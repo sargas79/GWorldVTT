@@ -1,0 +1,52 @@
+<section class="tab ibody" data-group="primary" data-tab="traits">
+
+  {{#each traitGroups as |group|}}
+    <div class="isec">
+      <div class="ish">
+        <span class="num">{{group.num}}</span>{{localize group.label}}
+        <span style="font-family: var(--font-body); font-size: 11px; letter-spacing: .04em; text-transform: none; color: var(--color-neutral-700)">
+          {{group.total}} pts
+        </span>
+      </div>
+
+      {{#each group.traits as |trait|}}
+        <div class="trait blueprint" data-item-id="{{trait.id}}">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span class="tn">
+            <span data-action="editItem">{{trait.name}}</span>
+            {{#if trait.system.levels}}<span class="tag">{{trait.system.levels}} {{localize "GWORLD.Trait.Levels"}}</span>{{/if}}
+            {{#if trait.system.reactionModifier}}
+              <span class="tag tag-accent">{{signed trait.system.reactionModifier}} {{localize "GWORLD.Trait.Reaction"}}</span>
+            {{/if}}
+          </span>
+          <span class="tp {{#if group.negative}}neg{{/if}}">{{trait.system.totalPoints}}</span>
+          {{#if trait.system.description}}
+            <span class="td">{{{trait.system.description}}}</span>
+          {{/if}}
+        </div>
+      {{/each}}
+
+      {{#if @root.editable}}
+        <button type="button" class="ibtn" style="align-self: flex-start"
+                data-action="createItem" data-item-type="trait" data-category="{{group.category}}">
+          + {{localize group.addLabel}}
+        </button>
+      {{/if}}
+    </div>
+  {{/each}}
+
+  <div class="meterwrap">
+    <div style="display: flex; justify-content: space-between; font-size: 11px">
+      <span class="fl">{{localize "GWORLD.Section.DisadvantageLimit"}}</span>
+      <span><strong>{{derived.points.disadvantageTotal}}</strong> of {{derived.points.disadvantageLimit}}</span>
+    </div>
+    <div class="meter">
+      <div class="mfill {{#if disadvantageOverLimit}}over{{/if}}"
+           style="width: {{percent derived.points.disadvantageTotal derived.points.disadvantageLimit}}%"></div>
+    </div>
+    <div style="font-size: 11px; color: var(--color-neutral-700)">
+      {{localize "GWORLD.Hint.DisadvantageLimit"}}
+    </div>
+  </div>
+
+</section>

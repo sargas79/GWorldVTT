@@ -1,0 +1,74 @@
+{{!-- Persistent header: identity, pools, and the combat strip. Shown on every tab. --}}
+<div class="ihdr">
+  <div class="iport blueprint">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <img src="{{actor.img}}" alt="{{actor.name}}" data-edit="img">
+  </div>
+
+  <div class="ihm">
+    <div class="inrow">
+      <input class="iname" type="text" name="name" value="{{actor.name}}" {{#unless editable}}disabled{{/unless}}>
+      <span class="imeta">{{system.details.player}}{{#if system.details.player}} / {{/if}}TL {{system.tl}}</span>
+      <span class="ipts">{{derived.points.spent}} of {{derived.points.starting}} pts</span>
+    </div>
+
+    <div class="ipools">
+      <div class="ipool">
+        <div class="ipt">
+          <span>{{localize "GWORLD.Secondary.HP"}}</span>
+          <span class="ipv">{{system.hp.value}} / {{system.hp.max}}</span>
+        </div>
+        <div class="itrack">
+          <div class="ifill {{#if derived.reeling}}reeling{{/if}}" style="width: {{percent system.hp.value system.hp.max}}%"></div>
+        </div>
+      </div>
+      <div class="ipool">
+        <div class="ipt">
+          <span>{{localize "GWORLD.Secondary.FP"}}</span>
+          <span class="ipv">{{system.fp.value}} / {{system.fp.max}}</span>
+        </div>
+        <div class="itrack">
+          <div class="ifill" style="width: {{percent system.fp.value system.fp.max}}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="istrip">
+      <div class="istat rollable" data-action="roll" data-roll-type="dodge"
+           data-roll-label="{{localize 'GWORLD.Secondary.Dodge'}}" data-roll-target="{{derived.defenses.dodge.total}}">
+        <span class="isl">{{localize "GWORLD.Secondary.Dodge"}}</span>
+        <span class="isv">{{derived.defenses.dodge.total}}</span>
+        <span class="isn">{{#if derived.shieldDb}}+{{derived.shieldDb}} DB{{/if}}</span>
+      </div>
+      <div class="istat {{#if derived.defenses.parry}}rollable{{/if}}"
+           {{#if derived.defenses.parry}}data-action="roll" data-roll-type="parry"
+           data-roll-label="{{localize 'GWORLD.Secondary.Parry'}}" data-roll-target="{{derived.defenses.parry.total}}"{{/if}}>
+        <span class="isl">{{localize "GWORLD.Secondary.Parry"}}</span>
+        <span class="isv">{{#if derived.defenses.parry}}{{derived.defenses.parry.total}}{{else}}&mdash;{{/if}}</span>
+        <span class="isn">{{#if derived.defenses.parry}}{{derived.defenses.parry.source}}{{/if}}</span>
+      </div>
+      <div class="istat {{#if derived.defenses.block}}rollable{{/if}}"
+           {{#if derived.defenses.block}}data-action="roll" data-roll-type="block"
+           data-roll-label="{{localize 'GWORLD.Secondary.Block'}}" data-roll-target="{{derived.defenses.block.total}}"{{/if}}>
+        <span class="isl">{{localize "GWORLD.Secondary.Block"}}</span>
+        <span class="isv">{{#if derived.defenses.block}}{{derived.defenses.block.total}}{{else}}&mdash;{{/if}}</span>
+        <span class="isn">{{#if derived.shieldName}}{{derived.shieldName}}{{/if}}</span>
+      </div>
+      <div class="istat">
+        <span class="isl">DR</span>
+        <span class="isv">{{derived.dr}}</span>
+        <span class="isn">{{#if derived.armorName}}{{derived.armorName}}{{/if}}</span>
+      </div>
+      <div class="istat">
+        <span class="isl">{{localize "GWORLD.Secondary.Move"}}</span>
+        <span class="isv">{{derived.move}}</span>
+        <span class="isn">{{localize (concat "GWORLD.Encumbrance." derived.encumbrance.key)}}</span>
+      </div>
+      <div class="istat">
+        <span class="isl">{{localize "GWORLD.Secondary.BasicSpeed"}}</span>
+        <span class="isv">{{decimal derived.basicSpeed 2}}</span>
+        <span class="isn">&nbsp;</span>
+      </div>
+    </div>
+  </div>
+</div>

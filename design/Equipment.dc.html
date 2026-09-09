@@ -1,0 +1,238 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #c9593f; } a:hover { color: #5d142b; }
+
+    .sheet {
+      --c-bg: #f7f3e8; --c-panel: #efe6d8; --c-panel-2: #e7d1b1; --c-rule: #d0b8a3;
+      --c-border: #c9c7b8; --c-border-2: #b5b3a4;
+      --c-text: #222; --c-text-2: #333; --c-subtle: #444; --c-muted: #7a7971;
+      --c-accent: #ee9b3a; --c-accent-2: #c9593f; --c-deep: #5d142b; --c-cool: #584a75;
+      width: 740px; min-height: 900px; box-sizing: border-box;
+      background: var(--c-bg); color: var(--c-text);
+      font-family: "Signika", ui-sans-serif, sans-serif; font-size: 13px; line-height: 1.4;
+      display: flex; flex-direction: column;
+    }
+
+    .hdr { display: flex; gap: 12px; padding: 12px; background: var(--c-panel); border-bottom: 1px solid var(--c-border-2); }
+    .portrait { width: 76px; height: 76px; flex-shrink: 0; border: 1px solid var(--c-border-2); background: var(--c-panel-2); display: flex; align-items: center; justify-content: center; }
+    .hdr-main { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 0; }
+    .name-row { display: flex; align-items: baseline; gap: 10px; }
+    .name { font-size: 24px; font-weight: 600; letter-spacing: 0.01em; color: var(--c-deep); }
+    .meta { font-size: 11px; color: var(--c-muted); }
+    .pts-badge { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--c-text-2); background: var(--c-panel-2); border: 1px solid var(--c-border-2); padding: 2px 8px; }
+    .pools { display: flex; gap: 10px; }
+    .pool { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .pool-top { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; }
+    .pool-label { color: var(--c-subtle); letter-spacing: 0.06em; }
+    .track { height: 9px; background: var(--c-rule); border: 1px solid var(--c-border-2); overflow: hidden; }
+    .fill { height: 100%; }
+    .strip { display: flex; border: 1px solid var(--c-border-2); background: var(--c-bg); }
+    .stat { flex: 1; padding: 5px 4px; text-align: center; border-right: 1px solid var(--c-border); }
+    .stat:last-child { border-right: 0; }
+    .stat-l { display: block; font-size: 9px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--c-muted); }
+    .stat-v { display: block; font-size: 17px; font-weight: 600; color: var(--c-text); }
+    .stat-n { display: block; font-size: 9px; color: var(--c-accent-2); }
+
+    .tabs { display: flex; gap: 2px; padding: 0 12px; background: var(--c-panel); border-bottom: 1px solid var(--c-border-2); }
+    .tab { padding: 7px 14px; font-size: 12px; font-weight: 500; color: var(--c-muted); background: var(--c-panel-2); border: 1px solid var(--c-border); border-bottom: 0; }
+    .tab.on { background: var(--c-bg); color: var(--c-deep); font-weight: 600; box-shadow: inset 0 2px 0 var(--c-accent-2); margin-bottom: -1px; padding-bottom: 8px; }
+
+    .body { padding: 12px; display: flex; flex-direction: column; gap: 14px; flex-grow: 1; }
+    .grp { display: flex; flex-direction: column; gap: 6px; }
+    .grp-h { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-accent-2); }
+    .grp-h::after { content: ""; flex-grow: 1; height: 1px; background: linear-gradient(90deg, var(--c-rule) 0%, transparent 100%); }
+
+    /* --- weapon with attack modes --- */
+    .wpn { border: 1px solid var(--c-border-2); background: var(--c-panel); }
+    .wpn-top { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--c-border); }
+    .wpn-name { font-weight: 600; }
+    .eq { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 5px; background: var(--c-cool); color: #f7f3e8; }
+    .wpn-meta { margin-left: auto; font-size: 11px; color: var(--c-muted); }
+
+    .mode { display: grid; grid-template-columns: 76px 1fr 118px 52px 62px 22px; gap: 8px; align-items: center; padding: 5px 8px; background: var(--c-bg); border-bottom: 1px solid var(--c-border); font-size: 12px; }
+    .mode:last-child { border-bottom: 0; }
+    .m-name { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--c-muted); }
+    .m-dmg { display: flex; align-items: baseline; gap: 6px; }
+    .m-raw { font-size: 11px; color: var(--c-muted); font-family: ui-monospace, monospace; }
+    .m-res { font-size: 15px; font-weight: 600; color: var(--c-deep); font-family: ui-monospace, monospace; }
+    .m-type { font-size: 11px; color: var(--c-subtle); }
+    .m-skill { font-size: 12px; text-align: right; }
+    .m-skill b { font-size: 14px; }
+    .m-x { font-size: 11px; color: var(--c-muted); text-align: right; }
+
+    /* --- simple gear rows --- */
+    .row { display: grid; grid-template-columns: 1fr 74px 58px 58px; gap: 8px; align-items: center; padding: 4px 8px; border-bottom: 1px solid var(--c-border); font-size: 12px; }
+    .row.head { border-bottom: 1px solid var(--c-border-2); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-muted); }
+    .row:nth-child(even) { background: rgba(215,200,175,0.22); }
+    .num { text-align: right; }
+    .g-name { display: flex; align-items: center; gap: 6px; }
+    .dr-badge { font-size: 11px; font-weight: 600; color: var(--c-deep); }
+
+    /* --- encumbrance meter --- */
+    .enc { border: 1px solid var(--c-border-2); background: var(--c-panel); padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+    .enc-top { display: flex; justify-content: space-between; align-items: baseline; }
+    .enc-l { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-muted); }
+    .enc-v { font-size: 12px; }
+    .enc-bar { display: flex; height: 20px; border: 1px solid var(--c-border-2); }
+    .enc-seg { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--c-muted); background: var(--c-bg); border-right: 1px solid var(--c-border); }
+    .enc-seg:last-child { border-right: 0; }
+    .enc-seg.on { background: var(--c-cool); color: #f7f3e8; font-weight: 600; }
+    .enc-note { font-size: 11px; color: var(--c-subtle); }
+  </style>
+</helmet>
+
+<div class="sheet">
+
+  <div class="hdr">
+    <div class="portrait">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#9f8475" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    </div>
+    <div class="hdr-main">
+      <div class="name-row">
+        <span class="name">Brenna Halvorsen</span>
+        <span class="meta">Diego &middot; TL 3</span>
+        <span class="pts-badge">138 / 150 pts</span>
+      </div>
+      <div class="pools">
+        <div class="pool">
+          <div class="pool-top"><span class="pool-label">HP</span><span>9 / 12</span></div>
+          <div class="track"><div class="fill" style="width: 75%; background: #5d142b"></div></div>
+        </div>
+        <div class="pool">
+          <div class="pool-top"><span class="pool-label">FP</span><span>10 / 12</span></div>
+          <div class="track"><div class="fill" style="width: 83%; background: #584a75"></div></div>
+        </div>
+      </div>
+      <div class="strip">
+        <div class="stat"><span class="stat-l">Dodge</span><span class="stat-v">8</span><span class="stat-n">+2 shield</span></div>
+        <div class="stat"><span class="stat-l">Parry</span><span class="stat-v">11</span><span class="stat-n">broadsword</span></div>
+        <div class="stat"><span class="stat-l">Block</span><span class="stat-v">10</span><span class="stat-n">shield</span></div>
+        <div class="stat"><span class="stat-l">DR</span><span class="stat-v">4</span><span class="stat-n">mail</span></div>
+        <div class="stat"><span class="stat-l">Move</span><span class="stat-v">4</span><span class="stat-n">light enc.</span></div>
+        <div class="stat"><span class="stat-l">Speed</span><span class="stat-v">6.00</span><span class="stat-n">&nbsp;</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab">Attributes</div>
+    <div class="tab">Skills</div>
+    <div class="tab">Traits</div>
+    <div class="tab on">Equipment</div>
+    <div class="tab">Description</div>
+  </div>
+
+  <div class="body">
+
+    <div class="grp">
+      <div class="grp-h">Weapons</div>
+
+      <div class="wpn">
+        <div class="wpn-top">
+          <span class="wpn-name">Broadsword</span>
+          <span class="eq">Equipped</span>
+          <span class="wpn-meta">TL 2 &middot; ST 10 &middot; 3 lb &middot; $500</span>
+        </div>
+        <div class="mode">
+          <span class="m-name">Swing</span>
+          <span class="m-dmg"><span class="m-raw">sw+1</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#b5b3a4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"></path><path d="m13 6 6 6-6 6"></path></svg>
+            <span class="m-res">1d+3</span></span>
+          <span class="m-type">cutting &middot; reach 1</span>
+          <span class="m-x">Parry 11</span>
+          <span class="m-skill">Broadsword <b>14</b></span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg>
+        </div>
+        <div class="mode">
+          <span class="m-name">Thrust</span>
+          <span class="m-dmg"><span class="m-raw">thr+1</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#b5b3a4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"></path><path d="m13 6 6 6-6 6"></path></svg>
+            <span class="m-res">1d</span></span>
+          <span class="m-type">crushing &middot; reach 1</span>
+          <span class="m-x">Parry 11</span>
+          <span class="m-skill">Broadsword <b>14</b></span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg>
+        </div>
+      </div>
+
+      <div class="wpn">
+        <div class="wpn-top">
+          <span class="wpn-name">Large Knife</span>
+          <span class="eq">Equipped</span>
+          <span class="wpn-meta">TL 0 &middot; ST 6 &middot; 1 lb &middot; $40</span>
+        </div>
+        <div class="mode">
+          <span class="m-name">Swing</span>
+          <span class="m-dmg"><span class="m-raw">sw-2</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#b5b3a4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"></path><path d="m13 6 6 6-6 6"></path></svg>
+            <span class="m-res">1d</span></span>
+          <span class="m-type">cutting &middot; reach C,1</span>
+          <span class="m-x">Parry &minus;1</span>
+          <span class="m-skill">Knife <b>12</b></span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg>
+        </div>
+        <div class="mode">
+          <span class="m-name">Thrust</span>
+          <span class="m-dmg"><span class="m-raw">thr</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#b5b3a4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"></path><path d="m13 6 6 6-6 6"></path></svg>
+            <span class="m-res">1d-1</span></span>
+          <span class="m-type">impaling &middot; reach C</span>
+          <span class="m-x">Parry &minus;1</span>
+          <span class="m-skill">Knife <b>12</b></span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">Armor &amp; Shields</div>
+      <div>
+        <div class="row head"><span>Item</span><span class="num">Protection</span><span class="num">Weight</span><span class="num">Cost</span></div>
+        <div class="row"><span class="g-name">Mail <span class="eq">Equipped</span></span><span class="num dr-badge">DR 4</span><span class="num">20 lb</span><span class="num">$500</span></div>
+        <div class="row"><span class="g-name">Medium Shield <span class="eq">Equipped</span></span><span class="num dr-badge">DB 2</span><span class="num">15 lb</span><span class="num">$60</span></div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">Gear</div>
+      <div>
+        <div class="row head"><span>Item</span><span class="num">Qty</span><span class="num">Weight</span><span class="num">Cost</span></div>
+        <div class="row"><span>Rations, 3 days</span><span class="num">3</span><span class="num">3 lb</span><span class="num">$6</span></div>
+        <div class="row"><span>Waterskin</span><span class="num">1</span><span class="num">2 lb</span><span class="num">$10</span></div>
+        <div class="row"><span>Torch</span><span class="num">2</span><span class="num">2 lb</span><span class="num">$6</span></div>
+        <div class="row"><span>Hemp rope, 10 yds</span><span class="num">1</span><span class="num">1 lb</span><span class="num">$5</span></div>
+      </div>
+    </div>
+
+    <div class="enc">
+      <div class="enc-top">
+        <span class="enc-l">Encumbrance</span>
+        <span class="enc-v"><strong>47 lb</strong> carried &middot; Basic Lift 29 lb &middot; $587 total</span>
+      </div>
+      <div class="enc-bar">
+        <div class="enc-seg">None &le;29</div>
+        <div class="enc-seg on">Light &le;58</div>
+        <div class="enc-seg">Medium &le;87</div>
+        <div class="enc-seg">Heavy &le;174</div>
+        <div class="enc-seg">X-Heavy &le;290</div>
+      </div>
+      <div class="enc-note">Light encumbrance: Move 6 &rarr; 4, Dodge &minus;1.</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

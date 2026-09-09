@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #c9593f; } a:hover { color: #5d142b; }
+
+    .sheet {
+      --c-bg: #f7f3e8; --c-panel: #efe6d8; --c-panel-2: #e7d1b1; --c-rule: #d0b8a3;
+      --c-border: #c9c7b8; --c-border-2: #b5b3a4;
+      --c-text: #222; --c-text-2: #333; --c-subtle: #444; --c-muted: #7a7971;
+      --c-accent: #ee9b3a; --c-accent-2: #c9593f; --c-deep: #5d142b; --c-cool: #584a75;
+      --c-ok: #26b231; --c-err: #ce0707;
+      width: 740px; min-height: 900px; box-sizing: border-box;
+      background: var(--c-bg); color: var(--c-text);
+      font-family: "Signika", ui-sans-serif, sans-serif; font-size: 13px; line-height: 1.4;
+      display: flex; flex-direction: column;
+    }
+
+    /* --- persistent header --- */
+    .hdr { display: flex; gap: 12px; padding: 12px; background: var(--c-panel); border-bottom: 1px solid var(--c-border-2); }
+    .portrait { width: 76px; height: 76px; flex-shrink: 0; border: 1px solid var(--c-border-2); background: var(--c-panel-2); display: flex; align-items: center; justify-content: center; }
+    .hdr-main { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 0; }
+    .name-row { display: flex; align-items: baseline; gap: 10px; }
+    .name { font-size: 24px; font-weight: 600; letter-spacing: 0.01em; color: var(--c-deep); }
+    .meta { font-size: 11px; color: var(--c-muted); }
+    .pts-badge { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--c-text-2); background: var(--c-panel-2); border: 1px solid var(--c-border-2); padding: 2px 8px; }
+
+    .pools { display: flex; gap: 10px; }
+    .pool { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .pool-top { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; }
+    .pool-label { color: var(--c-subtle); letter-spacing: 0.06em; }
+    .track { height: 9px; background: var(--c-rule); border: 1px solid var(--c-border-2); overflow: hidden; }
+    .fill { height: 100%; }
+
+    .strip { display: flex; gap: 0; border: 1px solid var(--c-border-2); background: var(--c-bg); }
+    .stat { flex: 1; padding: 5px 4px; text-align: center; border-right: 1px solid var(--c-border); }
+    .stat:last-child { border-right: 0; }
+    .stat-l { display: block; font-size: 9px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--c-muted); }
+    .stat-v { display: block; font-size: 17px; font-weight: 600; color: var(--c-text); }
+    .stat-n { display: block; font-size: 9px; color: var(--c-accent-2); }
+
+    /* --- tabs --- */
+    .tabs { display: flex; gap: 2px; padding: 0 12px; background: var(--c-panel); border-bottom: 1px solid var(--c-border-2); }
+    .tab { padding: 7px 14px; font-size: 12px; font-weight: 500; color: var(--c-muted); background: var(--c-panel-2); border: 1px solid var(--c-border); border-bottom: 0; }
+    .tab.on { background: var(--c-bg); color: var(--c-deep); font-weight: 600; box-shadow: inset 0 2px 0 var(--c-accent-2); margin-bottom: -1px; padding-bottom: 8px; }
+
+    /* --- body --- */
+    .body { padding: 12px; display: flex; flex-direction: column; gap: 14px; flex-grow: 1; }
+    .sec-h { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-accent-2); }
+    .sec-h::after { content: ""; flex-grow: 1; height: 1px; background: linear-gradient(90deg, var(--c-rule) 0%, transparent 100%); }
+    .sec { display: flex; flex-direction: column; gap: 7px; }
+
+    .attr-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .attr { position: relative; background: var(--c-panel); border: 1px solid var(--c-border-2); padding: 8px 8px 6px; text-align: center; }
+    .attr-l { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-muted); }
+    .attr-v { font-size: 30px; font-weight: 600; line-height: 1.05; color: var(--c-text); }
+    .attr-n { font-size: 10px; color: var(--c-subtle); }
+    .attr-c { font-size: 10px; color: var(--c-accent-2); font-weight: 600; }
+    .die { position: absolute; top: 6px; right: 6px; opacity: 0.4; }
+
+    .sec-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .cell { background: var(--c-panel); border: 1px solid var(--c-border); padding: 6px 8px; display: flex; flex-direction: column; gap: 1px; }
+    .cell-l { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--c-muted); }
+    .cell-v { font-size: 18px; font-weight: 600; }
+    .cell-d { font-size: 9px; color: var(--c-accent-2); font-family: ui-monospace, monospace; }
+
+    .row2 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .field { display: flex; flex-direction: column; gap: 3px; }
+    .field-l { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--c-muted); }
+    .input { height: 26px; box-sizing: border-box; padding: 0 8px; background: var(--c-bg); border: 1px solid var(--c-border-2); display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+
+    /* --- points ledger --- */
+    .ledger { border: 1px solid var(--c-border-2); background: var(--c-panel); }
+    .ldg-row { display: flex; justify-content: space-between; padding: 4px 10px; font-size: 12px; border-bottom: 1px solid var(--c-border); }
+    .ldg-row:last-child { border-bottom: 0; }
+    .ldg-tot { background: var(--c-panel-2); font-weight: 600; }
+    .neg { color: var(--c-accent-2); }
+    .note { display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: rgba(238,155,58,0.14); border-top: 1px solid var(--c-border); font-size: 11px; color: var(--c-subtle); }
+  </style>
+</helmet>
+
+<div class="sheet">
+
+  <!-- ================= persistent header ================= -->
+  <div class="hdr">
+    <div class="portrait">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#9f8475" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    </div>
+
+    <div class="hdr-main">
+      <div class="name-row">
+        <span class="name">Brenna Halvorsen</span>
+        <span class="meta">Diego &middot; TL 3</span>
+        <span class="pts-badge">138 / 150 pts</span>
+      </div>
+
+      <div class="pools">
+        <div class="pool">
+          <div class="pool-top"><span class="pool-label">HP</span><span>9 / 12</span></div>
+          <div class="track"><div class="fill" style="width: 75%; background: #5d142b"></div></div>
+        </div>
+        <div class="pool">
+          <div class="pool-top"><span class="pool-label">FP</span><span>10 / 12</span></div>
+          <div class="track"><div class="fill" style="width: 83%; background: #584a75"></div></div>
+        </div>
+      </div>
+
+      <div class="strip">
+        <div class="stat"><span class="stat-l">Dodge</span><span class="stat-v">8</span><span class="stat-n">+2 shield</span></div>
+        <div class="stat"><span class="stat-l">Parry</span><span class="stat-v">11</span><span class="stat-n">broadsword</span></div>
+        <div class="stat"><span class="stat-l">Block</span><span class="stat-v">10</span><span class="stat-n">shield</span></div>
+        <div class="stat"><span class="stat-l">DR</span><span class="stat-v">4</span><span class="stat-n">mail</span></div>
+        <div class="stat"><span class="stat-l">Move</span><span class="stat-v">4</span><span class="stat-n">light enc.</span></div>
+        <div class="stat"><span class="stat-l">Speed</span><span class="stat-v">6.00</span><span class="stat-n">&nbsp;</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= tabs ================= -->
+  <div class="tabs">
+    <div class="tab on">Attributes</div>
+    <div class="tab">Skills</div>
+    <div class="tab">Traits</div>
+    <div class="tab">Equipment</div>
+    <div class="tab">Description</div>
+  </div>
+
+  <!-- ================= attributes tab ================= -->
+  <div class="body">
+
+    <div class="sec">
+      <div class="sec-h">Basic Attributes</div>
+      <div class="attr-grid">
+        <div class="attr">
+          <svg class="die" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg>
+          <div class="attr-l">ST</div><div class="attr-v">12</div><div class="attr-c">20 pts</div>
+        </div>
+        <div class="attr">
+          <svg class="die" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg>
+          <div class="attr-l">DX</div><div class="attr-v">12</div><div class="attr-c">40 pts</div>
+        </div>
+        <div class="attr">
+          <svg class="die" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg>
+          <div class="attr-l">IQ</div><div class="attr-v">11</div><div class="attr-c">20 pts</div>
+        </div>
+        <div class="attr">
+          <svg class="die" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg>
+          <div class="attr-l">HT</div><div class="attr-v">12</div><div class="attr-c">20 pts</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h">Secondary Characteristics</div>
+      <div class="sec-grid">
+        <div class="cell"><span class="cell-l">Hit Points</span><span class="cell-v">12</span><span class="cell-d">= ST</span></div>
+        <div class="cell"><span class="cell-l">Will</span><span class="cell-v">11</span><span class="cell-d">= IQ</span></div>
+        <div class="cell"><span class="cell-l">Perception</span><span class="cell-v">11</span><span class="cell-d">= IQ</span></div>
+        <div class="cell"><span class="cell-l">Fatigue</span><span class="cell-v">12</span><span class="cell-d">= HT</span></div>
+        <div class="cell"><span class="cell-l">Basic Lift</span><span class="cell-v">29 lb</span><span class="cell-d">= ST&sup2;/5</span></div>
+        <div class="cell"><span class="cell-l">Basic Speed</span><span class="cell-v">6.00</span><span class="cell-d">= (DX+HT)/4</span></div>
+        <div class="cell"><span class="cell-l">Basic Move</span><span class="cell-v">6</span><span class="cell-d">= &lfloor;Speed&rfloor;</span></div>
+        <div class="cell"><span class="cell-l">Dodge</span><span class="cell-v">9</span><span class="cell-d">= Move + 3</span></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h">Damage &amp; Bearing</div>
+      <div class="row2">
+        <div class="field">
+          <span class="field-l">Thrust / Swing</span>
+          <div class="input"><span style="font-weight: 600">1d-1 <span style="color: #7a7971; font-weight: 400">/</span> 1d+2</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="12" cy="12" r="1.3" fill="#7a7971" stroke="none"></circle></svg>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-l">Posture</span>
+          <div class="input"><span>Standing</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-l">Encumbrance</span>
+          <div class="input"><span>Light &middot; 47 / 58 lb</span><span style="font-size: 10px; color: #c9593f">&minus;1 Dodge</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h">Character Points</div>
+      <div class="ledger">
+        <div class="ldg-row"><span>Attributes</span><span>100</span></div>
+        <div class="ldg-row"><span>Advantages</span><span>34</span></div>
+        <div class="ldg-row"><span>Disadvantages</span><span class="neg">&minus;30</span></div>
+        <div class="ldg-row"><span>Quirks</span><span class="neg">&minus;4</span></div>
+        <div class="ldg-row"><span>Languages</span><span>2</span></div>
+        <div class="ldg-row"><span>Skills</span><span>36</span></div>
+        <div class="ldg-row ldg-tot"><span>Spent</span><span>138 / 150</span></div>
+        <div class="note">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c9593f" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><path d="M12 16h.01"></path></svg>
+          <span>12 points unspent. Disadvantages and quirks 34 of 75 allowed.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

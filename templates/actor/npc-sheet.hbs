@@ -1,0 +1,117 @@
+{{!-- The NPC sheet: one pane, no tabs. Everything a GM needs mid-combat. --}}
+<div class="ihdr" style="grid-template-columns: 52px 1fr; padding: 13px 14px 12px">
+  <div class="iport blueprint">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <img src="{{actor.img}}" alt="{{actor.name}}">
+  </div>
+  <div class="ihm" style="gap: 7px">
+    <div class="inrow">
+      <input class="iname" style="font-size: 22px" type="text" name="name" value="{{actor.name}}"
+             {{#unless editable}}disabled{{/unless}}>
+      {{#if groupSizeLabel}}<span class="ipts">{{groupSizeLabel}}</span>{{/if}}
+    </div>
+    <div class="ipools">
+      <div class="ipool">
+        <div class="ipt">
+          <span>HP</span><span class="ipv">{{system.hp.value}} / {{system.hp.max}}</span>
+        </div>
+        <div class="itrack">
+          <div class="ifill {{#if derived.reeling}}reeling{{/if}}" style="width: {{percent system.hp.value system.hp.max}}%"></div>
+        </div>
+      </div>
+      <div class="ipool">
+        <div class="ipt">
+          <span>FP</span><span class="ipv">{{system.fp.value}} / {{system.fp.max}}</span>
+        </div>
+        <div class="itrack">
+          <div class="ifill" style="width: {{percent system.fp.value system.fp.max}}%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ibody" style="padding: 14px; gap: 14px">
+
+  <div class="cellgrid" style="grid-template-columns: repeat(8, minmax(0, 1fr))">
+    {{#each statCells as |cell|}}
+      <div class="cell {{#if cell.rollable}}rollable{{/if}}" style="padding: 6px 7px"
+           {{#if cell.rollable}}data-action="roll" data-roll-type="attribute"
+           data-roll-label="{{cell.label}}" data-roll-target="{{cell.value}}"{{/if}}>
+        <span class="cl">{{cell.label}}</span>
+        <span class="cv" style="font-size: 18px">{{cell.value}}</span>
+      </div>
+    {{/each}}
+  </div>
+
+  <div class="isec" style="gap: 7px">
+    <div class="grph">{{localize "GWORLD.Section.ActiveDefenses"}}</div>
+    <div class="npcline">
+      <span class="rollable" data-action="roll" data-roll-type="dodge"
+            data-roll-label="{{localize 'GWORLD.Secondary.Dodge'}}" data-roll-target="{{derived.defenses.dodge.total}}">
+        {{localize "GWORLD.Secondary.Dodge"}} <b>{{derived.defenses.dodge.total}}</b>
+      </span>
+      <span>
+        {{localize "GWORLD.Secondary.Parry"}}
+        <b>{{#if derived.defenses.parry}}{{derived.defenses.parry.total}}{{else}}&mdash;{{/if}}</b>
+      </span>
+      <span>
+        {{localize "GWORLD.Secondary.Block"}}
+        <b>{{#if derived.defenses.block}}{{derived.defenses.block.total}}{{else}}&mdash;{{/if}}</b>
+      </span>
+      <span class="wmode">
+        {{#if derived.armorName}}{{derived.armorName}}{{else}}{{localize "GWORLD.Item.NoArmor"}}{{/if}}
+        {{#unless derived.shieldName}}, {{localize "GWORLD.Item.NoShield"}}{{/unless}}
+      </span>
+    </div>
+  </div>
+
+  {{#if allAttacks.length}}
+    <div class="isec" style="gap: 7px">
+      <div class="grph">{{localize "GWORLD.Section.Attacks"}}</div>
+      <table class="gt">
+        <tbody>
+          {{#each allAttacks as |atk|}}
+            <tr data-item-id="{{atk.itemId}}">
+              <td><span class="wname">{{atk.name}}</span> <span class="wmode">{{atk.mode}}</span></td>
+              <td class="n">
+                {{#if atk.skillLevel}}<span class="lvl">{{atk.skillLevel}}</span>{{else}}<span class="bad">&mdash;</span>{{/if}}
+              </td>
+              <td class="dmg">{{atk.damage}} <span class="dt">{{atk.damageType}}</span></td>
+              <td class="c">{{#if atk.range}}{{atk.range}}{{else}}{{atk.reach}}{{/if}}</td>
+              <td class="c">
+                {{#if atk.skillLevel}}
+                  <span class="rollable" data-action="roll" data-roll-type="attack"
+                        data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}">
+                    {{> "gworld.die"}}
+                  </span>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{/if}}
+
+  {{#if notableSkills.length}}
+    <div class="isec" style="gap: 7px">
+      <div class="grph">{{localize "GWORLD.Section.SkillsOfNote"}}</div>
+      <div class="npcline">
+        {{#each notableSkills as |skill|}}
+          <span class="rollable" data-action="roll" data-roll-type="skill"
+                data-roll-label="{{skill.name}}" data-roll-target="{{skill.level}}">
+            {{skill.name}} <b>{{skill.level}}</b>
+          </span>
+        {{/each}}
+      </div>
+    </div>
+  {{/if}}
+
+  {{#if system.tactics}}
+    <div class="inote">
+      {{> "gworld.info"}}<span>{{system.tactics}}</span>
+    </div>
+  {{/if}}
+
+</div>

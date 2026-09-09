@@ -1,0 +1,33 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 740, "h": 900, "title": "Attributes" },
+    { "file": "Skills.dc.html", "x": 820, "y": 0, "w": 740, "h": 900, "title": "Skills" },
+    { "file": "Traits.dc.html", "x": 1640, "y": 0, "w": 740, "h": 900, "title": "Traits" },
+    { "file": "Equipment.dc.html", "x": 0, "y": 1020, "w": 740, "h": 900, "title": "Equipment" },
+    { "file": "Description.dc.html", "x": 820, "y": 1020, "w": 740, "h": 900, "title": "Description" }
+  ],
+  "annotations": [
+    {
+      "id": "header-note",
+      "x": 0,
+      "y": -150,
+      "w": 400,
+      "text": "The top block is persistent across all five tabs.\nIn the real sheet it lives outside the tab PARTS so switching tabs never re-renders it."
+    },
+    {
+      "id": "damage-note",
+      "x": 1640,
+      "y": 1020,
+      "w": 340,
+      "text": "Equipment tab: weapon modes show the printed formula (sw+1) resolved against this character's ST (1d+3).\nThat lookup is the most tedious part of GURPS at the table."
+    },
+    {
+      "id": "tokens-note",
+      "x": 2000,
+      "y": -150,
+      "w": 380,
+      "text": "Palette and type lifted from Foundry v14's own foundry2.css: Signika, warm-1 #ee9b3a, deep #5d142b, parchment #f7f3e8 / #efe6d8 / #e7d1b1, borders #c9c7b8 / #b5b3a4."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

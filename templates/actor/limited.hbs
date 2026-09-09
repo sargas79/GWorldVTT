@@ -1,0 +1,23 @@
+{{!-- What a player with Limited permission sees: identity and public description only. --}}
+<div class="limited">
+  <div class="iport blueprint" style="width: 120px; height: 120px">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <img src="{{actor.img}}" alt="{{actor.name}}">
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 5px">
+    <span class="iname" style="font-size: 25px">{{actor.name}}</span>
+    {{#if system.details.appearance}}
+      <span class="imeta">{{system.details.appearance}}</span>
+    {{/if}}
+  </div>
+
+  {{#if biographyHTML}}
+    <div class="box prose" style="text-align: left">{{{biographyHTML}}}</div>
+  {{/if}}
+
+  <div style="display: flex; align-items: center; gap: 7px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--color-neutral-700)">
+    {{> "gworld.lock"}}
+    <span>{{localize "GWORLD.Hint.LimitedSheet"}}</span>
+  </div>
+</div>

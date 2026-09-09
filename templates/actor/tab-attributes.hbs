@@ -1,0 +1,87 @@
+<section class="tab ibody" data-group="primary" data-tab="attributes">
+
+  <div class="isec">
+    <div class="ish"><span class="num">01</span>{{localize "GWORLD.Section.BasicAttributes"}}</div>
+    <div class="g4">
+      {{#each attributeCards as |attr|}}
+        <div class="attr blueprint">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span class="iroll rollable" data-action="roll" data-roll-type="attribute"
+                data-roll-label="{{attr.label}}" data-roll-target="{{attr.value}}">
+            {{> "gworld.die"}}
+          </span>
+          <span class="al">{{attr.key}}</span>
+          <input class="av" type="number" name="system.attributes.{{attr.key}}" value="{{attr.value}}"
+                 {{#unless @root.editable}}disabled{{/unless}}>
+          <span class="ac">{{attr.cost}} pts</span>
+        </div>
+      {{/each}}
+    </div>
+  </div>
+
+  <div class="isec">
+    <div class="ish"><span class="num">02</span>{{localize "GWORLD.Section.Secondary"}}</div>
+    <div class="cellgrid">
+      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.HP"}}</span><span class="cv">{{system.hp.max}}</span><span class="cd">= ST</span></div>
+      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.Will"}}</span><span class="cv">{{derived.will}}</span><span class="cd">= IQ</span></div>
+      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.Per"}}</span><span class="cv">{{derived.per}}</span><span class="cd">= IQ</span></div>
+      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.FP"}}</span><span class="cv">{{system.fp.max}}</span><span class="cd">= HT</span></div>
+      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.BasicLift"}}</span><span class="cv">{{derived.basicLift}} lb</span><span class="cd">= ST&sup2;/5</span></div>
+      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.BasicSpeed"}}</span><span class="cv">{{decimal derived.basicSpeed 2}}</span><span class="cd">= (DX+HT)/4</span></div>
+      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.BasicMove"}}</span><span class="cv">{{derived.basicMove}}</span><span class="cd">= &lfloor;Speed&rfloor;</span></div>
+      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.Dodge"}}</span><span class="cv">{{derived.defenses.dodge.total}}</span><span class="cd">= Move + 3</span></div>
+    </div>
+  </div>
+
+  <div class="isec">
+    <div class="ish"><span class="num">03</span>{{localize "GWORLD.Section.DamageBearing"}}</div>
+    <div class="g3">
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.ThrustSwing"}}</span>
+        <div class="fi">
+          <span class="dmg">{{derived.thrust}} / {{derived.swing}}</span>
+          {{> "gworld.die"}}
+        </div>
+      </div>
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.Posture"}}</span>
+        <div class="fi">
+          <select name="system.posture" {{#unless editable}}disabled{{/unless}}>
+            {{#each postures as |posture|}}
+              <option value="{{posture.key}}" {{#if posture.selected}}selected{{/if}}>{{posture.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.Encumbrance"}}</span>
+        <div class="fi">
+          <span>{{localize (concat "GWORLD.Encumbrance." derived.encumbrance.key)}} &middot; {{decimal derived.encumbrance.carriedWeight 1}} lb</span>
+          {{#if derived.encumbrance.dodgePenalty}}
+            <span style="font-size: 10px; letter-spacing: .06em; color: var(--color-accent-700)">
+              {{derived.encumbrance.dodgePenalty}} DODGE
+            </span>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="isec">
+    <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.CharacterPoints"}}</div>
+    <div class="ledger">
+      <div class="lrow"><span>{{localize "GWORLD.Points.Attributes"}}</span><span>{{derived.points.attributes}}</span></div>
+      <div class="lrow"><span>{{localize "GWORLD.Points.Advantages"}}</span><span>{{derived.points.advantages}}</span></div>
+      <div class="lrow"><span>{{localize "GWORLD.Points.Disadvantages"}}</span><span class="neg">{{derived.points.disadvantages}}</span></div>
+      <div class="lrow"><span>{{localize "GWORLD.Points.Quirks"}}</span><span class="neg">{{derived.points.quirks}}</span></div>
+      <div class="lrow"><span>{{localize "GWORLD.Points.Languages"}}</span><span>{{derived.points.languages}}</span></div>
+      <div class="lrow"><span>{{localize "GWORLD.Points.Skills"}}</span><span>{{derived.points.skills}}</span></div>
+      <div class="lrow ltot"><span>{{localize "GWORLD.Points.Spent"}}</span><span>{{derived.points.spent}} / {{derived.points.starting}}</span></div>
+    </div>
+    <div class="inote {{#if pointsWarning.over}}warn{{/if}}">
+      {{> "gworld.info"}}
+      <span>{{pointsWarning.text}}</span>
+    </div>
+  </div>
+
+</section>

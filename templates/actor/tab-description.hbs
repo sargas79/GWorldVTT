@@ -1,0 +1,96 @@
+<section class="tab ibody" data-group="primary" data-tab="description">
+
+  <div class="isec">
+    <div class="ish"><span class="num">01</span>{{localize "GWORLD.Section.VitalStatistics"}}</div>
+    <div class="g4">
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.Player"}}</span>
+        <div class="fi"><input type="text" name="system.details.player" value="{{system.details.player}}" {{#unless editable}}disabled{{/unless}}></div>
+      </div>
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.Height"}}</span>
+        <div class="fi"><input type="text" name="system.details.height" value="{{system.details.height}}" {{#unless editable}}disabled{{/unless}}></div>
+      </div>
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.Weight"}}</span>
+        <div class="fi"><input type="text" name="system.details.weight" value="{{system.details.weight}}" {{#unless editable}}disabled{{/unless}}></div>
+      </div>
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.Age"}}</span>
+        <div class="fi"><input type="text" name="system.details.age" value="{{system.details.age}}" {{#unless editable}}disabled{{/unless}}></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="isec">
+    <div class="ish"><span class="num">02</span>{{localize "GWORLD.Section.Appearance"}}</div>
+    <div class="box prose">
+      <input type="text" name="system.details.appearance" value="{{system.details.appearance}}"
+             placeholder="{{localize 'GWORLD.Field.AppearancePlaceholder'}}"
+             style="width: 100%; background: none; border: 0; font: inherit; color: inherit"
+             {{#unless editable}}disabled{{/unless}}>
+    </div>
+  </div>
+
+  <div class="isec">
+    <div class="ish"><span class="num">03</span>{{localize "GWORLD.Section.Languages"}}</div>
+    {{#if items.languages.length}}
+      <table class="gt">
+        <thead>
+          <tr>
+            <th>{{localize "GWORLD.Column.Language"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Spoken"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Written"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Pts"}}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each items.languages as |lang|}}
+            <tr data-item-id="{{lang.id}}">
+              <td>
+                <span class="wname" data-action="editItem">{{lang.name}}</span>
+                {{#if lang.system.isNative}}<span class="tag">{{localize "GWORLD.Language.Native"}}</span>{{/if}}
+              </td>
+              <td class="n">{{localize (concat "GWORLD.Language." lang.system.spoken)}}</td>
+              <td class="n">{{localize (concat "GWORLD.Language." lang.system.written)}}</td>
+              <td class="n">{{lang.system.totalPoints}}</td>
+              <td class="c">
+                {{#if @root.editable}}
+                  <span class="rollable" data-action="deleteItem">{{> "gworld.trash"}}</span>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{/if}}
+    {{#if editable}}
+      <button type="button" class="ibtn" style="align-self: flex-start"
+              data-action="createItem" data-item-type="language">
+        {{> "gworld.plus"}} {{localize "GWORLD.Action.AddLanguage"}}
+      </button>
+    {{/if}}
+    <div style="font-size: 11px; color: var(--color-neutral-700)">
+      {{localize "GWORLD.Hint.Languages"}}
+    </div>
+  </div>
+
+  <div class="isec">
+    <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.Biography"}}</div>
+    <div class="box editor prose">{{{biographyHTML}}}</div>
+  </div>
+
+  {{#if isOwner}}
+    <div class="isec">
+      <div class="ish">
+        <span class="num">05</span>{{localize "GWORLD.Section.Notes"}}
+        <span style="font-family: var(--font-body); font-size: 11px; letter-spacing: .04em; text-transform: none; color: var(--color-neutral-700)">
+          {{localize "GWORLD.Hint.GMOnly"}}
+        </span>
+      </div>
+      <div class="box editor prose">{{{notesHTML}}}</div>
+    </div>
+  {{/if}}
+
+</section>

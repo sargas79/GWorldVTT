@@ -1,0 +1,97 @@
+<section class="tab ibody" data-group="primary" data-tab="skills">
+
+  <div class="toolbar">
+    <div class="srch">
+      {{> "gworld.search"}}
+      <input type="search" name="skillFilter" placeholder="{{localize 'GWORLD.Action.FilterSkills'}}" autocomplete="off">
+    </div>
+    {{#if editable}}
+      <button type="button" class="ibtn" data-action="createItem" data-item-type="skill">
+        {{> "gworld.plus"}} {{localize "GWORLD.Action.AddSkill"}}
+      </button>
+    {{/if}}
+  </div>
+
+  {{#each items.skillGroups as |group|}}
+    <div class="isec" style="gap: 0">
+      <div class="grph">
+        {{group.attribute}}-{{localize "GWORLD.Section.Based"}}
+        <span class="sub">{{group.attribute}} {{group.score}}</span>
+      </div>
+      <table class="gt">
+        <thead>
+          <tr>
+            <th>{{localize "GWORLD.Column.Skill"}}</th>
+            <th>{{localize "GWORLD.Column.Type"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Pts"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Relative"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Level"}}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each group.skills as |skill|}}
+            <tr data-item-id="{{skill.id}}">
+              <td>
+                <span class="wname" data-action="editItem">{{skill.name}}</span>
+                {{#if skill.system.techLevel}}<span class="wmode">TL{{skill.system.techLevel}}</span>{{/if}}
+              </td>
+              <td class="wmode">{{skill.system.attribute}}/{{skill.system.difficulty}}</td>
+              <td class="n">{{skill.system.points}}</td>
+              <td class="n wmode">{{relativeLabel skill}}</td>
+              <td class="n"><span class="lvl">{{skill.system.derived.level}}</span></td>
+              <td class="c">
+                <span class="rollable" data-action="roll" data-roll-type="skill"
+                      data-roll-label="{{skill.name}}" data-roll-target="{{skill.system.derived.level}}">
+                  {{> "gworld.die"}}
+                </span>
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{/each}}
+
+  {{#if items.untrainedSkills.length}}
+    <div class="isec" style="gap: 0">
+      <div class="grph">
+        {{localize "GWORLD.Section.Untrained"}}
+        <span class="sub">{{localize "GWORLD.Section.RolledAtDefault"}}</span>
+      </div>
+      <table class="gt">
+        <tbody>
+          {{#each items.untrainedSkills as |skill|}}
+            <tr class="dim" data-item-id="{{skill.id}}">
+              <td><span class="wname" data-action="editItem">{{skill.name}}</span></td>
+              <td class="wmode">{{skill.system.attribute}}/{{skill.system.difficulty}}</td>
+              <td class="n">&mdash;</td>
+              <td class="n wmode">{{relativeLabel skill}}</td>
+              <td class="n">
+                {{#if skill.system.derived.hasDefault}}
+                  <span class="lvl">{{skill.system.derived.level}}</span>
+                {{else}}
+                  <span class="tag tag-danger">{{localize "GWORLD.Skill.NoDefault"}}</span>
+                {{/if}}
+              </td>
+              <td class="c">
+                {{#if skill.system.derived.hasDefault}}
+                  <span class="rollable" data-action="roll" data-roll-type="skill"
+                        data-roll-label="{{skill.name}}" data-roll-target="{{skill.system.derived.level}}">
+                    {{> "gworld.die"}}
+                  </span>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{/if}}
+
+  <div class="npcline" style="justify-content: space-between; color: var(--color-neutral-700)">
+    <span>{{skillSummary.count}} {{localize "GWORLD.Skill.Trained"}}</span>
+    <span>{{derived.points.skills}} {{localize "GWORLD.Points.PointsLabel"}}</span>
+  </div>
+
+</section>

@@ -1,0 +1,165 @@
+<section class="tab ibody" data-group="primary" data-tab="combat">
+
+  <div class="isec">
+    <div class="ish"><span class="num">01</span>{{localize "GWORLD.Section.Stance"}}</div>
+    <div class="istance">
+      <span class="ichip on">{{localize (concat "GWORLD.Posture." system.posture)}}</span>
+      {{#each conditionChips as |chip|}}
+        <button type="button" class="ichip {{#if chip.active}}on{{/if}}"
+                data-action="toggleCondition" data-condition="{{chip.key}}">{{localize chip.label}}</button>
+      {{/each}}
+      {{#if derived.encumbrance.dodgePenalty}}
+        <span class="ichip warn">
+          {{localize (concat "GWORLD.Encumbrance." derived.encumbrance.key)}} {{derived.encumbrance.dodgePenalty}}
+        </span>
+      {{/if}}
+      {{#if derived.reeling}}
+        <span class="ichip warn">{{localize "GWORLD.Health.reeling"}}</span>
+      {{/if}}
+    </div>
+  </div>
+
+  <div class="isec">
+    <div class="ish"><span class="num">02</span>{{localize "GWORLD.Section.ActiveDefenses"}}</div>
+    <div class="idefs">
+      {{#each defenseCards as |def|}}
+        <div class="idef blueprint">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          {{#if def.available}}
+            <span class="iroll rollable" data-action="roll" data-roll-type="{{def.key}}"
+                  data-roll-label="{{localize def.label}}" data-roll-target="{{def.total}}">
+              {{> "gworld.die"}}
+            </span>
+          {{/if}}
+          <span class="idl">{{localize def.label}}</span>
+          <span class="idv">{{#if def.available}}{{def.total}}{{else}}&mdash;{{/if}}</span>
+          <span class="idsrc">{{def.source}}</span>
+          <span class="idmath">{{def.math}}</span>
+        </div>
+      {{/each}}
+    </div>
+  </div>
+
+  <div class="isec">
+    <div class="ish"><span class="num">03</span>{{localize "GWORLD.Section.MeleeAttacks"}}</div>
+    {{#if derived.melee.length}}
+      <table class="gt">
+        <thead>
+          <tr>
+            <th>{{localize "GWORLD.Column.Weapon"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Skill"}}</th>
+            <th>{{localize "GWORLD.Column.Damage"}}</th>
+            <th class="c">{{localize "GWORLD.Column.Reach"}}</th>
+            <th class="c">{{localize "GWORLD.Secondary.Parry"}}</th>
+            <th class="c">ST</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each derived.melee as |atk|}}
+            <tr data-item-id="{{atk.itemId}}">
+              <td><span class="wname">{{atk.name}}</span> <span class="wmode">{{atk.mode}}</span></td>
+              <td class="n">
+                {{#if atk.skillLevel}}<span class="lvl">{{atk.skillLevel}}</span>{{else}}<span class="bad">&mdash;</span>{{/if}}
+              </td>
+              <td class="dmg">{{atk.damage}} <span class="dt">{{atk.damageType}}</span></td>
+              <td class="c">{{atk.reach}}</td>
+              <td class="c">{{#if atk.parry}}{{atk.parry}}{{else}}&mdash;{{/if}}</td>
+              <td class="c">{{#if atk.minSt}}{{atk.minSt}}{{else}}&mdash;{{/if}}</td>
+              <td class="c">
+                {{#if atk.skillLevel}}
+                  <span class="rollable" data-action="roll" data-roll-type="attack"
+                        data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}">
+                    {{> "gworld.die"}}
+                  </span>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{else}}
+      <div class="inote">{{> "gworld.info"}}<span>{{localize "GWORLD.Hint.NoMeleeAttacks"}}</span></div>
+    {{/if}}
+  </div>
+
+  {{#if derived.ranged.length}}
+    <div class="isec">
+      <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.RangedAttacks"}}</div>
+      <table class="gt">
+        <thead>
+          <tr>
+            <th>{{localize "GWORLD.Column.Weapon"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Skill"}}</th>
+            <th>{{localize "GWORLD.Column.Damage"}}</th>
+            <th class="c">{{localize "GWORLD.Column.Acc"}}</th>
+            <th class="c">{{localize "GWORLD.Column.Range"}}</th>
+            <th class="c">{{localize "GWORLD.Column.RoF"}}</th>
+            <th class="c">{{localize "GWORLD.Column.Shots"}}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each derived.ranged as |atk|}}
+            <tr data-item-id="{{atk.itemId}}">
+              <td><span class="wname">{{atk.name}}</span> <span class="wmode">{{atk.mode}}</span></td>
+              <td class="n">
+                {{#if atk.skillLevel}}<span class="lvl">{{atk.skillLevel}}</span>{{else}}<span class="bad">&mdash;</span>{{/if}}
+              </td>
+              <td class="dmg">{{atk.damage}} <span class="dt">{{atk.damageType}}</span></td>
+              <td class="c">{{atk.accuracy}}</td>
+              <td class="c">{{atk.range}}</td>
+              <td class="c">{{atk.rateOfFire}}</td>
+              <td class="c">{{atk.shots}}</td>
+              <td class="c">
+                {{#if atk.skillLevel}}
+                  <span class="rollable" data-action="roll" data-roll-type="attack"
+                        data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}">
+                    {{> "gworld.die"}}
+                  </span>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{/if}}
+
+  <div class="isec">
+    <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.Protection"}}</div>
+    <div class="iarm">
+      {{#each items.armor as |armor|}}
+        <div class="iac blueprint" data-item-id="{{armor.id}}">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span>
+            <strong data-action="editItem">{{armor.name}}</strong><br>
+            <span style="font-size: 10.5px; color: var(--color-neutral-700)">
+              {{armor.system.weight}} lb / {{#if armor.system.equipped}}{{localize "GWORLD.Item.Equipped"}}{{else}}{{localize "GWORLD.Item.Stowed"}}{{/if}}
+            </span>
+          </span>
+          <span style="text-align: right">
+            <span class="iav">DR {{armor.system.dr}}</span><br>
+            <span class="el">{{localize "GWORLD.Item.WholeBody"}}</span>
+          </span>
+        </div>
+      {{/each}}
+      {{#each items.shields as |shield|}}
+        <div class="iac blueprint" data-item-id="{{shield.id}}">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span>
+            <strong data-action="editItem">{{shield.name}}</strong><br>
+            <span style="font-size: 10.5px; color: var(--color-neutral-700)">
+              {{shield.system.weight}} lb / {{#if shield.system.equipped}}{{localize "GWORLD.Item.Readied"}}{{else}}{{localize "GWORLD.Item.Stowed"}}{{/if}}
+            </span>
+          </span>
+          <span style="text-align: right">
+            <span class="iav">DB {{shield.system.db}}</span><br>
+            <span class="el">{{localize "GWORLD.Item.FrontShieldSide"}}</span>
+          </span>
+        </div>
+      {{/each}}
+    </div>
+  </div>
+
+</section>

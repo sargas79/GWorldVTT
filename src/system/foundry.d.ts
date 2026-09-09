@@ -93,14 +93,27 @@ declare global {
         class ApplicationV2 {
           constructor(options?: object);
           static DEFAULT_OPTIONS: object;
+          static TABS: Record<
+            string,
+            { tabs: Array<{ id: string; cssClass?: string; label?: string }>; initial?: string; labelPrefix?: string }
+          >;
           readonly element: HTMLElement;
+          readonly tabGroups: Record<string, string>;
           render(options?: object | boolean): Promise<this>;
           close(options?: object): Promise<this>;
+          changeTab(tab: string, group: string, options?: object): void;
+          _prepareContext(options: object): Promise<object>;
         }
 
         class DocumentSheetV2 extends ApplicationV2 {
           readonly document: any;
           readonly isEditable: boolean;
+        }
+
+        class DialogV2 extends ApplicationV2 {
+          static confirm(options?: object): Promise<boolean>;
+          static prompt(options?: object): Promise<unknown>;
+          static wait(options?: object): Promise<unknown>;
         }
 
         function HandlebarsApplicationMixin<T extends abstract new (...args: any[]) => any>(
@@ -109,10 +122,20 @@ declare global {
           new (...args: any[]): {
             _prepareContext(options: object): Promise<object>;
             _preparePartContext(partId: string, context: object, options: object): Promise<object>;
+            _configureRenderParts(options: object): Record<string, unknown>;
             _onRender(context: object, options: object): Promise<void>;
           };
           PARTS: Record<string, { template: string; scrollable?: string[]; templates?: string[] }>;
         };
+      }
+
+      namespace ux {
+        class TextEditor {
+          static implementation: {
+            enrichHTML(content: string, options?: object): Promise<string>;
+            getDragEventData(event: DragEvent): Record<string, unknown>;
+          };
+        }
       }
 
       namespace sheets {

@@ -32,7 +32,8 @@
   "secondaryTokenAttribute": "fp",
   "documentTypes": {
     "Actor": {
-      "character": {}
+      "character": {},
+      "npc": {}
     },
     "Item": {
       "trait": {},

@@ -1,22 +1,700 @@
-/* GWorld - GURPS Lite 4e. Theme-aware base styles; sheet styles arrive in phase 2. */
+/**
+ * GWorld sheet styles.
+ *
+ * Ported from the "Industry" design system: steel-blue on a light technical
+ * ground, Barlow Condensed headings over Barlow, square corners, hairline
+ * borders, and "+" registration marks on framed objects.
+ *
+ * Every token is declared on `.gworld` rather than `:root` so the system's
+ * palette cannot leak into Foundry's own chrome, and every component class is
+ * scoped under `.gworld` for the same reason.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap");
 
 .gworld {
-  --gworld-accent: #7a2e2e;
-  --gworld-border: rgba(0, 0, 0, 0.2);
-  --gworld-muted: #6b6b6b;
+  --color-bg: #f2f2f3;
+  --color-surface: #e9e9ea;
+  --color-text: #1d1f20;
+  --color-accent: #5980a6;
+  --color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+
+  --color-neutral-200: #e7e7ea;
+  --color-neutral-700: #5d5d60;
+  --color-neutral-800: #424244;
+  --color-neutral-900: #2b2b2d;
+
+  --color-accent-100: #eef6ff;
+  --color-accent-700: #416180;
+  --color-accent-800: #2c455d;
+  --color-accent-900: #1d2d3d;
+
+  --color-danger: #8f2f2f;
+
+  --font-heading: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --space-1: 3.4px;
+  --space-2: 6.8px;
+  --space-3: 10.2px;
+  --space-4: 13.6px;
+  --space-6: 20.4px;
+  --space-8: 27.2px;
 }
 
-.gworld .gworld-crit-success {
-  color: #1a7f37;
-  font-weight: 700;
+/* ── shell ─────────────────────────────────────────────────────────────── */
+
+.gworld .window-content {
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
-.gworld .gworld-crit-failure {
-  color: #b3261e;
-  font-weight: 700;
+.gworld .ind {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
-.gworld .gworld-modifiers {
-  color: var(--gworld-muted);
-  font-size: 0.85em;
+.gworld .ind *,
+.gworld .ind *::before,
+.gworld .ind *::after {
+  box-sizing: border-box;
 }
+
+/* The blueprint frame: hairline border plus corner registration marks. */
+.gworld .blueprint {
+  position: relative;
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+}
+.gworld .blueprint > .corner {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  pointer-events: none;
+}
+.gworld .blueprint > .corner::before,
+.gworld .blueprint > .corner::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+}
+.gworld .blueprint > .corner::before {
+  left: 5px;
+  top: 0;
+  width: 1px;
+  height: 100%;
+}
+.gworld .blueprint > .corner::after {
+  top: 5px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+.gworld .blueprint > .corner.tl { top: -6px; left: -6px; }
+.gworld .blueprint > .corner.tr { top: -6px; right: -6px; }
+.gworld .blueprint > .corner.bl { bottom: -6px; left: -6px; }
+.gworld .blueprint > .corner.br { bottom: -6px; right: -6px; }
+
+/* ── persistent header ─────────────────────────────────────────────────── */
+
+.gworld .ihdr {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 14px;
+  padding: 16px 16px 14px;
+  border-bottom: 1px solid var(--color-divider);
+  flex: none;
+}
+.gworld .iport {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-divider);
+  overflow: hidden;
+}
+.gworld .iport img { width: 100%; height: 100%; object-fit: cover; border: 0; }
+.gworld .ihm { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.gworld .inrow { display: flex; align-items: baseline; gap: 10px; }
+.gworld .iname {
+  font-family: var(--font-heading);
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--color-text);
+  min-width: 0;
+}
+.gworld .imeta {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+}
+.gworld .ipts {
+  margin-left: auto;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+  white-space: nowrap;
+}
+.gworld .ipools { display: flex; gap: 14px; }
+.gworld .ipool { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.gworld .ipt {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .ipv {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--color-text);
+}
+.gworld .itrack { height: 6px; border: 1px solid var(--color-divider); }
+.gworld .ifill { height: 100%; background: var(--color-accent); }
+/* Injury states recolour the pool fill rather than adding new chrome. */
+.gworld .ifill.reeling { background: var(--color-danger); }
+.gworld .ifill.collapsing { background: var(--color-danger); opacity: 0.55; }
+
+.gworld .istrip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border: 1px solid var(--color-divider);
+}
+.gworld .istat {
+  padding: 6px 4px;
+  text-align: center;
+  border-right: 1px solid var(--color-divider);
+}
+.gworld .istat:last-child { border-right: 0; }
+.gworld .isl {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .isv {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+.gworld .isn {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--color-accent-700);
+  min-height: 12px;
+}
+
+/* ── tabs ──────────────────────────────────────────────────────────────── */
+
+.gworld .itabs {
+  display: flex;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--color-divider);
+  flex: none;
+}
+.gworld .itab {
+  padding: 9px 13px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+  text-decoration: none;
+  cursor: pointer;
+}
+.gworld .itab:hover { color: var(--color-accent); }
+.gworld .itab.active { color: #fff; background: var(--color-accent-900); }
+
+/* ── body ──────────────────────────────────────────────────────────────── */
+
+.gworld .ibody {
+  padding: 20px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+.gworld .isec { display: flex; flex-direction: column; gap: 11px; }
+.gworld .ish {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.gworld .ish::after {
+  content: "";
+  flex-grow: 1;
+  height: 1px;
+  background: var(--color-divider);
+}
+.gworld .ish .num { font-size: 10px; letter-spacing: 0.1em; color: var(--color-accent); }
+
+.gworld .g4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.gworld .g3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.gworld .g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+
+/* ── attributes ────────────────────────────────────────────────────────── */
+
+.gworld .attr {
+  position: relative;
+  border: 1px solid var(--color-divider);
+  padding: 10px 11px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.gworld .attr .al {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .attr .av {
+  font-family: var(--font-heading);
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 0.95;
+  color: var(--color-accent-900);
+  background: none;
+  border: 0;
+  padding: 0;
+  width: 100%;
+}
+.gworld .attr .ac {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+}
+
+.gworld .cellgrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--color-divider);
+  border-left: 1px solid var(--color-divider);
+}
+.gworld .cell {
+  padding: 8px 10px;
+  border-right: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  display: flex;
+  flex-direction: column;
+}
+.gworld .cl {
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .cv { font-family: var(--font-heading); font-size: 22px; font-weight: 600; line-height: 1.1; }
+.gworld .cd { font-size: 9.5px; font-family: var(--font-mono); color: var(--color-accent-700); }
+
+.gworld .fld { display: flex; flex-direction: column; gap: 4px; }
+.gworld .fl {
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .fi {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 9px;
+  border: 1px solid var(--color-divider);
+  font-size: 12.5px;
+}
+.gworld .fi select,
+.gworld .fi input {
+  background: none;
+  border: 0;
+  padding: 0;
+  height: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  width: 100%;
+}
+
+/* ── points ledger ─────────────────────────────────────────────────────── */
+
+.gworld .ledger { border: 1px solid var(--color-divider); }
+.gworld .lrow {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 11px;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--color-neutral-200);
+}
+.gworld .lrow:last-child { border-bottom: 0; }
+.gworld .ltot {
+  background: var(--color-accent-900);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.gworld .neg { color: var(--color-danger); }
+
+.gworld .inote {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 11px;
+  border-left: 2px solid var(--color-accent);
+  background: var(--color-accent-100);
+  font-size: 11px;
+  color: var(--color-accent-900);
+}
+.gworld .inote.warn { border-left-color: var(--color-danger); }
+
+/* ── tables ────────────────────────────────────────────────────────────── */
+
+.gworld table.gt { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.gworld table.gt th {
+  font-family: var(--font-heading);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 400;
+  padding: 0 6px 5px;
+  text-align: left;
+  color: var(--color-neutral-700);
+  border-bottom: 1px solid var(--color-divider);
+}
+.gworld table.gt td {
+  padding: 6px;
+  border-bottom: 1px solid var(--color-neutral-200);
+  vertical-align: baseline;
+}
+.gworld table.gt td.n { text-align: right; font-variant-numeric: tabular-nums; }
+.gworld table.gt td.c { text-align: center; }
+.gworld table.gt th.n { text-align: right; }
+.gworld table.gt th.c { text-align: center; }
+
+.gworld .wname { font-weight: 500; }
+.gworld .wmode {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .lvl {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-accent-900);
+}
+.gworld .dmg { font-family: var(--font-mono); font-size: 11.5px; }
+.gworld .dt { color: var(--color-accent-700); }
+.gworld .bad { color: var(--color-danger); font-weight: 600; }
+.gworld .dim td,
+.gworld .dim .lvl { color: var(--color-neutral-700); }
+
+.gworld .grph {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding-bottom: 4px;
+}
+.gworld .grph::after {
+  content: "";
+  flex-grow: 1;
+  height: 1px;
+  background: var(--color-divider);
+}
+.gworld .grph .sub {
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--color-neutral-700);
+}
+
+/* ── toolbar ───────────────────────────────────────────────────────────── */
+
+.gworld .toolbar { display: flex; gap: 10px; align-items: center; }
+.gworld .srch {
+  flex-grow: 1;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  border: 1px solid var(--color-divider);
+  font-size: 12px;
+  color: var(--color-neutral-700);
+}
+.gworld .srch input {
+  background: none;
+  border: 0;
+  height: 100%;
+  width: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--color-text);
+}
+.gworld .ibtn {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 0;
+}
+.gworld .ibtn:hover { background: var(--color-accent-700); border-color: var(--color-accent-700); }
+
+/* ── combat ────────────────────────────────────────────────────────────── */
+
+.gworld .istance { display: flex; gap: 8px; flex-wrap: wrap; }
+.gworld .ichip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 11px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-divider);
+  background: none;
+  color: var(--color-neutral-800);
+  cursor: pointer;
+  border-radius: 0;
+  font-family: inherit;
+}
+.gworld .ichip:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.gworld .ichip.on {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+.gworld .ichip.warn {
+  border-color: var(--color-accent-700);
+  color: var(--color-accent-800);
+  background: var(--color-accent-100);
+  cursor: default;
+}
+
+.gworld .idefs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.gworld .idef {
+  position: relative;
+  border: 1px solid var(--color-divider);
+  padding: 11px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gworld .idl {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .idv {
+  font-family: var(--font-heading);
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-accent-900);
+}
+.gworld .idsrc { font-size: 10.5px; color: var(--color-neutral-800); }
+.gworld .idmath {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+  letter-spacing: -0.01em;
+  color: var(--color-accent-700);
+}
+
+.gworld .iarm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.gworld .iac {
+  position: relative;
+  border: 1px solid var(--color-divider);
+  padding: 9px 11px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.gworld .iav { font-family: var(--font-heading); font-size: 24px; font-weight: 600; line-height: 1; }
+
+/* ── traits ────────────────────────────────────────────────────────────── */
+
+.gworld .trait {
+  position: relative;
+  border: 1px solid var(--color-divider);
+  padding: 9px 11px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+}
+.gworld .tn { font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.gworld .tp {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: right;
+}
+.gworld .td { grid-column: 1 / -1; font-size: 11.5px; color: var(--color-neutral-800); }
+
+.gworld .tag {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-divider);
+  color: var(--color-neutral-700);
+}
+.gworld .tag-accent {
+  background: var(--color-accent-100);
+  border-color: var(--color-accent);
+  color: var(--color-accent-800);
+}
+.gworld .tag-danger {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+}
+
+.gworld .meterwrap {
+  border: 1px solid var(--color-divider);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gworld .meter { height: 6px; border: 1px solid var(--color-divider); }
+.gworld .mfill { height: 100%; background: var(--color-accent); }
+.gworld .mfill.over { background: var(--color-danger); }
+
+/* ── encumbrance ───────────────────────────────────────────────────────── */
+
+.gworld .enc {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border: 1px solid var(--color-divider);
+}
+.gworld .encs {
+  padding: 7px 6px;
+  text-align: center;
+  border-right: 1px solid var(--color-divider);
+}
+.gworld .encs:last-child { border-right: 0; }
+.gworld .encs.on { background: var(--color-accent-900); color: #fff; }
+.gworld .encs.on .el,
+.gworld .encs.on .em { color: rgba(255, 255, 255, 0.75); }
+.gworld .el {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .ev { display: block; font-family: var(--font-heading); font-size: 15px; font-weight: 600; }
+.gworld .em { display: block; font-size: 9px; color: var(--color-neutral-700); }
+
+/* ── prose ─────────────────────────────────────────────────────────────── */
+
+.gworld .prose { font-size: 12.5px; line-height: 1.6; color: var(--color-neutral-900); }
+.gworld .prose p { margin: 0 0 8px; }
+.gworld .box { border: 1px solid var(--color-divider); padding: 10px 12px; }
+.gworld .box.editor { min-height: 120px; }
+
+.gworld .npcline { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; }
+.gworld .npcline b { font-family: var(--font-heading); font-size: 13px; letter-spacing: 0.06em; }
+
+/* ── limited view ──────────────────────────────────────────────────────── */
+
+.gworld .limited {
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: center;
+  text-align: center;
+}
+
+/* ── roll affordances ──────────────────────────────────────────────────── */
+
+.gworld .iroll {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  color: var(--color-accent);
+  cursor: pointer;
+  line-height: 0;
+}
+.gworld [data-action="roll"] { cursor: pointer; }
+.gworld [data-action="roll"]:hover { color: var(--color-accent); }
+.gworld .rollable { cursor: pointer; }
+.gworld .rollable:hover { color: var(--color-accent); }
+
+/* Themed focus, per the design system: never the default browser ring. */
+.gworld :focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.gworld ::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+
+/* ── tab visibility ────────────────────────────────────────────────────── */
+/* Foundry's changeTab toggles .active rather than re-rendering, so every tab
+   part is in the DOM at once and CSS decides which one shows. */
+
+.gworld .window-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.gworld .tab { display: none; }
+.gworld .tab.active { display: flex; }

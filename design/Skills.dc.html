@@ -1,0 +1,176 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #c9593f; } a:hover { color: #5d142b; }
+
+    .sheet {
+      --c-bg: #f7f3e8; --c-panel: #efe6d8; --c-panel-2: #e7d1b1; --c-rule: #d0b8a3;
+      --c-border: #c9c7b8; --c-border-2: #b5b3a4;
+      --c-text: #222; --c-text-2: #333; --c-subtle: #444; --c-muted: #7a7971;
+      --c-accent: #ee9b3a; --c-accent-2: #c9593f; --c-deep: #5d142b; --c-cool: #584a75;
+      width: 740px; min-height: 900px; box-sizing: border-box;
+      background: var(--c-bg); color: var(--c-text);
+      font-family: "Signika", ui-sans-serif, sans-serif; font-size: 13px; line-height: 1.4;
+      display: flex; flex-direction: column;
+    }
+
+    .hdr { display: flex; gap: 12px; padding: 12px; background: var(--c-panel); border-bottom: 1px solid var(--c-border-2); }
+    .portrait { width: 76px; height: 76px; flex-shrink: 0; border: 1px solid var(--c-border-2); background: var(--c-panel-2); display: flex; align-items: center; justify-content: center; }
+    .hdr-main { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 0; }
+    .name-row { display: flex; align-items: baseline; gap: 10px; }
+    .name { font-size: 24px; font-weight: 600; letter-spacing: 0.01em; color: var(--c-deep); }
+    .meta { font-size: 11px; color: var(--c-muted); }
+    .pts-badge { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--c-text-2); background: var(--c-panel-2); border: 1px solid var(--c-border-2); padding: 2px 8px; }
+    .pools { display: flex; gap: 10px; }
+    .pool { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .pool-top { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; }
+    .pool-label { color: var(--c-subtle); letter-spacing: 0.06em; }
+    .track { height: 9px; background: var(--c-rule); border: 1px solid var(--c-border-2); overflow: hidden; }
+    .fill { height: 100%; }
+    .strip { display: flex; border: 1px solid var(--c-border-2); background: var(--c-bg); }
+    .stat { flex: 1; padding: 5px 4px; text-align: center; border-right: 1px solid var(--c-border); }
+    .stat:last-child { border-right: 0; }
+    .stat-l { display: block; font-size: 9px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--c-muted); }
+    .stat-v { display: block; font-size: 17px; font-weight: 600; color: var(--c-text); }
+    .stat-n { display: block; font-size: 9px; color: var(--c-accent-2); }
+
+    .tabs { display: flex; gap: 2px; padding: 0 12px; background: var(--c-panel); border-bottom: 1px solid var(--c-border-2); }
+    .tab { padding: 7px 14px; font-size: 12px; font-weight: 500; color: var(--c-muted); background: var(--c-panel-2); border: 1px solid var(--c-border); border-bottom: 0; }
+    .tab.on { background: var(--c-bg); color: var(--c-deep); font-weight: 600; box-shadow: inset 0 2px 0 var(--c-accent-2); margin-bottom: -1px; padding-bottom: 8px; }
+
+    .body { padding: 12px; display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
+
+    .toolbar { display: flex; gap: 8px; align-items: center; }
+    .search { flex-grow: 1; height: 26px; box-sizing: border-box; display: flex; align-items: center; gap: 6px; padding: 0 8px; background: var(--c-bg); border: 1px solid var(--c-border-2); color: var(--c-muted); font-size: 12px; }
+    .btn { height: 26px; box-sizing: border-box; display: flex; align-items: center; gap: 5px; padding: 0 10px; background: var(--c-panel-2); border: 1px solid var(--c-border-2); font-size: 12px; font-weight: 500; color: var(--c-text-2); }
+
+    .grp { display: flex; flex-direction: column; }
+    .grp-h { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-accent-2); }
+    .grp-h::after { content: ""; flex-grow: 1; height: 1px; background: linear-gradient(90deg, var(--c-rule) 0%, transparent 100%); }
+    .grp-n { font-weight: 400; letter-spacing: 0.04em; color: var(--c-muted); text-transform: none; }
+
+    .row { display: grid; grid-template-columns: 1fr 58px 42px 96px 22px; gap: 8px; align-items: center; padding: 4px 6px; border-bottom: 1px solid var(--c-border); font-size: 13px; }
+    .row:nth-child(even) { background: rgba(215,200,175,0.22); }
+    .s-name { font-weight: 500; }
+    .s-type { font-size: 11px; color: var(--c-muted); font-family: ui-monospace, monospace; }
+    .s-pts { font-size: 12px; color: var(--c-subtle); text-align: right; }
+    .s-lvl { display: flex; align-items: baseline; gap: 6px; justify-content: flex-end; }
+    .s-rel { font-size: 10px; color: var(--c-accent-2); font-family: ui-monospace, monospace; }
+    .s-abs { font-size: 17px; font-weight: 600; min-width: 24px; text-align: right; }
+
+    .untrained .s-name, .untrained .s-abs { color: var(--c-muted); font-weight: 400; }
+    .untrained .s-abs { font-weight: 500; }
+    .tag { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 5px; border: 1px solid var(--c-border-2); color: var(--c-muted); background: var(--c-panel); }
+    .tag-none { border-color: #ce0707; color: #ce0707; background: rgba(206,7,7,0.07); }
+
+    .foot { display: flex; justify-content: space-between; padding: 6px 6px 0; font-size: 11px; color: var(--c-muted); }
+  </style>
+</helmet>
+
+<div class="sheet">
+
+  <div class="hdr">
+    <div class="portrait">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#9f8475" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    </div>
+    <div class="hdr-main">
+      <div class="name-row">
+        <span class="name">Brenna Halvorsen</span>
+        <span class="meta">Diego &middot; TL 3</span>
+        <span class="pts-badge">138 / 150 pts</span>
+      </div>
+      <div class="pools">
+        <div class="pool">
+          <div class="pool-top"><span class="pool-label">HP</span><span>9 / 12</span></div>
+          <div class="track"><div class="fill" style="width: 75%; background: #5d142b"></div></div>
+        </div>
+        <div class="pool">
+          <div class="pool-top"><span class="pool-label">FP</span><span>10 / 12</span></div>
+          <div class="track"><div class="fill" style="width: 83%; background: #584a75"></div></div>
+        </div>
+      </div>
+      <div class="strip">
+        <div class="stat"><span class="stat-l">Dodge</span><span class="stat-v">8</span><span class="stat-n">+2 shield</span></div>
+        <div class="stat"><span class="stat-l">Parry</span><span class="stat-v">11</span><span class="stat-n">broadsword</span></div>
+        <div class="stat"><span class="stat-l">Block</span><span class="stat-v">10</span><span class="stat-n">shield</span></div>
+        <div class="stat"><span class="stat-l">DR</span><span class="stat-v">4</span><span class="stat-n">mail</span></div>
+        <div class="stat"><span class="stat-l">Move</span><span class="stat-v">4</span><span class="stat-n">light enc.</span></div>
+        <div class="stat"><span class="stat-l">Speed</span><span class="stat-v">6.00</span><span class="stat-n">&nbsp;</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab">Attributes</div>
+    <div class="tab on">Skills</div>
+    <div class="tab">Traits</div>
+    <div class="tab">Equipment</div>
+    <div class="tab">Description</div>
+  </div>
+
+  <div class="body">
+
+    <div class="toolbar">
+      <div class="search">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <span>Filter skills</span>
+      </div>
+      <div class="btn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+        <span>Add Skill</span>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">DX-Based <span class="grp-n">&mdash; DX 12</span></div>
+      <div class="row"><span class="s-name">Broadsword</span><span class="s-type">DX/A</span><span class="s-pts">8</span><span class="s-lvl"><span class="s-rel">DX+2</span><span class="s-abs">14</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg></div>
+      <div class="row"><span class="s-name">Shield</span><span class="s-type">DX/E</span><span class="s-pts">4</span><span class="s-lvl"><span class="s-rel">DX+2</span><span class="s-abs">14</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg></div>
+      <div class="row"><span class="s-name">Brawling</span><span class="s-type">DX/E</span><span class="s-pts">2</span><span class="s-lvl"><span class="s-rel">DX+1</span><span class="s-abs">13</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg></div>
+      <div class="row"><span class="s-name">Climbing</span><span class="s-type">DX/A</span><span class="s-pts">4</span><span class="s-lvl"><span class="s-rel">DX+1</span><span class="s-abs">13</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg></div>
+      <div class="row"><span class="s-name">Knife</span><span class="s-type">DX/E</span><span class="s-pts">1</span><span class="s-lvl"><span class="s-rel">DX</span><span class="s-abs">12</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg></div>
+      <div class="row"><span class="s-name">Stealth</span><span class="s-type">DX/A</span><span class="s-pts">2</span><span class="s-lvl"><span class="s-rel">DX</span><span class="s-abs">12</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg></div>
+      <div class="row"><span class="s-name">Riding</span><span class="s-type">DX/A</span><span class="s-pts">2</span><span class="s-lvl"><span class="s-rel">DX</span><span class="s-abs">12</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg></div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">IQ-Based <span class="grp-n">&mdash; IQ 11</span></div>
+      <div class="row"><span class="s-name">Intimidation</span><span class="s-type">IQ/A</span><span class="s-pts">4</span><span class="s-lvl"><span class="s-rel">IQ+1</span><span class="s-abs">12</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg></div>
+      <div class="row"><span class="s-name">Tactics</span><span class="s-type">IQ/H</span><span class="s-pts">4</span><span class="s-lvl"><span class="s-rel">IQ</span><span class="s-abs">11</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg></div>
+      <div class="row"><span class="s-name">First Aid</span><span class="s-type">IQ/E</span><span class="s-pts">1</span><span class="s-lvl"><span class="s-rel">IQ</span><span class="s-abs">11</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg></div>
+      <div class="row"><span class="s-name">Area Knowledge (Northmarch)</span><span class="s-type">IQ/E</span><span class="s-pts">1</span><span class="s-lvl"><span class="s-rel">IQ</span><span class="s-abs">11</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg></div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">HT-Based <span class="grp-n">&mdash; HT 12</span></div>
+      <div class="row"><span class="s-name">Hiking</span><span class="s-type">HT/A</span><span class="s-pts">2</span><span class="s-lvl"><span class="s-rel">HT</span><span class="s-abs">12</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg></div>
+      <div class="row"><span class="s-name">Swimming</span><span class="s-type">HT/E</span><span class="s-pts">1</span><span class="s-lvl"><span class="s-rel">HT</span><span class="s-abs">12</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7a7971" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#7a7971" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#7a7971" stroke="none"></circle></svg></div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">Untrained <span class="grp-n">&mdash; rolled at default</span></div>
+      <div class="row untrained"><span class="s-name">Lockpicking</span><span class="s-type">IQ/A</span><span class="s-pts">&mdash;</span><span class="s-lvl"><span class="s-rel">IQ-5</span><span class="s-abs">6</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b5b3a4" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="12" cy="12" r="1.3" fill="#b5b3a4" stroke="none"></circle></svg></div>
+      <div class="row untrained"><span class="s-name">Observation</span><span class="s-type">IQ/A</span><span class="s-pts">&mdash;</span><span class="s-lvl"><span class="s-rel">IQ-5</span><span class="s-abs">6</span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b5b3a4" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="12" cy="12" r="1.3" fill="#b5b3a4" stroke="none"></circle></svg></div>
+      <div class="row untrained"><span class="s-name">Karate</span><span class="s-type">DX/H</span><span class="s-pts">&mdash;</span><span class="s-lvl"><span class="tag tag-none">No default</span></span><span></span></div>
+    </div>
+
+    <div class="foot">
+      <span>13 skills trained</span>
+      <span>36 points</span>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

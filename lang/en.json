@@ -1,5 +1,31 @@
 {
+  "TYPES": {
+    "Actor": {
+      "character": "Character",
+      "npc": "NPC"
+    },
+    "Item": {
+      "trait": "Trait",
+      "skill": "Skill",
+      "equipment": "Equipment",
+      "armor": "Armor",
+      "shield": "Shield",
+      "language": "Language"
+    }
+  },
   "GWORLD": {
+    "Sheet": {
+      "Character": "GURPS Character Sheet",
+      "Npc": "GURPS NPC Sheet"
+    },
+    "Tab": {
+      "attributes": "Attr",
+      "skills": "Skills",
+      "traits": "Traits",
+      "combat": "Combat",
+      "gear": "Gear",
+      "description": "Desc"
+    },
     "Attribute": {
       "ST": "Strength",
       "DX": "Dexterity",
@@ -14,26 +40,92 @@
       "HP": "Hit Points",
       "Will": "Will",
       "Per": "Perception",
-      "FP": "Fatigue Points",
+      "FP": "Fatigue",
       "BasicLift": "Basic Lift",
-      "BasicSpeed": "Basic Speed",
+      "BasicSpeed": "Speed",
       "BasicMove": "Basic Move",
+      "Move": "Move",
       "Dodge": "Dodge",
       "Parry": "Parry",
-      "Block": "Block"
+      "Block": "Block",
+      "WillAbbr": "Will",
+      "PerAbbr": "Per",
+      "MoveAbbr": "Move",
+      "DRAbbr": "DR"
     },
-    "Difficulty": {
-      "E": "Easy",
-      "A": "Average",
-      "H": "Hard"
+    "Section": {
+      "BasicAttributes": "Basic Attributes",
+      "Secondary": "Secondary Characteristics",
+      "DamageBearing": "Damage & Bearing",
+      "CharacterPoints": "Character Points",
+      "Based": "Based",
+      "Untrained": "Untrained",
+      "RolledAtDefault": "rolled at default",
+      "DisadvantageLimit": "Disadvantage Limit",
+      "Stance": "Stance",
+      "ActiveDefenses": "Active Defenses",
+      "MeleeAttacks": "Melee Attacks",
+      "RangedAttacks": "Ranged Attacks",
+      "Attacks": "Attacks",
+      "Protection": "Protection",
+      "SkillsOfNote": "Skills of note",
+      "VitalStatistics": "Vital Statistics",
+      "Appearance": "Appearance",
+      "Languages": "Languages",
+      "Biography": "Biography",
+      "Notes": "Notes"
     },
-    "Encumbrance": {
-      "none": "None",
-      "light": "Light",
-      "medium": "Medium",
-      "heavy": "Heavy",
-      "extraHeavy": "Extra-Heavy",
-      "Overloaded": "Overloaded"
+    "Column": {
+      "Skill": "Skill",
+      "Type": "Type",
+      "Pts": "Pts",
+      "Relative": "Rel.",
+      "Level": "Level",
+      "Weapon": "Weapon",
+      "Damage": "Damage",
+      "Reach": "Reach",
+      "Acc": "Acc",
+      "Range": "Range",
+      "RoF": "RoF",
+      "Shots": "Shots",
+      "Eq": "Eq",
+      "Item": "Item",
+      "Qty": "Qty",
+      "Weight": "Weight",
+      "Cost": "Cost",
+      "Notes": "Notes",
+      "Language": "Language",
+      "Spoken": "Spoken",
+      "Written": "Written"
+    },
+    "Field": {
+      "ThrustSwing": "Thrust / Swing",
+      "Posture": "Posture",
+      "Encumbrance": "Encumbrance",
+      "Player": "Player",
+      "Height": "Height",
+      "Weight": "Weight",
+      "Age": "Age",
+      "AppearancePlaceholder": "How they read to a stranger"
+    },
+    "Points": {
+      "Attributes": "Attributes",
+      "Advantages": "Advantages",
+      "Disadvantages": "Disadvantages",
+      "Quirks": "Quirks",
+      "Skills": "Skills",
+      "Languages": "Languages",
+      "Spent": "Spent",
+      "PointsLabel": "points",
+      "Unspent": "{points} points unspent.",
+      "Over": "{points} points over budget.",
+      "Exact": "Every point spent.",
+      "DisadvantageStanding": "Disadvantages {total} of the {limit} this campaign allows."
+    },
+    "Condition": {
+      "AllOutDefense": "All-Out Defense",
+      "Stunned": "Stunned",
+      "BlindToAttacker": "Blind to attacker"
     },
     "Posture": {
       "standing": "Standing",
@@ -43,14 +135,91 @@
       "sitting": "Sitting",
       "lying": "Lying Down"
     },
+    "Encumbrance": {
+      "none": "None",
+      "light": "Light",
+      "medium": "Medium",
+      "heavy": "Heavy",
+      "extraHeavy": "X-Heavy"
+    },
+    "Difficulty": {
+      "E": "Easy",
+      "A": "Average",
+      "H": "Hard"
+    },
     "DamageType": {
-      "burn": "burning",
-      "cr": "crushing",
-      "cut": "cutting",
-      "imp": "impaling",
-      "pi-": "small piercing",
-      "pi": "piercing",
-      "pi+": "large piercing"
+      "burn": "burn",
+      "cr": "cr",
+      "cut": "cut",
+      "imp": "imp",
+      "pi-": "pi-",
+      "pi": "pi",
+      "pi+": "pi+"
+    },
+    "Skill": {
+      "NoDefault": "No default",
+      "Trained": "skills trained"
+    },
+    "Trait": {
+      "Levels": "levels",
+      "Reaction": "reaction"
+    },
+    "Language": {
+      "none": "None",
+      "broken": "Broken",
+      "accented": "Accented",
+      "native": "Native",
+      "Native": "Native tongue"
+    },
+    "Item": {
+      "Equipped": "equipped",
+      "Readied": "readied",
+      "Stowed": "stowed",
+      "WholeBody": "whole body",
+      "FrontShieldSide": "front / shield side",
+      "NoArmor": "no armor",
+      "NoShield": "no shield"
+    },
+    "Gear": {
+      "Carried": "Carried",
+      "Stored": "Stored",
+      "Carrying": "carrying"
+    },
+    "Npc": {
+      "InScene": "x{count} in scene"
+    },
+    "Action": {
+      "AddSkill": "Add Skill",
+      "AddAdvantage": "Advantage",
+      "AddDisadvantage": "Disadvantage",
+      "AddQuirk": "Quirk",
+      "AddEquipment": "Equipment",
+      "AddArmor": "Armor",
+      "AddShield": "Shield",
+      "AddLanguage": "Add Language",
+      "FilterSkills": "Filter skills",
+      "Delete": "Delete"
+    },
+    "Prompt": {
+      "DeleteItemTitle": "Delete Item",
+      "DeleteItem": "Delete <strong>{name}</strong>? This cannot be undone."
+    },
+    "Hint": {
+      "DisadvantageLimit": "A rule of thumb, not a hard cap. Disadvantages and quirks both count.",
+      "Languages": "Accented is -1 to skills that depend on language. One native language is free.",
+      "GMOnly": "visible to the GM only",
+      "LimitedSheet": "Sheet is limited to you",
+      "NoMeleeAttacks": "No melee attacks. Add equipment with an attack mode on the Gear tab.",
+      "NothingCarried": "Nothing carried.",
+      "StoredNoEncumbrance": "does not count against encumbrance",
+      "Overloaded": "Carrying more than ten times Basic Lift. This character cannot move under this load."
+    },
+    "Health": {
+      "healthy": "Healthy",
+      "reeling": "Reeling",
+      "collapsing": "Collapsing",
+      "dead": "Dead",
+      "destroyed": "Destroyed"
     },
     "Roll": {
       "CriticalSuccess": "Critical Success",
@@ -59,13 +228,6 @@
       "Failure": "Failure",
       "MarginOfSuccess": "Margin of success",
       "MarginOfFailure": "Margin of failure"
-    },
-    "Health": {
-      "healthy": "Healthy",
-      "reeling": "Reeling",
-      "collapsing": "Collapsing",
-      "dead": "Dead",
-      "destroyed": "Destroyed"
     }
   }
 }

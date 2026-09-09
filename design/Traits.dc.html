@@ -1,0 +1,182 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #c9593f; } a:hover { color: #5d142b; }
+
+    .sheet {
+      --c-bg: #f7f3e8; --c-panel: #efe6d8; --c-panel-2: #e7d1b1; --c-rule: #d0b8a3;
+      --c-border: #c9c7b8; --c-border-2: #b5b3a4;
+      --c-text: #222; --c-text-2: #333; --c-subtle: #444; --c-muted: #7a7971;
+      --c-accent: #ee9b3a; --c-accent-2: #c9593f; --c-deep: #5d142b; --c-cool: #584a75;
+      width: 740px; min-height: 900px; box-sizing: border-box;
+      background: var(--c-bg); color: var(--c-text);
+      font-family: "Signika", ui-sans-serif, sans-serif; font-size: 13px; line-height: 1.4;
+      display: flex; flex-direction: column;
+    }
+
+    .hdr { display: flex; gap: 12px; padding: 12px; background: var(--c-panel); border-bottom: 1px solid var(--c-border-2); }
+    .portrait { width: 76px; height: 76px; flex-shrink: 0; border: 1px solid var(--c-border-2); background: var(--c-panel-2); display: flex; align-items: center; justify-content: center; }
+    .hdr-main { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 0; }
+    .name-row { display: flex; align-items: baseline; gap: 10px; }
+    .name { font-size: 24px; font-weight: 600; letter-spacing: 0.01em; color: var(--c-deep); }
+    .meta { font-size: 11px; color: var(--c-muted); }
+    .pts-badge { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--c-text-2); background: var(--c-panel-2); border: 1px solid var(--c-border-2); padding: 2px 8px; }
+    .pools { display: flex; gap: 10px; }
+    .pool { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .pool-top { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; }
+    .pool-label { color: var(--c-subtle); letter-spacing: 0.06em; }
+    .track { height: 9px; background: var(--c-rule); border: 1px solid var(--c-border-2); overflow: hidden; }
+    .fill { height: 100%; }
+    .strip { display: flex; border: 1px solid var(--c-border-2); background: var(--c-bg); }
+    .stat { flex: 1; padding: 5px 4px; text-align: center; border-right: 1px solid var(--c-border); }
+    .stat:last-child { border-right: 0; }
+    .stat-l { display: block; font-size: 9px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--c-muted); }
+    .stat-v { display: block; font-size: 17px; font-weight: 600; color: var(--c-text); }
+    .stat-n { display: block; font-size: 9px; color: var(--c-accent-2); }
+
+    .tabs { display: flex; gap: 2px; padding: 0 12px; background: var(--c-panel); border-bottom: 1px solid var(--c-border-2); }
+    .tab { padding: 7px 14px; font-size: 12px; font-weight: 500; color: var(--c-muted); background: var(--c-panel-2); border: 1px solid var(--c-border); border-bottom: 0; }
+    .tab.on { background: var(--c-bg); color: var(--c-deep); font-weight: 600; box-shadow: inset 0 2px 0 var(--c-accent-2); margin-bottom: -1px; padding-bottom: 8px; }
+
+    .body { padding: 12px; display: flex; flex-direction: column; gap: 14px; flex-grow: 1; }
+
+    .grp { display: flex; flex-direction: column; gap: 1px; }
+    .grp-h { display: flex; align-items: center; gap: 8px; padding: 3px 0 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c-accent-2); }
+    .grp-h::after { content: ""; flex-grow: 1; height: 1px; background: linear-gradient(90deg, var(--c-rule) 0%, transparent 100%); }
+    .grp-sum { font-weight: 700; letter-spacing: 0.02em; color: var(--c-text-2); }
+
+    .trait { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 6px 8px; border: 1px solid var(--c-border); background: var(--c-panel); }
+    .t-name { font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .t-pts { font-size: 14px; font-weight: 600; text-align: right; }
+    .t-desc { grid-column: 1 / -1; font-size: 11px; color: var(--c-subtle); }
+    .neg { color: var(--c-accent-2); }
+
+    .sc { font-size: 9px; letter-spacing: 0.05em; text-transform: uppercase; padding: 1px 5px; border: 1px solid var(--c-border-2); background: var(--c-bg); color: var(--c-muted); }
+    .react { font-size: 9px; letter-spacing: 0.05em; padding: 1px 5px; border: 1px solid #b5b3a4; background: rgba(238,155,58,0.16); color: #5d142b; }
+
+    .quirks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .quirk { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; border: 1px solid var(--c-border); background: var(--c-panel); font-size: 12px; }
+
+    /* disadvantage limit meter */
+    .limit { border: 1px solid var(--c-border-2); background: var(--c-panel); padding: 8px 10px; display: flex; flex-direction: column; gap: 5px; }
+    .limit-top { display: flex; justify-content: space-between; font-size: 11px; }
+    .limit-l { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-muted); }
+    .meter { height: 8px; background: var(--c-rule); border: 1px solid var(--c-border-2); }
+    .meter-fill { height: 100%; background: var(--c-cool); }
+  </style>
+</helmet>
+
+<div class="sheet">
+
+  <div class="hdr">
+    <div class="portrait">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#9f8475" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    </div>
+    <div class="hdr-main">
+      <div class="name-row">
+        <span class="name">Brenna Halvorsen</span>
+        <span class="meta">Diego &middot; TL 3</span>
+        <span class="pts-badge">138 / 150 pts</span>
+      </div>
+      <div class="pools">
+        <div class="pool">
+          <div class="pool-top"><span class="pool-label">HP</span><span>9 / 12</span></div>
+          <div class="track"><div class="fill" style="width: 75%; background: #5d142b"></div></div>
+        </div>
+        <div class="pool">
+          <div class="pool-top"><span class="pool-label">FP</span><span>10 / 12</span></div>
+          <div class="track"><div class="fill" style="width: 83%; background: #584a75"></div></div>
+        </div>
+      </div>
+      <div class="strip">
+        <div class="stat"><span class="stat-l">Dodge</span><span class="stat-v">8</span><span class="stat-n">+2 shield</span></div>
+        <div class="stat"><span class="stat-l">Parry</span><span class="stat-v">11</span><span class="stat-n">broadsword</span></div>
+        <div class="stat"><span class="stat-l">Block</span><span class="stat-v">10</span><span class="stat-n">shield</span></div>
+        <div class="stat"><span class="stat-l">DR</span><span class="stat-v">4</span><span class="stat-n">mail</span></div>
+        <div class="stat"><span class="stat-l">Move</span><span class="stat-v">4</span><span class="stat-n">light enc.</span></div>
+        <div class="stat"><span class="stat-l">Speed</span><span class="stat-v">6.00</span><span class="stat-n">&nbsp;</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab">Attributes</div>
+    <div class="tab">Skills</div>
+    <div class="tab on">Traits</div>
+    <div class="tab">Equipment</div>
+    <div class="tab">Description</div>
+  </div>
+
+  <div class="body">
+
+    <div class="grp">
+      <div class="grp-h">Advantages <span class="grp-sum">34 pts</span></div>
+      <div class="trait">
+        <span class="t-name">Combat Reflexes</span><span class="t-pts">15</span>
+        <span class="t-desc">+1 to all active defenses. Never freeze in a surprise situation, and your side gets +1 on initiative rolls.</span>
+      </div>
+      <div class="trait">
+        <span class="t-name">High Pain Threshold</span><span class="t-pts">10</span>
+        <span class="t-desc">Never suffer shock penalties from injury. +3 to HT rolls to avoid knockdown and stunning.</span>
+      </div>
+      <div class="trait">
+        <span class="t-name">Enhanced Parry (Broadsword)</span><span class="t-pts">5</span>
+        <span class="t-desc">+1 to your Parry score with Broadsword skill.</span>
+      </div>
+      <div class="trait">
+        <span class="t-name">Fearlessness 2</span><span class="t-pts">4</span>
+        <span class="t-desc">+2 to Will to resist fear and Intimidation; &minus;2 to Intimidation rolls made against you.</span>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">Disadvantages <span class="grp-sum neg">&minus;30 pts</span></div>
+      <div class="trait">
+        <span class="t-name">Bad Temper <span class="sc">Self-control 12</span></span><span class="t-pts neg">&minus;10</span>
+        <span class="t-desc">Make a self-control roll in any stressful situation. On a failure you must insult, attack, or otherwise act against the cause.</span>
+      </div>
+      <div class="trait">
+        <span class="t-name">Bloodlust <span class="sc">Self-control 12</span></span><span class="t-pts neg">&minus;10</span>
+        <span class="t-desc">You want your foes dead. In battle you must go for killing blows and confirm the kill.</span>
+      </div>
+      <div class="trait">
+        <span class="t-name">Code of Honor (Soldier's) <span class="react">&minus;1 reaction</span></span><span class="t-pts neg">&minus;10</span>
+        <span class="t-desc">Never break your sworn word. Stand by your comrades and avenge any insult to your unit.</span>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">Quirks <span class="grp-sum neg">&minus;4 pts</span></div>
+      <div class="quirks">
+        <div class="quirk"><span>Never removes her father's ring</span><span class="neg">&minus;1</span></div>
+        <div class="quirk"><span>Hums tunelessly when nervous</span><span class="neg">&minus;1</span></div>
+        <div class="quirk"><span>Distrusts anyone who won't drink</span><span class="neg">&minus;1</span></div>
+        <div class="quirk"><span>Refuses to sleep indoors</span><span class="neg">&minus;1</span></div>
+      </div>
+    </div>
+
+    <div class="limit">
+      <div class="limit-top">
+        <span class="limit-l">Disadvantage Limit</span>
+        <span><strong>34</strong> of 75 taken</span>
+      </div>
+      <div class="meter"><div class="meter-fill" style="width: 45%"></div></div>
+      <div style="font-size: 11px; color: #7a7971">Campaign limit is 50% of 150 starting points. Disadvantages and quirks both count.</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

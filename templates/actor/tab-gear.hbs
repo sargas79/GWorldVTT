@@ -1,0 +1,113 @@
+<section class="tab ibody" data-group="primary" data-tab="gear">
+
+  <div class="isec">
+    <div class="ish">
+      <span class="num">01</span>{{localize "GWORLD.Field.Encumbrance"}}
+      <span style="font-family: var(--font-body); font-size: 11px; letter-spacing: .04em; text-transform: none; color: var(--color-neutral-700)">
+        {{localize "GWORLD.Secondary.BasicLift"}} {{derived.basicLift}} lb &middot;
+        {{localize "GWORLD.Gear.Carrying"}} {{decimal derived.encumbrance.carriedWeight 1}} lb
+      </span>
+    </div>
+    <div class="enc">
+      {{#each encumbranceTiers as |tier|}}
+        <div class="encs {{#if tier.active}}on{{/if}}">
+          <span class="el">{{localize tier.label}}</span>
+          <span class="ev">{{tier.move}}</span>
+          <span class="em">&le; {{tier.limit}} lb</span>
+        </div>
+      {{/each}}
+    </div>
+    {{#if derived.encumbrance.overloaded}}
+      <div class="inote warn">
+        {{> "gworld.info"}}<span>{{localize "GWORLD.Hint.Overloaded"}}</span>
+      </div>
+    {{/if}}
+  </div>
+
+  <div class="isec">
+    <div class="ish"><span class="num">02</span>{{localize "GWORLD.Gear.Carried"}}</div>
+    <div class="toolbar">
+      {{#if editable}}
+        <button type="button" class="ibtn" data-action="createItem" data-item-type="equipment">
+          {{> "gworld.plus"}} {{localize "GWORLD.Action.AddEquipment"}}
+        </button>
+        <button type="button" class="ibtn" data-action="createItem" data-item-type="armor">
+          {{> "gworld.plus"}} {{localize "GWORLD.Action.AddArmor"}}
+        </button>
+        <button type="button" class="ibtn" data-action="createItem" data-item-type="shield">
+          {{> "gworld.plus"}} {{localize "GWORLD.Action.AddShield"}}
+        </button>
+      {{/if}}
+    </div>
+    {{#if carriedRows.length}}
+      <table class="gt">
+        <thead>
+          <tr>
+            <th class="c">{{localize "GWORLD.Column.Eq"}}</th>
+            <th>{{localize "GWORLD.Column.Item"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Qty"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Weight"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Cost"}}</th>
+            <th>{{localize "GWORLD.Column.Notes"}}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each carriedRows as |row|}}
+            <tr data-item-id="{{row.id}}">
+              <td class="c">
+                {{#if row.equippable}}
+                  <input type="checkbox" data-action="toggleEquipped" {{#if row.equipped}}checked{{/if}}
+                         {{#unless @root.editable}}disabled{{/unless}}>
+                {{/if}}
+              </td>
+              <td><span class="wname" data-action="editItem">{{row.name}}</span></td>
+              <td class="n">{{row.quantity}}</td>
+              <td class="n">{{decimal row.weight 1}} lb</td>
+              <td class="n">${{row.cost}}</td>
+              <td class="wmode">{{row.notes}}</td>
+              <td class="c">
+                {{#if @root.editable}}
+                  <span class="rollable" data-action="deleteItem" title="{{localize 'GWORLD.Action.Delete'}}">
+                    {{> "gworld.trash"}}
+                  </span>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{else}}
+      <div class="inote">{{> "gworld.info"}}<span>{{localize "GWORLD.Hint.NothingCarried"}}</span></div>
+    {{/if}}
+  </div>
+
+  {{#if items.stored.length}}
+    <div class="isec">
+      <div class="ish">
+        <span class="num">03</span>{{localize "GWORLD.Gear.Stored"}}
+        <span style="font-family: var(--font-body); font-size: 11px; letter-spacing: .04em; text-transform: none; color: var(--color-neutral-700)">
+          {{localize "GWORLD.Hint.StoredNoEncumbrance"}}
+        </span>
+      </div>
+      <table class="gt">
+        <tbody>
+          {{#each items.stored as |item|}}
+            <tr class="dim" data-item-id="{{item.id}}">
+              <td><span class="wname" data-action="editItem">{{item.name}}</span></td>
+              <td class="n">{{item.system.quantity}}</td>
+              <td class="n">{{decimal item.system.weight 1}} lb</td>
+              <td class="n">${{item.system.cost}}</td>
+              <td class="c">
+                {{#if @root.editable}}
+                  <span class="rollable" data-action="deleteItem">{{> "gworld.trash"}}</span>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{/if}}
+
+</section>

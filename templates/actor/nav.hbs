@@ -1,0 +1,6 @@
+{{!-- Tab strip. Foundry's changeTab toggles .active here and on the sections. --}}
+<nav class="itabs tabs" data-group="primary">
+  {{#each tabs as |tab|}}
+    <a class="itab {{tab.cssClass}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">{{localize tab.label}}</a>
+  {{/each}}
+</nav>
