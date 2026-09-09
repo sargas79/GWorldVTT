@@ -1,0 +1,71 @@
+{
+  "GWORLD": {
+    "Attribute": {
+      "ST": "Strength",
+      "DX": "Dexterity",
+      "IQ": "Intelligence",
+      "HT": "Health",
+      "STAbbr": "ST",
+      "DXAbbr": "DX",
+      "IQAbbr": "IQ",
+      "HTAbbr": "HT"
+    },
+    "Secondary": {
+      "HP": "Hit Points",
+      "Will": "Will",
+      "Per": "Perception",
+      "FP": "Fatigue Points",
+      "BasicLift": "Basic Lift",
+      "BasicSpeed": "Basic Speed",
+      "BasicMove": "Basic Move",
+      "Dodge": "Dodge",
+      "Parry": "Parry",
+      "Block": "Block"
+    },
+    "Difficulty": {
+      "E": "Easy",
+      "A": "Average",
+      "H": "Hard"
+    },
+    "Encumbrance": {
+      "none": "None",
+      "light": "Light",
+      "medium": "Medium",
+      "heavy": "Heavy",
+      "extraHeavy": "Extra-Heavy",
+      "Overloaded": "Overloaded"
+    },
+    "Posture": {
+      "standing": "Standing",
+      "crouching": "Crouching",
+      "kneeling": "Kneeling",
+      "crawling": "Crawling",
+      "sitting": "Sitting",
+      "lying": "Lying Down"
+    },
+    "DamageType": {
+      "burn": "burning",
+      "cr": "crushing",
+      "cut": "cutting",
+      "imp": "impaling",
+      "pi-": "small piercing",
+      "pi": "piercing",
+      "pi+": "large piercing"
+    },
+    "Roll": {
+      "CriticalSuccess": "Critical Success",
+      "CriticalFailure": "Critical Failure",
+      "Success": "Success",
+      "Failure": "Failure",
+      "MarginOfSuccess": "Margin of success",
+      "MarginOfFailure": "Margin of failure"
+    },
+    "Health": {
+      "healthy": "Healthy",
+      "reeling": "Reeling",
+      "collapsing": "Collapsing",
+      "dead": "Dead",
+      "destroyed": "Destroyed"
+    }
+  }
+}

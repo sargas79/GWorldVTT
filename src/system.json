@@ -1,0 +1,29 @@
+{
+  "id": "gworld",
+  "title": "GWorld - GURPS Lite 4e",
+  "description": "A game system implementing the GURPS Lite (4th Edition) rules for Foundry Virtual Tabletop.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14.367"
+  },
+  "authors": [
+    {
+      "name": "Diego Vescovini"
+    }
+  ],
+  "esmodules": ["gworld.mjs"],
+  "styles": ["gworld.css"],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "packs": [],
+  "gridDistance": 1,
+  "gridUnits": "yd",
+  "primaryTokenAttribute": "hp",
+  "secondaryTokenAttribute": "fp"
+}

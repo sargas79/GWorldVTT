@@ -1,0 +1,22 @@
+/* GWorld - GURPS Lite 4e. Theme-aware base styles; sheet styles arrive in phase 2. */
+
+.gworld {
+  --gworld-accent: #7a2e2e;
+  --gworld-border: rgba(0, 0, 0, 0.2);
+  --gworld-muted: #6b6b6b;
+}
+
+.gworld .gworld-crit-success {
+  color: #1a7f37;
+  font-weight: 700;
+}
+
+.gworld .gworld-crit-failure {
+  color: #b3261e;
+  font-weight: 700;
+}
+
+.gworld .gworld-modifiers {
+  color: var(--gworld-muted);
+  font-size: 0.85em;
+}
