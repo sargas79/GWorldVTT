@@ -43,5 +43,10 @@
       "shield": {},
       "language": {}
     }
-  }
+  },
+  "url": "https://github.com/sargas79/GWorldVTT",
+  "manifest": "https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json",
+  "download": "https://github.com/sargas79/GWorldVTT/releases/download/v0.1.0/gworld.zip",
+  "readme": "https://github.com/sargas79/GWorldVTT/blob/main/README.md",
+  "bugs": "https://github.com/sargas79/GWorldVTT/issues"
 }
