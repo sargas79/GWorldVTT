@@ -12,6 +12,16 @@ export default tseslint.config(
     },
   },
   {
+    // Foundry ships no official types, so the ambient declarations deliberately
+    // use `any` where the real API surface is untyped or too large to mirror.
+    files: ["**/*.d.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off",
+      "no-var": "off",
+    },
+  },
+  {
     // Build tooling runs under Node, not in the Foundry browser context.
     files: ["tools/**/*.mjs"],
     languageOptions: {

@@ -12,8 +12,12 @@
       "name": "Diego Vescovini"
     }
   ],
-  "esmodules": ["gworld.mjs"],
-  "styles": ["gworld.css"],
+  "esmodules": [
+    "gworld.mjs"
+  ],
+  "styles": [
+    "gworld.css"
+  ],
   "languages": [
     {
       "lang": "en",
@@ -25,5 +29,18 @@
   "gridDistance": 1,
   "gridUnits": "yd",
   "primaryTokenAttribute": "hp",
-  "secondaryTokenAttribute": "fp"
+  "secondaryTokenAttribute": "fp",
+  "documentTypes": {
+    "Actor": {
+      "character": {}
+    },
+    "Item": {
+      "trait": {},
+      "skill": {},
+      "equipment": {},
+      "armor": {},
+      "shield": {},
+      "language": {}
+    }
+  }
 }
