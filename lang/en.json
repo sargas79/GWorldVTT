@@ -351,6 +351,17 @@
     },
     "Shield": {
       "DB": "Defense Bonus"
+    },
+    "TraitCategory": {
+      "advantage": "Advantage",
+      "disadvantage": "Disadvantage",
+      "perk": "Perk",
+      "quirk": "Quirk"
+    },
+    "DamageBase": {
+      "thr": "Thrust",
+      "sw": "Swing",
+      "fixed": "Fixed"
     }
   }
 }

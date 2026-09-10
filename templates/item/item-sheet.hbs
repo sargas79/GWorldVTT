@@ -3,7 +3,11 @@
 
   <header class="ihead blueprint">
     <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-    <img class="iimg" src="{{item.img}}" alt="" data-edit="img" data-action="editImage" />
+    {{#if editable}}
+      <img class="iimg editable" src="{{item.img}}" alt="" data-edit="img" data-action="editImage" />
+    {{else}}
+      <img class="iimg" src="{{item.img}}" alt="" />
+    {{/if}}
     <div class="ihead-fields">
       <input type="text" name="name" value="{{item.name}}" placeholder="{{localize 'GWORLD.Item.Name'}}"
              {{#unless editable}}disabled{{/unless}} />
@@ -17,12 +21,12 @@
       <div class="ifields">
         <label>{{localize "GWORLD.Column.Attribute"}}
           <select name="system.attribute" {{#unless editable}}disabled{{/unless}}>
-            {{selectOptions choices.attributes selected=system.attribute}}
+            {{selectOptions choices.attributes selected=system.attribute localize=true}}
           </select>
         </label>
         <label>{{localize "GWORLD.Column.Difficulty"}}
           <select name="system.difficulty" {{#unless editable}}disabled{{/unless}}>
-            {{selectOptions choices.difficulties selected=system.difficulty}}
+            {{selectOptions choices.difficulties selected=system.difficulty localize=true}}
           </select>
         </label>
         <label>{{localize "GWORLD.Column.Pts"}}
@@ -55,15 +59,15 @@
               <option value="skill" {{#if (eq d.from "skill")}}selected{{/if}}>{{localize "GWORLD.Skill.FromSkill"}}</option>
             </select>
             <select name="system.defaults.{{i}}.attribute" {{#unless @root.editable}}disabled{{/unless}}>
-              {{selectOptions @root.choices.attributes selected=d.attribute}}
+              {{selectOptions @root.choices.attributes selected=d.attribute localize=true}}
             </select>
             <input type="text" name="system.defaults.{{i}}.skill" value="{{d.skill}}"
                    placeholder="{{localize 'GWORLD.Column.Skill'}}" {{#unless @root.editable}}disabled{{/unless}} />
             <input type="number" name="system.defaults.{{i}}.modifier" value="{{d.modifier}}" step="1"
                    {{#unless @root.editable}}disabled{{/unless}} />
             {{#if @root.editable}}
-              <span class="rollable" data-action="deleteDefault"
-                    title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</span>
+              <button type="button" class="rollable iconbtn" data-action="deleteDefault"
+                    title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
             {{/if}}
           </div>
         {{else}}
@@ -76,7 +80,7 @@
       <div class="ifields">
         <label>{{localize "GWORLD.Column.Difficulty"}}
           <select name="system.difficulty" {{#unless editable}}disabled{{/unless}}>
-            {{selectOptions choices.techniqueDifficulties selected=system.difficulty}}
+            {{selectOptions choices.techniqueDifficulties selected=system.difficulty localize=true}}
           </select>
         </label>
         <label>{{localize "GWORLD.Technique.Prerequisite"}}
@@ -98,7 +102,7 @@
       <div class="ifields">
         <label>{{localize "GWORLD.Trait.Category"}}
           <select name="system.category" {{#unless editable}}disabled{{/unless}}>
-            {{selectOptions choices.categories selected=system.category}}
+            {{selectOptions choices.categories selected=system.category localize=true}}
           </select>
         </label>
         <label>{{localize "GWORLD.Trait.Points"}}
@@ -125,12 +129,12 @@
       <div class="ifields">
         <label>{{localize "GWORLD.Language.Spoken"}}
           <select name="system.spoken" {{#unless editable}}disabled{{/unless}}>
-            {{selectOptions choices.comprehension selected=system.spoken}}
+            {{selectOptions choices.comprehension selected=system.spoken localize=true}}
           </select>
         </label>
         <label>{{localize "GWORLD.Language.Written"}}
           <select name="system.written" {{#unless editable}}disabled{{/unless}}>
-            {{selectOptions choices.comprehension selected=system.written}}
+            {{selectOptions choices.comprehension selected=system.written localize=true}}
           </select>
         </label>
       </div>
@@ -218,20 +222,20 @@
               <input type="text" name="system.meleeModes.{{i}}.skill" value="{{m.skill}}"
                      placeholder="{{localize 'GWORLD.Column.Skill'}}" {{#unless @root.editable}}disabled{{/unless}} />
               {{#if @root.editable}}
-                <span class="rollable" data-action="deleteMode"
-                      title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</span>
+                <button type="button" class="rollable iconbtn" data-action="deleteMode"
+                      title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
               {{/if}}
             </div>
             <div class="irow">
               <select name="system.meleeModes.{{i}}.damageBase" {{#unless @root.editable}}disabled{{/unless}}>
-                {{selectOptions @root.choices.damageBases selected=m.damageBase}}
+                {{selectOptions @root.choices.damageBases selected=m.damageBase localize=true}}
               </select>
               <input type="number" name="system.meleeModes.{{i}}.damageModifier" value="{{m.damageModifier}}" step="1"
                      {{#unless @root.editable}}disabled{{/unless}} />
               <input type="text" name="system.meleeModes.{{i}}.damageFormula" value="{{m.damageFormula}}"
                      placeholder="2d+1" {{#unless @root.editable}}disabled{{/unless}} />
               <select name="system.meleeModes.{{i}}.damageType" {{#unless @root.editable}}disabled{{/unless}}>
-                {{selectOptions @root.choices.damageTypes selected=m.damageType}}
+                {{selectOptions @root.choices.damageTypes selected=m.damageType localize=true}}
               </select>
             </div>
             <div class="irow">

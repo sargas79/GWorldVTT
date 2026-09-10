@@ -68,31 +68,28 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // array, Foundry's selectOptions helper uses the array index as the option's
     // value, so choosing "DX" would save 1. Only hitLocations stays a list,
     // because it is rendered as checkboxes rather than a select.
-    const byName = (values: string[]) => Object.fromEntries(values.map((v) => [v, v]));
+    //
+    // The values are localization keys, not English. The template asks
+    // selectOptions to localize them, so another locale gets its own labels
+    // rather than these ones.
+    const keyed = (group: string, values: string[]) =>
+      Object.fromEntries(values.map((v) => [v, `GWORLD.${group}.${v}`]));
 
     context.choices = {
-      attributes: byName(["ST", "DX", "IQ", "HT", "Will", "Per"]),
-      difficulties: { E: "Easy", A: "Average", H: "Hard", VH: "Very Hard" },
-      techniqueDifficulties: { A: "Average", H: "Hard" },
-      categories: {
-        advantage: "Advantage",
-        disadvantage: "Disadvantage",
-        perk: "Perk",
-        quirk: "Quirk",
-      },
-      damageBases: { thr: "Thrust", sw: "Swing", fixed: "Fixed" },
-      damageTypes: byName([
+      // Attributes are stored by their abbreviation, whose label is the same in
+      // every locale, so the key carries the full name rather than "ST".
+      attributes: keyed("Attribute", ["ST", "DX", "IQ", "HT", "Will", "Per"]),
+      difficulties: keyed("Difficulty", ["E", "A", "H", "VH"]),
+      techniqueDifficulties: keyed("Difficulty", ["A", "H"]),
+      categories: keyed("TraitCategory", ["advantage", "disadvantage", "perk", "quirk"]),
+      damageBases: keyed("DamageBase", ["thr", "sw", "fixed"]),
+      damageTypes: keyed("DamageType", [
         "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox",
       ]),
       hitLocations: [
         "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",
       ],
-      comprehension: {
-        none: "None",
-        broken: "Broken",
-        accented: "Accented",
-        native: "Native",
-      },
+      comprehension: keyed("Language", ["none", "broken", "accented", "native"]),
     };
 
     return context;

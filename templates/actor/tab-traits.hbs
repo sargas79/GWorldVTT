@@ -21,8 +21,8 @@
           </span>
           <span class="tp {{#if group.negative}}neg{{/if}}">{{trait.system.totalPoints}}</span>
           {{#if @root.editable}}
-            <span class="tdel rollable" data-action="deleteItem"
-                  title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</span>
+            <button type="button" class="tdel rollable iconbtn" data-action="deleteItem"
+                  title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
           {{/if}}
           {{#if trait.system.description}}
             <span class="td">{{{trait.system.description}}}</span>
