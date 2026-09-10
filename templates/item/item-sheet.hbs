@@ -1,10 +1,16 @@
-{{!-- One sheet for every item type; the sections below switch on the type. --}}
-<form class="isheet" autocomplete="off">
+{{!-- One sheet for every item type; the sections below switch on the type.
+     DocumentSheetV2 supplies the <form> itself, as it does for the actor
+     templates, so this part must not open one of its own. --}}
+<div class="isheet">
 
   <header class="ihead blueprint">
     <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
     {{#if editable}}
-      <img class="iimg editable" src="{{item.img}}" alt="" data-edit="img" data-action="editImage" />
+      <button type="button" class="iimgbtn" data-edit="img" data-action="editImage"
+              aria-label="{{localize 'GWORLD.Item.EditImage'}}"
+              title="{{localize 'GWORLD.Item.EditImage'}}">
+        <img class="iimg editable" src="{{item.img}}" alt="" />
+      </button>
     {{else}}
       <img class="iimg" src="{{item.img}}" alt="" />
     {{/if}}
@@ -291,4 +297,4 @@
     </div>
 
   </div>
-</form>
+</div>

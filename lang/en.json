@@ -246,7 +246,8 @@
       "ParryModifier": "Parry modifier",
       "MinSt": "Minimum ST",
       "ArmorDivisor": "Armour divisor",
-      "DefaultModifier": "Modifier"
+      "DefaultModifier": "Modifier",
+      "EditImage": "Change item image"
     },
     "Gear": {
       "Carried": "Carried",
