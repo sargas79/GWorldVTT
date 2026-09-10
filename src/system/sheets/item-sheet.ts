@@ -10,6 +10,7 @@
  * quantity, weight and cost. The body template switches on the type.
  */
 
+import { parseCostTable, parseLevelNames } from "../../rules/traits.js";
 import { SYSTEM_ID } from "../constants.js";
 
 const { ItemSheetV2 } = foundry.applications.sheets;
@@ -134,24 +135,16 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     }
 
     // The two trait arrays are edited as text, so they arrive as strings and
-    // have to be read back into arrays before the data model sees them.
-    // A step that is not a number is dropped rather than stored as NaN, which
-    // the schema would refuse; clearing the field clears the table, which is
-    // how a trait priced from a table goes back to being priced per level.
+    // have to be read back into arrays before the data model sees them. Both
+    // readers live in the rules layer, where they are tested: an empty cost
+    // table has to come back empty rather than as a single zero, which would
+    // price the trait at nothing instead of restoring its per-level cost.
     if (this.item.type === "trait" && data.system) {
       if (typeof data.system.costTable === "string") {
-        data.system.costTable = data.system.costTable
-          .split(/[/,]/)
-          .map((step: string) => Number(step.trim()))
-          .filter((step: number) => Number.isInteger(step));
+        data.system.costTable = parseCostTable(data.system.costTable);
       }
       if (typeof data.system.levelNames === "string") {
-        const names = data.system.levelNames.split("\n").map((n: string) => n.trim());
-        // Trailing blank lines are an artefact of typing, not unnamed levels;
-        // a blank between two names is a level the book leaves unnamed and is
-        // kept, which is how Combat Reflexes names only its second step.
-        while (names.length > 0 && names[names.length - 1] === "") names.pop();
-        data.system.levelNames = names;
+        data.system.levelNames = parseLevelNames(data.system.levelNames);
       }
     }
 

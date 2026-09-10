@@ -69,3 +69,37 @@ export function traitCostLabel(trait: TraitCost): string {
   if (trait.pointsPerLevel !== 0) return `${trait.pointsPerLevel}/level`;
   return String(trait.points);
 }
+
+/**
+ * Reads a cost table typed as text, the way the book prints it: "10/20/30/50/75".
+ *
+ * Commas are accepted alongside slashes because both read naturally, and a
+ * segment that is not a whole number is dropped rather than stored -- the
+ * schema takes integers, and NaN would be refused on save with nothing on
+ * screen to say which character caused it.
+ *
+ * An empty field means the trait is not priced from a table at all, and must
+ * come back as an empty list: a single zero would price the trait at nothing.
+ */
+export function parseCostTable(text: string): number[] {
+  return text
+    .split(/[/,]/)
+    .map((step) => step.trim())
+    .filter((step) => step !== "")
+    .map(Number)
+    .filter((step) => Number.isInteger(step));
+}
+
+/**
+ * Reads level names typed one per line.
+ *
+ * Trailing blank lines are an artefact of typing rather than levels the book
+ * leaves unnamed. A blank between two names is kept, because that is how a
+ * trait that names only some of its levels is written -- Combat Reflexes names
+ * its second step and not its first.
+ */
+export function parseLevelNames(text: string): string[] {
+  const names = text.split("\n").map((name) => name.trim());
+  while (names.length > 0 && names[names.length - 1] === "") names.pop();
+  return names;
+}

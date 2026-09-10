@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { traitCostLabel, traitLevelName, traitPoints, type TraitCost } from "../traits.js";
+import {
+  parseCostTable,
+  parseLevelNames,
+  traitCostLabel,
+  traitLevelName,
+  traitPoints,
+  type TraitCost,
+} from "../traits.js";
 
 const flat = (points: number): TraitCost => ({
   points,
@@ -89,5 +96,64 @@ describe("traitCostLabel", () => {
     expect(traitCostLabel(flat(15))).toBe("15");
     expect(traitCostLabel(perLevel(2, 0))).toBe("2/level");
     expect(traitCostLabel(tabled(WEALTH, 0))).toBe("10/20/30/50/75");
+  });
+});
+
+describe("parseCostTable", () => {
+  it("reads a table written the way the book prints it", () => {
+    expect(parseCostTable("10/20/30/50/75")).toEqual([10, 20, 30, 50, 75]);
+  });
+
+  it("accepts commas and stray space", () => {
+    expect(parseCostTable("4, 12 , 12,16")).toEqual([4, 12, 12, 16]);
+  });
+
+  it("reads a disadvantage's negative steps", () => {
+    expect(parseCostTable("-2/-5/-10/-15/-20")).toEqual([-2, -5, -10, -15, -20]);
+  });
+
+  /**
+   * The case that made this worth extracting: an empty field split on "/"
+   * yields one empty string, and Number("") is 0, so a cleared table came back
+   * as [0] -- which prices the trait at nothing rather than restoring its
+   * per-level cost.
+   */
+  it("gives an empty table for an empty field, not a zero", () => {
+    expect(parseCostTable("")).toEqual([]);
+    expect(parseCostTable("   ")).toEqual([]);
+    expect(parseCostTable("//")).toEqual([]);
+  });
+
+  it("drops a step that is not a whole number rather than storing NaN", () => {
+    expect(parseCostTable("10/abc/30")).toEqual([10, 30]);
+    expect(parseCostTable("10/2.5/30")).toEqual([10, 30]);
+  });
+
+  it("round-trips what traitCostLabel prints", () => {
+    const table = [10, 20, 30, 50, 75];
+    expect(parseCostTable(traitCostLabel(tabled(table, 1)))).toEqual(table);
+  });
+});
+
+describe("parseLevelNames", () => {
+  it("reads one name per line", () => {
+    expect(parseLevelNames("Comfortable\nWealthy\nVery Wealthy")).toEqual([
+      "Comfortable", "Wealthy", "Very Wealthy",
+    ]);
+  });
+
+  it("keeps a name containing a comma, which a separated list could not", () => {
+    expect(parseLevelNames("A large group (21-1,000 people)")).toEqual([
+      "A large group (21-1,000 people)",
+    ]);
+  });
+
+  it("keeps a blank between two names, which is a level the book does not name", () => {
+    expect(parseLevelNames("\nEnhanced Time Sense")).toEqual(["", "Enhanced Time Sense"]);
+  });
+
+  it("drops trailing blank lines, which are an artefact of typing", () => {
+    expect(parseLevelNames("Mild\nSevere\n\n\n")).toEqual(["Mild", "Severe"]);
+    expect(parseLevelNames("")).toEqual([]);
   });
 });
