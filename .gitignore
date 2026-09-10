@@ -11,3 +11,6 @@ design/import/
 
 # Release artifact, built on demand
 gworld.zip
+
+# Compiled compendium packs are a build artifact
+dist/packs/

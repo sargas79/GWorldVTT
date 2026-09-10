@@ -25,7 +25,30 @@
       "path": "lang/en.json"
     }
   ],
-  "packs": [],
+  "packs": [
+    {
+      "name": "skills",
+      "label": "GURPS Skills",
+      "path": "packs/skills",
+      "type": "Item",
+      "system": "gworld",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "equipment",
+      "label": "GURPS Equipment",
+      "path": "packs/equipment",
+      "type": "Item",
+      "system": "gworld",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    }
+  ],
   "gridDistance": 1,
   "gridUnits": "yd",
   "primaryTokenAttribute": "hp",
