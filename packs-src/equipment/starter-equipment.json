@@ -236,7 +236,7 @@
       "cost": 150,
       "carried": true,
       "equipped": false,
-      "tl": "2",
+      "tl": "",
       "description": "",
       "reference": "Basic Set: Characters"
     }
@@ -259,7 +259,7 @@
       "cost": 340,
       "carried": true,
       "equipped": false,
-      "tl": "2",
+      "tl": "",
       "description": "",
       "reference": "Basic Set: Characters"
     }
@@ -282,7 +282,7 @@
       "cost": 610,
       "carried": true,
       "equipped": false,
-      "tl": "2",
+      "tl": "",
       "description": "",
       "reference": "Basic Set: Characters"
     }
@@ -305,7 +305,7 @@
       "cost": 645,
       "carried": true,
       "equipped": false,
-      "tl": "2",
+      "tl": "",
       "description": "",
       "reference": "Basic Set: Characters"
     }
@@ -328,7 +328,7 @@
       "cost": 4040,
       "carried": true,
       "equipped": false,
-      "tl": "2",
+      "tl": "",
       "description": "",
       "reference": "Basic Set: Characters"
     }

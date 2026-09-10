@@ -30,6 +30,15 @@ const HIT_LOCATIONS = new Set([
 /** Mirrors parseDiceAdds in the rules engine: `2d`, `1d-2`, `3d+1`, or a flat number. */
 const DICE = /^(\d*)d([+-]\d+)?$|^([+-]?\d+)$/;
 
+/**
+ * parseDiceAdds lowercases and strips internal whitespace before matching, so
+ * the validator must too — otherwise "2D + 1" passes the engine but fails here,
+ * breaking the same-grammar guarantee this file exists to provide.
+ */
+function parsesAsDice(value) {
+  return DICE.test(String(value ?? "").trim().toLowerCase().replace(/\s+/g, ""));
+}
+
 const problems = [];
 const ids = new Map();
 
@@ -87,7 +96,7 @@ function validateItem(entry, file) {
     );
     if (mode.damageBase === "fixed") {
       check(
-        DICE.test(String(mode.damageFormula ?? "").trim()),
+        parsesAsDice(mode.damageFormula),
         file, name, `fixed damage "${mode.damageFormula}" does not parse`,
       );
     }

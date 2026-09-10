@@ -36,6 +36,12 @@
           "attribute": "DX",
           "skill": "",
           "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Shortsword",
+          "modifier": -2
         }
       ],
       "techLevel": "",
@@ -294,7 +300,14 @@
       "difficulty": "E",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters"
