@@ -149,3 +149,38 @@ export function block(shieldSkill: number, context: BlockContext = {}): DefenseR
   if (context.attackerUsingFlail) modifiers.push({ label: "Flail", value: -2 });
   return finish(base, modifiers);
 }
+
+/** A weapon that might be parried with, as the chooser needs to see it. */
+export interface ParryOption {
+  /** The parry score this weapon offers, or null when it cannot parry at all. */
+  parry: number | null;
+  /**
+   * An unbalanced weapon, marked "U" in the Parry column (GURPS Basic Set:
+   * Characters p. 269).
+   */
+  unbalanced: boolean;
+}
+
+/**
+ * The best weapon to parry an attack with.
+ *
+ * An unbalanced weapon cannot parry in a turn it has already attacked in: an
+ * axe swung this turn is not coming back in time to turn a blade. So on such a
+ * turn it is out of the running entirely, and a lesser but balanced weapon --
+ * or nothing at all -- is what the character actually has.
+ *
+ * Returns null when no weapon can parry, which is the difference between a bad
+ * parry and no parry.
+ */
+export function bestParryOption<T extends ParryOption>(
+  options: readonly T[],
+  attackedThisTurn = false,
+): T | null {
+  let best: T | null = null;
+  for (const option of options) {
+    if (option.parry === null) continue;
+    if (attackedThisTurn && option.unbalanced) continue;
+    if (best === null || option.parry > (best.parry ?? -Infinity)) best = option;
+  }
+  return best;
+}

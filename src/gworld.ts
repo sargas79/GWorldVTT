@@ -10,6 +10,7 @@ import "./styles/gworld.css";
 
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
+import { GWorldCombat } from "./system/combat.js";
 import { SYSTEM_ID } from "./system/constants.js";
 import { CharacterData } from "./system/data/character.js";
 import { NpcData } from "./system/data/npc.js";
@@ -43,9 +44,11 @@ Hooks.once("init", () => {
   CONFIG.Item.dataModels.shield = ShieldData;
   CONFIG.Item.dataModels.language = LanguageData;
 
-  // Initiative is Basic Speed, fixed for the whole fight (GURPS Lite p. 25).
-  // The Combat subclass that enforces the ordering arrives with a later phase.
+  // Initiative is Basic Speed, fixed for the whole fight (GURPS Lite p. 25):
+  // nothing random goes into the formula, so it does not change between rounds.
+  // The subclass breaks the ties, which quarter-point Basic Speed makes common.
   CONFIG.Combat.initiative = { formula: "@derived.basicSpeed", decimals: 2 };
+  CONFIG.Combat.documentClass = GWorldCombat;
 
   registerTemplateHelpers();
 

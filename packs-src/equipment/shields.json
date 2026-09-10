@@ -13,7 +13,8 @@
       "description": "",
       "reference": "Basic Set: Characters p. 275, 287",
       "db": 1,
-      "skill": "Shield"
+      "skill": "Cloak",
+      "meleeModes": []
     }
   },
   {
@@ -30,7 +31,8 @@
       "description": "",
       "reference": "Basic Set: Characters p. 275, 287",
       "db": 2,
-      "skill": "Shield"
+      "skill": "Cloak",
+      "meleeModes": []
     }
   },
   {
@@ -47,7 +49,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 1,
-      "skill": "Shield"
+      "skill": "Shield (Shield)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Shield)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -64,7 +86,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 1,
-      "skill": "Shield"
+      "skill": "Shield (Shield)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Shield)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -81,7 +123,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 2,
-      "skill": "Shield"
+      "skill": "Shield (Shield)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Shield)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -98,7 +160,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 3,
-      "skill": "Shield"
+      "skill": "Shield (Shield)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Shield)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -115,7 +197,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 1,
-      "skill": "Shield"
+      "skill": "Shield (Buckler)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Buckler)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -132,7 +234,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 1,
-      "skill": "Shield"
+      "skill": "Shield (Buckler)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Buckler)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -149,7 +271,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 2,
-      "skill": "Shield"
+      "skill": "Shield (Buckler)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Buckler)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -166,7 +308,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 1,
-      "skill": "Shield"
+      "skill": "Shield (Shield)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Shield)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -183,7 +345,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 1,
-      "skill": "Shield"
+      "skill": "Shield (Shield)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Shield)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -200,7 +382,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 2,
-      "skill": "Shield"
+      "skill": "Shield (Shield)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Shield)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -217,7 +419,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 3,
-      "skill": "Shield"
+      "skill": "Shield (Shield)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Shield)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -234,7 +456,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 1,
-      "skill": "Shield"
+      "skill": "Shield (Buckler)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Buckler)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -251,7 +493,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 1,
-      "skill": "Shield"
+      "skill": "Shield (Buckler)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Buckler)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -268,7 +530,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 2,
-      "skill": "Shield"
+      "skill": "Shield (Buckler)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Buckler)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -285,7 +567,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 3,
-      "skill": "Shield"
+      "skill": "Shield (Force)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Force)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   },
   {
@@ -302,7 +604,27 @@
       "description": "",
       "reference": "Basic Set: Characters p. 273, 287",
       "db": 3,
-      "skill": "Shield"
+      "skill": "Shield (Force)",
+      "meleeModes": [
+        {
+          "name": "Bash",
+          "skill": "Shield (Force)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ]
     }
   }
 ]

@@ -155,7 +155,8 @@
     "Condition": {
       "AllOutDefense": "All-Out Defense",
       "Stunned": "Stunned",
-      "BlindToAttacker": "Blind to attacker"
+      "BlindToAttacker": "Blind to attacker",
+      "AttackedThisTurn": "Attacked this turn"
     },
     "Posture": {
       "standing": "Standing",

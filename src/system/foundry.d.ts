@@ -262,6 +262,15 @@ declare global {
    */
   function fromUuid(uuid: string, options?: object): Promise<any>;
 
+  /**
+   * The Combat document. Only what a subclass overrides is declared:
+   * `_sortCombatants` is the turn-order comparator, called unbound.
+   */
+  class Combat {
+    _sortCombatants(a: any, b: any): number;
+    [key: string]: any;
+  }
+
   const Actor: any;
   const Item: any;
   const ui: any;
