@@ -46,12 +46,6 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Mathematics (Statistics)",
-          "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
           "skill": "Merchant",
           "modifier": -5
         }
@@ -120,12 +114,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Engineer (Civil)",
-          "modifier": -4
         }
       ],
       "techLevel": "",
@@ -148,12 +136,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Engineer (same)",
-          "modifier": -4
         }
       ],
       "techLevel": "",
@@ -220,12 +202,6 @@
           "attribute": "DX",
           "skill": "",
           "modifier": -4
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Driving(Motorcycle)",
-          "modifier": -4
         }
       ],
       "techLevel": "",
@@ -246,7 +222,7 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Biology",
+          "skill": "Biology/TL",
           "modifier": -5
         }
       ],
@@ -339,12 +315,6 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Detect Lies",
-          "modifier": -4
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
           "skill": "Psychology",
           "modifier": -4
         }
@@ -413,8 +383,8 @@
     }
   },
   {
-    "_id": "5443e7e84e7b1c1f",
-    "name": "Killjoy Camouflage",
+    "_id": "2f4b253696368185",
+    "name": "Camouflage",
     "type": "skill",
     "system": {
       "attribute": "IQ",
@@ -499,24 +469,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Geography (any)",
-          "modifier": -2
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Mathematics (Surveying)",
-          "modifier": -2
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Navigation (any)",
-          "modifier": -4
         }
       ],
       "techLevel": "",
@@ -539,12 +491,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -6
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Alchemy",
-          "modifier": -3
         }
       ],
       "techLevel": "",
@@ -589,18 +535,6 @@
           "attribute": "DX",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Net",
-          "modifier": -4
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Shield (any)",
-          "modifier": -4
         }
       ],
       "techLevel": "",
@@ -692,7 +626,7 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Research",
+          "skill": "Research/TL",
           "modifier": -4
         }
       ],
@@ -738,22 +672,15 @@
       "difficulty": "H",
       "points": 0,
       "bonus": 0,
-      "defaults": [
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Mathematics (Cryptology)",
-          "modifier": -5
-        }
-      ],
+      "defaults": [],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters"
     }
   },
   {
-    "_id": "d268bd118dda7551",
-    "name": "Physiology Disguise/TL",
+    "_id": "1531cb2c7bbf89ad",
+    "name": "Disguise/TL",
     "type": "skill",
     "system": {
       "attribute": "IQ",
@@ -770,7 +697,7 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Makeup",
+          "skill": "Makeup/TL",
           "modifier": -3
         }
       ],
@@ -798,48 +725,8 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "First Aid",
-          "modifier": -8
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Physician",
+          "skill": "Physician/TL",
           "modifier": -4
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Veterinary",
-          "modifier": -5
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "acd0f6601cee9ba1",
-    "name": "Will/Hard Driving/TL",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "A",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -5
-        },
-        {
-          "from": "attribute",
-          "attribute": "IQ",
-          "skill": "",
-          "modifier": -5
         }
       ],
       "techLevel": "",
@@ -930,12 +817,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Engineer (Electrical)",
-          "modifier": -3
         }
       ],
       "techLevel": "",
@@ -957,18 +838,6 @@
           "from": "attribute",
           "attribute": "IQ",
           "skill": "",
-          "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Electronics Repair (same)",
-          "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Engineer (Electronics)",
           "modifier": -5
         }
       ],
@@ -1061,9 +930,9 @@
       "bonus": 0,
       "defaults": [
         {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Perception",
+          "from": "attribute",
+          "attribute": "Per",
+          "skill": "",
           "modifier": -6
         }
       ],
@@ -1087,24 +956,6 @@
           "attribute": "Will",
           "skill": "",
           "modifier": -6
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Religious Ritual (any)",
-          "modifier": -3
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Ritual Magic (any)",
-          "modifier": -3
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Theology (any)",
-          "modifier": -3
         }
       ],
       "techLevel": "",
@@ -1142,12 +993,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Animal Handling (Raptors)",
-          "modifier": -3
         }
       ],
       "techLevel": "",
@@ -1170,18 +1015,6 @@
           "attribute": "DX",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Pickpocket",
-          "modifier": -4
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Sleight of Hand",
-          "modifier": -4
         }
       ],
       "techLevel": "",
@@ -1203,12 +1036,6 @@
           "from": "attribute",
           "attribute": "IQ",
           "skill": "",
-          "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Acting",
           "modifier": -5
         }
       ],
@@ -1277,9 +1104,9 @@
       "bonus": 0,
       "defaults": [
         {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Perception",
+          "from": "attribute",
+          "attribute": "Per",
+          "skill": "",
           "modifier": -4
         }
       ],
@@ -1344,7 +1171,7 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Criminology",
+          "skill": "Criminology/TL",
           "modifier": -4
         }
       ],
@@ -1368,12 +1195,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -6
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Counterfeiting",
-          "modifier": -2
         }
       ],
       "techLevel": "",
@@ -1417,12 +1238,6 @@
           "attribute": "DX",
           "skill": "Fast-Talk",
           "modifier": -3
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Occultism",
-          "modifier": -3
         }
       ],
       "techLevel": "",
@@ -1431,8 +1246,8 @@
     }
   },
   {
-    "_id": "36ce45e48b86d87d",
-    "name": "Cultural Familiarity Free Fall",
+    "_id": "607efb7059a32b45",
+    "name": "Free Fall",
     "type": "skill",
     "system": {
       "attribute": "DX",
@@ -1521,13 +1336,7 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Geography (Physical)",
-          "modifier": -4
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Prospecting",
+          "skill": "Prospecting/TL",
           "modifier": -5
         }
       ],
@@ -1654,12 +1463,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Sleight of Hand",
-          "modifier": -3
         }
       ],
       "techLevel": "",
@@ -1690,8 +1493,8 @@
     }
   },
   {
-    "_id": "c9c763c75896f605",
-    "name": "Hypnotism Immovable Stance",
+    "_id": "b89e99b24228e802",
+    "name": "Immovable Stance",
     "type": "skill",
     "system": {
       "attribute": "DX",
@@ -1741,12 +1544,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -6
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Strategy (any)",
-          "modifier": -6
         }
       ],
       "techLevel": "",
@@ -1784,12 +1581,6 @@
           "attribute": "Will",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Acting",
-          "modifier": -3
         }
       ],
       "techLevel": "",
@@ -1812,18 +1603,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -6
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Smith (Copper)",
-          "modifier": -4
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Smith (Lead and Tin)",
-          "modifier": -4
         }
       ],
       "techLevel": "",
@@ -1897,12 +1676,6 @@
           "attribute": "DX",
           "skill": "Climbing",
           "modifier": -4
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Seamanship",
-          "modifier": -4
         }
       ],
       "techLevel": "",
@@ -1933,36 +1706,8 @@
     }
   },
   {
-    "_id": "9663a789ba8d740d",
-    "name": "Lance",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "A",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Spear",
-          "modifier": -3
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "317256865ce2f5ae",
-    "name": "Leatherworking Linguistics",
+    "_id": "f2220d1bb0d0bf59",
+    "name": "Linguistics",
     "type": "skill",
     "system": {
       "attribute": "DX",
@@ -2023,9 +1768,9 @@
       "bonus": 0,
       "defaults": [
         {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Perception",
+          "from": "attribute",
+          "attribute": "Per",
+          "skill": "",
           "modifier": -10
         }
       ],
@@ -2093,12 +1838,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Mechanic (any)",
-          "modifier": -5
         }
       ],
       "techLevel": "",
@@ -2125,7 +1864,7 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Disguise",
+          "skill": "Disguise/TL",
           "modifier": -2
         }
       ],
@@ -2209,13 +1948,7 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Engineer (same)",
-          "modifier": -4
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Machinist",
+          "skill": "Machinist/TL",
           "modifier": -5
         }
       ],
@@ -2303,12 +2036,6 @@
           "attribute": "Will",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Meditation",
-          "modifier": -5
         }
       ],
       "techLevel": "",
@@ -2335,7 +2062,7 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Biology",
+          "skill": "Biology/TL",
           "modifier": -3
         }
       ],
@@ -2355,15 +2082,9 @@
       "bonus": 0,
       "defaults": [
         {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Perception",
-          "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Shadowing",
+          "from": "attribute",
+          "attribute": "Per",
+          "skill": "",
           "modifier": -5
         }
       ],
@@ -2413,7 +2134,7 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Fast Talk",
+          "skill": "Fast-Talk",
           "modifier": -2
         },
         {
@@ -2431,21 +2152,6 @@
   {
     "_id": "782c8dada4867ba1",
     "name": "Parry Missile Weapons",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "H",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "ca8c3aac11e458af",
-    "name": "Missile Weapons",
     "type": "skill",
     "system": {
       "attribute": "DX",
@@ -2477,12 +2183,6 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Acting",
-          "modifier": -2
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
           "skill": "Public Speaking",
           "modifier": -2
         }
@@ -2507,12 +2207,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Electronics Operation (Media)",
-          "modifier": -5
         }
       ],
       "techLevel": "",
@@ -2535,18 +2229,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -7
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "First Aid",
-          "modifier": -11
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Veterinary",
-          "modifier": -5
         }
       ],
       "techLevel": "",
@@ -2573,19 +2255,13 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Diagnosis",
+          "skill": "Diagnosis/TL",
           "modifier": -5
         },
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Physician",
-          "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Surgery",
+          "skill": "Physician/TL",
           "modifier": -5
         }
       ],
@@ -2653,12 +2329,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Writing",
-          "modifier": -5
         }
       ],
       "techLevel": "",
@@ -2685,19 +2355,13 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Chemistry",
+          "skill": "Chemistry/TL",
           "modifier": -5
         },
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Pharmacy (any)",
-          "modifier": -3
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Physician",
+          "skill": "Physician/TL",
           "modifier": -3
         }
       ],
@@ -2720,12 +2384,6 @@
           "from": "attribute",
           "attribute": "IQ",
           "skill": "",
-          "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Diplomacy",
           "modifier": -5
         }
       ],
@@ -2792,12 +2450,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Geology (any)",
-          "modifier": -4
         }
       ],
       "techLevel": "",
@@ -2819,12 +2471,6 @@
           "from": "attribute",
           "attribute": "IQ",
           "skill": "",
-          "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Acting",
           "modifier": -5
         },
         {
@@ -2916,20 +2562,7 @@
       "difficulty": "H",
       "points": 0,
       "bonus": 0,
-      "defaults": [
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Ritual Magic (same)",
-          "modifier": -6
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Theology (same)",
-          "modifier": -4
-        }
-      ],
+      "defaults": [],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters"
@@ -2950,12 +2583,6 @@
           "attribute": "DX",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Animal Handling (same)",
-          "modifier": -3
         }
       ],
       "techLevel": "",
@@ -2978,12 +2605,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Writing",
-          "modifier": -3
         }
       ],
       "techLevel": "",
@@ -3000,14 +2621,7 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Religious Ritual (same)",
-          "modifier": -6
-        }
-      ],
+      "defaults": [],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters"
@@ -3142,48 +2756,8 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Anthropology",
-          "modifier": -3
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
           "skill": "Psychology",
           "modifier": -4
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "e6c10d72dd658652",
-    "name": "Stage Combat DX/Average Strategy",
-    "type": "skill",
-    "system": {
-      "attribute": "IQ",
-      "difficulty": "H",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "IQ",
-          "skill": "",
-          "modifier": -6
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Intelligence Analysis",
-          "modifier": -6
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Tactics",
-          "modifier": -6
         }
       ],
       "techLevel": "",
@@ -3267,16 +2841,10 @@
       "bonus": 0,
       "defaults": [
         {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Perception",
+          "from": "attribute",
+          "attribute": "Per",
+          "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Naturalist (same planet)",
-          "modifier": -3
         }
       ],
       "techLevel": "",
@@ -3298,12 +2866,6 @@
           "from": "attribute",
           "attribute": "IQ",
           "skill": "",
-          "modifier": -6
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Strategy (any)",
           "modifier": -6
         }
       ],
@@ -3349,18 +2911,6 @@
           "attribute": "IQ",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Animal Handling (same)",
-          "modifier": -4
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Riding (same)",
-          "modifier": -2
         }
       ],
       "techLevel": "",
