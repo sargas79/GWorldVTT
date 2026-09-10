@@ -19,6 +19,20 @@ defenses, encumbrance, hit locations with the DR protecting each, and conditions
 
 **NPC sheet** — one pane, no tabs, showing what a GM needs mid-fight.
 
+**Building a character** — two ways in, and they edit the same sheet. Each of
+the Skills, Traits and Gear tabs has a Browse button that opens a searchable
+list of everything in the compendia, filtered to that tab, with every row
+saying what the entry is — a skill's attribute and difficulty, a trait's cost
+or its cost table, armour's DR. And a **Guided build** walks the whole thing in
+order — points, attributes, advantages, disadvantages, skills, gear — with the
+points ledger and the disadvantage limit in view at every step.
+
+The guided build edits the actor as it goes rather than staging changes, so
+going back a step shows what is really there and closing half-way leaves a
+half-built character rather than losing the work. Spending past the budget is
+flagged, never blocked: a GM may allow it, and a character part-way through
+being built is over and under by turns.
+
 **Item sheet** — one sheet serving all seven item types, editing every field each
 type persists. A weapon's melee attack modes are edited a row at a time; a
 skill's defaults and an armour's coverage and split DR likewise.
@@ -85,8 +99,6 @@ book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
 
 ## What is not implemented
 
-- **No character builder.** Characters are assembled by dragging from the
-  compendia and editing the sheet.
 - **Explosive and affliction damage.** The damage model holds dice and a
   modifier, so it has no way to say "cr ex [3d]" or "HT-4 aff". Hand grenades,
   incendiaries and a few beam weapons are therefore not in the compendium: they

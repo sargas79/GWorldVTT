@@ -156,6 +156,11 @@
   color: var(--color-neutral-700);
   white-space: nowrap;
 }
+
+/* Spending past the starting budget: flagged, not forbidden. A GM may allow
+   it, and a character part-way through being built is over and under by turns. */
+.gworld .ipts.over,
+.gworld .ltot .over { color: var(--color-warning, #a33); font-weight: 600; }
 .gworld .ipools { display: flex; gap: 14px; }
 .gworld .ipool { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .gworld .ipt {
@@ -991,3 +996,170 @@
 .gworld .iconbtn:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
 /* A trait's delete control is hidden until hover, so keyboard focus must reveal it. */
 .gworld .trait:focus-within .tdel { opacity: 1; }
+
+/* ── the compendium picker ──────────────────────────────────────────────── */
+
+.gworld-picker .gp {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 8px;
+  padding: 8px;
+}
+.gworld-picker .gp-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.gworld-picker .gp-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+}
+.gworld-picker .gp-count {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-800);
+  white-space: nowrap;
+}
+.gworld-picker .gp-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gworld-picker .gp-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--color-neutral-300);
+}
+.gworld-picker .gp-row:hover { background: color-mix(in srgb, var(--color-text) 5%, transparent); }
+/* Already taken this session: still addable, since a character may want two. */
+.gworld-picker .gp-row.added .gp-name { color: var(--color-neutral-800); }
+.gworld-picker .gp-name { min-width: 0; overflow-wrap: anywhere; }
+.gworld-picker .gp-summary {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-accent-700);
+  white-space: nowrap;
+}
+.gworld-picker .gp-add {
+  width: auto;
+  padding: 2px 8px;
+  font-family: var(--font-heading);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.gworld-picker .gp-empty {
+  padding: 12px 6px;
+  color: var(--color-neutral-800);
+  font-size: 12px;
+}
+
+/* ── the guided builder ─────────────────────────────────────────────────── */
+
+.gworld-builder .gb {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 8px;
+  padding: 10px;
+}
+.gworld-builder .gb-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.gworld-builder .gb-step {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld-builder .gb-title { font-family: var(--font-heading); font-size: 15px; }
+
+/* The ledger rides along on every step; losing track of it is what the
+   guided build exists to prevent. */
+.gworld-builder .gb-ledger {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  font-size: 11.5px;
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+  border-left: 2px solid var(--color-neutral-700);
+}
+.gworld-builder .gb-ledger .over { color: var(--color-warning, #a33); font-weight: 600; }
+
+.gworld-builder .gb-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gworld-builder .gb-hint { margin: 0; font-size: 11.5px; color: var(--color-neutral-800); }
+.gworld-builder .gb-browse { align-self: flex-start; }
+
+.gworld-builder .gb-list { margin: 0; padding: 0; list-style: none; }
+.gworld-builder .gb-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 4px;
+  border-bottom: 1px solid var(--color-neutral-300);
+}
+.gworld-builder .gb-detail {
+  font-size: 11px;
+  color: var(--color-accent-700);
+  white-space: nowrap;
+}
+.gworld-builder .gb-remove {
+  width: auto;
+  padding: 2px 6px;
+  line-height: 1;
+  cursor: pointer;
+}
+.gworld-builder .gb-empty {
+  padding: 8px 4px;
+  font-size: 12px;
+  color: var(--color-neutral-800);
+}
+
+.gworld-builder .gb-review { margin: 0; display: flex; flex-direction: column; gap: 3px; }
+.gworld-builder .gb-review > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.gworld-builder .gb-review dt, .gworld-builder .gb-review dd { margin: 0; }
+.gworld-builder .gb-review .gb-total {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-neutral-700);
+  font-weight: 600;
+}
+.gworld-builder .gb-review .over { color: var(--color-warning, #a33); }
+
+.gworld-builder .gb-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-neutral-300);
+}

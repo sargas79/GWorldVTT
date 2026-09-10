@@ -1,0 +1,27 @@
+<div class="gp">
+  <div class="gp-search">
+    <input type="search" name="search" value="{{query}}" autocomplete="off"
+           placeholder="{{localize "GWORLD.Picker.Search"}}" autofocus />
+    <span class="gp-count">
+      {{#if truncated}}
+        {{localize "GWORLD.Picker.Truncated" shown=entries.length total=total}}
+      {{else}}
+        {{localize "GWORLD.Picker.Count" total=total}}
+      {{/if}}
+    </span>
+  </div>
+
+  <ul class="gp-list">
+    {{#each entries as |entry|}}
+      <li class="gp-row{{#if entry.added}} added{{/if}}">
+        <span class="gp-name">{{entry.name}}</span>
+        <span class="gp-summary">{{entry.summary}}</span>
+        <button type="button" class="gp-add" data-action="add" data-uuid="{{entry.uuid}}">
+          {{#if entry.added}}{{localize "GWORLD.Picker.AddAgain"}}{{else}}{{localize "GWORLD.Picker.Add"}}{{/if}}
+        </button>
+      </li>
+    {{else}}
+      <li class="gp-empty">{{localize "GWORLD.Picker.Empty"}}</li>
+    {{/each}}
+  </ul>
+</div>

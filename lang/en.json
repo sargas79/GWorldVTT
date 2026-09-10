@@ -29,6 +29,7 @@
       "description": "Desc"
     },
     "Attribute": {
+      "TL": "Tech level",
       "ST": "Strength",
       "DX": "Dexterity",
       "IQ": "Intelligence",
@@ -137,6 +138,7 @@
       "Defenses": "Defenses"
     },
     "Points": {
+      "Starting": "Starting points",
       "Attributes": "Attributes",
       "Advantages": "Advantages",
       "Disadvantages": "Disadvantages",
@@ -151,6 +153,56 @@
       "DisadvantageStanding": "Disadvantages {total} of the {limit} this campaign allows.",
       "Secondaries": "Secondary Characteristics",
       "Techniques": "Techniques"
+    },
+    "Builder": {
+      "Title": "Build a character",
+      "Open": "Guided build",
+      "Step": "Step",
+      "Points": "points",
+      "Back": "Back",
+      "Next": "Next",
+      "Finish": "Finish",
+      "BrowseAction": "Browse the compendia",
+      "NothingYet": "Nothing chosen yet.",
+      "AttributeCost": "Attributes cost",
+      "Heading": {
+        "points": "How many points?",
+        "attributes": "Attributes",
+        "advantages": "Advantages",
+        "disadvantages": "Disadvantages",
+        "skills": "Skills and techniques",
+        "gear": "Gear",
+        "review": "Review"
+      },
+      "Hint": {
+        "points": "How many points the character is built on, and how many may come back from disadvantages. Both are the GM's call for the campaign.",
+        "attributes": "ST, DX, IQ and HT start at 10. Everything else on the sheet is worked out from them.",
+        "advantages": "What the character is unusually good at. The cost comes off the budget above.",
+        "disadvantages": "What the character is stuck with. These pay points back, up to the limit above.",
+        "skills": "What the character has learned. Points spent on each are set on the sheet afterwards.",
+        "gear": "What the character carries. Weight counts against encumbrance once it is marked carried.",
+        "review": "What the character has come to. Nothing here is fixed — the sheet edits all of it."
+      },
+      "Browse": {
+        "advantages": "Add an advantage",
+        "disadvantages": "Add a disadvantage",
+        "skills": "Add a skill or technique",
+        "gear": "Add gear, armour or a shield"
+      }
+    },
+    "Picker": {
+      "Title": "Add from the compendia",
+      "Skills": "Add a skill or technique",
+      "Traits": "Add an advantage or disadvantage",
+      "Gear": "Add gear, armour or a shield",
+      "Search": "Search by name",
+      "Add": "Add",
+      "AddAgain": "Add again",
+      "Added": "Added {name}.",
+      "NotFound": "That compendium entry could not be loaded.",
+      "Count": "{total} entries",
+      "Truncated": "showing {shown} of {total}",
+      "Empty": "Nothing matches."
     },
     "Condition": {
       "AllOutDefense": "All-Out Defense",
@@ -265,6 +317,9 @@
       "InScene": "x{count} in scene"
     },
     "Action": {
+      "BrowseSkills": "Browse",
+      "BrowseTraits": "Browse",
+      "BrowseGear": "Browse",
       "AddSkill": "Add Skill",
       "AddAdvantage": "Advantage",
       "AddDisadvantage": "Disadvantage",
@@ -283,6 +338,7 @@
       "DeleteItem": "Delete <strong>{name}</strong>? This cannot be undone."
     },
     "Hint": {
+      "OverBudget": "Spent past the starting budget.",
       "DisadvantageLimit": "A rule of thumb, not a hard cap. Disadvantages and quirks both count.",
       "Languages": "Accented is -1 to skills that depend on language. One native language is free.",
       "GMOnly": "visible to the GM only",

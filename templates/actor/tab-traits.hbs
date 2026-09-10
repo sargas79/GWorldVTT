@@ -31,10 +31,16 @@
       {{/each}}
 
       {{#if @root.editable}}
-        <button type="button" class="ibtn" style="align-self: flex-start"
-                data-action="createItem" data-item-type="trait" data-category="{{group.category}}">
-          + {{localize group.addLabel}}
-        </button>
+        <div class="toolbar" style="align-self: flex-start">
+          <button type="button" class="ibtn"
+                  data-action="createItem" data-item-type="trait" data-category="{{group.category}}">
+            + {{localize group.addLabel}}
+          </button>
+          <button type="button" class="ibtn" data-action="browseCompendium"
+                  data-item-types="trait" data-browse-title="GWORLD.Picker.Traits">
+            {{> "gworld.search"}} {{localize "GWORLD.Action.BrowseTraits"}}
+          </button>
+        </div>
       {{/if}}
     </div>
   {{/each}}

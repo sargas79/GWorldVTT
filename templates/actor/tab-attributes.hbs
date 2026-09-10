@@ -117,6 +117,13 @@
 
   <div class="isec">
     <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.CharacterPoints"}}</div>
+    {{#if editable}}
+      <div class="toolbar">
+        <button type="button" class="ibtn" data-action="openBuilder">
+          {{> "gworld.plus"}} {{localize "GWORLD.Builder.Open"}}
+        </button>
+      </div>
+    {{/if}}
     <div class="ledger">
       <div class="lrow"><span>{{localize "GWORLD.Points.Attributes"}}</span><span>{{derived.points.attributes}}</span></div>
       <div class="lrow"><span>{{localize "GWORLD.Points.Secondaries"}}</span><span>{{derived.points.secondaries}}</span></div>
@@ -126,7 +133,7 @@
       <div class="lrow"><span>{{localize "GWORLD.Points.Languages"}}</span><span>{{derived.points.languages}}</span></div>
       <div class="lrow"><span>{{localize "GWORLD.Points.Skills"}}</span><span>{{derived.points.skills}}</span></div>
       <div class="lrow"><span>{{localize "GWORLD.Points.Techniques"}}</span><span>{{derived.points.techniques}}</span></div>
-      <div class="lrow ltot"><span>{{localize "GWORLD.Points.Spent"}}</span><span>{{derived.points.spent}} / {{derived.points.starting}}</span></div>
+      <div class="lrow ltot"><span>{{localize "GWORLD.Points.Spent"}}</span><span class="{{#if overBudget}}over{{/if}}">{{derived.points.spent}} / {{derived.points.starting}}</span></div>
     </div>
     <div class="inote {{#if pointsWarning.over}}warn{{/if}}">
       {{> "gworld.info"}}

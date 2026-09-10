@@ -1,0 +1,93 @@
+<div class="gb">
+  <div class="gb-head">
+    <span class="gb-step">{{localize "GWORLD.Builder.Step"}} {{stepNumber}}/{{stepCount}}</span>
+    <strong class="gb-title">{{localize (concat "GWORLD.Builder.Heading." stepId)}}</strong>
+  </div>
+
+  <div class="gb-ledger">
+    <span class="{{#if overBudget}}over{{/if}}">
+      <strong>{{points.spent}}</strong> / {{points.starting}} {{localize "GWORLD.Builder.Points"}}
+    </span>
+    <span class="{{#if overDisadvantageLimit}}over{{/if}}">
+      {{localize "GWORLD.Section.DisadvantageLimit"}}
+      <strong>{{points.disadvantageTotal}}</strong> / {{points.disadvantageLimit}}
+    </span>
+  </div>
+
+  <div class="gb-body">
+    <p class="gb-hint">{{localize (concat "GWORLD.Builder.Hint." stepId)}}</p>
+
+    {{#if (eq stepId "points")}}
+      <div class="ifields">
+        <label>{{localize "GWORLD.Points.Starting"}}
+          <input type="number" step="5" min="0" value="{{system.points.starting}}"
+                 data-path="system.points.starting" />
+        </label>
+        <label>{{localize "GWORLD.Section.DisadvantageLimit"}}
+          <input type="number" step="5" min="0" value="{{system.points.disadvantageLimit}}"
+                 data-path="system.points.disadvantageLimit" />
+        </label>
+        <label>{{localize "GWORLD.Attribute.TL"}}
+          <input type="number" step="1" min="0" value="{{system.tl}}" data-path="system.tl" />
+        </label>
+      </div>
+    {{/if}}
+
+    {{#if (eq stepId "attributes")}}
+      <div class="ifields">
+        {{#each attributes as |attr|}}
+          <label>{{localize (concat "GWORLD.Attribute." attr.key)}}
+            <input type="number" step="1" value="{{attr.value}}"
+                   data-path="system.attributes.{{attr.key}}" />
+          </label>
+        {{/each}}
+      </div>
+      <p class="gb-hint">{{localize "GWORLD.Builder.AttributeCost"}} <strong>{{points.attributes}}</strong></p>
+    {{/if}}
+
+    {{#if hasBrowse}}
+      <button type="button" class="ibtn gb-browse" data-action="browse">
+        {{> "gworld.search"}} {{localize "GWORLD.Builder.BrowseAction"}}
+      </button>
+
+      <ul class="gb-list">
+        {{#each items as |item|}}
+          <li class="gb-row">
+            <span class="gb-name">{{item.name}}</span>
+            <span class="gb-detail">{{item.detail}}</span>
+            <button type="button" class="gb-remove" data-action="deleteItem" data-item-id="{{item.id}}"
+                    aria-label="{{localize "GWORLD.Action.Delete"}}">
+              {{> "gworld.trash"}}
+            </button>
+          </li>
+        {{else}}
+          <li class="gb-empty">{{localize "GWORLD.Builder.NothingYet"}}</li>
+        {{/each}}
+      </ul>
+    {{/if}}
+
+    {{#if (eq stepId "review")}}
+      <dl class="gb-review">
+        <div><dt>{{localize "GWORLD.Points.Attributes"}}</dt><dd>{{points.attributes}}</dd></div>
+        <div><dt>{{localize "GWORLD.Points.Advantages"}}</dt><dd>{{points.advantages}}</dd></div>
+        <div><dt>{{localize "GWORLD.Points.Disadvantages"}}</dt><dd>{{points.disadvantages}}</dd></div>
+        <div><dt>{{localize "GWORLD.Points.Skills"}}</dt><dd>{{points.skills}}</dd></div>
+        <div class="gb-total">
+          <dt>{{localize "GWORLD.Points.Spent"}}</dt>
+          <dd class="{{#if overBudget}}over{{/if}}">{{points.spent}} / {{points.starting}}</dd>
+        </div>
+      </dl>
+    {{/if}}
+  </div>
+
+  <div class="gb-foot">
+    <button type="button" class="ibtn" data-action="back" {{#if isFirst}}disabled{{/if}}>
+      {{localize "GWORLD.Builder.Back"}}
+    </button>
+    {{#if isLast}}
+      <button type="button" class="ibtn" data-action="finish">{{localize "GWORLD.Builder.Finish"}}</button>
+    {{else}}
+      <button type="button" class="ibtn" data-action="next">{{localize "GWORLD.Builder.Next"}}</button>
+    {{/if}}
+  </div>
+</div>
