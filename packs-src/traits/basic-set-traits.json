@@ -1409,7 +1409,7 @@
       "levels": 0,
       "pointsPerLevel": 0,
       "reactionModifier": 0,
-      "description": "<p>The book prices this trait as <em>5 points for Magery 0, +10</em>. The value here is its base cost.</p>",
+      "description": "<p>The book prices this trait as <em>5 points for Magery 0, +10 points/level</em>. The value here is its base cost.</p>",
       "reference": "Basic Set: Characters"
     }
   },
@@ -2641,7 +2641,7 @@
       "levels": 0,
       "pointsPerLevel": 0,
       "reactionModifier": 0,
-      "description": "<p>The book prices this trait as <em>30 points + 10 points per</em>. The value here is its base cost.</p>",
+      "description": "<p>The book prices this trait as <em>30 points + 10 points per -1 to Fright Check</em>. The value here is its base cost.</p>",
       "reference": "Basic Set: Characters"
     }
   },
@@ -2683,7 +2683,7 @@
       "levels": 0,
       "pointsPerLevel": 0,
       "reactionModifier": 0,
-      "description": "<p>The book prices this trait as <em>30 points + 5 points per point</em>. The value here is its base cost.</p>",
+      "description": "<p>The book prices this trait as <em>30 points + 5 points per point of Tunneling Move</em>. The value here is its base cost.</p>",
       "reference": "Basic Set: Characters"
     }
   },
@@ -2823,7 +2823,7 @@
       "levels": 0,
       "pointsPerLevel": 0,
       "reactionModifier": 0,
-      "description": "<p>The book prices this trait as <em>30 points + 5 points</em>. The value here is its base cost.</p>",
+      "description": "<p>The book prices this trait as <em>30 points + 5 points per extra HP drained</em>. The value here is its base cost.</p>",
       "reference": "Basic Set: Characters"
     }
   },

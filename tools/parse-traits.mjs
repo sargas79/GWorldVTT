@@ -65,10 +65,16 @@ const RUNNING_HEADER = /^(?:(\d{1,3})\s+)?(ADVANTAGES|DISADVANTAGES)(?:\s+(\d{1,
 
 /**
  * The enhancements and limitations chapter sits inside the advantages chapter's
- * running header, and its modifiers are priced "Variable" exactly as a trait is.
- * Only the book page separates them.
+ * running header, and its modifiers are priced "Variable" exactly as a trait is,
+ * so only the page separates them.
+ *
+ * The modifiers occupy pages 101-116 as this text numbers them. The guard runs
+ * past them to 120 because no trait heading of either kind appears on 117-120 --
+ * the last advantage is Zeroed on 99 and the first disadvantage Absent-Mindedness
+ * on 121 -- so the wider range cannot discard a trait, and it keeps holding if
+ * the page numbering shifts by a page.
  */
-const MODIFIER_PAGES = { first: 101, last: 118 };
+const MODIFIER_PAGES = { first: 101, last: 120 };
 
 /** A heading name: title case, optionally opening with a number ("360° Vision"). */
 const NAME = /^(?<name>[0-9]{0,3}[°"']?\s*[A-Z][A-Za-z0-9'’°()/, .-]{2,44})$/;
@@ -158,12 +164,17 @@ function main() {
     // Traits whose cost depends on a table the book prints separately (Luck,
     // Allies, Innate Attack) are headed "Variable" instead of a number. They are
     // worth carrying with a zero cost and a note, so the trait exists to drag
-    // onto a sheet, but only inside the two trait chapters.
+    // onto a sheet.
     const isVariable = !cost && lines[i].trim() === "Variable";
+    if (!cost && !isVariable) continue;
+
+    // Both kinds of cost are only trusted inside the two trait chapters, and
+    // outside the enhancements and limitations chapter that sits within the
+    // advantages running header. A "15 points" line anywhere else in the book
+    // sits in prose, and a heading-shaped line above it would invent a trait.
     const inModifiers =
       chapter === "ADVANTAGES" && page >= MODIFIER_PAGES.first && page <= MODIFIER_PAGES.last;
-    if (isVariable && (!chapter || inModifiers)) continue;
-    if (!cost && !isVariable) continue;
+    if (!chapter || inModifiers) continue;
 
     // Everything before the cost line, with the category symbols removed.
     let heading = lines[i - 1].trim().replace(SYMBOL_RUN, "").trim();
@@ -208,6 +219,16 @@ function main() {
     const perLevel = !isVariable && Boolean(cost.groups.per);
     const variable = isVariable || Boolean(cost.groups.range ?? cost.groups.tail);
 
+    // A cost phrase that names a unit wraps onto the next line as readily as a
+    // name does: "30 points + 10 points per" / "-1 to Fright Check". Quoting only
+    // the first line leaves the scale unsaid, which is worse than not quoting it.
+    // The trait's body always opens a sentence, so a following line that starts
+    // lowercase or with a sign is the rest of the price, not prose.
+    let priced = lines[i].trim();
+    if (variable && !isVariable && /^[a-z+-]|^\d+(?:\s|$)/.test((lines[i + 1] ?? "").trim())) {
+      priced = `${priced} ${lines[i + 1].trim()}`;
+    }
+
     // The sign separates the two chapters, and it is unambiguous. A trait
     // costing 0 at its lower bound ("0 or 5 points") is still an advantage.
     seen.add(name);
@@ -225,7 +246,7 @@ function main() {
         pointsPerLevel: perLevel ? points : 0,
         reactionModifier: 0,
         description: variable
-          ? `<p>The book prices this trait as <em>${lines[i].trim()}</em>. ${
+          ? `<p>The book prices this trait as <em>${priced}</em>. ${
               isVariable
                 ? "It has no fixed cost; set the points for your character."
                 : "The value here is its base cost."

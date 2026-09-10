@@ -82,7 +82,12 @@ function validateItem(entry, file) {
     // The sign of the cost has to agree with the category. This is the one thing
     // a mis-parsed trait gets wrong that nothing downstream would catch: the
     // ledger would quietly credit a disadvantage as if it were bought.
-    const cost = sys.levels > 0 ? sys.pointsPerLevel : sys.points;
+    //
+    // Which field holds the price is decided by which one is populated, not by
+    // how many levels are currently bought. A levelled trait sitting at zero
+    // levels still has to carry a correctly signed per-level cost, and checking
+    // `points` there would wave a positive per-level disadvantage through.
+    const cost = sys.pointsPerLevel !== 0 ? sys.pointsPerLevel : sys.points;
     if (sys.category === "disadvantage") {
       check(cost <= 0, file, name, `disadvantage must not cost a positive ${cost}`);
     }
