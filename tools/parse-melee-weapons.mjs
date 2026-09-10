@@ -83,18 +83,32 @@ const CONTINUATION = /^or$/i;
  * because the attack has to name one skill and that is the one the book lists
  * first.
  */
-function skillFromGroup(heading) {
+function skillsFromGroup(heading, hasDefaults) {
   // Headings are padded to the column width, so "TWO-HANDED     AXE/MACE"
   // arrives with the padding still in it.
-  const first = heading.replace(/\s+/g, " ").split(/,| or /)[0].trim();
-  if (!first || first === "DX") return "";
-  return first
-    .toLowerCase()
-    .replace(/\b[a-z]/g, (c) => c.toUpperCase())
-    .replace(/\bAnd\b/g, "and")
-    .replace(/Two-handed/i, "Two-Handed")
-    .replace(/Jitte\/sai/i, "Jitte/Sai")
-    .replace(/Axe\/mace/i, "Axe/Mace");
+  const names = heading
+    .replace(/\s+/g, " ")
+    .split(/,|\bor\b/)
+    .map((n) => n.trim())
+    .filter(Boolean);
+
+  // A heading with a defaults clause names one skill and then what it defaults
+  // from: "AXE/MACE (DX-5, Flail-4)". A heading without one names every skill
+  // that can make the attack: "BOXING, BRAWLING, KARATE, or DX". Keeping only
+  // the first there would stop a character trained in Brawling from punching.
+  const listed = hasDefaults ? names.slice(0, 1) : names;
+
+  return listed
+    .filter((n) => n && n !== "DX")
+    .map((n) =>
+      n
+        .toLowerCase()
+        .replace(/\b[a-z]/g, (c) => c.toUpperCase())
+        .replace(/\bAnd\b/g, "and")
+        .replace(/Two-handed/i, "Two-Handed")
+        .replace(/Jitte\/sai/i, "Jitte/Sai")
+        .replace(/Axe\/mace/i, "Axe/Mace"),
+    );
 }
 
 /**
@@ -176,8 +190,18 @@ function main() {
   const rejected = [];
   const reject = (context, why) => rejected.push({ context, why });
 
+  // Skills another pack already carries. Their own files state their defaults
+  // more fully than a weapon-table heading does, so they are left alone.
+  const alreadyPacked = new Set(
+    ["basic-set-skills.json", "melee-weapon-skills.json"].flatMap((f) =>
+      JSON.parse(readFileSync(join(projectRoot, "packs-src", "skills", f), "utf8")).map(
+        (x) => x.name,
+      ),
+    ),
+  );
+
   const skills = new Map();
-  let skill = "";
+  let groupSkills = [];
   let last = null;
   let pending = "";
   let penalised = false;
@@ -222,36 +246,50 @@ function main() {
 
       if (penalised) { reject(text, "skill penalty not expressible on a melee mode"); continue; }
 
-      const mode = {
+      // A cost or weight given as "var." or as an increment ("+$20", "+5")
+      // belongs to something else: a shield bash is priced by the shield you are
+      // holding, and its spike adds to that shield. Writing either as an absolute
+      // would put a free or mispriced item in the compendium and invite it to be
+      // carried as one. Reported instead, until a shield can hold attack modes.
+      const derived = (v) => /var\./.test(v) || /^\+/.test(v);
+      if (!continues && (derived(g.cost) || derived(g.weight))) {
+        reject(text, "cost and weight belong to another item");
+        continue;
+      }
+
+      // One mode per skill that can make the attack. Where the heading lists
+      // alternatives, a character trained in any of them can use the weapon.
+      const modes = (groupSkills.length ? groupSkills : [""]).map((modeSkill) => ({
         // A weapon whose damage is a flat dice roll neither swings nor thrusts.
         name: g.dmg.startsWith("sw") ? "swing" : g.dmg.startsWith("thr") ? "thrust" : "attack",
-        skill,
+        skill: modeSkill,
         damageBase: g.dmg.startsWith("sw") ? "sw" : g.dmg.startsWith("thr") ? "thr" : "fixed",
         damageModifier: Number(/[+-]\d+/.exec(g.dmg)?.[0] ?? 0),
         damageFormula: /^\d+d/.test(g.dmg) ? g.dmg.replace(/\(.*\)/, "") : "",
         damageType: g.type,
         armorDivisor: Number(g.div ?? 1),
         reach: g.reach.replace(/\s+/g, " ").trim(),
-        // "U" marks an unbalanced weapon and "F" a fencing weapon. Neither is a
-        // parry bonus, so only the leading number is read here.
+        // "U" and "F" are markers, not parry bonuses, so only the number is read
+        // here; each marker is recorded in its own field below.
         parryModifier: Number(/^[+-]?\d+/.exec(g.parry)?.[0] ?? 0),
         canParry: !/^No$/i.test(g.parry),
-        isFlail: /FLAIL|KUSARI/.test(skill.toUpperCase()),
+        isFlail: /FLAIL|KUSARI/.test(modeSkill.toUpperCase()),
         minSt: /^[-–—]$/.test(g.st) ? null : Number(/\d+/.exec(g.st)?.[0] ?? 0),
         // The table marks a two-handed weapon with a dagger after its ST, and
         // gives the same weapon a separate one-handed line where that applies
         // (a katana is ST 11 in one hand, ST 10† in two). The marker is the
         // book's own statement; the skill group only implies it.
         twoHanded: /†/.test(g.st),
-        // The book defines "U" as unbalanced -- cannot parry in a turn it has
-        // attacked in -- which is a different rule from needing to be readied
-        // again, and belongs in its own field.
+        // "U" is unbalanced: cannot parry in a turn it has attacked in. A
+        // different rule from needing to be readied again.
         unbalanced: /U$/.test(g.parry),
+        // "F" is a fencing weapon, which defends by different rules (p. 404).
+        isFencing: /F$/.test(g.parry),
         unreadyAfterAttack: false,
-      };
+      }));
 
       if (continues) {
-        last.system.meleeModes.push(mode);
+        last.system.meleeModes.push(...modes);
         continue;
       }
 
@@ -267,7 +305,7 @@ function main() {
       // Those are further ways to use one item, not a second item.
       const existing = byName.get(name);
       if (existing) {
-        existing.system.meleeModes.push(mode);
+        existing.system.meleeModes.push(...modes);
         last = existing;
         continue;
       }
@@ -285,7 +323,7 @@ function main() {
           tl: g.tl && !/^[-–—]$/.test(g.tl) ? g.tl : "",
           description: g.notes.trim() ? `<p>Table notes: ${g.notes.trim()}</p>` : "",
           reference: "Basic Set: Characters",
-          meleeModes: [mode],
+          meleeModes: modes,
           rangedModes: [],
         },
       };
@@ -299,17 +337,22 @@ function main() {
     const headingBody = g?.groups.skills.replace(/\b(?:or|and)\b/g, " ").trim();
     if (g && /[A-Z]{3}/.test(headingBody) && headingBody === headingBody.toUpperCase()) {
       penalised = PENALISED_GROUP.test(g.groups.skills);
-      skill = skillFromGroup(g.groups.skills);
+      groupSkills = skillsFromGroup(g.groups.skills, Boolean(g.groups.defaults));
       last = null;
-      if (skill && !penalised && !skills.has(skill)) {
-        const pair = pairs.get(skill);
+
+      for (const name of groupSkills) {
+        // A skill another pack already carries needs nothing from here, and its
+        // own file states its defaults more fully than this heading does.
+        if (penalised || skills.has(name) || alreadyPacked.has(name)) continue;
+
+        const pair = pairs.get(name);
         if (!pair) {
-          reject(skill, "skill has no attribute/difficulty in the skills chapter");
+          reject(name, "skill has no attribute/difficulty in the skills chapter");
           continue;
         }
-        skills.set(skill, {
-          _id: skillId(skill),
-          name: skill,
+        skills.set(name, {
+          _id: skillId(name),
+          name,
           type: "skill",
           system: {
             attribute: pair.attribute,

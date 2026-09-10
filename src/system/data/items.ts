@@ -219,6 +219,12 @@ function meleeModeField() {
      * about the weapon needing to be readied again.
      */
     unbalanced: new fields.BooleanField({ initial: false }),
+    /**
+     * A fencing weapon, marked "F" in the Parry column. Fencing weapons defend
+     * by their own rules (GURPS Basic Set: Campaigns p. 404), notably a larger
+     * bonus for retreating.
+     */
+    isFencing: new fields.BooleanField({ initial: false }),
     /** The weapon becomes unready after each attack unless ST is high enough. */
     unreadyAfterAttack: new fields.BooleanField({ initial: false }),
   });

@@ -28,6 +28,7 @@
           "minSt": 11,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -63,6 +64,7 @@
           "minSt": 8,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -98,6 +100,7 @@
           "minSt": 11,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -133,6 +136,7 @@
           "minSt": 12,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -168,6 +172,7 @@
           "minSt": 10,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -203,6 +208,7 @@
           "minSt": 10,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -224,7 +230,7 @@
       "reference": "Basic Set: Characters",
       "meleeModes": [
         {
-          "name": "thrust",
+          "name": "thrust (Boxing)",
           "skill": "Boxing",
           "damageBase": "thr",
           "damageModifier": -1,
@@ -238,6 +244,43 @@
           "minSt": null,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Brawling)",
+          "skill": "Brawling",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Karate)",
+          "skill": "Karate",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -259,7 +302,7 @@
       "reference": "Basic Set: Characters",
       "meleeModes": [
         {
-          "name": "thrust",
+          "name": "thrust (Boxing)",
           "skill": "Boxing",
           "damageBase": "thr",
           "damageModifier": 0,
@@ -273,6 +316,43 @@
           "minSt": null,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Brawling)",
+          "skill": "Brawling",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Karate)",
+          "skill": "Karate",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -308,6 +388,7 @@
           "minSt": null,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -343,6 +424,7 @@
           "minSt": null,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -378,6 +460,7 @@
           "minSt": null,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -413,6 +496,7 @@
           "minSt": null,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -448,6 +532,7 @@
           "minSt": 7,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -483,6 +568,7 @@
           "minSt": 10,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -500,6 +586,7 @@
           "minSt": 10,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -535,6 +622,7 @@
           "minSt": 10,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -552,6 +640,7 @@
           "minSt": 10,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -587,6 +676,7 @@
           "minSt": 10,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -604,6 +694,7 @@
           "minSt": 10,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -639,6 +730,7 @@
           "minSt": 11,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -656,6 +748,7 @@
           "minSt": 11,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -673,6 +766,7 @@
           "minSt": 10,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -690,6 +784,7 @@
           "minSt": 10,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -725,6 +820,7 @@
           "minSt": 11,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -742,6 +838,7 @@
           "minSt": 11,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -759,6 +856,7 @@
           "minSt": 10,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -776,6 +874,7 @@
           "minSt": 10,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -811,6 +910,7 @@
           "minSt": 11,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -828,6 +928,7 @@
           "minSt": 11,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -845,6 +946,7 @@
           "minSt": 10,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -862,6 +964,7 @@
           "minSt": 10,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -897,6 +1000,7 @@
           "minSt": 10,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -914,6 +1018,7 @@
           "minSt": 10,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -949,6 +1054,7 @@
           "minSt": 12,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -984,6 +1090,7 @@
           "minSt": 7,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1019,6 +1126,7 @@
           "minSt": 3,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1054,6 +1162,7 @@
           "minSt": 6,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1071,6 +1180,7 @@
           "minSt": 6,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1106,6 +1216,7 @@
           "minSt": 5,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1123,6 +1234,7 @@
           "minSt": 5,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1158,6 +1270,7 @@
           "minSt": 5,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1193,6 +1306,7 @@
           "minSt": 11,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1228,6 +1342,7 @@
           "minSt": 12,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1263,6 +1378,7 @@
           "minSt": 11,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1280,6 +1396,7 @@
           "minSt": 11,
           "twoHanded": true,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1315,6 +1432,7 @@
           "minSt": 9,
           "twoHanded": true,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1332,6 +1450,7 @@
           "minSt": 9,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1349,6 +1468,7 @@
           "minSt": 9,
           "twoHanded": true,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1366,6 +1486,7 @@
           "minSt": 9,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1383,6 +1504,7 @@
           "minSt": 9,
           "twoHanded": true,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1400,6 +1522,7 @@
           "minSt": 9,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1435,6 +1558,7 @@
           "minSt": 13,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1452,6 +1576,7 @@
           "minSt": 13,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1469,6 +1594,7 @@
           "minSt": 12,
           "twoHanded": true,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1504,6 +1630,7 @@
           "minSt": 12,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1521,6 +1648,7 @@
           "minSt": 12,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1556,6 +1684,7 @@
           "minSt": 9,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": true,
           "unreadyAfterAttack": false
         }
       ],
@@ -1591,6 +1720,7 @@
           "minSt": 8,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": true,
           "unreadyAfterAttack": false
         },
         {
@@ -1608,76 +1738,7 @@
           "minSt": 8,
           "twoHanded": false,
           "unbalanced": false,
-          "unreadyAfterAttack": false
-        }
-      ],
-      "rangedModes": []
-    }
-  },
-  {
-    "_id": "f7178b777fcf73ea",
-    "name": "Shield Bash",
-    "type": "equipment",
-    "system": {
-      "quantity": 1,
-      "weight": 0,
-      "cost": 0,
-      "carried": true,
-      "equipped": false,
-      "tl": "0",
-      "description": "",
-      "reference": "Basic Set: Characters",
-      "meleeModes": [
-        {
-          "name": "thrust",
-          "skill": "Shield",
-          "damageBase": "thr",
-          "damageModifier": 0,
-          "damageFormula": "",
-          "damageType": "cr",
-          "armorDivisor": 1,
-          "reach": "1",
-          "parryModifier": 0,
-          "canParry": false,
-          "isFlail": false,
-          "minSt": null,
-          "twoHanded": false,
-          "unbalanced": false,
-          "unreadyAfterAttack": false
-        }
-      ],
-      "rangedModes": []
-    }
-  },
-  {
-    "_id": "2917751ee974349e",
-    "name": "Shield Bash w. Spike",
-    "type": "equipment",
-    "system": {
-      "quantity": 1,
-      "weight": 5,
-      "cost": 20,
-      "carried": true,
-      "equipped": false,
-      "tl": "1",
-      "description": "",
-      "reference": "Basic Set: Characters",
-      "meleeModes": [
-        {
-          "name": "thrust",
-          "skill": "Shield",
-          "damageBase": "thr",
-          "damageModifier": 1,
-          "damageFormula": "",
-          "damageType": "cr",
-          "armorDivisor": 1,
-          "reach": "1",
-          "parryModifier": 0,
-          "canParry": false,
-          "isFlail": false,
-          "minSt": null,
-          "twoHanded": false,
-          "unbalanced": false,
+          "isFencing": true,
           "unreadyAfterAttack": false
         }
       ],
@@ -1713,6 +1774,7 @@
           "minSt": 6,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1730,6 +1792,7 @@
           "minSt": 6,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1765,6 +1828,7 @@
           "minSt": 8,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1782,6 +1846,7 @@
           "minSt": 8,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1817,6 +1882,7 @@
           "minSt": 8,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -1834,6 +1900,7 @@
           "minSt": 8,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1869,6 +1936,7 @@
           "minSt": 3,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -1904,6 +1972,7 @@
           "minSt": 6,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": true,
           "unreadyAfterAttack": false
         },
         {
@@ -1921,6 +1990,7 @@
           "minSt": 6,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": true,
           "unreadyAfterAttack": false
         }
       ],
@@ -1956,6 +2026,7 @@
           "minSt": 5,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": true,
           "unreadyAfterAttack": false
         }
       ],
@@ -1991,6 +2062,7 @@
           "minSt": 9,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -2026,6 +2098,7 @@
           "minSt": 6,
           "twoHanded": false,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -2061,6 +2134,7 @@
           "minSt": 10,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -2096,6 +2170,7 @@
           "minSt": 7,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -2113,6 +2188,7 @@
           "minSt": 7,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -2130,6 +2206,7 @@
           "minSt": 9,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -2147,6 +2224,7 @@
           "minSt": 9,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -2182,6 +2260,7 @@
           "minSt": 13,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -2217,6 +2296,7 @@
           "minSt": 12,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -2252,6 +2332,7 @@
           "minSt": 11,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -2269,6 +2350,7 @@
           "minSt": 11,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -2304,6 +2386,7 @@
           "minSt": 12,
           "twoHanded": false,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -2339,6 +2422,7 @@
           "minSt": 13,
           "twoHanded": true,
           "unbalanced": true,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -2374,6 +2458,7 @@
           "minSt": 12,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -2391,6 +2476,7 @@
           "minSt": 12,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
@@ -2426,6 +2512,7 @@
           "minSt": 12,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         },
         {
@@ -2443,6 +2530,7 @@
           "minSt": 12,
           "twoHanded": true,
           "unbalanced": false,
+          "isFencing": false,
           "unreadyAfterAttack": false
         }
       ],
