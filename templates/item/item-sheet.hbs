@@ -10,6 +10,7 @@
     {{/if}}
     <div class="ihead-fields">
       <input type="text" name="name" value="{{item.name}}" placeholder="{{localize 'GWORLD.Item.Name'}}"
+             aria-label="{{localize 'GWORLD.Item.Name'}}"
              {{#unless editable}}disabled{{/unless}} />
       <span class="itype">{{localize (concat "TYPES.Item." type)}}</span>
     </div>
@@ -54,16 +55,16 @@
         </div>
         {{#each system.defaults as |d i|}}
           <div class="irow" data-index="{{i}}">
-            <select name="system.defaults.{{i}}.from" {{#unless @root.editable}}disabled{{/unless}}>
+            <select name="system.defaults.{{i}}.from" aria-label="{{localize 'GWORLD.Skill.DefaultSource'}}" {{#unless @root.editable}}disabled{{/unless}}>
               <option value="attribute" {{#if (eq d.from "attribute")}}selected{{/if}}>{{localize "GWORLD.Skill.FromAttribute"}}</option>
               <option value="skill" {{#if (eq d.from "skill")}}selected{{/if}}>{{localize "GWORLD.Skill.FromSkill"}}</option>
             </select>
-            <select name="system.defaults.{{i}}.attribute" {{#unless @root.editable}}disabled{{/unless}}>
+            <select name="system.defaults.{{i}}.attribute" aria-label="{{localize 'GWORLD.Column.Attribute'}}" {{#unless @root.editable}}disabled{{/unless}}>
               {{selectOptions @root.choices.attributes selected=d.attribute localize=true}}
             </select>
-            <input type="text" name="system.defaults.{{i}}.skill" value="{{d.skill}}"
+            <input type="text" name="system.defaults.{{i}}.skill" value="{{d.skill}}" aria-label="{{localize 'GWORLD.Column.Skill'}}"
                    placeholder="{{localize 'GWORLD.Column.Skill'}}" {{#unless @root.editable}}disabled{{/unless}} />
-            <input type="number" name="system.defaults.{{i}}.modifier" value="{{d.modifier}}" step="1"
+            <input type="number" name="system.defaults.{{i}}.modifier" value="{{d.modifier}}" aria-label="{{localize 'GWORLD.Item.DefaultModifier'}}" step="1"
                    {{#unless @root.editable}}disabled{{/unless}} />
             {{#if @root.editable}}
               <button type="button" class="rollable iconbtn" data-action="deleteDefault"
@@ -217,9 +218,9 @@
         {{#each system.meleeModes as |m i|}}
           <div class="imode" data-index="{{i}}">
             <div class="irow">
-              <input type="text" name="system.meleeModes.{{i}}.name" value="{{m.name}}"
+              <input type="text" name="system.meleeModes.{{i}}.name" value="{{m.name}}" aria-label="{{localize 'GWORLD.Item.ModeName'}}"
                      placeholder="{{localize 'GWORLD.Item.ModeName'}}" {{#unless @root.editable}}disabled{{/unless}} />
-              <input type="text" name="system.meleeModes.{{i}}.skill" value="{{m.skill}}"
+              <input type="text" name="system.meleeModes.{{i}}.skill" value="{{m.skill}}" aria-label="{{localize 'GWORLD.Column.Skill'}}"
                      placeholder="{{localize 'GWORLD.Column.Skill'}}" {{#unless @root.editable}}disabled{{/unless}} />
               {{#if @root.editable}}
                 <button type="button" class="rollable iconbtn" data-action="deleteMode"
@@ -227,25 +228,25 @@
               {{/if}}
             </div>
             <div class="irow">
-              <select name="system.meleeModes.{{i}}.damageBase" {{#unless @root.editable}}disabled{{/unless}}>
+              <select name="system.meleeModes.{{i}}.damageBase" aria-label="{{localize 'GWORLD.Item.DamageBase'}}" {{#unless @root.editable}}disabled{{/unless}}>
                 {{selectOptions @root.choices.damageBases selected=m.damageBase localize=true}}
               </select>
-              <input type="number" name="system.meleeModes.{{i}}.damageModifier" value="{{m.damageModifier}}" step="1"
+              <input type="number" name="system.meleeModes.{{i}}.damageModifier" value="{{m.damageModifier}}" aria-label="{{localize 'GWORLD.Item.DamageModifier'}}" step="1"
                      {{#unless @root.editable}}disabled{{/unless}} />
-              <input type="text" name="system.meleeModes.{{i}}.damageFormula" value="{{m.damageFormula}}"
+              <input type="text" name="system.meleeModes.{{i}}.damageFormula" value="{{m.damageFormula}}" aria-label="{{localize 'GWORLD.Item.DamageFormula'}}"
                      placeholder="2d+1" {{#unless @root.editable}}disabled{{/unless}} />
-              <select name="system.meleeModes.{{i}}.damageType" {{#unless @root.editable}}disabled{{/unless}}>
+              <select name="system.meleeModes.{{i}}.damageType" aria-label="{{localize 'GWORLD.Item.DamageType'}}" {{#unless @root.editable}}disabled{{/unless}}>
                 {{selectOptions @root.choices.damageTypes selected=m.damageType localize=true}}
               </select>
             </div>
             <div class="irow">
-              <input type="text" name="system.meleeModes.{{i}}.reach" value="{{m.reach}}"
+              <input type="text" name="system.meleeModes.{{i}}.reach" value="{{m.reach}}" aria-label="{{localize 'GWORLD.Column.Reach'}}"
                      placeholder="{{localize 'GWORLD.Column.Reach'}}" {{#unless @root.editable}}disabled{{/unless}} />
-              <input type="number" name="system.meleeModes.{{i}}.parryModifier" value="{{m.parryModifier}}" step="1"
+              <input type="number" name="system.meleeModes.{{i}}.parryModifier" value="{{m.parryModifier}}" aria-label="{{localize 'GWORLD.Item.ParryModifier'}}" step="1"
                      {{#unless @root.editable}}disabled{{/unless}} />
-              <input type="number" name="system.meleeModes.{{i}}.minSt" value="{{m.minSt}}" step="1"
+              <input type="number" name="system.meleeModes.{{i}}.minSt" value="{{m.minSt}}" aria-label="{{localize 'GWORLD.Item.MinSt'}}" step="1"
                      placeholder="ST" {{#unless @root.editable}}disabled{{/unless}} />
-              <input type="number" name="system.meleeModes.{{i}}.armorDivisor" value="{{m.armorDivisor}}" step="0.5" min="1"
+              <input type="number" name="system.meleeModes.{{i}}.armorDivisor" value="{{m.armorDivisor}}" aria-label="{{localize 'GWORLD.Item.ArmorDivisor'}}" step="0.5" min="1"
                      {{#unless @root.editable}}disabled{{/unless}} />
             </div>
             <div class="irow iflags">

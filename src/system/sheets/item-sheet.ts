@@ -95,6 +95,24 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     return context;
   }
 
+  /**
+   * Armour coverage is a set of checkboxes sharing one name, and a form submits
+   * nothing at all for a checkbox group with none ticked. Left alone, unticking
+   * the last location would leave the previous coverage in place, so the
+   * documented whole-body state could never be reached again. An empty array is
+   * supplied explicitly when the group is present and empty.
+   */
+  override _processFormData(event: Event | null, form: HTMLFormElement, formData: object): object {
+    const data = super._processFormData(event, form, formData) as Record<string, any>;
+    if (this.item.type !== "armor") return data;
+
+    const hasGroup = form.querySelector('input[type="checkbox"][name="system.locations"]');
+    if (hasGroup && data.system?.locations === undefined) {
+      data.system = { ...(data.system ?? {}), locations: [] };
+    }
+    return data;
+  }
+
   /** The array field a mode-editing action refers to, and its current contents. */
   #modeList(target: HTMLElement): { path: string; list: unknown[] } | null {
     const path = target.closest<HTMLElement>("[data-mode-path]")?.dataset.modePath;

@@ -199,7 +199,8 @@
       "Defaults": "Defaults",
       "FromAttribute": "From attribute",
       "FromSkill": "From skill",
-      "NoDefaultsYet": "No defaults. Without one this skill cannot be rolled untrained."
+      "NoDefaultsYet": "No defaults. Without one this skill cannot be rolled untrained.",
+      "DefaultSource": "Default source"
     },
     "Trait": {
       "Levels": "levels",
@@ -235,7 +236,15 @@
       "Fencing": "Fencing",
       "TwoHanded": "Two-handed",
       "Flail": "Flail",
-      "NoModesYet": "No attacks yet. Add one to make this a weapon."
+      "NoModesYet": "No attacks yet. Add one to make this a weapon.",
+      "DamageBase": "Damage base",
+      "DamageModifier": "Damage modifier",
+      "DamageFormula": "Damage formula",
+      "DamageType": "Damage type",
+      "ParryModifier": "Parry modifier",
+      "MinSt": "Minimum ST",
+      "ArmorDivisor": "Armour divisor",
+      "DefaultModifier": "Modifier"
     },
     "Gear": {
       "Carried": "Carried",
