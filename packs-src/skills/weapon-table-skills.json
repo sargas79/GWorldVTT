@@ -1,0 +1,686 @@
+[
+  {
+    "_id": "8f6a886f2e717aa9",
+    "name": "Axe/Mace",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Flail",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Two-Handed Axe/Mace",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9331f70d3c5e90ca",
+    "name": "Broadsword",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Force Sword",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Rapier",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Saber",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Shortsword",
+          "modifier": -2
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Two-Handed Sword",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f30b7ae0caf6ac47",
+    "name": "Flail",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Axe/Mace",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Two-Handed Flail",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4a2d446a05ca507a",
+    "name": "Force Sword",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9736c2a7a2ec8ab7",
+    "name": "Knife",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Force Sword",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Shortsword",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "003064d593392318",
+    "name": "Kusari",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Monowire Whip",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Two-Handed Flail",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Whip",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "467643a5012ae108",
+    "name": "Monowire Whip",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Kusari",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Whip",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e8e67ebef88051de",
+    "name": "Polearm",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Spear",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Staff",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Two-Handed Axe/Mace",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "006e1b900a978bde",
+    "name": "Rapier",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Broadsword",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Saber",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Smallsword",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "db450910693e36d3",
+    "name": "Saber",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Broadsword",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Rapier",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Shortsword",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Smallsword",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c5dbde256989f8fa",
+    "name": "Shortsword",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Broadsword",
+          "modifier": -2
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Force Sword",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Knife",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Saber",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Smallsword",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "fb8b6ad95f5a81b6",
+    "name": "Smallsword",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Rapier",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Saber",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Shortsword",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "cf0c0702bcbcf754",
+    "name": "Spear",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Polearm",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Staff",
+          "modifier": -2
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e7b7ec9cf736aa9e",
+    "name": "Staff",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Polearm",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Spear",
+          "modifier": -2
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "af64235ede881e80",
+    "name": "Two-Handed Axe/Mace",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Axe/Mace",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Polearm",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Two-Handed Flail",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8638ae3c463be1ea",
+    "name": "Two-Handed Flail",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Flail",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Kusari",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Two-Handed Axe/Mace",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "98ca00c4c11a5aff",
+    "name": "Two-Handed Sword",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Broadsword",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Force Sword",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "63979cb2dcf2a50d",
+    "name": "Whip",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Kusari",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Monowire Whip",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  }
+]

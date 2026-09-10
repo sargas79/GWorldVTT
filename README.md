@@ -87,7 +87,23 @@ pdftotext -simple -f 168 -l 230 "GURPS 4E - Basic Set - Characters.pdf" skills.t
 node tools/parse-skills.mjs skills.txt --write
 ```
 
-Both parsers favour precision over recall and print every rejection with its
+```bash
+# The melee table shares its last page with the ranged one, so trim the tail.
+pdftotext -table -enc UTF-8 -f 273 -l 276 "GURPS 4E - Basic Set - Characters.pdf" melee-full.txt
+sed '/Ranged Weapon Table/,$d' melee-full.txt > melee.txt
+
+# The skill difficulties come from the skills chapter, which the table omits.
+pdftotext -raw -enc UTF-8 -f 205 -l 235 "GURPS 4E - Basic Set - Characters.pdf" skills-raw.txt
+
+node tools/parse-melee-weapons.mjs melee.txt skills-raw.txt --write
+```
+
+The weapon table needs `-table` rather than `-raw` or `-simple`, because it is
+genuinely tabular. It also needs the skills chapter alongside it: the table names
+the skill each weapon uses but never states that skill's difficulty, and assuming
+one gets Knife and Flail wrong.
+
+All three parsers favour precision over recall and print every rejection with its
 reason; each writes a `.rejected.txt` beside its output (git-ignored) so the
 entries that did not survive can be inspected. Traits are read in `-raw` mode
 rather than `-simple` because the reflow glues the book's trait-category symbols

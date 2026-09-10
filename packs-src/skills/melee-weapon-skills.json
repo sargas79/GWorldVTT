@@ -1,269 +1,14 @@
 [
   {
-    "_id": "8f6a886f2e717aa9",
-    "name": "Axe/Mace",
+    "_id": "3c38320a03823e8f",
+    "name": "Boxing",
     "type": "skill",
     "system": {
       "attribute": "DX",
       "difficulty": "A",
       "points": 0,
       "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -5
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "9331f70d3c5e90ca",
-    "name": "Broadsword",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "A",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Shortsword",
-          "modifier": -2
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "9736c2a7a2ec8ab7",
-    "name": "Knife",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "E",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -4
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "e8e67ebef88051de",
-    "name": "Polearm",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "A",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -5
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "006e1b900a978bde",
-    "name": "Rapier",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "A",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -5
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "c5dbde256989f8fa",
-    "name": "Shortsword",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "A",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -5
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "fb8b6ad95f5a81b6",
-    "name": "Smallsword",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "A",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -5
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "cf0c0702bcbcf754",
-    "name": "Spear",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "A",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -5
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "e7b7ec9cf736aa9e",
-    "name": "Staff",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "A",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -5
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "98ca00c4c11a5aff",
-    "name": "Two-Handed Sword",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "A",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -5
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "af64235ede881e80",
-    "name": "Two-Handed Axe/Mace",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "A",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -5
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "f30b7ae0caf6ac47",
-    "name": "Flail",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "H",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -6
-        }
-      ],
+      "defaults": [],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters"
@@ -284,6 +29,34 @@
           "attribute": "DX",
           "skill": "",
           "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9663a789ba8d740d",
+    "name": "Lance",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Spear",
+          "modifier": -3
         }
       ],
       "techLevel": "",
