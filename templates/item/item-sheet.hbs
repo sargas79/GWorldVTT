@@ -138,7 +138,13 @@
             {{selectOptions choices.comprehension selected=system.written localize=true}}
           </select>
         </label>
+        <label class="icheck">
+          <input type="checkbox" name="system.isNative" {{#if system.isNative}}checked{{/if}}
+                 {{#unless editable}}disabled{{/unless}} />
+          {{localize "GWORLD.Language.IsNative"}}
+        </label>
       </div>
+      <p class="ihint">{{localize "GWORLD.Language.NativeHint"}} <strong>{{system.totalPoints}}</strong></p>
     {{/if}}
 
     {{#if isArmor}}

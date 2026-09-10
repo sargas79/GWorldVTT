@@ -217,7 +217,9 @@
       "native": "Native",
       "Native": "Native tongue",
       "Spoken": "Spoken",
-      "Written": "Written"
+      "Written": "Written",
+      "IsNative": "Native language (free)",
+      "NativeHint": "Point cost:"
     },
     "Item": {
       "Equipped": "equipped",

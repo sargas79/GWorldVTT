@@ -100,7 +100,9 @@
               <td class="n">${{item.system.cost}}</td>
               <td class="c">
                 {{#if @root.editable}}
-                  <button type="button" class="rollable iconbtn" data-action="deleteItem">{{> "gworld.trash"}}</button>
+                  <button type="button" class="rollable iconbtn" data-action="deleteItem"
+                          title="{{localize 'GWORLD.Action.Delete'}}"
+                          aria-label="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
                 {{/if}}
               </td>
             </tr>

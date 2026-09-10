@@ -831,9 +831,10 @@
   height: 44px;
   object-fit: cover;
   border: 1px solid var(--color-divider);
-  cursor: pointer;
   flex: 0 0 auto;
 }
+/* Only the editable image opens the picker, so only it offers the affordance. */
+.gworld .iimg.editable { cursor: pointer; }
 .gworld .ihead-fields { display: flex; flex-direction: column; gap: 3px; flex: 1 1 auto; min-width: 0; }
 .gworld .ihead-fields input[type="text"] { font-family: var(--font-heading); font-size: 16px; font-weight: 600; }
 .gworld .itype {
