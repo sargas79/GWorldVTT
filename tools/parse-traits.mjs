@@ -64,6 +64,20 @@ const SYMBOL_RUN = /(?:^|\s+)\d(?:\/\d)?(?:\s+\d(?:\/\d)?)*\s*$/;
 const RUNNING_HEADER = /^(?:(\d{1,3})\s+)?(ADVANTAGES|DISADVANTAGES)(?:\s+(\d{1,3}))?$/;
 
 /**
+ * Any running header, whatever chapter it names. Reaching one that is not a
+ * trait chapter means the text has left them, and the chapter has to be
+ * forgotten rather than left standing: otherwise a cost line in a later part of
+ * the book is read under a chapter it no longer belongs to.
+ *
+ * The page number is required, which is what separates a running header from a
+ * section title set in the same capitals. "ADVANTAGE LIST" opens the advantages
+ * chapter and must not be read as leaving it -- forgetting the chapter there
+ * discards every trait up to the next header.
+ */
+const ANY_RUNNING_HEADER =
+  /^(?:\d{1,3}\s+[A-Z][A-Z’'-]*(?:\s+[A-Z][A-Z’'-]*)*|[A-Z][A-Z’'-]*(?:\s+[A-Z][A-Z’'-]*)*\s+\d{1,3})$/;
+
+/**
  * The enhancements and limitations chapter sits inside the advantages chapter's
  * running header, and its modifiers are priced "Variable" exactly as a trait is,
  * so only the page separates them.
@@ -158,6 +172,10 @@ function main() {
       page = Number(header[1] ?? header[3]) || page;
       continue;
     }
+    if (chapter && ANY_RUNNING_HEADER.test(lines[i].trim())) {
+      chapter = "";
+      continue;
+    }
 
     const cost = COST_LINE.exec(lines[i].trim());
 
@@ -229,6 +247,13 @@ function main() {
       priced = `${priced} ${lines[i + 1].trim()}`;
     }
 
+    // A few traits are priced as a base plus a rate: Magery is "5 points for
+    // Magery 0, +10 points/level". The data model already adds the two
+    // (totalPoints is points + levels * pointsPerLevel), so the rate belongs in
+    // pointsPerLevel. Reading only the leading number would leave Magery costing
+    // 5 at every level.
+    const basePlusLevel = perLevel ? null : /\+\s*(\d+)\s*points?\/level/.exec(priced);
+
     // The sign separates the two chapters, and it is unambiguous. A trait
     // costing 0 at its lower bound ("0 or 5 points") is still an advantage.
     seen.add(name);
@@ -243,7 +268,7 @@ function main() {
           points < 0 || (isVariable && chapter === "DISADVANTAGES") ? "disadvantage" : "advantage",
         points: perLevel ? 0 : points,
         levels: perLevel ? 1 : 0,
-        pointsPerLevel: perLevel ? points : 0,
+        pointsPerLevel: perLevel ? points : Number(basePlusLevel?.[1] ?? 0),
         reactionModifier: 0,
         description: variable
           ? `<p>The book prices this trait as <em>${priced}</em>. ${

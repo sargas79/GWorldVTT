@@ -1407,7 +1407,7 @@
       "category": "advantage",
       "points": 5,
       "levels": 0,
-      "pointsPerLevel": 0,
+      "pointsPerLevel": 10,
       "reactionModifier": 0,
       "description": "<p>The book prices this trait as <em>5 points for Magery 0, +10 points/level</em>. The value here is its base cost.</p>",
       "reference": "Basic Set: Characters"

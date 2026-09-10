@@ -72,27 +72,26 @@ function validateItem(entry, file) {
       file, name, `levels must be a non-negative integer, got "${sys.levels}"`,
     );
 
-    // A levelled trait prices its levels and a flat one prices itself. A cost in
-    // both fields is charged twice over by the points ledger.
-    check(
-      !(sys.points !== 0 && sys.pointsPerLevel !== 0),
-      file, name, "priced both flat and per level",
-    );
-
     // The sign of the cost has to agree with the category. This is the one thing
     // a mis-parsed trait gets wrong that nothing downstream would catch: the
-    // ledger would quietly credit a disadvantage as if it were bought.
+    // ledger would quietly credit a disadvantage as if it were bought. Perks are
+    // added to the advantage total and quirks to a negative bucket of their own,
+    // so both carry the same obligation as the category they are counted with.
     //
     // Which field holds the price is decided by which one is populated, not by
     // how many levels are currently bought. A levelled trait sitting at zero
     // levels still has to carry a correctly signed per-level cost, and checking
     // `points` there would wave a positive per-level disadvantage through.
+    //
+    // A trait may legitimately carry both: Magery is 5 points for Magery 0 plus
+    // 10 per level, and totalPoints adds them. Where both are set, the per-level
+    // rate is the one whose sign has to match, since it is the part that grows.
     const cost = sys.pointsPerLevel !== 0 ? sys.pointsPerLevel : sys.points;
-    if (sys.category === "disadvantage") {
-      check(cost <= 0, file, name, `disadvantage must not cost a positive ${cost}`);
-    }
-    if (sys.category === "advantage") {
-      check(cost >= 0, file, name, `advantage must not cost a negative ${cost}`);
+    const negative = sys.category === "disadvantage" || sys.category === "quirk";
+    if (negative) {
+      check(cost <= 0, file, name, `${sys.category} must not cost a positive ${cost}`);
+    } else {
+      check(cost >= 0, file, name, `${sys.category} must not cost a negative ${cost}`);
     }
   }
 
