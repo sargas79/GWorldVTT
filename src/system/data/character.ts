@@ -6,7 +6,12 @@
  * its embedded items.
  */
 
-import { secondaryCharacteristics } from "../../rules/attributes.js";
+import {
+  BASIC_SPEED_STEP,
+  basicSpeedPointCost,
+  secondaryCharacteristics,
+  secondaryPointCost,
+} from "../../rules/attributes.js";
 import { baseParry, block, dodge, parry } from "../../rules/defenses.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
@@ -71,10 +76,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     hp: number; will: number; per: number; fp: number;
     basicSpeed: number; basicMove: number; dodge: number;
   };
+  declare purchased: {
+    hp: number; will: number; per: number; fp: number;
+    basicSpeed: number; basicMove: number;
+  };
   declare hp: { value: number; max: number };
   declare fp: { value: number; max: number };
   declare points: { starting: number; disadvantageLimit: number };
   declare tl: number;
+  declare sm: number;
   declare posture: Posture;
   declare conditions: { stunned: boolean; allOutDefense: boolean; blindToAttacker: boolean };
   declare details: {
@@ -93,17 +103,40 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         HT: attributeField("GWORLD.Attribute.HT"),
       }),
 
-      // GURPS Lite ties every secondary characteristic to an attribute. These
-      // bonuses let racial templates and GM rulings shift them without a
-      // schema migration.
+      /**
+       * Levels GRANTED from outside the point budget: racial templates, GM
+       * rulings, magic items. These change the derived value but are never
+       * billed to the character.
+       */
       bonuses: new fields.SchemaField({
         hp: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
         will: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
         per: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
         fp: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
-        basicSpeed: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
+        basicSpeed: new fields.NumberField({
+          required: true, nullable: false, initial: 0, step: BASIC_SPEED_STEP,
+        }),
         basicMove: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
         dodge: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+      }),
+
+      /**
+       * Levels BOUGHT with character points (GURPS Basic Set: Characters
+       * pp. 14-17). Only these are billed to the points ledger.
+       *
+       * Basic Speed carries step 0.25 so an off-step value is rejected at the
+       * data boundary rather than reaching the pricing helper, which would
+       * otherwise charge nothing for an adjustment that still moved the score.
+       */
+      purchased: new fields.SchemaField({
+        hp: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        will: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        per: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        fp: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        basicSpeed: new fields.NumberField({
+          required: true, nullable: false, initial: 0, step: BASIC_SPEED_STEP,
+        }),
+        basicMove: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
       }),
 
       hp: poolField(),
@@ -116,6 +149,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       }),
 
       tl: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 3 }),
+
+      /**
+       * Size Modifier (GURPS Basic Set: Characters p. 19). Humans are SM 0.
+       * It is a bonus for others to hit you and a penalty to be missed.
+       */
+      sm: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
 
       posture: new fields.StringField({
         required: true,
@@ -172,13 +211,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   private buildDerived() {
     const attrs = this.attributes;
 
+    // Granted and purchased levels both move the score; only purchased ones
+    // are billed, which is why they are stored apart.
+    const p = this.purchased;
+    const b = this.bonuses;
     const secondary = secondaryCharacteristics(attrs, {
-      hp: this.bonuses.hp,
-      will: this.bonuses.will,
-      per: this.bonuses.per,
-      fp: this.bonuses.fp,
-      basicSpeed: this.bonuses.basicSpeed,
-      basicMove: this.bonuses.basicMove,
+      hp: b.hp + p.hp,
+      will: b.will + p.will,
+      per: b.per + p.per,
+      fp: b.fp + p.fp,
+      basicSpeed: b.basicSpeed + p.basicSpeed,
+      basicMove: b.basicMove + p.basicMove,
     });
 
     this.hp.max = secondary.hp;
@@ -388,8 +431,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       0,
     );
 
+    // Only purchased levels are billed. Granted ones (racial templates, GM
+    // rulings) move the score for free.
+    const secondaryPoints =
+      secondaryPointCost("hp", p.hp) +
+      secondaryPointCost("will", p.will) +
+      secondaryPointCost("per", p.per) +
+      secondaryPointCost("fp", p.fp) +
+      secondaryPointCost("basicMove", p.basicMove) +
+      basicSpeedPointCost(p.basicSpeed);
+
     const spent =
-      attributePoints + advantages + disadvantages + quirks + skillPoints + languagePoints;
+      attributePoints + secondaryPoints + advantages + disadvantages + quirks +
+      skillPoints + languagePoints;
 
     return {
       will: secondary.will,
@@ -412,6 +466,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       reeling,
       points: {
         attributes: attributePoints,
+        secondaries: secondaryPoints,
         advantages,
         disadvantages,
         quirks,

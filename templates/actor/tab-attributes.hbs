@@ -22,14 +22,24 @@
   <div class="isec">
     <div class="ish"><span class="num">02</span>{{localize "GWORLD.Section.Secondary"}}</div>
     <div class="cellgrid">
-      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.HP"}}</span><span class="cv">{{system.hp.max}}</span><span class="cd">= ST</span></div>
-      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.Will"}}</span><span class="cv">{{derived.will}}</span><span class="cd">= IQ</span></div>
-      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.Per"}}</span><span class="cv">{{derived.per}}</span><span class="cd">= IQ</span></div>
-      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.FP"}}</span><span class="cv">{{system.fp.max}}</span><span class="cd">= HT</span></div>
-      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.BasicLift"}}</span><span class="cv">{{derived.basicLift}} lb</span><span class="cd">= ST&sup2;/5</span></div>
-      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.BasicSpeed"}}</span><span class="cv">{{decimal derived.basicSpeed 2}}</span><span class="cd">= (DX+HT)/4</span></div>
-      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.BasicMove"}}</span><span class="cv">{{derived.basicMove}}</span><span class="cd">= &lfloor;Speed&rfloor;</span></div>
-      <div class="cell"><span class="cl">{{localize "GWORLD.Secondary.Dodge"}}</span><span class="cv">{{derived.defenses.dodge.total}}</span><span class="cd">= Move + 3</span></div>
+      {{#each secondaryCells as |cell|}}
+        <div class="cell">
+          <span class="cl">{{cell.label}}</span>
+          {{#if cell.editable}}
+            <span style="display: flex; align-items: baseline; gap: 6px">
+              <span class="cv">{{cell.value}}</span>
+              <input type="number" name="system.purchased.{{cell.key}}" value="{{cell.purchased}}"
+                     step="{{cell.step}}" title="{{localize 'GWORLD.Secondary.AdjustHint'}}"
+                     style="width: 46px; background: none; border: 1px solid var(--color-divider); font: inherit; color: var(--color-accent-700)"
+                     {{#unless @root.editable}}disabled{{/unless}}>
+            </span>
+          {{else}}
+            <span class="cv">{{cell.value}}</span>
+          {{/if}}
+          <span class="cd">{{cell.derivation}}{{#if cell.cost}} &middot; {{cell.cost}} pts{{/if}}{{#if cell.granted}} &middot; {{signed cell.granted}} {{localize "GWORLD.Secondary.Granted"}}{{/if}}</span>
+        </div>
+      {{/each}}
+    </div>
     </div>
   </div>
 
@@ -68,9 +78,48 @@
   </div>
 
   <div class="isec">
-    <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.CharacterPoints"}}</div>
+    <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.Campaign"}}</div>
+    <div class="g4">
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.TechLevel"}}</span>
+        <div class="fi">
+          <input type="number" name="system.tl" value="{{system.tl}}" step="1" min="0"
+                 style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+                 {{#unless editable}}disabled{{/unless}}>
+        </div>
+      </div>
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.SizeModifier"}}</span>
+        <div class="fi">
+          <input type="number" name="system.sm" value="{{system.sm}}" step="1"
+                 style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+                 {{#unless editable}}disabled{{/unless}}>
+        </div>
+      </div>
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.StartingPoints"}}</span>
+        <div class="fi">
+          <input type="number" name="system.points.starting" value="{{system.points.starting}}" step="5" min="0"
+                 style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+                 {{#unless editable}}disabled{{/unless}}>
+        </div>
+      </div>
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.DisadvantageLimit"}}</span>
+        <div class="fi">
+          <input type="number" name="system.points.disadvantageLimit" value="{{system.points.disadvantageLimit}}" step="5" min="0"
+                 style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+                 {{#unless editable}}disabled{{/unless}}>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="isec">
+    <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.CharacterPoints"}}</div>
     <div class="ledger">
       <div class="lrow"><span>{{localize "GWORLD.Points.Attributes"}}</span><span>{{derived.points.attributes}}</span></div>
+      <div class="lrow"><span>{{localize "GWORLD.Points.Secondaries"}}</span><span>{{derived.points.secondaries}}</span></div>
       <div class="lrow"><span>{{localize "GWORLD.Points.Advantages"}}</span><span>{{derived.points.advantages}}</span></div>
       <div class="lrow"><span>{{localize "GWORLD.Points.Disadvantages"}}</span><span class="neg">{{derived.points.disadvantages}}</span></div>
       <div class="lrow"><span>{{localize "GWORLD.Points.Quirks"}}</span><span class="neg">{{derived.points.quirks}}</span></div>

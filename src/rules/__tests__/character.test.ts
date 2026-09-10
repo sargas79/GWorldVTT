@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BASIC_SPEED_STEP,
+  SECONDARY_COST_PER_LEVEL,
   attributePointCost,
   attributesPointCost,
   basicLift,
   basicMove,
   basicSpeed,
+  basicSpeedPointCost,
   secondaryCharacteristics,
+  secondaryPointCost,
 } from "../attributes.js";
 import {
   ENCUMBRANCE_TIERS,
@@ -240,5 +244,54 @@ describe("encumbrance (GURPS Lite p. 22)", () => {
       dodgePenalty: -2,
       overloaded: false,
     });
+  });
+});
+
+describe("secondary characteristic pricing (GURPS Basic Set: Characters pp. 14-17)", () => {
+  it.each([
+    ["hp", 2],
+    ["will", 5],
+    ["per", 5],
+    ["fp", 3],
+    ["basicMove", 5],
+    ["basicSpeedQuarter", 5],
+  ] as const)("prices %s at %s points per level", (key, rate) => {
+    expect(SECONDARY_COST_PER_LEVEL[key]).toBe(rate);
+  });
+
+  it("charges the listed rate per level bought", () => {
+    expect(secondaryPointCost("hp", 3)).toBe(6);
+    expect(secondaryPointCost("will", 2)).toBe(10);
+    expect(secondaryPointCost("per", 1)).toBe(5);
+    expect(secondaryPointCost("fp", 4)).toBe(12);
+    expect(secondaryPointCost("basicMove", 2)).toBe(10);
+  });
+
+  it("refunds points for levels sold below the default", () => {
+    expect(secondaryPointCost("hp", -3)).toBe(-6);
+    expect(secondaryPointCost("will", -2)).toBe(-10);
+    expect(secondaryPointCost("fp", -1)).toBe(-3);
+  });
+
+  it("costs nothing when nothing is bought", () => {
+    for (const key of ["hp", "will", "per", "fp", "basicMove"] as const) {
+      expect(secondaryPointCost(key, 0)).toBe(0);
+    }
+  });
+
+  it("prices Basic Speed in quarter-point steps at 5 points each", () => {
+    expect(basicSpeedPointCost(0.25)).toBe(5);
+    expect(basicSpeedPointCost(0.5)).toBe(10);
+    expect(basicSpeedPointCost(1)).toBe(20);
+    expect(basicSpeedPointCost(0)).toBe(0);
+    expect(basicSpeedPointCost(-0.25)).toBe(-5);
+    expect(basicSpeedPointCost(-1)).toBe(-20);
+  });
+
+  it("does not silently price an off-step Basic Speed adjustment at zero", () => {
+    // The schema field rejects off-step values, but if one ever reached this
+    // helper it must not read as free while still moving the score.
+    expect(basicSpeedPointCost(0.1)).not.toBe(0);
+    expect(BASIC_SPEED_STEP).toBe(0.25);
   });
 });

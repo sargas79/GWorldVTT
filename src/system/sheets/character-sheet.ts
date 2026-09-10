@@ -9,6 +9,11 @@
 
 import { SYSTEM_ID } from "../constants.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
+import {
+  BASIC_SPEED_STEP,
+  basicSpeedPointCost,
+  secondaryPointCost,
+} from "../../rules/attributes.js";
 import { handleDamageAction, handleRollAction } from "../roll.js";
 import type { Attribute, Posture } from "../../rules/types.js";
 
@@ -135,6 +140,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         selected: system.posture === key,
       })),
 
+      secondaryCells: this.#secondaryCells(system, derived),
       pointsWarning: this.#pointsWarning(derived),
 
       traitGroups: [
@@ -233,6 +239,58 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     >;
     if (partContext.tabs && partId in partContext.tabs) partContext.tab = partContext.tabs[partId];
     return partContext;
+  }
+
+  /**
+   * The secondary-characteristics grid.
+   *
+   * Each Basic Set secondary can be bought above or sold below its
+   * attribute-derived default, so the editable ones expose their adjustment and
+   * what it costs. Basic Lift and Dodge stay read-only — they are computed, not
+   * purchased.
+   */
+  #secondaryCells(system: any, derived: any) {
+    const L = (key: string) => game.i18n.localize(`GWORLD.Secondary.${key}`);
+    const p = system.purchased;
+    const b = system.bonuses;
+
+    const cell = (
+      key: "hp" | "will" | "per" | "fp" | "basicMove",
+      label: string,
+      value: unknown,
+      derivation: string,
+    ) => ({
+      key,
+      label,
+      value,
+      purchased: p[key],
+      granted: b[key],
+      derivation,
+      step: 1,
+      editable: true,
+      cost: secondaryPointCost(key, p[key]),
+    });
+
+    return [
+      cell("hp", L("HP"), system.hp.max, "= ST"),
+      cell("will", L("Will"), derived.will, "= IQ"),
+      cell("per", L("Per"), derived.per, "= IQ"),
+      cell("fp", L("FP"), system.fp.max, "= HT"),
+      {
+        key: "basicLift", label: L("BasicLift"), value: `${derived.basicLift} lb`,
+        derivation: "= ST²/5", editable: false, cost: 0, granted: 0, purchased: 0, step: 1,
+      },
+      {
+        key: "basicSpeed", label: L("BasicSpeed"), value: derived.basicSpeed.toFixed(2),
+        purchased: p.basicSpeed, granted: b.basicSpeed, derivation: "= (DX+HT)/4",
+        step: BASIC_SPEED_STEP, editable: true, cost: basicSpeedPointCost(p.basicSpeed),
+      },
+      cell("basicMove", L("BasicMove"), derived.basicMove, "= ⌊Speed⌋"),
+      {
+        key: "dodge", label: L("Dodge"), value: derived.defenses.dodge.total,
+        derivation: "= Move + 3", editable: false, cost: 0, granted: 0, purchased: 0, step: 1,
+      },
+    ];
   }
 
   /** The advisory line under the points ledger. Warnings never block saving. */

@@ -51,7 +51,9 @@
       "WillAbbr": "Will",
       "PerAbbr": "Per",
       "MoveAbbr": "Move",
-      "DRAbbr": "DR"
+      "DRAbbr": "DR",
+      "AdjustHint": "Levels bought with character points",
+      "Granted": "granted"
     },
     "Section": {
       "BasicAttributes": "Basic Attributes",
@@ -73,7 +75,8 @@
       "Appearance": "Appearance",
       "Languages": "Languages",
       "Biography": "Biography",
-      "Notes": "Notes"
+      "Notes": "Notes",
+      "Campaign": "Campaign"
     },
     "Column": {
       "Skill": "Skill",
@@ -106,7 +109,11 @@
       "Height": "Height",
       "Weight": "Weight",
       "Age": "Age",
-      "AppearancePlaceholder": "How they read to a stranger"
+      "AppearancePlaceholder": "How they read to a stranger",
+      "TechLevel": "Tech Level",
+      "SizeModifier": "Size Modifier",
+      "StartingPoints": "Starting Points",
+      "DisadvantageLimit": "Disadv. Limit"
     },
     "Points": {
       "Attributes": "Attributes",
@@ -120,7 +127,8 @@
       "Unspent": "{points} points unspent.",
       "Over": "{points} points over budget.",
       "Exact": "Every point spent.",
-      "DisadvantageStanding": "Disadvantages {total} of the {limit} this campaign allows."
+      "DisadvantageStanding": "Disadvantages {total} of the {limit} this campaign allows.",
+      "Secondaries": "Secondary Characteristics"
     },
     "Condition": {
       "AllOutDefense": "All-Out Defense",
