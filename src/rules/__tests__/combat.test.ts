@@ -21,7 +21,13 @@ import {
   shockPenalty,
 } from "../injury.js";
 import { POSTURE_EFFECTS, postureMove, reachablePostures } from "../posture.js";
-import { rangedToHitModifier, speedRangeModifier, musclePoweredRange } from "../ranged.js";
+import {
+  musclePoweredRange,
+  rangedToHitModifier,
+  rapidFireBonus,
+  rapidFireHits,
+  speedRangeModifier,
+} from "../ranged.js";
 
 describe("base active defenses (GURPS Lite pp. 6, 28)", () => {
   it("gives Basic Speed 5.25 a Dodge of 8", () => {
@@ -291,5 +297,72 @@ describe("choosing a weapon to parry with (Basic Set: Characters p. 269)", () =>
     expect(bestParryOption([axe], true)).toBeNull();
     expect(bestParryOption([bow], false)).toBeNull();
     expect(bestParryOption([], false)).toBeNull();
+  });
+});
+
+describe("rapid fire (GURPS Basic Set: Campaigns p. 373)", () => {
+  it("gives no bonus for the shots a single trigger pull sends", () => {
+    expect(rapidFireBonus(1)).toBe(0);
+    expect(rapidFireBonus(2)).toBe(0);
+    expect(rapidFireBonus(4)).toBe(0);
+  });
+
+  it("reads the printed table", () => {
+    expect(rapidFireBonus(5)).toBe(1);
+    expect(rapidFireBonus(8)).toBe(1);
+    expect(rapidFireBonus(9)).toBe(2);
+    expect(rapidFireBonus(12)).toBe(2);
+    expect(rapidFireBonus(13)).toBe(3);
+    expect(rapidFireBonus(16)).toBe(3);
+    expect(rapidFireBonus(17)).toBe(4);
+    expect(rapidFireBonus(24)).toBe(4);
+    expect(rapidFireBonus(25)).toBe(5);
+    expect(rapidFireBonus(49)).toBe(5);
+    expect(rapidFireBonus(50)).toBe(6);
+    expect(rapidFireBonus(99)).toBe(6);
+  });
+
+  /** "each x2 +1 to hit" past the end of the printed rows. */
+  it("continues by doubling past the table", () => {
+    expect(rapidFireBonus(100)).toBe(7);
+    expect(rapidFireBonus(199)).toBe(7);
+    expect(rapidFireBonus(200)).toBe(8);
+    expect(rapidFireBonus(400)).toBe(9);
+  });
+
+  /** The book's own worked example, for a weapon at Rcl 2. */
+  it("scores one extra hit per full multiple of Recoil", () => {
+    const hits = (margin: number) => rapidFireHits({ margin, shotsFired: 10, recoil: 2 });
+    expect(hits(0)).toBe(1);
+    expect(hits(1)).toBe(1);
+    expect(hits(2)).toBe(2);
+    expect(hits(3)).toBe(2);
+    expect(hits(4)).toBe(3);
+    expect(hits(5)).toBe(3);
+    expect(hits(6)).toBe(4);
+    expect(hits(7)).toBe(4);
+  });
+
+  it("never scores more hits than shots fired", () => {
+    expect(rapidFireHits({ margin: 20, shotsFired: 3, recoil: 1 })).toBe(3);
+    expect(rapidFireHits({ margin: 0, shotsFired: 3, recoil: 1 })).toBe(1);
+  });
+
+  it("scores every shot with a recoilless weapon that rolls well", () => {
+    expect(rapidFireHits({ margin: 5, shotsFired: 6, recoil: 1 })).toBe(6);
+  });
+
+  /**
+   * The table prints Rcl 1 for a recoilless weapon, but a muscle-powered
+   * weapon can reach this recorded with none. Dividing by that would score
+   * every shot as a hit on any success at all.
+   */
+  it("treats a recoil below 1 as 1 rather than dividing by zero", () => {
+    expect(rapidFireHits({ margin: 3, shotsFired: 10, recoil: 0 })).toBe(4);
+    expect(Number.isFinite(rapidFireHits({ margin: 3, shotsFired: 10, recoil: 0 }))).toBe(true);
+  });
+
+  it("scores a single hit on a bare success however many shots were fired", () => {
+    expect(rapidFireHits({ margin: 0, shotsFired: 50, recoil: 3 })).toBe(1);
   });
 });

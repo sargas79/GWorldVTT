@@ -30,10 +30,15 @@ minimum-damage floor, states the wounding modifier and the injury an unarmoured
 target would take, and names the armour divisor when there is one.
 
 **Ranged attacks** — firing asks how far the target is, how fast it is moving,
-how big it is, and whether the shot was aimed, then rolls with the speed/range
-penalty from the Size and Speed/Range Table, the target's Size Modifier, and the
-weapon's Accuracy for an aimed shot. The card shows each as its own line rather
-than one opaque number.
+how big it is, how many shots to fire, and whether the shot was aimed. It rolls
+with the speed/range penalty from the Size and Speed/Range Table, the target's
+Size Modifier, the weapon's Accuracy for an aimed shot, and the bonus for
+firing a burst. The card shows each as its own line rather than one opaque
+number.
+
+A burst reports how many of its shots hit: one for the success itself, and one
+more for every full multiple of the weapon's Recoil the roll beat its target
+by, never more than were fired.
 
 **Turn order** — everyone acts in order of Basic Speed, highest first, and that
 order holds for the whole fight. Ties break on DX, which matters more than it
@@ -91,11 +96,6 @@ book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
   whether the character knows Boxing or Karate, and a lance's depends on the
   mount's ST and Move. Those are recorded from the book's own table in
   `packs-src/equipment/table-only-weapons.json` rather than derived.
-- **Rapid fire is not implemented.** A weapon's rate of fire and recoil are
-  recorded but not read: a burst rolls once and hits once. The rules that turn
-  a margin of success into a number of hits are in the Basic Set rather than
-  GURPS Lite, and are not implemented from memory — the numbers would be
-  guesses, and a guessed number at the table is worse than a missing feature.
 - Some statistics are recorded but not yet read by the rules engine:
   `isFencing` on a melee mode and `bulk` on a ranged one. Fencing weapons defend
   by their own rules, which turn on retreating, and nothing here models a
