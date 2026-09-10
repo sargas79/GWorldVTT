@@ -13,6 +13,10 @@
       <button type="button" class="ibtn" data-action="createItem" data-item-type="skill">
         {{> "gworld.plus"}} {{localize "GWORLD.Action.AddSkill"}}
       </button>
+      <button type="button" class="ibtn" data-action="browseCompendium"
+              data-item-types="skill,technique" data-browse-title="GWORLD.Picker.Skills">
+        {{> "gworld.search"}} {{localize "GWORLD.Action.BrowseSkills"}}
+      </button>
     {{/if}}
   </div>
 

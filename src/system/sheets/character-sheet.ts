@@ -7,6 +7,7 @@
  * DOM at once and CSS controls visibility.
  */
 
+import { CompendiumPicker } from "../apps/compendium-picker.js";
 import { SYSTEM_ID } from "../constants.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
 import {
@@ -64,6 +65,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       rollDamage: GWorldCharacterSheet.#onRollDamage,
       toggleCondition: GWorldCharacterSheet.#onToggleCondition,
       createItem: GWorldCharacterSheet.#onCreateItem,
+      browseCompendium: GWorldCharacterSheet.#onBrowseCompendium,
       editItem: GWorldCharacterSheet.#onEditItem,
       deleteItem: GWorldCharacterSheet.#onDeleteItem,
       toggleEquipped: GWorldCharacterSheet.#onToggleEquipped,
@@ -195,6 +197,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         },
       ],
       disadvantageOverLimit: derived.points.disadvantageTotal > derived.points.disadvantageLimit,
+      // Spending past the budget is not forbidden -- a GM may allow it, and a
+      // character part-way through being built is over and under by turns --
+      // so it is flagged rather than blocked.
+      overBudget: derived.points.spent > derived.points.starting,
 
       conditionChips: CONDITIONS.map(({ key, label }) => ({
         key,
@@ -459,6 +465,27 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!key) return;
     const current = foundry.utils.getProperty(this.actor, `system.conditions.${key}`);
     await this.actor.update({ [`system.conditions.${key}`]: !current });
+  }
+
+  /**
+   * Opens the compendium picker, filtered to the types the button names.
+   *
+   * Beside the "new blank item" button rather than replacing it: making one up
+   * is what you want for a house rule or a piece of loot, and finding one the
+   * book already prices is what you want for everything else.
+   */
+  static async #onBrowseCompendium(
+    this: GWorldCharacterSheet,
+    _event: Event,
+    target: HTMLElement,
+  ) {
+    const types = (target.dataset.itemTypes ?? "").split(",").filter(Boolean);
+    if (types.length === 0) return;
+    await CompendiumPicker.open({
+      actor: this.actor,
+      types,
+      title: game.i18n.localize(target.dataset.browseTitle ?? "GWORLD.Picker.Title"),
+    });
   }
 
   static async #onCreateItem(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

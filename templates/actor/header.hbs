@@ -10,7 +10,10 @@
     <div class="inrow">
       <input class="iname" type="text" name="name" value="{{actor.name}}" {{#unless editable}}disabled{{/unless}}>
       <span class="imeta">{{system.details.player}}{{#if system.details.player}} / {{/if}}TL {{system.tl}}</span>
-      <span class="ipts">{{derived.points.spent}} of {{derived.points.starting}} pts</span>
+      <span class="ipts{{#if overBudget}} over{{/if}}"
+            {{#if overBudget}}data-tooltip="{{localize "GWORLD.Hint.OverBudget"}}"{{/if}}>
+        {{derived.points.spent}} of {{derived.points.starting}} pts
+      </span>
     </div>
 
     <div class="ipools">

@@ -37,6 +37,10 @@
         <button type="button" class="ibtn" data-action="createItem" data-item-type="shield">
           {{> "gworld.plus"}} {{localize "GWORLD.Action.AddShield"}}
         </button>
+        <button type="button" class="ibtn" data-action="browseCompendium"
+                data-item-types="equipment,armor,shield" data-browse-title="GWORLD.Picker.Gear">
+          {{> "gworld.search"}} {{localize "GWORLD.Action.BrowseGear"}}
+        </button>
       {{/if}}
     </div>
     {{#if carriedRows.length}}

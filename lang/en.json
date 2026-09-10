@@ -152,6 +152,20 @@
       "Secondaries": "Secondary Characteristics",
       "Techniques": "Techniques"
     },
+    "Picker": {
+      "Title": "Add from the compendia",
+      "Skills": "Add a skill or technique",
+      "Traits": "Add an advantage or disadvantage",
+      "Gear": "Add gear, armour or a shield",
+      "Search": "Search by name",
+      "Add": "Add",
+      "AddAgain": "Add again",
+      "Added": "Added {name}.",
+      "NotFound": "That compendium entry could not be loaded.",
+      "Count": "{total} entries",
+      "Truncated": "showing {shown} of {total}",
+      "Empty": "Nothing matches."
+    },
     "Condition": {
       "AllOutDefense": "All-Out Defense",
       "Stunned": "Stunned",
@@ -265,6 +279,9 @@
       "InScene": "x{count} in scene"
     },
     "Action": {
+      "BrowseSkills": "Browse",
+      "BrowseTraits": "Browse",
+      "BrowseGear": "Browse",
       "AddSkill": "Add Skill",
       "AddAdvantage": "Advantage",
       "AddDisadvantage": "Disadvantage",
@@ -283,6 +300,7 @@
       "DeleteItem": "Delete <strong>{name}</strong>? This cannot be undone."
     },
     "Hint": {
+      "OverBudget": "Spent past the starting budget.",
       "DisadvantageLimit": "A rule of thumb, not a hard cap. Disadvantages and quirks both count.",
       "Languages": "Accented is -1 to skills that depend on language. One native language is free.",
       "GMOnly": "visible to the GM only",
