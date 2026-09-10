@@ -20,6 +20,7 @@ import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
 import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js";
 import {
   effectiveSkillLevel,
+  namedDefaultLevel,
   relativeLevelForPoints,
   resolveTechnique,
   techniqueLevelsForPoints,
@@ -256,9 +257,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         defaults?: Array<{ from: string; attribute: SkillAttribute; skill: string; modifier: number }>;
         derived?: Record<string, unknown>;
       };
+      // namedDefaultLevel applies the Rule of 20, so a Per 25 default at -5
+      // lands on 15 rather than 20.
       const attributeDefaults = (sys.defaults ?? [])
         .filter((d) => d.from !== "skill")
-        .map((d) => attributeScore(d.attribute) + d.modifier);
+        .map((d) => namedDefaultLevel(attributeScore(d.attribute), d.modifier));
 
       const resolved = effectiveSkillLevel({
         attributeScore: attributeScore(sys.attribute),

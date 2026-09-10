@@ -352,3 +352,12 @@ describe("techniques (GURPS Basic Set: Characters pp. 229-233)", () => {
     expect(result.cappedByPrerequisite).toBe(true);
   });
 });
+
+describe("skill defaults and the Rule of 20", () => {
+  it("caps a Per-based default at 20 before applying the modifier", () => {
+    // A Per 25 skill defaulting at -5 lands on 15, not 20.
+    expect(namedDefaultLevel(25, -5)).toBe(15);
+    expect(namedDefaultLevel(20, -5)).toBe(15);
+    expect(namedDefaultLevel(18, -5)).toBe(13);
+  });
+});

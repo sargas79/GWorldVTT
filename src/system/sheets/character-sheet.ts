@@ -390,7 +390,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       armor: byType("armor"),
       shields: byType("shield"),
       languages: byType("language"),
-      techniques: byType("technique").sort((a: any, b: any) => a.name.localeCompare(b.name)),
+      techniques: byType("technique")
+        .sort((a: any, b: any) => a.name.localeCompare(b.name))
+        // A resolved level of 0 or below is still a valid level, but Handlebars
+        // reads it as false, so the template needs an explicit flag.
+        .map((t: any) => ({ item: t, resolved: t.system.derived?.level !== null })),
       carried: equipment.filter((i: any) => i.system.carried),
       stored: equipment.filter((i: any) => !i.system.carried),
     };
