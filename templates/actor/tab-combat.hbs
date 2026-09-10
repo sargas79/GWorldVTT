@@ -194,8 +194,40 @@
     </div>
   {{/if}}
 
+  {{#if tactical}}
+    <div class="isec">
+      <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.Movement"}}</div>
+      <div class="ifields">
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Tactical.MovementPoints"}}</span>
+          <div class="fi">{{tactical.points}}</div>
+        </div>
+        <label class="fld">
+          <span class="fl">{{localize "GWORLD.Tactical.Handedness"}}</span>
+          <div class="fi">
+            <select name="system.handedness" {{#unless editable}}disabled{{/unless}}>
+              {{#each hands as |hand|}}
+                <option value="{{hand.key}}" {{#if hand.selected}}selected{{/if}}>{{hand.label}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </label>
+      </div>
+      {{#if tactical.immobile}}
+        <p class="ihint">{{localize "GWORLD.Tactical.Immobile"}}</p>
+      {{else}}
+        <div class="gc-mods">
+          <span>{{localize "GWORLD.Tactical.Forward"}} {{tactical.forward}}</span>
+          <span>{{localize "GWORLD.Tactical.Sideways"}} {{tactical.sideways}}</span>
+          <span>{{localize "GWORLD.Tactical.Backward"}} {{tactical.backward}}</span>
+        </div>
+        <p class="ihint">{{localize "GWORLD.Tactical.MovementHint"}}</p>
+      {{/if}}
+    </div>
+  {{/if}}
+
   <div class="isec">
-    <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.HitLocations"}}</div>
+    <div class="ish"><span class="num">06</span>{{localize "GWORLD.Section.HitLocations"}}</div>
     <table class="gt">
       <thead>
         <tr>

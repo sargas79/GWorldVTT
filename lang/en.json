@@ -61,6 +61,7 @@
       "Granted": "granted"
     },
     "Section": {
+      "Movement": "Movement",
       "BasicAttributes": "Basic Attributes",
       "Secondary": "Secondary Characteristics",
       "DamageBearing": "Damage & Bearing",
@@ -153,6 +154,33 @@
       "DisadvantageStanding": "Disadvantages {total} of the {limit} this campaign allows.",
       "Secondaries": "Secondary Characteristics",
       "Techniques": "Techniques"
+    },
+    "Tactical": {
+      "front": "from the front",
+      "side": "from the side",
+      "back": "from behind",
+      "Arc": "{arc}",
+      "ArcPenalty": "arc",
+      "Helpless": "No defense — attacked from behind",
+      "Retreat": "Retreat",
+      "Facing": "Facing",
+      "MovementPoints": "Movement points",
+      "Forward": "Forward",
+      "Sideways": "Sideways",
+      "Backward": "Backward",
+      "MovementHint": "Movement points per hex. Turning costs one point per hex-side during a move, and is free at the end of one — to any facing if you spent no more than half your points, otherwise by a single hex-side.",
+      "Immobile": "This posture cannot move hex by hex: sitting cannot move at all, and lying down spends every movement point to shift one hex.",
+      "Handedness": "Weapon hand",
+      "right": "Right",
+      "left": "Left"
+    },
+    "Settings": {
+      "CombatStyle": {
+        "Name": "Combat system",
+        "Hint": "Basic combat is abstract: everyone can reach everyone and nobody has a back. Tactical combat is fought on a hex map, where facing decides what you can defend against. Tactical needs a hex-gridded scene; on any other grid the table falls back to basic.",
+        "Basic": "Basic combat",
+        "Tactical": "Tactical combat (hex map and facing)"
+      }
     },
     "Builder": {
       "Title": "Build a character",

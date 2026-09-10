@@ -1,0 +1,47 @@
+/**
+ * World settings.
+ *
+ * The one that matters is which combat system the table is using. GURPS offers
+ * two -- an abstract one where everyone can reach everyone, and a tactical one
+ * fought on a hex map where a figure has a front and a back -- and the choice
+ * belongs to the GM for the whole world, not to a player per character.
+ */
+
+import { SYSTEM_ID } from "./constants.js";
+
+export const COMBAT_STYLE = "combatStyle";
+
+export type CombatStyle = "basic" | "tactical";
+
+export function registerSettings(): void {
+  game.settings.register(SYSTEM_ID, COMBAT_STYLE, {
+    name: "GWORLD.Settings.CombatStyle.Name",
+    hint: "GWORLD.Settings.CombatStyle.Hint",
+    scope: "world",
+    config: true,
+    type: String,
+    choices: {
+      basic: "GWORLD.Settings.CombatStyle.Basic",
+      tactical: "GWORLD.Settings.CombatStyle.Tactical",
+    },
+    default: "basic",
+  });
+}
+
+/** Which combat system this world is using. */
+export function combatStyle(): CombatStyle {
+  return game.settings.get(SYSTEM_ID, COMBAT_STYLE) === "tactical" ? "tactical" : "basic";
+}
+
+/**
+ * Whether the tactical rules apply.
+ *
+ * Only a hex grid can carry them: facing is defined by the six hexes around
+ * you, and a square or gridless scene has no such thing. A world set to
+ * tactical that opens a square-gridded scene falls back to basic combat rather
+ * than inventing arcs, which is the honest answer and not a failure.
+ */
+export function tacticalOnScene(gridType: number | null | undefined): boolean {
+  if (combatStyle() !== "tactical") return false;
+  return typeof gridType === "number" && gridType >= 2 && gridType <= 5;
+}
