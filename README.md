@@ -33,14 +33,20 @@ target would take, and names the armour divisor when there is one.
 
 | pack | contents |
 | --- | --- |
-| GURPS Advantages & Disadvantages | 385 traits (212 advantages, 173 disadvantages) |
-| GURPS Skills | 163 skills with attribute, difficulty and defaults |
-| GURPS Equipment | 161 items — 87 armours, 51 melee weapons carrying 90 attack modes, and 25 ranged modes across bows, crossbows, slings and thrown weapons |
+| GURPS Advantages & Disadvantages | 641 traits, each with its cost, level cap and the book's name for each level |
+| GURPS Skills | 630 skills with attribute, difficulty and defaults, and 35 techniques |
+| GURPS Equipment | 459 items — 148 armours, 19 shields, and 292 pieces of gear of which 124 carry attack modes |
 
 A weapon that appears in both weapon tables is one item with both kinds of
 attack: a hatchet swings under Axe/Mace and throws under Thrown Weapon. Armour
 written "4/2" carries both figures and the damage each applies to, so mail turns
-a blade at DR 4 and a mace at DR 2.
+a blade at DR 4 and a mace at DR 2. A bow's damage and range come off the bow's
+own ST rather than the archer's, and are recorded that way.
+
+A few dozen traits are priced from a table rather than at a flat rate per level,
+and those carry the table: Wealth runs 10/20/30/50/75 and Appearance
+4/12/12/16/16/20, which no per-level figure reproduces. Each level keeps the
+book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
 
 ## What is not implemented
 
@@ -50,15 +56,22 @@ a blade at DR 4 and a mace at DR 2.
 - **No character builder.** Characters are assembled by dragging from the
   compendia and editing the sheet.
 - **Initiative is Basic Speed**, but no Combat subclass enforces the ordering.
-- **Firearms and hand grenades** are not extracted. Both have their own column
-  layouts, unlike the tables that are.
+- **Explosive and affliction damage.** The damage model holds dice and a
+  modifier, so it has no way to say "cr ex [3d]" or "HT-4 aff". Hand grenades,
+  incendiaries and a few beam weapons are therefore not in the compendium: they
+  parse cleanly and are rejected on the way out, listed by name in the
+  rejections file. Firearms, which have neither, are included.
+- **Unarmed attacks and mounted charges.** A punch does damage that depends on
+  whether the character knows Boxing or Karate, and a lance's depends on the
+  mount's ST and Move. Those are recorded from the book's own table in
+  `packs-src/equipment/table-only-weapons.json` rather than derived.
 - Some statistics are recorded but not yet read by the rules engine:
-  `unbalanced` and `isFencing` on a melee mode, `bulk` on a ranged one. Each is
-  documented against the page that defines it, so the rule is available when the
-  defence and firing code grows to use it.
-- Traits the book prices only through a table in another chapter — Wealth,
-  Status, Rank, Reputation — have no cost line to extract and are absent.
-  `reactionModifier` is zero on every trait, because the book states reaction
+  `unbalanced` and `isFencing` on a melee mode, `bulk` and `recoil` on a ranged
+  one. Each is documented against the page that defines it, so the rule is
+  available when the defence and firing code grows to use it.
+- A shield's bash attack is not recorded: `ShieldData` holds a defense bonus and
+  no attack modes.
+- `reactionModifier` is zero on every trait, because the book states reaction
   modifiers in prose that is conditional or per-level, and a flat integer would
   fire in the wrong circumstances.
 
@@ -125,97 +138,62 @@ loads, then extracts them back out and fails if the document counts disagree.
 
 The JSON is committed rather than generated at build time, because it cannot be
 reproduced without the source books, which are not in this repository and cannot
-be. Regenerating it needs your own PDFs and Xpdf's `pdftotext` — the flags below
-are Xpdf's, and poppler's `pdftotext` has no `-simple` and lays the columns out
-differently.
+be.
 
-Each parser reads the extraction mode that suits its source, and the choice
-matters more than it sounds:
+### From a GCA data file
 
-| source | mode | why |
-| --- | --- | --- |
-| Skills | `-simple` | reflows the columns into reading order |
-| Traits | `-raw` | `-simple` glues the trait-category symbols onto the cost, so a 15-point advantage reads as 215 |
-| Weapons, armour | `-table` | genuinely tabular; column positions differ per group, so fields are matched by shape |
-
-### Traits
+The packs are built from the data file GURPS Character Assistant 5 ships for the
+Basic Set, which states the same books as structured records rather than as a
+typeset page:
 
 ```bash
-pdftotext -raw -enc UTF-8 -f 36 -l 170 "GURPS 4E - Basic Set - Characters.pdf" traits-raw.txt
-node tools/parse-traits.mjs traits-raw.txt --write
+node tools/parse-gdf.mjs "GURPS Basic Set 4th Ed.--Characters.gdf" --write
 ```
 
-### Skills
+That writes every pack in one pass and prints what it could not use. It reads
+statistics only: `tools/gdf.mjs` drops `description(...)` and the other prose
+fields as it parses, so the books' text cannot reach a compendium by accident.
 
-```bash
-pdftotext -simple -f 168 -l 230 "GURPS 4E - Basic Set - Characters.pdf" skills.txt
-node tools/parse-skills.mjs skills.txt --write
-```
+Reading the data file rather than the page fixes things a column reflow could
+not. The PDF pass read the heading "Acute Senses" and missed the four traits
+under it. It could not see a cost the trait's own entry never prints, which is
+every trait the book prices from a table. It had no way to reach skill defaults,
+techniques, or firearms.
 
-### Melee weapons
+Two entries are kept by hand rather than derived, because GCA computes them from
+the character sheet and nothing here can evaluate that: unarmed attacks, whose
+damage depends on whether you know Boxing or Karate, and the lance, whose damage
+depends on the mount. Those are in
+`packs-src/equipment/table-only-weapons.json`, taken from the book's own table.
 
-```bash
-# The melee table shares its last page with the ranged one, so trim the tail.
-pdftotext -table -enc UTF-8 -f 273 -l 276 "GURPS 4E - Basic Set - Characters.pdf" melee-full.txt
-sed '/Ranged Weapon Table/,$d' melee-full.txt > melee.txt
+### The route this replaced
 
-# The skill difficulties come from the skills chapter, which the table omits.
-pdftotext -raw -enc UTF-8 -f 205 -l 235 "GURPS 4E - Basic Set - Characters.pdf" skills-raw.txt
+The packs were first extracted from the books' own PDFs with Xpdf's
+`pdftotext`, one parser per table. Those parsers are gone: they wrote to the
+same files the GCA parser now writes, so keeping them meant keeping a way to
+silently replace good data with less of it.
 
-node tools/parse-melee-weapons.mjs melee.txt skills-raw.txt --write
-```
-
-The table names the skill each weapon uses but never states that skill's
-difficulty, so the skills chapter is read alongside it; assuming a difficulty
-gets Knife and Flail wrong.
-
-### Ranged weapons
-
-```bash
-# Muscle-powered only. The table ends where the hand grenades begin,
-# which have neither Acc nor Range, so trim there.
-pdftotext -table -enc UTF-8 -f 276 -l 279 "GURPS 4E - Basic Set - Characters.pdf" ranged-full.txt
-sed -n '/^TL *Weapon *Damage *Acc/,$p' ranged-full.txt | sed '/HAND GRENADES/,$d' > ranged.txt
-
-# A wider slice of the skills chapter: the ranged skills sit outside the melee pages.
-pdftotext -raw -enc UTF-8 -f 176 -l 240 "GURPS 4E - Basic Set - Characters.pdf" skills-wide.txt
-
-node tools/parse-ranged-weapons.mjs ranged.txt skills-wide.txt --write
-```
-
-**Run the ranged step after the melee one.** A hatchet appears in both tables,
-being one weapon you can either swing or throw, so the ranged parser adds its
-throwing mode to the item the melee parser already made rather than creating a
-second item of the same name. It replaces those modes rather than appending, so
-re-running it is safe.
-
-### Armour
-
-```bash
-# The three tables: low-tech, high/ultra-tech, and horse barding.
-pdftotext -table -enc UTF-8 -f 284 -l 288 "GURPS 4E - Basic Set - Characters.pdf" armor.txt
-node tools/parse-armor.mjs armor.txt --write
-```
-
-Armour written "4/2" carries both figures, along with the damage types the lower
-one applies to. Which those are depends on the table: the low-tech and barding
-footnote says the lower DR is used against crushing, while the high- and
-ultra-tech one says the higher is used against piercing and cutting and the lower
-against everything else. The two agree wherever they overlap, so the applicable
-types are recorded per piece rather than inferred from a flag. A test compares
-the parser's mapping against the rules engine's, because a comment saying they
-match would not keep them matching.
+The one thing worth carrying forward is that the extraction mode mattered more
+than it sounds. `-simple` reflows columns into reading order, which the skills
+chapter needs and the trait chapter cannot survive: it glues the trait-category
+symbols onto the cost, so a 15-point advantage reads as 215. `-raw` keeps the
+line breaks, which is what the traits need. `-table` suits the weapon and
+armour tables, whose column positions differ per group, so fields have to be
+matched by shape rather than by position. And poppler's `pdftotext` is a
+different program with different flags; none of that applies to it.
 
 ### Rejections
 
-All five parsers favour precision over recall: a row that fails to parse is a
-gap, but a misread row is a wrong statistic at the table, which is worse. Each
-prints every rejection with its reason and writes the rejected rows beside its
-output, all git-ignored:
+The parser favours precision over recall: a record that fails to parse is a
+gap, but a misread one is a wrong statistic at the table, which is worse. It
+prints every rejection with a reason and writes them beside its output, in
+`packs-src/{skills,traits,equipment}/.rejected-gdf.txt` — git-ignored, since
+they are derived from the books.
 
-- `packs-src/skills/.rejected.txt`
-- `packs-src/traits/.rejected.txt`
-- `packs-src/equipment/.rejected.txt`, `.rejected-ranged.txt`, `.rejected-armor.txt`
+Those files also list what was imported but could not be fully recorded: armour
+marked flexible or fine, a boot whose sole is tougher than its upper, a shield's
+bash attack. Recording the loss is the point — a statistic dropped in silence is
+one nobody knows to go and look up.
 
 ## Requirements
 

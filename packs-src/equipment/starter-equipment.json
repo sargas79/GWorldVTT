@@ -1,56 +1,5 @@
 [
   {
-    "_id": "aa24251e747333ba",
-    "name": "Small Shield",
-    "type": "shield",
-    "system": {
-      "db": 1,
-      "skill": "Shield",
-      "quantity": 1,
-      "weight": 8,
-      "cost": 40,
-      "carried": true,
-      "equipped": false,
-      "tl": "1",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "c219d25485bbfa3c",
-    "name": "Medium Shield",
-    "type": "shield",
-    "system": {
-      "db": 2,
-      "skill": "Shield",
-      "quantity": 1,
-      "weight": 15,
-      "cost": 60,
-      "carried": true,
-      "equipped": false,
-      "tl": "1",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "a9afad4d2b97ea51",
-    "name": "Large Shield",
-    "type": "shield",
-    "system": {
-      "db": 3,
-      "skill": "Shield",
-      "quantity": 1,
-      "weight": 25,
-      "cost": 90,
-      "carried": true,
-      "equipped": false,
-      "tl": "1",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
     "_id": "bcfd37bf385417fb",
     "name": "Cloth Armor (suit)",
     "type": "armor",

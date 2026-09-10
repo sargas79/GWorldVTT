@@ -1,0 +1,386 @@
+[
+  {
+    "_id": "3c55c5cb4ab4f5de",
+    "name": "Punch",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 0,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust (Boxing)",
+          "skill": "Boxing",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Brawling)",
+          "skill": "Brawling",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Karate)",
+          "skill": "Karate",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "85b6b7e941774930",
+    "name": "Brass Knuckles",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.25,
+      "cost": 10,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust (Boxing)",
+          "skill": "Boxing",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Brawling)",
+          "skill": "Brawling",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Karate)",
+          "skill": "Karate",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "6f2617b5232354f9",
+    "name": "Blunt Teeth",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 0,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Brawling",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "6ddf6ec6ed491e73",
+    "name": "Fangs",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 0,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Brawling",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "6855c1018ab1545e",
+    "name": "Sharp Beak",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 0,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Brawling",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "pi+",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "31c35f3686262155",
+    "name": "Sharp Teeth",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 0,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Brawling",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "7a6bc4517a04044e",
+    "name": "Lance",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 6,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Lance",
+          "damageBase": "thr",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "4",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": 12,
+          "twoHanded": false,
+          "unbalanced": false,
+          "isFencing": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "ed998764735a1ad8",
+    "name": "Atlatl",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 1,
+      "cost": 20,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [],
+      "rangedModes": [
+        {
+          "name": "Dart",
+          "skill": "Spear Thrower",
+          "damageBase": "sw",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "accuracy": 1,
+          "scopeBonus": 0,
+          "halfDamageRange": 3,
+          "maxRange": 4,
+          "rangeIsStMultiple": true,
+          "rateOfFire": 1,
+          "shots": "–",
+          "minSt": 5,
+          "twoHanded": false,
+          "weaponSt": null,
+          "thrown": false,
+          "bulk": -3
+        },
+        {
+          "name": "Javelin",
+          "skill": "Spear Thrower",
+          "damageBase": "sw",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "accuracy": 3,
+          "scopeBonus": 0,
+          "halfDamageRange": 2,
+          "maxRange": 3,
+          "rangeIsStMultiple": true,
+          "rateOfFire": 1,
+          "shots": "–",
+          "minSt": 6,
+          "twoHanded": false,
+          "weaponSt": null,
+          "thrown": false,
+          "bulk": -4
+        }
+      ]
+    }
+  }
+]

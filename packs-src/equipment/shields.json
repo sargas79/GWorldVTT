@@ -1,0 +1,325 @@
+[
+  {
+    "_id": "c61674b2ddeb6400",
+    "name": "Light Cloak",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 20,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 275, 287",
+      "db": 1,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "17e80403abce3d84",
+    "name": "Heavy Cloak",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 50,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 275, 287",
+      "db": 2,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "ad60e07f7fce8bfb",
+    "name": "Light Shield",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 25,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 1,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "aa24251e747333ba",
+    "name": "Small Shield",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 8,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 1,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "c219d25485bbfa3c",
+    "name": "Medium Shield",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 2,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "a9afad4d2b97ea51",
+    "name": "Large Shield",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 25,
+      "cost": 90,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 3,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "bd2bd9b1e08ff427",
+    "name": "Light Buckler",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 25,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 1,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "48efdc7c747067bc",
+    "name": "Small Buckler",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 8,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 1,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "99692cbcc52c6924",
+    "name": "Medium Buckler",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 2,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "044b0c77dd52f679",
+    "name": "Light Plastic Shield",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 1,
+      "cost": 25,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 1,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "0a9c0c0ae4d066c7",
+    "name": "Small Plastic Shield",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 1,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "a3f60f939cb057ce",
+    "name": "Medium Plastic Shield",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 7.5,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 2,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "a5eb1e76851c38fd",
+    "name": "Large Plastic Shield",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 12.5,
+      "cost": 90,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 3,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "3a9d65d15488b27d",
+    "name": "Light Plastic Buckler",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 1,
+      "cost": 25,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 1,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "f5c4b011a1fb0b3a",
+    "name": "Small Plastic Buckler",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 1,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "4790da06de363c63",
+    "name": "Medium Plastic Buckler",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 7.5,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 2,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "93cad54ef03b019b",
+    "name": "Force Shield",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 0.5,
+      "cost": 1500,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 3,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "b2fe5635c7dd4fad",
+    "name": "Force Buckler",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 0.5,
+      "cost": 1500,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "",
+      "reference": "Basic Set: Characters p. 273, 287",
+      "db": 3,
+      "skill": "Shield"
+    }
+  },
+  {
+    "_id": "79113869bbad0d3a",
+    "name": "Melee Net",
+    "type": "shield",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 20,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 276",
+      "db": 0,
+      "skill": "Shield"
+    }
+  }
+]

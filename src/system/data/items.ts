@@ -363,6 +363,18 @@ function rangedModeField() {
       initial: 0,
       max: 0,
     }),
+    /**
+     * Recoil: how much each shot after the first throws off the aim, when
+     * firing more than one (GURPS Basic Set: Characters p. 269). A muscle-
+     * powered weapon has none, which the table prints as 1 and this as 0.
+     */
+    recoil: new fields.NumberField({
+      required: true,
+      nullable: false,
+      integer: true,
+      initial: 0,
+      min: 0,
+    }),
   });
 }
 
