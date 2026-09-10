@@ -121,9 +121,11 @@ genuinely tabular. It also needs the skills chapter alongside it: the table name
 the skill each weapon uses but never states that skill's difficulty, and assuming
 one gets Knife and Flail wrong.
 
-All three parsers favour precision over recall and print every rejection with its
-reason; each writes a `.rejected.txt` beside its output (git-ignored) so the
-entries that did not survive can be inspected. Traits are read in `-raw` mode
+All four parsers favour precision over recall and print every rejection with its
+reason. Each also writes the rejected rows beside its output so they can be
+inspected: `packs-src/skills/.rejected.txt` for skills, `packs-src/traits/` for
+traits, and `packs-src/equipment/.rejected.txt` and `.rejected-ranged.txt` for
+the two weapon tables, which share a folder. All are git-ignored. Traits are read in `-raw` mode
 rather than `-simple` because the reflow glues the book's trait-category symbols
 onto the cost — see the comment at the top of `tools/parse-traits.mjs`.
 
