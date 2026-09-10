@@ -104,6 +104,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare sm: number;
   declare maneuver: Maneuver;
   declare evaluateTurns: number;
+  declare allOutDefenseOption: "increased" | "double";
+  declare allOutDefenseTarget: "dodge" | "parry" | "block";
   declare posture: Posture;
   declare conditions: { stunned: boolean; allOutDefense: boolean; blindToAttacker: boolean };
   declare details: {
@@ -190,6 +192,20 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       /** Consecutive Evaluate maneuvers taken, which accumulate +1 each to +3. */
       evaluateTurns: new fields.NumberField({
         required: true, nullable: false, integer: true, initial: 0, min: 0,
+      }),
+
+      /**
+       * All-Out Defense option (GURPS Basic Set: Campaigns p. 366). Increased
+       * Defense is +2 to ONE defense, named by `allOutDefenseTarget`; Double
+       * Defense instead allows a second, different defense against one attack.
+       */
+      allOutDefenseOption: new fields.StringField({
+        required: true, nullable: false, initial: "increased",
+        choices: ["increased", "double"],
+      }),
+      allOutDefenseTarget: new fields.StringField({
+        required: true, nullable: false, initial: "dodge",
+        choices: ["dodge", "parry", "block"],
       }),
 
       posture: new fields.StringField({
@@ -465,14 +481,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const defenseAvailable = canDefendWith(this.maneuver);
     const parryAvailable = defenseAvailable && canParryWith(this.maneuver);
 
-    const defenseContext = {
+    // Increased Defense raises one named defense by 2; it is not a blanket
+    // bonus, so each defense asks whether it is the one chosen.
+    const increasing =
+      (this.conditions.allOutDefense || this.maneuver === "allOutDefense") &&
+      this.allOutDefenseOption === "increased";
+
+    const contextFor = (which: "dodge" | "parry" | "block") => ({
       shieldDb,
       posture: this.posture,
       stunned: this.conditions.stunned,
-      allOutDefenseIncreased:
-        this.conditions.allOutDefense || this.maneuver === "allOutDefense",
+      allOutDefenseIncreased: increasing && this.allOutDefenseTarget === which,
       cannotSeeAttacker: this.conditions.blindToAttacker,
-    };
+    });
 
     const describe = (base: number, mods: Array<{ label: string; value: number }>): string =>
       [`${base} base`, ...mods.map((m) => `${m.value >= 0 ? "+" : "−"}${Math.abs(m.value)} ${m.label}`)].join(
@@ -480,7 +501,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       );
 
     const dodgeResult = dodge(secondary.basicSpeed, {
-      ...defenseContext,
+      ...contextFor("dodge"),
       encumbrance: encumbrance.level as EncumbranceLevel,
       reeling,
     });
@@ -492,11 +513,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     );
     const parryResult =
       parryAvailable && bestParry && bestParry.skillLevel !== null
-        ? parry(bestParry.skillLevel, defenseContext)
+        ? parry(bestParry.skillLevel, contextFor("parry"))
         : null;
 
     const blockResult =
-      defenseAvailable && shieldSkill !== null ? block(shieldSkill, defenseContext) : null;
+      defenseAvailable && shieldSkill !== null ? block(shieldSkill, contextFor("block")) : null;
 
     const defenses: { dodge: DefenseView | null; parry: DefenseView | null; block: DefenseView | null } = {
       dodge: !defenseAvailable ? null : {
@@ -564,6 +585,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       maneuver: {
         key: this.maneuver,
         label: MANEUVERS[this.maneuver].label,
+        labelKey: `GWORLD.Maneuver.${this.maneuver}`,
         defenseAvailable,
         parryAvailable,
         movement: MANEUVERS[this.maneuver].movement,

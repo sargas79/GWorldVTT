@@ -14,7 +14,7 @@ import {
   basicSpeedPointCost,
   secondaryPointCost,
 } from "../../rules/attributes.js";
-import { MANEUVERS, MANEUVER_ORDER } from "../../rules/maneuvers.js";
+import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
 import { handleDamageAction, handleRollAction } from "../roll.js";
 import type { Attribute, Posture } from "../../rules/types.js";
 
@@ -144,10 +144,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       secondaryCells: this.#secondaryCells(system, derived),
       maneuvers: MANEUVER_ORDER.map((key) => ({
         key,
-        label: MANEUVERS[key].label,
+        label: game.i18n.localize(`GWORLD.Maneuver.${key}`),
         selected: system.maneuver === key,
       })),
       isEvaluating: system.maneuver === "evaluate",
+      isAllOutDefense: system.maneuver === "allOutDefense" || system.conditions.allOutDefense,
+      aodIncreased: system.allOutDefenseOption === "increased",
+      aodTargets: (["dodge", "parry", "block"] as const).map((key) => ({
+        key,
+        label: `GWORLD.Secondary.${key === "dodge" ? "Dodge" : key === "parry" ? "Parry" : "Block"}`,
+        selected: system.allOutDefenseTarget === key,
+      })),
 
       pointsWarning: this.#pointsWarning(derived),
 

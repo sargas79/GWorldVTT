@@ -13,6 +13,29 @@
           </select>
         </div>
       </div>
+      {{#if isAllOutDefense}}
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Maneuver.Option"}}</span>
+          <div class="fi">
+            <select name="system.allOutDefenseOption" {{#unless editable}}disabled{{/unless}}>
+              <option value="increased" {{#if aodIncreased}}selected{{/if}}>{{localize "GWORLD.Maneuver.Increased"}}</option>
+              <option value="double" {{#unless aodIncreased}}selected{{/unless}}>{{localize "GWORLD.Maneuver.Double"}}</option>
+            </select>
+          </div>
+        </div>
+        {{#if aodIncreased}}
+          <div class="fld">
+            <span class="fl">{{localize "GWORLD.Maneuver.Target"}}</span>
+            <div class="fi">
+              <select name="system.allOutDefenseTarget" {{#unless editable}}disabled{{/unless}}>
+                {{#each aodTargets as |t|}}
+                  <option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{localize t.label}}</option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+        {{/if}}
+      {{/if}}
       {{#if isEvaluating}}
         <div class="fld">
           <span class="fl">{{localize "GWORLD.Field.EvaluateTurns"}}</span>

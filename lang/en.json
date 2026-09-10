@@ -292,7 +292,24 @@
     "Maneuver": {
       "AnyDefense": "Any",
       "NoParry": "Dodge or Block only",
-      "NoDefense": "None"
+      "NoDefense": "None",
+      "doNothing": "Do Nothing",
+      "move": "Move",
+      "changePosture": "Change Posture",
+      "ready": "Ready",
+      "aim": "Aim",
+      "evaluate": "Evaluate",
+      "attack": "Attack",
+      "feint": "Feint",
+      "allOutAttack": "All-Out Attack",
+      "moveAndAttack": "Move and Attack",
+      "allOutDefense": "All-Out Defense",
+      "concentrate": "Concentrate",
+      "wait": "Wait",
+      "Increased": "Increased Defense",
+      "Double": "Double Defense",
+      "Option": "AOD Option",
+      "Target": "Raise"
     }
   }
 }
