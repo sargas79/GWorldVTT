@@ -197,9 +197,26 @@ describe("drProfile", () => {
     ]);
   });
 
-  it("exempts toxic from the skull's own DR, as the injury rules do", () => {
+  /**
+   * computeInjury drops the hit location entirely for fatigue and exempts toxic
+   * from natural armour, so a profile that credited the skull against either
+   * would tell the GM to subtract DR the injury pipeline never applies.
+   */
+  it("exempts toxic and fatigue from the skull's own DR, as the injury rules do", () => {
     const bands = drProfile([], "skull");
     expect(bands.find((b) => b.types.includes("tox"))?.dr).toBe(0);
+    expect(bands.find((b) => b.types.includes("fat"))?.dr).toBe(0);
     expect(bands.find((b) => b.types.includes("cr"))?.dr).toBeGreaterThan(0);
+  });
+
+  it("still lets worn armour stop fatigue, which only the location's own DR skips", () => {
+    const vest: ArmorPiece = {
+      dr: 6,
+      drSplit: null,
+      drSplitAppliesTo: [],
+      locations: ["skull"],
+    };
+    expect(drByLocation([vest], "fat").skull).toBe(6);
+    expect(drByLocation([], "fat").skull).toBe(0);
   });
 });
