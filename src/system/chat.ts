@@ -314,7 +314,8 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
           attack: flag.attack,
           arcPenalty,
           retreating: retreatBox.checked,
-          skill: defenses[key].source ?? "",
+          skill: defenses[key].skillName ?? "",
+          isFencing: Boolean(defenses[key].isFencing),
         });
       });
       row.append(button);
@@ -370,8 +371,9 @@ async function rollDefense(options: {
   arcPenalty: number;
   retreating: boolean;
   skill: string;
+  isFencing: boolean;
 }): Promise<void> {
-  const { defender, key, total, attack, arcPenalty, retreating, skill } = options;
+  const { defender, key, total, attack, arcPenalty, retreating, skill, isFencing } = options;
   const name = game.i18n.localize(DEFENSES[key]);
 
   const modifiers = [];
@@ -383,7 +385,7 @@ async function rollDefense(options: {
       label: game.i18n.localize("GWORLD.Tactical.Retreat"),
       // A retreat is worth three to a Dodge and only one to most parries, but
       // three again to the parries that make superior use of mobility.
-      value: retreatBonus({ defense: key, skill }),
+      value: retreatBonus({ defense: key, skill, isFencing }),
     });
   }
 

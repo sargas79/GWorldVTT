@@ -155,6 +155,17 @@ describe("retreatBonus", () => {
     expect(retreatBonus({ defense: "parry", skill: "Two-Handed Sword" })).toBe(1);
     expect(retreatBonus({ defense: "parry", skill: "Boxing Sport" })).toBe(1);
   });
+
+  /**
+   * This wants the skill, not a sentence about it. The sheet describes a parry
+   * as "Rapier 14" for a human to read, and passing that in silently cost
+   * every fencing parry two points of retreat -- the exception the rule exists
+   * for never fired.
+   */
+  it("is not fooled by a skill name with the level appended", () => {
+    expect(retreatBonus({ defense: "parry", skill: "Rapier 14" })).toBe(1);
+    expect(retreatBonus({ defense: "parry", skill: "Rapier" })).toBe(3);
+  });
 });
 
 describe("hexMovementCost", () => {

@@ -100,8 +100,18 @@ export interface DerivedAttack {
 
 interface DefenseView {
   total: number;
+  /** How the score was arrived at, for display. Never parsed. */
   source: string;
   math: string;
+  /**
+   * The skill this defense is rolled with, as a bare name. Kept apart from
+   * `source`, which reads "Rapier 14" and is for a human: retreating gives a
+   * fencing parry +3 rather than +1, and that rule has to match on the skill
+   * itself rather than on a sentence about it.
+   */
+  skillName: string;
+  /** Whether the weapon parried with is a fencing weapon, which retreats better. */
+  isFencing: boolean;
 }
 
 export class CharacterData extends foundry.abstract.TypeDataModel {
@@ -611,6 +621,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         total: Math.max(1, dodgeResult.total + this.bonuses.dodge),
         source: `Basic Speed ${secondary.basicSpeed.toFixed(2)}`,
         math: describe(dodgeResult.base, dodgeResult.modifiers),
+        skillName: "",
+        isFencing: false,
       },
       parry:
         parryResult && bestParry
@@ -618,6 +630,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
               total: parryResult.total,
               source: `${bestParry.skillName} ${bestParry.skillLevel}`,
               math: describe(parryResult.base, parryResult.modifiers),
+              skillName: bestParry.skillName,
+              isFencing: bestParry.isFencing,
             }
           : null,
       block:
@@ -626,6 +640,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
               total: blockResult.total,
               source: `${shieldItem.system?.skill ?? "Shield"} ${shieldSkill}`,
               math: describe(blockResult.base, blockResult.modifiers),
+              skillName: String(shieldItem.system?.skill ?? "Shield"),
+              isFencing: false,
             }
           : null,
     };
