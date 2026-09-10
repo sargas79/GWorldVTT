@@ -35,7 +35,7 @@ target would take, and names the armour divisor when there is one.
 | --- | --- |
 | GURPS Advantages & Disadvantages | 641 traits, each with its cost, level cap and the book's name for each level |
 | GURPS Skills | 630 skills with attribute, difficulty and defaults, and 35 techniques |
-| GURPS Equipment | 459 items — 148 armours, 19 shields, and 292 pieces of gear of which 124 carry attack modes |
+| GURPS Equipment | 458 items — 153 armours, 18 shields, and 287 pieces of gear of which 132 carry attack modes |
 
 A weapon that appears in both weapon tables is one item with both kinds of
 attack: a hatchet swings under Axe/Mace and throws under Thrown Weapon. Armour
