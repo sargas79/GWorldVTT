@@ -69,7 +69,29 @@ routinely have two people on 5.00.
 card offers each defender their available active defenses with the score for
 each. Only defenders you can roll for are shown, and a defense the character
 does not have — no shield to block with, a maneuver that forfeits it — is left
-out rather than offered as a button that refuses.
+out rather than offered as a button that refuses. Every defense may be made
+with a retreat, worth +3 to a Dodge, +1 to most parries and blocks, and +3
+again to a parry with Boxing, Judo, Karate or a fencing weapon.
+
+**Two combat systems**, chosen by the GM in the world settings. *Basic combat*
+is the abstract one: everyone can reach everyone and nobody has a back.
+*Tactical combat* is fought on a hex map, and facing decides what a defender
+can do about an attack:
+
+- An attack from a side hex is defended at -2, unless the defender has
+  Peripheral Vision or 360° Vision. A shield only blocks from the shield side,
+  and a one-handed weapon only parries on the side it is held — no advantage
+  waives the first, and only Double-Jointed waives the second.
+- An attack from behind cannot be defended at all without Peripheral Vision
+  (-2) or 360° Vision (no penalty), and even then a block is impossible and a
+  parry is at a further -2.
+- The Combat tab gains a movement panel: movement points after encumbrance, and
+  what a hex costs forward, sideways and backward in the character's current
+  posture.
+
+Tactical combat needs a hex-gridded scene. On a square or gridless one the
+table falls back to basic combat rather than inventing arcs, because facing is
+defined by the six hexes around you and there are none.
 
 **Applying damage** — the damage card carries a hit location and an Apply
 button. It resolves the blow against whoever is targeted, or selected if
@@ -114,10 +136,13 @@ book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
   whether the character knows Boxing or Karate, and a lance's depends on the
   mount's ST and Move. Those are recorded from the book's own table in
   `packs-src/equipment/table-only-weapons.json` rather than derived.
-- Some statistics are recorded but not yet read by the rules engine:
-  `isFencing` on a melee mode and `bulk` on a ranged one. Fencing weapons defend
-  by their own rules, which turn on retreating, and nothing here models a
-  retreat yet. Each is documented against the page that defines it.
+- **Tactical combat is facing and movement, not the whole chapter.** Close
+  combat, evading, slams, Deceptive Attack, Rapid Strike and opportunity fire
+  are not implemented, and movement is costed rather than enforced — the panel
+  says what a hex costs, and nothing stops a token being dragged further than
+  its Move.
+- `bulk` on a ranged mode is recorded but not read. It is documented against
+  the page that defines it.
 - `reactionModifier` is zero on every trait, because the book states reaction
   modifiers in prose that is conditional or per-level, and a flat integer would
   fire in the wrong circumstances.

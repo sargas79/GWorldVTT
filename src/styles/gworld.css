@@ -1169,3 +1169,14 @@
   padding-top: 6px;
   border-top: 1px solid var(--color-neutral-300);
 }
+
+/* Retreating: an option on any defense against a melee attack, worth more to
+   a Dodge than to most parries. */
+.gworld-chat .gc-retreat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  color: var(--color-neutral-800);
+}

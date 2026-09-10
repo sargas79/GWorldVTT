@@ -26,6 +26,7 @@ import {
 import { GWorldCharacterSheet } from "./system/sheets/character-sheet.js";
 import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
+import { registerSettings } from "./system/settings.js";
 import { registerTemplateHelpers } from "./system/templates.js";
 
 export { SYSTEM_ID };
@@ -50,6 +51,7 @@ Hooks.once("init", () => {
   CONFIG.Combat.initiative = { formula: "@derived.basicSpeed", decimals: 2 };
   CONFIG.Combat.documentClass = GWorldCombat;
 
+  registerSettings();
   registerTemplateHelpers();
 
   // A damage card is posted before anyone has decided who it hits, so the card

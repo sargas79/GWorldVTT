@@ -124,6 +124,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare allOutDefenseOption: "increased" | "double";
   declare allOutDefenseTarget: "dodge" | "parry" | "block";
   declare posture: Posture;
+  declare handedness: "right" | "left";
   declare conditions: {
     stunned: boolean;
     allOutDefense: boolean;
@@ -235,6 +236,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         nullable: false,
         initial: "standing",
         choices: ["standing", "crouching", "kneeling", "crawling", "sitting", "lying"],
+      }),
+
+      /**
+       * Which hand holds the weapon. In tactical combat the shield is on the
+       * other side, and which side an attack comes from decides whether either
+       * can be brought to bear (GURPS Basic Set: Campaigns p. 390).
+       */
+      handedness: new fields.StringField({
+        required: true,
+        nullable: false,
+        initial: "right",
+        choices: ["right", "left"],
       }),
 
       conditions: new fields.SchemaField({

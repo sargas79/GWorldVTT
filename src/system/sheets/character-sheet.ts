@@ -8,6 +8,8 @@
  */
 
 import { CharacterBuilder } from "../apps/character-builder.js";
+import { combatStyle } from "../settings.js";
+import { facingChangeAtEndOfMove, hexMovementCost } from "../../rules/tactical.js";
 import { CompendiumPicker } from "../apps/compendium-picker.js";
 import { SYSTEM_ID } from "../constants.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
@@ -36,6 +38,41 @@ const CONDITIONS = [
   { key: "blindToAttacker", label: "GWORLD.Condition.BlindToAttacker" },
   { key: "attackedThisTurn", label: "GWORLD.Condition.AttackedThisTurn" },
 ] as const;
+
+/**
+ * What the Combat tab shows about movement when the table is playing tactical
+ * combat (GURPS Basic Set: Campaigns p. 387).
+ *
+ * Returns null when the world is on basic combat, where none of this applies
+ * and the panel should not be there at all. The scene's grid is not consulted:
+ * a GM reading a character sheet is not necessarily looking at a map, and the
+ * costs are worth knowing either way.
+ */
+function tacticalPanel(system: any, derived: any) {
+  if (combatStyle() !== "tactical") return null;
+
+  const posture = system.posture ?? "standing";
+  const points = derived.encumbrance?.move ?? 0;
+  const cost = (direction: "forward" | "sideways" | "backward") =>
+    hexMovementCost({ direction, posture });
+
+  return {
+    points,
+    forward: cost("forward"),
+    sideways: cost("sideways"),
+    backward: cost("backward"),
+    // Sitting cannot move and lying down spends everything to shift one hex,
+    // neither of which is a per-hex figure that could be listed.
+    immobile: cost("forward") === null,
+    // Turning mid-move costs a point per hex-side; at the end it is free, and
+    // unrestricted if no more than half the points were spent.
+    facingFree: facingChangeAtEndOfMove({
+      movementPointsSpent: 0,
+      movementPointsAvailable: points,
+    }),
+    handedness: system.handedness ?? "right",
+  };
+}
 
 /** Normalises a defense into the shape the card template renders. */
 function toCard(defense: { total: number; source: string; math: string } | null) {
@@ -152,6 +189,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         selected: system.posture === key,
       })),
 
+      hands: (["right", "left"] as const).map((key) => ({
+        key,
+        label: game.i18n.localize(`GWORLD.Tactical.${key}`),
+        selected: (system.handedness ?? "right") === key,
+      })),
+
       secondaryCells: this.#secondaryCells(system, derived),
       maneuvers: MANEUVER_ORDER.map((key) => ({
         key,
@@ -203,6 +246,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // character part-way through being built is over and under by turns --
       // so it is flagged rather than blocked.
       overBudget: derived.points.spent > derived.points.starting,
+
+      // Tactical combat, when the world is using it. Movement points are the
+      // character's Move after encumbrance, and what each hex costs depends on
+      // the direction travelled and the posture held.
+      tactical: tacticalPanel(system, derived),
 
       conditionChips: CONDITIONS.map(({ key, label }) => ({
         key,

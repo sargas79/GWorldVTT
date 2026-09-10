@@ -16,6 +16,10 @@ import { applyDamageToActor, type AppliedDamage, type IncomingDamage } from "./d
 import { rollSuccess } from "./roll.js";
 import { currentTargets } from "./targets.js";
 import { blastAt } from "../rules/explosions.js";
+import { arcDefense, attackArc, retreatBonus, type Arc } from "../rules/tactical.js";
+import { attackDirection, facingOf } from "./hex.js";
+import { tacticalOnScene } from "./settings.js";
+import { handednessOf, visionOf } from "./tactical-context.js";
 import { HIT_LOCATION_ORDER, type HitLocation } from "../rules/hit-locations.js";
 import type { DamageType } from "../rules/types.js";
 
@@ -202,7 +206,9 @@ async function applyFromCard(
 /** What an attack that connected recorded about who it was aimed at. */
 interface DefenseFlag {
   attack: string;
-  defenders: Array<{ uuid: string; name: string }>;
+  defenders: Array<{ uuid: string; name: string; tokenUuid?: string }>;
+  /** The attacker's token, so tactical combat can work out the arc. */
+  attackerToken?: string;
 }
 
 function defenseFlag(message: any): DefenseFlag | null {
@@ -242,10 +248,19 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     if (!defender?.isOwner) continue;
 
     const defenses = defender.system?.derived?.defenses ?? {};
-    const available = (Object.keys(DEFENSES) as DefenseKey[]).filter(
-      (key) => defenses[key] != null,
-    );
-    if (available.length === 0) continue;
+
+    // In tactical combat the arc the attack came from decides what is even
+    // possible: a blow from behind cannot be defended at all by most people,
+    // and one from the side reaches only the hand on that side.
+    const arc = await tacticalArc(flag, entry, defender);
+    const available = (Object.keys(DEFENSES) as DefenseKey[]).filter((key) => {
+      if (defenses[key] == null) return false;
+      if (!arc) return true;
+      if (arc.helpless) return false;
+      if (key === "parry") return arc.canParry;
+      if (key === "block") return arc.canBlock;
+      return arc.canDodge;
+    });
 
     const row = document.createElement("div");
     row.className = "gc-apply";
@@ -256,14 +271,51 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     who.textContent = String(defender.name ?? entry.name);
     row.append(who);
 
+    if (arc) {
+      const note = document.createElement("span");
+      note.className = arc.helpless ? "gc-warn" : "gc-mod";
+      note.textContent = arc.helpless
+        ? game.i18n.localize("GWORLD.Tactical.Helpless")
+        : game.i18n.format("GWORLD.Tactical.Arc", {
+            arc: game.i18n.localize(`GWORLD.Tactical.${arc.arc}`),
+          });
+      row.append(note);
+    }
+
+    if (available.length === 0) {
+      root.append(row);
+      continue;
+    }
+
+    // Retreating is an option on any defense against a melee attack, and it is
+    // worth more to some defenses than others, so it is a choice made here
+    // rather than a modifier typed in afterwards.
+    const retreat = document.createElement("label");
+    retreat.className = "gc-retreat";
+    const retreatBox = document.createElement("input");
+    retreatBox.type = "checkbox";
+    retreat.append(retreatBox, document.createTextNode(
+      game.i18n.localize("GWORLD.Tactical.Retreat"),
+    ));
+    row.append(retreat);
+
     for (const key of available) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "gc-apply-button";
       const label = game.i18n.localize(DEFENSES[key]);
-      button.textContent = `${label} ${defenses[key].total}`;
+      const arcPenalty = arc ? arc.modifier + (key === "parry" ? arc.parryModifier : 0) : 0;
+      button.textContent = `${label} ${defenses[key].total + arcPenalty}`;
       button.addEventListener("click", () => {
-        void rollDefense(defender, key, defenses[key].total, flag.attack);
+        void rollDefense({
+          defender,
+          key,
+          total: defenses[key].total,
+          attack: flag.attack,
+          arcPenalty,
+          retreating: retreatBox.checked,
+          skill: defenses[key].source ?? "",
+        });
       });
       row.append(button);
     }
@@ -272,19 +324,75 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
   }
 }
 
-/** Rolls one active defense for one defender. */
-async function rollDefense(
+/**
+ * The arc an attack came from, or null when the tactical rules do not apply --
+ * a world using basic combat, a scene without a hex grid, or an attack with no
+ * token on either end to measure between.
+ */
+async function tacticalArc(
+  flag: DefenseFlag,
+  entry: { tokenUuid?: string },
   defender: any,
-  key: DefenseKey,
-  total: number,
-  attack: string,
-): Promise<void> {
+): Promise<(ReturnType<typeof arcDefense> & { arc: Arc }) | null> {
+  if (!flag.attackerToken || !entry.tokenUuid) return null;
+
+  const attackerToken: any = await fromUuid(flag.attackerToken).catch(() => null);
+  const defenderToken: any = await fromUuid(entry.tokenUuid).catch(() => null);
+  if (!attackerToken || !defenderToken) return null;
+
+  const gridType = defenderToken.parent?.grid?.type;
+  if (!tacticalOnScene(gridType)) return null;
+
+  const from = attackDirection(attackerToken, defenderToken, gridType);
+  if (from === null) return null;
+
+  const { arc, side } = attackArc(facingOf(defenderToken, gridType), from);
+  // A shield is held in the off hand, so a two-handed weapon means no shield;
+  // what matters for the parry is whether the weapon is held in one hand.
+  return {
+    arc,
+    ...arcDefense({
+      arc,
+      side,
+      vision: visionOf(defender),
+      hands: handednessOf(defender),
+      oneHandedWeapon: true,
+    }),
+  };
+}
+
+/** Rolls one active defense for one defender. */
+async function rollDefense(options: {
+  defender: any;
+  key: DefenseKey;
+  total: number;
+  attack: string;
+  arcPenalty: number;
+  retreating: boolean;
+  skill: string;
+}): Promise<void> {
+  const { defender, key, total, attack, arcPenalty, retreating, skill } = options;
   const name = game.i18n.localize(DEFENSES[key]);
+
+  const modifiers = [];
+  if (arcPenalty !== 0) {
+    modifiers.push({ label: game.i18n.localize("GWORLD.Tactical.ArcPenalty"), value: arcPenalty });
+  }
+  if (retreating) {
+    modifiers.push({
+      label: game.i18n.localize("GWORLD.Tactical.Retreat"),
+      // A retreat is worth three to a Dodge and only one to most parries, but
+      // three again to the parries that make superior use of mobility.
+      value: retreatBonus({ defense: key, skill }),
+    });
+  }
+
   await rollSuccess({
     actor: defender,
     base: total,
     label: game.i18n.format("GWORLD.Chat.DefendingAgainst", { defense: name, attack }),
     kind: "defense",
+    modifiers,
   });
 }
 

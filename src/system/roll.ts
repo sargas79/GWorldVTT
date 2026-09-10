@@ -102,7 +102,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     // An attack that connects is the moment to record who it was aimed at: the
     // defender rolls afterwards, by which time the attacker may well have
     // changed their target. A miss needs no defense, so it carries nothing.
-    ...(kind === "attack" && outcome.success ? { flags: attackFlags(label) } : {}),
+    ...(kind === "attack" && outcome.success ? { flags: attackFlags(actor, label) } : {}),
   });
 
   return outcome;
@@ -119,14 +119,29 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
  * elsewhere: an attacker has their own token selected far more often than not,
  * and falling back would record them as defending against themselves.
  */
-function attackFlags(label: string): object {
+function attackFlags(actor: any, label: string): object {
   const defenders = targetedTokens()
-    .map((token: any) => token?.actor)
-    .filter((defender: any) => defender?.uuid)
-    .map((defender: any) => ({ uuid: String(defender.uuid), name: String(defender.name ?? "") }));
+    .filter((token: any) => token?.actor?.uuid)
+    .map((token: any) => ({
+      uuid: String(token.actor.uuid),
+      name: String(token.actor.name ?? ""),
+      // The token as well as the actor: tactical combat needs to know where
+      // the two of them were standing, which the actor alone cannot say.
+      tokenUuid: token.document?.uuid ? String(token.document.uuid) : "",
+    }));
 
   if (defenders.length === 0) return {};
-  return { [SYSTEM_ID]: { defense: { attack: label, defenders } } };
+
+  const attackerToken = actor?.getActiveTokens?.()?.[0]?.document?.uuid;
+  return {
+    [SYSTEM_ID]: {
+      defense: {
+        attack: label,
+        defenders,
+        attackerToken: attackerToken ? String(attackerToken) : "",
+      },
+    },
+  };
 }
 
 export interface DamageRollOptions {
