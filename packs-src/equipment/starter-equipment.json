@@ -52,7 +52,7 @@
   },
   {
     "_id": "bcfd37bf385417fb",
-    "name": "Cloth Armor",
+    "name": "Cloth Armor (suit)",
     "type": "armor",
     "system": {
       "dr": 1,
@@ -75,7 +75,7 @@
   },
   {
     "_id": "b23fb871419ddf58",
-    "name": "Leather Armor",
+    "name": "Leather Armor (suit)",
     "type": "armor",
     "system": {
       "dr": 2,
@@ -98,7 +98,7 @@
   },
   {
     "_id": "7d88a35c0d0024db",
-    "name": "Light Scale",
+    "name": "Light Scale (suit)",
     "type": "armor",
     "system": {
       "dr": 3,
@@ -121,7 +121,7 @@
   },
   {
     "_id": "0b7b658fe27eaa9e",
-    "name": "Mail",
+    "name": "Mail (suit)",
     "type": "armor",
     "system": {
       "dr": 4,
@@ -144,7 +144,7 @@
   },
   {
     "_id": "c5de60a3129c29cf",
-    "name": "Plate",
+    "name": "Plate (suit)",
     "type": "armor",
     "system": {
       "dr": 6,

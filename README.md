@@ -121,11 +121,18 @@ genuinely tabular. It also needs the skills chapter alongside it: the table name
 the skill each weapon uses but never states that skill's difficulty, and assuming
 one gets Knife and Flail wrong.
 
-All four parsers favour precision over recall and print every rejection with its
+```bash
+# Armour: the three tables (low-tech, high/ultra-tech, and horse barding).
+pdftotext -table -enc UTF-8 -f 284 -l 288 "GURPS 4E - Basic Set - Characters.pdf" armor.txt
+node tools/parse-armor.mjs armor.txt --write
+```
+
+All five parsers favour precision over recall and print every rejection with its
 reason. Each also writes the rejected rows beside its output so they can be
 inspected: `packs-src/skills/.rejected.txt` for skills, `packs-src/traits/` for
-traits, and `packs-src/equipment/.rejected.txt` and `.rejected-ranged.txt` for
-the two weapon tables, which share a folder. All are git-ignored. Traits are read in `-raw` mode
+traits, and `packs-src/equipment/.rejected.txt`, `.rejected-ranged.txt` and
+`.rejected-armor.txt` for the three equipment tables, which share a folder. All
+are git-ignored. Traits are read in `-raw` mode
 rather than `-simple` because the reflow glues the book's trait-category symbols
 onto the cost — see the comment at the top of `tools/parse-traits.mjs`.
 

@@ -1,0 +1,1274 @@
+[
+  {
+    "_id": "77e69404d404b9e3",
+    "name": "Fur Loincloth",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 10,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "dr": 1,
+      "locations": [
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "71fc3bd8e580bca9",
+    "name": "Fur Tunic",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 25,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "dr": 1,
+      "locations": [
+        "torso",
+        "vitals"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b4b6b0fd6b6c9b81",
+    "name": "Bronze Breastplate",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 20,
+      "cost": 400,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 4,
+      "locations": [
+        "torso",
+        "vitals"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "fddb52f8e74b1281",
+    "name": "Bronze Corselet",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 40,
+      "cost": 1300,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 5,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ac4e1f24b58fa279",
+    "name": "Cloth Armor",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 6,
+      "cost": 30,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 1,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d1a55431faf986e9",
+    "name": "Leather Armor",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 10,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 2,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "384ce3ac3b0bbcb8",
+    "name": "Leather Jacket",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 50,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 1,
+      "locations": [
+        "arm",
+        "torso",
+        "vitals"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c1b37cc0fdbb2b1d",
+    "name": "Light Scale Armor",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 150,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 3,
+      "locations": [
+        "torso",
+        "vitals"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a0b5b98aba7d9c1d",
+    "name": "Lorica Segmentata",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 26,
+      "cost": 680,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 5,
+      "locations": [
+        "torso",
+        "vitals"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f41d629923d08316",
+    "name": "Scale Armor",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 35,
+      "cost": 420,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4609fa76b47e0c13",
+    "name": "Heavy Steel Corselet",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 45,
+      "cost": 2300,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 7,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e1208caed6a3d64f",
+    "name": "Steel Breastplate",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 18,
+      "cost": 500,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 5,
+      "locations": [
+        "torso",
+        "vitals"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "17ec1da16877909d",
+    "name": "Steel Corselet",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 35,
+      "cost": 1300,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 6,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9dfef3770a5dd661",
+    "name": "Steel Laminate Plate",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 30,
+      "cost": 900,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 5,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8c21bf0c14f23073",
+    "name": "Buff Coat (Leather)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 16,
+      "cost": 210,
+      "carried": true,
+      "equipped": false,
+      "tl": "4",
+      "dr": 2,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin",
+        "arm",
+        "leg"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ace87164ecea4b95",
+    "name": "Bronze Armbands",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 9,
+      "cost": 180,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 3,
+      "locations": [
+        "arm"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1f6da98fad53c551",
+    "name": "Bronze Greaves",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 17,
+      "cost": 270,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 3,
+      "locations": [
+        "leg"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8ccc3d56dbfac738",
+    "name": "Cloth Sleeves",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 20,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 1,
+      "locations": [
+        "arm"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a0578765406faf97",
+    "name": "Heavy Leather Leggings",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 2,
+      "locations": [
+        "leg"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6be791f80fb60de4",
+    "name": "Heavy Leather Sleeves",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 50,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 2,
+      "locations": [
+        "arm"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9d4cef51c48e19f3",
+    "name": "Leather Leggings",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 1,
+      "locations": [
+        "leg"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2402f32c96b399fc",
+    "name": "Leather Pants",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 1,
+      "locations": [
+        "leg",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a744aaa5d383abbb",
+    "name": "Scale Leggings",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 21,
+      "cost": 250,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "locations": [
+        "leg"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "946a46d7c6024726",
+    "name": "Scale Sleeves",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 14,
+      "cost": 210,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "locations": [
+        "arm"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3b729f42809f0c80",
+    "name": "Heavy Plate Arms",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 20,
+      "cost": 1500,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 7,
+      "locations": [
+        "arm"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7c5e418f141e7203",
+    "name": "Heavy Plate Legs",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 25,
+      "cost": 1600,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 7,
+      "locations": [
+        "leg"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "285f5f2a1ddcdeb8",
+    "name": "Plate Arms",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 1000,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 6,
+      "locations": [
+        "arm"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "79cd8c7c547338ac",
+    "name": "Plate Legs",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 20,
+      "cost": 1100,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 6,
+      "locations": [
+        "leg"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "52bd490ff1680a48",
+    "name": "Bronze Helmet",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 7.5,
+      "cost": 160,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 3,
+      "locations": [
+        "skull",
+        "face"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "61343b7c5ce12089",
+    "name": "Bronze Pot-Helm",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 3,
+      "locations": [
+        "skull"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "754d70d4d7624fcd",
+    "name": "Cloth Cap",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 5,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 1,
+      "locations": [
+        "skull"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "81f4e6b658ff9e22",
+    "name": "Leather Cap",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 32,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 1,
+      "locations": [
+        "skull"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f2a825ce5baf584b",
+    "name": "Leather Helm",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 0.5,
+      "cost": 20,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 2,
+      "locations": [
+        "skull",
+        "face"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7dd6e8b43c2368ae",
+    "name": "Legionary Helmet",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 6,
+      "cost": 150,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "locations": [
+        "skull",
+        "face"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2972f83e9bb9de77",
+    "name": "Barrel Helm",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 10,
+      "cost": 240,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 6,
+      "locations": [
+        "skull",
+        "face"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ba44317355f81b24",
+    "name": "Face Mask",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 4,
+      "locations": [
+        "face"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "cdf067104cfc5dbd",
+    "name": "Greathelm",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 10,
+      "cost": 340,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 7,
+      "locations": [
+        "skull",
+        "face",
+        "neck"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d1b3105e51aae567",
+    "name": "Pot-Helm",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 4,
+      "locations": [
+        "skull"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "97547a9d1fa969c3",
+    "name": "Cloth Gloves",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 15,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 1,
+      "locations": [
+        "hand"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7bd3e38e856d8db4",
+    "name": "Leather Gloves",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 30,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 2,
+      "locations": [
+        "hand"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c1bd08f61a4d0ef8",
+    "name": "Gauntlets",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "locations": [
+        "hand"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9e09dfa1b2f75fa3",
+    "name": "Heavy Gauntlets",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 2.5,
+      "cost": 250,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 5,
+      "locations": [
+        "hand"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0092c769919bca57",
+    "name": "Sandals",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 0.5,
+      "cost": 25,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "dr": 0,
+      "locations": [
+        "foot"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b4186747fa0d8aaa",
+    "name": "Shoes",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 1,
+      "locations": [
+        "foot"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "db8cb16c21cf66c5",
+    "name": "Boots",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 80,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 2,
+      "locations": [
+        "foot"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "bfbc4f300e46f4e3",
+    "name": "Sollerets",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 7,
+      "cost": 150,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 4,
+      "locations": [
+        "foot"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d2141e9714a873fd",
+    "name": "Flak Jacket",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 20,
+      "cost": 500,
+      "carried": true,
+      "equipped": false,
+      "tl": "6",
+      "dr": 7,
+      "locations": [
+        "torso",
+        "vitals"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6149e0a0a58785f8",
+    "name": "Gas Mask",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "6",
+      "dr": 2,
+      "locations": [
+        "eye",
+        "face"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "31cbc68b5dfa4b72",
+    "name": "Steel Pot",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "6",
+      "dr": 4,
+      "locations": [
+        "skull"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9d8385eca267962e",
+    "name": "Frag Helmet",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 125,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "dr": 5,
+      "locations": [
+        "skull"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "93e5f086ef45db06",
+    "name": "Ballistic Helmet",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 250,
+      "carried": true,
+      "equipped": false,
+      "tl": "8",
+      "dr": 12,
+      "locations": [
+        "skull"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "019f7654c5809dbc",
+    "name": "NBC Suit",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3.5,
+      "cost": 150,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "dr": 1,
+      "locations": [],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6fb1644c6ebd425e",
+    "name": "Space Suit",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 225,
+      "cost": 2000000,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "dr": 2,
+      "locations": [],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "df33da041ffedd60",
+    "name": "Vacc Suit",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 25,
+      "cost": 10000,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "dr": 6,
+      "locations": [],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0df6cda6e4b4d3dd",
+    "name": "Barding: Leather & Cloth (face)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 2,
+      "locations": [
+        "face"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ba446a6d65a06d41",
+    "name": "Barding: Scale (face)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 12,
+      "cost": 200,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "locations": [
+        "face"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6a0e17205c0ebc16",
+    "name": "Barding: Plate (face)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 12,
+      "cost": 200,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 5,
+      "locations": [
+        "face"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e40c3014bcf0750a",
+    "name": "Barding: Leather & Cloth (neck, skull)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 80,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 2,
+      "locations": [
+        "neck",
+        "skull"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2efd2f8abb4de990",
+    "name": "Barding: Scale (neck, skull)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 20,
+      "cost": 320,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "locations": [
+        "neck",
+        "skull"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e8d0ce6452a90f35",
+    "name": "Barding: Plate (neck, skull)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 18,
+      "cost": 330,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 5,
+      "locations": [
+        "neck",
+        "skull"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7c303c9d95f71634",
+    "name": "Barding: Leather & Cloth (torso)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 12,
+      "cost": 260,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 2,
+      "locations": [
+        "torso",
+        "vitals"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "56b3c5fb2426d78d",
+    "name": "Barding: Scale (torso)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 60,
+      "cost": 480,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "locations": [
+        "torso",
+        "vitals"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "bb7172797b1df470",
+    "name": "Barding: Leather & Cloth (torso, groin)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 30,
+      "cost": 345,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 2,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "67ed5bf572b9bd22",
+    "name": "Barding: Plate (torso, groin)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 90,
+      "cost": 1650,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 5,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6ce27b1f061b0264",
+    "name": "Barding: Plate (legs)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 20,
+      "cost": 400,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 5,
+      "locations": [
+        "leg"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  }
+]
