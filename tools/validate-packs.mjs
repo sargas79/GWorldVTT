@@ -82,12 +82,15 @@ function validateItem(entry, file) {
     // plus 10 per level, and totalPoints adds them. So every populated field is
     // checked, not whichever one looks like the price -- otherwise an advantage
     // with points -5 and pointsPerLevel 10 passes while totalPoints is negative.
+    // A field that already failed the integer check is skipped here, so a missing
+    // cost reports "points must be an integer" once rather than following it with
+    // "must not have points of undefined".
     const negative = sys.category === "disadvantage" || sys.category === "quirk";
     for (const [field, cost] of [
       ["points", sys.points],
       ["pointsPerLevel", sys.pointsPerLevel],
     ]) {
-      if (cost === 0) continue;
+      if (cost === 0 || !Number.isInteger(cost)) continue;
       check(
         negative ? cost < 0 : cost > 0,
         file, name,

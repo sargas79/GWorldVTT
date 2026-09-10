@@ -243,7 +243,7 @@ function main() {
     // The trait's body always opens a sentence, so a following line that starts
     // lowercase or with a sign is the rest of the price, not prose.
     let priced = lines[i].trim();
-    if (variable && !isVariable && /^[a-z+-]|^\d+(?:\s|$)/.test((lines[i + 1] ?? "").trim())) {
+    if (variable && !isVariable && /^(?:[-a-z+]|\d+(?:\s|$))/.test((lines[i + 1] ?? "").trim())) {
       priced = `${priced} ${lines[i + 1].trim()}`;
     }
 
