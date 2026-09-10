@@ -809,10 +809,10 @@ function parseEquipment(recs, reject, note) {
   return { armor, gear, shields };
 }
 
-function report(label, items, rejected) {
-  console.log(`${label}: ${items.length}`);
+function report(label, count, rejected) {
+  console.log(`${label}: ${count}`);
   const reasons = rejected.reduce((a, r) => ((a[r.why] = (a[r.why] ?? 0) + 1), a), {});
-  if (rejected.length) console.log(`  rejected: ${rejected.length}`);
+  if (rejected.length) console.log(`  rejected ${rejected.length}:`);
   for (const [why, n] of Object.entries(reasons).sort((a, b) => b[1] - a[1])) {
     console.log(`    ${String(n).padStart(4)}  ${why}`);
   }
@@ -841,15 +841,17 @@ function main() {
     (n) => notes.push(n),
   );
 
-  report("traits", traits, traitRejects);
+  report("traits", traits.length, traitRejects);
   console.log(`  tabled costs: ${traits.filter((t) => t.system.costTable.length > 0).length}`);
-  report("skills", skills, skillRejects);
-  report("techniques", techniques, []);
-  report("armour", armor, []);
+  report("skills", skills.length, skillRejects);
+  report("techniques", techniques.length, []);
+
+  // The three equipment kinds come out of one pass over one section, so their
+  // rejections are reported together rather than split three ways.
   const armed = gear.filter((g) => g.system.meleeModes.length || g.system.rangedModes.length);
+  console.log(`armour: ${armor.length}`);
   console.log(`equipment: ${gear.length} (${armed.length} carrying attack modes)`);
-  console.log(`shields: ${shields.length}`);
-  report("  all three", [], gearRejects);
+  report("shields", shields.length, gearRejects);
   if (notes.length) {
     console.log(`\nrecorded but not modelled: ${notes.length}`);
     for (const n of notes.slice(0, 6)) console.log(`    ${n}`);
