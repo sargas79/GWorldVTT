@@ -102,7 +102,13 @@
           <input type="number" name="system.points" value="{{system.points}}" step="1" min="0"
                  {{#unless editable}}disabled{{/unless}} />
         </label>
+        <label>{{localize "GWORLD.Technique.MaxRelative"}}
+          <input type="number" name="system.maxRelativeToPrerequisite"
+                 value="{{system.maxRelativeToPrerequisite}}" step="1" max="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
       </div>
+      <p class="ihint">{{localize "GWORLD.Technique.MaxRelativeHint"}}</p>
     {{/if}}
 
     {{#if isTrait}}
@@ -277,6 +283,9 @@
               <label class="icheck"><input type="checkbox" name="system.meleeModes.{{i}}.isFlail"
                      {{#if m.isFlail}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.Flail"}}</label>
+              <label class="icheck"><input type="checkbox" name="system.meleeModes.{{i}}.unreadyAfterAttack"
+                     {{#if m.unreadyAfterAttack}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.UnreadyAfterAttack"}}</label>
             </div>
           </div>
         {{else}}

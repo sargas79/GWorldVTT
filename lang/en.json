@@ -247,7 +247,8 @@
       "MinSt": "Minimum ST",
       "ArmorDivisor": "Armour divisor",
       "DefaultModifier": "Modifier",
-      "EditImage": "Change item image"
+      "EditImage": "Change item image",
+      "UnreadyAfterAttack": "Unready after attack"
     },
     "Gear": {
       "Carried": "Carried",
@@ -355,7 +356,9 @@
     },
     "Technique": {
       "Prerequisite": "Prerequisite skill",
-      "DefaultModifier": "Default modifier"
+      "DefaultModifier": "Default modifier",
+      "MaxRelative": "Level cap",
+      "MaxRelativeHint": "Relative to the prerequisite skill. Zero lets the technique reach that skill but not exceed it."
     },
     "Armor": {
       "DR": "Damage Resistance",
