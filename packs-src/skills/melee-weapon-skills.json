@@ -270,28 +270,6 @@
     }
   },
   {
-    "_id": "0bbdabc5e422cea1",
-    "name": "Shield",
-    "type": "skill",
-    "system": {
-      "attribute": "DX",
-      "difficulty": "E",
-      "points": 0,
-      "bonus": 0,
-      "defaults": [
-        {
-          "from": "attribute",
-          "attribute": "DX",
-          "skill": "",
-          "modifier": -4
-        }
-      ],
-      "techLevel": "",
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
     "_id": "edd7f10bf0ba186f",
     "name": "Brawling",
     "type": "skill",
