@@ -8,8 +8,16 @@
 /** The four basic attributes (GURPS Lite p. 4). */
 export type Attribute = "ST" | "DX" | "IQ" | "HT";
 
-/** Skill difficulty levels (GURPS Lite p. 12). */
-export type Difficulty = "E" | "A" | "H";
+/** Skill difficulty levels (GURPS Basic Set: Characters p. 168). */
+export type Difficulty = "E" | "A" | "H" | "VH";
+
+/**
+ * Attributes a skill can be based on.
+ *
+ * GURPS Lite uses only the four basic attributes; the Basic Set adds skills
+ * based on the secondary characteristics Will and Perception.
+ */
+export type SkillAttribute = Attribute | "Will" | "Per";
 
 /**
  * Damage type abbreviations (GURPS Basic Set: Campaigns p. 379).

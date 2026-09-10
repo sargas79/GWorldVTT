@@ -79,7 +79,11 @@ export function registerTemplateHelpers(): void {
 
     if (relative === null || relative === undefined) {
       const best = (system.defaults ?? [])[0];
-      return best ? `${best.attribute}${best.modifier >= 0 ? "+" : ""}${best.modifier}` : "—";
+      if (!best) return "—";
+      // A default from another skill shows that skill's name, not the schema's
+      // unused attribute field — Broadsword reads "Shortsword-2", not "DX-2".
+      const source = best.from === "skill" ? best.skill || "—" : best.attribute;
+      return `${source}${best.modifier >= 0 ? "+" : ""}${best.modifier}`;
     }
     if (relative === 0) return attribute;
     return `${attribute}${relative > 0 ? "+" : ""}${relative}`;

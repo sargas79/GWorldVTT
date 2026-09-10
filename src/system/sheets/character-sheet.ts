@@ -364,10 +364,15 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const untrained = skills.filter((s: any) => s.system.points <= 0);
 
     // Skills group by controlling attribute, matching the printed sheet.
-    const skillGroups = (["DX", "IQ", "HT", "ST"] as const)
+    const skillGroups = (["DX", "IQ", "HT", "ST", "Will", "Per"] as const)
       .map((attribute) => ({
         attribute,
-        score: actor.system.attributes[attribute],
+        score:
+          attribute === "Will"
+            ? actor.system.derived.will
+            : attribute === "Per"
+              ? actor.system.derived.per
+              : actor.system.attributes[attribute],
         skills: trained
           .filter((s: any) => s.system.attribute === attribute)
           .sort((a: any, b: any) => a.name.localeCompare(b.name)),
@@ -385,6 +390,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       armor: byType("armor"),
       shields: byType("shield"),
       languages: byType("language"),
+      techniques: byType("technique")
+        .sort((a: any, b: any) => a.name.localeCompare(b.name))
+        // A resolved level of 0 or below is still a valid level, but Handlebars
+        // reads it as false, so the template needs an explicit flag.
+        .map((t: any) => ({ item: t, resolved: t.system.derived?.level !== null })),
       carried: equipment.filter((i: any) => i.system.carried),
       stored: equipment.filter((i: any) => !i.system.carried),
     };
