@@ -1,0 +1,283 @@
+{{!-- One sheet for every item type; the sections below switch on the type. --}}
+<form class="isheet" autocomplete="off">
+
+  <header class="ihead blueprint">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <img class="iimg" src="{{item.img}}" alt="" data-edit="img" data-action="editImage" />
+    <div class="ihead-fields">
+      <input type="text" name="name" value="{{item.name}}" placeholder="{{localize 'GWORLD.Item.Name'}}"
+             {{#unless editable}}disabled{{/unless}} />
+      <span class="itype">{{localize (concat "TYPES.Item." type)}}</span>
+    </div>
+  </header>
+
+  <div class="isbody">
+
+    {{#if isSkill}}
+      <div class="ifields">
+        <label>{{localize "GWORLD.Column.Attribute"}}
+          <select name="system.attribute" {{#unless editable}}disabled{{/unless}}>
+            {{selectOptions choices.attributes selected=system.attribute}}
+          </select>
+        </label>
+        <label>{{localize "GWORLD.Column.Difficulty"}}
+          <select name="system.difficulty" {{#unless editable}}disabled{{/unless}}>
+            {{selectOptions choices.difficulties selected=system.difficulty}}
+          </select>
+        </label>
+        <label>{{localize "GWORLD.Column.Pts"}}
+          <input type="number" name="system.points" value="{{system.points}}" step="1" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Column.Bonus"}}
+          <input type="number" name="system.bonus" value="{{system.bonus}}" step="1"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Column.TechLevel"}}
+          <input type="text" name="system.techLevel" value="{{system.techLevel}}" placeholder="—"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+
+      <div class="isub">
+        <div class="isub-head">
+          {{localize "GWORLD.Skill.Defaults"}}
+          {{#if editable}}
+            <button type="button" class="ibtn" data-action="addDefault">
+              {{> "gworld.plus"}} {{localize "GWORLD.Action.Add"}}
+            </button>
+          {{/if}}
+        </div>
+        {{#each system.defaults as |d i|}}
+          <div class="irow" data-index="{{i}}">
+            <select name="system.defaults.{{i}}.from" {{#unless @root.editable}}disabled{{/unless}}>
+              <option value="attribute" {{#if (eq d.from "attribute")}}selected{{/if}}>{{localize "GWORLD.Skill.FromAttribute"}}</option>
+              <option value="skill" {{#if (eq d.from "skill")}}selected{{/if}}>{{localize "GWORLD.Skill.FromSkill"}}</option>
+            </select>
+            <select name="system.defaults.{{i}}.attribute" {{#unless @root.editable}}disabled{{/unless}}>
+              {{selectOptions @root.choices.attributes selected=d.attribute}}
+            </select>
+            <input type="text" name="system.defaults.{{i}}.skill" value="{{d.skill}}"
+                   placeholder="{{localize 'GWORLD.Column.Skill'}}" {{#unless @root.editable}}disabled{{/unless}} />
+            <input type="number" name="system.defaults.{{i}}.modifier" value="{{d.modifier}}" step="1"
+                   {{#unless @root.editable}}disabled{{/unless}} />
+            {{#if @root.editable}}
+              <span class="rollable" data-action="deleteDefault"
+                    title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</span>
+            {{/if}}
+          </div>
+        {{else}}
+          <p class="ihint">{{localize "GWORLD.Skill.NoDefaultsYet"}}</p>
+        {{/each}}
+      </div>
+    {{/if}}
+
+    {{#if isTechnique}}
+      <div class="ifields">
+        <label>{{localize "GWORLD.Column.Difficulty"}}
+          <select name="system.difficulty" {{#unless editable}}disabled{{/unless}}>
+            {{selectOptions choices.techniqueDifficulties selected=system.difficulty}}
+          </select>
+        </label>
+        <label>{{localize "GWORLD.Technique.Prerequisite"}}
+          <input type="text" name="system.prerequisite" value="{{system.prerequisite}}"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Technique.DefaultModifier"}}
+          <input type="number" name="system.defaultModifier" value="{{system.defaultModifier}}" step="1" max="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Column.Pts"}}
+          <input type="number" name="system.points" value="{{system.points}}" step="1" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+    {{/if}}
+
+    {{#if isTrait}}
+      <div class="ifields">
+        <label>{{localize "GWORLD.Trait.Category"}}
+          <select name="system.category" {{#unless editable}}disabled{{/unless}}>
+            {{selectOptions choices.categories selected=system.category}}
+          </select>
+        </label>
+        <label>{{localize "GWORLD.Trait.Points"}}
+          <input type="number" name="system.points" value="{{system.points}}" step="1"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Trait.Levels"}}
+          <input type="number" name="system.levels" value="{{system.levels}}" step="1" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Trait.PointsPerLevel"}}
+          <input type="number" name="system.pointsPerLevel" value="{{system.pointsPerLevel}}" step="1"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Trait.Reaction"}}
+          <input type="number" name="system.reactionModifier" value="{{system.reactionModifier}}" step="1"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Trait.TotalHint"}} <strong>{{system.totalPoints}}</strong></p>
+    {{/if}}
+
+    {{#if isLanguage}}
+      <div class="ifields">
+        <label>{{localize "GWORLD.Language.Spoken"}}
+          <select name="system.spoken" {{#unless editable}}disabled{{/unless}}>
+            {{selectOptions choices.comprehension selected=system.spoken}}
+          </select>
+        </label>
+        <label>{{localize "GWORLD.Language.Written"}}
+          <select name="system.written" {{#unless editable}}disabled{{/unless}}>
+            {{selectOptions choices.comprehension selected=system.written}}
+          </select>
+        </label>
+      </div>
+    {{/if}}
+
+    {{#if isArmor}}
+      <div class="ifields">
+        <label>{{localize "GWORLD.Armor.DR"}}
+          <input type="number" name="system.dr" value="{{system.dr}}" step="1" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Armor.LocationsHint"}}</p>
+      <div class="ichecks">
+        {{#each choices.hitLocations as |loc|}}
+          <label class="icheck">
+            <input type="checkbox" name="system.locations" value="{{loc}}"
+                   {{#if (includes @root.system.locations loc)}}checked{{/if}}
+                   {{#unless @root.editable}}disabled{{/unless}} />
+            {{localize (concat "GWORLD.HitLocation." loc)}}
+          </label>
+        {{/each}}
+      </div>
+    {{/if}}
+
+    {{#if isShield}}
+      <div class="ifields">
+        <label>{{localize "GWORLD.Shield.DB"}}
+          <input type="number" name="system.db" value="{{system.db}}" step="1" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Column.Skill"}}
+          <input type="text" name="system.skill" value="{{system.skill}}"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+    {{/if}}
+
+    {{#if isPhysical}}
+      <div class="ifields">
+        <label>{{localize "GWORLD.Column.Quantity"}}
+          <input type="number" name="system.quantity" value="{{system.quantity}}" step="1" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Column.Weight"}}
+          <input type="number" name="system.weight" value="{{system.weight}}" step="0.01" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Column.Cost"}}
+          <input type="number" name="system.cost" value="{{system.cost}}" step="1" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Column.TechLevel"}}
+          <input type="text" name="system.tl" value="{{system.tl}}" placeholder="—"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label class="icheck">
+          <input type="checkbox" name="system.carried" {{#if system.carried}}checked{{/if}}
+                 {{#unless editable}}disabled{{/unless}} />
+          {{localize "GWORLD.Column.Carried"}}
+        </label>
+        <label class="icheck">
+          <input type="checkbox" name="system.equipped" {{#if system.equipped}}checked{{/if}}
+                 {{#unless editable}}disabled{{/unless}} />
+          {{localize "GWORLD.Column.Equipped"}}
+        </label>
+      </div>
+    {{/if}}
+
+    {{#if isArmed}}
+      <div class="isub" data-mode-path="meleeModes">
+        <div class="isub-head">
+          {{localize "GWORLD.Item.MeleeModes"}}
+          {{#if editable}}
+            <button type="button" class="ibtn" data-action="addMode">
+              {{> "gworld.plus"}} {{localize "GWORLD.Action.Add"}}
+            </button>
+          {{/if}}
+        </div>
+        {{#each system.meleeModes as |m i|}}
+          <div class="imode" data-index="{{i}}">
+            <div class="irow">
+              <input type="text" name="system.meleeModes.{{i}}.name" value="{{m.name}}"
+                     placeholder="{{localize 'GWORLD.Item.ModeName'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="text" name="system.meleeModes.{{i}}.skill" value="{{m.skill}}"
+                     placeholder="{{localize 'GWORLD.Column.Skill'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              {{#if @root.editable}}
+                <span class="rollable" data-action="deleteMode"
+                      title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</span>
+              {{/if}}
+            </div>
+            <div class="irow">
+              <select name="system.meleeModes.{{i}}.damageBase" {{#unless @root.editable}}disabled{{/unless}}>
+                {{selectOptions @root.choices.damageBases selected=m.damageBase}}
+              </select>
+              <input type="number" name="system.meleeModes.{{i}}.damageModifier" value="{{m.damageModifier}}" step="1"
+                     {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="text" name="system.meleeModes.{{i}}.damageFormula" value="{{m.damageFormula}}"
+                     placeholder="2d+1" {{#unless @root.editable}}disabled{{/unless}} />
+              <select name="system.meleeModes.{{i}}.damageType" {{#unless @root.editable}}disabled{{/unless}}>
+                {{selectOptions @root.choices.damageTypes selected=m.damageType}}
+              </select>
+            </div>
+            <div class="irow">
+              <input type="text" name="system.meleeModes.{{i}}.reach" value="{{m.reach}}"
+                     placeholder="{{localize 'GWORLD.Column.Reach'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.meleeModes.{{i}}.parryModifier" value="{{m.parryModifier}}" step="1"
+                     {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.meleeModes.{{i}}.minSt" value="{{m.minSt}}" step="1"
+                     placeholder="ST" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.meleeModes.{{i}}.armorDivisor" value="{{m.armorDivisor}}" step="0.5" min="1"
+                     {{#unless @root.editable}}disabled{{/unless}} />
+            </div>
+            <div class="irow iflags">
+              <label class="icheck"><input type="checkbox" name="system.meleeModes.{{i}}.canParry"
+                     {{#if m.canParry}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.CanParry"}}</label>
+              <label class="icheck"><input type="checkbox" name="system.meleeModes.{{i}}.unbalanced"
+                     {{#if m.unbalanced}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.Unbalanced"}}</label>
+              <label class="icheck"><input type="checkbox" name="system.meleeModes.{{i}}.isFencing"
+                     {{#if m.isFencing}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.Fencing"}}</label>
+              <label class="icheck"><input type="checkbox" name="system.meleeModes.{{i}}.twoHanded"
+                     {{#if m.twoHanded}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.TwoHanded"}}</label>
+              <label class="icheck"><input type="checkbox" name="system.meleeModes.{{i}}.isFlail"
+                     {{#if m.isFlail}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.Flail"}}</label>
+            </div>
+          </div>
+        {{else}}
+          <p class="ihint">{{localize "GWORLD.Item.NoModesYet"}}</p>
+        {{/each}}
+      </div>
+    {{/if}}
+
+    <div class="isub">
+      <div class="isub-head">{{localize "GWORLD.Column.Description"}}</div>
+      <prose-mirror class="box editor prose" name="system.description"
+                    value="{{system.description}}" toggled
+                    {{#unless editable}}disabled{{/unless}}>{{{enrichedDescription}}}</prose-mirror>
+      <label class="ifull">{{localize "GWORLD.Item.Reference"}}
+        <input type="text" name="system.reference" value="{{system.reference}}"
+               {{#unless editable}}disabled{{/unless}} />
+      </label>
+    </div>
+
+  </div>
+</form>

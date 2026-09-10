@@ -17,7 +17,8 @@
   "GWORLD": {
     "Sheet": {
       "Character": "GURPS Character Sheet",
-      "Npc": "GURPS NPC Sheet"
+      "Npc": "GURPS NPC Sheet",
+      "Item": "GURPS Item"
     },
     "Tab": {
       "attributes": "Attr",
@@ -108,7 +109,15 @@
       "Written": "Written",
       "Location": "Location",
       "DR": "DR",
-      "ToHit": "To Hit"
+      "ToHit": "To Hit",
+      "Attribute": "Attribute",
+      "Difficulty": "Difficulty",
+      "Bonus": "Bonus",
+      "TechLevel": "TL",
+      "Quantity": "Quantity",
+      "Carried": "Carried",
+      "Equipped": "Equipped",
+      "Description": "Description"
     },
     "Field": {
       "ThrustSwing": "Thrust / Swing",
@@ -186,18 +195,28 @@
       "NoDefault": "No default",
       "Trained": "skills trained",
       "CappedByPrerequisite": "capped by prerequisite",
-      "NoPrerequisite": "No prerequisite"
+      "NoPrerequisite": "No prerequisite",
+      "Defaults": "Defaults",
+      "FromAttribute": "From attribute",
+      "FromSkill": "From skill",
+      "NoDefaultsYet": "No defaults. Without one this skill cannot be rolled untrained."
     },
     "Trait": {
       "Levels": "levels",
-      "Reaction": "reaction"
+      "Reaction": "reaction",
+      "Category": "Category",
+      "Points": "Points",
+      "PointsPerLevel": "Points per level",
+      "TotalHint": "Total cost:"
     },
     "Language": {
       "none": "None",
       "broken": "Broken",
       "accented": "Accented",
       "native": "Native",
-      "Native": "Native tongue"
+      "Native": "Native tongue",
+      "Spoken": "Spoken",
+      "Written": "Written"
     },
     "Item": {
       "Equipped": "equipped",
@@ -206,7 +225,17 @@
       "WholeBody": "whole body",
       "FrontShieldSide": "front / shield side",
       "NoArmor": "no armor",
-      "NoShield": "no shield"
+      "NoShield": "no shield",
+      "Name": "Item name",
+      "Reference": "Reference",
+      "MeleeModes": "Melee attacks",
+      "ModeName": "Attack name",
+      "CanParry": "Can parry",
+      "Unbalanced": "Unbalanced",
+      "Fencing": "Fencing",
+      "TwoHanded": "Two-handed",
+      "Flail": "Flail",
+      "NoModesYet": "No attacks yet. Add one to make this a weapon."
     },
     "Gear": {
       "Carried": "Carried",
@@ -227,7 +256,8 @@
       "AddLanguage": "Add Language",
       "FilterSkills": "Filter skills",
       "Delete": "Delete",
-      "AddTechnique": "Add Technique"
+      "AddTechnique": "Add Technique",
+      "Add": "Add"
     },
     "Prompt": {
       "DeleteItemTitle": "Delete Item",
@@ -310,6 +340,17 @@
       "Double": "Double Defense",
       "Option": "AOD Option",
       "Target": "Raise"
+    },
+    "Technique": {
+      "Prerequisite": "Prerequisite skill",
+      "DefaultModifier": "Default modifier"
+    },
+    "Armor": {
+      "DR": "Damage Resistance",
+      "LocationsHint": "Locations covered. Leave all unticked for whole-body coverage."
+    },
+    "Shield": {
+      "DB": "Defense Bonus"
     }
   }
 }
