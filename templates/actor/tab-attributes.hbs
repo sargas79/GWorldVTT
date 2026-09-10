@@ -28,7 +28,7 @@
           {{#if cell.editable}}
             <span style="display: flex; align-items: baseline; gap: 6px">
               <span class="cv">{{cell.value}}</span>
-              <input type="number" name="system.bonuses.{{cell.key}}" value="{{cell.bonus}}"
+              <input type="number" name="system.purchased.{{cell.key}}" value="{{cell.purchased}}"
                      step="{{cell.step}}" title="{{localize 'GWORLD.Secondary.AdjustHint'}}"
                      style="width: 46px; background: none; border: 1px solid var(--color-divider); font: inherit; color: var(--color-accent-700)"
                      {{#unless @root.editable}}disabled{{/unless}}>
@@ -36,7 +36,7 @@
           {{else}}
             <span class="cv">{{cell.value}}</span>
           {{/if}}
-          <span class="cd">{{cell.derivation}}{{#if cell.cost}} &middot; {{cell.cost}} pts{{/if}}</span>
+          <span class="cd">{{cell.derivation}}{{#if cell.cost}} &middot; {{cell.cost}} pts{{/if}}{{#if cell.granted}} &middot; {{signed cell.granted}} {{localize "GWORLD.Secondary.Granted"}}{{/if}}</span>
         </div>
       {{/each}}
     </div>

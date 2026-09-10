@@ -52,7 +52,8 @@
       "PerAbbr": "Per",
       "MoveAbbr": "Move",
       "DRAbbr": "DR",
-      "AdjustHint": "Levels bought above or sold below the default"
+      "AdjustHint": "Levels bought with character points",
+      "Granted": "granted"
     },
     "Section": {
       "BasicAttributes": "Basic Attributes",

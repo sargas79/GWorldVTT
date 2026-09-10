@@ -59,12 +59,20 @@ export function secondaryPointCost(
   return levels * SECONDARY_COST_PER_LEVEL[key];
 }
 
+/** The increment Basic Speed may be bought or sold in. */
+export const BASIC_SPEED_STEP = 0.25;
+
 /**
  * Points spent on a Basic Speed adjustment, which is priced in quarter-point
  * steps. A +0.5 adjustment is two steps, so 10 points.
+ *
+ * This deliberately does not round. The schema field enforces the 0.25 step, so
+ * a value that is not a multiple has already failed validation; rounding here
+ * would instead price an invalid 0.1 adjustment at 0 points while it still
+ * moved derived speed.
  */
 export function basicSpeedPointCost(adjustment: number): number {
-  return Math.round(adjustment / 0.25) * SECONDARY_COST_PER_LEVEL.basicSpeedQuarter;
+  return (adjustment / BASIC_SPEED_STEP) * SECONDARY_COST_PER_LEVEL.basicSpeedQuarter;
 }
 
 /**

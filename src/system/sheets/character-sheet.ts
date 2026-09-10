@@ -9,8 +9,11 @@
 
 import { SYSTEM_ID } from "../constants.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
-import { basicSpeedPointCost, secondaryPointCost } from "../../rules/attributes.js";
-import type { SECONDARY_COST_PER_LEVEL } from "../../rules/attributes.js";
+import {
+  BASIC_SPEED_STEP,
+  basicSpeedPointCost,
+  secondaryPointCost,
+} from "../../rules/attributes.js";
 import { handleDamageAction, handleRollAction } from "../roll.js";
 import type { Attribute, Posture } from "../../rules/types.js";
 
@@ -248,20 +251,45 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    */
   #secondaryCells(system: any, derived: any) {
     const L = (key: string) => game.i18n.localize(`GWORLD.Secondary.${key}`);
+    const p = system.purchased;
     const b = system.bonuses;
 
-    const bought = (key: keyof typeof SECONDARY_COST_PER_LEVEL, levels: number) =>
-      secondaryPointCost(key, levels);
+    const cell = (
+      key: "hp" | "will" | "per" | "fp" | "basicMove",
+      label: string,
+      value: unknown,
+      derivation: string,
+    ) => ({
+      key,
+      label,
+      value,
+      purchased: p[key],
+      granted: b[key],
+      derivation,
+      step: 1,
+      editable: true,
+      cost: secondaryPointCost(key, p[key]),
+    });
 
     return [
-      { key: "hp", label: L("HP"), value: system.hp.max, bonus: b.hp, derivation: "= ST", step: 1, editable: true, cost: bought("hp", b.hp) },
-      { key: "will", label: L("Will"), value: derived.will, bonus: b.will, derivation: "= IQ", step: 1, editable: true, cost: bought("will", b.will) },
-      { key: "per", label: L("Per"), value: derived.per, bonus: b.per, derivation: "= IQ", step: 1, editable: true, cost: bought("per", b.per) },
-      { key: "fp", label: L("FP"), value: system.fp.max, bonus: b.fp, derivation: "= HT", step: 1, editable: true, cost: bought("fp", b.fp) },
-      { key: "basicLift", label: L("BasicLift"), value: `${derived.basicLift} lb`, derivation: "= ST²/5", editable: false, cost: 0 },
-      { key: "basicSpeed", label: L("BasicSpeed"), value: derived.basicSpeed.toFixed(2), bonus: b.basicSpeed, derivation: "= (DX+HT)/4", step: 0.25, editable: true, cost: basicSpeedPointCost(b.basicSpeed) },
-      { key: "basicMove", label: L("BasicMove"), value: derived.basicMove, bonus: b.basicMove, derivation: "= ⌊Speed⌋", step: 1, editable: true, cost: bought("basicMove", b.basicMove) },
-      { key: "dodge", label: L("Dodge"), value: derived.defenses.dodge.total, derivation: "= Move + 3", editable: false, cost: 0 },
+      cell("hp", L("HP"), system.hp.max, "= ST"),
+      cell("will", L("Will"), derived.will, "= IQ"),
+      cell("per", L("Per"), derived.per, "= IQ"),
+      cell("fp", L("FP"), system.fp.max, "= HT"),
+      {
+        key: "basicLift", label: L("BasicLift"), value: `${derived.basicLift} lb`,
+        derivation: "= ST²/5", editable: false, cost: 0, granted: 0, purchased: 0, step: 1,
+      },
+      {
+        key: "basicSpeed", label: L("BasicSpeed"), value: derived.basicSpeed.toFixed(2),
+        purchased: p.basicSpeed, granted: b.basicSpeed, derivation: "= (DX+HT)/4",
+        step: BASIC_SPEED_STEP, editable: true, cost: basicSpeedPointCost(p.basicSpeed),
+      },
+      cell("basicMove", L("BasicMove"), derived.basicMove, "= ⌊Speed⌋"),
+      {
+        key: "dodge", label: L("Dodge"), value: derived.defenses.dodge.total,
+        derivation: "= Move + 3", editable: false, cost: 0, granted: 0, purchased: 0, step: 1,
+      },
     ];
   }
 
