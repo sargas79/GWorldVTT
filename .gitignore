@@ -14,3 +14,6 @@ gworld.zip
 
 # Compiled compendium packs are a build artifact
 dist/packs/
+
+# Parser reject log, regenerated on each run
+packs-src/skills/.rejected.txt

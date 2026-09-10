@@ -1,0 +1,3414 @@
+[
+  {
+    "_id": "7540371fbe32dbc7",
+    "name": "Acrobatics",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c777d9315248af9f",
+    "name": "Accounting",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Finance",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Mathematics (Statistics)",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Merchant",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d23aa0390ae32b3b",
+    "name": "Animal Handling",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c42c75328dec6260",
+    "name": "Archaeology",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "16343347d45e0024",
+    "name": "Architecture/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Engineer (Civil)",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "09693889fff0260d",
+    "name": "Armoury/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Engineer (same)",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9c8a026cd041e995",
+    "name": "Artillery/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "fd823062cdf0dedc",
+    "name": "Astronomy/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a622226301eb9120",
+    "name": "Bicycling",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Driving(Motorcycle)",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "25ef176a356145ff",
+    "name": "Bioengineering/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Biology",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6f30c975457b9c42",
+    "name": "Blind Fighting",
+    "type": "skill",
+    "system": {
+      "attribute": "Per",
+      "difficulty": "VH",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "62570fe8e9808e8c",
+    "name": "Biology/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "VH",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Naturalist",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8146edb7e894c955",
+    "name": "Boating/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "40bf2b3cf6f2273c",
+    "name": "Body Language",
+    "type": "skill",
+    "system": {
+      "attribute": "Per",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Detect Lies",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Psychology",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "24cdc14daeae16eb",
+    "name": "Body Sense",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Acrobatics",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e09e6e7911badcfe",
+    "name": "Bolas",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e916727944043bd0",
+    "name": "Breath Control",
+    "type": "skill",
+    "system": {
+      "attribute": "HT",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "5443e7e84e7b1c1f",
+    "name": "Killjoy Camouflage",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Survival",
+          "modifier": -2
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "94d3a960aeee2813",
+    "name": "Carpentry",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "99c8d2ecd0a7475d",
+    "name": "Carousing",
+    "type": "skill",
+    "system": {
+      "attribute": "HT",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "HT",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ff2e38b1b2f6a056",
+    "name": "Cartography/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Geography (any)",
+          "modifier": -2
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Mathematics (Surveying)",
+          "modifier": -2
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Navigation (any)",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d7f197b82e5ace1c",
+    "name": "Chemistry/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Alchemy",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "27814a5a242c007c",
+    "name": "Climbing",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8c872ba6abf47d61",
+    "name": "Cloak",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Net",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Shield (any)",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "da604665f2184ae5",
+    "name": "Computer Programming/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7b8502210c93ed71",
+    "name": "Computer Operation/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1203d264ad8d34d6",
+    "name": "Cooking",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Housekeeping",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "355a65fc5a567182",
+    "name": "Current Affairs/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Research",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1f4eddbacdc08cc0",
+    "name": "Criminology/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Psychology",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4ad6e883d2b04090",
+    "name": "Cryptography/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Mathematics (Cryptology)",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d268bd118dda7551",
+    "name": "Physiology Disguise/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Makeup",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e7f230735efb9db9",
+    "name": "Diagnosis/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "First Aid",
+          "modifier": -8
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Physician",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Veterinary",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "acd0f6601cee9ba1",
+    "name": "Will/Hard Driving/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4c8cc1d4e982c047",
+    "name": "Dropping",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Throwing",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "172f4a006769a952",
+    "name": "Economics",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Finance",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Market Analysis",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Merchant",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "68d5d03dfb6ab6c8",
+    "name": "Electrician/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Engineer (Electrical)",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2951a8169988577a",
+    "name": "Electronics Operation/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Electronics Repair (same)",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Engineer (Electronics)",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "23b0cb985a44baa4",
+    "name": "Enthrallment",
+    "type": "skill",
+    "system": {
+      "attribute": "Will",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c165497adbeacee5",
+    "name": "Captivate",
+    "type": "skill",
+    "system": {
+      "attribute": "Will",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9eb6c3259d2fb024",
+    "name": "Escape",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7e370eb929e425dd",
+    "name": "Erotic Art",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Acrobatics",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7eec5d177f1f5ed2",
+    "name": "Esoteric Medicine",
+    "type": "skill",
+    "system": {
+      "attribute": "Per",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Perception",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2d95e269a4669398",
+    "name": "Exorcism",
+    "type": "skill",
+    "system": {
+      "attribute": "Will",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "Will",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Religious Ritual (any)",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Ritual Magic (any)",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Theology (any)",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "82982bbba65873e3",
+    "name": "Expert Skill",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2e3248d3d07919db",
+    "name": "Quick",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Animal Handling (Raptors)",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2e7f76b6d7347b42",
+    "name": "Filch",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Pickpocket",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Sleight of Hand",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ec22bedaf6a0acd5",
+    "name": "Fast-Talk",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Acting",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "22d8cef897c34dae",
+    "name": "Finance",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Accounting",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Economics",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Merchant",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8a2f3498c921e78b",
+    "name": "Fire Eating",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4cba336bb17345f8",
+    "name": "Fishing",
+    "type": "skill",
+    "system": {
+      "attribute": "Per",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Perception",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a01e1df5aad4e909",
+    "name": "Flight",
+    "type": "skill",
+    "system": {
+      "attribute": "HT",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "HT",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "5f0f333a6b07306b",
+    "name": "Flying Leap",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9ddf9306bba858c8",
+    "name": "Forensics/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Criminology",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0c3388606c8a1bb4",
+    "name": "Forgery/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Counterfeiting",
+          "modifier": -2
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "472849b2c4671344",
+    "name": "Forced Entry",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4b60414aa20a7cbe",
+    "name": "Fortune-Telling",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Fast-Talk",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Occultism",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "36ce45e48b86d87d",
+    "name": "Cultural Familiarity Free Fall",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "attribute",
+          "attribute": "HT",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7a57ac369462e486",
+    "name": "Freight Handling/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c54a809d5927d7c5",
+    "name": "Garrote",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f0b7f1341a72a54f",
+    "name": "Geology/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Geography (Physical)",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Prospecting",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0ef39bc81c977425",
+    "name": "Gunner/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ba094c2c61757286",
+    "name": "Gesture",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4c3acf5a1d697e78",
+    "name": "Materials/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8da013142e564217",
+    "name": "Hidden Lore",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "cd834ff8572552dd",
+    "name": "History",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2f479e782510a650",
+    "name": "Holdout",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Sleight of Hand",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4760105a2a2a9d23",
+    "name": "Housekeeping",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c9c763c75896f605",
+    "name": "Hypnotism Immovable Stance",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a7884e9579dfeb6b",
+    "name": "Innate Attack",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8aec694268121678",
+    "name": "Intelligence Analysis/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Strategy (any)",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ab9ef1f9a5fe3b88",
+    "name": "Invisibility Art",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "VH",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2291e06b5c417684",
+    "name": "Intimidation",
+    "type": "skill",
+    "system": {
+      "attribute": "Will",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "Will",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Acting",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "25f6896e586e8042",
+    "name": "Jeweler/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Smith (Copper)",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Smith (Lead and Tin)",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "adcd23e692943c76",
+    "name": "Judo",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0fbe3afcc2bfdc41",
+    "name": "Karate",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e35cf06ea9b5c5a4",
+    "name": "Kiai",
+    "type": "skill",
+    "system": {
+      "attribute": "HT",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4d3039556daffc2b",
+    "name": "Knot-Tying",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Climbing",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Seamanship",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9f48b3d8c56a4d1c",
+    "name": "Leadership",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9663a789ba8d740d",
+    "name": "Lance",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Spear",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "317256865ce2f5ae",
+    "name": "Leatherworking Linguistics",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3a6dcf47fa66dfab",
+    "name": "Lifting",
+    "type": "skill",
+    "system": {
+      "attribute": "HT",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "da42bc98f797a22e",
+    "name": "Light Walk",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "18c4215391a178e3",
+    "name": "Lip Reading",
+    "type": "skill",
+    "system": {
+      "attribute": "Per",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Perception",
+          "modifier": -10
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "63733a8f4ba32695",
+    "name": "Literature",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8744ea9e4e264ddf",
+    "name": "Lockpicking/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3d6238d68dd5aad3",
+    "name": "Machinist/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Mechanic (any)",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "082afb51bad6c41b",
+    "name": "Makeup/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Disguise",
+          "modifier": -2
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "cace5bafe55ba353",
+    "name": "Market Analysis",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Economics",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Merchant",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "06fba591293feeec",
+    "name": "Masonry",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "18d6d5350b295f9b",
+    "name": "Mechanic/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Engineer (same)",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Machinist",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "28142adcbd9742d9",
+    "name": "Mental Strength",
+    "type": "skill",
+    "system": {
+      "attribute": "Will",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ae0fe1447d64725a",
+    "name": "Merchant",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Finance",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Market Analysis",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "08a0ef1af18c1b89",
+    "name": "Musical Influence",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "VH",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "755df7d14e181b67",
+    "name": "Mind Block",
+    "type": "skill",
+    "system": {
+      "attribute": "Will",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "Will",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Meditation",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "67066fb52472545a",
+    "name": "Naturalist",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Biology",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "569f20daf69ffd4a",
+    "name": "Observation",
+    "type": "skill",
+    "system": {
+      "attribute": "Per",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Perception",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Shadowing",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6bcb2beb35a0ee40",
+    "name": "Parachuting/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "14eec92b2b1652f9",
+    "name": "Panhandling",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Fast Talk",
+          "modifier": -2
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Public Speaking",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "782c8dada4867ba1",
+    "name": "Parry Missile Weapons",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ca8c3aac11e458af",
+    "name": "Missile Weapons",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a5f73319a76cfd3d",
+    "name": "Performance",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Acting",
+          "modifier": -2
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Public Speaking",
+          "modifier": -2
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "769b6d6cc72e6b33",
+    "name": "Photography/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Electronics Operation (Media)",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4d4ee4fed2474dfa",
+    "name": "Physician/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -7
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "First Aid",
+          "modifier": -11
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Veterinary",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "cddd5d022815d594",
+    "name": "Physiology/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Diagnosis",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Physician",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Surgery",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a8b9a3f90b1748b1",
+    "name": "Philosophy",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "81e6b99814df92b0",
+    "name": "Physics/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "VH",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "304f03fef0cabb35",
+    "name": "Poetry",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Writing",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1e357e68fcd2982e",
+    "name": "Poisons/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Chemistry",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Pharmacy (any)",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Physician",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c5af0a05e4d82db2",
+    "name": "Politics",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Diplomacy",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "89623c9857de8e4d",
+    "name": "Professional Skill",
+    "type": "skill",
+    "system": {
+      "attribute": "Will",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c05ed1c0b37d0294",
+    "name": "Bartender",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Carousing",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "817f41ff13677c2e",
+    "name": "Prospecting/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Geology (any)",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b32908e05f67ee9a",
+    "name": "Public Speaking",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Acting",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Performance",
+          "modifier": -2
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Politics",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6f11f80d15fb3eb4",
+    "name": "Psychology",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Sociology",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c6431e331c25ff9a",
+    "name": "Propaganda/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Merchant",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Psychology",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e4e4294de7919642",
+    "name": "Religious Ritual",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Ritual Magic (same)",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Theology (same)",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "5237ccce70e67388",
+    "name": "Riding",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Animal Handling (same)",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2a1fc1e387ffe16e",
+    "name": "Research/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Writing",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a14c66bf815b9b4b",
+    "name": "Ritual Magic",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "VH",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Religious Ritual (same)",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9b5198058637c5fd",
+    "name": "Running",
+    "type": "skill",
+    "system": {
+      "attribute": "HT",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "HT",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "5e499bdeeed4a55d",
+    "name": "Sewing/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0bbdabc5e422cea1",
+    "name": "Shield",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d94605465f7c73fc",
+    "name": "Skating",
+    "type": "skill",
+    "system": {
+      "attribute": "HT",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "HT",
+          "skill": "",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "dd6f578b21450314",
+    "name": "Sling",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f1886984e1157824",
+    "name": "Sociology",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Anthropology",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Psychology",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e6c10d72dd658652",
+    "name": "Stage Combat DX/Average Strategy",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Intelligence Analysis",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Tactics",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a4795ae613e011f7",
+    "name": "Stealth",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3fbc09af37a498b8",
+    "name": "Sumo Wrestling",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "287ede50281eaaeb",
+    "name": "Submarine/TL",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2c19eabef9a5db01",
+    "name": "Survival",
+    "type": "skill",
+    "system": {
+      "attribute": "Per",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Perception",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Naturalist (same planet)",
+          "modifier": -3
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3c77af4c1af462d9",
+    "name": "Tactics",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Strategy (any)",
+          "modifier": -6
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "571f9fbde5d31249",
+    "name": "Teaching",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "db41d4c2f2ce86a1",
+    "name": "Teamster",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -5
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Animal Handling (same)",
+          "modifier": -4
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Riding (same)",
+          "modifier": -2
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "cd41eef0957fea2b",
+    "name": "Throwing",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -3
+        },
+        {
+          "from": "skill",
+          "attribute": "DX",
+          "skill": "Dropping",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "dde6cc8d56b427f0",
+    "name": "Ventriloquism",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  }
+]
