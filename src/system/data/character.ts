@@ -12,7 +12,7 @@ import {
   secondaryCharacteristics,
   secondaryPointCost,
 } from "../../rules/attributes.js";
-import { baseParry, block, dodge, parry } from "../../rules/defenses.js";
+import { baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
@@ -76,6 +76,13 @@ export interface DerivedAttack {
   armorDivisor: number;
   /** False when the damage formula cannot be parsed, so the UI can omit the roll. */
   damageRollable: boolean;
+  /**
+   * An unbalanced weapon cannot parry in a turn it has attacked in
+   * (p. 269, the "U" in the Parry column).
+   */
+  unbalanced: boolean;
+  /** A fencing weapon, marked "F", which defends by its own rules. */
+  isFencing: boolean;
   /** Ranged only. */
   accuracy?: number;
   /** A built-in scope's bonus, which the table lists separately as in "7+2". */
@@ -111,7 +118,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare allOutDefenseOption: "increased" | "double";
   declare allOutDefenseTarget: "dodge" | "parry" | "block";
   declare posture: Posture;
-  declare conditions: { stunned: boolean; allOutDefense: boolean; blindToAttacker: boolean };
+  declare conditions: {
+    stunned: boolean;
+    allOutDefense: boolean;
+    blindToAttacker: boolean;
+    attackedThisTurn: boolean;
+  };
   declare details: {
     player: string; height: string; weight: string; age: string;
     appearance: string; biography: string; notes: string;
@@ -223,6 +235,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         stunned: new fields.BooleanField({ initial: false }),
         allOutDefense: new fields.BooleanField({ initial: false }),
         blindToAttacker: new fields.BooleanField({ initial: false }),
+        /**
+         * Whether this character has already attacked this turn. An unbalanced
+         * weapon cannot parry in a turn it has attacked in, or attack in a turn
+         * it has parried (GURPS Basic Set: Characters p. 269, the "U" in the
+         * Parry column), so the parry it offers depends on what has already
+         * happened this turn and nothing else on the sheet can say.
+         */
+        attackedThisTurn: new fields.BooleanField({ initial: false }),
       }),
 
       details: new fields.SchemaField({
@@ -442,7 +462,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       return formatDiceAdds(weaponDamage(st, base, modifier, minSt));
     };
 
-    for (const item of this.itemsOfType("equipment")) {
+    // A shield is a weapon as well as a defense: bashing with it is an ordinary
+    // melee attack (GURPS Basic Set: Characters p. 273). Only an equipped one
+    // is on the list, since you cannot hit anyone with a shield in your pack.
+    const armed = [
+      ...this.itemsOfType("equipment"),
+      ...this.itemsOfType("shield").filter((i) => i.system?.equipped),
+    ];
+
+    for (const item of armed) {
       const sys = item.system as {
         meleeModes?: any[]; rangedModes?: any[]; equipped?: boolean;
       };
@@ -469,6 +497,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
               ? baseParry(skillLevel) + (mode.parryModifier ?? 0)
               : null,
           minSt: mode.minSt ?? null,
+          unbalanced: Boolean(mode.unbalanced),
+          isFencing: Boolean(mode.isFencing),
         });
       });
 
@@ -501,6 +531,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
           rateOfFire: mode.rateOfFire ?? 1,
           shots: mode.shots ?? "",
+          unbalanced: false,
+          isFencing: false,
         });
       });
     }
@@ -536,10 +568,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     });
 
     // The best parry available across every equipped melee mode.
-    const bestParry = melee.reduce<DerivedAttack | null>(
-      (best, atk) => (atk.parry !== null && (best === null || atk.parry > (best.parry ?? -Infinity)) ? atk : best),
-      null,
-    );
+    //
+    // An unbalanced weapon is out of the running on a turn its wielder has
+    // already attacked in: an axe swung this turn is not coming back in time to
+    // turn a blade (p. 269). It stays available on a turn nothing was swung, so
+    // the flag is read here rather than baked into the parry score.
+    const bestParry = bestParryOption(melee, this.conditions.attackedThisTurn);
     const parryResult =
       parryAvailable && bestParry && bestParry.skillLevel !== null
         ? parry(bestParry.skillLevel, contextFor("parry"))

@@ -512,6 +512,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
 export class ShieldData extends foundry.abstract.TypeDataModel {
   declare db: number;
   declare skill: string;
+  declare meleeModes: unknown[];
   declare quantity: number;
   declare weight: number;
   declare cost: number;
@@ -530,6 +531,12 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
         min: 0,
       }),
       skill: new fields.StringField({ required: true, blank: true, initial: "Shield" }),
+      /**
+       * Bashing someone with the shield (GURPS Basic Set: Characters p. 273).
+       * A shield is a weapon as well as a defense, and the same field shape as
+       * a weapon's modes is used so the Combat tab can render both alike.
+       */
+      meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: [] }),
     };
   }
 }

@@ -479,7 +479,13 @@ function parseDamage(damage, damtype) {
  */
 function parseSkillUsed(value) {
   for (const entry of splitTop(value ?? "")) {
-    const m = /^"?SK:([^"]+?)"?$/.exec(entry.trim());
+    const text = entry.trim();
+    // An entry carrying a modifier is a default -- what you fall back to if you
+    // lack the real skill -- not the skill the weapon is used with. A shield's
+    // list reads "ST:DX-4, SK:Shield (Buckler)-2, SK:Shield (Force)-2,
+    // SK:Shield (Shield)", and the unmodified one at the end is the answer.
+    if (/[+-]\s*\d+$/.test(text)) continue;
+    const m = /^"?SK:(.+?)"?$/.exec(text);
     if (m && !m[1].endsWith("!")) return m[1].trim();
   }
   return "";
@@ -721,12 +727,30 @@ function parseEquipment(recs, reject, note) {
     // "spcl." and it is rejected with a reason.
     if (number(f.get("db"), 0) >= 1) {
       taken.add(name);
-      if (modes(r.text).length > 0) note(`${name}: shield bash mode, which ShieldData does not hold`);
+
+      // A shield is a weapon as well as a defense. Its bash is an ordinary
+      // melee mode; its rush is a slam, whose damage comes from the rules for
+      // running into someone rather than from the weapon, and is reported.
+      const bashes = [];
+      for (const raw of modes(r.text)) {
+        const modeName = splitTop(raw)[0].trim();
+        const result = meleeMode(modeName || "Bash", fields(raw));
+        if (result.error) { note(`${name}: ${modeName}: ${result.error}`); continue; }
+        bashes.push(result.mode);
+      }
+
+      // The skill the shield is used with, which is also the skill a block
+      // rolls against. GCA names the specialty -- "Shield (Shield)" -- and the
+      // skill compendium has no bare "Shield" for the default to fall back to.
+      const skill = parseSkillUsed(fields(modes(r.text)[0] ?? "").get("skillused"))
+        || parseSkillUsed(f.get("skillused"))
+        || "Shield";
+
       shields.push({
         _id: ids.get(name) ?? id("shield", name),
         name,
         type: "shield",
-        system: { ...common, db: number(f.get("db"), 1), skill: "Shield" },
+        system: { ...common, db: number(f.get("db"), 1), skill, meleeModes: bashes },
       });
       continue;
     }

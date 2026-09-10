@@ -32,6 +32,7 @@ const CONDITIONS = [
   { key: "allOutDefense", label: "GWORLD.Condition.AllOutDefense" },
   { key: "stunned", label: "GWORLD.Condition.Stunned" },
   { key: "blindToAttacker", label: "GWORLD.Condition.BlindToAttacker" },
+  { key: "attackedThisTurn", label: "GWORLD.Condition.AttackedThisTurn" },
 ] as const;
 
 /** Normalises a defense into the shape the card template renders. */

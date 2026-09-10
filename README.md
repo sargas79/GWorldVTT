@@ -35,6 +35,11 @@ penalty from the Size and Speed/Range Table, the target's Size Modifier, and the
 weapon's Accuracy for an aimed shot. The card shows each as its own line rather
 than one opaque number.
 
+**Turn order** — everyone acts in order of Basic Speed, highest first, and that
+order holds for the whole fight. Ties break on DX, which matters more than it
+sounds: Basic Speed comes in quarter-point steps, so a party of four will
+routinely have two people on 5.00.
+
 **Defending** — an attack that connects records who it was aimed at, and its
 card offers each defender their available active defenses with the score for
 each. Only defenders you can roll for are shown, and a defense the character
@@ -60,7 +65,7 @@ and applying the headline would stop a mace with the DR that stops a sword.
 | --- | --- |
 | GURPS Advantages & Disadvantages | 641 traits, each with its cost, level cap and the book's name for each level |
 | GURPS Skills | 630 skills with attribute, difficulty and defaults, and 35 techniques |
-| GURPS Equipment | 458 items — 153 armours, 18 shields, and 287 pieces of gear of which 132 carry attack modes |
+| GURPS Equipment | 458 items — 153 armours, 18 shields (16 of which can be bashed with), and 287 pieces of gear of which 132 carry attack modes |
 
 A weapon that appears in both weapon tables is one item with both kinds of
 attack: a hatchet swings under Axe/Mace and throws under Thrown Weapon. Armour
@@ -77,7 +82,6 @@ book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
 
 - **No character builder.** Characters are assembled by dragging from the
   compendia and editing the sheet.
-- **Initiative is Basic Speed**, but no Combat subclass enforces the ordering.
 - **Explosive and affliction damage.** The damage model holds dice and a
   modifier, so it has no way to say "cr ex [3d]" or "HT-4 aff". Hand grenades,
   incendiaries and a few beam weapons are therefore not in the compendium: they
@@ -93,11 +97,9 @@ book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
   GURPS Lite, and are not implemented from memory — the numbers would be
   guesses, and a guessed number at the table is worse than a missing feature.
 - Some statistics are recorded but not yet read by the rules engine:
-  `unbalanced` and `isFencing` on a melee mode, `bulk` and `recoil` on a ranged
-  one. Each is documented against the page that defines it, so the rule is
-  available when the defence and firing code grows to use it.
-- A shield's bash attack is not recorded: `ShieldData` holds a defense bonus and
-  no attack modes.
+  `isFencing` on a melee mode and `bulk` on a ranged one. Fencing weapons defend
+  by their own rules, which turn on retreating, and nothing here models a
+  retreat yet. Each is documented against the page that defines it.
 - `reactionModifier` is zero on every trait, because the book states reaction
   modifiers in prose that is conditional or per-level, and a flat integer would
   fire in the wrong circumstances.

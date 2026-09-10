@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { baseBlock, baseDodge, baseParry, block, dodge, parry } from "../defenses.js";
+import {
+  baseBlock,
+  baseDodge,
+  baseParry,
+  bestParryOption,
+  block,
+  dodge,
+  parry,
+} from "../defenses.js";
 import {
   applyInjury,
   consciousnessRollPenalty,
@@ -244,5 +252,44 @@ describe("the Size and Speed/Range Table (GURPS Lite p. 27)", () => {
   it("computes muscle-powered ranges as multiples of ST", () => {
     // x10/x15 at ST 10 gives 100/150.
     expect(musclePoweredRange(10, 10, 15)).toEqual({ halfDamage: 100, max: 150 });
+  });
+});
+
+describe("choosing a weapon to parry with (Basic Set: Characters p. 269)", () => {
+  const sword = { name: "Broadsword", parry: 10, unbalanced: false };
+  const axe = { name: "Axe", parry: 11, unbalanced: true };
+  const knife = { name: "Knife", parry: 8, unbalanced: false };
+  const bow = { name: "Bow", parry: null, unbalanced: false };
+
+  it("takes the highest parry when nothing has been swung yet", () => {
+    expect(bestParryOption([sword, axe, knife], false)?.name).toBe("Axe");
+  });
+
+  /**
+   * The rule this exists for: an axe swung this turn is not coming back in
+   * time to turn a blade, so the character parries with the sword instead --
+   * at a worse score, which is the point.
+   */
+  it("drops an unbalanced weapon on a turn its wielder has already attacked", () => {
+    expect(bestParryOption([sword, axe, knife], true)?.name).toBe("Broadsword");
+  });
+
+  it("leaves a balanced weapon alone on such a turn", () => {
+    expect(bestParryOption([sword, knife], true)?.name).toBe("Broadsword");
+  });
+
+  it("skips a weapon that cannot parry at all", () => {
+    expect(bestParryOption([bow, knife], false)?.name).toBe("Knife");
+  });
+
+  /**
+   * No parry is not the same as a bad parry: a character holding only an axe
+   * they have already swung has no parry this turn, and the sheet must say so
+   * rather than offering the axe's score.
+   */
+  it("returns null when nothing left can parry", () => {
+    expect(bestParryOption([axe], true)).toBeNull();
+    expect(bestParryOption([bow], false)).toBeNull();
+    expect(bestParryOption([], false)).toBeNull();
   });
 });
