@@ -65,7 +65,12 @@ const NAME_CORRECTIONS = new Map([
   ["Physiology Disguise/TL", "Disguise/TL"],
   ["Cultural Familiarity Free Fall", "Free Fall"],
   ["Hypnotism Immovable Stance", "Immovable Stance"],
-  ["Leatherworking Linguistics", "Linguistics"],
+  // The reflow scrambles three columns here, running two headings together
+  // and interleaving both their pairs: "Leatherworking  LinguisticsDX/Easy
+  // Default: DX-4.Defaults: None....IQ/Hard". The pair this window matches
+  // is DX/Easy, which belongs to Leatherworking; Linguistics is IQ/Hard and
+  // is carried in corrected-skills.json because no window here can yield it.
+  ["Leatherworking Linguistics", "Leatherworking"],
   ["SKILLS 205 Lockpicking/TL", "Lockpicking/TL"],
 ]);
 

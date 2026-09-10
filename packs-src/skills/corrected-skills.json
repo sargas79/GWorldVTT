@@ -1,0 +1,17 @@
+[
+  {
+    "_id": "f2220d1bb0d0bf59",
+    "name": "Linguistics",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  }
+]
