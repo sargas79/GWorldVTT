@@ -1,5 +1,341 @@
 [
   {
+    "_id": "3186702553e816ff",
+    "name": "Horse Leather & Cloth Face Mask",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "6ff58bd73bd42ef5",
+    "name": "Horse Mail Face Mask",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 7,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 4,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
+      "locations": [
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "ba0bf4c5bc6a6d8c",
+    "name": "Horse Scale Face Mask",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 12,
+      "cost": 200,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "7552eebd16ef3455",
+    "name": "Horse Plate Face Mask",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 12,
+      "cost": 200,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "cefaf5072826942a",
+    "name": "Horse Leather & Cloth Head/Neck",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 80,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "neck",
+        "skull"
+      ]
+    }
+  },
+  {
+    "_id": "edd766fd64d1ffc5",
+    "name": "Horse Mail Head/Neck",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 4,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
+      "locations": [
+        "neck",
+        "skull"
+      ]
+    }
+  },
+  {
+    "_id": "eba92c1574474ca8",
+    "name": "Horse Scale Head/Neck",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 20,
+      "cost": 320,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "neck",
+        "skull"
+      ]
+    }
+  },
+  {
+    "_id": "a7ab2c950ce640f7",
+    "name": "Horse Plate Head/Neck",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 18,
+      "cost": 330,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "neck",
+        "skull"
+      ]
+    }
+  },
+  {
+    "_id": "6364f6a0b0198a42",
+    "name": "Horse Leather & Cloth Partial Barding",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 12,
+      "cost": 260,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "torso",
+        "vitals"
+      ]
+    }
+  },
+  {
+    "_id": "8abfbb839e38ff3e",
+    "name": "Horse Mail Partial Barding",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 20,
+      "cost": 440,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 4,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
+      "locations": [
+        "torso",
+        "vitals"
+      ]
+    }
+  },
+  {
+    "_id": "864ba01108fb4b7f",
+    "name": "Horse Scale Partial Barding",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 60,
+      "cost": 480,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "torso",
+        "vitals"
+      ]
+    }
+  },
+  {
+    "_id": "d7e0cb6b7bb9ba3d",
+    "name": "Horse Leather & Cloth Full Barding",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 30,
+      "cost": 345,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ]
+    }
+  },
+  {
+    "_id": "393f6e04ed399f3f",
+    "name": "Horse Mail Full Barding",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 59,
+      "cost": 670,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 4,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ]
+    }
+  },
+  {
+    "_id": "09aa2486f7cb7efd",
+    "name": "Horse Plate Full Barding",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 90,
+      "cost": 1650,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ]
+    }
+  },
+  {
+    "_id": "b3cd6ed3d1a80307",
+    "name": "Horse Plate Leggings",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 20,
+      "cost": 400,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 286",
+      "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "leg"
+      ]
+    }
+  },
+  {
     "_id": "77e69404d404b9e3",
     "name": "Fur Loincloth",
     "type": "armor",
@@ -10,14 +346,14 @@
       "carried": true,
       "equipped": false,
       "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 1,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -31,15 +367,15 @@
       "carried": true,
       "equipped": false,
       "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 1,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -53,15 +389,15 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 4,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -75,6 +411,8 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 5,
       "drSplit": null,
       "drSplitAppliesTo": [],
@@ -82,9 +420,7 @@
         "torso",
         "vitals",
         "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -98,6 +434,8 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 1,
       "drSplit": null,
       "drSplitAppliesTo": [],
@@ -105,9 +443,7 @@
         "torso",
         "vitals",
         "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -121,6 +457,8 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 2,
       "drSplit": null,
       "drSplitAppliesTo": [],
@@ -128,9 +466,7 @@
         "torso",
         "vitals",
         "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -144,6 +480,8 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 1,
       "drSplit": null,
       "drSplitAppliesTo": [],
@@ -151,9 +489,7 @@
         "arm",
         "torso",
         "vitals"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -167,15 +503,15 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 3,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -189,15 +525,15 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 5,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -211,6 +547,8 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 4,
       "drSplit": 2,
       "drSplitAppliesTo": [
@@ -220,9 +558,7 @@
         "torso",
         "vitals",
         "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -236,6 +572,8 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 4,
       "drSplit": 2,
       "drSplitAppliesTo": [
@@ -244,9 +582,7 @@
       "locations": [
         "torso",
         "vitals"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -260,6 +596,8 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 4,
       "drSplit": null,
       "drSplitAppliesTo": [],
@@ -267,9 +605,7 @@
         "torso",
         "vitals",
         "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -283,6 +619,8 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 5,
       "drSplit": 3,
       "drSplitAppliesTo": [
@@ -292,9 +630,7 @@
         "torso",
         "vitals",
         "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -308,6 +644,8 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 7,
       "drSplit": null,
       "drSplitAppliesTo": [],
@@ -315,9 +653,7 @@
         "torso",
         "vitals",
         "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -331,15 +667,15 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 5,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -353,6 +689,8 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 6,
       "drSplit": null,
       "drSplitAppliesTo": [],
@@ -360,9 +698,7 @@
         "torso",
         "vitals",
         "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -376,6 +712,8 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 5,
       "drSplit": null,
       "drSplitAppliesTo": [],
@@ -383,14 +721,12 @@
         "torso",
         "vitals",
         "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
-    "_id": "8c21bf0c14f23073",
-    "name": "Buff Coat (Leather)",
+    "_id": "5ddebd15dcc38080",
+    "name": "Buff Leather Coat",
     "type": "armor",
     "system": {
       "quantity": 1,
@@ -399,6 +735,8 @@
       "carried": true,
       "equipped": false,
       "tl": "4",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 2,
       "drSplit": null,
       "drSplitAppliesTo": [],
@@ -408,9 +746,7 @@
         "groin",
         "arm",
         "leg"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -424,14 +760,14 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 3,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "arm"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -445,14 +781,14 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 3,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "leg"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -466,14 +802,14 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 1,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "arm"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -487,14 +823,14 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 2,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "leg"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -508,14 +844,14 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 2,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "arm"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -529,14 +865,14 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 1,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "leg"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -550,15 +886,15 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 1,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
-        "leg",
-        "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+        "groin",
+        "leg"
+      ]
     }
   },
   {
@@ -572,6 +908,8 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 3,
       "drSplit": 2,
       "drSplitAppliesTo": [
@@ -580,9 +918,7 @@
       "locations": [
         "groin",
         "leg"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -596,6 +932,8 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 4,
       "drSplit": 2,
       "drSplitAppliesTo": [
@@ -603,9 +941,7 @@
       ],
       "locations": [
         "leg"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -619,6 +955,8 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 4,
       "drSplit": 2,
       "drSplitAppliesTo": [
@@ -626,9 +964,7 @@
       ],
       "locations": [
         "arm"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -642,14 +978,14 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 4,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "leg"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -663,14 +999,14 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 4,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "arm"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -684,14 +1020,14 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 7,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "arm"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -705,14 +1041,14 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 7,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "leg"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -726,14 +1062,14 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 6,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "arm"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -747,14 +1083,14 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 283",
       "dr": 6,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "leg"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -768,20 +1104,20 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 3,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "skull",
         "face"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
-    "_id": "61343b7c5ce12089",
-    "name": "Bronze Pot-Helm",
+    "_id": "a7f6124d2673fe05",
+    "name": "Bronze Pot-Helmet",
     "type": "armor",
     "system": {
       "quantity": 1,
@@ -790,14 +1126,14 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 3,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -811,14 +1147,14 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 1,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -832,14 +1168,14 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 1,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -853,15 +1189,15 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 2,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "skull",
         "face"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -875,15 +1211,15 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 4,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "skull",
         "face"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -897,6 +1233,8 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 4,
       "drSplit": 2,
       "drSplitAppliesTo": [
@@ -905,9 +1243,7 @@
       "locations": [
         "skull",
         "neck"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -921,15 +1257,15 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 6,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "skull",
         "face"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -943,14 +1279,14 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 4,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "face"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -964,6 +1300,8 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 7,
       "drSplit": null,
       "drSplitAppliesTo": [],
@@ -971,9 +1309,7 @@
         "skull",
         "face",
         "neck"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -987,14 +1323,14 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 4,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -1008,14 +1344,14 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 1,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "hand"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -1029,14 +1365,14 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 2,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "hand"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -1050,14 +1386,14 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 4,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "hand"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -1071,14 +1407,14 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 5,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "hand"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -1092,14 +1428,14 @@
       "carried": true,
       "equipped": false,
       "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 0,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "foot"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -1113,14 +1449,14 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 1,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "foot"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -1134,14 +1470,14 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 2,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "foot"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -1155,14 +1491,14 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 4,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "foot"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -1176,15 +1512,15 @@
       "carried": true,
       "equipped": false,
       "tl": "6",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 7,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -1198,6 +1534,8 @@
       "carried": true,
       "equipped": false,
       "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 5,
       "drSplit": 2,
       "drSplitAppliesTo": [
@@ -1212,14 +1550,34 @@
         "torso",
         "vitals",
         "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
-    "_id": "1d6543d2a7332c50",
-    "name": "Ballistic Vest",
+    "_id": "3abf429d0e6f7b60",
+    "name": "Frag Vest Plate Inserts",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 300,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 20,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "torso",
+        "vitals"
+      ]
+    }
+  },
+  {
+    "_id": "a1e5c5dd96264d1d",
+    "name": "Ballistic Vest (TL 8)",
     "type": "armor",
     "system": {
       "quantity": 1,
@@ -1228,6 +1586,8 @@
       "carried": true,
       "equipped": false,
       "tl": "8",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 8,
       "drSplit": 2,
       "drSplitAppliesTo": [
@@ -1241,14 +1601,12 @@
       "locations": [
         "torso",
         "vitals"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
-    "_id": "7d1827983ae8c3d7",
-    "name": "Tactical Vest",
+    "_id": "4e0ace3c5753235c",
+    "name": "Tactical Vest (TL 8)",
     "type": "armor",
     "system": {
       "quantity": 1,
@@ -1257,6 +1615,8 @@
       "carried": true,
       "equipped": false,
       "tl": "8",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 12,
       "drSplit": 5,
       "drSplitAppliesTo": [
@@ -1271,14 +1631,270 @@
         "torso",
         "vitals",
         "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
-    "_id": "80280cde1a31333a",
-    "name": "Ballistic Suit",
+    "_id": "93c5c7ed35e94bba",
+    "name": "Tactical Vest Trauma Plates",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 9,
+      "cost": 600,
+      "carried": true,
+      "equipped": false,
+      "tl": "8",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 23,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "torso",
+        "vitals"
+      ]
+    }
+  },
+  {
+    "_id": "055142da054456c5",
+    "name": "Tactical Vest (TL 9)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 9,
+      "cost": 900,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 18,
+      "drSplit": 7,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ]
+    }
+  },
+  {
+    "_id": "c123a646ac6aa286",
+    "name": "Tactical Vest (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 9,
+      "cost": 900,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 24,
+      "drSplit": 10,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ]
+    }
+  },
+  {
+    "_id": "464dd9f96314a1dc",
+    "name": "Tactical Vest (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 9,
+      "cost": 900,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 36,
+      "drSplit": 15,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ]
+    }
+  },
+  {
+    "_id": "524753fe199d2852",
+    "name": "Tactical Vest (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 9,
+      "cost": 900,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 48,
+      "drSplit": 20,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ]
+    }
+  },
+  {
+    "_id": "8e76f05870d6b15e",
+    "name": "Ballistic Vest (TL 9)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 400,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 12,
+      "drSplit": 3,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals"
+      ]
+    }
+  },
+  {
+    "_id": "1d92c2d50caeb0df",
+    "name": "Ballistic Vest (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 400,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 16,
+      "drSplit": 4,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals"
+      ]
+    }
+  },
+  {
+    "_id": "7024c9d7d555b942",
+    "name": "Ballistic Vest (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 400,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 24,
+      "drSplit": 6,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals"
+      ]
+    }
+  },
+  {
+    "_id": "97a8da9247660ad4",
+    "name": "Ballistic Vest (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 400,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 32,
+      "drSplit": 8,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals"
+      ]
+    }
+  },
+  {
+    "_id": "f73ef68412fbb7ad",
+    "name": "Ballistic Suit (TL 9)",
     "type": "armor",
     "system": {
       "quantity": 1,
@@ -1287,6 +1903,8 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 12,
       "drSplit": 4,
       "drSplitAppliesTo": [
@@ -1303,14 +1921,108 @@
         "groin",
         "arm",
         "leg"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
-    "_id": "f28495c314720df0",
-    "name": "Tactical Suit",
+    "_id": "4285e9af63ebda31",
+    "name": "Ballistic Suit (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 6,
+      "cost": 1000,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 18,
+      "drSplit": 6,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin",
+        "arm",
+        "leg"
+      ]
+    }
+  },
+  {
+    "_id": "b7c27d5224e61a50",
+    "name": "Ballistic Suit (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 6,
+      "cost": 1000,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 24,
+      "drSplit": 8,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin",
+        "arm",
+        "leg"
+      ]
+    }
+  },
+  {
+    "_id": "b42dfaf57bc28fa2",
+    "name": "Ballistic Suit (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 6,
+      "cost": 1000,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 36,
+      "drSplit": 12,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin",
+        "arm",
+        "leg"
+      ]
+    }
+  },
+  {
+    "_id": "bb3f35ae781c019a",
+    "name": "Tactical Suit (TL 9)",
     "type": "armor",
     "system": {
       "quantity": 1,
@@ -1319,6 +2031,8 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 20,
       "drSplit": 10,
       "drSplitAppliesTo": [
@@ -1329,9 +2043,85 @@
         "cor",
         "fat"
       ],
-      "locations": [],
+      "locations": []
+    }
+  },
+  {
+    "_id": "32a52d0a5aace563",
+    "name": "Tactical Suit (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 3000,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
       "description": "",
-      "reference": "Basic Set: Characters"
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 30,
+      "drSplit": 15,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": []
+    }
+  },
+  {
+    "_id": "81824fe914cd9280",
+    "name": "Tactical Suit (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 3000,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 40,
+      "drSplit": 20,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": []
+    }
+  },
+  {
+    "_id": "50a69f08114111fe",
+    "name": "Tactical Suit (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 3000,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 60,
+      "drSplit": 30,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": []
     }
   },
   {
@@ -1345,26 +2135,19 @@
       "carried": true,
       "equipped": false,
       "tl": "7",
-      "dr": 5,
-      "drSplit": 2,
-      "drSplitAppliesTo": [
-        "cr",
-        "imp",
-        "burn",
-        "tox",
-        "cor",
-        "fat"
-      ],
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "foot"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
-    "_id": "40f4bd49ce7307f7",
-    "name": "Assault Boots",
+    "_id": "d44c45f18da9a070",
+    "name": "Assault Boots (TL 9)",
     "type": "armor",
     "system": {
       "quantity": 1,
@@ -1373,6 +2156,8 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 12,
       "drSplit": 6,
       "drSplitAppliesTo": [
@@ -1385,14 +2170,75 @@
       ],
       "locations": [
         "foot"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
-    "_id": "f606c4c7b0b08775",
-    "name": "Ballistic Gloves",
+    "_id": "4a334165ed22abc8",
+    "name": "Assault Boots (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 150,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 9,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "foot"
+      ]
+    }
+  },
+  {
+    "_id": "160a183b1be0c702",
+    "name": "Assault Boots (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 150,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 12,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "foot"
+      ]
+    }
+  },
+  {
+    "_id": "868aacf678de8ea7",
+    "name": "Assault Boots (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 150,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 18,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "foot"
+      ]
+    }
+  },
+  {
+    "_id": "acaf3e13c96ebfc6",
+    "name": "Ballistic Gloves (TL 9)",
     "type": "armor",
     "system": {
       "quantity": 1,
@@ -1401,6 +2247,8 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
       "dr": 8,
       "drSplit": 2,
       "drSplitAppliesTo": [
@@ -1413,9 +2261,91 @@
       ],
       "locations": [
         "hand"
-      ],
+      ]
+    }
+  },
+  {
+    "_id": "3b328c0b2755f830",
+    "name": "Ballistic Gloves (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 30,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
       "description": "",
-      "reference": "Basic Set: Characters"
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 12,
+      "drSplit": 3,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "hand"
+      ]
+    }
+  },
+  {
+    "_id": "b62ca7b2896a4a87",
+    "name": "Ballistic Gloves (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 30,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 16,
+      "drSplit": 4,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "hand"
+      ]
+    }
+  },
+  {
+    "_id": "c45e52d0aee08ed4",
+    "name": "Ballistic Gloves (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 30,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 284",
+      "dr": 24,
+      "drSplit": 6,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "hand"
+      ]
     }
   },
   {
@@ -1429,15 +2359,15 @@
       "carried": true,
       "equipped": false,
       "tl": "6",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
       "dr": 2,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "eye",
         "face"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -1451,14 +2381,14 @@
       "carried": true,
       "equipped": false,
       "tl": "6",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
       "dr": 4,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
@@ -1472,19 +2402,41 @@
       "carried": true,
       "equipped": false,
       "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
       "dr": 5,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
-    "_id": "93e5f086ef45db06",
-    "name": "Ballistic Helmet",
+    "_id": "9aca06f3c8e5bc20",
+    "name": "Frag Helmet Visor",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 1.5,
+      "cost": 25,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 1,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "eye",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "6b184961a0150015",
+    "name": "Ballistic Helmet (TL 8)",
     "type": "armor",
     "system": {
       "quantity": 1,
@@ -1493,14 +2445,208 @@
       "carried": true,
       "equipped": false,
       "tl": "8",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
       "dr": 12,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ],
+      ]
+    }
+  },
+  {
+    "_id": "e125fedaa70f2de3",
+    "name": "Ballistic Helmet Visor (TL 8)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "8",
       "description": "",
-      "reference": "Basic Set: Characters"
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 10,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "eye",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "a744cb46331e6a03",
+    "name": "Ballistic Helmet (TL 9)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 250,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 18,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "skull"
+      ]
+    }
+  },
+  {
+    "_id": "128bc15367344e80",
+    "name": "Ballistic Helmet Visor (TL 9)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 15,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "eye",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "1f380ef0d06659c8",
+    "name": "Ballistic Helmet (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 250,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 24,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "skull"
+      ]
+    }
+  },
+  {
+    "_id": "319ea19bb0286cb4",
+    "name": "Ballistic Helmet Visor (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 20,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "eye",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "9bc5ddf12c2765d3",
+    "name": "Ballistic Helmet (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 250,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 36,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "skull"
+      ]
+    }
+  },
+  {
+    "_id": "0348e9a21d3e5a24",
+    "name": "Ballistic Helmet Visor (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 30,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "eye",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "7f1a2479683cdf63",
+    "name": "Ballistic Helmet (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 250,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 48,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "skull"
+      ]
+    }
+  },
+  {
+    "_id": "70d67d7d20a22463",
+    "name": "Ballistic Helmet Visor (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 40,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "eye",
+        "face"
+      ]
     }
   },
   {
@@ -1514,12 +2660,12 @@
       "carried": true,
       "equipped": false,
       "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
       "dr": 1,
       "drSplit": null,
       "drSplitAppliesTo": [],
-      "locations": [],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      "locations": []
     }
   },
   {
@@ -1533,17 +2679,39 @@
       "carried": true,
       "equipped": false,
       "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
       "dr": 2,
       "drSplit": null,
       "drSplitAppliesTo": [],
-      "locations": [],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      "locations": []
     }
   },
   {
-    "_id": "590ddebe44dae8c8",
-    "name": "Battlesuit",
+    "_id": "ea05cadb61cf0983",
+    "name": "Space Suit Helmet",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 10,
+      "cost": 25000,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 3,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "skull",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "4c7a24b658da178b",
+    "name": "Battlesuit (TL 9)",
     "type": "armor",
     "system": {
       "quantity": 1,
@@ -1552,6 +2720,8 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
       "dr": 70,
       "drSplit": 50,
       "drSplitAppliesTo": [
@@ -1562,14 +2732,206 @@
         "cor",
         "fat"
       ],
-      "locations": [],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      "locations": []
     }
   },
   {
-    "_id": "d0f95590c71f9ce5",
-    "name": "Combat Hardsuit",
+    "_id": "f0c567cb7b7f536d",
+    "name": "Battlesuit Helmet (TL 9)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 10000,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 70,
+      "drSplit": 50,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "skull",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "0c131e7019830706",
+    "name": "Battlesuit (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 150,
+      "cost": 80000,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 105,
+      "drSplit": 75,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": []
+    }
+  },
+  {
+    "_id": "21e7136613dfd7fa",
+    "name": "Battlesuit Helmet (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 10000,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 105,
+      "drSplit": 75,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "skull",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "b7578505ce19f7fe",
+    "name": "Battlesuit (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 150,
+      "cost": 80000,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 140,
+      "drSplit": 100,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": []
+    }
+  },
+  {
+    "_id": "21ad99e520680349",
+    "name": "Battlesuit Helmet (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 10000,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 140,
+      "drSplit": 100,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "skull",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "c38afcc8ea8ff24a",
+    "name": "Battlesuit (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 150,
+      "cost": 80000,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 210,
+      "drSplit": 150,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": []
+    }
+  },
+  {
+    "_id": "013aad7f6e672a7e",
+    "name": "Battlesuit Helmet (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 10000,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 210,
+      "drSplit": 150,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "skull",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "2f07775f73890e1b",
+    "name": "Combat Hardsuit (TL 9)",
     "type": "armor",
     "system": {
       "quantity": 1,
@@ -1578,6 +2940,8 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
       "dr": 50,
       "drSplit": 30,
       "drSplitAppliesTo": [
@@ -1588,14 +2952,206 @@
         "cor",
         "fat"
       ],
-      "locations": [],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      "locations": []
     }
   },
   {
-    "_id": "3b5f6375ef62acc2",
-    "name": "Space Armor",
+    "_id": "898395c8e054a983",
+    "name": "Combat Hardsuit Helmet (TL 9)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 2000,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 18,
+      "drSplit": 12,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "skull",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "341a53d6c4015fda",
+    "name": "Combat Hardsuit (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 30,
+      "cost": 10000,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 75,
+      "drSplit": 45,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": []
+    }
+  },
+  {
+    "_id": "17e63a22733e4125",
+    "name": "Combat Hardsuit Helmet (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 2000,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 27,
+      "drSplit": 18,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "skull",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "42ff9b27568d37a0",
+    "name": "Combat Hardsuit (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 30,
+      "cost": 10000,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 100,
+      "drSplit": 60,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": []
+    }
+  },
+  {
+    "_id": "231f53b5047c79de",
+    "name": "Combat Hardsuit Helmet (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 2000,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 36,
+      "drSplit": 24,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "skull",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "bd934caecc0b44ce",
+    "name": "Combat Hardsuit (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 30,
+      "cost": 10000,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 150,
+      "drSplit": 90,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": []
+    }
+  },
+  {
+    "_id": "e716c41336fe318f",
+    "name": "Combat Hardsuit Helmet (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 2000,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 54,
+      "drSplit": 36,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "skull",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "dffe1d849867679d",
+    "name": "Space Armor (TL 9)",
     "type": "armor",
     "system": {
       "quantity": 1,
@@ -1604,6 +3160,8 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
       "dr": 50,
       "drSplit": 30,
       "drSplitAppliesTo": [
@@ -1614,14 +3172,206 @@
         "cor",
         "fat"
       ],
-      "locations": [],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      "locations": []
     }
   },
   {
-    "_id": "df33da041ffedd60",
-    "name": "Vacc Suit",
+    "_id": "b548f5eb6b13b809",
+    "name": "Space Armor Helmet (TL 9)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 7,
+      "cost": 3000,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 40,
+      "drSplit": 30,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "skull",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "e0cd7ea9c6bbf027",
+    "name": "Space Armor (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 45,
+      "cost": 20000,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 75,
+      "drSplit": 45,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": []
+    }
+  },
+  {
+    "_id": "d1fed783c9de17c0",
+    "name": "Space Armor Helmet (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 7,
+      "cost": 3000,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 60,
+      "drSplit": 45,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "skull",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "961702d342b9e03c",
+    "name": "Space Armor (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 45,
+      "cost": 20000,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 100,
+      "drSplit": 60,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": []
+    }
+  },
+  {
+    "_id": "0ca8c0187a35c752",
+    "name": "Space Armor Helmet (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 7,
+      "cost": 3000,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 80,
+      "drSplit": 60,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "skull",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "0746efd9976e0b6f",
+    "name": "Space Armor (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 45,
+      "cost": 20000,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 150,
+      "drSplit": 90,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": []
+    }
+  },
+  {
+    "_id": "aed961f7b35c2063",
+    "name": "Space Armor Helmet (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 7,
+      "cost": 3000,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 120,
+      "drSplit": 90,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "skull",
+        "face"
+      ]
+    }
+  },
+  {
+    "_id": "a80923e7818ac681",
+    "name": "Vacc Suit (TL 9)",
     "type": "armor",
     "system": {
       "quantity": 1,
@@ -1630,348 +3380,157 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
       "dr": 6,
       "drSplit": null,
       "drSplitAppliesTo": [],
-      "locations": [],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      "locations": []
     }
   },
   {
-    "_id": "0df6cda6e4b4d3dd",
-    "name": "Barding: Leather & Cloth (face)",
+    "_id": "04b74f46f34ef499",
+    "name": "Vacc Suit Helmet (TL 9)",
     "type": "armor",
     "system": {
       "quantity": 1,
-      "weight": 3,
-      "cost": 40,
+      "weight": 5,
+      "cost": 2000,
       "carried": true,
       "equipped": false,
-      "tl": "1",
-      "dr": 2,
+      "tl": "9",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 6,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
+        "skull",
         "face"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
-    "_id": "4e58d35f491e4d03",
-    "name": "Barding: Mail (face)",
+    "_id": "230e57f0c9c59c72",
+    "name": "Vacc Suit (TL10)",
     "type": "armor",
     "system": {
       "quantity": 1,
-      "weight": 7,
-      "cost": 60,
+      "weight": 25,
+      "cost": 10000,
       "carried": true,
       "equipped": false,
-      "tl": "2",
-      "dr": 4,
-      "drSplit": 2,
-      "drSplitAppliesTo": [
-        "cr"
-      ],
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 9,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": []
+    }
+  },
+  {
+    "_id": "52f4fd66e9b955be",
+    "name": "Vacc Suit Helmet (TL10)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 2000,
+      "carried": true,
+      "equipped": false,
+      "tl": "10",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 9,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
+        "skull",
         "face"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
-    "_id": "ba446a6d65a06d41",
-    "name": "Barding: Scale (face)",
+    "_id": "f4389e9ea24956c5",
+    "name": "Vacc Suit (TL11)",
     "type": "armor",
     "system": {
       "quantity": 1,
-      "weight": 12,
-      "cost": 200,
+      "weight": 25,
+      "cost": 10000,
       "carried": true,
       "equipped": false,
-      "tl": "2",
-      "dr": 4,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 12,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": []
+    }
+  },
+  {
+    "_id": "be4e5b3f48e21ae2",
+    "name": "Vacc Suit Helmet (TL11)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 2000,
+      "carried": true,
+      "equipped": false,
+      "tl": "11",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 12,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
+        "skull",
         "face"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   },
   {
-    "_id": "6a0e17205c0ebc16",
-    "name": "Barding: Plate (face)",
+    "_id": "e0f13090eb10274e",
+    "name": "Vacc Suit (TL12)",
     "type": "armor",
     "system": {
       "quantity": 1,
-      "weight": 12,
-      "cost": 200,
+      "weight": 25,
+      "cost": 10000,
       "carried": true,
       "equipped": false,
-      "tl": "3",
-      "dr": 5,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 18,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": []
+    }
+  },
+  {
+    "_id": "14b59d4d7c54dd00",
+    "name": "Vacc Suit Helmet (TL12)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 2000,
+      "carried": true,
+      "equipped": false,
+      "tl": "12",
+      "description": "",
+      "reference": "Basic Set: Characters p. 285",
+      "dr": 18,
       "drSplit": null,
       "drSplitAppliesTo": [],
       "locations": [
+        "skull",
         "face"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "e40c3014bcf0750a",
-    "name": "Barding: Leather & Cloth (neck, skull)",
-    "type": "armor",
-    "system": {
-      "quantity": 1,
-      "weight": 4,
-      "cost": 80,
-      "carried": true,
-      "equipped": false,
-      "tl": "2",
-      "dr": 2,
-      "drSplit": null,
-      "drSplitAppliesTo": [],
-      "locations": [
-        "neck",
-        "skull"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "d83e0e1f21b82d29",
-    "name": "Barding: Mail (neck, skull)",
-    "type": "armor",
-    "system": {
-      "quantity": 1,
-      "weight": 15,
-      "cost": 100,
-      "carried": true,
-      "equipped": false,
-      "tl": "2",
-      "dr": 4,
-      "drSplit": 2,
-      "drSplitAppliesTo": [
-        "cr"
-      ],
-      "locations": [
-        "neck",
-        "skull"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "2efd2f8abb4de990",
-    "name": "Barding: Scale (neck, skull)",
-    "type": "armor",
-    "system": {
-      "quantity": 1,
-      "weight": 20,
-      "cost": 320,
-      "carried": true,
-      "equipped": false,
-      "tl": "2",
-      "dr": 4,
-      "drSplit": null,
-      "drSplitAppliesTo": [],
-      "locations": [
-        "neck",
-        "skull"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "e8d0ce6452a90f35",
-    "name": "Barding: Plate (neck, skull)",
-    "type": "armor",
-    "system": {
-      "quantity": 1,
-      "weight": 18,
-      "cost": 330,
-      "carried": true,
-      "equipped": false,
-      "tl": "3",
-      "dr": 5,
-      "drSplit": null,
-      "drSplitAppliesTo": [],
-      "locations": [
-        "neck",
-        "skull"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "7c303c9d95f71634",
-    "name": "Barding: Leather & Cloth (torso)",
-    "type": "armor",
-    "system": {
-      "quantity": 1,
-      "weight": 12,
-      "cost": 260,
-      "carried": true,
-      "equipped": false,
-      "tl": "1",
-      "dr": 2,
-      "drSplit": null,
-      "drSplitAppliesTo": [],
-      "locations": [
-        "torso",
-        "vitals"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "61f9b0207f3f58fe",
-    "name": "Barding: Mail (torso)",
-    "type": "armor",
-    "system": {
-      "quantity": 1,
-      "weight": 20,
-      "cost": 440,
-      "carried": true,
-      "equipped": false,
-      "tl": "2",
-      "dr": 4,
-      "drSplit": 2,
-      "drSplitAppliesTo": [
-        "cr"
-      ],
-      "locations": [
-        "torso",
-        "vitals"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "56b3c5fb2426d78d",
-    "name": "Barding: Scale (torso)",
-    "type": "armor",
-    "system": {
-      "quantity": 1,
-      "weight": 60,
-      "cost": 480,
-      "carried": true,
-      "equipped": false,
-      "tl": "2",
-      "dr": 4,
-      "drSplit": null,
-      "drSplitAppliesTo": [],
-      "locations": [
-        "torso",
-        "vitals"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "bb7172797b1df470",
-    "name": "Barding: Leather & Cloth (torso, groin)",
-    "type": "armor",
-    "system": {
-      "quantity": 1,
-      "weight": 30,
-      "cost": 345,
-      "carried": true,
-      "equipped": false,
-      "tl": "2",
-      "dr": 2,
-      "drSplit": null,
-      "drSplitAppliesTo": [],
-      "locations": [
-        "torso",
-        "vitals",
-        "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "b52532c6d705a645",
-    "name": "Barding: Mail (torso, groin)",
-    "type": "armor",
-    "system": {
-      "quantity": 1,
-      "weight": 59,
-      "cost": 670,
-      "carried": true,
-      "equipped": false,
-      "tl": "3",
-      "dr": 4,
-      "drSplit": 2,
-      "drSplitAppliesTo": [
-        "cr"
-      ],
-      "locations": [
-        "torso",
-        "vitals",
-        "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "67ed5bf572b9bd22",
-    "name": "Barding: Plate (torso, groin)",
-    "type": "armor",
-    "system": {
-      "quantity": 1,
-      "weight": 90,
-      "cost": 1650,
-      "carried": true,
-      "equipped": false,
-      "tl": "3",
-      "dr": 5,
-      "drSplit": null,
-      "drSplitAppliesTo": [],
-      "locations": [
-        "torso",
-        "vitals",
-        "groin"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
-    }
-  },
-  {
-    "_id": "6ce27b1f061b0264",
-    "name": "Barding: Plate (legs)",
-    "type": "armor",
-    "system": {
-      "quantity": 1,
-      "weight": 20,
-      "cost": 400,
-      "carried": true,
-      "equipped": false,
-      "tl": "3",
-      "dr": 5,
-      "drSplit": null,
-      "drSplitAppliesTo": [],
-      "locations": [
-        "leg"
-      ],
-      "description": "",
-      "reference": "Basic Set: Characters"
+      ]
     }
   }
 ]

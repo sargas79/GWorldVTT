@@ -921,6 +921,13 @@
 
 .gworld .ihint { font-size: 11.5px; color: var(--color-neutral-800); margin: 0; }
 
+/* A field that needs the whole row: a cost table, or a list of level names. */
+.gworld .ifields > label.wide { grid-column: 1 / -1; }
+.gworld .ifields > label.wide textarea { resize: vertical; font: inherit; }
+
+/* The book's name for the level bought, beside the total it costs. */
+.gworld .ilevel { color: var(--color-neutral-800); font-style: italic; }
+
 /*
  * Icon-only controls are real buttons so they can be reached and activated from
  * the keyboard; this strips the button chrome without losing the focus ring.

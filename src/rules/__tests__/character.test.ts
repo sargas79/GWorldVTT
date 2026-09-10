@@ -25,7 +25,9 @@ import {
   namedDefaultLevel,
   pointsForRelativeLevel,
   relativeLevelForPoints,
+  normalizeSkillName,
   resolveTechnique,
+  sameSkill,
   skillLevel,
   techniqueLevelsForPoints,
   techniquePointCost,
@@ -351,6 +353,28 @@ describe("techniques (GURPS Basic Set: Characters pp. 229-233)", () => {
     expect(result.level).toBe(13);
     expect(result.cappedByPrerequisite).toBe(true);
   });
+
+  /**
+   * Most techniques stop at the prerequisite skill's level, but the book lets
+   * some go past it: Arm Lock caps at the skill +4 and Kicking at +5 (p. 230).
+   * A ceiling assumed to sit at or below the skill refunds those levels.
+   */
+  it("lets a technique climb above its prerequisite where the book allows it", () => {
+    const armLock = resolveTechnique({
+      prerequisiteLevel: 12, defaultModifier: 0, levels: 4, maxRelativeToPrerequisite: 4,
+    });
+    expect(armLock.level).toBe(16);
+    expect(armLock.levels).toBe(4);
+    expect(armLock.cappedByPrerequisite).toBe(false);
+  });
+
+  it("still caps such a technique at its own higher ceiling", () => {
+    const over = resolveTechnique({
+      prerequisiteLevel: 12, defaultModifier: 0, levels: 7, maxRelativeToPrerequisite: 4,
+    });
+    expect(over.level).toBe(16);
+    expect(over.cappedByPrerequisite).toBe(true);
+  });
 });
 
 describe("skill defaults and the Rule of 20", () => {
@@ -359,5 +383,40 @@ describe("skill defaults and the Rule of 20", () => {
     expect(namedDefaultLevel(25, -5)).toBe(15);
     expect(namedDefaultLevel(20, -5)).toBe(15);
     expect(namedDefaultLevel(18, -5)).toBe(13);
+  });
+});
+
+describe("skill names and the /TL marker", () => {
+  /**
+   * The book marks a skill whose content depends on tech level with "/TL", but
+   * drops the marker everywhere it refers to that skill: the revolver's line
+   * says "Guns (Pistol)" and the skill is "Guns/TL (Pistol)". Matching on the
+   * literal name leaves a firearm unable to find the skill it is fired with.
+   */
+  it("matches a reference without the marker to the skill that carries it", () => {
+    expect(sameSkill("Guns (Pistol)", "Guns/TL (Pistol)")).toBe(true);
+    expect(sameSkill("Engineer (Civil)", "Engineer/TL (Civil)")).toBe(true);
+    expect(sameSkill("Architecture", "Architecture/TL")).toBe(true);
+  });
+
+  /** A character sheet writes the tech level learned into the marker. */
+  it("matches whatever tech level was learned", () => {
+    expect(sameSkill("Armoury/TL3", "Armoury/TL")).toBe(true);
+    expect(sameSkill("Armoury/TL3 (Body Armor)", "Armoury/TL8 (Body Armor)")).toBe(true);
+  });
+
+  it("ignores case and stray space, so a hand-typed name still matches", () => {
+    expect(sameSkill("  broadsword ", "Broadsword")).toBe(true);
+    expect(sameSkill("Guns/TL  (Pistol)", "guns (pistol)")).toBe(true);
+  });
+
+  it("does not conflate different skills or different specialties", () => {
+    expect(sameSkill("Guns (Pistol)", "Guns (Rifle)")).toBe(false);
+    expect(sameSkill("Broadsword", "Shortsword")).toBe(false);
+    expect(sameSkill("Bow", "Bow Art")).toBe(false);
+  });
+
+  it("reduces a name to what identifies the skill", () => {
+    expect(normalizeSkillName("Guns/TL8 (Pistol)")).toBe("guns (pistol)");
   });
 });

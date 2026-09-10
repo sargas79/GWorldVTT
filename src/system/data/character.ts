@@ -30,6 +30,7 @@ import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js"
 import {
   effectiveSkillLevel,
   namedDefaultLevel,
+  normalizeSkillName,
   relativeLevelForPoints,
   resolveTechnique,
   techniqueLevelsForPoints,
@@ -247,9 +248,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   /** The score of a skill by name, or null when the character lacks it. */
   private skillLevelByName(name: string): number | null {
     if (!name) return null;
-    const wanted = name.trim().toLowerCase();
+    // Compared through normalizeSkillName, because the book writes a skill's
+    // "/TL" marker in the skill's own name and leaves it off everywhere it
+    // refers to that skill: a revolver is used with "Guns (Pistol)", and the
+    // skill it means is "Guns/TL (Pistol)".
+    const wanted = normalizeSkillName(name);
     for (const item of this.itemsOfType("skill")) {
-      if (String(item.name).trim().toLowerCase() === wanted) {
+      if (normalizeSkillName(String(item.name)) === wanted) {
         return item.system?.derived?.level ?? null;
       }
     }

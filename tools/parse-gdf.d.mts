@@ -1,5 +1,5 @@
 /**
- * The one export the armour parser shares with the rules engine.
+ * The one export the GCA parser shares with the rules engine.
  *
  * The parser itself is plain JavaScript, run by node rather than compiled, so it
  * carries no types of its own. This declares only what the consistency test

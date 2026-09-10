@@ -10,6 +10,7 @@
  * quantity, weight and cost. The body template switches on the type.
  */
 
+import { parseCostTable, parseLevelNames } from "../../rules/traits.js";
 import { SYSTEM_ID } from "../constants.js";
 
 const { ItemSheetV2 } = foundry.applications.sheets;
@@ -55,6 +56,18 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // One flag per type, so the template can branch without a comparison helper.
     for (const t of ["skill", "technique", "trait", "equipment", "armor", "shield", "language"]) {
       context[`is${t.charAt(0).toUpperCase()}${t.slice(1)}`] = item.type === t;
+    }
+
+    // A trait's cost table and level names are arrays, which a form cannot
+    // carry directly. The table is short and reads naturally as the book prints
+    // it ("10/20/30/50/75"), so it is edited as text. Level names get a line
+    // each rather than a separated list, because several contain commas of
+    // their own -- "A large group (21-1,000 people)".
+    if (item.type === "trait") {
+      context.costTableText = item.system.costTable.join("/");
+      context.levelNamesText = item.system.levelNames.join("\n");
+      context.isTabled = item.system.costTable.length > 0;
+      context.levelName = item.system.levelName;
     }
 
     // The description is rich text, so it has to be enriched before display or
@@ -118,6 +131,20 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       const key = path.slice("system.".length);
       if (data.system?.[key] === undefined) {
         data.system = { ...(data.system ?? {}), [key]: [] };
+      }
+    }
+
+    // The two trait arrays are edited as text, so they arrive as strings and
+    // have to be read back into arrays before the data model sees them. Both
+    // readers live in the rules layer, where they are tested: an empty cost
+    // table has to come back empty rather than as a single zero, which would
+    // price the trait at nothing instead of restoring its per-level cost.
+    if (this.item.type === "trait" && data.system) {
+      if (typeof data.system.costTable === "string") {
+        data.system.costTable = parseCostTable(data.system.costTable);
+      }
+      if (typeof data.system.levelNames === "string") {
+        data.system.levelNames = parseLevelNames(data.system.levelNames);
       }
     }
 

@@ -130,12 +130,31 @@
           <input type="number" name="system.pointsPerLevel" value="{{system.pointsPerLevel}}" step="1"
                  {{#unless editable}}disabled{{/unless}} />
         </label>
+        <label>{{localize "GWORLD.Trait.MaxLevels"}}
+          <input type="number" name="system.maxLevels" value="{{system.maxLevels}}" step="1" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
         <label>{{localize "GWORLD.Trait.Reaction"}}
           <input type="number" name="system.reactionModifier" value="{{system.reactionModifier}}" step="1"
                  {{#unless editable}}disabled{{/unless}} />
         </label>
       </div>
-      <p class="ihint">{{localize "GWORLD.Trait.TotalHint"}} <strong>{{system.totalPoints}}</strong></p>
+      <div class="ifields">
+        <label class="wide">{{localize "GWORLD.Trait.CostTable"}}
+          <input type="text" name="system.costTable" value="{{costTableText}}"
+                 placeholder="10/20/30/50/75" {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label class="wide">{{localize "GWORLD.Trait.LevelNames"}}
+          <textarea name="system.levelNames" rows="3"
+                    {{#unless editable}}disabled{{/unless}}>{{levelNamesText}}</textarea>
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Trait.CostTableHint"}}</p>
+      <p class="ihint">
+        {{localize "GWORLD.Trait.TotalHint"}} <strong>{{system.totalPoints}}</strong>
+        {{#if levelName}}<span class="ilevel">({{levelName}})</span>{{/if}}
+        {{#if isTabled}}<span class="ilevel">{{localize "GWORLD.Trait.TabledNote"}}</span>{{/if}}
+      </p>
     {{/if}}
 
     {{#if isLanguage}}

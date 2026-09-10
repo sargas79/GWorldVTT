@@ -208,6 +208,11 @@
       "Category": "Category",
       "Points": "Points",
       "PointsPerLevel": "Points per level",
+      "MaxLevels": "Max levels",
+      "CostTable": "Cost table",
+      "LevelNames": "Level names, one per line",
+      "CostTableHint": "A few traits are priced from a table rather than at a flat rate per level: Wealth runs 10/20/30/50/75. Fill this in and it replaces the points and per-level figures. Leave it empty for the great majority, which are priced evenly.",
+      "TabledNote": "priced from the table",
       "TotalHint": "Total cost:"
     },
     "Language": {
