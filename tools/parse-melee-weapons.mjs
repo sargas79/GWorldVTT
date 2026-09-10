@@ -232,8 +232,8 @@ function main() {
         damageType: g.type,
         armorDivisor: Number(g.div ?? 1),
         reach: g.reach.replace(/\s+/g, " ").trim(),
-        // "U" marks an unbalanced weapon: it cannot parry in a turn it attacked.
-        // "F" marks a fencing weapon. Neither is a parry bonus.
+        // "U" marks an unbalanced weapon and "F" a fencing weapon. Neither is a
+        // parry bonus, so only the leading number is read here.
         parryModifier: Number(/^[+-]?\d+/.exec(g.parry)?.[0] ?? 0),
         canParry: !/^No$/i.test(g.parry),
         isFlail: /FLAIL|KUSARI/.test(skill.toUpperCase()),
@@ -243,7 +243,11 @@ function main() {
         // (a katana is ST 11 in one hand, ST 10† in two). The marker is the
         // book's own statement; the skill group only implies it.
         twoHanded: /†/.test(g.st),
-        unreadyAfterAttack: /U$/.test(g.parry),
+        // The book defines "U" as unbalanced -- cannot parry in a turn it has
+        // attacked in -- which is a different rule from needing to be readied
+        // again, and belongs in its own field.
+        unbalanced: /U$/.test(g.parry),
+        unreadyAfterAttack: false,
       };
 
       if (continues) {
@@ -335,6 +339,15 @@ function main() {
     for (const m of item.system.meleeModes) counts.set(m.name, (counts.get(m.name) ?? 0) + 1);
     for (const m of item.system.meleeModes) {
       if (counts.get(m.name) > 1) m.name = `${m.name} (${m.skill})`;
+    }
+
+    // A weapon can swing two ways with one skill -- a halberd cuts for sw+5 and
+    // impales for sw+4 -- so the skill alone still leaves two rows reading the
+    // same. Fall back to the damage type, which is what actually differs.
+    const after = new Map();
+    for (const m of item.system.meleeModes) after.set(m.name, (after.get(m.name) ?? 0) + 1);
+    for (const m of item.system.meleeModes) {
+      if (after.get(m.name) > 1) m.name = `${m.name} ${m.damageType}`;
     }
   }
 

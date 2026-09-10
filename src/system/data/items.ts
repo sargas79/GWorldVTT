@@ -212,6 +212,13 @@ function meleeModeField() {
     isFlail: new fields.BooleanField({ initial: false }),
     minSt: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null }),
     twoHanded: new fields.BooleanField({ initial: false }),
+    /**
+     * An unbalanced weapon cannot parry in a turn it has already attacked in, or
+     * vice versa (GURPS Basic Set: Characters p. 269, the "U" in the Parry
+     * column). This is a separate rule from {@link unreadyAfterAttack}, which is
+     * about the weapon needing to be readied again.
+     */
+    unbalanced: new fields.BooleanField({ initial: false }),
     /** The weapon becomes unready after each attack unless ST is high enough. */
     unreadyAfterAttack: new fields.BooleanField({ initial: false }),
   });
