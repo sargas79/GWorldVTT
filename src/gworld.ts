@@ -9,6 +9,7 @@
 import "./styles/gworld.css";
 
 import * as rules from "./rules/index.js";
+import { registerChatHooks } from "./system/chat.js";
 import { SYSTEM_ID } from "./system/constants.js";
 import { CharacterData } from "./system/data/character.js";
 import { NpcData } from "./system/data/npc.js";
@@ -47,6 +48,10 @@ Hooks.once("init", () => {
   CONFIG.Combat.initiative = { formula: "@derived.basicSpeed", decimals: 2 };
 
   registerTemplateHelpers();
+
+  // A damage card is posted before anyone has decided who it hits, so the card
+  // grows an apply control when it renders.
+  registerChatHooks();
 
   const { DocumentSheetConfig } = foundry.applications.apps;
   DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.applications.sheets.ActorSheetV2);

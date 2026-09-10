@@ -143,6 +143,14 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
     rolls: [roll],
+    // Carried on the message so the card can still apply the blow later: the
+    // roll is over, but who it lands on is decided afterwards, and re-reading
+    // the numbers out of the rendered HTML would be parsing our own output.
+    flags: {
+      [SYSTEM_ID]: {
+        damage: { basicDamage, damageType, armorDivisor, label },
+      },
+    },
   });
 
   return basicDamage;

@@ -6,6 +6,7 @@ import {
   drByLocation,
   drProfile,
   splitSummary,
+  wornDrAt,
   type ArmorPiece,
 } from "../armor.js";
 import { DAMAGE_TYPES } from "../types.js";
@@ -218,5 +219,45 @@ describe("drProfile", () => {
     };
     expect(drByLocation([vest], "fat").skull).toBe(6);
     expect(drByLocation([], "fat").skull).toBe(0);
+  });
+});
+
+describe("wornDrAt", () => {
+  it("counts only what is worn, not the location's own DR", () => {
+    // drByLocation seeds the skull with the DR the body came with; this must not.
+    expect(wornDrAt([], "skull", "cr")).toBe(0);
+    expect(drByLocation([], "cr").skull).toBeGreaterThan(0);
+  });
+
+  /**
+   * The reason this exists: computeInjury adds the location's own DR itself,
+   * so handing it drByLocation's figure would count the skull's bone twice and
+   * quietly over-protect every head shot.
+   */
+  it("differs from drByLocation at the skull by exactly the skull's own DR", () => {
+    const helm: ArmorPiece = {
+      dr: 4,
+      drSplit: null,
+      drSplitAppliesTo: [],
+      locations: ["skull"],
+    };
+    const own = drByLocation([], "cr").skull;
+    expect(wornDrAt([helm], "skull", "cr")).toBe(4);
+    expect(drByLocation([helm], "cr").skull).toBe(4 + own);
+  });
+
+  it("applies each piece's split against the damage asked about", () => {
+    expect(wornDrAt([mail], "torso", "cut")).toBe(4);
+    expect(wornDrAt([mail], "torso", "cr")).toBe(2);
+  });
+
+  it("sums overlapping pieces and ignores those that do not cover the location", () => {
+    expect(wornDrAt([mail, breastplate], "torso", "cr")).toBe(2 + 5);
+    expect(wornDrAt([mail, breastplate], "groin", "cr")).toBe(2);
+    expect(wornDrAt([mail], "skull", "cr")).toBe(0);
+  });
+
+  it("treats an empty location list as the whole body", () => {
+    expect(wornDrAt([tacticalSuit], "foot", "cut")).toBe(20);
   });
 });
