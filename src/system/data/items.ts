@@ -294,6 +294,18 @@ function rangedModeField() {
       initial: null,
     }),
     thrown: new fields.BooleanField({ initial: false }),
+    /**
+     * How unwieldy the weapon is, as a penalty: it applies when firing from a
+     * vehicle or in close combat, and to attempts to keep the weapon hidden
+     * (GURPS Basic Set: Characters p. 270). Zero or negative, never positive.
+     */
+    bulk: new fields.NumberField({
+      required: true,
+      nullable: false,
+      integer: true,
+      initial: 0,
+      max: 0,
+    }),
   });
 }
 
