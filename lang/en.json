@@ -10,7 +10,8 @@
       "equipment": "Equipment",
       "armor": "Armor",
       "shield": "Shield",
-      "language": "Language"
+      "language": "Language",
+      "technique": "Technique"
     }
   },
   "GWORLD": {
@@ -34,7 +35,9 @@
       "STAbbr": "ST",
       "DXAbbr": "DX",
       "IQAbbr": "IQ",
-      "HTAbbr": "HT"
+      "HTAbbr": "HT",
+      "Will": "Will",
+      "Per": "Perception"
     },
     "Secondary": {
       "HP": "Hit Points",
@@ -76,7 +79,8 @@
       "Languages": "Languages",
       "Biography": "Biography",
       "Notes": "Notes",
-      "Campaign": "Campaign"
+      "Campaign": "Campaign",
+      "Techniques": "Techniques"
     },
     "Column": {
       "Skill": "Skill",
@@ -128,7 +132,8 @@
       "Over": "{points} points over budget.",
       "Exact": "Every point spent.",
       "DisadvantageStanding": "Disadvantages {total} of the {limit} this campaign allows.",
-      "Secondaries": "Secondary Characteristics"
+      "Secondaries": "Secondary Characteristics",
+      "Techniques": "Techniques"
     },
     "Condition": {
       "AllOutDefense": "All-Out Defense",
@@ -153,7 +158,8 @@
     "Difficulty": {
       "E": "Easy",
       "A": "Average",
-      "H": "Hard"
+      "H": "Hard",
+      "VH": "Very Hard"
     },
     "DamageType": {
       "burn": "burn",
@@ -166,7 +172,9 @@
     },
     "Skill": {
       "NoDefault": "No default",
-      "Trained": "skills trained"
+      "Trained": "skills trained",
+      "CappedByPrerequisite": "capped by prerequisite",
+      "NoPrerequisite": "No prerequisite"
     },
     "Trait": {
       "Levels": "levels",
@@ -206,7 +214,8 @@
       "AddShield": "Shield",
       "AddLanguage": "Add Language",
       "FilterSkills": "Filter skills",
-      "Delete": "Delete"
+      "Delete": "Delete",
+      "AddTechnique": "Add Technique"
     },
     "Prompt": {
       "DeleteItemTitle": "Delete Item",
@@ -220,7 +229,8 @@
       "NoMeleeAttacks": "No melee attacks. Add equipment with an attack mode on the Gear tab.",
       "NothingCarried": "Nothing carried.",
       "StoredNoEncumbrance": "does not count against encumbrance",
-      "Overloaded": "Carrying more than ten times Basic Lift. This character cannot move under this load."
+      "Overloaded": "Carrying more than ten times Basic Lift. This character cannot move under this load.",
+      "Techniques": "bought up from a prerequisite skill"
     },
     "Health": {
       "healthy": "Healthy",

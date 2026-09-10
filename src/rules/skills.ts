@@ -8,10 +8,14 @@ import type { Difficulty } from "./types.js";
  * Relative level of a skill bought at the cheapest step, by difficulty.
  * One character point buys Attribute+0 for Easy, -1 for Average, -2 for Hard.
  */
-const DIFFICULTY_OFFSET: Record<Difficulty, number> = { E: 0, A: -1, H: -2 };
+const DIFFICULTY_OFFSET: Record<Difficulty, number> = { E: 0, A: -1, H: -2, VH: -3 };
 
-/** Default penalty when using an untrained skill (GURPS Lite p. 13). */
-const DIFFICULTY_DEFAULT_PENALTY: Record<Difficulty, number> = { E: -4, A: -5, H: -6 };
+/**
+ * Default penalty when using an untrained skill (GURPS Basic Set: Characters
+ * p. 173). Very Hard skills share the Hard penalty; most in practice have a
+ * specific listed default or none at all.
+ */
+const DIFFICULTY_DEFAULT_PENALTY: Record<Difficulty, number> = { E: -4, A: -5, H: -6, VH: -6 };
 
 /**
  * The Rule of 20: a skill defaulting from an attribute above 20 treats that
@@ -97,6 +101,73 @@ export function defaultLevel(attributeScore: number, difficulty: Difficulty): nu
  */
 export function namedDefaultLevel(sourceScore: number, penalty: number): number {
   return Math.min(sourceScore, RULE_OF_20_CAP) + penalty;
+}
+
+/**
+ * Technique difficulty. Techniques are only ever Average or Hard
+ * (GURPS Basic Set: Characters p. 230).
+ */
+export type TechniqueDifficulty = "A" | "H";
+
+/**
+ * Points needed to raise a technique by `levels` above its default.
+ *
+ * An Average technique costs 1 point per level. A Hard one costs 2 for the
+ * first level and 1 for each after, so the cost is not simply level x rate.
+ */
+export function techniquePointCost(levels: number, difficulty: TechniqueDifficulty): number {
+  if (levels <= 0) return 0;
+  return difficulty === "A" ? levels : levels + 1;
+}
+
+/** The inverse: how many levels a given number of points buys. */
+export function techniqueLevelsForPoints(
+  points: number,
+  difficulty: TechniqueDifficulty,
+): number {
+  if (points <= 0) return 0;
+  if (difficulty === "A") return points;
+  // Hard techniques waste a single point, which buys nothing.
+  return points < 2 ? 0 : points - 1;
+}
+
+export interface TechniqueResolution {
+  /** The technique's absolute level. */
+  level: number;
+  /** Levels actually applied, after the prerequisite cap. */
+  levels: number;
+  /** True when the cap prevented the bought levels from all applying. */
+  cappedByPrerequisite: boolean;
+}
+
+/**
+ * Resolves a technique against the skill it defaults from.
+ *
+ * A technique starts at `prerequisiteLevel + defaultModifier` (the modifier is
+ * negative) and is bought up from there. It can never exceed the prerequisite
+ * skill's own level, nor any tighter cap the technique specifies.
+ */
+export function resolveTechnique(options: {
+  prerequisiteLevel: number;
+  defaultModifier: number;
+  levels: number;
+  /** A cap tighter than the prerequisite level, expressed relative to it. */
+  maxRelativeToPrerequisite?: number;
+}): TechniqueResolution {
+  const { prerequisiteLevel, defaultModifier, levels } = options;
+  const base = prerequisiteLevel + defaultModifier;
+
+  const relativeCap = options.maxRelativeToPrerequisite ?? 0;
+  const ceiling = prerequisiteLevel + relativeCap;
+
+  const uncapped = base + Math.max(0, levels);
+  const level = Math.min(uncapped, ceiling);
+
+  return {
+    level,
+    levels: level - base,
+    cappedByPrerequisite: uncapped > ceiling,
+  };
 }
 
 /**

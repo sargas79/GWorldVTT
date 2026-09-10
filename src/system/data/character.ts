@@ -17,9 +17,16 @@ import { encumbranceState } from "../../rules/encumbrance.js";
 import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
 import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js";
-import { effectiveSkillLevel, relativeLevelForPoints } from "../../rules/skills.js";
+import {
+  effectiveSkillLevel,
+  relativeLevelForPoints,
+  resolveTechnique,
+  techniqueLevelsForPoints,
+} from "../../rules/skills.js";
 import { musclePoweredRange } from "../../rules/ranged.js";
-import type { Attribute, DamageType, Difficulty, EncumbranceLevel, Posture } from "../../rules/types.js";
+import type {
+  DamageType, Difficulty, EncumbranceLevel, Posture, SkillAttribute,
+} from "../../rules/types.js";
 
 const fields = foundry.data.fields;
 
@@ -230,29 +237,79 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // ── skills ──────────────────────────────────────────────────────────
     // Resolved here rather than on the item, because a skill's absolute level
     // needs the owning actor's attributes.
-    const attributeScore = (a: Attribute) => attrs[a];
-    for (const item of this.itemsOfType("skill")) {
+    //
+    // Will and Per are secondary characteristics, so a skill based on either
+    // has to wait for them to be derived above.
+    const attributeScore = (a: SkillAttribute): number => {
+      if (a === "Will") return secondary.will;
+      if (a === "Per") return secondary.per;
+      return attrs[a];
+    };
+
+    const skillItems = this.itemsOfType("skill");
+
+    // Pass one: levels that depend only on attributes.
+    for (const item of skillItems) {
       const sys = item.system as {
-        attribute: Attribute; difficulty: Difficulty; points: number; bonus: number;
-        defaults?: Array<{ attribute: Attribute; modifier: number }>;
+        attribute: SkillAttribute; difficulty: Difficulty; points: number; bonus: number;
+        defaults?: Array<{ from: string; attribute: SkillAttribute; skill: string; modifier: number }>;
         derived?: Record<string, unknown>;
       };
-      const defaults = (sys.defaults ?? []).map(
-        (d) => attributeScore(d.attribute) + d.modifier,
-      );
+      const attributeDefaults = (sys.defaults ?? [])
+        .filter((d) => d.from !== "skill")
+        .map((d) => attributeScore(d.attribute) + d.modifier);
+
       const resolved = effectiveSkillLevel({
         attributeScore: attributeScore(sys.attribute),
         difficulty: sys.difficulty,
         points: sys.points,
         bonus: sys.bonus,
-        defaults,
+        defaults: attributeDefaults,
       });
       sys.derived = {
         level: resolved?.level ?? null,
         fromDefault: resolved?.fromDefault ?? true,
         relativeLevel: relativeLevelForPoints(sys.points, sys.difficulty),
-        hasDefault: defaults.length > 0,
+        hasDefault: attributeDefaults.length > 0,
       };
+    }
+
+    // Pass two: defaults that come from another skill. A skill defaulting from
+    // one the character also lacks resolves against that skill's own default,
+    // which pass one has already settled.
+    for (const item of skillItems) {
+      const sys = item.system as any;
+      const skillDefaults = (sys.defaults ?? [])
+        .filter((d: any) => d.from === "skill")
+        .map((d: any) => {
+          const source = this.skillLevelByName(d.skill);
+          return source === null ? null : source + d.modifier;
+        })
+        .filter((v: number | null): v is number => v !== null);
+
+      if (!skillDefaults.length) continue;
+      const best = Math.max(...skillDefaults);
+      if (sys.derived.level === null || best > sys.derived.level) {
+        sys.derived.level = best;
+        sys.derived.fromDefault = true;
+        sys.derived.hasDefault = true;
+      }
+    }
+
+    // ── techniques ──────────────────────────────────────────────────────
+    for (const item of this.itemsOfType("technique")) {
+      const sys = item.system as any;
+      const prerequisiteLevel = this.skillLevelByName(sys.prerequisite);
+      if (prerequisiteLevel === null) {
+        sys.derived = { level: null, levels: 0, cappedByPrerequisite: false };
+        continue;
+      }
+      sys.derived = resolveTechnique({
+        prerequisiteLevel,
+        defaultModifier: sys.defaultModifier,
+        levels: techniqueLevelsForPoints(sys.points, sys.difficulty),
+        maxRelativeToPrerequisite: sys.maxRelativeToPrerequisite,
+      });
     }
 
     // ── protection ──────────────────────────────────────────────────────
@@ -426,6 +483,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       (sum, i) => sum + Number(i.system?.points ?? 0),
       0,
     );
+    const techniquePoints = this.itemsOfType("technique").reduce(
+      (sum, i) => sum + Number(i.system?.points ?? 0),
+      0,
+    );
     const languagePoints = this.itemsOfType("language").reduce(
       (sum, i) => sum + Number(i.system?.totalPoints ?? 0),
       0,
@@ -443,7 +504,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     const spent =
       attributePoints + secondaryPoints + advantages + disadvantages + quirks +
-      skillPoints + languagePoints;
+      skillPoints + techniquePoints + languagePoints;
 
     return {
       will: secondary.will,
@@ -471,6 +532,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         disadvantages,
         quirks,
         skills: skillPoints,
+        techniques: techniquePoints,
         languages: languagePoints,
         spent,
         starting: this.points.starting,

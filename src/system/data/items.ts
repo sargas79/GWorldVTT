@@ -3,7 +3,7 @@
  */
 
 import { relativeLevelForPoints } from "../../rules/skills.js";
-import type { Attribute, DamageType, Difficulty } from "../../rules/types.js";
+import type { DamageType, Difficulty, SkillAttribute } from "../../rules/types.js";
 
 const fields = foundry.data.fields;
 
@@ -91,11 +91,11 @@ export class TraitData extends foundry.abstract.TypeDataModel {
 
 /** A skill (GURPS Lite pp. 12-17). */
 export class SkillData extends foundry.abstract.TypeDataModel {
-  declare attribute: Attribute;
+  declare attribute: SkillAttribute;
   declare difficulty: Difficulty;
   declare points: number;
   declare bonus: number;
-  declare defaults: Array<{ attribute: Attribute; modifier: number }>;
+  declare defaults: Array<{ from: "attribute" | "skill"; attribute: SkillAttribute; skill: string; modifier: number }>;
   declare techLevel: string;
   declare derived: { level: number | null; relativeLevel: number | null; fromDefault: boolean };
 
@@ -106,13 +106,13 @@ export class SkillData extends foundry.abstract.TypeDataModel {
         required: true,
         nullable: false,
         initial: "DX",
-        choices: ["ST", "DX", "IQ", "HT"],
+        choices: ["ST", "DX", "IQ", "HT", "Will", "Per"],
       }),
       difficulty: new fields.StringField({
         required: true,
         nullable: false,
         initial: "A",
-        choices: ["E", "A", "H"],
+        choices: ["E", "A", "H", "VH"],
       }),
       points: new fields.NumberField({
         required: true,
@@ -129,12 +129,23 @@ export class SkillData extends foundry.abstract.TypeDataModel {
        */
       defaults: new fields.ArrayField(
         new fields.SchemaField({
+          /**
+           * Where the default comes from. GURPS Lite defaults only from an
+           * attribute; the Basic Set also defaults from other skills, e.g.
+           * Broadsword defaults to Shortsword-2.
+           */
+          from: new fields.StringField({
+            required: true, nullable: false, initial: "attribute",
+            choices: ["attribute", "skill"],
+          }),
           attribute: new fields.StringField({
             required: true,
             nullable: false,
             initial: "DX",
-            choices: ["ST", "DX", "IQ", "HT"],
+            choices: ["ST", "DX", "IQ", "HT", "Will", "Per"],
           }),
+          /** Skill name, used when `from` is "skill". */
+          skill: new fields.StringField({ required: true, blank: true, initial: "" }),
           modifier: new fields.NumberField({
             required: true,
             nullable: false,
@@ -400,3 +411,44 @@ export class LanguageData extends foundry.abstract.TypeDataModel {
 }
 
 export type { DamageType };
+
+/**
+ * A technique: a specialised feat bought up from a penalty against a
+ * prerequisite skill (GURPS Basic Set: Characters pp. 229-233).
+ *
+ * Kicking, for instance, defaults to Karate-2, and points buy that -2 off.
+ */
+export class TechniqueData extends foundry.abstract.TypeDataModel {
+  declare difficulty: "A" | "H";
+  declare prerequisite: string;
+  declare defaultModifier: number;
+  declare points: number;
+  declare maxRelativeToPrerequisite: number;
+  declare derived: { level: number | null; levels: number; cappedByPrerequisite: boolean };
+
+  static override defineSchema() {
+    return {
+      ...descriptionFields(),
+      /** Techniques are only ever Average or Hard. */
+      difficulty: new fields.StringField({
+        required: true, nullable: false, initial: "A", choices: ["A", "H"],
+      }),
+      /** The skill this technique defaults from, by name. */
+      prerequisite: new fields.StringField({ required: true, blank: true, initial: "" }),
+      /** The default penalty, e.g. -2 for Kicking off Karate. Negative. */
+      defaultModifier: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 0, max: 0,
+      }),
+      points: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 0, min: 0,
+      }),
+      /**
+       * A cap tighter than the prerequisite's own level, relative to it. Zero
+       * means the technique may reach the prerequisite skill but not exceed it.
+       */
+      maxRelativeToPrerequisite: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 0, max: 0,
+      }),
+    };
+  }
+}

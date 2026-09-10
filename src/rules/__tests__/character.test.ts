@@ -25,7 +25,10 @@ import {
   namedDefaultLevel,
   pointsForRelativeLevel,
   relativeLevelForPoints,
+  resolveTechnique,
   skillLevel,
+  techniqueLevelsForPoints,
+  techniquePointCost,
 } from "../skills.js";
 import type { Difficulty } from "../types.js";
 
@@ -85,17 +88,17 @@ describe("secondary characteristics (GURPS Lite pp. 5-6)", () => {
 
 describe("the Skill Cost Table (GURPS Lite p. 12)", () => {
   // The printed table, as relative level by difficulty for each point cost.
-  const printed: Array<{ points: number; E: number; A: number; H: number }> = [
-    { points: 1, E: 0, A: -1, H: -2 },
-    { points: 2, E: 1, A: 0, H: -1 },
-    { points: 4, E: 2, A: 1, H: 0 },
-    { points: 8, E: 3, A: 2, H: 1 },
-    { points: 12, E: 4, A: 3, H: 2 },
-    { points: 16, E: 5, A: 4, H: 3 },
+  const printed: Array<{ points: number; E: number; A: number; H: number; VH: number }> = [
+    { points: 1, E: 0, A: -1, H: -2, VH: -3 },
+    { points: 2, E: 1, A: 0, H: -1, VH: -2 },
+    { points: 4, E: 2, A: 1, H: 0, VH: -1 },
+    { points: 8, E: 3, A: 2, H: 1, VH: 0 },
+    { points: 12, E: 4, A: 3, H: 2, VH: 1 },
+    { points: 16, E: 5, A: 4, H: 3, VH: 2 },
   ];
 
   it.each(printed)("buys the printed relative levels for $points points", (row) => {
-    for (const difficulty of ["E", "A", "H"] as Difficulty[]) {
+    for (const difficulty of ["E", "A", "H", "VH"] as Difficulty[]) {
       expect(relativeLevelForPoints(row.points, difficulty), `${row.points} pts, ${difficulty}`).toBe(
         row[difficulty],
       );
@@ -104,7 +107,7 @@ describe("the Skill Cost Table (GURPS Lite p. 12)", () => {
 
   it("inverts cleanly back to point costs", () => {
     for (const row of printed) {
-      for (const difficulty of ["E", "A", "H"] as Difficulty[]) {
+      for (const difficulty of ["E", "A", "H", "VH"] as Difficulty[]) {
         expect(pointsForRelativeLevel(row[difficulty], difficulty)).toBe(row.points);
       }
     }
@@ -293,5 +296,59 @@ describe("secondary characteristic pricing (GURPS Basic Set: Characters pp. 14-1
     // helper it must not read as free while still moving the score.
     expect(basicSpeedPointCost(0.1)).not.toBe(0);
     expect(BASIC_SPEED_STEP).toBe(0.25);
+  });
+});
+
+describe("techniques (GURPS Basic Set: Characters pp. 229-233)", () => {
+  it("charges an Average technique one point per level", () => {
+    expect(techniquePointCost(1, "A")).toBe(1);
+    expect(techniquePointCost(3, "A")).toBe(3);
+  });
+
+  it("charges a Hard technique two for the first level, then one each", () => {
+    expect(techniquePointCost(1, "H")).toBe(2);
+    expect(techniquePointCost(2, "H")).toBe(3);
+    expect(techniquePointCost(4, "H")).toBe(5);
+  });
+
+  it("costs nothing at the default level", () => {
+    expect(techniquePointCost(0, "A")).toBe(0);
+    expect(techniquePointCost(0, "H")).toBe(0);
+  });
+
+  it("inverts points back into levels", () => {
+    expect(techniqueLevelsForPoints(3, "A")).toBe(3);
+    expect(techniqueLevelsForPoints(3, "H")).toBe(2);
+    // A single point buys nothing on a Hard technique.
+    expect(techniqueLevelsForPoints(1, "H")).toBe(0);
+    expect(techniqueLevelsForPoints(0, "A")).toBe(0);
+  });
+
+  it("starts at the prerequisite skill minus the default penalty", () => {
+    // Kicking defaults to Karate-2, so Karate-14 gives Kicking-12 unbought.
+    const result = resolveTechnique({ prerequisiteLevel: 14, defaultModifier: -2, levels: 0 });
+    expect(result.level).toBe(12);
+    expect(result.levels).toBe(0);
+  });
+
+  it("buys the penalty off, level by level", () => {
+    const result = resolveTechnique({ prerequisiteLevel: 14, defaultModifier: -2, levels: 2 });
+    expect(result.level).toBe(14);
+    expect(result.cappedByPrerequisite).toBe(false);
+  });
+
+  it("never exceeds the prerequisite skill's own level", () => {
+    // Buying 5 levels off a -2 default cannot pass Karate-14.
+    const result = resolveTechnique({ prerequisiteLevel: 14, defaultModifier: -2, levels: 5 });
+    expect(result.level).toBe(14);
+    expect(result.cappedByPrerequisite).toBe(true);
+  });
+
+  it("honours a tighter cap when the technique specifies one", () => {
+    const result = resolveTechnique({
+      prerequisiteLevel: 14, defaultModifier: -4, levels: 10, maxRelativeToPrerequisite: -1,
+    });
+    expect(result.level).toBe(13);
+    expect(result.cappedByPrerequisite).toBe(true);
   });
 });

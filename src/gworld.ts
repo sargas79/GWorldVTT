@@ -18,6 +18,7 @@ import {
   LanguageData,
   ShieldData,
   SkillData,
+  TechniqueData,
   TraitData,
 } from "./system/data/items.js";
 import { GWorldCharacterSheet } from "./system/sheets/character-sheet.js";
@@ -34,6 +35,7 @@ Hooks.once("init", () => {
 
   CONFIG.Item.dataModels.trait = TraitData;
   CONFIG.Item.dataModels.skill = SkillData;
+  CONFIG.Item.dataModels.technique = TechniqueData;
   CONFIG.Item.dataModels.equipment = EquipmentData;
   CONFIG.Item.dataModels.armor = ArmorData;
   CONFIG.Item.dataModels.shield = ShieldData;

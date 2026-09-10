@@ -7,6 +7,9 @@
              autocomplete="off" data-tooltip="{{localize 'GWORLD.Action.FilterSkills'}}">
     </div>
     {{#if editable}}
+      <button type="button" class="ibtn" data-action="createItem" data-item-type="technique">
+        {{> "gworld.plus"}} {{localize "GWORLD.Action.AddTechnique"}}
+      </button>
       <button type="button" class="ibtn" data-action="createItem" data-item-type="skill">
         {{> "gworld.plus"}} {{localize "GWORLD.Action.AddSkill"}}
       </button>
@@ -79,6 +82,57 @@
                 {{#if skill.system.derived.hasDefault}}
                   <span class="rollable" data-action="roll" data-roll-type="skill"
                         data-roll-label="{{skill.name}}" data-roll-target="{{skill.system.derived.level}}">
+                    {{> "gworld.die"}}
+                  </span>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{/if}}
+
+  {{#if items.techniques.length}}
+    <div class="isec" style="gap: 0">
+      <div class="grph">
+        {{localize "GWORLD.Section.Techniques"}}
+        <span class="sub">{{localize "GWORLD.Hint.Techniques"}}</span>
+      </div>
+      <table class="gt">
+        <thead>
+          <tr>
+            <th>{{localize "GWORLD.Column.Skill"}}</th>
+            <th>{{localize "GWORLD.Column.Type"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Pts"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Relative"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Level"}}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each items.techniques as |tech|}}
+            <tr data-item-id="{{tech.id}}" {{#unless tech.system.derived.level}}class="dim"{{/unless}}>
+              <td>
+                <span class="wname" data-action="editItem">{{tech.name}}</span>
+                {{#if tech.system.derived.cappedByPrerequisite}}
+                  <span class="tag">{{localize "GWORLD.Skill.CappedByPrerequisite"}}</span>
+                {{/if}}
+              </td>
+              <td class="wmode">Tech/{{tech.system.difficulty}}</td>
+              <td class="n">{{tech.system.points}}</td>
+              <td class="n wmode">{{tech.system.prerequisite}}{{tech.system.defaultModifier}}</td>
+              <td class="n">
+                {{#if tech.system.derived.level}}
+                  <span class="lvl">{{tech.system.derived.level}}</span>
+                {{else}}
+                  <span class="tag tag-danger">{{localize "GWORLD.Skill.NoPrerequisite"}}</span>
+                {{/if}}
+              </td>
+              <td class="c">
+                {{#if tech.system.derived.level}}
+                  <span class="rollable" data-action="roll" data-roll-type="skill"
+                        data-roll-label="{{tech.name}}" data-roll-target="{{tech.system.derived.level}}">
                     {{> "gworld.die"}}
                   </span>
                 {{/if}}
