@@ -64,6 +64,14 @@ export function registerTemplateHelpers(): void {
   /** Greater-than comparison, for conditionals the data cannot express directly. */
   Handlebars.registerHelper("gt", (a: number, b: number) => Number(a) > Number(b));
 
+  /** Equality, for selecting the current option of a hand-written select. */
+  Handlebars.registerHelper("eq", (a: unknown, b: unknown) => a === b);
+
+  /** Whether a list holds a value, for checkbox sets such as armor locations. */
+  Handlebars.registerHelper("includes", (list: unknown, value: unknown) =>
+    Array.isArray(list) && list.includes(value),
+  );
+
   /** String concatenation, used to build localization keys from data. */
   Handlebars.registerHelper("concat", (...args: unknown[]) => {
     args.pop(); // Handlebars appends its options object.

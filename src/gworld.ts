@@ -22,6 +22,7 @@ import {
   TraitData,
 } from "./system/data/items.js";
 import { GWorldCharacterSheet } from "./system/sheets/character-sheet.js";
+import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
 import { registerTemplateHelpers } from "./system/templates.js";
 
@@ -58,6 +59,16 @@ Hooks.once("init", () => {
     types: ["npc"],
     makeDefault: true,
     label: "GWORLD.Sheet.Npc",
+  });
+
+  // Without this, items fall back to Foundry's core sheet, which knows nothing
+  // about these data models: a skill opens showing a name and an image and
+  // nothing else that can be changed.
+  DocumentSheetConfig.unregisterSheet(Item, "core", foundry.applications.sheets.ItemSheetV2);
+  DocumentSheetConfig.registerSheet(Item, SYSTEM_ID, GWorldItemSheet, {
+    types: ["trait", "skill", "technique", "equipment", "armor", "shield", "language"],
+    makeDefault: true,
+    label: "GWORLD.Sheet.Item",
   });
 
   // Exposed for macros and for poking at the rules engine from the console.
