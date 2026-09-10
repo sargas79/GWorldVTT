@@ -8,10 +8,12 @@ import {
   rollDice,
   rollDiceAdds,
   rollDie,
+  toRollFormula,
 } from "../dice.js";
 import { isStepPostureChange, postureMove } from "../posture.js";
 import { sizeModifier, speedRangeModifier } from "../ranged.js";
 import { encumberedMove, encumbranceLevel } from "../encumbrance.js";
+import { swingDamage, thrustDamage } from "../damage.js";
 
 /** A deterministic rng that walks a fixed list of die faces. */
 function scriptedRng(faces: number[]): () => number {
@@ -101,5 +103,33 @@ describe("encumbrance edge cases", () => {
   it("reports level 4 rather than throwing when overloaded", () => {
     expect(encumbranceLevel(10_000, 20)).toBe(4);
     expect(encumberedMove(5, 4)).toBe(1);
+  });
+});
+
+describe("roll formula rendering", () => {
+  it("renders a negative modifier as a subtraction, not two operators", () => {
+    // "1d6 + -2" is what naive interpolation gives, and formula grammars reject it.
+    expect(toRollFormula({ dice: 1, adds: -2 })).toBe("1d6 - 2");
+  });
+
+  it("renders a positive modifier as an addition", () => {
+    expect(toRollFormula({ dice: 2, adds: 3 })).toBe("2d6 + 3");
+  });
+
+  it("omits a zero modifier", () => {
+    expect(toRollFormula({ dice: 3, adds: 0 })).toBe("3d6");
+  });
+
+  it("renders flat damage without a 0d6 term", () => {
+    expect(toRollFormula({ dice: 0, adds: 4 })).toBe("4");
+  });
+
+  it("round-trips every GURPS damage step into a valid formula", () => {
+    for (let st = 1; st <= 20; st++) {
+      for (const formula of [thrustDamage(st), swingDamage(st)]) {
+        const rendered = toRollFormula(formula);
+        expect(rendered, `ST ${st}`).toMatch(/^\d+d6( [+-] \d+)?$/);
+      }
+    }
   });
 });

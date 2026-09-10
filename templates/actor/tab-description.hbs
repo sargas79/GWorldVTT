@@ -79,8 +79,8 @@
   <div class="isec">
     <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.Biography"}}</div>
     <prose-mirror class="box editor prose" name="system.details.biography"
-                  value="{{system.details.biography}}" enriched="{{biographyHTML}}" toggled
-                  {{#unless editable}}disabled{{/unless}}></prose-mirror>
+                  value="{{system.details.biography}}" toggled
+                  {{#unless editable}}disabled{{/unless}}>{{{biographyHTML}}}</prose-mirror>
   </div>
 
   {{#if isOwner}}
@@ -92,8 +92,8 @@
         </span>
       </div>
       <prose-mirror class="box editor prose" name="system.details.notes"
-                    value="{{system.details.notes}}" enriched="{{notesHTML}}" toggled
-                    {{#unless editable}}disabled{{/unless}}></prose-mirror>
+                    value="{{system.details.notes}}" toggled
+                    {{#unless editable}}disabled{{/unless}}>{{{notesHTML}}}</prose-mirror>
     </div>
   {{/if}}
 

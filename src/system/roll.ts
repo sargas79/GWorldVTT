@@ -10,7 +10,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import { computeInjury } from "../rules/damage.js";
-import { parseDiceAdds } from "../rules/dice.js";
+import { parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import type { DamageType } from "../rules/types.js";
 
 const CHAT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/success-roll.hbs`;
@@ -97,7 +97,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     return 0;
   }
 
-  const roll = new Roll(`${parsed.dice}d6 + ${parsed.adds}`);
+  const roll = new Roll(toRollFormula(parsed));
   await roll.evaluate();
 
   // Basic damage floors at 0 for crushing, 1 for everything else.
