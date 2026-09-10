@@ -201,3 +201,30 @@ export function effectiveSkillLevel(options: {
   if (bestDefault !== null) return { level: bestDefault, fromDefault: true };
   return null;
 }
+
+/**
+ * A skill name reduced to what identifies the skill.
+ *
+ * The book marks a skill whose content depends on tech level with "/TL", and
+ * writes the tech level learned into the marker on a character sheet:
+ * Armoury/TL, Armoury/TL3. But it drops the marker whenever it refers to the
+ * skill from somewhere else -- a revolver is used with "Guns (Pistol)", and
+ * Architecture defaults from "Engineer (Civil)". The marker is notation about
+ * the skill, not part of its name, so matching has to see through it.
+ *
+ * Case and surrounding space go too, so that a hand-typed skill still matches
+ * one dragged in from the compendium.
+ */
+export function normalizeSkillName(name: string): string {
+  return name
+    .trim()
+    .replace(/\/TL[\d^]*/i, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+/** Whether two names refer to the same skill. */
+export function sameSkill(a: string, b: string): boolean {
+  return normalizeSkillName(a) === normalizeSkillName(b);
+}
