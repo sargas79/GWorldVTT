@@ -12,6 +12,7 @@ import { targetedTokens } from "./targets.js";
 import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import { applyDamageFloor, computeInjury } from "../rules/damage.js";
 import { parseDiceAdds, toRollFormula } from "../rules/dice.js";
+import { rangedToHitModifier } from "../rules/ranged.js";
 import type { DamageType } from "../rules/types.js";
 
 const CHAT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/success-roll.hbs`;
@@ -223,11 +224,19 @@ export async function handleRollAction(
   event: Event,
   target: HTMLElement,
 ): Promise<void> {
-  const { rollType, rollLabel, rollTarget } = target.dataset;
+  const { rollType, rollLabel, rollTarget, ranged } = target.dataset;
   const base = Number(rollTarget);
   if (!Number.isFinite(base)) return;
 
-  const modifiers = await maybePromptModifiers(event);
+  // A ranged attack always asks, rather than only on a shift-click: range is
+  // not optional the way a situational modifier is, and defaulting it to zero
+  // would quietly roll every shot as though it were point blank.
+  const modifiers = ranged
+    ? await promptForRangedAttack({
+        accuracy: Number(target.dataset.accuracy) || 0,
+        scopeBonus: Number(target.dataset.scopeBonus) || 0,
+      })
+    : await maybePromptModifiers(event);
   if (modifiers === null) return;
 
   await rollSuccess({
@@ -237,6 +246,103 @@ export async function handleRollAction(
     kind: rollKind(rollType),
     modifiers,
   });
+}
+
+/**
+ * Asks for what a ranged attack needs before rolling: how far away the target
+ * is, how fast it is moving, how big it is, and whether the shot was aimed.
+ *
+ * These are the modifiers GURPS Lite applies to a ranged attack (pp. 19-20 and
+ * the Size and Speed/Range Table on p. 27). They are asked rather than
+ * measured: the range to a target is knowable from the canvas only when both
+ * tokens are on it, and a GM running a fight in the theatre of the mind has no
+ * tokens at all.
+ *
+ * Returns null when the dialog is dismissed, which cancels the roll.
+ */
+export async function promptForRangedAttack(options: {
+  accuracy: number;
+  scopeBonus: number;
+}): Promise<RollModifier[] | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
+  const accuracyLabel = options.scopeBonus
+    ? `${L("Aimed")} (+${options.accuracy}+${options.scopeBonus})`
+    : `${L("Aimed")} (+${options.accuracy})`;
+
+  const field = (name: string, label: string, value: string) => `
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${label}</span>
+        <input type="number" name="${name}" value="${value}" step="1" style="width:90px">
+      </label>`;
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      ${field("range", L("Range"), "0")}
+      ${field("speed", L("TargetSpeed"), "0")}
+      ${field("size", L("TargetSize"), "0")}
+      ${field("modifier", game.i18n.localize("GWORLD.Chat.Modifier"), "0")}
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="aimed">
+        <span>${accuracyLabel}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const num = (name: string) =>
+          Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
+        const aimed =
+          form?.querySelector<HTMLInputElement>('input[name="aimed"]')?.checked ?? false;
+        return { range: num("range"), speed: num("speed"), size: num("size"), modifier: num("modifier"), aimed };
+      },
+    },
+    rejectClose: false,
+  });
+
+  if (!result || typeof result !== "object") return null;
+  return rangedModifiers(result as RangedInput, options);
+}
+
+interface RangedInput {
+  range: number;
+  speed: number;
+  size: number;
+  modifier: number;
+  aimed: boolean;
+}
+
+/**
+ * Turns what the dialog collected into labelled modifiers, so the chat card
+ * shows the shot's arithmetic rather than one opaque number.
+ *
+ * Accuracy is added only for an aimed shot: it is what taking the Aim maneuver
+ * buys, and a snap shot gets none of it.
+ */
+export function rangedModifiers(
+  input: RangedInput,
+  weapon: { accuracy: number; scopeBonus: number },
+): RollModifier[] {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
+  const modifiers: RollModifier[] = [];
+
+  const { speedRange, size } = rangedToHitModifier({
+    rangeYards: input.range,
+    targetSpeedYardsPerSecond: input.speed,
+    targetSizeModifier: input.size,
+  });
+
+  if (speedRange !== 0) modifiers.push({ label: L("SpeedRange"), value: speedRange });
+  if (size !== 0) modifiers.push({ label: L("TargetSize"), value: size });
+  if (input.aimed && weapon.accuracy + weapon.scopeBonus !== 0) {
+    modifiers.push({ label: L("Accuracy"), value: weapon.accuracy + weapon.scopeBonus });
+  }
+  if (input.modifier !== 0) {
+    modifiers.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: input.modifier });
+  }
+
+  return modifiers;
 }
 
 /** Handles a click on any element carrying the damage dataset. */

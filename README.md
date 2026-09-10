@@ -29,6 +29,12 @@ criticals by the Basic Set's table. The damage card rolls the dice, applies the
 minimum-damage floor, states the wounding modifier and the injury an unarmoured
 target would take, and names the armour divisor when there is one.
 
+**Ranged attacks** — firing asks how far the target is, how fast it is moving,
+how big it is, and whether the shot was aimed, then rolls with the speed/range
+penalty from the Size and Speed/Range Table, the target's Size Modifier, and the
+weapon's Accuracy for an aimed shot. The card shows each as its own line rather
+than one opaque number.
+
 **Defending** — an attack that connects records who it was aimed at, and its
 card offers each defender their available active defenses with the score for
 each. Only defenders you can roll for are shown, and a defense the character
@@ -81,6 +87,11 @@ book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
   whether the character knows Boxing or Karate, and a lance's depends on the
   mount's ST and Move. Those are recorded from the book's own table in
   `packs-src/equipment/table-only-weapons.json` rather than derived.
+- **Rapid fire is not implemented.** A weapon's rate of fire and recoil are
+  recorded but not read: a burst rolls once and hits once. The rules that turn
+  a margin of success into a number of hits are in the Basic Set rather than
+  GURPS Lite, and are not implemented from memory — the numbers would be
+  guesses, and a guessed number at the table is worse than a missing feature.
 - Some statistics are recorded but not yet read by the rules engine:
   `unbalanced` and `isFencing` on a melee mode, `bulk` and `recoil` on a ranged
   one. Each is documented against the page that defines it, so the rule is

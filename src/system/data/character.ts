@@ -78,6 +78,8 @@ export interface DerivedAttack {
   damageRollable: boolean;
   /** Ranged only. */
   accuracy?: number;
+  /** A built-in scope's bonus, which the table lists separately as in "7+2". */
+  scopeBonus?: number;
   range?: string;
   rateOfFire?: number;
   shots?: string;
@@ -495,6 +497,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           parry: null,
           minSt: mode.minSt ?? null,
           accuracy: mode.accuracy ?? 0,
+          scopeBonus: mode.scopeBonus ?? 0,
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
           rateOfFire: mode.rateOfFire ?? 1,
           shots: mode.shots ?? "",
