@@ -12,10 +12,21 @@ export type Attribute = "ST" | "DX" | "IQ" | "HT";
 export type Difficulty = "E" | "A" | "H";
 
 /**
- * Damage type abbreviations (GURPS Lite p. 19).
+ * Damage type abbreviations (GURPS Basic Set: Campaigns p. 379).
  * Wounding modifiers are applied per {@link WOUNDING_MODIFIERS}.
  */
-export type DamageType = "burn" | "cr" | "cut" | "imp" | "pi-" | "pi" | "pi+";
+export type DamageType =
+  | "burn"
+  | "cor"
+  | "cr"
+  | "cut"
+  | "fat"
+  | "imp"
+  | "pi-"
+  | "pi"
+  | "pi+"
+  | "pi++"
+  | "tox";
 
 /** Body postures (GURPS Lite p. 25, Posture Table). */
 export type Posture = "standing" | "crouching" | "kneeling" | "crawling" | "sitting" | "lying";

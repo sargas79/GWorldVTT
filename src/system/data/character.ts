@@ -14,6 +14,7 @@ import {
 } from "../../rules/attributes.js";
 import { baseParry, block, dodge, parry } from "../../rules/defenses.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
+import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
 import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
 import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js";
@@ -256,9 +257,26 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     }
 
     // ── protection ──────────────────────────────────────────────────────
-    let dr = 0;
+    // DR is tracked per location: a breastplate covering torso and vitals must
+    // not protect the head. Armor listing no locations covers the whole body,
+    // which keeps items written for the Lite rules working.
+    const drByLocation = Object.fromEntries(
+      HIT_LOCATION_ORDER.map((loc) => [loc, HIT_LOCATIONS[loc].extraDr]),
+    ) as Record<HitLocation, number>;
+
     const armorItems = this.itemsOfType("armor").filter((i) => i.system?.equipped);
-    for (const item of armorItems) dr += Number(item.system?.dr ?? 0);
+    for (const item of armorItems) {
+      const value = Number(item.system?.dr ?? 0);
+      const covered: HitLocation[] = item.system?.locations?.length
+        ? item.system.locations
+        : [...HIT_LOCATION_ORDER];
+      for (const loc of covered) {
+        if (loc in drByLocation) drByLocation[loc] += value;
+      }
+    }
+
+    // The headline DR figure stays the torso, which is what an unaimed blow hits.
+    const dr = drByLocation.torso;
 
     const shieldItem = this.itemsOfType("shield").find((i) => i.system?.equipped) ?? null;
     const shieldDb = shieldItem ? Number(shieldItem.system?.db ?? 0) : 0;
@@ -455,6 +473,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       thrust: formatDiceAdds(thrustDamage(attrs.ST)),
       swing: formatDiceAdds(swingDamage(attrs.ST)),
       dr,
+      drByLocation,
+      hitLocations: HIT_LOCATION_ORDER.map((key) => ({
+        key,
+        label: HIT_LOCATIONS[key].label,
+        toHit: HIT_LOCATIONS[key].toHit,
+        dr: drByLocation[key],
+      })),
       shieldDb,
       shieldName: shieldItem?.name ?? null,
       armorName: armorItems[0]?.name ?? null,
