@@ -7,6 +7,7 @@
  * DOM at once and CSS controls visibility.
  */
 
+import { CharacterBuilder } from "../apps/character-builder.js";
 import { CompendiumPicker } from "../apps/compendium-picker.js";
 import { SYSTEM_ID } from "../constants.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
@@ -66,6 +67,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       toggleCondition: GWorldCharacterSheet.#onToggleCondition,
       createItem: GWorldCharacterSheet.#onCreateItem,
       browseCompendium: GWorldCharacterSheet.#onBrowseCompendium,
+      openBuilder: GWorldCharacterSheet.#onOpenBuilder,
       editItem: GWorldCharacterSheet.#onEditItem,
       deleteItem: GWorldCharacterSheet.#onDeleteItem,
       toggleEquipped: GWorldCharacterSheet.#onToggleEquipped,
@@ -465,6 +467,16 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!key) return;
     const current = foundry.utils.getProperty(this.actor, `system.conditions.${key}`);
     await this.actor.update({ [`system.conditions.${key}`]: !current });
+  }
+
+  /**
+   * Opens the guided builder.
+   *
+   * A second way in rather than a replacement: it walks the same edits this
+   * sheet makes, in an order, with the points ledger always in view.
+   */
+  static async #onOpenBuilder(this: GWorldCharacterSheet) {
+    await CharacterBuilder.open(this.actor);
   }
 
   /**

@@ -117,6 +117,13 @@
 
   <div class="isec">
     <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.CharacterPoints"}}</div>
+    {{#if editable}}
+      <div class="toolbar">
+        <button type="button" class="ibtn" data-action="openBuilder">
+          {{> "gworld.plus"}} {{localize "GWORLD.Builder.Open"}}
+        </button>
+      </div>
+    {{/if}}
     <div class="ledger">
       <div class="lrow"><span>{{localize "GWORLD.Points.Attributes"}}</span><span>{{derived.points.attributes}}</span></div>
       <div class="lrow"><span>{{localize "GWORLD.Points.Secondaries"}}</span><span>{{derived.points.secondaries}}</span></div>
