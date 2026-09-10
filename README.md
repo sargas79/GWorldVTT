@@ -103,8 +103,15 @@ genuinely tabular. It also needs the skills chapter alongside it: the table name
 the skill each weapon uses but never states that skill's difficulty, and assuming
 one gets Knife and Flail wrong.
 
-All three parsers favour precision over recall and print every rejection with its
-reason; each writes a `.rejected.txt` beside its output (git-ignored) so the
+```bash
+# Armour: the three tables (low-tech, high/ultra-tech, and horse barding).
+pdftotext -table -enc UTF-8 -f 284 -l 288 "GURPS 4E - Basic Set - Characters.pdf" armor.txt
+node tools/parse-armor.mjs armor.txt --write
+```
+
+All the parsers favour precision over recall and print every rejection with its
+reason; each writes its rejected rows beside its output (git-ignored, and suffixed
+where a folder holds more than one, as `.rejected-armor.txt`) so the
 entries that did not survive can be inspected. Traits are read in `-raw` mode
 rather than `-simple` because the reflow glues the book's trait-category symbols
 onto the cost — see the comment at the top of `tools/parse-traits.mjs`.
