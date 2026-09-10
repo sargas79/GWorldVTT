@@ -162,6 +162,35 @@ describe("drProfile", () => {
     expect(bands.find((b) => b.dr === 6)?.types).toContain("imp");
   });
 
+  /**
+   * A high-tech piece is worth its lower DR against more damage types than its
+   * higher one, so ordering the bands by how much they cover would headline a
+   * DR 12/5 vest as DR 5. The base figure leads.
+   */
+  it("leads with the base DR even when the split covers more damage types", () => {
+    const vest: ArmorPiece = {
+      dr: 12,
+      drSplit: 5,
+      drSplitAppliesTo: SPLIT_AGAINST.highTech,
+      locations: ["torso"],
+    };
+    const bands = drProfile([vest], "torso");
+    expect(bands[0]?.dr).toBe(12);
+    expect(bands[0]!.types.length).toBeLessThan(bands[1]!.types.length);
+    expect(bands.map((b) => b.dr)).toEqual([12, 5]);
+  });
+
+  it("orders every band from the most protective down", () => {
+    const vest: ArmorPiece = {
+      dr: 8,
+      drSplit: 2,
+      drSplitAppliesTo: SPLIT_AGAINST.highTech,
+      locations: ["torso", "vitals"],
+    };
+    const drs = drProfile([mail, vest], "torso").map((b) => b.dr);
+    expect(drs).toEqual([...drs].sort((a, b) => b - a));
+  });
+
   it("gives one band when nothing splits", () => {
     expect(drProfile([breastplate], "torso")).toEqual([
       { dr: 5, types: [...DAMAGE_TYPES] },

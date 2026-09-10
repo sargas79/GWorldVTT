@@ -631,10 +631,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           toHit: HIT_LOCATIONS[key].toHit,
           dr: ordinary?.dr ?? 0,
           splits,
-          exceptions: exceptions.map((band) => ({
-            dr: band.dr,
-            types: band.types.join(", "),
-          })),
+          // The keys travel as keys. Joining them here would put raw codes
+          // like "pi+" on the sheet in every locale.
+          exceptions: exceptions.map((band) => ({ dr: band.dr, types: band.types })),
         };
       }),
       shieldDb,

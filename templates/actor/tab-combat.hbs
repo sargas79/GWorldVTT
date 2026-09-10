@@ -211,7 +211,10 @@
                     real figure and Handlebars reads it as false. --}}
               {{#if loc.splits}}
                 {{#each loc.exceptions as |ex|}}
-                  <span class="wmode">/ {{ex.dr}} vs {{ex.types}}</span>
+                  {{!-- The types arrive as keys so they can be localized here
+                        rather than shown as the raw codes the rules use. --}}
+                  <span class="wmode">/ {{ex.dr}} {{localize "GWORLD.Armor.Versus"}}
+                    {{~#each ex.types as |t|}} {{localize (concat "GWORLD.DamageType." t)}}{{#unless @last}},{{/unless}}{{/each}}</span>
                 {{/each}}
               {{/if}}
             </td>

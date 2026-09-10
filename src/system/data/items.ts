@@ -383,6 +383,11 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
     if (split !== null && split > (data.dr ?? 0)) {
       throw new Error(`Split DR ${split} must not exceed the armor's DR of ${data.dr}.`);
     }
+    // Both armour tables agree that crushing takes the lower figure, so a split
+    // without it has been read from neither of them.
+    if (split !== null && !against.includes("cr")) {
+      throw new Error("A split DR must apply to crushing, which both armour tables agree on.");
+    }
   }
 
   declare dr: number;

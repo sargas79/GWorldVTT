@@ -106,9 +106,14 @@ export function drProfile(pieces: readonly ArmorPiece[], location: HitLocation):
     else byType.set(dr, [type]);
   }
 
+  // Highest DR first, which is the base figure: drSplit is never above dr, so
+  // the band a piece leads with is the one it is worth the most against.
+  // Ordering by how many damage types a band covers would headline a DR 12/5
+  // vest as DR 5, because its lower figure applies to six types and its higher
+  // to five.
   return [...byType.entries()]
     .map(([dr, types]) => ({ dr, types }))
-    .sort((a, b) => b.types.length - a.types.length || b.dr - a.dr);
+    .sort((a, b) => b.dr - a.dr);
 }
 
 /**
