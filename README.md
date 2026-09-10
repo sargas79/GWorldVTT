@@ -98,14 +98,34 @@ pdftotext -raw -enc UTF-8 -f 205 -l 235 "GURPS 4E - Basic Set - Characters.pdf" 
 node tools/parse-melee-weapons.mjs melee.txt skills-raw.txt --write
 ```
 
+```bash
+# Muscle-powered ranged weapons. The table ends where the hand grenades begin,
+# which have neither Acc nor Range, so trim there.
+pdftotext -table -enc UTF-8 -f 276 -l 279 "GURPS 4E - Basic Set - Characters.pdf" ranged-full.txt
+sed -n '/^TL *Weapon *Damage *Acc/,$p' ranged-full.txt | sed '/HAND GRENADES/,$d' > ranged.txt
+
+# A wider slice of the skills chapter: the ranged skills sit outside the melee pages.
+pdftotext -raw -enc UTF-8 -f 176 -l 240 "GURPS 4E - Basic Set - Characters.pdf" skills-wide.txt
+
+node tools/parse-ranged-weapons.mjs ranged.txt skills-wide.txt --write
+```
+
+Run the ranged step after the melee one. A hatchet appears in both tables, being
+one weapon you can either swing or throw, so the ranged parser adds its throwing
+mode to the item the melee parser already made rather than creating a second item
+of the same name. It replaces those modes rather than appending, so re-running it
+is safe.
+
 The weapon table needs `-table` rather than `-raw` or `-simple`, because it is
 genuinely tabular. It also needs the skills chapter alongside it: the table names
 the skill each weapon uses but never states that skill's difficulty, and assuming
 one gets Knife and Flail wrong.
 
-All three parsers favour precision over recall and print every rejection with its
-reason; each writes a `.rejected.txt` beside its output (git-ignored) so the
-entries that did not survive can be inspected. Traits are read in `-raw` mode
+All four parsers favour precision over recall and print every rejection with its
+reason. Each also writes the rejected rows beside its output so they can be
+inspected: `packs-src/skills/.rejected.txt` for skills, `packs-src/traits/` for
+traits, and `packs-src/equipment/.rejected.txt` and `.rejected-ranged.txt` for
+the two weapon tables, which share a folder. All are git-ignored. Traits are read in `-raw` mode
 rather than `-simple` because the reflow glues the book's trait-category symbols
 onto the cost — see the comment at the top of `tools/parse-traits.mjs`.
 

@@ -68,7 +68,29 @@
           "unreadyAfterAttack": false
         }
       ],
-      "rangedModes": []
+      "rangedModes": [
+        {
+          "name": "thrown",
+          "skill": "Thrown Weapon (Axe/Mace)",
+          "damageBase": "sw",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "accuracy": 1,
+          "scopeBonus": 0,
+          "halfDamageRange": 1.5,
+          "maxRange": 2.5,
+          "rangeIsStMultiple": true,
+          "rateOfFire": 1,
+          "shots": "T(1)",
+          "minSt": 8,
+          "twoHanded": false,
+          "weaponSt": null,
+          "thrown": true,
+          "bulk": -2
+        }
+      ]
     }
   },
   {
@@ -104,7 +126,29 @@
           "unreadyAfterAttack": false
         }
       ],
-      "rangedModes": []
+      "rangedModes": [
+        {
+          "name": "thrown",
+          "skill": "Thrown Weapon (Axe/Mace)",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "accuracy": 2,
+          "scopeBonus": 0,
+          "halfDamageRange": 1,
+          "maxRange": 1.5,
+          "rangeIsStMultiple": true,
+          "rateOfFire": 1,
+          "shots": "T(1)",
+          "minSt": 11,
+          "twoHanded": false,
+          "weaponSt": null,
+          "thrown": true,
+          "bulk": -3
+        }
+      ]
     }
   },
   {
@@ -140,7 +184,29 @@
           "unreadyAfterAttack": false
         }
       ],
-      "rangedModes": []
+      "rangedModes": [
+        {
+          "name": "thrown",
+          "skill": "Thrown Weapon (Axe/Mace)",
+          "damageBase": "sw",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "accuracy": 1,
+          "scopeBonus": 0,
+          "halfDamageRange": 0.5,
+          "maxRange": 1,
+          "rangeIsStMultiple": true,
+          "rateOfFire": 1,
+          "shots": "T(1)",
+          "minSt": 12,
+          "twoHanded": false,
+          "weaponSt": null,
+          "thrown": true,
+          "bulk": -4
+        }
+      ]
     }
   },
   {
@@ -176,7 +242,29 @@
           "unreadyAfterAttack": false
         }
       ],
-      "rangedModes": []
+      "rangedModes": [
+        {
+          "name": "thrown",
+          "skill": "Thrown Weapon (Axe/Mace)",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "accuracy": 1,
+          "scopeBonus": 0,
+          "halfDamageRange": 1,
+          "maxRange": 1.5,
+          "rangeIsStMultiple": true,
+          "rateOfFire": 1,
+          "shots": "T(1)",
+          "minSt": 10,
+          "twoHanded": false,
+          "weaponSt": null,
+          "thrown": true,
+          "bulk": -3
+        }
+      ]
     }
   },
   {
@@ -1184,7 +1272,29 @@
           "unreadyAfterAttack": false
         }
       ],
-      "rangedModes": []
+      "rangedModes": [
+        {
+          "name": "thrown",
+          "skill": "Thrown Weapon (Knife)",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "accuracy": 0,
+          "scopeBonus": 0,
+          "halfDamageRange": 0.8,
+          "maxRange": 1.5,
+          "rangeIsStMultiple": true,
+          "rateOfFire": 1,
+          "shots": "T(1)",
+          "minSt": 6,
+          "twoHanded": false,
+          "weaponSt": null,
+          "thrown": true,
+          "bulk": -2
+        }
+      ]
     }
   },
   {
@@ -1238,7 +1348,29 @@
           "unreadyAfterAttack": false
         }
       ],
-      "rangedModes": []
+      "rangedModes": [
+        {
+          "name": "thrown",
+          "skill": "Thrown Weapon (Knife)",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "accuracy": 0,
+          "scopeBonus": 0,
+          "halfDamageRange": 0.5,
+          "maxRange": 1,
+          "rangeIsStMultiple": true,
+          "rateOfFire": 1,
+          "shots": "T(1)",
+          "minSt": 5,
+          "twoHanded": false,
+          "weaponSt": null,
+          "thrown": true,
+          "bulk": -1
+        }
+      ]
     }
   },
   {
@@ -1274,7 +1406,29 @@
           "unreadyAfterAttack": false
         }
       ],
-      "rangedModes": []
+      "rangedModes": [
+        {
+          "name": "thrown",
+          "skill": "Thrown Weapon (Knife)",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "accuracy": 0,
+          "scopeBonus": 0,
+          "halfDamageRange": 0.5,
+          "maxRange": 1,
+          "rangeIsStMultiple": true,
+          "rateOfFire": 1,
+          "shots": "T(1)",
+          "minSt": 5,
+          "twoHanded": false,
+          "weaponSt": null,
+          "thrown": true,
+          "bulk": -1
+        }
+      ]
     }
   },
   {
@@ -2066,7 +2220,29 @@
           "unreadyAfterAttack": false
         }
       ],
-      "rangedModes": []
+      "rangedModes": [
+        {
+          "name": "thrown",
+          "skill": "Thrown Weapon (Spear)",
+          "damageBase": "thr",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "accuracy": 2,
+          "scopeBonus": 0,
+          "halfDamageRange": 1,
+          "maxRange": 1.5,
+          "rangeIsStMultiple": true,
+          "rateOfFire": 1,
+          "shots": "T(1)",
+          "minSt": 9,
+          "twoHanded": false,
+          "weaponSt": null,
+          "thrown": true,
+          "bulk": -6
+        }
+      ]
     }
   },
   {
@@ -2102,7 +2278,29 @@
           "unreadyAfterAttack": false
         }
       ],
-      "rangedModes": []
+      "rangedModes": [
+        {
+          "name": "thrown",
+          "skill": "Thrown Weapon (Spear)",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "accuracy": 3,
+          "scopeBonus": 0,
+          "halfDamageRange": 1.5,
+          "maxRange": 2.5,
+          "rangeIsStMultiple": true,
+          "rateOfFire": 1,
+          "shots": "T(1)",
+          "minSt": 6,
+          "twoHanded": false,
+          "weaponSt": null,
+          "thrown": true,
+          "bulk": -4
+        }
+      ]
     }
   },
   {

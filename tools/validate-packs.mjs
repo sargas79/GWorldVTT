@@ -137,6 +137,15 @@ function validateItem(entry, file) {
         file, name, `fixed damage "${mode.damageFormula}" does not parse`,
       );
     }
+    // The data model's own bound, restated here so a divisor outside it is
+    // caught before the pack is built rather than when Foundry loads it. A
+    // divisor below 1 is legitimate -- it multiplies the target's DR -- but zero
+    // or negative is not.
+    check(
+      typeof mode.armorDivisor === "number" && mode.armorDivisor >= 0.1,
+      file, name, `armor divisor ${mode.armorDivisor} is out of range`,
+    );
+
     check(Boolean(mode.skill), file, name, "attack mode names no skill");
   }
 }

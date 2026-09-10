@@ -127,6 +127,11 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     formula,
     damageType,
     armorDivisor,
+    // A divisor of 1 is the ordinary case and is not worth a line on the card.
+    // Anything else is, in both directions: above 1 it divides the target's DR,
+    // below 1 it multiplies it, and a stake at (0.5) doubling DR matters to the
+    // GM every bit as much as a beam weapon halving it.
+    hasArmorDivisor: armorDivisor !== 1,
     modifiers: modifiers.filter((m) => m.value !== 0),
     basicDamage,
     woundingModifier: undefended.woundingModifier,
