@@ -172,6 +172,7 @@ declare global {
 
       namespace handlebars {
         function loadTemplates(paths: string[]): Promise<unknown>;
+        function renderTemplate(path: string, data: object): Promise<string>;
       }
     }
 
@@ -229,6 +230,22 @@ declare global {
   const Actor: any;
   const Item: any;
   const ui: any;
+
+  /** Foundry's dice roller. Formula evaluation and dice animation go through it. */
+  class Roll {
+    constructor(formula: string, data?: object, options?: object);
+    readonly total: number;
+    readonly dice: Array<{ results: Array<{ result: number; active?: boolean }> }>;
+    evaluate(options?: object): Promise<this>;
+    toJSON(): object;
+  }
+
+  const ChatMessage: {
+    implementation: {
+      create(data: object, operation?: object): Promise<unknown>;
+      getSpeaker(options?: { scene?: unknown; actor?: unknown; token?: unknown; alias?: string }): object;
+    };
+  };
 }
 
 export {};

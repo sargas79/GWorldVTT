@@ -61,6 +61,9 @@ export function registerTemplateHelpers(): void {
     return v > 0 ? `+${v}` : String(v);
   });
 
+  /** Greater-than comparison, for conditionals the data cannot express directly. */
+  Handlebars.registerHelper("gt", (a: number, b: number) => Number(a) > Number(b));
+
   /** String concatenation, used to build localization keys from data. */
   Handlebars.registerHelper("concat", (...args: unknown[]) => {
     args.pop(); // Handlebars appends its options object.

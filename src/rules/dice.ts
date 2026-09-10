@@ -51,6 +51,20 @@ export function formatDiceAdds({ dice, adds }: DiceAdds): string {
   return `${dice}d${sign}`;
 }
 
+/**
+ * Renders a dice+adds pair as a dice-roller formula, e.g. `2d6 - 1`.
+ *
+ * GURPS notation (`2d-1`) is not a valid roller formula, and the naive
+ * interpolation `2d6 + -1` puts two operators in a row, which formula grammars
+ * reject. Zero dice renders as the bare modifier so flat damage does not become
+ * `0d6`.
+ */
+export function toRollFormula({ dice, adds }: DiceAdds): string {
+  if (dice <= 0) return String(adds);
+  if (adds === 0) return `${dice}d6`;
+  return `${dice}d6 ${adds < 0 ? "-" : "+"} ${Math.abs(adds)}`;
+}
+
 /** Adds a flat modifier to a dice+adds expression (e.g. `thr+2` for a spear). */
 export function addModifier(base: DiceAdds, modifier: number): DiceAdds {
   return { dice: base.dice, adds: base.adds + modifier };

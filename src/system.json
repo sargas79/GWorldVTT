@@ -2,7 +2,7 @@
   "id": "gworld",
   "title": "GWorld - GURPS Lite 4e",
   "description": "A game system implementing the GURPS Lite (4th Edition) rules for Foundry Virtual Tabletop.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "compatibility": {
     "minimum": "14",
     "verified": "14.367"
@@ -46,7 +46,7 @@
   },
   "url": "https://github.com/sargas79/GWorldVTT",
   "manifest": "https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json",
-  "download": "https://github.com/sargas79/GWorldVTT/releases/download/v0.1.0/gworld.zip",
+  "download": "https://github.com/sargas79/GWorldVTT/releases/download/v0.2.0/gworld.zip",
   "readme": "https://github.com/sargas79/GWorldVTT/blob/main/README.md",
   "bugs": "https://github.com/sargas79/GWorldVTT/issues"
 }

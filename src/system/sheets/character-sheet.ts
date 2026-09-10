@@ -9,6 +9,7 @@
 
 import { SYSTEM_ID } from "../constants.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
+import { handleDamageAction, handleRollAction } from "../roll.js";
 import type { Attribute, Posture } from "../../rules/types.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -53,6 +54,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
       roll: GWorldCharacterSheet.#onRoll,
+      rollDamage: GWorldCharacterSheet.#onRollDamage,
       toggleCondition: GWorldCharacterSheet.#onToggleCondition,
       createItem: GWorldCharacterSheet.#onCreateItem,
       editItem: GWorldCharacterSheet.#onEditItem,
@@ -188,6 +190,51 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     };
   }
 
+  /**
+   * Wires the skill filter. It is deliberately not a form field — a `name`
+   * here would be submitted onto the actor on every keystroke.
+   */
+  override async _onRender(context: object, options: object): Promise<void> {
+    await super._onRender(context, options);
+
+    const filter = this.element.querySelector<HTMLInputElement>(".gworld-skill-filter");
+    if (!filter) return;
+
+    const apply = () => {
+      const needle = filter.value.trim().toLowerCase();
+      for (const row of this.element.querySelectorAll<HTMLElement>("[data-tab='skills'] tbody tr")) {
+        const name = row.querySelector(".wname")?.textContent?.toLowerCase() ?? "";
+        row.hidden = needle.length > 0 && !name.includes(needle);
+      }
+      // A group whose rows are all hidden should not leave a stray header.
+      for (const group of this.element.querySelectorAll<HTMLElement>("[data-tab='skills'] .isec")) {
+        const rows = [...group.querySelectorAll<HTMLElement>("tbody tr")];
+        group.hidden = rows.length > 0 && rows.every((r) => r.hidden);
+      }
+    };
+
+    filter.addEventListener("input", apply);
+    apply();
+  }
+
+  /**
+   * Hands each tab part its own tab config, so the section can mark itself
+   * active on first render. Without this every section renders inactive and
+   * the sheet body comes up blank.
+   */
+  override async _preparePartContext(
+    partId: string,
+    context: Record<string, any>,
+    options: object,
+  ): Promise<Record<string, any>> {
+    const partContext = (await super._preparePartContext(partId, context, options)) as Record<
+      string,
+      any
+    >;
+    if (partContext.tabs && partId in partContext.tabs) partContext.tab = partContext.tabs[partId];
+    return partContext;
+  }
+
   /** The advisory line under the points ledger. Warnings never block saving. */
   #pointsWarning(derived: any): { text: string; over: boolean } {
     const { remaining, disadvantageTotal, disadvantageLimit } = derived.points;
@@ -288,18 +335,16 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   /* ── actions ─────────────────────────────────────────────────────────── */
 
   /**
-   * Roll handler. The roll engine and modifier bucket arrive in a later phase;
-   * for now this reports the target number so the affordances are live and the
-   * markup does not need reworking when rolls land.
+   * Rolls 3d6 against the clicked target number and posts the result to chat.
+   * Shift-click prompts for a situational modifier first.
    */
-  static async #onRoll(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
-    const { rollType, rollLabel, rollTarget } = target.dataset;
-    const value = Number(rollTarget);
-    if (!Number.isFinite(value)) return;
+  static async #onRoll(this: GWorldCharacterSheet, event: Event, target: HTMLElement) {
+    await handleRollAction(this.actor, event, target);
+  }
 
-    ui.notifications?.info(
-      `${rollLabel ?? rollType ?? "Roll"}: target ${value} (roll engine lands in a later phase)`,
-    );
+  /** Rolls an attack mode's damage and posts it to chat. */
+  static async #onRollDamage(this: GWorldCharacterSheet, event: Event, target: HTMLElement) {
+    await handleDamageAction(this.actor, event, target);
   }
 
   static async #onToggleCondition(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

@@ -1,4 +1,4 @@
-<section class="tab ibody" data-group="primary" data-tab="combat">
+<section class="tab ibody{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
 
   <div class="isec">
     <div class="ish"><span class="num">01</span>{{localize "GWORLD.Section.Stance"}}</div>
@@ -62,7 +62,10 @@
               <td class="n">
                 {{#if atk.skillLevel}}<span class="lvl">{{atk.skillLevel}}</span>{{else}}<span class="bad">&mdash;</span>{{/if}}
               </td>
-              <td class="dmg">{{atk.damage}} <span class="dt">{{atk.damageType}}</span></td>
+              <td class="dmg{{#if atk.damageRollable}} rollable{{/if}}"
+                  {{#if atk.damageRollable}}data-action="rollDamage"
+                  data-damage-formula="{{atk.damage}}" data-damage-type="{{atk.damageType}}"
+                  data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}"{{/if}}>{{atk.damage}} <span class="dt">{{atk.damageType}}</span></td>
               <td class="c">{{atk.reach}}</td>
               <td class="c">{{#if atk.parry}}{{atk.parry}}{{else}}&mdash;{{/if}}</td>
               <td class="c">{{#if atk.minSt}}{{atk.minSt}}{{else}}&mdash;{{/if}}</td>
@@ -106,7 +109,10 @@
               <td class="n">
                 {{#if atk.skillLevel}}<span class="lvl">{{atk.skillLevel}}</span>{{else}}<span class="bad">&mdash;</span>{{/if}}
               </td>
-              <td class="dmg">{{atk.damage}} <span class="dt">{{atk.damageType}}</span></td>
+              <td class="dmg{{#if atk.damageRollable}} rollable{{/if}}"
+                  {{#if atk.damageRollable}}data-action="rollDamage"
+                  data-damage-formula="{{atk.damage}}" data-damage-type="{{atk.damageType}}"
+                  data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}"{{/if}}>{{atk.damage}} <span class="dt">{{atk.damageType}}</span></td>
               <td class="c">{{atk.accuracy}}</td>
               <td class="c">{{atk.range}}</td>
               <td class="c">{{atk.rateOfFire}}</td>
