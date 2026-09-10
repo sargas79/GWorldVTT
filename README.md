@@ -72,7 +72,8 @@ encumbrance, success and critical rules, active defenses, the injury pipeline,
 hit locations and their wounding modifiers, maneuvers, postures, armour DR, and
 the Size and Speed/Range table all live here. Because nothing imports a Foundry
 global, the whole engine runs headlessly under Vitest — which is where the
-system's correctness is actually established. 277 tests at present.
+system's correctness is actually established. `npm test` reports the count; it is
+deliberately not repeated here, where it would go stale the moment a test lands.
 
 **`src/system/`** and `src/gworld.ts` are the Foundry integration layer: data
 models, sheets, chat cards, and document registration. This layer consumes the

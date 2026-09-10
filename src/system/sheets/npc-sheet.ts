@@ -61,8 +61,21 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       .filter((s) => s.level !== null && s.level !== undefined)
       .sort((a, b) => (b.level as number) - (a.level as number));
 
+    // A GM reading this mid-fight needs the DR, and needs to know when it is not
+    // one number: an NPC in a ballistic vest stops a bullet far better than a
+    // club, and a sheet showing only the higher figure would have them subtract
+    // it from both.
+    const torso = (derived.hitLocations ?? []).find((l: any) => l.key === "torso");
+
     return {
       ...context,
+      torsoDr: torso
+        ? {
+            dr: torso.dr,
+            splits: torso.splits,
+            exceptions: torso.exceptions,
+          }
+        : null,
       actor,
       system,
       derived,

@@ -366,7 +366,8 @@
       "SplitHint": "Armour written “4/2” stops one kind of attack better than another. Leave the second DR blank unless it does.",
       "SplitDR": "Split DR",
       "SplitValue": "Second DR",
-      "Versus": "vs"
+      "Versus": "vs",
+      "DRAbbr": "DR"
     },
     "Shield": {
       "DB": "Defense Bonus"

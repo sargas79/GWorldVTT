@@ -86,8 +86,8 @@ export interface DrBand {
 }
 
 /**
- * Every distinct DR a location has, with the damage each applies to, commonest
- * first.
+ * Every distinct DR a location has, with the damage each applies to, highest DR
+ * first -- which is the base figure, since a split is never above it.
  *
  * Resolving two figures -- one against cutting and one against crushing -- is
  * not enough once pieces from different tables overlap. Mail takes its lower DR

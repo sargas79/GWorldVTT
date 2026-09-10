@@ -120,6 +120,24 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         data.system = { ...(data.system ?? {}), [key]: [] };
       }
     }
+
+    // A split DR is only valid as a pair, and the sheet submits on every change,
+    // so a GM filling it in one field at a time would submit an invalid halfway
+    // state and be refused before they could finish. The halves are completed
+    // here instead: giving a second DR with nothing ticked means crushing, which
+    // both armour tables agree on and is the only choice that is always right;
+    // clearing the second DR clears what it applied to.
+    if (this.item.type === "armor" && data.system) {
+      const split = data.system.drSplit ?? this.item.system.drSplit ?? null;
+      const against = data.system.drSplitAppliesTo ?? this.item.system.drSplitAppliesTo ?? [];
+
+      if (split !== null && against.length === 0) {
+        data.system.drSplitAppliesTo = ["cr"];
+      } else if (split === null && against.length > 0) {
+        data.system.drSplitAppliesTo = [];
+      }
+    }
+
     return data;
   }
 
