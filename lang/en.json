@@ -81,7 +81,8 @@
       "Notes": "Notes",
       "Campaign": "Campaign",
       "Techniques": "Techniques",
-      "HitLocations": "Damage Resistance by Location"
+      "HitLocations": "Damage Resistance by Location",
+      "Maneuver": "Maneuver"
     },
     "Column": {
       "Skill": "Skill",
@@ -121,7 +122,10 @@
       "TechLevel": "Tech Level",
       "SizeModifier": "Size Modifier",
       "StartingPoints": "Starting Points",
-      "DisadvantageLimit": "Disadv. Limit"
+      "DisadvantageLimit": "Disadv. Limit",
+      "Maneuver": "This Turn",
+      "EvaluateTurns": "Turns Evaluating",
+      "Defenses": "Defenses"
     },
     "Points": {
       "Attributes": "Attributes",
@@ -284,6 +288,11 @@
       "leg": "Leg",
       "hand": "Hand",
       "foot": "Foot"
+    },
+    "Maneuver": {
+      "AnyDefense": "Any",
+      "NoParry": "Dodge or Block only",
+      "NoDefense": "None"
     }
   }
 }

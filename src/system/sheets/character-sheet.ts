@@ -14,6 +14,7 @@ import {
   basicSpeedPointCost,
   secondaryPointCost,
 } from "../../rules/attributes.js";
+import { MANEUVERS, MANEUVER_ORDER } from "../../rules/maneuvers.js";
 import { handleDamageAction, handleRollAction } from "../roll.js";
 import type { Attribute, Posture } from "../../rules/types.js";
 
@@ -141,6 +142,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       })),
 
       secondaryCells: this.#secondaryCells(system, derived),
+      maneuvers: MANEUVER_ORDER.map((key) => ({
+        key,
+        label: MANEUVERS[key].label,
+        selected: system.maneuver === key,
+      })),
+      isEvaluating: system.maneuver === "evaluate",
+
       pointsWarning: this.#pointsWarning(derived),
 
       traitGroups: [

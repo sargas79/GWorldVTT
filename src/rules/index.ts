@@ -16,5 +16,6 @@ export * from "./encumbrance.js";
 export * from "./success.js";
 export * from "./defenses.js";
 export * from "./injury.js";
+export * from "./maneuvers.js";
 export * from "./posture.js";
 export * from "./ranged.js";
