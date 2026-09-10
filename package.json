@@ -1,6 +1,6 @@
 {
   "name": "gworld",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "private": true,
   "description": "A GURPS Lite (4th Edition) game system for Foundry Virtual Tabletop",
   "type": "module",
