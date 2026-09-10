@@ -60,13 +60,14 @@
         <span class="isl">{{localize "GWORLD.Armor.DRAbbr"}}</span>
         <span class="isv">{{derived.dr}}</span>
         <span class="isn">
-          {{~#if torsoDr.splits}}
-            {{~#each torsoDr.exceptions as |ex|}}{{#unless @first}} {{/unless}}{{ex.dr}} {{localize "GWORLD.Armor.Versus"}}
+          {{~#if torsoDr.splits~}}
+            {{#each torsoDr.exceptions as |ex|}}/ {{ex.dr}} {{localize "GWORLD.Armor.Versus"}}
               {{~#each ex.types as |t|}} {{localize (concat "GWORLD.DamageType." t)}}{{#unless @last}},{{/unless}}{{/each}}
+            {{~#unless @last}} {{/unless}}
             {{~/each}}
-          {{~else}}
-            {{~#if derived.armorName}}{{derived.armorName}}{{/if}}
-          {{~/if}}
+          {{~else~}}
+            {{#if derived.armorName}}{{derived.armorName}}{{/if}}
+          {{~/if~}}
         </span>
       </div>
       <div class="istat">
