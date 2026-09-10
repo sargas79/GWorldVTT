@@ -78,20 +78,21 @@ function validateItem(entry, file) {
     // added to the advantage total and quirks to a negative bucket of their own,
     // so both carry the same obligation as the category they are counted with.
     //
-    // Which field holds the price is decided by which one is populated, not by
-    // how many levels are currently bought. A levelled trait sitting at zero
-    // levels still has to carry a correctly signed per-level cost, and checking
-    // `points` there would wave a positive per-level disadvantage through.
-    //
-    // A trait may legitimately carry both: Magery is 5 points for Magery 0 plus
-    // 10 per level, and totalPoints adds them. Where both are set, the per-level
-    // rate is the one whose sign has to match, since it is the part that grows.
-    const cost = sys.pointsPerLevel !== 0 ? sys.pointsPerLevel : sys.points;
+    // A trait may legitimately carry both fields: Magery is 5 points for Magery 0
+    // plus 10 per level, and totalPoints adds them. So every populated field is
+    // checked, not whichever one looks like the price -- otherwise an advantage
+    // with points -5 and pointsPerLevel 10 passes while totalPoints is negative.
     const negative = sys.category === "disadvantage" || sys.category === "quirk";
-    if (negative) {
-      check(cost <= 0, file, name, `${sys.category} must not cost a positive ${cost}`);
-    } else {
-      check(cost >= 0, file, name, `${sys.category} must not cost a negative ${cost}`);
+    for (const [field, cost] of [
+      ["points", sys.points],
+      ["pointsPerLevel", sys.pointsPerLevel],
+    ]) {
+      if (cost === 0) continue;
+      check(
+        negative ? cost < 0 : cost > 0,
+        file, name,
+        `${sys.category} must not have ${field} of ${cost}`,
+      );
     }
   }
 

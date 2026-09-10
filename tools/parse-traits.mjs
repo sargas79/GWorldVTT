@@ -269,6 +269,13 @@ function main() {
         points: perLevel ? 0 : points,
         levels: perLevel ? 1 : 0,
         pointsPerLevel: perLevel ? points : Number(basePlusLevel?.[1] ?? 0),
+        // Left for the player to set. The book states reaction modifiers in
+        // prose, and nearly every one is conditional, per-level, or two opposing
+        // modifiers at once: Voice is +2 only from someone who can hear you,
+        // Charisma is +1 per level, and Overconfidence is +2 from the naive and
+        // -2 from the experienced. A single flat integer cannot hold any of
+        // those, so a number extracted here would fire in the wrong
+        // circumstances -- worse in play than a zero the player fills in.
         reactionModifier: 0,
         description: variable
           ? `<p>The book prices this trait as <em>${priced}</em>. ${
