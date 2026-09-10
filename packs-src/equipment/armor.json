@@ -31,7 +31,8 @@
       "tl": "0",
       "dr": 1,
       "locations": [
-        "torso"
+        "torso",
+        "vitals"
       ],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -50,7 +51,8 @@
       "tl": "1",
       "dr": 4,
       "locations": [
-        "torso"
+        "torso",
+        "vitals"
       ],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -70,6 +72,7 @@
       "dr": 5,
       "locations": [
         "torso",
+        "vitals",
         "groin"
       ],
       "description": "",
@@ -90,6 +93,7 @@
       "dr": 1,
       "locations": [
         "torso",
+        "vitals",
         "groin"
       ],
       "description": "",
@@ -110,6 +114,7 @@
       "dr": 2,
       "locations": [
         "torso",
+        "vitals",
         "groin"
       ],
       "description": "",
@@ -130,7 +135,8 @@
       "dr": 1,
       "locations": [
         "arm",
-        "torso"
+        "torso",
+        "vitals"
       ],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -149,7 +155,8 @@
       "tl": "2",
       "dr": 3,
       "locations": [
-        "torso"
+        "torso",
+        "vitals"
       ],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -168,7 +175,8 @@
       "tl": "2",
       "dr": 5,
       "locations": [
-        "torso"
+        "torso",
+        "vitals"
       ],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -188,6 +196,7 @@
       "dr": 4,
       "locations": [
         "torso",
+        "vitals",
         "groin"
       ],
       "description": "",
@@ -208,6 +217,7 @@
       "dr": 7,
       "locations": [
         "torso",
+        "vitals",
         "groin"
       ],
       "description": "",
@@ -227,7 +237,8 @@
       "tl": "3",
       "dr": 5,
       "locations": [
-        "torso"
+        "torso",
+        "vitals"
       ],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -247,6 +258,7 @@
       "dr": 6,
       "locations": [
         "torso",
+        "vitals",
         "groin"
       ],
       "description": "",
@@ -267,6 +279,7 @@
       "dr": 5,
       "locations": [
         "torso",
+        "vitals",
         "groin"
       ],
       "description": "",
@@ -287,6 +300,7 @@
       "dr": 2,
       "locations": [
         "torso",
+        "vitals",
         "groin",
         "arm",
         "leg"
@@ -904,7 +918,8 @@
       "tl": "6",
       "dr": 7,
       "locations": [
-        "torso"
+        "torso",
+        "vitals"
       ],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -1168,7 +1183,8 @@
       "tl": "1",
       "dr": 2,
       "locations": [
-        "torso"
+        "torso",
+        "vitals"
       ],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -1187,7 +1203,8 @@
       "tl": "2",
       "dr": 4,
       "locations": [
-        "torso"
+        "torso",
+        "vitals"
       ],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -1207,6 +1224,7 @@
       "dr": 2,
       "locations": [
         "torso",
+        "vitals",
         "groin"
       ],
       "description": "",
@@ -1227,6 +1245,7 @@
       "dr": 5,
       "locations": [
         "torso",
+        "vitals",
         "groin"
       ],
       "description": "",

@@ -50,7 +50,11 @@ const BARDING_TABLE = /^Horse Armor \(Barding\) Table$/;
  * whole body, which the data model spells as an empty list.
  */
 const LOCATIONS = new Map([
-  ["torso", ["torso"]],
+  // The vitals sit behind the torso, so anything covering the torso covers them:
+  // the data model says so in as many words, and the starter suits already did.
+  // Without this an extracted breastplate gives no DR against a deliberate
+  // vitals hit, which is the shot most worth aiming at.
+  ["torso", ["torso", "vitals"]],
   ["skull", ["skull"]],
   ["face", ["face"]],
   ["neck", ["neck"]],
@@ -61,7 +65,7 @@ const LOCATIONS = new Map([
   ["hands", ["hand"]],
   ["feet", ["foot"]],
   ["limbs", ["arm", "leg"]],
-  ["body", ["torso", "groin"]],
+  ["body", ["torso", "vitals", "groin"]],
   ["head", ["skull", "face"]],
   ["full suit", []],
 ]);
