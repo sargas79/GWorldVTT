@@ -97,6 +97,47 @@ function validateItem(entry, file) {
         `${sys.category} must not have ${field} of ${cost}`,
       );
     }
+
+    // A tabled cost is what totalPoints reads when it is there, so every step
+    // carries the same obligation to agree in sign with the category as the
+    // flat and per-level figures above.
+    const table = sys.costTable ?? [];
+    check(Array.isArray(table), file, name, "costTable must be a list");
+    for (const step of Array.isArray(table) ? table : []) {
+      check(Number.isInteger(step), file, name, `costTable step "${step}" must be an integer`);
+      if (!Number.isInteger(step) || step === 0) continue;
+      check(
+        negative ? step < 0 : step > 0,
+        file, name, `${sys.category} must not have a costTable step of ${step}`,
+      );
+    }
+    // The steps are totals, not increments, so they only ever move away from
+    // zero: a later level of a trait always costs at least as much as an
+    // earlier one. Wealth 10/20/30/50/75, Appearance 4/12/12/16/16/20.
+    for (let i = 1; i < (Array.isArray(table) ? table.length : 0); i++) {
+      check(
+        Math.abs(table[i]) >= Math.abs(table[i - 1]),
+        file, name,
+        `costTable step ${i + 1} (${table[i]}) costs less than step ${i} (${table[i - 1]})`,
+      );
+    }
+
+    check(
+      Number.isInteger(sys.maxLevels) && sys.maxLevels >= 0,
+      file, name, `maxLevels must be a non-negative integer, got "${sys.maxLevels}"`,
+    );
+    // A level cap below the number of steps priced would make steps that can
+    // never be bought, and a table longer than the cap is the likelier error.
+    if (Array.isArray(table) && table.length > 0 && sys.maxLevels > 0) {
+      check(
+        table.length <= sys.maxLevels,
+        file, name,
+        `costTable prices ${table.length} levels but maxLevels is ${sys.maxLevels}`,
+      );
+    }
+    for (const levelName of sys.levelNames ?? []) {
+      check(typeof levelName === "string", file, name, "levelNames must all be strings");
+    }
   }
 
   if (entry.type === "skill") {
@@ -112,6 +153,18 @@ function validateItem(entry, file) {
     check(["A", "H"].includes(sys.difficulty), file, name, `technique difficulty must be A or H`);
     check(Boolean(sys.prerequisite), file, name, "technique names no prerequisite skill");
     check((sys.defaultModifier ?? 0) <= 0, file, name, "technique default modifier must be <= 0");
+    // The ceiling is relative to the prerequisite skill and may sit above it --
+    // Arm Lock reaches the skill +4 -- but a technique that started below its
+    // own default could never be bought up to where the book says it begins.
+    check(
+      Number.isInteger(sys.maxRelativeToPrerequisite),
+      file, name, `maxRelativeToPrerequisite must be an integer`,
+    );
+    check(
+      (sys.maxRelativeToPrerequisite ?? 0) >= (sys.defaultModifier ?? 0),
+      file, name,
+      `ceiling ${sys.maxRelativeToPrerequisite} is below the default ${sys.defaultModifier}`,
+    );
   }
 
   if (entry.type === "armor") {
@@ -169,6 +222,38 @@ function validateItem(entry, file) {
     );
 
     check(Boolean(mode.skill), file, name, "attack mode names no skill");
+  }
+
+  // The data model's bounds on a ranged mode, restated so a bad figure is
+  // caught before the pack is built rather than when Foundry loads it.
+  for (const mode of sys.rangedModes ?? []) {
+    check(
+      Number.isInteger(mode.bulk) && mode.bulk <= 0,
+      file, name, `bulk ${mode.bulk} must be a non-positive integer`,
+    );
+    check(
+      Number.isInteger(mode.recoil) && mode.recoil >= 0,
+      file, name, `recoil ${mode.recoil} must be a non-negative integer`,
+    );
+    check(
+      Number.isInteger(mode.rateOfFire) && mode.rateOfFire >= 1,
+      file, name, `rate of fire ${mode.rateOfFire} must be a positive integer`,
+    );
+    check(
+      typeof mode.maxRange === "number" && mode.maxRange >= 0,
+      file, name, `maximum range ${mode.maxRange} must not be negative`,
+    );
+    check(
+      typeof mode.halfDamageRange === "number" && mode.halfDamageRange >= 0,
+      file, name, `half-damage range ${mode.halfDamageRange} must not be negative`,
+    );
+    // Half-damage range is where damage starts dropping off, so it sits at or
+    // below the maximum; the two swapped is a column read in the wrong order.
+    check(
+      !(mode.halfDamageRange > 0 && mode.halfDamageRange > mode.maxRange),
+      file, name,
+      `half-damage range ${mode.halfDamageRange} exceeds maximum range ${mode.maxRange}`,
+    );
   }
 }
 

@@ -357,7 +357,8 @@
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
-          "bulk": -3
+          "bulk": -3,
+          "recoil": 0
         },
         {
           "name": "Javelin",
@@ -378,7 +379,8 @@
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
-          "bulk": -4
+          "bulk": -4,
+          "recoil": 0
         }
       ]
     }
