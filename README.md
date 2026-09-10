@@ -88,8 +88,13 @@ node tools/parse-skills.mjs skills.txt --write
 ```
 
 ```bash
-pdftotext -table -enc UTF-8 -f 273 -l 276 "GURPS 4E - Basic Set - Characters.pdf" melee-raw.txt
-# cut melee-raw.txt at the "Ranged Weapon Table" heading, then:
+# The melee table shares its last page with the ranged one, so trim the tail.
+pdftotext -table -enc UTF-8 -f 273 -l 276 "GURPS 4E - Basic Set - Characters.pdf" melee-full.txt
+sed '/Ranged Weapon Table/,$d' melee-full.txt > melee.txt
+
+# The skill difficulties come from the skills chapter, which the table omits.
+pdftotext -raw -enc UTF-8 -f 205 -l 235 "GURPS 4E - Basic Set - Characters.pdf" skills-raw.txt
+
 node tools/parse-melee-weapons.mjs melee.txt skills-raw.txt --write
 ```
 

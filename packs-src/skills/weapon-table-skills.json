@@ -166,12 +166,6 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Main-Gauche",
-          "modifier": -3
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
           "skill": "Shortsword",
           "modifier": -3
         }
@@ -320,12 +314,6 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Main-Gauche",
-          "modifier": -3
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
           "skill": "Saber",
           "modifier": -3
         },
@@ -362,12 +350,6 @@
           "attribute": "DX",
           "skill": "Broadsword",
           "modifier": -4
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Main-Gauche",
-          "modifier": -3
         },
         {
           "from": "skill",
@@ -424,12 +406,6 @@
         {
           "from": "skill",
           "attribute": "DX",
-          "skill": "Jitte/Sai",
-          "modifier": -3
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
           "skill": "Knife",
           "modifier": -4
         },
@@ -444,12 +420,6 @@
           "attribute": "DX",
           "skill": "Smallsword",
           "modifier": -4
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Tonfa",
-          "modifier": -3
         }
       ],
       "techLevel": "",
@@ -472,12 +442,6 @@
           "attribute": "DX",
           "skill": "",
           "modifier": -5
-        },
-        {
-          "from": "skill",
-          "attribute": "DX",
-          "skill": "Main-Gauche",
-          "modifier": -3
         },
         {
           "from": "skill",

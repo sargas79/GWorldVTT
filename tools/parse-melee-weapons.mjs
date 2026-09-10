@@ -53,7 +53,16 @@ const ROW = new RegExp(
  * A skill-group heading. The skills are always capitals; the defaults clause
  * that follows is mixed case, so only the leading run is tested for case.
  */
-const GROUP = /^(?<skills>[A-Z][A-Z0-9/ ,'’-]{2,60}?)\s*(?:\((?<defaults>.+)\))?\s*$/;
+const GROUP =
+  /^(?<skills>[A-Z][A-Z0-9/ ,'’-]*(?:\s+(?:or|and)\s+[A-Z][A-Z0-9/ ,'’-]*)*)\s*(?:\((?<defaults>.+)\))?\s*$/;
+
+/**
+ * A heading whose skills carry a penalty: "BRAWLING-2, KARATE-2, or DX-2" heads
+ * the kicking attacks. The melee mode has no field for a modifier to the skill
+ * roll, so these rows are reported rather than written -- attacking at full
+ * Brawling when the book says Brawling-2 overstates the chance to hit.
+ */
+const PENALISED_GROUP = /[A-Z]-\d/;
 
 /**
  * How the skills chapter states a skill's attribute and difficulty:
@@ -132,8 +141,13 @@ function money(value) {
   return m ? Number(m[1].replace(/,/g, "")) : 0;
 }
 
+/**
+ * A weight or similar figure. At least one digit is required: matching "[\d.]+"
+ * alone also matches the dot in "var.", and Number(".") is NaN, which serialises
+ * to null and breaks the non-nullable weight field on the data model.
+ */
 function number(value) {
-  const m = /([\d.]+)/.exec(value ?? "");
+  const m = /(\d+(?:\.\d+)?|\.\d+)/.exec(value ?? "");
   return m ? Number(m[1]) : 0;
 }
 
@@ -166,6 +180,7 @@ function main() {
   let skill = "";
   let last = null;
   let pending = "";
+  let penalised = false;
 
   for (const raw of lines) {
     const line = raw.replace(/\s+$/, "");
@@ -204,6 +219,8 @@ function main() {
       // "var." damage is defined in prose elsewhere (Striker, force weapons),
       // and there is nothing here to roll.
       if (g.dmg === "var." || !g.type) { reject(text, "damage not expressible"); continue; }
+
+      if (penalised) { reject(text, "skill penalty not expressible on a melee mode"); continue; }
 
       const mode = {
         // A weapon whose damage is a flat dice roll neither swings nor thrusts.
@@ -275,10 +292,12 @@ function main() {
     }
 
     const g = GROUP.exec(text);
-    if (g && /[A-Z]{3}/.test(g.groups.skills) && g.groups.skills === g.groups.skills.toUpperCase()) {
+    const headingBody = g?.groups.skills.replace(/\b(?:or|and)\b/g, " ").trim();
+    if (g && /[A-Z]{3}/.test(headingBody) && headingBody === headingBody.toUpperCase()) {
+      penalised = PENALISED_GROUP.test(g.groups.skills);
       skill = skillFromGroup(g.groups.skills);
       last = null;
-      if (skill && !skills.has(skill)) {
+      if (skill && !penalised && !skills.has(skill)) {
         const pair = pairs.get(skill);
         if (!pair) {
           reject(skill, "skill has no attribute/difficulty in the skills chapter");
@@ -317,6 +336,26 @@ function main() {
     for (const m of item.system.meleeModes) {
       if (counts.get(m.name) > 1) m.name = `${m.name} (${m.skill})`;
     }
+  }
+
+  // A default naming a skill that no pack carries can never fire: the resolver
+  // matches by name and finds nothing. Drop those rather than ship a default
+  // that does nothing, and report them, as the skills parser does.
+  const known = new Set([
+    ...skills.keys(),
+    ...JSON.parse(readFileSync(join(projectRoot, "packs-src", "skills", "basic-set-skills.json"), "utf8")).map((x) => x.name),
+    ...JSON.parse(readFileSync(join(projectRoot, "packs-src", "skills", "melee-weapon-skills.json"), "utf8")).map((x) => x.name),
+  ]);
+  const unresolved = new Set();
+  for (const s of skills.values()) {
+    s.system.defaults = s.system.defaults.filter((d) => {
+      if (d.from !== "skill" || known.has(d.skill)) return true;
+      unresolved.add(d.skill);
+      return false;
+    });
+  }
+  if (unresolved.size) {
+    console.log(`skill defaults dropped as unresolvable: ${[...unresolved].join(", ")}`);
   }
 
   const modes = items.reduce((n, i) => n + i.system.meleeModes.length, 0);

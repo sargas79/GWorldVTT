@@ -1,5 +1,20 @@
 [
   {
+    "_id": "3c38320a03823e8f",
+    "name": "Boxing",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "A",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
     "_id": "edd7f10bf0ba186f",
     "name": "Brawling",
     "type": "skill",

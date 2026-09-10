@@ -219,7 +219,7 @@
       "meleeModes": [
         {
           "name": "thrust",
-          "skill": "Axe/Mace",
+          "skill": "Boxing",
           "damageBase": "thr",
           "damageModifier": -1,
           "damageFormula": "",
@@ -253,7 +253,7 @@
       "meleeModes": [
         {
           "name": "thrust",
-          "skill": "Axe/Mace",
+          "skill": "Boxing",
           "damageBase": "thr",
           "damageModifier": 0,
           "damageFormula": "",
@@ -262,74 +262,6 @@
           "reach": "C",
           "parryModifier": 0,
           "canParry": true,
-          "isFlail": false,
-          "minSt": null,
-          "twoHanded": false,
-          "unreadyAfterAttack": false
-        }
-      ],
-      "rangedModes": []
-    }
-  },
-  {
-    "_id": "8aa2ecdf50e28973",
-    "name": "Kick",
-    "type": "equipment",
-    "system": {
-      "quantity": 1,
-      "weight": 0,
-      "cost": 0,
-      "carried": true,
-      "equipped": false,
-      "tl": "",
-      "description": "<p>Table notes: [3, 4]</p>",
-      "reference": "Basic Set: Characters",
-      "meleeModes": [
-        {
-          "name": "thrust",
-          "skill": "Axe/Mace",
-          "damageBase": "thr",
-          "damageModifier": 0,
-          "damageFormula": "",
-          "damageType": "cr",
-          "armorDivisor": 1,
-          "reach": "C, 1",
-          "parryModifier": 0,
-          "canParry": false,
-          "isFlail": false,
-          "minSt": null,
-          "twoHanded": false,
-          "unreadyAfterAttack": false
-        }
-      ],
-      "rangedModes": []
-    }
-  },
-  {
-    "_id": "2592ed012b21cee0",
-    "name": "Kick w. Boots",
-    "type": "equipment",
-    "system": {
-      "quantity": 1,
-      "weight": 0,
-      "cost": 0,
-      "carried": true,
-      "equipped": false,
-      "tl": "",
-      "description": "<p>Table notes: [3, 4]</p>",
-      "reference": "Basic Set: Characters",
-      "meleeModes": [
-        {
-          "name": "thrust",
-          "skill": "Axe/Mace",
-          "damageBase": "thr",
-          "damageModifier": 1,
-          "damageFormula": "",
-          "damageType": "cr",
-          "armorDivisor": 1,
-          "reach": "C, 1",
-          "parryModifier": 0,
-          "canParry": false,
           "isFlail": false,
           "minSt": null,
           "twoHanded": false,
@@ -355,7 +287,7 @@
       "meleeModes": [
         {
           "name": "thrust",
-          "skill": "Axe/Mace",
+          "skill": "Brawling",
           "damageBase": "thr",
           "damageModifier": -1,
           "damageFormula": "",
@@ -389,7 +321,7 @@
       "meleeModes": [
         {
           "name": "thrust",
-          "skill": "Axe/Mace",
+          "skill": "Brawling",
           "damageBase": "thr",
           "damageModifier": -1,
           "damageFormula": "",
@@ -423,7 +355,7 @@
       "meleeModes": [
         {
           "name": "thrust",
-          "skill": "Axe/Mace",
+          "skill": "Brawling",
           "damageBase": "thr",
           "damageModifier": -1,
           "damageFormula": "",
@@ -457,7 +389,7 @@
       "meleeModes": [
         {
           "name": "thrust",
-          "skill": "Axe/Mace",
+          "skill": "Brawling",
           "damageBase": "thr",
           "damageModifier": -1,
           "damageFormula": "",
@@ -491,7 +423,7 @@
       "meleeModes": [
         {
           "name": "thrust",
-          "skill": "Axe/Mace",
+          "skill": "Brawling",
           "damageBase": "thr",
           "damageModifier": 0,
           "damageFormula": "",
@@ -1629,7 +1561,7 @@
     "type": "equipment",
     "system": {
       "quantity": 1,
-      "weight": null,
+      "weight": 0,
       "cost": 0,
       "carried": true,
       "equipped": false,
