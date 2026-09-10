@@ -18,6 +18,7 @@ const SOURCE = join(projectRoot, "packs-src");
 const ITEM_TYPES = new Set([
   "trait", "skill", "technique", "equipment", "armor", "shield", "language",
 ]);
+const TRAIT_CATEGORIES = new Set(["advantage", "disadvantage", "quirk", "perk"]);
 const SKILL_ATTRIBUTES = new Set(["ST", "DX", "IQ", "HT", "Will", "Per"]);
 const DIFFICULTIES = new Set(["E", "A", "H", "VH"]);
 const DAMAGE_TYPES = new Set([
@@ -61,6 +62,34 @@ function validateItem(entry, file) {
   }
 
   const sys = entry.system ?? {};
+
+  if (entry.type === "trait") {
+    check(TRAIT_CATEGORIES.has(sys.category), file, name, `bad category "${sys.category}"`);
+    check(Number.isInteger(sys.points), file, name, "points must be an integer");
+    check(Number.isInteger(sys.pointsPerLevel), file, name, "pointsPerLevel must be an integer");
+    check(
+      Number.isInteger(sys.levels) && sys.levels >= 0,
+      file, name, `levels must be a non-negative integer, got "${sys.levels}"`,
+    );
+
+    // A levelled trait prices its levels and a flat one prices itself. A cost in
+    // both fields is charged twice over by the points ledger.
+    check(
+      !(sys.points !== 0 && sys.pointsPerLevel !== 0),
+      file, name, "priced both flat and per level",
+    );
+
+    // The sign of the cost has to agree with the category. This is the one thing
+    // a mis-parsed trait gets wrong that nothing downstream would catch: the
+    // ledger would quietly credit a disadvantage as if it were bought.
+    const cost = sys.levels > 0 ? sys.pointsPerLevel : sys.points;
+    if (sys.category === "disadvantage") {
+      check(cost <= 0, file, name, `disadvantage must not cost a positive ${cost}`);
+    }
+    if (sys.category === "advantage") {
+      check(cost >= 0, file, name, `advantage must not cost a negative ${cost}`);
+    }
+  }
 
   if (entry.type === "skill") {
     check(SKILL_ATTRIBUTES.has(sys.attribute), file, name, `bad attribute "${sys.attribute}"`);
