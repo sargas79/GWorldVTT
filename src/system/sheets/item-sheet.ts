@@ -128,12 +128,23 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // both armour tables agree on and is the only choice that is always right;
     // clearing the second DR clears what it applied to.
     if (this.item.type === "armor" && data.system) {
-      const split = data.system.drSplit ?? this.item.system.drSplit ?? null;
-      const against = data.system.drSplitAppliesTo ?? this.item.system.drSplitAppliesTo ?? [];
+      // Whether the form carried a field at all, rather than what it carried.
+      // An emptied number input submits null, and treating that as "absent" and
+      // falling back to the stored value would make an existing split
+      // impossible to remove.
+      const submitted = (key: string) => Object.hasOwn(data.system, key);
+
+      const split = submitted("drSplit")
+        ? (data.system.drSplit ?? null)
+        : (this.item.system.drSplit ?? null);
+      const against = submitted("drSplitAppliesTo")
+        ? (data.system.drSplitAppliesTo ?? [])
+        : (this.item.system.drSplitAppliesTo ?? []);
 
       if (split !== null && against.length === 0) {
         data.system.drSplitAppliesTo = ["cr"];
       } else if (split === null && against.length > 0) {
+        data.system.drSplit = null;
         data.system.drSplitAppliesTo = [];
       }
     }

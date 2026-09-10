@@ -57,9 +57,17 @@
         <span class="isn">{{#if derived.shieldName}}{{derived.shieldName}}{{/if}}</span>
       </div>
       <div class="istat">
-        <span class="isl">DR</span>
+        <span class="isl">{{localize "GWORLD.Armor.DRAbbr"}}</span>
         <span class="isv">{{derived.dr}}</span>
-        <span class="isn">{{#if derived.armorName}}{{derived.armorName}}{{/if}}</span>
+        <span class="isn">
+          {{~#if torsoDr.splits}}
+            {{~#each torsoDr.exceptions as |ex|}}{{#unless @first}} {{/unless}}{{ex.dr}} {{localize "GWORLD.Armor.Versus"}}
+              {{~#each ex.types as |t|}} {{localize (concat "GWORLD.DamageType." t)}}{{#unless @last}},{{/unless}}{{/each}}
+            {{~/each}}
+          {{~else}}
+            {{~#if derived.armorName}}{{derived.armorName}}{{/if}}
+          {{~/if}}
+        </span>
       </div>
       <div class="istat">
         <span class="isl">{{localize "GWORLD.Secondary.Move"}}</span>
