@@ -186,7 +186,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     basicDamage,
     woundingModifier: undefended.woundingModifier,
     injuryIfUnarmored: undefended.injury,
- 
+
     // An explosion reaches twice its dice in yards, and its fragments five
     // times theirs (GURPS Basic Set: Campaigns p. 414). Both are worth stating
     // on the card, because they decide who else is in trouble.

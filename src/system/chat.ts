@@ -73,15 +73,19 @@ function addApplyControls(message: any, html: HTMLElement): void {
 
   // An explosion asks how far away the victim was. At zero they were struck
   // directly and take the listed damage; further out it falls off, and their
-  // torso armour is what stands between them and it.
-  const distance = document.createElement("input");
-  distance.type = "number";
-  distance.className = "gc-distance";
-  distance.min = "0";
-  distance.step = "1";
-  distance.value = "0";
-  distance.setAttribute("aria-label", game.i18n.localize("GWORLD.Chat.Distance"));
-  distance.title = game.i18n.localize("GWORLD.Chat.Distance");
+  // torso armour is what stands between them and it. Nothing else needs the
+  // field, so nothing else builds it.
+  let distance: HTMLInputElement | null = null;
+  if (flag.explosive) {
+    distance = document.createElement("input");
+    distance.type = "number";
+    distance.className = "gc-distance";
+    distance.min = "0";
+    distance.step = "1";
+    distance.value = "0";
+    distance.setAttribute("aria-label", game.i18n.localize("GWORLD.Chat.Distance"));
+    distance.title = game.i18n.localize("GWORLD.Chat.Distance");
+  }
 
   const button = document.createElement("button");
   button.type = "button";
@@ -92,12 +96,12 @@ function addApplyControls(message: any, html: HTMLElement): void {
     void applyFromCard(
       flag,
       select.value as HitLocation,
-      flag.explosive ? Math.max(0, Number(distance.value) || 0) : 0,
+      distance ? Math.max(0, Number(distance.value) || 0) : 0,
     );
   });
 
   row.append(select);
-  if (flag.explosive) row.append(distance);
+  if (distance) row.append(distance);
   row.append(button);
   root.append(row);
 }
