@@ -15,6 +15,7 @@ import { SYSTEM_ID } from "./constants.js";
 import { applyDamageToActor, type AppliedDamage, type IncomingDamage } from "./damage.js";
 import { rollSuccess } from "./roll.js";
 import { currentTargets } from "./targets.js";
+import { blastAt } from "../rules/explosions.js";
 import { HIT_LOCATION_ORDER, type HitLocation } from "../rules/hit-locations.js";
 import type { DamageType } from "../rules/types.js";
 
@@ -26,6 +27,9 @@ interface DamageFlag {
   damageType: DamageType;
   armorDivisor: number;
   label: string;
+  explosive?: boolean;
+  /** Dice the attack rolls, which is what sets the blast radius. */
+  diceOfDamage?: number;
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -67,32 +71,71 @@ function addApplyControls(message: any, html: HTMLElement): void {
     select.append(option);
   }
 
+  // An explosion asks how far away the victim was. At zero they were struck
+  // directly and take the listed damage; further out it falls off, and their
+  // torso armour is what stands between them and it.
+  const distance = document.createElement("input");
+  distance.type = "number";
+  distance.className = "gc-distance";
+  distance.min = "0";
+  distance.step = "1";
+  distance.value = "0";
+  distance.setAttribute("aria-label", game.i18n.localize("GWORLD.Chat.Distance"));
+  distance.title = game.i18n.localize("GWORLD.Chat.Distance");
+
   const button = document.createElement("button");
   button.type = "button";
   button.className = "gc-apply-button";
   button.textContent = game.i18n.localize("GWORLD.Chat.ApplyDamage");
 
   button.addEventListener("click", () => {
-    void applyFromCard(flag, select.value as HitLocation);
+    void applyFromCard(
+      flag,
+      select.value as HitLocation,
+      flag.explosive ? Math.max(0, Number(distance.value) || 0) : 0,
+    );
   });
 
-  row.append(select, button);
+  row.append(select);
+  if (flag.explosive) row.append(distance);
+  row.append(button);
   root.append(row);
 }
 
 /** Resolves the blow against every target and reports what it did. */
-async function applyFromCard(flag: DamageFlag, hitLocation: HitLocation): Promise<void> {
+async function applyFromCard(
+  flag: DamageFlag,
+  hitLocation: HitLocation,
+  distanceYards: number,
+): Promise<void> {
   const targets = currentTargets();
   if (targets.length === 0) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.Chat.NoTarget"));
     return;
   }
 
+  // Outside a blast, distance means nothing and the blow lands as rolled.
+  const blast = flag.explosive
+    ? blastAt({
+        rolledDamage: flag.basicDamage,
+        distanceYards,
+        diceOfDamage: flag.diceOfDamage ?? 0,
+        armorDivisor: flag.armorDivisor,
+      })
+    : null;
+
+  if (blast?.outOfRange) {
+    ui.notifications?.info(game.i18n.localize("GWORLD.Chat.OutOfBlast"));
+    return;
+  }
+
   const damage: IncomingDamage = {
-    basicDamage: flag.basicDamage,
+    basicDamage: blast ? blast.damage : flag.basicDamage,
     type: flag.damageType,
-    armorDivisor: flag.armorDivisor,
-    hitLocation,
+    armorDivisor: blast ? blast.armorDivisor : flag.armorDivisor,
+    // "Use torso armor to determine DR against explosion damage" (p. 414),
+    // whatever part of them happened to be nearest.
+    hitLocation: blast && !blast.direct ? "torso" : hitLocation,
   };
 
   const applied: AppliedDamage[] = [];
@@ -125,7 +168,9 @@ async function applyFromCard(flag: DamageFlag, hitLocation: HitLocation): Promis
   if (applied.length === 0) return;
 
   const content = await foundry.applications.handlebars.renderTemplate(APPLIED_TEMPLATE, {
-    label: flag.label,
+    label: blast && !blast.direct
+      ? `${flag.label} - ${game.i18n.format("GWORLD.Chat.Collateral", { yards: distanceYards })}`
+      : flag.label,
     damageType: flag.damageType,
     results: applied.map((result) => ({
       ...result,

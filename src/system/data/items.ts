@@ -272,6 +272,17 @@ function meleeModeField() {
      * bonus for retreating.
      */
     isFencing: new fields.BooleanField({ initial: false }),
+    /**
+     * An explosive attack, marked "ex" after its damage type (GURPS Basic Set:
+     * Campaigns p. 414). It does its listed damage to whoever it struck and
+     * collateral damage to everyone within twice its dice in yards.
+     */
+    explosive: new fields.BooleanField({ initial: false }),
+    /**
+     * Fragmentation thrown by the explosion, as a dice formula -- the "[2d]"
+     * in "cr ex [2d]". Blank when the explosive throws none.
+     */
+    fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
     /** The weapon becomes unready after each attack unless ST is high enough. */
     unreadyAfterAttack: new fields.BooleanField({ initial: false }),
   });
@@ -375,6 +386,17 @@ function rangedModeField() {
       initial: 0,
       min: 0,
     }),
+    /**
+     * An explosive attack, marked "ex" after its damage type (GURPS Basic Set:
+     * Campaigns p. 414). It does its listed damage to whoever it struck and
+     * collateral damage to everyone within twice its dice in yards.
+     */
+    explosive: new fields.BooleanField({ initial: false }),
+    /**
+     * Fragmentation thrown by the explosion, as a dice formula -- the "[2d]"
+     * in "cr ex [2d]". Blank when the explosive throws none.
+     */
+    fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
   });
 }
 

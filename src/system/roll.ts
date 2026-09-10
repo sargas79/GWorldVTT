@@ -12,6 +12,7 @@ import { targetedTokens } from "./targets.js";
 import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import { applyDamageFloor, computeInjury } from "../rules/damage.js";
 import { parseDiceAdds, toRollFormula } from "../rules/dice.js";
+import { blastRadius, fragmentationRadius } from "../rules/explosions.js";
 import { rangedToHitModifier, rapidFireBonus, rapidFireHits } from "../rules/ranged.js";
 import type { DamageType } from "../rules/types.js";
 
@@ -136,6 +137,10 @@ export interface DamageRollOptions {
   damageType: DamageType;
   armorDivisor?: number;
   modifiers?: RollModifier[];
+  /** An explosive attack, which also hurts everyone near what it struck. */
+  explosive?: boolean;
+  /** Fragmentation thrown, as a dice formula -- the "[2d]" in "cr ex [2d]". */
+  fragmentation?: string;
 }
 
 /**
@@ -145,7 +150,10 @@ export interface DamageRollOptions {
  * numbers a GM needs rather than guessing at whom it hit.
  */
 export async function rollDamage(options: DamageRollOptions): Promise<number> {
-  const { actor, label, formula, damageType, armorDivisor = 1, modifiers = [] } = options;
+  const {
+    actor, label, formula, damageType, armorDivisor = 1, modifiers = [],
+    explosive = false, fragmentation = "",
+  } = options;
 
   const parsed = parseDiceAdds(formula);
   if (!parsed) {
@@ -178,6 +186,16 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     basicDamage,
     woundingModifier: undefended.woundingModifier,
     injuryIfUnarmored: undefended.injury,
+ 
+    // An explosion reaches twice its dice in yards, and its fragments five
+    // times theirs (GURPS Basic Set: Campaigns p. 414). Both are worth stating
+    // on the card, because they decide who else is in trouble.
+    explosive,
+    blastRadius: explosive ? blastRadius(parsed.dice) : 0,
+    fragmentation,
+    fragmentationRadius: fragmentation
+      ? fragmentationRadius(parseDiceAdds(fragmentation)?.dice ?? 0)
+      : 0,
   });
 
   await ChatMessage.implementation.create({
@@ -190,7 +208,13 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     // the numbers out of the rendered HTML would be parsing our own output.
     flags: {
       [SYSTEM_ID]: {
-        damage: { basicDamage, damageType, armorDivisor, label },
+        damage: {
+          basicDamage, damageType, armorDivisor, label,
+          explosive,
+          // The dice, not the rolled total: the blast radius is set by how
+          // many dice the attack rolls, whatever they came up.
+          diceOfDamage: parsed.dice,
+        },
       },
     },
   });
@@ -416,6 +440,8 @@ export async function handleDamageAction(
     formula: damageFormula,
     damageType: damageType as DamageType,
     armorDivisor: Number(armorDivisor) || 1,
+    explosive: target.dataset.explosive === "1",
+    fragmentation: target.dataset.fragmentation ?? "",
     modifiers,
   });
 }
