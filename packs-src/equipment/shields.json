@@ -304,22 +304,5 @@
       "db": 3,
       "skill": "Shield"
     }
-  },
-  {
-    "_id": "79113869bbad0d3a",
-    "name": "Melee Net",
-    "type": "shield",
-    "system": {
-      "quantity": 1,
-      "weight": 5,
-      "cost": 20,
-      "carried": true,
-      "equipped": false,
-      "tl": "2",
-      "description": "",
-      "reference": "Basic Set: Characters p. 276",
-      "db": 0,
-      "skill": "Shield"
-    }
   }
 ]

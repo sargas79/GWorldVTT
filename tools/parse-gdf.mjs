@@ -713,14 +713,20 @@ function parseEquipment(recs, reject, note) {
 
     // Shields first: their dr() field runs DR and HP together on one entry, so
     // reading it as armour would invent a split.
-    if (f.has("db")) {
+    //
+    // A defense bonus of at least 1 is what makes a shield a shield. GCA gives
+    // a melee net db(0), which is true of it -- a net grants no defense bonus
+    // -- but filing it as a shield would put a thrown weapon in the shield
+    // slot. It falls through to the weapon branch instead, where its damage is
+    // "spcl." and it is rejected with a reason.
+    if (number(f.get("db"), 0) >= 1) {
       taken.add(name);
       if (modes(r.text).length > 0) note(`${name}: shield bash mode, which ShieldData does not hold`);
       shields.push({
         _id: ids.get(name) ?? id("shield", name),
         name,
         type: "shield",
-        system: { ...common, db: Math.max(0, number(f.get("db"), 1)), skill: "Shield" },
+        system: { ...common, db: number(f.get("db"), 1), skill: "Shield" },
       });
       continue;
     }
