@@ -17,3 +17,6 @@ dist/packs/
 
 # Parser reject log, regenerated on each run
 packs-src/*/.rejected*.txt
+
+# Obsidian vault settings, if the folder is opened as a vault
+.obsidian/
