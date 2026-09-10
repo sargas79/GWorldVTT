@@ -16,4 +16,4 @@ gworld.zip
 dist/packs/
 
 # Parser reject log, regenerated on each run
-packs-src/*/.rejected.txt
+packs-src/*/.rejected*.txt
