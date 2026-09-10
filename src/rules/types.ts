@@ -39,24 +39,8 @@ export type DamageType =
 /** Body postures (GURPS Lite p. 25, Posture Table). */
 export type Posture = "standing" | "crouching" | "kneeling" | "crawling" | "sitting" | "lying";
 
-/** Combat maneuvers (GURPS Lite pp. 25-26). */
-export type Maneuver =
-  | "doNothing"
-  | "move"
-  | "changePosture"
-  | "aim"
-  | "attack"
-  | "allOutAttack"
-  | "moveAndAttack"
-  | "allOutDefense"
-  | "concentrate"
-  | "ready";
-
-/** All-Out Attack options (GURPS Lite p. 26). */
-export type AllOutAttackOption = "determined" | "double" | "strong" | "ranged";
-
-/** All-Out Defense options (GURPS Lite p. 26). */
-export type AllOutDefenseOption = "increased" | "double";
+// Maneuvers and their options live in `maneuvers.ts`, which carries the full
+// Basic Set set (Evaluate, Feint, Wait) plus what each one permits.
 
 /** The three active defenses (GURPS Lite p. 28). */
 export type DefenseKind = "dodge" | "parry" | "block";

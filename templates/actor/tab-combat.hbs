@@ -1,7 +1,64 @@
 <section class="tab ibody{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
 
   <div class="isec">
-    <div class="ish"><span class="num">01</span>{{localize "GWORLD.Section.Stance"}}</div>
+    <div class="ish"><span class="num">01</span>{{localize "GWORLD.Section.Maneuver"}}</div>
+    <div class="g3">
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.Maneuver"}}</span>
+        <div class="fi">
+          <select name="system.maneuver" {{#unless editable}}disabled{{/unless}}>
+            {{#each maneuvers as |m|}}
+              <option value="{{m.key}}" {{#if m.selected}}selected{{/if}}>{{m.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+      {{#if isAllOutDefense}}
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Maneuver.Option"}}</span>
+          <div class="fi">
+            <select name="system.allOutDefenseOption" {{#unless editable}}disabled{{/unless}}>
+              <option value="increased" {{#if aodIncreased}}selected{{/if}}>{{localize "GWORLD.Maneuver.Increased"}}</option>
+              <option value="double" {{#unless aodIncreased}}selected{{/unless}}>{{localize "GWORLD.Maneuver.Double"}}</option>
+            </select>
+          </div>
+        </div>
+        {{#if aodIncreased}}
+          <div class="fld">
+            <span class="fl">{{localize "GWORLD.Maneuver.Target"}}</span>
+            <div class="fi">
+              <select name="system.allOutDefenseTarget" {{#unless editable}}disabled{{/unless}}>
+                {{#each aodTargets as |t|}}
+                  <option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{localize t.label}}</option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+        {{/if}}
+      {{/if}}
+      {{#if isEvaluating}}
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Field.EvaluateTurns"}}</span>
+          <div class="fi">
+            <input type="number" name="system.evaluateTurns" value="{{system.evaluateTurns}}"
+                   min="0" step="1"
+                   style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+                   {{#unless editable}}disabled{{/unless}}>
+            <span style="font-size: 10px; color: var(--color-accent-700)">{{signed derived.evaluateBonus}}</span>
+          </div>
+        </div>
+      {{/if}}
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.Defenses"}}</span>
+        <div class="fi">
+          {{#if derived.maneuver.defenseAvailable}}
+            <span>{{#if derived.maneuver.parryAvailable}}{{localize "GWORLD.Maneuver.AnyDefense"}}{{else}}{{localize "GWORLD.Maneuver.NoParry"}}{{/if}}</span>
+          {{else}}
+            <span class="bad">{{localize "GWORLD.Maneuver.NoDefense"}}</span>
+          {{/if}}
+        </div>
+      </div>
+    </div>
     <div class="istance">
       <span class="ichip on">{{localize (concat "GWORLD.Posture." system.posture)}}</span>
       {{#each conditionChips as |chip|}}

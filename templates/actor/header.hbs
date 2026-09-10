@@ -35,10 +35,11 @@
     </div>
 
     <div class="istrip">
-      <div class="istat rollable" data-action="roll" data-roll-type="dodge"
-           data-roll-label="{{localize 'GWORLD.Secondary.Dodge'}}" data-roll-target="{{derived.defenses.dodge.total}}">
+      <div class="istat {{#if derived.defenses.dodge}}rollable{{/if}}"
+           {{#if derived.defenses.dodge}}data-action="roll" data-roll-type="dodge"
+           data-roll-label="{{localize 'GWORLD.Secondary.Dodge'}}" data-roll-target="{{derived.defenses.dodge.total}}"{{/if}}>
         <span class="isl">{{localize "GWORLD.Secondary.Dodge"}}</span>
-        <span class="isv">{{derived.defenses.dodge.total}}</span>
+        <span class="isv">{{#if derived.defenses.dodge}}{{derived.defenses.dodge.total}}{{else}}&mdash;{{/if}}</span>
         <span class="isn">{{#if derived.shieldDb}}+{{derived.shieldDb}} DB{{/if}}</span>
       </div>
       <div class="istat {{#if derived.defenses.parry}}rollable{{/if}}"

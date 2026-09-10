@@ -15,6 +15,14 @@ import {
 import { baseParry, block, dodge, parry } from "../../rules/defenses.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
+import {
+  MANEUVERS,
+  MANEUVER_ORDER,
+  canDefendWith,
+  canParryWith,
+  evaluateBonus,
+  type Maneuver,
+} from "../../rules/maneuvers.js";
 import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
 import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js";
@@ -94,6 +102,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare points: { starting: number; disadvantageLimit: number };
   declare tl: number;
   declare sm: number;
+  declare maneuver: Maneuver;
+  declare evaluateTurns: number;
+  declare allOutDefenseOption: "increased" | "double";
+  declare allOutDefenseTarget: "dodge" | "parry" | "block";
   declare posture: Posture;
   declare conditions: { stunned: boolean; allOutDefense: boolean; blindToAttacker: boolean };
   declare details: {
@@ -164,6 +176,37 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
        * It is a bonus for others to hit you and a penalty to be missed.
        */
       sm: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+
+      /**
+       * The maneuver taken this turn. It stays in effect until the next one is
+       * chosen, and governs which active defenses are available
+       * (GURPS Basic Set: Campaigns pp. 363-367).
+       */
+      maneuver: new fields.StringField({
+        required: true,
+        nullable: false,
+        initial: "doNothing",
+        choices: [...MANEUVER_ORDER],
+      }),
+
+      /** Consecutive Evaluate maneuvers taken, which accumulate +1 each to +3. */
+      evaluateTurns: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 0, min: 0,
+      }),
+
+      /**
+       * All-Out Defense option (GURPS Basic Set: Campaigns p. 366). Increased
+       * Defense is +2 to ONE defense, named by `allOutDefenseTarget`; Double
+       * Defense instead allows a second, different defense against one attack.
+       */
+      allOutDefenseOption: new fields.StringField({
+        required: true, nullable: false, initial: "increased",
+        choices: ["increased", "double"],
+      }),
+      allOutDefenseTarget: new fields.StringField({
+        required: true, nullable: false, initial: "dodge",
+        choices: ["dodge", "parry", "block"],
+      }),
 
       posture: new fields.StringField({
         required: true,
@@ -434,13 +477,23 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     }
 
     // ── active defenses ─────────────────────────────────────────────────
-    const defenseContext = {
+    // All-Out Attack forfeits every defense; Move and Attack forbids parrying.
+    const defenseAvailable = canDefendWith(this.maneuver);
+    const parryAvailable = defenseAvailable && canParryWith(this.maneuver);
+
+    // Increased Defense raises one named defense by 2; it is not a blanket
+    // bonus, so each defense asks whether it is the one chosen.
+    const increasing =
+      (this.conditions.allOutDefense || this.maneuver === "allOutDefense") &&
+      this.allOutDefenseOption === "increased";
+
+    const contextFor = (which: "dodge" | "parry" | "block") => ({
       shieldDb,
       posture: this.posture,
       stunned: this.conditions.stunned,
-      allOutDefenseIncreased: this.conditions.allOutDefense,
+      allOutDefenseIncreased: increasing && this.allOutDefenseTarget === which,
       cannotSeeAttacker: this.conditions.blindToAttacker,
-    };
+    });
 
     const describe = (base: number, mods: Array<{ label: string; value: number }>): string =>
       [`${base} base`, ...mods.map((m) => `${m.value >= 0 ? "+" : "−"}${Math.abs(m.value)} ${m.label}`)].join(
@@ -448,7 +501,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       );
 
     const dodgeResult = dodge(secondary.basicSpeed, {
-      ...defenseContext,
+      ...contextFor("dodge"),
       encumbrance: encumbrance.level as EncumbranceLevel,
       reeling,
     });
@@ -459,14 +512,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       null,
     );
     const parryResult =
-      bestParry && bestParry.skillLevel !== null
-        ? parry(bestParry.skillLevel, defenseContext)
+      parryAvailable && bestParry && bestParry.skillLevel !== null
+        ? parry(bestParry.skillLevel, contextFor("parry"))
         : null;
 
-    const blockResult = shieldSkill !== null ? block(shieldSkill, defenseContext) : null;
+    const blockResult =
+      defenseAvailable && shieldSkill !== null ? block(shieldSkill, contextFor("block")) : null;
 
-    const defenses: { dodge: DefenseView; parry: DefenseView | null; block: DefenseView | null } = {
-      dodge: {
+    const defenses: { dodge: DefenseView | null; parry: DefenseView | null; block: DefenseView | null } = {
+      dodge: !defenseAvailable ? null : {
         total: Math.max(1, dodgeResult.total + this.bonuses.dodge),
         source: `Basic Speed ${secondary.basicSpeed.toFixed(2)}`,
         math: describe(dodgeResult.base, dodgeResult.modifiers),
@@ -528,6 +582,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       skillPoints + techniquePoints + languagePoints;
 
     return {
+      maneuver: {
+        key: this.maneuver,
+        label: MANEUVERS[this.maneuver].label,
+        labelKey: `GWORLD.Maneuver.${this.maneuver}`,
+        defenseAvailable,
+        parryAvailable,
+        movement: MANEUVERS[this.maneuver].movement,
+      },
+      evaluateBonus: this.maneuver === "evaluate" ? evaluateBonus(this.evaluateTurns) : 0,
       will: secondary.will,
       per: secondary.per,
       basicLift: secondary.basicLift,
