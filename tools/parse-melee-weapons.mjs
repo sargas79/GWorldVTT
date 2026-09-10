@@ -77,11 +77,18 @@ const DIFFICULTY = { Easy: "E", Average: "A", Hard: "H", "Very Hard": "VH" };
 const CONTINUATION = /^or$/i;
 
 /**
- * Skill names as the skills compendium stores them, keyed by the table's
- * capitalised group heading. A group naming several skills ("BOXING, BRAWLING,
- * KARATE, or DX") is an unarmed attack any of them can make; the first is used,
- * because the attack has to name one skill and that is the one the book lists
- * first.
+ * The skills a group heading names, spelled as the skills compendium spells them.
+ *
+ * A heading with a defaults clause names one skill and then what it defaults
+ * from: "AXE/MACE (DX-5, Flail-4)" is Axe/Mace alone. A heading without one names
+ * every skill that can make the attack: "BOXING, BRAWLING, KARATE, or DX" heads
+ * the punches, and all three are returned so the caller can give the weapon one
+ * mode per skill. Keeping only the first would leave a character trained in
+ * Brawling unable to use the attack, since a mode resolves through its single
+ * skill name.
+ *
+ * A bare "DX" is dropped: it is not a skill, and an attack with no skill falls
+ * back to the attribute anyway.
  */
 function skillsFromGroup(heading, hasDefaults) {
   // Headings are padded to the column width, so "TWO-HANDED     AXE/MACE"
@@ -427,8 +434,11 @@ function main() {
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, `${JSON.stringify(items, null, 2)}\n`, "utf8");
     console.log(`\nwrote ${items.length} weapons`);
-    // The skills the weapons name, built from the same headings. Without these
-    // an attack made with a saber or a lance resolves to no skill at all.
+    // The weapon skills this table names that no other pack already carries,
+    // built from the same headings. Without these an attack made with a saber or
+    // a kusari resolves to no skill at all. Skills the table names but cannot
+    // describe -- Boxing, Brawling, Lance -- are hand-verified in
+    // melee-weapon-skills.json instead and are not written here.
     const skillOut = join(projectRoot, "packs-src", "skills", "weapon-table-skills.json");
     writeFileSync(skillOut, `${JSON.stringify([...skills.values()], null, 2)}
 `, "utf8");
