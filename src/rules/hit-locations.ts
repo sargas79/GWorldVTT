@@ -26,6 +26,18 @@ export type HitLocation =
 /** How a location behaves when a limb or extremity takes a major wound. */
 export type CripplingKind = "none" | "limb" | "extremity";
 
+/**
+ * Extra DR a location grants against a given damage type.
+ *
+ * The skull's DR 2 is part of the same package as its x4 multiplier, and toxic
+ * damage is exempt from both (GURPS Basic Set: Campaigns p. 399) — exempting
+ * only the multiplier would armor the skull against poison.
+ */
+export function locationDrAgainst(location: HitLocation, type: DamageType): number {
+  if (type === "tox") return 0;
+  return HIT_LOCATIONS[location].extraDr;
+}
+
 export interface HitLocationInfo {
   key: HitLocation;
   label: string;
@@ -44,24 +56,36 @@ export interface HitLocationInfo {
    * Damage types that may deliberately target this location. An empty list
    * means any type may.
    */
+  /**
+   * Damage types that may deliberately target this location, ignoring the
+   * tight-beam burning case which {@link canTarget} handles separately.
+   */
   targetableBy: readonly DamageType[];
   /** True when this location can only be struck deliberately, never at random. */
   deliberateOnly: boolean;
 }
 
-/** Damage types that can target the eye (GURPS Basic Set: Campaigns p. 399). */
-const EYE_TARGETABLE: readonly DamageType[] = ["imp", "pi-", "pi", "pi+", "pi++", "burn"];
+/**
+ * Whether a burning attack is "tight-beam" — a laser rather than a torch or
+ * flamethrower (GURPS Basic Set: Campaigns p. 399).
+ *
+ * Only tight-beam burns may target the eye or vitals, and only they get the
+ * vitals multiplier, so `burn` alone cannot carry the restriction.
+ */
+export interface AttackQualifiers {
+  tightBeam?: boolean;
+}
 
-/** Damage types that can target the vitals. */
-const VITALS_TARGETABLE: readonly DamageType[] = ["imp", "pi-", "pi", "pi+", "pi++", "burn"];
+/** Damage types that can target the eye and vitals, burning aside. */
+const PRECISE_TYPES: readonly DamageType[] = ["imp", "pi-", "pi", "pi+", "pi++"];
 
 export const HIT_LOCATIONS: Record<HitLocation, HitLocationInfo> = {
   torso: { key: "torso", label: "Torso", toHit: 0, extraDr: 0, knockdown: 0, cripplingKind: "none", targetableBy: [], deliberateOnly: false },
   skull: { key: "skull", label: "Skull", toHit: -7, extraDr: 2, knockdown: -10, cripplingKind: "none", targetableBy: [], deliberateOnly: false },
-  eye: { key: "eye", label: "Eye", toHit: -9, extraDr: 0, knockdown: -10, cripplingKind: "none", targetableBy: EYE_TARGETABLE, deliberateOnly: true },
+  eye: { key: "eye", label: "Eye", toHit: -9, extraDr: 0, knockdown: -10, cripplingKind: "none", targetableBy: PRECISE_TYPES, deliberateOnly: true },
   face: { key: "face", label: "Face", toHit: -5, extraDr: 0, knockdown: -5, cripplingKind: "none", targetableBy: [], deliberateOnly: false },
   neck: { key: "neck", label: "Neck", toHit: -5, extraDr: 0, knockdown: 0, cripplingKind: "none", targetableBy: [], deliberateOnly: false },
-  vitals: { key: "vitals", label: "Vitals", toHit: -3, extraDr: 0, knockdown: 0, cripplingKind: "none", targetableBy: VITALS_TARGETABLE, deliberateOnly: true },
+  vitals: { key: "vitals", label: "Vitals", toHit: -3, extraDr: 0, knockdown: 0, cripplingKind: "none", targetableBy: PRECISE_TYPES, deliberateOnly: true },
   groin: { key: "groin", label: "Groin", toHit: -3, extraDr: 0, knockdown: -5, cripplingKind: "none", targetableBy: [], deliberateOnly: false },
   arm: { key: "arm", label: "Arm", toHit: -2, extraDr: 0, knockdown: 0, cripplingKind: "limb", targetableBy: [], deliberateOnly: false },
   leg: { key: "leg", label: "Leg", toHit: -2, extraDr: 0, knockdown: 0, cripplingKind: "limb", targetableBy: [], deliberateOnly: false },
@@ -82,16 +106,27 @@ const RANDOM_TABLE: ReadonlyArray<{ min: number; max: number; location: HitLocat
   { min: 11, max: 11, location: "groin" },
   { min: 12, max: 12, location: "arm", side: "left" },
   { min: 13, max: 14, location: "leg", side: "left" },
+  // Hand and foot have no side in the table; footnote: roll 1d, 1-3 right, 4-6 left.
   { min: 15, max: 15, location: "hand" },
   { min: 16, max: 16, location: "foot" },
   { min: 17, max: 18, location: "neck" },
 ];
 
 /** Resolves a 3d6 roll to a hit location. Rolls outside 3-18 clamp to the table. */
-export function randomHitLocation(roll: number): { location: HitLocation; side?: "right" | "left" } {
+export function randomHitLocation(
+  roll: number,
+  sideRoll?: number,
+): { location: HitLocation; side?: "right" | "left" } {
   const clamped = Math.max(3, Math.min(18, Math.round(roll)));
   const row = RANDOM_TABLE.find((r) => clamped >= r.min && clamped <= r.max)!;
-  return row.side ? { location: row.location, side: row.side } : { location: row.location };
+  if (row.side) return { location: row.location, side: row.side };
+
+  // Hands and feet are paired but unsided in the table: a 1d roll picks one,
+  // 1-3 right and 4-6 left.
+  if ((row.location === "hand" || row.location === "foot") && sideRoll !== undefined) {
+    return { location: row.location, side: sideRoll <= 3 ? "right" : "left" };
+  }
+  return { location: row.location };
 }
 
 /**
@@ -100,9 +135,16 @@ export function randomHitLocation(roll: number): { location: HitLocation; side?:
  * Only the eye and vitals restrict this: you cannot, for instance, target the
  * vitals with a swung axe.
  */
-export function canTarget(location: HitLocation, type: DamageType): boolean {
+export function canTarget(
+  location: HitLocation,
+  type: DamageType,
+  qualifiers: AttackQualifiers = {},
+): boolean {
   const info = HIT_LOCATIONS[location];
-  return info.targetableBy.length === 0 || info.targetableBy.includes(type);
+  if (info.targetableBy.length === 0) return true;
+  // A torch cannot be aimed at an eye; a laser can.
+  if (type === "burn") return qualifiers.tightBeam === true;
+  return info.targetableBy.includes(type);
 }
 
 /**
@@ -113,7 +155,11 @@ export function canTarget(location: HitLocation, type: DamageType): boolean {
  * the big piercing and impaling multipliers rather than raising them — a spear
  * through the arm does far less than one through the chest.
  */
-export function woundingModifierAt(type: DamageType, location: HitLocation): number {
+export function woundingModifierAt(
+  type: DamageType,
+  location: HitLocation,
+  qualifiers: AttackQualifiers = {},
+): number {
   const base = WOUNDING_MODIFIERS[type];
 
   switch (location) {
@@ -124,7 +170,8 @@ export function woundingModifierAt(type: DamageType, location: HitLocation): num
 
     case "vitals":
       if (type === "imp" || type === "pi-" || type === "pi" || type === "pi+" || type === "pi++") return 3;
-      if (type === "burn") return 2; // Tight-beam burning only; callers gate this.
+      // Only a tight-beam burn gets the vitals bonus; a flamethrower does not.
+      if (type === "burn") return qualifiers.tightBeam ? 2 : base;
       return base;
 
     case "neck":

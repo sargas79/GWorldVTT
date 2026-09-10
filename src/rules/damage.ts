@@ -4,7 +4,13 @@
  */
 
 import { addModifier, parseDiceAdds } from "./dice.js";
-import { HIT_LOCATIONS, applyCrippling, woundingModifierAt, type HitLocation } from "./hit-locations.js";
+import {
+  applyCrippling,
+  locationDrAgainst,
+  woundingModifierAt,
+  type AttackQualifiers,
+  type HitLocation,
+} from "./hit-locations.js";
 import type { DamageType, DiceAdds } from "./types.js";
 
 /**
@@ -177,6 +183,8 @@ export interface InjuryInput {
   hitLocation?: HitLocation;
   /** Maximum HP, needed only to cap injury to a crippled limb. */
   maxHp?: number;
+  /** Tight-beam burning and similar qualifiers that change targeting rules. */
+  qualifiers?: AttackQualifiers;
 }
 
 export interface InjuryResult {
@@ -192,6 +200,11 @@ export interface InjuryResult {
   excessLost: number;
   /** Whether this blow crippled the limb or extremity it struck. */
   crippled: boolean;
+  /**
+   * True when the loss is Fatigue Points rather than Hit Points. Fatigue
+   * damage never uses hit location.
+   */
+  costsFatigue: boolean;
 }
 
 /**
@@ -209,26 +222,37 @@ export function computeInjury({
   armorDivisor = 1,
   hitLocation,
   maxHp,
+  qualifiers = {},
 }: InjuryInput): InjuryResult {
   const divisor = armorDivisor > 0 ? armorDivisor : 1;
 
-  // The skull's extra DR is natural armor, so the divisor applies to it too.
-  const locationDr = hitLocation ? HIT_LOCATIONS[hitLocation].extraDr : 0;
+  // Fatigue damage costs FP and always ignores hit location, so it skips the
+  // location DR, the wounding overrides, and the crippling cap entirely.
+  const fatigue = costsFatigue(type);
+  const location = fatigue ? undefined : hitLocation;
+
+  // The skull's extra DR is natural armor, so the divisor applies to it too —
+  // and toxic damage is exempt from it, as it is from the skull multiplier.
+  const locationDr = location ? locationDrAgainst(location, type) : 0;
   const effectiveDr = Math.floor((Math.max(0, dr) + locationDr) / divisor);
   const penetrating = Math.max(0, basicDamage - effectiveDr);
-  const woundingModifier = hitLocation ? woundingModifierAt(type, hitLocation) : WOUNDING_MODIFIERS[type];
+  const woundingModifier = location
+    ? woundingModifierAt(type, location, qualifiers)
+    : WOUNDING_MODIFIERS[type];
+
+  const base = { effectiveDr, penetrating, woundingModifier, costsFatigue: fatigue };
 
   if (penetrating <= 0) {
-    return { effectiveDr, penetrating: 0, woundingModifier, injury: 0, excessLost: 0, crippled: false };
+    return { ...base, penetrating: 0, injury: 0, excessLost: 0, crippled: false };
   }
 
   const raw = Math.max(1, Math.floor(penetrating * woundingModifier));
 
   // Injury past what cripples a limb is lost rather than carried to the body.
-  if (hitLocation && maxHp !== undefined) {
-    const { injury, excessLost, crippled } = applyCrippling(raw, hitLocation, maxHp);
-    return { effectiveDr, penetrating, woundingModifier, injury, excessLost, crippled };
+  if (location && maxHp !== undefined) {
+    const { injury, excessLost, crippled } = applyCrippling(raw, location, maxHp);
+    return { ...base, injury, excessLost, crippled };
   }
 
-  return { effectiveDr, penetrating, woundingModifier, injury: raw, excessLost: 0, crippled: false };
+  return { ...base, injury: raw, excessLost: 0, crippled: false };
 }

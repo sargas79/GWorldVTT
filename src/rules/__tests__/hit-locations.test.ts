@@ -6,6 +6,7 @@ import {
   applyCrippling,
   canTarget,
   cripplingThreshold,
+  locationDrAgainst,
   randomHitLocation,
   woundingModifierAt,
 } from "../hit-locations.js";
@@ -81,8 +82,9 @@ describe("random hit location (3d6)", () => {
 });
 
 describe("targeting restrictions", () => {
-  it("lets only impaling, piercing and burning attacks target the eye and vitals", () => {
-    for (const type of ["imp", "pi", "pi+", "pi++", "pi-", "burn"] as const) {
+  it("lets only impaling and piercing attacks target the eye and vitals", () => {
+    // Burning is handled separately: only a tight-beam burn qualifies.
+    for (const type of ["imp", "pi", "pi+", "pi++", "pi-"] as const) {
       expect(canTarget("vitals", type), type).toBe(true);
       expect(canTarget("eye", type), type).toBe(true);
     }
@@ -116,8 +118,9 @@ describe("per-location wounding modifiers (GURPS Basic Set: Campaigns pp. 398-39
     expect(woundingModifierAt("imp", "vitals")).toBe(3);
     expect(woundingModifierAt("pi", "vitals")).toBe(3);
     expect(woundingModifierAt("pi-", "vitals")).toBe(3);
-    // A tight-beam burning attack only doubles.
-    expect(woundingModifierAt("burn", "vitals")).toBe(2);
+    // A tight-beam burning attack only doubles, and a plain burn gets nothing.
+    expect(woundingModifierAt("burn", "vitals", { tightBeam: true })).toBe(2);
+    expect(woundingModifierAt("burn", "vitals")).toBe(1);
   });
 
   it("raises crushing and corrosion to the neck, and doubles cutting", () => {
@@ -207,5 +210,65 @@ describe("the injury pipeline with hit locations", () => {
   it("leaves location-agnostic calls behaving exactly as before", () => {
     const result = computeInjury({ basicDamage: 6, dr: 4, type: "cr" });
     expect(result).toMatchObject({ penetrating: 2, injury: 2, crippled: false, excessLost: 0 });
+  });
+});
+
+describe("review fixes: tight-beam, toxic DR, fatigue, limb sides", () => {
+  it("lets only a tight-beam burn target the eye or vitals", () => {
+    // A flamethrower cannot be aimed at an eye; a laser can.
+    expect(canTarget("vitals", "burn")).toBe(false);
+    expect(canTarget("vitals", "burn", { tightBeam: true })).toBe(true);
+    expect(canTarget("eye", "burn")).toBe(false);
+    expect(canTarget("eye", "burn", { tightBeam: true })).toBe(true);
+  });
+
+  it("gives the vitals bonus only to a tight-beam burn", () => {
+    expect(woundingModifierAt("burn", "vitals")).toBe(1);
+    expect(woundingModifierAt("burn", "vitals", { tightBeam: true })).toBe(2);
+  });
+
+  it("exempts toxic damage from the skull's DR as well as its multiplier", () => {
+    expect(locationDrAgainst("skull", "tox")).toBe(0);
+    expect(locationDrAgainst("skull", "cr")).toBe(2);
+
+    // A toxic attack must not be armored by the skull it is exempt from.
+    const toxic = computeInjury({ basicDamage: 5, dr: 0, type: "tox", hitLocation: "skull" });
+    expect(toxic.effectiveDr).toBe(0);
+    expect(toxic.injury).toBe(5);
+  });
+
+  it("routes fatigue damage to FP and ignores hit location entirely", () => {
+    const result = computeInjury({
+      basicDamage: 6, dr: 0, type: "fat", hitLocation: "skull", maxHp: 10,
+    });
+    expect(result.costsFatigue).toBe(true);
+    // No x4 skull multiplier, no skull DR, no crippling.
+    expect(result.woundingModifier).toBe(1);
+    expect(result.effectiveDr).toBe(0);
+    expect(result.injury).toBe(6);
+    expect(result.crippled).toBe(false);
+  });
+
+  it("does not treat ordinary damage as fatigue", () => {
+    expect(computeInjury({ basicDamage: 5, dr: 0, type: "cr" }).costsFatigue).toBe(false);
+  });
+
+  it("picks a hand or foot side from a 1d roll, 1-3 right and 4-6 left", () => {
+    expect(randomHitLocation(15, 2).side).toBe("right");
+    expect(randomHitLocation(15, 5).side).toBe("left");
+    expect(randomHitLocation(16, 1).side).toBe("right");
+    expect(randomHitLocation(16, 6).side).toBe("left");
+    // Without a side roll the location is still returned, just unsided.
+    expect(randomHitLocation(15).location).toBe("hand");
+    expect(randomHitLocation(15).side).toBeUndefined();
+  });
+
+  it("keeps the printed leg rows, which are sided in the table itself", () => {
+    // 6-7 is the right leg and 13-14 the left; these are not paired rows
+    // needing a side roll.
+    expect(randomHitLocation(6)).toEqual({ location: "leg", side: "right" });
+    expect(randomHitLocation(7)).toEqual({ location: "leg", side: "right" });
+    expect(randomHitLocation(13)).toEqual({ location: "leg", side: "left" });
+    expect(randomHitLocation(14)).toEqual({ location: "leg", side: "left" });
   });
 });
