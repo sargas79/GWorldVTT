@@ -1,0 +1,336 @@
+[
+  {
+    "_id": "e9db73cd93a62dd9",
+    "name": "Broadsword",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 500,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Broadsword",
+          "damageBase": "sw",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Broadsword",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "584db384510f1a1e",
+    "name": "Large Knife",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 1,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Knife",
+          "damageBase": "sw",
+          "damageModifier": -2,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "C,1",
+          "parryModifier": -1,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 6,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Knife",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": -1,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 6,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "37c14b99bf473829",
+    "name": "Axe",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 50,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Axe/Mace",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 11,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "377b36f28cba33ad",
+    "name": "Mace",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 50,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Axe/Mace",
+          "damageBase": "sw",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 12,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "aa24251e747333ba",
+    "name": "Small Shield",
+    "type": "shield",
+    "system": {
+      "db": 1,
+      "skill": "Shield",
+      "quantity": 1,
+      "weight": 8,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c219d25485bbfa3c",
+    "name": "Medium Shield",
+    "type": "shield",
+    "system": {
+      "db": 2,
+      "skill": "Shield",
+      "quantity": 1,
+      "weight": 15,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a9afad4d2b97ea51",
+    "name": "Large Shield",
+    "type": "shield",
+    "system": {
+      "db": 3,
+      "skill": "Shield",
+      "quantity": 1,
+      "weight": 25,
+      "cost": 90,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "bcfd37bf385417fb",
+    "name": "Cloth Armor",
+    "type": "armor",
+    "system": {
+      "dr": 1,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin",
+        "arm",
+        "leg"
+      ],
+      "quantity": 1,
+      "weight": 12,
+      "cost": 150,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b23fb871419ddf58",
+    "name": "Leather Armor",
+    "type": "armor",
+    "system": {
+      "dr": 2,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin",
+        "arm",
+        "leg"
+      ],
+      "quantity": 1,
+      "weight": 19.5,
+      "cost": 340,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7d88a35c0d0024db",
+    "name": "Light Scale",
+    "type": "armor",
+    "system": {
+      "dr": 3,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin",
+        "arm",
+        "leg"
+      ],
+      "quantity": 1,
+      "weight": 49,
+      "cost": 610,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0b7b658fe27eaa9e",
+    "name": "Mail",
+    "type": "armor",
+    "system": {
+      "dr": 4,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin",
+        "arm",
+        "leg"
+      ],
+      "quantity": 1,
+      "weight": 58,
+      "cost": 645,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c5de60a3129c29cf",
+    "name": "Plate",
+    "type": "armor",
+    "system": {
+      "dr": 6,
+      "locations": [
+        "torso",
+        "vitals",
+        "groin",
+        "arm",
+        "leg"
+      ],
+      "quantity": 1,
+      "weight": 89.5,
+      "cost": 4040,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  }
+]
