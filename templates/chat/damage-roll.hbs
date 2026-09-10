@@ -1,0 +1,24 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{label}}</span>
+    <span class="gc-target">{{formula}} {{localize (concat "GWORLD.DamageType." damageType)}}</span>
+  </div>
+
+  <div class="gc-dice">
+    <span class="gc-total">{{basicDamage}}</span>
+    <span class="gc-mod">{{localize "GWORLD.Chat.BasicDamage"}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>{{localize "GWORLD.Chat.WoundingModifier"}} &times;{{woundingModifier}}</span>
+    {{#if (gt armorDivisor 1)}}
+      <span class="gc-mod">{{localize "GWORLD.Chat.ArmorDivisor"}} ({{armorDivisor}})</span>
+    {{/if}}
+  </div>
+
+  <div class="gc-result">
+    {{localize "GWORLD.Chat.InjuryUnarmored"}} <strong>{{injuryIfUnarmored}}</strong>
+  </div>
+
+  <div class="gc-foot">{{localize "GWORLD.Chat.SubtractDR"}}</div>
+</div>

@@ -1,9 +1,10 @@
-<section class="tab ibody" data-group="primary" data-tab="skills">
+<section class="tab ibody{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
 
   <div class="toolbar">
     <div class="srch">
       {{> "gworld.search"}}
-      <input type="search" name="skillFilter" placeholder="{{localize 'GWORLD.Action.FilterSkills'}}" autocomplete="off">
+      <input type="search" class="gworld-skill-filter" placeholder="{{localize 'GWORLD.Action.FilterSkills'}}"
+             autocomplete="off" data-tooltip="{{localize 'GWORLD.Action.FilterSkills'}}">
     </div>
     {{#if editable}}
       <button type="button" class="ibtn" data-action="createItem" data-item-type="skill">

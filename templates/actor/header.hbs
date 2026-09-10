@@ -2,7 +2,8 @@
 <div class="ihdr">
   <div class="iport blueprint">
     <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-    <img src="{{actor.img}}" alt="{{actor.name}}" data-edit="img">
+    <img src="{{actor.img}}" alt="{{actor.name}}" data-edit="img"
+         {{#if editable}}data-action="editImage" class="rollable"{{/if}}>
   </div>
 
   <div class="ihm">

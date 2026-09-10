@@ -49,6 +49,7 @@ export interface DerivedAttack {
   reach: string;
   parry: number | null;
   minSt: number | null;
+  armorDivisor: number;
   /** Ranged only. */
   accuracy?: number;
   range?: string;
@@ -263,6 +264,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           skillLevel,
           damage: resolveDamage(mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt),
           damageType: mode.damageType,
+          armorDivisor: mode.armorDivisor ?? 1,
           reach: mode.reach ?? "C",
           parry:
             mode.canParry && skillLevel !== null
@@ -288,6 +290,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           skillLevel: this.skillLevelByName(mode.skill),
           damage: resolveDamage(mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt),
           damageType: mode.damageType,
+          armorDivisor: mode.armorDivisor ?? 1,
           reach: "",
           parry: null,
           minSt: mode.minSt ?? null,

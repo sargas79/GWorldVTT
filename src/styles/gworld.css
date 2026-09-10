@@ -698,3 +698,108 @@
 }
 .gworld .tab { display: none; }
 .gworld .tab.active { display: flex; }
+
+/* ── chat cards ────────────────────────────────────────────────────────── */
+/* Chat messages render outside the sheet, so the card carries .gworld itself
+   to pick up the tokens. */
+
+.gworld-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-divider);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+}
+.gworld-chat .gc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--color-divider);
+}
+.gworld-chat .gc-label {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.gworld-chat .gc-target {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+  white-space: nowrap;
+}
+.gworld-chat .gc-mods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 10.5px;
+  color: var(--color-neutral-700);
+}
+.gworld-chat .gc-mod { color: var(--color-accent-700); }
+.gworld-chat .gc-dice { display: flex; align-items: center; gap: 6px; }
+.gworld-chat .gc-die {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--color-divider);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 600;
+}
+.gworld-chat .gc-total {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  margin-left: 4px;
+  color: var(--color-accent-900);
+}
+.gworld-chat .gc-result {
+  padding: 5px 8px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-left: 2px solid var(--color-neutral-700);
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+}
+.gworld-chat .gc-result.success {
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-100);
+  color: var(--color-accent-900);
+}
+.gworld-chat .gc-result.failure {
+  border-left-color: var(--color-neutral-700);
+  color: var(--color-neutral-800);
+}
+.gworld-chat .gc-result.crit-success {
+  border-left-color: var(--color-accent-900);
+  background: var(--color-accent-900);
+  color: #fff;
+}
+.gworld-chat .gc-result.crit-failure {
+  border-left-color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+}
+.gworld-chat .gc-foot { font-size: 10.5px; color: var(--color-neutral-700); }
+
+/* ProseMirror editors need a height to be usable, and their toolbar should
+   not inherit the sheet's uppercase heading treatment. */
+.gworld prose-mirror {
+  display: block;
+  min-height: 120px;
+  padding: 10px 12px;
+}
+.gworld prose-mirror .editor-content { min-height: 90px; }
+.gworld prose-mirror menu { text-transform: none; letter-spacing: normal; }

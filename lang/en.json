@@ -228,6 +228,19 @@
       "Failure": "Failure",
       "MarginOfSuccess": "Margin of success",
       "MarginOfFailure": "Margin of failure"
+    },
+    "Chat": {
+      "Target": "Target",
+      "Base": "base",
+      "Situational": "situational",
+      "Modifier": "Modifier",
+      "ModifierTitle": "Situational Modifier",
+      "Roll": "Roll",
+      "BasicDamage": "basic damage",
+      "WoundingModifier": "Wounding modifier",
+      "ArmorDivisor": "armor divisor",
+      "InjuryUnarmored": "Injury against no DR:",
+      "SubtractDR": "Subtract the target's DR from basic damage, then apply the wounding modifier."
     }
   }
 }

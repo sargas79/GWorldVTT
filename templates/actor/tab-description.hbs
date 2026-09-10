@@ -1,4 +1,4 @@
-<section class="tab ibody" data-group="primary" data-tab="description">
+<section class="tab ibody{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
 
   <div class="isec">
     <div class="ish"><span class="num">01</span>{{localize "GWORLD.Section.VitalStatistics"}}</div>
@@ -78,7 +78,9 @@
 
   <div class="isec">
     <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.Biography"}}</div>
-    <div class="box editor prose">{{{biographyHTML}}}</div>
+    <prose-mirror class="box editor prose" name="system.details.biography"
+                  value="{{system.details.biography}}" enriched="{{biographyHTML}}" toggled
+                  {{#unless editable}}disabled{{/unless}}></prose-mirror>
   </div>
 
   {{#if isOwner}}
@@ -89,7 +91,9 @@
           {{localize "GWORLD.Hint.GMOnly"}}
         </span>
       </div>
-      <div class="box editor prose">{{{notesHTML}}}</div>
+      <prose-mirror class="box editor prose" name="system.details.notes"
+                    value="{{system.details.notes}}" enriched="{{notesHTML}}" toggled
+                    {{#unless editable}}disabled{{/unless}}></prose-mirror>
     </div>
   {{/if}}
 
