@@ -50,6 +50,8 @@ export interface DerivedAttack {
   parry: number | null;
   minSt: number | null;
   armorDivisor: number;
+  /** False when the damage formula cannot be parsed, so the UI can omit the roll. */
+  damageRollable: boolean;
   /** Ranged only. */
   accuracy?: number;
   range?: string;
@@ -255,6 +257,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
         const skillLevel = this.skillLevelByName(mode.skill);
+        const meleeDamage = resolveDamage(
+          mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
+        );
         melee.push({
           itemId: item.id,
           modeIndex: index,
@@ -262,9 +267,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           mode: mode.name ?? "",
           skillName: mode.skill ?? "",
           skillLevel,
-          damage: resolveDamage(mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt),
+          damage: meleeDamage,
           damageType: mode.damageType,
           armorDivisor: mode.armorDivisor ?? 1,
+          damageRollable: parseDiceAdds(meleeDamage) !== null,
           reach: mode.reach ?? "C",
           parry:
             mode.canParry && skillLevel !== null
@@ -277,6 +283,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       (sys.rangedModes ?? []).forEach((mode: any, index: number) => {
         // Bows and crossbows use their own ST for damage and range.
         const st = mode.weaponSt ?? attrs.ST;
+        const rangedDamage = resolveDamage(
+          mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
+        );
         const range = mode.rangeIsStMultiple
           ? musclePoweredRange(st, mode.halfDamageRange, mode.maxRange)
           : { halfDamage: mode.halfDamageRange, max: mode.maxRange };
@@ -288,9 +297,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           mode: mode.name ?? "",
           skillName: mode.skill ?? "",
           skillLevel: this.skillLevelByName(mode.skill),
-          damage: resolveDamage(mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt),
+          damage: rangedDamage,
           damageType: mode.damageType,
           armorDivisor: mode.armorDivisor ?? 1,
+          damageRollable: parseDiceAdds(rangedDamage) !== null,
           reach: "",
           parry: null,
           minSt: mode.minSt ?? null,

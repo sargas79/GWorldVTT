@@ -227,7 +227,8 @@
       "Success": "Success",
       "Failure": "Failure",
       "MarginOfSuccess": "Margin of success",
-      "MarginOfFailure": "Margin of failure"
+      "MarginOfFailure": "Margin of failure",
+      "TooLowToAttempt": "{label}: effective {effective} is below 3, so the roll cannot be attempted."
     },
     "Chat": {
       "Target": "Target",
@@ -240,7 +241,8 @@
       "WoundingModifier": "Wounding modifier",
       "ArmorDivisor": "armor divisor",
       "InjuryUnarmored": "Injury against no DR:",
-      "SubtractDR": "Subtract the target's DR from basic damage, then apply the wounding modifier."
+      "SubtractDR": "Subtract the target's DR from basic damage, then apply the wounding modifier.",
+      "SubtractDRDivisor": "Divide the target's DR by {divisor} (rounding down), subtract it from basic damage, then apply the wounding modifier."
     }
   }
 }

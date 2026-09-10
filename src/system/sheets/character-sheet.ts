@@ -9,8 +9,8 @@
 
 import { SYSTEM_ID } from "../constants.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
-import { promptForModifier, rollDamage, rollSuccess, type RollModifier } from "../roll.js";
-import type { Attribute, DamageType, Posture } from "../../rules/types.js";
+import { handleDamageAction, handleRollAction } from "../roll.js";
+import type { Attribute, Posture } from "../../rules/types.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -336,51 +336,15 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
   /**
    * Rolls 3d6 against the clicked target number and posts the result to chat.
-   *
-   * Holding Shift opens a prompt for a situational modifier, which is how
-   * GURPS actually plays — almost every roll carries one.
+   * Shift-click prompts for a situational modifier first.
    */
   static async #onRoll(this: GWorldCharacterSheet, event: Event, target: HTMLElement) {
-    const { rollType, rollLabel, rollTarget } = target.dataset;
-    const base = Number(rollTarget);
-    if (!Number.isFinite(base)) return;
-
-    const kind = rollType === "dodge" || rollType === "parry" || rollType === "block"
-      ? "defense"
-      : rollType === "attribute"
-        ? "attribute"
-        : rollType === "attack"
-          ? "attack"
-          : "skill";
-
-    let modifiers: RollModifier[] = [];
-    if ((event as MouseEvent).shiftKey) {
-      const value = await promptForModifier();
-      if (value === null) return;
-      if (value !== 0) modifiers = [{ label: game.i18n.localize("GWORLD.Chat.Situational"), value }];
-    }
-
-    await rollSuccess({
-      actor: this.actor,
-      base,
-      label: rollLabel ?? rollType ?? "Roll",
-      kind,
-      modifiers,
-    });
+    await handleRollAction(this.actor, event, target);
   }
 
-  /** Rolls the damage for an attack mode and posts it to chat. */
-  static async #onRollDamage(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
-    const { damageFormula, damageType, damageLabel, armorDivisor } = target.dataset;
-    if (!damageFormula || !damageType) return;
-
-    await rollDamage({
-      actor: this.actor,
-      label: damageLabel ?? "Damage",
-      formula: damageFormula,
-      damageType: damageType as DamageType,
-      armorDivisor: Number(armorDivisor) || 1,
-    });
+  /** Rolls an attack mode's damage and posts it to chat. */
+  static async #onRollDamage(this: GWorldCharacterSheet, event: Event, target: HTMLElement) {
+    await handleDamageAction(this.actor, event, target);
   }
 
   static async #onToggleCondition(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

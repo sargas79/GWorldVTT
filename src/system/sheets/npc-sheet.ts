@@ -6,6 +6,7 @@
  */
 
 import { SYSTEM_ID } from "../constants.js";
+import { handleDamageAction, handleRollAction } from "../roll.js";
 import type { Attribute } from "../../rules/types.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -24,6 +25,7 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
       roll: GWorldNpcSheet.#onRoll,
+      rollDamage: GWorldNpcSheet.#onRollDamage,
       editItem: GWorldNpcSheet.#onEditItem,
     },
   };
@@ -92,11 +94,12 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     };
   }
 
-  static async #onRoll(this: GWorldNpcSheet, _event: Event, target: HTMLElement) {
-    const { rollLabel, rollTarget } = target.dataset;
-    const value = Number(rollTarget);
-    if (!Number.isFinite(value)) return;
-    ui.notifications?.info(`${rollLabel ?? "Roll"}: target ${value}`);
+  static async #onRoll(this: GWorldNpcSheet, event: Event, target: HTMLElement) {
+    await handleRollAction(this.actor, event, target);
+  }
+
+  static async #onRollDamage(this: GWorldNpcSheet, event: Event, target: HTMLElement) {
+    await handleDamageAction(this.actor, event, target);
   }
 
   static async #onEditItem(this: GWorldNpcSheet, _event: Event, target: HTMLElement) {

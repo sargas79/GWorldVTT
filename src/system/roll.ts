@@ -8,13 +8,16 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
-import { resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
-import { computeInjury } from "../rules/damage.js";
+import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
+import { applyDamageFloor, computeInjury } from "../rules/damage.js";
 import { parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import type { DamageType } from "../rules/types.js";
 
 const CHAT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/success-roll.hbs`;
 const DAMAGE_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-roll.hbs`;
+
+/** What rules a roll is judged by; only defenses skip the minimum-3 check. */
+export type RollKind = "skill" | "attribute" | "attack" | "defense";
 
 export interface RollModifier {
   label: string;
@@ -27,7 +30,7 @@ export interface SuccessRollOptions {
   base: number;
   label: string;
   /** What kind of roll this is; defense rolls use the defense success rules. */
-  kind?: "skill" | "attribute" | "attack" | "defense";
+  kind?: RollKind;
   modifiers?: RollModifier[];
 }
 
@@ -37,11 +40,21 @@ export interface SuccessRollOptions {
  * Returns the resolved outcome so callers can chain on it (an attack that hits
  * going on to roll damage, for instance).
  */
-export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessRollResult> {
+export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessRollResult | null> {
   const { actor, base, label, kind = "skill", modifiers = [] } = options;
 
   const totalModifier = modifiers.reduce((sum, m) => sum + m.value, 0);
   const effective = base + totalModifier;
+
+  // A roll at effective skill below 3 may not be attempted at all, and only
+  // active defenses are exempt (GURPS Lite p. 2). Without this check a rolled
+  // 3 or 4 would report success, since those always succeed once rolled.
+  if (kind !== "defense" && !canAttempt(effective)) {
+    ui.notifications?.warn(
+      game.i18n.format("GWORLD.Roll.TooLowToAttempt", { label, effective }),
+    );
+    return null;
+  }
 
   const roll = new Roll("3d6");
   await roll.evaluate();
@@ -80,6 +93,7 @@ export interface DamageRollOptions {
   formula: string;
   damageType: DamageType;
   armorDivisor?: number;
+  modifiers?: RollModifier[];
 }
 
 /**
@@ -89,7 +103,7 @@ export interface DamageRollOptions {
  * numbers a GM needs rather than guessing at whom it hit.
  */
 export async function rollDamage(options: DamageRollOptions): Promise<number> {
-  const { actor, label, formula, damageType, armorDivisor = 1 } = options;
+  const { actor, label, formula, damageType, armorDivisor = 1, modifiers = [] } = options;
 
   const parsed = parseDiceAdds(formula);
   if (!parsed) {
@@ -97,11 +111,13 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     return 0;
   }
 
-  const roll = new Roll(toRollFormula(parsed));
+  const bonus = modifiers.reduce((sum, m) => sum + m.value, 0);
+  const roll = new Roll(toRollFormula({ dice: parsed.dice, adds: parsed.adds + bonus }));
   await roll.evaluate();
 
-  // Basic damage floors at 0 for crushing, 1 for everything else.
-  const basicDamage = Math.max(damageType === "cr" ? 0 : 1, roll.total);
+  // The floor lives in the rules engine; duplicating it here would let chat
+  // damage drift from the rules if it ever changes.
+  const basicDamage = applyDamageFloor(roll.total, damageType);
 
   // Shown against DR 0 so the card states raw injury; the GM subtracts real DR.
   const undefended = computeInjury({ basicDamage, dr: 0, type: damageType });
@@ -111,6 +127,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     formula,
     damageType,
     armorDivisor,
+    modifiers: modifiers.filter((m) => m.value !== 0),
     basicDamage,
     woundingModifier: undefended.woundingModifier,
     injuryIfUnarmored: undefended.injury,
@@ -154,6 +171,76 @@ export async function promptForModifier(): Promise<number | null> {
   });
 
   return typeof result === "number" && Number.isFinite(result) ? result : null;
+}
+
+/**
+ * Handles a click on any element carrying the roll dataset.
+ *
+ * Shared by the character and NPC sheets so both route through chat and behave
+ * identically — an NPC's Dodge should roll exactly like a PC's.
+ */
+export async function handleRollAction(
+  actor: any,
+  event: Event,
+  target: HTMLElement,
+): Promise<void> {
+  const { rollType, rollLabel, rollTarget } = target.dataset;
+  const base = Number(rollTarget);
+  if (!Number.isFinite(base)) return;
+
+  const modifiers = await maybePromptModifiers(event);
+  if (modifiers === null) return;
+
+  await rollSuccess({
+    actor,
+    base,
+    label: rollLabel ?? rollType ?? "Roll",
+    kind: rollKind(rollType),
+    modifiers,
+  });
+}
+
+/** Handles a click on any element carrying the damage dataset. */
+export async function handleDamageAction(
+  actor: any,
+  event: Event,
+  target: HTMLElement,
+): Promise<void> {
+  const { damageFormula, damageType, damageLabel, armorDivisor } = target.dataset;
+  if (!damageFormula || !damageType) return;
+
+  const modifiers = await maybePromptModifiers(event);
+  if (modifiers === null) return;
+
+  await rollDamage({
+    actor,
+    label: damageLabel ?? "Damage",
+    formula: damageFormula,
+    damageType: damageType as DamageType,
+    armorDivisor: Number(armorDivisor) || 1,
+    modifiers,
+  });
+}
+
+/** Maps a roll's data-roll-type to the rules the roll should be judged by. */
+function rollKind(rollType: string | undefined): RollKind {
+  if (rollType === "dodge" || rollType === "parry" || rollType === "block") return "defense";
+  if (rollType === "attribute") return "attribute";
+  if (rollType === "attack") return "attack";
+  return "skill";
+}
+
+/**
+ * Shift-click asks for a situational modifier. Returns null when the prompt is
+ * dismissed, meaning the caller should abandon the roll entirely.
+ */
+async function maybePromptModifiers(event: Event): Promise<RollModifier[] | null> {
+  if (!(event as MouseEvent).shiftKey) return [];
+
+  const value = await promptForModifier();
+  if (value === null) return null;
+  if (value === 0) return [];
+  return [{ label: game.i18n.localize("GWORLD.Chat.Situational"), value }];
 }
 
 /** The individual d6 faces from an evaluated Roll. */
