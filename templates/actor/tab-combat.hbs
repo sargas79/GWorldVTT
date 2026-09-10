@@ -133,7 +133,34 @@
   {{/if}}
 
   <div class="isec">
-    <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.Protection"}}</div>
+    <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.HitLocations"}}</div>
+    <table class="gt">
+      <thead>
+        <tr>
+          <th>{{localize "GWORLD.Column.Location"}}</th>
+          <th class="c">{{localize "GWORLD.Column.ToHit"}}</th>
+          <th class="c">{{localize "GWORLD.Column.DR"}}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each derived.hitLocations as |loc|}}
+          <tr>
+            <td>{{localize (concat "GWORLD.HitLocation." loc.key)}}</td>
+            <td class="c wmode">{{#if loc.toHit}}{{loc.toHit}}{{else}}&mdash;{{/if}}</td>
+            <td class="c"><span class="lvl">{{loc.dr}}</span></td>
+            <td class="c wmode">{{#if loc.toHit}}{{localize "GWORLD.Hint.TargetPenalty"}}{{/if}}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    <div class="inote">
+      {{> "gworld.info"}}<span>{{localize "GWORLD.Hint.HitLocations"}}</span>
+    </div>
+  </div>
+
+  <div class="isec">
+    <div class="ish"><span class="num">06</span>{{localize "GWORLD.Section.Protection"}}</div>
     <div class="iarm">
       {{#each items.armor as |armor|}}
         <div class="iac blueprint" data-item-id="{{armor.id}}">
