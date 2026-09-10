@@ -18,6 +18,7 @@ const SOURCE = join(projectRoot, "packs-src");
 const ITEM_TYPES = new Set([
   "trait", "skill", "technique", "equipment", "armor", "shield", "language",
 ]);
+const TRAIT_CATEGORIES = new Set(["advantage", "disadvantage", "quirk", "perk"]);
 const SKILL_ATTRIBUTES = new Set(["ST", "DX", "IQ", "HT", "Will", "Per"]);
 const DIFFICULTIES = new Set(["E", "A", "H", "VH"]);
 const DAMAGE_TYPES = new Set([
@@ -61,6 +62,42 @@ function validateItem(entry, file) {
   }
 
   const sys = entry.system ?? {};
+
+  if (entry.type === "trait") {
+    check(TRAIT_CATEGORIES.has(sys.category), file, name, `bad category "${sys.category}"`);
+    check(Number.isInteger(sys.points), file, name, "points must be an integer");
+    check(Number.isInteger(sys.pointsPerLevel), file, name, "pointsPerLevel must be an integer");
+    check(
+      Number.isInteger(sys.levels) && sys.levels >= 0,
+      file, name, `levels must be a non-negative integer, got "${sys.levels}"`,
+    );
+
+    // The sign of the cost has to agree with the category. This is the one thing
+    // a mis-parsed trait gets wrong that nothing downstream would catch: the
+    // ledger would quietly credit a disadvantage as if it were bought. Perks are
+    // added to the advantage total and quirks to a negative bucket of their own,
+    // so both carry the same obligation as the category they are counted with.
+    //
+    // A trait may legitimately carry both fields: Magery is 5 points for Magery 0
+    // plus 10 per level, and totalPoints adds them. So every populated field is
+    // checked, not whichever one looks like the price -- otherwise an advantage
+    // with points -5 and pointsPerLevel 10 passes while totalPoints is negative.
+    // A field that already failed the integer check is skipped here, so a missing
+    // cost reports "points must be an integer" once rather than following it with
+    // "must not have points of undefined".
+    const negative = sys.category === "disadvantage" || sys.category === "quirk";
+    for (const [field, cost] of [
+      ["points", sys.points],
+      ["pointsPerLevel", sys.pointsPerLevel],
+    ]) {
+      if (cost === 0 || !Number.isInteger(cost)) continue;
+      check(
+        negative ? cost < 0 : cost > 0,
+        file, name,
+        `${sys.category} must not have ${field} of ${cost}`,
+      );
+    }
+  }
 
   if (entry.type === "skill") {
     check(SKILL_ATTRIBUTES.has(sys.attribute), file, name, `bad attribute "${sys.attribute}"`);

@@ -1,0 +1,5392 @@
+[
+  {
+    "_id": "c595de80a1f6fc96",
+    "name": "360° Vision",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 25,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ad2e6f8fb271133b",
+    "name": "Absolute Direction",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 or 10 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "35f4a2a55f40771a",
+    "name": "Absolute Timing",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 2,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>2 or 5 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1e862f47a378df1b",
+    "name": "Acute Senses",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2bd2ee401e29fb32",
+    "name": "Affliction",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 10,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d4f8b274a73879b7",
+    "name": "Allies",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "fe67818dc0d76a73",
+    "name": "Altered Time Rate",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 100,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "20682bcd7b3ff8e6",
+    "name": "Alternate Identity",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 or 15 points per identity</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4f01fcff86293bec",
+    "name": "Ambidexterity",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c52c8999ac621fd0",
+    "name": "Amphibious",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7766db385ba9a170",
+    "name": "Animal Empathy",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b3c81e44c9e2274b",
+    "name": "Arm DX",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 12,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>12 or 16 points per +1 DX</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e3943b387bff0937",
+    "name": "Arm ST",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 3,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>3, 5, or 8 points per +1 ST</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "25d12e89373ff1ec",
+    "name": "Binding",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8944cd2d35b2137a",
+    "name": "Blessed",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>10 or more points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b315eea292a673fc",
+    "name": "Brachiator",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "bb183880daa791ba",
+    "name": "Breath-Holding",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "bcc5fa5acfb0b8b0",
+    "name": "Catfall",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "895d4cd89bb9af13",
+    "name": "Chameleon",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d047c27e10820518",
+    "name": "Channeling",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "adcb3389731c7237",
+    "name": "Charisma",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d79468291867c882",
+    "name": "Claim to Hospitality",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 1,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>1 to 10 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "edb8926bdab6a1ec",
+    "name": "Clairsentience",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 50,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "dba21198d02abc71",
+    "name": "Claws",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "366b9d097b2d7def",
+    "name": "Clerical Investment",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1f844d4015341385",
+    "name": "Clinging",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7e0b5b4a89b6987c",
+    "name": "Combat Reflexes",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "019e39690406613b",
+    "name": "Common Sense",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a6374a8f79fe3c90",
+    "name": "Compartmentalized Mind",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 50,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d370606fda4a2c65",
+    "name": "Constriction Attack",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "83f1fb1e142a1409",
+    "name": "Contact Group",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6e0f39f20b7a64ea",
+    "name": "Contacts",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "68f95056dee234d7",
+    "name": "Cultural Adaptability",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>10 or 20 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d3f60925a77609b7",
+    "name": "Cybernetics",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "00f1473aca8f5177",
+    "name": "Damage Resistance",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c5595b7c11b1ae63",
+    "name": "Danger Sense",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ef17b2376ceb524d",
+    "name": "Daredevil",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2da2241be3697b6d",
+    "name": "Dark Vision",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 25,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "43a7ddbd86af8f4f",
+    "name": "Destiny",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "febaea525a083c4b",
+    "name": "Detect",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "492b9331e5b87f3c",
+    "name": "Digital Mind",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "77cd6f85f4a80d93",
+    "name": "Discriminatory Hearing",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "81eead1e783e0a6f",
+    "name": "Discriminatory Smell",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "079a48e6fb744c35",
+    "name": "Discriminatory Taste",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "57b74ad3e54dce3e",
+    "name": "Doesn't Breathe",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a8ed1685e69c8a13",
+    "name": "Doesn't Eat or Drink",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "5fe7d50817a889f7",
+    "name": "Doesn't Sleep",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "86fb6c0aeb56319b",
+    "name": "Dominance",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "5ef2c00d62d7869b",
+    "name": "Duplication",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 35,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>35 points/copy</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ddd110b38b817afd",
+    "name": "Eidetic Memory",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 or 10 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f350d74298131998",
+    "name": "Elastic Skin",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7bc939b87b3b65a6",
+    "name": "Empathy",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 or 15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "044543b81d728cc1",
+    "name": "Enhanced Defenses",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3f71321d1cb16b60",
+    "name": "Enhanced Move",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 20,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "85a41b13f963c356",
+    "name": "Enhanced Time Sense",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 45,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1a76cd335ec241bd",
+    "name": "Enhanced Tracking",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "89f130ba88c22541",
+    "name": "Extended Lifespan",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4e935ac3f3af161f",
+    "name": "Extra Arms",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a45a931aece940c3",
+    "name": "Extra Attack",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 25,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>25 points/attack</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8754267ede201328",
+    "name": "Extra Head",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>15 points/head</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "39c2afd93e6ab999",
+    "name": "Extra Legs",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "08ea48f50cca9210",
+    "name": "Extra Life",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 25,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>25 points/life</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1254cb155874cc34",
+    "name": "Extra Mouth",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 points/mouth</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "625720083b4e5502",
+    "name": "Favor",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a52158e7215adf74",
+    "name": "Fearlessness",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "35a60a2c3937f0f6",
+    "name": "Filter Lungs",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1f23004b1b5aee8c",
+    "name": "Fit",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 or 15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "26edb8c708ead563",
+    "name": "Flexibility",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 or 15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ae39e5b68a1e3620",
+    "name": "Flight",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 40,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "450dda0c9790aa6e",
+    "name": "Gadgeteer",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 25,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>25 or 50 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e90d8b8e6d6c77b9",
+    "name": "G-Experience",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 1,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>1 to 10 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8c52bd8d4b127100",
+    "name": "Gizmos",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 points/gizmo</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "10c525fbd91cea41",
+    "name": "Growth",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 10,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6c1258634746ef1d",
+    "name": "Gunslinger",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 25,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f5ec4be21857c51d",
+    "name": "Hard to Kill",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ec3a0e892f3ace6a",
+    "name": "Hard to Subdue",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f2e7b92a3a517757",
+    "name": "Healing",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 30,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3006581c19d94e52",
+    "name": "Hermaphromorph",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a1551284fe91e790",
+    "name": "High Manual Dexterity",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d2fb98faa5ee5c79",
+    "name": "High Pain Threshold",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "54aab6bcd4f42c44",
+    "name": "Higher Purpose",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b46e9be458557233",
+    "name": "Hyperspectral Vision",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 25,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "46c5a34a6ca4661e",
+    "name": "Illuminated",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "99b0b805e358175b",
+    "name": "Improved G-Tolerance",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 to 25 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8d209804d3b8353a",
+    "name": "Indomitable",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a14750c6b604643e",
+    "name": "Infravision",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>0 or 10 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9093ff6d3a29e0e5",
+    "name": "Injury Tolerance",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "eb34d0b9d991c4a7",
+    "name": "Innate Attack",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e4eadc6ab49821df",
+    "name": "Insubstantiality",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 80,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "10520fe6c02f8d92",
+    "name": "Intuition",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "367b7f2434fce205",
+    "name": "Invisibility",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 40,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "5bf775e6f61b2beb",
+    "name": "Jumper",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 100,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "97adeb402039bda0",
+    "name": "Language Talent",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f23e93aec6733164",
+    "name": "Legal Enforcement Powers",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5, 10, or 15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9e36de5b08702b10",
+    "name": "Legal Immunity",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 to 20 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "05dce78930ab2b7e",
+    "name": "Less Sleep",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8afbe24586000a40",
+    "name": "Lifting ST",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 3,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>3 points per +1 ST</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b020e5a80bbe9e13",
+    "name": "Lightning Calculator",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 2,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>2 or 5 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c5ffab0775f0c58a",
+    "name": "Longevity",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 2,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2f320c2c26cc69a2",
+    "name": "Luck",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "aea715037b17522d",
+    "name": "Magery",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 10,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 points for Magery 0, +10 points/level</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e9801756c11b2bac",
+    "name": "Magic Resistance",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1b6ecacddb35e301",
+    "name": "Mana Damper",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 10,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a70d8bc76558c792",
+    "name": "Mana Enhancer",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 50,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b002737c3d0caee7",
+    "name": "Medium",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "fdcf1d195d42847e",
+    "name": "Metabolism Control",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3a0660d8180647dc",
+    "name": "Microscopic Vision",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "bad68427f4ec3555",
+    "name": "Mimicry",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4484aa77ae692ce4",
+    "name": "Mind Control",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 50,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "118454845f990817",
+    "name": "Mind Probe",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ce5e2f7de4f5251e",
+    "name": "Mind Reading",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 30,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7c279bb9d6cad7e4",
+    "name": "Mind Shield",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 4,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d0ac60ca9f39fcde",
+    "name": "Mindlink",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0dc5ff9c90df4d59",
+    "name": "Modular Abilities",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0900fbfd11e8d0cf",
+    "name": "Neutralize",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 50,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a82585b607d21976",
+    "name": "Nictitating Membrane",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 1,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "10309529f2b178ce",
+    "name": "Night Vision",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 1,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "33fb6a7272a58204",
+    "name": "Obscure",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b4b28c14695e0bbe",
+    "name": "Oracle",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d476a6d376a5a860",
+    "name": "Parabolic Hearing",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 4,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "bc4def6b6bb46492",
+    "name": "Patrons",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "050e7ea397fbceb3",
+    "name": "Payload",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 1,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "126bb60018a28563",
+    "name": "Penetrating Vision",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 10,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e878dfc9ec60e2e6",
+    "name": "Perfect Balance",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0db406553b859f7b",
+    "name": "Peripheral Vision",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b969fa06a60de8a5",
+    "name": "Permeation",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "159b5030affd53c2",
+    "name": "Plant Empathy",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "bc9e1a8e9d31c12e",
+    "name": "Possession",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 100,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1ac5979b3c932c2b",
+    "name": "Power Investiture",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 10,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "bfb9462559c2ed59",
+    "name": "Precognition",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 25,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0d84db3a7971b0da",
+    "name": "Pressure Support",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 to 15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b390ad66f86773af",
+    "name": "Protected Sense",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 points/sense</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e109124e3ab9bbed",
+    "name": "Psi Static",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 30,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "fe0ba5cd254d88f1",
+    "name": "Psychometry",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "412120bccbf503c9",
+    "name": "Puppet",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 or 10 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3b868bc7ee8cc55f",
+    "name": "Racial Memory",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>15 or 40 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6b8630ab6bd6db2e",
+    "name": "Radiation Tolerance",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f05612b340cb77be",
+    "name": "Rapid Healing",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 or 15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0000bf23fa45af7b",
+    "name": "Rapier Wit",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8cd4de7c5c58ebcb",
+    "name": "Reawakened",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b2cbcab2224ff72d",
+    "name": "Recovery",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "aa8c886023c4a898",
+    "name": "Reduced Consumption",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d3676c554d1e8782",
+    "name": "Regeneration",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9b8665b46b0092a1",
+    "name": "Regrowth",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 40,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7fed2d3aafabbd4c",
+    "name": "Resistant",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4184cdac96cb6cdc",
+    "name": "Scanning Sense",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ea874ecdda2ea307",
+    "name": "Sealed",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "69b92fe657ffaadd",
+    "name": "Security Clearance",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ca891df83154953e",
+    "name": "See Invisible",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7495327b28ce833d",
+    "name": "Sensitive Touch",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "540d2b1f19a62f57",
+    "name": "Serendipity",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 15,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1582c5ff654e8a1c",
+    "name": "Shadow Form",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 50,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9ed86e6591fca266",
+    "name": "Shapeshifting",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "08c9cc8b9e1d43d9",
+    "name": "Alternate Form",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ebb8689e5f04c39a",
+    "name": "Morph",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "507ada78651c540e",
+    "name": "Shrinking",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9b99026b1becc57d",
+    "name": "Signature Gear",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b6f2c535e277ba1b",
+    "name": "Silence",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "af775997a754fe92",
+    "name": "Single-Minded",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "25a564fc05875038",
+    "name": "Slippery",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f496d98fc047e869",
+    "name": "Snatcher",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 80,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1b88e4de0adb62dc",
+    "name": "Social Chameleon",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d3479f1d84c55222",
+    "name": "Social Regard",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 points per +1 reaction</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6bcaa91a4db8b62d",
+    "name": "Speak Underwater",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d91362fecd50eaa3",
+    "name": "Speak With Animals",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 25,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b6ce4b2777ffa67b",
+    "name": "Speak With Plants",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c68bf5aa0f4116c9",
+    "name": "Special Rapport",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1f02cea0f82a7d27",
+    "name": "Spines",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 1,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>1 or 3 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f1e4e3361c3ddc36",
+    "name": "Spirit Empathy",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7139d70b71002b05",
+    "name": "Stretching",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 6,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "592318cf59e7cd2c",
+    "name": "Striker",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5, 6, 7, or 8 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "179c1ca124004fb4",
+    "name": "Striking ST",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>5 points per +1 ST</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ff16c2f34024aaba",
+    "name": "Subsonic Hearing",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>0 or 5 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "35a21c646d0c7097",
+    "name": "Subsonic Speech",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>0 or 10 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1abe483cdddb0aaf",
+    "name": "Super Climbing",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 3,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ae9f648837e68d1d",
+    "name": "Super Jump",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 10,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "038a426372fea6ad",
+    "name": "Super Luck",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 100,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "64cf7d14623b7f47",
+    "name": "Supernatural Durability",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 150,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "af55a9cd07ccfae4",
+    "name": "Talent",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7c4149ef89c7f84b",
+    "name": "Teeth",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>0, 1, or 2 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "56543bbbdf064e91",
+    "name": "Telecommunication",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9b195ce1ead1b9ae",
+    "name": "Telekinesis",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7e3407d22088ef3e",
+    "name": "Telescopic Vision",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "cece555e30a93580",
+    "name": "Temperature Control",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3befda2450abe9cc",
+    "name": "Temperature Tolerance",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 1,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3fb25b287ad5ab2d",
+    "name": "Temporal Inertia",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4d2ae5715298a7a5",
+    "name": "Tenure",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0f5aa42f88c505e6",
+    "name": "Terrain Adaptation",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>0 or 5 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "45de893313418f8b",
+    "name": "Terror",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 30,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>30 points + 10 points per -1 to Fright Check</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "54f8ed29a4efb850",
+    "name": "Trained By A Master",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 30,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "09e0518a74c42e90",
+    "name": "True Faith",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "367182a3fd765252",
+    "name": "Tunneling",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 30,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>30 points + 5 points per point of Tunneling Move</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6aaa4213359c3b65",
+    "name": "Ultrahearing",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>0 or 5 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "697c39c1bd357190",
+    "name": "Ultrasonic Speech",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>0 or 10 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2d36d9d8e06eaac2",
+    "name": "Ultravision",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>0 or 10 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f5f1982c535d8e56",
+    "name": "Unaging",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "98034c7881c4c79d",
+    "name": "Unfazeable",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ae010196039bc33e",
+    "name": "Universal Digestion",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3ae3e140f49ab049",
+    "name": "Unkillable",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 50,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>50 to 150 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3a0dfc08adb2df23",
+    "name": "Unusual Background",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d7568145a162e209",
+    "name": "Vacuum Support",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "5ca4001046fd050f",
+    "name": "Vampiric Bite",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 30,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>30 points + 5 points per extra HP drained</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4d7ae47525d618fc",
+    "name": "Versatile",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "77c9d84b7ccb0255",
+    "name": "Vibration Sense",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "cbbddd0c8a183cb3",
+    "name": "Visualization",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a5f7b94472b6d617",
+    "name": "Voice",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d6a94f8ee803d587",
+    "name": "Walk on Air",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "216fcb706f78ef57",
+    "name": "Walk on Liquid",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8177dea29eec4922",
+    "name": "Warp",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 100,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "de449acf4a2ab973",
+    "name": "Weapon Master",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "58f4396931d7dfcf",
+    "name": "Wild Talent",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 20,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8e557773fda304b0",
+    "name": "Zeroed",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1ea3f4216c15cdad",
+    "name": "Absent-Mindedness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0830811b3091df2e",
+    "name": "Addiction",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a8f990e3f35697fd",
+    "name": "Alcoholism",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-15 or -20 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "71c092cd781dafb3",
+    "name": "Amnesia",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-10 or -25 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c9acc122d05066ec",
+    "name": "Bad Back",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-15 or -25 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6d983efe685d7262",
+    "name": "Bad Grip",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": -5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "85da66979960a448",
+    "name": "Bad Sight",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -25,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "80886882fed4ce51",
+    "name": "Bad Smell",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "27df0f0f7769f4ff",
+    "name": "Bad Temper",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7e6b397ca0958f2a",
+    "name": "Berserk",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "997c06ae97b2c898",
+    "name": "Bestial",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-10 or -15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f879183e237f05ac",
+    "name": "Blindness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -50,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "12eb5e9db6f56966",
+    "name": "Bloodlust",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "180701fe29799d7b",
+    "name": "Bully",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "67d0ef6eecde8cda",
+    "name": "Callous",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "11f8db990baa935e",
+    "name": "Cannot Learn",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -30,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ee200b4197134eb6",
+    "name": "Cannot Speak",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-15 or -25 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "524abc86c6da5746",
+    "name": "Charitable",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "37057700af703dba",
+    "name": "Chronic Depression",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ea468baa4288051c",
+    "name": "Chronic Pain",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "187a994269750098",
+    "name": "Chummy",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 or -10 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "be5f1bbafd857e65",
+    "name": "Clueless",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "782b275881c8b86d",
+    "name": "Code of Honor",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 to -15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9f18c3b6849d10b4",
+    "name": "Cold-Blooded",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 or -10 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7dd2237124ae8bed",
+    "name": "Colorblindness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a7e5780e0bcf12f7",
+    "name": "Combat Paralysis",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "444fcd0b5265ad89",
+    "name": "Compulsive Behavior",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 to -15 points*</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d8574ed83bbc1196",
+    "name": "Confused",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "eb09b4132f5d3fba",
+    "name": "Cowardice",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c9d39ae7eda293a3",
+    "name": "Curious",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3d6c6d14acce671e",
+    "name": "Cursed",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -75,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f67f05fe6477e14a",
+    "name": "Deafness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "074d7db0bcca3259",
+    "name": "Decreased Time Rate",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -100,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b3817f35cd79b734",
+    "name": "Delusions",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 to -15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2bd40a393f1f8e8f",
+    "name": "Dependency",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "58ddc87bb20fb168",
+    "name": "Dependents",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a3b4a58fa6b4143c",
+    "name": "Disciplines of Faith",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 to -15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "001dd24b79f30e5a",
+    "name": "Disturbing Voice",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "23dc58ea0e30e462",
+    "name": "Divine Curse",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b30eb9d0d1b69ef7",
+    "name": "Draining",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d1f991b60bf023d3",
+    "name": "Dread",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a34062d717d21a61",
+    "name": "Duty",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f69ab169cbbb147d",
+    "name": "Dyslexia",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "358dfd238d795613",
+    "name": "Easy to Kill",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": -2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "185cb60c928040da",
+    "name": "Easy to Read",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4e51503f0465a74b",
+    "name": "Electrical",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "65d2de1ab4bf3cbd",
+    "name": "Enemies",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1070eab069abf415",
+    "name": "Epilepsy",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -30,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2d2cb283f72db7ad",
+    "name": "Extra Sleep",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": -2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "08f04b821923493b",
+    "name": "Fanaticism",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e6a744bc014ea17c",
+    "name": "Fearfulness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": -2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8712898ceae06c04",
+    "name": "Flashbacks",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "46b71dcde0fc6faf",
+    "name": "Fragile",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "5f10051fcdf9c6ec",
+    "name": "Frightens Animals",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ec09023cc0987672",
+    "name": "G-Intolerance",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-10 or -20 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "50528babdee9e773",
+    "name": "Gluttony",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "22b17e5d22c33999",
+    "name": "Greed",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7c2a8812eb531035",
+    "name": "Guilt Complex",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4046640a408725e0",
+    "name": "Gullibility",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "5799cc9695e84e69",
+    "name": "Ham-Fisted",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 or -10 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "5cbae3ae290140e5",
+    "name": "Hard of Hearing",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "151c904e285f0e19",
+    "name": "Hemophilia",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -30,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c0320b5905659713",
+    "name": "Hidebound",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c6fa31d710721b88",
+    "name": "Honesty",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4d037d517570e922",
+    "name": "Horizontal",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8339f3265a5dc1d6",
+    "name": "Hunchback",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "64ec2d695dd3a05d",
+    "name": "Impulsiveness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "995bef864baa3d0b",
+    "name": "Increased Consumption",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": -10,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f6be78670476f48b",
+    "name": "Increased Life Support",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2062cbdf790b0958",
+    "name": "Incurious",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "bb11caefb9b92f2c",
+    "name": "Indecisive",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "01480540a8921ab1",
+    "name": "Infectious Attack",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "be9f0d0416ce8084",
+    "name": "Innumerate",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "bd6c75dd6ecbf869",
+    "name": "Insomniac",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-10 or -15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "015ba298df03689f",
+    "name": "Intolerance",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "88efc53c4a63342c",
+    "name": "Invertebrate",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0d4ccf5167198b2a",
+    "name": "Jealousy",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b30cc916aa1689d2",
+    "name": "Killjoy",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "35887a6a1a9fd77c",
+    "name": "Kleptomania",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "25b7e2fcb5281ba6",
+    "name": "Klutz",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 or -15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c7125a5203c6bf2c",
+    "name": "Lame",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-10 to -30 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "90bab054c632f9e2",
+    "name": "Laziness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "66e3c50de49668a5",
+    "name": "Lecherousness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "92966d71ca0d8ca4",
+    "name": "Lifebane",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "fae694e8a428ed97",
+    "name": "Light Sleeper",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d11d9870a41821d2",
+    "name": "Loner",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "36ffb2afe82ac330",
+    "name": "Low Empathy",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c23038a4e04744bf",
+    "name": "Low Pain Threshold",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "932946364c0f1d2f",
+    "name": "Low Self-Image",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6aa1d685cfd9d335",
+    "name": "Lunacy",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ef7390073845a338",
+    "name": "Magic Susceptibility",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": -3,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "10e51523f7cbb9d3",
+    "name": "Maintenance",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ff722795736be085",
+    "name": "Manic-Depressive",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "5e4c51c4ac290296",
+    "name": "Megalomania",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7b8b5826aa03044b",
+    "name": "Miserliness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "be974ae47c5ee04d",
+    "name": "Missing Digit",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -2,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-2 or -5 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "cc4750bfb50ce9c2",
+    "name": "Motion Sickness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "50df96e5cdedd66b",
+    "name": "Mundane Background",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "53cfcd88b4f49a67",
+    "name": "Neurological Disorder",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b08ba57de6e1b743",
+    "name": "Night Blindness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "cf27a2f6cfd5324b",
+    "name": "Nightmares",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7ce1ee28cd7e84d1",
+    "name": "No Depth Perception",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "5e3fdd7735ff3825",
+    "name": "No Fine Manipulators",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -30,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-30 or -50 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c0497f8ff9168d15",
+    "name": "No Legs",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "36467486bdf36443",
+    "name": "No Sense of Humor",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d07852e4e3d10eab",
+    "name": "No Sense of Smell/Taste",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ef642bcaa639ff8a",
+    "name": "Nocturnal",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "dd915ac723751e40",
+    "name": "Noisy",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": -2,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "59e34712c7845e3b",
+    "name": "Non-Iconographic",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "efa21721942c6481",
+    "name": "Numb",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "67a026944ec93c63",
+    "name": "Oblivious",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8f77b9db43ad30ac",
+    "name": "Obsession",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 or -10 points*</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9cfcfefb1661c167",
+    "name": "On the Edge",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "740545e16341a09d",
+    "name": "One Arm",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d2e4ff1c70261f24",
+    "name": "One Eye",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "49746a8a44735de4",
+    "name": "One Hand",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "79f85a949c7420cb",
+    "name": "Overconfidence",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4ea78151ae8e08ac",
+    "name": "Pacifism",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8744febc6b30b9b2",
+    "name": "Paranoia",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "146fcd234e2390fe",
+    "name": "Phantom Voices",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 to -15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1d6f0fc1a6d4c536",
+    "name": "Post-Combat Shakes",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ec52544d794abfa2",
+    "name": "Pyromania",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "12bef94636dada26",
+    "name": "Quadriplegic",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -80,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4f123ce75a3198a4",
+    "name": "Reprogrammable",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9f5af49fa85e6c45",
+    "name": "Restricted Diet",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-10 to -40 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "66f2de8c7be0c43c",
+    "name": "Restricted Vision",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-15 or -30 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7f96f437a53fa08d",
+    "name": "Revulsion",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 to -15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "52206037907a17a2",
+    "name": "Sadism",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0efde31ce5bc273f",
+    "name": "Secret",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 to -30 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "58d849060e564f6b",
+    "name": "Secret Identity",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8fb87f518d3b7d0e",
+    "name": "Self-Destruct",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "8da8f29e45ad9abe",
+    "name": "Selfish",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a007db33f59cd039",
+    "name": "Selfless",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4a885cc954227bb7",
+    "name": "Semi-Upright",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "73ead9ed1f8eed8e",
+    "name": "Sense of Duty",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -2,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-2 to -20 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "85cd9dcbb72cb67d",
+    "name": "Short Attention Span",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6d6e5ab8be1d94cd",
+    "name": "Short Lifespan",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": -10,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d555f7485774bc3c",
+    "name": "Shyness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5, -10, or -20 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "64d3974ee15da74a",
+    "name": "Slave Mentality",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -40,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1f04502650b22694",
+    "name": "Sleepwalker",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d7be2022dadf28d1",
+    "name": "Sleepy",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "abc69bb97f719cb7",
+    "name": "Slow Eater",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "382371c00bda0261",
+    "name": "Slow Healing",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": -5,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "c3c0bd086fc49db7",
+    "name": "Slow Riser",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7b4f0c6fdf8987d4",
+    "name": "Social Disease",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "fedc692ae8de5afb",
+    "name": "Social Stigma",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 to -20 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2f282ce89901cff4",
+    "name": "Space Sickness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3746adb32d6bbeb9",
+    "name": "Split Personality",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "65df745b33d97dce",
+    "name": "Squeamish",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "fe0f6a5beda1983c",
+    "name": "Stubbornness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1557ba4c1fdc0e23",
+    "name": "Stuttering",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4681c898ff551f58",
+    "name": "Supernatural Features",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a16e01dc7249558e",
+    "name": "Supersensitive",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1df9ba37a55331ad",
+    "name": "Susceptible",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b39956ff8490c122",
+    "name": "Terminally Ill",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -50,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-50, -75, or -100 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b4227a0f3f458f14",
+    "name": "Timesickness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "654a72c73047fa81",
+    "name": "Trademark",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 to -15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "de4122cb489f0df4",
+    "name": "Trickster",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "195fb0dab3dfa127",
+    "name": "Truthfulness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "2fa7efba4bf61b4d",
+    "name": "Uncontrollable Appetite",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ef833c20558f93ec",
+    "name": "Unfit",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 or -15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "36452691e467413e",
+    "name": "Unhealing",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -20,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-20 or -30 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "261f97e54db21497",
+    "name": "Unique",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "13cd0bf0da1027a3",
+    "name": "Unluckiness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b5d6ced7e4e31f0d",
+    "name": "Unusual Biochemistry",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4ecbcc5ef909355d",
+    "name": "Vow",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>-5 to -15 points</em>. The value here is its base cost.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "0958d55898b64ad1",
+    "name": "Vulnerability",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ad27ff5d1e9ab971",
+    "name": "Weak Bite",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -2,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "195c4c75a582d2ae",
+    "name": "Weakness",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": 0,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "<p>The book prices this trait as <em>Variable</em>. It has no fixed cost; set the points for your character.</p>",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "ec2673b4c72463ee",
+    "name": "Weirdness Magnet",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -15,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "9613b3fbe339a3d9",
+    "name": "Workaholic",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3375495af8ae1e0d",
+    "name": "Wounded",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -5,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6402d0157203da3d",
+    "name": "Xenophilia",
+    "type": "trait",
+    "system": {
+      "category": "disadvantage",
+      "points": -10,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  }
+]

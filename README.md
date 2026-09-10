@@ -65,6 +65,34 @@ build` alone is enough to pick up later changes.
 Other scripts: `npm run watch` for a rebuilding build, `npm run typecheck`,
 `npm run lint`, `npm run test:coverage`.
 
+### Compendia
+
+`packs-src/` holds the compendium contents as reviewable JSON, one folder per
+pack. `npm run build` validates it and compiles it to the LevelDB packs Foundry
+loads, then extracts them back out and fails if the document counts disagree.
+
+The JSON is committed rather than generated at build time, because it cannot be
+reproduced without the source books, which are not in this repository and cannot
+be. Regenerating it needs your own PDFs and Xpdf's `pdftotext` (the flags below
+are Xpdf's; poppler's `pdftotext` does not have `-simple` and lays the columns
+out differently):
+
+```bash
+pdftotext -raw -enc UTF-8 -f 36 -l 170 "GURPS 4E - Basic Set - Characters.pdf" traits-raw.txt
+node tools/parse-traits.mjs traits-raw.txt --write
+```
+
+```bash
+pdftotext -simple -f 168 -l 230 "GURPS 4E - Basic Set - Characters.pdf" skills.txt
+node tools/parse-skills.mjs skills.txt --write
+```
+
+Both parsers favour precision over recall and print every rejection with its
+reason; each writes a `.rejected.txt` beside its output (git-ignored) so the
+entries that did not survive can be inspected. Traits are read in `-raw` mode
+rather than `-simple` because the reflow glues the book's trait-category symbols
+onto the cost — see the comment at the top of `tools/parse-traits.mjs`.
+
 ## Requirements
 
 - Foundry VTT v14 (verified against 14.367)
@@ -80,3 +108,11 @@ and is not affiliated with or endorsed by Steve Jackson Games. GURPS Lite states
 that it may not be incorporated into another product for distribution, so this
 system is intended for personal use and is not published as a distributable
 product. Anyone using it needs their own copy of GURPS Lite.
+
+The compendia under `packs-src/` are derived from the GURPS Basic Set, which —
+unlike GURPS Lite — is a commercial product and is not free to redistribute.
+They hold trait and skill names with their point costs and statistics, not the
+books' descriptive text. This is a private repository for personal play by
+someone who owns the books, and it should stay that way: publishing it, or
+distributing the built packs, would need permission from Steve Jackson Games.
+Regenerate the packs from your own copies rather than redistributing these.
