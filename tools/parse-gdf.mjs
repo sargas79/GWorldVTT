@@ -427,7 +427,16 @@ const number = (value, fallback = 0) => {
  * sheet formulas -- has no home in the model and is reported.
  */
 function parseDamage(damage, damtype) {
-  const type = (damtype ?? "").trim();
+  // "cr ex [2d]" is a crushing explosion throwing 2d of fragmentation
+  // (GURPS Basic Set: Campaigns p. 414). The type, the blast and the
+  // fragments are three facts written in one column.
+  const blast = /^([a-z+-]+)\s+ex\s*(?:\[\s*(\d+d(?:[+-]\d+)?)\s*\])?$/i.exec(
+    (damtype ?? "").trim(),
+  );
+  const type = blast ? blast[1].trim() : (damtype ?? "").trim();
+  const explosive = Boolean(blast);
+  const fragmentation = blast?.[2] ?? "";
+
   if (!DAMAGE_TYPES.has(type)) return null;
 
   const text = (damage ?? "").trim();
@@ -439,6 +448,8 @@ function parseDamage(damage, damtype) {
         damageModifier: scaled[3] ? Number(`${scaled[2]}${scaled[3]}`) : 0,
         damageFormula: "",
         damageType: type,
+        explosive,
+        fragmentation,
       },
       usesWeaponSt: false,
     };
@@ -453,6 +464,8 @@ function parseDamage(damage, damtype) {
         damageModifier: ofWeapon[3] ? Number(`${ofWeapon[2]}${ofWeapon[3]}`) : 0,
         damageFormula: "",
         damageType: type,
+        explosive,
+        fragmentation,
       },
       usesWeaponSt: true,
     };
@@ -464,6 +477,8 @@ function parseDamage(damage, damtype) {
         damageModifier: 0,
         damageFormula: text.replace(/\s+/g, ""),
         damageType: type,
+        explosive,
+        fragmentation,
       },
       usesWeaponSt: false,
     };
@@ -586,10 +601,20 @@ function rangedMode(name, f, thrown) {
 
   const half = parseRange(f.get("rangehalfdam"));
   const max = parseRange(f.get("rangemax"));
-  if (!half || !max) return { error: `range "${f.get("rangehalfdam") ?? ""}/${f.get("rangemax") ?? ""}"` };
+
+  // How far a thrown weapon goes is a property of the thrower, not the
+  // weapon: the book reads it off the Throwing Distance table from ST and
+  // weight (p. 355), and GCA writes that as a formula over the character
+  // sheet. So a grenade with no usable range is not a broken record -- it is
+  // a weapon whose range this cannot know, and everything else about it is
+  // still worth having.
+  const unknownThrownRange = thrown && (!half || !max);
+  if (!unknownThrownRange && (!half || !max)) {
+    return { error: `range "${f.get("rangehalfdam") ?? ""}/${f.get("rangemax") ?? ""}"` };
+  }
   // A weapon whose half-damage range is a distance and whose maximum is a
   // multiple of ST would need two units in one pair of fields.
-  if (half.distance > 0 && half.stMultiple !== max.stMultiple) {
+  if (half && max && half.distance > 0 && half.stMultiple !== max.stMultiple) {
     return { error: "half and maximum range are in different units" };
   }
 
@@ -600,17 +625,32 @@ function rangedMode(name, f, thrown) {
 
   const { minSt, twoHanded } = parseMinSt(f.get("minst"));
 
+  // GCA omits skillused() on one grenade where its four siblings in the same
+  // table all state Throwing. Losing the weapon over a field the source simply
+  // forgot is worse than reading across from the entries beside it, and the
+  // substitution is reported.
+  let skill = parseSkillUsed(f.get("skillused"));
+  let assumedSkill = false;
+  if (!skill && thrown) {
+    skill = "Throwing";
+    assumedSkill = true;
+  }
+
   return {
+    ...(unknownThrownRange
+      ? { warning: "range comes from the Throwing Distance table, not the weapon" }
+      : {}),
+    ...(assumedSkill ? { skillWarning: "no skill stated; read as Throwing" } : {}),
     mode: {
       name,
-      skill: parseSkillUsed(f.get("skillused")),
+      skill,
       ...damage.fields,
       armorDivisor: divisor === undefined ? 1 : Number(divisor),
       accuracy: Number(acc[1]),
       scopeBonus: acc[2] ? Number(acc[2]) : 0,
-      halfDamageRange: half.distance,
-      maxRange: max.distance,
-      rangeIsStMultiple: max.stMultiple,
+      halfDamageRange: half?.distance ?? 0,
+      maxRange: max?.distance ?? 0,
+      rangeIsStMultiple: max?.stMultiple ?? false,
       rateOfFire: Math.max(1, number(f.get("rof"), 1)),
       shots: (f.get("shots") ?? "").trim(),
       minSt,
@@ -618,7 +658,7 @@ function rangedMode(name, f, thrown) {
       // A bow's damage and range come off the bow's own ST rather than the
       // archer's, and the table states that ST in the same column as the
       // minimum needed to use it.
-      weaponSt: max.ofWeapon || damage.usesWeaponSt ? minSt : null,
+      weaponSt: max?.ofWeapon || damage.usesWeaponSt ? minSt : null,
       thrown,
       bulk: Math.min(0, number(f.get("bulk"), 0)),
       recoil: Math.max(0, number(f.get("rcl"), 0)),
@@ -821,6 +861,8 @@ function parseEquipment(recs, reject, note) {
         : rangedMode(scope.name || "attack", scope.f, thrown);
 
       if (result.error) { reject(name, `${scope.name || "attack"}: ${result.error}`); continue; }
+      if (result.warning) note(`${name}: ${result.warning}`);
+      if (result.skillWarning) note(`${name}: ${result.skillWarning}`);
       usable = true;
       (isMelee ? meleeModes : rangedModes).push(result.mode);
     }

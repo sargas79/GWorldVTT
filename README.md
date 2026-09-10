@@ -50,6 +50,12 @@ Size Modifier, the weapon's Accuracy for an aimed shot, and the bonus for
 firing a burst. The card shows each as its own line rather than one opaque
 number.
 
+An explosion states how far its collateral damage reaches — twice its dice in
+yards — and how far its fragments are thrown. Applying it asks how far the
+victim stood from the blast: at zero they were struck directly and take the
+listed damage, and further out it is divided by three times the distance,
+resolved against their torso armour, with the attack's armour divisor dropped.
+
 A burst reports how many of its shots hit: one for the success itself, and one
 more for every full multiple of the weapon's Recoil the roll beat its target
 by, never more than were fired.
@@ -84,7 +90,7 @@ and applying the headline would stop a mace with the DR that stops a sword.
 | --- | --- |
 | GURPS Advantages & Disadvantages | 641 traits, each with its cost, level cap and the book's name for each level |
 | GURPS Skills | 630 skills with attribute, difficulty and defaults, and 35 techniques |
-| GURPS Equipment | 458 items — 153 armours, 18 shields (16 of which can be bashed with), and 287 pieces of gear of which 132 carry attack modes |
+| GURPS Equipment | 463 items — 153 armours, 18 shields (16 of which can be bashed with), and 292 pieces of gear of which 137 carry attack modes |
 
 A weapon that appears in both weapon tables is one item with both kinds of
 attack: a hatchet swings under Axe/Mace and throws under Thrown Weapon. Armour
@@ -99,11 +105,11 @@ book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
 
 ## What is not implemented
 
-- **Explosive and affliction damage.** The damage model holds dice and a
-  modifier, so it has no way to say "cr ex [3d]" or "HT-4 aff". Hand grenades,
-  incendiaries and a few beam weapons are therefore not in the compendium: they
-  parse cleanly and are rejected on the way out, listed by name in the
-  rejections file. Firearms, which have neither, are included.
+- **Affliction damage.** The damage model has no way to say "HT-4 aff", so a
+  few beam weapons and the linked mode of some grenades are rejected on the way
+  out, listed by name in the rejections file. So are attacks whose damage
+  carries a multiplier, such as "6dx10": the dice model holds dice and a
+  modifier and not a factor.
 - **Unarmed attacks and mounted charges.** A punch does damage that depends on
   whether the character knows Boxing or Karate, and a lance's depends on the
   mount's ST and Move. Those are recorded from the book's own table in

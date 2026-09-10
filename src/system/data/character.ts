@@ -76,6 +76,10 @@ export interface DerivedAttack {
   armorDivisor: number;
   /** False when the damage formula cannot be parsed, so the UI can omit the roll. */
   damageRollable: boolean;
+  /** An explosive attack, which also hurts everyone near what it struck. */
+  explosive: boolean;
+  /** Fragmentation thrown, as a dice formula. Blank when it throws none. */
+  fragmentation: string;
   /**
    * An unbalanced weapon cannot parry in a turn it has attacked in
    * (p. 269, the "U" in the Parry column).
@@ -501,6 +505,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           minSt: mode.minSt ?? null,
           unbalanced: Boolean(mode.unbalanced),
           isFencing: Boolean(mode.isFencing),
+          explosive: Boolean(mode.explosive),
+          fragmentation: mode.fragmentation ?? "",
         });
       });
 
@@ -536,6 +542,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           shots: mode.shots ?? "",
           unbalanced: false,
           isFencing: false,
+          explosive: Boolean(mode.explosive),
+          fragmentation: mode.fragmentation ?? "",
         });
       });
     }

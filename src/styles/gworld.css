@@ -797,6 +797,12 @@
   padding-top: 6px;
   border-top: 1px solid var(--color-neutral-300);
 }
+.gworld-chat .gc-distance {
+  flex: 0 0 auto;
+  width: 56px;
+  font: inherit;
+  font-size: 12px;
+}
 .gworld-chat .gc-location {
   flex: 1 1 auto;
   min-width: 0;

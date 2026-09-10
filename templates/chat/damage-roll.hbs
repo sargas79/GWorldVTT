@@ -21,6 +21,15 @@
     {{localize "GWORLD.Chat.InjuryUnarmored"}} <strong>{{injuryIfUnarmored}}</strong>
   </div>
 
+  {{#if explosive}}
+    <div class="gc-mods">
+      <span>{{localize "GWORLD.Chat.Blast" yards=blastRadius}}</span>
+      {{#if fragmentation}}
+        <span>{{localize "GWORLD.Chat.Fragments" dice=fragmentation yards=fragmentationRadius}}</span>
+      {{/if}}
+    </div>
+  {{/if}}
+
   <div class="gc-foot">
     {{#if hasArmorDivisor}}
       {{localize "GWORLD.Chat.SubtractDRDivisor" divisor=armorDivisor}}
