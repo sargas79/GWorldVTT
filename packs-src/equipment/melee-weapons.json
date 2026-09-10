@@ -1,0 +1,2432 @@
+[
+  {
+    "_id": "abbe9d7808705cf8",
+    "name": "Axe",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 50,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Axe/Mace",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 11,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "a5dc4f9172fd9519",
+    "name": "Hatchet",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "<p>Table notes: [1]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Axe/Mace",
+          "damageBase": "sw",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 8,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "51f6aa0aee8d69fb",
+    "name": "Throwing Axe",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "<p>Table notes: [1]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Axe/Mace",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 11,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "3adc6a05f872462c",
+    "name": "Mace",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 50,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "<p>Table notes: [1]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Axe/Mace",
+          "damageBase": "sw",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 12,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "899f61fc9abb2c1e",
+    "name": "Small Mace",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 35,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "<p>Table notes: [1]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Axe/Mace",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "5121fd4a97feefe4",
+    "name": "Pick",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 70,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "<p>Table notes: [2]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Axe/Mace",
+          "damageBase": "sw",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "3c55c5cb4ab4f5de",
+    "name": "Punch",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 0,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "<p>Table notes: [3]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Axe/Mace",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "85b6b7e941774930",
+    "name": "Brass Knuckles",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.25,
+      "cost": 10,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "<p>Table notes: [3]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Axe/Mace",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "8aa2ecdf50e28973",
+    "name": "Kick",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 0,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "<p>Table notes: [3, 4]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Axe/Mace",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C, 1",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "2592ed012b21cee0",
+    "name": "Kick w. Boots",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 0,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "<p>Table notes: [3, 4]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Axe/Mace",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C, 1",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "6f2617b5232354f9",
+    "name": "Blunt Teeth",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 0,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "<p>Table notes: [3]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Axe/Mace",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "6ddf6ec6ed491e73",
+    "name": "Fangs",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 0,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "<p>Table notes: [3]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Axe/Mace",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "6855c1018ab1545e",
+    "name": "Sharp Beak",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 0,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "<p>Table notes: [3]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Axe/Mace",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "pi+",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "31c35f3686262155",
+    "name": "Sharp Teeth",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 0,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "<p>Table notes: [3]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Axe/Mace",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "ee7cf01c529c4c68",
+    "name": "Blackjack or Sap",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 1,
+      "cost": 20,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "<p>Table notes: [3]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Axe/Mace",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 7,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "7d454a300f83694e",
+    "name": "Light Club",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 5,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Broadsword",
+          "damageBase": "sw",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Broadsword",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "9bcd0f8ec11531af",
+    "name": "Broadsword",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 500,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Broadsword",
+          "damageBase": "sw",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Broadsword",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "535dd6587c0b5a18",
+    "name": "Thrusting Broadsword",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 600,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Broadsword",
+          "damageBase": "sw",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Broadsword",
+          "damageBase": "thr",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "2ef39ebe915ae15f",
+    "name": "Bastard Sword",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 650,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing (Broadsword)",
+          "skill": "Broadsword",
+          "damageBase": "sw",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 11,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        },
+        {
+          "name": "thrust (Broadsword)",
+          "skill": "Broadsword",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 11,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        },
+        {
+          "name": "swing (Two-Handed Sword)",
+          "skill": "Two-Handed Sword",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Two-Handed Sword)",
+          "skill": "Two-Handed Sword",
+          "damageBase": "thr",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "f4351eab1f2f4741",
+    "name": "Katana",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 650,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing (Broadsword)",
+          "skill": "Broadsword",
+          "damageBase": "sw",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 11,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Broadsword)",
+          "skill": "Broadsword",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 11,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "swing (Two-Handed Sword)",
+          "skill": "Two-Handed Sword",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Two-Handed Sword)",
+          "skill": "Two-Handed Sword",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "f1a7caa68f351cbf",
+    "name": "Thrusting Bastard Sword",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 750,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing (Broadsword)",
+          "skill": "Broadsword",
+          "damageBase": "sw",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 11,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        },
+        {
+          "name": "thrust (Broadsword)",
+          "skill": "Broadsword",
+          "damageBase": "thr",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 11,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        },
+        {
+          "name": "swing (Two-Handed Sword)",
+          "skill": "Two-Handed Sword",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Two-Handed Sword)",
+          "skill": "Two-Handed Sword",
+          "damageBase": "thr",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "f00d907076e467dd",
+    "name": "Cavalry Saber",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 500,
+      "carried": true,
+      "equipped": false,
+      "tl": "4",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Broadsword",
+          "damageBase": "sw",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Broadsword",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "c93a3c9ee1d3445e",
+    "name": "Morningstar",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 6,
+      "cost": 80,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "<p>Table notes: [6]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Flail",
+          "damageBase": "sw",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": true,
+          "minSt": 12,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "f0807e487e08420e",
+    "name": "Nunchaku",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 20,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "<p>Table notes: [6]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Flail",
+          "damageBase": "sw",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": true,
+          "minSt": 7,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "c8f7f6fa18304974",
+    "name": "Force Sword",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 10000,
+      "carried": true,
+      "equipped": false,
+      "tl": "^",
+      "description": "<p>Table notes: [7]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "attack",
+          "skill": "Force Sword",
+          "damageBase": "fixed",
+          "damageModifier": 0,
+          "damageFormula": "8d",
+          "damageType": "burn",
+          "armorDivisor": 5,
+          "reach": "1, 2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 3,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "f0093fef2ac34e67",
+    "name": "Large Knife",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 1,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Knife",
+          "damageBase": "sw",
+          "damageModifier": -2,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "C, 1",
+          "parryModifier": -1,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 6,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Knife",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": -1,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 6,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "e7f5e882715d9145",
+    "name": "Small Knife",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.5,
+      "cost": 30,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Knife",
+          "damageBase": "sw",
+          "damageModifier": -3,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "C, 1",
+          "parryModifier": -1,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 5,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Knife",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": -1,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 5,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "43c591f73d1fa88c",
+    "name": "Dagger",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.25,
+      "cost": 20,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "<p>Table notes: [1]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Knife",
+          "damageBase": "thr",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "C",
+          "parryModifier": -1,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 5,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "b02b85c7b2b09eb7",
+    "name": "Kusari",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 70,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "<p>Table notes: [6]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Kusari",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1-4*",
+          "parryModifier": -2,
+          "canParry": true,
+          "isFlail": true,
+          "minSt": 11,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "7a6bc4517a04044e",
+    "name": "Lance",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 6,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "<p>Table notes: [9]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Lance",
+          "damageBase": "thr",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "4",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": 12,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "d429c40db713aa04",
+    "name": "Glaive",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 8,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "<p>Table notes: ‡</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Polearm",
+          "damageBase": "sw",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "2, 3*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 11,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        },
+        {
+          "name": "thrust",
+          "skill": "Polearm",
+          "damageBase": "thr",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1-3*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 11,
+          "twoHanded": true,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "fc9205d1afec3efa",
+    "name": "Naginata",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 6,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing (Polearm)",
+          "skill": "Polearm",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1, 2*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 9,
+          "twoHanded": true,
+          "unreadyAfterAttack": true
+        },
+        {
+          "name": "thrust (Polearm)",
+          "skill": "Polearm",
+          "damageBase": "thr",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 9,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "swing (Staff)",
+          "skill": "Staff",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 9,
+          "twoHanded": true,
+          "unreadyAfterAttack": true
+        },
+        {
+          "name": "thrust (Staff)",
+          "skill": "Staff",
+          "damageBase": "thr",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 9,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "swing (Two-Handed Sword)",
+          "skill": "Two-Handed Sword",
+          "damageBase": "sw",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 9,
+          "twoHanded": true,
+          "unreadyAfterAttack": true
+        },
+        {
+          "name": "thrust (Two-Handed Sword)",
+          "skill": "Two-Handed Sword",
+          "damageBase": "thr",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 9,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "f2e1bef778b7d5aa",
+    "name": "Halberd",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 12,
+      "cost": 150,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "<p>Table notes: ‡</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing (Polearm)",
+          "skill": "Polearm",
+          "damageBase": "sw",
+          "damageModifier": 5,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "2, 3*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 13,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        },
+        {
+          "name": "swing (Polearm)",
+          "skill": "Polearm",
+          "damageBase": "sw",
+          "damageModifier": 4,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "2, 3*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 13,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        },
+        {
+          "name": "thrust",
+          "skill": "Polearm",
+          "damageBase": "thr",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1-3*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 12,
+          "twoHanded": true,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "52c9460535947e1c",
+    "name": "Poleaxe",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 10,
+      "cost": 120,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "<p>Table notes: ‡</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing (Polearm)",
+          "skill": "Polearm",
+          "damageBase": "sw",
+          "damageModifier": 4,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "2, 3*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 12,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        },
+        {
+          "name": "swing (Polearm)",
+          "skill": "Polearm",
+          "damageBase": "sw",
+          "damageModifier": 4,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "2, 3*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 12,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "08ecb1bea434e825",
+    "name": "Rapier",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 2.75,
+      "cost": 500,
+      "carried": true,
+      "equipped": false,
+      "tl": "4",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Rapier",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 9,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "c50e20b6ea84b462",
+    "name": "Saber",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 700,
+      "carried": true,
+      "equipped": false,
+      "tl": "4",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Saber",
+          "damageBase": "sw",
+          "damageModifier": -1,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 8,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Saber",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 8,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "f7178b777fcf73ea",
+    "name": "Shield Bash",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": null,
+      "cost": 0,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Shield",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "2917751ee974349e",
+    "name": "Shield Bash w. Spike",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 20,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Shield",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": false,
+          "isFlail": false,
+          "minSt": null,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "e3048ec18c247c50",
+    "name": "Baton",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 1,
+      "cost": 20,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Shortsword",
+          "damageBase": "sw",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 6,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Shortsword",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 6,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "c0069100b189c9a3",
+    "name": "Shortsword",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 400,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Shortsword",
+          "damageBase": "sw",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 8,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Shortsword",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 8,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "be13c3a503469bca",
+    "name": "Cutlass",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 300,
+      "carried": true,
+      "equipped": false,
+      "tl": "4",
+      "description": "<p>Table notes: [10]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Shortsword",
+          "damageBase": "sw",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 8,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Shortsword",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 8,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "a46513fb3fa539de",
+    "name": "Cattle Prod",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 50,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "attack",
+          "skill": "Shortsword",
+          "damageBase": "fixed",
+          "damageModifier": -3,
+          "damageFormula": "1d-3",
+          "damageType": "burn",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 3,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "cd0c4cb0a7a4958a",
+    "name": "Short Staff",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 1,
+      "cost": 20,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Smallsword",
+          "damageBase": "sw",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 6,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Smallsword",
+          "damageBase": "thr",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 6,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "0ca19f2260e3bb57",
+    "name": "Smallsword",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 1.5,
+      "cost": 400,
+      "carried": true,
+      "equipped": false,
+      "tl": "4",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Smallsword",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 5,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "9a6b7230ff819f07",
+    "name": "Spear",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "<p>Table notes: [1]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Spear",
+          "damageBase": "thr",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 9,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "ee079314a487dfe9",
+    "name": "Javelin",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 30,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "<p>Table notes: [1]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Spear",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 6,
+          "twoHanded": false,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "74c8e6fa6fff7bbe",
+    "name": "Long Spear",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "thrust",
+          "skill": "Spear",
+          "damageBase": "thr",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "2, 3*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 10,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "b78ba38f4b0d34cd",
+    "name": "Quarterstaff",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 10,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing (Staff)",
+          "skill": "Staff",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 2,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 7,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Staff)",
+          "skill": "Staff",
+          "damageBase": "thr",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 2,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 7,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "swing (Two-Handed Sword)",
+          "skill": "Two-Handed Sword",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 9,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust (Two-Handed Sword)",
+          "skill": "Two-Handed Sword",
+          "damageBase": "thr",
+          "damageModifier": 1,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 9,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "28b275d121ad2215",
+    "name": "Maul",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 12,
+      "cost": 80,
+      "carried": true,
+      "equipped": false,
+      "tl": "0",
+      "description": "<p>Table notes: ‡</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Two-Handed Axe/Mace",
+          "damageBase": "sw",
+          "damageModifier": 4,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1, 2*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 13,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "86999776e47cc5c6",
+    "name": "Great Axe",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 8,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "<p>Table notes: ‡</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Two-Handed Axe/Mace",
+          "damageBase": "sw",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1, 2*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 12,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "4635762defa4bd93",
+    "name": "Scythe",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 5,
+      "cost": 15,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "description": "<p>Table notes: ‡</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing (Two-Handed Axe/Mace)",
+          "skill": "Two-Handed Axe/Mace",
+          "damageBase": "sw",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 11,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        },
+        {
+          "name": "swing (Two-Handed Axe/Mace)",
+          "skill": "Two-Handed Axe/Mace",
+          "damageBase": "sw",
+          "damageModifier": 0,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 11,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "da2554ee398465d8",
+    "name": "Warhammer",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 7,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "<p>Table notes: ‡             [2]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Two-Handed Axe/Mace",
+          "damageBase": "sw",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "1, 2*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 12,
+          "twoHanded": false,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "37ddc9ab3b8e4bf4",
+    "name": "Flail",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 8,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "description": "<p>Table notes: [6]</p>",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Two-Handed Flail",
+          "damageBase": "sw",
+          "damageModifier": 4,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "1, 2*",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": true,
+          "minSt": 13,
+          "twoHanded": true,
+          "unreadyAfterAttack": true
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "6637de40f3fabb06",
+    "name": "Greatsword",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 7,
+      "cost": 800,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Two-Handed Sword",
+          "damageBase": "sw",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 12,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Two-Handed Sword",
+          "damageBase": "thr",
+          "damageModifier": 2,
+          "damageFormula": "",
+          "damageType": "cr",
+          "armorDivisor": 1,
+          "reach": "2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 12,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "f7e10a337764f981",
+    "name": "Thrusting Greatsword",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 7,
+      "cost": 900,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "description": "",
+      "reference": "Basic Set: Characters",
+      "meleeModes": [
+        {
+          "name": "swing",
+          "skill": "Two-Handed Sword",
+          "damageBase": "sw",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "cut",
+          "armorDivisor": 1,
+          "reach": "1, 2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 12,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        },
+        {
+          "name": "thrust",
+          "skill": "Two-Handed Sword",
+          "damageBase": "thr",
+          "damageModifier": 3,
+          "damageFormula": "",
+          "damageType": "imp",
+          "armorDivisor": 1,
+          "reach": "2",
+          "parryModifier": 0,
+          "canParry": true,
+          "isFlail": false,
+          "minSt": 12,
+          "twoHanded": true,
+          "unreadyAfterAttack": false
+        }
+      ],
+      "rangedModes": []
+    }
+  }
+]
