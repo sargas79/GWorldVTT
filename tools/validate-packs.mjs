@@ -119,6 +119,28 @@ function validateItem(entry, file) {
     for (const loc of sys.locations ?? []) {
       check(HIT_LOCATIONS.has(loc), file, name, `unknown hit location "${loc}"`);
     }
+
+    // Split DR is only meaningful as a pair: a second figure with nothing saying
+    // when it applies would silently never be used, and a list of damage types
+    // with no second figure would promise protection that does not exist.
+    const split = sys.drSplit ?? null;
+    const against = sys.drSplitAppliesTo ?? [];
+    check(
+      (split === null) === (against.length === 0),
+      file, name, "split DR needs both a second figure and the damage it applies to",
+    );
+    if (split !== null) {
+      check(
+        Number.isInteger(split) && split >= 0 && split <= sys.dr,
+        file, name, `split DR ${split} must be a non-negative integer no greater than ${sys.dr}`,
+      );
+      // Both tables agree that crushing takes the lower figure, so a split that
+      // omits it has been read from the wrong footnote.
+      check(against.includes("cr"), file, name, "split DR must apply to crushing");
+    }
+    for (const t of against) {
+      check(DAMAGE_TYPES.has(t), file, name, `unknown damage type "${t}" in split DR`);
+    }
   }
 
   if (entry.type === "shield") {

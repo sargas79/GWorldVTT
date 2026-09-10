@@ -86,6 +86,11 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       damageTypes: keyed("DamageType", [
         "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox",
       ]),
+      // A plain list, for the checkbox group that says which damage a split DR
+      // applies to. The keyed map above is for selects, whose values must be keys.
+      damageTypeList: [
+        "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox",
+      ],
       hitLocations: [
         "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",
       ],
@@ -96,20 +101,54 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   }
 
   /**
-   * Armour coverage is a set of checkboxes sharing one name, and a form submits
-   * nothing at all for a checkbox group with none ticked. Left alone, unticking
-   * the last location would leave the previous coverage in place, so the
-   * documented whole-body state could never be reached again. An empty array is
-   * supplied explicitly when the group is present and empty.
+   * Fields the sheet edits as a set of checkboxes sharing one name. A form
+   * submits nothing at all for such a group when none of its boxes are ticked,
+   * so without this, unticking the last one leaves the previous list in place:
+   * whole-body coverage could never be reached again, and a split DR could never
+   * be cleared. An empty array is supplied for each group the form actually
+   * carries.
    */
+  static readonly CHECKBOX_GROUPS = ["system.locations", "system.drSplitAppliesTo"];
+
   override _processFormData(event: Event | null, form: HTMLFormElement, formData: object): object {
     const data = super._processFormData(event, form, formData) as Record<string, any>;
-    if (this.item.type !== "armor") return data;
 
-    const hasGroup = form.querySelector('input[type="checkbox"][name="system.locations"]');
-    if (hasGroup && data.system?.locations === undefined) {
-      data.system = { ...(data.system ?? {}), locations: [] };
+    for (const path of GWorldItemSheet.CHECKBOX_GROUPS) {
+      if (!form.querySelector(`input[type="checkbox"][name="${path}"]`)) continue;
+      const key = path.slice("system.".length);
+      if (data.system?.[key] === undefined) {
+        data.system = { ...(data.system ?? {}), [key]: [] };
+      }
     }
+
+    // A split DR is only valid as a pair, and the sheet submits on every change,
+    // so a GM filling it in one field at a time would submit an invalid halfway
+    // state and be refused before they could finish. The halves are completed
+    // here instead: giving a second DR with nothing ticked means crushing, which
+    // both armour tables agree on and is the only choice that is always right;
+    // clearing the second DR clears what it applied to.
+    if (this.item.type === "armor" && data.system) {
+      // Whether the form carried a field at all, rather than what it carried.
+      // An emptied number input submits null, and treating that as "absent" and
+      // falling back to the stored value would make an existing split
+      // impossible to remove.
+      const submitted = (key: string) => Object.hasOwn(data.system, key);
+
+      const split = submitted("drSplit")
+        ? (data.system.drSplit ?? null)
+        : (this.item.system.drSplit ?? null);
+      const against = submitted("drSplitAppliesTo")
+        ? (data.system.drSplitAppliesTo ?? [])
+        : (this.item.system.drSplitAppliesTo ?? []);
+
+      if (split !== null && against.length === 0) {
+        data.system.drSplitAppliesTo = ["cr"];
+      } else if (split === null && against.length > 0) {
+        data.system.drSplit = null;
+        data.system.drSplitAppliesTo = [];
+      }
+    }
+
     return data;
   }
 

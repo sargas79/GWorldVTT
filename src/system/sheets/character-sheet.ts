@@ -118,12 +118,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         secrets: actor.isOwner,
       });
 
+    // The header carries DR on every tab, so it has to say when that figure is
+    // not the whole story: a ballistic vest stopping 12 from a bullet and 5 from
+    // a club must not read as a flat 12 wherever the GM happens to be looking.
+    const torso = (derived.hitLocations ?? []).find((l: any) => l.key === "torso");
+
     return {
       ...context,
       actor,
       system,
       derived,
       items,
+      torsoDr: torso ?? null,
       editable: this.isEditable,
       limited: actor.limited,
       isOwner: actor.isOwner,

@@ -34,7 +34,11 @@ export type CripplingKind = "none" | "limb" | "extremity";
  * only the multiplier would armor the skull against poison.
  */
 export function locationDrAgainst(location: HitLocation, type: DamageType): number {
-  if (type === "tox") return 0;
+  // Toxic slips past natural armour, as it slips past the skull multiplier.
+  // Fatigue ignores the location entirely -- computeInjury drops the location
+  // before it ever asks for this -- so the answer is stated here as well, or
+  // anything else reading DR per location would credit a skull with stopping it.
+  if (type === "tox" || type === "fat") return 0;
   return HIT_LOCATIONS[location].extraDr;
 }
 

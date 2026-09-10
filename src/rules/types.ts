@@ -23,18 +23,21 @@ export type SkillAttribute = Attribute | "Will" | "Per";
  * Damage type abbreviations (GURPS Basic Set: Campaigns p. 379).
  * Wounding modifiers are applied per {@link WOUNDING_MODIFIERS}.
  */
-export type DamageType =
-  | "burn"
-  | "cor"
-  | "cr"
-  | "cut"
-  | "fat"
-  | "imp"
-  | "pi-"
-  | "pi"
-  | "pi+"
-  | "pi++"
-  | "tox";
+export const DAMAGE_TYPES = [
+  "burn",
+  "cor",
+  "cr",
+  "cut",
+  "fat",
+  "imp",
+  "pi-",
+  "pi",
+  "pi+",
+  "pi++",
+  "tox",
+] as const;
+
+export type DamageType = (typeof DAMAGE_TYPES)[number];
 
 /** Body postures (GURPS Lite p. 25, Posture Table). */
 export type Posture = "standing" | "crouching" | "kneeling" | "crawling" | "sitting" | "lying";

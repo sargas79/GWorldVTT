@@ -63,6 +63,16 @@
         {{#if derived.armorName}}{{derived.armorName}}{{else}}{{localize "GWORLD.Item.NoArmor"}}{{/if}}
         {{#unless derived.shieldName}}, {{localize "GWORLD.Item.NoShield"}}{{/unless}}
       </span>
+      {{#if torsoDr}}
+        <span class="wmode">
+          {{localize "GWORLD.Armor.DRAbbr"}} {{torsoDr.dr}}
+          {{~#if torsoDr.splits}}
+            {{~#each torsoDr.exceptions as |ex|}} / {{ex.dr}} {{localize "GWORLD.Armor.Versus"}}
+              {{~#each ex.types as |t|}} {{localize (concat "GWORLD.DamageType." t)}}{{#unless @last}},{{/unless}}{{/each}}
+            {{~/each}}
+          {{~/if}}
+        </span>
+      {{/if}}
     </div>
   </div>
 

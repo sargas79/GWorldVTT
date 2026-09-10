@@ -362,7 +362,12 @@
     },
     "Armor": {
       "DR": "Damage Resistance",
-      "LocationsHint": "Locations covered. Leave all unticked for whole-body coverage."
+      "LocationsHint": "Locations covered. Leave all unticked for whole-body coverage.",
+      "SplitHint": "Armour written “4/2” stops one kind of attack better than another. Leave the second DR blank unless it does.",
+      "SplitDR": "Split DR",
+      "SplitValue": "Second DR",
+      "Versus": "vs",
+      "DRAbbr": "DR"
     },
     "Shield": {
       "DB": "Defense Bonus"

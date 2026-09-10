@@ -11,6 +11,8 @@
       "equipped": false,
       "tl": "0",
       "dr": 1,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "groin"
       ],
@@ -30,6 +32,8 @@
       "equipped": false,
       "tl": "0",
       "dr": 1,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals"
@@ -50,6 +54,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals"
@@ -70,6 +76,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals",
@@ -91,6 +99,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 1,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals",
@@ -112,6 +122,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals",
@@ -133,6 +145,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 1,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "arm",
         "torso",
@@ -154,6 +168,8 @@
       "equipped": false,
       "tl": "2",
       "dr": 3,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals"
@@ -174,6 +190,57 @@
       "equipped": false,
       "tl": "2",
       "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "torso",
+        "vitals"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "91dd4c9efc3d9fa9",
+    "name": "Mail Hauberk",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 25,
+      "cost": 230,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d2fd27a83a71a39a",
+    "name": "Mail Shirt",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 16,
+      "cost": 150,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
       "locations": [
         "torso",
         "vitals"
@@ -194,6 +261,33 @@
       "equipped": false,
       "tl": "2",
       "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "e59d831d6f40f98a",
+    "name": "Double Mail Hauberk",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 44,
+      "cost": 520,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 5,
+      "drSplit": 3,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
       "locations": [
         "torso",
         "vitals",
@@ -215,6 +309,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 7,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals",
@@ -236,6 +332,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals"
@@ -256,6 +354,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 6,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals",
@@ -277,6 +377,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals",
@@ -298,6 +400,8 @@
       "equipped": false,
       "tl": "4",
       "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals",
@@ -321,6 +425,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 3,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "arm"
       ],
@@ -340,6 +446,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 3,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "leg"
       ],
@@ -359,6 +467,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 1,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "arm"
       ],
@@ -378,6 +488,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "leg"
       ],
@@ -397,6 +509,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "arm"
       ],
@@ -416,6 +530,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 1,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "leg"
       ],
@@ -435,9 +551,81 @@
       "equipped": false,
       "tl": "1",
       "dr": 1,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "leg",
         "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3f4da8f2939239d6",
+    "name": "Studded Leather Skirt",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "1",
+      "dr": 3,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
+      "locations": [
+        "groin",
+        "leg"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f4bcfd282ba34354",
+    "name": "Mail Leggings",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 110,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
+      "locations": [
+        "leg"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7309c0a11044043e",
+    "name": "Mail Sleeves",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 9,
+      "cost": 70,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
+      "locations": [
+        "arm"
       ],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -455,6 +643,8 @@
       "equipped": false,
       "tl": "2",
       "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "leg"
       ],
@@ -474,6 +664,8 @@
       "equipped": false,
       "tl": "2",
       "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "arm"
       ],
@@ -493,6 +685,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 7,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "arm"
       ],
@@ -512,6 +706,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 7,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "leg"
       ],
@@ -531,6 +727,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 6,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "arm"
       ],
@@ -550,6 +748,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 6,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "leg"
       ],
@@ -569,6 +769,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 3,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "skull",
         "face"
@@ -589,6 +791,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 3,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "skull"
       ],
@@ -608,6 +812,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 1,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "skull"
       ],
@@ -627,6 +833,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 1,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "skull"
       ],
@@ -646,6 +854,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "skull",
         "face"
@@ -666,9 +876,35 @@
       "equipped": false,
       "tl": "2",
       "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "skull",
         "face"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "6c0f34da812027dd",
+    "name": "Mail Coif",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 4,
+      "cost": 55,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
+      "locations": [
+        "skull",
+        "neck"
       ],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -686,6 +922,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 6,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "skull",
         "face"
@@ -706,6 +944,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "face"
       ],
@@ -725,6 +965,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 7,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "skull",
         "face",
@@ -746,6 +988,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "skull"
       ],
@@ -765,6 +1009,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 1,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "hand"
       ],
@@ -784,6 +1030,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "hand"
       ],
@@ -803,6 +1051,8 @@
       "equipped": false,
       "tl": "2",
       "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "hand"
       ],
@@ -822,6 +1072,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "hand"
       ],
@@ -841,6 +1093,8 @@
       "equipped": false,
       "tl": "0",
       "dr": 0,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "foot"
       ],
@@ -860,6 +1114,8 @@
       "equipped": false,
       "tl": "1",
       "dr": 1,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "foot"
       ],
@@ -879,6 +1135,8 @@
       "equipped": false,
       "tl": "2",
       "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "foot"
       ],
@@ -898,6 +1156,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "foot"
       ],
@@ -917,9 +1177,242 @@
       "equipped": false,
       "tl": "6",
       "dr": 7,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a073b54440ac5007",
+    "name": "Frag Vest",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 9,
+      "cost": 350,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "dr": 5,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "1d6543d2a7332c50",
+    "name": "Ballistic Vest",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 2,
+      "cost": 400,
+      "carried": true,
+      "equipped": false,
+      "tl": "8",
+      "dr": 8,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "7d1827983ae8c3d7",
+    "name": "Tactical Vest",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 9,
+      "cost": 900,
+      "carried": true,
+      "equipped": false,
+      "tl": "8",
+      "dr": 12,
+      "drSplit": 5,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "80280cde1a31333a",
+    "name": "Ballistic Suit",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 6,
+      "cost": 1000,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "dr": 12,
+      "drSplit": 4,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin",
+        "arm",
+        "leg"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f28495c314720df0",
+    "name": "Tactical Suit",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 3000,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "dr": 20,
+      "drSplit": 10,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "a9a4b9151ed2d4c4",
+    "name": "Reinforced Boots",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 75,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "dr": 5,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "foot"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "40f4bd49ce7307f7",
+    "name": "Assault Boots",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 3,
+      "cost": 150,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "dr": 12,
+      "drSplit": 6,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "foot"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "f606c4c7b0b08775",
+    "name": "Ballistic Gloves",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 0,
+      "cost": 30,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "dr": 8,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [
+        "hand"
       ],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -937,6 +1430,8 @@
       "equipped": false,
       "tl": "6",
       "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "eye",
         "face"
@@ -957,6 +1452,8 @@
       "equipped": false,
       "tl": "6",
       "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "skull"
       ],
@@ -976,6 +1473,8 @@
       "equipped": false,
       "tl": "7",
       "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "skull"
       ],
@@ -995,6 +1494,8 @@
       "equipped": false,
       "tl": "8",
       "dr": 12,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "skull"
       ],
@@ -1014,6 +1515,8 @@
       "equipped": false,
       "tl": "7",
       "dr": 1,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -1031,6 +1534,86 @@
       "equipped": false,
       "tl": "7",
       "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "590ddebe44dae8c8",
+    "name": "Battlesuit",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 150,
+      "cost": 80000,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "dr": 70,
+      "drSplit": 50,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d0f95590c71f9ce5",
+    "name": "Combat Hardsuit",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 30,
+      "cost": 10000,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "dr": 50,
+      "drSplit": 30,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
+      "locations": [],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "3b5f6375ef62acc2",
+    "name": "Space Armor",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 45,
+      "cost": 20000,
+      "carried": true,
+      "equipped": false,
+      "tl": "9",
+      "dr": 50,
+      "drSplit": 30,
+      "drSplitAppliesTo": [
+        "cr",
+        "imp",
+        "burn",
+        "tox",
+        "cor",
+        "fat"
+      ],
       "locations": [],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -1048,6 +1631,8 @@
       "equipped": false,
       "tl": "9",
       "dr": 6,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [],
       "description": "",
       "reference": "Basic Set: Characters"
@@ -1065,6 +1650,31 @@
       "equipped": false,
       "tl": "1",
       "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "face"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "4e58d35f491e4d03",
+    "name": "Barding: Mail (face)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 7,
+      "cost": 60,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
       "locations": [
         "face"
       ],
@@ -1084,6 +1694,8 @@
       "equipped": false,
       "tl": "2",
       "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "face"
       ],
@@ -1103,6 +1715,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "face"
       ],
@@ -1122,6 +1736,32 @@
       "equipped": false,
       "tl": "2",
       "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "neck",
+        "skull"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "d83e0e1f21b82d29",
+    "name": "Barding: Mail (neck, skull)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 15,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
       "locations": [
         "neck",
         "skull"
@@ -1142,6 +1782,8 @@
       "equipped": false,
       "tl": "2",
       "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "neck",
         "skull"
@@ -1162,6 +1804,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "neck",
         "skull"
@@ -1182,6 +1826,32 @@
       "equipped": false,
       "tl": "1",
       "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "torso",
+        "vitals"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "61f9b0207f3f58fe",
+    "name": "Barding: Mail (torso)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 20,
+      "cost": 440,
+      "carried": true,
+      "equipped": false,
+      "tl": "2",
+      "dr": 4,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
       "locations": [
         "torso",
         "vitals"
@@ -1202,6 +1872,8 @@
       "equipped": false,
       "tl": "2",
       "dr": 4,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals"
@@ -1222,6 +1894,33 @@
       "equipped": false,
       "tl": "2",
       "dr": 2,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
+      "locations": [
+        "torso",
+        "vitals",
+        "groin"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters"
+    }
+  },
+  {
+    "_id": "b52532c6d705a645",
+    "name": "Barding: Mail (torso, groin)",
+    "type": "armor",
+    "system": {
+      "quantity": 1,
+      "weight": 59,
+      "cost": 670,
+      "carried": true,
+      "equipped": false,
+      "tl": "3",
+      "dr": 4,
+      "drSplit": 2,
+      "drSplitAppliesTo": [
+        "cr"
+      ],
       "locations": [
         "torso",
         "vitals",
@@ -1243,6 +1942,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "torso",
         "vitals",
@@ -1264,6 +1965,8 @@
       "equipped": false,
       "tl": "3",
       "dr": 5,
+      "drSplit": null,
+      "drSplitAppliesTo": [],
       "locations": [
         "leg"
       ],

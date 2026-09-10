@@ -22,6 +22,11 @@ declare global {
       class TypeDataModel extends DataModel {
         prepareBaseData(): void;
         prepareDerivedData(): void;
+        /**
+         * Checks a document as a whole, after each field has validated itself.
+         * The place for rules that relate two fields to each other.
+         */
+        static validateJoint(data: Record<string, unknown>): void;
       }
     }
 

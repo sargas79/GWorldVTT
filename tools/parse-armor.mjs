@@ -6,13 +6,13 @@
  *
  *     TL  Armor  Location  DR  Cost  Weight  LC  Notes
  *
- * Rows whose DR is split -- "4/2*" for mail -- are reported rather than written.
- * The armour data model holds one DR, and the book gives the split two different
- * meanings: the low-tech table's footnote says to use the lower DR against
- * crushing, while the high- and ultra-tech table says to use the higher against
- * piercing and cutting and the lower against everything else. Storing the higher
- * would overstate a mail hauberk against a mace, and storing the lower would
- * understate it against a sword, so neither number is safe on its own.
+ * Armour written "4/2" carries both numbers. Which damage the lower one applies
+ * to depends on the table: the low-tech and barding footnote says "use the lower
+ * DR against crushing attacks", while the high- and ultra-tech one says to use
+ * the higher against piercing and cutting and the lower against everything else.
+ * The two agree wherever they overlap and differ only on the types the low-tech
+ * note does not name, so the applicable types are recorded with each piece
+ * rather than inferred later from a flag.
  *
  * Usage: node tools/parse-armor.mjs <table-text> [--write]
  */
@@ -20,7 +20,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -43,6 +43,19 @@ const ROW = new RegExp(
 
 /** The barding table repeats names the human tables use, for a different wearer. */
 const BARDING_TABLE = /^Horse Armor \(Barding\) Table$/;
+
+/** Where the high- and ultra-tech table begins, which changes what a split means. */
+const HIGH_TECH_TABLE = /^High- and Ultra-Tech Armor Table$/;
+
+/**
+ * The damage the lower DR applies to. This must match SPLIT_AGAINST in
+ * `src/rules/armor.ts`, which is what resolves DR at play time; a comment saying
+ * so would not have stopped the two drifting, so a test compares them.
+ */
+export const SPLIT_AGAINST = {
+  lowTech: ["cr"],
+  highTech: ["cr", "imp", "burn", "tox", "cor", "fat"],
+};
 
 /**
  * The book's location words, in the vocabulary the hit-location rules use.
@@ -103,12 +116,14 @@ function main() {
   const reject = (context, why) => rejected.push({ context, why });
   const flagged = [];
   let barding = false;
+  let highTech = false;
 
   for (const raw of lines) {
     const line = raw.replace(/\s+$/, "");
     const text = line.trim();
     if (!text) continue;
-    if (BARDING_TABLE.test(text)) { barding = true; continue; }
+    if (HIGH_TECH_TABLE.test(text)) { highTech = true; continue; }
+    if (BARDING_TABLE.test(text)) { barding = true; highTech = false; continue; }
     if (/^TL\s+Armor/.test(text)) continue;
     if (/^(\d+\s+)?EQUIPMENT(\s+\d+)?$/.test(text)) continue;
 
@@ -120,10 +135,7 @@ function main() {
 
     const g = row.groups;
 
-    // A split DR needs a second number and the damage types it applies to,
-    // neither of which the model holds, and the two tables disagree on which
-    // types those are.
-    if (g.dr.includes("/")) { reject(text, "split DR cannot be represented"); continue; }
+    const [drHigh, drLow] = g.dr.split("/").map(Number);
 
     const parts = g.location.split(",").map((p) => p.trim()).filter(Boolean);
     const unknown = parts.filter((p) => !LOCATIONS.has(p));
@@ -158,7 +170,10 @@ function main() {
         carried: true,
         equipped: false,
         tl: g.tl && !new RegExp(`^${DASH}$`).test(g.tl) ? g.tl : "",
-        dr: Number(g.dr),
+        dr: drHigh,
+        drSplit: drLow ?? null,
+        drSplitAppliesTo:
+          drLow === undefined ? [] : highTech ? SPLIT_AGAINST.highTech : SPLIT_AGAINST.lowTech,
         locations,
         description: "",
         reference: "Basic Set: Characters",
@@ -189,4 +204,9 @@ function main() {
   }
 }
 
-main();
+// Only run when invoked directly. The split-DR mapping above is imported by a
+// test that checks it against the rules engine, and a module that runs its main
+// on import cannot be imported at all.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}

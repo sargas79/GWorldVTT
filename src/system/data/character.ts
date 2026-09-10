@@ -14,6 +14,7 @@ import {
 } from "../../rules/attributes.js";
 import { baseParry, block, dodge, parry } from "../../rules/defenses.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
+import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
 import {
   MANEUVERS,
@@ -368,15 +369,28 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     ) as Record<HitLocation, number>;
 
     const armorItems = this.itemsOfType("armor").filter((i) => i.system?.equipped);
-    for (const item of armorItems) {
-      const value = Number(item.system?.dr ?? 0);
-      const covered: HitLocation[] = item.system?.locations?.length
-        ? item.system.locations
-        : [...HIT_LOCATION_ORDER];
-      for (const loc of covered) {
-        if (loc in drByLocation) drByLocation[loc] += value;
-      }
-    }
+    const worn: ArmorPiece[] = armorItems.map((item) => ({
+      dr: Number(item.system?.dr ?? 0),
+      drSplit: item.system?.drSplit ?? null,
+      drSplitAppliesTo: item.system?.drSplitAppliesTo ?? [],
+      locations: item.system?.locations ?? [],
+    }));
+
+    // Armour written "4/2" stops one kind of attack better than another, and two
+    // passes are not enough to describe that: mail takes its lower DR against
+    // crushing alone while a ballistic vest takes its lower against five more
+    // types, so worn together against an impaling attack the total is neither
+    // the all-cutting nor the all-crushing sum. Each location is resolved across
+    // every damage type instead, and grouped.
+    // The headline figure is each location's own highest band, not the DR
+    // against any one damage type. Reading it from a cutting pass assumed
+    // cutting is always the base, and the sheet lets a GM tick "cut" among the
+    // types a split applies to -- armour at 4/2 against crushing and cutting
+    // would then have headlined as 2 while its profile led with 4.
+    const profiles = Object.fromEntries(
+      HIT_LOCATION_ORDER.map((loc) => [loc, splitSummary(worn, loc)]),
+    ) as Record<HitLocation, ReturnType<typeof splitSummary>>;
+    for (const loc of HIT_LOCATION_ORDER) drByLocation[loc] = profiles[loc].bands[0]?.dr ?? 0;
 
     // The headline DR figure stays the torso, which is what an unaimed blow hits.
     const dr = drByLocation.torso;
@@ -608,12 +622,23 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       swing: formatDiceAdds(swingDamage(attrs.ST)),
       dr,
       drByLocation,
-      hitLocations: HIT_LOCATION_ORDER.map((key) => ({
-        key,
-        label: HIT_LOCATIONS[key].label,
-        toHit: HIT_LOCATIONS[key].toHit,
-        dr: drByLocation[key],
-      })),
+      hitLocations: HIT_LOCATION_ORDER.map((key) => {
+        // Where a location is protected unevenly it carries every distinct DR
+        // with the damage each applies to, rather than a number that is only
+        // right against some of what lands there.
+        const { splits, bands } = profiles[key];
+        const [ordinary, ...exceptions] = bands;
+        return {
+          key,
+          label: HIT_LOCATIONS[key].label,
+          toHit: HIT_LOCATIONS[key].toHit,
+          dr: ordinary?.dr ?? 0,
+          splits,
+          // The keys travel as keys. Joining them here would put raw codes
+          // like "pi+" on the sheet in every locale.
+          exceptions: exceptions.map((band) => ({ dr: band.dr, types: band.types })),
+        };
+      }),
       shieldDb,
       shieldName: shieldItem?.name ?? null,
       armorName: armorItems[0]?.name ?? null,

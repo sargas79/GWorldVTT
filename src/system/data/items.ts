@@ -363,7 +363,36 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
 
 /** Worn armor, which provides Damage Resistance (GURPS Lite p. 18). */
 export class ArmorData extends foundry.abstract.TypeDataModel {
+  /**
+   * The split DR is only meaningful as a pair, and the second figure is the
+   * lower one. The pack validator checks this too, but a document edited on the
+   * sheet never passes through that, and a "lower" DR above the main one would
+   * make drAgainst return the larger number for the damage it is meant to
+   * protect against least.
+   */
+  static override validateJoint(data: Record<string, any>): void {
+    const split = data.drSplit ?? null;
+    const against = data.drSplitAppliesTo ?? [];
+
+    if (split === null && against.length > 0) {
+      throw new Error("Armor names damage for a split DR without giving the second DR.");
+    }
+    if (split !== null && against.length === 0) {
+      throw new Error("Armor has a split DR without saying which damage it applies to.");
+    }
+    if (split !== null && split > (data.dr ?? 0)) {
+      throw new Error(`Split DR ${split} must not exceed the armor's DR of ${data.dr}.`);
+    }
+    // Both armour tables agree that crushing takes the lower figure, so a split
+    // without it has been read from neither of them.
+    if (split !== null && !against.includes("cr")) {
+      throw new Error("A split DR must apply to crushing, which both armour tables agree on.");
+    }
+  }
+
   declare dr: number;
+  declare drSplit: number | null;
+  declare drSplitAppliesTo: DamageType[];
   declare locations: string[];
   declare quantity: number;
   declare weight: number;
@@ -391,6 +420,29 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
        * An empty list means whole-body coverage, which keeps armor written for
        * the Lite rules working unchanged.
        */
+      /**
+       * The second, lower DR of armour written "4/2", and the damage types it
+       * applies to. Which types those are depends on the table the armour came
+       * from -- see SPLIT_AGAINST in the rules engine -- so they are stored with
+       * the piece rather than inferred from it.
+       */
+      drSplit: new fields.NumberField({
+        required: true,
+        nullable: true,
+        integer: true,
+        initial: null,
+        min: 0,
+      }),
+      drSplitAppliesTo: new fields.ArrayField(
+        new fields.StringField({
+          required: true,
+          nullable: false,
+          blank: false,
+          choices: ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
+        }),
+        { required: true, initial: [] },
+      ),
+
       locations: new fields.ArrayField(
         new fields.StringField({
           required: true,
