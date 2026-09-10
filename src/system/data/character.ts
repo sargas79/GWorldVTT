@@ -6,7 +6,11 @@
  * its embedded items.
  */
 
-import { secondaryCharacteristics } from "../../rules/attributes.js";
+import {
+  basicSpeedPointCost,
+  secondaryCharacteristics,
+  secondaryPointCost,
+} from "../../rules/attributes.js";
 import { baseParry, block, dodge, parry } from "../../rules/defenses.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
@@ -75,6 +79,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare fp: { value: number; max: number };
   declare points: { starting: number; disadvantageLimit: number };
   declare tl: number;
+  declare sm: number;
   declare posture: Posture;
   declare conditions: { stunned: boolean; allOutDefense: boolean; blindToAttacker: boolean };
   declare details: {
@@ -116,6 +121,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       }),
 
       tl: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 3 }),
+
+      /**
+       * Size Modifier (GURPS Basic Set: Characters p. 19). Humans are SM 0.
+       * It is a bonus for others to hit you and a penalty to be missed.
+       */
+      sm: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
 
       posture: new fields.StringField({
         required: true,
@@ -388,8 +399,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       0,
     );
 
+    // Secondaries are bought per level above their attribute-derived default
+    // (GURPS Basic Set: Characters pp. 14-17).
+    const secondaryPoints =
+      secondaryPointCost("hp", this.bonuses.hp) +
+      secondaryPointCost("will", this.bonuses.will) +
+      secondaryPointCost("per", this.bonuses.per) +
+      secondaryPointCost("fp", this.bonuses.fp) +
+      secondaryPointCost("basicMove", this.bonuses.basicMove) +
+      basicSpeedPointCost(this.bonuses.basicSpeed);
+
     const spent =
-      attributePoints + advantages + disadvantages + quirks + skillPoints + languagePoints;
+      attributePoints + secondaryPoints + advantages + disadvantages + quirks +
+      skillPoints + languagePoints;
 
     return {
       will: secondary.will,
@@ -412,6 +434,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       reeling,
       points: {
         attributes: attributePoints,
+        secondaries: secondaryPoints,
         advantages,
         disadvantages,
         quirks,

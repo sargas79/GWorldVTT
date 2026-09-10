@@ -13,14 +13,42 @@ import {
   weaponDamage,
 } from "../damage.js";
 
-describe("the printed Damage Table (GURPS Lite p. 6)", () => {
-  it("reproduces every row of the table for ST 1-20", () => {
+describe("the Damage Table (GURPS Basic Set: Characters p. 16)", () => {
+  it("returns exactly the printed values for every listed ST", () => {
     for (let st = 1; st <= MAX_TABULATED_ST; st++) {
       const printed = tabulatedDamage(st);
-      expect(printed, `ST ${st} should be tabulated`).not.toBeNull();
-      expect(formatDiceAdds(thrustDamage(st)), `thrust at ST ${st}`).toBe(printed!.thrust);
-      expect(formatDiceAdds(swingDamage(st)), `swing at ST ${st}`).toBe(printed!.swing);
+      if (!printed) continue; // ST between listed rows, covered separately below.
+      expect(formatDiceAdds(thrustDamage(st)), `thrust at ST ${st}`).toBe(printed.thrust);
+      expect(formatDiceAdds(swingDamage(st)), `swing at ST ${st}`).toBe(printed.swing);
     }
+  });
+
+  it("keeps the swing progression flat where the book does", () => {
+    // The table stops advancing one step per point of ST after 26; a generated
+    // table gets these wrong, which is why the values are written out.
+    expect(formatDiceAdds(swingDamage(27))).toBe("5d+1");
+    expect(formatDiceAdds(swingDamage(28))).toBe("5d+1");
+    expect(formatDiceAdds(swingDamage(39))).toBe("7d-1");
+    expect(formatDiceAdds(swingDamage(40))).toBe("7d-1");
+  });
+
+  it("uses the lower row for a ST between two listed entries", () => {
+    // 41-44 are not listed, so they all roll as ST 40.
+    for (const st of [41, 42, 43, 44]) {
+      expect(formatDiceAdds(swingDamage(st)), `ST ${st}`).toBe("7d-1");
+      expect(formatDiceAdds(thrustDamage(st)), `ST ${st}`).toBe("4d+1");
+    }
+    expect(formatDiceAdds(swingDamage(45))).toBe("7d+1");
+  });
+
+  it("adds a die to both columns per full 10 points of ST above 100", () => {
+    expect(formatDiceAdds(thrustDamage(100))).toBe("11d");
+    expect(formatDiceAdds(swingDamage(100))).toBe("13d");
+    expect(formatDiceAdds(thrustDamage(110))).toBe("12d");
+    expect(formatDiceAdds(swingDamage(110))).toBe("14d");
+    // Partial decades do not count.
+    expect(formatDiceAdds(thrustDamage(119))).toBe("12d");
+    expect(formatDiceAdds(thrustDamage(120))).toBe("13d");
   });
 
   it("gives the average human ST 10 thrust 1d-2 and swing 1d", () => {
@@ -38,8 +66,7 @@ describe("the printed Damage Table (GURPS Lite p. 6)", () => {
     expect(formatDiceAdds(thrustDamage(-5))).toBe("1d-6");
   });
 
-  it("extrapolates above the table without skipping a step", () => {
-    // ST 21-23 continue the printed progression.
+  it("matches the printed values just past where GURPS Lite stopped", () => {
     expect(formatDiceAdds(thrustDamage(21))).toBe("2d");
     expect(formatDiceAdds(swingDamage(21))).toBe("4d-1");
     expect(formatDiceAdds(swingDamage(22))).toBe("4d");

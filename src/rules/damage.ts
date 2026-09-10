@@ -3,84 +3,96 @@
  * (GURPS Lite pp. 6, 19, 29).
  */
 
-import { addModifier } from "./dice.js";
+import { addModifier, parseDiceAdds } from "./dice.js";
 import type { DamageType, DiceAdds } from "./types.js";
 
 /**
- * The printed Damage Table (GURPS Lite p. 6) for ST 1-20, as `[thrust, swing]`
- * step indices into {@link stepToDiceAdds}. This literal table is the source of
- * truth; {@link thrustStep}/{@link swingStep} reproduce it and are verified
- * against it in the test suite.
- */
-const DAMAGE_TABLE: ReadonlyArray<readonly [string, string]> = [
-  ["1d-6", "1d-5"], // ST 1
-  ["1d-6", "1d-5"], // ST 2
-  ["1d-5", "1d-4"], // ST 3
-  ["1d-5", "1d-4"], // ST 4
-  ["1d-4", "1d-3"], // ST 5
-  ["1d-4", "1d-3"], // ST 6
-  ["1d-3", "1d-2"], // ST 7
-  ["1d-3", "1d-2"], // ST 8
-  ["1d-2", "1d-1"], // ST 9
-  ["1d-2", "1d"], //   ST 10
-  ["1d-1", "1d+1"], // ST 11
-  ["1d-1", "1d+2"], // ST 12
-  ["1d", "2d-1"], //   ST 13
-  ["1d", "2d"], //     ST 14
-  ["1d+1", "2d+1"], // ST 15
-  ["1d+1", "2d+2"], // ST 16
-  ["1d+2", "3d-1"], // ST 17
-  ["1d+2", "3d"], //   ST 18
-  ["2d-1", "3d+1"], // ST 19
-  ["2d-1", "3d+2"], // ST 20
-];
-
-/** The highest ST covered by the printed GURPS Lite Damage Table. */
-export const MAX_TABULATED_ST = DAMAGE_TABLE.length;
-
-/**
- * Converts a damage "step" into dice+adds. Steps advance `1d-6, 1d-5, ... 1d+2,
- * 2d-1, 2d, 2d+1, 2d+2, 3d-1, ...`: adds run from -1 to +2 before rolling over
- * into an extra die.
- */
-export function stepToDiceAdds(step: number): DiceAdds {
-  if (step < 0) return { dice: 1, adds: -6 };
-  if (step <= 8) return { dice: 1, adds: step - 6 };
-  const beyond = step - 9;
-  return { dice: 2 + Math.floor(beyond / 4), adds: (beyond % 4) - 1 };
-}
-
-/** Damage step for thrusting attacks: one step per two points of ST. */
-export function thrustStep(st: number): number {
-  return Math.floor((st - 1) / 2);
-}
-
-/** Damage step for swinging attacks: one step per point of ST from ST 8 up. */
-export function swingStep(st: number): number {
-  return st >= 8 ? st - 4 : Math.floor((st - 1) / 2) + 1;
-}
-
-/**
- * Basic thrusting damage for a given ST (GURPS Lite p. 6).
+ * The Damage Table (GURPS Basic Set: Characters p. 16).
  *
- * ST above 20 is extrapolated from the table's progression. GURPS Lite stops at
- * ST 20; the full Basic Set table flattens out at very high ST, so these values
- * run hot for ST beyond roughly the high 20s.
+ * Keyed by ST, as `[thrust, swing]`. Every ST from 1 to 40 is listed, then
+ * every fifth point to 100 — a ST between two listed rows uses the lower one,
+ * so ST 43 rolls as ST 40.
+ *
+ * This literal table is the source of truth. It cannot be generated: the swing
+ * progression is linear to ST 26 and then flattens, so ST 27 and 28 both give
+ * 5d+1 and ST 39 and 40 both give 7d-1.
  */
+const DAMAGE_TABLE: ReadonlyMap<number, readonly [string, string]> = new Map([
+  [1, ["1d-6", "1d-5"]], [2, ["1d-6", "1d-5"]],
+  [3, ["1d-5", "1d-4"]], [4, ["1d-5", "1d-4"]],
+  [5, ["1d-4", "1d-3"]], [6, ["1d-4", "1d-3"]],
+  [7, ["1d-3", "1d-2"]], [8, ["1d-3", "1d-2"]],
+  [9, ["1d-2", "1d-1"]], [10, ["1d-2", "1d"]],
+  [11, ["1d-1", "1d+1"]], [12, ["1d-1", "1d+2"]],
+  [13, ["1d", "2d-1"]], [14, ["1d", "2d"]],
+  [15, ["1d+1", "2d+1"]], [16, ["1d+1", "2d+2"]],
+  [17, ["1d+2", "3d-1"]], [18, ["1d+2", "3d"]],
+  [19, ["2d-1", "3d+1"]], [20, ["2d-1", "3d+2"]],
+  [21, ["2d", "4d-1"]], [22, ["2d", "4d"]],
+  [23, ["2d+1", "4d+1"]], [24, ["2d+1", "4d+2"]],
+  [25, ["2d+2", "5d-1"]], [26, ["2d+2", "5d"]],
+  // The swing progression flattens from here.
+  [27, ["3d-1", "5d+1"]], [28, ["3d-1", "5d+1"]],
+  [29, ["3d", "5d+2"]], [30, ["3d", "5d+2"]],
+  [31, ["3d+1", "6d-1"]], [32, ["3d+1", "6d-1"]],
+  [33, ["3d+2", "6d"]], [34, ["3d+2", "6d"]],
+  [35, ["4d-1", "6d+1"]], [36, ["4d-1", "6d+1"]],
+  [37, ["4d", "6d+2"]], [38, ["4d", "6d+2"]],
+  [39, ["4d+1", "7d-1"]], [40, ["4d+1", "7d-1"]],
+  [45, ["5d", "7d+1"]], [50, ["5d+2", "8d-1"]],
+  [55, ["6d", "8d+1"]], [60, ["7d-1", "9d"]],
+  [65, ["7d+1", "9d+2"]], [70, ["8d", "10d"]],
+  [75, ["8d+2", "10d+2"]], [80, ["9d", "11d"]],
+  [85, ["9d+2", "11d+2"]], [90, ["10d", "12d"]],
+  [95, ["10d+2", "12d+2"]], [100, ["11d", "13d"]],
+]);
+
+/** The highest ST the Damage Table prints. Above this, dice are added by rule. */
+export const MAX_TABULATED_ST = 100;
+
+/** Listed ST values, descending, for finding the row a given ST falls on. */
+const TABULATED_ST = [...DAMAGE_TABLE.keys()].sort((a, b) => b - a);
+
+/**
+ * Looks up the Damage Table row that applies to a given ST.
+ *
+ * A ST between two listed rows uses the lower one; anything above 100 uses the
+ * ST 100 row, with the extra dice applied separately by {@link diceAboveTable}.
+ */
+function damageRow(st: number): readonly [string, string] {
+  const clamped = Math.max(1, Math.floor(st));
+  const key = TABULATED_ST.find((candidate) => candidate <= clamped) ?? 1;
+  return DAMAGE_TABLE.get(key)!;
+}
+
+/**
+ * Extra dice for ST above 100: one added die to both thrust and swing per full
+ * 10 points over 100 (GURPS Basic Set: Characters p. 15).
+ */
+function diceAboveTable(st: number): number {
+  if (st <= MAX_TABULATED_ST) return 0;
+  return Math.floor((st - MAX_TABULATED_ST) / 10);
+}
+
+function damageForColumn(st: number, column: 0 | 1): DiceAdds {
+  const parsed = parseDiceAdds(damageRow(st)[column])!;
+  return { dice: parsed.dice + diceAboveTable(st), adds: parsed.adds };
+}
+
+/** Basic thrusting damage for a given ST (GURPS Basic Set: Characters p. 16). */
 export function thrustDamage(st: number): DiceAdds {
-  return stepToDiceAdds(thrustStep(Math.max(1, st)));
+  return damageForColumn(st, 0);
 }
 
-/** Basic swinging damage for a given ST (GURPS Lite p. 6). See {@link thrustDamage}. */
+/** Basic swinging damage for a given ST (GURPS Basic Set: Characters p. 16). */
 export function swingDamage(st: number): DiceAdds {
-  return stepToDiceAdds(swingStep(Math.max(1, st)));
+  return damageForColumn(st, 1);
 }
 
-/** Returns the printed table entry for ST 1-20, or `null` outside that range. */
+/** The printed table entry for a ST, or `null` when that ST has no listed row. */
 export function tabulatedDamage(st: number): { thrust: string; swing: string } | null {
-  const row = DAMAGE_TABLE[st - 1];
-  if (!row) return null;
-  return { thrust: row[0], swing: row[1] };
+  const row = DAMAGE_TABLE.get(st);
+  return row ? { thrust: row[0], swing: row[1] } : null;
 }
 
 /**

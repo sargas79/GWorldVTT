@@ -1,6 +1,13 @@
-{{!-- Tab strip. Foundry's changeTab toggles .active here and on the sections. --}}
+{{!--
+  Tab strip.
+
+  data-action="tab" is required: Foundry routes tab clicks through the same
+  action dispatcher as every other control, so data-tab and data-group alone
+  render a strip that does nothing when clicked.
+--}}
 <nav class="itabs tabs" data-group="primary">
   {{#each tabs as |tab|}}
-    <a class="itab {{tab.cssClass}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">{{localize tab.label}}</a>
+    <a class="itab {{tab.cssClass}}" data-action="tab"
+       data-group="{{tab.group}}" data-tab="{{tab.id}}">{{localize tab.label}}</a>
   {{/each}}
 </nav>
