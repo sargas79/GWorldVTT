@@ -29,6 +29,12 @@ criticals by the Basic Set's table. The damage card rolls the dice, applies the
 minimum-damage floor, states the wounding modifier and the injury an unarmoured
 target would take, and names the armour divisor when there is one.
 
+**Defending** — an attack that connects records who it was aimed at, and its
+card offers each defender their available active defenses with the score for
+each. Only defenders you can roll for are shown, and a defense the character
+does not have — no shield to block with, a maneuver that forfeits it — is left
+out rather than offered as a button that refuses.
+
 **Applying damage** — the damage card carries a hit location and an Apply
 button. It resolves the blow against whoever is targeted, or selected if
 nothing is targeted: the DR that actually applies to that damage at that
@@ -63,7 +69,6 @@ book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
 
 ## What is not implemented
 
-- **No defense prompts.** An attack does not ask the defender to roll.
 - **No character builder.** Characters are assembled by dragging from the
   compendia and editing the sheet.
 - **Initiative is Basic Speed**, but no Combat subclass enforces the ordering.

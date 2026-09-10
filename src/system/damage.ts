@@ -135,18 +135,3 @@ export async function applyDamageToActor(
   await actor.update({ [path]: resolved.current });
   return resolved;
 }
-
-/**
- * The tokens a blow should land on: whatever the user has targeted, falling
- * back to what they have selected.
- *
- * Targeting is the deliberate gesture -- it is how you say who you are shooting
- * at -- but a GM moving through a fight usually just has the token selected,
- * and refusing to act on that would make the button useless exactly when it is
- * most wanted.
- */
-export function damageTargets(): any[] {
-  const targeted = [...(game.user?.targets ?? [])];
-  if (targeted.length > 0) return targeted;
-  return [...(canvas?.tokens?.controlled ?? [])];
-}
