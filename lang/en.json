@@ -80,7 +80,8 @@
       "Biography": "Biography",
       "Notes": "Notes",
       "Campaign": "Campaign",
-      "Techniques": "Techniques"
+      "Techniques": "Techniques",
+      "HitLocations": "Damage Resistance by Location"
     },
     "Column": {
       "Skill": "Skill",
@@ -103,7 +104,10 @@
       "Notes": "Notes",
       "Language": "Language",
       "Spoken": "Spoken",
-      "Written": "Written"
+      "Written": "Written",
+      "Location": "Location",
+      "DR": "DR",
+      "ToHit": "To Hit"
     },
     "Field": {
       "ThrustSwing": "Thrust / Swing",
@@ -168,7 +172,11 @@
       "imp": "imp",
       "pi-": "pi-",
       "pi": "pi",
-      "pi+": "pi+"
+      "pi+": "pi+",
+      "cor": "cor",
+      "fat": "fat",
+      "tox": "tox",
+      "pi++": "pi++"
     },
     "Skill": {
       "NoDefault": "No default",
@@ -230,7 +238,9 @@
       "NothingCarried": "Nothing carried.",
       "StoredNoEncumbrance": "does not count against encumbrance",
       "Overloaded": "Carrying more than ten times Basic Lift. This character cannot move under this load.",
-      "Techniques": "bought up from a prerequisite skill"
+      "Techniques": "bought up from a prerequisite skill",
+      "TargetPenalty": "to target",
+      "HitLocations": "Unaimed blows hit the torso. Eye and Vitals can only be targeted deliberately, and only by impaling, piercing or tight-beam burning attacks."
     },
     "Health": {
       "healthy": "Healthy",
@@ -261,6 +271,19 @@
       "InjuryUnarmored": "Injury against no DR:",
       "SubtractDR": "Subtract the target's DR from basic damage, then apply the wounding modifier.",
       "SubtractDRDivisor": "Divide the target's DR by {divisor} (rounding down), subtract it from basic damage, then apply the wounding modifier."
+    },
+    "HitLocation": {
+      "torso": "Torso",
+      "skull": "Skull",
+      "eye": "Eye",
+      "face": "Face",
+      "neck": "Neck",
+      "vitals": "Vitals",
+      "groin": "Groin",
+      "arm": "Arm",
+      "leg": "Leg",
+      "hand": "Hand",
+      "foot": "Foot"
     }
   }
 }

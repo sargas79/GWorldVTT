@@ -195,7 +195,7 @@ function meleeModeField() {
       required: true,
       nullable: false,
       initial: "cr",
-      choices: ["burn", "cr", "cut", "imp", "pi-", "pi", "pi+"],
+      choices: ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
     }),
     armorDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 1 }),
     reach: new fields.StringField({ required: true, blank: true, initial: "C" }),
@@ -239,7 +239,7 @@ function rangedModeField() {
       required: true,
       nullable: false,
       initial: "pi",
-      choices: ["burn", "cr", "cut", "imp", "pi-", "pi", "pi+"],
+      choices: ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
     }),
     armorDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 1 }),
     /** Accuracy, added to skill after an Aim maneuver. */
@@ -319,6 +319,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
 /** Worn armor, which provides Damage Resistance (GURPS Lite p. 18). */
 export class ArmorData extends foundry.abstract.TypeDataModel {
   declare dr: number;
+  declare locations: string[];
   declare quantity: number;
   declare weight: number;
   declare cost: number;
@@ -329,10 +330,6 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
     return {
       ...descriptionFields(),
       ...physicalFields(),
-      /**
-       * GURPS Lite treats armor as covering the whole body with a single DR
-       * value; it has no hit location system.
-       */
       dr: new fields.NumberField({
         required: true,
         nullable: false,
@@ -340,6 +337,27 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
         initial: 0,
         min: 0,
       }),
+
+      /**
+       * Locations this armor covers (GURPS Basic Set: Campaigns p. 398). A
+       * breastplate protects the torso and vitals but not the limbs, so DR is
+       * summed per location rather than applied to every hit.
+       *
+       * An empty list means whole-body coverage, which keeps armor written for
+       * the Lite rules working unchanged.
+       */
+      locations: new fields.ArrayField(
+        new fields.StringField({
+          required: true,
+          nullable: false,
+          initial: "torso",
+          choices: [
+            "torso", "skull", "eye", "face", "neck",
+            "vitals", "groin", "arm", "leg", "hand", "foot",
+          ],
+        }),
+        { required: true, initial: [] },
+      ),
     };
   }
 }

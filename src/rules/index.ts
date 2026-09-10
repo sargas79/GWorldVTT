@@ -10,6 +10,7 @@ export * from "./types.js";
 export * from "./dice.js";
 export * from "./attributes.js";
 export * from "./damage.js";
+export * from "./hit-locations.js";
 export * from "./skills.js";
 export * from "./encumbrance.js";
 export * from "./success.js";
