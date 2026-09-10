@@ -197,7 +197,17 @@ function meleeModeField() {
       initial: "cr",
       choices: ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
     }),
-    armorDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 1 }),
+    /**
+     * Armour divisor. Above 1 it divides the target's DR; below 1 it multiplies
+     * it, so a wooden stake at (0.5) faces double DR (GURPS Basic Set:
+     * Characters p. 269). The bound was 1, which made that unrepresentable.
+     */
+    armorDivisor: new fields.NumberField({
+      required: true,
+      nullable: false,
+      initial: 1,
+      min: 0.1,
+    }),
     reach: new fields.StringField({ required: true, blank: true, initial: "C" }),
     /** Weapon parry modifier: -1 for a knife, +2 for a quarterstaff. */
     parryModifier: new fields.NumberField({
@@ -254,7 +264,17 @@ function rangedModeField() {
       initial: "pi",
       choices: ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
     }),
-    armorDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 1 }),
+    /**
+     * Armour divisor. Above 1 it divides the target's DR; below 1 it multiplies
+     * it, so a wooden stake at (0.5) faces double DR (GURPS Basic Set:
+     * Characters p. 269). The bound was 1, which made that unrepresentable.
+     */
+    armorDivisor: new fields.NumberField({
+      required: true,
+      nullable: false,
+      initial: 1,
+      min: 0.1,
+    }),
     /** Accuracy, added to skill after an Aim maneuver. */
     accuracy: new fields.NumberField({
       required: true,
@@ -294,6 +314,18 @@ function rangedModeField() {
       initial: null,
     }),
     thrown: new fields.BooleanField({ initial: false }),
+    /**
+     * How unwieldy the weapon is, as a penalty: it applies when firing from a
+     * vehicle or in close combat, and to attempts to keep the weapon hidden
+     * (GURPS Basic Set: Characters p. 270). Zero or negative, never positive.
+     */
+    bulk: new fields.NumberField({
+      required: true,
+      nullable: false,
+      integer: true,
+      initial: 0,
+      max: 0,
+    }),
   });
 }
 

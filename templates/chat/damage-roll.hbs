@@ -12,7 +12,7 @@
   <div class="gc-mods">
     <span>{{localize "GWORLD.Chat.WoundingModifier"}} &times;{{woundingModifier}}</span>
     {{#each modifiers as |mod|}}<span class="gc-mod">{{signed mod.value}} {{mod.label}}</span>{{/each}}
-    {{#if (gt armorDivisor 1)}}
+    {{#if hasArmorDivisor}}
       <span class="gc-mod">{{localize "GWORLD.Chat.ArmorDivisor"}} ({{armorDivisor}})</span>
     {{/if}}
   </div>
@@ -22,7 +22,7 @@
   </div>
 
   <div class="gc-foot">
-    {{#if (gt armorDivisor 1)}}
+    {{#if hasArmorDivisor}}
       {{localize "GWORLD.Chat.SubtractDRDivisor" divisor=armorDivisor}}
     {{else}}
       {{localize "GWORLD.Chat.SubtractDR"}}

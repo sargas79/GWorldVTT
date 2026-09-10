@@ -31,6 +31,7 @@
             <th class="n">{{localize "GWORLD.Column.Relative"}}</th>
             <th class="n">{{localize "GWORLD.Column.Level"}}</th>
             <th></th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -49,6 +50,13 @@
                       data-roll-label="{{skill.name}}" data-roll-target="{{skill.system.derived.level}}">
                   {{> "gworld.die"}}
                 </span>
+              </td>
+              <td class="c">
+                {{#if @root.editable}}
+                  <button type="button" class="rollable iconbtn" data-action="deleteItem" title="{{localize 'GWORLD.Action.Delete'}}">
+                    {{> "gworld.trash"}}
+                  </button>
+                {{/if}}
               </td>
             </tr>
           {{/each}}
@@ -86,6 +94,13 @@
                   </span>
                 {{/if}}
               </td>
+              <td class="c">
+                {{#if @root.editable}}
+                  <button type="button" class="rollable iconbtn" data-action="deleteItem" title="{{localize 'GWORLD.Action.Delete'}}">
+                    {{> "gworld.trash"}}
+                  </button>
+                {{/if}}
+              </td>
             </tr>
           {{/each}}
         </tbody>
@@ -107,6 +122,7 @@
             <th class="n">{{localize "GWORLD.Column.Pts"}}</th>
             <th class="n">{{localize "GWORLD.Column.Relative"}}</th>
             <th class="n">{{localize "GWORLD.Column.Level"}}</th>
+            <th></th>
             <th></th>
           </tr>
         </thead>
@@ -135,6 +151,13 @@
                         data-roll-label="{{entry.item.name}}" data-roll-target="{{entry.item.system.derived.level}}">
                     {{> "gworld.die"}}
                   </span>
+                {{/if}}
+              </td>
+              <td class="c">
+                {{#if @root.editable}}
+                  <button type="button" class="rollable iconbtn" data-action="deleteItem" title="{{localize 'GWORLD.Action.Delete'}}">
+                    {{> "gworld.trash"}}
+                  </button>
                 {{/if}}
               </td>
             </tr>

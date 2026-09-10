@@ -108,6 +108,12 @@ declare global {
         class DocumentSheetV2 extends ApplicationV2 {
           readonly document: any;
           readonly isEditable: boolean;
+          /**
+           * Turns the submitted form into the expanded object the document is
+           * updated with. Overridden to supply values a form omits, such as a
+           * checkbox group with nothing ticked.
+           */
+          _processFormData(event: Event | null, form: HTMLFormElement, formData: object): object;
         }
 
         class DialogV2 extends ApplicationV2 {
