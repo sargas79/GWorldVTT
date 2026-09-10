@@ -310,6 +310,15 @@
       "MarginOfFailure": "Margin of failure",
       "TooLowToAttempt": "{label}: effective {effective} is below 3, so the roll cannot be attempted."
     },
+    "Ranged": {
+      "Title": "Ranged attack",
+      "Range": "Range (yards)",
+      "TargetSpeed": "Target speed (yards/second)",
+      "TargetSize": "Target Size Modifier",
+      "Aimed": "Aimed",
+      "Accuracy": "Accuracy",
+      "SpeedRange": "speed/range"
+    },
     "Chat": {
       "Target": "Target",
       "Base": "base",
