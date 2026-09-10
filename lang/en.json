@@ -322,6 +322,7 @@
       "ArmorDivisor": "armor divisor",
       "InjuryUnarmored": "Injury against no DR:",
       "ApplyDamage": "Apply",
+      "DefendingAgainst": "{defense} vs {attack}",
       "HitLocation": "Hit location",
       "DamageApplied": "damage applied",
       "NoTarget": "Target or select a token first.",

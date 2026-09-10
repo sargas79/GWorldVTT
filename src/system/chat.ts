@@ -12,12 +12,9 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
-import {
-  applyDamageToActor,
-  damageTargets,
-  type AppliedDamage,
-  type IncomingDamage,
-} from "./damage.js";
+import { applyDamageToActor, type AppliedDamage, type IncomingDamage } from "./damage.js";
+import { rollSuccess } from "./roll.js";
+import { currentTargets } from "./targets.js";
 import { HIT_LOCATION_ORDER, type HitLocation } from "../rules/hit-locations.js";
 import type { DamageType } from "../rules/types.js";
 
@@ -85,7 +82,7 @@ function addApplyControls(message: any, html: HTMLElement): void {
 
 /** Resolves the blow against every target and reports what it did. */
 async function applyFromCard(flag: DamageFlag, hitLocation: HitLocation): Promise<void> {
-  const targets = damageTargets();
+  const targets = currentTargets();
   if (targets.length === 0) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.Chat.NoTarget"));
     return;
@@ -153,9 +150,99 @@ async function applyFromCard(flag: DamageFlag, hitLocation: HitLocation): Promis
   });
 }
 
+/** What an attack that connected recorded about who it was aimed at. */
+interface DefenseFlag {
+  attack: string;
+  defenders: Array<{ uuid: string; name: string }>;
+}
+
+function defenseFlag(message: any): DefenseFlag | null {
+  const flag = message?.getFlag?.(SYSTEM_ID, "defense");
+  if (!flag || !Array.isArray(flag.defenders) || flag.defenders.length === 0) return null;
+  return flag as DefenseFlag;
+}
+
+/**
+ * The three active defenses, in the order the sheet lists them, with the
+ * localization key each is labelled by.
+ */
+const DEFENSES = {
+  dodge: "GWORLD.Secondary.Dodge",
+  parry: "GWORLD.Secondary.Parry",
+  block: "GWORLD.Secondary.Block",
+} as const;
+type DefenseKey = keyof typeof DEFENSES;
+
+/**
+ * Adds a defense control per defender to an attack that connected.
+ *
+ * Only defenders this user can roll for are offered, so a table of players does
+ * not each see three buttons for everyone else's character. A defense that is
+ * not available -- no shield to block with, a maneuver that forfeits the
+ * defense entirely -- is left out rather than shown as a button that refuses.
+ */
+async function addDefenseControls(message: any, html: HTMLElement): Promise<void> {
+  const flag = defenseFlag(message);
+  if (!flag) return;
+
+  const root = html.querySelector<HTMLElement>(".gworld-chat");
+  if (!root || root.querySelector("[data-gworld-defend]")) return;
+
+  for (const entry of flag.defenders) {
+    const defender: any = await fromUuid(entry.uuid).catch(() => null);
+    if (!defender?.isOwner) continue;
+
+    const defenses = defender.system?.derived?.defenses ?? {};
+    const available = (Object.keys(DEFENSES) as DefenseKey[]).filter(
+      (key) => defenses[key] != null,
+    );
+    if (available.length === 0) continue;
+
+    const row = document.createElement("div");
+    row.className = "gc-apply";
+    row.dataset.gworldDefend = entry.uuid;
+
+    const who = document.createElement("span");
+    who.className = "gc-mod";
+    who.textContent = String(defender.name ?? entry.name);
+    row.append(who);
+
+    for (const key of available) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "gc-apply-button";
+      const label = game.i18n.localize(DEFENSES[key]);
+      button.textContent = `${label} ${defenses[key].total}`;
+      button.addEventListener("click", () => {
+        void rollDefense(defender, key, defenses[key].total, flag.attack);
+      });
+      row.append(button);
+    }
+
+    root.append(row);
+  }
+}
+
+/** Rolls one active defense for one defender. */
+async function rollDefense(
+  defender: any,
+  key: DefenseKey,
+  total: number,
+  attack: string,
+): Promise<void> {
+  const name = game.i18n.localize(DEFENSES[key]);
+  await rollSuccess({
+    actor: defender,
+    base: total,
+    label: game.i18n.format("GWORLD.Chat.DefendingAgainst", { defense: name, attack }),
+    kind: "defense",
+  });
+}
+
 /** Registers the chat hooks. Called once, at init. */
 export function registerChatHooks(): void {
   Hooks.on("renderChatMessageHTML", (message: any, html: HTMLElement) => {
     addApplyControls(message, html);
+    void addDefenseControls(message, html);
   });
 }

@@ -255,6 +255,13 @@ declare global {
     [key: string]: any;
   } | null;
 
+  /**
+   * Resolves a document by UUID, including one inside a compendium, or null
+   * when nothing is there. Exposed globally by the client (`fromUuid` in
+   * client/global.mjs, from foundry.utils).
+   */
+  function fromUuid(uuid: string, options?: object): Promise<any>;
+
   const Actor: any;
   const Item: any;
   const ui: any;

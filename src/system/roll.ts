@@ -8,6 +8,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { targetedTokens } from "./targets.js";
 import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import { applyDamageFloor, computeInjury } from "../rules/damage.js";
 import { parseDiceAdds, toRollFormula } from "../rules/dice.js";
@@ -81,9 +82,34 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
     rolls: [roll],
+    // An attack that connects is the moment to record who it was aimed at: the
+    // defender rolls afterwards, by which time the attacker may well have
+    // changed their target. A miss needs no defense, so it carries nothing.
+    ...(kind === "attack" && outcome.success ? { flags: attackFlags(label) } : {}),
   });
 
   return outcome;
+}
+
+/**
+ * Who an attack was aimed at, recorded on the message so the card can offer
+ * them a defense.
+ *
+ * Actors are named by UUID rather than by token, because the defense is rolled
+ * by the actor and a token can be gone by the time anyone clicks.
+ *
+ * Only targeted tokens count. The selection is not a fallback here as it is
+ * elsewhere: an attacker has their own token selected far more often than not,
+ * and falling back would record them as defending against themselves.
+ */
+function attackFlags(label: string): object {
+  const defenders = targetedTokens()
+    .map((token: any) => token?.actor)
+    .filter((defender: any) => defender?.uuid)
+    .map((defender: any) => ({ uuid: String(defender.uuid), name: String(defender.name ?? "") }));
+
+  if (defenders.length === 0) return {};
+  return { [SYSTEM_ID]: { defense: { attack: label, defenders } } };
 }
 
 export interface DamageRollOptions {
