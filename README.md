@@ -29,6 +29,19 @@ criticals by the Basic Set's table. The damage card rolls the dice, applies the
 minimum-damage floor, states the wounding modifier and the injury an unarmoured
 target would take, and names the armour divisor when there is one.
 
+**Applying damage** — the damage card carries a hit location and an Apply
+button. It resolves the blow against whoever is targeted, or selected if
+nothing is targeted: the DR that actually applies to that damage at that
+location, the armour divisor, the wounding modifier, and the crippling cap on a
+limb. It writes the new total to HP, or to FP for fatigue, and reports what the
+GM has to act on next — shock, a major wound, a consciousness roll and its
+penalty, a death check.
+
+DR is resolved against the damage being applied rather than the figure the
+sheet shows. The sheet leads with each location's highest band, which is what a
+player wants to read, but mail is DR 4 against a blade and DR 2 against a mace,
+and applying the headline would stop a mace with the DR that stops a sword.
+
 **Compendia** — extracted from the Basic Set, names and statistics only:
 
 | pack | contents |
@@ -50,8 +63,6 @@ book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
 
 ## What is not implemented
 
-- **Damage is not applied to targets.** The damage card gives the GM the numbers
-  and says what to subtract; nothing reads a target's DR automatically.
 - **No defense prompts.** An attack does not ask the defender to roll.
 - **No character builder.** Characters are assembled by dragging from the
   compendia and editing the sheet.

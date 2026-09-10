@@ -1,0 +1,41 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{label}}</span>
+    <span class="gc-target">{{localize "GWORLD.Chat.DamageApplied"}}</span>
+  </div>
+
+  {{#each results as |r|}}
+    <div class="gc-applied">
+      <div class="gc-applied-head">
+        <strong>{{r.actorName}}</strong>
+        <span class="gc-mod">{{r.location}}</span>
+      </div>
+
+      {{#if r.stopped}}
+        <div class="gc-result">
+          {{localize "GWORLD.Chat.Stopped" dr=r.effectiveDr}}
+        </div>
+      {{else}}
+        <div class="gc-mods">
+          <span>{{localize "GWORLD.Chat.DrSubtracted"}} {{r.effectiveDr}}</span>
+          <span>{{localize "GWORLD.Chat.Penetrating"}} {{r.penetrating}}</span>
+          <span>&times;{{r.woundingModifier}}</span>
+        </div>
+        <div class="gc-result">
+          <strong>{{r.injury}}</strong> {{r.pool}}
+          <span class="gc-mod">{{r.previous}} &rarr; {{r.current}} / {{r.max}}</span>
+          <span class="gc-mod">{{r.status}}</span>
+        </div>
+        <div class="gc-mods">
+          {{#if r.hasShock}}<span class="gc-mod">{{localize "GWORLD.Chat.Shock"}} {{r.shock}}</span>{{/if}}
+          {{#if r.crippled}}<span class="gc-warn">{{localize "GWORLD.Chat.Crippled"}}</span>{{/if}}
+          {{#if r.majorWound}}<span class="gc-warn">{{localize "GWORLD.Chat.MajorWound"}}</span>{{/if}}
+          {{#if r.unconsciousCheck}}
+            <span class="gc-warn">{{localize "GWORLD.Chat.ConsciousnessRoll"}} {{r.unconsciousPenalty}}</span>
+          {{/if}}
+          {{#if r.deathCheck}}<span class="gc-warn">{{localize "GWORLD.Chat.DeathCheck"}}</span>{{/if}}
+        </div>
+      {{/if}}
+    </div>
+  {{/each}}
+</div>

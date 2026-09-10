@@ -52,6 +52,28 @@ export function drAgainst(piece: ArmorPiece, type: DamageType): number {
 }
 
 /**
+ * DR at one location from worn armour alone, against one kind of damage.
+ *
+ * Deliberately excludes the location's own natural DR, which `drByLocation`
+ * includes. Both figures are wanted, in different places: a sheet showing what
+ * protects the skull wants the whole of it, but `computeInjury` adds the
+ * location's own DR itself, so handing it the combined figure would count the
+ * skull's bone twice.
+ */
+export function wornDrAt(
+  pieces: readonly ArmorPiece[],
+  location: HitLocation,
+  type: DamageType,
+): number {
+  let total = 0;
+  for (const piece of pieces) {
+    const covered = piece.locations.length ? piece.locations : HIT_LOCATION_ORDER;
+    if (covered.includes(location)) total += drAgainst(piece, type);
+  }
+  return total;
+}
+
+/**
  * DR per hit location from everything worn, against one kind of damage.
  *
  * The skull's own DR is included, because it is armour the body came with and

@@ -232,11 +232,28 @@ declare global {
       set(namespace: string, key: string, value: unknown): Promise<unknown>;
       register(namespace: string, key: string, data: object): void;
     };
-    user: { id: string; isGM: boolean } | null;
+    /**
+     * `targets` is the set of tokens this user has targeted, which is how a
+     * player says who they are shooting at (User#targets, a UserTargets set of
+     * Token placeables).
+     */
+    user: { id: string; isGM: boolean; targets: Set<any> } | null;
     system: { id: string; version: string };
     ready: boolean;
     [key: string]: any;
   };
+
+  /**
+   * The active scene's canvas. Only the token layer's selection is declared:
+   * `PlaceablesLayer#controlled` returns the placeables the user has selected,
+   * and a Token placeable carries the actor it represents.
+   *
+   * Null before a scene is drawn, which is the case in a world with no scenes.
+   */
+  const canvas: {
+    tokens: { controlled: Array<{ actor: any }> } | null;
+    [key: string]: any;
+  } | null;
 
   const Actor: any;
   const Item: any;
