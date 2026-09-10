@@ -5128,20 +5128,9 @@
         "Wealthy",
         "Very Wealthy",
         "Filthy Rich",
-        "Multimillionaire 1",
-        "Multimillionaire 2",
-        "Multimillionaire 3",
-        "Multimillionaire 4",
-        "Multimillionaire 5",
-        "Multimillionaire 6",
-        "Multimillionaire 7",
-        "Multimillionaire 8",
-        "Multimillionaire 9",
-        "Multimillionaire 10",
-        "Multimillionaire 11",
-        "Multimillionaire 12"
+        "Multimillionaire 1"
       ],
-      "maxLevels": 15,
+      "maxLevels": 5,
       "reactionModifier": 0,
       "description": "",
       "reference": "Basic Set: Characters p. 25"
@@ -7121,18 +7110,9 @@
       ],
       "levelNames": [
         "1 yard",
-        "2 yards",
-        "3 yards",
-        "4 yards",
-        "5 yards",
-        "6 yards",
-        "7 yards",
-        "8 yards",
-        "9 yards",
-        "10 yards",
-        "11 yards"
+        "2 yards"
       ],
-      "maxLevels": 11,
+      "maxLevels": 2,
       "reactionModifier": 0,
       "description": "",
       "reference": "Basic Set: Characters p. 133"

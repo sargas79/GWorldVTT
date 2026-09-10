@@ -144,7 +144,7 @@ function parseLevelNames(value) {
   return levels.some((n) => n !== "") ? levels : [];
 }
 
-function parseTraits(recs, reject) {
+function parseTraits(recs, reject, note) {
   const ids = existingIds("traits");
   const out = [];
   const taken = new Map();
@@ -174,6 +174,22 @@ function parseTraits(recs, reject) {
     taken.set(bare, category);
     taken.set(name, category);
 
+    // GCA prices a few tabled traits past the last step it prints, working the
+    // rest out from a rule it holds elsewhere: Wealth is capped at 15 levels
+    // but priced for 5, and Dread at 11 for 2. Carrying the higher cap would
+    // let a Multimillionaire 5 be bought at Multimillionaire 1's price, which
+    // is a wrong number at the table rather than a missing one. The cap comes
+    // down to what the table can actually price, and a GM who wants the higher
+    // levels can extend the table on the item sheet.
+    const cap = parseUpTo(f.get("upto"));
+    const priced = cost.costTable.length;
+    const maxLevels = priced > 0 && cap > priced ? priced : cap;
+    if (priced > 0 && cap > priced) {
+      note(`${name}: priced for ${priced} levels, capped there rather than at ${cap}`);
+    }
+
+    const levelNames = parseLevelNames(f.get("levelnames"));
+
     out.push({
       _id: ids.get(name) ?? id("trait", name),
       name,
@@ -184,8 +200,9 @@ function parseTraits(recs, reject) {
         levels: cost.levels,
         pointsPerLevel: cost.pointsPerLevel,
         costTable: cost.costTable,
-        levelNames: parseLevelNames(f.get("levelnames")),
-        maxLevels: parseUpTo(f.get("upto")),
+        // Names past the last priced level name levels that cannot be bought.
+        levelNames: maxLevels > 0 ? levelNames.slice(0, maxLevels) : levelNames,
+        maxLevels,
         reactionModifier: 0,
         description: "",
         reference: reference(f.get("page")),
@@ -810,14 +827,14 @@ function main() {
 
   const recs = records(readFileSync(source, "utf8"));
 
+  const notes = [];
   const traitRejects = [];
-  const traits = parseTraits(recs, (what, why) => traitRejects.push({ what, why }));
+  const traits = parseTraits(recs, (what, why) => traitRejects.push({ what, why }), (n) => notes.push(n));
 
   const skillRejects = [];
   const { skills, techniques } = parseSkills(recs, (what, why) => skillRejects.push({ what, why }));
 
   const gearRejects = [];
-  const notes = [];
   const { armor, gear, shields } = parseEquipment(
     recs,
     (what, why) => gearRejects.push({ what, why }),
