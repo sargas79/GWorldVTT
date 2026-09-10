@@ -401,7 +401,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const melee: DerivedAttack[] = [];
     const ranged: DerivedAttack[] = [];
 
+    /**
+     * The ST is passed in rather than closed over, because a bow or crossbow
+     * rolls damage from its own ST and not the archer's (GURPS Basic Set:
+     * Characters p. 270). Reading attrs.ST here made the range obey that rule
+     * while the damage quietly ignored it.
+     */
     const resolveDamage = (
+      st: number,
       base: "thr" | "sw" | "fixed",
       modifier: number,
       formula: string,
@@ -411,7 +418,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         const parsed = parseDiceAdds(formula);
         return parsed ? formatDiceAdds(parsed) : formula || "—";
       }
-      return formatDiceAdds(weaponDamage(attrs.ST, base, modifier, minSt));
+      return formatDiceAdds(weaponDamage(st, base, modifier, minSt));
     };
 
     for (const item of this.itemsOfType("equipment")) {
@@ -422,7 +429,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
         const skillLevel = this.skillLevelByName(mode.skill);
         const meleeDamage = resolveDamage(
-          mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
+          attrs.ST, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
         );
         melee.push({
           itemId: item.id,
@@ -448,7 +455,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // Bows and crossbows use their own ST for damage and range.
         const st = mode.weaponSt ?? attrs.ST;
         const rangedDamage = resolveDamage(
-          mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
+          st, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
         );
         const range = mode.rangeIsStMultiple
           ? musclePoweredRange(st, mode.halfDamageRange, mode.maxRange)

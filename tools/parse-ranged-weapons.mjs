@@ -215,7 +215,8 @@ function main() {
   let last = null;
   let pending = "";
 
-  for (const raw of lines) {
+  for (let index = 0; index < lines.length; index++) {
+    const raw = lines[index];
     const line = raw.replace(/\s+$/, "");
     let text = line.trim();
     if (!text && !pending) continue;
@@ -245,9 +246,20 @@ function main() {
 
       // A launcher has a dash for damage because it has none of its own: an
       // atlatl's damage belongs to the dart or javelin it throws, which the rows
-      // below it give. It becomes an item with no modes, so those rows have
+      // below it give. It becomes an item with no modes so those rows have
       // something to attach to.
-      const isLauncher = !continues && new RegExp(`^${DASH}$`).test(g.dmg);
+      //
+      // Requiring those rows to actually follow is what separates it from a
+      // "goat's foot", which also has a dash for damage but is a device for
+      // cocking a crossbow and takes the rejection path instead.
+      const followedByModes = lines
+        .slice(index + 1)
+        .find((l) => l.trim())
+        ?.trim();
+      const isLauncher =
+        !continues &&
+        new RegExp(`^${DASH}$`).test(g.dmg) &&
+        Boolean(followedByModes && CONTINUATION.test(followedByModes));
 
       // "spec." damage is described in prose; there is nothing here to roll.
       if (!isLauncher && (!/^(?:sw|thr|\d+d)/.test(g.dmg) || !g.type)) {
