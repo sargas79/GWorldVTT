@@ -73,10 +73,14 @@ function money(value) {
   return m ? Number(m[1].replace(/,/g, "")) : 0;
 }
 
+/**
+ * A weight. At least one digit is required: "[\d.]+" alone also matches the lone
+ * dot in "neg.", and Number(".") is NaN, which serialises to null against a
+ * field that forbids it. "neg." is the book's negligible weight, which is not
+ * zero but is close enough that carrying it as zero misleads nobody.
+ */
 function weight(value) {
-  // "neg." is the book's negligible weight, which is not zero but is close
-  // enough that carrying it as zero misleads nobody.
-  const m = /([\d.]+)/.exec((value ?? "").replace(/,/g, ""));
+  const m = /(\d+(?:\.\d+)?|\.\d+)/.exec((value ?? "").replace(/,/g, ""));
   return m ? Number(m[1]) : 0;
 }
 

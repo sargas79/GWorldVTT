@@ -5,7 +5,7 @@
     "type": "armor",
     "system": {
       "quantity": 1,
-      "weight": null,
+      "weight": 0,
       "cost": 10,
       "carried": true,
       "equipped": false,
@@ -588,7 +588,7 @@
     "type": "armor",
     "system": {
       "quantity": 1,
-      "weight": null,
+      "weight": 0,
       "cost": 5,
       "carried": true,
       "equipped": false,
@@ -607,7 +607,7 @@
     "type": "armor",
     "system": {
       "quantity": 1,
-      "weight": null,
+      "weight": 0,
       "cost": 32,
       "carried": true,
       "equipped": false,
@@ -745,7 +745,7 @@
     "type": "armor",
     "system": {
       "quantity": 1,
-      "weight": null,
+      "weight": 0,
       "cost": 15,
       "carried": true,
       "equipped": false,
@@ -764,7 +764,7 @@
     "type": "armor",
     "system": {
       "quantity": 1,
-      "weight": null,
+      "weight": 0,
       "cost": 30,
       "carried": true,
       "equipped": false,

@@ -352,7 +352,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   #carriedRows(items: { carried: any[]; armor: any[]; shields: any[] }) {
     const rows = [
       ...items.carried.map((i: any) => ({ item: i, notes: describeModes(i), equippable: false })),
-      ...items.armor.map((i: any) => ({ item: i, notes: `DR ${i.system.dr}`, equippable: true })),
+      // Armour arrives wrapped with its coverage text for the protection card,
+      // so the inventory has to reach through to the item itself.
+      ...items.armor.map((a: any) => ({
+        item: a.item,
+        notes: `DR ${a.item.system.dr} — ${a.coverage}`,
+        equippable: true,
+      })),
       ...items.shields.map((i: any) => ({ item: i, notes: `DB ${i.system.db}`, equippable: true })),
     ];
 
@@ -402,7 +408,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       advantages: byType("trait").filter((t: any) => ["advantage", "perk"].includes(t.system.category)),
       disadvantages: byType("trait").filter((t: any) => t.system.category === "disadvantage"),
       quirks: byType("trait").filter((t: any) => t.system.category === "quirk"),
-      armor: byType("armor"),
+      // The protection card used to call every piece whole-body, which was true
+      // while the only armour came from GURPS Lite's full suits. The Basic Set
+      // sells a torso piece and its sleeves separately, so the card has to say
+      // what each one actually covers.
+      armor: byType("armor").map((a: any) => ({
+        item: a,
+        coverage: (a.system.locations ?? []).length
+          ? (a.system.locations as string[])
+              .map((l) => game.i18n.localize(`GWORLD.HitLocation.${l}`))
+              .join(", ")
+          : game.i18n.localize("GWORLD.Item.WholeBody"),
+      })),
       shields: byType("shield"),
       languages: byType("language"),
       techniques: byType("technique")

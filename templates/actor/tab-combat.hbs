@@ -220,17 +220,17 @@
     <div class="ish"><span class="num">06</span>{{localize "GWORLD.Section.Protection"}}</div>
     <div class="iarm">
       {{#each items.armor as |armor|}}
-        <div class="iac blueprint" data-item-id="{{armor.id}}">
+        <div class="iac blueprint" data-item-id="{{armor.item.id}}">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <span>
-            <strong data-action="editItem">{{armor.name}}</strong><br>
+            <strong data-action="editItem">{{armor.item.name}}</strong><br>
             <span style="font-size: 10.5px; color: var(--color-neutral-700)">
-              {{armor.system.weight}} lb / {{#if armor.system.equipped}}{{localize "GWORLD.Item.Equipped"}}{{else}}{{localize "GWORLD.Item.Stowed"}}{{/if}}
+              {{armor.item.system.weight}} lb / {{#if armor.item.system.equipped}}{{localize "GWORLD.Item.Equipped"}}{{else}}{{localize "GWORLD.Item.Stowed"}}{{/if}}
             </span>
           </span>
           <span style="text-align: right">
-            <span class="iav">DR {{armor.system.dr}}</span><br>
-            <span class="el">{{localize "GWORLD.Item.WholeBody"}}</span>
+            <span class="iav">DR {{armor.item.system.dr}}</span><br>
+            <span class="el">{{armor.coverage}}</span>
           </span>
         </div>
       {{/each}}
