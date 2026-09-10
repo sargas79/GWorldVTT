@@ -14,6 +14,11 @@ import {
 } from "../../rules/attributes.js";
 import { baseParry, block, dodge, parry } from "../../rules/defenses.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
+import {
+  drByLocation as armorDrByLocation,
+  splitSummary,
+  type ArmorPiece,
+} from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
 import {
   MANEUVERS,
@@ -368,15 +373,20 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     ) as Record<HitLocation, number>;
 
     const armorItems = this.itemsOfType("armor").filter((i) => i.system?.equipped);
-    for (const item of armorItems) {
-      const value = Number(item.system?.dr ?? 0);
-      const covered: HitLocation[] = item.system?.locations?.length
-        ? item.system.locations
-        : [...HIT_LOCATION_ORDER];
-      for (const loc of covered) {
-        if (loc in drByLocation) drByLocation[loc] += value;
-      }
-    }
+    const worn: ArmorPiece[] = armorItems.map((item) => ({
+      dr: Number(item.system?.dr ?? 0),
+      drSplit: item.system?.drSplit ?? null,
+      drSplitAppliesTo: item.system?.drSplitAppliesTo ?? [],
+      locations: item.system?.locations ?? [],
+    }));
+
+    // Armour written "4/2" stops one kind of attack better than another, so the
+    // figures are worked out twice: once against cutting, which every split
+    // treats as the higher DR, and once against crushing, which every split
+    // treats as the lower. Those two cover the whole of what the sheet shows.
+    const drCutting = armorDrByLocation(worn, "cut");
+    const drCrushing = armorDrByLocation(worn, "cr");
+    for (const loc of HIT_LOCATION_ORDER) drByLocation[loc] = drCutting[loc];
 
     // The headline DR figure stays the torso, which is what an unaimed blow hits.
     const dr = drByLocation.torso;
@@ -608,12 +618,20 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       swing: formatDiceAdds(swingDamage(attrs.ST)),
       dr,
       drByLocation,
-      hitLocations: HIT_LOCATION_ORDER.map((key) => ({
-        key,
-        label: HIT_LOCATIONS[key].label,
-        toHit: HIT_LOCATIONS[key].toHit,
-        dr: drByLocation[key],
-      })),
+      hitLocations: HIT_LOCATION_ORDER.map((key) => {
+        // Where a covering piece splits its DR, the location carries the second
+        // figure too, so the table can show "4 / 2 vs cr" rather than a number
+        // that is only right against half the attacks that land there.
+        const summary = splitSummary(worn, key);
+        return {
+          key,
+          label: HIT_LOCATIONS[key].label,
+          toHit: HIT_LOCATIONS[key].toHit,
+          dr: drByLocation[key],
+          drSplit: summary.splits ? drCrushing[key] : null,
+          splitAgainst: summary.against,
+        };
+      }),
       shieldDb,
       shieldName: shieldItem?.name ?? null,
       armorName: armorItems[0]?.name ?? null,

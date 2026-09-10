@@ -177,6 +177,27 @@
           </label>
         {{/each}}
       </div>
+
+      <div class="isub">
+        <div class="isub-head">{{localize "GWORLD.Armor.SplitDR"}}</div>
+        <p class="ihint">{{localize "GWORLD.Armor.SplitHint"}}</p>
+        <div class="ifields">
+          <label>{{localize "GWORLD.Armor.SplitValue"}}
+            <input type="number" name="system.drSplit" value="{{system.drSplit}}" step="1" min="0"
+                   placeholder="—" {{#unless editable}}disabled{{/unless}} />
+          </label>
+        </div>
+        <div class="ichecks">
+          {{#each choices.damageTypeList as |dt|}}
+            <label class="icheck">
+              <input type="checkbox" name="system.drSplitAppliesTo" value="{{dt}}"
+                     {{#if (includes @root.system.drSplitAppliesTo dt)}}checked{{/if}}
+                     {{#unless @root.editable}}disabled{{/unless}} />
+              {{localize (concat "GWORLD.DamageType." dt)}}
+            </label>
+          {{/each}}
+        </div>
+      </div>
     {{/if}}
 
     {{#if isShield}}

@@ -127,6 +127,13 @@ pdftotext -table -enc UTF-8 -f 284 -l 288 "GURPS 4E - Basic Set - Characters.pdf
 node tools/parse-armor.mjs armor.txt --write
 ```
 
+Armour written “4/2” carries both figures, along with the damage types the lower
+one applies to. Which those are depends on the table: the low-tech and barding
+footnote says the lower DR is used against crushing, while the high- and
+ultra-tech one says the higher is used against piercing and cutting and the lower
+against everything else. The two agree wherever they overlap, so the applicable
+types are recorded per piece rather than inferred from a flag.
+
 All five parsers favour precision over recall and print every rejection with its
 reason. Each also writes the rejected rows beside its output so they can be
 inspected: `packs-src/skills/.rejected.txt` for skills, `packs-src/traits/` for

@@ -364,6 +364,8 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
 /** Worn armor, which provides Damage Resistance (GURPS Lite p. 18). */
 export class ArmorData extends foundry.abstract.TypeDataModel {
   declare dr: number;
+  declare drSplit: number | null;
+  declare drSplitAppliesTo: DamageType[];
   declare locations: string[];
   declare quantity: number;
   declare weight: number;
@@ -391,6 +393,29 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
        * An empty list means whole-body coverage, which keeps armor written for
        * the Lite rules working unchanged.
        */
+      /**
+       * The second, lower DR of armour written "4/2", and the damage types it
+       * applies to. Which types those are depends on the table the armour came
+       * from -- see SPLIT_AGAINST in the rules engine -- so they are stored with
+       * the piece rather than inferred from it.
+       */
+      drSplit: new fields.NumberField({
+        required: true,
+        nullable: true,
+        integer: true,
+        initial: null,
+        min: 0,
+      }),
+      drSplitAppliesTo: new fields.ArrayField(
+        new fields.StringField({
+          required: true,
+          nullable: false,
+          blank: false,
+          choices: ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
+        }),
+        { required: true, initial: [] },
+      ),
+
       locations: new fields.ArrayField(
         new fields.StringField({
           required: true,
