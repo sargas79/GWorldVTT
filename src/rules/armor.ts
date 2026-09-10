@@ -19,8 +19,12 @@
  * flag, and no piece has to belong to both readings.
  */
 
-import { HIT_LOCATION_ORDER, HIT_LOCATIONS, type HitLocation } from "./hit-locations.js";
-import type { DamageType } from "./types.js";
+import {
+  HIT_LOCATION_ORDER,
+  locationDrAgainst,
+  type HitLocation,
+} from "./hit-locations.js";
+import { DAMAGE_TYPES, type DamageType } from "./types.js";
 
 /** The damage types the lower DR applies to, by the table the armour comes from. */
 export const SPLIT_AGAINST = {
@@ -57,8 +61,11 @@ export function drByLocation(
   pieces: readonly ArmorPiece[],
   type: DamageType,
 ): Record<HitLocation, number> {
+  // The location's own DR depends on the damage too: locationDrAgainst exempts
+  // toxic from the skull's natural armour, and seeding from extraDr directly
+  // would have given poison something to chew through.
   const total = Object.fromEntries(
-    HIT_LOCATION_ORDER.map((loc) => [loc, HIT_LOCATIONS[loc].extraDr]),
+    HIT_LOCATION_ORDER.map((loc) => [loc, locationDrAgainst(loc, type)]),
   ) as Record<HitLocation, number>;
 
   for (const piece of pieces) {
@@ -72,18 +79,47 @@ export function drByLocation(
   return total;
 }
 
+/** One DR figure and the damage it protects against. */
+export interface DrBand {
+  dr: number;
+  types: DamageType[];
+}
+
 /**
- * Whether any piece covering a location protects it unevenly, and the DR when
- * the lower figure applies. Returned so a sheet can show "DR 4 (2 vs crushing)"
- * without having to know which attack is coming.
+ * Every distinct DR a location has, with the damage each applies to, commonest
+ * first.
+ *
+ * Resolving two figures -- one against cutting and one against crushing -- is
+ * not enough once pieces from different tables overlap. Mail takes its lower DR
+ * against crushing alone; a ballistic vest takes its lower against five more
+ * types besides. Worn together against an impaling attack the mail gives its
+ * higher figure and the vest its lower, and that total appears in neither pass.
+ * So the profile is built from every damage type and then grouped.
+ */
+export function drProfile(pieces: readonly ArmorPiece[], location: HitLocation): DrBand[] {
+  const byType = new Map<number, DamageType[]>();
+
+  for (const type of DAMAGE_TYPES) {
+    const dr = drByLocation(pieces, type)[location];
+    const bucket = byType.get(dr);
+    if (bucket) bucket.push(type);
+    else byType.set(dr, [type]);
+  }
+
+  return [...byType.entries()]
+    .map(([dr, types]) => ({ dr, types }))
+    .sort((a, b) => b.types.length - a.types.length || b.dr - a.dr);
+}
+
+/**
+ * Whether a location is protected unevenly, and what the profile looks like.
+ * Returned so a sheet can show the ordinary figure with its exceptions rather
+ * than a number that is only right against some of what lands there.
  */
 export function splitSummary(
   pieces: readonly ArmorPiece[],
   location: HitLocation,
-): { splits: boolean; against: readonly DamageType[] } {
-  const covering = pieces.filter(
-    (p) => (p.locations.length ? p.locations : HIT_LOCATION_ORDER).includes(location),
-  );
-  const against = [...new Set(covering.flatMap((p) => (p.drSplit === null ? [] : p.drSplitAppliesTo)))];
-  return { splits: against.length > 0, against };
+): { splits: boolean; bands: DrBand[] } {
+  const bands = drProfile(pieces, location);
+  return { splits: bands.length > 1, bands };
 }

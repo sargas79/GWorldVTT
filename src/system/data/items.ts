@@ -363,6 +363,28 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
 
 /** Worn armor, which provides Damage Resistance (GURPS Lite p. 18). */
 export class ArmorData extends foundry.abstract.TypeDataModel {
+  /**
+   * The split DR is only meaningful as a pair, and the second figure is the
+   * lower one. The pack validator checks this too, but a document edited on the
+   * sheet never passes through that, and a "lower" DR above the main one would
+   * make drAgainst return the larger number for the damage it is meant to
+   * protect against least.
+   */
+  static override validateJoint(data: Record<string, any>): void {
+    const split = data.drSplit ?? null;
+    const against = data.drSplitAppliesTo ?? [];
+
+    if (split === null && against.length > 0) {
+      throw new Error("Armor names damage for a split DR without giving the second DR.");
+    }
+    if (split !== null && against.length === 0) {
+      throw new Error("Armor has a split DR without saying which damage it applies to.");
+    }
+    if (split !== null && split > (data.dr ?? 0)) {
+      throw new Error(`Split DR ${split} must not exceed the armor's DR of ${data.dr}.`);
+    }
+  }
+
   declare dr: number;
   declare drSplit: number | null;
   declare drSplitAppliesTo: DamageType[];

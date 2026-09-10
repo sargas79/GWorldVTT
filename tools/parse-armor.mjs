@@ -20,7 +20,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -48,10 +48,11 @@ const BARDING_TABLE = /^Horse Armor \(Barding\) Table$/;
 const HIGH_TECH_TABLE = /^High- and Ultra-Tech Armor Table$/;
 
 /**
- * The damage the lower DR applies to, mirroring SPLIT_AGAINST in the rules
- * engine. Kept in step with it by the validator.
+ * The damage the lower DR applies to. This must match SPLIT_AGAINST in
+ * `src/rules/armor.ts`, which is what resolves DR at play time; a comment saying
+ * so would not have stopped the two drifting, so a test compares them.
  */
-const SPLIT_AGAINST = {
+export const SPLIT_AGAINST = {
   lowTech: ["cr"],
   highTech: ["cr", "imp", "burn", "tox", "cor", "fat"],
 };
@@ -203,4 +204,9 @@ function main() {
   }
 }
 
-main();
+// Only run when invoked directly. The split-DR mapping above is imported by a
+// test that checks it against the rules engine, and a module that runs its main
+// on import cannot be imported at all.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}

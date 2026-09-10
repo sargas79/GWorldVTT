@@ -207,7 +207,13 @@
             <td class="c wmode">{{#if loc.toHit}}{{loc.toHit}}{{else}}&mdash;{{/if}}</td>
             <td class="c">
               <span class="lvl">{{loc.dr}}</span>
-              {{#if loc.drSplit}}<span class="wmode">/ {{loc.drSplit}} {{localize "GWORLD.Armor.VsCrushing"}}</span>{{/if}}
+              {{!-- "splits" is a flag rather than a value test: a DR of 0 is a
+                    real figure and Handlebars reads it as false. --}}
+              {{#if loc.splits}}
+                {{#each loc.exceptions as |ex|}}
+                  <span class="wmode">/ {{ex.dr}} vs {{ex.types}}</span>
+                {{/each}}
+              {{/if}}
             </td>
             <td class="c wmode">{{#if loc.toHit}}{{localize "GWORLD.Hint.TargetPenalty"}}{{/if}}</td>
           </tr>

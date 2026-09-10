@@ -380,12 +380,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       locations: item.system?.locations ?? [],
     }));
 
-    // Armour written "4/2" stops one kind of attack better than another, so the
-    // figures are worked out twice: once against cutting, which every split
-    // treats as the higher DR, and once against crushing, which every split
-    // treats as the lower. Those two cover the whole of what the sheet shows.
+    // Armour written "4/2" stops one kind of attack better than another, and two
+    // passes are not enough to describe that: mail takes its lower DR against
+    // crushing alone while a ballistic vest takes its lower against five more
+    // types, so worn together against an impaling attack the total is neither
+    // the all-cutting nor the all-crushing sum. Each location is resolved across
+    // every damage type instead, and grouped.
     const drCutting = armorDrByLocation(worn, "cut");
-    const drCrushing = armorDrByLocation(worn, "cr");
     for (const loc of HIT_LOCATION_ORDER) drByLocation[loc] = drCutting[loc];
 
     // The headline DR figure stays the torso, which is what an unaimed blow hits.
@@ -619,17 +620,21 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       dr,
       drByLocation,
       hitLocations: HIT_LOCATION_ORDER.map((key) => {
-        // Where a covering piece splits its DR, the location carries the second
-        // figure too, so the table can show "4 / 2 vs cr" rather than a number
-        // that is only right against half the attacks that land there.
-        const summary = splitSummary(worn, key);
+        // Where a location is protected unevenly it carries every distinct DR
+        // with the damage each applies to, rather than a number that is only
+        // right against some of what lands there.
+        const { splits, bands } = splitSummary(worn, key);
+        const [ordinary, ...exceptions] = bands;
         return {
           key,
           label: HIT_LOCATIONS[key].label,
           toHit: HIT_LOCATIONS[key].toHit,
-          dr: drByLocation[key],
-          drSplit: summary.splits ? drCrushing[key] : null,
-          splitAgainst: summary.against,
+          dr: ordinary?.dr ?? 0,
+          splits,
+          exceptions: exceptions.map((band) => ({
+            dr: band.dr,
+            types: band.types.join(", "),
+          })),
         };
       }),
       shieldDb,

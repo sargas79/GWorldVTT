@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { SPLIT_AGAINST, drAgainst, drByLocation, splitSummary, type ArmorPiece } from "../armor.js";
+import {
+  SPLIT_AGAINST,
+  drAgainst,
+  drByLocation,
+  drProfile,
+  splitSummary,
+  type ArmorPiece,
+} from "../armor.js";
+import { DAMAGE_TYPES } from "../types.js";
 
 /** A mail hauberk: DR 4, but DR 2 against crushing (low-tech table). */
 const mail: ArmorPiece = {
@@ -105,13 +113,64 @@ describe("splitSummary", () => {
     expect(splitSummary([breastplate], "torso").splits).toBe(false);
   });
 
-  it("names the damage the lower DR applies to", () => {
-    const summary = splitSummary([mail], "torso");
-    expect(summary.splits).toBe(true);
-    expect(summary.against).toEqual(["cr"]);
+  it("names the damage each DR applies to", () => {
+    const { splits, bands } = splitSummary([mail], "torso");
+    expect(splits).toBe(true);
+    expect(bands.find((b) => b.dr === 2)?.types).toEqual(["cr"]);
+    expect(bands.find((b) => b.dr === 4)?.types).toContain("cut");
   });
 
   it("ignores pieces that do not cover the location asked about", () => {
-    expect(splitSummary([mail], "skull").splits).toBe(false);
+    const bands = splitSummary([mail], "skull").bands;
+    expect(bands.every((b) => b.dr <= 2)).toBe(true);
+  });
+
+  /**
+   * The skull protects unevenly on its own account, whatever is worn over it:
+   * its natural DR stops a blow but not a poison. That is a real split and the
+   * sheet is right to say so.
+   */
+  it("counts the skull as split because toxic bypasses its natural DR", () => {
+    const { splits, bands } = splitSummary([], "skull");
+    expect(splits).toBe(true);
+    expect(bands.find((b) => b.types.includes("tox"))?.dr).toBe(0);
+  });
+});
+
+describe("drProfile", () => {
+  /**
+   * The case that showed two passes were not enough: worn together against an
+   * impaling attack the mail gives its higher figure and the vest its lower, and
+   * that total is neither the all-cutting nor the all-crushing sum.
+   */
+  it("resolves overlapping pieces whose tables split differently", () => {
+    const vest: ArmorPiece = {
+      dr: 8,
+      drSplit: 2,
+      drSplitAppliesTo: SPLIT_AGAINST.highTech,
+      locations: ["torso", "vitals"],
+    };
+    const together = [mail, vest];
+
+    expect(drByLocation(together, "cut").torso).toBe(4 + 8);
+    expect(drByLocation(together, "cr").torso).toBe(2 + 2);
+    // Mail's higher figure and the vest's lower one.
+    expect(drByLocation(together, "imp").torso).toBe(4 + 2);
+
+    const bands = drProfile(together, "torso");
+    expect(bands.map((b) => b.dr).sort((a, b) => a - b)).toEqual([4, 6, 12]);
+    expect(bands.find((b) => b.dr === 6)?.types).toContain("imp");
+  });
+
+  it("gives one band when nothing splits", () => {
+    expect(drProfile([breastplate], "torso")).toEqual([
+      { dr: 5, types: [...DAMAGE_TYPES] },
+    ]);
+  });
+
+  it("exempts toxic from the skull's own DR, as the injury rules do", () => {
+    const bands = drProfile([], "skull");
+    expect(bands.find((b) => b.types.includes("tox"))?.dr).toBe(0);
+    expect(bands.find((b) => b.types.includes("cr"))?.dr).toBeGreaterThan(0);
   });
 });
