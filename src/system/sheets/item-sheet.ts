@@ -57,6 +57,18 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       context[`is${t.charAt(0).toUpperCase()}${t.slice(1)}`] = item.type === t;
     }
 
+    // A trait's cost table and level names are arrays, which a form cannot
+    // carry directly. The table is short and reads naturally as the book prints
+    // it ("10/20/30/50/75"), so it is edited as text. Level names get a line
+    // each rather than a separated list, because several contain commas of
+    // their own -- "A large group (21-1,000 people)".
+    if (item.type === "trait") {
+      context.costTableText = item.system.costTable.join("/");
+      context.levelNamesText = item.system.levelNames.join("\n");
+      context.isTabled = item.system.costTable.length > 0;
+      context.levelName = item.system.levelName;
+    }
+
     // The description is rich text, so it has to be enriched before display or
     // links and inline rolls arrive as raw markup.
     context.enrichedDescription = await foundry.applications.ux.TextEditor.implementation.enrichHTML(
@@ -118,6 +130,28 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       const key = path.slice("system.".length);
       if (data.system?.[key] === undefined) {
         data.system = { ...(data.system ?? {}), [key]: [] };
+      }
+    }
+
+    // The two trait arrays are edited as text, so they arrive as strings and
+    // have to be read back into arrays before the data model sees them.
+    // A step that is not a number is dropped rather than stored as NaN, which
+    // the schema would refuse; clearing the field clears the table, which is
+    // how a trait priced from a table goes back to being priced per level.
+    if (this.item.type === "trait" && data.system) {
+      if (typeof data.system.costTable === "string") {
+        data.system.costTable = data.system.costTable
+          .split(/[/,]/)
+          .map((step: string) => Number(step.trim()))
+          .filter((step: number) => Number.isInteger(step));
+      }
+      if (typeof data.system.levelNames === "string") {
+        const names = data.system.levelNames.split("\n").map((n: string) => n.trim());
+        // Trailing blank lines are an artefact of typing, not unnamed levels;
+        // a blank between two names is a level the book leaves unnamed and is
+        // kept, which is how Combat Reflexes names only its second step.
+        while (names.length > 0 && names[names.length - 1] === "") names.pop();
+        data.system.levelNames = names;
       }
     }
 

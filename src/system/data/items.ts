@@ -3,6 +3,7 @@
  */
 
 import { relativeLevelForPoints } from "../../rules/skills.js";
+import { traitPoints } from "../../rules/traits.js";
 import type { DamageType, Difficulty, SkillAttribute } from "../../rules/types.js";
 
 const fields = foundry.data.fields;
@@ -46,6 +47,9 @@ export class TraitData extends foundry.abstract.TypeDataModel {
   declare category: "advantage" | "disadvantage" | "quirk" | "perk";
   declare levels: number;
   declare pointsPerLevel: number;
+  declare costTable: number[];
+  declare levelNames: string[];
+  declare maxLevels: number;
   declare reactionModifier: number;
 
   static override defineSchema() {
@@ -73,6 +77,34 @@ export class TraitData extends foundry.abstract.TypeDataModel {
         integer: true,
         initial: 0,
       }),
+      /**
+       * Total cost at each level, for traits the book prices from a table
+       * rather than at a flat rate per level. Wealth runs 10/20/30/50/75 and
+       * Appearance 4/12/12/16/16/20, neither of which any per-level figure
+       * reproduces. Empty for the great majority of traits, which are priced
+       * evenly; when set, it is what `totalPoints` reads.
+       */
+      costTable: new fields.ArrayField(
+        new fields.NumberField({ required: true, nullable: false, integer: true }),
+        { required: true, initial: [] },
+      ),
+      /**
+       * The book's name for each level, level 1 first. Players name Wealth by
+       * its steps -- Comfortable, Filthy Rich -- rather than by a number. An
+       * entry may be blank where the book names only some levels.
+       */
+      levelNames: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: true, initial: "" }),
+        { required: true, initial: [] },
+      ),
+      /** Highest level the book allows, or 0 where it sets no limit. */
+      maxLevels: new fields.NumberField({
+        required: true,
+        nullable: false,
+        integer: true,
+        initial: 0,
+        min: 0,
+      }),
       /** A flat modifier this trait applies to reaction rolls (GURPS Lite p. 3). */
       reactionModifier: new fields.NumberField({
         required: true,
@@ -85,7 +117,12 @@ export class TraitData extends foundry.abstract.TypeDataModel {
 
   /** Total character points this trait costs, counting levels. */
   get totalPoints(): number {
-    return this.points + this.levels * this.pointsPerLevel;
+    return traitPoints(this);
+  }
+
+  /** The book's name for the level bought, where it names one. */
+  get levelName(): string | null {
+    return this.levelNames[this.levels - 1] || null;
   }
 }
 
@@ -558,11 +595,14 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
         required: true, nullable: false, integer: true, initial: 0, min: 0,
       }),
       /**
-       * A cap tighter than the prerequisite's own level, relative to it. Zero
-       * means the technique may reach the prerequisite skill but not exceed it.
+       * The technique's ceiling, relative to the prerequisite skill's level.
+       * Zero -- the common case -- means it may reach that skill but not
+       * exceed it. Some techniques are allowed past it: Arm Lock caps at the
+       * prerequisite +4 and Kicking at +5 (p. 230), so this is not bounded
+       * above.
        */
       maxRelativeToPrerequisite: new fields.NumberField({
-        required: true, nullable: false, integer: true, initial: 0, max: 0,
+        required: true, nullable: false, integer: true, initial: 0,
       }),
     };
   }

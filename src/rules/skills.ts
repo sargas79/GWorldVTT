@@ -144,14 +144,16 @@ export interface TechniqueResolution {
  * Resolves a technique against the skill it defaults from.
  *
  * A technique starts at `prerequisiteLevel + defaultModifier` (the modifier is
- * negative) and is bought up from there. It can never exceed the prerequisite
- * skill's own level, nor any tighter cap the technique specifies.
+ * negative) and is bought up from there. Its ceiling is usually the
+ * prerequisite skill's own level, but each technique sets its own: Arm Lock
+ * reaches the prerequisite +4 and Kicking +5 (p. 230), so the cap is not
+ * assumed to sit at or below the skill.
  */
 export function resolveTechnique(options: {
   prerequisiteLevel: number;
   defaultModifier: number;
   levels: number;
-  /** A cap tighter than the prerequisite level, expressed relative to it. */
+  /** The technique's ceiling, expressed relative to the prerequisite level. */
   maxRelativeToPrerequisite?: number;
 }): TechniqueResolution {
   const { prerequisiteLevel, defaultModifier, levels } = options;

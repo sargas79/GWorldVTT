@@ -1,0 +1,492 @@
+[
+  {
+    "_id": "5ff0d5fe8d9de453",
+    "name": "Arm Lock (Judo)",
+    "type": "technique",
+    "system": {
+      "difficulty": "A",
+      "prerequisite": "Judo",
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 4,
+      "description": "",
+      "reference": "Basic Set: Characters p. 230"
+    }
+  },
+  {
+    "_id": "c6277d9ae04ca8a3",
+    "name": "Arm Lock (Wrestling)",
+    "type": "technique",
+    "system": {
+      "difficulty": "A",
+      "prerequisite": "Wrestling",
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 4,
+      "description": "",
+      "reference": "Basic Set: Characters p. 230"
+    }
+  },
+  {
+    "_id": "6e03ea7fc6750de1",
+    "name": "Back Kick (Karate)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Karate",
+      "defaultModifier": -4,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 230"
+    }
+  },
+  {
+    "_id": "81dc3c829ed8ffad",
+    "name": "Choke Hold (Judo)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Judo",
+      "defaultModifier": -2,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 230"
+    }
+  },
+  {
+    "_id": "e5d9b3c03a5606b2",
+    "name": "Choke Hold (Wrestling)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Wrestling",
+      "defaultModifier": -3,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 230"
+    }
+  },
+  {
+    "_id": "e3153aa8385e92d8",
+    "name": "Dual-Weapon Attack (Beam Weapons (Pistol))",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Beam Weapons (Pistol)",
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 230"
+    }
+  },
+  {
+    "_id": "cdb1f7e35e06ac05",
+    "name": "Dual-Weapon Attack (Guns (Pistol))",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Guns (Pistol)",
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 230"
+    }
+  },
+  {
+    "_id": "4fb4c7dc3cee39d5",
+    "name": "Dual-Weapon Attack (Bow)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Bow",
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 230"
+    }
+  },
+  {
+    "_id": "0d5ae0ee56947a24",
+    "name": "Elbow Strike (Brawling)",
+    "type": "technique",
+    "system": {
+      "difficulty": "A",
+      "prerequisite": "Brawling",
+      "defaultModifier": -2,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 230"
+    }
+  },
+  {
+    "_id": "6c6d428a7b60e203",
+    "name": "Elbow Strike (Karate)",
+    "type": "technique",
+    "system": {
+      "difficulty": "A",
+      "prerequisite": "Karate",
+      "defaultModifier": -2,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 230"
+    }
+  },
+  {
+    "_id": "9720daa1d5504dce",
+    "name": "Finger Lock (Judo)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Arm Lock (Judo)",
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 231"
+    }
+  },
+  {
+    "_id": "82b64adee1103b51",
+    "name": "Finger Lock (Wrestling)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Arm Lock (Wrestling)",
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 231"
+    }
+  },
+  {
+    "_id": "eacccc968a311509",
+    "name": "Horse Archery (Bow)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Bow",
+      "defaultModifier": -4,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 231"
+    }
+  },
+  {
+    "_id": "cb618c34ce7ec47f",
+    "name": "Jump Kick (Karate)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Karate",
+      "defaultModifier": -4,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 231"
+    }
+  },
+  {
+    "_id": "168f59b0c1729189",
+    "name": "Kicking (Brawling)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Brawling",
+      "defaultModifier": -2,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 231"
+    }
+  },
+  {
+    "_id": "c2d9b59f9f6eb198",
+    "name": "Kicking (Karate)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Karate",
+      "defaultModifier": -2,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 231"
+    }
+  },
+  {
+    "_id": "960cb71becc09036",
+    "name": "Knee Strike (Brawling)",
+    "type": "technique",
+    "system": {
+      "difficulty": "A",
+      "prerequisite": "Brawling",
+      "defaultModifier": -1,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 232"
+    }
+  },
+  {
+    "_id": "47f695cd052e4df7",
+    "name": "Knee Strike (Karate)",
+    "type": "technique",
+    "system": {
+      "difficulty": "A",
+      "prerequisite": "Karate",
+      "defaultModifier": -1,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 232"
+    }
+  },
+  {
+    "_id": "19fb0c146865d56f",
+    "name": "Sweep (Polearm)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Polearm",
+      "defaultModifier": -3,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 232"
+    }
+  },
+  {
+    "_id": "48f10b13ac052e17",
+    "name": "Sweep (Spear)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Spear",
+      "defaultModifier": -3,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 232"
+    }
+  },
+  {
+    "_id": "d6a862b98dba634b",
+    "name": "Sweep (Staff)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Staff",
+      "defaultModifier": -3,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 232"
+    }
+  },
+  {
+    "_id": "fbef63dcb0249ffe",
+    "name": "Sweeping Kick (Judo)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Judo",
+      "defaultModifier": -3,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 232"
+    }
+  },
+  {
+    "_id": "b5da85a36079ef3c",
+    "name": "Sweeping Kick (Karate)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Karate",
+      "defaultModifier": -3,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 232"
+    }
+  },
+  {
+    "_id": "b35453cb85e18f87",
+    "name": "Sweeping Kick (Sumo Wrestling)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Sumo Wrestling",
+      "defaultModifier": -3,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 232"
+    }
+  },
+  {
+    "_id": "2c04ee8059700248",
+    "name": "Whirlwind Attack (Broadsword)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Broadsword",
+      "defaultModifier": -5,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 232"
+    }
+  },
+  {
+    "_id": "0714752a07c0293b",
+    "name": "Whirlwind Attack (Staff)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Staff",
+      "defaultModifier": -5,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 232"
+    }
+  },
+  {
+    "_id": "e34d2cec35a267da",
+    "name": "Whirlwind Attack (Two-Handed Sword)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Two-Handed Sword",
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 5,
+      "description": "",
+      "reference": "Basic Set: Characters p. 232"
+    }
+  },
+  {
+    "_id": "2e894e186fbb6253",
+    "name": "Impersonate (Mimicry (Speech))",
+    "type": "technique",
+    "system": {
+      "difficulty": "A",
+      "prerequisite": "Mimicry (Speech)",
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 233"
+    }
+  },
+  {
+    "_id": "3e1d907361aef0ae",
+    "name": "Lifesaving (Swimming)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Swimming",
+      "defaultModifier": -5,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 233"
+    }
+  },
+  {
+    "_id": "903fcf3109bb112c",
+    "name": "Motion-Picture Camera (Photography)",
+    "type": "technique",
+    "system": {
+      "difficulty": "A",
+      "prerequisite": "Photography",
+      "defaultModifier": -3,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 233"
+    }
+  },
+  {
+    "_id": "0eebd1c77ca6b03f",
+    "name": "Rope Up (Climbing)",
+    "type": "technique",
+    "system": {
+      "difficulty": "A",
+      "prerequisite": "Climbing",
+      "defaultModifier": -2,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 233"
+    }
+  },
+  {
+    "_id": "e52252fcb3952d3a",
+    "name": "Scaling (Climbing)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Climbing",
+      "defaultModifier": -3,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 233"
+    }
+  },
+  {
+    "_id": "5ed816feed8cd376",
+    "name": "Set Trap (Explosives (Demolition))",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Explosives (Demolition)",
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 233"
+    }
+  },
+  {
+    "_id": "edf3aff47e31d8c6",
+    "name": "Slip Handcuffs (Escape)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Escape",
+      "defaultModifier": -5,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 233"
+    }
+  },
+  {
+    "_id": "23ff1e49d99d9996",
+    "name": "Work by Touch (Lockpicking)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Lockpicking",
+      "defaultModifier": -5,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 233"
+    }
+  }
+]

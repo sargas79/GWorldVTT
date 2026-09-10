@@ -351,6 +351,28 @@ describe("techniques (GURPS Basic Set: Characters pp. 229-233)", () => {
     expect(result.level).toBe(13);
     expect(result.cappedByPrerequisite).toBe(true);
   });
+
+  /**
+   * Most techniques stop at the prerequisite skill's level, but the book lets
+   * some go past it: Arm Lock caps at the skill +4 and Kicking at +5 (p. 230).
+   * A ceiling assumed to sit at or below the skill refunds those levels.
+   */
+  it("lets a technique climb above its prerequisite where the book allows it", () => {
+    const armLock = resolveTechnique({
+      prerequisiteLevel: 12, defaultModifier: 0, levels: 4, maxRelativeToPrerequisite: 4,
+    });
+    expect(armLock.level).toBe(16);
+    expect(armLock.levels).toBe(4);
+    expect(armLock.cappedByPrerequisite).toBe(false);
+  });
+
+  it("still caps such a technique at its own higher ceiling", () => {
+    const over = resolveTechnique({
+      prerequisiteLevel: 12, defaultModifier: 0, levels: 7, maxRelativeToPrerequisite: 4,
+    });
+    expect(over.level).toBe(16);
+    expect(over.cappedByPrerequisite).toBe(true);
+  });
 });
 
 describe("skill defaults and the Rule of 20", () => {
