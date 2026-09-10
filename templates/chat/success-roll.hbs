@@ -19,4 +19,10 @@
   </div>
 
   <div class="gc-result {{resultClass}}">{{resultLabel}}</div>
+
+  {{#if hits}}
+    <div class="gc-result">
+      {{localize "GWORLD.Chat.Hits" hits=hits shots=shotsFired}}
+    </div>
+  {{/if}}
 </div>

@@ -318,7 +318,9 @@
       "TargetSize": "Target Size Modifier",
       "Aimed": "Aimed",
       "Accuracy": "Accuracy",
-      "SpeedRange": "speed/range"
+      "SpeedRange": "speed/range",
+      "Shots": "Shots fired",
+      "RapidFire": "rapid fire"
     },
     "Chat": {
       "Target": "Target",
@@ -332,6 +334,7 @@
       "ArmorDivisor": "armor divisor",
       "InjuryUnarmored": "Injury against no DR:",
       "ApplyDamage": "Apply",
+      "Hits": "{hits} of {shots} shots hit",
       "DefendingAgainst": "{defense} vs {attack}",
       "HitLocation": "Hit location",
       "DamageApplied": "damage applied",

@@ -22,6 +22,7 @@ const shot = (over: Partial<Parameters<typeof rangedModifiers>[0]> = {}) => ({
   speed: 0,
   size: 0,
   modifier: 0,
+  shots: 1,
   aimed: false,
   ...over,
 });

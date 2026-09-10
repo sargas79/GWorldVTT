@@ -89,6 +89,8 @@ export interface DerivedAttack {
   scopeBonus?: number;
   range?: string;
   rateOfFire?: number;
+  /** Recoil, which decides how many of a burst's shots hit. */
+  recoil?: number;
   shots?: string;
 }
 
@@ -530,6 +532,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           scopeBonus: mode.scopeBonus ?? 0,
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
           rateOfFire: mode.rateOfFire ?? 1,
+          recoil: mode.recoil ?? 0,
           shots: mode.shots ?? "",
           unbalanced: false,
           isFencing: false,

@@ -96,3 +96,54 @@ export function musclePoweredRange(
 ): { halfDamage: number; max: number } {
   return { halfDamage: st * halfDamageMultiplier, max: st * maxMultiplier };
 }
+
+/**
+ * Bonus to hit for firing many shots at once (GURPS Basic Set: Campaigns
+ * p. 373).
+ *
+ * Keyed on the number of shots actually fired, which is chosen before the
+ * attack roll and may be anything up to the weapon's Rate of Fire -- not on
+ * RoF itself. A revolver with RoF 3 firing one shot gets nothing.
+ */
+const RAPID_FIRE_BONUS: ReadonlyArray<{ upTo: number; bonus: number }> = [
+  { upTo: 4, bonus: 0 },
+  { upTo: 8, bonus: 1 },
+  { upTo: 12, bonus: 2 },
+  { upTo: 16, bonus: 3 },
+  { upTo: 24, bonus: 4 },
+  { upTo: 49, bonus: 5 },
+  { upTo: 99, bonus: 6 },
+];
+
+export function rapidFireBonus(shotsFired: number): number {
+  if (shotsFired < 2) return 0;
+  for (const row of RAPID_FIRE_BONUS) {
+    if (shotsFired <= row.upTo) return row.bonus;
+  }
+  // "each x2 +1 to hit": 100-199 is +7, 200-399 is +8, and so on.
+  return 6 + Math.floor(Math.log2(shotsFired / 50));
+}
+
+/**
+ * How many shots hit (GURPS Basic Set: Campaigns p. 373).
+ *
+ * "An attack scores one extra hit for every full multiple of Recoil by which
+ * you make your attack roll. The total number of hits cannot exceed shots
+ * fired." So a weapon at Rcl 2 that succeeds by 0-1 scores one hit, by 2-3 two,
+ * by 4-5 three.
+ *
+ * Recoil below 1 is read as 1. The table prints 1 for a recoilless weapon, and
+ * a weapon recorded with none would otherwise divide by zero and score every
+ * shot as a hit.
+ */
+export function rapidFireHits(options: {
+  /** Margin of success, zero or positive. A failed attack scores no hits. */
+  margin: number;
+  shotsFired: number;
+  recoil: number;
+}): number {
+  const shots = Math.max(1, Math.floor(options.shotsFired));
+  const recoil = Math.max(1, Math.floor(options.recoil));
+  const extra = Math.floor(Math.max(0, options.margin) / recoil);
+  return Math.min(shots, 1 + extra);
+}

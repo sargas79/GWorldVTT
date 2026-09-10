@@ -12,7 +12,7 @@ import { targetedTokens } from "./targets.js";
 import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import { applyDamageFloor, computeInjury } from "../rules/damage.js";
 import { parseDiceAdds, toRollFormula } from "../rules/dice.js";
-import { rangedToHitModifier } from "../rules/ranged.js";
+import { rangedToHitModifier, rapidFireBonus, rapidFireHits } from "../rules/ranged.js";
 import type { DamageType } from "../rules/types.js";
 
 const CHAT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/success-roll.hbs`;
@@ -34,6 +34,11 @@ export interface SuccessRollOptions {
   /** What kind of roll this is; defense rolls use the defense success rules. */
   kind?: RollKind;
   modifiers?: RollModifier[];
+  /**
+   * A burst, whose margin of success decides how many of its shots hit
+   * (GURPS Basic Set: Campaigns p. 373).
+   */
+  rapidFire?: { shotsFired: number; recoil: number };
 }
 
 /**
@@ -43,7 +48,7 @@ export interface SuccessRollOptions {
  * going on to roll damage, for instance).
  */
 export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessRollResult | null> {
-  const { actor, base, label, kind = "skill", modifiers = [] } = options;
+  const { actor, base, label, kind = "skill", modifiers = [], rapidFire } = options;
 
   const totalModifier = modifiers.reduce((sum, m) => sum + m.value, 0);
   const effective = base + totalModifier;
@@ -76,6 +81,16 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     outcome,
     resultLabel: describeOutcome(outcome, kind),
     resultClass: outcomeClass(outcome),
+    // A burst that missed scored nothing, so hits are reported only on a hit.
+    hits:
+      rapidFire && outcome.success
+        ? rapidFireHits({
+            margin: outcome.margin,
+            shotsFired: rapidFire.shotsFired,
+            recoil: rapidFire.recoil,
+          })
+        : null,
+    shotsFired: rapidFire?.shotsFired ?? null,
   });
 
   await ChatMessage.implementation.create({
@@ -231,12 +246,18 @@ export async function handleRollAction(
   // A ranged attack always asks, rather than only on a shift-click: range is
   // not optional the way a situational modifier is, and defaulting it to zero
   // would quietly roll every shot as though it were point blank.
-  const modifiers = ranged
+  const recoil = Number(target.dataset.recoil) || 0;
+  const shot = ranged
     ? await promptForRangedAttack({
         accuracy: Number(target.dataset.accuracy) || 0,
         scopeBonus: Number(target.dataset.scopeBonus) || 0,
+        rateOfFire: Number(target.dataset.rateOfFire) || 1,
+        recoil,
       })
-    : await maybePromptModifiers(event);
+    : null;
+  if (ranged && shot === null) return;
+
+  const modifiers = shot ? shot.modifiers : await maybePromptModifiers(event);
   if (modifiers === null) return;
 
   await rollSuccess({
@@ -245,6 +266,11 @@ export async function handleRollAction(
     label: rollLabel ?? rollType ?? "Roll",
     kind: rollKind(rollType),
     modifiers,
+    // Only a burst needs its hits counted; a single shot either hits or does
+    // not, and saying "1 hit" on every arrow would be noise.
+    ...(shot && shot.shotsFired > 1
+      ? { rapidFire: { shotsFired: shot.shotsFired, recoil } }
+      : {}),
   });
 }
 
@@ -263,7 +289,9 @@ export async function handleRollAction(
 export async function promptForRangedAttack(options: {
   accuracy: number;
   scopeBonus: number;
-}): Promise<RollModifier[] | null> {
+  rateOfFire: number;
+  recoil: number;
+}): Promise<{ modifiers: RollModifier[]; shotsFired: number } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   const accuracyLabel = options.scopeBonus
     ? `${L("Aimed")} (+${options.accuracy}+${options.scopeBonus})`
@@ -275,12 +303,19 @@ export async function promptForRangedAttack(options: {
         <input type="number" name="${name}" value="${value}" step="1" style="width:90px">
       </label>`;
 
+  // How many shots to fire is decided before the attack roll, and only a
+  // weapon that can fire more than one is asked (p. 373).
+  const rateOfFire = Math.max(1, Math.floor(options.rateOfFire));
+  const shotsField =
+    rateOfFire > 1 ? field("shots", `${L("Shots")} (1-${rateOfFire})`, "1") : "";
+
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Title") },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
       ${field("range", L("Range"), "0")}
       ${field("speed", L("TargetSpeed"), "0")}
       ${field("size", L("TargetSize"), "0")}
+      ${shotsField}
       ${field("modifier", game.i18n.localize("GWORLD.Chat.Modifier"), "0")}
       <label style="display:flex;align-items:center;gap:8px">
         <input type="checkbox" name="aimed">
@@ -295,14 +330,28 @@ export async function promptForRangedAttack(options: {
           Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
         const aimed =
           form?.querySelector<HTMLInputElement>('input[name="aimed"]')?.checked ?? false;
-        return { range: num("range"), speed: num("speed"), size: num("size"), modifier: num("modifier"), aimed };
+        return {
+          range: num("range"),
+          speed: num("speed"),
+          size: num("size"),
+          modifier: num("modifier"),
+          shots: rateOfFire > 1 ? num("shots") : 1,
+          aimed,
+        };
       },
     },
     rejectClose: false,
   });
 
   if (!result || typeof result !== "object") return null;
-  return rangedModifiers(result as RangedInput, options);
+
+  const input = result as RangedInput;
+  // A weapon cannot fire more shots than its Rate of Fire, nor fewer than one.
+  const shotsFired = Math.min(rateOfFire, Math.max(1, Math.floor(input.shots || 1)));
+  return {
+    modifiers: rangedModifiers({ ...input, shots: shotsFired }, options),
+    shotsFired,
+  };
 }
 
 interface RangedInput {
@@ -310,6 +359,8 @@ interface RangedInput {
   speed: number;
   size: number;
   modifier: number;
+  /** Shots fired this attack, at most the weapon's Rate of Fire. */
+  shots: number;
   aimed: boolean;
 }
 
@@ -338,6 +389,8 @@ export function rangedModifiers(
   if (input.aimed && weapon.accuracy + weapon.scopeBonus !== 0) {
     modifiers.push({ label: L("Accuracy"), value: weapon.accuracy + weapon.scopeBonus });
   }
+  const rapidFire = rapidFireBonus(input.shots ?? 1);
+  if (rapidFire !== 0) modifiers.push({ label: L("RapidFire"), value: rapidFire });
   if (input.modifier !== 0) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: input.modifier });
   }
