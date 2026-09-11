@@ -87,7 +87,13 @@
             <tr class="dim" data-item-id="{{skill.id}}">
               <td><span class="wname" data-action="editItem">{{skill.name}}</span></td>
               <td class="wmode">{{skill.system.attribute}}/{{skill.system.difficulty}}</td>
-              <td class="n">&mdash;</td>
+              <td class="n">
+                {{#if @root.editable}}
+                  <input type="number" class="npts" min="0" step="1"
+                         value="{{skill.system.points}}" data-item-field="system.points"
+                         aria-label="{{localize "GWORLD.Column.Pts"}}" />
+                {{else}}&mdash;{{/if}}
+              </td>
               <td class="n wmode">{{relativeLabel skill}}</td>
               <td class="n">
                 {{#if skill.system.derived.hasDefault}}
