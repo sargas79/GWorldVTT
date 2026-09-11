@@ -283,6 +283,23 @@ function meleeModeField() {
      * in "cr ex [2d]". Blank when the explosive throws none.
      */
     fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /**
+     * An affliction rather than damage (GURPS Basic Set: Characters p. 35).
+     * The target resists with an attribute roll at a penalty -- "HT-4 aff" --
+     * and what failing does is the weapon's own business, which the compendium
+     * does not carry because it is written in prose.
+     */
+    affliction: new fields.BooleanField({ initial: false }),
+    /** The attribute the target resists with. Blank when this is not an affliction. */
+    afflictionAttribute: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /** The penalty to that resistance roll, zero or negative. */
+    afflictionModifier: new fields.NumberField({
+      required: true,
+      nullable: false,
+      integer: true,
+      initial: 0,
+      max: 0,
+    }),
     /** The weapon becomes unready after each attack unless ST is high enough. */
     unreadyAfterAttack: new fields.BooleanField({ initial: false }),
   });
@@ -397,6 +414,23 @@ function rangedModeField() {
      * in "cr ex [2d]". Blank when the explosive throws none.
      */
     fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /**
+     * An affliction rather than damage (GURPS Basic Set: Characters p. 35).
+     * The target resists with an attribute roll at a penalty -- "HT-4 aff" --
+     * and what failing does is the weapon's own business, which the compendium
+     * does not carry because it is written in prose.
+     */
+    affliction: new fields.BooleanField({ initial: false }),
+    /** The attribute the target resists with. Blank when this is not an affliction. */
+    afflictionAttribute: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /** The penalty to that resistance roll, zero or negative. */
+    afflictionModifier: new fields.NumberField({
+      required: true,
+      nullable: false,
+      integer: true,
+      initial: 0,
+      max: 0,
+    }),
   });
 }
 

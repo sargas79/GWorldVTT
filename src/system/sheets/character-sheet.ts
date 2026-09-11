@@ -8,8 +8,11 @@
  */
 
 import { CharacterBuilder } from "../apps/character-builder.js";
-import { combatStyle } from "../settings.js";
-import { slamDamage } from "../../rules/attack-options.js";
+import { combatStyle, tacticalOnScene } from "../settings.js";
+import { evadeModifier, slamDamage } from "../../rules/attack-options.js";
+import { attackArc } from "../../rules/tactical.js";
+import { rollQuickContest } from "../contest.js";
+import { attackDirection, facingOf } from "../hex.js";
 import { facingChangeAtEndOfMove, hexMovementCost } from "../../rules/tactical.js";
 import { CompendiumPicker } from "../apps/compendium-picker.js";
 import { SYSTEM_ID } from "../constants.js";
@@ -20,7 +23,14 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
-import { handleDamageAction, handleRollAction, promptForNumber, rollDamage } from "../roll.js";
+import {
+  handleDamageAction,
+  handleRollAction,
+  promptForNumber,
+  rollDamage,
+  rollSuccess,
+} from "../roll.js";
+import { currentTargets } from "../targets.js";
 import type { Attribute, Posture } from "../../rules/types.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -75,6 +85,40 @@ function tacticalPanel(system: any, derived: any) {
   };
 }
 
+/**
+ * Which way the mover is coming at the foe, for the evade modifiers.
+ *
+ * Only a hex grid can say: approaching from a side or from behind is a fact
+ * about facing, and a square or gridless scene has none. Everywhere else the
+ * approach is taken as head-on, which is the version of the rule that asks
+ * least and claims least.
+ */
+async function approachTo(mover: any, foeToken: any): Promise<"front" | "side" | "back"> {
+  const foeDocument = foeToken?.document ?? foeToken;
+  const gridType = foeDocument?.parent?.grid?.type;
+  if (!tacticalOnScene(gridType)) return "front";
+
+  const moverToken = mover?.getActiveTokens?.()?.[0]?.document;
+  if (!moverToken) return "front";
+
+  const from = attackDirection(moverToken, foeDocument, gridType);
+  if (from === null) return "front";
+  return attackArc(facingOf(foeDocument, gridType), from).arc;
+}
+
+/**
+ * The score an affliction is resisted with.
+ *
+ * Will and Per are secondary characteristics and are derived rather than
+ * stored, so they are read from the derived block; the four attributes are read
+ * from the sheet.
+ */
+function resistanceScore(actor: any, attribute: string): number {
+  if (attribute === "Will") return Number(actor?.system?.derived?.will ?? 10);
+  if (attribute === "Per") return Number(actor?.system?.derived?.per ?? 10);
+  return Number(actor?.system?.attributes?.[attribute] ?? 10);
+}
+
 /** Normalises a defense into the shape the card template renders. */
 function toCard(defense: { total: number; source: string; math: string } | null) {
   return defense
@@ -107,6 +151,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       browseCompendium: GWorldCharacterSheet.#onBrowseCompendium,
       openBuilder: GWorldCharacterSheet.#onOpenBuilder,
       slam: GWorldCharacterSheet.#onSlam,
+      affliction: GWorldCharacterSheet.#onAffliction,
+      evade: GWorldCharacterSheet.#onEvade,
       editItem: GWorldCharacterSheet.#onEditItem,
       deleteItem: GWorldCharacterSheet.#onDeleteItem,
       toggleEquipped: GWorldCharacterSheet.#onToggleEquipped,
@@ -517,6 +563,99 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!key) return;
     const current = foundry.utils.getProperty(this.actor, `system.conditions.${key}`);
     await this.actor.update({ [`system.conditions.${key}`]: !current });
+  }
+
+  /**
+   * Tries to get past someone without knocking them down
+   * (GURPS Basic Set: Campaigns p. 368).
+   *
+   * A Quick Contest of DX, modified by what the foe is doing: hard past someone
+   * standing, easy past someone on the ground, and easier from a side or from
+   * behind. Both sides are rolled at once, because a contest is over in a
+   * second and nobody decides anything between the two rolls.
+   */
+  static async #onEvade(this: GWorldCharacterSheet) {
+    const targets = currentTargets();
+    if (targets.length !== 1) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Evade.OneTarget"));
+      return;
+    }
+
+    const foeToken = targets[0];
+    const foe = foeToken?.actor;
+    if (!foe) return;
+
+    const modifier = evadeModifier({
+      foePosture: foe.system?.posture ?? "standing",
+      approach: await approachTo(this.actor, foeToken),
+    });
+
+    const result = await rollQuickContest({
+      label: game.i18n.format("GWORLD.Evade.Label", {
+        mover: String(this.actor.name),
+        foe: String(foe.name),
+      }),
+      first: {
+        actor: this.actor,
+        base: Number(this.actor.system?.attributes?.DX ?? 10),
+        modifiers: [{ label: game.i18n.localize("GWORLD.Evade.Action"), value: modifier }],
+      },
+      second: { actor: foe, base: Number(foe.system?.attributes?.DX ?? 10) },
+    });
+
+    // "If you win, you evade him and are free to move on. If you lose or tie,
+    // he got in your way and stopped you." A tie is not a draw here.
+    ui.notifications?.info(
+      result.outcome === "first"
+        ? game.i18n.format("GWORLD.Evade.Past", { mover: String(this.actor.name) })
+        : game.i18n.format("GWORLD.Evade.Stopped", { foe: String(foe.name) }),
+    );
+  }
+
+  /**
+   * Rolls an affliction's resistance for everyone it is being used on
+   * (GURPS Basic Set: Characters p. 35).
+   *
+   * An affliction does no damage: the target rolls an attribute at a penalty
+   * and something happens to them if they fail. What that something is lives in
+   * the weapon's own notes, which the compendium does not carry, so this rolls
+   * the resistance and leaves the effect to the GM.
+   */
+  static async #onAffliction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const attribute = target.dataset.resist ?? "";
+    if (!attribute) return;
+    const modifier = Number(target.dataset.resistModifier) || 0;
+    const label = target.dataset.afflictionLabel ?? "";
+
+    const targets = currentTargets();
+    if (targets.length === 0) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Affliction.NoTarget"));
+      return;
+    }
+
+    // One roll each: an affliction is resisted individually, and two people
+    // caught by the same stun gun do not share a roll.
+    const seen = new Set<string>();
+    for (const token of targets) {
+      const victim = token?.actor;
+      if (!victim) continue;
+      const key = String(victim.uuid ?? victim.id ?? "");
+      if (key && seen.has(key)) continue;
+      if (key) seen.add(key);
+
+      await rollSuccess({
+        actor: victim,
+        base: resistanceScore(victim, attribute),
+        label: game.i18n.format("GWORLD.Affliction.Label", {
+          label,
+          resist: `${attribute}${modifier || ""}`,
+        }),
+        kind: "attribute",
+        modifiers: modifier === 0
+          ? []
+          : [{ label: game.i18n.localize("GWORLD.Affliction.Short"), value: modifier }],
+      });
+    }
   }
 
   /**

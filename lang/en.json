@@ -155,6 +155,27 @@
       "Secondaries": "Secondary Characteristics",
       "Techniques": "Techniques"
     },
+    "Contest": {
+      "QuickContest": "Quick Contest",
+      "Wins": "{winner} wins by {margin}",
+      "Tie": "A tie — nobody won",
+      "Success": "success by {margin}",
+      "Failure": "failure by {margin}"
+    },
+    "Evade": {
+      "Action": "Evade",
+      "Title": "Evade",
+      "Label": "{mover} evading {foe}",
+      "OneTarget": "Target exactly one person to evade.",
+      "Stopped": "{foe} got in the way",
+      "Past": "{mover} is past"
+    },
+    "Affliction": {
+      "Short": "aff",
+      "Label": "{label} — resist with {resist}",
+      "NoTarget": "Target the people it is being used on first.",
+      "Resisted": "resisted"
+    },
     "Slam": {
       "Action": "Slam",
       "Title": "Slam",
