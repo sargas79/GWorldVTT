@@ -29,6 +29,8 @@ import { parseDiceAdds, formatDiceAdds } from "../../rules/dice.js";
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
+import { rollBleeding, stopBleeding } from "../bleeding.js";
+import { rollStunRecovery } from "../knockdown.js";
 import { applyFirstAid, restForADay, restForFatigue, tryToWake } from "../recovery.js";
 import { rollFrightCheck } from "../fright.js";
 import { traitsOf } from "../damage.js";
@@ -537,6 +539,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       restDay: GWorldCharacterSheet.#onRestDay,
       firstAid: GWorldCharacterSheet.#onFirstAid,
       wake: GWorldCharacterSheet.#onWake,
+      bleed: GWorldCharacterSheet.#onBleed,
+      shakeOffStun: GWorldCharacterSheet.#onShakeOffStun,
       stepPoints: GWorldCharacterSheet.#onStepPoints,
       stepLevels: GWorldCharacterSheet.#onStepLevels,
       editItem: GWorldCharacterSheet.#onEditItem,
@@ -1457,7 +1461,32 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (modifier === null) return;
 
-    await applyFirstAid({ healer: this.actor, patient, modifier });
+    const restored = await applyFirstAid({ healer: this.actor, patient, modifier });
+
+    // "someone who is wounded but receives a successful First Aid roll ... loses
+    // no HP to bleeding. A later roll will prevent further HP loss."
+    if (restored > 0) await stopBleeding(patient);
+  }
+
+  /**
+   * A minute of bleeding (Campaigns p. 420).
+   *
+   * Rolled a minute at a time rather than run on a timer: how much time has
+   * passed between one scene and the next is the GM's to say, not a clock's.
+   */
+  static async #onBleed(this: GWorldCharacterSheet) {
+    if (!isRuleOn("bleeding")) return;
+    await rollBleeding({ actor: this.actor });
+  }
+
+  /**
+   * Shakes off stun at the end of a turn (Campaigns p. 420).
+   *
+   * A HT roll for the ordinary kind. Mental stun -- being surprised rather than
+   * hurt -- asks IQ instead, which is what shift-clicking gets.
+   */
+  static async #onShakeOffStun(this: GWorldCharacterSheet, event: Event) {
+    await rollStunRecovery({ actor: this.actor, mental: (event as MouseEvent).shiftKey });
   }
 
   /** Tries to come round (Campaigns p. 423). */

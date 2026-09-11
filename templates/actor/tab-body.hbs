@@ -156,6 +156,12 @@
               data-tooltip="{{localize "GWORLD.Recovery.WakingHint"}}">
         {{localize "GWORLD.Recovery.Waking"}}
       </button>
+      {{#if rules.bleeding}}
+        <button type="button" class="ibtn" data-action="bleed"
+                data-tooltip="{{localize "GWORLD.Bleeding.Hint"}}">
+          {{localize "GWORLD.Bleeding.Action"}}
+        </button>
+      {{/if}}
     </div>
   </div>
 

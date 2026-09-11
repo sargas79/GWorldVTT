@@ -17,6 +17,8 @@ import { rollSuccess } from "./roll.js";
 import { currentTargets } from "./targets.js";
 import { blastAt } from "../rules/explosions.js";
 import { criticalEntry, criticalHitTableFor } from "../rules/criticals.js";
+import { rollKnockdown } from "./knockdown.js";
+import { setCondition, syncHealthConditions } from "./conditions.js";
 import { EXTRA_EFFORT_FP, FEVERISH_DEFENSE_BONUS } from "../rules/extra-effort.js";
 import { spendFatigue } from "./extra-effort.js";
 import { isRuleOn } from "./optional-rules.js";
@@ -201,6 +203,7 @@ async function applyFromCard(options: {
 
   const applied: AppliedDamage[] = [];
   const refused: string[] = [];
+  const knockdowns: Array<{ actor: any; result: AppliedDamage }> = [];
 
   // One blow lands once. Two tokens can share an actor -- a linked token
   // dragged onto the scene twice -- and applying to each in turn would take the
@@ -217,8 +220,15 @@ async function applyFromCard(options: {
     const result = await applyDamageToActor(actor, damage);
     // A null result is a permission refusal, which is worth naming: silently
     // skipping a target looks identical to a blow that did nothing.
-    if (result) applied.push(result);
-    else refused.push(String(actor.name ?? ""));
+    if (result) {
+      applied.push(result);
+      // Reeling and dead are not judgements, they are what the hit point total
+      // means -- so the token says so without anybody being asked.
+      await syncHealthConditions(actor);
+      if (result.bleeds && isRuleOn("bleeding")) await setCondition(actor, "bleeding", true);
+      // Remembered so the knockdown control on the card knows whose roll it is.
+      knockdowns.push({ actor, result });
+    } else refused.push(String(actor.name ?? ""));
   }
 
   if (refused.length > 0) {
@@ -276,6 +286,19 @@ async function applyFromCard(options: {
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
     ...(critical ? { rolls: [critical.roll] } : {}),
+    flags: {
+      [SYSTEM_ID]: {
+        // Whoever this blow knocked about still owes a HT roll, and the card
+        // is where they are standing when they remember it.
+        knockdown: knockdowns
+          .filter((entry) => entry.result.knockdown?.required)
+          .map((entry) => ({
+            uuid: String(entry.actor.uuid ?? ""),
+            name: String(entry.actor.name ?? ""),
+            modifier: entry.result.knockdown!.modifier,
+          })),
+      },
+    },
   });
 }
 
@@ -555,10 +578,60 @@ async function rollDefense(options: {
   });
 }
 
+/** What an applied blow recorded about who still owes a knockdown roll. */
+interface KnockdownFlag {
+  uuid: string;
+  name: string;
+  modifier: number;
+}
+
+/**
+ * Adds a knockdown control for everyone the blow calls one for.
+ *
+ * On the applied-damage card rather than rolled with it: the roll is the
+ * victim's to make, and they may have a say in it -- a GM ruling, a trait this
+ * system does not read -- before it is made.
+ */
+async function addKnockdownControls(message: any, html: HTMLElement): Promise<void> {
+  const entries = message?.getFlag?.(SYSTEM_ID, "knockdown") as KnockdownFlag[] | undefined;
+  if (!Array.isArray(entries) || entries.length === 0) return;
+
+  const root = html.querySelector<HTMLElement>(".gworld-chat");
+  if (!root || root.querySelector("[data-gworld-knockdown]")) return;
+
+  for (const entry of entries) {
+    const actor: any = await fromUuid(entry.uuid).catch(() => null);
+    if (!actor?.isOwner) continue;
+
+    const row = document.createElement("div");
+    row.className = "gc-apply";
+    row.dataset.gworldKnockdown = entry.uuid;
+
+    const who = document.createElement("span");
+    who.className = "gc-mod";
+    who.textContent = entry.name;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "gc-apply-button";
+    button.textContent = entry.modifier === 0
+      ? game.i18n.localize("GWORLD.Knockdown.Roll")
+      : `${game.i18n.localize("GWORLD.Knockdown.Roll")} ${entry.modifier > 0 ? "+" : ""}${entry.modifier}`;
+    button.addEventListener("click", () => {
+      button.disabled = true;
+      void rollKnockdown({ actor, modifier: entry.modifier });
+    });
+
+    row.append(who, button);
+    root.append(row);
+  }
+}
+
 /** Registers the chat hooks. Called once, at init. */
 export function registerChatHooks(): void {
   Hooks.on("renderChatMessageHTML", (message: any, html: HTMLElement) => {
     addApplyControls(message, html);
     void addDefenseControls(message, html);
+    void addKnockdownControls(message, html);
   });
 }

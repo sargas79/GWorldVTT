@@ -13,7 +13,18 @@
       <span class="ipts{{#if overBudget}} over{{/if}}"
             {{#if overBudget}}data-tooltip="{{localize "GWORLD.Hint.OverBudget"}}"{{/if}}>
         {{derived.points.spent}} of {{derived.points.available}} pts
+        {{#if derived.points.unspent}}
+          <span class="iunspent">{{localize "GWORLD.Points.UnspentShort" points=derived.points.unspent}}</span>
+        {{/if}}
       </span>
+      {{#if editable}}
+        {{!-- The award control lives here because the header is on every tab:
+              points earned at the end of a session are the one thing a player
+              goes looking for and should not have to hunt for. --}}
+        <button type="button" class="iptbtn rollable" data-action="awardPoints"
+                data-tooltip="{{localize "GWORLD.Points.AwardHint"}}"
+                aria-label="{{localize "GWORLD.Points.Award"}}">{{> "gworld.plus"}}</button>
+      {{/if}}
     </div>
 
     <div class="ipools">

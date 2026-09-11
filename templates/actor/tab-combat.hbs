@@ -282,6 +282,12 @@
               data-tooltip="{{localize "GWORLD.Fall.Hint"}}">
         {{localize "GWORLD.Fall.Action"}}
       </button>
+      {{#if system.conditions.stunned}}
+        <button type="button" class="ibtn" data-action="shakeOffStun"
+                data-tooltip="{{localize "GWORLD.Knockdown.ShakeHint"}}">
+          {{localize "GWORLD.Knockdown.Shake"}}
+        </button>
+      {{/if}}
       {{#if rules.frightChecks}}
         <button type="button" class="ibtn" data-action="frightCheck"
                 data-tooltip="{{localize "GWORLD.Fright.Hint"}}">

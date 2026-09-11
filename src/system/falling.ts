@@ -18,6 +18,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { resolveDamageAgainst, type IncomingDamage } from "./damage.js";
+import { syncHealthConditions } from "./conditions.js";
 import { bluntTrauma, fallingDamage, type LandingSurface } from "../rules/falling.js";
 import { randomHitLocation, type HitLocation } from "../rules/hit-locations.js";
 import { applyInjury } from "../rules/injury.js";
@@ -92,7 +93,10 @@ export async function rollFall(options: FallOptions): Promise<number | null> {
 
   const previous = Number(hp.value) || 0;
   const applied = applyInjury(injury, previous, Number(hp.max) || 0);
-  if (injury > 0) await actor.update({ "system.hp.value": applied.currentHp });
+  if (injury > 0) {
+    await actor.update({ "system.hp.value": applied.currentHp });
+    await syncHealthConditions(actor);
+  }
 
   const content = await foundry.applications.handlebars.renderTemplate(FALL_TEMPLATE, {
     name: String(actor.name ?? ""),
