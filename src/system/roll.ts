@@ -18,6 +18,7 @@ import {
   shotOptions,
   type CalledShot,
 } from "./called-shot.js";
+import { consumeTurnedBlade, recordTurnedBlade } from "./turned-blade.js";
 import { isRuleOn } from "./optional-rules.js";
 import { targetedTokens } from "./targets.js";
 import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
@@ -27,7 +28,7 @@ import {
   type CriticalTable,
 } from "../rules/criticals.js";
 import { applyDamageFloor, computeInjury } from "../rules/damage.js";
-import { maxRoll, parseDiceAdds, toRollFormula } from "../rules/dice.js";
+import { formatDiceAdds, maxRoll, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import { blastRadius, fragmentationRadius } from "../rules/explosions.js";
 import {
   EXTRA_EFFORT_FP,
@@ -45,6 +46,8 @@ import {
 } from "../rules/attack-options.js";
 import { rangedToHitModifier, rapidFireBonus, rapidFireHits } from "../rules/ranged.js";
 import { attackWithoutSight, type Sight } from "../rules/visibility.js";
+import { levelDifference } from "../rules/melee-situations.js";
+import { turnedBlade } from "../rules/subduing.js";
 import { coverShot, type CoverApproach } from "../rules/cover.js";
 import type { DamageType } from "../rules/types.js";
 
@@ -456,6 +459,7 @@ export async function handleRollAction(
   // click: an attack that went for the skull should not have to be told twice.
   if (rollType === "attack") {
     await recordCalledShot(actor, melee?.calledShot ?? shot?.calledShot ?? null);
+    await recordTurnedBlade(actor, melee?.turned === true);
   }
 
   // A Feint made last turn is spent by this attack, whether or not it is aimed
@@ -837,8 +841,14 @@ export async function promptForMeleeAttack(options: {
   mightyBlows: boolean;
   /** Where it was aimed, for the damage roll to collect. */
   calledShot: CalledShot | null;
+  /** True when the blow was struck with the flat or the butt. */
+  turned: boolean;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Melee.${key}`);
+
+  // Only a cutting or impaling weapon has a flat or a butt to hit with, so the
+  // option is offered only where there is something to turn.
+  const turnable = turnedBlade({ type: options.damageType, damage: { dice: 1, adds: 0 } }) !== null;
   const E = (key: string) => game.i18n.localize(`GWORLD.ExtraEffort.${key}`);
   const deceptionAllowed = isRuleOn("deceptiveAttack");
   const rapidAllowed = isRuleOn("rapidStrike");
@@ -882,7 +892,22 @@ export async function promptForMeleeAttack(options: {
            </label>`
         : ""}
       ${calledShotField(options.damageType, false)}
+      ${turnable
+        ? `<label style="display:flex;align-items:center;gap:8px">
+             <input type="checkbox" name="turned">
+             <span>${game.i18n.localize("GWORLD.Subdue.Turned")}</span>
+           </label>`
+        : ""}
       ${sightField()}
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${game.i18n.localize("GWORLD.Ground.Label")}</span>
+        <select name="ground" style="width:150px">
+          <option value="0">${game.i18n.localize("GWORLD.Ground.Level")}</option>
+          <option value="3">${game.i18n.localize("GWORLD.Ground.Higher3")}</option>
+          <option value="4">${game.i18n.localize("GWORLD.Ground.Higher4")}</option>
+          <option value="5">${game.i18n.localize("GWORLD.Ground.Higher5")}</option>
+        </select>
+      </label>
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" style="width:90px">
@@ -906,6 +931,9 @@ export async function promptForMeleeAttack(options: {
             "clear") as Sight,
           calledShot:
             form?.querySelector<HTMLSelectElement>('select[name="calledShot"]')?.value ?? UNAIMED,
+          turned: ticked("turned"),
+          ground:
+            Number(form?.querySelector<HTMLSelectElement>('select[name="ground"]')?.value ?? 0) || 0,
         };
       },
     },
@@ -913,7 +941,8 @@ export async function promptForMeleeAttack(options: {
   });
 
   if (!result || typeof result !== "object") return null;
-  const { deceptive, modifier, rapid, flurry, mighty, sight, calledShot } = result as {
+  const { deceptive, modifier, rapid, flurry, mighty, sight, calledShot, turned, ground } =
+    result as {
     deceptive: number;
     modifier: number;
     rapid: boolean;
@@ -921,6 +950,8 @@ export async function promptForMeleeAttack(options: {
     mighty: boolean;
     sight: Sight;
     calledShot: string;
+    turned: boolean;
+    ground: number;
   };
 
   // "You may not reduce your final effective skill below 10", so the ceiling is
@@ -952,14 +983,22 @@ export async function promptForMeleeAttack(options: {
     modifiers.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: modifier });
   }
 
+  // "the lower fighter is at -1 to any active defense" and worse as the drop
+  // grows (p. 402). Only the defense half is applied: the rest of that rule is
+  // about which locations each fighter can reach, which needs a called shot to
+  // matter and a map to know.
+  const levels = levelDifference(ground);
+  const groundPenalty = levels.negligible ? 0 : levels.lower.defense;
+
   const mightyBlows = mighty && effortAllowed;
   return {
     modifiers,
-    defensePenalty: deception.defensePenalty,
+    defensePenalty: deception.defensePenalty + groundPenalty,
     // Both cost a flat point each, and both are paid before the roll.
     fatigue: (flurried ? EXTRA_EFFORT_FP : 0) + (mightyBlows ? EXTRA_EFFORT_FP : 0),
     mightyBlows,
     calledShot: aimed.shot,
+    turned: turned === true,
   };
 }
 
@@ -979,6 +1018,10 @@ export async function handleDamageAction(
   // rather than asking again -- and, for a chink, so the DR it found is halved.
   const aimed = await consumeCalledShot(actor);
 
+  // A blow struck with the flat of a blade crushes rather than cuts, and one
+  // struck with the butt of a spear crushes for a point less.
+  const flat = await consumeTurnedBlade(actor);
+
   // A Mighty Blows bought before the attack is collected here, where the dice
   // are known -- the bonus is "+2 to damage, or +1 per die if that is better".
   // It applies only to ST-based thrust and swing damage, so a force sword's
@@ -997,11 +1040,25 @@ export async function handleDamageAction(
     }
   }
 
+  // A weapon whose damage cannot be parsed is not turned: substituting dice
+  // for it would quietly change what the weapon does, which is worse than
+  // simply hitting them with the sharp end.
+  const parsed = flat ? parseDiceAdds(damageFormula) : null;
+  const struck = parsed
+    ? turnedBlade({
+        type: damageType as DamageType,
+        damage: parsed,
+        reach: Number(target.dataset.reach) || 1,
+      })
+    : null;
+
   await rollDamage({
     actor,
-    label: damageLabel ?? "Damage",
-    formula: damageFormula,
-    damageType: damageType as DamageType,
+    label: struck
+      ? `${damageLabel ?? "Damage"} (${game.i18n.localize("GWORLD.Subdue.Turned")})`
+      : damageLabel ?? "Damage",
+    formula: struck ? formatDiceAdds(struck.damage) : damageFormula,
+    damageType: struck ? struck.type : (damageType as DamageType),
     armorDivisor: Number(armorDivisor) || 1,
     ...(aimed ? { calledShot: aimed } : {}),
     explosive: target.dataset.explosive === "1",

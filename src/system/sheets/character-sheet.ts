@@ -32,6 +32,7 @@ import { rollFall } from "../falling.js";
 import { rollBleeding, stopBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
 import { catchBreath, rollSuffocation } from "../suffocation.js";
+import { rollDisarm } from "../disarm.js";
 import {
   beginGrapple,
   endGrapple,
@@ -312,6 +313,51 @@ async function promptForAward(): Promise<{ points: number; note: string } | null
           note: String(
             form?.querySelector<HTMLInputElement>('input[name="note"]')?.value ?? "",
           ).trim(),
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/**
+ * Asks what the disarm turns on.
+ *
+ * None of it is on either sheet: whether the weapon in hand is a fencing one,
+ * whether it is a jitte or a whip, and whether the foe has both hands on
+ * theirs are facts about this moment rather than about the characters.
+ */
+async function promptForDisarm(): Promise<{
+  fencingWeapon: boolean;
+  jitteOrWhip: boolean;
+  foeTwoHanded: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Disarm.${key}`);
+  const check = (name: string, label: string) => `
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="${name}">
+        <span>${label}</span>
+      </label>`;
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      ${check("fencing", L("Fencing"))}
+      ${check("jitte", L("JitteOption"))}
+      ${check("twoHanded", L("TwoHandedOption"))}
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const ticked = (name: string) =>
+          form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+        return {
+          fencingWeapon: ticked("fencing"),
+          jitteOrWhip: ticked("jitte"),
+          foeTwoHanded: ticked("twoHanded"),
         };
       },
     },
@@ -615,6 +661,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       catchBreath: GWorldCharacterSheet.#onCatchBreath,
       shakeOffStun: GWorldCharacterSheet.#onShakeOffStun,
       grapple: GWorldCharacterSheet.#onGrapple,
+      disarm: GWorldCharacterSheet.#onDisarm,
       breakFree: GWorldCharacterSheet.#onBreakFree,
       takedown: GWorldCharacterSheet.#onTakedown,
       pin: GWorldCharacterSheet.#onPin,
@@ -1622,6 +1669,30 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       hands: asked.hands,
       hitLocation: asked.hitLocation,
     });
+  }
+
+  /**
+   * Strikes at a foe's weapon to knock it away (Campaigns pp. 400-401).
+   *
+   * Two rolls: the strike, which they may defend against on the usual card,
+   * and then the Quick Contest that decides whether the weapon actually comes
+   * loose. What the contest turns on -- a fencing weapon, a jitte, their
+   * two-handed grip -- is asked, because none of it is on either sheet.
+   */
+  static async #onDisarm(this: GWorldCharacterSheet) {
+    const targets = targetedTokens();
+    if (targets.length !== 1) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Disarm.OneTarget"));
+      return;
+    }
+
+    const foe = targets[0]?.actor;
+    if (!foe) return;
+
+    const asked = await promptForDisarm();
+    if (!asked) return;
+
+    await rollDisarm({ actor: this.actor, foe, ...asked });
   }
 
   /** Tries to get loose (Campaigns p. 371). */
