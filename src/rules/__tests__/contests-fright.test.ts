@@ -76,15 +76,18 @@ describe("one exchange of a Regular Contest", () => {
 });
 
 describe("rolling out a whole Regular Contest", () => {
-  /** A scripted sequence of 3d totals, in the order the contest asks for them. */
+  /**
+   * A scripted sequence of 3d totals, in the order the contest asks for them.
+   * Synchronous, which the roller is allowed to be even though it need not be.
+   */
   const scripted = (totals: number[]) => {
     let i = 0;
     return () => totals[Math.min(i++, totals.length - 1)]!;
   };
 
-  it("keeps rolling until one side alone makes their roll", () => {
+  it("keeps rolling until one side alone makes their roll", async () => {
     // Both succeed, both fail, then the first succeeds alone.
-    const result = regularContest({
+    const result = await regularContest({
       first: 12,
       second: 12,
       roll: scripted([8, 8, 16, 16, 9, 15]),
@@ -93,22 +96,22 @@ describe("rolling out a whole Regular Contest", () => {
     expect(result.outcome).toBe("first");
   });
 
-  it("reports an unsettled contest rather than inventing a winner", () => {
+  it("reports an unsettled contest rather than inventing a winner", async () => {
     // Both sides roll the same every time, so nothing is ever settled.
-    const result = regularContest({ first: 12, second: 12, roll: () => 8, maxRounds: 5 });
+    const result = await regularContest({ first: 12, second: 12, roll: () => 8, maxRounds: 5 });
     expect(result.outcome).toBeNull();
     expect(result.rounds).toHaveLength(5);
   });
 
-  it("rolls at the balanced scores, not the given ones", () => {
-    const result = regularContest({ first: 5, second: 3, roll: () => 11 });
+  it("rolls at the balanced scores, not the given ones", async () => {
+    const result = await regularContest({ first: 5, second: 3, roll: () => 11 });
     expect(result.scores).toEqual({ first: 12, second: 10, adjusted: true });
     // 11 makes a 12 and misses a 10, which the raw scores could never show.
     expect(result.outcome).toBe("first");
   });
 
-  it("always rolls at least once", () => {
-    const result = regularContest({ first: 12, second: 12, roll: () => 8, maxRounds: 0 });
+  it("always rolls at least once", async () => {
+    const result = await regularContest({ first: 12, second: 12, roll: () => 8, maxRounds: 0 });
     expect(result.rounds).toHaveLength(1);
   });
 });

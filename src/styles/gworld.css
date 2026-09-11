@@ -898,7 +898,9 @@
   background: color-mix(in srgb, var(--color-danger) 12%, transparent);
   color: var(--color-danger);
 }
-/* A Regular Contest's exchanges: who made their roll each time. */
+/* A Regular Contest's exchanges: who made their roll each time, and the one
+   exchange that ended it. */
+.gworld-chat .gt tr.settled td { background: var(--color-accent-100); }
 .gworld-chat .gt td.made { color: var(--color-accent-900); font-weight: 600; }
 .gworld-chat .gt td.missed { color: var(--color-neutral-700); }
 

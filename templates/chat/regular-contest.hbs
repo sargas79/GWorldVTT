@@ -24,7 +24,7 @@
     </thead>
     <tbody>
       {{#each rounds as |round|}}
-        <tr>
+        <tr{{#if round.settled}} class="settled"{{/if}}>
           <td class="c">{{round.number}}</td>
           <td class="c {{#if round.first.success}}made{{else}}missed{{/if}}">{{round.first.roll}}</td>
           <td class="c {{#if round.second.success}}made{{else}}missed{{/if}}">{{round.second.roll}}</td>

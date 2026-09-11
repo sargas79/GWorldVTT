@@ -12,11 +12,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
-import {
-  balanceContestScores,
-  regularContestRound,
-  type ContestRound,
-} from "../rules/contests.js";
+import { regularContest } from "../rules/contests.js";
 import { resolveFeint, type FeintResult } from "../rules/maneuvers.js";
 import { quickContest, resolveSuccess } from "../rules/success.js";
 
@@ -157,25 +153,25 @@ export async function rollRegularContest(options: {
   first: ContestSide;
   second: ContestSide;
 }): Promise<{ outcome: "first" | "second" | null; exchanges: number }> {
-  const modifiersOf = (side: ContestSide) => (side.modifiers ?? []).filter((m) => m.value !== 0);
   const scoreOf = (side: ContestSide) =>
-    side.base + modifiersOf(side).reduce((sum, m) => sum + m.value, 0);
+    side.base + (side.modifiers ?? []).reduce((sum, m) => sum + m.value, 0);
 
-  const scores = balanceContestScores(scoreOf(options.first), scoreOf(options.second));
-
+  // Every 3d the contest asks for is a real Foundry roll, kept so the whole
+  // exchange can go on the message rather than only its totals.
   const rolls: any[] = [];
-  const rounds: ContestRound[] = [];
-  let outcome: "first" | "second" | null = null;
+  const roll = async () => {
+    const made = new Roll("3d6");
+    await made.evaluate();
+    rolls.push(made);
+    return made.total;
+  };
 
-  for (let i = 0; i < MAX_EXCHANGES && !outcome; i += 1) {
-    const first = await rollSide({ ...options.first, base: scores.first, modifiers: [] });
-    const second = await rollSide({ ...options.second, base: scores.second, modifiers: [] });
-    rolls.push(first.roll, second.roll);
-
-    const settled = regularContestRound(first.outcome, second.outcome);
-    rounds.push({ first: first.outcome, second: second.outcome, outcome: settled });
-    outcome = settled;
-  }
+  const contest = await regularContest({
+    first: scoreOf(options.first),
+    second: scoreOf(options.second),
+    roll,
+    maxRounds: MAX_EXCHANGES,
+  });
 
   const names = [
     String(options.first.actor?.name ?? ""),
@@ -186,24 +182,24 @@ export async function rollRegularContest(options: {
     label: options.label,
     kind: game.i18n.localize("GWORLD.Contest.Regular"),
     names,
-    scores,
-    // What each side is rolling at, and what they would have rolled at, so a
-    // player can see the balancing rule happen rather than wonder at the number.
+    scores: contest.scores,
+    // What each side rolled at, and what they would have rolled at, so a player
+    // can watch the balancing rule happen rather than wonder at the number.
     given: [scoreOf(options.first), scoreOf(options.second)],
-    rounds: rounds.map((round, index) => ({
+    rounds: contest.rounds.map((round, index) => ({
       number: index + 1,
       first: { roll: round.first.roll, success: round.first.success },
       second: { roll: round.second.roll, success: round.second.success },
       settled: round.outcome !== null,
     })),
     result:
-      outcome === null
-        ? game.i18n.format("GWORLD.Contest.Unsettled", { exchanges: rounds.length })
+      contest.outcome === null
+        ? game.i18n.format("GWORLD.Contest.Unsettled", { exchanges: contest.rounds.length })
         : game.i18n.format("GWORLD.Contest.WonAfter", {
-            winner: outcome === "first" ? names[0] : names[1],
-            exchanges: rounds.length,
+            winner: contest.outcome === "first" ? names[0] : names[1],
+            exchanges: contest.rounds.length,
           }),
-    resultClass: outcome === null ? "" : "success",
+    resultClass: contest.outcome === null ? "" : "success",
   });
 
   await ChatMessage.implementation.create({
@@ -212,7 +208,7 @@ export async function rollRegularContest(options: {
     rolls,
   });
 
-  return { outcome, exchanges: rounds.length };
+  return { outcome: contest.outcome, exchanges: contest.rounds.length };
 }
 
 export async function rollQuickContest(options: {

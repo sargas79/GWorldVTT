@@ -100,27 +100,39 @@ export interface ContestRound {
   outcome: RegularContestOutcome | null;
 }
 
+/** A whole contest, as it played out. */
+export interface RegularContestResult {
+  scores: ContestScores;
+  rounds: ContestRound[];
+  outcome: RegularContestOutcome | null;
+}
+
 /**
  * Rolls a whole Regular Contest, given something to roll 3d with.
+ *
+ * The roller may be asynchronous, which is what lets the Foundry layer use
+ * this rather than keeping its own copy of the loop: rolling dice through
+ * Foundry means awaiting them, and a contest that took nine exchanges should
+ * show nine pairs of dice rather than a summary.
  *
  * `maxRounds` is a stop, not a rule: even balanced scores can go a long way,
  * and a contest that has gone thirty exchanges is one the GM should be settling
  * rather than one the dice should keep chewing on. An unsettled contest returns
  * a null outcome rather than pretending somebody won.
  */
-export function regularContest(options: {
+export async function regularContest(options: {
   first: number;
   second: number;
-  roll: () => number;
+  roll: () => number | Promise<number>;
   maxRounds?: number;
-}): { scores: ContestScores; rounds: ContestRound[]; outcome: RegularContestOutcome | null } {
+}): Promise<RegularContestResult> {
   const { roll, maxRounds = 20 } = options;
   const scores = balanceContestScores(options.first, options.second);
   const rounds: ContestRound[] = [];
 
   for (let i = 0; i < Math.max(1, maxRounds); i += 1) {
-    const first = resolveSuccess(roll(), scores.first);
-    const second = resolveSuccess(roll(), scores.second);
+    const first = resolveSuccess(await roll(), scores.first);
+    const second = resolveSuccess(await roll(), scores.second);
     const outcome = regularContestRound(first, second);
     rounds.push({ first, second, outcome });
     if (outcome) return { scores, rounds, outcome };
