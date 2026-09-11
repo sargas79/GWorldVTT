@@ -8,14 +8,26 @@ import type { Difficulty } from "./types.js";
  * Relative level of a skill bought at the cheapest step, by difficulty.
  * One character point buys Attribute+0 for Easy, -1 for Average, -2 for Hard.
  */
-const DIFFICULTY_OFFSET: Record<Difficulty, number> = { E: 0, A: -1, H: -2, VH: -3 };
+const DIFFICULTY_OFFSET: Record<Difficulty, number> = { E: 0, A: -1, H: -2, VH: -3, W: -3 };
 
 /**
  * Default penalty when using an untrained skill (GURPS Basic Set: Characters
  * p. 173). Very Hard skills share the Hard penalty; most in practice have a
  * specific listed default or none at all.
  */
-const DIFFICULTY_DEFAULT_PENALTY: Record<Difficulty, number> = { E: -4, A: -5, H: -6, VH: -6 };
+const DIFFICULTY_DEFAULT_PENALTY: Record<Difficulty, number> = { E: -4, A: -5, H: -6, VH: -6, W: -6 };
+
+/**
+ * A wildcard skill "is Very Hard and costs triple the normal cost" (GURPS
+ * Basic Set: Characters p. 175): every step of the Skill Cost Table is three
+ * times the figure printed, so Gun! runs 3, 6, 12, 24 and then twelve at a time.
+ */
+export const WILDCARD_COST_MULTIPLIER = 3;
+
+/** What the Skill Cost Table is multiplied by for a skill of this difficulty. */
+export function costMultiplier(difficulty: Difficulty | undefined): number {
+  return difficulty === "W" ? WILDCARD_COST_MULTIPLIER : 1;
+}
 
 /**
  * The Rule of 20: a skill defaulting from an attribute above 20 treats that
@@ -49,7 +61,7 @@ export function pointsForRelativeLevel(
   difficulty: Difficulty,
 ): number | null {
   const step = stepForRelativeLevel(relativeLevel, difficulty);
-  return step < 0 ? null : skillStepCost(step);
+  return step < 0 ? null : skillStepCost(step) * costMultiplier(difficulty);
 }
 
 /**
@@ -60,10 +72,11 @@ export function pointsForRelativeLevel(
  * perspective, they simply do not yet reach the next step.
  */
 export function relativeLevelForPoints(points: number, difficulty: Difficulty): number | null {
-  if (points < 1) return null;
+  const multiplier = costMultiplier(difficulty);
+  if (points < multiplier) return null;
 
   let step = 0;
-  while (skillStepCost(step + 1) <= points) step++;
+  while (skillStepCost(step + 1) * multiplier <= points) step++;
   return step + DIFFICULTY_OFFSET[difficulty];
 }
 
@@ -246,10 +259,11 @@ const SKILL_POINT_CEILING = 1000;
  * A total that is off the table steps up to the next one on it, which is how a
  * skill imported at an odd figure comes back into line.
  */
-export function nextSkillPoints(points: number): number {
+export function nextSkillPoints(points: number, difficulty?: Difficulty): number {
   const from = Math.max(0, Math.floor(points));
+  const multiplier = costMultiplier(difficulty);
   for (let step = 0; ; step++) {
-    const cost = skillStepCost(step);
+    const cost = skillStepCost(step) * multiplier;
     if (cost > from) return cost;
     if (cost >= SKILL_POINT_CEILING) return from;
   }
@@ -261,11 +275,12 @@ export function nextSkillPoints(points: number): number {
  * Zero is a real answer: it is the skill unlearned, rolled at default if it has
  * one. A total off the table steps down to the highest one below it.
  */
-export function previousSkillPoints(points: number): number {
+export function previousSkillPoints(points: number, difficulty?: Difficulty): number {
   const from = Math.max(0, Math.floor(points));
+  const multiplier = costMultiplier(difficulty);
   let below = 0;
   for (let step = 0; ; step++) {
-    const cost = skillStepCost(step);
+    const cost = skillStepCost(step) * multiplier;
     if (cost >= from) return below;
     below = cost;
     if (cost >= SKILL_POINT_CEILING) return below;

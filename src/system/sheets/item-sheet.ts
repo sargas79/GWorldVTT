@@ -93,7 +93,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       // Attributes are stored by their abbreviation, whose label is the same in
       // every locale, so the key carries the full name rather than "ST".
       attributes: keyed("Attribute", ["ST", "DX", "IQ", "HT", "Will", "Per"]),
-      difficulties: keyed("Difficulty", ["E", "A", "H", "VH"]),
+      difficulties: keyed("Difficulty", ["E", "A", "H", "VH", "W"]),
       techniqueDifficulties: keyed("Difficulty", ["A", "H"]),
       categories: keyed("TraitCategory", ["advantage", "disadvantage", "perk", "quirk"]),
       damageBases: keyed("DamageBase", ["thr", "sw", "fixed"]),

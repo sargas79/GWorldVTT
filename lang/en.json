@@ -522,7 +522,8 @@
       "E": "Easy",
       "A": "Average",
       "H": "Hard",
-      "VH": "Very Hard"
+      "VH": "Very Hard",
+      "W": "Wildcard"
     },
     "DamageType": {
       "burn": "burn",

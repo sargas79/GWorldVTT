@@ -149,7 +149,8 @@ export class SkillData extends foundry.abstract.TypeDataModel {
         required: true,
         nullable: false,
         initial: "A",
-        choices: ["E", "A", "H", "VH"],
+        // "W" is a wildcard skill: Very Hard at three times the cost.
+        choices: ["E", "A", "H", "VH", "W"],
       }),
       points: new fields.NumberField({
         required: true,

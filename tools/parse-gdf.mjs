@@ -45,7 +45,7 @@ const ATTRIBUTES = new Map([
   ["Will", "Will"], ["Per", "Per"], ["Perception", "Per"],
 ]);
 
-const DIFFICULTIES = new Set(["E", "A", "H", "VH"]);
+const DIFFICULTIES = new Set(["E", "A", "H", "VH", "W"]);
 
 /**
  * A name GCA fills in from the character sheet rather than the book:
@@ -266,11 +266,6 @@ function parseSkills(recs, reject) {
 
     const bare = nameOf(r);
     if (PLACEHOLDER.test(bare)) { reject(bare, "name is a GCA placeholder"); continue; }
-    // A wildcard skill such as Gun! stands in for a whole group at once
-    // (p. 175). It has no difficulty the model can hold and is not a skill you
-    // roll against, so it is reported rather than invented.
-    if (bare.endsWith("!")) { reject(bare, "wildcard skill"); continue; }
-
     // The pair usually sits in the second field, but a few records state it as
     // type(IQ/VH) instead.
     const second = (splitTop(r.text)[1] ?? "").trim();
@@ -278,7 +273,9 @@ function parseSkills(recs, reject) {
     const parts = pair.split("/");
     if (parts.length !== 2) { reject(bare, `no attribute/difficulty pair: "${pair}"`); continue; }
 
-    const [attr, diff] = parts.map((p) => p.trim());
+    // GCA writes a wildcard skill's difficulty as "WC" -- Gun!, DX/WC. The
+    // model spells it "W": Very Hard, at three times the cost (p. 175).
+    const [attr, diff] = parts.map((p) => p.trim()).map((p) => (p === "WC" ? "W" : p));
 
     if (attr === "Tech") {
       const technique = parseTechnique(bare, diff, f, ids, reject);

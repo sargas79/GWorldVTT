@@ -20,7 +20,7 @@ const ITEM_TYPES = new Set([
 ]);
 const TRAIT_CATEGORIES = new Set(["advantage", "disadvantage", "quirk", "perk"]);
 const SKILL_ATTRIBUTES = new Set(["ST", "DX", "IQ", "HT", "Will", "Per"]);
-const DIFFICULTIES = new Set(["E", "A", "H", "VH"]);
+const DIFFICULTIES = new Set(["E", "A", "H", "VH", "W"]);
 const DAMAGE_TYPES = new Set([
   "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox",
 ]);

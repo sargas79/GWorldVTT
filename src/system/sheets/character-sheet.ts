@@ -2151,11 +2151,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // A technique is not a skill and does not use the Skill Cost Table: it
     // costs a point per level, so stepping it along the table would jump from
     // 2 to 4 and skip a level that can be bought.
-    const step = item.type === "technique"
-      ? (down ? previousTechniquePoints : nextTechniquePoints)
-      : (down ? previousSkillPoints : nextSkillPoints);
-
-    const next = step(current);
+    // A wildcard skill walks the same table at three times each figure, so
+    // the stepper is told the difficulty rather than assuming the printed one.
+    const difficulty = item.system?.difficulty;
+    const next = item.type === "technique"
+      ? (down ? previousTechniquePoints(current) : nextTechniquePoints(current))
+      : (down ? previousSkillPoints(current, difficulty) : nextSkillPoints(current, difficulty));
     if (next === current) return;
 
     await item.update({ "system.points": next });
