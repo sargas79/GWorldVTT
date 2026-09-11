@@ -147,3 +147,36 @@ export function rapidFireHits(options: {
   const extra = Math.floor(Math.max(0, options.margin) / recoil);
   return Math.min(shots, 1 + extra);
 }
+
+/**
+ * The distance a shot up or down a slope actually covers (Campaigns p. 408).
+ *
+ * "Firing Downward: for every two yards of elevation you have over your target,
+ * subtract one yard from the effective distance, to a minimum of half the real
+ * ground distance. Firing Upward: for every yard of elevation your target has
+ * over you, add one yard to the effective distance."
+ *
+ * The two halves are deliberately lopsided -- a yard of height helps half as
+ * much as it hurts -- and only the downward one has a floor.
+ *
+ * "Ignore it entirely for beam weapons like lasers!"
+ */
+export function elevationRange(options: {
+  /** Ground distance in yards, which is what a map measures. */
+  groundYards: number;
+  /** Yards the shooter is above the target; negative when below. */
+  elevationYards: number;
+  /** True for a laser or anything else that does not arc. */
+  beamWeapon?: boolean;
+}): number {
+  const ground = Math.max(0, options.groundYards);
+  if (options.beamWeapon) return ground;
+
+  if (options.elevationYards >= 0) {
+    const shortened = ground - Math.floor(options.elevationYards / 2);
+    return Math.max(ground / 2, shortened);
+  }
+
+  return ground + Math.abs(options.elevationYards);
+}
+

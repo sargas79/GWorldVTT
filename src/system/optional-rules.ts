@@ -66,6 +66,13 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "slams", reference: "Campaigns p. 371", default: true },
     { key: "grappling", reference: "Campaigns p. 370", default: true },
     { key: "evading", reference: "Campaigns p. 368", default: true },
+    { key: "malfunctions", reference: "Campaigns p. 407", default: true },
+    { key: "dualWeaponAttack", reference: "Campaigns p. 417", default: true },
+    { key: "scatter", reference: "Campaigns p. 414", default: true },
+    { key: "mountedCombat", reference: "Campaigns pp. 396-397", default: true },
+    { key: "highSpeed", reference: "Campaigns pp. 394-395", default: true },
+    { key: "overpenetration", reference: "Campaigns p. 408", default: true },
+    { key: "dirtyTricks", reference: "Campaigns p. 405", default: true },
   ],
   injury: [
     { key: "hitLocations", reference: "Campaigns p. 398", default: true },
@@ -83,6 +90,7 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "regularContests", reference: "Campaigns p. 349", default: true },
     { key: "frightChecks", reference: "Campaigns p. 360", default: true },
     { key: "extraEffort", reference: "Campaigns p. 356", default: true },
+    { key: "reactions", reference: "Campaigns pp. 359, 494", default: true },
   ],
   activities: [
     { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true },

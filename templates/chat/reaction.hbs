@@ -1,0 +1,41 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">
+      {{#if influence}}{{localize "GWORLD.Reaction.Influence"}}{{else}}{{localize "GWORLD.Reaction.Title"}}{{/if}}
+    </span>
+  </div>
+
+  <div class="gc-mods">
+    {{#if influence}}
+      <span>{{skill}} {{localize "GWORLD.Reaction.Against"}} {{subject}}</span>
+      <span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{target}} {{localize "GWORLD.Reaction.VsWill"}} {{will}}</span>
+    {{else}}
+      <span>{{localize "GWORLD.Reaction.Rolled" rolled=rolled}}</span>
+      {{#if modifier}}<span class="gc-mod">{{signed modifier}}</span>{{/if}}
+      <span class="gc-mod">= {{total}}</span>
+    {{/if}}
+  </div>
+
+  {{#if dice}}
+    <div class="gc-dice">
+      {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+      <span class="gc-total">{{roll}}</span>
+    </div>
+  {{/if}}
+
+  <div class="gc-result {{#if influence}}{{#if won}}success{{else}}failure{{/if}}{{/if}}">
+    {{band}}
+  </div>
+
+  <div class="gc-mods">
+    {{#if bounded}}<span class="gc-mod">{{localize "GWORLD.Reaction.Bounded"}}</span>{{/if}}
+    {{#if settled}}<span class="gc-mod">{{localize "GWORLD.Reaction.Settled"}}</span>{{/if}}
+    {{#if diplomacy}}
+      <span class="gc-mod">
+        {{#if usedFallback}}{{localize "GWORLD.Reaction.DiplomacySaved" band=fallbackBand}}
+        {{else}}{{localize "GWORLD.Reaction.DiplomacyTried" band=fallbackBand}}{{/if}}
+      </span>
+    {{/if}}
+  </div>
+</div>

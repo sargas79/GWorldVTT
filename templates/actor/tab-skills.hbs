@@ -65,7 +65,8 @@
               <td class="n"><span class="lvl">{{skill.system.derived.level}}</span></td>
               <td class="c">
                 <span class="rollable" data-action="roll" data-roll-type="skill"
-                      data-roll-label="{{skill.name}}" data-roll-target="{{skill.system.derived.level}}">
+                      data-roll-label="{{skill.name}}" data-roll-target="{{skill.system.derived.level}}"
+                      data-based-on="{{skill.system.attribute}}">
                   {{> "gworld.die"}}
                 </span>
               </td>
@@ -121,7 +122,8 @@
               <td class="c">
                 {{#if skill.system.derived.hasDefault}}
                   <span class="rollable" data-action="roll" data-roll-type="skill"
-                        data-roll-label="{{skill.name}}" data-roll-target="{{skill.system.derived.level}}">
+                        data-roll-label="{{skill.name}}" data-roll-target="{{skill.system.derived.level}}"
+                      data-based-on="{{skill.system.attribute}}">
                     {{> "gworld.die"}}
                   </span>
                 {{/if}}

@@ -7,7 +7,8 @@
         <div class="attr blueprint">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <span class="iroll rollable" data-action="roll" data-roll-type="attribute"
-                data-roll-label="{{attr.label}}" data-roll-target="{{attr.rollTarget}}">
+                data-roll-label="{{attr.label}}" data-roll-target="{{attr.rollTarget}}"
+                data-based-on="{{attr.key}}">
             {{> "gworld.die"}}
           </span>
           <span class="al">{{attr.key}}{{#if attr.weakened}}<em class="tired"

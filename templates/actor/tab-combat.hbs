@@ -252,7 +252,7 @@
                         data-ranged="1" data-accuracy="{{atk.accuracy}}"
                         data-scope-bonus="{{atk.scopeBonus}}"
                         data-rate-of-fire="{{atk.rateOfFire}}" data-recoil="{{atk.recoil}}"
-                        data-bulk="{{atk.bulk}}">
+                        data-bulk="{{atk.bulk}}" data-malfunction="{{atk.malfunction}}">
                     {{> "gworld.die"}}
                   </span>
                 {{/if}}
@@ -315,6 +315,56 @@
               data-tooltip="{{localize "GWORLD.Disarm.Hint"}}">
         {{localize "GWORLD.Disarm.Action"}}
       </button>
+      {{#if rules.dirtyTricks}}
+        <button type="button" class="ibtn" data-action="splash"
+                data-tooltip="{{localize "GWORLD.Splash.Hint"}}">
+          {{localize "GWORLD.Splash.Action"}}
+        </button>
+      {{/if}}
+      {{#if rules.scatter}}
+        <button type="button" class="ibtn" data-action="scatter"
+                data-tooltip="{{localize "GWORLD.Scatter.Hint"}}">
+          {{localize "GWORLD.Scatter.Action"}}
+        </button>
+      {{/if}}
+      {{#if rules.mountedCombat}}
+        <button type="button" class="ibtn{{#if system.mounted}} on{{/if}}" data-action="toggleMounted"
+                data-tooltip="{{localize "GWORLD.Mounted.Hint"}}">
+          {{localize "GWORLD.Mounted.Action"}}
+        </button>
+        {{#if system.mounted}}
+          <button type="button" class="ibtn" data-action="stayOn"
+                  data-tooltip="{{localize "GWORLD.Mounted.StayOnHint"}}">
+            {{localize "GWORLD.Mounted.StayOnAction"}}
+          </button>
+        {{/if}}
+      {{/if}}
+      {{#if rules.highSpeed}}
+        <button type="button" class="ibtn" data-action="pushEnvelope"
+                data-tooltip="{{localize "GWORLD.Mounted.EnvelopeHint"}}">
+          {{localize "GWORLD.Mounted.EnvelopeAction"}}
+        </button>
+      {{/if}}
+      <button type="button" class="ibtn" data-action="attributePenalties"
+              data-tooltip="{{localize "GWORLD.Penalties.Hint"}}">
+        {{localize "GWORLD.Penalties.Action"}}{{#if penaltiesShowing}} &middot; {{penaltiesShowing}}{{/if}}
+      </button>
+      {{#if rules.reactions}}
+        <button type="button" class="ibtn" data-action="reaction"
+                data-tooltip="{{localize "GWORLD.Reaction.Hint"}}">
+          {{localize "GWORLD.Reaction.Action"}}
+        </button>
+        <button type="button" class="ibtn" data-action="influence"
+                data-tooltip="{{localize "GWORLD.Reaction.InfluenceHint"}}">
+          {{localize "GWORLD.Reaction.InfluenceAction"}}
+        </button>
+      {{/if}}
+      {{#if rules.overpenetration}}
+        <button type="button" class="ibtn" data-action="overpenetration"
+                data-tooltip="{{localize "GWORLD.Overpenetration.Hint"}}">
+          {{localize "GWORLD.Overpenetration.Action"}}
+        </button>
+      {{/if}}
     </div>
 
     {{!-- A grapple changes what this character can do more than anything else

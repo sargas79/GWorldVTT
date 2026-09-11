@@ -583,6 +583,12 @@
   border-radius: 0;
 }
 .gworld .ibtn:hover { background: var(--color-accent-700); border-color: var(--color-accent-700); }
+/* A button that is a state rather than an action -- mounted, say -- shows
+   whether the state is on rather than merely offering to change it. */
+.gworld .ibtn.on {
+  background: var(--color-accent-900);
+  border-color: var(--color-accent-900);
+}
 /* A button that has to sit in a table cell beside the roll die. */
 .gworld .ibtn.tiny {
   height: 20px;

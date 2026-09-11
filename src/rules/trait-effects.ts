@@ -44,6 +44,12 @@ export interface TraitEffects {
   enhancedMove: number;
   /** True for anything that swims at its full Basic Move. */
   aquatic: boolean;
+  /** No penalty for using the off hand (Ambidexterity, Characters p. 39). */
+  ambidextrous: boolean;
+  /** Influence rolls fail against them outright (Indomitable, Characters p. 60). */
+  indomitable: boolean;
+  /** Intimidation fails against them outright (Unfazeable, Characters p. 95). */
+  slaveMentality: boolean;
 }
 
 /** What no traits at all come to, and the shape everything is added onto. */
@@ -61,6 +67,9 @@ export function noTraitEffects(): TraitEffects {
     superJump: 0,
     enhancedMove: 1,
     aquatic: false,
+    ambidextrous: false,
+    indomitable: false,
+    slaveMentality: false,
   };
 }
 
@@ -127,6 +136,16 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   // Move" (Campaigns p. 354). Aquatic is a meta-trait rather than a record of
   // its own, and what the compendium carries for it is No Legs (Aquatic).
   amphibious: () => ({ aquatic: true }),
+
+  // "You can use either hand... you suffer no -4 penalty for using the 'off'
+  // hand" (Characters p. 39).
+  ambidexterity: () => ({ ambidextrous: true }),
+
+  // "You cannot be affected by Influence rolls" (Characters p. 60), and its
+  // opposite: "you win automatically against those with Slave Mentality"
+  // (Campaigns p. 359).
+  indomitable: () => ({ indomitable: true }),
+  "slave mentality": () => ({ slaveMentality: true }),
   "no legs (aquatic)": () => ({ aquatic: true }),
 };
 
@@ -181,6 +200,9 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
     total.unfazeable ||= applied.unfazeable ?? false;
     total.noShock ||= applied.noShock ?? false;
     total.aquatic ||= applied.aquatic ?? false;
+    total.ambidextrous ||= applied.ambidextrous ?? false;
+    total.indomitable ||= applied.indomitable ?? false;
+    total.slaveMentality ||= applied.slaveMentality ?? false;
 
     total.shockMultiplier = Math.max(total.shockMultiplier, applied.shockMultiplier ?? 1);
     total.enhancedMove = Math.max(total.enhancedMove, applied.enhancedMove ?? 1);

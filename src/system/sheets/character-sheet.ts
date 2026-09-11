@@ -36,6 +36,11 @@ import { applyDeprivation, rollExposure } from "../environment.js";
 import { activePoisons, advancePoison, clearPoison, dosePoison, treatPoison } from "../poison.js";
 import { drinkForAnHour, drinkingState, hangoverRoll, soberUpRoll } from "../intoxication.js";
 import { checkInfection, exposeToDisease } from "../disease.js";
+import { checkOverpenetration, rollScatter, splashInTheFace } from "../gunplay.js";
+import { rollInfluence, rollReaction } from "../reactions.js";
+import { rollPushingTheEnvelope, rollStayOn } from "../mounted.js";
+import { INFLUENCE_SKILLS, REACTIONS, type Reaction } from "../../rules/reactions.js";
+import type { CoverKind } from "../../rules/overpenetration.js";
 import {
   CONTAGION_MODIFIERS,
   DISEASE_EXAMPLES,
@@ -787,6 +792,426 @@ async function promptForInfection(): Promise<{
   return result && typeof result === "object" ? (result as never) : null;
 }
 
+/** Asks how badly the grenade was thrown (Campaigns p. 414). */
+async function promptForScatter(): Promise<{
+  margin: number;
+  distanceYards: number;
+  dodged: boolean;
+  unseen: boolean;
+  fragmentationDice: number;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Scatter.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Margin")}</span>
+        <input type="number" name="margin" value="1" min="0" step="1" autofocus style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Distance")}</span>
+        <input type="number" name="distance" value="10" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Fragmentation")}</span>
+        <input type="number" name="fragmentation" value="0" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="dodged">
+        <span>${L("Dodged")}</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="unseen">
+        <span>${L("Unseen")}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const num = (name: string) =>
+          Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
+        const ticked = (name: string) =>
+          form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+        return {
+          margin: num("margin"),
+          distanceYards: num("distance"),
+          fragmentationDice: num("fragmentation"),
+          dodged: ticked("dodged"),
+          unseen: ticked("unseen"),
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/** Asks what the shot went through and what is behind it (Campaigns p. 408). */
+async function promptForOverpenetration(): Promise<{
+  basicDamage: number;
+  coverDr: number;
+  coverHp: number;
+  coverKind: CoverKind;
+  armorDivisor: number;
+  behindDr: number;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Overpenetration.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("BasicDamage")}</span>
+        <input type="number" name="damage" value="0" min="0" step="1" autofocus style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Kind")}</span>
+        <select name="kind" style="width:180px">
+          <option value="flesh">${L("Kind_flesh")}</option>
+          <option value="unliving">${L("Kind_unliving")}</option>
+          <option value="homogenous">${L("Kind_homogenous")}</option>
+          <option value="thinSlab">${L("Kind_thinSlab")}</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("CoverDrField")}</span>
+        <input type="number" name="coverDr" value="0" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("CoverHp")}</span>
+        <input type="number" name="coverHp" value="10" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Divisor")}</span>
+        <input type="number" name="divisor" value="1" min="1" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("BehindDr")}</span>
+        <input type="number" name="behindDr" value="0" min="0" step="1" style="width:90px">
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Apply"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const num = (name: string) =>
+          Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
+        return {
+          basicDamage: num("damage"),
+          coverDr: num("coverDr"),
+          coverHp: num("coverHp"),
+          coverKind: (form?.querySelector<HTMLSelectElement>('select[name="kind"]')?.value ??
+            "flesh") as CoverKind,
+          armorDivisor: Math.max(1, num("divisor")),
+          behindDr: num("behindDr"),
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/** Asks how the splash landed (Campaigns p. 405). */
+async function promptForSplash(): Promise<{
+  hit: boolean;
+  criticalHit: boolean;
+  defended: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Splash.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <p class="ihint">${game.i18n.format("GWORLD.Splash.Thrown", {
+        acc: 1,
+        max: 3,
+        face: -5,
+      })}</p>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="hit" checked>
+        <span>${L("Hit")}</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="critical">
+        <span>${L("Critical")}</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="defended">
+        <span>${L("Defended")}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const ticked = (name: string) =>
+          form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+        return {
+          hit: ticked("hit"),
+          criticalHit: ticked("critical"),
+          defended: ticked("defended"),
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/**
+ * Asks what colours an NPC's first impression (Campaigns p. 494).
+ *
+ * The best and worst cases are asked because a predetermined reaction is the
+ * commonest thing a GM has written down about an NPC -- "a street gang might
+ * have a -5 reaction to anybody" -- and applying it by hand afterwards means
+ * remembering it at the moment the dice land.
+ */
+async function promptForReaction(): Promise<{
+  modifier: number;
+  best: Reaction | null;
+  worst: Reaction | null;
+  open: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Reaction.${key}`);
+  const bands = (selected: string) =>
+    [`<option value="">${L("Unbounded")}</option>`]
+      .concat(
+        REACTIONS.map(
+          (band) =>
+            `<option value="${band}"${band === selected ? " selected" : ""}>${L(band)}</option>`,
+        ),
+      )
+      .join("");
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Modifier")}</span>
+        <input type="number" name="modifier" value="0" step="1" autofocus style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Best")}</span>
+        <select name="best" style="width:150px">${bands("")}</select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Worst")}</span>
+        <select name="worst" style="width:150px">${bands("")}</select>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="open">
+        <span>${L("Open")}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const chosen = (name: string) =>
+          form?.querySelector<HTMLSelectElement>(`select[name="${name}"]`)?.value ?? "";
+        return {
+          modifier:
+            Number(form?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value ?? 0) || 0,
+          best: (chosen("best") || null) as Reaction | null,
+          worst: (chosen("worst") || null) as Reaction | null,
+          open: form?.querySelector<HTMLInputElement>('input[name="open"]')?.checked ?? false,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/** Asks which Influence skill is being tried, and how (Campaigns p. 359). */
+async function promptForInfluence(skills: Array<{ name: string; level: number }>): Promise<{
+  skill: string;
+  skillLevel: number;
+  modifier: number;
+  specious: boolean;
+  reactionModifier: number;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Reaction.${key}`);
+
+  const options = skills
+    .map((skill) => `<option value="${skill.name}">${skill.name} ${skill.level}</option>`)
+    .join("");
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Influence") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Skill")}</span>
+        <select name="skill" style="width:200px">${options}</select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
+        <input type="number" name="modifier" value="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Modifier")}</span>
+        <input type="number" name="reaction" value="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="specious">
+        <span>${L("Specious")}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const name = form?.querySelector<HTMLSelectElement>('select[name="skill"]')?.value ?? "";
+        return {
+          skill: name,
+          skillLevel: skills.find((skill) => skill.name === name)?.level ?? 4,
+          modifier:
+            Number(form?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value ?? 0) || 0,
+          reactionModifier:
+            Number(form?.querySelector<HTMLInputElement>('input[name="reaction"]')?.value ?? 0) || 0,
+          specious:
+            form?.querySelector<HTMLInputElement>('input[name="specious"]')?.checked ?? false,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/** Asks what went wrong in the saddle (Campaigns p. 397). */
+async function promptForStayOn(): Promise<{
+  stunned: boolean;
+  knockbackYards: number;
+  saddleAndStirrups: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Mounted.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("StayOn") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="stunned">
+        <span>${L("Stunned")}</span>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("KnockbackYards")}</span>
+        <input type="number" name="knockback" value="0" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="saddle" checked>
+        <span>${L("Saddle")}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const ticked = (name: string) =>
+          form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+        return {
+          stunned: ticked("stunned"),
+          knockbackYards:
+            Number(form?.querySelector<HTMLInputElement>('input[name="knockback"]')?.value ?? 0) || 0,
+          saddleAndStirrups: ticked("saddle"),
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/** Asks what is being attempted at speed (Campaigns p. 395). */
+async function promptForEnvelope(): Promise<{
+  velocity: number;
+  deceleration: number;
+  turning: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Mounted.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Envelope") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Velocity")}</span>
+        <input type="number" name="velocity" value="10" min="0" step="1" autofocus style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Deceleration")}</span>
+        <input type="number" name="deceleration" value="0" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="turning">
+        <span>${L("Turn")}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const num = (name: string) =>
+          Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
+        return {
+          velocity: num("velocity"),
+          deceleration: num("deceleration"),
+          turning: form?.querySelector<HTMLInputElement>('input[name="turning"]')?.checked ?? false,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/** Asks what has been knocked down, and by how much (Campaigns p. 421). */
+async function promptForPenalties(current: {
+  ST: number;
+  DX: number;
+  IQ: number;
+  HT: number;
+}): Promise<{ ST: number; DX: number; IQ: number; HT: number } | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Penalties.${key}`);
+  const field = (key: "ST" | "DX" | "IQ" | "HT") => `
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${game.i18n.localize(`GWORLD.Attribute.${key}`)}</span>
+        <input type="number" name="${key}" value="${current[key]}" max="0" step="1" style="width:90px">
+      </label>`;
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      ${field("ST")}${field("DX")}${field("IQ")}${field("HT")}
+      <p class="ihint">${L("Explain")}</p>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Apply"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const num = (name: string) =>
+          Math.min(
+            0,
+            Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0,
+          );
+        return { ST: num("ST"), DX: num("DX"), IQ: num("IQ"), HT: num("HT") };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
 /**
  * Asks what the session was worth, and what for.
  *
@@ -1174,6 +1599,15 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       hangover: GWorldCharacterSheet.#onHangover,
       illness: GWorldCharacterSheet.#onIllness,
       infection: GWorldCharacterSheet.#onInfection,
+      scatter: GWorldCharacterSheet.#onScatter,
+      overpenetration: GWorldCharacterSheet.#onOverpenetration,
+      splash: GWorldCharacterSheet.#onSplash,
+      reaction: GWorldCharacterSheet.#onReaction,
+      influence: GWorldCharacterSheet.#onInfluence,
+      toggleMounted: GWorldCharacterSheet.#onToggleMounted,
+      stayOn: GWorldCharacterSheet.#onStayOn,
+      pushEnvelope: GWorldCharacterSheet.#onPushEnvelope,
+      attributePenalties: GWorldCharacterSheet.#onAttributePenalties,
       shakeOffStun: GWorldCharacterSheet.#onShakeOffStun,
       grapple: GWorldCharacterSheet.#onGrapple,
       disarm: GWorldCharacterSheet.#onDisarm,
@@ -1386,6 +1820,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // not disabled, it is absent: there is nothing to explain about a rule
       // nobody is using.
       rules: activeRules(),
+
+      // "-2 DX, -1 IQ" for the button, or nothing at all when nothing is down.
+      penaltiesShowing: (["ST", "DX", "IQ", "HT"] as const)
+        .filter((key) => Number(system.attributePenalties?.[key]) < 0)
+        .map((key) => `${system.attributePenalties[key]} ${key}`)
+        .join(", "),
 
       // What is still working on this character. Both are flags rather than
       // system data: they are a state the GM advances, not a number a player
@@ -2418,6 +2858,148 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
     await checkInfection({ actor: this.actor, ...asked });
     this.render();
+  }
+
+  /**
+   * Where a missed grenade landed (Campaigns p. 414).
+   *
+   * The margin is asked rather than remembered: the attack card that missed is
+   * already posted, and reaching back into it to find the margin would be a
+   * worse guess than the number the GM is looking at.
+   */
+  static async #onScatter(this: GWorldCharacterSheet) {
+    if (!isRuleOn("scatter")) return;
+
+    const asked = await promptForScatter();
+    if (!asked) return;
+
+    await rollScatter({ actor: this.actor, ...asked });
+  }
+
+  /** Whether the shot came out the other side (Campaigns p. 408). */
+  static async #onOverpenetration(this: GWorldCharacterSheet) {
+    if (!isRuleOn("overpenetration")) return;
+
+    const asked = await promptForOverpenetration();
+    if (!asked) return;
+
+    await checkOverpenetration({ actor: this.actor, ...asked });
+  }
+
+
+  /**
+   * What an NPC makes of this character (Campaigns p. 494).
+   *
+   * Whispered to the GM by default: "they don't know, for instance, whether
+   * that friendly-looking old farmer is giving them straight advice or sending
+   * them into a trap."
+   */
+  static async #onReaction(this: GWorldCharacterSheet) {
+    if (!isRuleOn("reactions")) return;
+
+    const asked = await promptForReaction();
+    if (!asked) return;
+
+    await rollReaction({ actor: this.actor, ...asked });
+  }
+
+  /**
+   * Talking somebody round (Campaigns p. 359).
+   *
+   * The skills offered are the ones this character actually has, at the levels
+   * they have them: an Influence roll is a Quick Contest, and a skill nobody
+   * bought is not one of the six the book names.
+   */
+  static async #onInfluence(this: GWorldCharacterSheet) {
+    if (!isRuleOn("reactions")) return;
+
+    const targets = targetedTokens();
+    if (targets.length !== 1) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Reaction.OneTarget"));
+      return;
+    }
+
+    const subject = targets[0]?.actor;
+    if (!subject) return;
+
+    // Every Influence skill, whether or not it was bought: an unbought one
+    // defaults, and which default applies is the skill's own business.
+    const skills = INFLUENCE_SKILLS.map((name) => ({
+      name,
+      level: this.actor.system?.derived?.influence?.[name] ?? 4,
+    }));
+
+    const asked = await promptForInfluence(skills);
+    if (!asked) return;
+
+    await rollInfluence({ actor: this.actor, subject, ...asked });
+  }
+
+
+  /**
+   * Gets on or off (Campaigns p. 397).
+   *
+   * Mounted is a state rather than an action because of what it changes: every
+   * active defense is capped by Riding while it is set, so it has to be
+   * somewhere the defense scores can read it.
+   */
+  static async #onToggleMounted(this: GWorldCharacterSheet) {
+    if (!isRuleOn("mountedCombat")) return;
+    await this.actor.update({ "system.mounted": !this.actor.system?.mounted });
+  }
+
+  /** The Riding roll after something went wrong (Campaigns p. 397). */
+  static async #onStayOn(this: GWorldCharacterSheet) {
+    if (!isRuleOn("mountedCombat")) return;
+
+    const asked = await promptForStayOn();
+    if (!asked) return;
+
+    await rollStayOn({ actor: this.actor, ...asked });
+  }
+
+  /** A stop or a turn sharper than the rules allow (Campaigns p. 395). */
+  static async #onPushEnvelope(this: GWorldCharacterSheet) {
+    if (!isRuleOn("highSpeed")) return;
+
+    const asked = await promptForEnvelope();
+    if (!asked) return;
+
+    await rollPushingTheEnvelope({ actor: this.actor, ...asked });
+  }
+
+  /**
+   * Records what has been knocked down for a while (Campaigns p. 421).
+   *
+   * Written to the sheet rather than rolled, because it stays there: a penalty
+   * from shock or an affliction lasts until something takes it away, and every
+   * skill roll in between should already know about it.
+   */
+  static async #onAttributePenalties(this: GWorldCharacterSheet) {
+    const current = this.actor.system?.attributePenalties ?? { ST: 0, DX: 0, IQ: 0, HT: 0 };
+    const asked = await promptForPenalties(current);
+    if (!asked) return;
+
+    await this.actor.update({ "system.attributePenalties": asked });
+  }
+
+  /** A drink in somebody's face (Campaigns p. 405). */
+  static async #onSplash(this: GWorldCharacterSheet) {
+    if (!isRuleOn("dirtyTricks")) return;
+
+    const targets = targetedTokens();
+    if (targets.length !== 1) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Splash.OneTarget"));
+      return;
+    }
+
+    const victim = targets[0]?.actor;
+    if (!victim) return;
+
+    const asked = await promptForSplash();
+    if (!asked) return;
+
+    await splashInTheFace({ actor: this.actor, victim, ...asked });
   }
 
   /**

@@ -404,6 +404,19 @@ function rangedModeField() {
       min: 0,
     }),
     /**
+     * Malfunction: the attack roll at or above which the weapon fails (GURPS
+     * Basic Set: Campaigns p. 407). Most firearms are 17; a bow or a thrown
+     * rock has none, which is what null means here rather than 18.
+     */
+    malfunction: new fields.NumberField({
+      required: true,
+      nullable: true,
+      integer: true,
+      initial: null,
+      min: 3,
+      max: 18,
+    }),
+    /**
      * An explosive attack, marked "ex" after its damage type (GURPS Basic Set:
      * Campaigns p. 414). It does its listed damage to whoever it struck and
      * collateral damage to everyone within twice its dice in yards.

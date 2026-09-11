@@ -34,6 +34,9 @@ import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
 import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js";
 import { fatigueStatus, isVeryTired } from "../../rules/fatigue.js";
+import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
+import { mountedDefensePenalty } from "../../rules/mounted.js";
+import { penaltyEffects } from "../../rules/attribute-penalties.js";
 import {
   effectiveSkillLevel,
   namedDefaultLevel,
@@ -125,6 +128,11 @@ export interface DerivedAttack {
   isFencing: boolean;
   /** Ranged only. */
   accuracy?: number;
+  /**
+   * Malf.: the attack roll at or above which the weapon fails (Campaigns
+   * p. 407). Null for anything that cannot jam, such as a bow.
+   */
+  malfunction?: number | null;
   /** A built-in scope's bonus, which the table lists separately as in "7+2". */
   scopeBonus?: number;
   range?: string;
@@ -164,6 +172,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   };
   declare hp: { value: number; max: number };
   declare fp: { value: number; max: number };
+  declare mounted: boolean;
+  declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
   declare points: {
     starting: number;
     disadvantageLimit: number;
@@ -313,6 +323,23 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         choices: ["standing", "crouching", "kneeling", "crawling", "sitting", "lying"],
       }),
 
+      /** In the saddle, which caps active defenses by Riding (Campaigns p. 397). */
+      mounted: new fields.BooleanField({ initial: false }),
+
+      /**
+       * Attributes something has temporarily knocked down (Campaigns p. 421).
+       *
+       * Kept apart from the attributes themselves, because a temporary penalty
+       * is deliberately not the same thing as a lower attribute: it must not
+       * touch hit points, Basic Speed, Basic Move, FP or any active defense.
+       */
+      attributePenalties: new fields.SchemaField({
+        ST: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, max: 0 }),
+        DX: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, max: 0 }),
+        IQ: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, max: 0 }),
+        HT: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, max: 0 }),
+      }),
+
       /**
        * Which hand holds the weapon. In tactical combat the shield is on the
        * other side, and which side an attack comes from decides whether either
@@ -457,6 +484,48 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       },
       lifting: { skill: this.skillLevelByName("Lifting") },
     };
+  }
+
+  /**
+   * What an Influence skill nobody bought is rolled at (Characters pp. 187-224).
+   *
+   * All six default to an attribute at a penalty, and the penalties differ:
+   * Fast-Talk and Streetwise are IQ-5, Diplomacy is IQ-6, Intimidation is
+   * Will-5, Savoir-Faire is IQ-4, and Sex Appeal is HT-3.
+   */
+  private influenceDefault(
+    name: string,
+    attrs: { IQ?: number; HT?: number },
+    will: number,
+  ): number {
+    const iq = attrs.IQ ?? 10;
+    switch (name) {
+      case "Diplomacy":
+        return iq - 6;
+      case "Savoir-Faire":
+        return iq - 4;
+      case "Sex Appeal":
+        return (attrs.HT ?? 10) - 3;
+      case "Intimidation":
+        return will - 5;
+      default:
+        return iq - 5;
+    }
+  }
+
+  /**
+   * Levels bought in a technique, by name.
+   *
+   * A technique's own line on the sheet shows its level; what a dialog needs is
+   * how many levels were bought, since that is what buys a penalty back.
+   */
+  private techniqueLevelsByName(name: string): number {
+    const wanted = name.trim().toLowerCase();
+    for (const item of this.itemsOfType("technique")) {
+      if (String(item.name ?? "").trim().toLowerCase() !== wanted) continue;
+      return Number((item.system as { derived?: { levels?: number } })?.derived?.levels) || 0;
+    }
+    return 0;
   }
 
   /** The score of a skill by name, or null when the character lacks it. */
@@ -765,6 +834,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           rateOfFire: mode.rateOfFire ?? 1,
           recoil: mode.recoil ?? 0,
           bulk: mode.bulk ?? 0,
+          malfunction: mode.malfunction ?? null,
           shots: mode.shots ?? "",
           usable: true,
           unbalanced: false,
@@ -793,9 +863,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       (this.conditions.allOutDefense || this.maneuver === "allOutDefense") &&
       this.allOutDefenseOption === "increased";
 
+    // A rider defends at the mercy of their Riding skill; somebody on foot is
+    // not asked. Riding defaults to DX-5 for anybody who never learned it.
+    const ridingSkill = this.skillLevelByName("Riding") ?? (attrs.DX ?? 10) - 5;
+    const mountedPenalty = this.mounted ? mountedDefensePenalty(ridingSkill) : 0;
+
     const contextFor = (which: "dodge" | "parry" | "block") => ({
       shieldDb,
       posture: this.posture,
+      mountedPenalty,
       stunned: this.conditions.stunned,
       allOutDefenseIncreased: increasing && this.allOutDefenseTarget === which,
       cannotSeeAttacker: this.conditions.blindToAttacker,
@@ -955,6 +1031,22 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ranged,
       encumbrance,
       feats: this.#physicalFeats(attrs, secondary.basicLift, encumbrance.move, traits),
+      // What each Influence skill is worth to this character (Campaigns
+      // p. 359). An unbought one is not left out: it defaults, and the dialog
+      // shows the default so the player can see what they are risking.
+      influence: Object.fromEntries(
+        INFLUENCE_SKILLS.map((name: string) => [
+          name,
+          this.skillLevelByName(name) ?? this.influenceDefault(name, attrs, secondary.will),
+        ]),
+      ),
+
+      // The two techniques that change a roll made from a dialog rather than
+      // from their own line on the sheet (Campaigns p. 417).
+      techniques: {
+        dualWeaponAttack: this.techniqueLevelsByName("Dual-Weapon Attack"),
+        offHandWeaponTraining: this.techniqueLevelsByName("Off-Hand Weapon Training"),
+      },
       recovery: {
         // First Aid is IQ/Easy, so someone who never learned it defaults to
         // IQ-4 and can still bandage a friend (Characters p. 195).
@@ -968,6 +1060,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       traitEffects: traits,
       status: healthStatus(this.hp.value, this.hp.max),
       reeling,
+      mounted: this.mounted,
+      ridingSkill,
+      // What a temporary penalty comes to, for the rolls that read it. The
+      // penalties themselves stay where they were entered; this is only their
+      // arithmetic, IQ dragging Will and Per with it (Campaigns p. 421).
+      attributePenalties: penaltyEffects(this.attributePenalties),
       fatigue: {
         status: fatigueStatus(this.fp.value, this.fp.max),
         veryTired,

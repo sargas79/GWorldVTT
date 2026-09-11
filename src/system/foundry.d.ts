@@ -305,6 +305,13 @@ declare global {
     implementation: {
       create(data: object, operation?: object): Promise<unknown>;
       getSpeaker(options?: { scene?: unknown; actor?: unknown; token?: unknown; alias?: string }): object;
+      /**
+       * The users a whisper to this name reaches. Verified against
+       * `client/documents/chat-message.mjs`: "GM" and "DM" return every GM,
+       * "players" returns the non-GMs, and anything else is matched against
+       * user names.
+       */
+      getWhisperRecipients(name: string): Array<{ id: string }>;
     };
   };
 }

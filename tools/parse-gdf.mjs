@@ -583,6 +583,17 @@ function parseParry(value) {
 }
 
 /**
+ * A weapon's Malf. from the data file, or null where it has none.
+ *
+ * GCA writes it as a bare number; anything unparseable is treated as a weapon
+ * that does not jam, since a wrong number here would jam a bow.
+ */
+function malfunctionOf(raw) {
+  const value = Number(String(raw ?? "").trim());
+  return Number.isInteger(value) && value >= 3 && value <= 18 ? value : null;
+}
+
+/**
  * A range figure. It is either a distance in yards, or a multiple of ST --
  * which GCA writes `ST*15` for the wielder's ST and `me::weaponst*15` for a
  * bow's own. Anything else is one of GCA's sheet formulas, notably the one it
@@ -708,6 +719,10 @@ function rangedMode(name, f, thrown) {
       thrown,
       bulk: Math.min(0, number(f.get("bulk"), 0)),
       recoil: Math.max(0, number(f.get("rcl"), 0)),
+      // Malf.: the roll at or above which the weapon jams (Campaigns p. 407).
+      // A weapon with no malf() in the data cannot jam at all, which is not the
+      // same as one that jams on an 18.
+      malfunction: malfunctionOf(f.get("malf")),
     },
   };
 }
