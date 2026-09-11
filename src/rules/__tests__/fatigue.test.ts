@@ -59,6 +59,15 @@ describe("spending fatigue (Campaigns p. 426)", () => {
     expect(spent.status).toBe("unconscious");
   });
 
+  /** A sheet without a fatigue pool is missing a number, not out of energy. */
+  it("charges no injury when no fatigue pool is recorded", () => {
+    expect(spendFatigue({ currentFp: 0, maxFp: 0, lost: 3 })).toMatchObject({
+      fp: -3,
+      fpLost: 3,
+      hpLost: 0,
+    });
+  });
+
   it("spends nothing for a loss of nothing", () => {
     expect(spendFatigue({ currentFp: 5, maxFp: 12, lost: 0 })).toMatchObject({
       fp: 5,

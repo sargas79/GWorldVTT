@@ -71,6 +71,18 @@ export function spendFatigue(options: {
   const max = Math.max(0, options.maxFp);
   const lost = Math.max(0, options.lost);
 
+  // A sheet with no fatigue pool recorded is missing a number, not a character
+  // at the end of their strength: charge it the fatigue and no injury, rather
+  // than turning every point of it into a wound.
+  if (max <= 0) {
+    return {
+      fp: options.currentFp - lost,
+      fpLost: lost,
+      hpLost: 0,
+      status: "fresh",
+    };
+  }
+
   // Everything above zero comes off fatigue for free; everything from there
   // down costs a hit point as well.
   const free = Math.max(0, Math.min(lost, options.currentFp));
