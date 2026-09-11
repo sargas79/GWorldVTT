@@ -36,6 +36,8 @@ import {
   opportunityFirePenalty,
 } from "../rules/attack-options.js";
 import { rangedToHitModifier, rapidFireBonus, rapidFireHits } from "../rules/ranged.js";
+import { attackWithoutSight, type Sight } from "../rules/visibility.js";
+import { coverShot, type CoverApproach } from "../rules/cover.js";
 import type { DamageType } from "../rules/types.js";
 
 const CHAT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/success-roll.hbs`;
@@ -504,6 +506,16 @@ export async function promptForRangedAttack(options: {
       ${field("speed", L("TargetSpeed"), "0")}
       ${field("size", L("TargetSize"), "0")}
       ${shotsField}
+      ${sightField()}
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${game.i18n.localize("GWORLD.Cover.Label")}</span>
+        <select name="cover" style="width:150px">
+          <option value="none">${game.i18n.localize("GWORLD.Cover.none")}</option>
+          <option value="exposedLocation">${game.i18n.localize("GWORLD.Cover.exposedLocation")}</option>
+          <option value="randomLocation">${game.i18n.localize("GWORLD.Cover.randomLocation")}</option>
+          <option value="shootThrough">${game.i18n.localize("GWORLD.Cover.shootThrough")}</option>
+        </select>
+      </label>
       ${field("modifier", game.i18n.localize("GWORLD.Chat.Modifier"), "0")}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Situation")}</span>
@@ -528,6 +540,10 @@ export async function promptForRangedAttack(options: {
           form?.querySelector<HTMLInputElement>('input[name="aimed"]')?.checked ?? false;
         const situation =
           form?.querySelector<HTMLSelectElement>('select[name="situation"]')?.value ?? "normal";
+        const sight = (form?.querySelector<HTMLSelectElement>('select[name="sight"]')?.value ??
+          "clear") as Sight;
+        const cover =
+          form?.querySelector<HTMLSelectElement>('select[name="cover"]')?.value ?? "none";
         return {
           range: num("range"),
           speed: num("speed"),
@@ -535,6 +551,8 @@ export async function promptForRangedAttack(options: {
           modifier: num("modifier"),
           shots: rateOfFire > 1 ? num("shots") : 1,
           situation: situation as RangedInput["situation"],
+          sight,
+          cover: cover as CoverApproach | "none",
           aimed,
         };
       },
@@ -566,6 +584,10 @@ interface RangedInput {
    * speed/range penalty (pp. 365, 391).
    */
   situation: "normal" | "moveAndAttack" | "closeCombat";
+  /** What the shooter can see of the target. */
+  sight?: Sight;
+  /** What they decided to do about anything in the way. */
+  cover?: CoverApproach | "none";
   aimed: boolean;
 }
 
@@ -613,6 +635,21 @@ export function rangedModifiers(
     modifiers.push({ label: L("SpeedRange"), value: speedRange });
   }
   if (size !== 0) modifiers.push({ label: L("TargetSize"), value: size });
+
+  const unseen = sightModifier(input.sight ?? "clear", false);
+  if (unseen) modifiers.push(unseen);
+
+  // Cover is a choice between three ways of dealing with it, not one modifier
+  // (p. 407), so what it costs depends on which one was taken.
+  if (input.cover && input.cover !== "none") {
+    const shot = coverShot({ approach: input.cover });
+    if (shot.modifier !== 0) {
+      modifiers.push({
+        label: game.i18n.localize(`GWORLD.Cover.${input.cover}`),
+        value: shot.modifier,
+      });
+    }
+  }
 
   if (situation !== "normal") {
     modifiers.push({ label: L("Bulk"), value: bulkPenalty(weapon.bulk, situation) });
@@ -670,6 +707,37 @@ export async function promptForNumber(options: {
   });
 
   return typeof result === "number" && Number.isFinite(result) ? result : null;
+}
+
+/**
+ * The choices offered for what an attacker can see, worst first.
+ *
+ * Offered on every attack because it applies to every attack: a fight in a dark
+ * room is not an exception, it is Tuesday.
+ */
+const SIGHT_OPTIONS: readonly Sight[] = ["clear", "positionKnown", "foeUnseen", "blind"];
+
+/** The markup for the sight select, and the modifier it resolves to. */
+function sightField(): string {
+  const options = SIGHT_OPTIONS.map(
+    (sight) =>
+      `<option value="${sight}">${game.i18n.localize(`GWORLD.Sight.${sight}`)}</option>`,
+  ).join("");
+
+  return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <span>${game.i18n.localize("GWORLD.Sight.Label")}</span>
+    <select name="sight" style="width:150px">${options}</select>
+  </label>`;
+}
+
+/** What the chosen sight costs, as a modifier line. */
+function sightModifier(sight: Sight, lightSource: boolean): RollModifier | null {
+  const penalty = attackWithoutSight({ sight, lightSource });
+  if (penalty.modifier === 0) return null;
+  return {
+    label: game.i18n.localize(`GWORLD.Sight.${sight}`),
+    value: penalty.modifier,
+  };
 }
 
 /**
@@ -734,6 +802,7 @@ export async function promptForMeleeAttack(options: {
              <span>${E("MightyBlows")} (${EXTRA_EFFORT_FP} FP)</span>
            </label>`
         : ""}
+      ${sightField()}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" style="width:90px">
@@ -753,6 +822,8 @@ export async function promptForMeleeAttack(options: {
           rapid: ticked("rapid"),
           flurry: ticked("flurry"),
           mighty: ticked("mighty"),
+          sight: (form?.querySelector<HTMLSelectElement>('select[name="sight"]')?.value ??
+            "clear") as Sight,
         };
       },
     },
@@ -760,12 +831,13 @@ export async function promptForMeleeAttack(options: {
   });
 
   if (!result || typeof result !== "object") return null;
-  const { deceptive, modifier, rapid, flurry, mighty } = result as {
+  const { deceptive, modifier, rapid, flurry, mighty, sight } = result as {
     deceptive: number;
     modifier: number;
     rapid: boolean;
     flurry: boolean;
     mighty: boolean;
+    sight: Sight;
   };
 
   // "You may not reduce your final effective skill below 10", so the ceiling is
@@ -787,6 +859,9 @@ export async function promptForMeleeAttack(options: {
       value: flurried ? flurryOfBlowsPenalty() : RAPID_STRIKE_PENALTY,
     });
   }
+  const unseen = sightModifier(sight, false);
+  if (unseen) modifiers.push(unseen);
+
   if (modifier !== 0) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: modifier });
   }

@@ -40,6 +40,7 @@ import {
   rollPin,
   rollTakedown,
 } from "../grappling.js";
+import { grappleSizeBonus } from "../../rules/size.js";
 import { rollStunRecovery } from "../knockdown.js";
 import { applyFirstAid, restForADay, restForFatigue, tryToWake } from "../recovery.js";
 import { rollFrightCheck } from "../fright.js";
@@ -1578,6 +1579,22 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const skill = grapplingSkill(this.actor);
     const base = skill?.level ?? (Number(this.actor.system?.attributes?.DX) || 10);
 
+    // "+1 to hit when you grapple per +1 SM advantage you have over your
+    // target" (Campaigns p. 402) -- which the sheet knows without being asked.
+    const sizeBonus = grappleSizeBonus(
+      Number(this.actor.system?.sm) || 0,
+      Number(victim.system?.sm) || 0,
+    );
+
+    const modifiers = [
+      ...(sizeBonus !== 0
+        ? [{ label: game.i18n.localize("GWORLD.Field.SizeModifier"), value: sizeBonus }]
+        : []),
+      ...(asked.modifier !== 0
+        ? [{ label: game.i18n.localize("GWORLD.Chat.Situational"), value: asked.modifier }]
+        : []),
+    ];
+
     const outcome = await rollSuccess({
       actor: this.actor,
       base,
@@ -1586,9 +1603,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         skill: skill?.name ?? "DX",
         foe: String(victim.name),
       }),
-      modifiers: asked.modifier === 0
-        ? []
-        : [{ label: game.i18n.localize("GWORLD.Chat.Situational"), value: asked.modifier }],
+      modifiers,
     });
 
     // A grapple that missed is a missed attack and nothing more; the foe still
