@@ -911,6 +911,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ranged,
       encumbrance,
       feats: this.#physicalFeats(attrs, secondary.basicLift, encumbrance.move, traits),
+      recovery: {
+        // First Aid is IQ/Easy, so someone who never learned it defaults to
+        // IQ-4 and can still bandage a friend (Characters p. 195).
+        firstAid: this.skillLevelByName("First Aid") ?? (attrs.IQ ?? 10) - 4,
+      },
       traitEffects: traits,
       status: healthStatus(this.hp.value, this.hp.max),
       reeling,

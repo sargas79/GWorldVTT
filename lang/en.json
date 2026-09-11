@@ -87,7 +87,8 @@
       "HitLocations": "Damage Resistance by Location",
       "Maneuver": "Maneuver",
       "Actions": "Actions",
-      "PhysicalFeats": "Physical Feats"
+      "PhysicalFeats": "Physical Feats",
+      "Recovery": "Recovery"
     },
     "Column": {
       "Skill": "Skill",
@@ -856,6 +857,32 @@
         "hard": "hard ground",
         "soft": "something soft"
       }
+    },
+    "Recovery": {
+      "Rest": "Rest",
+      "RestHint": "Quiet rest: 1 FP per 10 minutes, and one more for a meal",
+      "Minutes": "Minutes rested",
+      "Rested": "{minutes} minutes of quiet rest",
+      "Daily": "A day's rest",
+      "DailyHint": "A day of rest and decent food: HT for 1 HP",
+      "DailyDetail": "A day of rest and decent food",
+      "Conditions": "Conditions (GM's modifier)",
+      "FirstAid": "First Aid",
+      "FirstAidHint": "Treat one target's wounds",
+      "FirstAidDetail": "Treating {patient}, {minutes} minutes at TL{tl}",
+      "OneTarget": "Target exactly one patient to treat.",
+      "Waking": "Wake up",
+      "WakingHint": "Try to come round after being knocked out",
+      "Waking_automatic": "Above 0 HP: awake again in 15 minutes, no roll needed",
+      "Waking_hourly": "At 0 HP or below: HT every hour to wake",
+      "Waking_mortal": "At -1×HP or below: one HT roll after 12 hours",
+      "Mortal": "Will not wake without medical help — HT every 12 hours or die",
+      "CriticalSuccess": "Critical success",
+      "CriticalFailure": "Critical failure",
+      "AlreadyWell": "Already as well as they are going to get",
+      "NoBetter": "No better for it",
+      "MealHint": "Ate a decent meal while resting (+1 FP)",
+      "RestedFed": "{minutes} minutes of quiet rest, with a meal"
     }
   }
 }
