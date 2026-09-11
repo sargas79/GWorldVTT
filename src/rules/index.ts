@@ -34,6 +34,7 @@ export * from "./injury.js";
 export * from "./knockdown.js";
 export * from "./maneuvers.js";
 export * from "./physical.js";
+export * from "./melee-situations.js";
 export * from "./mortal-wounds.js";
 export * from "./posture.js";
 export * from "./ranged.js";

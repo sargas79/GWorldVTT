@@ -1026,6 +1026,11 @@
       "Dead": "Four minutes without air",
       "Breathe": "Air again",
       "BreatheHint": "Stops the clock and starts recovering fatigue"
+    },
+    "CalledShot": {
+      "Label": "Aimed at",
+      "ChinkTorso": "Chink in torso armour",
+      "ChinkOther": "Chink elsewhere"
     }
   }
 }

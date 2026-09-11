@@ -43,6 +43,10 @@ interface DamageFlag {
   diceOfDamage?: number;
   /** The most those dice could have come up, for a critical that maximises them. */
   maxDamage?: number;
+  /** Where the attack was aimed, if it was aimed anywhere. */
+  hitLocation?: HitLocation;
+  /** True when it went for a gap in the armour, which halves what it finds. */
+  chink?: boolean;
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -78,9 +82,9 @@ function addApplyControls(message: any, html: HTMLElement): void {
     const option = document.createElement("option");
     option.value = location;
     option.textContent = game.i18n.localize(`GWORLD.HitLocation.${location}`);
-    // The torso is what an unaimed blow hits, so it is what the card offers
-    // until someone says otherwise.
-    if (location === "torso") option.selected = true;
+    // The location the attack was aimed at, or the torso, which is what an
+    // unaimed blow hits.
+    if (location === (flag.hitLocation ?? "torso")) option.selected = true;
     select.append(option);
   }
 
@@ -192,6 +196,10 @@ async function applyFromCard(options: {
     type: flag.damageType,
     armorDivisor: blast ? blast.armorDivisor : flag.armorDivisor,
     hitLocation: struck,
+    // "If you hit, halve DR. This is cumulative with any armor divisors"
+    // (p. 400), so it goes in beside the critical's halving rather than
+    // instead of it.
+    ...(flag.chink ? { chink: true } : {}),
     // The maximum belongs to the dice as rolled, so it is only the maximum for
     // someone the blast struck directly: collateral damage has already been
     // scaled down by distance, and pairing it with the undiminished maximum
