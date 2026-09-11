@@ -152,6 +152,10 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       points: {
         spent: points.spent ?? 0,
         starting: points.starting ?? 0,
+        // Everything they have to spend, which is the starting points plus
+        // whatever the campaign has awarded since.
+        available: points.available ?? points.starting ?? 0,
+        earned: points.earned ?? 0,
         remaining: points.remaining ?? 0,
         attributes: points.attributes ?? 0,
         advantages: points.advantages ?? 0,
@@ -160,7 +164,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
         disadvantageTotal: points.disadvantageTotal ?? 0,
         disadvantageLimit: points.disadvantageLimit ?? 0,
       },
-      overBudget: (points.spent ?? 0) > (points.starting ?? 0),
+      overBudget: points.overBudget ?? false,
       overDisadvantageLimit: (points.disadvantageTotal ?? 0) > (points.disadvantageLimit ?? 0),
     };
   }

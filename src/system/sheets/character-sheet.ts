@@ -51,6 +51,7 @@ import {
   previousTechniquePoints,
 } from "../../rules/skills.js";
 import { nextTraitLevel, previousTraitLevel } from "../../rules/traits.js";
+import { awardsNewestFirst, type PointAward } from "../../rules/character-points.js";
 import { isReadTrait } from "../../rules/trait-effects.js";
 import {
   handleDamageAction,
@@ -257,6 +258,45 @@ async function promptForFall(): Promise<{
               : "hard",
           controlled:
             form?.querySelector<HTMLInputElement>('input[name="controlled"]')?.checked ?? false,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/**
+ * Asks what the session was worth, and what for.
+ *
+ * Returns null when the dialog is dismissed, which awards nothing.
+ */
+async function promptForAward(): Promise<{ points: number; note: string } | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Points.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("AwardTitle") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("AwardPoints")}</span>
+        <input type="number" name="points" value="3" step="1" autofocus style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("AwardNote")}</span>
+        <input type="text" name="note" value="" style="width:180px">
+      </label>
+    </div>`,
+    ok: {
+      label: L("Award"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        return {
+          points:
+            Number(form?.querySelector<HTMLInputElement>('input[name="points"]')?.value ?? 0) || 0,
+          note: String(
+            form?.querySelector<HTMLInputElement>('input[name="note"]')?.value ?? "",
+          ).trim(),
         };
       },
     },
@@ -477,6 +517,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       createItem: GWorldCharacterSheet.#onCreateItem,
       browseCompendium: GWorldCharacterSheet.#onBrowseCompendium,
       openBuilder: GWorldCharacterSheet.#onOpenBuilder,
+      awardPoints: GWorldCharacterSheet.#onAwardPoints,
+      deleteAward: GWorldCharacterSheet.#onDeleteAward,
       slam: GWorldCharacterSheet.#onSlam,
       affliction: GWorldCharacterSheet.#onAffliction,
       evade: GWorldCharacterSheet.#onEvade,
@@ -553,6 +595,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // not the whole story: a ballistic vest stopping 12 from a bullet and 5 from
     // a club must not read as a flat 12 wherever the GM happens to be looking.
     const torso = (derived.hitLocations ?? []).find((l: any) => l.key === "torso");
+
+    // Read once: every index handed to the template has to point into the
+    // same list that removing an award will write back.
+    const stored: PointAward[] = derived.points.awards ?? [];
 
     return {
       ...context,
@@ -651,7 +697,16 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // Spending past the budget is not forbidden -- a GM may allow it, and a
       // character part-way through being built is over and under by turns --
       // so it is flagged rather than blocked.
-      overBudget: derived.points.spent > derived.points.starting,
+      overBudget: derived.points.overBudget,
+
+      // The award log, newest first, which is the order a log is read in.
+      // Each row carries its index in the *stored* order, because that is what
+      // removing one has to address and the order shown here is not it.
+      awards: awardsNewestFirst(stored).map((award) => ({
+        ...award,
+        index: stored.indexOf(award),
+        when: award.at ? new Date(award.at).toLocaleDateString() : "",
+      })),
 
       // Tactical combat, when the world is using it. Movement points are the
       // character's Move after encumbrance, and what each hex costs depends on
@@ -1476,6 +1531,45 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       formula: modifier === 0 ? `${dice}d` : `${dice}d${modifier}`,
       damageType: "cr",
     });
+  }
+
+  /**
+   * Awards points for a session (GURPS Basic Set: Campaigns pp. 292-294).
+   *
+   * Appended to the log rather than added to a running total: the point of
+   * keeping earned points apart from starting ones is being able to say where
+   * each of them came from, and a total nobody can explain is the thing a
+   * ledger exists to prevent.
+   */
+  static async #onAwardPoints(this: GWorldCharacterSheet) {
+    const asked = await promptForAward();
+    if (!asked || asked.points === 0) return;
+
+    const awards: PointAward[] = [
+      ...((this.actor.system as { points?: { awards?: PointAward[] } }).points?.awards ?? []),
+      { points: asked.points, note: asked.note, at: Date.now() },
+    ];
+    await this.actor.update({ "system.points.awards": awards });
+  }
+
+  /**
+   * Takes one award back out of the log.
+   *
+   * A correction is usually better recorded as a negative award -- it keeps the
+   * history -- but an award entered by mistake should be removable, and a log
+   * nobody can correct is one people stop trusting.
+   */
+  static async #onDeleteAward(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const index = Number(target.dataset.index);
+    if (!Number.isInteger(index) || index < 0) return;
+
+    const awards: PointAward[] = [
+      ...((this.actor.system as { points?: { awards?: PointAward[] } }).points?.awards ?? []),
+    ];
+    if (index >= awards.length) return;
+
+    awards.splice(index, 1);
+    await this.actor.update({ "system.points.awards": awards });
   }
 
   /**

@@ -151,12 +151,19 @@
       "Languages": "Languages",
       "Spent": "Spent",
       "PointsLabel": "points",
-      "Unspent": "{points} points unspent.",
+      "Unspent": "Unspent",
       "Over": "{points} points over budget.",
       "Exact": "Every point spent.",
       "DisadvantageStanding": "Disadvantages {total} of the {limit} this campaign allows.",
       "Secondaries": "Secondary Characteristics",
-      "Techniques": "Techniques"
+      "Techniques": "Techniques",
+      "Earned": "Earned since",
+      "Award": "Award points",
+      "AwardHint": "Points earned for a session, added to the log",
+      "AwardTitle": "Award character points",
+      "AwardPoints": "Points",
+      "AwardNote": "What for",
+      "AwardWhen": "When"
     },
     "Wait": {
       "Trigger": "Waiting for",

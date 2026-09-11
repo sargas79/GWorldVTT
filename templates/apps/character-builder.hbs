@@ -6,7 +6,7 @@
 
   <div class="gb-ledger">
     <span class="{{#if overBudget}}over{{/if}}">
-      <strong>{{points.spent}}</strong> / {{points.starting}} {{localize "GWORLD.Builder.Points"}}
+      <strong>{{points.spent}}</strong> / {{points.available}} {{localize "GWORLD.Builder.Points"}}
     </span>
     <span class="{{#if overDisadvantageLimit}}over{{/if}}">
       {{localize "GWORLD.Section.DisadvantageLimit"}}
@@ -82,7 +82,7 @@
         <div><dt>{{localize "GWORLD.Points.Skills"}}</dt><dd>{{points.skills}}</dd></div>
         <div class="gb-total">
           <dt>{{localize "GWORLD.Points.Spent"}}</dt>
-          <dd class="{{#if overBudget}}over{{/if}}">{{points.spent}} / {{points.starting}}</dd>
+          <dd class="{{#if overBudget}}over{{/if}}">{{points.spent}} / {{points.available}}</dd>
         </div>
       </dl>
     {{/if}}

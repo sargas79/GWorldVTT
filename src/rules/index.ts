@@ -9,6 +9,7 @@
 export * from "./types.js";
 export * from "./dice.js";
 export * from "./attributes.js";
+export * from "./character-points.js";
 export * from "./contests.js";
 export * from "./criticals.js";
 export * from "./damage.js";
