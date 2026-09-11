@@ -5,6 +5,7 @@ import {
   RULE_GROUPS,
   allRuleKeys,
   defaultRuleState,
+  isImplemented,
   isRuleOn,
   ruleState,
 } from "../optional-rules.js";
@@ -81,5 +82,37 @@ describe("reading the state", () => {
   /** An unlisted key is a rule someone forgot to register, not one turned off. */
   it("treats an unknown rule as in play", () => {
     expect(isRuleOn("somethingNobodyRegistered")).toBe(true);
+  });
+});
+
+describe("rules that are listed but not built", () => {
+  /**
+   * They are shown greyed rather than hidden, so the page maps the whole
+   * ruleset. But nothing reads them, so they must not report as in play --
+   * flipping `implemented` is the one switch that brings a rule into use.
+   */
+  it("reads as off however the state is stored", () => {
+    globals.game = { settings: { get: () => ({ frightChecks: true }) } };
+    expect(isRuleOn("frightChecks")).toBe(false);
+    expect(isImplemented("frightChecks")).toBe(false);
+  });
+
+  it("reads an implemented rule normally", () => {
+    expect(isImplemented("slams")).toBe(true);
+    expect(isRuleOn("slams")).toBe(true);
+  });
+
+  it("treats an unlisted key as implemented, matching isRuleOn", () => {
+    expect(isImplemented("somethingNobodyRegistered")).toBe(true);
+  });
+
+  it("still has a name and a hint for one that is not built", () => {
+    // The catalogue and the strings are checked together above; this pins that
+    // a pending rule is not exempt from either.
+    const pending = Object.values(OPTIONAL_RULES)
+      .flat()
+      .filter((rule) => rule.implemented === false);
+    expect(pending.length).toBeGreaterThan(0);
+    for (const rule of pending) expect(rule.reference).toBeTruthy();
   });
 });

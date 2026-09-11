@@ -184,8 +184,9 @@ optional rule with the page that defines it and a switch. A rule that is off
 behaves as though it had never been written — no penalty applied, no control
 shown, nothing to explain.
 
-Only rules that are actually implemented are listed. A switch for a rule
-nothing reads would say the table has a choice it does not have.
+Rules this system does not read yet are listed too, greyed out and marked, so
+the page is a map of the whole ruleset rather than only of the finished parts.
+They cannot be switched on, because switching them on would do nothing.
 
 The spine is never optional: success rolls, damage, DR and the three active
 defenses are always in play.

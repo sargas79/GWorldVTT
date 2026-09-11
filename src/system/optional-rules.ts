@@ -28,19 +28,22 @@ export interface OptionalRule {
   reference: string;
   /** On unless the table says otherwise. */
   default: boolean;
+  /**
+   * False for a rule this system does not yet read. It is still listed, greyed
+   * out, so the page is a map of the ruleset rather than only of the parts
+   * that happen to be finished -- but it cannot be switched on, because
+   * switching it on would do nothing.
+   */
+  implemented?: boolean;
 }
 
 /** The groups the settings page shows, in the order it shows them. */
 export const RULE_GROUPS = [
   { id: "combat", label: "GWORLD.Rules.Group.Combat" },
   { id: "injury", label: "GWORLD.Rules.Group.Injury" },
+  { id: "rolls", label: "GWORLD.Rules.Group.Rolls" },
+  { id: "activities", label: "GWORLD.Rules.Group.Activities" },
 ] as const;
-
-/*
- * Only rules that are actually implemented are listed. A switch for a rule
- * nothing reads is worse than no switch: it says the table has a choice it
- * does not have. Entries arrive here as the rules behind them do.
- */
 
 export type RuleGroup = (typeof RULE_GROUPS)[number]["id"];
 
@@ -53,6 +56,7 @@ export type RuleGroup = (typeof RULE_GROUPS)[number]["id"];
  */
 export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
   combat: [
+    { key: "feint", reference: "Campaigns p. 365", default: true, implemented: false },
     { key: "deceptiveAttack", reference: "Campaigns p. 369", default: true },
     { key: "rapidStrike", reference: "Campaigns p. 370", default: true },
     { key: "retreat", reference: "Campaigns p. 377", default: true },
@@ -66,8 +70,27 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "hitLocations", reference: "Campaigns p. 398", default: true },
     { key: "explosions", reference: "Campaigns p. 414", default: true },
     { key: "afflictions", reference: "Characters p. 35", default: true },
+    { key: "knockback", reference: "Campaigns p. 378", default: true, implemented: false },
+    { key: "criticalTables", reference: "Campaigns p. 556", default: true, implemented: false },
+  ],
+  rolls: [
+    { key: "regularContests", reference: "Campaigns p. 349", default: true, implemented: false },
+    { key: "frightChecks", reference: "Campaigns p. 360", default: true, implemented: false },
+    { key: "extraEffort", reference: "Campaigns p. 356", default: true, implemented: false },
+  ],
+  activities: [
+    { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true, implemented: false },
   ],
 };
+
+/** Whether the system actually reads a rule yet. */
+export function isImplemented(key: string): boolean {
+  for (const group of Object.values(OPTIONAL_RULES)) {
+    const rule = group.find((r) => r.key === key);
+    if (rule) return rule.implemented !== false;
+  }
+  return true;
+}
 
 /** Every rule key, flattened. */
 export function allRuleKeys(): string[] {
@@ -114,6 +137,10 @@ export function ruleState(): Record<string, boolean> {
  * harder bug to find than the missing entry.
  */
 export function isRuleOn(key: string): boolean {
+  // A rule nothing reads is off whatever the stored state says. Flipping
+  // `implemented` is then the single switch that brings one into play, rather
+  // than something to remember alongside wiring it up.
+  if (!isImplemented(key)) return false;
   const state = ruleState();
   return key in state ? state[key]! : true;
 }

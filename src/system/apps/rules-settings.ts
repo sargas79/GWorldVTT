@@ -12,6 +12,7 @@ import {
   OPTIONAL_RULES_KEY,
   RULE_GROUPS,
   defaultRuleState,
+  isImplemented,
   ruleState,
 } from "../optional-rules.js";
 
@@ -60,7 +61,10 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
           label: `GWORLD.Rules.Rule.${rule.key}.Name`,
           hint: `GWORLD.Rules.Rule.${rule.key}.Hint`,
           reference: rule.reference,
-          enabled: state[rule.key] ?? rule.default,
+          // A rule nothing reads yet is shown greyed rather than hidden: the
+          // page is a map of the ruleset, and a gap in it is worth seeing.
+          pending: rule.implemented === false,
+          enabled: rule.implemented !== false && (state[rule.key] ?? rule.default),
         })),
       })),
       // Unsaved changes are worth saying out loud on a page whose whole point
@@ -104,7 +108,9 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async #setAll(value: boolean): Promise<void> {
     const state = this.#state();
-    this.#pending = Object.fromEntries(Object.keys(state).map((key) => [key, value]));
+    this.#pending = Object.fromEntries(
+      Object.keys(state).map((key) => [key, isImplemented(key) ? value : false]),
+    );
     await this.render();
   }
 
