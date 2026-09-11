@@ -170,9 +170,17 @@
                 {{#if atk.skillLevel}}
                   {{#if atk.usable}}
                     <span class="rollable" data-action="roll" data-roll-type="attack"
-                          data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}">
+                          data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
+                          data-unarmed="{{#if atk.unarmed}}1{{/if}}">
                       {{> "gworld.die"}}
                     </span>
+                    {{#if ../rules.feint}}
+                      <button type="button" class="ibtn tiny" data-action="feint"
+                              data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
+                              data-tooltip="{{localize "GWORLD.Feint.Hint"}}">
+                        {{localize "GWORLD.Feint.Action"}}
+                      </button>
+                    {{/if}}
                   {{else}}
                     <span class="bad" data-tooltip="{{localize "GWORLD.Melee.Unusable"}}">&mdash;</span>
                   {{/if}}

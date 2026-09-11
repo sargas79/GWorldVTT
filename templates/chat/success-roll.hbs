@@ -20,6 +20,18 @@
 
   <div class="gc-result {{resultClass}}">{{resultLabel}}</div>
 
+  {{#if criticalHit}}
+    <div class="gc-result crit-success">{{localize "GWORLD.Critical.NoDefense"}}</div>
+  {{/if}}
+
+  {{#if criticalMiss}}
+    <div class="gc-result crit-failure">
+      {{localize "GWORLD.Critical.Fumbled" roll=criticalMiss.total}}
+      &mdash; {{criticalMiss.effect}}
+      {{#if criticalMiss.gmDecides}}<span class="gc-mod">{{localize "GWORLD.Critical.GmDecides"}}</span>{{/if}}
+    </div>
+  {{/if}}
+
   {{#if hits}}
     <div class="gc-result">
       {{localize "GWORLD.Chat.Hits" hits=hits shots=shotsFired}}

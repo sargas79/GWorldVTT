@@ -1,14 +1,16 @@
 <div class="gworld gworld-chat">
   <div class="gc-head">
     <span class="gc-label">{{label}}</span>
-    <span class="gc-target">{{localize "GWORLD.Contest.QuickContest"}}</span>
+    <span class="gc-target">{{kind}}</span>
   </div>
 
   {{#each sides as |side|}}
     <div class="gc-applied">
       <div class="gc-applied-head">
         <strong>{{side.name}}</strong>
-        <span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{side.effective}}</span>
+        <span class="gc-mod">
+          {{localize "GWORLD.Chat.Target"}} {{side.effective}}{{#if side.note}} ({{side.note}}){{/if}}
+        </span>
       </div>
       <div class="gc-dice">
         {{#each side.dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}

@@ -15,10 +15,25 @@
  */
 
 import { wornDrAt, type ArmorPiece } from "../rules/armor.js";
+import {
+  criticalBasicDamage,
+  criticalShock,
+  type CriticalEntry,
+  type CriticalTable,
+} from "../rules/criticals.js";
 import { computeInjury } from "../rules/damage.js";
 import type { HitLocation } from "../rules/hit-locations.js";
 import { applyInjury, type InjuryConsequences } from "../rules/injury.js";
+import { knockback, type KnockbackResult } from "../rules/maneuvers.js";
 import type { DamageType } from "../rules/types.js";
+
+/** A critical hit, already rolled for on one of the tables. */
+export interface CriticalHit {
+  table: CriticalTable;
+  /** The 3d rolled on that table. */
+  roll: number;
+  entry: CriticalEntry;
+}
 
 /** A blow about to land. */
 export interface IncomingDamage {
@@ -28,6 +43,13 @@ export interface IncomingDamage {
   /** Above 1 it divides the target's DR; below 1 it multiplies it. */
   armorDivisor: number;
   hitLocation: HitLocation;
+  /**
+   * The most the damage dice could have come up, for the critical results that
+   * substitute maximum damage for what was rolled.
+   */
+  maxDamage?: number;
+  /** A critical hit, whose table entry may multiply damage or halve DR. */
+  critical?: CriticalHit;
 }
 
 /** What applying a blow did. */
@@ -50,6 +72,11 @@ export interface AppliedDamage {
   current: number;
   max: number;
   consequences: InjuryConsequences;
+  /** Basic damage after a critical multiplied or maximised it. */
+  basicDamage: number;
+  critical: CriticalHit | null;
+  /** How far the blow shoves the target, and what that costs them to stay up. */
+  knockback: KnockbackResult;
 }
 
 /** The armour a target is actually wearing, as the rules engine wants it. */
@@ -78,16 +105,29 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
 
   const wornDr = wornDrAt(wornArmor(actor), damage.hitLocation, damage.type);
 
+  // A critical can double or triple the blow, or replace the roll with the
+  // most the dice could have given. All of that happens to basic damage, before
+  // DR and before the wounding modifier.
+  const critical = damage.critical?.entry.damage;
+  const basicDamage = criticalBasicDamage({
+    rolled: damage.basicDamage,
+    maximum: damage.maxDamage ?? damage.basicDamage,
+    ...(critical ? { damage: critical } : {}),
+  });
+
   // computeInjury adds the location's own natural DR itself, so it is given the
   // worn figure alone. maxHp is what caps injury to a limb at the point the
   // limb is crippled.
   const result = computeInjury({
-    basicDamage: damage.basicDamage,
+    basicDamage,
     dr: wornDr,
     type: damage.type,
     armorDivisor: damage.armorDivisor,
     hitLocation: damage.hitLocation,
     maxHp: Number(hp.max) || 0,
+    // Halving or ignoring DR is the critical's doing and belongs inside the
+    // pipeline, because the tables halve what is left after the armour divisor.
+    ...(critical ? { critical } : {}),
   });
 
   // Fatigue comes off FP, and the consequences that follow -- shock, major
@@ -96,6 +136,25 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   const previous = Number(pool.value) || 0;
   const max = Number(pool.max) || 0;
   const applied = applyInjury(result.injury, previous, max);
+
+  // Knockback is worked out from damage before DR, and a crushing blow causes
+  // it whether or not it got through (p. 378).
+  const shoved = knockback({
+    basicDamage,
+    type: damage.type,
+    penetratedDr: result.penetrating > 0,
+    targetStrength: Number(actor?.system?.attributes?.ST) || Number(hp.max) || 10,
+  });
+
+  // Two of the critical results change what follows from the injury rather than
+  // the injury itself: one doubles shock past its usual floor, and the others
+  // make a major wound of anything that penetrates, however little.
+  const consequences: InjuryConsequences = {
+    ...applied,
+    shock: criticalShock(applied.shock, critical),
+    majorWound:
+      applied.majorWound || Boolean(critical?.majorWound && result.penetrating > 0),
+  };
 
   return {
     actorName: String(actor?.name ?? ""),
@@ -111,7 +170,10 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     previous,
     current: applied.currentHp,
     max,
-    consequences: applied,
+    consequences,
+    basicDamage,
+    critical: damage.critical ?? null,
+    knockback: shoved,
   };
 }
 

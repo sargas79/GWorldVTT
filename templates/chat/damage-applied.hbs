@@ -4,12 +4,26 @@
     <span class="gc-target">{{localize "GWORLD.Chat.DamageApplied"}}</span>
   </div>
 
+  {{#if critical}}
+    <div class="gc-result crit-success">
+      {{localize "GWORLD.Critical.RolledOn" table=critical.table roll=critical.roll}}
+      &mdash; {{critical.effect}}
+      {{#if critical.gmDecides}}<span class="gc-mod">{{localize "GWORLD.Critical.GmDecides"}}</span>{{/if}}
+    </div>
+  {{/if}}
+
   {{#each results as |r|}}
     <div class="gc-applied">
       <div class="gc-applied-head">
         <strong>{{r.actorName}}</strong>
         <span class="gc-mod">{{r.location}}</span>
       </div>
+
+      {{#if r.criticalDamage}}
+        <div class="gc-mods">
+          <span class="gc-mod">{{localize "GWORLD.Critical.BasicDamage"}} {{r.criticalDamage}}</span>
+        </div>
+      {{/if}}
 
       {{#if r.stopped}}
         <div class="gc-result">
@@ -34,6 +48,15 @@
             <span class="gc-warn">{{localize "GWORLD.Chat.ConsciousnessRoll"}} {{r.unconsciousPenalty}}</span>
           {{/if}}
           {{#if r.deathCheck}}<span class="gc-warn">{{localize "GWORLD.Chat.DeathCheck"}}</span>{{/if}}
+        </div>
+      {{/if}}
+
+      {{#if r.knockback}}
+        <div class="gc-mods">
+          <span class="gc-warn">{{localize "GWORLD.Knockback.Pushed" yards=r.knockback.yards}}</span>
+          {{#if r.knockback.fallRollPenalty}}
+            <span class="gc-mod">{{localize "GWORLD.Knockback.StayUp"}} {{r.knockback.fallRollPenalty}}</span>
+          {{/if}}
         </div>
       {{/if}}
     </div>

@@ -16,6 +16,7 @@ import { applyDamageToActor, type AppliedDamage, type IncomingDamage } from "./d
 import { rollSuccess } from "./roll.js";
 import { currentTargets } from "./targets.js";
 import { blastAt } from "../rules/explosions.js";
+import { criticalEntry, criticalHitTableFor } from "../rules/criticals.js";
 import { isRuleOn } from "./optional-rules.js";
 import { arcDefense, attackArc, retreatBonus, type Arc } from "../rules/tactical.js";
 import { attackDirection, facingOf } from "./hex.js";
@@ -35,6 +36,8 @@ interface DamageFlag {
   explosive?: boolean;
   /** Dice the attack rolls, which is what sets the blast radius. */
   diceOfDamage?: number;
+  /** The most those dice could have come up, for a critical that maximises them. */
+  maxDamage?: number;
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -92,31 +95,53 @@ function addApplyControls(message: any, html: HTMLElement): void {
     distance.title = game.i18n.localize("GWORLD.Chat.Distance");
   }
 
+  // Whether the blow was a critical is known by whoever rolled the attack, not
+  // by this card: the attack was a separate roll, possibly minutes ago. So it
+  // is asked rather than assumed, and the table is rolled at the moment of
+  // application, where the hit location that decides which table to read has
+  // just been chosen.
+  let critical: HTMLInputElement | null = null;
+  let criticalLabel: HTMLLabelElement | null = null;
+  if (isRuleOn("criticalTables")) {
+    critical = document.createElement("input");
+    critical.type = "checkbox";
+    criticalLabel = document.createElement("label");
+    criticalLabel.className = "gc-retreat";
+    criticalLabel.append(
+      critical,
+      document.createTextNode(game.i18n.localize("GWORLD.Critical.CriticalHit")),
+    );
+  }
+
   const button = document.createElement("button");
   button.type = "button";
   button.className = "gc-apply-button";
   button.textContent = game.i18n.localize("GWORLD.Chat.ApplyDamage");
 
   button.addEventListener("click", () => {
-    void applyFromCard(
+    void applyFromCard({
       flag,
-      select.value as HitLocation,
-      distance ? Math.max(0, Number(distance.value) || 0) : 0,
-    );
+      hitLocation: select.value as HitLocation,
+      distanceYards: distance ? Math.max(0, Number(distance.value) || 0) : 0,
+      critical: critical?.checked ?? false,
+    });
   });
 
   row.append(select);
   if (distance) row.append(distance);
+  if (criticalLabel) row.append(criticalLabel);
   row.append(button);
   root.append(row);
 }
 
 /** Resolves the blow against every target and reports what it did. */
-async function applyFromCard(
-  flag: DamageFlag,
-  hitLocation: HitLocation,
-  distanceYards: number,
-): Promise<void> {
+async function applyFromCard(options: {
+  flag: DamageFlag;
+  hitLocation: HitLocation;
+  distanceYards: number;
+  critical: boolean;
+}): Promise<void> {
+  const { flag, hitLocation, distanceYards } = options;
   const targets = currentTargets();
   if (targets.length === 0) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.Chat.NoTarget"));
@@ -138,13 +163,27 @@ async function applyFromCard(
     return;
   }
 
+  // "Use torso armor to determine DR against explosion damage" (p. 414),
+  // whatever part of them happened to be nearest.
+  const struck: HitLocation = blast && !blast.direct ? "torso" : hitLocation;
+
+  // One roll on the table, applied to everyone the blow lands on: a critical is
+  // something the attacker did, not something each victim rolls separately.
+  const critical = options.critical ? await rollCriticalHit(struck) : null;
+
   const damage: IncomingDamage = {
     basicDamage: blast ? blast.damage : flag.basicDamage,
     type: flag.damageType,
     armorDivisor: blast ? blast.armorDivisor : flag.armorDivisor,
-    // "Use torso armor to determine DR against explosion damage" (p. 414),
-    // whatever part of them happened to be nearest.
-    hitLocation: blast && !blast.direct ? "torso" : hitLocation,
+    hitLocation: struck,
+    // The maximum belongs to the dice as rolled, so it is only the maximum for
+    // someone the blast struck directly: collateral damage has already been
+    // scaled down by distance, and pairing it with the undiminished maximum
+    // would let a critical hand a bystander the whole explosion.
+    ...(flag.maxDamage !== undefined && (!blast || blast.direct)
+      ? { maxDamage: flag.maxDamage }
+      : {}),
+    ...(critical ? { critical: critical.hit } : {}),
   };
 
   const applied: AppliedDamage[] = [];
@@ -177,6 +216,14 @@ async function applyFromCard(
   if (applied.length === 0) return;
 
   const content = await foundry.applications.handlebars.renderTemplate(APPLIED_TEMPLATE, {
+    critical: critical
+      ? {
+          roll: critical.hit.roll,
+          effect: game.i18n.localize(`GWORLD.Critical.${critical.hit.entry.effect}`),
+          gmDecides: critical.hit.entry.gmDecides === true,
+          table: game.i18n.localize(`GWORLD.Critical.Table.${critical.hit.table}`),
+        }
+      : null,
     label: blast && !blast.direct
       ? `${flag.label} - ${game.i18n.format("GWORLD.Chat.Collateral", { yards: distanceYards })}`
       : flag.label,
@@ -195,13 +242,38 @@ async function applyFromCard(
       unconsciousPenalty: result.consequences.consciousnessRollPenalty,
       status: game.i18n.localize(`GWORLD.Health.${result.consequences.status}`),
       location: game.i18n.localize(`GWORLD.HitLocation.${result.hitLocation}`),
+      // Knockback is reported even where the blow did no injury: a crushing
+      // hit that armour stopped still shoves, which is most of the point of
+      // the rule (p. 378).
+      knockback: isRuleOn("knockback") && result.knockback.yards > 0 ? result.knockback : null,
+      // A critical may have changed what the dice said, which is worth showing
+      // beside the injury rather than leaving to be inferred.
+      criticalDamage:
+        result.critical && result.basicDamage !== damage.basicDamage ? result.basicDamage : null,
     })),
   });
 
   await ChatMessage.implementation.create({
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
+    ...(critical ? { rolls: [critical.roll] } : {}),
   });
+}
+
+/**
+ * Rolls 3d on the critical hit table the location calls for.
+ *
+ * A blow to the face, skull or eye is read on the head blow table, which is a
+ * good deal nastier and rounds halved DR the other way (p. 556).
+ */
+async function rollCriticalHit(hitLocation: HitLocation): Promise<{
+  roll: any;
+  hit: NonNullable<IncomingDamage["critical"]>;
+}> {
+  const table = criticalHitTableFor(hitLocation);
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  return { roll, hit: { table, roll: roll.total, entry: criticalEntry(table, roll.total) } };
 }
 
 /** What an attack that connected recorded about who it was aimed at. */
@@ -212,6 +284,8 @@ interface DefenseFlag {
   attackerToken?: string;
   /** A penalty the attack imposes on every defense, from a Deceptive Attack. */
   defensePenalty?: number;
+  /** True for a critical hit, which no active defense may be rolled against. */
+  noDefense?: boolean;
 }
 
 function defenseFlag(message: any): DefenseFlag | null {
@@ -249,6 +323,23 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
   for (const entry of flag.defenders) {
     const defender: any = await fromUuid(entry.uuid).catch(() => null);
     if (!defender?.isOwner) continue;
+
+    // "In all cases, the target gets no active defense against the attack"
+    // (p. 556). Saying so is worth more than three buttons nobody may press.
+    if (flag.noDefense) {
+      const row = document.createElement("div");
+      row.className = "gc-apply";
+      row.dataset.gworldDefend = entry.uuid;
+      const who = document.createElement("span");
+      who.className = "gc-mod";
+      who.textContent = String(defender.name ?? entry.name);
+      const note = document.createElement("span");
+      note.className = "gc-warn";
+      note.textContent = game.i18n.localize("GWORLD.Critical.NoDefense");
+      row.append(who, note);
+      root.append(row);
+      continue;
+    }
 
     const defenses = defender.system?.derived?.defenses ?? {};
 

@@ -3,6 +3,7 @@
  * (GURPS Lite pp. 6, 19, 29).
  */
 
+import { criticalDr, type CriticalDamage } from "./criticals.js";
 import { addModifier, parseDiceAdds } from "./dice.js";
 import {
   applyCrippling,
@@ -185,6 +186,12 @@ export interface InjuryInput {
   maxHp?: number;
   /** Tight-beam burning and similar qualifiers that change targeting rules. */
   qualifiers?: AttackQualifiers;
+  /**
+   * A critical hit's effect on the target's DR. The tables halve or ignore DR
+   * "after applying any armor divisors", so it is applied here rather than by
+   * the caller adjusting the DR it passes in.
+   */
+  critical?: CriticalDamage;
 }
 
 export interface InjuryResult {
@@ -223,6 +230,7 @@ export function computeInjury({
   hitLocation,
   maxHp,
   qualifiers = {},
+  critical,
 }: InjuryInput): InjuryResult {
   const divisor = armorDivisor > 0 ? armorDivisor : 1;
 
@@ -234,7 +242,7 @@ export function computeInjury({
   // The skull's extra DR is natural armor, so the divisor applies to it too —
   // and toxic damage is exempt from it, as it is from the skull multiplier.
   const locationDr = location ? locationDrAgainst(location, type) : 0;
-  const effectiveDr = Math.floor((Math.max(0, dr) + locationDr) / divisor);
+  const effectiveDr = criticalDr(Math.floor((Math.max(0, dr) + locationDr) / divisor), critical);
   const penetrating = Math.max(0, basicDamage - effectiveDr);
   const woundingModifier = location
     ? woundingModifierAt(type, location, qualifiers)

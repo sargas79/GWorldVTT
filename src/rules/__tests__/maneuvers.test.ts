@@ -70,18 +70,32 @@ describe("All-Out Attack", () => {
   });
 });
 
-describe("Feint", () => {
-  it("penalises the loser's defenses by the margin of victory", () => {
-    expect(resolveFeint(7, 3)).toEqual({ success: true, defensePenalty: 4 });
+describe("Feint (GURPS Basic Set: Campaigns p. 365)", () => {
+  const made = (margin: number) => ({ success: true, margin });
+  const missed = (margin: number) => ({ success: false, margin });
+
+  it("takes the feinter's own margin off the defense when the foe fails", () => {
+    // "if your skill is 15 and you roll a 12, your foe defends against you
+    // at -3 next turn" -- three, not three plus however badly the foe rolled.
+    expect(resolveFeint(made(3), missed(6))).toEqual({ success: true, defensePenalty: -3 });
   });
 
-  it("achieves nothing on a tie", () => {
-    expect(resolveFeint(5, 5)).toEqual({ success: false, defensePenalty: 0 });
+  it("takes the difference when both succeed", () => {
+    // Skill 15 rolling 10 against skill 14 rolling 12: five against two.
+    expect(resolveFeint(made(5), made(2))).toEqual({ success: true, defensePenalty: -3 });
   });
 
-  it("never helps the defender when the feint is beaten", () => {
-    // A lost feint must not produce a negative penalty (i.e. a bonus).
-    expect(resolveFeint(2, 9)).toEqual({ success: false, defensePenalty: 0 });
+  it("achieves nothing when the foe succeeds by as much", () => {
+    expect(resolveFeint(made(5), made(5))).toEqual({ success: false, defensePenalty: 0 });
+    expect(resolveFeint(made(2), made(9))).toEqual({ success: false, defensePenalty: 0 });
+  });
+
+  /**
+   * "If you fail your roll, your Feint is unsuccessful." A Quick Contest would
+   * award this to the feinter, who failed by less; a Feint is not one.
+   */
+  it("achieves nothing when the feinter misses their own roll", () => {
+    expect(resolveFeint(missed(1), missed(8))).toEqual({ success: false, defensePenalty: 0 });
   });
 });
 
