@@ -23,6 +23,7 @@ export * from "./skills.js";
 export * from "./trait-effects.js";
 export * from "./traits.js";
 export * from "./visibility.js";
+export * from "./disease.js";
 export * from "./encumbrance.js";
 export * from "./extra-effort.js";
 export * from "./success.js";

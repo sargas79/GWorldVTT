@@ -90,7 +90,7 @@
       "Actions": "Actions",
       "PhysicalFeats": "Physical Feats",
       "Recovery": "Recovery",
-      "Hazards": "Poison & Drink"
+      "Hazards": "Poison, Illness & Drink"
     },
     "Column": {
       "Skill": "Skill",
@@ -354,6 +354,10 @@
         "intoxication": {
           "Name": "Drinking",
           "Hint": "An hourly roll against the drink, sober to tipsy to drunk to the floor."
+        },
+        "disease": {
+          "Name": "Illness and infection",
+          "Hint": "Catching something, and the wound that goes bad afterwards."
         }
       }
     },
@@ -1162,6 +1166,49 @@
       "NoHangover": "No hangover",
       "HangoverIn": "A hangover in {hours} hours",
       "Lasting": "lasting {hours} hours"
+    },
+    "Illness": {
+      "Action": "Illness",
+      "Hint": "A day where something is going round: one HT roll, and the disease runs in cycles like a poison",
+      "Title": "Illness",
+      "Which": "Disease",
+      "Custom": "Something else",
+      "Exposure": "Closest contact",
+      "Exposure_avoided": "Avoided all contact — +4",
+      "Exposure_enteredDwelling": "Entered a victim's dwelling — +3",
+      "Exposure_spokeCloseQuarters": "Spoke at close quarters — +2",
+      "Exposure_touchedBriefly": "Touched a victim briefly — +1",
+      "Exposure_usedBelongings": "Used their clothes or blankets — 0",
+      "Exposure_ateCookedFlesh": "Ate cooked flesh — 0",
+      "Exposure_ateRawFlesh": "Ate raw flesh — −1",
+      "Exposure_prolongedContact": "Prolonged contact — −2",
+      "Exposure_intimateContact": "Intimate contact — −3",
+      "Contact": "{value} contact",
+      "Caught": "Caught it",
+      "Resisted": "Shook it off",
+      "Incubating": "symptoms in {seconds}s",
+      "Immune": "Simply immune to it, and does not know",
+      "AlreadyImmune": "Immune to this one already",
+      "Infection": "Infection",
+      "InfectionAction": "Infection",
+      "InfectionHint": "Whether an untreated wound goes bad: HT+3, worse for what got into it",
+      "Dirt": "What got into the wound",
+      "Dirt_clean": "Ordinary clean dirt — 0",
+      "Dirt_dung": "Dung or other infected matter — −2",
+      "Dirt_specialInfection": "The locale harbours something special — −3",
+      "Antibiotic": "Treated with antibiotics",
+      "Antibiotics": "Antibiotics at TL{tl}: no infection",
+      "Clean": "The wound stays clean",
+      "WentBad": "The wound is infected",
+      "Virulence": "HT modifier (virulence)",
+      "Damage": "Damage per cycle",
+      "Interval": "Seconds between cycles",
+      "Cycles": "Cycles",
+      "Delay": "Incubation in seconds",
+      "Name": "Name",
+      "Cycle": "Illness",
+      "ShakenOff": "Over it",
+      "RanOut": "It has run its course"
     },
     "CalledShot": {
       "Label": "Aimed at",

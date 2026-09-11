@@ -35,6 +35,17 @@ import { catchBreath, rollSuffocation } from "../suffocation.js";
 import { applyDeprivation, rollExposure } from "../environment.js";
 import { activePoisons, advancePoison, clearPoison, dosePoison, treatPoison } from "../poison.js";
 import { drinkForAnHour, drinkingState, hangoverRoll, soberUpRoll } from "../intoxication.js";
+import { checkInfection, exposeToDisease } from "../disease.js";
+import {
+  CONTAGION_MODIFIERS,
+  DISEASE_EXAMPLES,
+  GENERIC_DELAY_SECONDS,
+  GENERIC_INTERVAL_SECONDS,
+  diseaseNamed,
+  type Disease,
+  type Exposure,
+  type WoundDirt,
+} from "../../rules/disease.js";
 import { POISON_EXAMPLES, poisonNamed, type Poison, type Treatment } from "../../rules/poison.js";
 import { rollDisarm } from "../disarm.js";
 import {
@@ -629,6 +640,154 @@ async function promptForDrinks(): Promise<{
 }
 
 /**
+ * Asks what is going round and how close they got (Campaigns pp. 442-443).
+ *
+ * The two illustrations the book works through are offered as starting points,
+ * because a disease is four numbers and those are two sets that are known to
+ * add up to something playable.
+ */
+async function promptForDisease(): Promise<{
+  disease: Disease;
+  exposures: Exposure[];
+  modifier: number;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Illness.${key}`);
+
+  const diseases = DISEASE_EXAMPLES.map(
+    (disease) => `<option value="${disease.name}">${disease.name}</option>`,
+  ).join("");
+  const contacts = (Object.keys(CONTAGION_MODIFIERS) as Exposure[])
+    .map((key) => `<option value="${key}">${L(`Exposure_${key}`)}</option>`)
+    .join("");
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Which")}</span>
+        <select name="disease" style="width:220px">
+          ${diseases}
+          <option value="">${L("Custom")}</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Exposure")}</span>
+        <select name="exposure" style="width:280px">
+          ${contacts}
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
+        <input type="number" name="modifier" value="0" step="1" style="width:90px">
+      </label>
+      <hr>
+      <p class="ihint">${L("Custom")}</p>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Name")}</span>
+        <input type="text" name="name" value="" style="width:200px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Virulence")}</span>
+        <input type="number" name="virulence" value="-2" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Damage")}</span>
+        <input type="number" name="damage" value="1" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Delay")}</span>
+        <input type="number" name="delay" value="${GENERIC_DELAY_SECONDS}" min="0" step="1" style="width:110px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Interval")}</span>
+        <input type="number" name="interval" value="${GENERIC_INTERVAL_SECONDS}" min="0" step="1" style="width:110px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Cycles")}</span>
+        <input type="number" name="cycles" value="6" min="1" step="1" style="width:90px">
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const field = (name: string) =>
+          form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? "";
+        const chosen = (name: string) =>
+          form?.querySelector<HTMLSelectElement>(`select[name="${name}"]`)?.value ?? "";
+
+        const exposures = [chosen("exposure") as Exposure];
+        const modifier = Number(field("modifier")) || 0;
+        const named = diseaseNamed(chosen("disease"));
+        if (named) return { disease: named, exposures, modifier };
+
+        return {
+          disease: {
+            name: field("name") || game.i18n.localize("GWORLD.Illness.Title"),
+            vector: "contact",
+            resistanceModifier: Number(field("virulence")) || 0,
+            delaySeconds: Number(field("delay")) || 0,
+            dice: 0,
+            adds: Math.max(0, Number(field("damage")) || 0),
+            intervalSeconds: Number(field("interval")) || 0,
+            cycles: Math.max(1, Number(field("cycles")) || 1),
+          } satisfies Disease,
+          exposures,
+          modifier,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/** Asks what got into the wound (Campaigns p. 444). */
+async function promptForInfection(): Promise<{
+  dirt: WoundDirt[];
+  antibiotics: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Illness.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Infection") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="dung">
+        <span>${L("Dirt_dung")}</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="special">
+        <span>${L("Dirt_specialInfection")}</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="antibiotics">
+        <span>${L("Antibiotic")}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const ticked = (name: string) =>
+          form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+
+        const dirt: WoundDirt[] = [];
+        if (ticked("dung")) dirt.push("dung");
+        if (ticked("special")) dirt.push("specialInfection");
+        if (dirt.length === 0) dirt.push("clean");
+
+        return { dirt, antibiotics: ticked("antibiotics") };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/**
  * Asks what the session was worth, and what for.
  *
  * Returns null when the dialog is dismissed, which awards nothing.
@@ -1013,6 +1172,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       drink: GWorldCharacterSheet.#onDrink,
       soberUp: GWorldCharacterSheet.#onSoberUp,
       hangover: GWorldCharacterSheet.#onHangover,
+      illness: GWorldCharacterSheet.#onIllness,
+      infection: GWorldCharacterSheet.#onInfection,
       shakeOffStun: GWorldCharacterSheet.#onShakeOffStun,
       grapple: GWorldCharacterSheet.#onGrapple,
       disarm: GWorldCharacterSheet.#onDisarm,
@@ -2228,6 +2389,34 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (modifier === null) return;
 
     await hangoverRoll({ actor: this.actor, modifier });
+    this.render();
+  }
+
+  /**
+   * A day spent where something is going round (Campaigns p. 443).
+   *
+   * One HT roll, modified by the disease's own virulence and by the closest
+   * contact they had. Catching it puts it on the same list as a poison, since
+   * from there it behaves like one.
+   */
+  static async #onIllness(this: GWorldCharacterSheet) {
+    if (!isRuleOn("disease")) return;
+
+    const asked = await promptForDisease();
+    if (!asked) return;
+
+    await exposeToDisease({ actor: this.actor, ...asked });
+    this.render();
+  }
+
+  /** Whether an untreated wound goes bad (Campaigns p. 444). */
+  static async #onInfection(this: GWorldCharacterSheet) {
+    if (!isRuleOn("disease")) return;
+
+    const asked = await promptForInfection();
+    if (!asked) return;
+
+    await checkInfection({ actor: this.actor, ...asked });
     this.render();
   }
 

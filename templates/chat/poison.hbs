@@ -19,7 +19,9 @@
   {{/if}}
 
   {{#if shakenOff}}
-    <div class="gc-result success">{{localize "GWORLD.Poison.ShakenOff"}}</div>
+    <div class="gc-result success">
+      {{#if illness}}{{localize "GWORLD.Illness.ShakenOff"}}{{else}}{{localize "GWORLD.Poison.ShakenOff"}}{{/if}}
+    </div>
   {{else}}
     {{#if hpLost}}
       <div class="gc-result crit-failure">
@@ -56,7 +58,9 @@
 
   {{#if finished}}
     {{#unless shakenOff}}
-      <div class="gc-result">{{localize "GWORLD.Poison.RanOut"}}</div>
+      <div class="gc-result">
+        {{#if illness}}{{localize "GWORLD.Illness.RanOut"}}{{else}}{{localize "GWORLD.Poison.RanOut"}}{{/if}}
+      </div>
     {{/unless}}
   {{/if}}
 </div>

@@ -191,7 +191,7 @@
     </div>
   </div>
 
-  {{#if (or rules.poison rules.intoxication)}}
+  {{#if (or rules.poison rules.intoxication rules.disease)}}
     <div class="isec">
       <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.Hazards"}}</div>
 
@@ -226,6 +226,16 @@
           <button type="button" class="ibtn" data-action="poison"
                   data-tooltip="{{localize "GWORLD.Poison.Hint"}}">
             {{localize "GWORLD.Poison.Action"}}
+          </button>
+        {{/if}}
+        {{#if rules.disease}}
+          <button type="button" class="ibtn" data-action="illness"
+                  data-tooltip="{{localize "GWORLD.Illness.Hint"}}">
+            {{localize "GWORLD.Illness.Action"}}
+          </button>
+          <button type="button" class="ibtn" data-action="infection"
+                  data-tooltip="{{localize "GWORLD.Illness.InfectionHint"}}">
+            {{localize "GWORLD.Illness.InfectionAction"}}
           </button>
         {{/if}}
         {{#if rules.intoxication}}

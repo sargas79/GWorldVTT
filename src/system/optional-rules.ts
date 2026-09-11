@@ -91,6 +91,7 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "exposure", reference: "Campaigns pp. 426-435", default: true },
     { key: "poison", reference: "Campaigns pp. 437-439", default: true },
     { key: "intoxication", reference: "Campaigns pp. 439-441", default: true },
+    { key: "disease", reference: "Campaigns pp. 442-444", default: true },
   ],
 };
 

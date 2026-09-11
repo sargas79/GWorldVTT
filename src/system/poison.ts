@@ -49,6 +49,14 @@ export interface ActivePoison {
   /** A standing bonus to resist, from an antidote or a course of treatment. */
   treatment: number;
   reference: string;
+  /**
+   * True for an illness rather than a dose of something.
+   *
+   * A caught disease runs on the same machinery -- a cyclic resistance roll and
+   * damage per failure -- so it lives in the same list, and this is what the
+   * cards read to call it an illness instead of a poison.
+   */
+  illness?: boolean;
 }
 
 /** The doses at work on an actor. */
@@ -261,7 +269,8 @@ export async function advancePoison(options: { actor: any; id: string }): Promis
   const fp = actor.system?.fp ?? { value: 0, max: 0 };
 
   await post(actor, {
-    kind: game.i18n.localize("GWORLD.Poison.Cycle"),
+    kind: game.i18n.localize(dose.illness ? "GWORLD.Illness.Cycle" : "GWORLD.Poison.Cycle"),
+    illness: dose.illness === true,
     poison: dose,
     ...(check
       ? {
