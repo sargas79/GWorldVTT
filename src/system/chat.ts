@@ -18,6 +18,7 @@ import { currentTargets } from "./targets.js";
 import { blastAt } from "../rules/explosions.js";
 import { criticalEntry, criticalHitTableFor } from "../rules/criticals.js";
 import { rollKnockdown } from "./knockdown.js";
+import { rollDeathCheck } from "./dying.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { EXTRA_EFFORT_FP, FEVERISH_DEFENSE_BONUS } from "../rules/extra-effort.js";
 import { spendFatigue } from "./extra-effort.js";
@@ -296,6 +297,14 @@ async function applyFromCard(options: {
             uuid: String(entry.actor.uuid ?? ""),
             name: String(entry.actor.name ?? ""),
             modifier: entry.result.knockdown!.modifier,
+          })),
+        // A blow that took somebody past a multiple of their HP owes a roll
+        // against death, which is the other roll this card used only to name.
+        deathCheck: knockdowns
+          .filter((entry) => entry.result.consequences.deathCheckRequired)
+          .map((entry) => ({
+            uuid: String(entry.actor.uuid ?? ""),
+            name: String(entry.actor.name ?? ""),
           })),
       },
     },
@@ -627,11 +636,54 @@ async function addKnockdownControls(message: any, html: HTMLElement): Promise<vo
   }
 }
 
+/**
+ * Adds a death check control for everyone the blow calls one for.
+ *
+ * The same shape as the knockdown control, and for the same reason: the roll
+ * belongs to the person making it, and a card that rolled it for them would
+ * take the decision away from the table.
+ */
+async function addDeathCheckControls(message: any, html: HTMLElement): Promise<void> {
+  const entries = message?.getFlag?.(SYSTEM_ID, "deathCheck") as
+    | Array<{ uuid: string; name: string }>
+    | undefined;
+  if (!Array.isArray(entries) || entries.length === 0) return;
+
+  const root = html.querySelector<HTMLElement>(".gworld-chat");
+  if (!root || root.querySelector("[data-gworld-death]")) return;
+
+  for (const entry of entries) {
+    const actor: any = await fromUuid(entry.uuid).catch(() => null);
+    if (!actor?.isOwner) continue;
+
+    const row = document.createElement("div");
+    row.className = "gc-apply";
+    row.dataset.gworldDeath = entry.uuid;
+
+    const who = document.createElement("span");
+    who.className = "gc-mod";
+    who.textContent = entry.name;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "gc-apply-button";
+    button.textContent = game.i18n.localize("GWORLD.Dying.Roll");
+    button.addEventListener("click", () => {
+      button.disabled = true;
+      void rollDeathCheck({ actor });
+    });
+
+    row.append(who, button);
+    root.append(row);
+  }
+}
+
 /** Registers the chat hooks. Called once, at init. */
 export function registerChatHooks(): void {
   Hooks.on("renderChatMessageHTML", (message: any, html: HTMLElement) => {
     addApplyControls(message, html);
     void addDefenseControls(message, html);
     void addKnockdownControls(message, html);
+    void addDeathCheckControls(message, html);
   });
 }

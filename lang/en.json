@@ -417,7 +417,9 @@
       "Dead": "Dead",
       "Grappling": "Grappling",
       "Grappled": "Grappled",
-      "Pinned": "Pinned"
+      "Pinned": "Pinned",
+      "MortallyWounded": "Mortally wounded",
+      "Suffocating": "Suffocating"
     },
     "Posture": {
       "standing": "Standing",
@@ -984,6 +986,46 @@
       "exposedLocation": "Aim at an exposed part",
       "randomLocation": "Roll the location, and risk the cover",
       "shootThrough": "Shoot through it (-2, and its DR)"
+    },
+    "Dying": {
+      "DeathCheck": "Roll against death",
+      "Roll": "Death check",
+      "HardToKill": "Hard to Kill",
+      "survived": "Still alive",
+      "mortallyWounded": "Mortally wounded — incapacitated, and dying by halves",
+      "dead": "Dead",
+      "MortalWound": "Mortal wound",
+      "MortalWoundHint": "The roll a mortally wounded character makes every half-hour",
+      "PhysicianSkill": "Caregiver's Physician skill (0 for none)",
+      "EveryMinutes": "every {minutes} minutes",
+      "lingers": "Lingers — roll again at the end of the next interval",
+      "recovered": "Pulls through — no longer mortally wounded, but still incapacitated",
+      "Crippling": "Crippling injury",
+      "CripplingHint": "How serious a crippling turned out to be, rolled at the end of combat",
+      "TreatedAt": "Treated at TL (0 for untreated)",
+      "temporary": "Temporary — it goes when they are back at full HP",
+      "lasting": "Lasting",
+      "permanent": "Permanent — the body part is gone or useless",
+      "Months": "{months} months to heal"
+    },
+    "Air": {
+      "Action": "No air",
+      "Hint": "Time without air: a point of fatigue a second, and four minutes is fatal",
+      "Title": "Suffocation",
+      "Kind": "What is happening",
+      "None": "No air at all — choked, buried, holding a breath run out",
+      "Water": "Drowning — some air, and a lot of water",
+      "Seconds": "Seconds elapsed",
+      "Drowning": "Drowning",
+      "Elapsed": "{seconds}s",
+      "Total": "{seconds}s without air",
+      "Remaining": "{seconds}s until it is fatal",
+      "NoLoss": "Kept it down this time",
+      "WillRolls": "Out of fatigue — Will every second or fall unconscious",
+      "BrainDamage": "Past two minutes — HT on recovery or lose a point of IQ",
+      "Dead": "Four minutes without air",
+      "Breathe": "Air again",
+      "BreatheHint": "Stops the clock and starts recovering fatigue"
     }
   }
 }

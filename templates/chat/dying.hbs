@@ -1,0 +1,24 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">{{kind}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>HT {{ht}}</span>
+    {{#if modifier}}
+      <span class="gc-mod">{{signed modifier}} {{modifierLabel}}</span>
+    {{/if}}
+    <span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{target}}</span>
+    {{#if detail}}<span class="gc-mod">{{detail}}</span>{{/if}}
+  </div>
+
+  <div class="gc-dice">
+    {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+    <span class="gc-total">{{roll}}</span>
+  </div>
+
+  <div class="gc-result {{#if fatal}}crit-failure{{else if bad}}failure{{else}}success{{/if}}">
+    {{outcome}}
+  </div>
+</div>
