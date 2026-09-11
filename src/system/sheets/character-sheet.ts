@@ -9,6 +9,7 @@
 
 import { CharacterBuilder } from "../apps/character-builder.js";
 import { combatStyle } from "../settings.js";
+import { slamDamage } from "../../rules/attack-options.js";
 import { facingChangeAtEndOfMove, hexMovementCost } from "../../rules/tactical.js";
 import { CompendiumPicker } from "../apps/compendium-picker.js";
 import { SYSTEM_ID } from "../constants.js";
@@ -19,7 +20,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
-import { handleDamageAction, handleRollAction } from "../roll.js";
+import { handleDamageAction, handleRollAction, promptForNumber, rollDamage } from "../roll.js";
 import type { Attribute, Posture } from "../../rules/types.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -105,6 +106,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       createItem: GWorldCharacterSheet.#onCreateItem,
       browseCompendium: GWorldCharacterSheet.#onBrowseCompendium,
       openBuilder: GWorldCharacterSheet.#onOpenBuilder,
+      slam: GWorldCharacterSheet.#onSlam,
       editItem: GWorldCharacterSheet.#onEditItem,
       deleteItem: GWorldCharacterSheet.#onDeleteItem,
       toggleEquipped: GWorldCharacterSheet.#onToggleEquipped,
@@ -515,6 +517,31 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!key) return;
     const current = foundry.utils.getProperty(this.actor, `system.conditions.${key}`);
     await this.actor.update({ [`system.conditions.${key}`]: !current });
+  }
+
+  /**
+   * Slams into someone (GURPS Basic Set: Campaigns p. 371).
+   *
+   * Anyone can slam, so it is not an item on the sheet: it is a button, and
+   * what it does depends entirely on how fast you were going. Both parties take
+   * the damage, so the card is posted rather than applied.
+   */
+  static async #onSlam(this: GWorldCharacterSheet) {
+    const hp = Number(this.actor.system?.hp?.max ?? 0);
+    const velocity = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Slam.Title"),
+      label: game.i18n.localize("GWORLD.Slam.Velocity"),
+      initial: Number(this.actor.system?.derived?.encumbrance?.move ?? 1),
+    });
+    if (velocity === null) return;
+
+    const { dice, modifier } = slamDamage(hp, velocity);
+    await rollDamage({
+      actor: this.actor,
+      label: game.i18n.format("GWORLD.Slam.Label", { yards: velocity }),
+      formula: modifier === 0 ? `${dice}d` : `${dice}d${modifier}`,
+      damageType: "cr",
+    });
   }
 
   /**

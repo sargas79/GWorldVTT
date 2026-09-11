@@ -155,6 +155,18 @@
       "Secondaries": "Secondary Characteristics",
       "Techniques": "Techniques"
     },
+    "Slam": {
+      "Action": "Slam",
+      "Title": "Slam",
+      "Velocity": "Yards moved",
+      "Label": "Slam at {yards} yards"
+    },
+    "Melee": {
+      "Title": "Melee attack",
+      "Deceptive": "Deceptive Attack",
+      "NoDeception": "Skill too low for a Deceptive Attack, which may not take you below 10.",
+      "RapidStrike": "Rapid Strike"
+    },
     "Tactical": {
       "front": "from the front",
       "side": "from the side",
@@ -403,6 +415,11 @@
       "Aimed": "Aimed",
       "Accuracy": "Accuracy",
       "SpeedRange": "speed/range",
+      "Bulk": "bulk",
+      "Situation": "Situation",
+      "Normal": "Ordinary shot",
+      "MoveAndAttack": "Move and Attack",
+      "CloseCombat": "Close combat",
       "Shots": "Shots fired",
       "RapidFire": "rapid fire"
     },
