@@ -45,6 +45,30 @@
 
 /* ── shell ─────────────────────────────────────────────────────────────── */
 
+/*
+ * A window can never be taller or wider than the screen showing it.
+ *
+ * Foundry remembers where each sheet was last put, including its size, so a
+ * sheet dragged large on one monitor opens at that size on a smaller one --
+ * with its foot below the bottom of the screen and no way to reach it. The
+ * clamp is on the application rather than on the content because it is the
+ * window that overflows; the tabs inside already scroll.
+ */
+.gworld.application {
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+}
+
+/*
+ * Every tab scrolls inside the window rather than stretching it.
+ *
+ * `flex: 1` alone is not enough in a column: a flex item's automatic minimum
+ * size is its content, so a long tab pushes the window taller instead of
+ * scrolling. It is zero here because the tab is a scroll container, and saying
+ * so explicitly is cheaper than relying on that being remembered.
+ */
+.gworld .tab.ibody { min-height: 0; }
+
 .gworld .window-content {
   padding: 0;
   background: var(--color-bg);
@@ -374,6 +398,9 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+/* The rule between what was spent and what there was to spend: one ledger
+   reads better than two, but the two halves answer different questions. */
+.gworld .lsep { border-top: 2px solid var(--color-accent-900); }
 .gworld .neg { color: var(--color-danger); }
 
 .gworld .inote {
@@ -906,19 +933,65 @@
 
 .gworld-chat .gc-foot { font-size: 10.5px; color: var(--color-neutral-700); }
 
-/* ProseMirror editors need a height to be usable, and their toolbar should
-   not inherit the sheet's uppercase heading treatment. */
+/*
+ * ProseMirror editors.
+ *
+ * Foundry lays the element out as a flex column whose editor-container takes
+ * the remaining height and whose editor-content is absolutely positioned
+ * inside it. Overriding the element to `display: block` -- which this did --
+ * breaks that chain: the container has no height to take, so the writing area
+ * collapses to whatever a min-height props it up to and the text runs out of
+ * the box. The height is set through `--min-height`, which is the variable
+ * Foundry's own rule reads, and the layout is left alone.
+ */
 .gworld prose-mirror {
-  display: block;
-  min-height: 120px;
-  padding: 10px 12px;
+  --min-height: 240px;
+  padding: 0;
 }
-.gworld prose-mirror .editor-content { min-height: 90px; }
+
+/*
+ * The pencil that turns a biography into an editor appears on hover only, in
+ * the top corner, which is not a control anybody finds. It is always visible
+ * here, and only dimmed until the pointer is near it.
+ */
+.gworld prose-mirror button.toggle:enabled {
+  display: block;
+  opacity: 0.45;
+  background: var(--color-bg);
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+  width: 26px;
+  height: 26px;
+  transition: opacity 120ms ease;
+}
+.gworld prose-mirror:hover button.toggle:enabled,
+.gworld prose-mirror button.toggle:enabled:focus-visible { opacity: 1; }
+
 .gworld prose-mirror menu { text-transform: none; letter-spacing: normal; }
+
+/* Room to write in, and room to read: the editor is the tallest thing on its
+   tab and should look like somewhere text goes. */
+.gworld .box.editor {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+}
 
 /* ── item sheet ────────────────────────────────────────────────────────── */
 
-.gworld .isheet { display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+/*
+ * The item sheet sizes itself to its content, so the clamp above can cut it
+ * off on a small screen. It scrolls instead: a sheet that is too tall to show
+ * is still a sheet you can read.
+ */
+.gworld .isheet {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  min-height: 0;
+  overflow-y: auto;
+}
 
 .gworld .ihead {
   position: relative;

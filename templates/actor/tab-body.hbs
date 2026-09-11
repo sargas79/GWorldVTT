@@ -1,0 +1,162 @@
+<section class="tab ibody{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+
+  {{#if rules.hitLocations}}
+  <div class="isec">
+    <div class="ish"><span class="num">01</span>{{localize "GWORLD.Section.HitLocations"}}</div>
+    <table class="gt">
+      <thead>
+        <tr>
+          <th>{{localize "GWORLD.Column.Location"}}</th>
+          <th class="c">{{localize "GWORLD.Column.ToHit"}}</th>
+          <th class="c">{{localize "GWORLD.Column.DR"}}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each derived.hitLocations as |loc|}}
+          <tr>
+            <td>{{localize (concat "GWORLD.HitLocation." loc.key)}}</td>
+            <td class="c wmode">{{#if loc.toHit}}{{loc.toHit}}{{else}}&mdash;{{/if}}</td>
+            <td class="c">
+              <span class="lvl">{{loc.dr}}</span>
+              {{!-- "splits" is a flag rather than a value test: a DR of 0 is a
+                    real figure and Handlebars reads it as false. --}}
+              {{#if loc.splits}}
+                {{#each loc.exceptions as |ex|}}
+                  {{!-- The types arrive as keys so they can be localized here
+                        rather than shown as the raw codes the rules use. --}}
+                  <span class="wmode">/ {{ex.dr}} {{localize "GWORLD.Armor.Versus"}}
+                    {{~#each ex.types as |t|}} {{localize (concat "GWORLD.DamageType." t)}}{{#unless @last}},{{/unless}}{{/each}}</span>
+                {{/each}}
+              {{/if}}
+            </td>
+            <td class="c wmode">{{#if loc.toHit}}{{localize "GWORLD.Hint.TargetPenalty"}}{{/if}}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    <div class="inote">
+      {{> "gworld.info"}}<span>{{localize "GWORLD.Hint.HitLocations"}}</span>
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="isec">
+    <div class="ish"><span class="num">02</span>{{localize "GWORLD.Section.Protection"}}</div>
+    <div class="iarm">
+      {{#each items.armor as |armor|}}
+        <div class="iac blueprint" data-item-id="{{armor.item.id}}">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span>
+            <strong data-action="editItem">{{armor.item.name}}</strong><br>
+            <span style="font-size: 10.5px; color: var(--color-neutral-700)">
+              {{armor.item.system.weight}} lb / {{#if armor.item.system.equipped}}{{localize "GWORLD.Item.Equipped"}}{{else}}{{localize "GWORLD.Item.Stowed"}}{{/if}}
+            </span>
+          </span>
+          <span style="text-align: right">
+            <span class="iav">DR {{armor.item.system.dr}}</span><br>
+            <span class="el">{{armor.coverage}}</span>
+          </span>
+        </div>
+      {{/each}}
+      {{#each items.shields as |shield|}}
+        <div class="iac blueprint" data-item-id="{{shield.id}}">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span>
+            <strong data-action="editItem">{{shield.name}}</strong><br>
+            <span style="font-size: 10.5px; color: var(--color-neutral-700)">
+              {{shield.system.weight}} lb / {{#if shield.system.equipped}}{{localize "GWORLD.Item.Readied"}}{{else}}{{localize "GWORLD.Item.Stowed"}}{{/if}}
+            </span>
+          </span>
+          <span style="text-align: right">
+            <span class="iav">DB {{shield.system.db}}</span><br>
+            <span class="el">{{localize "GWORLD.Item.FrontShieldSide"}}</span>
+          </span>
+        </div>
+      {{/each}}
+    </div>
+  </div>
+
+  {{#if rules.physicalActivities}}
+  <div class="isec">
+    <div class="ish"><span class="num">03</span>{{localize "GWORLD.Section.PhysicalFeats"}}</div>
+    <div class="cellgrid">
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.HighJump"}}</span>
+        <span class="cv">{{derived.feats.jumping.high}}"</span>
+        <span class="cd">{{localize "GWORLD.Feats.WithRun" value=derived.feats.jumping.highRunning}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.BroadJump"}}</span>
+        <span class="cv">{{derived.feats.jumping.broad}} ft</span>
+        <span class="cd">{{localize "GWORLD.Feats.WithRun" value=derived.feats.jumping.broadRunning}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.Lift"}}</span>
+        <span class="cv">{{derived.feats.lift.twoHanded}} lb</span>
+        <span class="cd">{{localize "GWORLD.Feats.OneHanded" value=derived.feats.lift.oneHanded}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.Shove"}}</span>
+        <span class="cv">{{derived.feats.lift.shove}} lb</span>
+        <span class="cd">{{localize "GWORLD.Feats.Running" value=derived.feats.lift.runningShove}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.CarryOnBack"}}</span>
+        <span class="cv">{{derived.feats.lift.carryOnBack}} lb</span>
+        <span class="cd">{{localize "GWORLD.Feats.Shift" value=derived.feats.lift.shiftSlightly}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.Sprint"}}</span>
+        <span class="cv">{{derived.feats.running.sprint}}</span>
+        <span class="cd">{{localize "GWORLD.Feats.Paced"}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.WaterMove"}}</span>
+        <span class="cv">{{derived.feats.swimming.move}}</span>
+        <span class="cd">{{localize "GWORLD.Feats.SwimSkill"}} {{derived.feats.swimming.skill}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.Climbing"}}</span>
+        <span class="cv">{{derived.feats.climbing.skill}}</span>
+        <span class="cd">{{localize "GWORLD.Feats.ClimbDefault"}}</span>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button type="button" class="ibtn" data-action="climb">
+        {{localize "GWORLD.Feats.Climbing"}}
+      </button>
+      <button type="button" class="ibtn" data-action="swim">
+        {{localize "GWORLD.Feats.Swimming"}}
+      </button>
+      <button type="button" class="ibtn" data-action="throwObject">
+        {{localize "GWORLD.Feats.Throw"}}
+      </button>
+    </div>
+    <p class="ihint">{{localize "GWORLD.Feats.Hint"}}</p>
+  </div>
+  {{/if}}
+
+  <div class="isec">
+    <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.Recovery"}}</div>
+    <div class="toolbar">
+      <button type="button" class="ibtn" data-action="rest"
+              data-tooltip="{{localize "GWORLD.Recovery.RestHint"}}">
+        {{localize "GWORLD.Recovery.Rest"}}
+      </button>
+      <button type="button" class="ibtn" data-action="restDay"
+              data-tooltip="{{localize "GWORLD.Recovery.DailyHint"}}">
+        {{localize "GWORLD.Recovery.Daily"}}
+      </button>
+      <button type="button" class="ibtn" data-action="firstAid"
+              data-tooltip="{{localize "GWORLD.Recovery.FirstAidHint"}}">
+        {{localize "GWORLD.Recovery.FirstAid"}} {{derived.recovery.firstAid}}
+      </button>
+      <button type="button" class="ibtn" data-action="wake"
+              data-tooltip="{{localize "GWORLD.Recovery.WakingHint"}}">
+        {{localize "GWORLD.Recovery.Waking"}}
+      </button>
+    </div>
+  </div>
+
+</section>
