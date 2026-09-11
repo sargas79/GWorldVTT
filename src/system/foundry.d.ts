@@ -231,6 +231,11 @@ declare global {
       get(namespace: string, key: string): unknown;
       set(namespace: string, key: string, value: unknown): Promise<unknown>;
       register(namespace: string, key: string, data: object): void;
+      /**
+       * Registers a button in the settings list that opens an application,
+       * for a setting too involved to edit as one field.
+       */
+      registerMenu(namespace: string, key: string, data: object): void;
     };
     /**
      * `targets` is the set of tokens this user has targeted, which is how a

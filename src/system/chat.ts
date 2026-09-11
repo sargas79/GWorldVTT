@@ -16,6 +16,7 @@ import { applyDamageToActor, type AppliedDamage, type IncomingDamage } from "./d
 import { rollSuccess } from "./roll.js";
 import { currentTargets } from "./targets.js";
 import { blastAt } from "../rules/explosions.js";
+import { isRuleOn } from "./optional-rules.js";
 import { arcDefense, attackArc, retreatBonus, type Arc } from "../rules/tactical.js";
 import { attackDirection, facingOf } from "./hex.js";
 import { tacticalOnScene } from "./settings.js";
@@ -80,7 +81,7 @@ function addApplyControls(message: any, html: HTMLElement): void {
   // torso armour is what stands between them and it. Nothing else needs the
   // field, so nothing else builds it.
   let distance: HTMLInputElement | null = null;
-  if (flag.explosive) {
+  if (flag.explosive && isRuleOn("explosions")) {
     distance = document.createElement("input");
     distance.type = "number";
     distance.className = "gc-distance";
@@ -292,14 +293,16 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     // Retreating is an option on any defense against a melee attack, and it is
     // worth more to some defenses than others, so it is a choice made here
     // rather than a modifier typed in afterwards.
+    const retreatBox = isRuleOn("retreat") ? document.createElement("input") : null;
     const retreat = document.createElement("label");
     retreat.className = "gc-retreat";
-    const retreatBox = document.createElement("input");
-    retreatBox.type = "checkbox";
-    retreat.append(retreatBox, document.createTextNode(
-      game.i18n.localize("GWORLD.Tactical.Retreat"),
-    ));
-    row.append(retreat);
+    if (retreatBox) {
+      retreatBox.type = "checkbox";
+      retreat.append(retreatBox, document.createTextNode(
+        game.i18n.localize("GWORLD.Tactical.Retreat"),
+      ));
+      row.append(retreat);
+    }
 
     for (const key of available) {
       const button = document.createElement("button");
@@ -317,7 +320,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
           attack: flag.attack,
           arcPenalty,
           deception,
-          retreating: retreatBox.checked,
+          retreating: retreatBox?.checked ?? false,
           skill: defenses[key].skillName ?? "",
           isFencing: Boolean(defenses[key].isFencing),
         });

@@ -176,6 +176,21 @@ and those carry the table: Wealth runs 10/20/30/50/75 and Appearance
 4/12/12/16/16/20, which no per-level figure reproduces. Each level keeps the
 book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
 
+## Which rules are in play
+
+GURPS is written to be played at several depths, and the GM chooses how much of
+it this table is using: **Configure Settings → GURPS rules in play** lists every
+optional rule with the page that defines it and a switch. A rule that is off
+behaves as though it had never been written — no penalty applied, no control
+shown, nothing to explain.
+
+Rules this system does not read yet are listed too, greyed out and marked, so
+the page is a map of the whole ruleset rather than only of the finished parts.
+They cannot be switched on, because switching them on would do nothing.
+
+The spine is never optional: success rolls, damage, DR and the three active
+defenses are always in play.
+
 ## What is not implemented
 
 - **A Wait does not fire itself.** The trigger is written down and the penalty

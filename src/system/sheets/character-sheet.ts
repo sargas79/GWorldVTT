@@ -9,6 +9,7 @@
 
 import { CharacterBuilder } from "../apps/character-builder.js";
 import { combatStyle, tacticalOnScene } from "../settings.js";
+import { isRuleOn, ruleState } from "../optional-rules.js";
 import {
   OPPORTUNITY_LINE_PENALTY,
   evadeModifier,
@@ -285,6 +286,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       })),
       isEvaluating: system.maneuver === "evaluate",
       isWaiting: system.maneuver === "wait",
+      // The area covered only matters if opportunity fire is being played.
+      showOpportunityFire: system.maneuver === "wait" && isRuleOn("opportunityFire"),
       // What covering that much ground will cost when the shot is finally
       // taken, shown while the area is still being chosen.
       waitPenalty: system.wait?.coveringLine
@@ -348,6 +351,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // character's Move after encumbrance, and what each hex costs depends on
       // the direction travelled and the posture held.
       tactical: tacticalPanel(system, derived),
+
+      // Which rules the table is playing. A control for a rule that is off is
+      // not disabled, it is absent: there is nothing to explain about a rule
+      // nobody is using.
+      rules: ruleState(),
 
       conditionChips: CONDITIONS.map(({ key, label }) => ({
         key,
@@ -701,6 +709,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * second and nobody decides anything between the two rolls.
    */
   static async #onEvade(this: GWorldCharacterSheet) {
+    if (!isRuleOn("evading")) return;
     const targets = currentTargets();
     if (targets.length !== 1) {
       ui.notifications?.warn(game.i18n.localize("GWORLD.Evade.OneTarget"));
@@ -748,6 +757,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * the resistance and leaves the effect to the GM.
    */
   static async #onAffliction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    if (!isRuleOn("afflictions")) return;
     const attribute = target.dataset.resist ?? "";
     if (!attribute) return;
     const modifier = Number(target.dataset.resistModifier) || 0;
@@ -792,6 +802,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * the damage, so the card is posted rather than applied.
    */
   static async #onSlam(this: GWorldCharacterSheet) {
+    if (!isRuleOn("slams")) return;
     const hp = Number(this.actor.system?.hp?.max ?? 0);
     const velocity = await promptForNumber({
       title: game.i18n.localize("GWORLD.Slam.Title"),

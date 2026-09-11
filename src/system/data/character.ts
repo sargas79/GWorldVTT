@@ -14,6 +14,7 @@ import {
 } from "../../rules/attributes.js";
 import { baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import { usableInCloseCombat } from "../../rules/tactical.js";
+import { isRuleOn } from "../optional-rules.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
@@ -570,7 +571,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           minSt: mode.minSt ?? null,
           // Inside a foe's hex only a weapon that reaches close is any use.
           usable:
-            !this.conditions.closeCombat || usableInCloseCombat(String(mode.reach ?? "C")),
+            !isRuleOn("closeCombat") ||
+            !this.conditions.closeCombat ||
+            usableInCloseCombat(String(mode.reach ?? "C")),
           unbalanced: Boolean(mode.unbalanced),
           isFencing: Boolean(mode.isFencing),
           explosive: Boolean(mode.explosive),

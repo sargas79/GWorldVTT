@@ -8,6 +8,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { isRuleOn } from "./optional-rules.js";
 import { targetedTokens } from "./targets.js";
 import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import { applyDamageFloor, computeInjury } from "../rules/damage.js";
@@ -186,8 +187,9 @@ export interface DamageRollOptions {
 export async function rollDamage(options: DamageRollOptions): Promise<number> {
   const {
     actor, label, formula, damageType, armorDivisor = 1, modifiers = [],
-    explosive = false, fragmentation = "",
+    fragmentation = "",
   } = options;
+  const explosive = options.explosive === true && isRuleOn("explosions");
 
   const parsed = parseDiceAdds(formula);
   if (!parsed) {
@@ -402,7 +404,7 @@ export async function promptForRangedAttack(options: {
 
   // How many shots to fire is decided before the attack roll, and only a
   // weapon that can fire more than one is asked (p. 373).
-  const rateOfFire = Math.max(1, Math.floor(options.rateOfFire));
+  const rateOfFire = isRuleOn("rapidFire") ? Math.max(1, Math.floor(options.rateOfFire)) : 1;
   const shotsField =
     rateOfFire > 1 ? field("shots", `${L("Shots")} (1-${rateOfFire})`, "1") : "";
 
@@ -507,7 +509,7 @@ export function rangedModifiers(
 
   // Opportunity fire: the wider the ground being covered, the worse the shot
   // (p. 390). Watching a single line is a flat -2 whatever its length.
-  const watching = weapon.watching;
+  const watching = isRuleOn("opportunityFire") ? weapon.watching : null;
   if (watching) {
     modifiers.push({
       label: L("OpportunityFire"),
@@ -594,28 +596,34 @@ export async function promptForMeleeAttack(options: {
   effectiveSkill: number;
 }): Promise<{ modifiers: RollModifier[]; defensePenalty: number } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Melee.${key}`);
+  const deceptionAllowed = isRuleOn("deceptiveAttack");
+  const rapidAllowed = isRuleOn("rapidStrike");
 
   // A fighter at skill 11 or less cannot buy any deception at all, so they are
   // not offered a field that can only be left at zero. The ceiling shown is
   // against the unmodified skill, which is all that is known before the
   // situational modifier is typed; what is actually taken is clamped again
   // afterwards, against the skill the modifier leaves.
-  const most = maxDeception(options.effectiveSkill);
+  const most = deceptionAllowed ? maxDeception(options.effectiveSkill) : 0;
   const deceptiveField = most > 0
     ? `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
          <span>${L("Deceptive")} (0-${most})</span>
          <input type="number" name="deceptive" value="0" min="0" max="${most}" step="1" style="width:90px">
        </label>`
-    : `<p style="margin:0;font-size:11px;opacity:0.8">${L("NoDeception")}</p>`;
+    : deceptionAllowed
+      ? `<p style="margin:0;font-size:11px;opacity:0.8">${L("NoDeception")}</p>`
+      : "";
 
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Title") },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
       ${deceptiveField}
-      <label style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" name="rapid">
-        <span>${L("RapidStrike")} (${RAPID_STRIKE_PENALTY})</span>
-      </label>
+      ${rapidAllowed
+        ? `<label style="display:flex;align-items:center;gap:8px">
+             <input type="checkbox" name="rapid">
+             <span>${L("RapidStrike")} (${RAPID_STRIKE_PENALTY})</span>
+           </label>`
+        : ""}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" style="width:90px">

@@ -214,6 +214,99 @@
       "right": "Right",
       "left": "Left"
     },
+    "Rules": {
+      "Title": "GURPS rules in play",
+      "MenuLabel": "Which rules are we playing?",
+      "MenuHint": "Turn individual GURPS rules on or off for this world. A rule that is off behaves as though it had never been written — no penalty, no control, nothing to explain.",
+      "Intro": "GURPS is written to be played at several depths. Everything here is optional detail; the spine — success rolls, damage, DR and the active defenses — is always in play.",
+      "Save": "Save",
+      "Saved": "Rules updated.",
+      "Unsaved": "Unsaved changes",
+      "AllOn": "All on",
+      "AllOff": "All off",
+      "Restore": "Restore defaults",
+      "NotYet": "not built yet",
+      "Group": {
+        "Combat": "Combat options",
+        "Injury": "Damage and injury",
+        "Rolls": "Rolls and contests",
+        "Activities": "Outside combat"
+      },
+      "Rule": {
+        "feint": {
+          "Name": "Feint",
+          "Hint": "Fake an attack: a Quick Contest of weapon skills whose margin comes off the foe's next defense."
+        },
+        "deceptiveAttack": {
+          "Name": "Deceptive Attack",
+          "Hint": "Trade two points of your own skill for one off the foe's defenses."
+        },
+        "rapidStrike": {
+          "Name": "Rapid Strike",
+          "Hint": "A second attack in the time of one, both at -6."
+        },
+        "retreat": {
+          "Name": "Retreating",
+          "Hint": "Step back as you defend: +3 to Dodge, +1 to most parries and blocks."
+        },
+        "rapidFire": {
+          "Name": "Rapid fire",
+          "Hint": "Fire a burst: a bonus for the shots sent, and Recoil decides how many land."
+        },
+        "opportunityFire": {
+          "Name": "Opportunity fire",
+          "Hint": "Cover ground with a ready weapon on a Wait, and pay for how much of it."
+        },
+        "closeCombat": {
+          "Name": "Close combat",
+          "Hint": "Sharing a hex: only a weapon that reaches close is any use there."
+        },
+        "slams": {
+          "Name": "Slams",
+          "Hint": "Run into someone. Damage comes off how fast you were going."
+        },
+        "evading": {
+          "Name": "Evading",
+          "Hint": "Get past someone without knocking them down, as a Quick Contest of DX."
+        },
+        "hitLocations": {
+          "Name": "Hit locations",
+          "Hint": "Aim at a part of the body, with its own to-hit penalty, DR and wounding."
+        },
+        "knockback": {
+          "Name": "Knockback",
+          "Hint": "A heavy blow throws the target back, and may knock them down."
+        },
+        "criticalTables": {
+          "Name": "Critical hit and miss tables",
+          "Hint": "A critical does something in particular rather than only being named."
+        },
+        "explosions": {
+          "Name": "Explosions",
+          "Hint": "Collateral damage falling off with distance, and fragmentation."
+        },
+        "afflictions": {
+          "Name": "Afflictions",
+          "Hint": "Attacks resisted with an attribute roll rather than doing damage."
+        },
+        "regularContests": {
+          "Name": "Regular Contests",
+          "Hint": "A drawn-out contest of repeated rolls, rather than one apiece."
+        },
+        "frightChecks": {
+          "Name": "Fright Checks",
+          "Hint": "A Will roll against horror, with the Fright Check Table for failures."
+        },
+        "extraEffort": {
+          "Name": "Extra Effort",
+          "Hint": "Spend fatigue to push a roll or a feat of strength beyond its usual limit."
+        },
+        "physicalActivities": {
+          "Name": "Physical activities",
+          "Hint": "Climbing, jumping, swimming, running, throwing distance and lifting."
+        }
+      }
+    },
     "Settings": {
       "CombatStyle": {
         "Name": "Combat system",
