@@ -21,7 +21,8 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   damage they produce.
 - **Points that add up.** Starting points and points earned since are kept
   apart, awards are logged one at a time with what they were for, and everything
-  on the sheet is counted against the two together.
+  on the sheet is counted against the two together. The header carries the
+  running total and the award control, on every tab.
 - **Spending points where you read them.** A skill's points and a levelled
   trait's levels have steppers on the sheet itself: a skill's walk the Skill Cost
   Table, a trait's move a level at a time and stop at the cap.
@@ -52,6 +53,12 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
 - **Criticals do something in particular.** A critical miss rolls on the table as
   the attack does; a critical hit rolls when the damage is applied, where the hit
   location picks between the ordinary and head blow tables.
+- **Knockdown and stunning.** A major wound, or a head or vitals hit that causes
+  shock, calls for a HT roll on the card; failing it stuns, floors and disarms,
+  and failing badly puts you out.
+- **Conditions on the token** — stunned, prone, unconscious, reeling, bleeding
+  and dead, replacing Foundry's own list. Reeling and dead follow the hit point
+  total by themselves, in both directions.
 - **Extra effort** — Mighty Blows, Flurry of Blows and Feverish Defense in
   combat, and the Will roll outside it.
 
@@ -63,6 +70,7 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
 - **Physical feats** — jumping, lifting, running, swimming, climbing and
   throwing, all derived from ST, Basic Lift and Move.
 - **Falling**, including blunt trauma through armour that stopped it.
+- **Bleeding**, a HT roll a minute until the wound closes or somebody binds it.
 - **Recovery** — rest for fatigue, a day's rest, First Aid by tech level, and
   waking up again.
 - **Compendia** of advantages, disadvantages, skills and equipment, carrying
