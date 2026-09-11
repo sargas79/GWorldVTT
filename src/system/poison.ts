@@ -233,13 +233,17 @@ export async function advancePoison(options: { actor: any; id: string }): Promis
   });
 
   const rolls: any[] = check ? [check] : [];
+  let damageDice: number[] = [];
   let hpLost = 0;
   let fpLost = 0;
 
   if (!cycle.shakenOff && dose.damage !== "none") {
     const damage = dose.dice > 0 ? new Roll(`${dose.dice}d6`) : null;
-    if (damage) await damage.evaluate();
-    if (damage) rolls.push(damage);
+    if (damage) {
+      await damage.evaluate();
+      rolls.push(damage);
+      damageDice = dieResults(damage);
+    }
 
     const rolled = (damage?.total ?? 0) + dose.adds;
     const suffered = Math.max(0, Math.round(rolled * dose.damageMultiplier));
@@ -281,6 +285,7 @@ export async function advancePoison(options: { actor: any; id: string }): Promis
         }
       : { noRoll: true }),
     shakenOff: cycle.shakenOff,
+    damageDice,
     // "Even a poison that inflicts 1 HP of injury per day can be lethal if it's
     // hard to resist and lasts for two dozen cycles", so the count is the point.
     cyclesSuffered: cycle.cyclesSuffered,

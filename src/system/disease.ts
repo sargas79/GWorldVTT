@@ -14,6 +14,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { activePoisons, POISON_FLAG, type ActivePoison } from "./poison.js";
 import {
+  INFECTION_BASE,
   antibioticsPreventInfection,
   contagionModifier,
   diseaseNamed,
@@ -29,6 +30,14 @@ const DISEASE_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/disease.hbs`;
 
 /** Diseases somebody has proved immune to, so the roll is not made twice. */
 export const IMMUNITY_FLAG = "immuneTo";
+
+/**
+ * Diseases somebody has already been rolled against.
+ *
+ * Natural immunity is found on "your first attempt to resist a disease" and
+ * nowhere else, so a later 3 or 4 is only a very good roll.
+ */
+export const EXPOSED_FLAG = "exposedTo";
 
 /** The individual d6 faces from an evaluated Roll. */
 function dieResults(roll: any): number[] {
@@ -60,6 +69,12 @@ async function post(actor: any, context: Record<string, unknown>): Promise<void>
 /** What this character has already proved immune to. */
 export function immunities(actor: any): string[] {
   const stored = actor?.getFlag?.(SYSTEM_ID, IMMUNITY_FLAG);
+  return Array.isArray(stored) ? (stored as string[]) : [];
+}
+
+/** What this character has been rolled against before. */
+function exposures(actor: any): string[] {
+  const stored = actor?.getFlag?.(SYSTEM_ID, EXPOSED_FLAG);
   return Array.isArray(stored) ? (stored as string[]) : [];
 }
 
@@ -122,9 +137,13 @@ export async function exposeToDisease(options: {
   // "If the GM rolls a 3 or 4 for your first attempt to resist a disease, you
   // are immune! He should note this fact and not tell you." Noting it is what
   // this can do; not telling them is between the GM and the chat log.
-  const immune = naturallyImmune(roll.total);
+  const seen = exposures(actor);
+  const immune = naturallyImmune(roll.total, !seen.includes(disease.name));
   if (immune) {
     await actor.setFlag(SYSTEM_ID, IMMUNITY_FLAG, [...immunities(actor), disease.name]);
+  }
+  if (!seen.includes(disease.name)) {
+    await actor.setFlag(SYSTEM_ID, EXPOSED_FLAG, [...seen, disease.name]);
   }
 
   const caught = !outcome.success;
@@ -176,7 +195,13 @@ export async function checkInfection(options: {
   await roll.evaluate();
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
 
-  const infection = diseaseNamed("Infection")!;
+  // "A typical infection requires a daily HT roll, modified as above" -- the
+  // same filth, once the +3 for having a wound treated at all is taken back
+  // out: that bonus is for whether it goes bad, not for shaking it off.
+  const infection = {
+    ...diseaseNamed("Infection")!,
+    resistanceModifier: infectionModifier(options.dirt) - INFECTION_BASE,
+  };
   const caught = !outcome.success;
   if (caught) await takeIll(actor, infection);
 

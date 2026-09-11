@@ -18,6 +18,12 @@
     </div>
   {{/if}}
 
+  {{#if damageDice}}
+    <div class="gc-dice">
+      {{#each damageDice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+    </div>
+  {{/if}}
+
   {{#if shakenOff}}
     <div class="gc-result success">
       {{#if illness}}{{localize "GWORLD.Illness.ShakenOff"}}{{else}}{{localize "GWORLD.Poison.ShakenOff"}}{{/if}}
