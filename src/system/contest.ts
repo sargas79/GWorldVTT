@@ -12,10 +12,26 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import {
+  balanceContestScores,
+  regularContestRound,
+  type ContestRound,
+} from "../rules/contests.js";
 import { resolveFeint, type FeintResult } from "../rules/maneuvers.js";
 import { quickContest, resolveSuccess } from "../rules/success.js";
 
 const CONTEST_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/contest.hbs`;
+const REGULAR_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/regular-contest.hbs`;
+
+/**
+ * How many exchanges a Regular Contest is rolled out for before it is handed
+ * back to the GM.
+ *
+ * The rule has no limit -- "eventually, one character succeeds when the other
+ * fails" -- and with balanced scores it usually takes a handful. A contest that
+ * has gone twenty exchanges is one the GM should be narrating.
+ */
+const MAX_EXCHANGES = 20;
 
 /** One competitor. */
 export interface ContestSide {
@@ -125,6 +141,80 @@ export async function rollFeint(options: {
  * Returns which side won, so a caller can act on it -- an evade that succeeds
  * lets the mover past, and one that fails does not.
  */
+/**
+ * Rolls a Regular Contest and posts every exchange (Campaigns p. 349).
+ *
+ * Both sides roll again and again; nothing is settled while both succeed or
+ * both fail. The scores are balanced first, because two contestants at 5 spend
+ * a dozen exchanges failing together and two at 17 spend a dozen succeeding
+ * together, and the book moves both to where the dice can decide.
+ *
+ * Every roll goes to chat, so the exchanges can be seen rather than summarised:
+ * an arm-wrestling match that went nine rounds is worth watching.
+ */
+export async function rollRegularContest(options: {
+  label: string;
+  first: ContestSide;
+  second: ContestSide;
+}): Promise<{ outcome: "first" | "second" | null; exchanges: number }> {
+  const modifiersOf = (side: ContestSide) => (side.modifiers ?? []).filter((m) => m.value !== 0);
+  const scoreOf = (side: ContestSide) =>
+    side.base + modifiersOf(side).reduce((sum, m) => sum + m.value, 0);
+
+  const scores = balanceContestScores(scoreOf(options.first), scoreOf(options.second));
+
+  const rolls: any[] = [];
+  const rounds: ContestRound[] = [];
+  let outcome: "first" | "second" | null = null;
+
+  for (let i = 0; i < MAX_EXCHANGES && !outcome; i += 1) {
+    const first = await rollSide({ ...options.first, base: scores.first, modifiers: [] });
+    const second = await rollSide({ ...options.second, base: scores.second, modifiers: [] });
+    rolls.push(first.roll, second.roll);
+
+    const settled = regularContestRound(first.outcome, second.outcome);
+    rounds.push({ first: first.outcome, second: second.outcome, outcome: settled });
+    outcome = settled;
+  }
+
+  const names = [
+    String(options.first.actor?.name ?? ""),
+    String(options.second.actor?.name ?? ""),
+  ];
+
+  const content = await foundry.applications.handlebars.renderTemplate(REGULAR_TEMPLATE, {
+    label: options.label,
+    kind: game.i18n.localize("GWORLD.Contest.Regular"),
+    names,
+    scores,
+    // What each side is rolling at, and what they would have rolled at, so a
+    // player can see the balancing rule happen rather than wonder at the number.
+    given: [scoreOf(options.first), scoreOf(options.second)],
+    rounds: rounds.map((round, index) => ({
+      number: index + 1,
+      first: { roll: round.first.roll, success: round.first.success },
+      second: { roll: round.second.roll, success: round.second.success },
+      settled: round.outcome !== null,
+    })),
+    result:
+      outcome === null
+        ? game.i18n.format("GWORLD.Contest.Unsettled", { exchanges: rounds.length })
+        : game.i18n.format("GWORLD.Contest.WonAfter", {
+            winner: outcome === "first" ? names[0] : names[1],
+            exchanges: rounds.length,
+          }),
+    resultClass: outcome === null ? "" : "success",
+  });
+
+  await ChatMessage.implementation.create({
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content,
+    rolls,
+  });
+
+  return { outcome, exchanges: rounds.length };
+}
+
 export async function rollQuickContest(options: {
   label: string;
   first: ContestSide;

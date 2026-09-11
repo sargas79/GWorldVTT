@@ -1,0 +1,37 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{label}}</span>
+    <span class="gc-target">{{kind}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>{{lookup names 0}} {{localize "GWORLD.Chat.Target"}} {{scores.first}}</span>
+    <span>{{lookup names 1}} {{localize "GWORLD.Chat.Target"}} {{scores.second}}</span>
+    {{#if scores.adjusted}}
+      <span class="gc-mod">
+        {{localize "GWORLD.Contest.Balanced" first=(lookup given 0) second=(lookup given 1)}}
+      </span>
+    {{/if}}
+  </div>
+
+  <table class="gt">
+    <thead>
+      <tr>
+        <th class="c">#</th>
+        <th class="c">{{lookup names 0}}</th>
+        <th class="c">{{lookup names 1}}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each rounds as |round|}}
+        <tr>
+          <td class="c">{{round.number}}</td>
+          <td class="c {{#if round.first.success}}made{{else}}missed{{/if}}">{{round.first.roll}}</td>
+          <td class="c {{#if round.second.success}}made{{else}}missed{{/if}}">{{round.second.roll}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <div class="gc-result {{resultClass}}">{{result}}</div>
+</div>

@@ -259,9 +259,35 @@
     </div>
   {{/if}}
 
+  <div class="isec">
+    <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.Actions"}}</div>
+    <div class="toolbar">
+      {{#if rules.slams}}
+        <button type="button" class="ibtn" data-action="slam">
+          {{localize "GWORLD.Slam.Action"}}
+        </button>
+      {{/if}}
+      {{#if rules.evading}}
+        <button type="button" class="ibtn" data-action="evade">
+          {{localize "GWORLD.Evade.Action"}}
+        </button>
+      {{/if}}
+      <button type="button" class="ibtn" data-action="contest"
+              data-tooltip="{{localize "GWORLD.Contest.Hint"}}">
+        {{localize "GWORLD.Contest.Action"}}
+      </button>
+      {{#if rules.frightChecks}}
+        <button type="button" class="ibtn" data-action="frightCheck"
+                data-tooltip="{{localize "GWORLD.Fright.Hint"}}">
+          {{localize "GWORLD.Fright.Action"}}
+        </button>
+      {{/if}}
+    </div>
+  </div>
+
   {{#if tactical}}
     <div class="isec">
-      <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.Movement"}}</div>
+      <div class="ish"><span class="num">06</span>{{localize "GWORLD.Section.Movement"}}</div>
       <div class="ifields">
         <div class="fld">
           <span class="fl">{{localize "GWORLD.Tactical.MovementPoints"}}</span>
@@ -278,18 +304,6 @@
           </div>
         </label>
       </div>
-      <div class="toolbar">
-        {{#if rules.slams}}
-          <button type="button" class="ibtn" data-action="slam">
-            {{localize "GWORLD.Slam.Action"}}
-          </button>
-        {{/if}}
-        {{#if rules.evading}}
-          <button type="button" class="ibtn" data-action="evade">
-            {{localize "GWORLD.Evade.Action"}}
-          </button>
-        {{/if}}
-      </div>
       {{#if tactical.immobile}}
         <p class="ihint">{{localize "GWORLD.Tactical.Immobile"}}</p>
       {{else}}
@@ -305,7 +319,7 @@
 
   {{#if rules.hitLocations}}
   <div class="isec">
-    <div class="ish"><span class="num">06</span>{{localize "GWORLD.Section.HitLocations"}}</div>
+    <div class="ish"><span class="num">07</span>{{localize "GWORLD.Section.HitLocations"}}</div>
     <table class="gt">
       <thead>
         <tr>
@@ -345,7 +359,7 @@
   {{/if}}
 
   <div class="isec">
-    <div class="ish"><span class="num">07</span>{{localize "GWORLD.Section.Protection"}}</div>
+    <div class="ish"><span class="num">08</span>{{localize "GWORLD.Section.Protection"}}</div>
     <div class="iarm">
       {{#each items.armor as |armor|}}
         <div class="iac blueprint" data-item-id="{{armor.item.id}}">

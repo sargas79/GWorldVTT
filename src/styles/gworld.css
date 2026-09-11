@@ -898,6 +898,10 @@
   background: color-mix(in srgb, var(--color-danger) 12%, transparent);
   color: var(--color-danger);
 }
+/* A Regular Contest's exchanges: who made their roll each time. */
+.gworld-chat .gt td.made { color: var(--color-accent-900); font-weight: 600; }
+.gworld-chat .gt td.missed { color: var(--color-neutral-700); }
+
 .gworld-chat .gc-foot { font-size: 10.5px; color: var(--color-neutral-700); }
 
 /* ProseMirror editors need a height to be usable, and their toolbar should

@@ -17,7 +17,8 @@ import {
   slamDamage,
 } from "../../rules/attack-options.js";
 import { attackArc } from "../../rules/tactical.js";
-import { rollFeint, rollQuickContest } from "../contest.js";
+import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
+import { rollFrightCheck } from "../fright.js";
 import { feintDefenseScore, recordFeint } from "../feint.js";
 import { attackDirection, facingOf } from "../hex.js";
 import { facingChangeAtEndOfMove, hexMovementCost } from "../../rules/tactical.js";
@@ -140,6 +141,68 @@ async function approachTo(mover: any, foeToken: any): Promise<"front" | "side" |
   return attackArc(facingOf(foeDocument, gridType), from).arc;
 }
 
+/** The attributes a contest can be rolled on, in the order the dialog lists them. */
+const CONTEST_ATTRIBUTES = ["ST", "DX", "IQ", "HT", "Will", "Per"] as const;
+
+/**
+ * Asks what is being contested, and which kind of contest it is.
+ *
+ * Returns null when the dialog is dismissed, which cancels the contest.
+ */
+async function promptForContest(): Promise<{
+  attribute: string;
+  yours: number;
+  theirs: number;
+  regular: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Contest.${key}`);
+  const options = CONTEST_ATTRIBUTES.map((key) => `<option value="${key}">${key}</option>`).join("");
+
+  // Only offered where the table is playing it; a Quick Contest is core.
+  const kindField = isRuleOn("regularContests")
+    ? `<label style="display:flex;align-items:center;gap:8px">
+         <input type="checkbox" name="regular">
+         <span>${L("RegularHint")}</span>
+       </label>`
+    : "";
+
+  const number = (name: string, label: string) => `
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${label}</span>
+        <input type="number" name="${name}" value="0" step="1" style="width:90px">
+      </label>`;
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Attribute")}</span>
+        <select name="attribute" style="width:90px">${options}</select>
+      </label>
+      ${number("yours", L("YourModifier"))}
+      ${number("theirs", L("TheirModifier"))}
+      ${kindField}
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const num = (name: string) =>
+          Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
+        return {
+          attribute: form?.querySelector<HTMLSelectElement>('select[name="attribute"]')?.value ?? "ST",
+          yours: num("yours"),
+          theirs: num("theirs"),
+          regular: form?.querySelector<HTMLInputElement>('input[name="regular"]')?.checked ?? false,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
 /**
  * The score an affliction is resisted with.
  *
@@ -188,6 +251,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       affliction: GWorldCharacterSheet.#onAffliction,
       evade: GWorldCharacterSheet.#onEvade,
       feint: GWorldCharacterSheet.#onFeint,
+      contest: GWorldCharacterSheet.#onContest,
+      frightCheck: GWorldCharacterSheet.#onFrightCheck,
       stepPoints: GWorldCharacterSheet.#onStepPoints,
       stepLevels: GWorldCharacterSheet.#onStepLevels,
       editItem: GWorldCharacterSheet.#onEditItem,
@@ -796,6 +861,68 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (result.success) {
       await recordFeint(this.actor, String(foe.uuid), result.defensePenalty);
     }
+  }
+
+  /**
+   * Pits this character against one other, at the same attribute
+   * (GURPS Basic Set: Campaigns pp. 348-349).
+   *
+   * Both kinds of contest are here because the choice between them is the whole
+   * question: a Quick Contest is settled in a second -- two people lunging for
+   * the same gun -- and a Regular Contest is arm wrestling, which goes on until
+   * somebody slips.
+   */
+  static async #onContest(this: GWorldCharacterSheet) {
+    // Targeted rather than selected, for the reason given under the Feint.
+    const targets = targetedTokens();
+    if (targets.length !== 1) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Contest.OneTarget"));
+      return;
+    }
+
+    const foe = targets[0]?.actor;
+    if (!foe) return;
+
+    const asked = await promptForContest();
+    if (!asked) return;
+
+    // The same lookup an affliction resists with: Will and Per are derived
+    // rather than stored, and the four attributes are read off the sheet.
+    const score = (actor: any) => resistanceScore(actor, asked.attribute);
+    const label = game.i18n.format("GWORLD.Contest.Label", {
+      attribute: asked.attribute,
+      first: String(this.actor.name),
+      second: String(foe.name),
+    });
+    const modifier = (value: number) => (value === 0
+      ? []
+      : [{ label: game.i18n.localize("GWORLD.Chat.Situational"), value }]);
+
+    const first = { actor: this.actor, base: score(this.actor), modifiers: modifier(asked.yours) };
+    const second = { actor: foe, base: score(foe), modifiers: modifier(asked.theirs) };
+
+    if (asked.regular) await rollRegularContest({ label, first, second });
+    else await rollQuickContest({ label, first, second });
+  }
+
+  /**
+   * Rolls a Fright Check (GURPS Basic Set: Campaigns pp. 360-361).
+   *
+   * The modifier is asked rather than worked out: what a thing is worth to a
+   * Fright Check is a judgement about that particular horrible thing -- how
+   * grisly, how close, how dark, how alone -- and the sheet knows none of it.
+   */
+  static async #onFrightCheck(this: GWorldCharacterSheet) {
+    if (!isRuleOn("frightChecks")) return;
+
+    const modifier = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Fright.Title"),
+      label: game.i18n.localize("GWORLD.Fright.Modifier"),
+      initial: 0,
+    });
+    if (modifier === null) return;
+
+    await rollFrightCheck({ actor: this.actor, modifier });
   }
 
   /**
