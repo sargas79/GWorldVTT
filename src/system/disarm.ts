@@ -12,6 +12,7 @@
 import { rollQuickContest } from "./contest.js";
 import { rollSuccess } from "./roll.js";
 import { disarmContestModifier, disarmPenalty, disarmResult } from "../rules/melee-situations.js";
+import { attributeOf } from "./attributes.js";
 
 /** The best weapon skill this character has, which is what a disarm contests. */
 function weaponSkill(actor: any): { name: string; level: number } | null {
@@ -96,7 +97,7 @@ export async function rollDisarm(options: {
       // "if you're attempting to knock away a missile weapon, your opponent
       // rolls against DX" -- and somebody with no weapon skill at all rolls it
       // too, because there is nothing else to roll.
-      base: theirs?.level ?? (Number(foe?.system?.attributes?.DX) || 10),
+      base: theirs?.level ?? attributeOf(foe, "DX"),
       note: theirs?.name ?? "DX",
       ...(bonus.defender !== 0
         ? {

@@ -15,7 +15,10 @@
                 data-tooltip="{{localize "GWORLD.Health.VeryTiredHint"}}">{{attr.rollTarget}}</em>{{/if}}</span>
           <input class="av" type="number" name="system.attributes.{{attr.key}}" value="{{attr.value}}"
                  {{#unless @root.editable}}disabled{{/unless}}>
-          <span class="ac">{{attr.cost}} pts</span>
+          <span class="ac">
+            {{attr.cost}} pts
+            {{#if attr.bonus}}&middot; {{signed attr.bonus}} {{localize "GWORLD.Attribute.FromTraits"}} = <strong>{{attr.effective}}</strong>{{/if}}
+          </span>
         </div>
       {{/each}}
     </div>

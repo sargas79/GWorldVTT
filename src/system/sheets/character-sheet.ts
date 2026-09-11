@@ -74,6 +74,7 @@ import { facingChangeAtEndOfMove, hexMovementCost } from "../../rules/tactical.j
 import { CompendiumPicker } from "../apps/compendium-picker.js";
 import { SYSTEM_ID } from "../constants.js";
 import { SKILL_ORDER } from "../settings.js";
+import { attributeOf } from "../attributes.js";
 import { asSkillOrder, groupSkills, otherOrder } from "../skill-groups.js";
 import { GEAR_GROUPS, gearGroupOf, type GearGroup } from "../gear-groups.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
@@ -1532,7 +1533,7 @@ async function promptForContest(): Promise<{
 function resistanceScore(actor: any, attribute: string): number {
   if (attribute === "Will") return Number(actor?.system?.derived?.will ?? 10);
   if (attribute === "Per") return Number(actor?.system?.derived?.per ?? 10);
-  return Number(actor?.system?.attributes?.[attribute] ?? 10);
+  return attributeOf(actor, attribute);
 }
 
 /** Normalises a defense into the shape the card template renders. */
@@ -1708,15 +1709,22 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       sheetId: this.id,
       skillOrderAlphabetical: skillOrder === "alphabetical",
 
+      // The input edits the bought figure; what traits add is shown beside it,
+      // with the figure the rest of the sheet actually uses.
       attributeCards: ATTRIBUTE_KEYS.map((key) => ({
         key,
         label: game.i18n.localize(`GWORLD.Attribute.${key}`),
         value: system.attributes[key],
+        effective: derived.attributes?.[key] ?? system.attributes[key],
+        bonus: derived.attributeBonuses?.[key] ?? 0,
         // The score is what the sheet shows and what points were paid for; the
-        // roll target is what you actually roll against, which is half of it
-        // for the ST of somebody very tired (Campaigns p. 426).
+        // roll target is what you actually roll against: the score with what
+        // traits add, or half of it for the ST of somebody very tired
+        // (Campaigns p. 426).
         rollTarget:
-          key === "ST" ? (system.derived?.fatigue?.strength ?? system.attributes[key]) : system.attributes[key],
+          key === "ST"
+            ? (system.derived?.fatigue?.strength ?? derived.attributes?.[key] ?? system.attributes[key])
+            : (derived.attributes?.[key] ?? system.attributes[key]),
         weakened: key === "ST" && system.derived?.fatigue?.veryTired === true,
         cost: (system.attributes[key] - 10) * (key === "DX" || key === "IQ" ? 20 : 10),
       })),
@@ -2273,10 +2281,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       }),
       first: {
         actor: this.actor,
-        base: Number(this.actor.system?.attributes?.DX ?? 10),
+        base: attributeOf(this.actor, "DX"),
         modifiers: [{ label: game.i18n.localize("GWORLD.Evade.Action"), value: modifier }],
       },
-      second: { actor: foe, base: Number(foe.system?.attributes?.DX ?? 10) },
+      second: { actor: foe, base: attributeOf(foe, "DX") },
     });
 
     // "If you win, you evade him and are free to move on. If you lose or tie,
@@ -2659,7 +2667,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!asked) return;
 
     const skill = grapplingSkill(this.actor);
-    const base = skill?.level ?? (Number(this.actor.system?.attributes?.DX) || 10);
+    const base = skill?.level ?? attributeOf(this.actor, "DX");
 
     // "+1 to hit when you grapple per +1 SM advantage you have over your
     // target" (Campaigns p. 402) -- which the sheet knows without being asked.

@@ -34,6 +34,7 @@ import {
   type TraitEffects,
 } from "../rules/trait-effects.js";
 import type { DamageType } from "../rules/types.js";
+import { attributeOf } from "./attributes.js";
 
 /** A critical hit, already rolled for on one of the tables. */
 export interface CriticalHit {
@@ -194,7 +195,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     basicDamage,
     type: damage.type,
     penetratedDr: result.penetrating > 0,
-    targetStrength: Number(actor?.system?.attributes?.ST) || Number(hp.max) || 10,
+    targetStrength: attributeOf(actor, "ST", Number(hp.max) || 10),
   });
 
   // Two of the critical results change what follows from the injury rather than

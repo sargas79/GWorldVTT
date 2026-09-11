@@ -50,6 +50,18 @@ export interface TraitEffects {
   indomitable: boolean;
   /** Intimidation fails against them outright (Unfazeable, Characters p. 95). */
   slaveMentality: boolean;
+  /**
+   * Levels added to the four attributes by traits that buy them as traits --
+   * Extra ST, Extra DX and so on (Characters pp. 14-17 price them; GCA
+   * carries them by these names). Read everywhere the attribute is.
+   */
+  attributes: { ST: number; DX: number; IQ: number; HT: number };
+  /** Striking ST: added to ST for thrust and swing damage only (p. 88). */
+  strikingSt: number;
+  /** Lifting ST: added to ST for Basic Lift and everything carried (p. 65). */
+  liftingSt: number;
+  /** Levels of the secondary characteristics bought as traits. */
+  secondary: { hp: number; fp: number; will: number; per: number; basicMove: number; basicSpeed: number };
 }
 
 /** What no traits at all come to, and the shape everything is added onto. */
@@ -70,6 +82,10 @@ export function noTraitEffects(): TraitEffects {
     ambidextrous: false,
     indomitable: false,
     slaveMentality: false,
+    attributes: { ST: 0, DX: 0, IQ: 0, HT: 0 },
+    strikingSt: 0,
+    liftingSt: 0,
+    secondary: { hp: 0, fp: 0, will: 0, per: 0, basicMove: 0, basicSpeed: 0 },
   };
 }
 
@@ -147,6 +163,27 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   indomitable: () => ({ indomitable: true }),
   "slave mentality": () => ({ slaveMentality: true }),
   "no legs (aquatic)": () => ({ aquatic: true }),
+
+  // The attributes bought as traits. Each level is a point of the attribute,
+  // and the sheet reads the sum wherever it reads the attribute.
+  "extra st": (levels) => ({ attributes: { ST: levels, DX: 0, IQ: 0, HT: 0 } }),
+  "extra dx": (levels) => ({ attributes: { ST: 0, DX: levels, IQ: 0, HT: 0 } }),
+  "extra iq": (levels) => ({ attributes: { ST: 0, DX: 0, IQ: levels, HT: 0 } }),
+  "extra ht": (levels) => ({ attributes: { ST: 0, DX: 0, IQ: 0, HT: levels } }),
+
+  // "Striking ST ... adds to ST only for the purpose of damage" (p. 88), and
+  // "Lifting ST ... for Basic Lift" and what follows from it (p. 65).
+  "striking st": (levels) => ({ strikingSt: levels }),
+  "lifting st": (levels) => ({ liftingSt: levels }),
+
+  // The secondary characteristics bought as traits rather than adjusted on the
+  // sheet. Basic Speed comes in quarter steps.
+  "extra hit points": (levels) => ({ secondary: { hp: levels, fp: 0, will: 0, per: 0, basicMove: 0, basicSpeed: 0 } }),
+  "extra fatigue points": (levels) => ({ secondary: { hp: 0, fp: levels, will: 0, per: 0, basicMove: 0, basicSpeed: 0 } }),
+  "extra will": (levels) => ({ secondary: { hp: 0, fp: 0, will: levels, per: 0, basicMove: 0, basicSpeed: 0 } }),
+  "extra perception": (levels) => ({ secondary: { hp: 0, fp: 0, will: 0, per: levels, basicMove: 0, basicSpeed: 0 } }),
+  "extra basic move": (levels) => ({ secondary: { hp: 0, fp: 0, will: 0, per: 0, basicMove: levels, basicSpeed: 0 } }),
+  "extra basic speed": (levels) => ({ secondary: { hp: 0, fp: 0, will: 0, per: 0, basicMove: 0, basicSpeed: levels * 0.25 } }),
 };
 
 /**
@@ -196,6 +233,14 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
     total.consciousness += applied.consciousness ?? 0;
     total.damageResistance += applied.damageResistance ?? 0;
     total.superJump += applied.superJump ?? 0;
+    total.strikingSt += applied.strikingSt ?? 0;
+    total.liftingSt += applied.liftingSt ?? 0;
+    for (const key of ["ST", "DX", "IQ", "HT"] as const) {
+      total.attributes[key] += applied.attributes?.[key] ?? 0;
+    }
+    for (const key of ["hp", "fp", "will", "per", "basicMove", "basicSpeed"] as const) {
+      total.secondary[key] += applied.secondary?.[key] ?? 0;
+    }
 
     total.unfazeable ||= applied.unfazeable ?? false;
     total.noShock ||= applied.noShock ?? false;

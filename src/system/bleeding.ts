@@ -11,6 +11,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { attributeOf } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { bleedingMinute, bleedingModifier } from "../rules/bleeding.js";
 import { resolveSuccess } from "../rules/success.js";
@@ -44,7 +45,7 @@ export async function rollBleeding(options: { actor: any }): Promise<number> {
   const hp = actor.system?.hp ?? { value: 0, max: 0 };
   const current = Number(hp.value) || 0;
   const max = Number(hp.max) || 0;
-  const ht = Number(actor.system?.attributes?.HT) || 10;
+  const ht = attributeOf(actor, "HT");
 
   // "-1 per 5 HP lost", which is what is missing from the pool rather than what
   // is left in it.

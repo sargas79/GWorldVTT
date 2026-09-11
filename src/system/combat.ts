@@ -12,12 +12,14 @@
  * breaks that tie on DX, and only then arbitrarily.
  */
 
+import { attributeOf } from "./attributes.js";
+
 /**
  * A combatant's DX, or null when there is nothing to read it from -- an actor
  * that has been deleted, or a combatant with no actor at all.
  */
 function dexterityOf(combatant: any): number | null {
-  const dx = combatant?.actor?.system?.attributes?.DX;
+  const dx = combatant?.actor ? attributeOf(combatant.actor, "DX") : undefined;
   return typeof dx === "number" && Number.isFinite(dx) ? dx : null;
 }
 

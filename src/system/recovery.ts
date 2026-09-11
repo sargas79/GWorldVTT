@@ -20,6 +20,7 @@ import {
   wakingFrom,
 } from "../rules/recovery.js";
 import { resolveSuccess } from "../rules/success.js";
+import { attributeOf } from "./attributes.js";
 
 const RECOVERY_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/recovery.hbs`;
 
@@ -124,7 +125,7 @@ export async function restForADay(options: {
   const hp = actor.system?.hp ?? { value: 0, max: 0 };
   const current = Number(hp.value) || 0;
   const max = Number(hp.max) || 0;
-  const ht = numberOr(actor.system?.attributes?.HT, 10);
+  const ht = attributeOf(actor, "HT");
 
   const roll = new Roll("3d6");
   await roll.evaluate();
@@ -244,7 +245,7 @@ export async function tryToWake(options: { actor: any }): Promise<boolean> {
 
   const hp = actor?.system?.hp ?? { value: 0, max: 0 };
   const waking = wakingFrom(Number(hp.value) || 0, Number(hp.max) || 0);
-  const ht = numberOr(actor?.system?.attributes?.HT, 10);
+  const ht = attributeOf(actor, "HT");
 
   const roll = waking.needsRoll ? new Roll("3d6") : null;
   if (roll) await roll.evaluate();

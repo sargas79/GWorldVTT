@@ -25,6 +25,7 @@ import {
   takedownModifier,
   takedownScore,
 } from "../rules/grappling.js";
+import { attributeOf } from "./attributes.js";
 
 /** Where a grapple is recorded on each side of it. */
 export const GRAPPLE_FLAG = "grapple";
@@ -143,11 +144,10 @@ export function grapplingSkill(actor: any): { name: string; level: number } | nu
 
 /** ST, DX and the best grappling skill, which is what most of these contest. */
 function scoresOf(actor: any) {
-  const attributes = actor?.system?.attributes ?? {};
   const skill = grapplingSkill(actor);
   return {
-    strength: Number(attributes.ST) || 10,
-    dexterity: Number(attributes.DX) || 10,
+    strength: attributeOf(actor, "ST"),
+    dexterity: attributeOf(actor, "DX"),
     skill,
   };
 }
@@ -338,8 +338,7 @@ export async function rollChoke(options: { actor: any }): Promise<void> {
   const aroundTorso = grapple.hitLocation !== "neck";
   const modifier = chokeModifier({ hands: grapple.hands, aroundTorso });
 
-  const foeAttributes = foe.system?.attributes ?? {};
-  const resist = Math.max(Number(foeAttributes.ST) || 10, Number(foeAttributes.HT) || 10);
+  const resist = Math.max(attributeOf(foe, "ST"), attributeOf(foe, "HT"));
 
   const result = await rollQuickContest({
     label: game.i18n.format("GWORLD.Grapple.ChokeLabel", {
@@ -383,8 +382,5 @@ export async function heldInPlace(actor: any): Promise<boolean> {
   const foe = await foeOf(grapple);
   if (!foe) return false;
 
-  return preventsMovement(
-    Number(foe.system?.attributes?.ST) || 10,
-    Number(actor.system?.attributes?.ST) || 10,
-  );
+  return preventsMovement(attributeOf(foe, "ST"), attributeOf(actor, "ST"));
 }
