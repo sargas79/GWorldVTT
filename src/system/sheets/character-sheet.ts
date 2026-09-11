@@ -17,6 +17,15 @@ import {
   slamDamage,
 } from "../../rules/attack-options.js";
 import { attackArc } from "../../rules/tactical.js";
+import {
+  CLIMBS,
+  climb,
+  climbingModifier,
+  swimmingModifier,
+  throwingDistance,
+  thrownDamage,
+} from "../../rules/physical.js";
+import { parseDiceAdds, formatDiceAdds } from "../../rules/dice.js";
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { rollFrightCheck } from "../fright.js";
@@ -183,6 +192,83 @@ async function promptForExtraEffort(): Promise<{
   return result && typeof result === "object" ? (result as never) : null;
 }
 
+/**
+ * A number from the derived block, or a fallback when there is none.
+ *
+ * `|| fallback` will not do: a Climbing of 0 is a real score for someone with
+ * DX 5, and would be silently replaced by it.
+ */
+function numberOr(value: unknown, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+/**
+ * Asks the user to pick one of a list.
+ *
+ * Returns null when the dialog is dismissed, which cancels whatever asked.
+ */
+async function promptForChoice(options: {
+  title: string;
+  label: string;
+  options: Array<{ value: string; label: string }>;
+}): Promise<string | null> {
+  const list = options.options
+    .map((option) => `<option value="${option.value}">${option.label}</option>`)
+    .join("");
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: options.title },
+    content: `<div class="gworld">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${options.label}</span>
+        <select name="choice" style="min-width:160px">${list}</select>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) =>
+        button
+          .closest<HTMLElement>(".application")
+          ?.querySelector<HTMLSelectElement>('select[name="choice"]')?.value ?? "",
+    },
+    rejectClose: false,
+  });
+
+  return typeof result === "string" && result ? result : null;
+}
+
+/** Posts what a thrown object does, since nothing is rolled for it. */
+async function postThrow(options: {
+  actor: any;
+  weight: number;
+  basicLift: number;
+  distance: number | null;
+  damage: string;
+}): Promise<void> {
+  const { actor, weight, basicLift, distance, damage } = options;
+
+  const content = await foundry.applications.handlebars.renderTemplate(
+    `systems/${SYSTEM_ID}/templates/chat/throw.hbs`,
+    {
+      name: String(actor?.name ?? ""),
+      weight,
+      basicLift,
+      // Null means it is past a two-handed lift, which is not a short throw but
+      // no throw at all.
+      tooHeavy: distance === null,
+      distance: distance === null ? 0 : Math.round(distance * 10) / 10,
+      damage,
+    },
+  );
+
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content,
+  });
+}
+
 /** The attributes a contest can be rolled on, in the order the dialog lists them. */
 const CONTEST_ATTRIBUTES = ["ST", "DX", "IQ", "HT", "Will", "Per"] as const;
 
@@ -296,6 +382,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       contest: GWorldCharacterSheet.#onContest,
       frightCheck: GWorldCharacterSheet.#onFrightCheck,
       extraEffort: GWorldCharacterSheet.#onExtraEffort,
+      climb: GWorldCharacterSheet.#onClimb,
+      swim: GWorldCharacterSheet.#onSwim,
+      throwObject: GWorldCharacterSheet.#onThrow,
       stepPoints: GWorldCharacterSheet.#onStepPoints,
       stepLevels: GWorldCharacterSheet.#onStepLevels,
       editItem: GWorldCharacterSheet.#onEditItem,
@@ -991,6 +1080,132 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       actor: this.actor,
       percentIncrease: asked.percentIncrease,
       motivated: asked.motivated,
+    });
+  }
+
+  /**
+   * Climbs something (GURPS Basic Set: Campaigns p. 349).
+   *
+   * "Make one roll to start the climb and another roll every five minutes. Any
+   * failure means you fall." What is being climbed sets the modifier and the
+   * speed, and encumbrance comes off on top of it -- "climbing while heavily
+   * laden is a dangerous matter".
+   *
+   * A ladder needs no roll at all, and is offered anyway, for its speed.
+   */
+  static async #onClimb(this: GWorldCharacterSheet) {
+    if (!isRuleOn("physicalActivities")) return;
+
+    const chosen = await promptForChoice({
+      title: game.i18n.localize("GWORLD.Feats.ClimbTitle"),
+      label: game.i18n.localize("GWORLD.Feats.ClimbKind"),
+      options: CLIMBS.map((row) => ({
+        value: row.key,
+        label: game.i18n.localize(`GWORLD.Feats.Climb.${row.key}`),
+      })),
+    });
+    if (!chosen) return;
+
+    const row = climb(chosen);
+    const speeds = row
+      ? game.i18n.format("GWORLD.Feats.ClimbSpeeds", { combat: row.combat, regular: row.regular })
+      : "";
+
+    // A ladder is not rolled for; saying so and giving the speed is the whole
+    // answer, and a card reporting a roll nobody made would be worse.
+    if (!row || row.modifier === null) {
+      ui.notifications?.info(
+        `${game.i18n.localize(`GWORLD.Feats.Climb.${chosen}`)} — ${game.i18n.localize("GWORLD.Feats.NoRoll")}. ${speeds}`,
+      );
+      return;
+    }
+
+    const feats = this.actor.system?.derived?.feats;
+    const encumbrance = Number(this.actor.system?.derived?.encumbrance?.level) || 0;
+
+    await rollSuccess({
+      actor: this.actor,
+      base: numberOr(feats?.climbing?.skill, 5),
+      label: `${game.i18n.localize("GWORLD.Feats.Climbing")} — ${game.i18n.localize(`GWORLD.Feats.Climb.${chosen}`)} (${speeds})`,
+      modifiers: [
+        {
+          label: game.i18n.localize("GWORLD.Feats.ClimbKind"),
+          value: climbingModifier(chosen, encumbrance),
+        },
+      ],
+    });
+  }
+
+  /**
+   * Swims (GURPS Basic Set: Campaigns p. 354).
+   *
+   * Rolled "any time you enter water over your head", again every five minutes,
+   * and on a failure you inhale water. The modifiers are what the sheet can
+   * see: whether they meant to be in the water, and what they are carrying.
+   */
+  static async #onSwim(this: GWorldCharacterSheet) {
+    if (!isRuleOn("physicalActivities")) return;
+
+    const intentional = await promptForChoice({
+      title: game.i18n.localize("GWORLD.Feats.SwimTitle"),
+      label: game.i18n.localize("GWORLD.Feats.SwimEntry"),
+      options: [
+        { value: "yes", label: game.i18n.localize("GWORLD.Feats.SwimIntentional") },
+        { value: "no", label: game.i18n.localize("GWORLD.Feats.SwimFell") },
+      ],
+    });
+    if (!intentional) return;
+
+    const feats = this.actor.system?.derived?.feats;
+    const encumbrance = Number(this.actor.system?.derived?.encumbrance?.level) || 0;
+    const modifier = swimmingModifier({
+      intentional: intentional === "yes",
+      encumbranceLevel: encumbrance,
+    });
+
+    await rollSuccess({
+      actor: this.actor,
+      base: numberOr(feats?.swimming?.skill, 6),
+      label: game.i18n.format("GWORLD.Feats.SwimLabel", {
+        move: numberOr(feats?.swimming?.move, 1),
+      }),
+      ...(modifier !== 0
+        ? { modifiers: [{ label: game.i18n.localize("GWORLD.Feats.SwimTitle"), value: modifier }] }
+        : {}),
+    });
+  }
+
+  /**
+   * Works out how far something can be thrown, and what it does when it lands
+   * (GURPS Basic Set: Campaigns p. 355).
+   *
+   * No roll: this is the arithmetic the book tells you to skip until it
+   * matters. Hitting with it is an ordinary attack roll afterwards.
+   */
+  static async #onThrow(this: GWorldCharacterSheet) {
+    if (!isRuleOn("physicalActivities")) return;
+
+    const weight = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Feats.ThrowTitle"),
+      label: game.i18n.localize("GWORLD.Feats.ThrowWeight"),
+      initial: 1,
+    });
+    if (weight === null) return;
+
+    const feats = this.actor.system?.derived?.feats;
+    const strength = Number(feats?.throwing?.strength) || 10;
+    const basicLift = Number(feats?.throwing?.basicLift) || 0;
+
+    const distance = throwingDistance({ strength, basicLift, weight });
+    const thrust = parseDiceAdds(String(this.actor.system?.derived?.thrust ?? ""));
+    const damage = thrust ? thrownDamage(thrust, weight, basicLift) : null;
+
+    await postThrow({
+      actor: this.actor,
+      weight,
+      basicLift,
+      distance,
+      damage: damage ? formatDiceAdds(damage) : "",
     });
   }
 

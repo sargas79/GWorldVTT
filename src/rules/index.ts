@@ -23,5 +23,6 @@ export * from "./defenses.js";
 export * from "./fright.js";
 export * from "./injury.js";
 export * from "./maneuvers.js";
+export * from "./physical.js";
 export * from "./posture.js";
 export * from "./ranged.js";
