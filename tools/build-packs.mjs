@@ -4,6 +4,13 @@
  *
  * Compendium content lives in git as plain JSON so it can be diffed and
  * reviewed; the binary packs are a build artifact, never committed.
+ *
+ * Usage: node tools/build-packs.mjs [--out <dir>]
+ *
+ * The output directory is `dist/packs` unless another is given. A running
+ * Foundry holds those files open, and rebuilding them under it fails on
+ * Windows -- so a release build can put them somewhere else rather than
+ * needing the GM to shut down first.
  */
 
 import { existsSync } from "node:fs";
@@ -15,7 +22,12 @@ import { compilePack, extractPack } from "@foundryvtt/foundryvtt-cli";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE = join(projectRoot, "packs-src");
-const OUT = join(projectRoot, "dist", "packs");
+
+const outFlag = process.argv.indexOf("--out");
+const OUT =
+  outFlag !== -1 && process.argv[outFlag + 1]
+    ? resolve(process.argv[outFlag + 1])
+    : join(projectRoot, "dist", "packs");
 
 /**
  * Every value a Foundry document needs that the source JSON should not repeat.
@@ -100,7 +112,7 @@ async function main() {
     console.log(`  ${pack}: ${documents.length} documents`);
   }
 
-  console.log(`Built ${packs.length} pack(s) into dist/packs/`);
+  console.log(`Built ${packs.length} pack(s) into ${OUT}`);
 }
 
 await main();

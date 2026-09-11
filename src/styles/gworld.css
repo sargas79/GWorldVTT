@@ -390,7 +390,24 @@
 
 /* ── tables ────────────────────────────────────────────────────────────── */
 
-.gworld table.gt { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+/*
+ * Tables state their own colours rather than inheriting them.
+ *
+ * Foundry's core stylesheet paints tables -- a dark header band and a filled
+ * body -- and a table that only sets its borders inherits all of it. That put
+ * grey text on grey rows: the to-hit column and the "to target" links were
+ * nearly unreadable against their own background.
+ */
+.gworld table.gt {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  background: transparent;
+  color: var(--color-text);
+}
+.gworld table.gt thead,
+.gworld table.gt tbody,
+.gworld table.gt tr { background: transparent; }
 .gworld table.gt th {
   font-family: var(--font-heading);
   font-size: 9px;
@@ -399,13 +416,28 @@
   font-weight: 400;
   padding: 0 6px 5px;
   text-align: left;
+  background: transparent;
   color: var(--color-neutral-700);
   border-bottom: 1px solid var(--color-divider);
 }
 .gworld table.gt td {
   padding: 6px;
+  background: transparent;
+  color: inherit;
   border-bottom: 1px solid var(--color-neutral-200);
   vertical-align: baseline;
+}
+
+/*
+ * A whisper of banding, so the eye keeps its place across a wide row without
+ * the stripe becoming a colour in its own right. Eleven hit locations is a
+ * long way to track a number across.
+ */
+.gworld table.gt tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--color-text) 3.5%, transparent);
+}
+.gworld table.gt tbody tr:hover td {
+  background: color-mix(in srgb, var(--color-accent, #1d1f20) 8%, transparent);
 }
 .gworld table.gt td.n { text-align: right; font-variant-numeric: tabular-nums; }
 .gworld table.gt td.c { text-align: center; }
