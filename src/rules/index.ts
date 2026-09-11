@@ -14,6 +14,7 @@ export * from "./character-points.js";
 export * from "./contests.js";
 export * from "./criticals.js";
 export * from "./damage.js";
+export * from "./grappling.js";
 export * from "./hit-locations.js";
 export * from "./armor.js";
 export * from "./skills.js";

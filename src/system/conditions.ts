@@ -36,6 +36,9 @@ export const CONDITIONS: readonly ConditionDefinition[] = [
   { id: "unconscious", label: "GWORLD.Condition.Unconscious", img: "icons/svg/unconscious.svg" },
   { id: "reeling", label: "GWORLD.Condition.Reeling", img: "icons/svg/downgrade.svg" },
   { id: "bleeding", label: "GWORLD.Condition.Bleeding", img: "icons/svg/blood.svg" },
+  { id: "grappling", label: "GWORLD.Condition.Grappling", img: "icons/svg/net.svg" },
+  { id: "grappled", label: "GWORLD.Condition.Grappled", img: "icons/svg/padlock.svg" },
+  { id: "pinned", label: "GWORLD.Condition.Pinned", img: "icons/svg/paralysis.svg" },
   { id: "dead", label: "GWORLD.Condition.Dead", img: "icons/svg/skull.svg" },
 ];
 

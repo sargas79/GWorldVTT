@@ -337,6 +337,10 @@
         "bleeding": {
           "Name": "Bleeding",
           "Hint": "A wound keeps costing HP each minute until it is bound. The book marks this optional for the bookkeeping."
+        },
+        "grappling": {
+          "Name": "Grappling",
+          "Hint": "Take hold of a foe, then take them down, pin them, or choke them."
         }
       }
     },
@@ -410,7 +414,10 @@
       "Unconscious": "Unconscious",
       "Reeling": "Reeling",
       "Bleeding": "Bleeding",
-      "Dead": "Dead"
+      "Dead": "Dead",
+      "Grappling": "Grappling",
+      "Grappled": "Grappled",
+      "Pinned": "Pinned"
     },
     "Posture": {
       "standing": "Standing",
@@ -927,6 +934,42 @@
       "Held": "No blood lost this minute — {minutes} of 3 quiet minutes",
       "Stopped": "The bleeding has stopped",
       "Clotted": "The bleeding stops completely"
+    },
+    "Grapple": {
+      "Action": "Grapple",
+      "Hint": "Take hold of a foe: they cannot walk away, and most of what they could do is gone",
+      "Title": "Grapple",
+      "Hands": "Hands used",
+      "Where": "Take hold of",
+      "Label": "{skill} to grapple {foe}",
+      "OneTarget": "Target exactly one foe to grapple.",
+      "NotGrappled": "Nobody is holding on to you.",
+      "NotInOne": "Not in a grapple.",
+      "MustBeHolding": "Only the one doing the holding can try that.",
+      "PinRequires": "A pin needs a foe on the ground, held by the torso.",
+      "BreakFree": "Break free",
+      "BreakFreeHint": "A Quick Contest of ST against the grip holding you",
+      "BreakFreeLabel": "{victim} tries to break free of {foe}",
+      "Grip": "grip",
+      "Hold": "hold",
+      "Advantage": "size and hands",
+      "Free": "Free — and may move one yard in any direction.",
+      "FreeAutomatically": "{foe} is unconscious and holding on to nothing.",
+      "StillHeld": "Still held — another attempt in {seconds}s.",
+      "Takedown": "Takedown",
+      "TakedownHint": "Bear a standing foe to the ground — and go down yourself if you lose",
+      "TakedownLabel": "{attacker} tries to take {foe} down",
+      "Pin": "Pin",
+      "PinHint": "A Regular Contest of ST to pin a foe already on the ground",
+      "PinLabel": "{attacker} tries to pin {foe}",
+      "Pinned": "{foe} is pinned and helpless.",
+      "Choke": "Choke",
+      "ChokeHint": "ST against the higher of their ST or HT; damage is the margin",
+      "ChokeLabel": "{attacker} chokes {foe}",
+      "Release": "Let go",
+      "StateHolding": "Holding on with {hands} — Aim, Feint, Concentrate, Wait and ranged attacks are out",
+      "StateHeld": "Held with {hands} — no Move, no Aim, no ranged attacks, and nothing longer than a dagger",
+      "StatePinned": "Pinned and helpless — no maneuver that needs physical movement"
     }
   }
 }
