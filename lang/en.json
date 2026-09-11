@@ -85,7 +85,8 @@
       "Campaign": "Campaign",
       "Techniques": "Techniques",
       "HitLocations": "Damage Resistance by Location",
-      "Maneuver": "Maneuver"
+      "Maneuver": "Maneuver",
+      "Actions": "Actions"
     },
     "Column": {
       "Skill": "Skill",
@@ -166,7 +167,20 @@
       "Wins": "{winner} wins by {margin}",
       "Tie": "A tie — nobody won",
       "Success": "success by {margin}",
-      "Failure": "failure by {margin}"
+      "Failure": "failure by {margin}",
+      "Action": "Contest",
+      "Hint": "Roll a contest of attributes against your target",
+      "Title": "Contest",
+      "Attribute": "Attribute",
+      "YourModifier": "Your modifier",
+      "TheirModifier": "Their modifier",
+      "RegularHint": "Regular Contest — roll until one side alone succeeds",
+      "Regular": "Regular Contest",
+      "Label": "{attribute}: {first} vs {second}",
+      "OneTarget": "Target exactly one opponent to contest with.",
+      "Balanced": "balanced from {first} vs {second}",
+      "WonAfter": "{winner} wins after {exchanges} exchanges",
+      "Unsettled": "Still unsettled after {exchanges} exchanges — the GM decides"
     },
     "Evade": {
       "Action": "Evade",
@@ -707,6 +721,52 @@
       "OneTarget": "Target exactly one foe to feint.",
       "Landed": "{foe} defends at {penalty} against your next attack",
       "Failed": "The feint achieves nothing"
+    },
+    "Fright": {
+      "Action": "Fright Check",
+      "Hint": "A Will roll to resist fear, capped at 13 by the Rule of 14",
+      "Title": "Fright Check",
+      "Modifier": "Fright Check modifier",
+      "RuleOf14": "capped at {ceiling} — Rule of 14",
+      "Held": "Held their nerve",
+      "Failed": "Failed by {margin}",
+      "TableTitle": "Fright Check Table",
+      "GmDecides": "the GM sets the particulars",
+      "Effect": {
+        "stunnedRecovers": "Stunned for one second, then recovers",
+        "stunnedWillUnmodified": "Stunned; roll against unmodified Will each second to snap out of it",
+        "stunnedWillModified": "Stunned; roll against modified Will each second to snap out of it",
+        "stunned1d": "Stunned for 1d seconds, then modified Will each second",
+        "stunned2d": "Stunned for 2d seconds, then modified Will each second",
+        "retching": "Retching for (25 - HT) seconds, then HT each second to recover",
+        "quirk": "Gains a new mental quirk",
+        "loseFpAndStun": "Loses 1d FP and is stunned for 1d seconds",
+        "stunAndQuirk": "Stunned for 1d seconds and gains a new quirk",
+        "faint": "Faints for 1d minutes, then HT each minute to recover",
+        "faintAndFall": "Faints as above; HT at once or take 1 HP collapsing",
+        "severeFaint": "Severe faint for 2d minutes, and 1 HP of injury",
+        "faintNearShock": "Faint bordering on shock for 4d minutes, and 1d FP",
+        "panic": "Panics for 1d minutes, then unmodified Will each minute",
+        "delusion10": "Gains a -10-point Delusion",
+        "phobia10": "Gains a -10-point Phobia or other mental disadvantage",
+        "physical15": "A major physical effect worth -15 points",
+        "worseSelfControl": "A related self-control number worsens a step, or a new -10-point disadvantage",
+        "faintAndDelusion10": "Faints for 1d minutes and gains a -10-point Delusion",
+        "faintAndPhobia10": "Faints for 1d minutes and gains a -10-point mental disadvantage",
+        "lightComa": "Light coma; HT every 30 minutes, then -2 to everything for 6 hours",
+        "coma": "Coma for 1d hours, then HT to wake, and again if it fails",
+        "catatonia": "Catatonia for 1d days, then HT to wake, and again if it fails",
+        "seizure": "Seizure for 1d minutes, costing 1d FP; HT or take 1d injury",
+        "stricken": "Stricken: falls, taking 2d of injury",
+        "totalPanic": "Total panic, out of control; Will to come out of it",
+        "delusion15": "Gains a -15-point Delusion",
+        "phobia15": "Gains a -15-point Phobia or other mental disadvantage",
+        "physical20": "A severe physical effect worth -20 points",
+        "physical30": "A severe physical effect worth -30 points",
+        "comaAndDelusion15": "Coma, and a -15-point Delusion",
+        "comaAndPhobia15": "Coma, and a -15-point mental disadvantage",
+        "comaAndPhobiaAndIq": "Coma, a -15-point mental disadvantage, and 1 IQ lost permanently"
+      }
     }
   }
 }

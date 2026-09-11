@@ -86,6 +86,15 @@ describe("reading the state", () => {
   });
 });
 
+/**
+ * Named rather than hardcoded, because a rule stops being an example of this
+ * the day it is built -- which is the point of the flag. When the catalogue is
+ * finished there is no example left, and these say so instead of failing.
+ */
+const PENDING = Object.values(OPTIONAL_RULES)
+  .flat()
+  .filter((rule) => rule.implemented === false);
+
 describe("rules that are listed but not built", () => {
   /**
    * They are shown greyed rather than hidden, so the page maps the whole
@@ -93,9 +102,11 @@ describe("rules that are listed but not built", () => {
    * flipping `implemented` is the one switch that brings a rule into use.
    */
   it("reads as off however the state is stored", () => {
-    globals.game = { settings: { get: () => ({ frightChecks: true }) } };
-    expect(isRuleOn("frightChecks")).toBe(false);
-    expect(isImplemented("frightChecks")).toBe(false);
+    for (const rule of PENDING) {
+      globals.game = { settings: { get: () => ({ [rule.key]: true }) } };
+      expect(isRuleOn(rule.key), rule.key).toBe(false);
+      expect(isImplemented(rule.key), rule.key).toBe(false);
+    }
   });
 
   it("reads an implemented rule normally", () => {
@@ -109,25 +120,25 @@ describe("rules that are listed but not built", () => {
    * to agree with it rather than reporting the raw stored state.
    */
   it("is off in the map the sheets read, whatever is stored", () => {
-    globals.game = { settings: { get: () => ({ frightChecks: true, slams: false }) } };
+    const stored: Record<string, boolean> = { slams: false };
+    for (const rule of PENDING) stored[rule.key] = true;
+
+    globals.game = { settings: { get: () => stored } };
     const active = activeRules();
-    expect(active.frightChecks).toBe(false);
+
     expect(active.slams).toBe(false);
     expect(active.explosions).toBe(true);
-    for (const key of allRuleKeys()) expect(active[key]).toBe(isRuleOn(key));
+    for (const rule of PENDING) expect(active[rule.key], rule.key).toBe(false);
+    for (const key of allRuleKeys()) expect(active[key], key).toBe(isRuleOn(key));
   });
 
   it("treats an unlisted key as implemented, matching isRuleOn", () => {
     expect(isImplemented("somethingNobodyRegistered")).toBe(true);
   });
 
-  it("still has a name and a hint for one that is not built", () => {
-    // The catalogue and the strings are checked together above; this pins that
-    // a pending rule is not exempt from either.
-    const pending = Object.values(OPTIONAL_RULES)
-      .flat()
-      .filter((rule) => rule.implemented === false);
-    expect(pending.length).toBeGreaterThan(0);
-    for (const rule of pending) expect(rule.reference).toBeTruthy();
+  it("still cites a page for one that is not built", () => {
+    // The catalogue's own checks cover every rule; this pins that a pending
+    // one is not exempt from them.
+    for (const rule of PENDING) expect(rule.reference, rule.key).toBeTruthy();
   });
 });
