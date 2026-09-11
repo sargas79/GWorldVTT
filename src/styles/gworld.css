@@ -329,6 +329,12 @@
   text-transform: uppercase;
   color: var(--color-neutral-700);
 }
+/* The halved score a very tired character actually rolls ST against. */
+.gworld .attr .al .tired {
+  margin-left: 4px;
+  font-style: normal;
+  color: var(--color-danger);
+}
 .gworld .attr .av {
   font-family: var(--font-heading);
   font-size: 44px;
@@ -537,7 +543,9 @@
 
 /* ── toolbar ───────────────────────────────────────────────────────────── */
 
-.gworld .toolbar { display: flex; gap: 10px; align-items: center; }
+/* Toolbars wrap. A row of actions grows every time a rule is implemented, and
+   a row that cannot wrap puts the last of them off the edge of the sheet. */
+.gworld .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .gworld .srch {
   flex-grow: 1;
   height: 28px;

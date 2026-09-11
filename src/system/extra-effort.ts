@@ -17,6 +17,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { applyFatigue } from "./fatigue.js";
 import { EXTRA_EFFORT_FP, extraEffortModifier, extraEffortTarget } from "../rules/extra-effort.js";
 import { resolveSuccess } from "../rules/success.js";
 
@@ -30,9 +31,10 @@ export const MIGHTY_BLOWS_FLAG = "mightyBlows";
  *
  * Returns false when they cannot pay, in which case nothing is spent and the
  * option must not be applied. Fatigue can be pushed below zero in GURPS, at the
- * price of hit points and a HT roll to do anything at all (p. 426) -- rules
- * this system does not yet run, so rather than quietly taking a character
- * somewhere it cannot then look after them, this refuses and says so.
+ * price of hit points and a HT roll to do anything at all (p. 426), and the
+ * system does keep that chart -- but extra effort is paid before you know
+ * whether it worked, so buying it with hit points is a decision worth making
+ * deliberately rather than one a button press makes for you.
  */
 export async function spendFatigue(actor: any, points: number, what: string): Promise<boolean> {
   if (points <= 0) return true;
@@ -46,7 +48,7 @@ export async function spendFatigue(actor: any, points: number, what: string): Pr
     return false;
   }
 
-  await actor.update({ "system.fp.value": current - points });
+  await applyFatigue(actor, points);
   return true;
 }
 

@@ -13,6 +13,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { syncHealthConditions } from "./conditions.js";
+import { applyFatigue } from "./fatigue.js";
 import {
   coldInterval,
   coldModifier,
@@ -62,32 +63,6 @@ async function post(actor: any, context: Record<string, unknown>): Promise<void>
     content,
     rolls: (context.rolls as any[]) ?? [],
   });
-}
-
-/** Takes fatigue off a sheet, and hit points where the rule costs those too. */
-async function spend(actor: any, fpLost: number, hpLost: number): Promise<{
-  fp: { previous: number; now: number; max: number };
-  hp: { previous: number; now: number; max: number };
-}> {
-  const fp = actor.system?.fp ?? { value: 0, max: 0 };
-  const hp = actor.system?.hp ?? { value: 0, max: 0 };
-  const fpBefore = Number(fp.value) || 0;
-  const hpBefore = Number(hp.value) || 0;
-
-  const changes: Record<string, number> = {};
-  if (fpLost > 0) changes["system.fp.value"] = fpBefore - fpLost;
-  if (hpLost > 0) changes["system.hp.value"] = hpBefore - hpLost;
-  if (Object.keys(changes).length > 0) {
-    await actor.update(changes);
-    // Fatigue does not make anybody reeling, but hit points do, and going
-    // hungry long enough is a way to reach zero without ever being hit.
-    if (hpLost > 0) await syncHealthConditions(actor);
-  }
-
-  return {
-    fp: { previous: fpBefore, now: fpBefore - fpLost, max: Number(fp.max) || 0 },
-    hp: { previous: hpBefore, now: hpBefore - hpLost, max: Number(hp.max) || 0 },
-  };
 }
 
 /**
@@ -140,7 +115,7 @@ export async function rollExposure(options: {
     heat,
   });
 
-  const pools = await spend(actor, cost.fpLost, 0);
+  const pools = await applyFatigue(actor, cost.fpLost);
 
   await post(actor, {
     heat,
@@ -154,8 +129,13 @@ export async function rollExposure(options: {
     roll: roll.total,
     success: outcome.success,
     criticalFailure: outcome.criticalFailure,
-    lost: cost.fpLost,
+    lost: pools.fpLost,
     heatStroke: cost.heatStroke,
+    // Past 0 FP the weather starts costing hit points instead (p. 426).
+    hpLost: pools.hpLost,
+    hp: pools.hp,
+    collapsing: pools.status === "collapsing" || pools.status === "unconscious",
+    unconscious: pools.status === "unconscious",
     // "You lose an extra 1 FP whenever you lose FP to exertion or dehydration"
     // -- which is not this roll, so it is reported rather than charged.
     surcharge: heat ? heatSurcharge(options.temperatureF) : 0,
@@ -163,7 +143,7 @@ export async function rollExposure(options: {
     rolls: stroke ? [roll, stroke] : [roll],
   });
 
-  return cost.fpLost;
+  return pools.fpLost;
 }
 
 /**
@@ -186,7 +166,14 @@ export async function applyDeprivation(options: {
   const thirst = dehydrationForDay({ climate, quartsDrunk: options.quartsDrunk });
   const fpLost = hunger + thirst.fpLost;
 
-  const pools = await spend(actor, fpLost, thirst.hpLost);
+  const pools = await applyFatigue(actor, fpLost);
+
+  // Drinking under a quart a day costs a hit point of its own, on top of
+  // anything the fatigue chart charged for going below zero.
+  if (thirst.hpLost > 0) {
+    await actor.update({ "system.hp.value": pools.hp.now - thirst.hpLost });
+    await syncHealthConditions(actor);
+  }
 
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Weather.Deprivation"),
@@ -197,12 +184,14 @@ export async function applyDeprivation(options: {
     }),
     hunger,
     thirst: thirst.fpLost,
-    lost: fpLost,
-    hpLost: thirst.hpLost,
+    lost: pools.fpLost,
+    hpLost: pools.hpLost + thirst.hpLost,
     parched: thirst.hpLost > 0,
     fp: pools.fp,
-    hp: pools.hp,
+    hp: { ...pools.hp, now: pools.hp.now - thirst.hpLost },
+    collapsing: pools.status === "collapsing" || pools.status === "unconscious",
+    unconscious: pools.status === "unconscious",
   });
 
-  return fpLost;
+  return pools.fpLost;
 }

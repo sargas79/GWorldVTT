@@ -885,6 +885,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         key,
         label: game.i18n.localize(`GWORLD.Attribute.${key}`),
         value: system.attributes[key],
+        // The score is what the sheet shows and what points were paid for; the
+        // roll target is what you actually roll against, which is half of it
+        // for the ST of somebody very tired (Campaigns p. 426).
+        rollTarget:
+          key === "ST" ? (system.derived?.fatigue?.strength ?? system.attributes[key]) : system.attributes[key],
+        weakened: key === "ST" && system.derived?.fatigue?.veryTired === true,
         cost: (system.attributes[key] - 10) * (key === "DX" || key === "IQ" ? 20 : 10),
       })),
 

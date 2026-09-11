@@ -30,6 +30,7 @@ export * from "./subduing.js";
 export * from "./suffocation.js";
 export * from "./defenses.js";
 export * from "./falling.js";
+export * from "./fatigue.js";
 export * from "./fright.js";
 export * from "./injury.js";
 export * from "./knockdown.js";

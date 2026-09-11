@@ -577,7 +577,11 @@
       "reeling": "Reeling",
       "collapsing": "Collapsing",
       "dead": "Dead",
-      "destroyed": "Destroyed"
+      "destroyed": "Destroyed",
+      "VeryTired": "Very tired",
+      "VeryTiredHint": "Below a third of your fatigue: Move, Dodge and ST are halved",
+      "Collapsing": "On the verge of collapse: a Will roll to do anything but talk or rest",
+      "Unconscious": "Out of fatigue entirely"
     },
     "Roll": {
       "CriticalSuccess": "Critical Success",
@@ -1065,7 +1069,8 @@
       "Rations": "{meals} meals missed, {quarts} of {needed} quarts drunk",
       "Hunger": "{fp} FP to hunger",
       "Thirst": "{fp} FP to thirst",
-      "Parched": "Under a quart all day"
+      "Parched": "Under a quart all day",
+      "PastEmpty": "Past empty — fatigue coming out of hit points"
     },
     "CalledShot": {
       "Label": "Aimed at",

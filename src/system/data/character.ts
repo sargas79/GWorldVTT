@@ -33,6 +33,7 @@ import {
 import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
 import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js";
+import { fatigueStatus, isVeryTired } from "../../rules/fatigue.js";
 import {
   effectiveSkillLevel,
   namedDefaultLevel,
@@ -650,6 +651,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     }
     const encumbrance = encumbranceState(carriedWeight, secondary.basicLift, secondary.basicMove);
     const reeling = isReeling(this.hp.value, this.hp.max);
+    // Fatigue has a chart of its own, with the same two halvings on it: someone
+    // who has not eaten in three days moves and dodges like someone bleeding.
+    const veryTired = isVeryTired(this.fp.value, this.fp.max);
 
     // ── attacks ─────────────────────────────────────────────────────────
     const melee: DerivedAttack[] = [];
@@ -807,6 +811,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ...contextFor("dodge"),
       encumbrance: encumbrance.level as EncumbranceLevel,
       reeling,
+      veryTired,
     });
 
     // The best parry available across every equipped melee mode.
@@ -917,7 +922,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       basicLift: secondary.basicLift,
       basicSpeed: secondary.basicSpeed,
       basicMove: secondary.basicMove,
-      move: reeling ? halveForReeling(encumbrance.move) : encumbrance.move,
+      move: [reeling, veryTired].reduce(
+        (move, halve) => (halve ? halveForReeling(move) : move),
+        encumbrance.move,
+      ),
       thrust: formatDiceAdds(thrustDamage(attrs.ST)),
       swing: formatDiceAdds(swingDamage(attrs.ST)),
       dr,
@@ -955,6 +963,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       traitEffects: traits,
       status: healthStatus(this.hp.value, this.hp.max),
       reeling,
+      fatigue: {
+        status: fatigueStatus(this.fp.value, this.fp.max),
+        veryTired,
+        // "Halve your Move, Dodge, and ST (round up). This does not affect
+        // ST-based quantities, such as HP and damage" -- so this is the score
+        // ST rolls are made against, and not the one Basic Lift comes from.
+        strength: veryTired ? halveForReeling(attrs.ST ?? 10) : (attrs.ST ?? 10),
+      },
       points: {
         attributes: attributePoints,
         secondaries: secondaryPoints,

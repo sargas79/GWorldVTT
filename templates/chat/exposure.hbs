@@ -23,12 +23,14 @@
       <span class="gc-mod">{{fp.previous}} &rarr; {{fp.now}} / {{fp.max}}</span>
     </div>
   {{else}}
-    <div class="gc-result success">{{localize "GWORLD.Weather.Bore"}}</div>
+    {{#unless hpLost}}
+      <div class="gc-result success">{{localize "GWORLD.Weather.Bore"}}</div>
+    {{/unless}}
   {{/if}}
 
   {{#if hpLost}}
     <div class="gc-result crit-failure">
-      {{localize "GWORLD.Weather.Parched"}} &mdash;
+      {{#if parched}}{{localize "GWORLD.Weather.Parched"}}{{else}}{{localize "GWORLD.Weather.PastEmpty"}}{{/if}} &mdash;
       <strong>-{{hpLost}}</strong> HP
       <span class="gc-mod">{{hp.previous}} &rarr; {{hp.now}} / {{hp.max}}</span>
     </div>
@@ -38,5 +40,10 @@
     {{#if hunger}}<span class="gc-mod">{{localize "GWORLD.Weather.Hunger" fp=hunger}}</span>{{/if}}
     {{#if thirst}}<span class="gc-mod">{{localize "GWORLD.Weather.Thirst" fp=thirst}}</span>{{/if}}
     {{#if surcharge}}<span class="gc-warn">{{localize "GWORLD.Weather.Surcharge" fp=surcharge}}</span>{{/if}}
+    {{#if unconscious}}
+      <span class="gc-warn">{{localize "GWORLD.Health.Unconscious"}}</span>
+    {{else if collapsing}}
+      <span class="gc-warn">{{localize "GWORLD.Health.Collapsing"}}</span>
+    {{/if}}
   </div>
 </div>
