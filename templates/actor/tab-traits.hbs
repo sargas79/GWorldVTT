@@ -14,7 +14,21 @@
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <span class="tn">
             <span data-action="editItem">{{trait.name}}</span>
-            {{#if trait.system.levels}}<span class="tag">{{trait.system.levels}} {{localize "GWORLD.Trait.Levels"}}</span>{{/if}}
+            {{#if trait.levelled}}
+              {{#if @root.editable}}
+                <label class="tag taglevels">
+                  <input type="number" min="0" step="1" value="{{trait.system.levels}}"
+                         data-item-field="system.levels"
+                         aria-label="{{localize "GWORLD.Trait.Levels"}}" />
+                  <span>{{#if trait.levelName}}{{trait.levelName}}{{else}}{{localize "GWORLD.Trait.Levels"}}{{/if}}</span>
+                </label>
+              {{else}}
+                <span class="tag">
+                  {{trait.system.levels}}
+                  {{#if trait.levelName}}{{trait.levelName}}{{else}}{{localize "GWORLD.Trait.Levels"}}{{/if}}
+                </span>
+              {{/if}}
+            {{/if}}
             {{#if trait.system.reactionModifier}}
               <span class="tag tag-accent">{{signed trait.system.reactionModifier}} {{localize "GWORLD.Trait.Reaction"}}</span>
             {{/if}}

@@ -92,6 +92,25 @@ function tacticalPanel(system: any, derived: any) {
 }
 
 /**
+ * A trait, with what the sheet needs to show its levels.
+ *
+ * Levelled means priced per level or from a table -- Acute Hearing at 2 a
+ * level, Wealth at 10/20/30/50/75. A flat advantage has no levels to buy, and
+ * offering a box for them would only invite typing into one that does nothing.
+ */
+function withLevels(trait: any) {
+  const system = trait.system ?? {};
+  const table: number[] = system.costTable ?? [];
+  return {
+    id: trait.id,
+    name: trait.name,
+    system,
+    levelled: Boolean(system.pointsPerLevel) || table.length > 0,
+    levelName: system.levelName ?? null,
+  };
+}
+
+/**
  * Which way the mover is coming at the foe, for the evade modifiers.
  *
  * Only a hex grid can say: approaching from a side or from behind is a fact
@@ -272,6 +291,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
       pointsWarning: this.#pointsWarning(derived),
 
+      // A trait is levelled if it is priced per level or from a table. Only
+      // those get a levels field: a flat 15-point advantage has nothing to
+      // buy, and a box that can only read zero invites being typed into.
       traitGroups: [
         {
           num: "01",
@@ -280,7 +302,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           category: "advantage",
           total: derived.points.advantages,
           negative: false,
-          traits: items.advantages,
+          traits: items.advantages.map(withLevels),
         },
         {
           num: "02",
@@ -289,7 +311,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           category: "disadvantage",
           total: derived.points.disadvantages,
           negative: true,
-          traits: items.disadvantages,
+          traits: items.disadvantages.map(withLevels),
         },
         {
           num: "03",
@@ -298,7 +320,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           category: "quirk",
           total: derived.points.quirks,
           negative: true,
-          traits: items.quirks,
+          traits: items.quirks.map(withLevels),
         },
       ],
       disadvantageOverLimit: derived.points.disadvantageTotal > derived.points.disadvantageLimit,
@@ -340,6 +362,29 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    */
   override async _onRender(context: object, options: object): Promise<void> {
     await super._onRender(context, options);
+
+    // Points and levels are edited in place. They are the numbers a character
+    // is actually built out of, and having to open each item's own sheet to
+    // change one made spending points a chore rather than the point.
+    //
+    // Registered before the skill filter, which returns early on tabs that do
+    // not have one.
+    for (const input of this.element.querySelectorAll<HTMLInputElement>("input[data-item-field]")) {
+      input.addEventListener("change", () => {
+        const item = this.#itemFrom(input);
+        const field = input.dataset.itemField;
+        if (!item || !field) return;
+
+        const value = Math.round(Number(input.value));
+        if (!Number.isFinite(value)) {
+          // A field cleared or typed into nonsense is put back rather than
+          // written, so a stray keystroke cannot silently zero a skill.
+          void this.render();
+          return;
+        }
+        void item.update({ [field]: Math.max(0, value) });
+      });
+    }
 
     const filter = this.element.querySelector<HTMLInputElement>(".gworld-skill-filter");
     if (!filter) return;

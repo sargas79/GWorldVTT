@@ -19,6 +19,12 @@ defenses, encumbrance, hit locations with the DR protecting each, and conditions
 
 **NPC sheet** — one pane, no tabs, showing what a GM needs mid-fight.
 
+**Spending points** — a skill's points and a levelled trait's levels are edited
+where they are read: in the table on the sheet, and beside each entry in the
+guided build. Both show what the spending bought, so a skill says the level its
+points reach rather than repeating the points back. A trait with a flat cost
+gets no levels field, since there is nothing to buy.
+
 **Building a character** — two ways in, and they edit the same sheet. Each of
 the Skills, Traits and Gear tabs has a Browse button that opens a searchable
 list of everything in the compendia, filtered to that tab, with every row

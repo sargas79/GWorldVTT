@@ -54,6 +54,14 @@
         {{#each items as |item|}}
           <li class="gb-row">
             <span class="gb-name">{{item.name}}</span>
+            {{#if item.field}}
+              <label class="gb-spend">
+                <input type="number" min="0" step="1" value="{{item.value}}"
+                       data-item-id="{{item.id}}" data-item-field="{{item.field}}"
+                       aria-label="{{item.unit}}" />
+                <span>{{item.unit}}</span>
+              </label>
+            {{/if}}
             <span class="gb-detail">{{item.detail}}</span>
             <button type="button" class="gb-remove" data-action="deleteItem" data-item-id="{{item.id}}"
                     aria-label="{{localize "GWORLD.Action.Delete"}}">

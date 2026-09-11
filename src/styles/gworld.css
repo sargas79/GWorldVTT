@@ -1123,7 +1123,7 @@
 .gworld-builder .gb-list { margin: 0; padding: 0; list-style: none; }
 .gworld-builder .gb-row {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto;
   align-items: center;
   gap: 8px;
   padding: 3px 4px;
@@ -1180,3 +1180,59 @@
   white-space: nowrap;
   color: var(--color-neutral-800);
 }
+
+/* Points and levels edited in place: the numbers a character is built out of,
+   so they sit in the table rather than behind another sheet. */
+.gworld input.npts {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px dotted var(--color-neutral-500);
+  font: inherit;
+  color: inherit;
+  text-align: right;
+}
+.gworld input.npts:focus { border-bottom-color: var(--color-accent); outline: none; }
+
+.gworld .tag.taglevels {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.gworld .tag.taglevels input {
+  width: 2.6em;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px dotted currentColor;
+  font: inherit;
+  color: inherit;
+  text-align: right;
+}
+.gworld .tag.taglevels input:focus { outline: none; border-bottom-style: solid; }
+
+/* Spending on an item from inside the builder, rather than going and finding
+   its own sheet. */
+.gworld-builder .gb-spend {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-neutral-800);
+  white-space: nowrap;
+}
+.gworld-builder .gb-spend input {
+  width: 3.2em;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px dotted var(--color-neutral-500);
+  font: inherit;
+  color: inherit;
+  text-align: right;
+}
+.gworld-builder .gb-spend input:focus { outline: none; border-bottom-color: var(--color-accent); }
