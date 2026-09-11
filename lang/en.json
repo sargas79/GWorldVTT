@@ -135,7 +135,7 @@
       "Age": "Age",
       "AppearancePlaceholder": "How they read to a stranger",
       "TechLevel": "Tech Level",
-      "SizeModifier": "Size Modifier",
+      "SizeModifier": "size",
       "StartingPoints": "Starting Points",
       "DisadvantageLimit": "Disadv. Limit",
       "Maneuver": "This Turn",
@@ -970,6 +970,20 @@
       "StateHolding": "Holding on with {hands} — Aim, Feint, Concentrate, Wait and ranged attacks are out",
       "StateHeld": "Held with {hands} — no Move, no Aim, no ranged attacks, and nothing longer than a dagger",
       "StatePinned": "Pinned and helpless — no maneuver that needs physical movement"
+    },
+    "Sight": {
+      "Label": "What you can see",
+      "clear": "The target, clearly",
+      "positionKnown": "Nothing, but you know where they are (-4)",
+      "foeUnseen": "Everything but the target (-6)",
+      "blind": "Nothing at all (-10)"
+    },
+    "Cover": {
+      "Label": "Cover",
+      "none": "None",
+      "exposedLocation": "Aim at an exposed part",
+      "randomLocation": "Roll the location, and risk the cover",
+      "shootThrough": "Shoot through it (-2, and its DR)"
     }
   }
 }

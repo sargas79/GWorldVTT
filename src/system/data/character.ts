@@ -13,6 +13,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { isUnarmedSkill } from "../../rules/criticals.js";
+import { reachForSize } from "../../rules/size.js";
 import { pointsLedger, type PointAward } from "../../rules/character-points.js";
 import { afterSuperJump, traitEffects, type TraitEffects } from "../../rules/trait-effects.js";
 import { baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
@@ -703,7 +704,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           damageType: mode.damageType,
           armorDivisor: mode.armorDivisor ?? 1,
           damageRollable: !mode.affliction && parseDiceAdds(meleeDamage) !== null,
-          reach: mode.reach ?? "C",
+          // A big fighter's arms are longer, so their weapons reach further
+          // (Campaigns p. 402). Only the upper end moves.
+          reach: reachForSize(String(mode.reach ?? "C"), this.sm),
           parry:
             mode.canParry && skillLevel !== null
               ? baseParry(skillLevel) + (mode.parryModifier ?? 0)
