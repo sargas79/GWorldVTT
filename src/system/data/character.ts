@@ -39,6 +39,15 @@ import {
   techniqueLevelsForPoints,
 } from "../../rules/skills.js";
 import { musclePoweredRange } from "../../rules/ranged.js";
+import {
+  broadJumpFeet,
+  highJumpInches,
+  jumpingMove,
+  liftCapacities,
+  pacedMove,
+  sprintMove,
+  waterMove,
+} from "../../rules/physical.js";
 import type {
   DamageType, Difficulty, EncumbranceLevel, Posture, SkillAttribute,
 } from "../../rules/types.js";
@@ -346,6 +355,53 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
   private itemsOfType(type: string): Array<Record<string, any>> {
     return this.items.filter((i) => i.type === type);
+  }
+
+  /**
+   * What this body can do, given ST, Basic Lift and Move
+   * (GURPS Basic Set: Campaigns pp. 349-355).
+   *
+   * Derived rather than looked up, because every one of these is arithmetic on
+   * numbers already on the sheet, and a player who wants to know whether they
+   * can clear the pit should be able to read it rather than work it out.
+   *
+   * Move here is Move after encumbrance, which is what a jump and a sprint
+   * actually have to work with.
+   */
+  #physicalFeats(attrs: Record<string, number>, basicLift: number, move: number) {
+    // "you may substitute half your skill level, rounded down, for Basic Move"
+    // -- so the jump uses whichever of the two is better.
+    const jump = jumpingMove(move, this.skillLevelByName("Jumping"));
+
+    return {
+      jumping: {
+        move: jump,
+        high: highJumpInches({ move: jump }),
+        broad: broadJumpFeet({ move: jump }),
+        // One yard of run, which is the shortest run there is and the one a
+        // fighter in a corridor actually gets.
+        highRunning: highJumpInches({ move: jump, runningStartYards: 1 }),
+        broadRunning: broadJumpFeet({ move: jump, runningStartYards: 1 }),
+      },
+      lift: liftCapacities(basicLift),
+      running: { sprint: sprintMove(move), paced: pacedMove(move) },
+      swimming: {
+        move: waterMove(move),
+        // "Swimming defaults to HT-4", and Climbing to DX-5: someone who never
+        // learned either can still try.
+        skill: this.skillLevelByName("Swimming") ?? (attrs.HT ?? 10) - 4,
+      },
+      climbing: { skill: this.skillLevelByName("Climbing") ?? (attrs.DX ?? 10) - 5 },
+      // "Roll against DX-3 to hit a specific target, or against DX to lob
+      // something into a general area", or Throwing skill for what fits in a
+      // hand.
+      throwing: {
+        skill: this.skillLevelByName("Throwing") ?? (attrs.DX ?? 10) - 3,
+        strength: attrs.ST ?? 10,
+        basicLift,
+      },
+      lifting: { skill: this.skillLevelByName("Lifting") },
+    };
   }
 
   /** The score of a skill by name, or null when the character lacks it. */
@@ -804,6 +860,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       melee,
       ranged,
       encumbrance,
+      feats: this.#physicalFeats(attrs, secondary.basicLift, encumbrance.move),
       status: healthStatus(this.hp.value, this.hp.max),
       reeling,
       points: {

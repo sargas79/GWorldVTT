@@ -79,7 +79,7 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "extraEffort", reference: "Campaigns p. 356", default: true },
   ],
   activities: [
-    { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true, implemented: false },
+    { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true },
   ],
 };
 

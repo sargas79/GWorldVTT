@@ -77,8 +77,68 @@
     </div>
   </div>
 
+  {{#if rules.physicalActivities}}
   <div class="isec">
-    <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.Campaign"}}</div>
+    <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.PhysicalFeats"}}</div>
+    <div class="cellgrid">
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.HighJump"}}</span>
+        <span class="cv">{{derived.feats.jumping.high}}"</span>
+        <span class="cd">{{localize "GWORLD.Feats.WithRun" value=derived.feats.jumping.highRunning}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.BroadJump"}}</span>
+        <span class="cv">{{derived.feats.jumping.broad}} ft</span>
+        <span class="cd">{{localize "GWORLD.Feats.WithRun" value=derived.feats.jumping.broadRunning}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.Lift"}}</span>
+        <span class="cv">{{derived.feats.lift.twoHanded}} lb</span>
+        <span class="cd">{{localize "GWORLD.Feats.OneHanded" value=derived.feats.lift.oneHanded}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.Shove"}}</span>
+        <span class="cv">{{derived.feats.lift.shove}} lb</span>
+        <span class="cd">{{localize "GWORLD.Feats.Running" value=derived.feats.lift.runningShove}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.CarryOnBack"}}</span>
+        <span class="cv">{{derived.feats.lift.carryOnBack}} lb</span>
+        <span class="cd">{{localize "GWORLD.Feats.Shift" value=derived.feats.lift.shiftSlightly}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.Sprint"}}</span>
+        <span class="cv">{{derived.feats.running.sprint}}</span>
+        <span class="cd">{{localize "GWORLD.Feats.Paced"}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.WaterMove"}}</span>
+        <span class="cv">{{derived.feats.swimming.move}}</span>
+        <span class="cd">{{localize "GWORLD.Feats.SwimSkill"}} {{derived.feats.swimming.skill}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Feats.Climbing"}}</span>
+        <span class="cv">{{derived.feats.climbing.skill}}</span>
+        <span class="cd">{{localize "GWORLD.Feats.ClimbDefault"}}</span>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button type="button" class="ibtn" data-action="climb">
+        {{localize "GWORLD.Feats.Climbing"}}
+      </button>
+      <button type="button" class="ibtn" data-action="swim">
+        {{localize "GWORLD.Feats.Swimming"}}
+      </button>
+      <button type="button" class="ibtn" data-action="throwObject">
+        {{localize "GWORLD.Feats.Throw"}}
+      </button>
+    </div>
+    <p class="ihint">{{localize "GWORLD.Feats.Hint"}}</p>
+  </div>
+  {{/if}}
+
+  <div class="isec">
+    <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.Campaign"}}</div>
     <div class="g4">
       <div class="fld">
         <span class="fl">{{localize "GWORLD.Field.TechLevel"}}</span>
@@ -116,7 +176,7 @@
   </div>
 
   <div class="isec">
-    <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.CharacterPoints"}}</div>
+    <div class="ish"><span class="num">06</span>{{localize "GWORLD.Section.CharacterPoints"}}</div>
     {{#if editable}}
       <div class="toolbar">
         <button type="button" class="ibtn" data-action="openBuilder">
@@ -140,5 +200,4 @@
       <span>{{pointsWarning.text}}</span>
     </div>
   </div>
-
 </section>

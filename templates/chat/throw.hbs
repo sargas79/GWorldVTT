@@ -1,0 +1,22 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">{{localize "GWORLD.Feats.ThrowTitle"}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>{{localize "GWORLD.Feats.ThrowWeight"}} {{weight}} lb</span>
+    <span class="gc-mod">{{localize "GWORLD.Secondary.BasicLift"}} {{basicLift}} lb</span>
+  </div>
+
+  {{#if tooHeavy}}
+    <div class="gc-result failure">{{localize "GWORLD.Feats.TooHeavy"}}</div>
+  {{else}}
+    <div class="gc-result success">{{localize "GWORLD.Feats.ThrowDistance" yards=distance}}</div>
+    {{#if damage}}
+      <div class="gc-mods">
+        <span>{{localize "GWORLD.Feats.ThrowDamage"}} {{damage}} cr</span>
+      </div>
+    {{/if}}
+  {{/if}}
+</div>

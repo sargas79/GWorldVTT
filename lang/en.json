@@ -86,7 +86,8 @@
       "Techniques": "Techniques",
       "HitLocations": "Damage Resistance by Location",
       "Maneuver": "Maneuver",
-      "Actions": "Actions"
+      "Actions": "Actions",
+      "PhysicalFeats": "Physical Feats"
     },
     "Column": {
       "Skill": "Skill",
@@ -788,6 +789,51 @@
       "MightyBlows": "Mighty Blows",
       "NoFatigue": "Not enough FP for {what} ({cost} FP).",
       "NotStBased": "Mighty Blows adds nothing to damage that is not ST-based."
+    },
+    "Feats": {
+      "Hint": "Jumping, lifting, running, swimming and throwing, from ST, Basic Lift and Move.",
+      "HighJump": "High jump",
+      "BroadJump": "Broad jump",
+      "WithRun": "{value} with a running start",
+      "Lift": "Two-handed lift",
+      "OneHanded": "{value} lb one-handed",
+      "Shove": "Shove or knock over",
+      "Running": "{value} lb at a run",
+      "CarryOnBack": "Carry on back",
+      "Shift": "{value} lb shifted where it stands",
+      "Sprint": "Sprinting Move",
+      "Paced": "half that, paced",
+      "WaterMove": "Water Move",
+      "SwimSkill": "Swimming",
+      "Climbing": "Climbing",
+      "ClimbDefault": "DX-5 untrained",
+      "Swimming": "Swim",
+      "Throw": "Throw",
+      "ClimbTitle": "Climb",
+      "ClimbKind": "What is being climbed",
+      "ClimbSpeeds": "{combat} in a hurry, {regular} at leisure",
+      "NoRoll": "no roll needed",
+      "SwimTitle": "Swimming",
+      "SwimEntry": "How did you get in?",
+      "SwimIntentional": "Dived in on purpose (+3)",
+      "SwimFell": "Fell, or was thrown in",
+      "SwimLabel": "Swimming — water Move {move}",
+      "ThrowTitle": "Throw an object",
+      "ThrowWeight": "Weight (lb)",
+      "ThrowDistance": "Thrown {yards} yards",
+      "ThrowDamage": "Damage",
+      "TooHeavy": "Too heavy to throw — past a two-handed lift",
+      "Climb": {
+        "ladderUp": "Ladder, going up",
+        "ladderDown": "Ladder, going down",
+        "tree": "Ordinary tree",
+        "mountain": "Ordinary mountain",
+        "stoneWall": "Vertical stone wall",
+        "modernBuilding": "Modern building",
+        "ropeUp": "Rope, going up",
+        "ropeDown": "Rope, going down",
+        "ropeDownRigged": "Rope, going down with equipment"
+      }
     }
   }
 }
