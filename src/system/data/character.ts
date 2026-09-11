@@ -13,6 +13,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { isUnarmedSkill } from "../../rules/criticals.js";
+import { afterSuperJump, traitEffects, type TraitEffects } from "../../rules/trait-effects.js";
 import { baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import { usableInCloseCombat } from "../../rules/tactical.js";
 import { isRuleOn } from "../optional-rules.js";
@@ -47,6 +48,7 @@ import {
   pacedMove,
   sprintMove,
   waterMove,
+  type JumpInput,
 } from "../../rules/physical.js";
 import type {
   DamageType, Difficulty, EncumbranceLevel, Posture, SkillAttribute,
@@ -368,25 +370,50 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
    * Move here is Move after encumbrance, which is what a jump and a sprint
    * actually have to work with.
    */
-  #physicalFeats(attrs: Record<string, number>, basicLift: number, move: number) {
+  #physicalFeats(
+    attrs: Record<string, number>,
+    basicLift: number,
+    move: number,
+    traits: TraitEffects,
+  ) {
     // "you may substitute half your skill level, rounded down, for Basic Move"
     // -- so the jump uses whichever of the two is better.
     const jump = jumpingMove(move, this.skillLevelByName("Jumping"));
 
+    // "Those with Enhanced Move (Ground) may apply their movement multiplier to
+    // Basic Move before inserting it into these formulas when they have a
+    // running start. This is instead of adding the number of yards run!"
+    //
+    // The ceiling of twice the standing jump is not applied to that. It is
+    // stated as part of the add-the-yards-you-ran rule, which Enhanced Move
+    // replaces rather than extends, and the book's own example -- "a horse with
+    // Basic Move 6 and Enhanced Move 1 makes running jumps as if its Basic Move
+    // were 12" -- reads as a plain recomputation at the higher Move.
+    const runningJump = (formula: (input: JumpInput) => number) =>
+      traits.enhancedMove > 1
+        ? formula({ move: jump * traits.enhancedMove })
+        : formula({ move: jump, runningStartYards: 1 });
+
+    // "Those who have Super Jump double the final jumping distance for each
+    // level of that advantage. This is cumulative with the effects of Enhanced
+    // Move!" -- so it is applied last, to whatever the rest came to.
+    const leap = (distance: number) => afterSuperJump(distance, traits.superJump);
+
     return {
       jumping: {
         move: jump,
-        high: highJumpInches({ move: jump }),
-        broad: broadJumpFeet({ move: jump }),
+        high: leap(highJumpInches({ move: jump })),
+        broad: leap(broadJumpFeet({ move: jump })),
         // One yard of run, which is the shortest run there is and the one a
-        // fighter in a corridor actually gets.
-        highRunning: highJumpInches({ move: jump, runningStartYards: 1 }),
-        broadRunning: broadJumpFeet({ move: jump, runningStartYards: 1 }),
+        // fighter in a corridor actually gets -- unless Enhanced Move makes the
+        // run itself the multiplier.
+        highRunning: leap(runningJump(highJumpInches)),
+        broadRunning: leap(runningJump(broadJumpFeet)),
       },
       lift: liftCapacities(basicLift),
       running: { sprint: sprintMove(move), paced: pacedMove(move) },
       swimming: {
-        move: waterMove(move),
+        move: waterMove(move, traits.aquatic),
         // "Swimming defaults to HT-4", and Climbing to DX-5: someone who never
         // learned either can still try.
         skill: this.skillLevelByName("Swimming") ?? (attrs.HT ?? 10) - 4,
@@ -524,6 +551,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       });
     }
 
+    // What this character's traits do to the numbers. Read once, here, so that
+    // every rule downstream asks the same question of the same answer.
+    const traits = traitEffects(
+      this.itemsOfType("trait").map((item) => ({
+        name: String(item.name ?? ""),
+        levels: Number(item.system?.levels ?? 0),
+      })),
+    );
+
     // ── protection ──────────────────────────────────────────────────────
     // DR is tracked per location: a breastplate covering torso and vitals must
     // not protect the head. Armor listing no locations covers the whole body,
@@ -539,6 +575,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       drSplitAppliesTo: item.system?.drSplitAppliesTo ?? [],
       locations: item.system?.locations ?? [],
     }));
+
+    // The Damage Resistance advantage is armour the character is: it covers
+    // everything, which is what an empty location list means here, and it goes
+    // in with the rest so the sheet shows the DR the damage pipeline will
+    // actually subtract.
+    if (traits.damageResistance > 0) {
+      worn.push({
+        dr: traits.damageResistance,
+        drSplit: null,
+        drSplitAppliesTo: [],
+        locations: [],
+      });
+    }
 
     // Armour written "4/2" stops one kind of attack better than another, and two
     // passes are not enough to describe that: mail takes its lower DR against
@@ -717,6 +766,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       stunned: this.conditions.stunned,
       allOutDefenseIncreased: increasing && this.allOutDefenseTarget === which,
       cannotSeeAttacker: this.conditions.blindToAttacker,
+      combatReflexes: traits.activeDefense > 0,
     });
 
     const describe = (base: number, mods: Array<{ label: string; value: number }>): string =>
@@ -860,7 +910,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       melee,
       ranged,
       encumbrance,
-      feats: this.#physicalFeats(attrs, secondary.basicLift, encumbrance.move),
+      feats: this.#physicalFeats(attrs, secondary.basicLift, encumbrance.move, traits),
+      traitEffects: traits,
       status: healthStatus(this.hp.value, this.hp.max),
       reeling,
       points: {

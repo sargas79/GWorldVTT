@@ -7,10 +7,11 @@
  * interesting half lives. Both are posted on one card, because the second is
  * meaningless without the first.
  *
- * Not handled: Unfazeable, whose owner makes no Fright Check at all, and the
- * long list of situational modifiers on p. 360. Those are the GM's call about a
- * particular horrible thing, so they are typed into the one modifier field
- * rather than guessed at from the sheet.
+ * The traits that bear on it are read off the sheet: Combat Reflexes and
+ * Fearlessness add, Combat Paralysis and Fearfulness subtract, and Unfazeable
+ * makes no check at all. The rest of the long list of modifiers on p. 360 --
+ * how grisly, how close, how dark, how alone -- is the GM's call about a
+ * particular horrible thing, and is typed into the one modifier field.
  */
 
 import { SYSTEM_ID } from "./constants.js";
@@ -21,19 +22,25 @@ import {
   frightCheckWill,
 } from "../rules/fright.js";
 import { resolveSuccess } from "../rules/success.js";
+import { traitsOf } from "./damage.js";
 
 const FRIGHT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/fright.hbs`;
 
 /** The Will a Fright Check is rolled against, and whether the Rule of 14 bit. */
-export function frightTarget(will: number, modifier: number): {
+export function frightTarget(
+  will: number,
+  modifier: number,
+  traitBonus = 0,
+): {
   will: number;
   modifier: number;
+  traitBonus: number;
   effective: number;
   capped: boolean;
 } {
-  const modified = will + modifier;
+  const modified = will + modifier + traitBonus;
   const effective = frightCheckWill(modified);
-  return { will, modifier, effective, capped: effective < modified };
+  return { will, modifier, traitBonus, effective, capped: effective < modified };
 }
 
 /**
@@ -47,7 +54,22 @@ export async function rollFrightCheck(options: {
   modifier: number;
 }): Promise<{ effect: string; total: number } | null> {
   const { actor, modifier } = options;
-  const target = frightTarget(Number(actor?.system?.derived?.will) || 10, modifier);
+  const traits = traitsOf(actor);
+
+  // "Unfazeable characters don't make Fright Checks!" -- so none is made, and
+  // saying so is the whole answer.
+  if (traits.unfazeable) {
+    ui.notifications?.info(
+      game.i18n.format("GWORLD.Fright.Unfazeable", { name: String(actor?.name ?? "") }),
+    );
+    return null;
+  }
+
+  const target = frightTarget(
+    Number(actor?.system?.derived?.will) || 10,
+    modifier,
+    traits.frightCheck,
+  );
 
   const check = new Roll("3d6");
   await check.evaluate();

@@ -136,6 +136,17 @@ function addApplyControls(message: any, html: HTMLElement): void {
   root.append(row);
 }
 
+/**
+ * A modifier as it reads beside a roll, or nothing at all when it is zero.
+ *
+ * "+3" says something; "+0" says the same as an empty space and takes more room
+ * to say it.
+ */
+function signedOrBlank(value: number): string {
+  if (value === 0) return "";
+  return value > 0 ? `+${value}` : String(value);
+}
+
 /** Resolves the blow against every target and reports what it did. */
 async function applyFromCard(options: {
   flag: DamageFlag;
@@ -241,7 +252,13 @@ async function applyFromCard(options: {
       majorWound: result.consequences.majorWound,
       deathCheck: result.consequences.deathCheckRequired,
       unconsciousCheck: result.consequences.consciousnessRollRequired,
-      unconsciousPenalty: result.consequences.consciousnessRollPenalty,
+      // Each HT roll the blow calls for is shown with what the victim's traits
+      // are worth to it: High Pain Threshold on the knockdown roll, Hard to
+      // Subdue on staying conscious, Hard to Kill on staying alive.
+      knockdownModifier: signedOrBlank(result.htModifiers.knockdown),
+      survivalModifier: signedOrBlank(result.htModifiers.survival),
+      unconsciousPenalty:
+        result.consequences.consciousnessRollPenalty + result.htModifiers.consciousness,
       status: game.i18n.localize(`GWORLD.Health.${result.consequences.status}`),
       location: game.i18n.localize(`GWORLD.HitLocation.${result.hitLocation}`),
       // Knockback is reported even where the blow did no injury: a crushing

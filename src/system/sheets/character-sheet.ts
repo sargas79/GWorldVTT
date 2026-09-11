@@ -29,6 +29,7 @@ import { parseDiceAdds, formatDiceAdds } from "../../rules/dice.js";
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { rollFrightCheck } from "../fright.js";
+import { traitsOf } from "../damage.js";
 import { feintDefenseScore, recordFeint } from "../feint.js";
 import { attackDirection, facingOf } from "../hex.js";
 import { facingChangeAtEndOfMove, hexMovementCost } from "../../rules/tactical.js";
@@ -48,6 +49,7 @@ import {
   previousTechniquePoints,
 } from "../../rules/skills.js";
 import { nextTraitLevel, previousTraitLevel } from "../../rules/traits.js";
+import { isReadTrait } from "../../rules/trait-effects.js";
 import {
   handleDamageAction,
   handleRollAction,
@@ -127,6 +129,11 @@ function withLevels(trait: any) {
     system,
     levelled: Boolean(system.pointsPerLevel) || table.length > 0,
     levelName: system.levelName ?? null,
+    // Most traits are the GM's to adjudicate; a couple of dozen say something
+    // exact that this system applies on its own. Which is which is worth a
+    // badge -- a player who buys Combat Reflexes should be able to see that
+    // the +1 is already in their Dodge.
+    applied: isReadTrait(String(trait.name ?? "")),
   };
 }
 
@@ -1046,6 +1053,15 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    */
   static async #onFrightCheck(this: GWorldCharacterSheet) {
     if (!isRuleOn("frightChecks")) return;
+
+    // Asked before the dialog rather than after it: someone who makes no Fright
+    // Check should not be asked how frightening the thing was.
+    if (traitsOf(this.actor).unfazeable) {
+      ui.notifications?.info(
+        game.i18n.format("GWORLD.Fright.Unfazeable", { name: String(this.actor.name) }),
+      );
+      return;
+    }
 
     const modifier = await promptForNumber({
       title: game.i18n.localize("GWORLD.Fright.Title"),
