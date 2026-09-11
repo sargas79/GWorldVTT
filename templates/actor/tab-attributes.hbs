@@ -138,7 +138,29 @@
   {{/if}}
 
   <div class="isec">
-    <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.Campaign"}}</div>
+    <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.Recovery"}}</div>
+    <div class="toolbar">
+      <button type="button" class="ibtn" data-action="rest"
+              data-tooltip="{{localize "GWORLD.Recovery.RestHint"}}">
+        {{localize "GWORLD.Recovery.Rest"}}
+      </button>
+      <button type="button" class="ibtn" data-action="restDay"
+              data-tooltip="{{localize "GWORLD.Recovery.DailyHint"}}">
+        {{localize "GWORLD.Recovery.Daily"}}
+      </button>
+      <button type="button" class="ibtn" data-action="firstAid"
+              data-tooltip="{{localize "GWORLD.Recovery.FirstAidHint"}}">
+        {{localize "GWORLD.Recovery.FirstAid"}} {{derived.recovery.firstAid}}
+      </button>
+      <button type="button" class="ibtn" data-action="wake"
+              data-tooltip="{{localize "GWORLD.Recovery.WakingHint"}}">
+        {{localize "GWORLD.Recovery.Waking"}}
+      </button>
+    </div>
+  </div>
+
+  <div class="isec">
+    <div class="ish"><span class="num">06</span>{{localize "GWORLD.Section.Campaign"}}</div>
     <div class="g4">
       <div class="fld">
         <span class="fl">{{localize "GWORLD.Field.TechLevel"}}</span>
@@ -176,7 +198,7 @@
   </div>
 
   <div class="isec">
-    <div class="ish"><span class="num">06</span>{{localize "GWORLD.Section.CharacterPoints"}}</div>
+    <div class="ish"><span class="num">07</span>{{localize "GWORLD.Section.CharacterPoints"}}</div>
     {{#if editable}}
       <div class="toolbar">
         <button type="button" class="ibtn" data-action="openBuilder">

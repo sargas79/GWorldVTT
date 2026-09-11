@@ -28,3 +28,4 @@ export * from "./maneuvers.js";
 export * from "./physical.js";
 export * from "./posture.js";
 export * from "./ranged.js";
+export * from "./recovery.js";

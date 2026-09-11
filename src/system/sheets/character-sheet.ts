@@ -29,6 +29,7 @@ import { parseDiceAdds, formatDiceAdds } from "../../rules/dice.js";
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
+import { applyFirstAid, restForADay, restForFatigue, tryToWake } from "../recovery.js";
 import { rollFrightCheck } from "../fright.js";
 import { traitsOf } from "../damage.js";
 import { feintDefenseScore, recordFeint } from "../feint.js";
@@ -266,6 +267,45 @@ async function promptForFall(): Promise<{
 }
 
 /**
+ * Asks how long the rest was, and whether there was food.
+ *
+ * The meal is asked rather than inferred from the clock: "the GM may allow you
+ * to regain one extra FP if you eat a decent meal while resting" is their call,
+ * and a long rest is not the same thing as a fed one.
+ */
+async function promptForRest(): Promise<{ minutes: number; meal: boolean } | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Recovery.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Rest") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Minutes")}</span>
+        <input type="number" name="minutes" value="10" min="0" step="10" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="meal">
+        <span>${L("MealHint")}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        return {
+          minutes:
+            Number(form?.querySelector<HTMLInputElement>('input[name="minutes"]')?.value ?? 0) || 0,
+          meal: form?.querySelector<HTMLInputElement>('input[name="meal"]')?.checked ?? false,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/**
  * Asks the user to pick one of a list.
  *
  * Returns null when the dialog is dismissed, which cancels whatever asked.
@@ -448,6 +488,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       swim: GWorldCharacterSheet.#onSwim,
       throwObject: GWorldCharacterSheet.#onThrow,
       fall: GWorldCharacterSheet.#onFall,
+      rest: GWorldCharacterSheet.#onRest,
+      restDay: GWorldCharacterSheet.#onRestDay,
+      firstAid: GWorldCharacterSheet.#onFirstAid,
+      wake: GWorldCharacterSheet.#onWake,
       stepPoints: GWorldCharacterSheet.#onStepPoints,
       stepLevels: GWorldCharacterSheet.#onStepLevels,
       editItem: GWorldCharacterSheet.#onEditItem,
@@ -1298,6 +1342,67 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       surface: asked.surface,
       controlled: asked.controlled,
     });
+  }
+
+  /**
+   * Rests quietly and gets some fatigue back (Campaigns p. 427).
+   *
+   * A point per ten minutes, and one more for a decent meal. There is no roll:
+   * resting works, and the only question is for how long.
+   */
+  static async #onRest(this: GWorldCharacterSheet) {
+    const asked = await promptForRest();
+    if (!asked) return;
+
+    await restForFatigue({ actor: this.actor, minutes: asked.minutes, meal: asked.meal });
+  }
+
+  /**
+   * A day of rest and decent food (Campaigns p. 424).
+   *
+   * One HT roll for one hit point. The GM's modifier for how good or bad the
+   * conditions were is asked, because only they know what they were.
+   */
+  static async #onRestDay(this: GWorldCharacterSheet) {
+    const modifier = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Recovery.Daily"),
+      label: game.i18n.localize("GWORLD.Recovery.Conditions"),
+      initial: 0,
+    });
+    if (modifier === null) return;
+
+    await restForADay({ actor: this.actor, modifier });
+  }
+
+  /**
+   * Treats somebody else's wounds (Campaigns p. 424).
+   *
+   * This character is the medic and the target is the patient, so the roll is
+   * made here and the hit points are written there.
+   */
+  static async #onFirstAid(this: GWorldCharacterSheet) {
+    const targets = targetedTokens();
+    if (targets.length !== 1) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Recovery.OneTarget"));
+      return;
+    }
+
+    const patient = targets[0]?.actor;
+    if (!patient) return;
+
+    const modifier = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Recovery.FirstAid"),
+      label: game.i18n.localize("GWORLD.Chat.Modifier"),
+      initial: 0,
+    });
+    if (modifier === null) return;
+
+    await applyFirstAid({ healer: this.actor, patient, modifier });
+  }
+
+  /** Tries to come round (Campaigns p. 423). */
+  static async #onWake(this: GWorldCharacterSheet) {
+    await tryToWake({ actor: this.actor });
   }
 
   /**
