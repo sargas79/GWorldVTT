@@ -507,7 +507,10 @@ function describeModes(item: any): string {
 export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static override DEFAULT_OPTIONS = {
     classes: ["gworld", "sheet", "actor", "character"],
-    position: { width: 740, height: 900 },
+    // 900 was taller than a 1366x768 laptop can show, so the foot of every tab
+    // was off the bottom of the screen with no way to reach it. Each tab now
+    // scrolls inside the window instead, and the window fits.
+    position: { width: 760, height: 700 },
     window: { resizable: true },
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
@@ -549,6 +552,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     skills: { template: `${TEMPLATE_ROOT}/tab-skills.hbs`, scrollable: [""] },
     traits: { template: `${TEMPLATE_ROOT}/tab-traits.hbs`, scrollable: [""] },
     combat: { template: `${TEMPLATE_ROOT}/tab-combat.hbs`, scrollable: [""] },
+    body: { template: `${TEMPLATE_ROOT}/tab-body.hbs`, scrollable: [""] },
     gear: { template: `${TEMPLATE_ROOT}/tab-gear.hbs`, scrollable: [""] },
     description: { template: `${TEMPLATE_ROOT}/tab-description.hbs`, scrollable: [""] },
   };
@@ -562,6 +566,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         { id: "skills" },
         { id: "traits" },
         { id: "combat" },
+        { id: "body" },
         { id: "gear" },
         { id: "description" },
       ],
