@@ -316,11 +316,12 @@ export async function handleRollAction(
   // A melee attack asks only when asked -- shift-click, as every other roll --
   // but when it does ask, it asks about Deceptive Attack and Rapid Strike too,
   // since both are decided before the roll and both cost skill.
-  const melee =
-    !ranged && rollType === "attack" && (event as MouseEvent).shiftKey
-      ? await promptForMeleeAttack({ effectiveSkill: base })
-      : null;
-  if (!ranged && rollType === "attack" && (event as MouseEvent).shiftKey && melee === null) return;
+  const asksAboutMelee =
+    !ranged && rollType === "attack" && (event as MouseEvent).shiftKey;
+  const melee = asksAboutMelee
+    ? await promptForMeleeAttack({ effectiveSkill: base })
+    : null;
+  if (asksAboutMelee && melee === null) return;
 
   const modifiers = shot
     ? shot.modifiers
@@ -549,10 +550,13 @@ export async function promptForMeleeAttack(options: {
   effectiveSkill: number;
 }): Promise<{ modifiers: RollModifier[]; defensePenalty: number } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Melee.${key}`);
-  const most = maxDeception(options.effectiveSkill);
 
   // A fighter at skill 11 or less cannot buy any deception at all, so they are
-  // not offered a field that can only be left at zero.
+  // not offered a field that can only be left at zero. The ceiling shown is
+  // against the unmodified skill, which is all that is known before the
+  // situational modifier is typed; what is actually taken is clamped again
+  // afterwards, against the skill the modifier leaves.
+  const most = maxDeception(options.effectiveSkill);
   const deceptiveField = most > 0
     ? `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
          <span>${L("Deceptive")} (0-${most})</span>
@@ -596,7 +600,11 @@ export async function promptForMeleeAttack(options: {
     rapid: boolean;
   };
 
-  const deception = deceptiveAttack(options.effectiveSkill, deceptive);
+  // "You may not reduce your final effective skill below 10", so the ceiling is
+  // set against the skill after the situational modifier, not before it. A
+  // fighter at 16 who is also at -4 for something can afford one level of
+  // deception, not three.
+  const deception = deceptiveAttack(options.effectiveSkill + modifier, deceptive);
   const modifiers: RollModifier[] = [];
 
   if (deception.attackPenalty !== 0) {
