@@ -56,6 +56,9 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   time getting hold of somebody smaller.
 - **Defending.** An attack that connects offers each defender the defenses they
   actually have, with retreats and Feverish Defense.
+- **Called shots** — aim at a location and take its penalty, or go for the
+  chinks in somebody's armour with a piercing or impaling weapon and meet half
+  the DR. Where the blow was aimed carries through to the damage.
 - **Damage and injury** — DR resolved against the damage type being applied,
   armour divisors, wounding modifiers, hit locations, crippling, shock, major
   wounds, consciousness and death checks, knockback, explosions and afflictions.
@@ -80,6 +83,11 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   throwing, all derived from ST, Basic Lift and Move.
 - **Falling**, including blunt trauma through armour that stopped it.
 - **Bleeding**, a HT roll a minute until the wound closes or somebody binds it.
+- **Death checks and mortal wounds** — failing by one or two is not death but a
+  state you can be carried out of, rolling HT every half-hour.
+- **Crippling injuries** — how long one lasts, and whether it lasts for good.
+- **Suffocation and drowning** — a point of fatigue a second, and four minutes
+  is fatal whatever the hit points say.
 - **Recovery** — rest for fatigue, a day's rest, First Aid by tech level, and
   waking up again.
 - **Compendia** of advantages, disadvantages, skills and equipment, carrying
