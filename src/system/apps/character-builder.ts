@@ -24,8 +24,12 @@ interface Step {
   id: string;
   /** Item types this step's Browse button offers, if it offers one. */
   types?: string[];
-  /** The trait category this step lists, for the two trait steps. */
-  category?: string;
+  /**
+   * The trait categories this step lists and offers. Advantages and
+   * disadvantages are the same item type, so a step that does not say which it
+   * wants gets both, which is no use to anyone choosing.
+   */
+  categories?: string[];
 }
 
 /**
@@ -36,8 +40,8 @@ interface Step {
 const STEPS: readonly Step[] = [
   { id: "points" },
   { id: "attributes" },
-  { id: "advantages", types: ["trait"], category: "advantage" },
-  { id: "disadvantages", types: ["trait"], category: "disadvantage" },
+  { id: "advantages", types: ["trait"], categories: ["advantage", "perk"] },
+  { id: "disadvantages", types: ["trait"], categories: ["disadvantage", "quirk"] },
   { id: "skills", types: ["skill", "technique"] },
   { id: "gear", types: ["equipment", "armor", "shield"] },
   { id: "review" },
@@ -104,8 +108,8 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     return [...(this.#actor.items ?? [])]
       .filter((item: any) => {
         if (!types.has(item.type)) return false;
-        if (!step.category) return true;
-        return item.system?.category === step.category;
+        if (!step.categories) return true;
+        return step.categories.includes(item.system?.category);
       })
       .map((item: any) => {
         const spend = spendableOn(item);
@@ -205,6 +209,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     const picker = await CompendiumPicker.open({
       actor: this.#actor,
       types: step.types,
+      ...(step.categories ? { categories: step.categories } : {}),
       title: game.i18n.localize(`GWORLD.Builder.Browse.${step.id}`),
     });
 

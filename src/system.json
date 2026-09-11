@@ -38,9 +38,20 @@
       }
     },
     {
-      "name": "traits",
-      "label": "GURPS Advantages & Disadvantages",
-      "path": "packs/traits",
+      "name": "advantages",
+      "label": "GURPS Advantages",
+      "path": "packs/advantages",
+      "type": "Item",
+      "system": "gworld",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "disadvantages",
+      "label": "GURPS Disadvantages",
+      "path": "packs/disadvantages",
       "type": "Item",
       "system": "gworld",
       "ownership": {

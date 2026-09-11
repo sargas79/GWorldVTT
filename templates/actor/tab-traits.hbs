@@ -16,12 +16,18 @@
             <span data-action="editItem">{{trait.name}}</span>
             {{#if trait.levelled}}
               {{#if @root.editable}}
-                <label class="tag taglevels">
+                <span class="tag taglevels ptstep">
+                  <button type="button" data-action="stepLevels" data-step="down"
+                          aria-label="{{localize "GWORLD.Trait.OneLess"}}"
+                          title="{{localize "GWORLD.Trait.OneLess"}}">&minus;</button>
                   <input type="number" min="0" step="1" value="{{trait.system.levels}}"
                          data-item-field="system.levels"
                          aria-label="{{localize "GWORLD.Trait.Levels"}}" />
+                  <button type="button" data-action="stepLevels" data-step="up"
+                          aria-label="{{localize "GWORLD.Trait.OneMore"}}"
+                          title="{{localize "GWORLD.Trait.OneMore"}}">+</button>
                   <span>{{#if trait.levelName}}{{trait.levelName}}{{else}}{{localize "GWORLD.Trait.Levels"}}{{/if}}</span>
-                </label>
+                </span>
               {{else}}
                 <span class="tag">
                   {{trait.system.levels}}
@@ -51,7 +57,8 @@
             + {{localize group.addLabel}}
           </button>
           <button type="button" class="ibtn" data-action="browseCompendium"
-                  data-item-types="trait" data-browse-title="GWORLD.Picker.Traits">
+                  data-item-types="trait" data-categories="{{group.categories}}"
+                  data-browse-title="{{group.browseTitle}}">
             {{> "gworld.search"}} {{localize "GWORLD.Action.BrowseTraits"}}
           </button>
         </div>

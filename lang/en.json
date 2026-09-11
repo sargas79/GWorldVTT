@@ -261,7 +261,9 @@
     "Picker": {
       "Title": "Add from the compendia",
       "Skills": "Add a skill or technique",
-      "Traits": "Add an advantage or disadvantage",
+      "Advantages": "Add an advantage or perk",
+      "Disadvantages": "Add a disadvantage or quirk",
+      "Quirks": "Add a quirk",
       "Gear": "Add gear, armour or a shield",
       "Search": "Search by name",
       "Add": "Add",
@@ -314,6 +316,8 @@
       "pi++": "pi++"
     },
     "Skill": {
+      "SpendMore": "Spend the next step of points",
+      "SpendLess": "Take back the last step of points",
       "NoDefault": "No default",
       "Trained": "skills trained",
       "CappedByPrerequisite": "capped by prerequisite",
@@ -331,6 +335,8 @@
       "Points": "Points",
       "PointsPerLevel": "Points per level",
       "MaxLevels": "Max levels",
+      "OneMore": "One more level",
+      "OneLess": "One level fewer",
       "CostTable": "Cost table",
       "LevelNames": "Level names, one per line",
       "CostTableHint": "A few traits are priced from a table rather than at a flat rate per level: Wealth runs 10/20/30/50/75. Fill this in and it replaces the points and per-level figures. Leave it empty for the great majority, which are priced evenly.",

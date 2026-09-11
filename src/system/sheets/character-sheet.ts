@@ -28,6 +28,8 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
+import { nextSkillPoints, previousSkillPoints } from "../../rules/skills.js";
+import { nextTraitLevel, previousTraitLevel } from "../../rules/traits.js";
 import {
   handleDamageAction,
   handleRollAction,
@@ -178,6 +180,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       slam: GWorldCharacterSheet.#onSlam,
       affliction: GWorldCharacterSheet.#onAffliction,
       evade: GWorldCharacterSheet.#onEvade,
+      stepPoints: GWorldCharacterSheet.#onStepPoints,
+      stepLevels: GWorldCharacterSheet.#onStepLevels,
       editItem: GWorldCharacterSheet.#onEditItem,
       deleteItem: GWorldCharacterSheet.#onDeleteItem,
       toggleEquipped: GWorldCharacterSheet.#onToggleEquipped,
@@ -300,6 +304,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           label: "GWORLD.Points.Advantages",
           addLabel: "GWORLD.Action.AddAdvantage",
           category: "advantage",
+          categories: "advantage,perk",
+          browseTitle: "GWORLD.Picker.Advantages",
           total: derived.points.advantages,
           negative: false,
           traits: items.advantages.map(withLevels),
@@ -309,6 +315,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           label: "GWORLD.Points.Disadvantages",
           addLabel: "GWORLD.Action.AddDisadvantage",
           category: "disadvantage",
+          categories: "disadvantage,quirk",
+          browseTitle: "GWORLD.Picker.Disadvantages",
           total: derived.points.disadvantages,
           negative: true,
           traits: items.disadvantages.map(withLevels),
@@ -318,6 +326,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           label: "GWORLD.Points.Quirks",
           addLabel: "GWORLD.Action.AddQuirk",
           category: "quirk",
+          categories: "quirk",
+          browseTitle: "GWORLD.Picker.Quirks",
           total: derived.points.quirks,
           negative: true,
           traits: items.quirks.map(withLevels),
@@ -623,6 +633,52 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   }
 
   /**
+   * Steps a skill's points up or down the Skill Cost Table (GURPS Lite p. 12).
+   *
+   * Points come in steps -- 1, 2, 4, 8, then four at a time -- and the totals
+   * between them buy nothing. Adding one would spend a character point for no
+   * change to the level three times out of four, so this moves to the next
+   * total that actually buys something.
+   */
+  static async #onStepPoints(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.#itemFrom(target);
+    if (!item) return;
+
+    const current = Number(item.system?.points ?? 0);
+    const next =
+      target.dataset.step === "down" ? previousSkillPoints(current) : nextSkillPoints(current);
+    if (next === current) return;
+
+    await item.update({ "system.points": next });
+  }
+
+  /**
+   * Steps a levelled trait up or down.
+   *
+   * Levels move one at a time -- unlike skill points, every level of a trait
+   * buys something -- but they stop where the book stops: at the printed cap,
+   * and at the last step a cost table prices, since past that there would be
+   * no cost to charge.
+   */
+  static async #onStepLevels(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.#itemFrom(target);
+    if (!item) return;
+
+    const system = item.system ?? {};
+    const trait = {
+      levels: Number(system.levels ?? 0),
+      maxLevels: Number(system.maxLevels ?? 0),
+      costTable: (system.costTable ?? []) as number[],
+    };
+
+    const next =
+      target.dataset.step === "down" ? previousTraitLevel(trait) : nextTraitLevel(trait);
+    if (next === trait.levels) return;
+
+    await item.update({ "system.levels": next });
+  }
+
+  /**
    * Tries to get past someone without knocking them down
    * (GURPS Basic Set: Campaigns p. 368).
    *
@@ -764,9 +820,16 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   ) {
     const types = (target.dataset.itemTypes ?? "").split(",").filter(Boolean);
     if (types.length === 0) return;
+
+    // Advantages and disadvantages are one item type, so the button says which
+    // of them it wants. Without that, browsing from under Disadvantages offers
+    // the whole 641 with the advantages mixed through them.
+    const categories = (target.dataset.categories ?? "").split(",").filter(Boolean);
+
     await CompendiumPicker.open({
       actor: this.actor,
       types,
+      ...(categories.length > 0 ? { categories } : {}),
       title: game.i18n.localize(target.dataset.browseTitle ?? "GWORLD.Picker.Title"),
     });
   }
