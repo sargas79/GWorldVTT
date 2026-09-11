@@ -43,11 +43,19 @@
         <div class="gc-mods">
           {{#if r.hasShock}}<span class="gc-mod">{{localize "GWORLD.Chat.Shock"}} {{r.shock}}</span>{{/if}}
           {{#if r.crippled}}<span class="gc-warn">{{localize "GWORLD.Chat.Crippled"}}</span>{{/if}}
-          {{#if r.majorWound}}<span class="gc-warn">{{localize "GWORLD.Chat.MajorWound"}}</span>{{/if}}
+          {{#if r.majorWound}}
+            <span class="gc-warn">
+              {{localize "GWORLD.Chat.MajorWound"}} {{r.knockdownModifier}}
+            </span>
+          {{/if}}
           {{#if r.unconsciousCheck}}
             <span class="gc-warn">{{localize "GWORLD.Chat.ConsciousnessRoll"}} {{r.unconsciousPenalty}}</span>
           {{/if}}
-          {{#if r.deathCheck}}<span class="gc-warn">{{localize "GWORLD.Chat.DeathCheck"}}</span>{{/if}}
+          {{#if r.deathCheck}}
+            <span class="gc-warn">
+              {{localize "GWORLD.Chat.DeathCheck"}} {{r.survivalModifier}}
+            </span>
+          {{/if}}
         </div>
       {{/if}}
 

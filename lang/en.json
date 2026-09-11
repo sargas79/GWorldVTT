@@ -449,7 +449,9 @@
       "LevelNames": "Level names, one per line",
       "CostTableHint": "A few traits are priced from a table rather than at a flat rate per level: Wealth runs 10/20/30/50/75. Fill this in and it replaces the points and per-level figures. Leave it empty for the great majority, which are priced evenly.",
       "TabledNote": "priced from the table",
-      "TotalHint": "Total cost:"
+      "TotalHint": "Total cost:",
+      "Applied": "applied",
+      "AppliedHint": "This system applies this trait itself — its bonus is already in the numbers on the sheet."
     },
     "Language": {
       "none": "None",
@@ -767,7 +769,9 @@
         "comaAndDelusion15": "Coma, and a -15-point Delusion",
         "comaAndPhobia15": "Coma, and a -15-point mental disadvantage",
         "comaAndPhobiaAndIq": "Coma, a -15-point mental disadvantage, and 1 IQ lost permanently"
-      }
+      },
+      "Traits": "traits",
+      "Unfazeable": "{name} is Unfazeable and makes no Fright Check."
     },
     "ExtraEffort": {
       "Action": "Extra Effort",

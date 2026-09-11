@@ -15,6 +15,7 @@ export * from "./damage.js";
 export * from "./hit-locations.js";
 export * from "./armor.js";
 export * from "./skills.js";
+export * from "./trait-effects.js";
 export * from "./traits.js";
 export * from "./encumbrance.js";
 export * from "./extra-effort.js";

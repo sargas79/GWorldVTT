@@ -40,6 +40,8 @@ export interface DefenseContext {
   cannotSeeAttacker?: boolean;
   /** GM-assigned situational penalties: bad footing, distraction, and so on. */
   situational?: number;
+  /** Combat Reflexes: "+1 to all active defense rolls" (Characters p. 43). */
+  combatReflexes?: boolean;
 }
 
 export interface DodgeContext extends DefenseContext {
@@ -92,6 +94,7 @@ function commonModifiers(context: DefenseContext): DefenseModifier[] {
   if (context.allOutDefenseIncreased) {
     modifiers.push({ label: "All-Out Defense (Increased)", value: 2 });
   }
+  if (context.combatReflexes) modifiers.push({ label: "Combat Reflexes", value: 1 });
   if (context.stunned) modifiers.push({ label: "Stunned", value: -4 });
   if (context.cannotSeeAttacker) modifiers.push({ label: "Cannot see attacker", value: -4 });
   if (context.situational) modifiers.push({ label: "Situational", value: context.situational });

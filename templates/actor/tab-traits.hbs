@@ -35,6 +35,11 @@
                 </span>
               {{/if}}
             {{/if}}
+            {{#if trait.applied}}
+              <span class="tag tag-accent" data-tooltip="{{localize "GWORLD.Trait.AppliedHint"}}">
+                {{localize "GWORLD.Trait.Applied"}}
+              </span>
+            {{/if}}
             {{#if trait.system.reactionModifier}}
               <span class="tag tag-accent">{{signed trait.system.reactionModifier}} {{localize "GWORLD.Trait.Reaction"}}</span>
             {{/if}}

@@ -7,6 +7,9 @@
   <div class="gc-mods">
     <span>{{localize "GWORLD.Secondary.Will"}} {{will}}</span>
     {{#if modifier}}<span class="gc-mod">{{signed modifier}}</span>{{/if}}
+    {{#if traitBonus}}
+      <span class="gc-mod">{{signed traitBonus}} {{localize "GWORLD.Fright.Traits"}}</span>
+    {{/if}}
     <span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{effective}}</span>
     {{#if capped}}
       <span class="gc-mod">{{localize "GWORLD.Fright.RuleOf14" ceiling=ceiling}}</span>

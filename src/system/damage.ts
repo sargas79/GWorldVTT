@@ -25,6 +25,11 @@ import { computeInjury } from "../rules/damage.js";
 import type { HitLocation } from "../rules/hit-locations.js";
 import { applyInjury, type InjuryConsequences } from "../rules/injury.js";
 import { knockback, type KnockbackResult } from "../rules/maneuvers.js";
+import {
+  noTraitEffects,
+  shockAfterTraits,
+  type TraitEffects,
+} from "../rules/trait-effects.js";
 import type { DamageType } from "../rules/types.js";
 
 /** A critical hit, already rolled for on one of the tables. */
@@ -77,6 +82,25 @@ export interface AppliedDamage {
   critical: CriticalHit | null;
   /** How far the blow shoves the target, and what that costs them to stay up. */
   knockback: KnockbackResult;
+  /** DR the target has of their own, under whatever they are wearing. */
+  naturalDr: number;
+  /**
+   * Modifiers the target's traits give to the HT rolls this blow calls for --
+   * knockdown, staying conscious, staying alive. The rolls themselves are the
+   * GM's; what the traits are worth to them is not.
+   */
+  htModifiers: { knockdown: number; consciousness: number; survival: number };
+}
+
+/**
+ * What a target's own traits do to a blow, read off their derived data.
+ *
+ * Falls back to nothing at all, so that a blow can be resolved against a plain
+ * object -- a token with no prepared data, or a test.
+ */
+export function traitsOf(actor: any): TraitEffects {
+  const effects = actor?.system?.derived?.traitEffects;
+  return effects ? { ...noTraitEffects(), ...effects } : noTraitEffects();
 }
 
 /** The armour a target is actually wearing, as the rules engine wants it. */
@@ -103,7 +127,12 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   const hp = actor?.system?.hp ?? { value: 0, max: 0 };
   const fp = actor?.system?.fp ?? { value: 0, max: 0 };
 
-  const wornDr = wornDrAt(wornArmor(actor), damage.hitLocation, damage.type);
+  const traits = traitsOf(actor);
+
+  // Damage Resistance is the target's own, under whatever they are wearing:
+  // "each point of DR stops one point of basic damage", the same as armour.
+  const wornDr = wornDrAt(wornArmor(actor), damage.hitLocation, damage.type)
+    + traits.damageResistance;
 
   // A critical can double or triple the blow, or replace the roll with the
   // most the dice could have given. All of that happens to basic damage, before
@@ -151,7 +180,9 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   // make a major wound of anything that penetrates, however little.
   const consequences: InjuryConsequences = {
     ...applied,
-    shock: criticalShock(applied.shock, critical),
+    // High Pain Threshold feels no shock at all and Low Pain Threshold feels it
+    // twice; a critical's doubling is applied to whatever that left.
+    shock: criticalShock(shockAfterTraits(applied.shock, traits), critical),
     majorWound:
       applied.majorWound || Boolean(critical?.majorWound && result.penetrating > 0),
   };
@@ -174,6 +205,12 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     basicDamage,
     critical: damage.critical ?? null,
     knockback: shoved,
+    naturalDr: traits.damageResistance,
+    htModifiers: {
+      knockdown: traits.knockdown,
+      consciousness: traits.consciousness,
+      survival: traits.survival,
+    },
   };
 }
 
