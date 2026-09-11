@@ -56,6 +56,29 @@ criticals by the Basic Set's table. The damage card rolls the dice, applies the
 minimum-damage floor, states the wounding modifier and the injury an unarmoured
 target would take, and names the armour divisor when there is one.
 
+**Criticals do something in particular.** A critical miss is rolled on the table
+as the attack is: an armed one may break the weapon, turn it in your hand or put
+you on the ground, and a punch or a kick reads the unarmed table instead. A
+critical hit is rolled when the damage is applied, where the hit location
+decides which table — a blow to the face, skull or eye reads the far nastier
+head blow table — and where the target's DR is known, since half of the results
+change it. The blow may be doubled, tripled or maximised, DR may be halved or
+ignored, anything that penetrates may count as a major wound, and shock may be
+doubled past its usual floor. In every case the target gets no active defense at
+all, and the defense card says so rather than offering three buttons.
+
+**Contests** — a Quick Contest is one roll each. A Regular Contest is arm
+wrestling: both sides roll again and again, and nothing is settled while both
+succeed or both fail. Extreme scores are balanced first, because two contestants
+at 5 spend a dozen exchanges failing together and two at 17 spend a dozen
+succeeding together; the card shows what was rolled at and what it started as.
+
+**Fright Checks** — a Will roll capped at 13 by the Rule of 14, so a 14 always
+fails however steady you are. Failing rolls 3d plus the margin on a table that
+runs from a second of stunning to a coma and a permanent point of IQ. What the
+situation is worth is asked rather than derived: how grisly, how close, how dark
+and how alone is a judgement about a particular horrible thing.
+
 **Close combat** — a condition for sharing a hex with someone. Only a weapon
 that reaches close can be used there, so a broadsword shows a dash instead of a
 roll and stops offering its parry, and a ranged weapon takes its Bulk in place
@@ -78,6 +101,23 @@ a Deceptive Attack buys a penalty to the foe's defenses at two points of your
 own skill each, never taking you below 10, and a Rapid Strike buys a second
 attack at -6 to both. A deceptive attack's penalty travels with it and lands on
 the defender's card.
+
+**Feint** — a button beside each melee attack fakes it. The foe defends with
+their best of their weapon skills, DX, or Cloak or Shield, and the card says
+which. It is not quite a Quick Contest: a feinter who fails their own roll gains
+nothing however badly the foe rolls, and when the foe fails, the penalty is the
+feinter's own margin rather than the two added together. What it buys is
+remembered on the attacker and spent by their next attack — a feint is good for
+one second, and a fight that moves on without that attack leaves it behind.
+
+**Extra effort** — fatigue for something you could not otherwise do. In combat
+there is no roll at all: a point buys +2 on one defense, or halves the Rapid
+Strike penalty, or adds an All-Out Attack (Strong)'s damage without giving up
+your defenses. Out of combat it is a Will roll at -1 per 5% asked, worse for
+every FP already spent and better by five for someone frightened, angry or
+protecting someone; it costs the point whether it works or not, except on a
+critical success, which is free, and a critical failure, which costs hit points
+and fails outright.
 
 **Ranged attacks** — firing asks how far the target is, how fast it is moving,
 how big it is, how many shots to fire, whether the shot was aimed, and whether
@@ -149,6 +189,22 @@ sheet shows. The sheet leads with each location's highest band, which is what a
 player wants to read, but mail is DR 4 against a blade and DR 2 against a mace,
 and applying the headline would stop a mace with the DR that stops a sword.
 
+**Knockback** is reported with the injury: a yard per full multiple of the
+target's ST-2, worked out from damage before DR, and a penalty to stay standing
+of one per yard after the first. A crushing blow shoves whether or not it gets
+through, which is most of the point of the rule; a cut only shoves when the
+armour stopped it, because a cut that gets through wounds instead.
+
+**Physical feats** — what a body can do falls out of ST, Basic Lift and Move, so
+the attributes tab shows it: how far it jumps standing and running, what it can
+lift in one hand and two, shove, carry and shift where it stands, and how fast
+it sprints and swims. Three of them have buttons. Climbing takes its modifier
+and both speeds from what is being climbed, with encumbrance off the top, and a
+ladder says it needs no roll rather than rolling one. Swimming is +3 for having
+meant to be in the water and -2 per level of encumbrance. Throwing is not a roll
+at all but the weight-ratio table: how far in yards, and thrust damage adjusted
+for weight, with anything past a two-handed lift refused.
+
 **Compendia** — extracted from the Basic Set, names and statistics only:
 
 | pack | contents |
@@ -184,9 +240,10 @@ optional rule with the page that defines it and a switch. A rule that is off
 behaves as though it had never been written — no penalty applied, no control
 shown, nothing to explain.
 
-Rules this system does not read yet are listed too, greyed out and marked, so
-the page is a map of the whole ruleset rather than only of the finished parts.
-They cannot be switched on, because switching them on would do nothing.
+Every rule the page lists is built and can be switched on. A rule added to the
+catalogue before it is wired up is listed greyed out and cannot be switched on,
+because switching it on would do nothing — that is what the page's own
+`implemented` flag is for, and nothing is carrying it at the moment.
 
 The spine is never optional: success rolls, damage, DR and the three active
 defenses are always in play.
@@ -210,6 +267,14 @@ defenses are always in play.
 - `reactionModifier` is zero on every trait, because the book states reaction
   modifiers in prose that is conditional or per-level, and a flat integer would
   fire in the wrong circumstances.
+- **Advantages that change what a body can do.** Enhanced Move and Super Jump
+  multiply jumping distances, Amphibious and Aquatic change water Move, and
+  Unfazeable exempts its owner from Fright Checks entirely. The compendium
+  carries all of them; the feats read only ST, Basic Lift and Move.
+- **Fatigue below zero.** Extra effort refuses when the FP is not there. GURPS
+  allows it at the price of hit points and a HT roll to do anything at all
+  (p. 426), which this system does not yet run, so it says no rather than
+  leaving a character somewhere it cannot look after them.
 
 ## Architecture
 
