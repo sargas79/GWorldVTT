@@ -47,6 +47,12 @@
             {{#if trait.system.reactionModifier}}
               <span class="tag tag-accent">{{signed trait.system.reactionModifier}} {{localize "GWORLD.Trait.Reaction"}}</span>
             {{/if}}
+            {{#if trait.system.selfControl}}
+              <span class="tag">CR {{trait.system.selfControl}}</span>
+            {{/if}}
+            {{#each trait.system.modifiers as |m|}}
+              <span class="tag">{{signed m.value}}%{{#if m.name}} {{m.name}}{{/if}}</span>
+            {{/each}}
           </span>
           <span class="tp {{#if group.negative}}neg{{/if}}">{{trait.system.totalPoints}}</span>
           {{#if @root.editable}}

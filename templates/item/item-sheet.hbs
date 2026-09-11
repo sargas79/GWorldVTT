@@ -154,8 +154,47 @@
         </label>
       </div>
       <p class="ihint">{{localize "GWORLD.Trait.CostTableHint"}}</p>
+
+      {{!-- Enhancements and limitations, and the self-control number: what
+           changes a trait's cost from the figure the book prints. --}}
+      <div class="isub">
+        <div class="isub-head">
+          {{localize "GWORLD.Trait.Modifiers"}}
+          {{#if editable}}
+            <button type="button" class="ibtn" data-action="addModifier">
+              {{> "gworld.plus"}} {{localize "GWORLD.Action.Add"}}
+            </button>
+          {{/if}}
+        </div>
+        {{#each system.modifiers as |m i|}}
+          <div class="irow" data-index="{{i}}">
+            <input type="text" name="system.modifiers.{{i}}.name" value="{{m.name}}"
+                   aria-label="{{localize 'GWORLD.Trait.ModifierName'}}"
+                   placeholder="{{localize 'GWORLD.Trait.ModifierName'}}" {{#unless @root.editable}}disabled{{/unless}} />
+            <input type="number" name="system.modifiers.{{i}}.value" value="{{m.value}}" step="5"
+                   aria-label="{{localize 'GWORLD.Trait.ModifierValue'}}" {{#unless @root.editable}}disabled{{/unless}} />
+            <span class="wmode">%</span>
+            {{#if @root.editable}}
+              <button type="button" class="rollable iconbtn" data-action="deleteModifier"
+                    title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
+            {{/if}}
+          </div>
+        {{else}}
+          <p class="ihint">{{localize "GWORLD.Trait.NoModifiers"}}</p>
+        {{/each}}
+        <div class="ifields">
+          <label>{{localize "GWORLD.Trait.SelfControl"}}
+            <select name="system.selfControl" {{#unless editable}}disabled{{/unless}}>
+              {{selectOptions choices.selfControl selected=system.selfControl localize=true}}
+            </select>
+          </label>
+        </div>
+        <p class="ihint">{{localize "GWORLD.Trait.ModifiersHint"}}</p>
+      </div>
+
       <p class="ihint">
         {{localize "GWORLD.Trait.TotalHint"}} <strong>{{system.totalPoints}}</strong>
+        {{#if hasModifiers}}<span class="ilevel">({{signed netModifier}}%)</span>{{/if}}
         {{#if levelName}}<span class="ilevel">({{levelName}})</span>{{/if}}
         {{#if isTabled}}<span class="ilevel">{{localize "GWORLD.Trait.TabledNote"}}</span>{{/if}}
       </p>

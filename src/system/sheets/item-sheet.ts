@@ -37,6 +37,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       addDefault: GWorldItemSheet.#onAddDefault,
       deleteDefault: GWorldItemSheet.#onDeleteDefault,
       editItemImage: GWorldItemSheet.#onEditImage,
+      addModifier: GWorldItemSheet.#onAddModifier,
+      deleteModifier: GWorldItemSheet.#onDeleteModifier,
     },
   };
 
@@ -70,6 +72,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       context.levelNamesText = item.system.levelNames.join("\n");
       context.isTabled = item.system.costTable.length > 0;
       context.levelName = item.system.levelName;
+      context.netModifier = item.system.netModifier;
+      context.hasModifiers = (item.system.modifiers ?? []).length > 0;
     }
 
     // The description is rich text, so it has to be enriched before display or
@@ -111,6 +115,15 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       ],
       comprehension: keyed("Language", ["none", "broken", "accented", "native"]),
       equipmentCategories: keyed("GearCategory", [...EQUIPMENT_CATEGORIES]),
+      // The self-control numbers, with "none" first. Keys are strings because
+      // a select's values are, and the form reader turns the number back.
+      selfControl: {
+        "": "GWORLD.Trait.NoSelfControl",
+        "6": "GWORLD.Trait.SelfControl6",
+        "9": "GWORLD.Trait.SelfControl9",
+        "12": "GWORLD.Trait.SelfControl12",
+        "15": "GWORLD.Trait.SelfControl15",
+      },
     };
 
     return context;
@@ -148,6 +161,12 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       }
       if (typeof data.system.levelNames === "string") {
         data.system.levelNames = parseLevelNames(data.system.levelNames);
+      }
+      // The select submits "" for none, which the number field cannot hold.
+      if (data.system.selfControl === "" || data.system.selfControl === undefined) {
+        if (Object.hasOwn(data.system, "selfControl")) data.system.selfControl = null;
+      } else {
+        data.system.selfControl = Number(data.system.selfControl);
       }
     }
 
@@ -227,6 +246,19 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       },
     });
     await fp.browse();
+  }
+
+  static async #onAddModifier(this: GWorldItemSheet) {
+    const modifiers = [...(this.item.system.modifiers ?? [])];
+    await this.item.update({ "system.modifiers": [...modifiers, { name: "", value: 0 }] });
+  }
+
+  static async #onDeleteModifier(this: GWorldItemSheet, _event: Event, target: HTMLElement) {
+    const index = Number(target.closest<HTMLElement>("[data-index]")?.dataset.index);
+    if (!Number.isInteger(index)) return;
+    const modifiers = [...(this.item.system.modifiers ?? [])];
+    modifiers.splice(index, 1);
+    await this.item.update({ "system.modifiers": modifiers });
   }
 
   static async #onAddDefault(this: GWorldItemSheet) {
