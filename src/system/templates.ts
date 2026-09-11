@@ -67,6 +67,12 @@ export function registerTemplateHelpers(): void {
   /** Equality, for selecting the current option of a hand-written select. */
   Handlebars.registerHelper("eq", (a: unknown, b: unknown) => a === b);
 
+  /** Any of these, for a section that appears when either of two rules is on. */
+  Handlebars.registerHelper("or", (...args: unknown[]) => {
+    args.pop(); // Handlebars appends its options object.
+    return args.some(Boolean);
+  });
+
   /** Whether a list holds a value, for checkbox sets such as armor locations. */
   Handlebars.registerHelper("includes", (list: unknown, value: unknown) =>
     Array.isArray(list) && list.includes(value),

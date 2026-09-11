@@ -1,0 +1,72 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">{{kind}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>{{poison.name}}</span>
+    {{#if poison.reference}}<span class="gc-mod">{{poison.reference}}</span>{{/if}}
+    {{#if target}}<span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{target}}</span>{{/if}}
+    {{#if noRoll}}<span class="gc-warn">{{localize "GWORLD.Poison.NoRoll"}}</span>{{/if}}
+  </div>
+
+  {{#if dice}}
+    <div class="gc-dice">
+      {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+      <span class="gc-total">{{roll}}</span>
+    </div>
+  {{/if}}
+
+  {{#if damageDice}}
+    <div class="gc-dice">
+      {{#each damageDice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+    </div>
+  {{/if}}
+
+  {{#if shakenOff}}
+    <div class="gc-result success">
+      {{#if illness}}{{localize "GWORLD.Illness.ShakenOff"}}{{else}}{{localize "GWORLD.Poison.ShakenOff"}}{{/if}}
+    </div>
+  {{else}}
+    {{#if hpLost}}
+      <div class="gc-result crit-failure">
+        <strong>-{{hpLost}}</strong> HP
+        <span class="gc-mod">{{hp.now}} / {{hp.max}}</span>
+      </div>
+    {{/if}}
+    {{#if fpLost}}
+      <div class="gc-result failure">
+        <strong>-{{fpLost}}</strong> FP
+        <span class="gc-mod">{{fp.now}} / {{fp.max}}</span>
+      </div>
+    {{/if}}
+  {{/if}}
+
+  {{#if treatment}}
+    <div class="gc-result success">{{treatment}} &mdash; {{localize "GWORLD.Poison.Bonus" bonus=bonus}}</div>
+  {{/if}}
+
+  <div class="gc-mods">
+    {{#if poison.delaySeconds}}
+      <span class="gc-mod">{{localize "GWORLD.Poison.Delay" seconds=poison.delaySeconds}}</span>
+    {{/if}}
+    {{#if cyclesSuffered}}
+      <span class="gc-mod">{{localize "GWORLD.Poison.Suffered" cycles=cyclesSuffered}}</span>
+    {{/if}}
+    {{#if cyclesLeft}}
+      <span class="gc-mod">{{localize "GWORLD.Poison.Left" cycles=cyclesLeft}}</span>
+    {{/if}}
+    {{#if doubled}}
+      <span class="gc-warn">{{localize "GWORLD.Poison.Detect" bonus=detectionBonus}}</span>
+    {{/if}}
+  </div>
+
+  {{#if finished}}
+    {{#unless shakenOff}}
+      <div class="gc-result">
+        {{#if illness}}{{localize "GWORLD.Illness.RanOut"}}{{else}}{{localize "GWORLD.Poison.RanOut"}}{{/if}}
+      </div>
+    {{/unless}}
+  {{/if}}
+</div>

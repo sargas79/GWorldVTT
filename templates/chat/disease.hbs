@@ -1,0 +1,42 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">
+      {{#if infection}}{{localize "GWORLD.Illness.Infection"}}{{else}}{{localize "GWORLD.Illness.Title"}}{{/if}}
+    </span>
+  </div>
+
+  <div class="gc-mods">
+    {{#if disease.name}}<span>{{disease.name}}</span>{{/if}}
+    {{#if disease.reference}}<span class="gc-mod">{{disease.reference}}</span>{{/if}}
+    {{#if target}}<span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{target}}</span>{{/if}}
+    {{#if contact}}<span class="gc-mod">{{localize "GWORLD.Illness.Contact" value=(signed contact)}}</span>{{/if}}
+  </div>
+
+  {{#if dice}}
+    <div class="gc-dice">
+      {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+      <span class="gc-total">{{roll}}</span>
+    </div>
+  {{/if}}
+
+  {{#if protected}}
+    <div class="gc-result success">{{localize "GWORLD.Illness.Antibiotics" tl=techLevel}}</div>
+  {{else if caught}}
+    <div class="gc-result crit-failure">
+      {{#if infection}}{{localize "GWORLD.Illness.WentBad"}}{{else}}{{localize "GWORLD.Illness.Caught"}}{{/if}}
+      <span class="gc-mod">{{localize "GWORLD.Illness.Incubating" seconds=disease.delaySeconds}}</span>
+    </div>
+  {{else}}
+    <div class="gc-result success">
+      {{#if infection}}{{localize "GWORLD.Illness.Clean"}}{{else}}{{localize "GWORLD.Illness.Resisted"}}{{/if}}
+    </div>
+  {{/if}}
+
+  {{#if immune}}
+    <div class="gc-result success">
+      {{#if alreadyKnown}}{{localize "GWORLD.Illness.AlreadyImmune"}}
+      {{else}}{{localize "GWORLD.Illness.Immune"}}{{/if}}
+    </div>
+  {{/if}}
+</div>

@@ -191,4 +191,70 @@
     </div>
   </div>
 
+  {{#if (or rules.poison rules.intoxication rules.disease)}}
+    <div class="isec">
+      <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.Hazards"}}</div>
+
+      {{#if poisons.length}}
+        <div class="cellgrid">
+          {{#each poisons as |dose|}}
+            <div class="cell">
+              <span class="cl">{{dose.name}}</span>
+              <span class="cv">{{dose.left}}</span>
+              <span class="cd">
+                {{localize "GWORLD.Poison.OfCycles" cycles=dose.cycles}}
+                {{#if dose.treatment}} &middot; {{localize "GWORLD.Poison.Bonus" bonus=dose.treatment}}{{/if}}
+              </span>
+              <div class="toolbar">
+                <button type="button" class="ibtn" data-action="poisonCycle" data-poison="{{dose.id}}">
+                  {{localize "GWORLD.Poison.Advance"}}
+                </button>
+                <button type="button" class="ibtn" data-action="poisonTreat" data-poison="{{dose.id}}">
+                  {{localize "GWORLD.Poison.Treat"}}
+                </button>
+                <button type="button" class="ibtn" data-action="poisonClear" data-poison="{{dose.id}}">
+                  {{localize "GWORLD.Poison.Clear"}}
+                </button>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      {{/if}}
+
+      <div class="toolbar">
+        {{#if rules.poison}}
+          <button type="button" class="ibtn" data-action="poison"
+                  data-tooltip="{{localize "GWORLD.Poison.Hint"}}">
+            {{localize "GWORLD.Poison.Action"}}
+          </button>
+        {{/if}}
+        {{#if rules.disease}}
+          <button type="button" class="ibtn" data-action="illness"
+                  data-tooltip="{{localize "GWORLD.Illness.Hint"}}">
+            {{localize "GWORLD.Illness.Action"}}
+          </button>
+          <button type="button" class="ibtn" data-action="infection"
+                  data-tooltip="{{localize "GWORLD.Illness.InfectionHint"}}">
+            {{localize "GWORLD.Illness.InfectionAction"}}
+          </button>
+        {{/if}}
+        {{#if rules.intoxication}}
+          <button type="button" class="ibtn" data-action="drink"
+                  data-tooltip="{{localize "GWORLD.Drink.Hint"}}">
+            {{localize "GWORLD.Drink.Action"}}
+            {{#unless (eq drinking.level "sober")}} &middot; {{localize (concat "GWORLD.Drink.Level_" drinking.level)}}{{/unless}}
+          </button>
+          <button type="button" class="ibtn" data-action="soberUp"
+                  data-tooltip="{{localize "GWORLD.Drink.SoberHint"}}">
+            {{localize "GWORLD.Drink.SoberAction"}}
+          </button>
+          <button type="button" class="ibtn" data-action="hangover"
+                  data-tooltip="{{localize "GWORLD.Drink.HangoverHint"}}">
+            {{localize "GWORLD.Drink.HangoverAction"}}
+          </button>
+        {{/if}}
+      </div>
+    </div>
+  {{/if}}
+
 </section>
