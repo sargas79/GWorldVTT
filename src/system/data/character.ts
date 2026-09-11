@@ -90,6 +90,12 @@ export interface DerivedAttack {
   usable: boolean;
   /** True for a punch, kick, bite or grapple, which fumbles on its own table. */
   unarmed: boolean;
+  /**
+   * True when the damage comes off the Damage Table -- thrust or swing scaled
+   * by ST. The bonuses that only apply to muscle-powered blows read this; a
+   * force sword's flat 8d is not one of them.
+   */
+  stBased: boolean;
   /** An affliction, which is resisted rather than damaging. */
   affliction: boolean;
   /** The attribute it is resisted with, e.g. "HT". Blank when not an affliction. */
@@ -582,6 +588,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           // Which critical miss table a fumble is read on is decided by the
           // skill: a Karate kick fumbles differently from a dropped axe.
           unarmed: isUnarmedSkill(mode.skill),
+          stBased: mode.damageBase === "thr" || mode.damageBase === "sw",
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),
@@ -627,6 +634,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           // A ranged attack never reads the unarmed miss table: a thrown rock
           // fumbles as a weapon does, whatever threw it.
           unarmed: false,
+          stBased: mode.damageBase === "thr" || mode.damageBase === "sw",
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),

@@ -159,6 +159,7 @@
                     data-damage-formula="{{atk.damage}}" data-damage-type="{{atk.damageType}}"
                     data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}"
                     data-explosive="{{#if atk.explosive}}1{{/if}}"
+                    data-st-based="{{#if atk.stBased}}1{{/if}}" data-melee="1"
                     data-fragmentation="{{atk.fragmentation}}"{{/if}}>{{atk.damage}}
                   <span class="dt">{{atk.damageType}}</span>
                 </td>
@@ -232,6 +233,7 @@
                     data-damage-formula="{{atk.damage}}" data-damage-type="{{atk.damageType}}"
                     data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}"
                     data-explosive="{{#if atk.explosive}}1{{/if}}"
+                    data-st-based="{{#if atk.stBased}}1{{/if}}"
                     data-fragmentation="{{atk.fragmentation}}"{{/if}}>{{atk.damage}}
                   <span class="dt">{{atk.damageType}}</span>
                 </td>
@@ -280,6 +282,12 @@
         <button type="button" class="ibtn" data-action="frightCheck"
                 data-tooltip="{{localize "GWORLD.Fright.Hint"}}">
           {{localize "GWORLD.Fright.Action"}}
+        </button>
+      {{/if}}
+      {{#if rules.extraEffort}}
+        <button type="button" class="ibtn" data-action="extraEffort"
+                data-tooltip="{{localize "GWORLD.ExtraEffort.Hint"}}">
+          {{localize "GWORLD.ExtraEffort.Action"}}
         </button>
       {{/if}}
     </div>

@@ -17,6 +17,8 @@ import { rollSuccess } from "./roll.js";
 import { currentTargets } from "./targets.js";
 import { blastAt } from "../rules/explosions.js";
 import { criticalEntry, criticalHitTableFor } from "../rules/criticals.js";
+import { EXTRA_EFFORT_FP, FEVERISH_DEFENSE_BONUS } from "../rules/extra-effort.js";
+import { spendFatigue } from "./extra-effort.js";
 import { isRuleOn } from "./optional-rules.js";
 import { arcDefense, attackArc, retreatBonus, type Arc } from "../rules/tactical.js";
 import { attackDirection, facingOf } from "./hex.js";
@@ -395,6 +397,20 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       row.append(retreat);
     }
 
+    // A point of fatigue for +2 on this one defense (Campaigns p. 357). Ticked
+    // before the button is pressed, because the FP is spent whatever the roll
+    // then does.
+    const feverishBox = isRuleOn("extraEffort") ? document.createElement("input") : null;
+    if (feverishBox) {
+      feverishBox.type = "checkbox";
+      const feverish = document.createElement("label");
+      feverish.className = "gc-retreat";
+      feverish.append(feverishBox, document.createTextNode(
+        `${game.i18n.localize("GWORLD.ExtraEffort.Feverish")} (+${FEVERISH_DEFENSE_BONUS})`,
+      ));
+      row.append(feverish);
+    }
+
     for (const key of available) {
       const button = document.createElement("button");
       button.type = "button";
@@ -412,6 +428,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
           arcPenalty,
           deception,
           retreating: retreatBox?.checked ?? false,
+          feverish: feverishBox?.checked ?? false,
           skill: defenses[key].skillName ?? "",
           isFencing: Boolean(defenses[key].isFencing),
         });
@@ -469,13 +486,26 @@ async function rollDefense(options: {
   arcPenalty: number;
   deception: number;
   retreating: boolean;
+  feverish: boolean;
   skill: string;
   isFencing: boolean;
 }): Promise<void> {
   const {
-    defender, key, total, attack, arcPenalty, deception, retreating, skill, isFencing,
+    defender, key, total, attack, arcPenalty, deception, retreating, feverish, skill, isFencing,
   } = options;
   const name = game.i18n.localize(DEFENSES[key]);
+
+  // Paid before the roll, and a defender who cannot pay does not get the bonus
+  // -- so the defense is abandoned rather than rolled on a promise, and they
+  // can press the button again without it.
+  if (feverish) {
+    const paid = await spendFatigue(
+      defender,
+      EXTRA_EFFORT_FP,
+      game.i18n.localize("GWORLD.ExtraEffort.Feverish"),
+    );
+    if (!paid) return;
+  }
 
   const modifiers = [];
   if (arcPenalty !== 0) {
@@ -483,6 +513,12 @@ async function rollDefense(options: {
   }
   if (deception !== 0) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Melee.Deceptive"), value: deception });
+  }
+  if (feverish) {
+    modifiers.push({
+      label: game.i18n.localize("GWORLD.ExtraEffort.Feverish"),
+      value: FEVERISH_DEFENSE_BONUS,
+    });
   }
   if (retreating) {
     modifiers.push({

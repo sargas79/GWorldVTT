@@ -767,6 +767,27 @@
         "comaAndPhobia15": "Coma, and a -15-point mental disadvantage",
         "comaAndPhobiaAndIq": "Coma, a -15-point mental disadvantage, and 1 IQ lost permanently"
       }
+    },
+    "ExtraEffort": {
+      "Action": "Extra Effort",
+      "Title": "Extra Effort",
+      "Hint": "Push past your limits: a Will roll at -1 per 5% asked, and a point of fatigue",
+      "Percent": "Increase asked (%)",
+      "MotivatedHint": "Driven by fear, anger or concern for a loved one (+5)",
+      "Motivated": "motivated",
+      "Fatigued": "fatigued",
+      "Asking": "+{percent}% asked",
+      "Success": "Gains the {percent}% — the task itself still has to be rolled",
+      "Failure": "Achieves only what they would have without the effort",
+      "CriticalSuccess": "Gains the increase, and it costs no fatigue at all",
+      "CriticalFailure": "The task fails outright, and costs {hp} HP",
+      "NaturalEighteen": "Roll against HT or take a temporary disadvantage — the GM says which",
+      "Spent": "{fp} FP spent",
+      "Feverish": "Feverish Defense",
+      "Flurry": "Flurry of Blows",
+      "MightyBlows": "Mighty Blows",
+      "NoFatigue": "Not enough FP for {what} ({cost} FP).",
+      "NotStBased": "Mighty Blows adds nothing to damage that is not ST-based."
     }
   }
 }
