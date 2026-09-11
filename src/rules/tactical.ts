@@ -270,3 +270,16 @@ export function facingChangeAtEndOfMove(options: {
   if (movementPointsAvailable <= 0) return "any";
   return movementPointsSpent <= movementPointsAvailable / 2 ? "any" : "oneHexSide";
 }
+
+/**
+ * Whether a melee weapon can be used in close combat
+ * (GURPS Basic Set: Campaigns p. 391).
+ *
+ * "You can only use small, easily managed weapons in close combat. You can
+ * attack with any melee weapon with reach 'C'." A reach of "C,1" qualifies --
+ * the weapon can be brought in close even though it also reaches a yard -- but
+ * a broadsword at reach 1 cannot be used at all once someone is inside it.
+ */
+export function usableInCloseCombat(reach: string): boolean {
+  return /(^|[,\s-])c($|[,\s*])/i.test(reach.trim());
+}

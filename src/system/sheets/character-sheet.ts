@@ -53,6 +53,7 @@ const CONDITIONS = [
   { key: "stunned", label: "GWORLD.Condition.Stunned" },
   { key: "blindToAttacker", label: "GWORLD.Condition.BlindToAttacker" },
   { key: "attackedThisTurn", label: "GWORLD.Condition.AttackedThisTurn" },
+  { key: "closeCombat", label: "GWORLD.Condition.CloseCombat" },
 ] as const;
 
 /**
