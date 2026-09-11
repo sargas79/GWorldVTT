@@ -88,10 +88,14 @@
     <div class="istance">
       {{!-- The posture is chosen here as well as read here. It used to be a
            label only, and a character knocked down by a takedown had no way
-           back up from the tab where the fight is run. --}}
+           back up from the tab where the fight is run.
+
+           Not a form field: the Attributes tab already has one named
+           system.posture, and two fields of one name submit as a pair the
+           schema refuses. This one writes the actor itself when changed. --}}
       <label class="ichip on iposture" data-tooltip="{{localize "GWORLD.Field.PostureHint"}}">
         <span class="ichip-label">{{localize "GWORLD.Field.Posture"}}</span>
-        <select name="system.posture" aria-label="{{localize "GWORLD.Field.Posture"}}"
+        <select data-posture-select aria-label="{{localize "GWORLD.Field.Posture"}}"
                 {{#unless editable}}disabled{{/unless}}>
           {{#each postures as |posture|}}
             <option value="{{posture.key}}" {{#if posture.selected}}selected{{/if}}>{{posture.label}}</option>
