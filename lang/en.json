@@ -774,7 +774,8 @@
       "Slowing": "Shedding {yards} yards/second — {safe} is safe, {most} the most",
       "HeldIt": "Held it",
       "LostControl": "Lost control — falls or spins out",
-      "Riding": "Riding"
+      "Riding": "Riding",
+      "Charging": "Charging (mount at velocity 7+)"
     },
     "Penalties": {
       "Label": "Attribute penalty",

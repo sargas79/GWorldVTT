@@ -46,6 +46,8 @@ import {
   dualWeaponAttack,
 } from "../rules/attack-options.js";
 import { penaltyForRoll } from "../rules/attribute-penalties.js";
+import { CHARGE_VELOCITY, mountedAttack, mountedShooting } from "../rules/mounted.js";
+import { consumeCharge, recordCharge } from "./mounted.js";
 import type { SkillAttribute } from "../rules/types.js";
 import {
   elevationRange,
@@ -535,12 +537,28 @@ export async function handleRollAction(
     ? await promptForMeleeAttack({
         effectiveSkill: base,
         damageType: (target.dataset.damageType ?? "cr") as DamageType,
+        mounted: actor?.system?.mounted === true && isRuleOn("mountedCombat"),
         dualWeaponTechnique: Number(actor?.system?.derived?.techniques?.dualWeaponAttack) || 0,
         ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true,
         offHandTraining: Number(actor?.system?.derived?.techniques?.offHandWeaponTraining) || 0,
       })
     : null;
   if (asksAboutMelee && melee === null) return;
+
+  // "Firing from atop a moving animal tests both marksmanship and riding. Roll
+  // against the lower of Riding or ranged weapon skill to hit" (p. 396).
+  if (ranged && shot && actor?.system?.mounted === true && isRuleOn("mountedCombat")) {
+    const capped = mountedShooting({
+      ridingSkill: Number(actor?.system?.derived?.ridingSkill) || 6,
+      weaponSkill: base,
+    }).toHit;
+    if (capped < base) {
+      shot.modifiers.push({
+        label: game.i18n.localize("GWORLD.Mounted.Riding"),
+        value: capped - base,
+      });
+    }
+  }
 
   const modifiers = shot
     ? shot.modifiers
@@ -572,6 +590,7 @@ export async function handleRollAction(
   if (rollType === "attack") {
     await recordCalledShot(actor, melee?.calledShot ?? shot?.calledShot ?? null);
     await recordTurnedBlade(actor, melee?.turned === true);
+    if (melee?.charging) await recordCharge(actor);
   }
 
   // A Feint made last turn is spent by this attack, whether or not it is aimed
@@ -975,6 +994,8 @@ export async function promptForMeleeAttack(options: {
   effectiveSkill: number;
   /** What the weapon does, which decides where it can be aimed. */
   damageType: DamageType;
+  /** In the saddle, which offers the charge (Campaigns p. 396). */
+  mounted?: boolean;
   /** Levels of the Dual-Weapon Attack technique, which buy the -4 back. */
   dualWeaponTechnique?: number;
   /** Ambidexterity, or full Off-Hand Weapon Training. */
@@ -992,6 +1013,8 @@ export async function promptForMeleeAttack(options: {
   calledShot: CalledShot | null;
   /** True when the blow was struck with the flat or the butt. */
   turned: boolean;
+  /** True when it was struck from a mount moving at 7+ relative to the foe. */
+  charging: boolean;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Melee.${key}`);
 
@@ -1033,6 +1056,12 @@ export async function promptForMeleeAttack(options: {
         ? `<label style="display:flex;align-items:center;gap:8px">
              <input type="checkbox" name="flurry">
              <span>${E("Flurry")} (${flurryOfBlowsPenalty()}, ${EXTRA_EFFORT_FP} FP)</span>
+           </label>`
+        : ""}
+      ${options.mounted
+        ? `<label style="display:flex;align-items:center;gap:8px">
+             <input type="checkbox" name="charging">
+             <span>${game.i18n.localize("GWORLD.Mounted.Charging")}</span>
            </label>`
         : ""}
       ${dualAllowed
@@ -1095,6 +1124,7 @@ export async function promptForMeleeAttack(options: {
           ground:
             Number(form?.querySelector<HTMLSelectElement>('select[name="ground"]')?.value ?? 0) || 0,
           dual: form?.querySelector<HTMLSelectElement>('select[name="dual"]')?.value ?? "no",
+          charging: ticked("charging"),
         };
       },
     },
@@ -1102,8 +1132,9 @@ export async function promptForMeleeAttack(options: {
   });
 
   if (!result || typeof result !== "object") return null;
-  const { deceptive, modifier, rapid, flurry, mighty, sight, calledShot, turned, ground, dual } =
-    result as {
+  const {
+    deceptive, modifier, rapid, flurry, mighty, sight, calledShot, turned, ground, dual, charging,
+  } = result as {
     deceptive: number;
     modifier: number;
     rapid: boolean;
@@ -1114,6 +1145,7 @@ export async function promptForMeleeAttack(options: {
     turned: boolean;
     ground: number;
     dual: string;
+    charging: boolean;
   };
 
   // "You may not reduce your final effective skill below 10", so the ceiling is
@@ -1135,6 +1167,16 @@ export async function promptForMeleeAttack(options: {
       value: flurried ? flurryOfBlowsPenalty() : RAPID_STRIKE_PENALTY,
     });
   }
+  // "If the mount's velocity is 7 or more relative to the foe, the attack has
+  // -1 to hit but +1 damage" (p. 396). The damage half is collected at the
+  // damage roll, which is a separate click.
+  if (charging) {
+    modifiers.push({
+      label: game.i18n.localize("GWORLD.Mounted.Charging"),
+      value: mountedAttack(CHARGE_VELOCITY).toHit,
+    });
+  }
+
   // Both hands at once: each roll is separate, so this is the modifier for the
   // hand being rolled now (p. 417). The technique and Ambidexterity come off the
   // sheet rather than being asked about again.
@@ -1176,6 +1218,7 @@ export async function promptForMeleeAttack(options: {
     mightyBlows,
     calledShot: aimed.shot,
     turned: turned === true,
+    charging: charging === true,
   };
 }
 
@@ -1215,6 +1258,14 @@ export async function handleDamageAction(
     } else {
       ui.notifications?.info(game.i18n.localize("GWORLD.ExtraEffort.NotStBased"));
     }
+  }
+
+  // The other half of a mounted charge: "-1 to hit but +1 damage" (p. 396).
+  if (await consumeCharge(actor)) {
+    modifiers.push({
+      label: game.i18n.localize("GWORLD.Mounted.Charging"),
+      value: mountedAttack(CHARGE_VELOCITY).damageBonus,
+    });
   }
 
   // A weapon whose damage cannot be parsed is not turned: substituting dice

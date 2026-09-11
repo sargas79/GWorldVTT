@@ -143,3 +143,26 @@ export async function rollPushingTheEnvelope(options: {
 
   return outcome.success;
 }
+
+/** Where a charge bought at the attack roll waits for the damage roll. */
+export const CHARGE_FLAG = "mountedCharge";
+
+/**
+ * Remembers that this blow was struck from a mount at speed (p. 396).
+ *
+ * The to-hit penalty lands on the attack roll and the damage bonus on the
+ * damage roll, which is a separate click -- the same split Mighty Blows has,
+ * and the same solution.
+ */
+export async function recordCharge(actor: any): Promise<void> {
+  if (!actor?.isOwner) return;
+  await actor.setFlag(SYSTEM_ID, CHARGE_FLAG, true);
+}
+
+/** Collects a charge bought before the attack roll, and clears it. */
+export async function consumeCharge(actor: any): Promise<boolean> {
+  const charging = actor?.getFlag?.(SYSTEM_ID, CHARGE_FLAG) === true;
+  if (charging) await actor.unsetFlag(SYSTEM_ID, CHARGE_FLAG);
+  return charging;
+}
+
