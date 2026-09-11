@@ -159,6 +159,18 @@ declare global {
       }
 
       namespace apps {
+        /**
+         * The file browser. Only what the item sheet uses is declared: it is
+         * constructed with the current path, a file type and a callback, and
+         * `browse()` opens it.
+         */
+        class FilePicker {
+          static implementation: new (options: {
+            current?: string;
+            type?: string;
+            callback?: (path: string) => void;
+          }) => { browse(): Promise<unknown> };
+        }
         class DocumentSheetConfig {
           static registerSheet(
             documentClass: unknown,

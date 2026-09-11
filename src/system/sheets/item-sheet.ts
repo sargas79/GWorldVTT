@@ -35,6 +35,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       deleteMode: GWorldItemSheet.#onDeleteMode,
       addDefault: GWorldItemSheet.#onAddDefault,
       deleteDefault: GWorldItemSheet.#onDeleteDefault,
+      editItemImage: GWorldItemSheet.#onEditImage,
     },
   };
 
@@ -201,6 +202,29 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     if (!found || !Number.isInteger(index)) return;
     found.list.splice(index, 1);
     await this.item.update({ [`system.${found.path}`]: found.list });
+  }
+
+  /**
+   * Picks a new image for the item.
+   *
+   * Foundry's own editImage action insists on an <img> element, and the image
+   * here sits inside a button so it can be reached from the keyboard. The
+   * chosen path is written straight to the item rather than dropped into the
+   * form: the form has no image field to drop it into, and the one it used to
+   * have was the cause of every "does not have a valid file extension" refusal
+   * this sheet ever produced.
+   */
+  static async #onEditImage(this: GWorldItemSheet) {
+    if (!this.isEditable) return;
+    const item = this.item;
+    const fp = new foundry.applications.apps.FilePicker.implementation({
+      current: String(item._source?.img ?? item.img ?? ""),
+      type: "image",
+      callback: (path: string) => {
+        void item.update({ img: path });
+      },
+    });
+    await fp.browse();
   }
 
   static async #onAddDefault(this: GWorldItemSheet) {
