@@ -45,6 +45,15 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   accuracy, rapid fire, bulk, close combat, Wait and opportunity fire.
 - **Attack options** — Deceptive Attack, Rapid Strike, Feint, All-Out Attack,
   slams, evading, retreats.
+- **Grappling** — take hold of a foe and they cannot walk away; then a takedown,
+  a pin, or a choke, each the contest the book says it is, and breaking free is
+  a contest of ST against how good the grip is.
+- **Fighting what you cannot see** — the penalties for darkness, invisibility
+  and knowing only where a foe is, on both the attack and the defense.
+- **Cover** — aim at what is showing, roll the location and risk the cover, or
+  shoot through it.
+- **Size** — a large fighter's weapons reach further, and they have an easier
+  time getting hold of somebody smaller.
 - **Defending.** An attack that connects offers each defender the defenses they
   actually have, with retreats and Feverish Defense.
 - **Damage and injury** — DR resolved against the damage type being applied,
