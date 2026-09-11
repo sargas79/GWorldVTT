@@ -228,3 +228,64 @@ export function normalizeSkillName(name: string): string {
 export function sameSkill(a: string, b: string): boolean {
   return normalizeSkillName(a) === normalizeSkillName(b);
 }
+
+/**
+ * The most points anyone will sensibly put into one skill, used only to stop
+ * the steppers below looping for ever on a nonsense input.
+ */
+const SKILL_POINT_CEILING = 1000;
+
+/**
+ * The next point total that actually buys something (GURPS Lite p. 12).
+ *
+ * Skill points come in steps -- 1, 2, 4, 8, then four at a time -- and the
+ * totals between them buy nothing at all. Stepping up by one would spend a
+ * character point for no change to the level three times out of four, so the
+ * step goes to the next total on the table.
+ *
+ * A total that is off the table steps up to the next one on it, which is how a
+ * skill imported at an odd figure comes back into line.
+ */
+export function nextSkillPoints(points: number): number {
+  const from = Math.max(0, Math.floor(points));
+  for (let step = 0; ; step++) {
+    const cost = skillStepCost(step);
+    if (cost > from) return cost;
+    if (cost >= SKILL_POINT_CEILING) return from;
+  }
+}
+
+/**
+ * The previous point total that buys something, or zero.
+ *
+ * Zero is a real answer: it is the skill unlearned, rolled at default if it has
+ * one. A total off the table steps down to the highest one below it.
+ */
+export function previousSkillPoints(points: number): number {
+  const from = Math.max(0, Math.floor(points));
+  let below = 0;
+  for (let step = 0; ; step++) {
+    const cost = skillStepCost(step);
+    if (cost >= from) return below;
+    below = cost;
+    if (cost >= SKILL_POINT_CEILING) return below;
+  }
+}
+
+/**
+ * The next point total for a technique (GURPS Basic Set: Characters p. 230).
+ *
+ * Techniques are not skills and do not use the Skill Cost Table: an Average
+ * one costs a point per level, and a Hard one wastes the first point and then
+ * costs a point per level. Either way every further point buys a level, so
+ * they step one at a time -- stepping them along the skill table would jump
+ * from 2 to 4 and skip a level that can be bought.
+ */
+export function nextTechniquePoints(points: number): number {
+  return Math.max(0, Math.floor(points)) + 1;
+}
+
+/** The previous point total for a technique, floored at none. */
+export function previousTechniquePoints(points: number): number {
+  return Math.max(0, Math.floor(points) - 1);
+}

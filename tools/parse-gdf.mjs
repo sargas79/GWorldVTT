@@ -23,7 +23,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -77,12 +77,15 @@ const id = (kind, name) =>
  * changed would break every such reference, so a name that already exists keeps
  * the id it already had.
  */
-function existingIds(pack) {
-  const dir = join(projectRoot, "packs-src", pack);
+function existingIds(...packs) {
   const byName = new Map();
-  for (const file of readdirSync(dir).filter((f) => f.endsWith(".json"))) {
-    for (const doc of JSON.parse(readFileSync(join(dir, file), "utf8"))) {
-      byName.set(doc.name, doc._id);
+  for (const pack of packs) {
+    const dir = join(projectRoot, "packs-src", pack);
+    if (!existsSync(dir)) continue;
+    for (const file of readdirSync(dir).filter((f) => f.endsWith(".json"))) {
+      for (const doc of JSON.parse(readFileSync(join(dir, file), "utf8"))) {
+        byName.set(doc.name, doc._id);
+      }
     }
   }
   return byName;
@@ -145,7 +148,9 @@ function parseLevelNames(value) {
 }
 
 function parseTraits(recs, reject, note) {
-  const ids = existingIds("traits");
+  // Advantages and disadvantages are separate compendia, but they are one
+  // body of records in the source and share a name space: Wealth is both.
+  const ids = existingIds("advantages", "disadvantages");
   const out = [];
   const taken = new Map();
 
@@ -954,7 +959,9 @@ function main() {
     (n) => notes.push(n),
   );
 
+  const positive = traits.filter((t) => ["advantage", "perk"].includes(t.system.category));
   report("traits", traits.length, traitRejects);
+  console.log(`  advantages ${positive.length}, disadvantages ${traits.length - positive.length}`);
   console.log(`  tabled costs: ${traits.filter((t) => t.system.costTable.length > 0).length}`);
   report("skills", skills.length, skillRejects);
   report("techniques", techniques.length, []);
@@ -971,8 +978,15 @@ function main() {
   }
 
   if (write === "--write") {
+    // Two packs rather than one. A list of 641 traits with advantages and
+    // disadvantages interleaved is not a list anyone can choose from: you go
+    // looking for something to spend points on and half of what you scroll
+    // past charges you nothing.
+    const negative = traits.filter((t) => !positive.includes(t));
+
     const files = [
-      ["traits", "basic-set-traits.json", traits],
+      ["advantages", "basic-set-advantages.json", positive],
+      ["disadvantages", "basic-set-disadvantages.json", negative],
       ["skills", "basic-set-skills.json", skills],
       ["skills", "basic-set-techniques.json", techniques],
       ["equipment", "armor.json", armor],
@@ -980,6 +994,7 @@ function main() {
       ["equipment", "shields.json", shields],
     ];
     for (const [pack, file, docs] of files) {
+      mkdirSync(join(projectRoot, "packs-src", pack), { recursive: true });
       writeFileSync(
         join(projectRoot, "packs-src", pack, file),
         `${JSON.stringify(docs, null, 2)}\n`,
@@ -987,7 +1002,7 @@ function main() {
       );
     }
     writeFileSync(
-      join(projectRoot, "packs-src", "traits", ".rejected-gdf.txt"),
+      join(projectRoot, "packs-src", "advantages", ".rejected-gdf.txt"),
       traitRejects.map((r) => `${r.why}\t${r.what}`).join("\n"),
       "utf8",
     );

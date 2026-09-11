@@ -48,9 +48,17 @@
               <td class="wmode">{{skill.system.attribute}}/{{skill.system.difficulty}}</td>
               <td class="n">
                 {{#if @root.editable}}
-                  <input type="number" class="npts" min="0" step="1"
-                         value="{{skill.system.points}}" data-item-field="system.points"
-                         aria-label="{{localize "GWORLD.Column.Pts"}}" />
+                  <span class="ptstep">
+                    <button type="button" data-action="stepPoints" data-step="down"
+                            aria-label="{{localize "GWORLD.Skill.SpendLess"}}"
+                            title="{{localize "GWORLD.Skill.SpendLess"}}">&minus;</button>
+                    <input type="number" class="npts" min="0" step="1"
+                           value="{{skill.system.points}}" data-item-field="system.points"
+                           aria-label="{{localize "GWORLD.Column.Pts"}}" />
+                    <button type="button" data-action="stepPoints" data-step="up"
+                            aria-label="{{localize "GWORLD.Skill.SpendMore"}}"
+                            title="{{localize "GWORLD.Skill.SpendMore"}}">+</button>
+                  </span>
                 {{else}}{{skill.system.points}}{{/if}}
               </td>
               <td class="n wmode">{{relativeLabel skill}}</td>
@@ -89,9 +97,17 @@
               <td class="wmode">{{skill.system.attribute}}/{{skill.system.difficulty}}</td>
               <td class="n">
                 {{#if @root.editable}}
-                  <input type="number" class="npts" min="0" step="1"
-                         value="{{skill.system.points}}" data-item-field="system.points"
-                         aria-label="{{localize "GWORLD.Column.Pts"}}" />
+                  <span class="ptstep">
+                    <button type="button" data-action="stepPoints" data-step="down"
+                            aria-label="{{localize "GWORLD.Skill.SpendLess"}}"
+                            title="{{localize "GWORLD.Skill.SpendLess"}}">&minus;</button>
+                    <input type="number" class="npts" min="0" step="1"
+                           value="{{skill.system.points}}" data-item-field="system.points"
+                           aria-label="{{localize "GWORLD.Column.Pts"}}" />
+                    <button type="button" data-action="stepPoints" data-step="up"
+                            aria-label="{{localize "GWORLD.Skill.SpendMore"}}"
+                            title="{{localize "GWORLD.Skill.SpendMore"}}">+</button>
+                  </span>
                 {{else}}&mdash;{{/if}}
               </td>
               <td class="n wmode">{{relativeLabel skill}}</td>
@@ -154,9 +170,17 @@
               <td class="wmode">Tech/{{entry.item.system.difficulty}}</td>
               <td class="n">
                 {{#if @root.editable}}
-                  <input type="number" class="npts" min="0" step="1"
-                         value="{{entry.item.system.points}}" data-item-field="system.points"
-                         aria-label="{{localize "GWORLD.Column.Pts"}}" />
+                  <span class="ptstep">
+                    <button type="button" data-action="stepPoints" data-step="down"
+                            aria-label="{{localize "GWORLD.Skill.SpendLess"}}"
+                            title="{{localize "GWORLD.Skill.SpendLess"}}">&minus;</button>
+                    <input type="number" class="npts" min="0" step="1"
+                           value="{{entry.item.system.points}}" data-item-field="system.points"
+                           aria-label="{{localize "GWORLD.Column.Pts"}}" />
+                    <button type="button" data-action="stepPoints" data-step="up"
+                            aria-label="{{localize "GWORLD.Skill.SpendMore"}}"
+                            title="{{localize "GWORLD.Skill.SpendMore"}}">+</button>
+                  </span>
                 {{else}}{{entry.item.system.points}}{{/if}}
               </td>
               <td class="n wmode">{{entry.item.system.prerequisite}}{{entry.item.system.defaultModifier}}</td>

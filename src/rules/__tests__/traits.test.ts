@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  nextTraitLevel,
   parseCostTable,
   parseLevelNames,
   traitCostLabel,
+  traitLevelCeiling,
   traitLevelName,
   traitPoints,
+  previousTraitLevel,
   type TraitCost,
 } from "../traits.js";
 
@@ -155,5 +158,52 @@ describe("parseLevelNames", () => {
   it("drops trailing blank lines, which are an artefact of typing", () => {
     expect(parseLevelNames("Mild\nSevere\n\n\n")).toEqual(["Mild", "Severe"]);
     expect(parseLevelNames("")).toEqual([]);
+  });
+});
+
+describe("stepping trait levels", () => {
+  const levelled = (levels: number, over: Partial<{ maxLevels: number; costTable: number[] }> = {}) => ({
+    levels,
+    maxLevels: 0,
+    costTable: [] as number[],
+    ...over,
+  });
+
+  it("steps one level at a time, since every level buys something", () => {
+    expect(nextTraitLevel(levelled(0))).toBe(1);
+    expect(nextTraitLevel(levelled(3))).toBe(4);
+    expect(previousTraitLevel(levelled(3))).toBe(2);
+  });
+
+  it("stops at none rather than going negative", () => {
+    expect(previousTraitLevel(levelled(1))).toBe(0);
+    expect(previousTraitLevel(levelled(0))).toBe(0);
+  });
+
+  it("stops at the cap the book prints", () => {
+    expect(nextTraitLevel(levelled(2, { maxLevels: 3 }))).toBe(3);
+    expect(nextTraitLevel(levelled(3, { maxLevels: 3 }))).toBe(3);
+  });
+
+  /**
+   * A tabled trait cannot go past the steps it prices: there would be no cost
+   * to charge for the level. Wealth prices five.
+   */
+  it("stops at the last step a table prices", () => {
+    const wealth = levelled(5, { costTable: [10, 20, 30, 50, 75], maxLevels: 5 });
+    expect(nextTraitLevel(wealth)).toBe(5);
+    expect(nextTraitLevel({ ...wealth, levels: 4 })).toBe(5);
+  });
+
+  it("takes whichever ceiling is lower", () => {
+    expect(traitLevelCeiling({ maxLevels: 8, costTable: [1, 2, 3] })).toBe(3);
+    expect(traitLevelCeiling({ maxLevels: 2, costTable: [1, 2, 3] })).toBe(2);
+    expect(traitLevelCeiling({ maxLevels: 0, costTable: [1, 2] })).toBe(2);
+  });
+
+  /** Acute Hearing is 2 a level with no printed limit. */
+  it("has no ceiling for an evenly priced trait the book does not cap", () => {
+    expect(traitLevelCeiling({ maxLevels: 0, costTable: [] })).toBeNull();
+    expect(nextTraitLevel(levelled(97))).toBe(98);
   });
 });

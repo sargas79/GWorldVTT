@@ -25,6 +25,13 @@ guided build. Both show what the spending bought, so a skill says the level its
 points reach rather than repeating the points back. A trait with a flat cost
 gets no levels field, since there is nothing to buy.
 
+Each has a pair of steppers. A skill's walk the Skill Cost Table — 1, 2, 4, 8,
+then four at a time — because the totals in between buy nothing at all, and a
+stepper that added one would spend a character point for no change to the level
+three times out of four. A trait's move a level at a time, since every level of
+a trait buys something, and stop at the cap the book prints or the last step its
+cost table prices.
+
 **Building a character** — two ways in, and they edit the same sheet. Each of
 the Skills, Traits and Gear tabs has a Browse button that opens a searchable
 list of everything in the compendia, filtered to that tab, with every row
@@ -146,7 +153,8 @@ and applying the headline would stop a mace with the DR that stops a sword.
 
 | pack | contents |
 | --- | --- |
-| GURPS Advantages & Disadvantages | 641 traits, each with its cost, level cap and the book's name for each level |
+| GURPS Advantages | 329 advantages and perks, each with its cost, level cap and the book's name for each level |
+| GURPS Disadvantages | 312 disadvantages and quirks |
 | GURPS Skills | 630 skills with attribute, difficulty and defaults, and 35 techniques |
 | GURPS Equipment | 463 items — 153 armours, 18 shields (16 of which can be bashed with), and 292 pieces of gear of which 137 carry attack modes |
 
@@ -155,6 +163,13 @@ attack: a hatchet swings under Axe/Mace and throws under Thrown Weapon. Armour
 written "4/2" carries both figures and the damage each applies to, so mail turns
 a blade at DR 4 and a mace at DR 2. A bow's damage and range come off the bow's
 own ST rather than the archer's, and are recorded that way.
+
+Advantages and disadvantages are separate compendia. They are one item type
+and one body of records in the source, but a list of 641 with the two
+interleaved is not a list anyone can choose from: you go looking for something
+to spend points on and half of what you scroll past charges you nothing. The
+picker filters by category too, so browsing from under Disadvantages offers
+only those.
 
 A few dozen traits are priced from a table rather than at a flat rate per level,
 and those carry the table: Wealth runs 10/20/30/50/75 and Appearance

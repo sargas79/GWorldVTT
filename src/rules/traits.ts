@@ -103,3 +103,42 @@ export function parseLevelNames(text: string): string[] {
   while (names.length > 0 && names[names.length - 1] === "") names.pop();
   return names;
 }
+
+/**
+ * The next level of a levelled trait, or the current one if it is already at
+ * the top.
+ *
+ * Levels step one at a time -- unlike skill points, every level of a trait
+ * buys something -- but they stop where the book stops. `maxLevels` is the cap
+ * the book prints; a tabled trait also cannot go past the steps it prices,
+ * since there would be no cost to charge.
+ */
+export function nextTraitLevel(trait: {
+  levels: number;
+  maxLevels: number;
+  costTable: readonly number[];
+}): number {
+  const ceiling = traitLevelCeiling(trait);
+  const next = Math.max(0, Math.floor(trait.levels)) + 1;
+  return ceiling === null ? next : Math.min(next, ceiling);
+}
+
+/** The previous level, floored at none. */
+export function previousTraitLevel(trait: { levels: number }): number {
+  return Math.max(0, Math.floor(trait.levels) - 1);
+}
+
+/**
+ * The highest level this trait can reach, or null where the book sets no
+ * limit and the cost is a flat rate per level.
+ */
+export function traitLevelCeiling(trait: {
+  maxLevels: number;
+  costTable: readonly number[];
+}): number | null {
+  const capped = trait.maxLevels > 0 ? trait.maxLevels : null;
+  const priced = trait.costTable.length > 0 ? trait.costTable.length : null;
+  if (capped === null) return priced;
+  if (priced === null) return capped;
+  return Math.min(capped, priced);
+}

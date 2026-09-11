@@ -50,8 +50,15 @@ export interface PickerEntry {
  * index is a summary the server already holds, and loading 1,764 documents to
  * show a list of names would not be.
  */
-export async function collectEntries(types: readonly string[]): Promise<PickerEntry[]> {
+export async function collectEntries(
+  types: readonly string[],
+  categories?: readonly string[],
+): Promise<PickerEntry[]> {
   const wanted = new Set(types);
+  // Traits are one item type covering four categories, so a step that asks
+  // for advantages must say so: offering a list with disadvantages mixed
+  // through it means half of what you scroll past charges you nothing.
+  const allowed = categories && categories.length > 0 ? new Set(categories) : null;
   const entries: PickerEntry[] = [];
 
   for (const pack of (game as any).packs ?? []) {
@@ -59,6 +66,7 @@ export async function collectEntries(types: readonly string[]): Promise<PickerEn
     const index = await pack.getIndex({ fields: INDEX_FIELDS });
     for (const entry of index) {
       if (!wanted.has(entry.type)) continue;
+      if (allowed && !allowed.has(entry.system?.category)) continue;
       entries.push({
         uuid: `Compendium.${pack.collection}.Item.${entry._id}`,
         name: entry.name,
@@ -88,26 +96,41 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
 
   #actor: any;
   #types: string[];
+  #categories: string[];
   #entries: PickerEntry[] = [];
   #query = "";
   /** Names added during this session, so the list can show what has been taken. */
   #added = new Set<string>();
 
-  constructor(options: { actor: any; types: string[]; title?: string }) {
+  constructor(options: {
+    actor: any;
+    types: string[];
+    /** Trait categories to offer, when the caller wants only some of them. */
+    categories?: string[];
+    title?: string;
+  }) {
     super({ window: options.title ? { title: options.title } : {} });
     this.#actor = options.actor;
     this.#types = options.types;
+    this.#categories = options.categories ?? [];
   }
 
   /** Opens a picker for one actor and set of types. */
-  static async open(options: { actor: any; types: string[]; title?: string }): Promise<CompendiumPicker> {
+  static async open(options: {
+    actor: any;
+    types: string[];
+    categories?: string[];
+    title?: string;
+  }): Promise<CompendiumPicker> {
     const app = new CompendiumPicker(options);
     await app.render(true);
     return app;
   }
 
   override async _prepareContext(): Promise<Record<string, unknown>> {
-    if (this.#entries.length === 0) this.#entries = await collectEntries(this.#types);
+    if (this.#entries.length === 0) {
+      this.#entries = await collectEntries(this.#types, this.#categories);
+    }
 
     const query = this.#query.trim().toLowerCase();
     const matching = query
