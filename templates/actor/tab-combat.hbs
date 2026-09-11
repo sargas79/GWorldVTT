@@ -300,7 +300,59 @@
           {{localize "GWORLD.ExtraEffort.Action"}}
         </button>
       {{/if}}
+      {{#if rules.grappling}}
+        {{#unless grapple}}
+          <button type="button" class="ibtn" data-action="grapple"
+                  data-tooltip="{{localize "GWORLD.Grapple.Hint"}}">
+            {{localize "GWORLD.Grapple.Action"}}
+          </button>
+        {{/unless}}
+      {{/if}}
     </div>
+
+    {{!-- A grapple changes what this character can do more than anything else
+          in a fight, so what it allows is shown rather than remembered. --}}
+    {{#if grapple}}
+      <div class="toolbar">
+        {{#if grapple.holding}}
+          <button type="button" class="ibtn" data-action="takedown"
+                  data-tooltip="{{localize "GWORLD.Grapple.TakedownHint"}}">
+            {{localize "GWORLD.Grapple.Takedown"}}
+          </button>
+          {{#unless grapple.pinned}}
+            <button type="button" class="ibtn" data-action="pin"
+                    data-tooltip="{{localize "GWORLD.Grapple.PinHint"}}">
+              {{localize "GWORLD.Grapple.Pin"}}
+            </button>
+          {{/unless}}
+          <button type="button" class="ibtn" data-action="choke"
+                  data-tooltip="{{localize "GWORLD.Grapple.ChokeHint"}}">
+            {{localize "GWORLD.Grapple.Choke"}}
+          </button>
+          <button type="button" class="ibtn" data-action="releaseGrapple">
+            {{localize "GWORLD.Grapple.Release"}}
+          </button>
+        {{else}}
+          <button type="button" class="ibtn" data-action="breakFree"
+                  data-tooltip="{{localize "GWORLD.Grapple.BreakFreeHint"}}">
+            {{localize "GWORLD.Grapple.BreakFree"}}
+          </button>
+          <button type="button" class="ibtn" data-action="takedown"
+                  data-tooltip="{{localize "GWORLD.Grapple.TakedownHint"}}">
+            {{localize "GWORLD.Grapple.Takedown"}}
+          </button>
+        {{/if}}
+      </div>
+      <p class="ihint">
+        {{#if grapple.pinned}}
+          {{localize "GWORLD.Grapple.StatePinned"}}
+        {{else if grapple.holding}}
+          {{localize "GWORLD.Grapple.StateHolding" hands=grapple.hands}}
+        {{else}}
+          {{localize "GWORLD.Grapple.StateHeld" hands=grapple.hands}}
+        {{/if}}
+      </p>
+    {{/if}}
   </div>
 
   {{#if tactical}}

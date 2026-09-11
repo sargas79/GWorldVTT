@@ -30,6 +30,16 @@ import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding, stopBleeding } from "../bleeding.js";
+import {
+  beginGrapple,
+  endGrapple,
+  grapplingSkill,
+  grappleOf,
+  rollBreakFree,
+  rollChoke,
+  rollPin,
+  rollTakedown,
+} from "../grappling.js";
 import { rollStunRecovery } from "../knockdown.js";
 import { applyFirstAid, restForADay, restForFatigue, tryToWake } from "../recovery.js";
 import { rollFrightCheck } from "../fright.js";
@@ -309,6 +319,62 @@ async function promptForAward(): Promise<{ points: number; note: string } | null
 }
 
 /**
+ * Asks what kind of grapple this is: how many hands, and what they take hold of.
+ *
+ * Both change what follows -- two hands are a far better grip than one, and only
+ * a hold on the neck can be turned into a choke.
+ */
+async function promptForGrapple(): Promise<{
+  hands: number;
+  hitLocation: string;
+  modifier: number;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Grapple.${key}`);
+
+  // The parts worth taking hold of, rather than every location: you grab an arm
+  // to disarm somebody, a leg to trip them, a neck to strangle them.
+  const parts = ["torso", "arm", "leg", "neck", "hand"];
+  const options = parts
+    .map((part) => `<option value="${part}">${game.i18n.localize(`GWORLD.HitLocation.${part}`)}</option>`)
+    .join("");
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Hands")}</span>
+        <input type="number" name="hands" value="2" min="1" max="6" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Where")}</span>
+        <select name="where" style="width:120px">${options}</select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
+        <input type="number" name="modifier" value="0" step="1" style="width:90px">
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const num = (name: string) =>
+          Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
+        return {
+          hands: Math.max(1, num("hands")),
+          hitLocation:
+            form?.querySelector<HTMLSelectElement>('select[name="where"]')?.value ?? "torso",
+          modifier: num("modifier"),
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/**
  * Asks how long the rest was, and whether there was food.
  *
  * The meal is asked rather than inferred from the clock: "the GM may allow you
@@ -541,6 +607,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       wake: GWorldCharacterSheet.#onWake,
       bleed: GWorldCharacterSheet.#onBleed,
       shakeOffStun: GWorldCharacterSheet.#onShakeOffStun,
+      grapple: GWorldCharacterSheet.#onGrapple,
+      breakFree: GWorldCharacterSheet.#onBreakFree,
+      takedown: GWorldCharacterSheet.#onTakedown,
+      pin: GWorldCharacterSheet.#onPin,
+      choke: GWorldCharacterSheet.#onChoke,
+      releaseGrapple: GWorldCharacterSheet.#onRelease,
       stepPoints: GWorldCharacterSheet.#onStepPoints,
       stepLevels: GWorldCharacterSheet.#onStepLevels,
       editItem: GWorldCharacterSheet.#onEditItem,
@@ -716,6 +788,19 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         index: stored.indexOf(award),
         when: award.at ? new Date(award.at).toLocaleDateString() : "",
       })),
+
+      // The grapple this character is in, if any: what it allows is entirely
+      // different depending on which end of it they are.
+      grapple: (() => {
+        const held = grappleOf(this.actor);
+        if (!held) return null;
+        return {
+          holding: held.holding,
+          pinned: held.pinned,
+          hands: held.hands,
+          byTheNeck: held.hitLocation === "neck",
+        };
+      })(),
 
       // Tactical combat, when the world is using it. Movement points are the
       // character's Move after encumbrance, and what each hex costs depends on
@@ -1466,6 +1551,81 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // "someone who is wounded but receives a successful First Aid roll ... loses
     // no HP to bleeding. A later roll will prevent further HP loss."
     if (restored > 0) await stopBleeding(patient);
+  }
+
+  /**
+   * Takes hold of somebody (GURPS Basic Set: Campaigns p. 370).
+   *
+   * The attack roll is an ordinary one, against DX or the best of Judo,
+   * Wrestling, Sumo Wrestling and Brawling. What it buys is a state: from here
+   * the foe cannot walk away, and both sheets know it.
+   */
+  static async #onGrapple(this: GWorldCharacterSheet) {
+    if (!isRuleOn("grappling")) return;
+
+    const targets = targetedTokens();
+    if (targets.length !== 1) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Grapple.OneTarget"));
+      return;
+    }
+
+    const victim = targets[0]?.actor;
+    if (!victim) return;
+
+    const asked = await promptForGrapple();
+    if (!asked) return;
+
+    const skill = grapplingSkill(this.actor);
+    const base = skill?.level ?? (Number(this.actor.system?.attributes?.DX) || 10);
+
+    const outcome = await rollSuccess({
+      actor: this.actor,
+      base,
+      kind: "attack",
+      label: game.i18n.format("GWORLD.Grapple.Label", {
+        skill: skill?.name ?? "DX",
+        foe: String(victim.name),
+      }),
+      modifiers: asked.modifier === 0
+        ? []
+        : [{ label: game.i18n.localize("GWORLD.Chat.Situational"), value: asked.modifier }],
+    });
+
+    // A grapple that missed is a missed attack and nothing more; the foe still
+    // gets their defense, which is the ordinary defense card.
+    if (!outcome?.success) return;
+
+    await beginGrapple({
+      grappler: this.actor,
+      victim,
+      hands: asked.hands,
+      hitLocation: asked.hitLocation,
+    });
+  }
+
+  /** Tries to get loose (Campaigns p. 371). */
+  static async #onBreakFree(this: GWorldCharacterSheet) {
+    await rollBreakFree({ actor: this.actor });
+  }
+
+  /** Bears a standing foe to the ground (Campaigns p. 370). */
+  static async #onTakedown(this: GWorldCharacterSheet) {
+    await rollTakedown({ actor: this.actor });
+  }
+
+  /** Pins a foe already on the ground (Campaigns p. 370). */
+  static async #onPin(this: GWorldCharacterSheet) {
+    await rollPin({ actor: this.actor });
+  }
+
+  /** Chokes a foe held by the neck (Campaigns p. 370). */
+  static async #onChoke(this: GWorldCharacterSheet) {
+    await rollChoke({ actor: this.actor });
+  }
+
+  /** Lets go, which is a free action on your own turn. */
+  static async #onRelease(this: GWorldCharacterSheet) {
+    await endGrapple(this.actor);
   }
 
   /**
