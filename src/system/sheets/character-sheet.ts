@@ -37,6 +37,8 @@ import { activePoisons, advancePoison, clearPoison, dosePoison, treatPoison } fr
 import { drinkForAnHour, drinkingState, hangoverRoll, soberUpRoll } from "../intoxication.js";
 import { checkInfection, exposeToDisease } from "../disease.js";
 import { checkOverpenetration, rollScatter, splashInTheFace } from "../gunplay.js";
+import { rollInfluence, rollReaction } from "../reactions.js";
+import { INFLUENCE_SKILLS, REACTIONS, type Reaction } from "../../rules/reactions.js";
 import type { CoverKind } from "../../rules/overpenetration.js";
 import {
   CONTAGION_MODIFIERS,
@@ -962,6 +964,129 @@ async function promptForSplash(): Promise<{
 }
 
 /**
+ * Asks what colours an NPC's first impression (Campaigns p. 494).
+ *
+ * The best and worst cases are asked because a predetermined reaction is the
+ * commonest thing a GM has written down about an NPC -- "a street gang might
+ * have a -5 reaction to anybody" -- and applying it by hand afterwards means
+ * remembering it at the moment the dice land.
+ */
+async function promptForReaction(): Promise<{
+  modifier: number;
+  best: Reaction | null;
+  worst: Reaction | null;
+  open: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Reaction.${key}`);
+  const bands = (selected: string) =>
+    [`<option value="">${L("Unbounded")}</option>`]
+      .concat(
+        REACTIONS.map(
+          (band) =>
+            `<option value="${band}"${band === selected ? " selected" : ""}>${L(band)}</option>`,
+        ),
+      )
+      .join("");
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Modifier")}</span>
+        <input type="number" name="modifier" value="0" step="1" autofocus style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Best")}</span>
+        <select name="best" style="width:150px">${bands("")}</select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Worst")}</span>
+        <select name="worst" style="width:150px">${bands("")}</select>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="open">
+        <span>${L("Open")}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const chosen = (name: string) =>
+          form?.querySelector<HTMLSelectElement>(`select[name="${name}"]`)?.value ?? "";
+        return {
+          modifier:
+            Number(form?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value ?? 0) || 0,
+          best: (chosen("best") || null) as Reaction | null,
+          worst: (chosen("worst") || null) as Reaction | null,
+          open: form?.querySelector<HTMLInputElement>('input[name="open"]')?.checked ?? false,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/** Asks which Influence skill is being tried, and how (Campaigns p. 359). */
+async function promptForInfluence(skills: Array<{ name: string; level: number }>): Promise<{
+  skill: string;
+  skillLevel: number;
+  modifier: number;
+  specious: boolean;
+  reactionModifier: number;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Reaction.${key}`);
+
+  const options = skills
+    .map((skill) => `<option value="${skill.name}">${skill.name} ${skill.level}</option>`)
+    .join("");
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Influence") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Skill")}</span>
+        <select name="skill" style="width:200px">${options}</select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
+        <input type="number" name="modifier" value="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Modifier")}</span>
+        <input type="number" name="reaction" value="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="specious">
+        <span>${L("Specious")}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const name = form?.querySelector<HTMLSelectElement>('select[name="skill"]')?.value ?? "";
+        return {
+          skill: name,
+          skillLevel: skills.find((skill) => skill.name === name)?.level ?? 4,
+          modifier:
+            Number(form?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value ?? 0) || 0,
+          reactionModifier:
+            Number(form?.querySelector<HTMLInputElement>('input[name="reaction"]')?.value ?? 0) || 0,
+          specious:
+            form?.querySelector<HTMLInputElement>('input[name="specious"]')?.checked ?? false,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/**
  * Asks what the session was worth, and what for.
  *
  * Returns null when the dialog is dismissed, which awards nothing.
@@ -1351,6 +1476,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       scatter: GWorldCharacterSheet.#onScatter,
       overpenetration: GWorldCharacterSheet.#onOverpenetration,
       splash: GWorldCharacterSheet.#onSplash,
+      reaction: GWorldCharacterSheet.#onReaction,
+      influence: GWorldCharacterSheet.#onInfluence,
       shakeOffStun: GWorldCharacterSheet.#onShakeOffStun,
       grapple: GWorldCharacterSheet.#onGrapple,
       disarm: GWorldCharacterSheet.#onDisarm,
@@ -2621,6 +2748,55 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!asked) return;
 
     await checkOverpenetration({ actor: this.actor, ...asked });
+  }
+
+
+  /**
+   * What an NPC makes of this character (Campaigns p. 494).
+   *
+   * Whispered to the GM by default: "they don't know, for instance, whether
+   * that friendly-looking old farmer is giving them straight advice or sending
+   * them into a trap."
+   */
+  static async #onReaction(this: GWorldCharacterSheet) {
+    if (!isRuleOn("reactions")) return;
+
+    const asked = await promptForReaction();
+    if (!asked) return;
+
+    await rollReaction({ actor: this.actor, ...asked });
+  }
+
+  /**
+   * Talking somebody round (Campaigns p. 359).
+   *
+   * The skills offered are the ones this character actually has, at the levels
+   * they have them: an Influence roll is a Quick Contest, and a skill nobody
+   * bought is not one of the six the book names.
+   */
+  static async #onInfluence(this: GWorldCharacterSheet) {
+    if (!isRuleOn("reactions")) return;
+
+    const targets = targetedTokens();
+    if (targets.length !== 1) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Reaction.OneTarget"));
+      return;
+    }
+
+    const subject = targets[0]?.actor;
+    if (!subject) return;
+
+    // Every Influence skill, whether or not it was bought: an unbought one
+    // defaults, and which default applies is the skill's own business.
+    const skills = INFLUENCE_SKILLS.map((name) => ({
+      name,
+      level: this.actor.system?.derived?.influence?.[name] ?? 4,
+    }));
+
+    const asked = await promptForInfluence(skills);
+    if (!asked) return;
+
+    await rollInfluence({ actor: this.actor, subject, ...asked });
   }
 
   /** A drink in somebody's face (Campaigns p. 405). */

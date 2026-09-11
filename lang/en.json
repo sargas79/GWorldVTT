@@ -382,6 +382,10 @@
         "dirtyTricks": {
           "Name": "Dirty tricks",
           "Hint": "Sand or a drink in the face: a thrown weapon, and a Will roll not to flinch."
+        },
+        "reactions": {
+          "Name": "Reaction and Influence rolls",
+          "Hint": "What strangers make of you, and talking them round."
         }
       }
     },
@@ -706,6 +710,37 @@
       "Flinched": "Flinched: {penalty} to further defenses, and to DX and Sense next turn",
       "Unmoved": "Did not so much as blink",
       "OneTarget": "Target exactly one token to splash"
+    },
+    "Reaction": {
+      "Action": "Reaction",
+      "Hint": "What an NPC makes of this character: 3d, modifiers on the dice, high is good",
+      "Title": "Reaction",
+      "Rolled": "Rolled {rolled}",
+      "Modifier": "Reaction modifier",
+      "Best": "Never better than",
+      "Worst": "Never worse than",
+      "Unbounded": "No limit",
+      "Open": "Show it to everyone",
+      "Bounded": "Held at a predetermined limit",
+      "disastrous": "Disastrous",
+      "veryBad": "Very Bad",
+      "bad": "Bad",
+      "poor": "Poor",
+      "neutral": "Neutral",
+      "good": "Good",
+      "veryGood": "Very Good",
+      "excellent": "Excellent",
+      "Influence": "Influence roll",
+      "InfluenceAction": "Influence",
+      "InfluenceHint": "Talk them round: a Quick Contest of an Influence skill against their Will",
+      "Skill": "Influence skill",
+      "Against": "against",
+      "VsWill": "vs Will",
+      "Specious": "Empty threat (specious intimidation)",
+      "Settled": "Settled without a contest",
+      "DiplomacySaved": "Diplomacy's second roll was better: {band}",
+      "DiplomacyTried": "Diplomacy also rolled {band}",
+      "OneTarget": "Target exactly one token to influence"
     },
     "Chat": {
       "Target": "Target",

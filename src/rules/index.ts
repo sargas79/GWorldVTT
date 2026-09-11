@@ -49,4 +49,5 @@ export * from "./overpenetration.js";
 export * from "./posture.js";
 export * from "./ranged.js";
 export * from "./scatter.js";
+export * from "./reactions.js";
 export * from "./recovery.js";

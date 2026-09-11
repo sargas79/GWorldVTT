@@ -34,6 +34,7 @@ import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
 import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js";
 import { fatigueStatus, isVeryTired } from "../../rules/fatigue.js";
+import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
 import {
   effectiveSkillLevel,
   namedDefaultLevel,
@@ -462,6 +463,33 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       },
       lifting: { skill: this.skillLevelByName("Lifting") },
     };
+  }
+
+  /**
+   * What an Influence skill nobody bought is rolled at (Characters pp. 187-224).
+   *
+   * All six default to an attribute at a penalty, and the penalties differ:
+   * Fast-Talk and Streetwise are IQ-5, Diplomacy is IQ-6, Intimidation is
+   * Will-5, Savoir-Faire is IQ-4, and Sex Appeal is HT-3.
+   */
+  private influenceDefault(
+    name: string,
+    attrs: { IQ?: number; HT?: number },
+    will: number,
+  ): number {
+    const iq = attrs.IQ ?? 10;
+    switch (name) {
+      case "Diplomacy":
+        return iq - 6;
+      case "Savoir-Faire":
+        return iq - 4;
+      case "Sex Appeal":
+        return (attrs.HT ?? 10) - 3;
+      case "Intimidation":
+        return will - 5;
+      default:
+        return iq - 5;
+    }
   }
 
   /**
@@ -976,6 +1004,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ranged,
       encumbrance,
       feats: this.#physicalFeats(attrs, secondary.basicLift, encumbrance.move, traits),
+      // What each Influence skill is worth to this character (Campaigns
+      // p. 359). An unbought one is not left out: it defaults, and the dialog
+      // shows the default so the player can see what they are risking.
+      influence: Object.fromEntries(
+        INFLUENCE_SKILLS.map((name: string) => [
+          name,
+          this.skillLevelByName(name) ?? this.influenceDefault(name, attrs, secondary.will),
+        ]),
+      ),
+
       // The two techniques that change a roll made from a dialog rather than
       // from their own line on the sheet (Campaigns p. 417).
       techniques: {
