@@ -25,6 +25,8 @@ import { computeInjury } from "../rules/damage.js";
 import type { HitLocation } from "../rules/hit-locations.js";
 import { applyInjury, type InjuryConsequences } from "../rules/injury.js";
 import { knockback, type KnockbackResult } from "../rules/maneuvers.js";
+import { knockdownModifier, knockdownRequired } from "../rules/knockdown.js";
+import { woundBleeds } from "../rules/bleeding.js";
 import {
   noTraitEffects,
   shockAfterTraits,
@@ -90,6 +92,14 @@ export interface AppliedDamage {
    * GM's; what the traits are worth to them is not.
    */
   htModifiers: { knockdown: number; consciousness: number; survival: number };
+  /**
+   * The knockdown roll this blow calls for, or null when it calls for none.
+   * A major wound calls for one wherever it landed; a blow to the head or
+   * vitals calls for one as soon as it causes any shock at all.
+   */
+  knockdown: { required: boolean; modifier: number } | null;
+  /** True when a wound of this kind would bleed, which the GM may overrule. */
+  bleeds: boolean;
 }
 
 /**
@@ -187,6 +197,12 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
       applied.majorWound || Boolean(critical?.majorWound && result.penetrating > 0),
   };
 
+  const required = knockdownRequired({
+    majorWound: consequences.majorWound,
+    hitLocation: damage.hitLocation,
+    shock: consequences.shock,
+  });
+
   return {
     actorName: String(actor?.name ?? ""),
     hitLocation: damage.hitLocation,
@@ -211,6 +227,18 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
       consciousness: traits.consciousness,
       survival: traits.survival,
     },
+    knockdown: required
+      ? {
+          required: true,
+          modifier: knockdownModifier({
+            majorWound: consequences.majorWound,
+            hitLocation: damage.hitLocation,
+            shock: consequences.shock,
+            traitModifier: traits.knockdown,
+          }),
+        }
+      : null,
+    bleeds: result.injury > 0 && woundBleeds(damage.type, consequences.majorWound),
   };
 }
 

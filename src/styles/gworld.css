@@ -180,6 +180,25 @@
   color: var(--color-neutral-700);
   white-space: nowrap;
 }
+/* Points still to spend are the half of that line anybody is looking for. */
+.gworld .iunspent { color: var(--color-accent); font-weight: 600; }
+
+/* The award control, beside the points it changes. */
+.gworld .iptbtn {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+  color: var(--color-neutral-700);
+  cursor: pointer;
+}
+.gworld .iptbtn:hover { color: var(--color-accent); border-color: var(--color-accent); }
 
 /* Spending past the starting budget: flagged, not forbidden. A GM may allow
    it, and a character part-way through being built is over and under by turns. */

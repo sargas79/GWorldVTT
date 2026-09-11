@@ -164,7 +164,8 @@
       "AwardTitle": "Award character points",
       "AwardPoints": "Points",
       "AwardNote": "What for",
-      "AwardWhen": "When"
+      "AwardWhen": "When",
+      "UnspentShort": "· {points} unspent"
     },
     "Wait": {
       "Trigger": "Waiting for",
@@ -328,6 +329,14 @@
         "physicalActivities": {
           "Name": "Physical activities",
           "Hint": "Climbing, jumping, swimming, running, throwing distance and lifting."
+        },
+        "knockdown": {
+          "Name": "Knockdown and stunning",
+          "Hint": "A major wound, or a head or vitals hit, calls for a HT roll to stay upright."
+        },
+        "bleeding": {
+          "Name": "Bleeding",
+          "Hint": "A wound keeps costing HP each minute until it is bound. The book marks this optional for the bookkeeping."
         }
       }
     },
@@ -396,7 +405,12 @@
       "Stunned": "Stunned",
       "BlindToAttacker": "Blind to attacker",
       "AttackedThisTurn": "Attacked this turn",
-      "CloseCombat": "In close combat"
+      "CloseCombat": "In close combat",
+      "Prone": "Prone",
+      "Unconscious": "Unconscious",
+      "Reeling": "Reeling",
+      "Bleeding": "Bleeding",
+      "Dead": "Dead"
     },
     "Posture": {
       "standing": "Standing",
@@ -891,6 +905,28 @@
       "NoBetter": "No better for it",
       "MealHint": "Ate a decent meal while resting (+1 FP)",
       "RestedFed": "{minutes} minutes of quiet rest, with a meal"
+    },
+    "Knockdown": {
+      "Title": "Knockdown and stunning",
+      "RecoveryTitle": "Shaking off stun",
+      "Roll": "Knockdown",
+      "unaffected": "Stays on their feet",
+      "knockedDown": "Stunned, and down — Do Nothing next turn, defenses at -4",
+      "unconscious": "Unconscious",
+      "recovered": "Shakes it off and can act normally",
+      "stillStunned": "Still stunned — Do Nothing, and roll again next turn",
+      "Shake": "Shake off stun",
+      "ShakeHint": "HT to recover from stun at the end of your turn; shift-click for mental stun"
+    },
+    "Bleeding": {
+      "Action": "Bleeding check",
+      "Hint": "A minute of bleeding: HT at -1 per 5 HP already lost",
+      "Title": "Bleeding",
+      "PerFive": "per 5 HP lost",
+      "Lost": "Bleeds for {hp} HP",
+      "Held": "No blood lost this minute — {minutes} of 3 quiet minutes",
+      "Stopped": "The bleeding has stopped",
+      "Clotted": "The bleeding stops completely"
     }
   }
 }

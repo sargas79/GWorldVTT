@@ -209,6 +209,18 @@ declare global {
     };
     Combat: { documentClass: unknown; initiative: { formula: string | null; decimals: number } };
     Combatant: { documentClass: unknown };
+    /**
+     * The status effects a token can carry.
+     *
+     * Declared as an array with a string index because it is neither: it is a
+     * Proxy over an array that also keys each entry by its id, which is how
+     * `Actor#toggleStatusEffect` looks one up. Writing `CONFIG.statusEffects[id]
+     * = effect` goes through the proxy and does both; assigning a plain array
+     * over the whole thing replaces the proxy and breaks every toggle.
+     */
+    statusEffects: Array<{ id: string; name: string; img: string }> & {
+      [id: string]: { id: string; name: string; img: string };
+    };
     [key: string]: any;
   };
 

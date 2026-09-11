@@ -1,0 +1,32 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">{{localize "GWORLD.Bleeding.Title"}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>HT {{ht}}</span>
+    {{#if modifier}}<span class="gc-mod">{{signed modifier}} {{localize "GWORLD.Bleeding.PerFive"}}</span>{{/if}}
+    <span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{target}}</span>
+  </div>
+
+  <div class="gc-dice">
+    {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+    <span class="gc-total">{{roll}}</span>
+  </div>
+
+  {{#if stopped}}
+    <div class="gc-result success">
+      {{#if criticalSuccess}}{{localize "GWORLD.Bleeding.Clotted"}}{{else}}{{localize "GWORLD.Bleeding.Stopped"}}{{/if}}
+    </div>
+  {{else if lost}}
+    <div class="gc-result {{#if criticalFailure}}crit-failure{{else}}failure{{/if}}">
+      {{localize "GWORLD.Bleeding.Lost" hp=lost}}
+      <span class="gc-mod">{{previous}} &rarr; {{now}} / {{max}}</span>
+    </div>
+  {{else}}
+    <div class="gc-result">
+      {{localize "GWORLD.Bleeding.Held" minutes=quietMinutes}}
+    </div>
+  {{/if}}
+</div>

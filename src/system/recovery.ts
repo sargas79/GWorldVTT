@@ -11,6 +11,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { syncHealthConditions } from "./conditions.js";
 import {
   fatigueRecovered,
   firstAidAt,
@@ -131,7 +132,12 @@ export async function restForADay(options: {
 
   const wanted = outcome.success ? naturalRecovery(max) : 0;
   const gained = Math.max(0, Math.min(wanted, max - current));
-  if (gained > 0) await actor.update({ "system.hp.value": current + gained });
+  if (gained > 0) {
+    await actor.update({ "system.hp.value": current + gained });
+    // Reeling and dead are what the hit point total means, so they follow it
+    // back up as readily as they followed it down.
+    await syncHealthConditions(actor);
+  }
 
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Recovery.Daily"),
@@ -197,7 +203,10 @@ export async function applyFirstAid(options: {
   // it is capped upwards at their maximum but never floored at their current,
   // because losing hit points is exactly what the rule says happens.
   const change = restored >= 0 ? Math.min(restored, Math.max(0, max - current)) : restored;
-  if (change !== 0) await patient.update({ "system.hp.value": current + change });
+  if (change !== 0) {
+    await patient.update({ "system.hp.value": current + change });
+    await syncHealthConditions(patient);
+  }
 
   await post(healer, {
     kind: game.i18n.localize("GWORLD.Recovery.FirstAid"),

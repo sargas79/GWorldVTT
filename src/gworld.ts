@@ -1,5 +1,5 @@
 /**
- * GWorld - a GURPS Lite (4th Edition) system for Foundry Virtual Tabletop.
+ * GWorld - a GURPS (4th Edition) system for Foundry Virtual Tabletop.
  *
  * Entry point. The rules engine in `src/rules` is pure and Foundry-free; this
  * module and everything under `src/system` form the integration layer that
@@ -10,6 +10,7 @@ import "./styles/gworld.css";
 
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
+import { registerConditions } from "./system/conditions.js";
 import { GWorldCombat } from "./system/combat.js";
 import { SYSTEM_ID } from "./system/constants.js";
 import { CharacterData } from "./system/data/character.js";
@@ -32,7 +33,7 @@ import { registerTemplateHelpers } from "./system/templates.js";
 export { SYSTEM_ID };
 
 Hooks.once("init", () => {
-  console.log(`${SYSTEM_ID} | Initialising GURPS Lite system`);
+  console.log(`${SYSTEM_ID} | Initialising GURPS system`);
 
   CONFIG.Actor.dataModels.character = CharacterData;
   CONFIG.Actor.dataModels.npc = NpcData;
@@ -53,6 +54,10 @@ Hooks.once("init", () => {
 
   registerSettings();
   registerTemplateHelpers();
+
+  // Foundry's own status effects are another game's. These are the states a
+  // GURPS wound actually leaves somebody in.
+  registerConditions();
 
   // A damage card is posted before anyone has decided who it hits, so the card
   // grows an apply control when it renders.

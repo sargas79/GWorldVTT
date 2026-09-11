@@ -72,6 +72,11 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "afflictions", reference: "Characters p. 35", default: true },
     { key: "knockback", reference: "Campaigns p. 378", default: true },
     { key: "criticalTables", reference: "Campaigns p. 556", default: true },
+    { key: "knockdown", reference: "Campaigns p. 420", default: true },
+    // "These rules add realism... but they also require extra record keeping,
+    // so they are optional" -- the book's own words, and the reason this one
+    // starts switched off.
+    { key: "bleeding", reference: "Campaigns p. 420", default: false },
   ],
   rolls: [
     { key: "regularContests", reference: "Campaigns p. 349", default: true },

@@ -9,6 +9,7 @@
 export * from "./types.js";
 export * from "./dice.js";
 export * from "./attributes.js";
+export * from "./bleeding.js";
 export * from "./character-points.js";
 export * from "./contests.js";
 export * from "./criticals.js";
@@ -25,6 +26,7 @@ export * from "./defenses.js";
 export * from "./falling.js";
 export * from "./fright.js";
 export * from "./injury.js";
+export * from "./knockdown.js";
 export * from "./maneuvers.js";
 export * from "./physical.js";
 export * from "./posture.js";

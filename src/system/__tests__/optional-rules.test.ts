@@ -40,10 +40,21 @@ describe("the rule catalogue", () => {
     }
   });
 
-  it("starts with everything in play", () => {
-    const state = defaultRuleState();
-    expect(Object.values(state).every(Boolean)).toBe(true);
-    expect(Object.keys(state).sort()).toEqual(allRuleKeys().sort());
+  it("has a default for every rule and no others", () => {
+    expect(Object.keys(defaultRuleState()).sort()).toEqual(allRuleKeys().sort());
+  });
+
+  /**
+   * A rule is on out of the box unless the book itself says it is extra work.
+   * Bleeding is the one that does -- "these rules add realism... but they also
+   * require extra record keeping, so they are optional" -- so a table opts into
+   * it rather than out of it.
+   */
+  it("starts with everything in play but the ones the book marks optional", () => {
+    const off = Object.entries(defaultRuleState())
+      .filter(([, on]) => !on)
+      .map(([key]) => key);
+    expect(off).toEqual(["bleeding"]);
   });
 });
 
