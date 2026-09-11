@@ -30,6 +30,8 @@ import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding, stopBleeding } from "../bleeding.js";
+import { rollCripplingDuration, rollMortalWound } from "../dying.js";
+import { catchBreath, rollSuffocation } from "../suffocation.js";
 import {
   beginGrapple,
   endGrapple,
@@ -607,6 +609,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       firstAid: GWorldCharacterSheet.#onFirstAid,
       wake: GWorldCharacterSheet.#onWake,
       bleed: GWorldCharacterSheet.#onBleed,
+      mortalWound: GWorldCharacterSheet.#onMortalWound,
+      cripplingDuration: GWorldCharacterSheet.#onCripplingDuration,
+      suffocate: GWorldCharacterSheet.#onSuffocate,
+      catchBreath: GWorldCharacterSheet.#onCatchBreath,
       shakeOffStun: GWorldCharacterSheet.#onShakeOffStun,
       grapple: GWorldCharacterSheet.#onGrapple,
       breakFree: GWorldCharacterSheet.#onBreakFree,
@@ -1652,6 +1658,83 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onBleed(this: GWorldCharacterSheet) {
     if (!isRuleOn("bleeding")) return;
     await rollBleeding({ actor: this.actor });
+  }
+
+  /**
+   * Time without air (Campaigns p. 436).
+   *
+   * Advanced a span at a time, because how long somebody was under is the GM's
+   * to say. Choking and drowning cost differently: no air at all is a point of
+   * fatigue a second, while drowning costs one only on the five-second Swimming
+   * rolls that are missed.
+   */
+  static async #onSuffocate(this: GWorldCharacterSheet) {
+    const asked = await promptForChoice({
+      title: game.i18n.localize("GWORLD.Air.Title"),
+      label: game.i18n.localize("GWORLD.Air.Kind"),
+      options: [
+        { value: "none", label: game.i18n.localize("GWORLD.Air.None") },
+        { value: "drowning", label: game.i18n.localize("GWORLD.Air.Water") },
+      ],
+    });
+    if (!asked) return;
+
+    const seconds = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Air.Title"),
+      label: game.i18n.localize("GWORLD.Air.Seconds"),
+      initial: 5,
+    });
+    if (seconds === null || seconds <= 0) return;
+
+    await rollSuffocation({
+      actor: this.actor,
+      seconds,
+      air: asked === "drowning" ? "drowning" : "none",
+    });
+  }
+
+  /** Gets air again, which stops the clock (Campaigns p. 436). */
+  static async #onCatchBreath(this: GWorldCharacterSheet) {
+    await catchBreath(this.actor);
+  }
+
+  /**
+   * The half-hourly roll a mortally wounded character makes (Campaigns p. 423).
+   *
+   * A caregiver's Physician skill can stand in for their HT at TL6+, which is
+   * asked for rather than looked up: whoever is keeping them alive is not
+   * necessarily anybody whose sheet is open.
+   */
+  static async #onMortalWound(this: GWorldCharacterSheet) {
+    const physician = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Dying.MortalWound"),
+      label: game.i18n.localize("GWORLD.Dying.PhysicianSkill"),
+      initial: 0,
+    });
+    if (physician === null) return;
+
+    await rollMortalWound({
+      actor: this.actor,
+      physician: physician > 0 ? physician : null,
+      traumaMaintenance: physician > 0,
+    });
+  }
+
+  /**
+   * How serious a crippling injury turned out to be (Campaigns p. 422).
+   *
+   * "For battlefield injuries, roll at the end of combat" -- so it is a button
+   * pressed afterwards rather than something a blow decides on the spot.
+   */
+  static async #onCripplingDuration(this: GWorldCharacterSheet) {
+    const tl = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Dying.Crippling"),
+      label: game.i18n.localize("GWORLD.Dying.TreatedAt"),
+      initial: 0,
+    });
+    if (tl === null) return;
+
+    await rollCripplingDuration({ actor: this.actor, treatedAtTl: tl > 0 ? tl : null });
   }
 
   /**

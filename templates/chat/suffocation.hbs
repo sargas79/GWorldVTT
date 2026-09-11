@@ -1,0 +1,34 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">
+      {{#if drowning}}{{localize "GWORLD.Air.Drowning"}}{{else}}{{localize "GWORLD.Air.Title"}}{{/if}}
+    </span>
+  </div>
+
+  <div class="gc-mods">
+    <span>{{localize "GWORLD.Air.Elapsed" seconds=seconds}}</span>
+    <span class="gc-mod">{{localize "GWORLD.Air.Total" seconds=total}}</span>
+    {{#if airless}}
+      <span class="gc-mod">{{localize "GWORLD.Air.Remaining" seconds=secondsToDeath}}</span>
+    {{/if}}
+  </div>
+
+  {{#if lost}}
+    <div class="gc-result failure">
+      <strong>-{{lost}}</strong> FP
+      <span class="gc-mod">{{previous}} &rarr; {{now}} / {{max}}</span>
+    </div>
+  {{else}}
+    <div class="gc-result">{{localize "GWORLD.Air.NoLoss"}}</div>
+  {{/if}}
+
+  <div class="gc-mods">
+    {{#if willRolls}}<span class="gc-warn">{{localize "GWORLD.Air.WillRolls"}}</span>{{/if}}
+    {{#if brainDamage}}<span class="gc-warn">{{localize "GWORLD.Air.BrainDamage"}}</span>{{/if}}
+  </div>
+
+  {{#if dead}}
+    <div class="gc-result crit-failure">{{localize "GWORLD.Air.Dead"}}</div>
+  {{/if}}
+</div>
