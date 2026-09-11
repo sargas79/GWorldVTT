@@ -1,0 +1,34 @@
+<div class="gr">
+  <p class="gr-intro">{{localize "GWORLD.Rules.Intro"}}</p>
+
+  <div class="gr-bulk">
+    <button type="button" class="ibtn" data-action="allOn">{{localize "GWORLD.Rules.AllOn"}}</button>
+    <button type="button" class="ibtn" data-action="allOff">{{localize "GWORLD.Rules.AllOff"}}</button>
+    <button type="button" class="ibtn" data-action="restore">{{localize "GWORLD.Rules.Restore"}}</button>
+  </div>
+
+  <div class="gr-body">
+    {{#each groups as |group|}}
+      <section class="gr-group">
+        <h3>{{localize group.label}}</h3>
+        {{#each group.rules as |rule|}}
+          <label class="gr-rule">
+            <input type="checkbox" data-rule="{{rule.key}}" {{#if rule.enabled}}checked{{/if}} />
+            <span class="gr-text">
+              <span class="gr-name">
+                {{localize rule.label}}
+                <span class="gr-ref">{{rule.reference}}</span>
+              </span>
+              <span class="gr-hint">{{localize rule.hint}}</span>
+            </span>
+          </label>
+        {{/each}}
+      </section>
+    {{/each}}
+  </div>
+
+  <div class="gr-foot">
+    {{#if dirty}}<span class="gr-dirty">{{localize "GWORLD.Rules.Unsaved"}}</span>{{/if}}
+    <button type="button" class="ibtn" data-action="save">{{localize "GWORLD.Rules.Save"}}</button>
+  </div>
+</div>

@@ -48,7 +48,7 @@
           </div>
         </div>
       {{/if}}
-      {{#if isWaiting}}
+      {{#if showOpportunityFire}}
         <div class="fld wide">
           <span class="fl">{{localize "GWORLD.Wait.Trigger"}}</span>
           <div class="fi">
@@ -271,12 +271,16 @@
         </label>
       </div>
       <div class="toolbar">
-        <button type="button" class="ibtn" data-action="slam">
-          {{localize "GWORLD.Slam.Action"}}
-        </button>
-        <button type="button" class="ibtn" data-action="evade">
-          {{localize "GWORLD.Evade.Action"}}
-        </button>
+        {{#if rules.slams}}
+          <button type="button" class="ibtn" data-action="slam">
+            {{localize "GWORLD.Slam.Action"}}
+          </button>
+        {{/if}}
+        {{#if rules.evading}}
+          <button type="button" class="ibtn" data-action="evade">
+            {{localize "GWORLD.Evade.Action"}}
+          </button>
+        {{/if}}
       </div>
       {{#if tactical.immobile}}
         <p class="ihint">{{localize "GWORLD.Tactical.Immobile"}}</p>
@@ -291,6 +295,7 @@
     </div>
   {{/if}}
 
+  {{#if rules.hitLocations}}
   <div class="isec">
     <div class="ish"><span class="num">06</span>{{localize "GWORLD.Section.HitLocations"}}</div>
     <table class="gt">
@@ -329,6 +334,7 @@
       {{> "gworld.info"}}<span>{{localize "GWORLD.Hint.HitLocations"}}</span>
     </div>
   </div>
+  {{/if}}
 
   <div class="isec">
     <div class="ish"><span class="num">07</span>{{localize "GWORLD.Section.Protection"}}</div>

@@ -7,13 +7,34 @@
  * belongs to the GM for the whole world, not to a player per character.
  */
 
+import { RulesSettings } from "./apps/rules-settings.js";
 import { SYSTEM_ID } from "./constants.js";
+import { OPTIONAL_RULES_KEY, defaultRuleState } from "./optional-rules.js";
 
 export const COMBAT_STYLE = "combatStyle";
 
 export type CombatStyle = "basic" | "tactical";
 
 export function registerSettings(): void {
+  // The rules the table is playing, as one stored object. Not shown in the
+  // core settings list itself -- the menu below is how it is edited, and a raw
+  // JSON blob in a settings pane helps nobody.
+  game.settings.register(SYSTEM_ID, OPTIONAL_RULES_KEY, {
+    scope: "world",
+    config: false,
+    type: Object,
+    default: defaultRuleState(),
+  });
+
+  game.settings.registerMenu(SYSTEM_ID, "rules", {
+    name: "GWORLD.Rules.Title",
+    label: "GWORLD.Rules.MenuLabel",
+    hint: "GWORLD.Rules.MenuHint",
+    icon: "fa-solid fa-list-check",
+    type: RulesSettings,
+    restricted: true,
+  });
+
   game.settings.register(SYSTEM_ID, COMBAT_STYLE, {
     name: "GWORLD.Settings.CombatStyle.Name",
     hint: "GWORLD.Settings.CombatStyle.Hint",
