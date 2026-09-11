@@ -15,6 +15,7 @@ import {
   defaultSources,
   type PackSummary,
 } from "../compendium-sources.js";
+import { loadSkillCatalog } from "../skill-catalog.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -102,6 +103,8 @@ export class CompendiumSourcesSettings extends HandlebarsApplicationMixin(Applic
     this.#pending = null;
     ui.notifications?.info(game.i18n.localize("GWORLD.Sources.Saved"));
     await this.close();
+    // The weapon defaults are read from these packs, so they are read again.
+    await loadSkillCatalog();
   }
 
   static async #onRestore(this: CompendiumSourcesSettings): Promise<void> {

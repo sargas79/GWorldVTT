@@ -502,29 +502,36 @@ export async function handleRollAction(
   const base = Number(rollTarget);
   if (!Number.isFinite(base)) return;
 
-  // A ranged attack always asks, rather than only on a shift-click: range is
-  // not optional the way a situational modifier is, and defaulting it to zero
-  // would quietly roll every shot as though it were point blank.
+  // A ranged attack needs its range, which is not optional the way a
+  // situational modifier is: defaulting it to zero would quietly roll every
+  // shot as though it were point blank. So a plain click takes the range off
+  // the map -- the distance from the shooter's token to the one target --
+  // and rolls with nothing else asked; where that cannot be measured, or on
+  // a shift-click, the dialog asks for everything.
   const recoil = Number(target.dataset.recoil) || 0;
   const malfunctionNumber = Number(target.dataset.malfunction) || 0;
+  const weapon = {
+    damageType: (target.dataset.damageType ?? "cr") as DamageType,
+    accuracy: Number(target.dataset.accuracy) || 0,
+    scopeBonus: Number(target.dataset.scopeBonus) || 0,
+    rateOfFire: Number(target.dataset.rateOfFire) || 1,
+    recoil,
+    bulk: Number(target.dataset.bulk) || 0,
+    // A shooter on a Wait is covering ground, and the area they declared
+    // is what the penalty comes off.
+    watching:
+      actor?.system?.maneuver === "wait"
+        ? {
+            hexesWatched: Number(actor.system?.wait?.hexesWatched ?? 1),
+            coveringLine: Boolean(actor.system?.wait?.coveringLine),
+          }
+        : null,
+  };
+  const measured = ranged && !(event as MouseEvent).shiftKey ? measuredShot(actor) : null;
   const shot = ranged
-    ? await promptForRangedAttack({
-        damageType: (target.dataset.damageType ?? "cr") as DamageType,
-        accuracy: Number(target.dataset.accuracy) || 0,
-        scopeBonus: Number(target.dataset.scopeBonus) || 0,
-        rateOfFire: Number(target.dataset.rateOfFire) || 1,
-        recoil,
-        bulk: Number(target.dataset.bulk) || 0,
-        // A shooter on a Wait is covering ground, and the area they declared
-        // is what the penalty comes off.
-        watching:
-          actor?.system?.maneuver === "wait"
-            ? {
-                hexesWatched: Number(actor.system?.wait?.hexesWatched ?? 1),
-                coveringLine: Boolean(actor.system?.wait?.coveringLine),
-              }
-            : null,
-      })
+    ? measured
+      ? quickShot(measured, weapon)
+      : await promptForRangedAttack(weapon)
     : null;
   if (ranged && shot === null) return;
 
@@ -599,10 +606,16 @@ export async function handleRollAction(
     rollType === "attack" && isRuleOn("feint") ? await consumeFeint(actor) : 0;
   const defensePenalty = (melee?.defensePenalty ?? 0) + feint;
 
+  // A shot taken at a measured range says so on the card, where the number
+  // came from being the one thing a player will want to check.
+  const label = measured
+    ? `${rollLabel ?? rollType ?? "Roll"} (${game.i18n.format("GWORLD.Ranged.Measured", { yards: measured.rangeYards })})`
+    : (rollLabel ?? rollType ?? "Roll");
+
   await rollSuccess({
     actor,
     base,
-    label: rollLabel ?? rollType ?? "Roll",
+    label,
     kind: rollKind(rollType),
     modifiers,
     // Which critical miss table a fumble reads is decided by the attack, and
@@ -629,6 +642,71 @@ export async function handleRollAction(
       ? { rapidFire: { shotsFired: shot.shotsFired, recoil } }
       : {}),
   });
+}
+
+/** What the map knows about a shot: how far, and at what size. */
+interface MeasuredShot {
+  rangeYards: number;
+  targetSizeModifier: number;
+}
+
+/**
+ * The range to the one targeted token, read off the map, or null when it
+ * cannot be: no token for the shooter, no target or several, or no scene.
+ *
+ * Scenes are measured in yards by this system, and a scene set to feet or
+ * metres is converted; any other unit is taken as yards, since a wrong
+ * guess about a unit nobody uses for GURPS is not worth refusing the shot.
+ */
+export function measuredShot(actor: any): MeasuredShot | null {
+  const stage: any = (globalThis as any).canvas;
+  const scene = stage?.scene;
+  if (!scene || !stage.grid?.measurePath) return null;
+
+  const targets = targetedTokens();
+  if (targets.length !== 1) return null;
+  const target: any = targets[0];
+  const shooter: any = actor?.getActiveTokens?.()?.[0];
+  if (!shooter?.center || !target?.center) return null;
+
+  const distance = Number(stage.grid.measurePath([shooter.center, target.center])?.distance);
+  if (!Number.isFinite(distance)) return null;
+
+  const units = String(scene.grid?.units ?? "").trim().toLowerCase();
+  const yards = units === "ft" || units === "feet" || units === "'"
+    ? distance / 3
+    : units === "m" || units === "meters" || units === "metres"
+      ? distance * 1.0936
+      : distance;
+
+  return {
+    rangeYards: Math.max(0, Math.round(yards)),
+    targetSizeModifier: Number(target.actor?.system?.sm) || 0,
+  };
+}
+
+/**
+ * A shot with nothing asked: the measured range, the target's size, and the
+ * weapon as it is. No aim, one shot, in the clear. Everything the dialog
+ * offers is still there on a shift-click.
+ */
+function quickShot(
+  measured: MeasuredShot,
+  weapon: Parameters<typeof promptForRangedAttack>[0],
+): { modifiers: RollModifier[]; shotsFired: number; calledShot: CalledShot | null } {
+  const modifiers = rangedModifiers(
+    {
+      range: measured.rangeYards,
+      speed: 0,
+      size: measured.targetSizeModifier,
+      modifier: 0,
+      shots: 1,
+      situation: "normal",
+      aimed: false,
+    },
+    weapon,
+  );
+  return { modifiers, shotsFired: 1, calledShot: null };
 }
 
 /**

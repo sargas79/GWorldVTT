@@ -44,6 +44,7 @@ export * from "./physical.js";
 export * from "./poison.js";
 export * from "./melee-situations.js";
 export * from "./modifiers.js";
+export * from "./natural-attacks.js";
 export * from "./mortal-wounds.js";
 export * from "./mounted.js";
 export * from "./objects.js";
