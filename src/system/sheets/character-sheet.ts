@@ -28,7 +28,12 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
-import { nextSkillPoints, previousSkillPoints } from "../../rules/skills.js";
+import {
+  nextSkillPoints,
+  nextTechniquePoints,
+  previousSkillPoints,
+  previousTechniquePoints,
+} from "../../rules/skills.js";
 import { nextTraitLevel, previousTraitLevel } from "../../rules/traits.js";
 import {
   handleDamageAction,
@@ -645,8 +650,16 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!item) return;
 
     const current = Number(item.system?.points ?? 0);
-    const next =
-      target.dataset.step === "down" ? previousSkillPoints(current) : nextSkillPoints(current);
+    const down = target.dataset.step === "down";
+
+    // A technique is not a skill and does not use the Skill Cost Table: it
+    // costs a point per level, so stepping it along the table would jump from
+    // 2 to 4 and skip a level that can be bought.
+    const step = item.type === "technique"
+      ? (down ? previousTechniquePoints : nextTechniquePoints)
+      : (down ? previousSkillPoints : nextSkillPoints);
+
+    const next = step(current);
     if (next === current) return;
 
     await item.update({ "system.points": next });

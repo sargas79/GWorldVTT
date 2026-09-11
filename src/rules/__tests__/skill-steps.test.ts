@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   nextSkillPoints,
+  nextTechniquePoints,
   previousSkillPoints,
+  previousTechniquePoints,
   relativeLevelForPoints,
   skillStepCost,
+  techniqueLevelsForPoints,
 } from "../skills.js";
 
 /** The Skill Cost Table: 1, 2, 4, then four at a time. */
@@ -66,5 +69,36 @@ describe("stepping skill points", () => {
   it("survives a nonsense total rather than looping", () => {
     expect(nextSkillPoints(-5)).toBe(1);
     expect(previousSkillPoints(-5)).toBe(0);
+  });
+});
+
+describe("stepping technique points", () => {
+  /**
+   * Techniques are not skills and do not use the Skill Cost Table. Stepping
+   * one along it would go 2, 4, 8 and skip levels that can be bought.
+   */
+  it("steps a point at a time", () => {
+    expect(nextTechniquePoints(0)).toBe(1);
+    expect(nextTechniquePoints(2)).toBe(3);
+    expect(nextTechniquePoints(3)).toBe(4);
+    expect(previousTechniquePoints(3)).toBe(2);
+    expect(previousTechniquePoints(0)).toBe(0);
+  });
+
+  it("buys a level with every step, for either difficulty", () => {
+    for (const difficulty of ["A", "H"] as const) {
+      let points = difficulty === "A" ? 0 : 1;
+      let last = techniqueLevelsForPoints(points, difficulty);
+      for (let i = 0; i < 6; i++) {
+        points = nextTechniquePoints(points);
+        const now = techniqueLevelsForPoints(points, difficulty);
+        expect(now).toBe(last + 1);
+        last = now;
+      }
+    }
+  });
+
+  it("does not follow the skill table", () => {
+    expect(nextTechniquePoints(2)).not.toBe(nextSkillPoints(2));
   });
 });

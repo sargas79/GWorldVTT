@@ -271,3 +271,21 @@ export function previousSkillPoints(points: number): number {
     if (cost >= SKILL_POINT_CEILING) return below;
   }
 }
+
+/**
+ * The next point total for a technique (GURPS Basic Set: Characters p. 230).
+ *
+ * Techniques are not skills and do not use the Skill Cost Table: an Average
+ * one costs a point per level, and a Hard one wastes the first point and then
+ * costs a point per level. Either way every further point buys a level, so
+ * they step one at a time -- stepping them along the skill table would jump
+ * from 2 to 4 and skip a level that can be bought.
+ */
+export function nextTechniquePoints(points: number): number {
+  return Math.max(0, Math.floor(points)) + 1;
+}
+
+/** The previous point total for a technique, floored at none. */
+export function previousTechniquePoints(points: number): number {
+  return Math.max(0, Math.floor(points) - 1);
+}
