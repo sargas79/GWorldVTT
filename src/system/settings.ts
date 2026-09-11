@@ -8,7 +8,9 @@
  */
 
 import { RulesSettings } from "./apps/rules-settings.js";
+import { CompendiumSourcesSettings } from "./apps/compendium-sources.js";
 import { SYSTEM_ID } from "./constants.js";
+import { COMPENDIUM_SOURCES_KEY } from "./compendium-sources.js";
 import { OPTIONAL_RULES_KEY, defaultRuleState } from "./optional-rules.js";
 
 export const COMBAT_STYLE = "combatStyle";
@@ -32,6 +34,25 @@ export function registerSettings(): void {
     hint: "GWORLD.Rules.MenuHint",
     icon: "fa-solid fa-list-check",
     type: RulesSettings,
+    restricted: true,
+  });
+
+  // Which compendia the picker offers. Empty means the system's own packs;
+  // a GM with a private pack of house-ruled traits or campaign gear can add
+  // it beside the book's, or put it in the book's place.
+  game.settings.register(SYSTEM_ID, COMPENDIUM_SOURCES_KEY, {
+    scope: "world",
+    config: false,
+    type: Array,
+    default: [],
+  });
+
+  game.settings.registerMenu(SYSTEM_ID, "compendiumSources", {
+    name: "GWORLD.Sources.Title",
+    label: "GWORLD.Sources.MenuLabel",
+    hint: "GWORLD.Sources.MenuHint",
+    icon: "fa-solid fa-book-atlas",
+    type: CompendiumSourcesSettings,
     restricted: true,
   });
 

@@ -1,0 +1,36 @@
+<div class="gr">
+  <p class="gr-intro">{{localize "GWORLD.Sources.Intro"}}</p>
+
+  <div class="gr-bulk">
+    <button type="button" class="ibtn" data-action="restore">{{localize "GWORLD.Sources.Restore"}}</button>
+  </div>
+
+  <div class="gr-body">
+    {{#each groups as |group|}}
+      <section class="gr-group">
+        <h3>{{localize group.label}}</h3>
+        {{#each group.packs as |pack|}}
+          <label class="gr-rule">
+            <input type="checkbox" data-pack="{{pack.collection}}" {{#if pack.enabled}}checked{{/if}} />
+            <span class="gr-text">
+              <span class="gr-name">
+                {{pack.label}}
+                <span class="gr-ref">{{pack.collection}}</span>
+              </span>
+            </span>
+          </label>
+        {{/each}}
+      </section>
+    {{else}}
+      <p class="gr-hint">{{localize "GWORLD.Sources.NoPacks"}}</p>
+    {{/each}}
+    {{#if none}}
+      <p class="gr-hint">{{localize "GWORLD.Sources.NoneHint"}}</p>
+    {{/if}}
+  </div>
+
+  <div class="gr-foot">
+    {{#if dirty}}<span class="gr-dirty">{{localize "GWORLD.Rules.Unsaved"}}</span>{{/if}}
+    <button type="button" class="ibtn" data-action="save">{{localize "GWORLD.Rules.Save"}}</button>
+  </div>
+</div>
