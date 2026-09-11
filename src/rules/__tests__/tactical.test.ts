@@ -9,6 +9,7 @@ import {
   hexMovementCost,
   retreatBonus,
   shieldSide,
+  usableInCloseCombat,
   type HexDirection,
 } from "../tactical.js";
 
@@ -217,5 +218,29 @@ describe("facing changes", () => {
     expect(facingChangeAtEndOfMove({ movementPointsSpent: 3, movementPointsAvailable: 6 })).toBe(
       "any",
     );
+  });
+});
+
+describe("close combat (p. 391)", () => {
+  it("allows a weapon that reaches close", () => {
+    expect(usableInCloseCombat("C")).toBe(true);
+    expect(usableInCloseCombat("C,1")).toBe(true);
+    expect(usableInCloseCombat("c")).toBe(true);
+  });
+
+  /**
+   * "You can only use small, easily managed weapons in close combat." A
+   * broadsword at reach 1 is no use once someone is inside it.
+   */
+  it("refuses a weapon that does not", () => {
+    expect(usableInCloseCombat("1")).toBe(false);
+    expect(usableInCloseCombat("1,2")).toBe(false);
+    expect(usableInCloseCombat("2,3*")).toBe(false);
+    expect(usableInCloseCombat("1-4*")).toBe(false);
+  });
+
+  it("is not fooled by a C somewhere else in the string", () => {
+    expect(usableInCloseCombat("")).toBe(false);
+    expect(usableInCloseCombat("1-3*")).toBe(false);
   });
 });

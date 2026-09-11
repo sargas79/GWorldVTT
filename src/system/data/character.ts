@@ -13,6 +13,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
+import { usableInCloseCombat } from "../../rules/tactical.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
@@ -80,6 +81,11 @@ export interface DerivedAttack {
   explosive: boolean;
   /** Fragmentation thrown, as a dice formula. Blank when it throws none. */
   fragmentation: string;
+  /**
+   * False when this weapon cannot be used where the character is standing --
+   * a reach-1 weapon while sharing a hex with a foe.
+   */
+  usable: boolean;
   /** An affliction, which is resisted rather than damaging. */
   affliction: boolean;
   /** The attribute it is resisted with, e.g. "HT". Blank when not an affliction. */
@@ -149,6 +155,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     allOutDefense: boolean;
     blindToAttacker: boolean;
     attackedThisTurn: boolean;
+    closeCombat: boolean;
   };
   declare details: {
     player: string; height: string; weight: string; age: string;
@@ -301,6 +308,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
          * happened this turn and nothing else on the sheet can say.
          */
         attackedThisTurn: new fields.BooleanField({ initial: false }),
+        /**
+         * Sharing a hex with a foe (GURPS Basic Set: Campaigns p. 391). Only a
+         * weapon that reaches close can be used there, and a ranged weapon
+         * takes its Bulk in place of the speed/range penalty.
+         */
+        closeCombat: new fields.BooleanField({ initial: false }),
       }),
 
       details: new fields.SchemaField({
@@ -555,6 +568,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
               ? baseParry(skillLevel) + (mode.parryModifier ?? 0)
               : null,
           minSt: mode.minSt ?? null,
+          // Inside a foe's hex only a weapon that reaches close is any use.
+          usable:
+            !this.conditions.closeCombat || usableInCloseCombat(String(mode.reach ?? "C")),
           unbalanced: Boolean(mode.unbalanced),
           isFencing: Boolean(mode.isFencing),
           explosive: Boolean(mode.explosive),
@@ -596,6 +612,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           recoil: mode.recoil ?? 0,
           bulk: mode.bulk ?? 0,
           shots: mode.shots ?? "",
+          usable: true,
           unbalanced: false,
           isFencing: false,
           explosive: Boolean(mode.explosive),
@@ -643,7 +660,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // already attacked in: an axe swung this turn is not coming back in time to
     // turn a blade (p. 269). It stays available on a turn nothing was swung, so
     // the flag is read here rather than baked into the parry score.
-    const bestParry = bestParryOption(melee, this.conditions.attackedThisTurn);
+    const bestParry = bestParryOption(
+      melee.filter((atk) => atk.usable),
+      this.conditions.attackedThisTurn,
+    );
     const parryResult =
       parryAvailable && bestParry && bestParry.skillLevel !== null
         ? parry(bestParry.skillLevel, contextFor("parry"))

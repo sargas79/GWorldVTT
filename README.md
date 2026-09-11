@@ -43,6 +43,11 @@ criticals by the Basic Set's table. The damage card rolls the dice, applies the
 minimum-damage floor, states the wounding modifier and the injury an unarmoured
 target would take, and names the armour divisor when there is one.
 
+**Close combat** — a condition for sharing a hex with someone. Only a weapon
+that reaches close can be used there, so a broadsword shows a dash instead of a
+roll and stops offering its parry, and a ranged weapon takes its Bulk in place
+of the speed/range penalty.
+
 **Waiting and opportunity fire** — a Wait records what you are watching for and
 what you will do, because a Wait only works if both are declared in advance.
 With a ready ranged weapon it also records the ground you are covering, and the
@@ -152,8 +157,6 @@ book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
 
 ## What is not implemented
 
-- **Close combat** beyond the Bulk penalty — entering a foe's hex as a state,
-  and readying a weapon there — is not implemented.
 - **A Wait does not fire itself.** The trigger is written down and the penalty
   is applied when the shot is taken, but nothing watches the map and shoots on
   your behalf. The book does not ask for that either — "you can attack at any

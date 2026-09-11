@@ -168,10 +168,14 @@
               <td class="c">{{#if atk.minSt}}{{atk.minSt}}{{else}}&mdash;{{/if}}</td>
               <td class="c">
                 {{#if atk.skillLevel}}
-                  <span class="rollable" data-action="roll" data-roll-type="attack"
-                        data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}">
-                    {{> "gworld.die"}}
-                  </span>
+                  {{#if atk.usable}}
+                    <span class="rollable" data-action="roll" data-roll-type="attack"
+                          data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}">
+                      {{> "gworld.die"}}
+                    </span>
+                  {{else}}
+                    <span class="bad" data-tooltip="{{localize "GWORLD.Melee.Unusable"}}">&mdash;</span>
+                  {{/if}}
                 {{/if}}
               </td>
             </tr>

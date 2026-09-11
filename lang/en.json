@@ -191,6 +191,7 @@
     "Melee": {
       "Title": "Melee attack",
       "Deceptive": "Deceptive Attack",
+      "Unusable": "too long for close combat",
       "NoDeception": "Skill too low for a Deceptive Attack, which may not take you below 10.",
       "RapidStrike": "Rapid Strike"
     },
@@ -275,7 +276,8 @@
       "AllOutDefense": "All-Out Defense",
       "Stunned": "Stunned",
       "BlindToAttacker": "Blind to attacker",
-      "AttackedThisTurn": "Attacked this turn"
+      "AttackedThisTurn": "Attacked this turn",
+      "CloseCombat": "In close combat"
     },
     "Posture": {
       "standing": "Standing",
