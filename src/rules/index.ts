@@ -17,6 +17,7 @@ export * from "./armor.js";
 export * from "./skills.js";
 export * from "./traits.js";
 export * from "./encumbrance.js";
+export * from "./extra-effort.js";
 export * from "./success.js";
 export * from "./defenses.js";
 export * from "./fright.js";

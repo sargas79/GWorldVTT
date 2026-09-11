@@ -1,0 +1,37 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">{{localize "GWORLD.ExtraEffort.Title"}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>{{localize "GWORLD.ExtraEffort.Asking" percent=percentIncrease}}</span>
+    <span>{{localize "GWORLD.Secondary.Will"}} {{will}}</span>
+    {{#if penalty}}<span class="gc-mod">{{signed penalty}}</span>{{/if}}
+    {{#if missingFp}}<span class="gc-mod">-{{missingFp}} {{localize "GWORLD.ExtraEffort.Fatigued"}}</span>{{/if}}
+    {{#if motivated}}<span class="gc-mod">+5 {{localize "GWORLD.ExtraEffort.Motivated"}}</span>{{/if}}
+    <span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{effective}}</span>
+  </div>
+
+  <div class="gc-dice">
+    {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+    <span class="gc-total">{{roll}}</span>
+  </div>
+
+  {{#if criticalFailure}}
+    <div class="gc-result crit-failure">{{localize "GWORLD.ExtraEffort.CriticalFailure" hp=cost}}</div>
+    {{#if naturalEighteen}}
+      <div class="gc-result crit-failure">{{localize "GWORLD.ExtraEffort.NaturalEighteen"}}</div>
+    {{/if}}
+  {{else if criticalSuccess}}
+    <div class="gc-result crit-success">{{localize "GWORLD.ExtraEffort.CriticalSuccess"}}</div>
+  {{else if success}}
+    <div class="gc-result success">{{localize "GWORLD.ExtraEffort.Success" percent=percentIncrease}}</div>
+  {{else}}
+    <div class="gc-result failure">{{localize "GWORLD.ExtraEffort.Failure"}}</div>
+  {{/if}}
+
+  {{#if cost}}
+    <div class="gc-mods"><span class="gc-mod">{{localize "GWORLD.ExtraEffort.Spent" fp=cost}}</span></div>
+  {{/if}}
+</div>

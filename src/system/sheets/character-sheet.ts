@@ -18,6 +18,7 @@ import {
 } from "../../rules/attack-options.js";
 import { attackArc } from "../../rules/tactical.js";
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
+import { rollExtraEffort } from "../extra-effort.js";
 import { rollFrightCheck } from "../fright.js";
 import { feintDefenseScore, recordFeint } from "../feint.js";
 import { attackDirection, facingOf } from "../hex.js";
@@ -141,6 +142,47 @@ async function approachTo(mover: any, foeToken: any): Promise<"front" | "side" |
   return attackArc(facingOf(foeDocument, gridType), from).arc;
 }
 
+/**
+ * Asks how much more is being asked of the body, and why.
+ *
+ * Returns null when the dialog is dismissed, which cancels the attempt.
+ */
+async function promptForExtraEffort(): Promise<{
+  percentIncrease: number;
+  motivated: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.ExtraEffort.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Percent")}</span>
+        <input type="number" name="percent" value="10" min="0" step="5" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="motivated">
+        <span>${L("MotivatedHint")}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        return {
+          percentIncrease:
+            Number(form?.querySelector<HTMLInputElement>('input[name="percent"]')?.value ?? 0) || 0,
+          motivated:
+            form?.querySelector<HTMLInputElement>('input[name="motivated"]')?.checked ?? false,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
 /** The attributes a contest can be rolled on, in the order the dialog lists them. */
 const CONTEST_ATTRIBUTES = ["ST", "DX", "IQ", "HT", "Will", "Per"] as const;
 
@@ -253,6 +295,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       feint: GWorldCharacterSheet.#onFeint,
       contest: GWorldCharacterSheet.#onContest,
       frightCheck: GWorldCharacterSheet.#onFrightCheck,
+      extraEffort: GWorldCharacterSheet.#onExtraEffort,
       stepPoints: GWorldCharacterSheet.#onStepPoints,
       stepLevels: GWorldCharacterSheet.#onStepLevels,
       editItem: GWorldCharacterSheet.#onEditItem,
@@ -923,6 +966,32 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (modifier === null) return;
 
     await rollFrightCheck({ actor: this.actor, modifier });
+  }
+
+  /**
+   * Pushes past your usual limits at a physical task
+   * (GURPS Basic Set: Campaigns pp. 356-357).
+   *
+   * This is the out-of-combat half: a Will roll at -1 per 5% asked, paid for in
+   * fatigue whether it works or not. The combat half needs no button, because
+   * it is chosen where it applies -- Mighty Blows and Flurry of Blows in the
+   * melee attack dialog, Feverish Defense on the defense card.
+   *
+   * What the effort is *for* is not asked. The rule covers digging, hiking,
+   * running, swimming, jumping, throwing and lifting, and each has its own
+   * consequences on a critical failure; the roll is the same one every time.
+   */
+  static async #onExtraEffort(this: GWorldCharacterSheet) {
+    if (!isRuleOn("extraEffort")) return;
+
+    const asked = await promptForExtraEffort();
+    if (asked === null) return;
+
+    await rollExtraEffort({
+      actor: this.actor,
+      percentIncrease: asked.percentIncrease,
+      motivated: asked.motivated,
+    });
   }
 
   /**

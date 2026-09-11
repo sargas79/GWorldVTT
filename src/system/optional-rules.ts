@@ -76,7 +76,7 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
   rolls: [
     { key: "regularContests", reference: "Campaigns p. 349", default: true },
     { key: "frightChecks", reference: "Campaigns p. 360", default: true },
-    { key: "extraEffort", reference: "Campaigns p. 356", default: true, implemented: false },
+    { key: "extraEffort", reference: "Campaigns p. 356", default: true },
   ],
   activities: [
     { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true, implemented: false },

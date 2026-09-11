@@ -8,6 +8,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { consumeMightyBlows, recordMightyBlows, spendFatigue } from "./extra-effort.js";
 import { consumeFeint } from "./feint.js";
 import { isRuleOn } from "./optional-rules.js";
 import { targetedTokens } from "./targets.js";
@@ -20,6 +21,11 @@ import {
 import { applyDamageFloor, computeInjury } from "../rules/damage.js";
 import { maxRoll, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import { blastRadius, fragmentationRadius } from "../rules/explosions.js";
+import {
+  EXTRA_EFFORT_FP,
+  flurryOfBlowsPenalty,
+  mightyBlowsBonus,
+} from "../rules/extra-effort.js";
 import {
   OPPORTUNITY_LINE_PENALTY,
   RAPID_STRIKE_PENALTY,
@@ -413,6 +419,15 @@ export async function handleRollAction(
       : await maybePromptModifiers(event);
   if (modifiers === null) return;
 
+  // "You must declare that you are using extra effort and spend the required FP
+  // before you make your attack" -- and a fighter who cannot pay does not get
+  // the option, so the roll is abandoned rather than made on a promise.
+  if (melee && melee.fatigue > 0) {
+    const paid = await spendFatigue(actor, melee.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"));
+    if (!paid) return;
+    if (melee.mightyBlows) await recordMightyBlows(actor);
+  }
+
   // A Feint made last turn is spent by this attack, whether or not it is aimed
   // at the foe who was feinted -- it was good for one second either way.
   const feint =
@@ -668,10 +683,19 @@ export async function promptForNumber(options: {
  */
 export async function promptForMeleeAttack(options: {
   effectiveSkill: number;
-}): Promise<{ modifiers: RollModifier[]; defensePenalty: number } | null> {
+}): Promise<{
+  modifiers: RollModifier[];
+  defensePenalty: number;
+  /** FP the chosen options cost, to be paid before the roll. */
+  fatigue: number;
+  /** True when Mighty Blows was bought, for the damage roll to collect. */
+  mightyBlows: boolean;
+} | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Melee.${key}`);
+  const E = (key: string) => game.i18n.localize(`GWORLD.ExtraEffort.${key}`);
   const deceptionAllowed = isRuleOn("deceptiveAttack");
   const rapidAllowed = isRuleOn("rapidStrike");
+  const effortAllowed = isRuleOn("extraEffort");
 
   // A fighter at skill 11 or less cannot buy any deception at all, so they are
   // not offered a field that can only be left at zero. The ceiling shown is
@@ -698,6 +722,18 @@ export async function promptForMeleeAttack(options: {
              <span>${L("RapidStrike")} (${RAPID_STRIKE_PENALTY})</span>
            </label>`
         : ""}
+      ${effortAllowed && rapidAllowed
+        ? `<label style="display:flex;align-items:center;gap:8px">
+             <input type="checkbox" name="flurry">
+             <span>${E("Flurry")} (${flurryOfBlowsPenalty()}, ${EXTRA_EFFORT_FP} FP)</span>
+           </label>`
+        : ""}
+      ${effortAllowed
+        ? `<label style="display:flex;align-items:center;gap:8px">
+             <input type="checkbox" name="mighty">
+             <span>${E("MightyBlows")} (${EXTRA_EFFORT_FP} FP)</span>
+           </label>`
+        : ""}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" style="width:90px">
@@ -709,10 +745,14 @@ export async function promptForMeleeAttack(options: {
         const form = button.closest<HTMLElement>(".application");
         const num = (name: string) =>
           Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
+        const ticked = (name: string) =>
+          form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
         return {
           deceptive: num("deceptive"),
           modifier: num("modifier"),
-          rapid: form?.querySelector<HTMLInputElement>('input[name="rapid"]')?.checked ?? false,
+          rapid: ticked("rapid"),
+          flurry: ticked("flurry"),
+          mighty: ticked("mighty"),
         };
       },
     },
@@ -720,10 +760,12 @@ export async function promptForMeleeAttack(options: {
   });
 
   if (!result || typeof result !== "object") return null;
-  const { deceptive, modifier, rapid } = result as {
+  const { deceptive, modifier, rapid, flurry, mighty } = result as {
     deceptive: number;
     modifier: number;
     rapid: boolean;
+    flurry: boolean;
+    mighty: boolean;
   };
 
   // "You may not reduce your final effective skill below 10", so the ceiling is
@@ -736,12 +778,27 @@ export async function promptForMeleeAttack(options: {
   if (deception.attackPenalty !== 0) {
     modifiers.push({ label: L("Deceptive"), value: deception.attackPenalty });
   }
-  if (rapid) modifiers.push({ label: L("RapidStrike"), value: RAPID_STRIKE_PENALTY });
+  // A Flurry of Blows buys half the Rapid Strike penalty back, so the two are
+  // one modifier rather than a penalty and a refund.
+  const flurried = rapid && flurry && effortAllowed;
+  if (rapid) {
+    modifiers.push({
+      label: flurried ? `${L("RapidStrike")} + ${E("Flurry")}` : L("RapidStrike"),
+      value: flurried ? flurryOfBlowsPenalty() : RAPID_STRIKE_PENALTY,
+    });
+  }
   if (modifier !== 0) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: modifier });
   }
 
-  return { modifiers, defensePenalty: deception.defensePenalty };
+  const mightyBlows = mighty && effortAllowed;
+  return {
+    modifiers,
+    defensePenalty: deception.defensePenalty,
+    // Both cost a flat point each, and both are paid before the roll.
+    fatigue: (flurried ? EXTRA_EFFORT_FP : 0) + (mightyBlows ? EXTRA_EFFORT_FP : 0),
+    mightyBlows,
+  };
 }
 
 /** Handles a click on any element carrying the damage dataset. */
@@ -755,6 +812,24 @@ export async function handleDamageAction(
 
   const modifiers = await maybePromptModifiers(event);
   if (modifiers === null) return;
+
+  // A Mighty Blows bought before the attack is collected here, where the dice
+  // are known -- the bonus is "+2 to damage, or +1 per die if that is better".
+  // It applies only to ST-based thrust and swing damage, so a force sword's
+  // flat 8d collects nothing however much fatigue was spent.
+  if (isRuleOn("extraEffort") && (await consumeMightyBlows(actor))) {
+    // Melee only: "if you take an Attack maneuver in melee combat". A bow's
+    // damage is ST-based too, and would otherwise collect a bonus bought for a
+    // sword.
+    if (target.dataset.melee === "1" && target.dataset.stBased === "1") {
+      modifiers.push({
+        label: game.i18n.localize("GWORLD.ExtraEffort.MightyBlows"),
+        value: mightyBlowsBonus(parseDiceAdds(damageFormula)?.dice ?? 0),
+      });
+    } else {
+      ui.notifications?.info(game.i18n.localize("GWORLD.ExtraEffort.NotStBased"));
+    }
+  }
 
   await rollDamage({
     actor,

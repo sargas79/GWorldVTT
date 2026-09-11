@@ -67,6 +67,21 @@ export function allOutAttackBonus(option: AllOutAttackOption, ranged = false): n
   return option === "determined" ? 4 : 0;
 }
 
+/**
+ * The damage bonus for All-Out Attack (Strong), p. 365.
+ *
+ * "If you hit, you get +2 to damage -- or +1 damage per die, if that would be
+ * better." Which is better depends on the weapon: a knife doing 1d gains 2, and
+ * a maul doing 3d gains 3.
+ *
+ * "This only applies to melee attacks doing ST-based thrust or swing damage,
+ * not to weapons such as force swords" -- which the caller decides, since the
+ * dice alone cannot say where they came from.
+ */
+export function strongAttackDamageBonus(dice: number): number {
+  return Math.max(2, Math.max(0, Math.floor(dice)));
+}
+
 /** All-Out Defense options (GURPS Basic Set: Campaigns p. 366). */
 export type AllOutDefenseOption = "increased" | "double";
 
