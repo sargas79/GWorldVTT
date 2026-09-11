@@ -256,6 +256,24 @@ declare global {
 
   const game: {
     i18n: { localize(key: string): string; format(key: string, data?: object): string };
+    /**
+     * Keyboard shortcuts. Registered at init, before the bindings are built;
+     * `onDown` returns true when it handled the key.
+     */
+    keybindings: {
+      register(
+        namespace: string,
+        action: string,
+        data: {
+          name: string;
+          hint?: string;
+          editable?: Array<{ key: string; modifiers?: string[] }>;
+          onDown?: () => boolean | void;
+          onUp?: () => boolean | void;
+          restricted?: boolean;
+        },
+      ): void;
+    };
     settings: {
       get(namespace: string, key: string): unknown;
       set(namespace: string, key: string, value: unknown): Promise<unknown>;
