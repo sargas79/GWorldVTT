@@ -13,6 +13,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { setCondition } from "./conditions.js";
+import { applyFatigue } from "./fatigue.js";
 import {
   DROWNING_ROLL_SECONDS,
   SECONDS_TO_DEATH,
@@ -77,10 +78,12 @@ export async function rollSuffocation(options: {
     }
   }
 
-  const now = current - lost;
-  const state = suffocationSecond({ air, seconds: after, currentFp: now + lost });
+  const state = suffocationSecond({ air, seconds: after, currentFp: current });
 
-  if (lost > 0) await actor.update({ "system.fp.value": now });
+  // Below 0 FP the points come out of hit points as well, which is how
+  // drowning finishes somebody who has already run out of energy (p. 426).
+  const spent = lost > 0 ? await applyFatigue(actor, lost) : null;
+  const now = spent?.fp.now ?? current;
   await actor.setFlag(SYSTEM_ID, SUFFOCATION_FLAG, after);
   await setCondition(actor, "suffocating", true);
 
@@ -93,13 +96,15 @@ export async function rollSuffocation(options: {
     seconds,
     total: after,
     drowning: air === "drowning",
-    lost,
+    lost: spent?.fpLost ?? 0,
     previous: current,
     now,
     max: Number(fp.max) || 0,
     // At nothing left it is a Will roll every second to stay awake, which is
     // the GM's to run second by second.
     willRolls: now <= 0,
+    hpLost: spent?.hpLost ?? 0,
+    hp: spent?.hp ?? null,
     dead,
     brainDamage: !dead && brainDamageRoll(after),
     secondsToDeath: Math.max(0, SECONDS_TO_DEATH - after),
@@ -116,7 +121,7 @@ export async function rollSuffocation(options: {
     rolls,
   });
 
-  return lost;
+  return spent?.fpLost ?? 0;
 }
 
 /**

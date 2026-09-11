@@ -7,6 +7,8 @@
  * several can be combined with it.
  */
 
+import { penalty } from "./modifiers.js";
+
 /** Rapid Strike: two attacks in the time of one, both at -6 (p. 370). */
 export const RAPID_STRIKE_PENALTY = -6;
 
@@ -42,12 +44,9 @@ export function maxDeception(effectiveSkill: number): number {
  */
 export function deceptiveAttack(effectiveSkill: number, levels: number): DeceptiveAttack {
   const taken = Math.max(0, Math.min(Math.floor(levels), maxDeception(effectiveSkill)));
-  // Negating zero gives -0, which is equal to 0 everywhere except where it is
-  // printed: a card would read "-0 Deceptive Attack". The zero case is written
-  // out rather than negated.
   return {
-    attackPenalty: taken === 0 ? 0 : -2 * taken,
-    defensePenalty: taken === 0 ? 0 : -taken,
+    attackPenalty: penalty(2 * taken),
+    defensePenalty: penalty(taken),
     effectiveSkill: effectiveSkill - 2 * taken,
   };
 }

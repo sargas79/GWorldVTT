@@ -1,0 +1,49 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">{{kind}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>{{detail}}</span>
+    {{#if target}}<span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{target}}</span>{{/if}}
+  </div>
+
+  {{#if dice}}
+    <div class="gc-dice">
+      {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+      <span class="gc-total">{{roll}}</span>
+    </div>
+  {{/if}}
+
+  {{#if lost}}
+    <div class="gc-result {{#if heatStroke}}crit-failure{{else}}failure{{/if}}">
+      {{#if heatStroke}}{{localize "GWORLD.Weather.HeatStroke"}} &mdash; {{/if}}
+      <strong>-{{lost}}</strong> FP
+      <span class="gc-mod">{{fp.previous}} &rarr; {{fp.now}} / {{fp.max}}</span>
+    </div>
+  {{else}}
+    {{#unless hpLost}}
+      <div class="gc-result success">{{localize "GWORLD.Weather.Bore"}}</div>
+    {{/unless}}
+  {{/if}}
+
+  {{#if hpLost}}
+    <div class="gc-result crit-failure">
+      {{#if parched}}{{localize "GWORLD.Weather.Parched"}}{{else}}{{localize "GWORLD.Weather.PastEmpty"}}{{/if}} &mdash;
+      <strong>-{{hpLost}}</strong> HP
+      <span class="gc-mod">{{hp.previous}} &rarr; {{hp.now}} / {{hp.max}}</span>
+    </div>
+  {{/if}}
+
+  <div class="gc-mods">
+    {{#if hunger}}<span class="gc-mod">{{localize "GWORLD.Weather.Hunger" fp=hunger}}</span>{{/if}}
+    {{#if thirst}}<span class="gc-mod">{{localize "GWORLD.Weather.Thirst" fp=thirst}}</span>{{/if}}
+    {{#if surcharge}}<span class="gc-warn">{{localize "GWORLD.Weather.Surcharge" fp=surcharge}}</span>{{/if}}
+    {{#if unconscious}}
+      <span class="gc-warn">{{localize "GWORLD.Health.Unconscious"}}</span>
+    {{else if collapsing}}
+      <span class="gc-warn">{{localize "GWORLD.Health.Collapsing"}}</span>
+    {{/if}}
+  </div>
+</div>

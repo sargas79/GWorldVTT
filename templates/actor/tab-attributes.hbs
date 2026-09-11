@@ -7,10 +7,11 @@
         <div class="attr blueprint">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <span class="iroll rollable" data-action="roll" data-roll-type="attribute"
-                data-roll-label="{{attr.label}}" data-roll-target="{{attr.value}}">
+                data-roll-label="{{attr.label}}" data-roll-target="{{attr.rollTarget}}">
             {{> "gworld.die"}}
           </span>
-          <span class="al">{{attr.key}}</span>
+          <span class="al">{{attr.key}}{{#if attr.weakened}}<em class="tired"
+                data-tooltip="{{localize "GWORLD.Health.VeryTiredHint"}}">{{attr.rollTarget}}</em>{{/if}}</span>
           <input class="av" type="number" name="system.attributes.{{attr.key}}" value="{{attr.value}}"
                  {{#unless @root.editable}}disabled{{/unless}}>
           <span class="ac">{{attr.cost}} pts</span>

@@ -20,7 +20,17 @@
       <span class="gc-mod">{{previous}} &rarr; {{now}} / {{max}}</span>
     </div>
   {{else}}
-    <div class="gc-result">{{localize "GWORLD.Air.NoLoss"}}</div>
+    {{#unless hpLost}}
+      <div class="gc-result">{{localize "GWORLD.Air.NoLoss"}}</div>
+    {{/unless}}
+  {{/if}}
+
+  {{#if hpLost}}
+    <div class="gc-result crit-failure">
+      {{localize "GWORLD.Weather.PastEmpty"}} &mdash;
+      <strong>-{{hpLost}}</strong> HP
+      <span class="gc-mod">{{hp.previous}} &rarr; {{hp.now}} / {{hp.max}}</span>
+    </div>
   {{/if}}
 
   <div class="gc-mods">

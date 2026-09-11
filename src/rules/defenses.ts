@@ -37,6 +37,8 @@ export interface DefenseContext {
   stunned?: boolean;
   /** The defender is reeling (below 1/3 HP), which halves Dodge. */
   reeling?: boolean;
+  /** The defender is very tired (below 1/3 FP), which halves Dodge again. */
+  veryTired?: boolean;
   cannotSeeAttacker?: boolean;
   /** GM-assigned situational penalties: bad footing, distraction, and so on. */
   situational?: number;
@@ -108,10 +110,15 @@ function commonModifiers(context: DefenseContext): DefenseModifier[] {
  * Reeling halves the score, rounding up. Because GURPS Lite states the halving
  * as an effect on the Dodge score itself, it is applied to the base before
  * modifiers rather than to the final total.
+ *
+ * Being very tired halves it as well (Campaigns p. 426). The two charts are
+ * separate and the fatigue one says its effects are cumulative, so somebody
+ * both hurt and exhausted is halved twice rather than once.
  */
 export function dodge(basicSpeed: number, context: DodgeContext = {}): DefenseResult {
   const raw = baseDodge(basicSpeed);
-  const base = context.reeling ? halveForReeling(raw) : raw;
+  const hurt = context.reeling ? halveForReeling(raw) : raw;
+  const base = context.veryTired ? halveForReeling(hurt) : hurt;
 
   const modifiers = commonModifiers(context);
   if (context.encumbrance) {

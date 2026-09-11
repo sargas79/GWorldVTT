@@ -58,6 +58,13 @@ describe("Dodge modifiers", () => {
     expect(dodge(5.25, { reeling: true, encumbrance: 1 }).total).toBe(3);
   });
 
+  /** The fatigue chart halves Dodge the same way the injury chart does. */
+  it("halves the score when very tired as well", () => {
+    expect(dodge(5.25, { veryTired: true }).total).toBe(4);
+    // "All effects are cumulative": hurt and exhausted is halved twice.
+    expect(dodge(5.25, { reeling: true, veryTired: true }).total).toBe(2);
+  });
+
   it("stacks stun and All-Out Defense", () => {
     expect(dodge(5.25, { stunned: true }).total).toBe(4);
     expect(dodge(5.25, { allOutDefenseIncreased: true }).total).toBe(10);

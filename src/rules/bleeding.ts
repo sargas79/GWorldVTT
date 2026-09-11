@@ -10,6 +10,7 @@
  * computer.
  */
 
+import { penalty } from "./modifiers.js";
 import type { DamageType } from "./types.js";
 
 /** How many minutes without bleeding end it for good (p. 420). */
@@ -55,11 +56,7 @@ export function woundBleeds(type: DamageType, majorWound = false): boolean {
  * harder as the wound accumulates.
  */
 export function bleedingModifier(hpLost: number): number {
-  const steps = Math.floor(Math.max(0, hpLost) / 5);
-  // Negating zero gives -0, which is equal to 0 everywhere except where it is
-  // printed: a card would read "-0". The zero case is written out rather than
-  // negated.
-  return steps === 0 ? 0 : -steps;
+  return penalty(Math.floor(Math.max(0, hpLost) / 5));
 }
 
 /** What a minute of bleeding did. */
