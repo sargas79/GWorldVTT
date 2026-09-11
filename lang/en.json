@@ -1031,6 +1031,34 @@
       "Label": "Aimed at",
       "ChinkTorso": "Chink in torso armour",
       "ChinkOther": "Chink elsewhere"
+    },
+    "Disarm": {
+      "Action": "Disarm",
+      "Hint": "Strike at a foe's weapon to knock it out of their hand",
+      "Title": "Disarm",
+      "Fencing": "Fencing weapon — main-gauche, rapier, saber, smallsword (no -2)",
+      "JitteOption": "Using Jitte/Sai or Whip (+2)",
+      "TwoHandedOption": "They have both hands on it (+2 to them)",
+      "Strike": "striking at the weapon",
+      "Jitte": "Jitte/Sai or Whip",
+      "TwoHanded": "two-handed grip",
+      "Label": "Strike at {foe}'s weapon",
+      "ContestLabel": "{attacker} tries to disarm {foe}",
+      "OneTarget": "Target exactly one foe to disarm.",
+      "NoWeapon": "No weapon skill to strike with.",
+      "Disarmed": "{foe} is disarmed — the weapon flies a yard.",
+      "Unready": "{foe} keeps the weapon, but it is unready.",
+      "HeldFast": "{foe} holds on to it."
+    },
+    "Subdue": {
+      "Turned": "Strike with the flat or the butt (crushing)"
+    },
+    "Ground": {
+      "Label": "Ground",
+      "Level": "Level with them",
+      "Higher3": "Three feet above them (they defend at -1)",
+      "Higher4": "Four feet above them (-2)",
+      "Higher5": "Five feet or more above them (-3)"
     }
   }
 }

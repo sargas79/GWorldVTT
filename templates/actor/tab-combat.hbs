@@ -159,6 +159,7 @@
                     data-damage-formula="{{atk.damage}}" data-damage-type="{{atk.damageType}}"
                     data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}"
                     data-explosive="{{#if atk.explosive}}1{{/if}}"
+                    data-reach="{{atk.reach}}"
                     data-st-based="{{#if atk.stBased}}1{{/if}}" data-melee="1"
                     data-fragmentation="{{atk.fragmentation}}"{{/if}}>{{atk.damage}}
                   <span class="dt">{{atk.damageType}}</span>
@@ -310,6 +311,10 @@
           </button>
         {{/unless}}
       {{/if}}
+      <button type="button" class="ibtn" data-action="disarm"
+              data-tooltip="{{localize "GWORLD.Disarm.Hint"}}">
+        {{localize "GWORLD.Disarm.Action"}}
+      </button>
     </div>
 
     {{!-- A grapple changes what this character can do more than anything else
