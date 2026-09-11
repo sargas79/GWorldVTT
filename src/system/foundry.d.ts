@@ -134,7 +134,9 @@ declare global {
             _prepareContext(options: object): Promise<object>;
             _preparePartContext(partId: string, context: object, options: object): Promise<object>;
             _configureRenderParts(options: object): Record<string, unknown>;
+            _onFirstRender(context: object, options: object): Promise<void>;
             _onRender(context: object, options: object): Promise<void>;
+            _onClose(options: object): Promise<void>;
           };
           PARTS: Record<string, { template: string; scrollable?: string[]; templates?: string[] }>;
         };
@@ -244,7 +246,8 @@ declare global {
   const Hooks: {
     once(event: string, handler: (...args: any[]) => unknown): number;
     on(event: string, handler: (...args: any[]) => unknown): number;
-    off(event: string, handler: (...args: any[]) => unknown): void;
+    /** Takes either the handler or the id `on` returned for it. */
+    off(event: string, handler: number | ((...args: any[]) => unknown)): void;
     call(event: string, ...args: any[]): boolean;
     callAll(event: string, ...args: any[]): boolean;
   };
