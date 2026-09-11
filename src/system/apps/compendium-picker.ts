@@ -1,5 +1,5 @@
 /**
- * A searchable list of everything in the system's compendia, for adding to a
+ * A searchable list of everything in the chosen compendia, for adding to a
  * character without leaving the sheet.
  *
  * The compendia hold 1,764 entries between them. Foundry's own compendium
@@ -9,10 +9,22 @@
  *
  * Both ways of building a character use this: the sheet's Add buttons open it
  * filtered to one type, and the guided builder opens it at each step.
+ *
+ * Each row asks how much to take before it is taken -- levels of a levelled
+ * trait, points in a skill -- and says what that will cost. Taking something
+ * the character already has raises what they have rather than adding a copy.
  */
 
 import { SYSTEM_ID } from "../constants.js";
 import { summarise } from "../item-summary.js";
+import { sourceCollections } from "../compendium-sources.js";
+import {
+  amountKind,
+  levelCeiling,
+  planAddition,
+  previewCost,
+  type PlannedItem,
+} from "../picker-merge.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -24,6 +36,7 @@ const INDEX_FIELDS = [
   "system.points",
   "system.pointsPerLevel",
   "system.costTable",
+  "system.maxLevels",
   "system.dr",
   "system.db",
   "system.weight",
@@ -41,10 +54,12 @@ export interface PickerEntry {
   summary: string;
   /** Lowercased name, kept so filtering does not rebuild it on every keystroke. */
   search: string;
+  /** What the index knows of the entry, enough to price an amount before it is taken. */
+  system: Record<string, any>;
 }
 
 /**
- * Every entry across the system's Item compendia, of the given types.
+ * Every entry across the chosen Item compendia, of the given types.
  *
  * Reading the index rather than the documents is what keeps this quick: the
  * index is a summary the server already holds, and loading 1,764 documents to
@@ -59,10 +74,12 @@ export async function collectEntries(
   // for advantages must say so: offering a list with disadvantages mixed
   // through it means half of what you scroll past charges you nothing.
   const allowed = categories && categories.length > 0 ? new Set(categories) : null;
+  const sources = sourceCollections();
   const entries: PickerEntry[] = [];
 
   for (const pack of (game as any).packs ?? []) {
     if (pack?.documentName !== "Item") continue;
+    if (!sources.has(String(pack.collection))) continue;
     const index = await pack.getIndex({ fields: INDEX_FIELDS });
     for (const entry of index) {
       if (!wanted.has(entry.type)) continue;
@@ -73,6 +90,7 @@ export async function collectEntries(
         type: entry.type,
         summary: summarise(entry.type, entry.system),
         search: String(entry.name).toLowerCase(),
+        system: entry.system ?? {},
       });
     }
   }
@@ -83,7 +101,7 @@ export async function collectEntries(
 export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) {
   static override DEFAULT_OPTIONS = {
     classes: ["gworld", "gworld-picker"],
-    position: { width: 460, height: 560 },
+    position: { width: 520, height: 560 },
     window: { title: "GWORLD.Picker.Title", resizable: true },
     actions: {
       add: CompendiumPicker.#onAdd,
@@ -97,10 +115,13 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
   #actor: any;
   #types: string[];
   #categories: string[];
-  #entries: PickerEntry[] = [];
+  #entries: PickerEntry[] | null = null;
+  #loading: Promise<void> | null = null;
   #query = "";
   /** Names added during this session, so the list can show what has been taken. */
   #added = new Set<string>();
+  /** The amount typed beside each row, kept across re-renders. */
+  #amounts = new Map<string, number>();
 
   constructor(options: {
     actor: any;
@@ -127,31 +148,102 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     return app;
   }
 
+  /**
+   * Reads the compendia once, after the window is already open.
+   *
+   * The first render used to wait on this, which meant nothing at all
+   * happened for a second or two after "Browse" was pressed. The window now
+   * opens at once saying it is loading, and fills in when the index arrives.
+   */
+  #load(): void {
+    if (this.#entries || this.#loading) return;
+    this.#loading = collectEntries(this.#types, this.#categories)
+      .then((entries) => {
+        this.#entries = entries;
+      })
+      .catch((error) => {
+        console.error(`${SYSTEM_ID} | Could not read the compendia`, error);
+        this.#entries = [];
+      })
+      .finally(() => {
+        this.#loading = null;
+        void this.render();
+      });
+  }
+
   override async _prepareContext(): Promise<Record<string, unknown>> {
-    if (this.#entries.length === 0) {
-      this.#entries = await collectEntries(this.#types, this.#categories);
-    }
+    this.#load();
 
     const query = this.#query.trim().toLowerCase();
-    const matching = query
-      ? this.#entries.filter((entry) => entry.search.includes(query))
-      : this.#entries;
+    const all = this.#entries ?? [];
+    const matching = query ? all.filter((entry) => entry.search.includes(query)) : all;
 
     // A list of 1,764 rows is slow to render and useless to read. The cap is
     // generous enough that a real search is never truncated, and the count
     // below says when it has been.
     const shown = matching.slice(0, 200);
 
+    const points = this.#actor?.system?.derived?.points ?? {};
+
     return {
+      loading: this.#entries === null,
       query: this.#query,
-      entries: shown.map((entry) => ({ ...entry, added: this.#added.has(entry.uuid) })),
+      entries: shown.map((entry) => this.#row(entry)),
       total: matching.length,
       truncated: matching.length > shown.length,
+      // The ledger rides along here too: what has been spent and what is left
+      // is the whole question while choosing, and it should not take a trip
+      // back to the sheet to answer.
+      ledger: {
+        spent: points.spent ?? 0,
+        available: points.available ?? 0,
+        unspent: points.unspent ?? points.remaining ?? 0,
+        over: Boolean(points.overBudget),
+      },
+    };
+  }
+
+  /** One row, with the amount field it needs and what that amount costs. */
+  #row(entry: PickerEntry) {
+    const item: PlannedItem = { type: entry.type, name: entry.name, system: entry.system };
+    const kind = amountKind(item);
+    const amount = this.#amounts.get(entry.uuid) ?? 1;
+    const ceiling = kind === "levels" ? levelCeiling(item) : null;
+    const cost = kind ? previewCost(item, amount) : null;
+    return {
+      ...entry,
+      added: this.#added.has(entry.uuid),
+      amountKind: kind,
+      amount,
+      max: ceiling,
+      unit: kind === "levels"
+        ? game.i18n.localize("GWORLD.Trait.Levels")
+        : game.i18n.localize("GWORLD.Picker.Points"),
+      cost: cost === null ? null : game.i18n.format("GWORLD.Picker.Cost", { points: cost }),
     };
   }
 
   override async _onRender(context: object, options: object): Promise<void> {
     await super._onRender(context, options);
+
+    for (const input of this.element.querySelectorAll<HTMLInputElement>("input[data-amount-for]")) {
+      input.addEventListener("input", () => {
+        const uuid = input.dataset.amountFor;
+        if (!uuid) return;
+        const value = Math.max(1, Math.floor(Number(input.value) || 1));
+        this.#amounts.set(uuid, value);
+        // Re-price the row in place rather than re-rendering the list, which
+        // would take the caret out of the field being typed into.
+        const entry = this.#entries?.find((e) => e.uuid === uuid);
+        const cost = entry
+          ? previewCost({ type: entry.type, name: entry.name, system: entry.system }, value)
+          : null;
+        const label = input.closest(".gp-row")?.querySelector<HTMLElement>(".gp-cost");
+        if (label && cost !== null) {
+          label.textContent = game.i18n.format("GWORLD.Picker.Cost", { points: cost });
+        }
+      });
+    }
 
     const search = this.element.querySelector<HTMLInputElement>('input[name="search"]');
     if (!search) return;
@@ -185,9 +277,33 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     const data = source.toObject();
     delete data._id;
 
-    await this.#actor.createEmbeddedDocuments("Item", [data]);
+    const amount = this.#amounts.get(uuid) ?? 1;
+    const plan = planAddition({
+      source: data,
+      existing: [...(this.#actor.items ?? [])].map((item: any) => ({
+        id: item.id,
+        type: item.type,
+        name: item.name,
+        system: item.system,
+      })),
+      chosen: { levels: amount, points: amount },
+    });
+
+    if (plan.action === "update") {
+      await this.#actor.items.get(plan.itemId)?.update(plan.changes);
+      ui.notifications?.info(
+        game.i18n.format(`GWORLD.Picker.Raised.${plan.moved.what}`, {
+          name: data.name,
+          from: plan.moved.from,
+          to: plan.moved.to,
+        }),
+      );
+    } else {
+      await this.#actor.createEmbeddedDocuments("Item", [plan.data]);
+      ui.notifications?.info(game.i18n.format("GWORLD.Picker.Added", { name: data.name }));
+    }
+
     this.#added.add(uuid);
-    ui.notifications?.info(game.i18n.format("GWORLD.Picker.Added", { name: data.name }));
     await this.render();
   }
 }
