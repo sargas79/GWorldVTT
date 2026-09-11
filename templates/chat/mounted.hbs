@@ -1,0 +1,42 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">
+      {{#if stayOn}}{{localize "GWORLD.Mounted.StayOn"}}{{else}}{{localize "GWORLD.Mounted.Envelope"}}{{/if}}
+    </span>
+  </div>
+
+  <div class="gc-mods">
+    {{#if stunned}}<span class="gc-mod">{{localize "GWORLD.Condition.Stunned"}}</span>{{/if}}
+    {{#if knockback}}
+      <span class="gc-mod">{{localize "GWORLD.Mounted.Knockback" yards=knockback}}</span>
+    {{/if}}
+    {{#if envelope}}
+      {{#if turning}}
+        <span>{{localize "GWORLD.Mounted.Turning" velocity=velocity radius=radius}}</span>
+      {{else}}
+        <span>{{localize "GWORLD.Mounted.Slowing" yards=deceleration safe=safe most=most}}</span>
+      {{/if}}
+    {{/if}}
+    {{#if target}}<span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{target}}</span>{{/if}}
+  </div>
+
+  {{#if dice}}
+    <div class="gc-dice">
+      {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+      <span class="gc-total">{{roll}}</span>
+    </div>
+  {{/if}}
+
+  {{#if thrown}}
+    <div class="gc-result crit-failure">{{localize "GWORLD.Mounted.Thrown"}}</div>
+  {{else if success}}
+    <div class="gc-result success">
+      {{#if stayOn}}{{localize "GWORLD.Mounted.Stayed"}}{{else}}{{localize "GWORLD.Mounted.HeldIt"}}{{/if}}
+    </div>
+  {{else}}
+    <div class="gc-result failure">
+      {{#if stayOn}}{{localize "GWORLD.Mounted.Fell"}}{{else}}{{localize "GWORLD.Mounted.LostControl"}}{{/if}}
+    </div>
+  {{/if}}
+</div>

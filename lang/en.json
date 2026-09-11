@@ -386,6 +386,14 @@
         "reactions": {
           "Name": "Reaction and Influence rolls",
           "Hint": "What strangers make of you, and talking them round."
+        },
+        "mountedCombat": {
+          "Name": "Mounted combat",
+          "Hint": "Fighting from the saddle: defenses capped by Riding, and staying on."
+        },
+        "highSpeed": {
+          "Name": "High-speed movement",
+          "Hint": "Going faster than you can stop: turning radius, and pushing the envelope."
         }
       }
     },
@@ -741,6 +749,40 @@
       "DiplomacySaved": "Diplomacy's second roll was better: {band}",
       "DiplomacyTried": "Diplomacy also rolled {band}",
       "OneTarget": "Target exactly one token to influence"
+    },
+    "Mounted": {
+      "Action": "Mounted",
+      "Hint": "In the saddle: active defenses are capped by Riding below 12",
+      "Title": "Mounted",
+      "StayOn": "Staying on",
+      "StayOnAction": "Stay on",
+      "StayOnHint": "The Riding roll after a stun or a knockback",
+      "Stunned": "Stunned",
+      "KnockbackYards": "Yards of knockback",
+      "Saddle": "Saddle and stirrups",
+      "Knockback": "{yards} yards of knockback",
+      "Thrown": "Thrown from the saddle — no saddle, no roll",
+      "Stayed": "Stayed on",
+      "Fell": "Came off",
+      "Envelope": "Pushing the envelope",
+      "EnvelopeAction": "High speed",
+      "EnvelopeHint": "A stop or a turn sharper than high-speed movement allows",
+      "Velocity": "Velocity (yards/second)",
+      "Deceleration": "Slowing by (yards/second)",
+      "Turn": "Turning early or tighter than 60°",
+      "Turning": "Turning at velocity {velocity}, radius {radius} yards",
+      "Slowing": "Shedding {yards} yards/second — {safe} is safe, {most} the most",
+      "HeldIt": "Held it",
+      "LostControl": "Lost control — falls or spins out",
+      "Riding": "Riding"
+    },
+    "Penalties": {
+      "Label": "Attribute penalty",
+      "Title": "Temporary attribute penalties",
+      "Hint": "Shock, afflictions and the like, knocking an attribute down for a while",
+      "Action": "Penalties",
+      "Explain": "Comes off skills governed by the attribute, and IQ takes Will and Per with it. Never off defenses, resistance rolls or Fright Checks.",
+      "Clear": "Clear"
     },
     "Chat": {
       "Target": "Target",

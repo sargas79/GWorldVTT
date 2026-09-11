@@ -327,6 +327,28 @@
           {{localize "GWORLD.Scatter.Action"}}
         </button>
       {{/if}}
+      {{#if rules.mountedCombat}}
+        <button type="button" class="ibtn{{#if system.mounted}} on{{/if}}" data-action="toggleMounted"
+                data-tooltip="{{localize "GWORLD.Mounted.Hint"}}">
+          {{localize "GWORLD.Mounted.Action"}}
+        </button>
+        {{#if system.mounted}}
+          <button type="button" class="ibtn" data-action="stayOn"
+                  data-tooltip="{{localize "GWORLD.Mounted.StayOnHint"}}">
+            {{localize "GWORLD.Mounted.StayOnAction"}}
+          </button>
+        {{/if}}
+      {{/if}}
+      {{#if rules.highSpeed}}
+        <button type="button" class="ibtn" data-action="pushEnvelope"
+                data-tooltip="{{localize "GWORLD.Mounted.EnvelopeHint"}}">
+          {{localize "GWORLD.Mounted.EnvelopeAction"}}
+        </button>
+      {{/if}}
+      <button type="button" class="ibtn" data-action="attributePenalties"
+              data-tooltip="{{localize "GWORLD.Penalties.Hint"}}">
+        {{localize "GWORLD.Penalties.Action"}}{{#if penaltiesShowing}} &middot; {{penaltiesShowing}}{{/if}}
+      </button>
       {{#if rules.reactions}}
         <button type="button" class="ibtn" data-action="reaction"
                 data-tooltip="{{localize "GWORLD.Reaction.Hint"}}">

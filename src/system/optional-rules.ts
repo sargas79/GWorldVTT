@@ -69,6 +69,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "malfunctions", reference: "Campaigns p. 407", default: true },
     { key: "dualWeaponAttack", reference: "Campaigns p. 417", default: true },
     { key: "scatter", reference: "Campaigns p. 414", default: true },
+    { key: "mountedCombat", reference: "Campaigns pp. 396-397", default: true },
+    { key: "highSpeed", reference: "Campaigns pp. 394-395", default: true },
     { key: "overpenetration", reference: "Campaigns p. 408", default: true },
     { key: "dirtyTricks", reference: "Campaigns p. 405", default: true },
   ],

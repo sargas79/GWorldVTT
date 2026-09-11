@@ -35,6 +35,8 @@ import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
 import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js";
 import { fatigueStatus, isVeryTired } from "../../rules/fatigue.js";
 import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
+import { mountedDefensePenalty } from "../../rules/mounted.js";
+import { penaltyEffects } from "../../rules/attribute-penalties.js";
 import {
   effectiveSkillLevel,
   namedDefaultLevel,
@@ -170,6 +172,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   };
   declare hp: { value: number; max: number };
   declare fp: { value: number; max: number };
+  declare mounted: boolean;
+  declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
   declare points: {
     starting: number;
     disadvantageLimit: number;
@@ -317,6 +321,23 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         nullable: false,
         initial: "standing",
         choices: ["standing", "crouching", "kneeling", "crawling", "sitting", "lying"],
+      }),
+
+      /** In the saddle, which caps active defenses by Riding (Campaigns p. 397). */
+      mounted: new fields.BooleanField({ initial: false }),
+
+      /**
+       * Attributes something has temporarily knocked down (Campaigns p. 421).
+       *
+       * Kept apart from the attributes themselves, because a temporary penalty
+       * is deliberately not the same thing as a lower attribute: it must not
+       * touch hit points, Basic Speed, Basic Move, FP or any active defense.
+       */
+      attributePenalties: new fields.SchemaField({
+        ST: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, max: 0 }),
+        DX: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, max: 0 }),
+        IQ: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, max: 0 }),
+        HT: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, max: 0 }),
       }),
 
       /**
@@ -842,9 +863,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       (this.conditions.allOutDefense || this.maneuver === "allOutDefense") &&
       this.allOutDefenseOption === "increased";
 
+    // A rider defends at the mercy of their Riding skill; somebody on foot is
+    // not asked. Riding defaults to DX-5 for anybody who never learned it.
+    const ridingSkill = this.skillLevelByName("Riding") ?? (attrs.DX ?? 10) - 5;
+    const mountedPenalty = this.mounted ? mountedDefensePenalty(ridingSkill) : 0;
+
     const contextFor = (which: "dodge" | "parry" | "block") => ({
       shieldDb,
       posture: this.posture,
+      mountedPenalty,
       stunned: this.conditions.stunned,
       allOutDefenseIncreased: increasing && this.allOutDefenseTarget === which,
       cannotSeeAttacker: this.conditions.blindToAttacker,
@@ -1033,6 +1060,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       traitEffects: traits,
       status: healthStatus(this.hp.value, this.hp.max),
       reeling,
+      mounted: this.mounted,
+      ridingSkill,
+      // What a temporary penalty comes to, for the rolls that read it. The
+      // penalties themselves stay where they were entered; this is only their
+      // arithmetic, IQ dragging Will and Per with it (Campaigns p. 421).
+      attributePenalties: penaltyEffects(this.attributePenalties),
       fatigue: {
         status: fatigueStatus(this.fp.value, this.fp.max),
         veryTired,

@@ -39,6 +39,11 @@ export interface DefenseContext {
   reeling?: boolean;
   /** The defender is very tired (below 1/3 FP), which halves Dodge again. */
   veryTired?: boolean;
+  /**
+   * A rider whose Riding is below 12 defends worse by the difference
+   * (Campaigns p. 397). Zero for anybody on their own feet.
+   */
+  mountedPenalty?: number;
   cannotSeeAttacker?: boolean;
   /** GM-assigned situational penalties: bad footing, distraction, and so on. */
   situational?: number;
@@ -97,6 +102,11 @@ function commonModifiers(context: DefenseContext): DefenseModifier[] {
     modifiers.push({ label: "All-Out Defense (Increased)", value: 2 });
   }
   if (context.combatReflexes) modifiers.push({ label: "Combat Reflexes", value: 1 });
+  // "A rider can Dodge, Block, or Parry. If he has Riding at 12+, all of these
+  // defenses are at normal levels" -- and worse by the shortfall if not.
+  if (context.mountedPenalty) {
+    modifiers.push({ label: "Mounted", value: context.mountedPenalty });
+  }
   if (context.stunned) modifiers.push({ label: "Stunned", value: -4 });
   if (context.cannotSeeAttacker) modifiers.push({ label: "Cannot see attacker", value: -4 });
   if (context.situational) modifiers.push({ label: "Situational", value: context.situational });

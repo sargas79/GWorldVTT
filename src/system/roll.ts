@@ -45,6 +45,8 @@ import {
   opportunityFirePenalty,
   dualWeaponAttack,
 } from "../rules/attack-options.js";
+import { penaltyForRoll } from "../rules/attribute-penalties.js";
+import type { SkillAttribute } from "../rules/types.js";
 import {
   elevationRange,
   rangedToHitModifier,
@@ -195,6 +197,26 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   });
 
   return outcome;
+}
+
+/**
+ * The penalty a lowered attribute puts on this roll (p. 421).
+ *
+ * Returns zero for a roll the rule exempts, and for a button that does not say
+ * what it is based on -- an attack rolls against a weapon skill whose attribute
+ * is the skill's own business, and guessing at it would be worse than nothing.
+ */
+function temporaryPenalty(actor: any, basedOn: string | undefined, kind: RollKind): number {
+  if (!basedOn) return 0;
+
+  const penalties = actor?.system?.attributePenalties;
+  if (!penalties) return 0;
+
+  return penaltyForRoll({
+    penalties,
+    basedOn: basedOn as SkillAttribute,
+    kind: kind === "defense" ? "activeDefense" : "skill",
+  });
 }
 
 /**
@@ -526,6 +548,15 @@ export async function handleRollAction(
       ? melee.modifiers
       : await maybePromptModifiers(event);
   if (modifiers === null) return;
+
+  // Something has temporarily knocked an attribute down (p. 421). It comes off
+  // every skill that attribute governs -- and off nothing else: a defense, a
+  // resistance roll and a Fright Check are all exempt, which is why this reads
+  // the kind of roll rather than applying itself everywhere.
+  const knockedDown = temporaryPenalty(actor, target.dataset.basedOn, rollKind(rollType));
+  if (knockedDown !== 0) {
+    modifiers.push({ label: game.i18n.localize("GWORLD.Penalties.Label"), value: knockedDown });
+  }
 
   // "You must declare that you are using extra effort and spend the required FP
   // before you make your attack" -- and a fighter who cannot pay does not get

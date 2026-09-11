@@ -9,6 +9,7 @@
 export * from "./types.js";
 export * from "./dice.js";
 export * from "./attributes.js";
+export * from "./attribute-penalties.js";
 export * from "./bleeding.js";
 export * from "./character-points.js";
 export * from "./contests.js";
@@ -44,6 +45,7 @@ export * from "./poison.js";
 export * from "./melee-situations.js";
 export * from "./modifiers.js";
 export * from "./mortal-wounds.js";
+export * from "./mounted.js";
 export * from "./objects.js";
 export * from "./overpenetration.js";
 export * from "./posture.js";
