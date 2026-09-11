@@ -14,10 +14,13 @@ import { applyDamageFloor, computeInjury } from "../rules/damage.js";
 import { parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import { blastRadius, fragmentationRadius } from "../rules/explosions.js";
 import {
+  OPPORTUNITY_LINE_PENALTY,
   RAPID_STRIKE_PENALTY,
   bulkPenalty,
+  canAimWhileWatching,
   deceptiveAttack,
   maxDeception,
+  opportunityFirePenalty,
 } from "../rules/attack-options.js";
 import { rangedToHitModifier, rapidFireBonus, rapidFireHits } from "../rules/ranged.js";
 import type { DamageType } from "../rules/types.js";
@@ -312,6 +315,15 @@ export async function handleRollAction(
         rateOfFire: Number(target.dataset.rateOfFire) || 1,
         recoil,
         bulk: Number(target.dataset.bulk) || 0,
+        // A shooter on a Wait is covering ground, and the area they declared
+        // is what the penalty comes off.
+        watching:
+          actor?.system?.maneuver === "wait"
+            ? {
+                hexesWatched: Number(actor.system?.wait?.hexesWatched ?? 1),
+                coveringLine: Boolean(actor.system?.wait?.coveringLine),
+              }
+            : null,
       })
     : null;
   if (ranged && shot === null) return;
@@ -370,6 +382,12 @@ export async function promptForRangedAttack(options: {
   rateOfFire: number;
   recoil: number;
   bulk: number;
+  /**
+   * Set when the shooter is on a Wait, covering ground with a ready weapon.
+   * The area watched costs a penalty, and watching anything wider than one hex
+   * forfeits Accuracy.
+   */
+  watching?: { hexesWatched: number; coveringLine: boolean } | null;
 }): Promise<{ modifiers: RollModifier[]; shotsFired: number } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   const accuracyLabel = options.scopeBonus
@@ -469,7 +487,12 @@ interface RangedInput {
  */
 export function rangedModifiers(
   input: RangedInput,
-  weapon: { accuracy: number; scopeBonus: number; bulk: number },
+  weapon: {
+    accuracy: number;
+    scopeBonus: number;
+    bulk: number;
+    watching?: { hexesWatched: number; coveringLine: boolean } | null;
+  },
 ): RollModifier[] {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   const modifiers: RollModifier[] = [];
@@ -481,6 +504,18 @@ export function rangedModifiers(
   });
 
   const situation = input.situation ?? "normal";
+
+  // Opportunity fire: the wider the ground being covered, the worse the shot
+  // (p. 390). Watching a single line is a flat -2 whatever its length.
+  const watching = weapon.watching;
+  if (watching) {
+    modifiers.push({
+      label: L("OpportunityFire"),
+      value: watching.coveringLine
+        ? OPPORTUNITY_LINE_PENALTY
+        : opportunityFirePenalty(watching.hexesWatched),
+    });
+  }
   // In close combat the speed/range penalty is dropped and Bulk stands in its
   // place: the target is right there, and the weapon is in the way.
   if (speedRange !== 0 && situation !== "closeCombat") {
@@ -492,8 +527,14 @@ export function rangedModifiers(
     modifiers.push({ label: L("Bulk"), value: bulkPenalty(weapon.bulk, situation) });
   }
 
-  // A Move and Attack loses the benefit of having aimed, whatever was ticked.
-  if (input.aimed && situation !== "moveAndAttack" && weapon.accuracy + weapon.scopeBonus !== 0) {
+  // A Move and Attack loses the benefit of having aimed, whatever was ticked,
+  // and so does anyone covering more than a single hex: "you cannot claim any
+  // of the bonuses listed for the Aim maneuver ... Exception: if you watch a
+  // single hex (only), you can Aim and Wait."
+  const mayAim =
+    situation !== "moveAndAttack" &&
+    (!watching || (!watching.coveringLine && canAimWhileWatching(watching.hexesWatched)));
+  if (input.aimed && mayAim && weapon.accuracy + weapon.scopeBonus !== 0) {
     modifiers.push({ label: L("Accuracy"), value: weapon.accuracy + weapon.scopeBonus });
   }
   const rapidFire = rapidFireBonus(input.shots ?? 1);

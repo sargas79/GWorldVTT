@@ -158,3 +158,41 @@ export function bulkPenalty(bulk: number, situation: "moveAndAttack" | "closeCom
   const rating = Math.min(0, bulk);
   return situation === "closeCombat" ? rating : Math.min(-2, rating);
 }
+
+/**
+ * The penalty for watching an area with a ready ranged weapon
+ * (GURPS Basic Set: Campaigns p. 390).
+ *
+ * "The larger the area you have to watch, the greater the penalty when you
+ * attack." Watching one hex costs nothing; watching eleven or more costs -5.
+ */
+const OPPORTUNITY_FIRE: ReadonlyArray<{ upTo: number; penalty: number }> = [
+  { upTo: 1, penalty: 0 },
+  { upTo: 2, penalty: -1 },
+  { upTo: 4, penalty: -2 },
+  { upTo: 6, penalty: -3 },
+  { upTo: 10, penalty: -4 },
+];
+
+/** Watching a single straight line rather than an area is a flat -2. */
+export const OPPORTUNITY_LINE_PENALTY = -2;
+
+export function opportunityFirePenalty(hexesWatched: number): number {
+  const hexes = Math.max(1, Math.floor(hexesWatched));
+  for (const row of OPPORTUNITY_FIRE) {
+    if (hexes <= row.upTo) return row.penalty;
+  }
+  return -5;
+}
+
+/**
+ * Whether someone on opportunity fire may also be aiming.
+ *
+ * "You cannot claim any of the bonuses listed for the Aim maneuver. Exception:
+ * If you watch a single hex (only), you can Aim and Wait." Watching anything
+ * wider than one hex means your attention is moving, and Accuracy is what
+ * having it still buys.
+ */
+export function canAimWhileWatching(hexesWatched: number): boolean {
+  return Math.floor(hexesWatched) === 1;
+}
