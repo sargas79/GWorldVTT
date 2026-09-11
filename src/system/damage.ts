@@ -26,6 +26,7 @@ import type { HitLocation } from "../rules/hit-locations.js";
 import { applyInjury, type InjuryConsequences } from "../rules/injury.js";
 import { knockback, type KnockbackResult } from "../rules/maneuvers.js";
 import { knockdownModifier, knockdownRequired } from "../rules/knockdown.js";
+import { chinkDr } from "../rules/melee-situations.js";
 import { woundBleeds } from "../rules/bleeding.js";
 import {
   noTraitEffects,
@@ -57,6 +58,12 @@ export interface IncomingDamage {
   maxDamage?: number;
   /** A critical hit, whose table entry may multiply damage or halve DR. */
   critical?: CriticalHit;
+  /**
+   * True when the blow found a gap in the armour, which halves the DR it meets
+   * (Campaigns p. 400) -- after the armour divisor, and on top of anything a
+   * critical did to it.
+   */
+  chink?: boolean;
 }
 
 /** What applying a blow did. */
@@ -144,6 +151,11 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   const wornDr = wornDrAt(wornArmor(actor), damage.hitLocation, damage.type)
     + traits.damageResistance;
 
+  // A blow that found a chink meets half the armour. It is applied to the worn
+  // figure rather than inside the pipeline because natural DR is not armour
+  // with gaps in it -- "joints or weak points in a suit of armor".
+  const armour = damage.chink ? chinkDr(wornDr) : wornDr;
+
   // A critical can double or triple the blow, or replace the roll with the
   // most the dice could have given. All of that happens to basic damage, before
   // DR and before the wounding modifier.
@@ -159,7 +171,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   // limb is crippled.
   const result = computeInjury({
     basicDamage,
-    dr: wornDr,
+    dr: armour,
     type: damage.type,
     armorDivisor: damage.armorDivisor,
     hitLocation: damage.hitLocation,
@@ -206,7 +218,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   return {
     actorName: String(actor?.name ?? ""),
     hitLocation: damage.hitLocation,
-    wornDr,
+    wornDr: armour,
     effectiveDr: result.effectiveDr,
     penetrating: result.penetrating,
     woundingModifier: result.woundingModifier,

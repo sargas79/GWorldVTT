@@ -10,6 +10,14 @@
 import { SYSTEM_ID } from "./constants.js";
 import { consumeMightyBlows, recordMightyBlows, spendFatigue } from "./extra-effort.js";
 import { consumeFeint } from "./feint.js";
+import {
+  UNAIMED,
+  consumeCalledShot,
+  parseShot,
+  recordCalledShot,
+  shotOptions,
+  type CalledShot,
+} from "./called-shot.js";
 import { isRuleOn } from "./optional-rules.js";
 import { targetedTokens } from "./targets.js";
 import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
@@ -240,6 +248,8 @@ export interface DamageRollOptions {
   explosive?: boolean;
   /** Fragmentation thrown, as a dice formula -- the "[2d]" in "cr ex [2d]". */
   fragmentation?: string;
+  /** Where the attack that earned this damage was aimed. */
+  calledShot?: CalledShot | null;
 }
 
 /**
@@ -319,6 +329,14 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
       [SYSTEM_ID]: {
         damage: {
           basicDamage, damageType, armorDivisor, label,
+          // Carried so the apply control opens on the location that was aimed
+          // at, and knows to halve the DR of a chink it found.
+          ...(options.calledShot
+            ? {
+                hitLocation: options.calledShot.hitLocation,
+                chink: options.calledShot.chink,
+              }
+            : {}),
           // The most these dice could have come up, for the critical results
           // that replace the roll with maximum damage.
           maxDamage: applyDamageFloor(maxRoll(rolled), damageType),
@@ -386,6 +404,7 @@ export async function handleRollAction(
   const recoil = Number(target.dataset.recoil) || 0;
   const shot = ranged
     ? await promptForRangedAttack({
+        damageType: (target.dataset.damageType ?? "cr") as DamageType,
         accuracy: Number(target.dataset.accuracy) || 0,
         scopeBonus: Number(target.dataset.scopeBonus) || 0,
         rateOfFire: Number(target.dataset.rateOfFire) || 1,
@@ -410,7 +429,10 @@ export async function handleRollAction(
   const asksAboutMelee =
     !ranged && rollType === "attack" && (event as MouseEvent).shiftKey;
   const melee = asksAboutMelee
-    ? await promptForMeleeAttack({ effectiveSkill: base })
+    ? await promptForMeleeAttack({
+        effectiveSkill: base,
+        damageType: (target.dataset.damageType ?? "cr") as DamageType,
+      })
     : null;
   if (asksAboutMelee && melee === null) return;
 
@@ -428,6 +450,12 @@ export async function handleRollAction(
     const paid = await spendFatigue(actor, melee.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"));
     if (!paid) return;
     if (melee.mightyBlows) await recordMightyBlows(actor);
+  }
+
+  // Where the blow was aimed travels to the damage roll, which is a separate
+  // click: an attack that went for the skull should not have to be told twice.
+  if (rollType === "attack") {
+    await recordCalledShot(actor, melee?.calledShot ?? shot?.calledShot ?? null);
   }
 
   // A Feint made last turn is spent by this attack, whether or not it is aimed
@@ -470,6 +498,8 @@ export async function handleRollAction(
  * Returns null when the dialog is dismissed, which cancels the roll.
  */
 export async function promptForRangedAttack(options: {
+  /** What the weapon does, which decides where it can be aimed. */
+  damageType: DamageType;
   accuracy: number;
   scopeBonus: number;
   rateOfFire: number;
@@ -481,7 +511,11 @@ export async function promptForRangedAttack(options: {
    * forfeits Accuracy.
    */
   watching?: { hexesWatched: number; coveringLine: boolean } | null;
-}): Promise<{ modifiers: RollModifier[]; shotsFired: number } | null> {
+}): Promise<{
+  modifiers: RollModifier[];
+  shotsFired: number;
+  calledShot: CalledShot | null;
+} | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   const accuracyLabel = options.scopeBonus
     ? `${L("Aimed")} (+${options.accuracy}+${options.scopeBonus})`
@@ -506,6 +540,7 @@ export async function promptForRangedAttack(options: {
       ${field("speed", L("TargetSpeed"), "0")}
       ${field("size", L("TargetSize"), "0")}
       ${shotsField}
+      ${calledShotField(options.damageType, false)}
       ${sightField()}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Cover.Label")}</span>
@@ -544,6 +579,8 @@ export async function promptForRangedAttack(options: {
           "clear") as Sight;
         const cover =
           form?.querySelector<HTMLSelectElement>('select[name="cover"]')?.value ?? "none";
+        const calledShot =
+          form?.querySelector<HTMLSelectElement>('select[name="calledShot"]')?.value ?? UNAIMED;
         return {
           range: num("range"),
           speed: num("speed"),
@@ -553,6 +590,7 @@ export async function promptForRangedAttack(options: {
           situation: situation as RangedInput["situation"],
           sight,
           cover: cover as CoverApproach | "none",
+          calledShot,
           aimed,
         };
       },
@@ -562,13 +600,15 @@ export async function promptForRangedAttack(options: {
 
   if (!result || typeof result !== "object") return null;
 
-  const input = result as RangedInput;
+  const input = result as RangedInput & { calledShot?: string };
   // A weapon cannot fire more shots than its Rate of Fire, nor fewer than one.
   const shotsFired = Math.min(rateOfFire, Math.max(1, Math.floor(input.shots || 1)));
-  return {
-    modifiers: rangedModifiers({ ...input, shots: shotsFired }, options),
-    shotsFired,
-  };
+
+  const aimed = calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, false);
+  const modifiers = rangedModifiers({ ...input, shots: shotsFired }, options);
+  if (aimed.modifier) modifiers.push(aimed.modifier);
+
+  return { modifiers, shotsFired, calledShot: aimed.shot };
 }
 
 interface RangedInput {
@@ -710,6 +750,41 @@ export async function promptForNumber(options: {
 }
 
 /**
+ * The markup for the called shot select, and what each option costs.
+ *
+ * Offered on every attack because the penalty is the whole decision: going for
+ * the skull is -7 and going for the eye is -9, and a system that let you pick
+ * the location only after the dice had landed was giving those away.
+ */
+function calledShotField(type: DamageType, tightBeam: boolean): string {
+  const options = shotOptions(type, tightBeam)
+    .map((option) => {
+      const cost = option.penalty === 0 ? "" : ` (${option.penalty})`;
+      return `<option value="${option.value}">${option.label}${cost}</option>`;
+    })
+    .join("");
+
+  return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <span>${game.i18n.localize("GWORLD.CalledShot.Label")}</span>
+    <select name="calledShot" style="width:180px">${options}</select>
+  </label>`;
+}
+
+/** What a chosen called shot costs, as a modifier line. */
+function calledShotModifier(value: string, type: DamageType, tightBeam: boolean): {
+  shot: CalledShot | null;
+  modifier: RollModifier | null;
+} {
+  const shot = parseShot(value);
+  if (shot === null) return { shot: null, modifier: null };
+
+  const option = shotOptions(type, tightBeam).find((entry) => entry.value === value);
+  if (!option || option.penalty === 0) return { shot, modifier: null };
+
+  return { shot, modifier: { label: option.label, value: option.penalty } };
+}
+
+/**
  * The choices offered for what an attacker can see, worst first.
  *
  * Offered on every attack because it applies to every attack: a fight in a dark
@@ -751,6 +826,8 @@ function sightModifier(sight: Sight, lightSource: boolean): RollModifier | null 
  */
 export async function promptForMeleeAttack(options: {
   effectiveSkill: number;
+  /** What the weapon does, which decides where it can be aimed. */
+  damageType: DamageType;
 }): Promise<{
   modifiers: RollModifier[];
   defensePenalty: number;
@@ -758,6 +835,8 @@ export async function promptForMeleeAttack(options: {
   fatigue: number;
   /** True when Mighty Blows was bought, for the damage roll to collect. */
   mightyBlows: boolean;
+  /** Where it was aimed, for the damage roll to collect. */
+  calledShot: CalledShot | null;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Melee.${key}`);
   const E = (key: string) => game.i18n.localize(`GWORLD.ExtraEffort.${key}`);
@@ -802,6 +881,7 @@ export async function promptForMeleeAttack(options: {
              <span>${E("MightyBlows")} (${EXTRA_EFFORT_FP} FP)</span>
            </label>`
         : ""}
+      ${calledShotField(options.damageType, false)}
       ${sightField()}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
@@ -824,6 +904,8 @@ export async function promptForMeleeAttack(options: {
           mighty: ticked("mighty"),
           sight: (form?.querySelector<HTMLSelectElement>('select[name="sight"]')?.value ??
             "clear") as Sight,
+          calledShot:
+            form?.querySelector<HTMLSelectElement>('select[name="calledShot"]')?.value ?? UNAIMED,
         };
       },
     },
@@ -831,13 +913,14 @@ export async function promptForMeleeAttack(options: {
   });
 
   if (!result || typeof result !== "object") return null;
-  const { deceptive, modifier, rapid, flurry, mighty, sight } = result as {
+  const { deceptive, modifier, rapid, flurry, mighty, sight, calledShot } = result as {
     deceptive: number;
     modifier: number;
     rapid: boolean;
     flurry: boolean;
     mighty: boolean;
     sight: Sight;
+    calledShot: string;
   };
 
   // "You may not reduce your final effective skill below 10", so the ceiling is
@@ -859,6 +942,9 @@ export async function promptForMeleeAttack(options: {
       value: flurried ? flurryOfBlowsPenalty() : RAPID_STRIKE_PENALTY,
     });
   }
+  const aimed = calledShotModifier(calledShot, options.damageType, false);
+  if (aimed.modifier) modifiers.push(aimed.modifier);
+
   const unseen = sightModifier(sight, false);
   if (unseen) modifiers.push(unseen);
 
@@ -873,6 +959,7 @@ export async function promptForMeleeAttack(options: {
     // Both cost a flat point each, and both are paid before the roll.
     fatigue: (flurried ? EXTRA_EFFORT_FP : 0) + (mightyBlows ? EXTRA_EFFORT_FP : 0),
     mightyBlows,
+    calledShot: aimed.shot,
   };
 }
 
@@ -887,6 +974,10 @@ export async function handleDamageAction(
 
   const modifiers = await maybePromptModifiers(event);
   if (modifiers === null) return;
+
+  // Where the attack was aimed, so the apply control opens on that location
+  // rather than asking again -- and, for a chink, so the DR it found is halved.
+  const aimed = await consumeCalledShot(actor);
 
   // A Mighty Blows bought before the attack is collected here, where the dice
   // are known -- the bonus is "+2 to damage, or +1 per die if that is better".
@@ -912,6 +1003,7 @@ export async function handleDamageAction(
     formula: damageFormula,
     damageType: damageType as DamageType,
     armorDivisor: Number(armorDivisor) || 1,
+    ...(aimed ? { calledShot: aimed } : {}),
     explosive: target.dataset.explosive === "1",
     fragmentation: target.dataset.fragmentation ?? "",
     modifiers,
