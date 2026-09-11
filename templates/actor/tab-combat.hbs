@@ -48,6 +48,32 @@
           </div>
         </div>
       {{/if}}
+      {{#if isWaiting}}
+        <div class="fld wide">
+          <span class="fl">{{localize "GWORLD.Wait.Trigger"}}</span>
+          <div class="fi">
+            <input type="text" name="system.wait.trigger" value="{{system.wait.trigger}}"
+                   placeholder="{{localize "GWORLD.Wait.TriggerHint"}}"
+                   style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+                   {{#unless editable}}disabled{{/unless}}>
+          </div>
+        </div>
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Wait.HexesWatched"}}</span>
+          <div class="fi">
+            <input type="number" name="system.wait.hexesWatched" value="{{system.wait.hexesWatched}}"
+                   min="1" step="1"
+                   style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+                   {{#unless editable}}disabled{{/unless}}>
+            <span style="font-size: 10px; color: var(--color-accent-700)">{{signed waitPenalty}}</span>
+          </div>
+        </div>
+        <label class="fld icheck">
+          <input type="checkbox" name="system.wait.coveringLine"
+                 {{#if system.wait.coveringLine}}checked{{/if}} {{#unless editable}}disabled{{/unless}}>
+          <span>{{localize "GWORLD.Wait.CoveringLine"}}</span>
+        </label>
+      {{/if}}
       <div class="fld">
         <span class="fl">{{localize "GWORLD.Field.Defenses"}}</span>
         <div class="fi">

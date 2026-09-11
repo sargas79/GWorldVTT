@@ -9,7 +9,12 @@
 
 import { CharacterBuilder } from "../apps/character-builder.js";
 import { combatStyle, tacticalOnScene } from "../settings.js";
-import { evadeModifier, slamDamage } from "../../rules/attack-options.js";
+import {
+  OPPORTUNITY_LINE_PENALTY,
+  evadeModifier,
+  opportunityFirePenalty,
+  slamDamage,
+} from "../../rules/attack-options.js";
 import { attackArc } from "../../rules/tactical.js";
 import { rollQuickContest } from "../contest.js";
 import { attackDirection, facingOf } from "../hex.js";
@@ -250,6 +255,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         selected: system.maneuver === key,
       })),
       isEvaluating: system.maneuver === "evaluate",
+      isWaiting: system.maneuver === "wait",
+      // What covering that much ground will cost when the shot is finally
+      // taken, shown while the area is still being chosen.
+      waitPenalty: system.wait?.coveringLine
+        ? OPPORTUNITY_LINE_PENALTY
+        : opportunityFirePenalty(Number(system.wait?.hexesWatched ?? 1)),
       isAllOutDefense: system.maneuver === "allOutDefense" || system.conditions.allOutDefense,
       aodIncreased: system.allOutDefenseOption === "increased",
       aodTargets: (["dodge", "parry", "block"] as const).map((key) => ({

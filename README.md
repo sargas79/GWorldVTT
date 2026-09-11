@@ -43,6 +43,13 @@ criticals by the Basic Set's table. The damage card rolls the dice, applies the
 minimum-damage floor, states the wounding modifier and the injury an unarmoured
 target would take, and names the armour divisor when there is one.
 
+**Waiting and opportunity fire** — a Wait records what you are watching for and
+what you will do, because a Wait only works if both are declared in advance.
+With a ready ranged weapon it also records the ground you are covering, and the
+shot pays for it when it comes: nothing for a single hex, up to -5 for eleven
+or more, or a flat -2 for a line. Covering more than one hex forfeits Accuracy,
+since Aim is what holding still on one spot buys.
+
 **Afflictions** — an attack written "HT-4 aff" does no damage: clicking it
 rolls the resistance for everyone it is being used on, one roll each. What
 failing does is in the weapon's own notes, which the compendia do not carry, so
@@ -147,15 +154,20 @@ book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
 
 - **Close combat** beyond the Bulk penalty — entering a foe's hex as a state,
   and readying a weapon there — is not implemented.
-- **Opportunity fire** needs a Wait maneuver that can interrupt someone else's
-  turn, which needs a turn to interrupt. That is a Combat-document feature
-  rather than an attack option.
+- **A Wait does not fire itself.** The trigger is written down and the penalty
+  is applied when the shot is taken, but nothing watches the map and shoots on
+  your behalf. The book does not ask for that either — "you can attack at any
+  time" is addressed to a player, not to a machine — so what is missing is
+  automation rather than a rule.
 - **Unarmed attacks and mounted charges.** A punch does damage that depends on
   whether the character knows Boxing or Karate, and a lance's depends on the
   mount's ST and Move. Those are recorded from the book's own table in
   `packs-src/equipment/table-only-weapons.json` rather than derived.
 - **Movement is costed, not enforced.** The panel says what a hex costs;
-  nothing stops a token being dragged further than its Move.
+  nothing stops a token being dragged further than its Move. A hard limit would
+  be wrong more often than right — obstructions, bad footing and evading are
+  all the GM's call, and a token that cannot be moved is worse than one moved
+  too far.
 - `reactionModifier` is zero on every trait, because the book states reaction
   modifiers in prose that is conditional or per-level, and a flat integer would
   fire in the wrong circumstances.

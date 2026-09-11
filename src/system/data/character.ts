@@ -143,6 +143,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare allOutDefenseTarget: "dodge" | "parry" | "block";
   declare posture: Posture;
   declare handedness: "right" | "left";
+  declare wait: { trigger: string; hexesWatched: number; coveringLine: boolean };
   declare conditions: {
     stunned: boolean;
     allOutDefense: boolean;
@@ -266,6 +267,26 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         nullable: false,
         initial: "right",
         choices: ["right", "left"],
+      }),
+
+      /**
+       * A Wait maneuver's declared trigger and, for a ranged weapon, the area
+       * being covered (GURPS Basic Set: Campaigns pp. 366, 390). A Wait only
+       * works if you say in advance both what you are watching for and what
+       * you will do, so both are written down rather than remembered.
+       */
+      wait: new fields.SchemaField({
+        trigger: new fields.StringField({ required: true, blank: true, initial: "" }),
+        /** Hexes covered with a ready ranged weapon. One costs no penalty. */
+        hexesWatched: new fields.NumberField({
+          required: true,
+          nullable: false,
+          integer: true,
+          initial: 1,
+          min: 1,
+        }),
+        /** Watching a single straight line instead of an area, which is a flat -2. */
+        coveringLine: new fields.BooleanField({ initial: false }),
       }),
 
       conditions: new fields.SchemaField({

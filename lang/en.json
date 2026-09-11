@@ -155,6 +155,12 @@
       "Secondaries": "Secondary Characteristics",
       "Techniques": "Techniques"
     },
+    "Wait": {
+      "Trigger": "Waiting for",
+      "TriggerHint": "What triggers it, and what you will do",
+      "HexesWatched": "Hexes watched",
+      "CoveringLine": "Covering a line rather than an area"
+    },
     "Contest": {
       "QuickContest": "Quick Contest",
       "Wins": "{winner} wins by {margin}",
@@ -436,6 +442,7 @@
       "Aimed": "Aimed",
       "Accuracy": "Accuracy",
       "SpeedRange": "speed/range",
+      "OpportunityFire": "opportunity fire",
       "Bulk": "bulk",
       "Situation": "Situation",
       "Normal": "Ordinary shot",

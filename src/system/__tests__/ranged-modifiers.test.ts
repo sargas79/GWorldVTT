@@ -124,3 +124,36 @@ describe("Bulk (pp. 365, 391)", () => {
     expect(valueOf(mods, "Accuracy")).toBe(2);
   });
 });
+
+describe("opportunity fire (p. 390)", () => {
+  const watching = (hexesWatched: number, coveringLine = false) => ({
+    ...bow,
+    watching: { hexesWatched, coveringLine },
+  });
+
+  it("charges for the ground being covered", () => {
+    expect(valueOf(rangedModifiers(shot(), watching(1)), "OpportunityFire")).toBe(0);
+    expect(valueOf(rangedModifiers(shot(), watching(4)), "OpportunityFire")).toBe(-2);
+    expect(valueOf(rangedModifiers(shot(), watching(20)), "OpportunityFire")).toBe(-5);
+  });
+
+  it("charges a flat two for a line", () => {
+    expect(valueOf(rangedModifiers(shot(), watching(30, true)), "OpportunityFire")).toBe(-2);
+  });
+
+  it("does not charge a shooter who is not waiting", () => {
+    expect(valueOf(rangedModifiers(shot(), bow), "OpportunityFire")).toBeUndefined();
+  });
+
+  /**
+   * "You cannot claim any of the bonuses listed for the Aim maneuver.
+   * Exception: If you watch a single hex (only), you can Aim and Wait."
+   */
+  it("lets only a single watched hex keep Accuracy", () => {
+    expect(valueOf(rangedModifiers(shot({ aimed: true }), watching(1)), "Accuracy")).toBe(2);
+    expect(valueOf(rangedModifiers(shot({ aimed: true }), watching(2)), "Accuracy")).toBeUndefined();
+    expect(
+      valueOf(rangedModifiers(shot({ aimed: true }), watching(1, true)), "Accuracy"),
+    ).toBeUndefined();
+  });
+});

@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   DECEPTIVE_SKILL_FLOOR,
+  OPPORTUNITY_LINE_PENALTY,
   RAPID_STRIKE_PENALTY,
+  canAimWhileWatching,
+  opportunityFirePenalty,
   bulkPenalty,
   deceptiveAttack,
   evadeModifier,
@@ -152,5 +155,38 @@ describe("Bulk", () => {
   it("never turns into a bonus, whatever it was given", () => {
     expect(bulkPenalty(3, "closeCombat")).toBe(0);
     expect(bulkPenalty(3, "moveAndAttack")).toBe(-2);
+  });
+});
+
+describe("opportunity fire (p. 390)", () => {
+  it("reads the printed table", () => {
+    expect(opportunityFirePenalty(1)).toBe(0);
+    expect(opportunityFirePenalty(2)).toBe(-1);
+    expect(opportunityFirePenalty(3)).toBe(-2);
+    expect(opportunityFirePenalty(4)).toBe(-2);
+    expect(opportunityFirePenalty(5)).toBe(-3);
+    expect(opportunityFirePenalty(6)).toBe(-3);
+    expect(opportunityFirePenalty(7)).toBe(-4);
+    expect(opportunityFirePenalty(10)).toBe(-4);
+    expect(opportunityFirePenalty(11)).toBe(-5);
+    expect(opportunityFirePenalty(50)).toBe(-5);
+  });
+
+  it("cannot watch less than a hex", () => {
+    expect(opportunityFirePenalty(0)).toBe(0);
+  });
+
+  it("charges a flat two for watching a line", () => {
+    expect(OPPORTUNITY_LINE_PENALTY).toBe(-2);
+  });
+
+  /**
+   * "You cannot claim any of the bonuses listed for the Aim maneuver.
+   * Exception: If you watch a single hex (only), you can Aim and Wait."
+   */
+  it("lets only someone watching a single hex keep aiming", () => {
+    expect(canAimWhileWatching(1)).toBe(true);
+    expect(canAimWhileWatching(2)).toBe(false);
+    expect(canAimWhileWatching(11)).toBe(false);
   });
 });
