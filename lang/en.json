@@ -90,7 +90,9 @@
       "Actions": "Actions",
       "PhysicalFeats": "Physical Feats",
       "Recovery": "Recovery",
-      "Hazards": "Poison, Illness & Drink"
+      "Hazards": "Poison, Illness & Drink",
+      "AllSkills": "All skills",
+      "Alphabetical": "alphabetical"
     },
     "Column": {
       "Skill": "Skill",
@@ -416,6 +418,12 @@
         "Hint": "Basic combat is abstract: everyone can reach everyone and nobody has a back. Tactical combat is fought on a hex map, where facing decides what you can defend against. Tactical needs a hex-gridded scene; on any other grid the table falls back to basic.",
         "Basic": "Basic combat",
         "Tactical": "Tactical combat (hex map and facing)"
+      },
+      "SkillOrder": {
+        "Name": "Skill order",
+        "Hint": "How the Skills tab lists skills: grouped by controlling attribute as the printed sheet does, or as one alphabetical list.",
+        "attribute": "By attribute",
+        "alphabetical": "One alphabetical list"
       }
     },
     "Builder": {
@@ -549,7 +557,8 @@
       "FromAttribute": "From attribute",
       "FromSkill": "From skill",
       "NoDefaultsYet": "No defaults. Without one this skill cannot be rolled untrained.",
-      "DefaultSource": "Default source"
+      "DefaultSource": "Default source",
+      "Untrained": "default"
     },
     "Trait": {
       "Levels": "levels",
@@ -611,7 +620,19 @@
     "Gear": {
       "Carried": "Carried",
       "Stored": "Stored",
-      "Carrying": "carrying"
+      "Carrying": "carrying",
+      "Show": "Show",
+      "All": "All gear",
+      "Category": "Category",
+      "CategoryHint": "For the Gear tab to sort by. Anything with an attack is listed as a weapon whatever this says.",
+      "Group": {
+        "armor": "Armor",
+        "shield": "Shields",
+        "weapon": "Weapons",
+        "tool": "Tools",
+        "consumable": "Consumables",
+        "misc": "Miscellaneous"
+      }
     },
     "Npc": {
       "InScene": "x{count} in scene"
@@ -631,7 +652,9 @@
       "FilterSkills": "Filter skills",
       "Delete": "Delete",
       "AddTechnique": "Add Technique",
-      "Add": "Add"
+      "Add": "Add",
+      "OrderByName": "A–Z",
+      "OrderByAttribute": "By attribute"
     },
     "Prompt": {
       "DeleteItemTitle": "Delete Item",
@@ -1450,6 +1473,12 @@
         "world": "This world",
         "module": "Modules"
       }
+    },
+    "GearCategory": {
+      "weapon": "Weapon",
+      "tool": "Tool",
+      "consumable": "Consumable",
+      "misc": "Miscellaneous"
     }
   }
 }

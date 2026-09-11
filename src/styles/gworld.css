@@ -496,6 +496,30 @@
 .gworld table.gt th.n { text-align: right; }
 .gworld table.gt th.c { text-align: center; }
 
+/* A heading row inside the inventory: the kind of gear the rows beneath are. */
+.gworld table.gt tr.ggroup td {
+  padding: 8px 6px 3px;
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+  background: transparent;
+  border-bottom: 1px solid var(--color-divider);
+}
+.gworld table.gt tbody[hidden] { display: none; }
+/* The gear filter sits in the toolbar like the skill search does. */
+.gworld .gfilter { flex-grow: 0; gap: 8px; }
+.gworld .gfilter select {
+  background: none;
+  border: 0;
+  height: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--color-text);
+}
+
 .gworld .wname { font-weight: 500; }
 .gworld .wmode {
   font-size: 10px;
