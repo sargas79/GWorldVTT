@@ -13,6 +13,12 @@ import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } fr
 import { applyDamageFloor, computeInjury } from "../rules/damage.js";
 import { parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import { blastRadius, fragmentationRadius } from "../rules/explosions.js";
+import {
+  RAPID_STRIKE_PENALTY,
+  bulkPenalty,
+  deceptiveAttack,
+  maxDeception,
+} from "../rules/attack-options.js";
 import { rangedToHitModifier, rapidFireBonus, rapidFireHits } from "../rules/ranged.js";
 import type { DamageType } from "../rules/types.js";
 
@@ -40,6 +46,11 @@ export interface SuccessRollOptions {
    * (GURPS Basic Set: Campaigns p. 373).
    */
   rapidFire?: { shotsFired: number; recoil: number };
+  /**
+   * A penalty this attack imposes on the defender, from a Deceptive Attack.
+   * Recorded on the message so the defense card can apply it.
+   */
+  defensePenalty?: number;
 }
 
 /**
@@ -49,7 +60,9 @@ export interface SuccessRollOptions {
  * going on to roll damage, for instance).
  */
 export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessRollResult | null> {
-  const { actor, base, label, kind = "skill", modifiers = [], rapidFire } = options;
+  const {
+    actor, base, label, kind = "skill", modifiers = [], rapidFire, defensePenalty = 0,
+  } = options;
 
   const totalModifier = modifiers.reduce((sum, m) => sum + m.value, 0);
   const effective = base + totalModifier;
@@ -102,7 +115,9 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     // An attack that connects is the moment to record who it was aimed at: the
     // defender rolls afterwards, by which time the attacker may well have
     // changed their target. A miss needs no defense, so it carries nothing.
-    ...(kind === "attack" && outcome.success ? { flags: attackFlags(actor, label) } : {}),
+    ...(kind === "attack" && outcome.success
+      ? { flags: attackFlags(actor, label, defensePenalty) }
+      : {}),
   });
 
   return outcome;
@@ -119,7 +134,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
  * elsewhere: an attacker has their own token selected far more often than not,
  * and falling back would record them as defending against themselves.
  */
-function attackFlags(actor: any, label: string): object {
+function attackFlags(actor: any, label: string, defensePenalty: number): object {
   const defenders = targetedTokens()
     .filter((token: any) => token?.actor?.uuid)
     .map((token: any) => ({
@@ -139,6 +154,7 @@ function attackFlags(actor: any, label: string): object {
         attack: label,
         defenders,
         attackerToken: attackerToken ? String(attackerToken) : "",
+        defensePenalty,
       },
     },
   };
@@ -292,11 +308,25 @@ export async function handleRollAction(
         scopeBonus: Number(target.dataset.scopeBonus) || 0,
         rateOfFire: Number(target.dataset.rateOfFire) || 1,
         recoil,
+        bulk: Number(target.dataset.bulk) || 0,
       })
     : null;
   if (ranged && shot === null) return;
 
-  const modifiers = shot ? shot.modifiers : await maybePromptModifiers(event);
+  // A melee attack asks only when asked -- shift-click, as every other roll --
+  // but when it does ask, it asks about Deceptive Attack and Rapid Strike too,
+  // since both are decided before the roll and both cost skill.
+  const melee =
+    !ranged && rollType === "attack" && (event as MouseEvent).shiftKey
+      ? await promptForMeleeAttack({ effectiveSkill: base })
+      : null;
+  if (!ranged && rollType === "attack" && (event as MouseEvent).shiftKey && melee === null) return;
+
+  const modifiers = shot
+    ? shot.modifiers
+    : melee
+      ? melee.modifiers
+      : await maybePromptModifiers(event);
   if (modifiers === null) return;
 
   await rollSuccess({
@@ -305,6 +335,11 @@ export async function handleRollAction(
     label: rollLabel ?? rollType ?? "Roll",
     kind: rollKind(rollType),
     modifiers,
+    // A Deceptive Attack's whole purpose is the penalty it puts on the
+    // defender, so it has to travel with the attack to the defense card.
+    ...(melee && melee.defensePenalty !== 0
+      ? { defensePenalty: melee.defensePenalty }
+      : {}),
     // Only a burst needs its hits counted; a single shot either hits or does
     // not, and saying "1 hit" on every arrow would be noise.
     ...(shot && shot.shotsFired > 1
@@ -330,6 +365,7 @@ export async function promptForRangedAttack(options: {
   scopeBonus: number;
   rateOfFire: number;
   recoil: number;
+  bulk: number;
 }): Promise<{ modifiers: RollModifier[]; shotsFired: number } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   const accuracyLabel = options.scopeBonus
@@ -356,6 +392,14 @@ export async function promptForRangedAttack(options: {
       ${field("size", L("TargetSize"), "0")}
       ${shotsField}
       ${field("modifier", game.i18n.localize("GWORLD.Chat.Modifier"), "0")}
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Situation")}</span>
+        <select name="situation" style="width:150px">
+          <option value="normal">${L("Normal")}</option>
+          <option value="moveAndAttack">${L("MoveAndAttack")}</option>
+          <option value="closeCombat">${L("CloseCombat")}</option>
+        </select>
+      </label>
       <label style="display:flex;align-items:center;gap:8px">
         <input type="checkbox" name="aimed">
         <span>${accuracyLabel}</span>
@@ -369,12 +413,15 @@ export async function promptForRangedAttack(options: {
           Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
         const aimed =
           form?.querySelector<HTMLInputElement>('input[name="aimed"]')?.checked ?? false;
+        const situation =
+          form?.querySelector<HTMLSelectElement>('select[name="situation"]')?.value ?? "normal";
         return {
           range: num("range"),
           speed: num("speed"),
           size: num("size"),
           modifier: num("modifier"),
           shots: rateOfFire > 1 ? num("shots") : 1,
+          situation: situation as RangedInput["situation"],
           aimed,
         };
       },
@@ -400,6 +447,12 @@ interface RangedInput {
   modifier: number;
   /** Shots fired this attack, at most the weapon's Rate of Fire. */
   shots: number;
+  /**
+   * Why the weapon's Bulk applies, if it does: a Move and Attack takes the
+   * worse of -2 and Bulk, and close combat takes Bulk in place of the
+   * speed/range penalty (pp. 365, 391).
+   */
+  situation: "normal" | "moveAndAttack" | "closeCombat";
   aimed: boolean;
 }
 
@@ -412,7 +465,7 @@ interface RangedInput {
  */
 export function rangedModifiers(
   input: RangedInput,
-  weapon: { accuracy: number; scopeBonus: number },
+  weapon: { accuracy: number; scopeBonus: number; bulk: number },
 ): RollModifier[] {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   const modifiers: RollModifier[] = [];
@@ -423,9 +476,20 @@ export function rangedModifiers(
     targetSizeModifier: input.size,
   });
 
-  if (speedRange !== 0) modifiers.push({ label: L("SpeedRange"), value: speedRange });
+  const situation = input.situation ?? "normal";
+  // In close combat the speed/range penalty is dropped and Bulk stands in its
+  // place: the target is right there, and the weapon is in the way.
+  if (speedRange !== 0 && situation !== "closeCombat") {
+    modifiers.push({ label: L("SpeedRange"), value: speedRange });
+  }
   if (size !== 0) modifiers.push({ label: L("TargetSize"), value: size });
-  if (input.aimed && weapon.accuracy + weapon.scopeBonus !== 0) {
+
+  if (situation !== "normal") {
+    modifiers.push({ label: L("Bulk"), value: bulkPenalty(weapon.bulk, situation) });
+  }
+
+  // A Move and Attack loses the benefit of having aimed, whatever was ticked.
+  if (input.aimed && situation !== "moveAndAttack" && weapon.accuracy + weapon.scopeBonus !== 0) {
     modifiers.push({ label: L("Accuracy"), value: weapon.accuracy + weapon.scopeBonus });
   }
   const rapidFire = rapidFireBonus(input.shots ?? 1);
@@ -435,6 +499,115 @@ export function rangedModifiers(
   }
 
   return modifiers;
+}
+
+/**
+ * Asks for a single number, for the handful of rolls that need one figure and
+ * no options at all.
+ *
+ * Returns null when the dialog is dismissed, which cancels whatever asked.
+ */
+export async function promptForNumber(options: {
+  title: string;
+  label: string;
+  initial?: number;
+}): Promise<number | null> {
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: options.title },
+    content: `<div class="gworld">
+      <label style="display:flex;align-items:center;gap:8px">
+        <span>${options.label}</span>
+        <input type="number" name="value" value="${options.initial ?? 0}" step="1" min="0"
+               autofocus style="width:90px">
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const input = button
+          .closest<HTMLElement>(".application")
+          ?.querySelector<HTMLInputElement>('input[name="value"]');
+        return Number(input?.value ?? 0);
+      },
+    },
+    rejectClose: false,
+  });
+
+  return typeof result === "number" && Number.isFinite(result) ? result : null;
+}
+
+/**
+ * Asks what a melee attack is trading, before the roll.
+ *
+ * Deceptive Attack and Rapid Strike are both choices made before rolling
+ * (pp. 369-370), and both cost skill, so they belong in the same place as the
+ * situational modifier rather than being typed in as one.
+ *
+ * Returns null when the dialog is dismissed, which cancels the roll.
+ */
+export async function promptForMeleeAttack(options: {
+  effectiveSkill: number;
+}): Promise<{ modifiers: RollModifier[]; defensePenalty: number } | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Melee.${key}`);
+  const most = maxDeception(options.effectiveSkill);
+
+  // A fighter at skill 11 or less cannot buy any deception at all, so they are
+  // not offered a field that can only be left at zero.
+  const deceptiveField = most > 0
+    ? `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+         <span>${L("Deceptive")} (0-${most})</span>
+         <input type="number" name="deceptive" value="0" min="0" max="${most}" step="1" style="width:90px">
+       </label>`
+    : `<p style="margin:0;font-size:11px;opacity:0.8">${L("NoDeception")}</p>`;
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      ${deceptiveField}
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="rapid">
+        <span>${L("RapidStrike")} (${RAPID_STRIKE_PENALTY})</span>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
+        <input type="number" name="modifier" value="0" step="1" style="width:90px">
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const num = (name: string) =>
+          Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
+        return {
+          deceptive: num("deceptive"),
+          modifier: num("modifier"),
+          rapid: form?.querySelector<HTMLInputElement>('input[name="rapid"]')?.checked ?? false,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  if (!result || typeof result !== "object") return null;
+  const { deceptive, modifier, rapid } = result as {
+    deceptive: number;
+    modifier: number;
+    rapid: boolean;
+  };
+
+  const deception = deceptiveAttack(options.effectiveSkill, deceptive);
+  const modifiers: RollModifier[] = [];
+
+  if (deception.attackPenalty !== 0) {
+    modifiers.push({ label: L("Deceptive"), value: deception.attackPenalty });
+  }
+  if (rapid) modifiers.push({ label: L("RapidStrike"), value: RAPID_STRIKE_PENALTY });
+  if (modifier !== 0) {
+    modifiers.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: modifier });
+  }
+
+  return { modifiers, defensePenalty: deception.defensePenalty };
 }
 
 /** Handles a click on any element carrying the damage dataset. */

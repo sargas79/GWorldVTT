@@ -43,8 +43,18 @@ criticals by the Basic Set's table. The damage card rolls the dice, applies the
 minimum-damage floor, states the wounding modifier and the injury an unarmoured
 target would take, and names the armour divisor when there is one.
 
+**Attack options** — shift-clicking a melee attack asks what it is trading:
+a Deceptive Attack buys a penalty to the foe's defenses at two points of your
+own skill each, never taking you below 10, and a Rapid Strike buys a second
+attack at -6 to both. A deceptive attack's penalty travels with it and lands on
+the defender's card.
+
 **Ranged attacks** — firing asks how far the target is, how fast it is moving,
-how big it is, how many shots to fire, and whether the shot was aimed. It rolls
+how big it is, how many shots to fire, whether the shot was aimed, and whether
+it is an ordinary shot, a Move and Attack or fired in close combat. The last
+decides the weapon's Bulk: the worse of -2 and Bulk on the move, which also
+forfeits Accuracy, and Bulk in place of the speed/range penalty in close
+combat. It rolls
 with the speed/range penalty from the Size and Speed/Range Table, the target's
 Size Modifier, the weapon's Accuracy for an aimed shot, and the bonus for
 firing a burst. The card shows each as its own line rather than one opaque
@@ -85,9 +95,10 @@ can do about an attack:
 - An attack from behind cannot be defended at all without Peripheral Vision
   (-2) or 360° Vision (no penalty), and even then a block is impossible and a
   parry is at a further -2.
-- The Combat tab gains a movement panel: movement points after encumbrance, and
+- The Combat tab gains a movement panel: movement points after encumbrance,
   what a hex costs forward, sideways and backward in the character's current
-  posture.
+  posture, and a Slam button — anyone can run into someone, and what it does
+  depends entirely on how fast they were going.
 
 Tactical combat needs a hex-gridded scene. On a square or gridless one the
 table falls back to basic combat rather than inventing arcs, because facing is
@@ -136,13 +147,12 @@ book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
   whether the character knows Boxing or Karate, and a lance's depends on the
   mount's ST and Move. Those are recorded from the book's own table in
   `packs-src/equipment/table-only-weapons.json` rather than derived.
-- **Tactical combat is facing and movement, not the whole chapter.** Close
-  combat, evading, slams, Deceptive Attack, Rapid Strike and opportunity fire
-  are not implemented, and movement is costed rather than enforced — the panel
-  says what a hex costs, and nothing stops a token being dragged further than
-  its Move.
-- `bulk` on a ranged mode is recorded but not read. It is documented against
-  the page that defines it.
+- **Evading, close combat and opportunity fire** are not implemented. Evading
+  is a Quick Contest, and nothing in this system runs a contest between two
+  characters yet; opportunity fire needs a Wait maneuver that can interrupt
+  someone else's turn, which needs a turn to interrupt.
+- **Movement is costed, not enforced.** The panel says what a hex costs;
+  nothing stops a token being dragged further than its Move.
 - `reactionModifier` is zero on every trait, because the book states reaction
   modifiers in prose that is conditional or per-level, and a flat integer would
   fire in the wrong circumstances.

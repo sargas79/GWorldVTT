@@ -14,8 +14,8 @@ afterEach(() => {
   delete globals.game;
 });
 
-const bow = { accuracy: 2, scopeBonus: 0 };
-const rifle = { accuracy: 5, scopeBonus: 2 };
+const bow = { accuracy: 2, scopeBonus: 0, bulk: -6 };
+const rifle = { accuracy: 5, scopeBonus: 2, bulk: -5 };
 
 const shot = (over: Partial<Parameters<typeof rangedModifiers>[0]> = {}) => ({
   range: 0,
@@ -23,6 +23,7 @@ const shot = (over: Partial<Parameters<typeof rangedModifiers>[0]> = {}) => ({
   size: 0,
   modifier: 0,
   shots: 1,
+  situation: "normal" as const,
   aimed: false,
   ...over,
 });
@@ -82,5 +83,44 @@ describe("rangedModifiers", () => {
     const mods = rangedModifiers(shot({ range: 50, size: 3, aimed: true, modifier: 1 }), rifle);
     expect(mods).toHaveLength(4);
     for (const mod of mods) expect(mod.label).toBeTruthy();
+  });
+});
+
+describe("Bulk (pp. 365, 391)", () => {
+  it("does not apply to an ordinary shot", () => {
+    expect(valueOf(rangedModifiers(shot({ range: 20 }), bow), "Bulk")).toBeUndefined();
+  });
+
+  /** "-2 or -Bulk of weapon, whichever is worse" -- a bow at -6 is worse. */
+  it("takes the worse of -2 and Bulk on a Move and Attack", () => {
+    const mods = rangedModifiers(shot({ situation: "moveAndAttack" }), bow);
+    expect(valueOf(mods, "Bulk")).toBe(-6);
+    const small = rangedModifiers(shot({ situation: "moveAndAttack" }), {
+      accuracy: 1,
+      scopeBonus: 0,
+      bulk: -1,
+    });
+    expect(valueOf(small, "Bulk")).toBe(-2);
+  });
+
+  /** A Move and Attack loses the benefit of having aimed. */
+  it("drops Accuracy on a Move and Attack even when aimed", () => {
+    const mods = rangedModifiers(shot({ situation: "moveAndAttack", aimed: true }), bow);
+    expect(valueOf(mods, "Accuracy")).toBeUndefined();
+  });
+
+  /**
+   * In close combat the target is right there: the speed/range penalty is
+   * dropped and Bulk stands in its place.
+   */
+  it("replaces the speed/range penalty with Bulk in close combat", () => {
+    const mods = rangedModifiers(shot({ range: 20, situation: "closeCombat" }), bow);
+    expect(valueOf(mods, "SpeedRange")).toBeUndefined();
+    expect(valueOf(mods, "Bulk")).toBe(-6);
+  });
+
+  it("keeps Accuracy in close combat, which only a Move and Attack forfeits", () => {
+    const mods = rangedModifiers(shot({ situation: "closeCombat", aimed: true }), bow);
+    expect(valueOf(mods, "Accuracy")).toBe(2);
   });
 });

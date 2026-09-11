@@ -182,7 +182,8 @@
                         data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
                         data-ranged="1" data-accuracy="{{atk.accuracy}}"
                         data-scope-bonus="{{atk.scopeBonus}}"
-                        data-rate-of-fire="{{atk.rateOfFire}}" data-recoil="{{atk.recoil}}">
+                        data-rate-of-fire="{{atk.rateOfFire}}" data-recoil="{{atk.recoil}}"
+                        data-bulk="{{atk.bulk}}">
                     {{> "gworld.die"}}
                   </span>
                 {{/if}}
@@ -212,6 +213,11 @@
             </select>
           </div>
         </label>
+      </div>
+      <div class="toolbar">
+        <button type="button" class="ibtn" data-action="slam">
+          {{localize "GWORLD.Slam.Action"}}
+        </button>
       </div>
       {{#if tactical.immobile}}
         <p class="ihint">{{localize "GWORLD.Tactical.Immobile"}}</p>

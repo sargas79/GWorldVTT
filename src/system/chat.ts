@@ -209,6 +209,8 @@ interface DefenseFlag {
   defenders: Array<{ uuid: string; name: string; tokenUuid?: string }>;
   /** The attacker's token, so tactical combat can work out the arc. */
   attackerToken?: string;
+  /** A penalty the attack imposes on every defense, from a Deceptive Attack. */
+  defensePenalty?: number;
 }
 
 function defenseFlag(message: any): DefenseFlag | null {
@@ -305,7 +307,8 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       button.className = "gc-apply-button";
       const label = game.i18n.localize(DEFENSES[key]);
       const arcPenalty = arc ? arc.modifier + (key === "parry" ? arc.parryModifier : 0) : 0;
-      button.textContent = `${label} ${defenses[key].total + arcPenalty}`;
+      const deception = flag.defensePenalty ?? 0;
+      button.textContent = `${label} ${defenses[key].total + arcPenalty + deception}`;
       button.addEventListener("click", () => {
         void rollDefense({
           defender,
@@ -313,6 +316,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
           total: defenses[key].total,
           attack: flag.attack,
           arcPenalty,
+          deception,
           retreating: retreatBox.checked,
           skill: defenses[key].skillName ?? "",
           isFencing: Boolean(defenses[key].isFencing),
@@ -369,16 +373,22 @@ async function rollDefense(options: {
   total: number;
   attack: string;
   arcPenalty: number;
+  deception: number;
   retreating: boolean;
   skill: string;
   isFencing: boolean;
 }): Promise<void> {
-  const { defender, key, total, attack, arcPenalty, retreating, skill, isFencing } = options;
+  const {
+    defender, key, total, attack, arcPenalty, deception, retreating, skill, isFencing,
+  } = options;
   const name = game.i18n.localize(DEFENSES[key]);
 
   const modifiers = [];
   if (arcPenalty !== 0) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Tactical.ArcPenalty"), value: arcPenalty });
+  }
+  if (deception !== 0) {
+    modifiers.push({ label: game.i18n.localize("GWORLD.Melee.Deceptive"), value: deception });
   }
   if (retreating) {
     modifiers.push({

@@ -95,6 +95,8 @@ export interface DerivedAttack {
   rateOfFire?: number;
   /** Recoil, which decides how many of a burst's shots hit. */
   recoil?: number;
+  /** Bulk, the penalty for firing on the move or in close combat. */
+  bulk?: number;
   shots?: string;
 }
 
@@ -562,6 +564,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
           rateOfFire: mode.rateOfFire ?? 1,
           recoil: mode.recoil ?? 0,
+          bulk: mode.bulk ?? 0,
           shots: mode.shots ?? "",
           unbalanced: false,
           isFencing: false,
