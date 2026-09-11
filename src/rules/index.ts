@@ -21,6 +21,7 @@ export * from "./encumbrance.js";
 export * from "./extra-effort.js";
 export * from "./success.js";
 export * from "./defenses.js";
+export * from "./falling.js";
 export * from "./fright.js";
 export * from "./injury.js";
 export * from "./maneuvers.js";

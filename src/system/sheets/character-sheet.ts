@@ -28,6 +28,7 @@ import {
 import { parseDiceAdds, formatDiceAdds } from "../../rules/dice.js";
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
+import { rollFall } from "../falling.js";
 import { rollFrightCheck } from "../fright.js";
 import { traitsOf } from "../damage.js";
 import { feintDefenseScore, recordFeint } from "../feint.js";
@@ -208,6 +209,60 @@ async function promptForExtraEffort(): Promise<{
 function numberOr(value: unknown, fallback: number): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+/**
+ * Asks how far, onto what, and how well.
+ *
+ * Returns null when the dialog is dismissed, which cancels the fall -- nobody
+ * hits the ground by accident here.
+ */
+async function promptForFall(): Promise<{
+  yards: number;
+  surface: "hard" | "soft";
+  controlled: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Fall.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Yards")}</span>
+        <input type="number" name="yards" value="1" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Onto")}</span>
+        <select name="surface" style="width:120px">
+          <option value="hard">${L("Surface.hard")}</option>
+          <option value="soft">${L("Surface.soft")}</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="controlled">
+        <span>${L("ControlledHint")}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        return {
+          yards:
+            Number(form?.querySelector<HTMLInputElement>('input[name="yards"]')?.value ?? 0) || 0,
+          surface:
+            form?.querySelector<HTMLSelectElement>('select[name="surface"]')?.value === "soft"
+              ? "soft"
+              : "hard",
+          controlled:
+            form?.querySelector<HTMLInputElement>('input[name="controlled"]')?.checked ?? false,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
 }
 
 /**
@@ -392,6 +447,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       climb: GWorldCharacterSheet.#onClimb,
       swim: GWorldCharacterSheet.#onSwim,
       throwObject: GWorldCharacterSheet.#onThrow,
+      fall: GWorldCharacterSheet.#onFall,
       stepPoints: GWorldCharacterSheet.#onStepPoints,
       stepLevels: GWorldCharacterSheet.#onStepLevels,
       editItem: GWorldCharacterSheet.#onEditItem,
@@ -1222,6 +1278,25 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       basicLift,
       distance,
       damage: damage ? formatDiceAdds(damage) : "",
+    });
+  }
+
+  /**
+   * Drops this character (GURPS Basic Set: Campaigns pp. 430-431).
+   *
+   * A fall is a collision with the ground, so what it does depends on how far
+   * they fell, what they landed on, and whether they landed properly. All three
+   * are asked, because none of them is on the sheet.
+   */
+  static async #onFall(this: GWorldCharacterSheet) {
+    const asked = await promptForFall();
+    if (!asked) return;
+
+    await rollFall({
+      actor: this.actor,
+      yardsFallen: asked.yards,
+      surface: asked.surface,
+      controlled: asked.controlled,
     });
   }
 

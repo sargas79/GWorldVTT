@@ -838,6 +838,24 @@
         "ropeDown": "Rope, going down",
         "ropeDownRigged": "Rope, going down with equipment"
       }
+    },
+    "Fall": {
+      "Action": "Fall",
+      "Title": "Fall",
+      "Hint": "A fall is a collision with the ground: how far, onto what, and how well",
+      "Yards": "Yards fallen",
+      "Onto": "Landed on",
+      "ControlledHint": "Landed properly with Acrobatics (-5 yards)",
+      "Controlled": "controlled",
+      "Fell": "Fell {yards} yards",
+      "Velocity": "velocity",
+      "NoFall": "Not far enough to hurt.",
+      "BluntTrauma": "Armour stopped it, but {hp} HP of blunt trauma got through",
+      "ExcessKept": "{hp} past crippling, taken off HP rather than discarded",
+      "Surface": {
+        "hard": "hard ground",
+        "soft": "something soft"
+      }
     }
   }
 }

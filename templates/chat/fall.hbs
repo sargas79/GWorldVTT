@@ -1,0 +1,51 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">{{localize "GWORLD.Fall.Title"}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>{{localize "GWORLD.Fall.Fell" yards=yardsFallen}}</span>
+    {{#if shortened}}<span class="gc-mod">{{localize "GWORLD.Fall.Controlled"}}</span>{{/if}}
+    <span class="gc-mod">{{localize "GWORLD.Fall.Velocity"}} {{velocity}}</span>
+    <span class="gc-mod">{{surface}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>{{formula}} = <strong>{{rolled}}</strong></span>
+    <span class="gc-mod">{{location}}</span>
+    <span class="gc-mod">{{localize "GWORLD.Chat.DrSubtracted"}} {{dr}}</span>
+  </div>
+
+  {{#if stopped}}
+    <div class="gc-result">
+      {{#if trauma}}
+        {{localize "GWORLD.Fall.BluntTrauma" hp=trauma}}
+      {{else}}
+        {{localize "GWORLD.Chat.Stopped" dr=dr}}
+      {{/if}}
+    </div>
+  {{/if}}
+
+  {{#if injury}}
+    <div class="gc-result">
+      <strong>{{injury}}</strong> HP
+      <span class="gc-mod">{{previous}} &rarr; {{current}} / {{max}}</span>
+      <span class="gc-mod">{{status}}</span>
+    </div>
+  {{/if}}
+
+  <div class="gc-mods">
+    {{#if excessKept}}
+      <span class="gc-warn">{{localize "GWORLD.Fall.ExcessKept" hp=excessKept}}</span>
+    {{/if}}
+    {{#if crippled}}<span class="gc-warn">{{localize "GWORLD.Chat.Crippled"}}</span>{{/if}}
+    {{#if majorWound}}
+      <span class="gc-warn">
+        {{localize "GWORLD.Chat.MajorWound"}}
+        {{#if knockdownModifier}}{{signed knockdownModifier}}{{/if}}
+      </span>
+    {{/if}}
+    {{#if deathCheck}}<span class="gc-warn">{{localize "GWORLD.Chat.DeathCheck"}}</span>{{/if}}
+  </div>
+</div>
