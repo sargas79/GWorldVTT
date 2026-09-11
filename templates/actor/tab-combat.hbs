@@ -252,7 +252,7 @@
                         data-ranged="1" data-accuracy="{{atk.accuracy}}"
                         data-scope-bonus="{{atk.scopeBonus}}"
                         data-rate-of-fire="{{atk.rateOfFire}}" data-recoil="{{atk.recoil}}"
-                        data-bulk="{{atk.bulk}}">
+                        data-bulk="{{atk.bulk}}" data-malfunction="{{atk.malfunction}}">
                     {{> "gworld.die"}}
                   </span>
                 {{/if}}
@@ -315,6 +315,24 @@
               data-tooltip="{{localize "GWORLD.Disarm.Hint"}}">
         {{localize "GWORLD.Disarm.Action"}}
       </button>
+      {{#if rules.dirtyTricks}}
+        <button type="button" class="ibtn" data-action="splash"
+                data-tooltip="{{localize "GWORLD.Splash.Hint"}}">
+          {{localize "GWORLD.Splash.Action"}}
+        </button>
+      {{/if}}
+      {{#if rules.scatter}}
+        <button type="button" class="ibtn" data-action="scatter"
+                data-tooltip="{{localize "GWORLD.Scatter.Hint"}}">
+          {{localize "GWORLD.Scatter.Action"}}
+        </button>
+      {{/if}}
+      {{#if rules.overpenetration}}
+        <button type="button" class="ibtn" data-action="overpenetration"
+                data-tooltip="{{localize "GWORLD.Overpenetration.Hint"}}">
+          {{localize "GWORLD.Overpenetration.Action"}}
+        </button>
+      {{/if}}
     </div>
 
     {{!-- A grapple changes what this character can do more than anything else

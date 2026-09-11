@@ -195,3 +195,49 @@ export function opportunityFirePenalty(hexesWatched: number): number {
 export function canAimWhileWatching(hexesWatched: number): boolean {
   return Math.floor(hexesWatched) === 1;
 }
+
+/** What a two-handed flurry costs each hand (Campaigns p. 417). */
+export interface DualWeaponAttack {
+  /** The modifier to the roll with the better hand. */
+  primary: number;
+  /** The modifier to the roll with the other one. */
+  offHand: number;
+  /** What the target's defenses suffer if both attacks come at them. */
+  defensePenalty: number;
+}
+
+/**
+ * Striking with both hands at once (Campaigns p. 417).
+ *
+ * "Each attack is at -4 to hit, but you can learn the Dual-Weapon Attack
+ * technique to reduce this penalty. You have an extra -4 (total -8) with your
+ * 'off' hand, unless you have Ambidexterity or learn Off-Hand Weapon Training."
+ *
+ * The technique and the training buy the two penalties back separately, which
+ * is why they are separate arguments rather than one bonus.
+ */
+export function dualWeaponAttack(options: {
+  /** Levels bought in the Dual-Weapon Attack technique, up to 4. */
+  technique?: number;
+  /** True for Ambidexterity or full Off-Hand Weapon Training. */
+  ambidextrous?: boolean;
+  /** Levels of Off-Hand Weapon Training, up to 4, for somebody who is not. */
+  offHandTraining?: number;
+  /** True when both attacks are aimed at the same foe. */
+  sameTarget?: boolean;
+}): DualWeaponAttack {
+  const bought = Math.max(0, Math.min(4, Math.floor(options.technique ?? 0)));
+  const primary = penalty(4 - bought);
+
+  const offHandTax = options.ambidextrous
+    ? 0
+    : Math.max(0, 4 - Math.max(0, Math.min(4, Math.floor(options.offHandTraining ?? 0))));
+
+  return {
+    primary,
+    offHand: penalty(4 - bought + offHandTax),
+    // "If you aim both attacks at a single opponent, he defends at -1 against
+    // them, as his attention is divided!"
+    defensePenalty: options.sameTarget ? penalty(1) : 0,
+  };
+}

@@ -219,7 +219,11 @@
       "Deceptive": "Deceptive Attack",
       "Unusable": "too long for close combat",
       "NoDeception": "Skill too low for a Deceptive Attack, which may not take you below 10.",
-      "RapidStrike": "Rapid Strike"
+      "RapidStrike": "Rapid Strike",
+      "DualWeapon": "Both hands at once",
+      "DualNone": "One weapon",
+      "DualPrimary": "Dual-Weapon Attack",
+      "DualOff": "Dual-Weapon Attack, off hand"
     },
     "Tactical": {
       "front": "from the front",
@@ -358,6 +362,26 @@
         "disease": {
           "Name": "Illness and infection",
           "Hint": "Catching something, and the wound that goes bad afterwards."
+        },
+        "malfunctions": {
+          "Name": "Malfunctions",
+          "Hint": "A gun that fails on a high attack roll, and what it takes to clear."
+        },
+        "dualWeaponAttack": {
+          "Name": "Dual-Weapon Attacks",
+          "Hint": "Strike with both hands on one Attack maneuver, at -4 and -8."
+        },
+        "scatter": {
+          "Name": "Scatter",
+          "Hint": "Where a missed grenade actually landed, and how far the fragments reach."
+        },
+        "overpenetration": {
+          "Name": "Overpenetration",
+          "Hint": "A shot that goes through cover, a shield or a person into whatever is behind."
+        },
+        "dirtyTricks": {
+          "Name": "Dirty tricks",
+          "Hint": "Sand or a drink in the face: a thrown weapon, and a Will roll not to flinch."
         }
       }
     },
@@ -620,7 +644,68 @@
       "MoveAndAttack": "Move and Attack",
       "CloseCombat": "Close combat",
       "Shots": "Shots fired",
-      "RapidFire": "rapid fire"
+      "RapidFire": "rapid fire",
+      "Elevation": "Height over target (yards)",
+      "SpeedRangeUphill": "Speed/Range at {yards} yards"
+    },
+    "Malfunction": {
+      "Jammed": "The weapon malfunctions",
+      "mechanical": "Mechanical or electrical problem",
+      "misfire": "Misfire",
+      "stoppage": "Stoppage",
+      "explosion": "Mechanical problem, and it may blow up",
+      "Hours": "An hour of Armoury work per attempt",
+      "Ready": "{ready} Ready maneuvers and both hands",
+      "Revolver": "A revolver: the next shot fires normally",
+      "FiredFirst": "The shot went off before it jammed",
+      "Exploded": "It blows up: 1d+2 cr ex [2d] to the gunner"
+    },
+    "Scatter": {
+      "Action": "Scatter",
+      "Hint": "Where a missed grenade actually landed",
+      "Title": "Scatter",
+      "Margin": "Margin of failure",
+      "Distance": "Yards to the target",
+      "Dodged": "The margin is the defender's dodge",
+      "Unseen": "Flying, underwater, or fired blind",
+      "Fragmentation": "Dice of fragmentation",
+      "OnTarget": "It landed where it was meant to",
+      "Landed": "{yards} yards off, direction {direction} ({bearing}° from your facing)",
+      "Squared": "Unseen target: the margin is squared",
+      "Fragments": "Fragments reach {yards} yards, attacking at skill {skill}"
+    },
+    "Overpenetration": {
+      "Action": "Overpenetration",
+      "Hint": "Whether the shot went through, and what hit whoever was behind",
+      "Title": "Overpenetration",
+      "BasicDamage": "Basic damage rolled",
+      "CoverDrField": "DR of the thing in the way",
+      "CoverHp": "Its hit points",
+      "Kind": "What it is",
+      "Kind_flesh": "A person or animal",
+      "Kind_unliving": "A machine or vehicle",
+      "Kind_homogenous": "A solid object",
+      "Kind_thinSlab": "A wall or door",
+      "Divisor": "Armour divisor",
+      "BehindDr": "DR of whoever is behind",
+      "Basic": "{damage} basic damage",
+      "CoverDr": "cover DR {dr}",
+      "Through": "{damage} reaches whoever was behind",
+      "Stopped": "It stops in the cover"
+    },
+    "Splash": {
+      "Action": "Splash in the face",
+      "Hint": "A drink, sand, or anything else thrown in somebody's eyes",
+      "Title": "In the face",
+      "Hit": "It hit",
+      "Critical": "Critical hit",
+      "Defended": "They defended",
+      "Thrown": "thrown weapon: Acc {acc}, {max} yards, {face} for the face",
+      "Blinded": "Blinded for {seconds} seconds",
+      "Dodged": "Dodged it — and a liquid cannot be parried",
+      "Flinched": "Flinched: {penalty} to further defenses, and to DX and Sense next turn",
+      "Unmoved": "Did not so much as blink",
+      "OneTarget": "Target exactly one token to splash"
     },
     "Chat": {
       "Target": "Target",

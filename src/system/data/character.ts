@@ -125,6 +125,11 @@ export interface DerivedAttack {
   isFencing: boolean;
   /** Ranged only. */
   accuracy?: number;
+  /**
+   * Malf.: the attack roll at or above which the weapon fails (Campaigns
+   * p. 407). Null for anything that cannot jam, such as a bow.
+   */
+  malfunction?: number | null;
   /** A built-in scope's bonus, which the table lists separately as in "7+2". */
   scopeBonus?: number;
   range?: string;
@@ -459,6 +464,21 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     };
   }
 
+  /**
+   * Levels bought in a technique, by name.
+   *
+   * A technique's own line on the sheet shows its level; what a dialog needs is
+   * how many levels were bought, since that is what buys a penalty back.
+   */
+  private techniqueLevelsByName(name: string): number {
+    const wanted = name.trim().toLowerCase();
+    for (const item of this.itemsOfType("technique")) {
+      if (String(item.name ?? "").trim().toLowerCase() !== wanted) continue;
+      return Number((item.system as { derived?: { levels?: number } })?.derived?.levels) || 0;
+    }
+    return 0;
+  }
+
   /** The score of a skill by name, or null when the character lacks it. */
   private skillLevelByName(name: string): number | null {
     if (!name) return null;
@@ -765,6 +785,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           rateOfFire: mode.rateOfFire ?? 1,
           recoil: mode.recoil ?? 0,
           bulk: mode.bulk ?? 0,
+          malfunction: mode.malfunction ?? null,
           shots: mode.shots ?? "",
           usable: true,
           unbalanced: false,
@@ -955,6 +976,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ranged,
       encumbrance,
       feats: this.#physicalFeats(attrs, secondary.basicLift, encumbrance.move, traits),
+      // The two techniques that change a roll made from a dialog rather than
+      // from their own line on the sheet (Campaigns p. 417).
+      techniques: {
+        dualWeaponAttack: this.techniqueLevelsByName("Dual-Weapon Attack"),
+        offHandWeaponTraining: this.techniqueLevelsByName("Off-Hand Weapon Training"),
+      },
       recovery: {
         // First Aid is IQ/Easy, so someone who never learned it defaults to
         // IQ-4 and can still bandage a friend (Characters p. 195).

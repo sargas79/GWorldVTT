@@ -43,8 +43,22 @@ import {
   deceptiveAttack,
   maxDeception,
   opportunityFirePenalty,
+  dualWeaponAttack,
 } from "../rules/attack-options.js";
-import { rangedToHitModifier, rapidFireBonus, rapidFireHits } from "../rules/ranged.js";
+import {
+  elevationRange,
+  rangedToHitModifier,
+  rapidFireBonus,
+  rapidFireHits,
+} from "../rules/ranged.js";
+import {
+  REPAIRS,
+  clearsItself,
+  malfunctionFor,
+  malfunctioned,
+  mayExplode,
+  type Malfunction,
+} from "../rules/malfunctions.js";
 import { attackWithoutSight, type Sight } from "../rules/visibility.js";
 import { levelDifference } from "../rules/melee-situations.js";
 import { turnedBlade } from "../rules/subduing.js";
@@ -85,6 +99,11 @@ export interface SuccessRollOptions {
    * miss table (GURPS Basic Set: Campaigns p. 557).
    */
   unarmed?: boolean;
+  /**
+   * The weapon's Malf., and what it takes to put right if the roll reaches it
+   * (GURPS Basic Set: Campaigns p. 407).
+   */
+  malfunction?: { number: number; techLevel: number; revolver: boolean } | null;
 }
 
 /**
@@ -130,6 +149,13 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
       : null;
   const criticalHit = kind === "attack" && outcome.criticalSuccess && isRuleOn("criticalTables");
 
+  // A gun that jams does so on the attack roll itself, whether or not the shot
+  // would otherwise have hit -- "on any attack roll of Malf. or more".
+  const jam =
+    kind === "attack" && isRuleOn("malfunctions") && options.malfunction
+      ? await rollMalfunction(roll.total, options.malfunction)
+      : null;
+
   const content = await foundry.applications.handlebars.renderTemplate(CHAT_TEMPLATE, {
     label,
     kind,
@@ -152,13 +178,14 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
           })
         : null,
     shotsFired: rapidFire?.shotsFired ?? null,
+    jam,
   });
 
   await ChatMessage.implementation.create({
     speaker: ChatMessage.implementation.getSpeaker({ actor }),
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
-    rolls: criticalMiss ? [roll, criticalMiss.roll] : [roll],
+    rolls: [roll, ...(criticalMiss ? [criticalMiss.roll] : []), ...(jam ? [jam.roll] : [])],
     // An attack that connects is the moment to record who it was aimed at: the
     // defender rolls afterwards, by which time the attacker may well have
     // changed their target. A miss needs no defense, so it carries nothing.
@@ -168,6 +195,56 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   });
 
   return outcome;
+}
+
+/**
+ * Rolls on the Firearm Malfunction Table, if the shot jammed the gun (p. 407).
+ *
+ * "The weapon fires one shot, then jams" is the only outcome where the attack
+ * still happens, so the shot is not cancelled here: the card reports both, and
+ * the GM decides what a misfired attack that also rolled a hit means.
+ */
+async function rollMalfunction(
+  attackRoll: number,
+  weapon: { number: number; techLevel: number; revolver: boolean },
+): Promise<{
+  roll: any;
+  kind: Malfunction;
+  label: string;
+  repair: string;
+  fires: boolean;
+  clears: boolean;
+  explodes: boolean;
+} | null> {
+  if (!malfunctioned({ roll: attackRoll, malfunctionNumber: weapon.number })) return null;
+
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+
+  const rolled = malfunctionFor(roll.total);
+  // "TL5+ weapons do not explode -- treat as a mechanical or electrical
+  // problem", so the worst row of the table is two different results.
+  const kind: Malfunction =
+    rolled === "explosion" && !mayExplode(weapon.techLevel) ? "mechanical" : rolled;
+
+  const repair = REPAIRS[kind];
+  const clears = clearsItself(kind, weapon.revolver);
+
+  return {
+    roll,
+    kind,
+    label: game.i18n.localize(`GWORLD.Malfunction.${kind}`),
+    repair: clears
+      ? game.i18n.localize("GWORLD.Malfunction.Revolver")
+      : repair.hours > 0
+        ? game.i18n.format("GWORLD.Malfunction.Hours", { hours: repair.hours })
+        : game.i18n.format("GWORLD.Malfunction.Ready", { ready: repair.readyManeuvers }),
+    // "The weapon fires one shot, then jams. (Treat the fired shot as a normal
+    // attack.)"
+    fires: kind === "stoppage",
+    clears,
+    explodes: kind === "explosion",
+  };
 }
 
 /**
@@ -405,6 +482,7 @@ export async function handleRollAction(
   // not optional the way a situational modifier is, and defaulting it to zero
   // would quietly roll every shot as though it were point blank.
   const recoil = Number(target.dataset.recoil) || 0;
+  const malfunctionNumber = Number(target.dataset.malfunction) || 0;
   const shot = ranged
     ? await promptForRangedAttack({
         damageType: (target.dataset.damageType ?? "cr") as DamageType,
@@ -435,6 +513,9 @@ export async function handleRollAction(
     ? await promptForMeleeAttack({
         effectiveSkill: base,
         damageType: (target.dataset.damageType ?? "cr") as DamageType,
+        dualWeaponTechnique: Number(actor?.system?.derived?.techniques?.dualWeaponAttack) || 0,
+        ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true,
+        offHandTraining: Number(actor?.system?.derived?.techniques?.offHandWeaponTraining) || 0,
       })
     : null;
   if (asksAboutMelee && melee === null) return;
@@ -481,6 +562,17 @@ export async function handleRollAction(
     // defender, and a Feint's is the same penalty bought a turn earlier, so
     // both travel with the attack to the defense card.
     ...(defensePenalty !== 0 ? { defensePenalty } : {}),
+    // A weapon that can jam says so on the button; one that cannot -- a bow, a
+    // thrown rock -- carries nothing and is never asked.
+    ...(malfunctionNumber
+      ? {
+          malfunction: {
+            number: malfunctionNumber,
+            techLevel: Number(actor?.system?.tl) || 3,
+            revolver: target.dataset.revolver === "1",
+          },
+        }
+      : {}),
     // Only a burst needs its hits counted; a single shot either hits or does
     // not, and saying "1 hit" on every arrow would be noise.
     ...(shot && shot.shotsFired > 1
@@ -541,6 +633,7 @@ export async function promptForRangedAttack(options: {
     window: { title: L("Title") },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
       ${field("range", L("Range"), "0")}
+      ${field("elevation", L("Elevation"), "0")}
       ${field("speed", L("TargetSpeed"), "0")}
       ${field("size", L("TargetSize"), "0")}
       ${shotsField}
@@ -587,6 +680,7 @@ export async function promptForRangedAttack(options: {
           form?.querySelector<HTMLSelectElement>('select[name="calledShot"]')?.value ?? UNAIMED;
         return {
           range: num("range"),
+          elevation: num("elevation"),
           speed: num("speed"),
           size: num("size"),
           modifier: num("modifier"),
@@ -617,6 +711,8 @@ export async function promptForRangedAttack(options: {
 
 interface RangedInput {
   range: number;
+  /** Yards the shooter stands above the target; negative when below. */
+  elevation?: number;
   speed: number;
   size: number;
   modifier: number;
@@ -648,14 +744,24 @@ export function rangedModifiers(
     accuracy: number;
     scopeBonus: number;
     bulk: number;
+    /** A laser, which the slope does not affect at all. */
+    beamWeapon?: boolean;
     watching?: { hexesWatched: number; coveringLine: boolean } | null;
   },
 ): RollModifier[] {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   const modifiers: RollModifier[] = [];
 
+  // Height changes how far the shot has to travel before the table is read:
+  // downhill is shorter, uphill is longer, and by different amounts (p. 408).
+  const effectiveRange = elevationRange({
+    groundYards: input.range,
+    elevationYards: input.elevation ?? 0,
+    beamWeapon: weapon.beamWeapon === true,
+  });
+
   const { speedRange, size } = rangedToHitModifier({
-    rangeYards: input.range,
+    rangeYards: effectiveRange,
     targetSpeedYardsPerSecond: input.speed,
     targetSizeModifier: input.size,
   });
@@ -676,7 +782,13 @@ export function rangedModifiers(
   // In close combat the speed/range penalty is dropped and Bulk stands in its
   // place: the target is right there, and the weapon is in the way.
   if (speedRange !== 0 && situation !== "closeCombat") {
-    modifiers.push({ label: L("SpeedRange"), value: speedRange });
+    modifiers.push({
+      label:
+        effectiveRange === input.range
+          ? L("SpeedRange")
+          : game.i18n.format("GWORLD.Ranged.SpeedRangeUphill", { yards: effectiveRange }),
+      value: speedRange,
+    });
   }
   if (size !== 0) modifiers.push({ label: L("TargetSize"), value: size });
 
@@ -832,6 +944,12 @@ export async function promptForMeleeAttack(options: {
   effectiveSkill: number;
   /** What the weapon does, which decides where it can be aimed. */
   damageType: DamageType;
+  /** Levels of the Dual-Weapon Attack technique, which buy the -4 back. */
+  dualWeaponTechnique?: number;
+  /** Ambidexterity, or full Off-Hand Weapon Training. */
+  ambidextrous?: boolean;
+  /** Levels of Off-Hand Weapon Training, for somebody who is not. */
+  offHandTraining?: number;
 }): Promise<{
   modifiers: RollModifier[];
   defensePenalty: number;
@@ -852,6 +970,7 @@ export async function promptForMeleeAttack(options: {
   const E = (key: string) => game.i18n.localize(`GWORLD.ExtraEffort.${key}`);
   const deceptionAllowed = isRuleOn("deceptiveAttack");
   const rapidAllowed = isRuleOn("rapidStrike");
+  const dualAllowed = isRuleOn("dualWeaponAttack");
   const effortAllowed = isRuleOn("extraEffort");
 
   // A fighter at skill 11 or less cannot buy any deception at all, so they are
@@ -883,6 +1002,16 @@ export async function promptForMeleeAttack(options: {
         ? `<label style="display:flex;align-items:center;gap:8px">
              <input type="checkbox" name="flurry">
              <span>${E("Flurry")} (${flurryOfBlowsPenalty()}, ${EXTRA_EFFORT_FP} FP)</span>
+           </label>`
+        : ""}
+      ${dualAllowed
+        ? `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+             <span>${game.i18n.localize("GWORLD.Melee.DualWeapon")}</span>
+             <select name="dual" style="width:150px">
+               <option value="no">${game.i18n.localize("GWORLD.Melee.DualNone")}</option>
+               <option value="primary">${game.i18n.localize("GWORLD.Melee.DualPrimary")}</option>
+               <option value="off">${game.i18n.localize("GWORLD.Melee.DualOff")}</option>
+             </select>
            </label>`
         : ""}
       ${effortAllowed
@@ -934,6 +1063,7 @@ export async function promptForMeleeAttack(options: {
           turned: ticked("turned"),
           ground:
             Number(form?.querySelector<HTMLSelectElement>('select[name="ground"]')?.value ?? 0) || 0,
+          dual: form?.querySelector<HTMLSelectElement>('select[name="dual"]')?.value ?? "no",
         };
       },
     },
@@ -941,7 +1071,7 @@ export async function promptForMeleeAttack(options: {
   });
 
   if (!result || typeof result !== "object") return null;
-  const { deceptive, modifier, rapid, flurry, mighty, sight, calledShot, turned, ground } =
+  const { deceptive, modifier, rapid, flurry, mighty, sight, calledShot, turned, ground, dual } =
     result as {
     deceptive: number;
     modifier: number;
@@ -952,6 +1082,7 @@ export async function promptForMeleeAttack(options: {
     calledShot: string;
     turned: boolean;
     ground: number;
+    dual: string;
   };
 
   // "You may not reduce your final effective skill below 10", so the ceiling is
@@ -973,6 +1104,21 @@ export async function promptForMeleeAttack(options: {
       value: flurried ? flurryOfBlowsPenalty() : RAPID_STRIKE_PENALTY,
     });
   }
+  // Both hands at once: each roll is separate, so this is the modifier for the
+  // hand being rolled now (p. 417). The technique and Ambidexterity come off the
+  // sheet rather than being asked about again.
+  if (dual === "primary" || dual === "off") {
+    const both = dualWeaponAttack({
+      technique: options.dualWeaponTechnique ?? 0,
+      ambidextrous: options.ambidextrous === true,
+      offHandTraining: options.offHandTraining ?? 0,
+    });
+    modifiers.push({
+      label: game.i18n.localize(dual === "off" ? "GWORLD.Melee.DualOff" : "GWORLD.Melee.DualPrimary"),
+      value: dual === "off" ? both.offHand : both.primary,
+    });
+  }
+
   const aimed = calledShotModifier(calledShot, options.damageType, false);
   if (aimed.modifier) modifiers.push(aimed.modifier);
 

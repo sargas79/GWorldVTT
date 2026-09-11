@@ -1,0 +1,67 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">
+      {{#if scatter}}{{localize "GWORLD.Scatter.Title"}}
+      {{else if overpenetration}}{{localize "GWORLD.Overpenetration.Title"}}
+      {{else}}{{localize "GWORLD.Splash.Title"}}{{/if}}
+    </span>
+  </div>
+
+  {{#if dice}}
+    <div class="gc-dice">
+      {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+      <span class="gc-total">{{roll}}</span>
+    </div>
+  {{/if}}
+
+  {{#if scatter}}
+    {{#if onTarget}}
+      <div class="gc-result success">{{localize "GWORLD.Scatter.OnTarget"}}</div>
+    {{else}}
+      <div class="gc-result failure">
+        {{localize "GWORLD.Scatter.Landed" yards=yards direction=direction bearing=bearing}}
+      </div>
+    {{/if}}
+    <div class="gc-mods">
+      {{#if squared}}<span class="gc-warn">{{localize "GWORLD.Scatter.Squared"}}</span>{{/if}}
+      {{#if fragmentRadius}}
+        <span class="gc-mod">{{localize "GWORLD.Scatter.Fragments" yards=fragmentRadius skill=fragmentSkillAt}}</span>
+      {{/if}}
+    </div>
+  {{/if}}
+
+  {{#if overpenetration}}
+    <div class="gc-mods">
+      <span>{{localize "GWORLD.Overpenetration.Basic" damage=basicDamage}}</span>
+      <span class="gc-mod">{{localize "GWORLD.Overpenetration.CoverDr" dr=cover}}</span>
+    </div>
+    {{#if went}}
+      <div class="gc-result crit-failure">
+        {{localize "GWORLD.Overpenetration.Through" damage=through}}
+      </div>
+    {{else}}
+      <div class="gc-result success">{{localize "GWORLD.Overpenetration.Stopped"}}</div>
+    {{/if}}
+  {{/if}}
+
+  {{#if splash}}
+    <div class="gc-mods">
+      <span>{{victim}}</span>
+      <span class="gc-mod">{{localize "GWORLD.Splash.Thrown" acc=accuracy max=maxRange face=faceModifier}}</span>
+    </div>
+    {{#if blinded}}
+      <div class="gc-result crit-failure">
+        {{localize "GWORLD.Splash.Blinded" seconds=blindSeconds}}
+      </div>
+    {{else if defended}}
+      <div class="gc-result success">{{localize "GWORLD.Splash.Dodged"}}</div>
+    {{else if flinched}}
+      <div class="gc-result failure">
+        {{localize "GWORLD.Splash.Flinched" penalty=flinchPenalty}}
+      </div>
+    {{else}}
+      <div class="gc-result success">{{localize "GWORLD.Splash.Unmoved"}}</div>
+    {{/if}}
+  {{/if}}
+</div>

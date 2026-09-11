@@ -37,4 +37,17 @@
       {{localize "GWORLD.Chat.Hits" hits=hits shots=shotsFired}}
     </div>
   {{/if}}
+
+  {{#if jam}}
+    <div class="gc-result crit-failure">
+      {{localize "GWORLD.Malfunction.Jammed"}} &mdash; {{jam.label}}
+      <span class="gc-mod">{{jam.repair}}</span>
+    </div>
+    {{#if jam.fires}}
+      <div class="gc-mods"><span>{{localize "GWORLD.Malfunction.FiredFirst"}}</span></div>
+    {{/if}}
+    {{#if jam.explodes}}
+      <div class="gc-result crit-failure">{{localize "GWORLD.Malfunction.Exploded"}}</div>
+    {{/if}}
+  {{/if}}
 </div>
