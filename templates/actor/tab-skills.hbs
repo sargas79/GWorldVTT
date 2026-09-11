@@ -46,7 +46,13 @@
                 {{#if skill.system.techLevel}}<span class="wmode">TL{{skill.system.techLevel}}</span>{{/if}}
               </td>
               <td class="wmode">{{skill.system.attribute}}/{{skill.system.difficulty}}</td>
-              <td class="n">{{skill.system.points}}</td>
+              <td class="n">
+                {{#if @root.editable}}
+                  <input type="number" class="npts" min="0" step="1"
+                         value="{{skill.system.points}}" data-item-field="system.points"
+                         aria-label="{{localize "GWORLD.Column.Pts"}}" />
+                {{else}}{{skill.system.points}}{{/if}}
+              </td>
               <td class="n wmode">{{relativeLabel skill}}</td>
               <td class="n"><span class="lvl">{{skill.system.derived.level}}</span></td>
               <td class="c">
@@ -81,7 +87,13 @@
             <tr class="dim" data-item-id="{{skill.id}}">
               <td><span class="wname" data-action="editItem">{{skill.name}}</span></td>
               <td class="wmode">{{skill.system.attribute}}/{{skill.system.difficulty}}</td>
-              <td class="n">&mdash;</td>
+              <td class="n">
+                {{#if @root.editable}}
+                  <input type="number" class="npts" min="0" step="1"
+                         value="{{skill.system.points}}" data-item-field="system.points"
+                         aria-label="{{localize "GWORLD.Column.Pts"}}" />
+                {{else}}&mdash;{{/if}}
+              </td>
               <td class="n wmode">{{relativeLabel skill}}</td>
               <td class="n">
                 {{#if skill.system.derived.hasDefault}}
@@ -140,7 +152,13 @@
                 {{/if}}
               </td>
               <td class="wmode">Tech/{{entry.item.system.difficulty}}</td>
-              <td class="n">{{entry.item.system.points}}</td>
+              <td class="n">
+                {{#if @root.editable}}
+                  <input type="number" class="npts" min="0" step="1"
+                         value="{{entry.item.system.points}}" data-item-field="system.points"
+                         aria-label="{{localize "GWORLD.Column.Pts"}}" />
+                {{else}}{{entry.item.system.points}}{{/if}}
+              </td>
               <td class="n wmode">{{entry.item.system.prerequisite}}{{entry.item.system.defaultModifier}}</td>
               <td class="n">
                 {{#if entry.resolved}}
