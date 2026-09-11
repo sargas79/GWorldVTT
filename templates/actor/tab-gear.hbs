@@ -27,6 +27,19 @@
   <div class="isec">
     <div class="ish"><span class="num">02</span>{{localize "GWORLD.Gear.Carried"}}</div>
     <div class="toolbar">
+      {{!-- One kind at a time, or the whole inventory. Not a form field: it
+           filters what is shown and writes nothing to the actor. --}}
+      {{#if gearGroups.length}}
+        <label class="srch gfilter">
+          <span class="wmode">{{localize "GWORLD.Gear.Show"}}</span>
+          <select data-gear-filter aria-label="{{localize 'GWORLD.Gear.Show'}}">
+            <option value="">{{localize "GWORLD.Gear.All"}}</option>
+            {{#each gearGroups as |group|}}
+              <option value="{{group.key}}" {{#if group.selected}}selected{{/if}}>{{localize group.label}} ({{group.rows.length}})</option>
+            {{/each}}
+          </select>
+        </label>
+      {{/if}}
       {{#if editable}}
         <button type="button" class="ibtn" data-action="createItem" data-item-type="equipment">
           {{> "gworld.plus"}} {{localize "GWORLD.Action.AddEquipment"}}
@@ -43,7 +56,7 @@
         </button>
       {{/if}}
     </div>
-    {{#if carriedRows.length}}
+    {{#if gearGroups.length}}
       <table class="gt">
         <thead>
           <tr>
@@ -56,30 +69,35 @@
             <th></th>
           </tr>
         </thead>
-        <tbody>
-          {{#each carriedRows as |row|}}
-            <tr data-item-id="{{row.id}}">
-              <td class="c">
-                {{#if row.equippable}}
-                  <input type="checkbox" data-action="toggleEquipped" {{#if row.equipped}}checked{{/if}}
-                         {{#unless @root.editable}}disabled{{/unless}}>
-                {{/if}}
-              </td>
-              <td><span class="wname" data-action="editItem">{{row.name}}</span></td>
-              <td class="n">{{row.quantity}}</td>
-              <td class="n">{{decimal row.weight 1}} lb</td>
-              <td class="n">${{row.cost}}</td>
-              <td class="wmode">{{row.notes}}</td>
-              <td class="c">
-                {{#if @root.editable}}
-                  <button type="button" class="rollable iconbtn" data-action="deleteItem" title="{{localize 'GWORLD.Action.Delete'}}">
-                    {{> "gworld.trash"}}
-                  </button>
-                {{/if}}
-              </td>
+        {{#each gearGroups as |group|}}
+          <tbody data-gear-group="{{group.key}}">
+            <tr class="ggroup">
+              <td colspan="7">{{localize group.label}}</td>
             </tr>
-          {{/each}}
-        </tbody>
+            {{#each group.rows as |row|}}
+              <tr data-item-id="{{row.id}}">
+                <td class="c">
+                  {{#if row.equippable}}
+                    <input type="checkbox" data-action="toggleEquipped" {{#if row.equipped}}checked{{/if}}
+                           {{#unless @root.editable}}disabled{{/unless}}>
+                  {{/if}}
+                </td>
+                <td><span class="wname" data-action="editItem">{{row.name}}</span></td>
+                <td class="n">{{row.quantity}}</td>
+                <td class="n">{{decimal row.weight 1}} lb</td>
+                <td class="n">${{row.cost}}</td>
+                <td class="wmode">{{row.notes}}</td>
+                <td class="c">
+                  {{#if @root.editable}}
+                    <button type="button" class="rollable iconbtn" data-action="deleteItem" title="{{localize 'GWORLD.Action.Delete'}}">
+                      {{> "gworld.trash"}}
+                    </button>
+                  {{/if}}
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        {{/each}}
       </table>
     {{else}}
       <div class="inote">{{> "gworld.info"}}<span>{{localize "GWORLD.Hint.NothingCarried"}}</span></div>

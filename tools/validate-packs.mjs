@@ -24,6 +24,7 @@ const DIFFICULTIES = new Set(["E", "A", "H", "VH", "W"]);
 const DAMAGE_TYPES = new Set([
   "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox",
 ]);
+const EQUIPMENT_CATEGORIES = new Set(["weapon", "tool", "consumable", "misc"]);
 const HIT_LOCATIONS = new Set([
   "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",
 ]);
@@ -201,6 +202,10 @@ function validateItem(entry, file) {
 
   if (entry.type === "shield") {
     check(Number.isInteger(sys.db) && sys.db >= 0, file, name, `bad DB "${sys.db}"`);
+  }
+
+  if (entry.type === "equipment" && sys.category !== undefined) {
+    check(EQUIPMENT_CATEGORIES.has(sys.category), file, name, `bad category "${sys.category}"`);
   }
 
   for (const mode of [...(sys.meleeModes ?? []), ...(sys.rangedModes ?? [])]) {

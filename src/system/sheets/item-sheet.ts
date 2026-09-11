@@ -12,6 +12,7 @@
 
 import { parseCostTable, parseLevelNames } from "../../rules/traits.js";
 import { SYSTEM_ID } from "../constants.js";
+import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
 
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -109,6 +110,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",
       ],
       comprehension: keyed("Language", ["none", "broken", "accented", "native"]),
+      equipmentCategories: keyed("GearCategory", [...EQUIPMENT_CATEGORIES]),
     };
 
     return context;
