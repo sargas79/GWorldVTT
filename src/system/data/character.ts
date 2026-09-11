@@ -13,6 +13,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { isUnarmedSkill } from "../../rules/criticals.js";
+import { pointsLedger, type PointAward } from "../../rules/character-points.js";
 import { afterSuperJump, traitEffects, type TraitEffects } from "../../rules/trait-effects.js";
 import { baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import { usableInCloseCombat } from "../../rules/tactical.js";
@@ -161,7 +162,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   };
   declare hp: { value: number; max: number };
   declare fp: { value: number; max: number };
-  declare points: { starting: number; disadvantageLimit: number };
+  declare points: {
+    starting: number;
+    disadvantageLimit: number;
+    awards: PointAward[];
+  };
   declare tl: number;
   declare sm: number;
   declare maneuver: Maneuver;
@@ -237,6 +242,27 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         starting: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 150 }),
         // A rule of thumb, not a hard cap (GURPS Lite p. 4).
         disadvantageLimit: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 75 }),
+        /**
+         * Points earned since the character was made, one award at a time
+         * (Campaigns pp. 292-294). The log is the record rather than a running
+         * total, because "account for what has been spent" means being able to
+         * say where every point came from -- and a total nobody can explain is
+         * the thing a ledger exists to prevent.
+         */
+        awards: new fields.ArrayField(
+          new fields.SchemaField({
+            points: new fields.NumberField({
+              required: true,
+              nullable: false,
+              integer: true,
+              initial: 0,
+            }),
+            note: new fields.StringField({ required: true, blank: true, initial: "" }),
+            /** Epoch milliseconds, for ordering the log. */
+            at: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+          }),
+          { required: true, initial: [] },
+        ),
       }),
 
       tl: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 3 }),
@@ -866,6 +892,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       attributePoints + secondaryPoints + advantages + disadvantages + quirks +
       skillPoints + techniquePoints + languagePoints;
 
+    // Worked out once, beside the spending it is measured against.
+    const ledger = pointsLedger({
+      starting: this.points.starting,
+      awards: this.points.awards ?? [],
+      spent,
+    });
+
     return {
       maneuver: {
         key: this.maneuver,
@@ -928,9 +961,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         skills: skillPoints,
         techniques: techniquePoints,
         languages: languagePoints,
-        spent,
-        starting: this.points.starting,
-        remaining: this.points.starting - spent,
+        // What they started with, what they have earned since, and what is
+        // left after the sheet is paid for -- three numbers rather than one,
+        // because they answer three different questions.
+        ...ledger,
+        awards: this.points.awards ?? [],
+        // Kept under its old name as well: "remaining" is what callers already
+        // ask for, and it now counts against the whole budget rather than
+        // against the starting points alone.
+        remaining: ledger.unspent,
         // Disadvantages and quirks both count toward the campaign limit.
         disadvantageTotal: Math.abs(disadvantages + quirks),
         disadvantageLimit: this.points.disadvantageLimit,

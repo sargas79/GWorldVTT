@@ -215,8 +215,55 @@
       <div class="lrow"><span>{{localize "GWORLD.Points.Languages"}}</span><span>{{derived.points.languages}}</span></div>
       <div class="lrow"><span>{{localize "GWORLD.Points.Skills"}}</span><span>{{derived.points.skills}}</span></div>
       <div class="lrow"><span>{{localize "GWORLD.Points.Techniques"}}</span><span>{{derived.points.techniques}}</span></div>
-      <div class="lrow ltot"><span>{{localize "GWORLD.Points.Spent"}}</span><span class="{{#if overBudget}}over{{/if}}">{{derived.points.spent}} / {{derived.points.starting}}</span></div>
+      <div class="lrow ltot"><span>{{localize "GWORLD.Points.Spent"}}</span><span class="{{#if overBudget}}over{{/if}}">{{derived.points.spent}}</span></div>
     </div>
+
+    <div class="ledger">
+      <div class="lrow"><span>{{localize "GWORLD.Points.Starting"}}</span><span>{{derived.points.starting}}</span></div>
+      <div class="lrow"><span>{{localize "GWORLD.Points.Earned"}}</span><span>{{derived.points.earned}}</span></div>
+      <div class="lrow ltot">
+        <span>{{localize "GWORLD.Points.Unspent"}}</span>
+        <span class="{{#if overBudget}}over{{/if}}">{{derived.points.unspent}}</span>
+      </div>
+    </div>
+
+    {{#if editable}}
+      <div class="toolbar">
+        <button type="button" class="ibtn" data-action="awardPoints"
+                data-tooltip="{{localize "GWORLD.Points.AwardHint"}}">
+          {{> "gworld.plus"}} {{localize "GWORLD.Points.Award"}}
+        </button>
+      </div>
+    {{/if}}
+
+    {{#if awards.length}}
+      <table class="gt">
+        <thead>
+          <tr>
+            <th class="c">{{localize "GWORLD.Points.AwardPoints"}}</th>
+            <th>{{localize "GWORLD.Points.AwardNote"}}</th>
+            <th class="c">{{localize "GWORLD.Points.AwardWhen"}}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each awards as |award|}}
+            <tr>
+              <td class="c"><span class="lvl">{{signed award.points}}</span></td>
+              <td>{{award.note}}</td>
+              <td class="c wmode">{{award.when}}</td>
+              <td class="c">
+                {{#if @root.editable}}
+                  <button type="button" class="tdel rollable iconbtn" data-action="deleteAward"
+                          data-index="{{award.index}}"
+                          title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{/if}}
     <div class="inote {{#if pointsWarning.over}}warn{{/if}}">
       {{> "gworld.info"}}
       <span>{{pointsWarning.text}}</span>
