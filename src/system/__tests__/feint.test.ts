@@ -9,10 +9,14 @@ afterEach(() => {
   delete globals.game;
 });
 
-/** Stands in for the targeting Foundry global `consumeFeint` reads. */
-function targeting(uuids: string[]): void {
+/**
+ * Stands in for the Foundry globals these read: who is targeted, and which
+ * combat and round it is.
+ */
+function targeting(uuids: string[], combat?: { id: string; round: number }): void {
   globals.game = {
     user: { targets: new Set(uuids.map((uuid) => ({ actor: { uuid } }))) },
+    ...(combat ? { combat } : {}),
   };
 }
 
@@ -71,6 +75,44 @@ describe("remembering a feint", () => {
   it("asks about no targets when there is no feint to spend", async () => {
     // No game global at all: with nothing pending, nothing should be read.
     expect(await consumeFeint(actor())).toBe(0);
+  });
+
+  /** "A Feint is good for one second": this turn and the next, not longer. */
+  it("still counts on the turn after it was made", async () => {
+    const attacker = actor();
+    targeting([], { id: "Combat.1", round: 3 });
+    await recordFeint(attacker, "Actor.foe", -3);
+
+    targeting(["Actor.foe"], { id: "Combat.1", round: 4 });
+    expect(await consumeFeint(attacker)).toBe(-3);
+  });
+
+  it("is worthless once the fight has moved on", async () => {
+    const attacker = actor();
+    targeting([], { id: "Combat.1", round: 3 });
+    await recordFeint(attacker, "Actor.foe", -3);
+
+    targeting(["Actor.foe"], { id: "Combat.1", round: 5 });
+    expect(await consumeFeint(attacker)).toBe(0);
+  });
+
+  it("does not survive into a different fight", async () => {
+    const attacker = actor();
+    targeting([], { id: "Combat.1", round: 3 });
+    await recordFeint(attacker, "Actor.foe", -3);
+
+    targeting(["Actor.foe"], { id: "Combat.2", round: 3 });
+    expect(await consumeFeint(attacker)).toBe(0);
+  });
+
+  /** Outside a fight nothing counts rounds, so nothing expires. */
+  it("keeps a feint made with no combat running", async () => {
+    const attacker = actor();
+    targeting([]);
+    await recordFeint(attacker, "Actor.foe", -2);
+
+    targeting(["Actor.foe"], { id: "Combat.1", round: 9 });
+    expect(await consumeFeint(attacker)).toBe(-2);
   });
 
   it("can be thrown away without being applied", async () => {

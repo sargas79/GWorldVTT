@@ -176,7 +176,13 @@ async function applyFromCard(options: {
     type: flag.damageType,
     armorDivisor: blast ? blast.armorDivisor : flag.armorDivisor,
     hitLocation: struck,
-    ...(flag.maxDamage !== undefined ? { maxDamage: flag.maxDamage } : {}),
+    // The maximum belongs to the dice as rolled, so it is only the maximum for
+    // someone the blast struck directly: collateral damage has already been
+    // scaled down by distance, and pairing it with the undiminished maximum
+    // would let a critical hand a bystander the whole explosion.
+    ...(flag.maxDamage !== undefined && (!blast || blast.direct)
+      ? { maxDamage: flag.maxDamage }
+      : {}),
     ...(critical ? { critical: critical.hit } : {}),
   };
 

@@ -10,7 +10,8 @@
  *
  * A flag on the attacker's own actor does both. It also expires the way the
  * rule does: "A Feint is good for one second", so the next attack that actor
- * makes spends it, whether or not it is aimed at the foe who was feinted.
+ * makes spends it, whether or not it is aimed at the foe who was feinted --
+ * and a fight that moves on without that attack leaves it behind.
  *
  * Not handled: All-Out Attack (Double), where "the feint applies to both
  * attacks". The second attack here spends nothing, because the first already
@@ -28,6 +29,24 @@ interface PendingFeint {
   target: string;
   /** The penalty their defenses suffer, zero or negative. */
   penalty: number;
+  /** The combat and round it was made in, when it was made during one. */
+  combat?: string;
+  round?: number;
+}
+
+/**
+ * The combat and round a feint is being made in, if a fight is running.
+ *
+ * Read off globalThis rather than the `game` global directly, so that this is
+ * answerable outside Foundry -- where there is no fight, and so nothing to
+ * expire against.
+ */
+function nowInCombat(): { combat: string; round: number } | null {
+  const combat = (globalThis as {
+    game?: { combat?: { id?: string; round?: number } };
+  }).game?.combat;
+  if (!combat?.id) return null;
+  return { combat: String(combat.id), round: Number(combat.round) || 0 };
 }
 
 /** Records a feint that landed, to be spent by the attacker's next attack. */
@@ -37,7 +56,25 @@ export async function recordFeint(
   penalty: number,
 ): Promise<void> {
   if (!attacker?.isOwner || penalty >= 0 || !target) return;
-  await attacker.setFlag(SYSTEM_ID, FEINT_FLAG, { target, penalty } satisfies PendingFeint);
+  await attacker.setFlag(SYSTEM_ID, FEINT_FLAG, {
+    target,
+    penalty,
+    ...(nowInCombat() ?? {}),
+  } satisfies PendingFeint);
+}
+
+/**
+ * Whether a feint is still worth anything.
+ *
+ * "A Feint is good for one second", which is this round or the next: you fake
+ * on your turn and strike on the following one. Outside a fight nothing counts
+ * rounds, so nothing expires -- the next attack spends it whenever it comes.
+ */
+function stillGood(pending: PendingFeint): boolean {
+  const now = nowInCombat();
+  if (!now || pending.combat === undefined || pending.round === undefined) return true;
+  if (pending.combat !== now.combat) return false;
+  return now.round - pending.round <= 1;
 }
 
 /** Throws away a pending feint without applying it. */
@@ -60,6 +97,7 @@ export async function consumeFeint(attacker: any): Promise<number> {
   if (!pending?.target) return 0;
 
   await clearFeint(attacker);
+  if (!stillGood(pending)) return 0;
 
   const aimedAt = targetedTokens().some(
     (token: any) => String(token?.actor?.uuid ?? "") === pending.target,
