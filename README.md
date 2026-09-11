@@ -31,8 +31,9 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   disadvantages, skills and gear in order with the ledger in view.
 - **Traits that change the numbers.** Combat Reflexes, High and Low Pain
   Threshold, Damage Resistance, Hard to Kill, Hard to Subdue, Fearlessness,
-  Fearfulness, Combat Paralysis, Unfazeable, Super Jump, Enhanced Move and
-  Amphibious are all read and applied; the traits tab marks which ones are.
+  Fearfulness, Combat Paralysis, Unfazeable, Ambidexterity, Indomitable, Slave
+  Mentality, Super Jump, Enhanced Move and Amphibious are all read and applied;
+  the traits tab marks which ones are.
 
 ### Combat
 
@@ -68,11 +69,31 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
 - **Knockdown and stunning.** A major wound, or a head or vitals hit that causes
   shock, calls for a HT roll on the card; failing it stuns, floors and disarms,
   and failing badly puts you out.
-- **Conditions on the token** — stunned, prone, unconscious, reeling, bleeding
-  and dead, replacing Foundry's own list. Reeling and dead follow the hit point
-  total by themselves, in both directions.
+- **Conditions on the token** — stunned, prone, unconscious, reeling, bleeding,
+  grappling, grappled, pinned, suffocating, mortally wounded and dead, replacing
+  Foundry's own list. Reeling and dead follow the hit point total by themselves,
+  in both directions.
 - **Extra effort** — Mighty Blows, Flurry of Blows and Feverish Defense in
   combat, and the Will roll outside it.
+- **Dual-Weapon Attacks** — both hands on one Attack maneuver, with the
+  technique and Ambidexterity buying the penalties back, and a foe attacked
+  twice defending at -1.
+- **Malfunctions.** A gun jams on an attack roll at or above its Malf. and rolls
+  on the table: a stoppage still fires the shot, a revolver shrugs off a
+  misfire, and a low-tech weapon can go off in your hand.
+- **Firing up and down a slope**, where height is worth twice as much against
+  you as for you, and lasers ignore it entirely.
+- **Scatter** — where a missed grenade actually landed, with the direction
+  rolled openly, and how far its fragments reach.
+- **Overpenetration** — whether a shot went through cover, a shield or a person,
+  and what reached whoever was behind.
+- **Mounted combat** — a rider's defenses capped by Riding, the charge that
+  trades a point of skill for a point of damage, firing at the lower of Riding
+  and weapon skill, and the roll to stay on after a stun or a knockback.
+- **High-speed movement** — the turning radius that keeps you going forwards,
+  and the roll for stopping or turning harder than that allows.
+- **Dirty tricks** — a drink in the face as a thrown weapon, and the Will roll
+  not to flinch.
 
 ### Everything else
 
@@ -90,6 +111,26 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   is fatal whatever the hit points say.
 - **Recovery** — rest for fatigue, a day's rest, First Aid by tech level, and
   waking up again.
+- **Lost Fatigue Points**, which is what makes every slow drain dangerous: below
+  0 FP each further point of fatigue is also a point of injury, and at -1×FP you
+  are unconscious. Very Tired halves Move, Dodge and ST the way reeling does.
+- **Heat, cold, hunger and thirst** — a roll against the weather every half hour
+  or oftener in a wind, and a day of short rations costing a point per missed
+  meal.
+- **Poison** — six numbers, a dose written onto the victim and advanced a cycle
+  at a time, with the book's named poisons ready-made, dosage, and treatment as
+  a standing bonus to every roll still to come.
+- **Illness and infection** — catching something (the worst contact you had, not
+  the sum), the wound that goes bad afterwards (where the filth *is* cumulative),
+  antibiotics, and natural immunity noted when it turns up.
+- **Drink** — an hourly roll from sober to tipsy to drunk to the floor, pink
+  elephants, the Heaves, sobering up and the morning after. Drugs, overdose and
+  withdrawal are worked out with the book's numbers.
+- **Reaction and Influence rolls** — the Reaction Table with its modifiers on the
+  dice rather than on a target, whispered to the GM; and the Quick Contest that
+  buys a stated reaction, Diplomacy's second chance included.
+- **Temporary attribute penalties** — off the skills the attribute governs, and
+  off nothing else: never a defense, a resistance roll or a Fright Check.
 - **Compendia** of advantages, disadvantages, skills and equipment, carrying
   names, point costs and statistics.
 
