@@ -426,7 +426,37 @@ const number = (value, fallback = 0) => {
  * ignores ST. Anything else -- an affliction, a special effect, one of GCA's
  * sheet formulas -- has no home in the model and is reported.
  */
+/** Attributes an affliction can be resisted with. */
+const RESISTANCE = ["ST", "DX", "IQ", "HT", "Will", "Per"];
+
 function parseDamage(damage, damtype) {
+  // An affliction is not damage: the target resists with an attribute roll at
+  // a penalty, written damage(HT-4) damtype(aff), and what failing does is in
+  // the weapon's notes rather than in any number here.
+  if ((damtype ?? "").trim().toLowerCase() === "aff") {
+    const resist = /^(ST|DX|IQ|HT|Will|Per)\s*(?:([+-])\s*(\d+))?$/i.exec((damage ?? "").trim());
+    if (!resist) return null;
+    const attribute = RESISTANCE.find((a) => a.toLowerCase() === resist[1].toLowerCase());
+    const modifier = resist[3] ? Number(`${resist[2]}${resist[3]}`) : 0;
+    if (!attribute || modifier > 0) return null;
+    return {
+      fields: {
+        // An affliction rolls no damage, so these are inert. The type is left
+        // at the schema's own default rather than invented.
+        damageBase: "fixed",
+        damageModifier: 0,
+        damageFormula: "",
+        damageType: "cr",
+        explosive: false,
+        fragmentation: "",
+        affliction: true,
+        afflictionAttribute: attribute,
+        afflictionModifier: modifier,
+      },
+      usesWeaponSt: false,
+    };
+  }
+
   // "cr ex [2d]" is a crushing explosion throwing 2d of fragmentation
   // (GURPS Basic Set: Campaigns p. 414). The type, the blast and the
   // fragments are three facts written in one column.
@@ -450,6 +480,9 @@ function parseDamage(damage, damtype) {
         damageType: type,
         explosive,
         fragmentation,
+        affliction: false,
+        afflictionAttribute: "",
+        afflictionModifier: 0,
       },
       usesWeaponSt: false,
     };
@@ -466,11 +499,16 @@ function parseDamage(damage, damtype) {
         damageType: type,
         explosive,
         fragmentation,
+        affliction: false,
+        afflictionAttribute: "",
+        afflictionModifier: 0,
       },
       usesWeaponSt: true,
     };
   }
-  if (/^\d+d\s*(?:[+-]\s*\d+)?$/i.test(text)) {
+  // "6dx10" is the notation the heaviest weapons come in: the roll is
+  // multiplied, and the dice model carries the factor.
+  if (/^\d+d\s*(?:[+-]\s*\d+)?(?:\s*x\s*\d+)?$/i.test(text)) {
     return {
       fields: {
         damageBase: "fixed",
@@ -479,6 +517,9 @@ function parseDamage(damage, damtype) {
         damageType: type,
         explosive,
         fragmentation,
+        affliction: false,
+        afflictionAttribute: "",
+        afflictionModifier: 0,
       },
       usesWeaponSt: false,
     };

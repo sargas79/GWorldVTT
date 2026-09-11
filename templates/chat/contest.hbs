@@ -1,0 +1,29 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{label}}</span>
+    <span class="gc-target">{{localize "GWORLD.Contest.QuickContest"}}</span>
+  </div>
+
+  {{#each sides as |side|}}
+    <div class="gc-applied">
+      <div class="gc-applied-head">
+        <strong>{{side.name}}</strong>
+        <span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{side.effective}}</span>
+      </div>
+      <div class="gc-dice">
+        {{#each side.dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+        <span class="gc-total">{{side.roll}}</span>
+        <span class="gc-mod">{{side.outcome}}</span>
+      </div>
+      {{#if side.modifiers.length}}
+        <div class="gc-mods">
+          {{#each side.modifiers as |mod|}}
+            <span class="gc-mod">{{signed mod.value}} {{mod.label}}</span>
+          {{/each}}
+        </div>
+      {{/if}}
+    </div>
+  {{/each}}
+
+  <div class="gc-result {{resultClass}}">{{result}}</div>
+</div>

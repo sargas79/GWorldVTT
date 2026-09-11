@@ -43,6 +43,11 @@ criticals by the Basic Set's table. The damage card rolls the dice, applies the
 minimum-damage floor, states the wounding modifier and the injury an unarmoured
 target would take, and names the armour divisor when there is one.
 
+**Afflictions** — an attack written "HT-4 aff" does no damage: clicking it
+rolls the resistance for everyone it is being used on, one roll each. What
+failing does is in the weapon's own notes, which the compendia do not carry, so
+that stays with the GM.
+
 **Attack options** — shift-clicking a melee attack asks what it is trading:
 a Deceptive Attack buys a penalty to the foe's defenses at two points of your
 own skill each, never taking you below 10, and a Rapid Strike buys a second
@@ -97,8 +102,10 @@ can do about an attack:
   parry is at a further -2.
 - The Combat tab gains a movement panel: movement points after encumbrance,
   what a hex costs forward, sideways and backward in the character's current
-  posture, and a Slam button — anyone can run into someone, and what it does
-  depends entirely on how fast they were going.
+  posture, and Slam and Evade buttons. Anyone can run into someone, and what
+  that does depends entirely on how fast they were going; evading is a Quick
+  Contest of DX, easier past someone kneeling or lying and easier still from a
+  side or from behind.
 
 Tactical combat needs a hex-gridded scene. On a square or gridless one the
 table falls back to basic combat rather than inventing arcs, because facing is
@@ -138,19 +145,15 @@ book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
 
 ## What is not implemented
 
-- **Affliction damage.** The damage model has no way to say "HT-4 aff", so a
-  few beam weapons and the linked mode of some grenades are rejected on the way
-  out, listed by name in the rejections file. So are attacks whose damage
-  carries a multiplier, such as "6dx10": the dice model holds dice and a
-  modifier and not a factor.
+- **Close combat** beyond the Bulk penalty — entering a foe's hex as a state,
+  and readying a weapon there — is not implemented.
+- **Opportunity fire** needs a Wait maneuver that can interrupt someone else's
+  turn, which needs a turn to interrupt. That is a Combat-document feature
+  rather than an attack option.
 - **Unarmed attacks and mounted charges.** A punch does damage that depends on
   whether the character knows Boxing or Karate, and a lance's depends on the
   mount's ST and Move. Those are recorded from the book's own table in
   `packs-src/equipment/table-only-weapons.json` rather than derived.
-- **Evading, close combat and opportunity fire** are not implemented. Evading
-  is a Quick Contest, and nothing in this system runs a contest between two
-  characters yet; opportunity fire needs a Wait maneuver that can interrupt
-  someone else's turn, which needs a turn to interrupt.
 - **Movement is costed, not enforced.** The panel says what a hex costs;
   nothing stops a token being dragged further than its Move.
 - `reactionModifier` is zero on every trait, because the book states reaction

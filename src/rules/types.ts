@@ -55,6 +55,12 @@ export type EncumbranceLevel = 0 | 1 | 2 | 3 | 4;
 export interface DiceAdds {
   dice: number;
   adds: number;
+  /**
+   * A multiplier on the rolled total, as in "6dx10" -- the notation heavy
+   * weapons and large explosives are written in. Absent or 1 for the great
+   * majority, which are not multiplied at all.
+   */
+  multiplier?: number;
 }
 
 /** The four basic attributes as recorded on a character sheet. */

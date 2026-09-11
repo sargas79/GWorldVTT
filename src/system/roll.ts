@@ -222,7 +222,9 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     // times theirs (GURPS Basic Set: Campaigns p. 414). Both are worth stating
     // on the card, because they decide who else is in trouble.
     explosive,
-    blastRadius: explosive ? blastRadius(parsed.dice) : 0,
+    // "if an explosion does 6dx2 damage, everyone within 24 yards is
+    // vulnerable" -- twelve dice, not six. The multiplier counts.
+    blastRadius: explosive ? blastRadius(parsed.dice * (parsed.multiplier ?? 1)) : 0,
     fragmentation,
     fragmentationRadius: fragmentation
       ? fragmentationRadius(parseDiceAdds(fragmentation)?.dice ?? 0)
@@ -243,8 +245,9 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           basicDamage, damageType, armorDivisor, label,
           explosive,
           // The dice, not the rolled total: the blast radius is set by how
-          // many dice the attack rolls, whatever they came up.
-          diceOfDamage: parsed.dice,
+          // many dice the attack rolls, whatever they came up -- and a
+          // multiplied roll is that many dice again.
+          diceOfDamage: parsed.dice * (parsed.multiplier ?? 1),
         },
       },
     },

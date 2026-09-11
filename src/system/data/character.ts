@@ -80,6 +80,12 @@ export interface DerivedAttack {
   explosive: boolean;
   /** Fragmentation thrown, as a dice formula. Blank when it throws none. */
   fragmentation: string;
+  /** An affliction, which is resisted rather than damaging. */
+  affliction: boolean;
+  /** The attribute it is resisted with, e.g. "HT". Blank when not an affliction. */
+  afflictionAttribute: string;
+  /** The penalty to that resistance roll. */
+  afflictionModifier: number;
   /**
    * An unbalanced weapon cannot parry in a turn it has attacked in
    * (p. 269, the "U" in the Parry column).
@@ -521,7 +527,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           damage: meleeDamage,
           damageType: mode.damageType,
           armorDivisor: mode.armorDivisor ?? 1,
-          damageRollable: parseDiceAdds(meleeDamage) !== null,
+          damageRollable: !mode.affliction && parseDiceAdds(meleeDamage) !== null,
           reach: mode.reach ?? "C",
           parry:
             mode.canParry && skillLevel !== null
@@ -532,6 +538,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           isFencing: Boolean(mode.isFencing),
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",
+          affliction: Boolean(mode.affliction),
+          afflictionAttribute: mode.afflictionAttribute ?? "",
+          afflictionModifier: Number(mode.afflictionModifier ?? 0),
         });
       });
 
@@ -555,7 +564,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           damage: rangedDamage,
           damageType: mode.damageType,
           armorDivisor: mode.armorDivisor ?? 1,
-          damageRollable: parseDiceAdds(rangedDamage) !== null,
+          damageRollable: !mode.affliction && parseDiceAdds(rangedDamage) !== null,
           reach: "",
           parry: null,
           minSt: mode.minSt ?? null,
@@ -570,6 +579,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           isFencing: false,
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",
+          affliction: Boolean(mode.affliction),
+          afflictionAttribute: mode.afflictionAttribute ?? "",
+          afflictionModifier: Number(mode.afflictionModifier ?? 0),
         });
       });
     }

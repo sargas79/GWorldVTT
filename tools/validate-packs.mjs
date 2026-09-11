@@ -28,8 +28,11 @@ const HIT_LOCATIONS = new Set([
   "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",
 ]);
 
-/** Mirrors parseDiceAdds in the rules engine: `2d`, `1d-2`, `3d+1`, or a flat number. */
-const DICE = /^(\d*)d([+-]\d+)?$|^([+-]?\d+)$/;
+/**
+ * Mirrors parseDiceAdds in the rules engine: `2d`, `1d-2`, `3d+1`, `6dx10`, or
+ * a flat number.
+ */
+const DICE = /^(\d*)d([+-]\d+)?(x\d+)?$|^([+-]?\d+)$/;
 
 /**
  * parseDiceAdds lowercases and strips internal whitespace before matching, so
@@ -201,6 +204,22 @@ function validateItem(entry, file) {
   }
 
   for (const mode of [...(sys.meleeModes ?? []), ...(sys.rangedModes ?? [])]) {
+    // An affliction does no damage at all: the target rolls an attribute at a
+    // penalty and something happens to them. Its damage fields are inert, so
+    // checking them would demand a formula that is meant to be absent.
+    if (mode.affliction) {
+      check(
+        ["ST", "DX", "IQ", "HT", "Will", "Per"].includes(mode.afflictionAttribute),
+        file, name, `affliction resisted with "${mode.afflictionAttribute}", which is not an attribute`,
+      );
+      check(
+        Number.isInteger(mode.afflictionModifier) && mode.afflictionModifier <= 0,
+        file, name, `affliction modifier ${mode.afflictionModifier} must be a non-positive integer`,
+      );
+      check(Boolean(mode.skill), file, name, "attack mode names no skill");
+      continue;
+    }
+
     check(DAMAGE_TYPES.has(mode.damageType), file, name, `unknown damage type "${mode.damageType}"`);
     check(
       ["thr", "sw", "fixed"].includes(mode.damageBase),
