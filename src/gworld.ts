@@ -10,7 +10,7 @@ import "./styles/gworld.css";
 
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
-import { registerConditions } from "./system/conditions.js";
+import { registerConditions, registerPostureSync } from "./system/conditions.js";
 import { GWorldCombat } from "./system/combat.js";
 import { SYSTEM_ID } from "./system/constants.js";
 import { CharacterData } from "./system/data/character.js";
@@ -58,6 +58,9 @@ Hooks.once("init", () => {
   // Foundry's own status effects are another game's. These are the states a
   // GURPS wound actually leaves somebody in.
   registerConditions();
+  // The posture on the sheet and the prone icon on the token are one fact
+  // written in two places, so changing either changes both.
+  registerPostureSync();
 
   // A damage card is posted before anyone has decided who it hits, so the card
   // grows an apply control when it renders.

@@ -140,7 +140,8 @@
       "DisadvantageLimit": "Disadv. Limit",
       "Maneuver": "This Turn",
       "EvaluateTurns": "Turns Evaluating",
-      "Defenses": "Defenses"
+      "Defenses": "Defenses",
+      "PostureHint": "Change posture. Lying down, a character crawls, kneels or sits up first, then stands."
     },
     "Points": {
       "Starting": "Starting points",
@@ -219,6 +220,12 @@
       "Unusable": "too long for close combat",
       "NoDeception": "Skill too low for a Deceptive Attack, which may not take you below 10.",
       "RapidStrike": "Rapid Strike"
+    },
+    "Defense": {
+      "NoParry": "Nothing to parry with",
+      "NoBlock": "No shield to block with",
+      "Maneuver": "This turn's maneuver allows no defense",
+      "Arc": "Not from that side"
     },
     "Tactical": {
       "front": "from the front",
