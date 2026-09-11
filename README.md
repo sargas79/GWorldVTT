@@ -195,6 +195,25 @@ of one per yard after the first. A crushing blow shoves whether or not it gets
 through, which is most of the point of the rule; a cut only shoves when the
 armour stopped it, because a cut that gets through wounds instead.
 
+**Falling** — a fall is a collision with the ground, so it does the damage a
+slam does, with the faller's HP doubled on anything hard. The velocity comes off
+the book's table rather than the formula it prints beside it, because the two
+disagree by one at the start of every band from 28 yards and the table is what a
+GM reads. It lands on a randomly rolled hit location, through worn armour, and
+adds the two rules that are true only of falling: all armour counts as flexible,
+so a fall the armour stopped still leaves a point of blunt trauma per five it
+stopped, and injury past what cripples a limb comes off HP rather than being
+discarded.
+
+**Recovery** — the other half of the injury rules. Rest returns a point of
+fatigue per ten minutes and one more for a meal; a day of rest is a HT roll for
+a hit point; First Aid is rolled by the medic at their own tech level and
+written to the patient, restoring at least a point on a success, the table's
+maximum on a critical success, and costing two on a critical failure. Waking up
+says what it takes — a quarter of an hour, an hourly HT roll, or the single roll
+after twelve hours at -1xHP — and rolls it. Everything caps at the character's
+own maximum, and anything larger than a person heals in proportion to its HP.
+
 **Physical feats** — what a body can do falls out of ST, Basic Lift and Move, so
 the attributes tab shows it: how far it jumps standing and running, what it can
 lift in one hand and two, shove, carry and shift where it stands, and how fast
@@ -232,6 +251,23 @@ and those carry the table: Wealth runs 10/20/30/50/75 and Appearance
 4/12/12/16/16/20, which no per-level figure reproduces. Each level keeps the
 book's name for it, so the sheet can say "Filthy Rich" rather than "Wealth 4".
 
+**Traits that change the numbers** — most of what a trait buys is narrative, or
+conditional, or the GM's to adjudicate, but a couple of dozen say something
+exact about a roll this system makes, and those are applied. Combat Reflexes
+adds +1 to every active defense and +2 to Fright Checks. High Pain Threshold
+removes shock entirely and adds +3 to the knockdown roll; Low Pain Threshold
+doubles the shock and takes -4 off it. Damage Resistance is armour the character
+is, shown on the sheet and subtracted in the pipeline. Hard to Kill and Hard to
+Subdue are reported beside the HT rolls they modify. Fearlessness, Fearfulness
+and Combat Paralysis move the Fright Check, and Unfazeable means none is made.
+Super Jump doubles jumping distances, Enhanced Move (Ground) multiplies Move for
+a running jump, and Amphibious swims at full Basic Move.
+
+A trait is matched by name, and a renamed one stops being read: a house-ruled
+"Combat Reflexes (Feline)" is the GM's own trait, and applying the book's
+numbers to it would be a guess. The traits tab marks the ones that are read, so
+nobody adds a bonus that is already counted.
+
 ## Which rules are in play
 
 GURPS is written to be played at several depths, and the GM chooses how much of
@@ -267,10 +303,14 @@ defenses are always in play.
 - `reactionModifier` is zero on every trait, because the book states reaction
   modifiers in prose that is conditional or per-level, and a flat integer would
   fire in the wrong circumstances.
-- **Advantages that change what a body can do.** Enhanced Move and Super Jump
-  multiply jumping distances, Amphibious and Aquatic change water Move, and
-  Unfazeable exempts its owner from Fright Checks entirely. The compendium
-  carries all of them; the feats read only ST, Basic Lift and Move.
+- **Most traits still do nothing mechanically.** A couple of dozen are read
+  (above); the other six hundred cost points and say what they are. Most of them
+  should stay that way -- what Charisma or Language Talent is worth is a
+  judgement about the situation -- but some that could be read are not yet.
+- **Blunt trauma applies only to falls.** The rule is implemented in full,
+  including the ten-point band for cutting, impaling and piercing, but applying
+  it to ordinary attacks needs each armour record to say whether it is flexible,
+  and the GCA data file the compendia are built from does not carry that.
 - **Fatigue below zero.** Extra effort refuses when the FP is not there. GURPS
   allows it at the price of hit points and a HT roll to do anything at all
   (p. 426), which this system does not yet run, so it says no rather than
