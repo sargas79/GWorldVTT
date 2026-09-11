@@ -1,0 +1,57 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">
+      {{#if hangover}}{{localize "GWORLD.Drink.Hangover"}}
+      {{else if sobering}}{{localize "GWORLD.Drink.Sobering"}}
+      {{else}}{{localize "GWORLD.Drink.Title"}}{{/if}}
+    </span>
+  </div>
+
+  <div class="gc-mods">
+    {{#if drinks}}<span>{{localize "GWORLD.Drink.Had" drinks=drinks total=total}}</span>{{/if}}
+    {{#if target}}<span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{target}}</span>{{/if}}
+    <span class="gc-mod">{{levelLabel}}</span>
+  </div>
+
+  {{#if dice}}
+    <div class="gc-dice">
+      {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+      <span class="gc-total">{{roll}}</span>
+    </div>
+  {{/if}}
+
+  {{#if steady}}
+    <div class="gc-result success">{{localize "GWORLD.Drink.Steady"}}</div>
+  {{else if hangover}}
+    {{#if success}}
+      <div class="gc-result success">{{localize "GWORLD.Drink.NoHangover"}}</div>
+    {{else}}
+      <div class="gc-result failure">
+        {{localize "GWORLD.Drink.HangoverIn" hours=startsInHours}}
+        <span class="gc-mod">{{localize "GWORLD.Drink.Lasting" hours=hours}}</span>
+      </div>
+    {{/if}}
+  {{else if sobering}}
+    <div class="gc-result {{#if success}}success{{else}}failure{{/if}}">
+      {{#if stuck}}{{localize "GWORLD.Drink.NeedsHelp"}}
+      {{else if success}}{{localize "GWORLD.Drink.Better" level=levelLabel}}
+      {{else}}{{localize "GWORLD.Drink.NoBetter"}}{{/if}}
+    </div>
+  {{else if success}}
+    <div class="gc-result success">{{localize "GWORLD.Drink.HeldIt"}}</div>
+  {{else}}
+    <div class="gc-result {{#if criticalFailure}}crit-failure{{else}}failure{{/if}}">
+      {{localize "GWORLD.Drink.Slipped" steps=steps level=levelLabel}}
+    </div>
+  {{/if}}
+
+  <div class="gc-mods">
+    {{#if hallucinating}}<span class="gc-warn">{{localize "GWORLD.Drink.PinkElephants"}}</span>{{/if}}
+    {{#if retching}}<span class="gc-warn">{{localize "GWORLD.Drink.Heaves"}}</span>{{/if}}
+    {{#if choking}}<span class="gc-warn">{{localize "GWORLD.Drink.Choking"}}</span>{{/if}}
+    {{#if soberingHours}}
+      <span class="gc-mod">{{localize "GWORLD.Drink.SoberEvery" hours=soberingHours}}</span>
+    {{/if}}
+  </div>
+</div>

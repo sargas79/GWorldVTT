@@ -12,14 +12,24 @@
  */
 
 /**
+ * Any signed modifier, as a number safe to print.
+ *
+ * Use it where the modifier can go either way -- a bigger dose of a poison is a
+ * penalty to resist it and a smaller one is a bonus -- and `penalty()` where it
+ * can only ever be a penalty.
+ */
+export function modifier(value: number): number {
+  return value === 0 ? 0 : value;
+}
+
+/**
  * A penalty of some number of steps, as a number safe to print.
  *
  * Pass the size of the penalty, not its sign: `penalty(3)` is -3 and
  * `penalty(0)` is a positive zero rather than a negative one.
  */
 export function penalty(steps: number): number {
-  const size = Math.max(0, steps);
-  return size === 0 ? 0 : -size;
+  return modifier(-Math.max(0, steps));
 }
 
 /**

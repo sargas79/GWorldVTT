@@ -33,6 +33,9 @@ import { rollBleeding, stopBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
 import { catchBreath, rollSuffocation } from "../suffocation.js";
 import { applyDeprivation, rollExposure } from "../environment.js";
+import { activePoisons, advancePoison, clearPoison, dosePoison, treatPoison } from "../poison.js";
+import { drinkForAnHour, drinkingState, hangoverRoll, soberUpRoll } from "../intoxication.js";
+import { POISON_EXAMPLES, poisonNamed, type Poison, type Treatment } from "../../rules/poison.js";
 import { rollDisarm } from "../disarm.js";
 import {
   beginGrapple,
@@ -407,6 +410,215 @@ async function promptForRations(): Promise<{
             form?.querySelector<HTMLSelectElement>('select[name="climate"]')?.value || "temperate",
           quartsDrunk:
             Number(form?.querySelector<HTMLInputElement>('input[name="quarts"]')?.value ?? 0) || 0,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/**
+ * Asks what somebody has been given, and how much of it (Campaigns pp. 437-438).
+ *
+ * The named poisons are offered because they are the ones with numbers already
+ * worked out; anything else is six fields, which is all a poison is.
+ */
+async function promptForPoison(): Promise<{ poison: Poison; doublings: number } | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Poison.${key}`);
+
+  const options = POISON_EXAMPLES.map(
+    (poison) => `<option value="${poison.name}">${poison.name}</option>`,
+  ).join("");
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Which")}</span>
+        <select name="poison" style="width:200px">
+          ${options}
+          <option value="">${L("Custom")}</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Dose")}</span>
+        <select name="dose" style="width:200px">
+          <option value="-1">${L("Dose_-1")}</option>
+          <option value="0" selected>${L("Dose_0")}</option>
+          <option value="1">${L("Dose_1")}</option>
+          <option value="2">${L("Dose_2")}</option>
+        </select>
+      </label>
+      <hr>
+      <p class="ihint">${L("Custom")}</p>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Name")}</span>
+        <input type="text" name="name" value="" style="width:200px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Resistance")}</span>
+        <input type="number" name="resistance" value="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="resistible" checked>
+        <span>${L("Resistible")}</span>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Damage")}</span>
+        <select name="damage" style="width:200px">
+          <option value="toxic">${L("Damage_toxic")}</option>
+          <option value="fatigue">${L("Damage_fatigue")}</option>
+          <option value="none">${L("Damage_none")}</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Dice")}</span>
+        <input type="number" name="dice" value="1" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("DelayField")}</span>
+        <input type="number" name="delay" value="0" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Interval")}</span>
+        <input type="number" name="interval" value="3600" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Cycles")}</span>
+        <input type="number" name="cycles" value="1" min="1" step="1" style="width:90px">
+      </label>
+    </div>`,
+    ok: {
+      label: L("Dosed"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const field = (name: string) =>
+          form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? "";
+        const chosen = (name: string) =>
+          form?.querySelector<HTMLSelectElement>(`select[name="${name}"]`)?.value ?? "";
+        const ticked = (name: string) =>
+          form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+
+        const doublings = Number(chosen("dose")) || 0;
+        const named = poisonNamed(chosen("poison"));
+        if (named) return { poison: named, doublings };
+
+        const resistible = ticked("resistible");
+        return {
+          poison: {
+            name: field("name") || game.i18n.localize("GWORLD.Poison.Title"),
+            delivery: [],
+            delaySeconds: Number(field("delay")) || 0,
+            resistanceModifier: resistible ? Number(field("resistance")) || 0 : null,
+            damage: (chosen("damage") || "toxic") as Poison["damage"],
+            dice: Number(field("dice")) || 0,
+            adds: 0,
+            intervalSeconds: Number(field("interval")) || 0,
+            cycles: Math.max(1, Number(field("cycles")) || 1),
+          } satisfies Poison,
+          doublings,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/** Asks which treatment was tried against a dose (Campaigns p. 439). */
+async function promptForTreatment(): Promise<{
+  treatment: Treatment;
+  antidoteBonus: number;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Poison.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Treat") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Treatment")}</span>
+        <select name="treatment" style="width:240px">
+          <option value="suckWound">${L("Treatment_suckWound")}</option>
+          <option value="induceVomiting">${L("Treatment_induceVomiting")}</option>
+          <option value="medical">${L("Treatment_medical")}</option>
+          <option value="antidote">${L("Treatment_antidote")}</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("AntidoteBonus")}</span>
+        <input type="number" name="antidote" value="0" min="0" step="1" style="width:90px">
+      </label>
+    </div>`,
+    ok: {
+      label: L("Treat"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        return {
+          treatment: (form?.querySelector<HTMLSelectElement>('select[name="treatment"]')?.value ??
+            "medical") as Treatment,
+          antidoteBonus:
+            Number(form?.querySelector<HTMLInputElement>('input[name="antidote"]')?.value ?? 0) || 0,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/** Asks how the hour at the tavern went (Campaigns p. 439). */
+async function promptForDrinks(): Promise<{
+  drinks: number;
+  emptyStomach: boolean;
+  recentlyEaten: boolean;
+  tolerance: boolean;
+  intolerance: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Drink.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Drinks")}</span>
+        <input type="number" name="drinks" value="1" min="0" step="1" autofocus style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Stomach")}</span>
+        <select name="stomach" style="width:220px">
+          <option value="normal">${L("Stomach_normal")}</option>
+          <option value="empty">${L("Stomach_empty")}</option>
+          <option value="fed">${L("Stomach_fed")}</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="tolerance">
+        <span>${L("Tolerance")}</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="intolerance">
+        <span>${L("Intolerance")}</span>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const ticked = (name: string) =>
+          form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+        const stomach = form?.querySelector<HTMLSelectElement>('select[name="stomach"]')?.value;
+
+        return {
+          drinks:
+            Number(form?.querySelector<HTMLInputElement>('input[name="drinks"]')?.value ?? 0) || 0,
+          emptyStomach: stomach === "empty",
+          recentlyEaten: stomach === "fed",
+          tolerance: ticked("tolerance"),
+          intolerance: ticked("intolerance"),
         };
       },
     },
@@ -794,6 +1006,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       catchBreath: GWorldCharacterSheet.#onCatchBreath,
       exposure: GWorldCharacterSheet.#onExposure,
       rations: GWorldCharacterSheet.#onRations,
+      poison: GWorldCharacterSheet.#onPoison,
+      poisonCycle: GWorldCharacterSheet.#onPoisonCycle,
+      poisonTreat: GWorldCharacterSheet.#onPoisonTreat,
+      poisonClear: GWorldCharacterSheet.#onPoisonClear,
+      drink: GWorldCharacterSheet.#onDrink,
+      soberUp: GWorldCharacterSheet.#onSoberUp,
+      hangover: GWorldCharacterSheet.#onHangover,
       shakeOffStun: GWorldCharacterSheet.#onShakeOffStun,
       grapple: GWorldCharacterSheet.#onGrapple,
       disarm: GWorldCharacterSheet.#onDisarm,
@@ -1006,6 +1225,15 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // not disabled, it is absent: there is nothing to explain about a rule
       // nobody is using.
       rules: activeRules(),
+
+      // What is still working on this character. Both are flags rather than
+      // system data: they are a state the GM advances, not a number a player
+      // edits, and neither belongs in the template's editable fields.
+      poisons: activePoisons(actor).map((dose) => ({
+        ...dose,
+        left: Math.max(0, dose.cycles - dose.cyclesSuffered),
+      })),
+      drinking: drinkingState(actor),
 
       conditionChips: CONDITIONS.map(({ key, label }) => ({
         key,
@@ -1908,6 +2136,99 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   /** Gets air again, which stops the clock (Campaigns p. 436). */
   static async #onCatchBreath(this: GWorldCharacterSheet) {
     await catchBreath(this.actor);
+  }
+
+  /**
+   * Gives this character a dose of something (Campaigns pp. 437-438).
+   *
+   * The dose goes onto the sheet rather than resolving at once: a poison with a
+   * delay has not done anything yet, and one with cycles is not finished for
+   * hours. Advancing it is a separate press, once the time has passed.
+   */
+  static async #onPoison(this: GWorldCharacterSheet) {
+    if (!isRuleOn("poison")) return;
+
+    const asked = await promptForPoison();
+    if (!asked) return;
+
+    await dosePoison({ actor: this.actor, poison: asked.poison, doublings: asked.doublings });
+    this.render();
+  }
+
+  /** Advances one dose by one cycle (Campaigns p. 438). */
+  static async #onPoisonCycle(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.dataset.poison;
+    if (!id) return;
+
+    await advancePoison({ actor: this.actor, id });
+    this.render();
+  }
+
+  /** Notes a treatment against one dose (Campaigns p. 439). */
+  static async #onPoisonTreat(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.dataset.poison;
+    if (!id) return;
+
+    const asked = await promptForTreatment();
+    if (!asked) return;
+
+    await treatPoison({ actor: this.actor, id, ...asked });
+    this.render();
+  }
+
+  /** Takes a dose off the sheet, for a GM who has decided it is over. */
+  static async #onPoisonClear(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.dataset.poison;
+    if (!id) return;
+
+    await clearPoison(this.actor, id);
+    this.render();
+  }
+
+  /**
+   * An hour at the tavern (Campaigns p. 439).
+   *
+   * One roll per hour, against the higher of HT and Carousing, and the extra
+   * rolls a bad one calls for are made with it.
+   */
+  static async #onDrink(this: GWorldCharacterSheet) {
+    if (!isRuleOn("intoxication")) return;
+
+    const asked = await promptForDrinks();
+    if (!asked) return;
+
+    await drinkForAnHour({ actor: this.actor, ...asked });
+    this.render();
+  }
+
+  /** One roll towards sober (Campaigns p. 439). */
+  static async #onSoberUp(this: GWorldCharacterSheet) {
+    if (!isRuleOn("intoxication")) return;
+
+    const modifier = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Drink.Sobering"),
+      label: game.i18n.localize("GWORLD.Chat.Modifier"),
+      initial: 0,
+    });
+    if (modifier === null) return;
+
+    await soberUpRoll({ actor: this.actor, modifier });
+    this.render();
+  }
+
+  /** The roll on stopping, for whether tomorrow hurts (Campaigns p. 439). */
+  static async #onHangover(this: GWorldCharacterSheet) {
+    if (!isRuleOn("intoxication")) return;
+
+    const modifier = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Drink.Hangover"),
+      label: game.i18n.localize("GWORLD.Chat.Modifier"),
+      initial: 0,
+    });
+    if (modifier === null) return;
+
+    await hangoverRoll({ actor: this.actor, modifier });
+    this.render();
   }
 
   /**

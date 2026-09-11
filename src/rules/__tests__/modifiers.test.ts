@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { penalty, totalPenalty } from "../modifiers.js";
+import { modifier, penalty, totalPenalty } from "../modifiers.js";
+
+describe("a signed modifier", () => {
+  it("passes a bonus and a penalty through untouched", () => {
+    expect(modifier(3)).toBe(3);
+    expect(modifier(-3)).toBe(-3);
+  });
+
+  /** The only thing it does: a modifier of nothing prints as "0", not "-0". */
+  it("turns a negative zero into a positive one", () => {
+    expect(Object.is(modifier(-0), 0)).toBe(true);
+    expect(Object.is(modifier(2 * -0), 0)).toBe(true);
+  });
+});
 
 describe("building a modifier that prints correctly", () => {
   it("negates what it is given", () => {

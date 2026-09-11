@@ -959,6 +959,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // First Aid is IQ/Easy, so someone who never learned it defaults to
         // IQ-4 and can still bandage a friend (Characters p. 195).
         firstAid: this.skillLevelByName("First Aid") ?? (attrs.IQ ?? 10) - 4,
+        // A drinker rolls "the higher of HT or Carousing" (Campaigns p. 439).
+        // Carousing is HT/Easy: somebody who never learned it defaults to HT-4,
+        // which is never the higher of the two and so never used -- but the
+        // number is here rather than absent, so the card can show what it beat.
+        carousing: this.skillLevelByName("Carousing") ?? (attrs.HT ?? 10) - 4,
       },
       traitEffects: traits,
       status: healthStatus(this.hp.value, this.hp.max),
