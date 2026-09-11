@@ -28,8 +28,11 @@ const HIT_LOCATIONS = new Set([
   "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",
 ]);
 
-/** Mirrors parseDiceAdds in the rules engine: `2d`, `1d-2`, `3d+1`, or a flat number. */
-const DICE = /^(\d*)d([+-]\d+)?$|^([+-]?\d+)$/;
+/**
+ * Mirrors parseDiceAdds in the rules engine: `2d`, `1d-2`, `3d+1`, `6dx10`, or
+ * a flat number.
+ */
+const DICE = /^(\d*)d([+-]\d+)?(x\d+)?$|^([+-]?\d+)$/;
 
 /**
  * parseDiceAdds lowercases and strips internal whitespace before matching, so

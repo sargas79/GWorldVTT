@@ -4863,6 +4863,51 @@
     }
   },
   {
+    "_id": "4a57097723244110",
+    "name": "SAM, 70mm",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 18,
+      "cost": 38000,
+      "carried": true,
+      "equipped": false,
+      "tl": "8",
+      "description": "",
+      "reference": "Basic Set: Characters p. 281",
+      "meleeModes": [],
+      "rangedModes": [
+        {
+          "name": "attack",
+          "skill": "Artillery (Guided Missile)",
+          "damageBase": "fixed",
+          "damageModifier": 0,
+          "damageFormula": "6dx3",
+          "damageType": "cr",
+          "explosive": true,
+          "fragmentation": "6d",
+          "affliction": false,
+          "afflictionAttribute": "",
+          "afflictionModifier": 0,
+          "armorDivisor": 1,
+          "accuracy": 7,
+          "scopeBonus": 0,
+          "halfDamageRange": 1000,
+          "maxRange": 8800,
+          "rangeIsStMultiple": false,
+          "rateOfFire": 1,
+          "shots": "1(20)",
+          "minSt": 10,
+          "twoHanded": true,
+          "weaponSt": null,
+          "thrown": false,
+          "bulk": -8,
+          "recoil": 1
+        }
+      ]
+    }
+  },
+  {
     "_id": "e6345f59cb8feed2",
     "name": "Scorpion",
     "type": "equipment",
@@ -4993,6 +5038,141 @@
           "thrown": false,
           "bulk": 0,
           "recoil": 2
+        }
+      ]
+    }
+  },
+  {
+    "_id": "c8febbdbb359d805",
+    "name": "Bazooka, 60mm",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 16.7,
+      "cost": 1000,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 281",
+      "meleeModes": [],
+      "rangedModes": [
+        {
+          "name": "attack",
+          "skill": "Guns (Light Anti-Armor Weapon)",
+          "damageBase": "fixed",
+          "damageModifier": 0,
+          "damageFormula": "6dx2",
+          "damageType": "cr",
+          "explosive": true,
+          "fragmentation": "",
+          "affliction": false,
+          "afflictionAttribute": "",
+          "afflictionModifier": 0,
+          "armorDivisor": 10,
+          "accuracy": 3,
+          "scopeBonus": 0,
+          "halfDamageRange": 100,
+          "maxRange": 650,
+          "rangeIsStMultiple": false,
+          "rateOfFire": 1,
+          "shots": "1(4)",
+          "minSt": 10,
+          "twoHanded": true,
+          "weaponSt": null,
+          "thrown": false,
+          "bulk": -6,
+          "recoil": 1
+        }
+      ]
+    }
+  },
+  {
+    "_id": "2c252a8f01b5e4be",
+    "name": "RPG, 85mm",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 21,
+      "cost": 800,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 281",
+      "meleeModes": [],
+      "rangedModes": [
+        {
+          "name": "attack",
+          "skill": "Guns (Light Anti-Armor Weapon)",
+          "damageBase": "fixed",
+          "damageModifier": 0,
+          "damageFormula": "6dx3",
+          "damageType": "cr",
+          "explosive": true,
+          "fragmentation": "",
+          "affliction": false,
+          "afflictionAttribute": "",
+          "afflictionModifier": 0,
+          "armorDivisor": 10,
+          "accuracy": 3,
+          "scopeBonus": 0,
+          "halfDamageRange": 300,
+          "maxRange": 1000,
+          "rangeIsStMultiple": false,
+          "rateOfFire": 1,
+          "shots": "1(5)",
+          "minSt": 10,
+          "twoHanded": true,
+          "weaponSt": null,
+          "thrown": false,
+          "bulk": -6,
+          "recoil": 1
+        }
+      ]
+    }
+  },
+  {
+    "_id": "992303718b4eb752",
+    "name": "LAW, 84mm",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 14.7,
+      "cost": 750,
+      "carried": true,
+      "equipped": false,
+      "tl": "8",
+      "description": "",
+      "reference": "Basic Set: Characters p. 281",
+      "meleeModes": [],
+      "rangedModes": [
+        {
+          "name": "attack",
+          "skill": "Guns (Light Anti-Armor Weapon)",
+          "damageBase": "fixed",
+          "damageModifier": 0,
+          "damageFormula": "6dx6",
+          "damageType": "cr",
+          "explosive": true,
+          "fragmentation": "",
+          "affliction": false,
+          "afflictionAttribute": "",
+          "afflictionModifier": 0,
+          "armorDivisor": 10,
+          "accuracy": 3,
+          "scopeBonus": 0,
+          "halfDamageRange": 330,
+          "maxRange": 2300,
+          "rangeIsStMultiple": false,
+          "rateOfFire": 1,
+          "shots": "1(-)",
+          "minSt": 10,
+          "twoHanded": true,
+          "weaponSt": null,
+          "thrown": false,
+          "bulk": -5,
+          "recoil": 1
         }
       ]
     }
@@ -9644,6 +9824,51 @@
     }
   },
   {
+    "_id": "0af011d2a847b3b1",
+    "name": "Concussion Grenade (TL 7)",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 1,
+      "cost": 40,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "description": "",
+      "reference": "Basic Set: Characters p. 277",
+      "meleeModes": [],
+      "rangedModes": [
+        {
+          "name": "attack",
+          "skill": "Throwing",
+          "damageBase": "fixed",
+          "damageModifier": 0,
+          "damageFormula": "5dx2",
+          "damageType": "cr",
+          "explosive": true,
+          "fragmentation": "",
+          "affliction": false,
+          "afflictionAttribute": "",
+          "afflictionModifier": 0,
+          "armorDivisor": 1,
+          "accuracy": 0,
+          "scopeBonus": 0,
+          "halfDamageRange": 0,
+          "maxRange": 0,
+          "rangeIsStMultiple": false,
+          "rateOfFire": 1,
+          "shots": "T(1)",
+          "minSt": 5,
+          "twoHanded": false,
+          "weaponSt": null,
+          "thrown": true,
+          "bulk": -2,
+          "recoil": 0
+        }
+      ]
+    }
+  },
+  {
     "_id": "475edbed15a5f33a",
     "name": "Fragmentation Grenade (TL 7)",
     "type": "equipment",
@@ -9667,6 +9892,51 @@
           "damageType": "cr",
           "explosive": true,
           "fragmentation": "3d",
+          "affliction": false,
+          "afflictionAttribute": "",
+          "afflictionModifier": 0,
+          "armorDivisor": 1,
+          "accuracy": 0,
+          "scopeBonus": 0,
+          "halfDamageRange": 0,
+          "maxRange": 0,
+          "rangeIsStMultiple": false,
+          "rateOfFire": 1,
+          "shots": "T(1)",
+          "minSt": 5,
+          "twoHanded": false,
+          "weaponSt": null,
+          "thrown": true,
+          "bulk": -2,
+          "recoil": 0
+        }
+      ]
+    }
+  },
+  {
+    "_id": "f0a3d03f5ae66da4",
+    "name": "Plasma Grenade",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 1,
+      "cost": 100,
+      "carried": true,
+      "equipped": false,
+      "tl": "",
+      "description": "",
+      "reference": "Basic Set: Characters p. 277",
+      "meleeModes": [],
+      "rangedModes": [
+        {
+          "name": "attack",
+          "skill": "Throwing",
+          "damageBase": "fixed",
+          "damageModifier": 0,
+          "damageFormula": "6dx4",
+          "damageType": "burn",
+          "explosive": true,
+          "fragmentation": "",
           "affliction": false,
           "afflictionAttribute": "",
           "afflictionModifier": 0,

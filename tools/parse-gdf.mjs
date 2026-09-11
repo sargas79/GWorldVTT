@@ -506,7 +506,9 @@ function parseDamage(damage, damtype) {
       usesWeaponSt: true,
     };
   }
-  if (/^\d+d\s*(?:[+-]\s*\d+)?$/i.test(text)) {
+  // "6dx10" is the notation the heaviest weapons come in: the roll is
+  // multiplied, and the dice model carries the factor.
+  if (/^\d+d\s*(?:[+-]\s*\d+)?(?:\s*x\s*\d+)?$/i.test(text)) {
     return {
       fields: {
         damageBase: "fixed",
