@@ -341,6 +341,10 @@
         "grappling": {
           "Name": "Grappling",
           "Hint": "Take hold of a foe, then take them down, pin them, or choke them."
+        },
+        "exposure": {
+          "Name": "Heat, cold, hunger and thirst",
+          "Hint": "The weather and the rations wearing a party down, a point of fatigue at a time."
         }
       }
     },
@@ -613,6 +617,7 @@
       "ArmorDivisor": "armor divisor",
       "InjuryUnarmored": "Injury against no DR:",
       "ApplyDamage": "Apply",
+      "Apply": "Apply",
       "Blast": "Explosion — collateral damage out to {yards} yards",
       "Fragments": "Fragmentation {dice} out to {yards} yards",
       "Distance": "Yards from the blast",
@@ -1026,6 +1031,41 @@
       "Dead": "Four minutes without air",
       "Breathe": "Air again",
       "BreatheHint": "Stops the clock and starts recovering fatigue"
+    },
+    "Weather": {
+      "Action": "Weather",
+      "Hint": "Heat or cold, a roll at a time: a point of fatigue for each one missed",
+      "Title": "Exposure",
+      "Heat": "The heat",
+      "Cold": "The cold",
+      "Kind": "Which way",
+      "HeatOption": "Heat — above 80°F and moving about",
+      "ColdOption": "Cold — below 35°F",
+      "Temperature": "Temperature (°F)",
+      "Clothing": "Wearing",
+      "Clothing_light": "Light clothing",
+      "Clothing_winter": "Winter clothing",
+      "Clothing_arctic": "Arctic gear",
+      "Clothing_heatedSuit": "Heated suit",
+      "Wet": "Wet through",
+      "Wind": "Wind (mph)",
+      "Conditions": "{degrees}°F, a roll every {minutes} minutes",
+      "Bore": "Bore it",
+      "HeatStroke": "Heat stroke",
+      "Surcharge": "While it is this hot, every other exertion costs {fp} FP more",
+      "Deprivation": "Short rations",
+      "DeprivationAction": "Hunger & thirst",
+      "DeprivationHint": "A day of missed meals and too little water: a point of fatigue for each",
+      "Meals": "Meals missed today",
+      "Climate": "Climate",
+      "Climate_temperate": "Temperate — 2 quarts a day",
+      "Climate_hot": "Hot — 3 quarts a day",
+      "Climate_desert": "Desert — 5 quarts a day",
+      "Quarts": "Quarts drunk",
+      "Rations": "{meals} meals missed, {quarts} of {needed} quarts drunk",
+      "Hunger": "{fp} FP to hunger",
+      "Thirst": "{fp} FP to thirst",
+      "Parched": "Under a quart all day"
     },
     "CalledShot": {
       "Label": "Aimed at",

@@ -178,6 +178,16 @@
               data-tooltip="{{localize "GWORLD.Air.BreatheHint"}}">
         {{localize "GWORLD.Air.Breathe"}}
       </button>
+      {{#if rules.exposure}}
+        <button type="button" class="ibtn" data-action="exposure"
+                data-tooltip="{{localize "GWORLD.Weather.Hint"}}">
+          {{localize "GWORLD.Weather.Action"}}
+        </button>
+        <button type="button" class="ibtn" data-action="rations"
+                data-tooltip="{{localize "GWORLD.Weather.DeprivationHint"}}">
+          {{localize "GWORLD.Weather.DeprivationAction"}}
+        </button>
+      {{/if}}
     </div>
   </div>
 

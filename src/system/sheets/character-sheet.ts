@@ -32,6 +32,7 @@ import { rollFall } from "../falling.js";
 import { rollBleeding, stopBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
 import { catchBreath, rollSuffocation } from "../suffocation.js";
+import { applyDeprivation, rollExposure } from "../environment.js";
 import { rollDisarm } from "../disarm.js";
 import {
   beginGrapple,
@@ -274,6 +275,138 @@ async function promptForFall(): Promise<{
               : "hard",
           controlled:
             form?.querySelector<HTMLInputElement>('input[name="controlled"]')?.checked ?? false,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/**
+ * Asks what the weather is doing (Campaigns pp. 430, 434).
+ *
+ * The two halves ask different things -- a wind matters in the cold and not in
+ * the heat, and what somebody is wearing matters the other way round -- but
+ * they are one dialog, because "which way is it killing me" is the first
+ * question and the rest follows from it.
+ */
+async function promptForWeather(): Promise<{
+  heat: boolean;
+  temperatureF: number;
+  clothing: "light" | "winter" | "arctic" | "heatedSuit";
+  wetClothes: boolean;
+  windMph: number;
+  modifier: number;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Weather.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Kind")}</span>
+        <select name="kind" style="width:220px">
+          <option value="heat">${L("HeatOption")}</option>
+          <option value="cold">${L("ColdOption")}</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Temperature")}</span>
+        <input type="number" name="degrees" value="95" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Clothing")}</span>
+        <select name="clothing" style="width:220px">
+          <option value="light">${L("Clothing_light")}</option>
+          <option value="winter">${L("Clothing_winter")}</option>
+          <option value="arctic">${L("Clothing_arctic")}</option>
+          <option value="heatedSuit">${L("Clothing_heatedSuit")}</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Wind")}</span>
+        <input type="number" name="wind" value="0" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="wet">
+        <span>${L("Wet")}</span>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
+        <input type="number" name="modifier" value="0" step="1" style="width:90px">
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const value = (name: string) =>
+          form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? "";
+        const chosen = (name: string) =>
+          form?.querySelector<HTMLSelectElement>(`select[name="${name}"]`)?.value ?? "";
+
+        return {
+          heat: chosen("kind") !== "cold",
+          temperatureF: Number(value("degrees")) || 0,
+          clothing: chosen("clothing") || "light",
+          wetClothes: form?.querySelector<HTMLInputElement>('input[name="wet"]')?.checked ?? false,
+          windMph: Number(value("wind")) || 0,
+          modifier: Number(value("modifier")) || 0,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" ? (result as never) : null;
+}
+
+/**
+ * Asks how the day's rations went (Campaigns p. 426).
+ *
+ * How much water a day needs depends on where it was spent, so the climate is
+ * asked alongside what was actually drunk.
+ */
+async function promptForRations(): Promise<{
+  mealsMissed: number;
+  climate: "temperate" | "hot" | "desert";
+  quartsDrunk: number;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Weather.${key}`);
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Deprivation") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Meals")}</span>
+        <input type="number" name="meals" value="0" min="0" step="1" autofocus style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Climate")}</span>
+        <select name="climate" style="width:220px">
+          <option value="temperate">${L("Climate_temperate")}</option>
+          <option value="hot">${L("Climate_hot")}</option>
+          <option value="desert">${L("Climate_desert")}</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Quarts")}</span>
+        <input type="number" name="quarts" value="2" min="0" step="0.5" style="width:90px">
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Apply"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        return {
+          mealsMissed:
+            Number(form?.querySelector<HTMLInputElement>('input[name="meals"]')?.value ?? 0) || 0,
+          climate:
+            form?.querySelector<HTMLSelectElement>('select[name="climate"]')?.value || "temperate",
+          quartsDrunk:
+            Number(form?.querySelector<HTMLInputElement>('input[name="quarts"]')?.value ?? 0) || 0,
         };
       },
     },
@@ -659,6 +792,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       cripplingDuration: GWorldCharacterSheet.#onCripplingDuration,
       suffocate: GWorldCharacterSheet.#onSuffocate,
       catchBreath: GWorldCharacterSheet.#onCatchBreath,
+      exposure: GWorldCharacterSheet.#onExposure,
+      rations: GWorldCharacterSheet.#onRations,
       shakeOffStun: GWorldCharacterSheet.#onShakeOffStun,
       grapple: GWorldCharacterSheet.#onGrapple,
       disarm: GWorldCharacterSheet.#onDisarm,
@@ -1767,6 +1902,36 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   /** Gets air again, which stops the clock (Campaigns p. 436). */
   static async #onCatchBreath(this: GWorldCharacterSheet) {
     await catchBreath(this.actor);
+  }
+
+  /**
+   * A spell of weather nobody was dressed for (Campaigns pp. 430, 434).
+   *
+   * One roll for one interval -- half an hour of heat, or as little as ten
+   * minutes of a strong wind. How many of those passed is the GM's to say, so
+   * this rolls one and can be pressed again.
+   */
+  static async #onExposure(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+
+    const asked = await promptForWeather();
+    if (!asked) return;
+
+    await rollExposure({ actor: this.actor, ...asked });
+  }
+
+  /**
+   * A day of going short (Campaigns p. 426).
+   *
+   * No roll: hunger and thirst are not something a character can be good at.
+   */
+  static async #onRations(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+
+    const asked = await promptForRations();
+    if (!asked) return;
+
+    await applyDeprivation({ actor: this.actor, ...asked });
   }
 
   /**

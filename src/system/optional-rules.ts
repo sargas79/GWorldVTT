@@ -86,6 +86,9 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
   ],
   activities: [
     { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true },
+    // "The GM may ignore this entirely" is how the book opens the food section,
+    // which is why the whole block is one switch rather than four.
+    { key: "exposure", reference: "Campaigns pp. 426-435", default: true },
   ],
 };
 

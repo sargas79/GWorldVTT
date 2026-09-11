@@ -36,6 +36,7 @@ export * from "./knockdown.js";
 export * from "./maneuvers.js";
 export * from "./physical.js";
 export * from "./melee-situations.js";
+export * from "./modifiers.js";
 export * from "./mortal-wounds.js";
 export * from "./objects.js";
 export * from "./posture.js";
