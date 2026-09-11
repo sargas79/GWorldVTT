@@ -92,7 +92,8 @@
               <td class="c">
                 {{#if atk.skillLevel}}
                   <span class="rollable" data-action="roll" data-roll-type="attack"
-                        data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}">
+                        data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
+                        data-unarmed="{{#if atk.unarmed}}1{{/if}}">
                     {{> "gworld.die"}}
                   </span>
                 {{/if}}

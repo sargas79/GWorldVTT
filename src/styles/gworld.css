@@ -529,6 +529,14 @@
   border-radius: 0;
 }
 .gworld .ibtn:hover { background: var(--color-accent-700); border-color: var(--color-accent-700); }
+/* A button that has to sit in a table cell beside the roll die. */
+.gworld .ibtn.tiny {
+  height: 20px;
+  padding: 0 6px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  vertical-align: middle;
+}
 
 /* ── combat ────────────────────────────────────────────────────────────── */
 

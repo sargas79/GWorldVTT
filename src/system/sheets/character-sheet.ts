@@ -9,7 +9,7 @@
 
 import { CharacterBuilder } from "../apps/character-builder.js";
 import { combatStyle, tacticalOnScene } from "../settings.js";
-import { isRuleOn, ruleState } from "../optional-rules.js";
+import { activeRules, isRuleOn } from "../optional-rules.js";
 import {
   OPPORTUNITY_LINE_PENALTY,
   evadeModifier,
@@ -17,7 +17,8 @@ import {
   slamDamage,
 } from "../../rules/attack-options.js";
 import { attackArc } from "../../rules/tactical.js";
-import { rollQuickContest } from "../contest.js";
+import { rollFeint, rollQuickContest } from "../contest.js";
+import { feintDefenseScore, recordFeint } from "../feint.js";
 import { attackDirection, facingOf } from "../hex.js";
 import { facingChangeAtEndOfMove, hexMovementCost } from "../../rules/tactical.js";
 import { CompendiumPicker } from "../apps/compendium-picker.js";
@@ -43,7 +44,7 @@ import {
   rollDamage,
   rollSuccess,
 } from "../roll.js";
-import { currentTargets } from "../targets.js";
+import { currentTargets, targetedTokens } from "../targets.js";
 import type { Attribute, Posture } from "../../rules/types.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -186,6 +187,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       slam: GWorldCharacterSheet.#onSlam,
       affliction: GWorldCharacterSheet.#onAffliction,
       evade: GWorldCharacterSheet.#onEvade,
+      feint: GWorldCharacterSheet.#onFeint,
       stepPoints: GWorldCharacterSheet.#onStepPoints,
       stepLevels: GWorldCharacterSheet.#onStepLevels,
       editItem: GWorldCharacterSheet.#onEditItem,
@@ -355,7 +357,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // Which rules the table is playing. A control for a rule that is off is
       // not disabled, it is absent: there is nothing to explain about a rule
       // nobody is using.
-      rules: ruleState(),
+      rules: activeRules(),
 
       conditionChips: CONDITIONS.map(({ key, label }) => ({
         key,
@@ -710,7 +712,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    */
   static async #onEvade(this: GWorldCharacterSheet) {
     if (!isRuleOn("evading")) return;
-    const targets = currentTargets();
+    // Targeted rather than selected, for the reason given under the Feint: the
+    // mover usually has their own token selected, and evading yourself is not
+    // a contest anyone meant to roll.
+    const targets = targetedTokens();
     if (targets.length !== 1) {
       ui.notifications?.warn(game.i18n.localize("GWORLD.Evade.OneTarget"));
       return;
@@ -745,6 +750,52 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         ? game.i18n.format("GWORLD.Evade.Past", { mover: String(this.actor.name) })
         : game.i18n.format("GWORLD.Evade.Stopped", { foe: String(foe.name) }),
     );
+  }
+
+  /**
+   * Fakes an attack, so the next real one is harder to defend against
+   * (GURPS Basic Set: Campaigns p. 365).
+   *
+   * The Feint itself is not an attack and does nothing on its own: what it buys
+   * is a penalty to the foe's active defenses against this character's next
+   * attack, which is recorded on the actor and spent when that attack is rolled.
+   */
+  static async #onFeint(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    if (!isRuleOn("feint")) return;
+
+    const base = Number(target.dataset.rollTarget);
+    if (!Number.isFinite(base)) return;
+
+    // One foe, because a feint is aimed at a person: "your allies cannot take
+    // advantage of your Feint", and neither can it be aimed at two people.
+    //
+    // Targeted, never merely selected: a feinter has their own token selected
+    // far more often than not, and falling back to it would have them feinting
+    // themselves.
+    const targets = targetedTokens();
+    if (targets.length !== 1) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Feint.OneTarget"));
+      return;
+    }
+
+    const foe = targets[0]?.actor;
+    if (!foe) return;
+
+    const defense = feintDefenseScore(foe);
+    const result = await rollFeint({
+      label: game.i18n.format("GWORLD.Feint.Label", {
+        weapon: target.dataset.rollLabel ?? "",
+        foe: String(foe.name),
+      }),
+      feinter: { actor: this.actor, base },
+      // Naming what they rolled against matters here: the rule lets them roll
+      // their best of several things, and the card should say which it was.
+      defender: { actor: foe, base: defense.score, note: defense.source },
+    });
+
+    if (result.success) {
+      await recordFeint(this.actor, String(foe.uuid), result.defensePenalty);
+    }
   }
 
   /**

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   OPTIONAL_RULES,
   RULE_GROUPS,
+  activeRules,
   allRuleKeys,
   defaultRuleState,
   isImplemented,
@@ -100,6 +101,20 @@ describe("rules that are listed but not built", () => {
   it("reads an implemented rule normally", () => {
     expect(isImplemented("slams")).toBe(true);
     expect(isRuleOn("slams")).toBe(true);
+  });
+
+  /**
+   * A template asking `rules.x` is asking whether a control should be shown,
+   * which is the question isRuleOn answers -- so the map handed to a sheet has
+   * to agree with it rather than reporting the raw stored state.
+   */
+  it("is off in the map the sheets read, whatever is stored", () => {
+    globals.game = { settings: { get: () => ({ frightChecks: true, slams: false }) } };
+    const active = activeRules();
+    expect(active.frightChecks).toBe(false);
+    expect(active.slams).toBe(false);
+    expect(active.explosions).toBe(true);
+    for (const key of allRuleKeys()) expect(active[key]).toBe(isRuleOn(key));
   });
 
   it("treats an unlisted key as implemented, matching isRuleOn", () => {

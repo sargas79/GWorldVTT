@@ -8,11 +8,17 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { consumeFeint } from "./feint.js";
 import { isRuleOn } from "./optional-rules.js";
 import { targetedTokens } from "./targets.js";
 import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
+import {
+  criticalEntry,
+  criticalMissTableFor,
+  type CriticalTable,
+} from "../rules/criticals.js";
 import { applyDamageFloor, computeInjury } from "../rules/damage.js";
-import { parseDiceAdds, toRollFormula } from "../rules/dice.js";
+import { maxRoll, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import { blastRadius, fragmentationRadius } from "../rules/explosions.js";
 import {
   OPPORTUNITY_LINE_PENALTY,
@@ -51,10 +57,15 @@ export interface SuccessRollOptions {
    */
   rapidFire?: { shotsFired: number; recoil: number };
   /**
-   * A penalty this attack imposes on the defender, from a Deceptive Attack.
-   * Recorded on the message so the defense card can apply it.
+   * A penalty this attack imposes on the defender, from a Deceptive Attack or
+   * a Feint. Recorded on the message so the defense card can apply it.
    */
   defensePenalty?: number;
+  /**
+   * True for a punch, kick, bite, grapple or slam, which reads its own critical
+   * miss table (GURPS Basic Set: Campaigns p. 557).
+   */
+  unarmed?: boolean;
 }
 
 /**
@@ -66,6 +77,7 @@ export interface SuccessRollOptions {
 export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessRollResult | null> {
   const {
     actor, base, label, kind = "skill", modifiers = [], rapidFire, defensePenalty = 0,
+    unarmed = false,
   } = options;
 
   const totalModifier = modifiers.reduce((sum, m) => sum + m.value, 0);
@@ -89,9 +101,21 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
       ? resolveDefense(roll.total, effective, dieResults(roll))
       : resolveSuccess(roll.total, effective, dieResults(roll));
 
+  // A critical hit or miss is read off a table rather than merely announced
+  // (p. 381). The miss is rolled here, because its result lands on the attacker
+  // straight away; the hit is rolled when the damage is applied, where the hit
+  // location and the target's DR are both known.
+  const criticalMiss =
+    kind === "attack" && outcome.criticalFailure && isRuleOn("criticalTables")
+      ? await rollCriticalMiss(criticalMissTableFor(unarmed))
+      : null;
+  const criticalHit = kind === "attack" && outcome.criticalSuccess && isRuleOn("criticalTables");
+
   const content = await foundry.applications.handlebars.renderTemplate(CHAT_TEMPLATE, {
     label,
     kind,
+    criticalMiss,
+    criticalHit,
     base,
     modifiers: modifiers.filter((m) => m.value !== 0),
     totalModifier,
@@ -115,16 +139,40 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     speaker: ChatMessage.implementation.getSpeaker({ actor }),
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
-    rolls: [roll],
+    rolls: criticalMiss ? [roll, criticalMiss.roll] : [roll],
     // An attack that connects is the moment to record who it was aimed at: the
     // defender rolls afterwards, by which time the attacker may well have
     // changed their target. A miss needs no defense, so it carries nothing.
     ...(kind === "attack" && outcome.success
-      ? { flags: attackFlags(actor, label, defensePenalty) }
+      ? { flags: attackFlags(actor, label, defensePenalty, criticalHit) }
       : {}),
   });
 
   return outcome;
+}
+
+/**
+ * Rolls on one of the critical miss tables and says what it landed on.
+ *
+ * The roll goes through Foundry's Roll class like any other, so that it shows
+ * in the log and animates -- a result this unpleasant should be visibly rolled
+ * rather than asserted.
+ */
+async function rollCriticalMiss(table: CriticalTable): Promise<{
+  roll: any;
+  total: number;
+  effect: string;
+  gmDecides: boolean;
+}> {
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  const entry = criticalEntry(table, roll.total);
+  return {
+    roll,
+    total: roll.total,
+    effect: game.i18n.localize(`GWORLD.Critical.${entry.effect}`),
+    gmDecides: entry.gmDecides === true,
+  };
 }
 
 /**
@@ -138,7 +186,12 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
  * elsewhere: an attacker has their own token selected far more often than not,
  * and falling back would record them as defending against themselves.
  */
-function attackFlags(actor: any, label: string, defensePenalty: number): object {
+function attackFlags(
+  actor: any,
+  label: string,
+  defensePenalty: number,
+  criticalHit: boolean,
+): object {
   const defenders = targetedTokens()
     .filter((token: any) => token?.actor?.uuid)
     .map((token: any) => ({
@@ -159,6 +212,9 @@ function attackFlags(actor: any, label: string, defensePenalty: number): object 
         defenders,
         attackerToken: attackerToken ? String(attackerToken) : "",
         defensePenalty,
+        // "In all cases, the target gets no active defense against the attack"
+        // (p. 556) -- so the defense card offers none.
+        noDefense: criticalHit,
       },
     },
   };
@@ -198,7 +254,14 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
   }
 
   const bonus = modifiers.reduce((sum, m) => sum + m.value, 0);
-  const roll = new Roll(toRollFormula({ dice: parsed.dice, adds: parsed.adds + bonus }));
+  // The multiplier travels with the roll: "6dx10" is six dice times ten, and
+  // dropping it here would roll a tenth of the attack.
+  const rolled = {
+    dice: parsed.dice,
+    adds: parsed.adds + bonus,
+    ...(parsed.multiplier ? { multiplier: parsed.multiplier } : {}),
+  };
+  const roll = new Roll(toRollFormula(rolled));
   await roll.evaluate();
 
   // The floor lives in the rules engine; duplicating it here would let chat
@@ -248,6 +311,9 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
       [SYSTEM_ID]: {
         damage: {
           basicDamage, damageType, armorDivisor, label,
+          // The most these dice could have come up, for the critical results
+          // that replace the roll with maximum damage.
+          maxDamage: applyDamageFloor(maxRoll(rolled), damageType),
           explosive,
           // The dice, not the rolled total: the blast radius is set by how
           // many dice the attack rolls, whatever they came up -- and a
@@ -347,17 +413,25 @@ export async function handleRollAction(
       : await maybePromptModifiers(event);
   if (modifiers === null) return;
 
+  // A Feint made last turn is spent by this attack, whether or not it is aimed
+  // at the foe who was feinted -- it was good for one second either way.
+  const feint =
+    rollType === "attack" && isRuleOn("feint") ? await consumeFeint(actor) : 0;
+  const defensePenalty = (melee?.defensePenalty ?? 0) + feint;
+
   await rollSuccess({
     actor,
     base,
     label: rollLabel ?? rollType ?? "Roll",
     kind: rollKind(rollType),
     modifiers,
+    // Which critical miss table a fumble reads is decided by the attack, and
+    // the sheet is where that is known.
+    unarmed: target.dataset.unarmed === "1",
     // A Deceptive Attack's whole purpose is the penalty it puts on the
-    // defender, so it has to travel with the attack to the defense card.
-    ...(melee && melee.defensePenalty !== 0
-      ? { defensePenalty: melee.defensePenalty }
-      : {}),
+    // defender, and a Feint's is the same penalty bought a turn earlier, so
+    // both travel with the attack to the defense card.
+    ...(defensePenalty !== 0 ? { defensePenalty } : {}),
     // Only a burst needs its hits counted; a single shot either hits or does
     // not, and saying "1 hit" on every arrow would be noise.
     ...(shot && shot.shotsFired > 1

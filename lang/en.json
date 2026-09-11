@@ -235,7 +235,7 @@
       "Rule": {
         "feint": {
           "Name": "Feint",
-          "Hint": "Fake an attack: a Quick Contest of weapon skills whose margin comes off the foe's next defense."
+          "Hint": "Fake an attack: your margin over the foe's roll comes off his defense against your next attack."
         },
         "deceptiveAttack": {
           "Name": "Deceptive Attack",
@@ -649,6 +649,64 @@
       "thr": "Thrust",
       "sw": "Swing",
       "fixed": "Fixed"
+    },
+    "Critical": {
+      "CriticalHit": "Critical hit",
+      "NoDefense": "Critical hit — no active defense",
+      "RolledOn": "{table}: {roll}",
+      "Fumbled": "Critical miss table: {roll}",
+      "GmDecides": "see p. 556",
+      "BasicDamage": "Basic damage",
+      "Table": {
+        "hit": "Critical hit table",
+        "headBlow": "Critical head blow table",
+        "miss": "Critical miss table",
+        "missUnarmed": "Unarmed critical miss table"
+      },
+      "tripleDamage": "Triple basic damage",
+      "doubleDamage": "Double basic damage",
+      "maximumDamage": "Maximum normal damage",
+      "halfDrDown": "DR protects at half value, rounding down",
+      "halfDrUp": "DR protects at half value, rounding up",
+      "halfDrUpMajor": "DR at half value rounding up; anything through is a major wound",
+      "maxAndIgnoreDr": "Maximum normal damage, ignoring DR",
+      "majorWound": "Anything through DR is a major wound",
+      "doubleShock": "Double shock, to a maximum of -8; a limb struck is crippled too",
+      "normal": "Normal damage",
+      "dropsHeld": "Normal damage, and the victim drops whatever he is holding",
+      "treatAsEye": "Treat as a hit to the eye; if impossible, treat as a 4",
+      "offBalance": "Knocked off balance: Do Nothing next turn, but may defend",
+      "deafenedOrScarred": "If damage penetrates: deafened by crushing, badly scarred otherwise",
+      "dropsWeapon": "Normal damage, and the victim drops his weapon",
+      "weaponBreaks": "Your weapon breaks; a resistant weapon rolls again",
+      "hitYourself": "You hit yourself in the arm or leg",
+      "hitYourselfHalf": "You hit yourself in the arm or leg, for half damage",
+      "loseBalance": "You lose your balance: nothing until your next turn, defenses at -2",
+      "weaponTurns": "The weapon turns in your hand: Ready it before using it again",
+      "dropWeapon": "You drop the weapon",
+      "weaponFlies": "Swinging, the weapon flies 1d yards from your hand; otherwise you drop it",
+      "strainShoulder": "You strain your shoulder: your weapon arm is unusable for 30 minutes",
+      "fallDown": "You fall down",
+      "knockYourselfOut": "You knock yourself out; roll vs HT every 30 minutes to recover",
+      "strainLimb": "You strain the limb: 1 HP and unusable for 30 minutes",
+      "hitSolidObject": "You hit a solid object: thrust crushing damage to the part you used",
+      "hitSolidObjectHalf": "You hit a solid object, for half thrust crushing damage",
+      "stumble": "You stumble past your foe and end your turn facing away from him",
+      "trip": "You trip: roll against DX to avoid falling down",
+      "dropGuard": "You drop your guard: defenses at -2, and Evaluate and Feint count double",
+      "tearMuscle": "You tear a muscle: 1d-3 injury to the limb, off balance next turn"
+    },
+    "Knockback": {
+      "Pushed": "Knocked back {yards} yd",
+      "StayUp": "DX, Acrobatics or Judo to stay standing"
+    },
+    "Feint": {
+      "Action": "Feint",
+      "Hint": "Fake this attack so the next one is harder to defend against",
+      "Label": "{weapon} feint vs {foe}",
+      "OneTarget": "Target exactly one foe to feint.",
+      "Landed": "{foe} defends at {penalty} against your next attack",
+      "Failed": "The feint achieves nothing"
     }
   }
 }

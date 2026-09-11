@@ -85,23 +85,38 @@ export interface FeintResult {
   /** True when the feint landed. */
   success: boolean;
   /**
-   * Penalty applied to the target's active defenses against the feinter's next
-   * attack. Zero when the feint failed.
+   * Penalty to the target's active defenses against the feinter's next attack,
+   * zero or negative to match every other defense modifier. Zero when the
+   * feint achieved nothing.
    */
   defensePenalty: number;
 }
 
 /**
- * Resolves a Feint as a Quick Contest (GURPS Basic Set: Campaigns p. 365).
+ * Resolves a Feint (GURPS Basic Set: Campaigns p. 365).
  *
- * The winner's margin of victory becomes a penalty to the loser's defenses
- * against the feinter's next attack. A feint that ties or loses achieves
- * nothing — it never helps the defender.
+ * Nearly a Quick Contest, but not quite one, and the difference matters twice:
+ *
+ * "If you fail your roll, your Feint is unsuccessful" -- so a feinter who
+ * misses their own roll gains nothing, however badly the foe misses theirs. A
+ * Quick Contest would hand the win to whoever failed by less.
+ *
+ * And when the foe fails, the penalty is the feinter's own margin of success,
+ * not the two margins added together as a Quick Contest's margin of victory
+ * would be.
  */
-export function resolveFeint(feinterMargin: number, defenderMargin: number): FeintResult {
-  const difference = feinterMargin - defenderMargin;
-  if (difference <= 0) return { success: false, defensePenalty: 0 };
-  return { success: true, defensePenalty: difference };
+export function resolveFeint(
+  feinter: { success: boolean; margin: number },
+  defender: { success: boolean; margin: number },
+): FeintResult {
+  if (!feinter.success) return { success: false, defensePenalty: 0 };
+
+  // "if you succeed, but your foe succeeds by as much as or more than you do,
+  // your Feint fails."
+  const penalty = defender.success ? feinter.margin - defender.margin : feinter.margin;
+  if (penalty <= 0) return { success: false, defensePenalty: 0 };
+
+  return { success: true, defensePenalty: -penalty };
 }
 
 export interface KnockbackInput {

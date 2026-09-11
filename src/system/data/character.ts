@@ -12,6 +12,7 @@ import {
   secondaryCharacteristics,
   secondaryPointCost,
 } from "../../rules/attributes.js";
+import { isUnarmedSkill } from "../../rules/criticals.js";
 import { baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import { usableInCloseCombat } from "../../rules/tactical.js";
 import { isRuleOn } from "../optional-rules.js";
@@ -87,6 +88,8 @@ export interface DerivedAttack {
    * a reach-1 weapon while sharing a hex with a foe.
    */
   usable: boolean;
+  /** True for a punch, kick, bite or grapple, which fumbles on its own table. */
+  unarmed: boolean;
   /** An affliction, which is resisted rather than damaging. */
   affliction: boolean;
   /** The attribute it is resisted with, e.g. "HT". Blank when not an affliction. */
@@ -576,6 +579,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             usableInCloseCombat(String(mode.reach ?? "C")),
           unbalanced: Boolean(mode.unbalanced),
           isFencing: Boolean(mode.isFencing),
+          // Which critical miss table a fumble is read on is decided by the
+          // skill: a Karate kick fumbles differently from a dropped axe.
+          unarmed: isUnarmedSkill(mode.skill),
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),
@@ -618,6 +624,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           usable: true,
           unbalanced: false,
           isFencing: false,
+          // A ranged attack never reads the unarmed miss table: a thrown rock
+          // fumbles as a weapon does, whatever threw it.
+          unarmed: false,
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),

@@ -56,7 +56,7 @@ export type RuleGroup = (typeof RULE_GROUPS)[number]["id"];
  */
 export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
   combat: [
-    { key: "feint", reference: "Campaigns p. 365", default: true, implemented: false },
+    { key: "feint", reference: "Campaigns p. 365", default: true },
     { key: "deceptiveAttack", reference: "Campaigns p. 369", default: true },
     { key: "rapidStrike", reference: "Campaigns p. 370", default: true },
     { key: "retreat", reference: "Campaigns p. 377", default: true },
@@ -70,8 +70,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "hitLocations", reference: "Campaigns p. 398", default: true },
     { key: "explosions", reference: "Campaigns p. 414", default: true },
     { key: "afflictions", reference: "Characters p. 35", default: true },
-    { key: "knockback", reference: "Campaigns p. 378", default: true, implemented: false },
-    { key: "criticalTables", reference: "Campaigns p. 556", default: true, implemented: false },
+    { key: "knockback", reference: "Campaigns p. 378", default: true },
+    { key: "criticalTables", reference: "Campaigns p. 556", default: true },
   ],
   rolls: [
     { key: "regularContests", reference: "Campaigns p. 349", default: true, implemented: false },
@@ -125,6 +125,22 @@ export function ruleState(): Record<string, boolean> {
   const stored = (game.settings.get(SYSTEM_ID, OPTIONAL_RULES_KEY) ?? {}) as Record<string, unknown>;
   for (const key of Object.keys(state)) {
     if (typeof stored[key] === "boolean") state[key] = stored[key];
+  }
+  return state;
+}
+
+/**
+ * The stored state with every unimplemented rule forced off.
+ *
+ * What a sheet or a template asks is "is this in play", which is the same
+ * question `isRuleOn` answers one key at a time. Handing the raw stored state
+ * to a template would show a control for a rule that reads as on and does
+ * nothing.
+ */
+export function activeRules(): Record<string, boolean> {
+  const state = ruleState();
+  for (const key of Object.keys(state)) {
+    if (!isImplemented(key)) state[key] = false;
   }
   return state;
 }
