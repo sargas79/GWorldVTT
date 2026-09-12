@@ -106,6 +106,13 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "jobs", reference: "Campaigns pp. 516-518", default: true },
     { key: "aging", reference: "Campaigns p. 444", default: true },
     { key: "socialBackground", reference: "Characters pp. 23-24", default: true },
+    { key: "sleep", reference: "Campaigns pp. 426-427", default: true },
+    { key: "hiking", reference: "Campaigns pp. 351, 426", default: true },
+    { key: "collisions", reference: "Campaigns pp. 430-432", default: true },
+    { key: "electricity", reference: "Campaigns pp. 432-433", default: true },
+    { key: "fire", reference: "Campaigns pp. 433-434", default: true },
+    { key: "radiation", reference: "Campaigns pp. 435-436", default: true },
+    { key: "vehicles", reference: "Campaigns pp. 462-468", default: true },
   ],
   magic: [
     // The whole chapter. A campaign without magic has no Magic tab, no

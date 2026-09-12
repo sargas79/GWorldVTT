@@ -38,6 +38,8 @@ import {
 } from "../../rules/wealth.js";
 import { agingRollsPerYear, lifespanFrom } from "../../rules/aging.js";
 import { culturallyAdaptable, languagePenalty, type Comprehension } from "../../rules/languages.js";
+import { sleepPeriodFrom } from "../../rules/sleep.js";
+import { radiationRow, radiationToleranceFrom, remainingDose } from "../../rules/radiation.js";
 import { baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import { usableInCloseCombat } from "../../rules/tactical.js";
 import { isRuleOn } from "../optional-rules.js";
@@ -295,6 +297,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     closeCombat: boolean;
   };
   declare money: number;
+  declare radiation: { dose: number; at: number };
   declare job: { title: string; skill: string; level: string; kind: "wage" | "freelance"; risk: string };
   declare details: {
     player: string; height: string; weight: string; age: string;
@@ -615,6 +618,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         closeCombat: new fields.BooleanField({ initial: false }),
       }),
 
+      /**
+       * The radiation carried (Campaigns p. 435): the accumulated dose in
+       * rads as of the moment it was last written, which is what it heals
+       * from -- after thirty days, ten rads a day, to a tenth that stays.
+       */
+      radiation: new fields.SchemaField({
+        dose: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        at: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+      }),
+
       /** Cash in hand, in $ (Characters p. 25). Starting wealth less the gear is where it begins. */
       money: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
 
@@ -824,6 +837,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       jobPay: this.job?.title ? monthlyPay(tl, jobLevel) : 0,
       jobKind: String(this.job?.kind ?? "wage"),
     };
+  }
+
+  /** What is left of the dose written on the sheet, as of now (Campaigns p. 435). */
+  #radiation() {
+    const stored = this.radiation ?? { dose: 0, at: 0 };
+    const days = stored.at > 0 ? (Date.now() - stored.at) / 86400000 : 0;
+    const dose = Math.round(remainingDose(Number(stored.dose) || 0, days) * 10) / 10;
+    const row = radiationRow(dose);
+    return { dose, htModifier: row?.htModifier ?? 0, exposed: dose >= 1 };
   }
 
   /** How old, and how often the aging roll comes round (Campaigns p. 444). */
@@ -1666,6 +1688,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         writtenPenalty: languagePenalty(String(item.system?.written ?? "none") as Comprehension),
       })),
       culturallyAdaptable: culturallyAdaptable(heldTraits),
+      // How long a night has to be (Campaigns p. 427; Characters pp. 50, 65, 136).
+      sleepPeriod: sleepPeriodFrom(heldTraits),
+      // The dose as it stands today, and what the table says of it (Campaigns pp. 435-436).
+      radiation: this.#radiation(),
+      radiationTolerance: radiationToleranceFrom(heldTraits),
       regeneration: regenerationRate(traits.regeneration),
       // The attributes as everything else reads them: bought plus what traits
       // add. The sheet's inputs edit the bought figure and show this one.

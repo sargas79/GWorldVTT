@@ -468,6 +468,34 @@
           "Name": "Languages and cultures",
           "Hint": "A Broken language is -3 and an Accented one -1 on Influence rolls, and an unfamiliar culture -3 on the same skills."
         },
+        "sleep": {
+          "Name": "Missed sleep",
+          "Hint": "A day is sixteen hours; past it, a point of fatigue and another every four hours, and only sleep gives them back."
+        },
+        "hiking": {
+          "Name": "Hiking",
+          "Hint": "Ten miles a Move a day, by terrain and weather, at the fatigue of a battle an hour."
+        },
+        "collisions": {
+          "Name": "Collisions",
+          "Hint": "Being struck by something moving: its HP times its velocity, over a hundred, in dice."
+        },
+        "electricity": {
+          "Name": "Electricity",
+          "Hint": "A shock: a HT roll not to be stunned, or burning damage and a HT roll not to be knocked out."
+        },
+        "fire": {
+          "Name": "Flame",
+          "Hint": "Seconds in a fire, and whether a blow of burning damage set the clothes alight."
+        },
+        "radiation": {
+          "Name": "Radiation",
+          "Hint": "Doses in rads that accumulate and slowly heal, with a HT roll against the table each time."
+        },
+        "vehicles": {
+          "Name": "Vehicles",
+          "Hint": "Equipment with a stat line, and a control roll at its Handling that fails by its Stability Rating."
+        },
         "battleFatigue": {
           "Name": "Battle fatigue",
           "Hint": "A fight that runs past ten seconds costs everyone in it a point of fatigue when the tracker closes."
@@ -1044,6 +1072,7 @@
         "weapon": "Weapons",
         "tool": "Tools",
         "consumable": "Consumables",
+        "vehicle": "Vehicles",
         "misc": "Miscellaneous"
       }
     },
@@ -1922,10 +1951,170 @@
         "module": "Modules"
       }
     },
+    "Hazard": {
+      "Sleep": "Sleep",
+      "SleepAction": "Sleep",
+      "StayAwake": "Stay up",
+      "StayAwakeHint": "Past the day, a point of fatigue and another every four hours (Campaigns p. 427)",
+      "SleepHintShort": "A full sleep period gives a point back, and every hour beyond it another",
+      "HoursAwake": "Hours awake",
+      "MissedSleep": "Hours of sleep missed last night",
+      "SleepHint": "The day is 24 hours less the sleep period, less twice the sleep missed; from there it costs 1 FP, and 1 FP every four hours after.",
+      "HoursSlept": "Hours slept",
+      "DoesntSleep": "Doesn't Sleep: the whole section is ignored",
+      "Awake": "{hours} hours awake, {missed} hours of sleep missed last night",
+      "StayedUpFree": "Within the {day}-hour day: no cost yet",
+      "StayedUpCost": "{fp} FP past the {day}-hour day",
+      "Dozing": "Half the FP or more lost to sleep: a Will roll every {minutes} minutes of inaction, or fall asleep",
+      "DozingBadly": "Under a third of FP: a Will roll every {minutes} minutes of inaction or every {active} of action",
+      "FatigueInjury": "Below 0 FP: {hp} HP of injury with it",
+      "Slept": "{hours} hours of sleep, against a sleep period of {period}",
+      "SleptShort": "Short of the {period}-hour sleep period: nothing back",
+      "SleptRecovered": "{fp} FP back: {previous} → {now} / {max}",
+      "Hike": "March",
+      "HikeHint": "A day on the road: ten miles a Move, by terrain and weather, and the fatigue of a battle an hour (Campaigns pp. 351, 426)",
+      "HoursMarched": "Hours marched",
+      "TerrainLabel": "Terrain",
+      "Terrain": {
+        "veryBad": "Very bad (deep snow, jungle, mountains, swamp)",
+        "bad": "Bad (broken ground, forest, steep hills)",
+        "average": "Average (light forest, rolling hills, roads)",
+        "good": "Good (hard desert, level plains, the best roads)"
+      },
+      "WeatherLabel": "Weather",
+      "Weather": {
+        "fair": "Fair",
+        "rain": "Rain",
+        "snow": "Ankle-deep snow",
+        "deepSnow": "Deeper snow",
+        "ice": "Ice"
+      },
+      "HotDay": "A hot day (+1 FP an hour)",
+      "HikingMade": "Hiking roll made: a fifth farther",
+      "HikingMissed": "Hiking roll missed",
+      "Miles": "{miles} miles for a full day over {terrain}, {weather}",
+      "MarchCost": "{hours} hours at {perHour} FP an hour: {fp} FP",
+      "Collision": "Struck",
+      "CollisionHint": "Something moving hits you: (its HP × velocity)/100 dice of crushing damage (Campaigns pp. 430-432)",
+      "ObjectHp": "HP of what struck",
+      "ObjectVelocity": "Its velocity (yards/second)",
+      "OwnVelocity": "Your velocity (yards/second)",
+      "AngleLabel": "Angle",
+      "Angle": {
+        "side": "Side-on, or you were still",
+        "headOn": "Head-on (velocities added)",
+        "rearEnd": "Rear-end (velocities subtracted)"
+      },
+      "Shape": "Shape of what struck",
+      "Blunt": "Blunt (crushing)",
+      "Sharp": {
+        "cut": "Sharp (half damage, cutting)",
+        "imp": "Spiked (half damage, impaling)",
+        "pi": "Bullet-shaped (half damage, piercing)"
+      },
+      "ObjectSm": "Its Size Modifier",
+      "StruckAt": "Struck by something of {hp} HP at {velocity} yards/second, {angle}",
+      "CollisionDamage": "{formula} = {rolled} to the {location}, DR {dr}",
+      "Injury": "{injury} HP of injury: {previous} → {now}",
+      "Overrun": "Overrun, two sizes larger: thrust {formula} = {rolled}, {injury} HP more",
+      "Shock": "Shock",
+      "ShockHint": "Electricity: a HT roll not to be stunned, or burning damage and a HT roll not to be knocked out (Campaigns pp. 432-433)",
+      "ShockKindLabel": "Kind of shock",
+      "ShockKind": {
+        "nonlethal": "Nonlethal: stun weapons, electric fences, static",
+        "lethal": "Lethal: mains, lightning, transmission lines",
+        "localized": "Localized: a burn to one part of the body"
+      },
+      "ShockModifier": "HT modifier for the strength",
+      "Continuous": "Continuous (stun gun, fence), not a jolt",
+      "ShockFormula": "Burning damage",
+      "MetalArmor": "In metal armour (DR 1 only)",
+      "ShockDamage": "{formula} = {rolled} burning, DR {dr}: {injury} HP, {previous} → {now}",
+      "ShockHarmless": "Nothing got through: no roll",
+      "ShockHeld": "Held",
+      "ShockStunned": "Stunned, for {seconds} second(s) before HT rolls to recover",
+      "ShockOut": "Unconscious for {minutes} minute(s), then -2 DX for {dazed} more",
+      "HeartAttack": "Failed by 5 or more: a heart attack (Mortal Conditions, Campaigns p. 429)",
+      "Fire": "Flame",
+      "FireHint": "Seconds in a fire: 1d-3 for part of a turn, 1d-1 a second for all of it or when alight (Campaigns p. 433)",
+      "ExposureLabel": "Exposure",
+      "Exposure": {
+        "partTurn": "Part of a turn in the flames (1d-3)",
+        "fullTurn": "All of a turn, or on fire (1d-1 a second)",
+        "intense": "Molten metal or a furnace (3d a second)"
+      },
+      "Seconds": "Seconds",
+      "Burned": "{seconds} second(s): {exposure}, {formula} each",
+      "FireRolled": "{total} burning damage rolled in all",
+      "CatchFire": "Catching fire",
+      "CatchFireHint": "Whether a blow of burning damage set the clothes alight: 3 points for part, 10 for all (Campaigns p. 434)",
+      "BasicBurning": "Basic burning damage of the blow",
+      "TightBeam": "A tight-beam attack (divided by 10)",
+      "BlowOfBurning": "A blow of {damage} burning",
+      "Alight": {
+        "part": "Part of the clothing alight: {formula} burning a second, {dx} DX",
+        "all": "All the clothes alight: {formula} burning a second, {dx} DX"
+      },
+      "PutOut": "A DX roll to put out, each attempt {readies} Ready maneuver(s); water puts it out at once",
+      "NotAlight": "Nothing caught",
+      "Radiation": "Radiation",
+      "RadiationHint": "A dose in rads, shielded by a Protection Factor, added to what is carried; a HT roll against the accumulated dose (Campaigns pp. 435-436)",
+      "Rads": "Rads received",
+      "ProtectionFactor": "Protection Factor of the shielding",
+      "RadsUnit": "rads",
+      "DoseLine": "accumulated; HT rolls at {modifier} (Campaigns p. 436)",
+      "Dosed": "{rads} rads after shielding; {total} rads accumulated",
+      "NoDose": "Under a rad: no roll",
+      "Effect": {
+        "none": "No obvious effect; the dose accumulates",
+        "A": "A: radiation burns. HT hours on, 1d of injury and Low Pain Threshold for a week; two more HT rolls, for sterility and Terminally Ill on a critical failure",
+        "B": "B: hematopoietic syndrome. As A, and after HT hours nausea for (40 - HT) hours, 1d off each of DX, IQ and FP, Hemophilia, and a daily HT roll",
+        "C": "C: gastrointestinal syndrome. As B, and in 1d/2 weeks the hair goes and injury comes daily until a critical success",
+        "D": "D: terminal radiation sickness. As C, HP loss from 1d/2 days, and death is certain",
+        "E": "E: rapid cerebrovascular death within hours"
+      },
+      "Control": "Control roll",
+      "ControlHint": "A control roll against the vehicle's skill at its Handling (Campaigns p. 466)",
+      "Controlled": "{vehicle}: {skill} at Handling {handling}",
+      "ControlResult": {
+        "ok": "In control",
+        "minor": "Failed by no more than the Stability Rating: a minor problem, a skid or lost time",
+        "major": "Failed by more than the Stability Rating: a major problem, a crash; the GM may allow a second roll at a hefty penalty",
+        "disaster": "A critical failure: disaster is inevitable"
+      }
+    },
+    "Vehicle": {
+      "Statistics": "Vehicle statistics",
+      "StHp": "ST/HP",
+      "Handling": "Handling (Hnd)",
+      "Stability": "Stability Rating (SR)",
+      "HT": "HT",
+      "Acceleration": "Acceleration (yards/s)",
+      "TopSpeed": "Top Speed (yards/s)",
+      "LoadedWeight": "Loaded weight (tons)",
+      "Load": "Load (tons)",
+      "SM": "SM",
+      "Occupants": "Occupants (crew+passengers)",
+      "DR": "DR",
+      "Range": "Range (miles)",
+      "Skill": "Control skill",
+      "LocomotionLabel": "Moves on",
+      "Locomotion": {
+        "wheels": "wheels",
+        "tracks": "tracks",
+        "legs": "legs",
+        "runners": "runners or skids",
+        "water": "water",
+        "air": "air"
+      },
+      "RoadBound": "Road-bound (an ordinary car)",
+      "Hint": "The line as the tables print it (Campaigns pp. 462-465). The Gear tab offers a control roll against the skill at Handling; a failure by more than the Stability Rating is a crash."
+    },
     "GearCategory": {
       "weapon": "Weapon",
       "tool": "Tool",
       "consumable": "Consumable",
+      "vehicle": "Vehicle",
       "misc": "Miscellaneous"
     },
     "Natural": {

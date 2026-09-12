@@ -197,9 +197,58 @@
     </div>
   </div>
 
-  {{#if (or rules.poison rules.intoxication rules.disease)}}
+  {{#if (or rules.poison rules.intoxication rules.disease rules.sleep rules.hiking rules.collisions rules.electricity rules.fire rules.radiation)}}
     <div class="isec">
       <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.Hazards"}}</div>
+
+      {{#if (and rules.radiation derived.radiation.exposed)}}
+        <div class="cellgrid">
+          <div class="cell">
+            <span class="cl">{{localize "GWORLD.Hazard.Radiation"}}</span>
+            <span class="cv">{{derived.radiation.dose}} {{localize "GWORLD.Hazard.RadsUnit"}}</span>
+            <span class="cd">{{localize "GWORLD.Hazard.DoseLine" modifier=derived.radiation.htModifier}}</span>
+          </div>
+        </div>
+      {{/if}}
+
+      <div class="toolbar">
+        {{#if rules.sleep}}
+          <button type="button" class="ibtn" data-action="stayAwake" data-tooltip="{{localize "GWORLD.Hazard.StayAwakeHint"}}">
+            {{localize "GWORLD.Hazard.StayAwake"}}
+          </button>
+          <button type="button" class="ibtn" data-action="sleep" data-tooltip="{{localize "GWORLD.Hazard.SleepHintShort"}}">
+            {{localize "GWORLD.Hazard.SleepAction"}}
+          </button>
+        {{/if}}
+        {{#if rules.hiking}}
+          <button type="button" class="ibtn" data-action="hike" data-tooltip="{{localize "GWORLD.Hazard.HikeHint"}}">
+            {{localize "GWORLD.Hazard.Hike"}}
+          </button>
+        {{/if}}
+        {{#if rules.collisions}}
+          <button type="button" class="ibtn" data-action="struckBy" data-tooltip="{{localize "GWORLD.Hazard.CollisionHint"}}">
+            {{localize "GWORLD.Hazard.Collision"}}
+          </button>
+        {{/if}}
+        {{#if rules.electricity}}
+          <button type="button" class="ibtn" data-action="shock" data-tooltip="{{localize "GWORLD.Hazard.ShockHint"}}">
+            {{localize "GWORLD.Hazard.Shock"}}
+          </button>
+        {{/if}}
+        {{#if rules.fire}}
+          <button type="button" class="ibtn" data-action="burn" data-tooltip="{{localize "GWORLD.Hazard.FireHint"}}">
+            {{localize "GWORLD.Hazard.Fire"}}
+          </button>
+          <button type="button" class="ibtn" data-action="catchFire" data-tooltip="{{localize "GWORLD.Hazard.CatchFireHint"}}">
+            {{localize "GWORLD.Hazard.CatchFire"}}
+          </button>
+        {{/if}}
+        {{#if rules.radiation}}
+          <button type="button" class="ibtn" data-action="irradiate" data-tooltip="{{localize "GWORLD.Hazard.RadiationHint"}}">
+            {{localize "GWORLD.Hazard.Radiation"}}
+          </button>
+        {{/if}}
+      </div>
 
       {{#if poisons.length}}
         <div class="cellgrid">

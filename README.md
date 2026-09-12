@@ -159,6 +159,18 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
 - **Aging** — from 50, a series of four HT rolls a year, one per attribute
   and oftener later, that costs a level of the attribute when it fails;
   Longevity, Extended and Short Lifespan and Unaging are read.
+- **Missed sleep** — a sixteen-hour day, a point of fatigue past it and one
+  every four hours after, and only sleep to give them back.
+- **Hiking** — ten miles a Move a day by terrain and weather, at the fatigue
+  of a battle an hour.
+- **Collisions, electricity, flame and radiation** — being struck by
+  something moving, at its HP times its velocity; a shock's HT roll not to
+  be stunned or knocked out; seconds in a fire and whether the clothes
+  caught; doses in rads that accumulate, heal slowly and roll against the
+  table.
+- **Vehicles** — gear filed as a vehicle carries the book's stat line, and
+  its row offers a control roll at Handling that fails by the Stability
+  Rating.
 - **Temporary attribute penalties** — off the skills the attribute governs, and
   off nothing else: never a defense, a resistance roll or a Fright Check.
 - **Compendia** of advantages, disadvantages, skills, spells, equipment and

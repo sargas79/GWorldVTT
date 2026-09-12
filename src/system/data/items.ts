@@ -552,6 +552,12 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare unready: boolean;
   declare meleeModes: unknown[];
   declare rangedModes: unknown[];
+  declare vehicle: {
+    stHp: number; handling: number; stability: number; ht: number;
+    acceleration: number; topSpeed: number; loadedWeight: number; load: number;
+    sm: number; occupants: string; dr: number; range: number; skill: string;
+    locomotion: "wheels" | "tracks" | "legs" | "runners" | "water" | "air"; roadBound: boolean;
+  };
 
   static override defineSchema() {
     return {
@@ -576,6 +582,32 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
       }),
       meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: [] }),
       rangedModes: new fields.ArrayField(rangedModeField(), { required: true, initial: [] }),
+      /**
+       * The vehicle statistics (Campaigns pp. 462-463), read when the
+       * category is "vehicle": ST/HP, Hnd/SR, HT, Move as acceleration and
+       * top speed in yards a second, weights in tons, SM, occupants as
+       * "crew+passengers", DR, range in miles, and the control skill.
+       */
+      vehicle: new fields.SchemaField({
+        stHp: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 10, min: 0 }),
+        handling: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        stability: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 2, min: 0 }),
+        ht: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 10, min: 1 }),
+        acceleration: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0 }),
+        topSpeed: new fields.NumberField({ required: true, nullable: false, initial: 10, min: 0 }),
+        loadedWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        load: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        sm: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        occupants: new fields.StringField({ required: true, blank: true, initial: "1" }),
+        dr: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+        range: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        skill: new fields.StringField({ required: true, blank: true, initial: "" }),
+        locomotion: new fields.StringField({
+          required: true, nullable: false, initial: "wheels",
+          choices: ["wheels", "tracks", "legs", "runners", "water", "air"],
+        }),
+        roadBound: new fields.BooleanField({ initial: false }),
+      }),
     };
   }
 

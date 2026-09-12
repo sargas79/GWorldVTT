@@ -72,6 +72,15 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // A spell's colleges are a list, edited as one line: "Movement,
     // Protection & Warning". Its classes are checkboxes, since a spell may be
     // several at once (Characters p. 239).
+    // A vehicle is equipment with a stat line, and the sheet shows the line
+    // only when the category says so.
+    context.isVehicle = item.type === "equipment" && item.system?.category === "vehicle";
+    context.locomotions = (["wheels", "tracks", "legs", "runners", "water", "air"] as const).map((key) => ({
+      key,
+      label: game.i18n.localize(`GWORLD.Vehicle.Locomotion.${key}`),
+      selected: item.system?.vehicle?.locomotion === key,
+    }));
+
     if (item.type === "spell") {
       context.collegesText = (item.system.colleges ?? []).join(", ");
       context.isAttackSpell = (item.system.classes ?? []).some((c: string) => c === "missile" || c === "melee");

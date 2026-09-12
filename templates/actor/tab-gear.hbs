@@ -82,7 +82,13 @@
                            {{#unless @root.editable}}disabled{{/unless}}>
                   {{/if}}
                 </td>
-                <td><span class="wname" data-action="editItem">{{row.name}}</span></td>
+                <td>
+                  <span class="wname" data-action="editItem">{{row.name}}</span>
+                  {{#if row.vehicle}}
+                    <span class="rollable" data-action="controlVehicle"
+                          data-tooltip="{{localize 'GWORLD.Hazard.ControlHint'}}">{{> "gworld.die"}}</span>
+                  {{/if}}
+                </td>
                 <td class="n">{{row.quantity}}</td>
                 <td class="n">{{decimal row.weight 1}} lb</td>
                 <td class="n">${{row.cost}}</td>
