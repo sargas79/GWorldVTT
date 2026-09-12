@@ -1240,7 +1240,9 @@ async function promptForPenalties(current: {
  * asks for stated above them, because "select two skills from" is a rule the
  * player is meant to be able to see themselves keeping.
  */
-async function promptForTemplate(template: Template): Promise<TemplateEntry[] | null> {
+export async function chooseTemplateOptions(
+  template: Template,
+): Promise<TemplateEntry[] | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Template.${key}`);
   const escape = (text: string) => foundry.utils.escapeHTML(String(text ?? ""));
 
@@ -1353,7 +1355,7 @@ async function promptForTemplate(template: Template): Promise<TemplateEntry[] | 
  * Looks in the world's items and in every compendium the user can read, since
  * a table's own templates and the shipped ones are equally likely to be wanted.
  */
-async function promptForTemplateItem(): Promise<any | null> {
+export async function pickTemplateItem(): Promise<any | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Template.${key}`);
 
   const found: Array<{ uuid: string; name: string; kind: string; cost: number }> = [];
@@ -3274,7 +3276,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const template = templateFromItem(item);
     if (!template) return null;
 
-    const picks = await promptForTemplate(template);
+    const picks = await chooseTemplateOptions(template);
     if (picks === null) return null;
 
     await applyTemplateToActor({
@@ -3294,13 +3296,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * rather not go looking for the compendium first.
    */
   static async #onApplyTemplate(this: GWorldCharacterSheet) {
-    const chosen = await promptForTemplateItem();
+    const chosen = await pickTemplateItem();
     if (!chosen) return;
 
     const template = templateFromItem(chosen);
     if (!template) return;
 
-    const picks = await promptForTemplate(template);
+    const picks = await chooseTemplateOptions(template);
     if (picks === null) return;
 
     await applyTemplateToActor({

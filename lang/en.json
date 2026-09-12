@@ -447,7 +447,8 @@
         "disadvantages": "Disadvantages",
         "skills": "Skills and techniques",
         "gear": "Gear",
-        "review": "Review"
+        "review": "Review",
+        "templates": "Template"
       },
       "Hint": {
         "points": "How many points the character is built on, and how many may come back from disadvantages. Both are the GM's call for the campaign.",
@@ -456,7 +457,8 @@
         "disadvantages": "What the character is stuck with. These pay points back, up to the limit above.",
         "skills": "What the character has learned. Points spent on each are set on the sheet afterwards.",
         "gear": "What the character carries. Weight counts against encumbrance once it is marked carried.",
-        "review": "What the character has come to. Nothing here is fixed — the sheet edits all of it."
+        "review": "What the character has come to. Nothing here is fixed — the sheet edits all of it.",
+        "templates": "Optional. A template buys a package of traits in one go; everything after this step customises what it left you."
       },
       "Browse": {
         "advantages": "Add an advantage",
