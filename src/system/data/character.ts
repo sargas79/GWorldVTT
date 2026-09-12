@@ -190,6 +190,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     uuid: string;
     attributeCost: number;
     granted: Record<string, number>;
+    previous: Record<string, number>;
     itemIds: string[];
   }>;
   declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
@@ -395,6 +396,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             /** Size, which stacks and comes back off with the rest. */
             sm: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
           }),
+          /**
+           * What the sheet held before, keyed by the path each value came
+           * from ("attributes.ST", "purchased.hp"). Free-form because which
+           * paths a template writes depends on the template.
+           */
+          previous: new fields.ObjectField({ required: true, initial: {} }),
           /** The items it added, so removing it removes exactly those. */
           itemIds: new fields.ArrayField(
             new fields.StringField({ required: true, blank: true, initial: "" }),

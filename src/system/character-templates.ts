@@ -29,6 +29,16 @@ export interface AppliedTemplate {
   uuid: string;
   attributeCost: number;
   granted: Record<string, number>;
+  /**
+   * What the sheet held before, for the numbers a template writes rather than
+   * grants.
+   *
+   * A character template's attributes and secondary levels are bought, so
+   * there is nothing to "give back" -- but removal deletes the items it added,
+   * and leaving the attributes it set would be half a removal. What it
+   * overwrote is kept so that taking it off means taking it off.
+   */
+  previous: Record<string, number>;
   itemIds: string[];
 }
 
@@ -113,10 +123,12 @@ export async function applyTemplateToActor(options: {
   // ── the numbers ───────────────────────────────────────────────────────
   const changes: Record<string, unknown> = {};
   const granted: Record<string, number> = {};
+  const previous: Record<string, number> = {};
 
   // A character template states scores to buy; a racial one states modifiers
   // to whatever was bought, which are granted rather than billed.
   for (const [key, value] of Object.entries(applied.attributes)) {
+    previous[`attributes.${key}`] = Number(actor.system?.attributes?.[key]) || 10;
     changes[`system.attributes.${key}`] = value;
   }
   for (const [key, value] of Object.entries(applied.racial)) {
@@ -129,6 +141,7 @@ export async function applyTemplateToActor(options: {
   // exactly what it gave.
   for (const [key, value] of Object.entries(applied.purchased)) {
     const current = Number(actor.system?.purchased?.[key]) || 0;
+    previous[`purchased.${key}`] = current;
     changes[`system.purchased.${key}`] = current + value;
   }
   for (const [key, value] of Object.entries(applied.bonuses)) {
@@ -151,6 +164,7 @@ export async function applyTemplateToActor(options: {
     uuid: options.uuid ?? "",
     attributeCost: applied.attributeCost,
     granted,
+    previous,
     itemIds: created.map((item: { id: string }) => item.id),
   };
 
@@ -202,6 +216,11 @@ export async function removeTemplateFromActor(options: {
     const where = ["ST", "DX", "IQ", "HT"].includes(key) ? "racial" : "bonuses";
     const current = Number(actor.system?.[where]?.[key]) || 0;
     changes[`system.${where}.${key}`] = current - value;
+  }
+
+  // What a character template overwrote goes back exactly as it was.
+  for (const [path, value] of Object.entries(record.previous ?? {})) {
+    changes[`system.${path}`] = value;
   }
 
   changes["system.templates"] = templates.filter((_, index) => index !== options.index);
