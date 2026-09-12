@@ -17,7 +17,15 @@
       </div>
       <div class="fld">
         <span class="fl">{{localize "GWORLD.Field.Age"}}</span>
-        <div class="fi"><input type="text" name="system.details.age" value="{{system.details.age}}" {{#unless editable}}disabled{{/unless}}></div>
+        <div class="fi">
+          <input type="text" name="system.details.age" value="{{system.details.age}}" {{#unless editable}}disabled{{/unless}}>
+          {{#if (and rules.aging derived.aging.rollsPerYear)}}
+            <button type="button" class="ibtn tiny" data-action="agingRoll"
+                    data-tooltip="{{localize 'GWORLD.Life.AgingHint' rolls=derived.aging.rollsPerYear}}">
+              {{localize "GWORLD.Life.Aging"}}
+            </button>
+          {{/if}}
+        </div>
       </div>
     </div>
   </div>

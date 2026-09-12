@@ -118,9 +118,17 @@ export interface TraitEffects {
   infravision: boolean;
   /** Acute Senses (p. 35): a level each to the Perception roll for that sense. */
   acute: { vision: number; hearing: number; tasteSmell: number; touch: number };
-  /** Bad Sight (p. 123): nearsighted is -2 to ranged attacks, farsighted -3 to melee. */
+  /**
+   * Bad Sight (p. 123). Nearsighted: "-2 to skill" on a melee attack, and a
+   * ranged attack doubles the distance to the target when reading the range
+   * modifier. Farsighted: "-3 to DX on any close manual task, including
+   * close combat".
+   */
   badSight: "nearsighted" | "farsighted" | null;
-  /** One Eye (p. 147): -1 to ranged attacks, from the lack of depth. */
+  /**
+   * One Eye (p. 147): "-1 to DX in combat ... and -3 on ranged attacks
+   * (unless you Aim first)".
+   */
   oneEye: boolean;
   /** Hard of Hearing (p. 138): -4 on Hearing rolls. */
   hardOfHearing: boolean;
@@ -129,9 +137,11 @@ export interface TraitEffects {
   /** Blindness (p. 124): no Vision roll, and every attack is made blind, at the accustomed -6. */
   blindness: boolean;
   /**
-   * Lame (p. 141): crippled legs halve Basic Move; missing legs leave Move 2;
-   * legless or paraplegic leaves none. Each is a penalty to attacks and defenses
-   * on foot as well.
+   * Lame (p. 141): crippled legs are "-3 to use any skill that requires the
+   * use of your legs, including all Melee Weapon and unarmed combat skills
+   * (but not ranged combat skills)" and Basic Move of half Basic Speed;
+   * missing legs are -6 and Basic Move 2; legless or paraplegic are -6 and
+   * Basic Move 0.
    */
   lame: "crippled" | "missing" | "none" | null;
   /** One Arm (p. 147): nothing two-handed can be used. */
@@ -340,12 +350,19 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
       : { htRolls: 1, fatigueRecoveryMultiplier: 2 },
   "very fit": () => ({ htRolls: 2, fatigueRecoveryMultiplier: 2, fatigueLossHalved: true }),
 
-  // "Each level of Night Vision allows you to ignore -1 in darkness penalties"
-  // (p. 71); Dark Vision "can see in total darkness" (p. 47); Infravision sees
-  // the warmth of a living foe (p. 60).
+  // "Each level of this ability (maximum nine levels) allows you to ignore
+  // -1 in combat or vision penalties due to darkness, provided there is at
+  // least some light" (p. 71); Dark Vision suffers "no skill penalties for
+  // darkness, no matter what its origin" (p. 47); Infravision "lets you fight
+  // at no penalty even in absolute darkness, if your target emits heat"
+  // (p. 60); Hyperspectral Vision is "near-perfect night vision" and +3 on
+  // Vision rolls, and Infravision in total darkness (p. 60).
   "night vision": (levels) => ({ nightVision: Math.min(9, levels) }),
   "dark vision": () => ({ darkVision: true }),
   infravision: () => ({ infravision: true }),
+  "hyperspectral vision": () => ({
+    nightVision: 9, infravision: true, acute: { vision: 3, hearing: 0, tasteSmell: 0, touch: 0 },
+  }),
 
   // "+1 per level to all Sense rolls" for that sense (p. 35).
   "acute vision": (levels) => ({ acute: { vision: levels, hearing: 0, tasteSmell: 0, touch: 0 } }),
@@ -353,8 +370,8 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   "acute taste and smell": (levels) => ({ acute: { vision: 0, hearing: 0, tasteSmell: levels, touch: 0 } }),
   "acute touch": (levels) => ({ acute: { vision: 0, hearing: 0, tasteSmell: 0, touch: levels } }),
 
-  // "Nearsighted ... -2 to hit with ranged weapons. Farsighted ... -3 to hit
-  // in melee combat" (p. 123), and the senses that are missing outright.
+  // The eyes and ears that are short of the mark (pp. 123-147), each read
+  // where its page puts it.
   "bad sight (nearsighted)": () => ({ badSight: "nearsighted" }),
   "bad sight (farsighted)": () => ({ badSight: "farsighted" }),
   "one eye": () => ({ oneEye: true }),
@@ -363,8 +380,7 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   blindness: () => ({ blindness: true }),
   "one arm": () => ({ oneArm: true }),
 
-  // Lame (p. 141): "Crippled Legs: ... halve your Basic Move (round down)";
-  // "Missing Legs: ... Basic Move 2"; "Legless" and "Paraplegic" have none.
+  // Lame (p. 141): crippled legs, one leg, or none.
   "lame (crippled legs)": () => ({ lame: "crippled" }),
   "lame (missing legs)": () => ({ lame: "missing" }),
   "lame (legless)": () => ({ lame: "none" }),
@@ -541,13 +557,18 @@ function worseLameness(a: TraitEffects["lame"], b: TraitEffects["lame"]): TraitE
 /**
  * Basic Move after Lame (p. 141).
  *
- * "Crippled Legs ... halve your Basic Move (round down)", "Missing Legs ...
- * Basic Move 2", and the legless or paraplegic "have a Basic Move of 0".
+ * "Crippled Legs ... You must reduce your Basic Move to half your Basic Speed
+ * (round down)"; "Missing Legs ... You must reduce Basic Move to 2"; the
+ * legless and the paraplegic "must reduce Basic Move to 0".
  */
-export function lameMove(basicMove: number, lame: TraitEffects["lame"]): number {
+export function lameMove(
+  basicMove: number,
+  lame: TraitEffects["lame"],
+  basicSpeed: number = basicMove,
+): number {
   switch (lame) {
     case "crippled":
-      return Math.floor(basicMove / 2);
+      return Math.min(basicMove, Math.floor(basicSpeed / 2));
     case "missing":
       return Math.min(basicMove, 2);
     case "none":
@@ -558,8 +579,10 @@ export function lameMove(basicMove: number, lame: TraitEffects["lame"]): number 
 }
 
 /**
- * What Lame costs in a fight (p. 141): "-3 to attack and defense rolls" with
- * crippled legs, and "-6" without them.
+ * What Lame takes off a skill that needs legs (p. 141): "-3 to use any skill
+ * that requires the use of your legs, including all Melee Weapon and unarmed
+ * combat skills (but not ranged combat skills)" with crippled legs, and -6
+ * with fewer. Read into the melee skill levels, so the parry follows.
  */
 export function lameCombatPenalty(lame: TraitEffects["lame"]): number {
   switch (lame) {
@@ -601,22 +624,25 @@ export interface ImpairedAttack {
 }
 
 /**
- * What the physical disadvantages cost an attack (pp. 123, 141, 147).
+ * What the eyes cost an attack (pp. 123, 147).
  *
- * Nearsighted is "-2 to hit with ranged weapons" and farsighted "-3 to hit
- * in melee combat"; One Eye is "-1 to all ranged attacks"; Lame is a penalty
- * to every attack made on foot. Each is listed under its own name, because a
- * roll at -6 should say which three things it was.
+ * Nearsighted is "-2 to skill" when making a melee attack (at range it
+ * doubles the distance instead, which the range modifier reads); farsighted
+ * is "-3 to DX ... including close combat"; One Eye is "-1 to DX in combat
+ * ... and -3 on ranged attacks (unless you Aim first)". Each is listed under
+ * its own name, because a roll at -4 should say which things it was.
  */
 export function impairedAttacks(
-  effects: Pick<TraitEffects, "badSight" | "oneEye" | "lame">,
-  ranged: boolean,
+  effects: Pick<TraitEffects, "badSight" | "oneEye">,
+  situation: { ranged: boolean; aimed?: boolean; closeCombat?: boolean },
 ): ImpairedAttack[] {
   const out: ImpairedAttack[] = [];
-  if (ranged && effects.badSight === "nearsighted") out.push({ trait: "Bad Sight", value: -2 });
-  if (!ranged && effects.badSight === "farsighted") out.push({ trait: "Bad Sight", value: -3 });
-  if (ranged && effects.oneEye) out.push({ trait: "One Eye", value: -1 });
-  const lame = lameCombatPenalty(effects.lame);
-  if (lame !== 0) out.push({ trait: "Lame", value: lame });
+  if (!situation.ranged && effects.badSight === "nearsighted") out.push({ trait: "Bad Sight", value: -2 });
+  if (!situation.ranged && effects.badSight === "farsighted" && situation.closeCombat) {
+    out.push({ trait: "Bad Sight", value: -3 });
+  }
+  if (effects.oneEye) {
+    out.push({ trait: "One Eye", value: situation.ranged && !situation.aimed ? -4 : -1 });
+  }
   return out;
 }

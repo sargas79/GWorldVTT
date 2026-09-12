@@ -13,7 +13,8 @@
       "language": "Language",
       "technique": "Technique",
       "template": "Template",
-      "spell": "Spell"
+      "spell": "Spell",
+      "modifier": "Enhancement or Limitation"
     }
   },
   "GWORLD": {
@@ -452,6 +453,50 @@
           "Name": "High-speed movement",
           "Hint": "Going faster than you can stop: turning radius, and pushing the envelope."
         },
+        "study": {
+          "Name": "Improvement through study",
+          "Hint": "Hours of study become character points in the skill studied: 200 with a teacher, 400 alone or on the job."
+        },
+        "jobs": {
+          "Name": "Jobs and cost of living",
+          "Hint": "Money on the sheet: a monthly job roll that pays or does not, and a month's cost of living at your Status."
+        },
+        "aging": {
+          "Name": "Aging",
+          "Hint": "From 50, a series of four HT rolls a year, one per attribute; a failure costs a level of it."
+        },
+        "socialBackground": {
+          "Name": "Languages and cultures",
+          "Hint": "A Broken language is -3 and an Accented one -1 on Influence rolls, and an unfamiliar culture -3 on the same skills."
+        },
+        "sleep": {
+          "Name": "Missed sleep",
+          "Hint": "A day is sixteen hours; past it, a point of fatigue and another every four hours, and only sleep gives them back."
+        },
+        "hiking": {
+          "Name": "Hiking",
+          "Hint": "Ten miles a Move a day, by terrain and weather, at the fatigue of a battle an hour."
+        },
+        "collisions": {
+          "Name": "Collisions",
+          "Hint": "Being struck by something moving: its HP times its velocity, over a hundred, in dice."
+        },
+        "electricity": {
+          "Name": "Electricity",
+          "Hint": "A shock: a HT roll not to be stunned, or burning damage and a HT roll not to be knocked out."
+        },
+        "fire": {
+          "Name": "Flame",
+          "Hint": "Seconds in a fire, and whether a blow of burning damage set the clothes alight."
+        },
+        "radiation": {
+          "Name": "Radiation",
+          "Hint": "Doses in rads that accumulate and slowly heal, with a HT roll against the table each time."
+        },
+        "vehicles": {
+          "Name": "Vehicles",
+          "Hint": "Equipment with a stat line, and a control roll at its Handling that fails by its Stability Rating."
+        },
         "battleFatigue": {
           "Name": "Battle fatigue",
           "Hint": "A fight that runs past ten seconds costs everyone in it a point of fatigue when the tracker closes."
@@ -551,7 +596,8 @@
         "levels": "{name}: {from} → {to} levels.",
         "points": "{name}: {from} → {to} points.",
         "quantity": "{name}: {from} → {to}."
-      }
+      },
+      "Modifiers": "Enhancements and limitations"
     },
     "Condition": {
       "AllOutDefense": "All-Out Defense",
@@ -1028,6 +1074,7 @@
         "weapon": "Weapons",
         "tool": "Tools",
         "consumable": "Consumables",
+        "vehicle": "Vehicles",
         "misc": "Miscellaneous"
       }
     },
@@ -1182,10 +1229,14 @@
       "FromTraits": "From the sheet",
       "When": {
         "attracted": "from those attracted to your sex",
-        "knowing": "from those who know the reputation",
-        "respectful": "from those who respect status",
+        "knowing": "from those who know of it",
+        "respectful": "from those in your culture who respect Status",
         "pitying": "from those who might feel pity",
-        "stylish": "where clothing might matter"
+        "stylish": "where clothing might matter",
+        "impressed": "from those who notice the talent and would be impressed",
+        "ownKind": "from anyone but your own kind",
+        "faithful": "from followers of the faith",
+        "adult": "when dealing with others as an adult"
       },
       "Hint": "What an NPC makes of this character: 3d, modifiers on the dice, high is good",
       "Title": "Reaction",
@@ -1902,15 +1953,259 @@
         "module": "Modules"
       }
     },
+    "Hazard": {
+      "Sleep": "Sleep",
+      "SleepAction": "Sleep",
+      "StayAwake": "Stay up",
+      "StayAwakeHint": "Past the day, a point of fatigue and another every four hours (Campaigns p. 427)",
+      "SleepHintShort": "A full sleep period gives a point back, and every hour beyond it another",
+      "HoursAwake": "Hours awake",
+      "MissedSleep": "Hours of sleep missed last night",
+      "SleepHint": "The day is 24 hours less the sleep period, less twice the sleep missed; from there it costs 1 FP, and 1 FP every four hours after.",
+      "HoursSlept": "Hours slept",
+      "DoesntSleep": "Doesn't Sleep: the whole section is ignored",
+      "Awake": "{hours} hours awake, {missed} hours of sleep missed last night",
+      "StayedUpFree": "Within the {day}-hour day: no cost yet",
+      "StayedUpCost": "{fp} FP past the {day}-hour day",
+      "Dozing": "Half the FP or more lost to sleep: a Will roll every {minutes} minutes of inaction, or fall asleep",
+      "DozingBadly": "Under a third of FP: a Will roll every {minutes} minutes of inaction or every {active} of action",
+      "FatigueInjury": "Below 0 FP: {hp} HP of injury with it",
+      "Slept": "{hours} hours of sleep, against a sleep period of {period}",
+      "SleptShort": "Short of the {period}-hour sleep period: nothing back",
+      "SleptRecovered": "{fp} FP back: {previous} → {now} / {max}",
+      "Hike": "March",
+      "HikeHint": "A day on the road: ten miles a Move, by terrain and weather, and the fatigue of a battle an hour (Campaigns pp. 351, 426)",
+      "HoursMarched": "Hours marched",
+      "TerrainLabel": "Terrain",
+      "Terrain": {
+        "veryBad": "Very bad (deep snow, jungle, mountains, swamp)",
+        "bad": "Bad (broken ground, forest, steep hills)",
+        "average": "Average (light forest, rolling hills, roads)",
+        "good": "Good (hard desert, level plains, the best roads)"
+      },
+      "WeatherLabel": "Weather",
+      "Weather": {
+        "fair": "Fair",
+        "rain": "Rain",
+        "snow": "Ankle-deep snow",
+        "deepSnow": "Deeper snow",
+        "ice": "Ice"
+      },
+      "HotDay": "A hot day (+1 FP an hour)",
+      "HikingMade": "Hiking roll made: a fifth farther",
+      "HikingMissed": "Hiking roll missed",
+      "Miles": "{miles} miles for a full day over {terrain}, {weather}",
+      "MarchCost": "{hours} hours at {perHour} FP an hour: {fp} FP",
+      "Collision": "Struck",
+      "CollisionHint": "Something moving hits you: (its HP × velocity)/100 dice of crushing damage (Campaigns pp. 430-432)",
+      "ObjectHp": "HP of what struck",
+      "ObjectVelocity": "Its velocity (yards/second)",
+      "OwnVelocity": "Your velocity (yards/second)",
+      "AngleLabel": "Angle",
+      "Angle": {
+        "side": "Side-on, or you were still",
+        "headOn": "Head-on (velocities added)",
+        "rearEnd": "Rear-end (velocities subtracted)"
+      },
+      "Shape": "Shape of what struck",
+      "Blunt": "Blunt (crushing)",
+      "Sharp": {
+        "cut": "Sharp (half damage, cutting)",
+        "imp": "Spiked (half damage, impaling)",
+        "pi": "Bullet-shaped (half damage, piercing)"
+      },
+      "ObjectSm": "Its Size Modifier",
+      "StruckAt": "Struck by something of {hp} HP at {velocity} yards/second, {angle}",
+      "CollisionDamage": "{formula} = {rolled} to the {location}, DR {dr}",
+      "Injury": "{injury} HP of injury: {previous} → {now}",
+      "Overrun": "Overrun, two sizes larger: thrust {formula} = {rolled}, {injury} HP more",
+      "Shock": "Shock",
+      "BadFormula": "Not a damage roll: {formula}",
+      "ShockHint": "Electricity: a HT roll not to be stunned, or burning damage and a HT roll not to be knocked out (Campaigns pp. 432-433)",
+      "ShockKindLabel": "Kind of shock",
+      "ShockKind": {
+        "nonlethal": "Nonlethal: stun weapons, electric fences, static",
+        "lethal": "Lethal: mains, lightning, transmission lines",
+        "localized": "Localized: a burn to one part of the body"
+      },
+      "ShockModifier": "HT modifier for the strength",
+      "Continuous": "Continuous (stun gun, fence), not a jolt",
+      "ShockFormula": "Burning damage",
+      "MetalArmor": "In metal armour (DR 1 only)",
+      "ShockDamage": "{formula} = {rolled} burning, DR {dr}: {injury} HP, {previous} → {now}",
+      "ShockHarmless": "Nothing got through: no roll",
+      "ShockHeld": "Held",
+      "ShockStunned": "Stunned, for {seconds} second(s) before HT rolls to recover",
+      "ShockOut": "Unconscious for {minutes} minute(s), then -2 DX for {dazed} more",
+      "HeartAttack": "Failed by 5 or more: a heart attack (Mortal Conditions, Campaigns p. 429)",
+      "Fire": "Flame",
+      "FireHint": "Seconds in a fire: 1d-3 for part of a turn, 1d-1 a second for all of it or when alight (Campaigns p. 433)",
+      "ExposureLabel": "Exposure",
+      "Exposure": {
+        "partTurn": "Part of a turn in the flames (1d-3)",
+        "fullTurn": "All of a turn, or on fire (1d-1 a second)",
+        "intense": "Molten metal or a furnace (3d a second)"
+      },
+      "Seconds": "Seconds",
+      "Burned": "{seconds} second(s): {exposure}, {formula} each",
+      "FireRolled": "{total} burning damage rolled in all",
+      "CatchFire": "Catching fire",
+      "CatchFireHint": "Whether a blow of burning damage set the clothes alight: 3 points for part, 10 for all (Campaigns p. 434)",
+      "BasicBurning": "Basic burning damage of the blow",
+      "TightBeam": "A tight-beam attack (divided by 10)",
+      "BlowOfBurning": "A blow of {damage} burning",
+      "Alight": {
+        "part": "Part of the clothing alight: {formula} burning a second, {dx} DX",
+        "all": "All the clothes alight: {formula} burning a second, {dx} DX"
+      },
+      "PutOut": "A DX roll to put out, each attempt {readies} Ready maneuver(s); water puts it out at once",
+      "NotAlight": "Nothing caught",
+      "Radiation": "Radiation",
+      "RadiationHint": "A dose in rads, shielded by a Protection Factor, added to what is carried; a HT roll against the accumulated dose (Campaigns pp. 435-436)",
+      "Rads": "Rads received",
+      "ProtectionFactor": "Protection Factor of the shielding",
+      "RadsUnit": "rads",
+      "DoseLine": "accumulated; HT rolls at {modifier} (Campaigns p. 436)",
+      "Dosed": "{rads} rads after shielding; {total} rads accumulated",
+      "NoDose": "Under a rad: no roll",
+      "Effect": {
+        "none": "No obvious effect; the dose accumulates",
+        "A": "A: radiation burns. HT hours on, 1d of injury and Low Pain Threshold for a week; two more HT rolls, for sterility and Terminally Ill on a critical failure",
+        "B": "B: hematopoietic syndrome. As A, and after HT hours nausea for (40 - HT) hours, 1d off each of DX, IQ and FP, Hemophilia, and a daily HT roll",
+        "C": "C: gastrointestinal syndrome. As B, and in 1d/2 weeks the hair goes and injury comes daily until a critical success",
+        "D": "D: terminal radiation sickness. As C, HP loss from 1d/2 days, and death is certain",
+        "E": "E: rapid cerebrovascular death within hours"
+      },
+      "Control": "Control roll",
+      "ControlHint": "A control roll against the vehicle's skill at its Handling (Campaigns p. 466)",
+      "Controlled": "{vehicle}: {skill} at Handling {handling}",
+      "ControlResult": {
+        "ok": "In control",
+        "minor": "Failed by no more than the Stability Rating: a minor problem, a skid or lost time",
+        "major": "Failed by more than the Stability Rating: a major problem, a crash; the GM may allow a second roll at a hefty penalty",
+        "disaster": "A critical failure: disaster is inevitable"
+      }
+    },
+    "Vehicle": {
+      "Statistics": "Vehicle statistics",
+      "StHp": "ST/HP",
+      "Handling": "Handling (Hnd)",
+      "Stability": "Stability Rating (SR)",
+      "HT": "HT",
+      "Acceleration": "Acceleration (yards/s)",
+      "TopSpeed": "Top Speed (yards/s)",
+      "LoadedWeight": "Loaded weight (tons)",
+      "Load": "Load (tons)",
+      "SM": "SM",
+      "Occupants": "Occupants (crew+passengers)",
+      "DR": "DR",
+      "Range": "Range (miles)",
+      "Skill": "Control skill",
+      "LocomotionLabel": "Moves on",
+      "Locomotion": {
+        "wheels": "wheels",
+        "tracks": "tracks",
+        "legs": "legs",
+        "runners": "runners or skids",
+        "water": "water",
+        "air": "air"
+      },
+      "RoadBound": "Road-bound (an ordinary car)",
+      "Hint": "The line as the tables print it (Campaigns pp. 462-465). The Gear tab offers a control roll against the skill at Handling; a failure by more than the Stability Rating is a crash."
+    },
     "GearCategory": {
       "weapon": "Weapon",
       "tool": "Tool",
       "consumable": "Consumable",
+      "vehicle": "Vehicle",
       "misc": "Miscellaneous"
     },
     "Natural": {
       "punch": "Punch",
-      "kick": "Kick"
+      "kick": "Kick",
+      "bite": "Bite",
+      "claw": "Claw",
+      "striker": "Striker"
+    },
+    "Life": {
+      "Study": "Study",
+      "StudyHint": "200 hours of learning make a point: an hour of instruction is an hour, intensive training counts double, self-teaching counts half and work a quarter (Characters pp. 292-293). Hours short of a point are banked on the skill.",
+      "StudyAward": "Study: {skill}",
+      "Studied": "{hours} hours of {method} on {skill}",
+      "Method": {
+        "education": "instruction",
+        "intensive": "intensive training",
+        "selfTeaching": "self-teaching",
+        "onTheJob": "work"
+      },
+      "Skill": "Skill",
+      "Hours": "Hours",
+      "How": "How",
+      "PointsEarned": "{points} character point(s) into the skill",
+      "NoPointYet": "Not a whole point yet",
+      "Banked": "{hours} hours banked toward the next",
+      "BankedShort": "{hours} h banked",
+      "NoSkills": "Nothing to study: add a skill first",
+      "Money": "Money",
+      "Cash": "Cash",
+      "StartingWealth": "started with",
+      "GearCost": "Gear",
+      "GearHint": "what everything owned cost",
+      "CostOfLiving": "Cost of living",
+      "PerMonth": "a month, at this Status (Characters p. 265)",
+      "DebtLine": "Debt ${amount} a month",
+      "IncomeLine": "Independent Income ${amount} a month",
+      "DebtPaid": "Debt paid: ${amount}",
+      "IncomeReceived": "Independent Income received: ${amount}",
+      "Pay": "Pay a month",
+      "PaidMonths": "{months} month(s) of living paid: ${amount}",
+      "MoneyLeft": "${amount} left",
+      "Months": "Months",
+      "Status": "Status",
+      "Wealth": {
+        "deadBroke": "Dead Broke",
+        "poor": "Poor",
+        "struggling": "Struggling",
+        "average": "Average",
+        "comfortable": "Comfortable",
+        "wealthy": "Wealthy",
+        "veryWealthy": "Very Wealthy",
+        "filthyRich": "Filthy Rich",
+        "multimillionaire": "Multimillionaire"
+      },
+      "Job": "Job",
+      "JobTitle": "Job",
+      "JobSkill": "Rolled against",
+      "JobLevel": "Pays at",
+      "JobKindLabel": "Paid as",
+      "JobKind": {
+        "wage": "a fixed wage",
+        "freelance": "freelance, by the margin"
+      },
+      "JobRisk": "Risk",
+      "JobPays": "Pays ${amount} a month (Campaigns pp. 516-517).",
+      "JobHint": "Name a job and the skill it is rolled against; a typical job at this tech level pays ${amount} a month (Campaigns p. 517).",
+      "WorkMonth": "Work a month",
+      "Worked": "A month as {title}, rolled against {skill}, paid as {kind}",
+      "NoJob": "No job to work: give it a title and a skill the character has",
+      "Paid": "Paid ${amount}",
+      "NotPaid": "Not paid this month",
+      "ByMargin": "{percent}% of the monthly pay, by the margin",
+      "Raise": "A critical success: a {percent}% permanent raise",
+      "Disaster": "A critical failure is always bad: demotion, lost savings, the sack, an injury or an arrest, as the GM decides",
+      "DisasterNamed": "A critical failure is always bad, and this job's risk is: {risk}",
+      "Aging": "Aging roll",
+      "AgingHint": "{rolls} series a year of four HT rolls, one per attribute (Campaigns p. 444)",
+      "AgingDetail": "Age {age}: {rolls} series a year, at {modifier} for medical tech level and fitness",
+      "Held": "{attribute}: rolled {roll}, holding up",
+      "HeldByLongevity": "{attribute}: rolled {roll}, held by Longevity",
+      "Lost": "{attribute}: rolled {roll}, {points} level(s) lost",
+      "NaturalDeath": "An attribute has reached 0: a natural death",
+      "Unaging": "Unaging: no aging rolls at all",
+      "LanguageUsed": "Language used",
+      "NoLanguage": "Native, or none needed",
+      "Unfamiliar": "In an unfamiliar culture (-3 to the skill)",
+      "UnfamiliarAdaptable": "In an unfamiliar culture (Cultural Adaptability: no penalty)"
     },
     "Senses": {
       "vision": "Vision",
@@ -1920,7 +2215,9 @@
       "Missing": "no roll"
     },
     "Attack": {
-      "ImpairedMelee": "Taken off every melee attack roll (Characters pp. 123, 141)",
+      "ImpairedMelee": "Taken off every melee attack roll (Characters p. 123)",
+      "Lame": "Lame {penalty}",
+      "LameHint": "Taken off every Melee Weapon and unarmed combat skill, and so off the parry (Characters p. 141)",
       "ImpairedRanged": "Taken off every ranged attack roll (Characters pp. 123, 147)",
       "AtDefaultHint": "The skill is not on the sheet; this is the book's default for it.",
       "PerTurn": "{count} attacks a turn",
@@ -1951,6 +2248,24 @@
       "Title": "Battle fatigue",
       "Seconds": "{seconds} seconds of fighting",
       "Charged": "{fp} FP from {names}"
+    },
+    "Modifier": {
+      "Browse": "Browse the book's",
+      "BrowseHint": "Pick an enhancement or limitation from the compendium (Characters pp. 101-117) at the level wanted; it is written onto the trait as a name and a percentage.",
+      "None": "No enhancements or limitations in the chosen compendia",
+      "Level": "Level",
+      "Kind": "Kind",
+      "Kinds": {
+        "enhancement": "Enhancement",
+        "limitation": "Limitation",
+        "special": "Special (priced by hand)"
+      },
+      "Value": "Percent (a level)",
+      "MaxLevels": "Max levels",
+      "Group": "Group",
+      "CostTable": "Percent at each level",
+      "LevelNames": "Level names",
+      "Hint": "A flat modifier carries its percent; one priced by level carries the percent at each level, and the names the book gives them, separated by semicolons."
     }
   }
 }

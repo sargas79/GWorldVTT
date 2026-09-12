@@ -30,6 +30,14 @@ import { drinkForAnHour, drinkingState, hangoverRoll, soberUpRoll } from "../int
 import { checkInfection, exposeToDisease } from "../disease.js";
 import { checkOverpenetration, rollScatter, splashInTheFace } from "../gunplay.js";
 import { rollInfluence, rollReaction } from "../reactions.js";
+import { payCostOfLiving, rollAging, studySkill, workAMonth } from "../life.js";
+import {
+  burn, catchFire, controlVehicle, hike, irradiate, shock, sleepFor, stayAwake, struckBy,
+} from "../hazards.js";
+import type { CollisionAngle } from "../../rules/collisions.js";
+import type { DamageType } from "../../rules/types.js";
+import { culturePenalty, languagePenalty, type Comprehension } from "../../rules/languages.js";
+import type { StudyMethod } from "../../rules/study.js";
 import { rollPushingTheEnvelope, rollStayOn } from "../mounted.js";
 import { rollThrow } from "../throwing.js";
 import {
@@ -1007,6 +1015,18 @@ async function promptForSplash(): Promise<{
  * have a -5 reaction to anybody" -- and applying it by hand afterwards means
  * remembering it at the moment the dice land.
  */
+/** What the sheet says about the languages spoken, or null when the rule is off. */
+function socialBackgroundOf(actor: any): SocialBackground | null {
+  if (!isRuleOn("socialBackground")) return null;
+  return {
+    languages: (actor?.system?.derived?.languages ?? []).map((lang: any) => ({
+      name: String(lang.name ?? ""),
+      spoken: String(lang.spoken ?? "none") as Comprehension,
+    })),
+    adaptable: actor?.system?.derived?.culturallyAdaptable === true,
+  };
+}
+
 async function promptForReaction(sources: ReactionSource[]): Promise<{
   modifier: number;
   best: Reaction | null;
@@ -1076,6 +1096,7 @@ async function promptForReaction(sources: ReactionSource[]): Promise<{
         form?.querySelectorAll<HTMLInputElement>('input[name^="source-"]').forEach((box) => {
           if (box.checked) ticked += Number(box.dataset.value) || 0;
         });
+
         return {
           modifier:
             (Number(form?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value ?? 0) || 0) +
@@ -1092,8 +1113,267 @@ async function promptForReaction(sources: ReactionSource[]): Promise<{
   return result && typeof result === "object" ? (result as never) : null;
 }
 
+/** Asks what was studied, for how long, and how (Characters p. 292). */
+async function promptForStudy(
+  skills: Array<{ id: string; name: string; banked: number }>,
+): Promise<{ skillId: string; hours: number; method: StudyMethod } | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Life.${key}`);
+  const options = skills
+    .map(
+      (skill) =>
+        `<option value="${skill.id}">${skill.name}${skill.banked ? ` (${game.i18n.format("GWORLD.Life.BankedShort", { hours: skill.banked })})` : ""}</option>`,
+    )
+    .join("");
+  const methods = (["education", "intensive", "selfTeaching", "onTheJob"] as const)
+    .map((m) => `<option value="${m}">${L(`Method.${m}`)}</option>`)
+    .join("");
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Study") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Skill")}</span>
+        <select name="skill" style="width:200px">${options}</select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Hours")}</span>
+        <input type="number" name="hours" value="200" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("How")}</span>
+        <select name="method" style="width:200px">${methods}</select>
+      </label>
+      <p class="ihint" style="margin:0">${L("StudyHint")}</p>
+    </div>`,
+    ok: {
+      label: L("Study"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        return {
+          skillId: form?.querySelector<HTMLSelectElement>('select[name="skill"]')?.value ?? "",
+          hours: Number(form?.querySelector<HTMLInputElement>('input[name="hours"]')?.value ?? 0) || 0,
+          method: (form?.querySelector<HTMLSelectElement>('select[name="method"]')?.value ?? "education") as StudyMethod,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" && (result as { skillId: string }).skillId
+    ? (result as never)
+    : null;
+}
+
+const HZ = (key: string) => game.i18n.localize(`GWORLD.Hazard.${key}`);
+
+/** A number field for the hazard prompts. */
+function hazardField(name: string, label: string, value: string | number, extra = ""): string {
+  return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <span>${label}</span>
+      <input type="number" name="${name}" value="${value}" step="1" ${extra} style="width:90px">
+    </label>`;
+}
+
+function hazardSelect(name: string, label: string, options: Array<[string, string]>): string {
+  return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <span>${label}</span>
+      <select name="${name}" style="width:180px">${options.map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select>
+    </label>`;
+}
+
+function hazardCheck(name: string, label: string): string {
+  return `<label style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" name="${name}"><span>${label}</span>
+    </label>`;
+}
+
+/** Runs one of the hazard prompts and reads its form back. */
+async function hazardPrompt<T>(title: string, content: string, read: (form: HTMLElement | null) => T): Promise<T | null> {
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">${content}</div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => read(button.closest<HTMLElement>(".application")),
+    },
+    rejectClose: false,
+  });
+  return result && typeof result === "object" ? (result as T) : null;
+}
+
+const num = (form: HTMLElement | null, name: string) =>
+  Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
+const str = (form: HTMLElement | null, name: string) =>
+  form?.querySelector<HTMLSelectElement | HTMLInputElement>(`[name="${name}"]`)?.value ?? "";
+const ticked = (form: HTMLElement | null, name: string) =>
+  form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+
+async function promptForStayingUp(): Promise<{ hoursAwake: number; missedSleepHours: number } | null> {
+  return hazardPrompt(
+    HZ("Sleep"),
+    hazardField("awake", HZ("HoursAwake"), 20, 'min="0"') +
+      hazardField("missed", HZ("MissedSleep"), 0, 'min="0"') +
+      `<p class="ihint" style="margin:0">${HZ("SleepHint")}</p>`,
+    (form) => ({ hoursAwake: num(form, "awake"), missedSleepHours: num(form, "missed") }),
+  );
+}
+
+async function promptForHike(): Promise<{
+  hours: number; terrain: "veryBad" | "bad" | "average" | "good";
+  weather: "fair" | "rain" | "snow" | "deepSnow" | "ice"; hot: boolean; modifier: number;
+} | null> {
+  const terrains: Array<[string, string]> = (["average", "good", "bad", "veryBad"] as const).map((k) => [k, HZ(`Terrain.${k}`)]);
+  const weathers: Array<[string, string]> = (["fair", "rain", "snow", "deepSnow", "ice"] as const).map((k) => [k, HZ(`Weather.${k}`)]);
+  return hazardPrompt(
+    HZ("Hike"),
+    hazardField("hours", HZ("HoursMarched"), 8, 'min="0"') +
+      hazardSelect("terrain", HZ("TerrainLabel"), terrains) +
+      hazardSelect("weather", HZ("WeatherLabel"), weathers) +
+      hazardCheck("hot", HZ("HotDay")) +
+      hazardField("modifier", game.i18n.localize("GWORLD.Chat.Modifier"), 0),
+    (form) => ({
+      hours: num(form, "hours"),
+      terrain: (str(form, "terrain") || "average") as "veryBad" | "bad" | "average" | "good",
+      weather: (str(form, "weather") || "fair") as "fair" | "rain" | "snow" | "deepSnow" | "ice",
+      hot: ticked(form, "hot"),
+      modifier: num(form, "modifier"),
+    }),
+  );
+}
+
+async function promptForCollision(): Promise<{
+  objectHp: number; objectVelocity: number; ownVelocity: number; angle: CollisionAngle;
+  sharp: DamageType | null; objectSm: number | null;
+} | null> {
+  const angles: Array<[string, string]> = (["side", "headOn", "rearEnd"] as const).map((k) => [k, HZ(`Angle.${k}`)]);
+  const shapes: Array<[string, string]> = [["", HZ("Blunt")], ["cut", HZ("Sharp.cut")], ["imp", HZ("Sharp.imp")], ["pi", HZ("Sharp.pi")]];
+  return hazardPrompt(
+    HZ("Collision"),
+    hazardField("hp", HZ("ObjectHp"), 10, 'min="0"') +
+      hazardField("velocity", HZ("ObjectVelocity"), 5, 'min="0"') +
+      hazardField("own", HZ("OwnVelocity"), 0, 'min="0"') +
+      hazardSelect("angle", HZ("AngleLabel"), angles) +
+      hazardSelect("shape", HZ("Shape"), shapes) +
+      hazardField("sm", HZ("ObjectSm"), 0) +
+      `<p class="ihint" style="margin:0">${HZ("CollisionHint")}</p>`,
+    (form) => ({
+      objectHp: num(form, "hp"),
+      objectVelocity: num(form, "velocity"),
+      ownVelocity: num(form, "own"),
+      angle: (str(form, "angle") || "side") as CollisionAngle,
+      sharp: (str(form, "shape") || null) as DamageType | null,
+      objectSm: num(form, "sm"),
+    }),
+  );
+}
+
+async function promptForShock(): Promise<{
+  kind: "nonlethal" | "lethal" | "localized"; modifier: number; continuous: boolean; formula: string; metalArmor: boolean;
+} | null> {
+  const kinds: Array<[string, string]> = (["nonlethal", "lethal", "localized"] as const).map((k) => [k, HZ(`ShockKind.${k}`)]);
+  return hazardPrompt(
+    HZ("Shock"),
+    hazardSelect("kind", HZ("ShockKindLabel"), kinds) +
+      hazardField("modifier", HZ("ShockModifier"), 0) +
+      hazardCheck("continuous", HZ("Continuous")) +
+      `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${HZ("ShockFormula")}</span>
+        <input type="text" name="formula" value="1d-3" style="width:90px">
+      </label>` +
+      hazardCheck("metal", HZ("MetalArmor")) +
+      `<p class="ihint" style="margin:0">${HZ("ShockHint")}</p>`,
+    (form) => ({
+      kind: (str(form, "kind") || "nonlethal") as "nonlethal" | "lethal" | "localized",
+      modifier: num(form, "modifier"),
+      continuous: ticked(form, "continuous"),
+      formula: str(form, "formula"),
+      metalArmor: ticked(form, "metal"),
+    }),
+  );
+}
+
+async function promptForFire(): Promise<{ exposure: "partTurn" | "fullTurn" | "intense"; seconds: number } | null> {
+  const exposures: Array<[string, string]> = (["partTurn", "fullTurn", "intense"] as const).map((k) => [k, HZ(`Exposure.${k}`)]);
+  return hazardPrompt(
+    HZ("Fire"),
+    hazardSelect("exposure", HZ("ExposureLabel"), exposures) +
+      hazardField("seconds", HZ("Seconds"), 1, 'min="1" max="60"'),
+    (form) => ({
+      exposure: (str(form, "exposure") || "partTurn") as "partTurn" | "fullTurn" | "intense",
+      seconds: num(form, "seconds"),
+    }),
+  );
+}
+
+async function promptForCatchingFire(): Promise<{ basicBurningDamage: number; tightBeam: boolean } | null> {
+  return hazardPrompt(
+    HZ("CatchFire"),
+    hazardField("damage", HZ("BasicBurning"), 3, 'min="0"') +
+      hazardCheck("beam", HZ("TightBeam")),
+    (form) => ({ basicBurningDamage: num(form, "damage"), tightBeam: ticked(form, "beam") }),
+  );
+}
+
+async function promptForRadiation(): Promise<{ rads: number; protectionFactor: number; modifier: number } | null> {
+  return hazardPrompt(
+    HZ("Radiation"),
+    hazardField("rads", HZ("Rads"), 10, 'min="0"') +
+      hazardField("pf", HZ("ProtectionFactor"), 1, 'min="1"') +
+      hazardField("modifier", game.i18n.localize("GWORLD.Chat.Modifier"), 0) +
+      `<p class="ihint" style="margin:0">${HZ("RadiationHint")}</p>`,
+    (form) => ({ rads: num(form, "rads"), protectionFactor: Math.max(1, num(form, "pf")), modifier: num(form, "modifier") }),
+  );
+}
+
+/** A vehicle's stat line as the tables print it: ST/HP, Hnd/SR, HT, Move, DR. */
+function vehicleNotes(item: any): string {
+  const v = item.system?.vehicle ?? {};
+  const signed = (n: number) => (n >= 0 ? `+${n}` : String(n));
+  return `${v.stHp ?? 0} · Hnd/SR ${signed(Number(v.handling) || 0)}/${v.stability ?? 0} · HT ${v.ht ?? 10} · Move ${v.acceleration ?? 0}/${v.topSpeed ?? 0} · DR ${v.dr ?? 0}${v.skill ? ` · ${v.skill}` : ""}`;
+}
+
+/** The languages and manners a social roll is made in (Characters pp. 23-24). */
+interface SocialBackground {
+  languages: Array<{ name: string; spoken: Comprehension }>;
+  adaptable: boolean;
+}
+
+/** The markup for the language select and the culture box, or nothing when the rule is off. */
+function socialBackgroundFields(background: SocialBackground | null): string {
+  if (!background) return "";
+  const L = (key: string) => game.i18n.localize(`GWORLD.Life.${key}`);
+  const languages = [`<option value="">${L("NoLanguage")}</option>`]
+    .concat(
+      background.languages.map(
+        (lang) =>
+          `<option value="${lang.spoken}">${lang.name} (${game.i18n.localize(`GWORLD.Language.${lang.spoken}`)})</option>`,
+      ),
+    )
+    .join("");
+  return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <span>${L("LanguageUsed")}</span>
+      <select name="language" style="width:200px">${languages}</select>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" name="unfamiliar">
+      <span>${background.adaptable ? L("UnfamiliarAdaptable") : L("Unfamiliar")}</span>
+    </label>`;
+}
+
+/** What the language chosen and the culture ticked cost (Characters pp. 23-24). */
+function socialBackgroundPenalty(form: HTMLElement | null, background: SocialBackground | null): number {
+  if (!background || !form) return 0;
+  const spoken = form.querySelector<HTMLSelectElement>('select[name="language"]')?.value ?? "";
+  const language = spoken ? (languagePenalty(spoken as Comprehension) ?? 0) : 0;
+  const unfamiliar = form.querySelector<HTMLInputElement>('input[name="unfamiliar"]')?.checked ?? false;
+  return language + culturePenalty(unfamiliar, background.adaptable ? [{ name: "Cultural Adaptability" }] : []);
+}
+
 /** Asks which Influence skill is being tried, and how (Campaigns p. 359). */
-async function promptForInfluence(skills: Array<{ name: string; level: number }>): Promise<{
+async function promptForInfluence(
+  skills: Array<{ name: string; level: number }>,
+  background: SocialBackground | null = null,
+): Promise<{
   skill: string;
   skillLevel: number;
   modifier: number;
@@ -1125,6 +1405,7 @@ async function promptForInfluence(skills: Array<{ name: string; level: number }>
         <input type="checkbox" name="specious">
         <span>${L("Specious")}</span>
       </label>
+      ${socialBackgroundFields(background)}
     </div>`,
     ok: {
       label: game.i18n.localize("GWORLD.Chat.Roll"),
@@ -1134,8 +1415,11 @@ async function promptForInfluence(skills: Array<{ name: string; level: number }>
         return {
           skill: name,
           skillLevel: skills.find((skill) => skill.name === name)?.level ?? 4,
+          // The language spoken and the culture it is spoken in come off the
+          // Influence roll (Characters pp. 23-24).
           modifier:
-            Number(form?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value ?? 0) || 0,
+            (Number(form?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value ?? 0) || 0) +
+            socialBackgroundPenalty(form, background),
           reactionModifier:
             Number(form?.querySelector<HTMLInputElement>('input[name="reaction"]')?.value ?? 0) || 0,
           specious:
@@ -1849,6 +2133,19 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       toggleSkillOrder: GWorldCharacterSheet.#onToggleSkillOrder,
       readyWeapon: GWorldCharacterSheet.#onReadyWeapon,
       regenerate: GWorldCharacterSheet.#onRegenerate,
+      study: GWorldCharacterSheet.#onStudy,
+      workMonth: GWorldCharacterSheet.#onWorkMonth,
+      payLiving: GWorldCharacterSheet.#onPayLiving,
+      agingRoll: GWorldCharacterSheet.#onAgingRoll,
+      stayAwake: GWorldCharacterSheet.#onStayAwake,
+      sleep: GWorldCharacterSheet.#onSleep,
+      hike: GWorldCharacterSheet.#onHike,
+      struckBy: GWorldCharacterSheet.#onStruckBy,
+      shock: GWorldCharacterSheet.#onShock,
+      burn: GWorldCharacterSheet.#onBurn,
+      catchFire: GWorldCharacterSheet.#onCatchFire,
+      irradiate: GWorldCharacterSheet.#onIrradiate,
+      controlVehicle: GWorldCharacterSheet.#onControlVehicle,
       castSpell: GWorldCharacterSheet.#onCastSpell,
       maintainSpell: GWorldCharacterSheet.#onMaintainSpell,
       dropSpell: GWorldCharacterSheet.#onDropSpell,
@@ -2108,6 +2405,19 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // not disabled, it is absent: there is nothing to explain about a rule
       // nobody is using.
       rules: activeRules(),
+
+      // A fixed wage, or freelance work paid by the margin (Campaigns p. 516).
+      jobKinds: (["wage", "freelance"] as const).map((key) => ({
+        key,
+        label: game.i18n.localize(`GWORLD.Life.JobKind.${key}`),
+        selected: (system.job?.kind ?? "wage") === key,
+      })),
+      // The levels of Wealth a job can pay at (Campaigns p. 517).
+      jobLevels: (["poor", "struggling", "average", "comfortable", "wealthy", "veryWealthy", "filthyRich"] as const).map((key) => ({
+        key,
+        label: game.i18n.localize(`GWORLD.Life.Wealth.${key}`),
+        selected: (system.job?.level ?? "average") === key,
+      })),
 
       // "-2 DX, -1 IQ" for the button, or nothing at all when nothing is down.
       penaltiesShowing: (["ST", "DX", "IQ", "HT"] as const)
@@ -2553,7 +2863,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       cost: (item.system.cost ?? 0) * (item.system.quantity ?? 1),
       equipped: Boolean(item.system.equipped),
       equippable: equippable || Boolean(item.system.meleeModes?.length || item.system.rangedModes?.length),
-      notes,
+      notes: item.system.category === "vehicle" ? vehicleNotes(item) : notes,
+      vehicle: item.system.category === "vehicle" && isRuleOn("vehicles"),
     })).sort((a, b) => a.name.localeCompare(b.name));
 
     return GEAR_GROUPS.map((key) => ({
@@ -3458,7 +3769,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       level: this.actor.system?.derived?.influence?.[name] ?? 4,
     }));
 
-    const asked = await promptForInfluence(skills);
+    const asked = await promptForInfluence(skills, socialBackgroundOf(this.actor));
     if (!asked) return;
 
     await rollInfluence({ actor: this.actor, subject, ...asked });
@@ -3919,6 +4230,145 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (minutes === null || minutes <= 0) return;
     await regenerate({ actor: this.actor, seconds: minutes * 60 });
+  }
+
+  /**
+   * Hours with a teacher, a book or the job (Characters p. 292).
+   *
+   * The skills offered are the ones on the sheet: study improves a skill the
+   * character already has some of, and a new one is added first.
+   */
+  static async #onStudy(this: GWorldCharacterSheet) {
+    if (!isRuleOn("study")) return;
+    const skills = [...this.actor.items]
+      .filter((item: any) => item.type === "skill")
+      .map((item: any) => ({ id: String(item.id), name: String(item.name), banked: Number(item.system?.studyHours) || 0 }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (skills.length === 0) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Life.NoSkills"));
+      return;
+    }
+    const asked = await promptForStudy(skills);
+    if (!asked) return;
+    await studySkill({ actor: this.actor, ...asked });
+  }
+
+  /** A month at the job (Campaigns p. 517). */
+  static async #onWorkMonth(this: GWorldCharacterSheet) {
+    if (!isRuleOn("jobs")) return;
+    const modifier = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Life.Job"),
+      label: game.i18n.localize("GWORLD.Chat.Modifier"),
+      initial: 0,
+    });
+    if (modifier === null) return;
+    await workAMonth({ actor: this.actor, modifier });
+  }
+
+  /** The month's cost of living, out of the money on the sheet (Characters p. 265). */
+  static async #onPayLiving(this: GWorldCharacterSheet) {
+    if (!isRuleOn("jobs")) return;
+    const months = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Life.CostOfLiving"),
+      label: game.i18n.localize("GWORLD.Life.Months"),
+      initial: 1,
+    });
+    if (months === null || months <= 0) return;
+    await payCostOfLiving({ actor: this.actor, months });
+  }
+
+  /** A year older (Campaigns p. 444). */
+  static async #onAgingRoll(this: GWorldCharacterSheet) {
+    if (!isRuleOn("aging")) return;
+    const modifier = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Life.Aging"),
+      label: game.i18n.localize("GWORLD.Chat.Modifier"),
+      initial: 0,
+    });
+    if (modifier === null) return;
+    await rollAging({ actor: this.actor, modifier });
+  }
+
+  /** A night without enough sleep, or too long a day (Campaigns p. 427). */
+  static async #onStayAwake(this: GWorldCharacterSheet) {
+    if (!isRuleOn("sleep")) return;
+    const asked = await promptForStayingUp();
+    if (!asked) return;
+    await stayAwake({ actor: this.actor, ...asked });
+  }
+
+  /** Sleep, which is the only way back from missed sleep (Campaigns p. 427). */
+  static async #onSleep(this: GWorldCharacterSheet) {
+    if (!isRuleOn("sleep")) return;
+    const hours = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Hazard.Sleep"),
+      label: game.i18n.localize("GWORLD.Hazard.HoursSlept"),
+      initial: 8,
+    });
+    if (hours === null || hours <= 0) return;
+    await sleepFor({ actor: this.actor, hours });
+  }
+
+  /** A day on the road (Campaigns pp. 351, 426). */
+  static async #onHike(this: GWorldCharacterSheet) {
+    if (!isRuleOn("hiking")) return;
+    const asked = await promptForHike();
+    if (!asked) return;
+    await hike({ actor: this.actor, ...asked });
+  }
+
+  /** Struck by something moving (Campaigns pp. 430-432). */
+  static async #onStruckBy(this: GWorldCharacterSheet) {
+    if (!isRuleOn("collisions")) return;
+    const asked = await promptForCollision();
+    if (!asked) return;
+    await struckBy({ actor: this.actor, ...asked });
+  }
+
+  /** A shock (Campaigns pp. 432-433). */
+  static async #onShock(this: GWorldCharacterSheet) {
+    if (!isRuleOn("electricity")) return;
+    const asked = await promptForShock();
+    if (!asked) return;
+    await shock({ actor: this.actor, ...asked });
+  }
+
+  /** Seconds in the flames (Campaigns p. 433). */
+  static async #onBurn(this: GWorldCharacterSheet) {
+    if (!isRuleOn("fire")) return;
+    const asked = await promptForFire();
+    if (!asked) return;
+    await burn({ actor: this.actor, ...asked });
+  }
+
+  /** Whether a blow of burning damage set the clothes alight (Campaigns p. 434). */
+  static async #onCatchFire(this: GWorldCharacterSheet) {
+    if (!isRuleOn("fire")) return;
+    const asked = await promptForCatchingFire();
+    if (!asked) return;
+    await catchFire({ actor: this.actor, ...asked });
+  }
+
+  /** A dose of rads (Campaigns pp. 435-436). */
+  static async #onIrradiate(this: GWorldCharacterSheet) {
+    if (!isRuleOn("radiation")) return;
+    const asked = await promptForRadiation();
+    if (!asked) return;
+    await irradiate({ actor: this.actor, ...asked });
+  }
+
+  /** A control roll for the vehicle on this row (Campaigns p. 466). */
+  static async #onControlVehicle(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    if (!isRuleOn("vehicles")) return;
+    const item = this.#itemFrom(target);
+    if (!item) return;
+    const modifier = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Hazard.Control"),
+      label: game.i18n.localize("GWORLD.Chat.Modifier"),
+      initial: 0,
+    });
+    if (modifier === null) return;
+    await controlVehicle({ actor: this.actor, itemId: String(item.id), modifier });
   }
 
   static async #onToggleEquipped(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

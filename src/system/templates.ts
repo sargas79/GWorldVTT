@@ -91,6 +91,17 @@ export function registerTemplateHelpers(): void {
     return args.some(Boolean);
   });
 
+  /** A list as one line, for a field edited as text and stored as an array. */
+  Handlebars.registerHelper("join", (list: unknown, separator: unknown) =>
+    Array.isArray(list) ? list.join(typeof separator === "string" ? separator : ", ") : "",
+  );
+
+  /** All of these, for a control that needs a rule on and something to act on. */
+  Handlebars.registerHelper("and", (...args: unknown[]) => {
+    args.pop();
+    return args.every(Boolean);
+  });
+
   /** Whether a list holds a value, for checkbox sets such as armor locations. */
   Handlebars.registerHelper("includes", (list: unknown, value: unknown) =>
     Array.isArray(list) && list.includes(value),

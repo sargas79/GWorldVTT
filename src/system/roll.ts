@@ -67,6 +67,7 @@ import {
   type Malfunction,
 } from "../rules/malfunctions.js";
 import { attackWithoutSight, darknessPenalty, type Sight, type VisionTraits } from "../rules/visibility.js";
+import { impairedAttacks } from "../rules/trait-effects.js";
 import { levelDifference } from "../rules/melee-situations.js";
 import { turnedBlade } from "../rules/subduing.js";
 import { coverShot, type CoverApproach } from "../rules/cover.js";
@@ -615,12 +616,19 @@ export async function handleRollAction(
     modifiers.push({ label: game.i18n.localize("GWORLD.Penalties.Label"), value: knockedDown });
   }
 
-  // Bad Sight, One Eye and Lame each take their own line off an attack
-  // (Characters pp. 123, 141, 147), and a blind fighter attacks blind even
-  // when nothing in the dialog was ticked.
+  // Bad Sight and One Eye each take their own line off an attack
+  // (Characters pp. 123, 147) -- One Eye's -3 at range only when the shot
+  // was not aimed -- and a blind fighter attacks blind even when nothing in
+  // the dialog was ticked.
   if (rollType === "attack") {
-    const impaired: Array<{ trait: string; value: number }> =
-      actor?.system?.derived?.attackPenalties?.[ranged ? "ranged" : "melee"] ?? [];
+    const traits = actor?.system?.derived?.traitEffects;
+    const impaired = traits
+      ? impairedAttacks(traits, {
+          ranged: Boolean(ranged),
+          aimed: Boolean(ranged) && aimTurnsOf(actor) > 0,
+          closeCombat: actor?.system?.conditions?.closeCombat === true,
+        })
+      : [];
     for (const penalty of impaired) modifiers.push({ label: penalty.trait, value: penalty.value });
     if (!melee && !shot && eyesOf(actor).blindness) {
       const blind = sightModifier("clear", false, eyesOf(actor));
@@ -1034,8 +1042,10 @@ export function rangedModifiers(
     beamWeapon: weapon.beamWeapon === true,
   });
 
+  // A nearsighted shooter reads the table at twice the distance (p. 123).
+  const seenRange = weapon.eyes?.nearsighted ? effectiveRange * 2 : effectiveRange;
   const { speedRange, size } = rangedToHitModifier({
-    rangeYards: effectiveRange,
+    rangeYards: seenRange,
     targetSpeedYardsPerSecond: input.speed,
     targetSizeModifier: input.size,
   });
@@ -1058,9 +1068,9 @@ export function rangedModifiers(
   if (speedRange !== 0 && situation !== "closeCombat") {
     modifiers.push({
       label:
-        effectiveRange === input.range
+        seenRange === input.range
           ? L("SpeedRange")
-          : game.i18n.format("GWORLD.Ranged.SpeedRangeUphill", { yards: effectiveRange }),
+          : game.i18n.format("GWORLD.Ranged.SpeedRangeUphill", { yards: seenRange }),
       value: speedRange,
     });
   }
@@ -1193,9 +1203,11 @@ function calledShotModifier(value: string, type: DamageType, tightBeam: boolean)
  */
 const SIGHT_OPTIONS: readonly Sight[] = ["clear", "positionKnown", "foeUnseen", "blind"];
 
-/** The eyes an attacker has, and whether they have any (pp. 47, 60, 71, 124). */
+/** The eyes an attacker has, and whether they have any (pp. 47, 60, 71, 123-124). */
 export interface Eyes extends VisionTraits {
   blindness?: boolean;
+  /** Nearsighted: "double the actual distance to the target when calculating the range modifier" (p. 123). */
+  nearsighted?: boolean;
 }
 
 /** What the sheet says about this character's eyes. */
@@ -1206,6 +1218,7 @@ export function eyesOf(actor: any): Eyes {
     darkVision: vision.darkVision === true,
     infravision: vision.infravision === true,
     blindness: vision.blindness === true,
+    nearsighted: vision.nearsighted === true,
   };
 }
 

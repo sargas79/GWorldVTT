@@ -202,6 +202,7 @@ export class SkillData extends foundry.abstract.TypeDataModel {
   declare bonus: number;
   declare defaults: Array<{ from: "attribute" | "skill"; attribute: SkillAttribute; skill: string; modifier: number }>;
   declare techLevel: string;
+  declare studyHours: number;
   declare derived: { level: number | null; relativeLevel: number | null; fromDefault: boolean };
 
   static override defineSchema() {
@@ -263,6 +264,11 @@ export class SkillData extends foundry.abstract.TypeDataModel {
       ),
       /** Set for skills marked /TL, recording which tech level was learned. */
       techLevel: new fields.StringField({ required: true, blank: true, initial: "" }),
+      /**
+       * Hours of study banked toward the next character point (Characters
+       * p. 292): what is left over once the whole points have gone in.
+       */
+      studyHours: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
     };
   }
 
@@ -546,6 +552,12 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare unready: boolean;
   declare meleeModes: unknown[];
   declare rangedModes: unknown[];
+  declare vehicle: {
+    stHp: number; handling: number; stability: number; ht: number;
+    acceleration: number; topSpeed: number; loadedWeight: number; load: number;
+    sm: number; occupants: string; dr: number; range: number; skill: string;
+    locomotion: "wheels" | "tracks" | "legs" | "runners" | "water" | "air"; roadBound: boolean;
+  };
 
   static override defineSchema() {
     return {
@@ -570,6 +582,32 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
       }),
       meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: [] }),
       rangedModes: new fields.ArrayField(rangedModeField(), { required: true, initial: [] }),
+      /**
+       * The vehicle statistics (Campaigns pp. 462-463), read when the
+       * category is "vehicle": ST/HP, Hnd/SR, HT, Move as acceleration and
+       * top speed in yards a second, weights in tons, SM, occupants as
+       * "crew+passengers", DR, range in miles, and the control skill.
+       */
+      vehicle: new fields.SchemaField({
+        stHp: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 10, min: 0 }),
+        handling: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        stability: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 2, min: 0 }),
+        ht: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 10, min: 1 }),
+        acceleration: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0 }),
+        topSpeed: new fields.NumberField({ required: true, nullable: false, initial: 10, min: 0 }),
+        loadedWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        load: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        sm: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        occupants: new fields.StringField({ required: true, blank: true, initial: "1" }),
+        dr: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+        range: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        skill: new fields.StringField({ required: true, blank: true, initial: "" }),
+        locomotion: new fields.StringField({
+          required: true, nullable: false, initial: "wheels",
+          choices: ["wheels", "tracks", "legs", "runners", "water", "air"],
+        }),
+        roadBound: new fields.BooleanField({ initial: false }),
+      }),
     };
   }
 
@@ -709,6 +747,58 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
        */
       meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: [] }),
     };
+  }
+}
+
+/**
+ * An enhancement or limitation (GURPS Basic Set: Characters pp. 101-117),
+ * as a compendium entry to be picked from rather than typed.
+ *
+ * A trait carries its modifiers as names and percentages; this is where the
+ * names and percentages come from. A modifier is priced flat -- Ranged
+ * +40% -- or by level from a table -- Area Effect +50%, +100% and on -- and
+ * a few are neither, being special enough that the page prices them by
+ * hand; those carry 0 and their page.
+ */
+export class ModifierData extends foundry.abstract.TypeDataModel {
+  declare kind: "enhancement" | "limitation" | "special";
+  declare value: number;
+  declare costTable: number[];
+  declare levelNames: string[];
+  declare maxLevels: number;
+  declare group: string;
+
+  static override defineSchema() {
+    return {
+      ...descriptionFields(),
+      kind: new fields.StringField({
+        required: true, nullable: false, initial: "enhancement",
+        choices: ["enhancement", "limitation", "special"],
+      }),
+      /** The percentage, or the percentage a level, for one priced evenly. */
+      value: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+      /** The percentage at each level, level 1 first, for one priced from a table. */
+      costTable: new fields.ArrayField(
+        new fields.NumberField({ required: true, nullable: false, integer: true }),
+        { required: true, initial: [] },
+      ),
+      /** The book's name for each level, where it names them. */
+      levelNames: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: true, initial: "" }),
+        { required: true, initial: [] },
+      ),
+      /** The most levels the book allows, or 0 where it sets no limit. */
+      maxLevels: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+      /** The book's grouping: "General", "Attack Enhancements", and so on. */
+      group: new fields.StringField({ required: true, blank: true, initial: "" }),
+    };
+  }
+
+  /** The percentage at a level: the table's figure where there is one, else value x levels. */
+  percentAt(levels: number): number {
+    const level = Math.max(1, Math.floor(levels) || 1);
+    if (this.costTable.length > 0) return this.costTable[Math.min(level, this.costTable.length) - 1] ?? 0;
+    return this.value * level;
   }
 }
 

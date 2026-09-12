@@ -22,9 +22,19 @@ export interface ReactionSource {
   /**
    * Blank for a modifier that always applies. Otherwise a key naming who it
    * applies to, for the dialog to explain: "attracted", "knowing", "respectful",
-   * "pitying", "stylish".
+   * "pitying", "stylish", "impressed", "ownKind", "faithful", "adult".
    */
-  condition: "" | "attracted" | "knowing" | "respectful" | "pitying" | "stylish";
+  condition:
+    | ""
+    | "attracted"
+    | "knowing"
+    | "respectful"
+    | "pitying"
+    | "stylish"
+    | "impressed"
+    | "ownKind"
+    | "faithful"
+    | "adult";
 }
 
 /** A trait as the sheet holds it, for reading the modifiers off. */
@@ -41,16 +51,19 @@ export interface SocialTrait {
  * table offers as the difference.
  */
 const APPEARANCE_ADVANTAGE: readonly { everyone: number; attracted: number }[] = [
-  { everyone: 1, attracted: 1 }, // Attractive
-  { everyone: 2, attracted: 4 }, // Beautiful
+  { everyone: 1, attracted: 1 }, // Attractive: "+1 on reaction rolls"
+  { everyone: 2, attracted: 4 }, // Beautiful: "+4 ... attracted to members of your sex, +2 from everyone else"
   { everyone: 2, attracted: 4 }, // Handsome
-  { everyone: 2, attracted: 6 }, // Very Beautiful
+  { everyone: 2, attracted: 6 }, // Very Beautiful: "+6 ... +2 from others"
   { everyone: 2, attracted: 6 }, // Very Handsome
-  { everyone: 3, attracted: 8 }, // Transcendent
+  { everyone: 2, attracted: 8 }, // Transcendent: "+8 (!) ... +2 from others"
 ];
 
-/** Appearance as a disadvantage (p. 21): Unattractive through Horrific. */
-const APPEARANCE_DISADVANTAGE: readonly number[] = [-1, -2, -3, -4, -5];
+/**
+ * Appearance as a disadvantage (p. 21): Unattractive -1, Ugly -2, Hideous
+ * -4, Monstrous -5, Horrific -6.
+ */
+const APPEARANCE_DISADVANTAGE: readonly number[] = [-1, -2, -4, -5, -6];
 
 function levelsOf(trait: SocialTrait): number {
   return Math.max(1, Math.floor(trait.levels ?? 0) || 1);
@@ -99,10 +112,14 @@ export function reactionSources(traits: readonly SocialTrait[]): ReactionSource[
     } else if (key === "status (disadvantage)") {
       out.push({ label: trait.name, value: -levels, condition: "respectful" });
     } else if (key.startsWith("social stigma")) {
-      // "-1 on reaction rolls per -5 points" (p. 155), and the compendium
-      // prices the named ones as flat traits: a level a -5.
-      const points = flatStigmaLevels(key) ?? levels;
-      out.push({ label: trait.name, value: -points, condition: "" });
+      // "-1 on reaction rolls per -5 points" for one written as levels, and
+      // the book's own figure for each named one (p. 155).
+      const named = namedStigma(key);
+      if (named) {
+        if (named.value !== 0) out.push({ label: trait.name, value: named.value, condition: named.condition });
+      } else {
+        out.push({ label: trait.name, value: -levels, condition: "" });
+      }
     } else if (key === "odious personal habit") {
       // "-1 to reactions per -5 points" (p. 22).
       out.push({ label: trait.name, value: -levels, condition: "" });
@@ -112,27 +129,58 @@ export function reactionSources(traits: readonly SocialTrait[]): ReactionSource[
     } else if (key === "fashion sense") {
       // "+1 to reactions ... in any situation where clothing might matter" (p. 21).
       out.push({ label: trait.name, value: 1, condition: "stylish" });
+    } else if (key in TALENT_REACTION) {
+      // "A bonus of +1 per level on all reaction rolls made by anyone in a
+      // position to notice your Talent, if he would be impressed" (p. 89).
+      out.push({ label: trait.name, value: levels, condition: "impressed" });
     }
   }
 
-  return out;
+  // "Your total reaction modifier from reputations cannot be better than +4
+  // or worse than -4 in a given situation" (p. 28).
+  return capReputations(out);
 }
 
-/** How many -5s a named Social Stigma is worth (p. 155). */
-function flatStigmaLevels(key: string): number | null {
-  const named: Record<string, number> = {
-    "social stigma (criminal record)": 1,
-    "social stigma (disowned)": 1,
-    "social stigma (publically disowned)": 2,
-    "social stigma (excommunicated)": 1,
-    "social stigma (ignorant)": 1,
-    "social stigma (minor)": 1,
-    "social stigma (minority group)": 2,
-    "social stigma (monster)": 3,
-    "social stigma (second-class citizen)": 1,
-    "social stigma (subjugated)": 4,
-    "social stigma (uneducated)": 1,
-    "social stigma (valuable property)": 2,
+/** The ten standard Talents, each worth its levels from those who notice (p. 89). */
+const TALENT_REACTION: Readonly<Record<string, true>> = {
+  "animal friend": true, artificer: true, "business acumen": true, "gifted artist": true,
+  "green thumb": true, healer: true, "mathematical ability": true, "musical ability": true,
+  outdoorsman: true, "smooth operator": true,
+};
+
+const REPUTATION_CAP = 4;
+
+function capReputations(sources: ReactionSource[]): ReactionSource[] {
+  const reputations = sources.filter((s) => s.label.trim().toLowerCase().startsWith("reputation"));
+  const total = reputations.reduce((sum, s) => sum + s.value, 0);
+  if (Math.abs(total) <= REPUTATION_CAP) return sources;
+  const capped = Math.sign(total) * REPUTATION_CAP;
+  // The first reputation carries the capped figure; the rest are dropped.
+  const [first, ...rest] = reputations;
+  return sources
+    .filter((s) => !rest.includes(s))
+    .map((s) => (s === first ? { ...s, value: capped } : s));
+}
+
+/**
+ * What each named Social Stigma does to a reaction, as the book has it
+ * (p. 155). Valuable Property is "limited freedom ... more than ... a
+ * reaction modifier", and Subjugated is Second-Class Citizen's penalty.
+ */
+function namedStigma(key: string): { value: number; condition: ReactionSource["condition"] } | null {
+  const named: Record<string, { value: number; condition: ReactionSource["condition"] }> = {
+    "social stigma (criminal record)": { value: -1, condition: "knowing" },
+    "social stigma (disowned)": { value: -1, condition: "" },
+    "social stigma (publically disowned)": { value: -2, condition: "" },
+    "social stigma (excommunicated)": { value: -3, condition: "faithful" },
+    "social stigma (ignorant)": { value: -1, condition: "knowing" },
+    "social stigma (minor)": { value: -2, condition: "adult" },
+    "social stigma (minority group)": { value: -2, condition: "ownKind" },
+    "social stigma (monster)": { value: -3, condition: "" },
+    "social stigma (second-class citizen)": { value: -1, condition: "ownKind" },
+    "social stigma (subjugated)": { value: -1, condition: "ownKind" },
+    "social stigma (uneducated)": { value: -1, condition: "knowing" },
+    "social stigma (valuable property)": { value: 0, condition: "" },
   };
   return key in named ? named[key]! : null;
 }
@@ -152,7 +200,8 @@ export function isSocialTrait(name: string): boolean {
     key.startsWith("social stigma") ||
     key === "odious personal habit" ||
     key === "pitiable" ||
-    key === "fashion sense"
+    key === "fashion sense" ||
+    key in TALENT_REACTION
   );
 }
 

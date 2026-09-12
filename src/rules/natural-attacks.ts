@@ -23,7 +23,7 @@
 
 import { thrustDamage } from "./damage.js";
 import { addModifier } from "./dice.js";
-import type { DiceAdds } from "./types.js";
+import type { DamageType, DiceAdds } from "./types.js";
 
 /** The kick's to-hit penalty (Characters p. 271). */
 export const KICK_PENALTY = -2;
@@ -61,7 +61,7 @@ export function unarmedDamageBonusPerDie(skill: string, level: number, dx: numbe
 }
 
 export interface NaturalAttack {
-  key: "punch" | "kick";
+  key: "punch" | "kick" | "bite" | "claw" | "striker";
   /** The skill the level came from, or "DX" when none applies. */
   skillName: string;
   /** The number to roll against, penalty included. */
@@ -119,4 +119,115 @@ export function naturalAttacks(input: NaturalAttackInput): NaturalAttack[] {
       canParry: false,
     },
   ];
+}
+
+// ── the beasts (Campaigns p. 460; Characters pp. 42, 88, 91) ──────────────
+
+/** What a creature bites, claws and strikes with, read off its traits. */
+export interface BeastTraits {
+  /** Teeth: blunt, sharp (cutting), fangs (impaling), or a sharp beak (large piercing). */
+  teeth?: "blunt" | "sharp" | "fangs" | "beak" | null;
+  /** "Weak Bite, common for large herbivores, gives an extra -2 per die." */
+  weakBite?: boolean;
+  /** Claws: blunt (+1 per die, crushing), sharp (cutting, no bonus), or hooves (as blunt, for kicks). */
+  claws?: "blunt" | "sharp" | "hooves" | "talons" | null;
+  /** Strikers -- horns, tusks, antlers -- each with its damage type. */
+  strikers?: Array<{ name: string; type: DamageType }>;
+}
+
+/** An animal attack, beside the punch and the kick. */
+export interface BeastAttack extends NaturalAttack {
+  damageType: DamageType;
+}
+
+/**
+ * "Damage for Animals" (Campaigns p. 460).
+ *
+ * "Basic damage for a beast is thrust for its ST ... A bite does thrust-1.
+ * Weak Bite ... gives an extra -2 per die. A bite is crushing unless the
+ * creature has Sharp Teeth (cutting) or Fangs (impaling). A claw does
+ * thrust-1, like a punch. Blunt Claws give +1 per die, and damage is
+ * crushing. Sharp Claws give no bonus, but inflict cutting damage. ... Most
+ * other attacks (horns, tusks, etc.) are Strikers. These inflict thrust
+ * damage, at +1 per die. ... Brawling at DX+2 level or better ... adds +1
+ * per die to basic thrust damage for any of these attacks!"
+ *
+ * A creature without teeth traits, claws or strikers has none of these: an
+ * ordinary set of blunt teeth is a bite the book does not bother to list.
+ */
+export function beastAttacks(input: NaturalAttackInput & { beast: BeastTraits }): BeastAttack[] {
+  const { st, dx, skills, beast } = input;
+  const thrust = thrustDamage(st);
+  const skill = best([["Brawling", skills.Brawling]], dx);
+  const trained = unarmedDamageBonusPerDie(skill.name, skill.level, dx) * thrust.dice;
+  const out: BeastAttack[] = [];
+
+  if (beast.teeth || beast.weakBite) {
+    const type: DamageType =
+      beast.teeth === "sharp" ? "cut" : beast.teeth === "fangs" ? "imp" : beast.teeth === "beak" ? "pi+" : "cr";
+    out.push({
+      key: "bite",
+      skillName: skill.name,
+      skillLevel: skill.level,
+      damage: addModifier(thrust, -1 + trained - (beast.weakBite ? 2 * thrust.dice : 0)),
+      damageType: type,
+      reach: "C",
+      canParry: false,
+    });
+  }
+
+  if (beast.claws && beast.claws !== "hooves") {
+    const blunt = beast.claws === "blunt";
+    out.push({
+      key: "claw",
+      skillName: skill.name,
+      skillLevel: skill.level,
+      damage: addModifier(thrust, -1 + trained + (blunt ? thrust.dice : 0)),
+      damageType: blunt ? "cr" : "cut",
+      reach: "C",
+      canParry: false,
+    });
+  }
+
+  for (const striker of beast.strikers ?? []) {
+    out.push({
+      key: "striker",
+      skillName: striker.name,
+      skillLevel: skill.level,
+      damage: addModifier(thrust, thrust.dice + trained),
+      damageType: striker.type,
+      reach: "C",
+      canParry: false,
+    });
+  }
+
+  return out;
+}
+
+/** The natural weapons a beast has, read off the names of its traits. */
+export function beastTraitsFrom(names: readonly string[]): BeastTraits {
+  const beast: BeastTraits = { teeth: null, weakBite: false, claws: null, strikers: [] };
+  for (const raw of names) {
+    const name = raw.trim().toLowerCase();
+    if (name === "teeth (sharp teeth)" || name === "sharp teeth") beast.teeth = "sharp";
+    else if (name === "teeth (fangs)" || name === "fangs") beast.teeth = "fangs";
+    else if (name === "teeth (sharp beak)" || name === "sharp beak") beast.teeth = "beak";
+    else if (name === "teeth (blunt teeth)" || name === "vampiric bite") beast.teeth = beast.teeth ?? "blunt";
+    else if (name === "weak bite") beast.weakBite = true;
+    else if (name === "claws (sharp claws)" || name === "sharp claws") beast.claws = "sharp";
+    else if (name === "claws (blunt claws)" || name === "blunt claws") beast.claws = "blunt";
+    else if (name === "claws (talons)" || name === "claws (long talons)") beast.claws = "talons";
+    else if (name === "claws (hooves)" || name === "hooves") beast.claws = beast.claws ?? "hooves";
+    else {
+      const striker = /^striker \((crushing|cutting|impaling|piercing|large piercing)(?:; )?([^)]*)\)(?:: (.*))?$/.exec(name);
+      if (striker) {
+        const type: DamageType =
+          striker[1] === "crushing" ? "cr" : striker[1] === "cutting" ? "cut" : striker[1] === "impaling" ? "imp" : striker[1] === "large piercing" ? "pi+" : "pi";
+        const label = (striker[3] || striker[2] || "").trim();
+        beast.strikers!.push({ name: label ? label.replace(/^\w/, (c) => c.toUpperCase()) : "Striker", type });
+      }
+    }
+  }
+  if (beast.claws === "talons") beast.claws = "sharp";
+  return beast;
 }

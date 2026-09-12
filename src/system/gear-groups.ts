@@ -15,11 +15,11 @@
  */
 
 /** The categories a piece of equipment can be given. */
-export const EQUIPMENT_CATEGORIES = ["weapon", "tool", "consumable", "misc"] as const;
+export const EQUIPMENT_CATEGORIES = ["weapon", "tool", "consumable", "vehicle", "misc"] as const;
 export type EquipmentCategory = (typeof EQUIPMENT_CATEGORIES)[number];
 
 /** The groups the tab shows, in the order it shows them. */
-export const GEAR_GROUPS = ["armor", "shield", "weapon", "tool", "consumable", "misc"] as const;
+export const GEAR_GROUPS = ["armor", "shield", "weapon", "tool", "consumable", "vehicle", "misc"] as const;
 export type GearGroup = (typeof GEAR_GROUPS)[number];
 
 /** What the grouping needs to know about an item. */
@@ -49,6 +49,8 @@ export function gearGroupOf(item: GroupableGear): GearGroup {
   if (item.type === "shield") return "shield";
 
   const system = item.system ?? {};
+  // A vehicle with a gun on it is still a vehicle (Campaigns p. 467).
+  if (system.category === "vehicle") return "vehicle";
   const armed = (system.meleeModes?.length ?? 0) > 0 || (system.rangedModes?.length ?? 0) > 0;
   if (armed) return "weapon";
   return isEquipmentCategory(system.category) ? system.category : "misc";

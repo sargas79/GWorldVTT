@@ -30,7 +30,17 @@ export interface FatigueApplied {
  * The caller is trusted to have checked that this user may change the actor:
  * every caller has already said so in a way its own user can act on.
  */
-export async function applyFatigue(actor: any, lost: number): Promise<FatigueApplied> {
+export async function applyFatigue(
+  actor: any,
+  lost: number,
+  options: {
+    /**
+     * False for FP spent on a spell or a psi ability: Fit and Very Fit
+     * "apply only to FP lost to exertion, heat, etc." (Characters p. 55).
+     */
+    exertion?: boolean;
+  } = {},
+): Promise<FatigueApplied> {
   const fp = actor?.system?.fp ?? { value: 0, max: 0 };
   const hp = actor?.system?.hp ?? { value: 0, max: 0 };
   const fpBefore = Number(fp.value) || 0;
@@ -43,7 +53,9 @@ export async function applyFatigue(actor: any, lost: number): Promise<FatigueApp
     maxFp: fpMax,
     lost,
     // Very Fit: "you lose FP at only half the normal rate" (Characters p. 55).
-    halved: actor?.system?.derived?.traitEffects?.fatigueLossHalved === true,
+    halved:
+      options.exertion !== false &&
+      actor?.system?.derived?.traitEffects?.fatigueLossHalved === true,
   });
 
   const changes: Record<string, number> = {};

@@ -48,9 +48,9 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   dark, the ten Talents and Voice on their skills, Acute Senses on the four
   sense rolls, Temperature Tolerance against the weather, and Bad Sight, One
   Eye, One Arm, Hard of Hearing, Deafness, Blindness and Lame where each
-  bites. Appearance, Charisma, Reputation, Status, Voice, Social Stigma and an
-  Odious Personal Habit fill in the reaction roll. The traits tab marks which
-  ones are read.
+  bites. Appearance, Charisma, Reputation, Status, Voice, Social Stigma, an
+  Odious Personal Habit and the Talents fill in the reaction roll. The traits
+  tab marks which ones are read.
 
 ### Combat
 
@@ -146,13 +146,42 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
 - **Reaction and Influence rolls** — the Reaction Table with its modifiers on the
   dice rather than on a target, whispered to the GM; and the Quick Contest that
   buys a stated reaction, Diplomacy's second chance included.
+- **Study** — hours with a teacher make a character point every 200, hours
+  alone or on the job every 400; the points go into the skill and onto the
+  ledger, and the hours short of a point are banked.
+- **Money** — what the Wealth trait is worth at the character's tech level,
+  what the gear cost, a month's cost of living at their Status with any Debt
+  and Independent Income, and a job rolled monthly against its skill: a wage
+  paid on anything but a critical, or freelance work paid by the margin.
+- **Languages and cultures** — a Broken or Accented language costs an
+  Influence roll, and an unfamiliar culture costs reactions and Influence
+  alike, unless the character adapts to any.
+- **Aging** — from 50, a series of four HT rolls a year, one per attribute
+  and oftener later, that costs a level of the attribute when it fails;
+  Longevity, Extended and Short Lifespan and Unaging are read.
+- **Missed sleep** — a sixteen-hour day, a point of fatigue past it and one
+  every four hours after, and only sleep to give them back.
+- **Hiking** — ten miles a Move a day by terrain and weather, at the fatigue
+  of a battle an hour.
+- **Collisions, electricity, flame and radiation** — being struck by
+  something moving, at its HP times its velocity; a shock's HT roll not to
+  be stunned or knocked out; seconds in a fire and whether the clothes
+  caught; doses in rads that accumulate, heal slowly and roll against the
+  table.
+- **Vehicles** — gear filed as a vehicle carries the book's stat line, and
+  its row offers a control roll at Handling that fails by the Stability
+  Rating.
 - **Temporary attribute penalties** — off the skills the attribute governs, and
   off nothing else: never a defense, a resistance roll or a Fright Check.
-- **Compendia** of advantages, disadvantages, skills, spells, equipment and
-  templates, carrying names, point costs and statistics. The templates are the
+- **Compendia** of advantages, disadvantages, skills, spells, equipment,
+  templates, enhancements and limitations, and the Basic Set's animals and
+  monsters, carrying names, point costs and statistics. The templates are the
   Basic Set's four racial ones, its three sample character templates, and
   eighteen meta-traits; every one is checked at build time against the cost
-  the book states for it.
+  the book states for it. A trait's modifiers are picked off the enhancements
+  compendium at the level wanted, and a creature dragged from the bestiary
+  arrives with its traits, its skills, and the bite, claws and strikers its
+  traits give it.
 
 ### Magic
 

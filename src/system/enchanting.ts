@@ -244,7 +244,7 @@ export async function enchantItem(actor: any): Promise<void> {
   const outcome = resolveEnchanting(roll.total, effective, dice);
 
   // "Succeed or fail, all the energy is spent when the GM rolls the dice."
-  if (casterShare > 0) await applyFatigue(actor, casterShare);
+  if (casterShare > 0) await applyFatigue(actor, casterShare, { exertion: false });
 
   const rolls: any[] = [roll];
   let power: number | null = null;

@@ -13,7 +13,7 @@ import {
   secondaryCharacteristics,
   secondaryPointCost,
 } from "../../rules/attributes.js";
-import { naturalAttacks } from "../../rules/natural-attacks.js";
+import { beastAttacks, beastTraitsFrom, naturalAttacks } from "../../rules/natural-attacks.js";
 import { becomesUnreadyAfterAttack } from "../../rules/readiness.js";
 import { aimBonus } from "../../rules/aim.js";
 import { regenerationRate } from "../../rules/recovery.js";
@@ -32,6 +32,14 @@ import {
 import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { senseScores } from "../../rules/senses.js";
+import {
+  costOfLiving, gearCost, monthlyIncomeFromTraits, monthlyPay, startingWealth, statusFrom, wealthFrom,
+  type WealthLevel,
+} from "../../rules/wealth.js";
+import { agingRollsPerYear, lifespanFrom } from "../../rules/aging.js";
+import { culturallyAdaptable, languagePenalty, type Comprehension } from "../../rules/languages.js";
+import { sleepPeriodFrom } from "../../rules/sleep.js";
+import { radiationRow, radiationToleranceFrom, remainingDose } from "../../rules/radiation.js";
 import { baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import { usableInCloseCombat } from "../../rules/tactical.js";
 import { isRuleOn } from "../optional-rules.js";
@@ -288,6 +296,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     attackedThisTurn: boolean;
     closeCombat: boolean;
   };
+  declare money: number;
+  declare radiation: { dose: number; at: number };
+  declare job: { title: string; skill: string; level: string; kind: "wage" | "freelance"; risk: string };
   declare details: {
     player: string; height: string; weight: string; age: string;
     appearance: string; biography: string; notes: string;
@@ -607,6 +618,38 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         closeCombat: new fields.BooleanField({ initial: false }),
       }),
 
+      /**
+       * The radiation carried (Campaigns p. 435): the accumulated dose in
+       * rads as of the moment it was last written, which is what it heals
+       * from -- after thirty days, ten rads a day, to a tenth that stays.
+       */
+      radiation: new fields.SchemaField({
+        dose: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        at: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+      }),
+
+      /** Cash in hand, in $ (Characters p. 25). Starting wealth less the gear is where it begins. */
+      money: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
+
+      /**
+       * A job (Campaigns pp. 516-518): what it is called, the skill it is
+       * rolled against each month, the level of Wealth it pays at, and what
+       * a critical failure brings down.
+       */
+      job: new fields.SchemaField({
+        title: new fields.StringField({ required: true, blank: true, initial: "" }),
+        skill: new fields.StringField({ required: true, blank: true, initial: "" }),
+        level: new fields.StringField({
+          required: true, nullable: false, initial: "average",
+          choices: ["poor", "struggling", "average", "comfortable", "wealthy", "veryWealthy", "filthyRich"],
+        }),
+        /** A fixed wage, or freelance work paid by the margin (p. 516). */
+        kind: new fields.StringField({
+          required: true, nullable: false, initial: "wage", choices: ["wage", "freelance"],
+        }),
+        risk: new fields.StringField({ required: true, blank: true, initial: "" }),
+      }),
+
       details: new fields.SchemaField({
         player: new fields.StringField({ required: true, blank: true, initial: "" }),
         height: new fields.StringField({ required: true, blank: true, initial: "" }),
@@ -757,6 +800,66 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       }
     }
     return null;
+  }
+
+  /**
+   * What the money comes to (Characters pp. 25-27, 265; Campaigns p. 517).
+   *
+   * Starting wealth is the tech level's figure times the level of Wealth;
+   * the gear is what has been spent of it; the cost of living is what a
+   * month at this Status costs; and the job pays at the level of Wealth it
+   * was written for.
+   */
+  #wealth(traits: ReadonlyArray<{ name: string; levels?: number }>) {
+    const standing = wealthFrom(traits);
+    const status = statusFrom(traits);
+    const tl = Number(this.tl) || 0;
+    const gear = gearCost(
+      this.items
+        .filter((i) => i.system && typeof i.system.cost === "number")
+        .map((i) => ({ cost: Number(i.system.cost), quantity: Number(i.system.quantity ?? 1) })),
+    );
+    const jobLevel = String(this.job?.level ?? "average") as Exclude<WealthLevel, "multimillionaire" | "deadBroke">;
+    const starting = startingWealth(tl, standing);
+    const monthly = monthlyIncomeFromTraits(traits, starting);
+    return {
+      level: standing.level,
+      multimillionaire: standing.multimillionaire,
+      startingWealth: starting,
+      gearCost: gear,
+      money: Number(this.money) || 0,
+      status,
+      costOfLiving: costOfLiving(status),
+      // Independent Income and Debt, a percentage of starting wealth a month (p. 26).
+      independentIncome: monthly.income,
+      debt: monthly.debt,
+      averagePay: monthlyPay(tl, "average"),
+      jobPay: this.job?.title ? monthlyPay(tl, jobLevel) : 0,
+      jobKind: String(this.job?.kind ?? "wage"),
+    };
+  }
+
+  /** What is left of the dose written on the sheet, as of now (Campaigns p. 435). */
+  #radiation() {
+    const stored = this.radiation ?? { dose: 0, at: 0 };
+    const days = stored.at > 0 ? (Date.now() - stored.at) / 86400000 : 0;
+    const dose = Math.round(remainingDose(Number(stored.dose) || 0, days) * 10) / 10;
+    const row = radiationRow(dose);
+    return { dose, htModifier: row?.htModifier ?? 0, exposed: dose >= 1 };
+  }
+
+  /** How old, and how often the aging roll comes round (Campaigns p. 444). */
+  #aging(traits: ReadonlyArray<{ name: string; levels?: number }>) {
+    const lifespan = lifespanFrom(traits);
+    const parsed = parseInt(String(this.details?.age ?? ""), 10);
+    const age = Number.isFinite(parsed) ? parsed : null;
+    return {
+      age,
+      rollsPerYear: age === null ? 0 : agingRollsPerYear(age, lifespan),
+      longevity: lifespan.longevity,
+      unaging: lifespan.unaging,
+      lifespanMultiplier: lifespan.multiplier,
+    };
   }
 
   override prepareDerivedData(): void {
@@ -937,8 +1040,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       basicMove: b.basicMove + p.basicMove + t.basicMove,
     });
     secondary.basicLift = basicLift(liftingSt);
-    // Lame legs are read here, before encumbrance takes its share (p. 141).
-    secondary.basicMove = lameMove(secondary.basicMove, traits.lame);
+    // Lame legs are read here, before encumbrance takes its share: half of
+    // Basic Speed, or 2, or none (p. 141).
+    secondary.basicMove = lameMove(secondary.basicMove, traits.lame, secondary.basicSpeed);
 
     this.hp.max = secondary.hp;
     this.fp.max = secondary.fp;
@@ -1158,14 +1262,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ...this.itemsOfType("shield").filter((i) => i.system?.equipped),
     ];
 
+    // "-3 to use any skill that requires the use of your legs, including all
+    // Melee Weapon and unarmed combat skills (but not ranged combat skills)"
+    // (p. 141): read into the melee levels, so the parry built on them follows.
+    const legs = lameCombatPenalty(traits.lame);
+
     /**
      * The level a weapon's skill is rolled at: the character's own if they
      * have the skill, else the book's default for it. A pistol in the hands
      * of somebody who never learned Guns is still a pistol, at DX-4.
      */
-    const weaponSkill = (name: string): { level: number | null; atDefault: boolean } => {
+    const weaponSkill = (name: string, melee = false): { level: number | null; atDefault: boolean } => {
       const own = this.skillLevelByName(name);
-      if (own !== null) return { level: own, atDefault: false };
+      if (own !== null) return { level: own + (melee ? legs : 0), atDefault: false };
       const listed = catalogSkill(name);
       if (!listed) return { level: null, atDefault: false };
       const level = defaultLevelFrom(
@@ -1173,7 +1282,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         attributeScore,
         (other) => this.skillLevelByName(other),
       );
-      return { level, atDefault: level !== null };
+      return { level: level === null ? null : level + (melee ? legs : 0), atDefault: level !== null };
     };
 
     for (const item of armed) {
@@ -1196,7 +1305,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const unready = Boolean((sys as any).unready);
 
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
-        const { level: skillLevel, atDefault } = enchantedSkill(weaponSkill(mode.skill));
+        const { level: skillLevel, atDefault } = enchantedSkill(weaponSkill(mode.skill, true));
         const meleeDamage = withPuissance(resolveDamage(
           strikingSt, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
         ));
@@ -1327,7 +1436,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         name: game.i18n.localize(`GWORLD.Natural.${attack.key}`),
         mode: attack.skillName,
         skillName: attack.skillName,
-        skillLevel: attack.skillLevel,
+        skillLevel: attack.skillLevel + legs,
         atDefault: false,
         natural: true,
         unready: false,
@@ -1339,8 +1448,49 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         reach: reachForSize(attack.reach, this.sm),
         // Enhanced Parry (Bare Hands) is exactly this parry and no other.
         parry: attack.canParry
-          ? baseParry(attack.skillLevel) + traits.enhancedParry.all + traits.enhancedParry.bareHands
+          ? baseParry(attack.skillLevel + legs) + traits.enhancedParry.all + traits.enhancedParry.bareHands
           : null,
+        parryModifier: 0,
+        minSt: null,
+        usable: true,
+        unbalanced: false,
+        isFencing: false,
+        unarmed: true,
+        stBased: true,
+        explosive: false,
+        fragmentation: "",
+        affliction: false,
+        afflictionAttribute: "",
+        afflictionModifier: 0,
+      });
+    }
+
+    // A beast's bite, claws and strikers (Campaigns p. 460), read off the
+    // traits it carries; nothing for a character with none of them.
+    const brawling = this.skillLevelByName("Brawling");
+    for (const attack of beastAttacks({
+      st: strikingSt,
+      dx: attrs.DX,
+      skills: brawling !== null ? { Brawling: brawling } : {},
+      beast: beastTraitsFrom(heldTraits.map((t) => t.name)),
+    })) {
+      melee.push({
+        itemId: "",
+        modeIndex: 0,
+        name: attack.key === "striker" ? attack.skillName : game.i18n.localize(`GWORLD.Natural.${attack.key}`),
+        mode: attack.key === "striker" ? game.i18n.localize("GWORLD.Natural.striker") : attack.skillName,
+        skillName: attack.key === "striker" ? (brawling !== null ? "Brawling" : "DX") : attack.skillName,
+        skillLevel: attack.skillLevel + legs,
+        atDefault: false,
+        natural: true,
+        unready: false,
+        readiesAfterAttack: false,
+        damage: formatDiceAdds(attack.damage),
+        damageType: attack.damageType,
+        armorDivisor: 1,
+        damageRollable: true,
+        reach: reachForSize(attack.reach, this.sm),
+        parry: null,
         parryModifier: 0,
         minSt: null,
         usable: true,
@@ -1372,8 +1522,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const ridingSkill = this.skillLevelByName("Riding") ?? (attrs.DX ?? 10) - 5;
     const mountedPenalty = this.mounted ? mountedDefensePenalty(ridingSkill) : 0;
 
-    // Enhanced Dodge, Parry and Block each raise the one defense they name
-    // (p. 51); Lame lowers all three (p. 141).
+    // Enhanced Dodge, Parry and Block each raise the one defense they name (p. 51).
     const enhancedFor = { dodge: traits.enhancedDodge, parry: traits.enhancedParry.all, block: traits.enhancedBlock };
     const contextFor = (which: "dodge" | "parry" | "block") => ({
       shieldDb: shieldDb + deflectDb,
@@ -1384,7 +1533,6 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       cannotSeeAttacker: this.conditions.blindToAttacker,
       combatReflexes: traits.activeDefense > 0,
       enhanced: enhancedFor[which],
-      lame: lameCombatPenalty(traits.lame),
     });
 
     const describe = (base: number, mods: Array<{ label: string; value: number }>): string =>
@@ -1542,18 +1690,22 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // One attack a turn, plus a level of Extra Attack for each beyond it.
       attacksPerTurn: 1 + traits.extraAttacks,
       extraArms: traits.extraArms,
-      // What the physical disadvantages take off an attack, by kind, each
-      // under its own name (pp. 123, 141, 147).
+      // What the eyes take off an attack, by kind, each under its own name
+      // (pp. 123, 147) -- as things stand on the sheet; the roll itself asks
+      // again, knowing whether the shot was aimed.
       attackPenalties: {
-        melee: impairedAttacks(traits, false),
-        ranged: impairedAttacks(traits, true),
+        melee: impairedAttacks(traits, { ranged: false, closeCombat: this.conditions.closeCombat }),
+        ranged: impairedAttacks(traits, { ranged: true, aimed: this.maneuver === "aim" && (this.aim?.turns ?? 0) > 0 }),
       },
-      // The eyes brought to the dark, for the attack dialog to read.
+      // What the legs take off every melee skill (p. 141), for the chip.
+      legPenalty: legs,
+      // The eyes brought to the dark and to the range, for the attack dialog.
       vision: {
         nightVision: traits.nightVision,
         darkVision: traits.darkVision,
         infravision: traits.infravision,
         blindness: traits.blindness,
+        nearsighted: traits.badSight === "nearsighted",
       },
       // The four senses as Perception rolls, each after the traits that
       // sharpen or blunt it (pp. 35, 124, 129, 138).
@@ -1564,6 +1716,24 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       charismaInfluence: charismaInfluenceBonus(heldTraits),
       // Fit's bonus to every HT roll, for the rolls made outside this block.
       healthRollBonus: traits.htRolls,
+      wealth: this.#wealth(heldTraits),
+      aging: this.#aging(heldTraits),
+      // Each language with what using it costs (Characters p. 24), and
+      // whether an unfamiliar culture costs anything at all (p. 46).
+      languages: this.itemsOfType("language").map((item) => ({
+        id: String(item.id ?? ""),
+        name: String(item.name ?? ""),
+        spoken: String(item.system?.spoken ?? "none") as Comprehension,
+        written: String(item.system?.written ?? "none") as Comprehension,
+        spokenPenalty: languagePenalty(String(item.system?.spoken ?? "none") as Comprehension),
+        writtenPenalty: languagePenalty(String(item.system?.written ?? "none") as Comprehension),
+      })),
+      culturallyAdaptable: culturallyAdaptable(heldTraits),
+      // How long a night has to be (Campaigns p. 427; Characters pp. 50, 65, 136).
+      sleepPeriod: sleepPeriodFrom(heldTraits),
+      // The dose as it stands today, and what the table says of it (Campaigns pp. 435-436).
+      radiation: this.#radiation(),
+      radiationTolerance: radiationToleranceFrom(heldTraits),
       regeneration: regenerationRate(traits.regeneration),
       // The attributes as everything else reads them: bought plus what traits
       // add. The sheet's inputs edit the bought figure and show this one.

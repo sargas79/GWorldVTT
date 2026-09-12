@@ -300,6 +300,10 @@
             <button type="button" class="ibtn" data-action="addModifier">
               {{> "gworld.plus"}} {{localize "GWORLD.Action.Add"}}
             </button>
+            <button type="button" class="ibtn" data-action="browseModifiers"
+                    data-tooltip="{{localize 'GWORLD.Modifier.BrowseHint'}}">
+              {{> "gworld.search"}} {{localize "GWORLD.Modifier.Browse"}}
+            </button>
           {{/if}}
         </div>
         {{#each system.modifiers as |m i|}}
@@ -595,7 +599,79 @@
           </label>
         </div>
         <p class="ihint">{{localize "GWORLD.Gear.CategoryHint"}}</p>
+        {{#if isVehicle}}
+          {{!-- The stat line as the tables print it (Campaigns pp. 462-465). --}}
+          <div class="isub">
+            <div class="isub-head">{{localize "GWORLD.Vehicle.Statistics"}}</div>
+            <div class="ifields">
+              <label>{{localize "GWORLD.Vehicle.StHp"}}
+                <input type="number" name="system.vehicle.stHp" value="{{system.vehicle.stHp}}" step="1" min="0" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.Handling"}}
+                <input type="number" name="system.vehicle.handling" value="{{system.vehicle.handling}}" step="1" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.Stability"}}
+                <input type="number" name="system.vehicle.stability" value="{{system.vehicle.stability}}" step="1" min="0" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.HT"}}
+                <input type="number" name="system.vehicle.ht" value="{{system.vehicle.ht}}" step="1" min="1" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.Acceleration"}}
+                <input type="number" name="system.vehicle.acceleration" value="{{system.vehicle.acceleration}}" step="0.1" min="0" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.TopSpeed"}}
+                <input type="number" name="system.vehicle.topSpeed" value="{{system.vehicle.topSpeed}}" step="1" min="0" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.LoadedWeight"}}
+                <input type="number" name="system.vehicle.loadedWeight" value="{{system.vehicle.loadedWeight}}" step="0.01" min="0" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.Load"}}
+                <input type="number" name="system.vehicle.load" value="{{system.vehicle.load}}" step="0.01" min="0" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.SM"}}
+                <input type="number" name="system.vehicle.sm" value="{{system.vehicle.sm}}" step="1" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.Occupants"}}
+                <input type="text" name="system.vehicle.occupants" value="{{system.vehicle.occupants}}" placeholder="1+3" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.DR"}}
+                <input type="number" name="system.vehicle.dr" value="{{system.vehicle.dr}}" step="1" min="0" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.Range"}}
+                <input type="number" name="system.vehicle.range" value="{{system.vehicle.range}}" step="1" min="0" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.Skill"}}
+                <input type="text" name="system.vehicle.skill" value="{{system.vehicle.skill}}" placeholder="Driving (Automobile)" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.LocomotionLabel"}}
+                <select name="system.vehicle.locomotion" {{#unless editable}}disabled{{/unless}}>
+                  {{#each locomotions as |l|}}
+                    <option value="{{l.key}}" {{#if l.selected}}selected{{/if}}>{{l.label}}</option>
+                  {{/each}}
+                </select>
+              </label>
+              <label class="icheck"><input type="checkbox" name="system.vehicle.roadBound" {{#if system.vehicle.roadBound}}checked{{/if}} {{#unless editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Vehicle.RoadBound"}}</label>
+            </div>
+            <p class="ihint">{{localize "GWORLD.Vehicle.Hint"}}</p>
+          </div>
+        {{/if}}
       {{/if}}
+    {{/if}}
+
+    {{#if isModifier}}
+      {{!-- An enhancement or limitation as the book prices it (Characters pp. 101-117). --}}
+      <div class="ifields">
+        <label>{{localize "GWORLD.Modifier.Kind"}}
+          <select name="system.kind" {{#unless editable}}disabled{{/unless}}>
+            {{#each modifierKinds as |k|}}
+              <option value="{{k.key}}" {{#if k.selected}}selected{{/if}}>{{k.label}}</option>
+            {{/each}}
+          </select>
+        </label>
+        <label>{{localize "GWORLD.Modifier.Value"}}
+          <input type="number" name="system.value" value="{{system.value}}" step="5" {{#unless editable}}disabled{{/unless}} /></label>
+        <label>{{localize "GWORLD.Modifier.MaxLevels"}}
+          <input type="number" name="system.maxLevels" value="{{system.maxLevels}}" step="1" min="0" {{#unless editable}}disabled{{/unless}} /></label>
+        <label>{{localize "GWORLD.Modifier.Group"}}
+          <input type="text" name="system.group" value="{{system.group}}" {{#unless editable}}disabled{{/unless}} /></label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Modifier.Hint"}}</p>
+      <div class="ifields">
+        <label>{{localize "GWORLD.Modifier.CostTable"}}
+          <input type="text" name="system.costTable" value="{{join system.costTable "/"}}" placeholder="50/100/150"
+                 {{#unless editable}}disabled{{/unless}} /></label>
+        <label>{{localize "GWORLD.Modifier.LevelNames"}}
+          <input type="text" name="system.levelNames" value="{{join system.levelNames "; "}}" placeholder="x3; x10; x30"
+                 {{#unless editable}}disabled{{/unless}} /></label>
+      </div>
     {{/if}}
 
     {{#if isPhysical}}
