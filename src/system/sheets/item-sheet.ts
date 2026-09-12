@@ -13,6 +13,7 @@
 import { parseCostTable, parseLevelNames } from "../../rules/traits.js";
 import { SPELL_CLASSES } from "../../rules/magic.js";
 import { SYSTEM_ID } from "../constants.js";
+import { sourceCollections } from "../compendium-sources.js";
 import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
 
 const { ItemSheetV2 } = foundry.applications.sheets;
@@ -25,6 +26,101 @@ const PHYSICAL_TYPES = new Set(["equipment", "armor", "shield"]);
 
 /** Types that can carry attack modes. */
 const ARMED_TYPES = new Set(["equipment"]);
+
+/** Every enhancement and limitation the chosen compendia hold, by name. */
+async function modifierEntries(): Promise<Array<{ name: string; value: number; costTable: number[]; levelNames: string[]; maxLevels: number; group: string; kind: string }>> {
+  const sources = sourceCollections();
+  const out: Array<{ name: string; value: number; costTable: number[]; levelNames: string[]; maxLevels: number; group: string; kind: string }> = [];
+  for (const pack of (game as any).packs ?? []) {
+    if (pack?.documentName !== "Item" || !sources.has(String(pack.collection))) continue;
+    const index = await pack.getIndex({
+      fields: ["system.kind", "system.value", "system.costTable", "system.levelNames", "system.maxLevels", "system.group"],
+    });
+    for (const entry of index) {
+      if (entry.type !== "modifier") continue;
+      out.push({
+        name: String(entry.name),
+        value: Number(entry.system?.value) || 0,
+        costTable: Array.isArray(entry.system?.costTable) ? entry.system.costTable : [],
+        levelNames: Array.isArray(entry.system?.levelNames) ? entry.system.levelNames : [],
+        maxLevels: Number(entry.system?.maxLevels) || 0,
+        group: String(entry.system?.group ?? ""),
+        kind: String(entry.system?.kind ?? ""),
+      });
+    }
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The percentage a modifier is worth at a level. */
+function percentAt(entry: { value: number; costTable: number[] }, level: number): number {
+  const at = Math.max(1, Math.floor(level) || 1);
+  if (entry.costTable.length > 0) return entry.costTable[Math.min(at, entry.costTable.length) - 1] ?? 0;
+  return entry.value * at;
+}
+
+/**
+ * Asks which modifier, and at what level, from a filtered list.
+ *
+ * Returns the name and percentage to write onto the trait: "Area Effect 2"
+ * at +100%, "Ranged" at +40%.
+ */
+async function promptForModifier(): Promise<{ name: string; value: number } | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Modifier.${key}`);
+  const entries = await modifierEntries();
+  if (entries.length === 0) {
+    ui.notifications?.warn(L("None"));
+    return null;
+  }
+  const signed = (v: number) => (v > 0 ? `+${v}` : String(v));
+  const option = (e: (typeof entries)[number], i: number) =>
+    `<option value="${i}">${e.name} (${e.costTable.length ? e.costTable.map((v) => `${signed(v)}%`).join("/") : `${signed(e.value)}%`})${e.group ? ` — ${e.group}` : ""}</option>`;
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Browse") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <input type="search" name="filter" placeholder="${game.i18n.localize("GWORLD.Picker.Search")}" autofocus>
+      <select name="entry" size="10" style="width:100%">${entries.map(option).join("")}</select>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Level")}</span>
+        <input type="number" name="level" value="1" min="1" step="1" style="width:90px">
+      </label>
+      <p class="ihint" style="margin:0">${L("BrowseHint")}</p>
+    </div>`,
+    render: (_event: Event, dialog: any) => {
+      const root: HTMLElement = dialog.element ?? dialog;
+      const filter = root.querySelector<HTMLInputElement>('input[name="filter"]');
+      const select = root.querySelector<HTMLSelectElement>('select[name="entry"]');
+      filter?.addEventListener("input", () => {
+        const needle = filter.value.trim().toLowerCase();
+        select!.innerHTML = entries
+          .map((e, i) => ({ e, i }))
+          .filter(({ e }) => !needle || e.name.toLowerCase().includes(needle) || e.group.toLowerCase().includes(needle))
+          .map(({ e, i }) => option(e, i))
+          .join("");
+      });
+    },
+    ok: {
+      label: game.i18n.localize("GWORLD.Picker.Add"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const index = Number(form?.querySelector<HTMLSelectElement>('select[name="entry"]')?.value ?? -1);
+        const level = Number(form?.querySelector<HTMLInputElement>('input[name="level"]')?.value ?? 1) || 1;
+        const entry = entries[index];
+        if (!entry) return null;
+        const levelled = entry.costTable.length > 1 || entry.maxLevels !== 1 && (entry.maxLevels > 1 || entry.levelNames.length > 1);
+        const named = levelled && entry.levelNames[level - 1]
+          ? `${entry.name} (${entry.levelNames[level - 1]})`
+          : levelled && level > 1
+            ? `${entry.name} ${level}`
+            : entry.name;
+        return { name: named, value: percentAt(entry, level) };
+      },
+    },
+    rejectClose: false,
+  });
+  return result && typeof result === "object" ? (result as { name: string; value: number }) : null;
+}
 
 export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   static override DEFAULT_OPTIONS = {
@@ -39,6 +135,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       deleteDefault: GWorldItemSheet.#onDeleteDefault,
       editItemImage: GWorldItemSheet.#onEditImage,
       addModifier: GWorldItemSheet.#onAddModifier,
+      browseModifiers: GWorldItemSheet.#onBrowseModifiers,
       deleteModifier: GWorldItemSheet.#onDeleteModifier,
       addEnchantment: GWorldItemSheet.#onAddEnchantment,
       deleteEnchantment: GWorldItemSheet.#onDeleteEnchantment,
@@ -65,6 +162,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // One flag per type, so the template can branch without a comparison helper.
     for (const t of [
       "skill", "technique", "trait", "equipment", "armor", "shield", "language", "template", "spell",
+      "modifier",
     ]) {
       context[`is${t.charAt(0).toUpperCase()}${t.slice(1)}`] = item.type === t;
     }
@@ -75,6 +173,11 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // A vehicle is equipment with a stat line, and the sheet shows the line
     // only when the category says so.
     context.isVehicle = item.type === "equipment" && item.system?.category === "vehicle";
+    context.modifierKinds = (["enhancement", "limitation", "special"] as const).map((key) => ({
+      key,
+      label: game.i18n.localize(`GWORLD.Modifier.Kinds.${key}`),
+      selected: item.system?.kind === key,
+    }));
     context.locomotions = (["wheels", "tracks", "legs", "runners", "water", "air"] as const).map((key) => ({
       key,
       label: game.i18n.localize(`GWORLD.Vehicle.Locomotion.${key}`),
@@ -251,6 +354,18 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
 
     // The colleges are typed as one line and stored as a list. An empty line
     // is a spell of no college, which the tab files last rather than refusing.
+    if (this.item.type === "modifier" && data.system) {
+      // "50/100/150" and "x3; x10; x30" typed as one line each.
+      if (typeof data.system.costTable === "string") {
+        data.system.costTable = String(data.system.costTable)
+          .split("/").map((s: string) => Number(s.trim())).filter((n: number) => Number.isFinite(n));
+      }
+      if (typeof data.system.levelNames === "string") {
+        data.system.levelNames = String(data.system.levelNames)
+          .split(";").map((s: string) => s.trim()).filter(Boolean);
+      }
+    }
+
     if (this.item.type === "spell" && data.system && typeof data.system.colleges === "string") {
       data.system.colleges = data.system.colleges
         .split(",")
@@ -393,6 +508,17 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   static async #onAddModifier(this: GWorldItemSheet) {
     const modifiers = [...(this.item.system.modifiers ?? [])];
     await this.item.update({ "system.modifiers": [...modifiers, { name: "", value: 0 }] });
+  }
+
+  /**
+   * Picks an enhancement or limitation off the compendium (Characters
+   * pp. 101-117) and puts it on the trait, at the level asked for.
+   */
+  static async #onBrowseModifiers(this: GWorldItemSheet) {
+    const picked = await promptForModifier();
+    if (!picked) return;
+    const modifiers = [...(this.item.system.modifiers ?? [])];
+    await this.item.update({ "system.modifiers": [...modifiers, picked] });
   }
 
   static async #onDeleteModifier(this: GWorldItemSheet, _event: Event, target: HTMLElement) {

@@ -26,7 +26,10 @@ const SOURCE =
 
 const ITEM_TYPES = new Set([
   "trait", "skill", "technique", "equipment", "armor", "shield", "language", "template", "spell",
+  "modifier",
 ]);
+const ACTOR_TYPES = new Set(["character", "npc"]);
+const MODIFIER_KINDS = new Set(["enhancement", "limitation", "special"]);
 const SPELL_CLASSES = new Set([
   "regular", "area", "melee", "missile", "blocking", "information", "enchantment", "special",
 ]);
@@ -36,7 +39,7 @@ const DIFFICULTIES = new Set(["E", "A", "H", "VH", "W"]);
 const DAMAGE_TYPES = new Set([
   "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox",
 ]);
-const EQUIPMENT_CATEGORIES = new Set(["weapon", "tool", "consumable", "misc"]);
+const EQUIPMENT_CATEGORIES = new Set(["weapon", "tool", "consumable", "vehicle", "misc"]);
 const HIT_LOCATIONS = new Set([
   "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",
 ]);
@@ -61,6 +64,23 @@ const ids = new Map();
 
 function check(condition, file, name, message) {
   if (!condition) problems.push(`${file} — ${name}: ${message}`);
+}
+
+/**
+ * An Actor in a pack: a creature of the bestiary. Its attributes have to be
+ * whole and its embedded items have to pass as items do.
+ */
+function validateActor(entry, file) {
+  const name = entry.name ?? "(unnamed)";
+  check(Boolean(entry._id), file, name, "missing _id");
+  check(/^[A-Za-z0-9]{16}$/.test(entry._id ?? ""), file, name, "_id must be 16 alphanumerics");
+  if (ids.has(entry._id)) problems.push(`${file} — ${name}: duplicate _id, also used by ${ids.get(entry._id)}`);
+  ids.set(entry._id, name);
+  const attrs = entry.system?.attributes ?? {};
+  for (const key of ["ST", "DX", "IQ", "HT"]) {
+    check(Number.isInteger(attrs[key]) && attrs[key] >= 1, file, name, `${key} must be a positive integer`);
+  }
+  for (const item of entry.items ?? []) validateItem(item, `${file} (${name})`);
 }
 
 function validateItem(entry, file) {
@@ -313,6 +333,17 @@ function validateItem(entry, file) {
     check(Number.isInteger(sys.db) && sys.db >= 0, file, name, `bad DB "${sys.db}"`);
   }
 
+  if (entry.type === "modifier") {
+    check(MODIFIER_KINDS.has(sys.kind), file, name, `bad kind "${sys.kind}"`);
+    check(Number.isInteger(sys.value), file, name, "value must be an integer percentage");
+    const table = Array.isArray(sys.costTable) ? sys.costTable : [];
+    for (const step of table) check(Number.isInteger(step), file, name, `costTable step "${step}" is not an integer`);
+    // The sign has to agree with the kind, as a trait's must with its category.
+    const first = table.length > 0 ? table[0] : sys.value;
+    if (sys.kind === "enhancement") check(first > 0, file, name, `an enhancement priced at ${first}%`);
+    if (sys.kind === "limitation") check(first < 0, file, name, `a limitation priced at ${first}%`);
+  }
+
   if (entry.type === "equipment" && sys.category !== undefined) {
     check(EQUIPMENT_CATEGORIES.has(sys.category), file, name, `bad category "${sys.category}"`);
   }
@@ -415,7 +446,8 @@ async function main() {
     for (const file of (await readdir(dir)).filter((f) => f.endsWith(".json"))) {
       const raw = JSON.parse(await readFile(join(dir, file), "utf8"));
       for (const entry of Array.isArray(raw) ? raw : [raw]) {
-        validateItem(entry, `${pack}/${file}`);
+        if (ACTOR_TYPES.has(entry.type)) validateActor(entry, `${pack}/${file}`);
+        else validateItem(entry, `${pack}/${file}`);
         count++;
       }
     }

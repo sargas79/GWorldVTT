@@ -13,7 +13,7 @@ import {
   secondaryCharacteristics,
   secondaryPointCost,
 } from "../../rules/attributes.js";
-import { naturalAttacks } from "../../rules/natural-attacks.js";
+import { beastAttacks, beastTraitsFrom, naturalAttacks } from "../../rules/natural-attacks.js";
 import { becomesUnreadyAfterAttack } from "../../rules/readiness.js";
 import { aimBonus } from "../../rules/aim.js";
 import { regenerationRate } from "../../rules/recovery.js";
@@ -1450,6 +1450,47 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         parry: attack.canParry
           ? baseParry(attack.skillLevel + legs) + traits.enhancedParry.all + traits.enhancedParry.bareHands
           : null,
+        parryModifier: 0,
+        minSt: null,
+        usable: true,
+        unbalanced: false,
+        isFencing: false,
+        unarmed: true,
+        stBased: true,
+        explosive: false,
+        fragmentation: "",
+        affliction: false,
+        afflictionAttribute: "",
+        afflictionModifier: 0,
+      });
+    }
+
+    // A beast's bite, claws and strikers (Campaigns p. 460), read off the
+    // traits it carries; nothing for a character with none of them.
+    const brawling = this.skillLevelByName("Brawling");
+    for (const attack of beastAttacks({
+      st: strikingSt,
+      dx: attrs.DX,
+      skills: brawling !== null ? { Brawling: brawling } : {},
+      beast: beastTraitsFrom(heldTraits.map((t) => t.name)),
+    })) {
+      melee.push({
+        itemId: "",
+        modeIndex: 0,
+        name: attack.key === "striker" ? attack.skillName : game.i18n.localize(`GWORLD.Natural.${attack.key}`),
+        mode: attack.key === "striker" ? game.i18n.localize("GWORLD.Natural.striker") : attack.skillName,
+        skillName: attack.key === "striker" ? (brawling !== null ? "Brawling" : "DX") : attack.skillName,
+        skillLevel: attack.skillLevel + legs,
+        atDefault: false,
+        natural: true,
+        unready: false,
+        readiesAfterAttack: false,
+        damage: formatDiceAdds(attack.damage),
+        damageType: attack.damageType,
+        armorDivisor: 1,
+        damageRollable: true,
+        reach: reachForSize(attack.reach, this.sm),
+        parry: null,
         parryModifier: 0,
         minSt: null,
         usable: true,

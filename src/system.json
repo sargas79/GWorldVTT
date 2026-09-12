@@ -91,6 +91,28 @@
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
       }
+    },
+    {
+      "name": "modifiers",
+      "label": "Enhancements and Limitations",
+      "path": "packs/modifiers",
+      "type": "Item",
+      "system": "gworld",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "creatures",
+      "label": "Animals and Monsters",
+      "path": "packs/creatures",
+      "type": "Actor",
+      "system": "gworld",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
     }
   ],
   "gridDistance": 1,
@@ -111,7 +133,8 @@
       "language": {},
       "technique": {},
       "template": {},
-      "spell": {}
+      "spell": {},
+      "modifier": {}
     }
   },
   "url": "https://github.com/sargas79/GWorldVTT",

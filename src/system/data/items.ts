@@ -750,6 +750,58 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
   }
 }
 
+/**
+ * An enhancement or limitation (GURPS Basic Set: Characters pp. 101-117),
+ * as a compendium entry to be picked from rather than typed.
+ *
+ * A trait carries its modifiers as names and percentages; this is where the
+ * names and percentages come from. A modifier is priced flat -- Ranged
+ * +40% -- or by level from a table -- Area Effect +50%, +100% and on -- and
+ * a few are neither, being special enough that the page prices them by
+ * hand; those carry 0 and their page.
+ */
+export class ModifierData extends foundry.abstract.TypeDataModel {
+  declare kind: "enhancement" | "limitation" | "special";
+  declare value: number;
+  declare costTable: number[];
+  declare levelNames: string[];
+  declare maxLevels: number;
+  declare group: string;
+
+  static override defineSchema() {
+    return {
+      ...descriptionFields(),
+      kind: new fields.StringField({
+        required: true, nullable: false, initial: "enhancement",
+        choices: ["enhancement", "limitation", "special"],
+      }),
+      /** The percentage, or the percentage a level, for one priced evenly. */
+      value: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+      /** The percentage at each level, level 1 first, for one priced from a table. */
+      costTable: new fields.ArrayField(
+        new fields.NumberField({ required: true, nullable: false, integer: true }),
+        { required: true, initial: [] },
+      ),
+      /** The book's name for each level, where it names them. */
+      levelNames: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: true, initial: "" }),
+        { required: true, initial: [] },
+      ),
+      /** The most levels the book allows, or 0 where it sets no limit. */
+      maxLevels: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+      /** The book's grouping: "General", "Attack Enhancements", and so on. */
+      group: new fields.StringField({ required: true, blank: true, initial: "" }),
+    };
+  }
+
+  /** The percentage at a level: the table's figure where there is one, else value x levels. */
+  percentAt(levels: number): number {
+    const level = Math.max(1, Math.floor(levels) || 1);
+    if (this.costTable.length > 0) return this.costTable[Math.min(level, this.costTable.length) - 1] ?? 0;
+    return this.value * level;
+  }
+}
+
 /** A known language and its comprehension levels (GURPS Lite p. 7). */
 export class LanguageData extends foundry.abstract.TypeDataModel {
   declare spoken: "none" | "broken" | "accented" | "native";

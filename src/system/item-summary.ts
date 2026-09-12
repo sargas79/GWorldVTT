@@ -33,6 +33,14 @@ export function summarise(type: string, system: any): string {
       return `DB ${system?.db ?? 0}`;
     case "language":
       return "";
+    case "modifier": {
+      // "+50%/+100%" for one priced by level, "+40%" for a flat one, and the
+      // group for the handful the page prices by hand.
+      const table: number[] = system?.costTable ?? [];
+      if (table.length > 0) return table.map((v) => `${signed(v)}%`).join("/");
+      if (system?.value) return `${signed(system.value)}%${system?.maxLevels === 1 ? "" : system?.maxLevels || system?.levelNames?.length ? "/level" : ""}`;
+      return String(system?.group ?? "");
+    }
     case "spell": {
       // A spell is told from another by where it is filed and what it costs:
       // "Fire · Missile · 1 to Magery" says more than IQ/H, which nearly

@@ -13,7 +13,8 @@
       "language": "Language",
       "technique": "Technique",
       "template": "Template",
-      "spell": "Spell"
+      "spell": "Spell",
+      "modifier": "Enhancement or Limitation"
     }
   },
   "GWORLD": {
@@ -595,7 +596,8 @@
         "levels": "{name}: {from} → {to} levels.",
         "points": "{name}: {from} → {to} points.",
         "quantity": "{name}: {from} → {to}."
-      }
+      },
+      "Modifiers": "Enhancements and limitations"
     },
     "Condition": {
       "AllOutDefense": "All-Out Defense",
@@ -2120,7 +2122,10 @@
     },
     "Natural": {
       "punch": "Punch",
-      "kick": "Kick"
+      "kick": "Kick",
+      "bite": "Bite",
+      "claw": "Claw",
+      "striker": "Striker"
     },
     "Life": {
       "Study": "Study",
@@ -2243,6 +2248,24 @@
       "Title": "Battle fatigue",
       "Seconds": "{seconds} seconds of fighting",
       "Charged": "{fp} FP from {names}"
+    },
+    "Modifier": {
+      "Browse": "Browse the book's",
+      "BrowseHint": "Pick an enhancement or limitation from the compendium (Characters pp. 101-117) at the level wanted; it is written onto the trait as a name and a percentage.",
+      "None": "No enhancements or limitations in the chosen compendia",
+      "Level": "Level",
+      "Kind": "Kind",
+      "Kinds": {
+        "enhancement": "Enhancement",
+        "limitation": "Limitation",
+        "special": "Special (priced by hand)"
+      },
+      "Value": "Percent (a level)",
+      "MaxLevels": "Max levels",
+      "Group": "Group",
+      "CostTable": "Percent at each level",
+      "LevelNames": "Level names",
+      "Hint": "A flat modifier carries its percent; one priced by level carries the percent at each level, and the names the book gives them, separated by semicolons."
     }
   }
 }

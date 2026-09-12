@@ -41,14 +41,29 @@ const OUT = flag("--out", join(projectRoot, "dist", "packs"));
  * without one (`if (!doc._key) continue`), so omitting it produces an empty
  * pack that compiles without error.
  */
+const ACTOR_TYPES = new Set(["character", "npc"]);
+
 function normalise(entry, type) {
+  const documentType = entry.type ?? type;
+  const actor = ACTOR_TYPES.has(documentType);
   return {
-    _key: `!items!${entry._id}`,
+    _key: `!${actor ? "actors" : "items"}!${entry._id}`,
     _id: entry._id,
     name: entry.name,
-    type: entry.type ?? type,
+    type: documentType,
     img: entry.img ?? undefined,
     system: entry.system ?? {},
+    // A creature carries its traits and skills with it, each keyed under it:
+    // compilePack wants every document in the hierarchy to say where it sits.
+    ...(actor
+      ? {
+          items: (entry.items ?? []).map((item) => ({
+            _key: `!actors.items!${entry._id}.${item._id}`,
+            ...item,
+          })),
+          prototypeToken: entry.prototypeToken ?? undefined,
+        }
+      : {}),
   };
 }
 
@@ -111,7 +126,7 @@ async function main() {
     if (written !== documents.length) {
       throw new Error(
         `${pack}: compiled ${written} documents but expected ${documents.length}. ` +
-          `Every document needs a _key of the form !items!<id>.`,
+          `Every document needs a _key of the form !items!<id> or !actors!<id>.`,
       );
     }
     console.log(`  ${pack}: ${documents.length} documents`);

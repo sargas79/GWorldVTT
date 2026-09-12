@@ -1,0 +1,7207 @@
+[
+  {
+    "_id": "db753fa641ef7d61",
+    "name": "Chimpanzee",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 11,
+        "DX": 12,
+        "IQ": 6,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 4,
+        "per": 4,
+        "basicSpeed": 0,
+        "basicMove": 1
+      },
+      "hp": {
+        "value": 11,
+        "max": 11
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 0,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "140 lbs.",
+        "notes": "Apes. Basic Set: Campaigns p. 456"
+      }
+    },
+    "items": [
+      {
+        "_id": "0a55519484fda4d9",
+        "name": "Arm ST",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 3,
+          "pointsPerLevel": 3,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 40",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "30fbf4067d5af9dd",
+        "name": "Bad Grip",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": -5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 3,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 123",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "1a727ca6b52fcc64",
+        "name": "Brachiator",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 41",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "07ffae60a5180062",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "02b78e447c70dedb",
+        "name": "Teeth (Sharp Teeth)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "f3e66a694646187d",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "2446d8f9c45defe9",
+        "name": "Climbing",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "A",
+          "points": 8,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "DX",
+              "skill": "",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 183"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "49fe0d9522716ae2",
+    "name": "Gorilla",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 15,
+        "DX": 12,
+        "IQ": 6,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 4,
+        "per": 4,
+        "basicSpeed": 0,
+        "basicMove": 1
+      },
+      "hp": {
+        "value": 15,
+        "max": 15
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "400 lbs.",
+        "notes": "Apes. Basic Set: Campaigns p. 456"
+      }
+    },
+    "items": [
+      {
+        "_id": "7ca879b4455082e0",
+        "name": "Arm ST",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 3,
+          "pointsPerLevel": 3,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 40",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "17e590997706d531",
+        "name": "Bad Grip",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": -5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 3,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 123",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "1a56ef6cd4186bb3",
+        "name": "Brachiator",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 41",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "c509aaa58b5f551c",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "6d01781329bdbb58",
+        "name": "Teeth (Sharp Teeth)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "1ded1b003e275794",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "7f1092f76cd58ce7",
+        "name": "Climbing",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "A",
+          "points": 8,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "DX",
+              "skill": "",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 183"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "5554f5a61107e711",
+    "name": "Black Bear",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 14,
+        "DX": 11,
+        "IQ": 4,
+        "HT": 13
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 8,
+        "per": 6,
+        "basicSpeed": 0,
+        "basicMove": 1
+      },
+      "hp": {
+        "value": 14,
+        "max": 14
+      },
+      "fp": {
+        "value": 13,
+        "max": 13
+      },
+      "sm": 0,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "300 lbs.",
+        "notes": "Bears. Basic Set: Campaigns p. 456"
+      }
+    },
+    "items": [
+      {
+        "_id": "c42f0873df07fd43",
+        "name": "Claws (Blunt Claws)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "28b26d5917320979",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "e81eb2901e410eff",
+        "name": "No Fine Manipulators",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 145",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "6a3d9f2f37bee054",
+        "name": "Semi-Upright",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 153",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "96dfb02d88b9e459",
+        "name": "Teeth (Sharp Teeth)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "6ff0cda6e6bdfc34",
+        "name": "Temperature Tolerance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 1,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 93",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "9b820e1cd9484e98",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "012db533c5936182",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "6540c0fe5102c47e",
+    "name": "Grizzly Bear",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 19,
+        "DX": 11,
+        "IQ": 4,
+        "HT": 13
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 6,
+        "basicSpeed": 0,
+        "basicMove": 2
+      },
+      "hp": {
+        "value": 19,
+        "max": 19
+      },
+      "fp": {
+        "value": 13,
+        "max": 13
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "800 lbs.",
+        "notes": "Bears. Basic Set: Campaigns p. 456"
+      }
+    },
+    "items": [
+      {
+        "_id": "18b03c0c976339a8",
+        "name": "Claws (Blunt Claws)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "4ab57966a1142b6c",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "a8a655fc47e7d929",
+        "name": "No Fine Manipulators",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 145",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "af5cbf877d4f3ee8",
+        "name": "Semi-Upright",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 153",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "d09681c764a4f6ff",
+        "name": "Teeth (Sharp Teeth)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "ee8d2e83af7648bc",
+        "name": "Temperature Tolerance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 1,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 93",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "2177277f0698850b",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "cace52ba2871a99b",
+        "name": "Bad Temper",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 124",
+          "modifiers": [],
+          "selfControl": 9
+        }
+      },
+      {
+        "_id": "509af37c1048a6f0",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "901493e390fd036c",
+    "name": "Polar Bear",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 20,
+        "DX": 11,
+        "IQ": 4,
+        "HT": 13
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 6,
+        "basicSpeed": 0,
+        "basicMove": 1
+      },
+      "hp": {
+        "value": 20,
+        "max": 20
+      },
+      "fp": {
+        "value": 13,
+        "max": 13
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "1,000 lbs.",
+        "notes": "Bears. Move: Water Move 3. Basic Set: Campaigns p. 456"
+      }
+    },
+    "items": [
+      {
+        "_id": "7517356f33a24295",
+        "name": "Claws (Blunt Claws)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "e888c239012d555d",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "27780a8e8653630c",
+        "name": "No Fine Manipulators",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 145",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "210141d1efea7888",
+        "name": "Semi-Upright",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 153",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "d118a0ad2d4697f6",
+        "name": "Teeth (Sharp Teeth)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "cead42eff05297eb",
+        "name": "Temperature Tolerance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 1,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 93",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "dfb7e31ab1721900",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "9ff64c3d25e1d978",
+        "name": "Bad Temper",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 124",
+          "modifiers": [],
+          "selfControl": 9
+        }
+      },
+      {
+        "_id": "a58d6d4d12710e5e",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      },
+      {
+        "_id": "c63b5a9c69dae66c",
+        "name": "Swimming",
+        "type": "skill",
+        "system": {
+          "attribute": "HT",
+          "difficulty": "E",
+          "points": 1,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "HT",
+              "skill": "",
+              "modifier": -4
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 224"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "48c366b1fa8fc2b9",
+    "name": "Cave Bear",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 23,
+        "DX": 11,
+        "IQ": 4,
+        "HT": 13
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 6,
+        "basicSpeed": 0,
+        "basicMove": 1
+      },
+      "hp": {
+        "value": 23,
+        "max": 23
+      },
+      "fp": {
+        "value": 13,
+        "max": 13
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "1,400 lbs.",
+        "notes": "Bears. Basic Set: Campaigns p. 456"
+      }
+    },
+    "items": [
+      {
+        "_id": "61cedc627dd4b2c5",
+        "name": "Claws (Blunt Claws)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "8f1c9a3ca5ce589d",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "97a00c530f0ac804",
+        "name": "No Fine Manipulators",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 145",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "fb74b777e7081d66",
+        "name": "Semi-Upright",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 153",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "2130f6ff56469753",
+        "name": "Teeth (Sharp Teeth)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "8f62fd070ed5bc67",
+        "name": "Temperature Tolerance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 1,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 93",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "1379af3c7bf0b078",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "84a2f7477923745e",
+        "name": "Bad Temper",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 124",
+          "modifiers": [],
+          "selfControl": 9
+        }
+      },
+      {
+        "_id": "d154923bbe5675a1",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "1f0818254bb7904e",
+    "name": "House Cat",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 4,
+        "DX": 14,
+        "IQ": 4,
+        "HT": 10
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 8,
+        "basicSpeed": 0,
+        "basicMove": 4
+      },
+      "hp": {
+        "value": 4,
+        "max": 4
+      },
+      "fp": {
+        "value": 10,
+        "max": 10
+      },
+      "sm": -3,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "10 lbs.",
+        "notes": "Cats. Basic Set: Campaigns p. 456"
+      }
+    },
+    "items": [
+      {
+        "_id": "2c2b88642986de34",
+        "name": "Catfall",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 41",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "147cddd439fed4eb",
+        "name": "Combat Reflexes",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "Enhanced Time Sense"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 43",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "d956a3706fa69f04",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "975879376b7ed85e",
+        "name": "Night Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 5,
+          "pointsPerLevel": 1,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 9,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 71",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "90d3895a49777cd7",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "1b5f2212b4afa612",
+        "name": "Claws (Sharp Claws)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "2a82229eaeb1fc71",
+        "name": "Teeth (Sharp Teeth)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "db3a14dd343399fc",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      },
+      {
+        "_id": "5f00a022298896dd",
+        "name": "Jumping",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 1,
+          "bonus": 0,
+          "defaults": [],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 203"
+        }
+      },
+      {
+        "_id": "92d5c1d6c5c1c606",
+        "name": "Stealth",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "A",
+          "points": 2,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "DX",
+              "skill": "",
+              "modifier": -5
+            },
+            {
+              "from": "attribute",
+              "attribute": "IQ",
+              "skill": "",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 222"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "fc87dc232e6fb0f9",
+    "name": "Lion",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 16,
+        "DX": 13,
+        "IQ": 4,
+        "HT": 11
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 8,
+        "basicSpeed": 0,
+        "basicMove": 4
+      },
+      "hp": {
+        "value": 16,
+        "max": 16
+      },
+      "fp": {
+        "value": 11,
+        "max": 11
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "500 lbs.",
+        "notes": "Cats. 2 hexes. Basic Set: Campaigns p. 456"
+      }
+    },
+    "items": [
+      {
+        "_id": "5f1d203e0b5fa160",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "dca9212aab5433b8",
+        "name": "Laziness",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 142",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "3d474d7520c84f33",
+        "name": "Night Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 5,
+          "pointsPerLevel": 1,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 9,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 71",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "2b006e4e2d423f85",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "987d4cc9a50ff993",
+        "name": "Claws (Sharp Claws)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "e1bf45d06173a34b",
+        "name": "Teeth (Sharp Teeth)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "6c23842e6c390bc9",
+        "name": "Temperature Tolerance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 1,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 93",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "a0f5b9ff34f850d8",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "69004bc0ab1d7ecf",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      },
+      {
+        "_id": "8058f7154b230c2c",
+        "name": "Running",
+        "type": "skill",
+        "system": {
+          "attribute": "HT",
+          "difficulty": "A",
+          "points": 8,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "HT",
+              "skill": "",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 218"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "189a24180aaf59e4",
+    "name": "Tiger",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 17,
+        "DX": 13,
+        "IQ": 4,
+        "HT": 11
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 8,
+        "basicSpeed": 0,
+        "basicMove": 4
+      },
+      "hp": {
+        "value": 17,
+        "max": 17
+      },
+      "fp": {
+        "value": 11,
+        "max": 11
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "500 lbs.",
+        "notes": "Cats. 2 hexes. Basic Set: Campaigns p. 456"
+      }
+    },
+    "items": [
+      {
+        "_id": "72b7187be658cc16",
+        "name": "Combat Reflexes",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "Enhanced Time Sense"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 43",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "3244bb18e3329f24",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "4db0f59ef38350d0",
+        "name": "Night Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 5,
+          "pointsPerLevel": 1,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 9,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 71",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "5e6e6bc472eab81a",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "b1e391ab87f66134",
+        "name": "Claws (Sharp Claws)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "7c1987482504dc00",
+        "name": "Teeth (Sharp Teeth)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "d97b8b2b4a209565",
+        "name": "Temperature Tolerance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 1,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 93",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "0ffd2894c2777e5d",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "1b3b3cb35aad8fc8",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      },
+      {
+        "_id": "c6235fd16bd8e13d",
+        "name": "Stealth",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "A",
+          "points": 2,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "DX",
+              "skill": "",
+              "modifier": -5
+            },
+            {
+              "from": "attribute",
+              "attribute": "IQ",
+              "skill": "",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 222"
+        }
+      },
+      {
+        "_id": "956ba147f829d7df",
+        "name": "Swimming",
+        "type": "skill",
+        "system": {
+          "attribute": "HT",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "HT",
+              "skill": "",
+              "modifier": -4
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 224"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "83c51767e02ef639",
+    "name": "Red Deer",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 12,
+        "DX": 13,
+        "IQ": 3,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 7,
+        "basicSpeed": 0,
+        "basicMove": 3
+      },
+      "hp": {
+        "value": 12,
+        "max": 12
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "200 lbs.",
+        "notes": "Deer. 2 hexes. Basic Set: Campaigns p. 457"
+      }
+    },
+    "items": [
+      {
+        "_id": "2722380516c8a013",
+        "name": "Claws (Hooves)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "c42306144a97330a",
+        "name": "Striker (Impaling): Antlers",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 8,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 88"
+        }
+      },
+      {
+        "_id": "eea48ed4ad0d07e7",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "31c405ee23e0dd4b",
+        "name": "Weak Bite",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 161",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "a71ba784851caa63",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "98b6ac97a0731852",
+        "name": "Running",
+        "type": "skill",
+        "system": {
+          "attribute": "HT",
+          "difficulty": "A",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "HT",
+              "skill": "",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 218"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "5cd0aa14c011fe98",
+    "name": "Large Guard Dog",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 9,
+        "DX": 11,
+        "IQ": 4,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 6,
+        "per": 8,
+        "basicSpeed": 0,
+        "basicMove": 5
+      },
+      "hp": {
+        "value": 9,
+        "max": 9
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 0,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "90 lbs.",
+        "notes": "Dogs. Basic Set: Campaigns p. 457"
+      }
+    },
+    "items": [
+      {
+        "_id": "e8a362d77a3824f4",
+        "name": "Chummy",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "Gregarious"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 126",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "2821ea2c534c6eec",
+        "name": "Discriminatory Smell",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 49",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "3e9ca759cba2caf1",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "025eda658dace53f",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "c85b794275cce0c7",
+        "name": "Teeth (Sharp Teeth)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "6b9349c1651a8470",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      },
+      {
+        "_id": "63da7c5c5265ccd8",
+        "name": "Tracking",
+        "type": "skill",
+        "system": {
+          "attribute": "Per",
+          "difficulty": "A",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "Per",
+              "skill": "",
+              "modifier": -5
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Naturalist",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 226"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "6785fa6f966e725c",
+    "name": "Large Falcon",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 3,
+        "DX": 14,
+        "IQ": 3,
+        "HT": 10
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 9,
+        "basicSpeed": 0,
+        "basicMove": -4
+      },
+      "hp": {
+        "value": 3,
+        "max": 3
+      },
+      "fp": {
+        "value": 10,
+        "max": 10
+      },
+      "sm": -4,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "5 lbs.",
+        "notes": "Falcons. Move: Ground; Air Move 12. Basic Set: Campaigns p. 457"
+      }
+    },
+    "items": [
+      {
+        "_id": "7269ea6bdde5697c",
+        "name": "Acute Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 3,
+          "pointsPerLevel": 2,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 35",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "c084cc22b265ee90",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "1a68273d581635b3",
+        "name": "Enhanced Move (Air)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 1000,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "7535efcea4ad08d0",
+        "name": "Flight",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 40,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 56",
+          "modifiers": [
+            {
+              "name": "Winged",
+              "value": -25
+            }
+          ],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "832ab18e2d18a517",
+        "name": "No Fine Manipulators",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 145",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "856881f9b78f5fcb",
+        "name": "Teeth (Sharp Beak)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "a0e034a46374b7c0",
+        "name": "Claws (Sharp Claws)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "3e97d728438d4c93",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "8848c7447e952783",
+    "name": "Tiger Shark",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 19,
+        "DX": 13,
+        "IQ": 2,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 8,
+        "per": 10,
+        "basicSpeed": 0,
+        "basicMove": 1
+      },
+      "hp": {
+        "value": 19,
+        "max": 19
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 2,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "900 lbs.",
+        "notes": "Sharks. 4 hexes. Move: Water. Basic Set: Campaigns p. 457"
+      }
+    },
+    "items": [
+      {
+        "_id": "a017c0d796fb45cc",
+        "name": "Bad Temper",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 124",
+          "modifiers": [],
+          "selfControl": 9
+        }
+      },
+      {
+        "_id": "04583d95d6912ca8",
+        "name": "Combat Reflexes",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "Enhanced Time Sense"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 43",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "7d5a6a1522e71396",
+        "name": "Striker (Crushing): Snout",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 88"
+        }
+      },
+      {
+        "_id": "7eba3d3f4610088d",
+        "name": "Discriminatory Smell",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 49",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "bff4f51a4207d4cd",
+        "name": "Doesn't Breathe",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 20,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 49",
+          "modifiers": [
+            {
+              "name": "Gills",
+              "value": -50
+            }
+          ],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "cf6a5a4c1b15ee43",
+        "name": "Enhanced Move (Water)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 1000,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "29a2010c6f58b309",
+        "name": "Ichthyoid",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -50,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "ae1ba7d5b09280bc",
+        "name": "Pressure Support",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 3,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 77",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "b25f567ae6c3d28f",
+        "name": "Teeth (Sharp Teeth)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "7428a49a70cd2ab8",
+        "name": "Subsonic Hearing",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 89",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "23f3e4459ae9976c",
+        "name": "Vibration Sense",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 96",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "57cf92ddec9c7aef",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "68d09c1bded454b3",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      },
+      {
+        "_id": "2cfde5fa4b001959",
+        "name": "Survival (Open Ocean)",
+        "type": "skill",
+        "system": {
+          "attribute": "Per",
+          "difficulty": "A",
+          "points": 8,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "Per",
+              "skill": "",
+              "modifier": -5
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Naturalist",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Bank)",
+              "modifier": -4
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Deep Ocean Vent)",
+              "modifier": -4
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Fresh-Water Lake)",
+              "modifier": -4
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Reef)",
+              "modifier": -4
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (River/Stream)",
+              "modifier": -4
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Salt-Water Sea)",
+              "modifier": -4
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Tropical Lagoon)",
+              "modifier": -4
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 223"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "1cb39219f8593a88",
+    "name": "Great White Shark",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 38,
+        "DX": 10,
+        "IQ": 2,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 8,
+        "per": 8,
+        "basicSpeed": 0,
+        "basicMove": 2
+      },
+      "hp": {
+        "value": 38,
+        "max": 38
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 3,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "7,000 lbs.",
+        "notes": "Sharks. 7 hexes. Move: Water. Basic Set: Campaigns p. 458"
+      }
+    },
+    "items": [
+      {
+        "_id": "4e69ed0e04204bc4",
+        "name": "Bad Temper",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 124",
+          "modifiers": [],
+          "selfControl": 9
+        }
+      },
+      {
+        "_id": "0751b2901946f09f",
+        "name": "Combat Reflexes",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "Enhanced Time Sense"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 43",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "1b52768fb6ffad2b",
+        "name": "Striker (Crushing): Snout",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 88"
+        }
+      },
+      {
+        "_id": "49e92fef99770bee",
+        "name": "Discriminatory Smell",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 49",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "534eb666cde9c080",
+        "name": "Doesn't Breathe",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 20,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 49",
+          "modifiers": [
+            {
+              "name": "Gills",
+              "value": -50
+            }
+          ],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "e6dc6f54218ec79d",
+        "name": "Enhanced Move (Water)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 1000,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "174e20d6435fbede",
+        "name": "Ichthyoid",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -50,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "52559659685981de",
+        "name": "Pressure Support",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 3,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 77",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "1c347f4d44367246",
+        "name": "Teeth (Sharp Teeth)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "5a83d04a445fd794",
+        "name": "Subsonic Hearing",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 89",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "4b84a11571b06935",
+        "name": "Vibration Sense",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 96",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "f58fda9219ede7cb",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "1791d3d4a09ceab5",
+        "name": "Hard to Kill",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 2,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 58",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "6ab707f45fb3065d",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      },
+      {
+        "_id": "5342b3b24f162052",
+        "name": "Survival (Open Ocean)",
+        "type": "skill",
+        "system": {
+          "attribute": "Per",
+          "difficulty": "A",
+          "points": 16,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "Per",
+              "skill": "",
+              "modifier": -5
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Naturalist",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Bank)",
+              "modifier": -4
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Deep Ocean Vent)",
+              "modifier": -4
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Fresh-Water Lake)",
+              "modifier": -4
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Reef)",
+              "modifier": -4
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (River/Stream)",
+              "modifier": -4
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Salt-Water Sea)",
+              "modifier": -4
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Tropical Lagoon)",
+              "modifier": -4
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 223"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "c5f39838ba059832",
+    "name": "Python",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 13,
+        "DX": 12,
+        "IQ": 2,
+        "HT": 11
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 8,
+        "per": 8,
+        "basicSpeed": 0,
+        "basicMove": -1
+      },
+      "hp": {
+        "value": 13,
+        "max": 13
+      },
+      "fp": {
+        "value": 11,
+        "max": 11
+      },
+      "sm": 0,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "225 lbs.",
+        "notes": "Snakes. Basic Set: Campaigns p. 458"
+      }
+    },
+    "items": [
+      {
+        "_id": "60ba5780d5b1755d",
+        "name": "Cold-Blooded",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": -5,
+          "costTable": [],
+          "levelNames": [
+            "You \"stiffen up\" below 50°",
+            "You \"stiffen up\" below 65°"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 127",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "d818760e6f1d5061",
+        "name": "Constriction Attack",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 43",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "2638e7b2904d4443",
+        "name": "Vermiform",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "32381fe55c0b0e97",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "f4ffa7948aaaaf9a",
+        "name": "Stealth",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "A",
+          "points": 2,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "DX",
+              "skill": "",
+              "modifier": -5
+            },
+            {
+              "from": "attribute",
+              "attribute": "IQ",
+              "skill": "",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 222"
+        }
+      },
+      {
+        "_id": "8d150bd4053a15e5",
+        "name": "Wrestling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "A",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Wrestling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Wrestling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 228"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "8f8469581a85e656",
+    "name": "Rattlesnake",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 5,
+        "DX": 13,
+        "IQ": 2,
+        "HT": 11
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 8,
+        "per": 8,
+        "basicSpeed": 0,
+        "basicMove": -2
+      },
+      "hp": {
+        "value": 5,
+        "max": 5
+      },
+      "fp": {
+        "value": 11,
+        "max": 11
+      },
+      "sm": -1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "15 lbs.",
+        "notes": "Snakes. Basic Set: Campaigns p. 458"
+      }
+    },
+    "items": [
+      {
+        "_id": "1cc89e36b8a3c078",
+        "name": "Cold-Blooded",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": -5,
+          "costTable": [],
+          "levelNames": [
+            "You \"stiffen up\" below 50°",
+            "You \"stiffen up\" below 65°"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 127",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "4fd922a277f4e899",
+        "name": "Teeth (Fangs)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "d8a973dba472f4da",
+        "name": "Toxic Attack",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 4,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 61",
+          "modifiers": [
+            {
+              "name": "Cyclic, 1 day, 4 cycles",
+              "value": 0
+            },
+            {
+              "name": "Follow-Up, Fangs",
+              "value": 0
+            },
+            {
+              "name": "Resistible, HT-4",
+              "value": 0
+            }
+          ],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "847ac35d0a2d8351",
+        "name": "Vermiform",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "d08e9f5a99ac7836",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "0c95199afd14b37b",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      },
+      {
+        "_id": "f6062449e169d1ba",
+        "name": "Stealth",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "A",
+          "points": 2,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "DX",
+              "skill": "",
+              "modifier": -5
+            },
+            {
+              "from": "attribute",
+              "attribute": "IQ",
+              "skill": "",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 222"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "a307b858fcfb9f08",
+    "name": "Large Boar",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 15,
+        "DX": 12,
+        "IQ": 5,
+        "HT": 14
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 7,
+        "basicSpeed": 0,
+        "basicMove": 2
+      },
+      "hp": {
+        "value": 15,
+        "max": 15
+      },
+      "fp": {
+        "value": 14,
+        "max": 14
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "400 lbs.",
+        "notes": "Wild Boars. 2 hexes. Basic Set: Campaigns p. 458"
+      }
+    },
+    "items": [
+      {
+        "_id": "2f438c7f281f7f82",
+        "name": "Bad Temper",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 124",
+          "modifiers": [],
+          "selfControl": 9
+        }
+      },
+      {
+        "_id": "f28e211dd06f4c39",
+        "name": "Combat Reflexes",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "Enhanced Time Sense"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 43",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "ae8603f59518aa64",
+        "name": "Striker (Cutting): Tusks",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 7,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 88"
+        }
+      },
+      {
+        "_id": "34c808912367a974",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "95cba96f3d094835",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "6143823c9bc5d3ef",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "fc96b1c32cbc6007",
+    "name": "Small Boar",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 8,
+        "DX": 12,
+        "IQ": 5,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 7,
+        "basicSpeed": 0,
+        "basicMove": 1
+      },
+      "hp": {
+        "value": 8,
+        "max": 8
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": -1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "45 lbs.",
+        "notes": "Wild Boars. Basic Set: Campaigns p. 458"
+      }
+    },
+    "items": [
+      {
+        "_id": "e22467678123e6ff",
+        "name": "Bad Temper",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 124",
+          "modifiers": [],
+          "selfControl": 9
+        }
+      },
+      {
+        "_id": "273fedba15a5d2a4",
+        "name": "Combat Reflexes",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "Enhanced Time Sense"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 43",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "395acd745d349f7f",
+        "name": "Striker (Cutting): Tusks",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 7,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 88"
+        }
+      },
+      {
+        "_id": "f9ab43f447bd4817",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "1180c93fc67886b8",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "1467cc020931d61a",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "9fd51a0fe0e8eddc",
+    "name": "Timber Wolf",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 10,
+        "DX": 12,
+        "IQ": 4,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 10,
+        "basicSpeed": 0,
+        "basicMove": 3
+      },
+      "hp": {
+        "value": 10,
+        "max": 10
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 0,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "120 lbs.",
+        "notes": "Wolves. Basic Set: Campaigns p. 458"
+      }
+    },
+    "items": [
+      {
+        "_id": "3f22549ba2350922",
+        "name": "Discriminatory Smell",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 49",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "8cfa79dc4fa01a19",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "f66ab1e342eba907",
+        "name": "Night Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 1,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 9,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 71",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "ee1781e356b71a2b",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "b8f4f37edc78b25d",
+        "name": "Teeth (Sharp Teeth)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "e49c28d30162c18f",
+        "name": "Temperature Tolerance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 1,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 93",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "627a05810eb4913d",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "53c7feabc4c35a5c",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      },
+      {
+        "_id": "ddce2cde329ecda7",
+        "name": "Tracking",
+        "type": "skill",
+        "system": {
+          "attribute": "Per",
+          "difficulty": "A",
+          "points": 2,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "Per",
+              "skill": "",
+              "modifier": -5
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Naturalist",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 226"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "baf470462402f9d5",
+    "name": "Camel",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 22,
+        "DX": 9,
+        "IQ": 3,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 8,
+        "per": 9,
+        "basicSpeed": 0,
+        "basicMove": 2
+      },
+      "hp": {
+        "value": 22,
+        "max": 22
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "1,400 lbs.",
+        "notes": "Riding and Draft Animals. 3 hexes. Cost: $1,500. Basic Set: Campaigns p. 459"
+      }
+    },
+    "items": [
+      {
+        "_id": "3b766b66b383837f",
+        "name": "Bad Temper",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 124",
+          "modifiers": [],
+          "selfControl": 12
+        }
+      },
+      {
+        "_id": "3340b34c07791f0f",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "36226bdb1f4e94c4",
+        "name": "Enhanced Move (Ground)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 1000,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "f32cf2d50e40bd53",
+        "name": "Claws (Hooves)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "41bcec81e9e286a2",
+        "name": "Peripheral Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "360° Vision"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 74",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "902a1e14b6431a96",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "fb056ede4aa3ee7c",
+        "name": "Reduced Consumption",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 3,
+          "pointsPerLevel": 2,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 80",
+          "modifiers": [
+            {
+              "name": "Water Only",
+              "value": -50
+            }
+          ],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "1db472433176def6",
+        "name": "Stubbornness",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 157",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "daeb02bd098b8576",
+        "name": "Weak Bite",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 161",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "caa3a34bbabdbca7",
+        "name": "Survival (Desert)",
+        "type": "skill",
+        "system": {
+          "attribute": "Per",
+          "difficulty": "A",
+          "points": 2,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "Per",
+              "skill": "",
+              "modifier": -5
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Naturalist",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Arctic)",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Island/Beach)",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Jungle)",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Mountain)",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Plains)",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Swampland)",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Survival (Woodlands)",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 223"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "5f34de6b224a4c87",
+    "name": "Cavalry Horse",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 22,
+        "DX": 9,
+        "IQ": 3,
+        "HT": 11
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 8,
+        "per": 9,
+        "basicSpeed": 0,
+        "basicMove": 3
+      },
+      "hp": {
+        "value": 22,
+        "max": 22
+      },
+      "fp": {
+        "value": 11,
+        "max": 11
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "1,400 lbs.",
+        "notes": "Riding and Draft Animals. 3 hexes. Cost: $4,000. Basic Set: Campaigns p. 459"
+      }
+    },
+    "items": [
+      {
+        "_id": "618f9b24798278ae",
+        "name": "Combat Reflexes",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "Enhanced Time Sense"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 43",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "5e350e3be1c4d71d",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "813371c1f745eaa4",
+        "name": "Enhanced Move (Ground)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 1000,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "e3f6f8336c0842de",
+        "name": "Claws (Hooves)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "76400f24f8afd678",
+        "name": "Peripheral Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "360° Vision"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 74",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "78771a864f20c22b",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "d7fa3a5321a03284",
+        "name": "Weak Bite",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 161",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "a2b604132890b24e",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 2,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      },
+      {
+        "_id": "8b5c8671936de531",
+        "name": "Mount",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "A",
+          "points": 12,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "DX",
+              "skill": "",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 210"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "54a196cefd0416c6",
+    "name": "Donkey",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 15,
+        "DX": 10,
+        "IQ": 3,
+        "HT": 11
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 8,
+        "per": 9,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "hp": {
+        "value": 15,
+        "max": 15
+      },
+      "fp": {
+        "value": 11,
+        "max": 11
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "500 lbs.",
+        "notes": "Riding and Draft Animals. 2 hexes. Cost: $1,000. Basic Set: Campaigns p. 459"
+      }
+    },
+    "items": [
+      {
+        "_id": "acd3d23a2494d4d6",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "4029dfe567ece7ce",
+        "name": "Enhanced Move (Ground) 1/2",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52"
+        }
+      },
+      {
+        "_id": "238568900698ac57",
+        "name": "Claws (Hooves)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "bb7d8cc4087bdca8",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "71a6e83a83a40845",
+        "name": "Weak Bite",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 161",
+          "modifiers": [],
+          "selfControl": null
+        }
+      }
+    ]
+  },
+  {
+    "_id": "be45bce7f70f9d2e",
+    "name": "Draft Horse",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 25,
+        "DX": 9,
+        "IQ": 3,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 8,
+        "basicSpeed": 0,
+        "basicMove": 1
+      },
+      "hp": {
+        "value": 25,
+        "max": 25
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "2,000 lbs.",
+        "notes": "Riding and Draft Animals. 3 hexes. Cost: $2,000. Basic Set: Campaigns pp. 459-460"
+      }
+    },
+    "items": [
+      {
+        "_id": "88786870182d97ce",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "4906fe2175d16c92",
+        "name": "Enhanced Move (Ground)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 1000,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "171a349cbd487977",
+        "name": "Claws (Hooves)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "169441021ad8f428",
+        "name": "Peripheral Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "360° Vision"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 74",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "149b2324e475033b",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "18dd39708ee97a07",
+        "name": "Weak Bite",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 161",
+          "modifiers": [],
+          "selfControl": null
+        }
+      }
+    ]
+  },
+  {
+    "_id": "58d22dcf45f1b5f6",
+    "name": "Heavy Warhorse",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 24,
+        "DX": 9,
+        "IQ": 3,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 8,
+        "per": 9,
+        "basicSpeed": 0,
+        "basicMove": 2
+      },
+      "hp": {
+        "value": 24,
+        "max": 24
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "1,900 lbs.",
+        "notes": "Riding and Draft Animals. 3 hexes. Cost: $5,000. Basic Set: Campaigns p. 460"
+      }
+    },
+    "items": [
+      {
+        "_id": "87f1c93881a0d6c9",
+        "name": "Combat Reflexes",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "Enhanced Time Sense"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 43",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "0754617b692fe0c2",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "db2567cc60e503b5",
+        "name": "Enhanced Move (Ground)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 1000,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "93a18f95df1e35bb",
+        "name": "Claws (Hooves)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "31480589492e4b72",
+        "name": "Peripheral Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "360° Vision"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 74",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "ded90edeb8526c0f",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "d1bc400fe7f42492",
+        "name": "Weak Bite",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 161",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "f281321bdef4febc",
+        "name": "Bad Temper",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 124",
+          "modifiers": [],
+          "selfControl": 12
+        }
+      },
+      {
+        "_id": "6cb3db033c01c4fd",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 8,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      },
+      {
+        "_id": "06fe96188be87ee9",
+        "name": "Mount",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "A",
+          "points": 16,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "DX",
+              "skill": "",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 210"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "e793e80a20a8b02c",
+    "name": "Large Mule",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 22,
+        "DX": 10,
+        "IQ": 3,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 9,
+        "per": 9,
+        "basicSpeed": 0,
+        "basicMove": 1
+      },
+      "hp": {
+        "value": 22,
+        "max": 22
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "1,400 lbs.",
+        "notes": "Riding and Draft Animals. 2 hexes. Cost: $2,000. Basic Set: Campaigns p. 460"
+      }
+    },
+    "items": [
+      {
+        "_id": "99609ff28138d2a6",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "37347741e8ba17e3",
+        "name": "Enhanced Move (Ground) 1/2",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52"
+        }
+      },
+      {
+        "_id": "9ba10acce69cd36f",
+        "name": "Claws (Hooves)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "fd0b3c4be8ce142a",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "d772ae70f3ce4259",
+        "name": "Weak Bite",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 161",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "def383a09e16e7b4",
+        "name": "Neutered",
+        "type": "trait",
+        "system": {
+          "category": "quirk",
+          "points": -1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 165",
+          "modifiers": [],
+          "selfControl": null
+        }
+      }
+    ]
+  },
+  {
+    "_id": "1606a8b3b8795279",
+    "name": "Pony",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 18,
+        "DX": 10,
+        "IQ": 3,
+        "HT": 11
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 8,
+        "per": 9,
+        "basicSpeed": 0,
+        "basicMove": 2
+      },
+      "hp": {
+        "value": 18,
+        "max": 18
+      },
+      "fp": {
+        "value": 11,
+        "max": 11
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "800 lbs.",
+        "notes": "Riding and Draft Animals. 3 hexes. Cost: $1,500. Basic Set: Campaigns p. 460"
+      }
+    },
+    "items": [
+      {
+        "_id": "3e3d6539eabc9938",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "d8d40ba16bc447ee",
+        "name": "Enhanced Move (Ground)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 1000,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "6db4a60a46b30bce",
+        "name": "Claws (Hooves)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "8cdd68c863b6764f",
+        "name": "Peripheral Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "360° Vision"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 74",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "25fb905376adb0ac",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "883e79963a49f0e7",
+        "name": "Weak Bite",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 161",
+          "modifiers": [],
+          "selfControl": null
+        }
+      }
+    ]
+  },
+  {
+    "_id": "fca722ce9cb9368f",
+    "name": "Racehorse",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 20,
+        "DX": 9,
+        "IQ": 3,
+        "HT": 11
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 8,
+        "per": 8,
+        "basicSpeed": 0,
+        "basicMove": 4
+      },
+      "hp": {
+        "value": 20,
+        "max": 20
+      },
+      "fp": {
+        "value": 11,
+        "max": 11
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "1,100 lbs.",
+        "notes": "Riding and Draft Animals. 3 hexes. Cost: $4,000. Basic Set: Campaigns p. 460"
+      }
+    },
+    "items": [
+      {
+        "_id": "4865da38475f51db",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "6e6f975319e8fa93",
+        "name": "Enhanced Move (Ground)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 1000,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "f0bc0e3477d6417c",
+        "name": "Claws (Hooves)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "4f767758a1d05a2c",
+        "name": "Peripheral Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "360° Vision"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 74",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "d34339d561e5c82e",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "26144f7a163f7348",
+        "name": "Weak Bite",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 161",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "3eaa9913fb0ce68d",
+        "name": "Mount",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "A",
+          "points": 12,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "DX",
+              "skill": "",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 210"
+        }
+      },
+      {
+        "_id": "cb090200de8c7952",
+        "name": "Running",
+        "type": "skill",
+        "system": {
+          "attribute": "HT",
+          "difficulty": "A",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "HT",
+              "skill": "",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 218"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "66013e73b54d9b38",
+    "name": "Saddle Horse",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 21,
+        "DX": 9,
+        "IQ": 3,
+        "HT": 11
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 9,
+        "basicSpeed": 0,
+        "basicMove": 1
+      },
+      "hp": {
+        "value": 21,
+        "max": 21
+      },
+      "fp": {
+        "value": 11,
+        "max": 11
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "1,200 lbs.",
+        "notes": "Riding and Draft Animals. 3 hexes. Cost: $1,200. Basic Set: Campaigns p. 460"
+      }
+    },
+    "items": [
+      {
+        "_id": "eaa618728b092351",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "33cbedb2f24eecf4",
+        "name": "Enhanced Move (Ground)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 1000,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "a3e65bb01816b373",
+        "name": "Claws (Hooves)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "161b277a11897417",
+        "name": "Peripheral Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "360° Vision"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 74",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "88ecdd27c0aca023",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "239b5112fc0c390e",
+        "name": "Weak Bite",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 161",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "059665bf391401d8",
+        "name": "Mount",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "A",
+          "points": 8,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "attribute",
+              "attribute": "DX",
+              "skill": "",
+              "modifier": -5
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 210"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "3fa6018fee13bb29",
+    "name": "Small Mule",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 18,
+        "DX": 10,
+        "IQ": 3,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 9,
+        "per": 9,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "hp": {
+        "value": 18,
+        "max": 18
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "800 lbs.",
+        "notes": "Riding and Draft Animals. 2 hexes. Cost: $1,000. Basic Set: Campaigns p. 460"
+      }
+    },
+    "items": [
+      {
+        "_id": "41a03730223fb192",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "2202fa3b29d5aced",
+        "name": "Enhanced Move (Ground) 1/2",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52"
+        }
+      },
+      {
+        "_id": "d79259aea0fa6153",
+        "name": "Claws (Hooves)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 3,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "0098310f75b6123a",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "df65e540df85771b",
+        "name": "Weak Bite",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 161",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "e0595daa5e809463",
+        "name": "Neutered",
+        "type": "trait",
+        "system": {
+          "category": "quirk",
+          "points": -1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 165",
+          "modifiers": [],
+          "selfControl": null
+        }
+      }
+    ]
+  },
+  {
+    "_id": "c366dfdb0603f17d",
+    "name": "Elephant",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 45,
+        "DX": 12,
+        "IQ": 5,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 5,
+        "per": 5,
+        "basicSpeed": -2,
+        "basicMove": 0
+      },
+      "hp": {
+        "value": 45,
+        "max": 45
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 3,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "12,000+ lbs.",
+        "notes": "Elephants. 10 hexes. Cost: $10,000. Basic Set: Campaigns p. 460"
+      }
+    },
+    "items": [
+      {
+        "_id": "af9615399f842c75",
+        "name": "Striker (Crushing): Tusks",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 88"
+        }
+      },
+      {
+        "_id": "daff4ce7a7d2622a",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "544c24b3036eb720",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 4,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "48f92813ca7950ce",
+        "name": "Enhanced Move (Ground)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 1000,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "90fef25eca847dc0",
+        "name": "Peripheral Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "360° Vision"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 74",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "7b09f53f5fb9ebe1",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "71f6dee385176637",
+        "name": "Extra Arms (Trunk)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 53",
+          "modifiers": [
+            {
+              "name": "Extra-Flexible",
+              "value": 50
+            },
+            {
+              "name": "Long",
+              "value": 100
+            },
+            {
+              "name": "Weak",
+              "value": -50
+            }
+          ],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "cef6afdcfdb1809f",
+        "name": "Weak Bite",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 161",
+          "modifiers": [],
+          "selfControl": null
+        }
+      }
+    ]
+  },
+  {
+    "_id": "78f0c3931389d7ac",
+    "name": "Ox",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 27,
+        "DX": 8,
+        "IQ": 3,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 9,
+        "per": 7,
+        "basicSpeed": 0,
+        "basicMove": -1
+      },
+      "hp": {
+        "value": 27,
+        "max": 27
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 2,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "2,500 lbs.",
+        "notes": "Oxen. 3 hexes. Cost: $1,500. Basic Set: Campaigns p. 460"
+      }
+    },
+    "items": [
+      {
+        "_id": "2aacb3b1f778949e",
+        "name": "Domestic Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "d409b54121b1c3f4",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [
+            {
+              "name": "Skull only",
+              "value": -70
+            }
+          ],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "871172a63cda6ccb",
+        "name": "Enhanced Move (Ground)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 1000,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "cc86a6a2474aab33",
+        "name": "Striker (Impaling): Horns",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 8,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 88"
+        }
+      },
+      {
+        "_id": "4896176d10604dc8",
+        "name": "Neutered",
+        "type": "trait",
+        "system": {
+          "category": "quirk",
+          "points": -1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 165",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "d6436b413a3b4d24",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "ffc724621ad36d11",
+        "name": "Weak Bite",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -2,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 161",
+          "modifiers": [],
+          "selfControl": null
+        }
+      }
+    ]
+  },
+  {
+    "_id": "df09ebb8d7e1b2a2",
+    "name": "Basilisk",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 2,
+        "DX": 12,
+        "IQ": 3,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 7,
+        "per": 7,
+        "basicSpeed": 0,
+        "basicMove": -2
+      },
+      "hp": {
+        "value": 2,
+        "max": 2
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": -3,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "2 lbs.",
+        "notes": "Fantasy Monsters. Basic Set: Campaigns p. 460"
+      }
+    },
+    "items": [
+      {
+        "_id": "7ad14f3d8499016e",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "9e1fee2f2b264474",
+        "name": "Toxic Attack",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 3,
+          "pointsPerLevel": 4,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 61",
+          "modifiers": [
+            {
+              "name": "Malediction 1",
+              "value": 0
+            },
+            {
+              "name": "Psychokinetic",
+              "value": 0
+            },
+            {
+              "name": "Vision-Based",
+              "value": 0
+            }
+          ],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "a5fac481a31d2adf",
+        "name": "Vermiform",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "ae961b7f3d2ffc2c",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "4703caa74e0c78db",
+    "name": "Gryphon",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 17,
+        "DX": 12,
+        "IQ": 5,
+        "HT": 12
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 6,
+        "per": 7,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "hp": {
+        "value": 17,
+        "max": 17
+      },
+      "fp": {
+        "value": 12,
+        "max": 12
+      },
+      "sm": 1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "600 lbs.",
+        "notes": "Fantasy Monsters. 2 hexes. Move: Ground; Air Move 12. Basic Set: Campaigns pp. 460-461"
+      }
+    },
+    "items": [
+      {
+        "_id": "4382a916a9a275cd",
+        "name": "Acute Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 3,
+          "pointsPerLevel": 2,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 35",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "210f9753b2128708",
+        "name": "Combat Reflexes",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 15,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [
+            "",
+            "Enhanced Time Sense"
+          ],
+          "maxLevels": 2,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 43",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "039b6090225aaf59",
+        "name": "Damage Resistance",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 2,
+          "pointsPerLevel": 5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 46",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "fa21fde669e98c2e",
+        "name": "Enhanced Move (Air)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 10,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 1000,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 52",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "cc391d410157c6f4",
+        "name": "Flight",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 40,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 56",
+          "modifiers": [
+            {
+              "name": "Winged",
+              "value": -25
+            }
+          ],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "f1794b77872dcda2",
+        "name": "Quadruped",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -35,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "57175467db4446e5",
+        "name": "Teeth (Sharp Beak)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 1,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 91",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "b3a11e28a10b3de8",
+        "name": "Claws (Sharp Claws)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 42",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "4b8c6b91bdf3694d",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "baed31862f4015e7",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "b0ea7e1ba08b1a04",
+    "name": "Strix",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 5,
+        "DX": 15,
+        "IQ": 4,
+        "HT": 11
+      },
+      "purchased": {
+        "hp": 0,
+        "fp": 0,
+        "will": 6,
+        "per": 6,
+        "basicSpeed": 0,
+        "basicMove": -4
+      },
+      "hp": {
+        "value": 5,
+        "max": 5
+      },
+      "fp": {
+        "value": 11,
+        "max": 11
+      },
+      "sm": -1,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "details": {
+        "weight": "18 lbs.",
+        "notes": "Fantasy Monsters. Move: Ground; Air Move 12. Basic Set: Campaigns p. 461"
+      }
+    },
+    "items": [
+      {
+        "_id": "f380bf19af348836",
+        "name": "Bloodlust",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -10,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 125",
+          "modifiers": [],
+          "selfControl": 9
+        }
+      },
+      {
+        "_id": "b513033222859a1b",
+        "name": "Flight",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 40,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 56",
+          "modifiers": [
+            {
+              "name": "Winged",
+              "value": -25
+            }
+          ],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "c2ca8da4d795401d",
+        "name": "Night Vision",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 5,
+          "pointsPerLevel": 1,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 9,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 71",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "9f421cd883b57c12",
+        "name": "No Fine Manipulators",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 145",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "8edf1b0dbf9bdc12",
+        "name": "Vampiric Bite",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": 0,
+          "costTable": [
+            30,
+            35
+          ],
+          "levelNames": [
+            "1HP/sec"
+          ],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 96",
+          "modifiers": [],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "f8e4f116a05553e2",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      },
+      {
+        "_id": "771488ff08cb039d",
+        "name": "Brawling",
+        "type": "skill",
+        "system": {
+          "attribute": "DX",
+          "difficulty": "E",
+          "points": 4,
+          "bonus": 0,
+          "defaults": [
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Art",
+              "modifier": -3
+            },
+            {
+              "from": "skill",
+              "attribute": "DX",
+              "skill": "Brawling Sport",
+              "modifier": -3
+            }
+          ],
+          "techLevel": "",
+          "description": "",
+          "reference": "Basic Set: Characters p. 182"
+        }
+      }
+    ]
+  }
+]

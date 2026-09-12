@@ -300,6 +300,10 @@
             <button type="button" class="ibtn" data-action="addModifier">
               {{> "gworld.plus"}} {{localize "GWORLD.Action.Add"}}
             </button>
+            <button type="button" class="ibtn" data-action="browseModifiers"
+                    data-tooltip="{{localize 'GWORLD.Modifier.BrowseHint'}}">
+              {{> "gworld.search"}} {{localize "GWORLD.Modifier.Browse"}}
+            </button>
           {{/if}}
         </div>
         {{#each system.modifiers as |m i|}}
@@ -640,6 +644,34 @@
           </div>
         {{/if}}
       {{/if}}
+    {{/if}}
+
+    {{#if isModifier}}
+      {{!-- An enhancement or limitation as the book prices it (Characters pp. 101-117). --}}
+      <div class="ifields">
+        <label>{{localize "GWORLD.Modifier.Kind"}}
+          <select name="system.kind" {{#unless editable}}disabled{{/unless}}>
+            {{#each modifierKinds as |k|}}
+              <option value="{{k.key}}" {{#if k.selected}}selected{{/if}}>{{k.label}}</option>
+            {{/each}}
+          </select>
+        </label>
+        <label>{{localize "GWORLD.Modifier.Value"}}
+          <input type="number" name="system.value" value="{{system.value}}" step="5" {{#unless editable}}disabled{{/unless}} /></label>
+        <label>{{localize "GWORLD.Modifier.MaxLevels"}}
+          <input type="number" name="system.maxLevels" value="{{system.maxLevels}}" step="1" min="0" {{#unless editable}}disabled{{/unless}} /></label>
+        <label>{{localize "GWORLD.Modifier.Group"}}
+          <input type="text" name="system.group" value="{{system.group}}" {{#unless editable}}disabled{{/unless}} /></label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Modifier.Hint"}}</p>
+      <div class="ifields">
+        <label>{{localize "GWORLD.Modifier.CostTable"}}
+          <input type="text" name="system.costTable" value="{{join system.costTable "/"}}" placeholder="50/100/150"
+                 {{#unless editable}}disabled{{/unless}} /></label>
+        <label>{{localize "GWORLD.Modifier.LevelNames"}}
+          <input type="text" name="system.levelNames" value="{{join system.levelNames "; "}}" placeholder="x3; x10; x30"
+                 {{#unless editable}}disabled{{/unless}} /></label>
+      </div>
     {{/if}}
 
     {{#if isPhysical}}

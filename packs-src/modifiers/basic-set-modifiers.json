@@ -1,0 +1,2822 @@
+[
+  {
+    "_id": "005c10e3ffe81878",
+    "name": "Accessibility",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 110"
+    }
+  },
+  {
+    "_id": "998cfdfe05e33261",
+    "name": "Accessibility: half power",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 110"
+    }
+  },
+  {
+    "_id": "7f15c99f63b11ca1",
+    "name": "Accurate",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 102"
+    }
+  },
+  {
+    "_id": "ad8339145d139e40",
+    "name": "Affects Insubstantial",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 102"
+    }
+  },
+  {
+    "_id": "4436a024e00fad21",
+    "name": "Affects Substantial",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 40,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 102"
+    }
+  },
+  {
+    "_id": "4a8726ff491df12d",
+    "name": "Always On",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": 0,
+      "costTable": [
+        -10,
+        -20,
+        -40
+      ],
+      "levelNames": [
+        "effects are social or cosmetic",
+        "effects are physically inconvenient",
+        "effects are dangerous"
+      ],
+      "maxLevels": 3,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 110"
+    }
+  },
+  {
+    "_id": "5af9a9fdeb43b7c8",
+    "name": "Area Effect",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 50,
+      "costTable": [],
+      "levelNames": [
+        "2 yd",
+        "#list(LevelName Area Effect)"
+      ],
+      "maxLevels": 25,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 102"
+    }
+  },
+  {
+    "_id": "014e708e6356cbec",
+    "name": "Armor Divisor",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 50,
+      "costTable": [],
+      "levelNames": [
+        "2",
+        "3",
+        "5",
+        "10"
+      ],
+      "maxLevels": 4,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 102"
+    }
+  },
+  {
+    "_id": "eccb6e67be099a1e",
+    "name": "Armor Divisor (Attack Limitations)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": 0,
+      "costTable": [
+        -30,
+        -50,
+        -70
+      ],
+      "levelNames": [
+        "0.5",
+        "0.2",
+        "0.1"
+      ],
+      "maxLevels": 3,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 110"
+    }
+  },
+  {
+    "_id": "d2446d5b91d66bf7",
+    "name": "Aura",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 80,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 102"
+    }
+  },
+  {
+    "_id": "989b9af848840033",
+    "name": "Based On DX (Target Roll)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 102"
+    }
+  },
+  {
+    "_id": "d3a467de29aa7351",
+    "name": "Based On HT (Target Roll)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 102"
+    }
+  },
+  {
+    "_id": "0ab4f6ba8bef69a3",
+    "name": "Based On IQ (Target Roll)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 102"
+    }
+  },
+  {
+    "_id": "7cca1f8ddb181ded",
+    "name": "Based On Per (Target Roll)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 102"
+    }
+  },
+  {
+    "_id": "ca02ad43ee97be45",
+    "name": "Based On ST (Target Roll)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 102"
+    }
+  },
+  {
+    "_id": "30935a5d463b0844",
+    "name": "Based On Will (Target Roll)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 102"
+    }
+  },
+  {
+    "_id": "87039affa27d3ca9",
+    "name": "Blood Agent",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -40,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Affliction Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 110"
+    }
+  },
+  {
+    "_id": "f9963b5c79e71bfa",
+    "name": "Blood Agent (Attack Enhancements)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 100,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 102"
+    }
+  },
+  {
+    "_id": "a09a76329a6e5b75",
+    "name": "Bombardment",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [
+        "Skill 14",
+        "Skill 12",
+        "Skill 10",
+        "Skill 8"
+      ],
+      "maxLevels": 4,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 111"
+    }
+  },
+  {
+    "_id": "acbb12b285ea8f68",
+    "name": "Cone",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 0,
+      "costTable": [
+        60,
+        70
+      ],
+      "levelNames": [],
+      "maxLevels": 2,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 103"
+    }
+  },
+  {
+    "_id": "5ecc4c9d8858e27e",
+    "name": "Contact Agent",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 150,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Affliction Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 103"
+    }
+  },
+  {
+    "_id": "7bb2eb752abf3742",
+    "name": "Contact Agent (Affliction Limitations)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -30,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Affliction Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 111"
+    }
+  },
+  {
+    "_id": "eb304e4292bcac6b",
+    "name": "Contact Agent (Fatigue Attack Limitations)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -30,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Fatigue Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 111"
+    }
+  },
+  {
+    "_id": "9c0b96d8637c24e9",
+    "name": "Contact Agent (Toxic Attack Limitations)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -30,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Toxic Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 111"
+    }
+  },
+  {
+    "_id": "30c5ae06446d97ef",
+    "name": "Cosmic: ability other than an attack or a defense",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 103"
+    }
+  },
+  {
+    "_id": "fc4713d6935a5c8a",
+    "name": "Cosmic: Attack with a lingering special effect",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 100,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 103"
+    }
+  },
+  {
+    "_id": "f582001259fe7460",
+    "name": "Cosmic: Defense or countermeasure",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 103"
+    }
+  },
+  {
+    "_id": "2d941f3bca9d3434",
+    "name": "Cosmic: Irresistible attack",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 300,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 103"
+    }
+  },
+  {
+    "_id": "879bd091695993b6",
+    "name": "Costs Fatigue",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 111"
+    }
+  },
+  {
+    "_id": "e4d492ba4386eec9",
+    "name": "Cyclic (1 day interval)",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [
+        0,
+        10,
+        20
+      ],
+      "levelNames": [
+        "1 cycle",
+        "#buildlist(list(#list(LevelName Step 1)), template(\"%listitem% cycles\"))"
+      ],
+      "maxLevels": 3,
+      "group": "Burning Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 103"
+    }
+  },
+  {
+    "_id": "73aec40b13e45f01",
+    "name": "Cyclic (1 hour interval)",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [
+        0,
+        20,
+        40
+      ],
+      "levelNames": [
+        "1 cycle",
+        "#buildlist(list(#list(LevelName Step 1)), template(\"%listitem% cycles\"))"
+      ],
+      "maxLevels": 3,
+      "group": "Burning Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 103"
+    }
+  },
+  {
+    "_id": "d0ad8b4d8afb1950",
+    "name": "Cyclic (1 minute interval)",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [
+        0,
+        40,
+        80
+      ],
+      "levelNames": [
+        "1 cycle",
+        "#buildlist(list(#list(LevelName Step 1)), template(\"%listitem% cycles\"))"
+      ],
+      "maxLevels": 3,
+      "group": "Burning Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 103"
+    }
+  },
+  {
+    "_id": "ce17e9232ff47a80",
+    "name": "Cyclic (1 second interval)",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [
+        0,
+        100,
+        200
+      ],
+      "levelNames": [
+        "1 cycle",
+        "#buildlist(list(#list(LevelName Step 1)), template(\"%listitem% cycles\"))"
+      ],
+      "maxLevels": 3,
+      "group": "Burning Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 103"
+    }
+  },
+  {
+    "_id": "f3f59a819b4bcdff",
+    "name": "Cyclic (10 second interval)",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [
+        0,
+        50,
+        100
+      ],
+      "levelNames": [
+        "1 cycle",
+        "#buildlist(list(#list(LevelName Step 1)), template(\"%listitem% cycles\"))"
+      ],
+      "maxLevels": 3,
+      "group": "Burning Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 103"
+    }
+  },
+  {
+    "_id": "9d3a215b334e8a25",
+    "name": "Cyclic: Contagious",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 0,
+      "costTable": [
+        20,
+        50
+      ],
+      "levelNames": [],
+      "maxLevels": 2,
+      "group": "Burning Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 103"
+    }
+  },
+  {
+    "_id": "0ed0732d5409aa7b",
+    "name": "Damage Limitation: No Blunt Trauma",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Crushing Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 111"
+    }
+  },
+  {
+    "_id": "b315146697b60f8e",
+    "name": "Damage Limitation: No Knockback",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Crushing Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 111"
+    }
+  },
+  {
+    "_id": "87427844b1e9d017",
+    "name": "Damage Limitation: No Wounding",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Crushing Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 111"
+    }
+  },
+  {
+    "_id": "47aecf8078fe227c",
+    "name": "Damage Modifier: Dehydration Hazard",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Fatigue Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "cdfc020ef21d644d",
+    "name": "Damage Modifier: Double Blunt Trauma",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Burning Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "f3cddaee494c32e4",
+    "name": "Damage Modifier: Double Knockback",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Crushing Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "6b57c3ba7dedbc30",
+    "name": "Damage Modifier: Drowning Hazard",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Fatigue Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "c1f310334cedae0e",
+    "name": "Damage Modifier: Explosion",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 50,
+      "costTable": [],
+      "levelNames": [
+        "Damage / 3xYards",
+        "Damage / 2xYards",
+        "Damage / 1xYards"
+      ],
+      "maxLevels": 3,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "1a550fa6ce335a4e",
+    "name": "Damage Modifier: Fragmentation",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 15,
+      "costTable": [],
+      "levelNames": [
+        "[0d]",
+        "[1d]",
+        "[2d]",
+        "[3d]",
+        "[4d]",
+        "[5d]",
+        "[6d]",
+        "[7d]",
+        "[8d]",
+        "[9d]",
+        "[10d]",
+        "[11d]",
+        "[12d]"
+      ],
+      "maxLevels": 13,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "04d181b23eed96dc",
+    "name": "Damage Modifier: Fragmentation (hot fragments)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 15,
+      "costTable": [],
+      "levelNames": [
+        "[0d]",
+        "[1d(0.2)]",
+        "[2d(0.2)]",
+        "[3d(0.2)]",
+        "[4d(0.2)]",
+        "[5d(0.2)]",
+        "[6d(0.2)]",
+        "[7d(0.2)]",
+        "[8d(0.2)]",
+        "[9d(0.2)]",
+        "[10d(0.2)]",
+        "[11d(0.2)]",
+        "[12d(0.2)]"
+      ],
+      "maxLevels": 13,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "6e3826826da85519",
+    "name": "Damage Modifier: Freezing Hazard",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Fatigue Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "5c43ec9d49767eea",
+    "name": "Damage Modifier: Incendiary",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Crushing Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "102f15268a5cbfd1",
+    "name": "Damage Modifier: Missed Sleep Hazard",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Fatigue Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "4f5a2b1de3f3fb5a",
+    "name": "Damage Modifier: Radiation",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 100,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Burning Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "cf5c6e1ce6f782e8",
+    "name": "Damage Modifier: Radiation (Toxic Attack Enhancements)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 25,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Toxic Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "45100cd9d06cc007",
+    "name": "Damage Modifier: Starvation Hazard",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 40,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Fatigue Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "a70c8f0f4f310e10",
+    "name": "Damage Modifier: Suffocation Hazard",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Fatigue Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "877dccba3521a900",
+    "name": "Damage Modifier: Surge",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 104"
+    }
+  },
+  {
+    "_id": "abd69eb54175dfa1",
+    "name": "Delay: Fixed",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 105"
+    }
+  },
+  {
+    "_id": "6c98f667bc53c52f",
+    "name": "Delay: Triggered",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 105"
+    }
+  },
+  {
+    "_id": "00516edb7aa944f1",
+    "name": "Delay: Variable (10 seconds or less)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 105"
+    }
+  },
+  {
+    "_id": "9f0a512903ba6063",
+    "name": "Delay: Variable (longer than 10 seconds)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 105"
+    }
+  },
+  {
+    "_id": "23458fb7d1f57ae4",
+    "name": "Dissipation",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "665b168e0d5f6529",
+    "name": "Drifting",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 105"
+    }
+  },
+  {
+    "_id": "b6174771a6bc5652",
+    "name": "Emanation",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "f1655020cce10c11",
+    "name": "Emergencies Only",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -30,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "a275afc65aca47d3",
+    "name": "Emergencies Only (Half-power normally)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "c442063cd0dba94a",
+    "name": "Extended Duration",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 0,
+      "costTable": [
+        20,
+        40,
+        60,
+        80,
+        100,
+        120,
+        150,
+        300
+      ],
+      "levelNames": [
+        "x3",
+        "x10",
+        "x30",
+        "x100",
+        "x300",
+        "x1000",
+        "Permanent with dispelling conditions",
+        "Permanent"
+      ],
+      "maxLevels": 8,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 105"
+    }
+  },
+  {
+    "_id": "2581b62cf6c1be19",
+    "name": "Extra Recoil",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [
+        "Rcl 2",
+        "Rcl 3",
+        "Rcl 4",
+        "Rcl 5+"
+      ],
+      "maxLevels": 4,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "8ac3647be8c63b37",
+    "name": "Follow-Up",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [
+        0,
+        5
+      ],
+      "levelNames": [],
+      "maxLevels": 2,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 105"
+    }
+  },
+  {
+    "_id": "51293bb5c35da51e",
+    "name": "Follow-Up (Attack Limitations)",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [
+        0,
+        -5
+      ],
+      "levelNames": [],
+      "maxLevels": 2,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 105"
+    }
+  },
+  {
+    "_id": "67f93ce301d6bfbd",
+    "name": "Follow-Up (Passive)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 105"
+    }
+  },
+  {
+    "_id": "b94017d6aa6a37ee",
+    "name": "Gadget/Breakable: Cannot repair",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -15,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "c654bf4085c4ee6e",
+    "name": "Gadget/Breakable: DR 16-25",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "a79edfd971470176",
+    "name": "Gadget/Breakable: DR 2 or less",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "5ded519972ddcdf1",
+    "name": "Gadget/Breakable: DR 26 or higher",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "f28318c4268de7d7",
+    "name": "Gadget/Breakable: DR 3-5",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -15,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "87bbf6bd2237038f",
+    "name": "Gadget/Breakable: DR 6-15",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "cf193c72e4c84d0c",
+    "name": "Gadget/Breakable: Object is complex machine",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "e570a846c932b64f",
+    "name": "Gadget/Breakable: Size -1 or -2",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "a57f166b640f5675",
+    "name": "Gadget/Breakable: Size -3 or -4",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -15,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "9b5ff2c8095684f2",
+    "name": "Gadget/Breakable: Size -5 or -6",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "a9f3e6b05e6932a3",
+    "name": "Gadget/Breakable: Size -7 or -8",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "4827f02ac6fb1356",
+    "name": "Gadget/Breakable: Size -9 or less",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "f420cecbcc63ce82",
+    "name": "Gadget/Breakable: Size 0 or more",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -25,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "2dac0b2429f5f4f3",
+    "name": "Gadget/Can Be Stolen: Can only be taken by stealth or trickery",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "4ac2a70876e90738",
+    "name": "Gadget/Can Be Stolen: Easily snatched with unopposed DX roll",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -40,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "385e2dd61c6fbec2",
+    "name": "Gadget/Can Be Stolen: Must be forcefully removed",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "e3d17e45be528cd7",
+    "name": "Gadget/Can Be Stolen: Thief must win a Quick Contest of DX or ST",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -30,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "9fd0a12fe420cd5f",
+    "name": "Gadget/Unique",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -25,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 117"
+    }
+  },
+  {
+    "_id": "da551373be9bcadd",
+    "name": "Guided",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 105"
+    }
+  },
+  {
+    "_id": "eee2f10acc84f96b",
+    "name": "Homing",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 0,
+      "costTable": [
+        50,
+        51,
+        52
+      ],
+      "levelNames": [],
+      "maxLevels": 3,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 105"
+    }
+  },
+  {
+    "_id": "867504e8598f6db1",
+    "name": "Inaccurate",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [
+        "-1",
+        "-2",
+        "-3",
+        "-4",
+        "-5",
+        "-6",
+        "-7",
+        "-8",
+        "-9",
+        "-10"
+      ],
+      "maxLevels": 10,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "638750c4fffcdedf",
+    "name": "Increased Range",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 10,
+      "costTable": [],
+      "levelNames": [
+        "#list(LevelName Increased Range)"
+      ],
+      "maxLevels": 36,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 106"
+    }
+  },
+  {
+    "_id": "e8350f6852da2129",
+    "name": "Increased Range (1/2D Range only)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 5,
+      "costTable": [],
+      "levelNames": [
+        "#list(LevelName Increased Range)"
+      ],
+      "maxLevels": 36,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 106"
+    }
+  },
+  {
+    "_id": "a74f5a03c0cb9b10",
+    "name": "Increased Range (1/2D Range Only)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 5,
+      "costTable": [],
+      "levelNames": [
+        "#list(LevelName Increased Range)"
+      ],
+      "maxLevels": 36,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 106"
+    }
+  },
+  {
+    "_id": "fa27258ebf1f8ce7",
+    "name": "Increased Range (Max Range only)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 5,
+      "costTable": [],
+      "levelNames": [
+        "#list(LevelName Increased Range)"
+      ],
+      "maxLevels": 36,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 106"
+    }
+  },
+  {
+    "_id": "8dfb35ed0da118a2",
+    "name": "Increased Range (Max Range Only)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 5,
+      "costTable": [],
+      "levelNames": [
+        "#list(LevelName Increased Range)"
+      ],
+      "maxLevels": 36,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 106"
+    }
+  },
+  {
+    "_id": "df6c3203420af9b0",
+    "name": "Jet",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 106"
+    }
+  },
+  {
+    "_id": "3b7c2adf7831e298",
+    "name": "Jet: Increased Range",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 10,
+      "costTable": [],
+      "levelNames": [
+        "#buildlist(list(#list(LevelName Step 1)), template(x%listitem%))"
+      ],
+      "maxLevels": 1,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 106"
+    }
+  },
+  {
+    "_id": "137d7b8e7ca84a1e",
+    "name": "Jet: Increased Range (1/2D Range Only)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 5,
+      "costTable": [],
+      "levelNames": [
+        "#buildlist(list(#list(LevelName Step 1)), template(x%listitem%))"
+      ],
+      "maxLevels": 1,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 106"
+    }
+  },
+  {
+    "_id": "aa546689b7406fc5",
+    "name": "Jet: Increased Range (Max Range Only)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 5,
+      "costTable": [],
+      "levelNames": [
+        "#buildlist(list(#list(LevelName Step 1)), template(x%listitem%))"
+      ],
+      "maxLevels": 1,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 106"
+    }
+  },
+  {
+    "_id": "7b8147b8a77298f6",
+    "name": "Limited Use",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [
+        "10/day",
+        "9/day",
+        "8/day",
+        "7/day",
+        "6/day",
+        "5/day",
+        "4/day",
+        "3/day",
+        "2/day",
+        "1/day"
+      ],
+      "maxLevels": 10,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "dd31c5b657a6feb4",
+    "name": "Limited Use (Fast Reload)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [
+        "RoFx10/day",
+        "RoFx9/day",
+        "RoFx8/day",
+        "RoFx7/day",
+        "RoFx6/day",
+        "RoFx5/day",
+        "RoFx4/day",
+        "RoFx3/day",
+        "RoFx2/day",
+        "RoFx1/day"
+      ],
+      "maxLevels": 10,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "b218a760cd14a78e",
+    "name": "Limited Use (Slow Reload)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": 0,
+      "costTable": [
+        -5,
+        -15,
+        -25,
+        -35
+      ],
+      "levelNames": [
+        "RoFx10/day",
+        "RoFx9/day",
+        "RoFx8/day",
+        "RoFx7/day",
+        "RoFx6/day",
+        "RoFx5/day",
+        "RoFx4/day",
+        "RoFx3/day",
+        "RoFx2/day",
+        "RoFx1/day"
+      ],
+      "maxLevels": 4,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "6f154c64c1154f40",
+    "name": "Link",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 10,
+      "costTable": [],
+      "levelNames": [
+        "Powers must be used together",
+        "powers can be used separately"
+      ],
+      "maxLevels": 2,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 106"
+    }
+  },
+  {
+    "_id": "15c52d7de55afeac",
+    "name": "Low Signature",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 106"
+    }
+  },
+  {
+    "_id": "4ff6352208211aca",
+    "name": "Malediction",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 0,
+      "costTable": [
+        100,
+        150,
+        200
+      ],
+      "levelNames": [
+        "Receives -1/yd range",
+        "Uses Speed/Range Table",
+        "Uses Long-Distance Modifiers"
+      ],
+      "maxLevels": 3,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 106"
+    }
+  },
+  {
+    "_id": "7865c3983104d15b",
+    "name": "Melee Attack: Cannot Parry",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "62af98de956e7530",
+    "name": "Melee Attack: Reach 1",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -25,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "23a72feb278fd114",
+    "name": "Melee Attack: Reach 1-4 (like a whip)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -15,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "4cbdb8f06a16740b",
+    "name": "Melee Attack: Reach 1,2",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "7b34a1f0ff6cba52",
+    "name": "Melee Attack: Reach 2",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -25,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "8404bf0b83c42e37",
+    "name": "Melee Attack: Reach 2,3",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "b662f7f62c1a0981",
+    "name": "Melee Attack: Reach C",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -30,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "e1daa1e69e8eb1e4",
+    "name": "Melee Attack: Reach C,1",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "4e048a87ca9be75c",
+    "name": "Melee Non-Attack: Reach C",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -30,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "1f8c2028b870ce2f",
+    "name": "Mitigator: Artificial Eyes",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -60,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Blindness",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "c3e5735de4e67db9",
+    "name": "Mitigator: daily treatment",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -60,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "1f7382fbee5240e5",
+    "name": "Mitigator: Glasses",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -60,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Bad Sight",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "b04417fc41c55661",
+    "name": "Mitigator: Hearing Aid",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -60,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Hard of Hearing",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "0b51152f35200228",
+    "name": "Mitigator: monthly treatment",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -70,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "829e622a90141e22",
+    "name": "Mitigator: Prosthetic Leg",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -60,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Missing Legs",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "13abad09f65485ec",
+    "name": "Mitigator: vulnerable",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -60,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "a47c94723875392f",
+    "name": "Mitigator: weekly treatment",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -65,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "19ddfc720ed25ba0",
+    "name": "Mobile",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 40,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 107"
+    }
+  },
+  {
+    "_id": "e4d2ab5db1a77a7e",
+    "name": "No Signature",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 106"
+    }
+  },
+  {
+    "_id": "5170a129dfac51e4",
+    "name": "Nuisance Effect: ability earns a reaction penalty from those around you",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 4,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "fed4048916101522",
+    "name": "Nuisance Effect: ability makes you obvious",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "855ed871eedafcc9",
+    "name": "Nuisance Effect: ability physically inconveniences you",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 112"
+    }
+  },
+  {
+    "_id": "0196b518bcde6b6c",
+    "name": "Onset",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [
+        "Delay 1 minute",
+        "Delay 1 hour",
+        "Delay 1 day",
+        "Delay 1 week or more"
+      ],
+      "maxLevels": 4,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 113"
+    }
+  },
+  {
+    "_id": "76d47efb39feadc4",
+    "name": "Onset (Exposure Time)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": 0,
+      "costTable": [
+        -30,
+        -40
+      ],
+      "levelNames": [
+        "Delay 1 minute",
+        "Delay 1 hour",
+        "Delay 1 day",
+        "Delay 1 week or more"
+      ],
+      "maxLevels": 2,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 113"
+    }
+  },
+  {
+    "_id": "b382e7c0e70c547f",
+    "name": "Overhead",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 30,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 107"
+    }
+  },
+  {
+    "_id": "7b2910d8ca1fbc38",
+    "name": "Pact",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -1,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 113"
+    }
+  },
+  {
+    "_id": "ed53b0fbfa2222b1",
+    "name": "Persistent",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 40,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 107"
+    }
+  },
+  {
+    "_id": "92185f6b40712739",
+    "name": "Preparation Required",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": 0,
+      "costTable": [
+        -20,
+        -30,
+        -50,
+        -60
+      ],
+      "levelNames": [
+        "1 minute",
+        "10 minutes",
+        "1 hour",
+        "8 hours"
+      ],
+      "maxLevels": 4,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 114"
+    }
+  },
+  {
+    "_id": "a116ecdfa4eb922c",
+    "name": "Preparation Required: Weakened Without Preparation",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": 0,
+      "costTable": [
+        -10,
+        -15,
+        -25,
+        -30
+      ],
+      "levelNames": [
+        "1 minute",
+        "10 minutes",
+        "1 hour",
+        "8 hours"
+      ],
+      "maxLevels": 4,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 114"
+    }
+  },
+  {
+    "_id": "d558b104b1c1eec6",
+    "name": "Ranged",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 40,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 107"
+    }
+  },
+  {
+    "_id": "0bcdc8fd09db9344",
+    "name": "Rapid Fire",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [
+        0,
+        40,
+        50,
+        70
+      ],
+      "levelNames": [],
+      "maxLevels": 4,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 108"
+    }
+  },
+  {
+    "_id": "707228f7f1f1ba6f",
+    "name": "Rapid Fire (Multiple Projectiles)",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [
+        0,
+        40,
+        50,
+        70
+      ],
+      "levelNames": [
+        "1x[projectiles]",
+        "#buildlist(list(#list(LevelName Step 1)), template(%listitem%x[projectiles]))"
+      ],
+      "maxLevels": 4,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 108"
+    }
+  },
+  {
+    "_id": "93d76eeb3c3fda51",
+    "name": "Rapid Fire: Selective Fire",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 108"
+    }
+  },
+  {
+    "_id": "f25a4b0d8d87db04",
+    "name": "Reduced Fatigue Cost",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 108"
+    }
+  },
+  {
+    "_id": "9bcd3ffdba389a3b",
+    "name": "Reduced Range",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [
+        "x1/2",
+        "x1/5",
+        "x1/10"
+      ],
+      "maxLevels": 3,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 115"
+    }
+  },
+  {
+    "_id": "30c3ff3fa4328d00",
+    "name": "Reduced Range (1/2D Range Only)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [
+        "x1/2",
+        "x1/5",
+        "x1/10"
+      ],
+      "maxLevels": 3,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 115"
+    }
+  },
+  {
+    "_id": "b39a68f7898e5820",
+    "name": "Reduced Time",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 108"
+    }
+  },
+  {
+    "_id": "2ad3da391b5683cc",
+    "name": "Resistible",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [
+        "HT-5",
+        "HT-4",
+        "HT-3",
+        "HT-2",
+        "HT-1",
+        "HT"
+      ],
+      "maxLevels": 6,
+      "group": "Fatigue Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 115"
+    }
+  },
+  {
+    "_id": "622288c8f8dff3ca",
+    "name": "Respiratory Agent",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 108"
+    }
+  },
+  {
+    "_id": "d506f6e7286ebcaa",
+    "name": "Selective Area",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 108"
+    }
+  },
+  {
+    "_id": "a871d9ac6c3d41a7",
+    "name": "Selectivity",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 108"
+    }
+  },
+  {
+    "_id": "cfbebe9bdde6619f",
+    "name": "Sense-Based",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 0,
+      "costTable": [
+        150,
+        200,
+        250
+      ],
+      "levelNames": [
+        "1 Sense",
+        "#buildlist(list(#list(LevelName Step 1)), template(%listitem% Senses))"
+      ],
+      "maxLevels": 3,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 109"
+    }
+  },
+  {
+    "_id": "5cbb56601afd927d",
+    "name": "Sense-Based (Hearing)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 150,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 109"
+    }
+  },
+  {
+    "_id": "a18a104b0ccaca60",
+    "name": "Sense-Based (Smell)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 150,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 109"
+    }
+  },
+  {
+    "_id": "1000702ede4680b0",
+    "name": "Sense-Based (Vision)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 150,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 109"
+    }
+  },
+  {
+    "_id": "c9e00f0d737bc197",
+    "name": "Sense-Based (with Malediction)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": 0,
+      "costTable": [
+        -20,
+        -15,
+        -10
+      ],
+      "levelNames": [
+        "One sense",
+        "Two senses",
+        "Three senses"
+      ],
+      "maxLevels": 3,
+      "group": "Attack Limitations",
+      "description": "",
+      "reference": "Basic Set: Characters p. 115"
+    }
+  },
+  {
+    "_id": "bc997c7c8be7d72b",
+    "name": "Side Effect",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 0,
+      "costTable": [
+        50,
+        51,
+        52
+      ],
+      "levelNames": [],
+      "maxLevels": 3,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 109"
+    }
+  },
+  {
+    "_id": "7115612fa7aba49a",
+    "name": "Takes Extra Time",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [
+        "x2",
+        "x4",
+        "x8",
+        "x16",
+        "x32",
+        "x64",
+        "x128",
+        "x256",
+        "x512",
+        "x1,024",
+        "x2,048",
+        "x4,096",
+        "x8,192",
+        "x16,384",
+        "x32,768",
+        "x65,536",
+        "x131,072",
+        "x262,144",
+        "x524,288",
+        "x1,048,576"
+      ],
+      "maxLevels": 20,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 115"
+    }
+  },
+  {
+    "_id": "4184e78f7d189aec",
+    "name": "Takes Recharge",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": 0,
+      "costTable": [
+        -10,
+        -10,
+        -20,
+        -20,
+        -30,
+        -30
+      ],
+      "levelNames": [
+        "5 seconds",
+        "x2 use time",
+        "15 seconds",
+        "x5 use time",
+        "1 hour",
+        "x10 use time"
+      ],
+      "maxLevels": 6,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 115"
+    }
+  },
+  {
+    "_id": "e47b7dcda94210f7",
+    "name": "Temporary Disadvantage",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -1,
+      "costTable": [],
+      "levelNames": [
+        "-1",
+        "#buildlist(list(#list(LevelName Step 1)), template(-%listitem%))"
+      ],
+      "maxLevels": 2,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 115"
+    }
+  },
+  {
+    "_id": "c86eda475be287e9",
+    "name": "Temporary Disadvantage: Electrical",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "",
+      "description": "",
+      "reference": "Basic Set: Characters p. 115, 134"
+    }
+  },
+  {
+    "_id": "2c918350a54088c2",
+    "name": "Trigger",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [
+        "Very Common",
+        "Common",
+        "Occasional",
+        "Rare"
+      ],
+      "maxLevels": 4,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 115"
+    }
+  },
+  {
+    "_id": "2d1083a7c834b92e",
+    "name": "Unconscious Only",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 115"
+    }
+  },
+  {
+    "_id": "50c5e64ccfb23951",
+    "name": "Uncontrollable",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": 0,
+      "costTable": [
+        -10,
+        -30
+      ],
+      "levelNames": [
+        "non-destructive power",
+        "destructive power"
+      ],
+      "maxLevels": 2,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 116"
+    }
+  },
+  {
+    "_id": "50a2de90f556ffe2",
+    "name": "Underwater",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 109"
+    }
+  },
+  {
+    "_id": "1ef4e7ef81d18dc2",
+    "name": "Unreliable/Activation",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": 0,
+      "costTable": [
+        -10,
+        -20,
+        -40,
+        -80
+      ],
+      "levelNames": [
+        "14 or less",
+        "11 or less",
+        "8 or less",
+        "5 or less"
+      ],
+      "maxLevels": 4,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 116"
+    }
+  },
+  {
+    "_id": "5d2fc0843ef06055",
+    "name": "Unreliable/Malfunction",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [
+        "malfunction number 16",
+        "malfunction number 15",
+        "malfunction number 14",
+        "malfunction number 13",
+        "malfunction number 12"
+      ],
+      "maxLevels": 5,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 116"
+    }
+  },
+  {
+    "_id": "53c9d20747d43090",
+    "name": "Untrainable",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -40,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 116"
+    }
+  },
+  {
+    "_id": "5b4abd3c9cdd41d9",
+    "name": "Variable",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 109"
+    }
+  },
+  {
+    "_id": "700f260a543adcc4",
+    "name": "Wall: Permeable",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 30,
+      "costTable": [],
+      "levelNames": [
+        "Any shape desired"
+      ],
+      "maxLevels": 2,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 109"
+    }
+  },
+  {
+    "_id": "c46697952d241bd2",
+    "name": "Wall: Rigid",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 30,
+      "costTable": [],
+      "levelNames": [
+        "Any shape desired"
+      ],
+      "maxLevels": 2,
+      "group": "Attack Enhancements",
+      "description": "",
+      "reference": "Basic Set: Characters p. 109"
+    }
+  }
+]
