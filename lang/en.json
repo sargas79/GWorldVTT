@@ -1015,7 +1015,9 @@
       "SelfControl6": "6 (almost never resisted, ×2)",
       "SelfControl9": "9 (rarely, ×1.5)",
       "SelfControl12": "12 (fairly often, ×1)",
-      "SelfControl15": "15 (almost always, ×0.5)"
+      "SelfControl15": "15 (almost always, ×0.5)",
+      "DescriptionHint": "Show the full description",
+      "ShowLess": "Show less"
     },
     "Template": {
       "Title": "Templates",

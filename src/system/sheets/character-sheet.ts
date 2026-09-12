@@ -44,6 +44,7 @@ import { culturePenalty, languagePenalty, type Comprehension } from "../../rules
 import type { StudyMethod } from "../../rules/study.js";
 import { rollPushingTheEnvelope, rollStayOn } from "../mounted.js";
 import { rollThrow } from "../throwing.js";
+import { summariseDescription } from "../description-summary.js";
 import {
   applyTemplateToActor,
   appliedTemplates,
@@ -209,15 +210,22 @@ function tacticalPanel(system: any, derived: any) {
  * level, Wealth at 10/20/30/50/75. A flat advantage has no levels to buy, and
  * offering a box for them would only invite typing into one that does nothing.
  */
-function withLevels(trait: any) {
+function withLevels(trait: any, openDescriptions: ReadonlySet<string> = new Set()) {
   const system = trait.system ?? {};
   const table: number[] = system.costTable ?? [];
+  const description = summariseDescription(system.description);
   return {
     id: trait.id,
     name: trait.name,
     system,
     levelled: Boolean(system.pointsPerLevel) || table.length > 0,
     levelName: system.levelName ?? null,
+    // The first line, and whether the rest is folded under it. Which folds
+    // are open is remembered on the sheet, since every edit redraws it.
+    description: {
+      ...description,
+      open: openDescriptions.has(String(trait.id)),
+    },
     // Most traits are the GM's to adjudicate; a couple of dozen say something
     // exact that this system applies on its own. Which is which is worth a
     // badge -- a player who buys Combat Reflexes should be able to see that
@@ -2237,6 +2245,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   /** Which kind of gear the Gear tab is showing, or "" for all of it. */
   #gearFilter: GearGroup | "" = "";
 
+  /**
+   * The trait descriptions unfolded on this sheet, by item id. On the sheet
+   * rather than the actor: which fold is open is not a fact about the
+   * character, and a redraw after every edit would otherwise close it.
+   */
+  #openDescriptions = new Set<string>();
+
   static override PARTS = {
     header: { template: `${TEMPLATE_ROOT}/header.hbs` },
     nav: { template: `${TEMPLATE_ROOT}/nav.hbs` },
@@ -2415,7 +2430,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           browseTitle: "GWORLD.Picker.Advantages",
           total: derived.points.advantages,
           negative: false,
-          traits: items.advantages.map(withLevels),
+          traits: items.advantages.map((trait: any) => withLevels(trait, this.#openDescriptions)),
         },
         {
           num: "02",
@@ -2426,7 +2441,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           browseTitle: "GWORLD.Picker.Disadvantages",
           total: derived.points.disadvantages,
           negative: true,
-          traits: items.disadvantages.map(withLevels),
+          traits: items.disadvantages.map((trait: any) => withLevels(trait, this.#openDescriptions)),
         },
         {
           num: "03",
@@ -2437,7 +2452,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           browseTitle: "GWORLD.Picker.Quirks",
           total: derived.points.quirks,
           negative: true,
-          traits: items.quirks.map(withLevels),
+          traits: items.quirks.map((trait: any) => withLevels(trait, this.#openDescriptions)),
         },
       ],
       disadvantageOverLimit: derived.points.disadvantageTotal > derived.points.disadvantageLimit,
@@ -2599,6 +2614,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // hundred skills do.
     this.#wireFilter(".gworld-skill-filter", "skills");
     this.#wireFilter(".gworld-spell-filter", "magic");
+
+    // A long trait description is folded to its first line. Which ones are
+    // open is kept on the sheet so a level stepped on the same tab does not
+    // fold everything back up.
+    for (const fold of this.element.querySelectorAll<HTMLDetailsElement>("details[data-description-for]")) {
+      fold.addEventListener("toggle", () => {
+        const id = fold.dataset.descriptionFor;
+        if (!id) return;
+        if (fold.open) this.#openDescriptions.add(id);
+        else this.#openDescriptions.delete(id);
+      });
+    }
   }
 
   /** Narrows one tab's tables to the rows whose name contains what was typed. */
