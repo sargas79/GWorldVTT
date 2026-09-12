@@ -142,6 +142,17 @@
       {{#if derived.extraArms}}
         <span class="ichip warn">{{localize "GWORLD.Attack.ExtraArms" count=derived.extraArms}}</span>
       {{/if}}
+      {{#each derived.attackPenalties.melee as |p|}}
+        <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Attack.ImpairedMelee'}}">{{p.trait}} {{signed p.value}}</span>
+      {{/each}}
+      {{#each derived.attackPenalties.ranged as |p|}}
+        {{#unless (eq p.trait "Lame")}}
+          <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Attack.ImpairedRanged'}}">{{p.trait}} {{signed p.value}}</span>
+        {{/unless}}
+      {{/each}}
+      {{#if derived.vision.blindness}}
+        <span class="ichip warn">{{localize "GWORLD.Sight.Blindness"}}</span>
+      {{/if}}
     </div>
   </div>
 

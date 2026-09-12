@@ -66,7 +66,7 @@ import {
   mayExplode,
   type Malfunction,
 } from "../rules/malfunctions.js";
-import { attackWithoutSight, type Sight } from "../rules/visibility.js";
+import { attackWithoutSight, darknessPenalty, type Sight, type VisionTraits } from "../rules/visibility.js";
 import { levelDifference } from "../rules/melee-situations.js";
 import { turnedBlade } from "../rules/subduing.js";
 import { coverShot, type CoverApproach } from "../rules/cover.js";
@@ -547,6 +547,7 @@ export async function handleRollAction(
       turns: aimTurnsOf(actor),
       braced: Boolean(actor?.system?.aim?.braced),
     },
+    eyes: eyesOf(actor),
     // A shooter on a Wait is covering ground, and the area they declared
     // is what the penalty comes off.
     watching:
@@ -578,6 +579,7 @@ export async function handleRollAction(
         dualWeaponTechnique: Number(actor?.system?.derived?.techniques?.dualWeaponAttack) || 0,
         ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true,
         offHandTraining: Number(actor?.system?.derived?.techniques?.offHandWeaponTraining) || 0,
+        eyes: eyesOf(actor),
       })
     : null;
   if (asksAboutMelee && melee === null) return null;
@@ -611,6 +613,19 @@ export async function handleRollAction(
   const knockedDown = temporaryPenalty(actor, target.dataset.basedOn, rollKind(rollType));
   if (knockedDown !== 0) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Penalties.Label"), value: knockedDown });
+  }
+
+  // Bad Sight, One Eye and Lame each take their own line off an attack
+  // (Characters pp. 123, 141, 147), and a blind fighter attacks blind even
+  // when nothing in the dialog was ticked.
+  if (rollType === "attack") {
+    const impaired: Array<{ trait: string; value: number }> =
+      actor?.system?.derived?.attackPenalties?.[ranged ? "ranged" : "melee"] ?? [];
+    for (const penalty of impaired) modifiers.push({ label: penalty.trait, value: penalty.value });
+    if (!melee && !shot && eyesOf(actor).blindness) {
+      const blind = sightModifier("clear", false, eyesOf(actor));
+      if (blind) modifiers.push(blind);
+    }
   }
 
   // "You must declare that you are using extra effort and spend the required FP
@@ -836,6 +851,8 @@ export async function promptForRangedAttack(options: {
   halfDamageRange?: number;
   /** The Aim maneuver as it stands: turns spent, and whether braced. */
   aim?: { turns: number; braced: boolean } | null;
+  /** The shooter's eyes, for the dark. */
+  eyes?: Eyes;
 }): Promise<RangedShot | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   // What aiming is worth: Accuracy after a turn, more for the second and
@@ -922,6 +939,7 @@ export async function promptForRangedAttack(options: {
           shots: rateOfFire > 1 ? num("shots") : 1,
           situation: situation as RangedInput["situation"],
           sight,
+          darkness: num("darkness"),
           cover: cover as CoverApproach | "none",
           calledShot,
           aimed,
@@ -976,6 +994,8 @@ interface RangedInput {
   situation: "normal" | "moveAndAttack" | "closeCombat";
   /** What the shooter can see of the target. */
   sight?: Sight;
+  /** Darkness short of total, 0 to 9 (p. 394). */
+  darkness?: number;
   /** What they decided to do about anything in the way. */
   cover?: CoverApproach | "none";
   aimed: boolean;
@@ -999,6 +1019,8 @@ export function rangedModifiers(
     watching?: { hexesWatched: number; coveringLine: boolean } | null;
     /** The Aim maneuver as it stands, for the extra turns and the bracing. */
     aim?: { turns: number; braced: boolean } | null;
+    /** The shooter's eyes, which decide what the dark costs. */
+    eyes?: Eyes;
   },
 ): RollModifier[] {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
@@ -1044,8 +1066,10 @@ export function rangedModifiers(
   }
   if (size !== 0) modifiers.push({ label: L("TargetSize"), value: size });
 
-  const unseen = sightModifier(input.sight ?? "clear", false);
+  const unseen = sightModifier(input.sight ?? "clear", false, weapon.eyes);
   if (unseen) modifiers.push(unseen);
+  const dark = darknessModifier(input.darkness ?? 0, weapon.eyes);
+  if (dark) modifiers.push(dark);
 
   // Cover is a choice between three ways of dealing with it, not one modifier
   // (p. 407), so what it costs depends on which one was taken.
@@ -1169,7 +1193,30 @@ function calledShotModifier(value: string, type: DamageType, tightBeam: boolean)
  */
 const SIGHT_OPTIONS: readonly Sight[] = ["clear", "positionKnown", "foeUnseen", "blind"];
 
-/** The markup for the sight select, and the modifier it resolves to. */
+/** The eyes an attacker has, and whether they have any (pp. 47, 60, 71, 124). */
+export interface Eyes extends VisionTraits {
+  blindness?: boolean;
+}
+
+/** What the sheet says about this character's eyes. */
+export function eyesOf(actor: any): Eyes {
+  const vision = actor?.system?.derived?.vision ?? {};
+  return {
+    nightVision: Number(vision.nightVision) || 0,
+    darkVision: vision.darkVision === true,
+    infravision: vision.infravision === true,
+    blindness: vision.blindness === true,
+  };
+}
+
+/**
+ * The markup for the sight select and the darkness field, and the modifiers
+ * they resolve to.
+ *
+ * Darkness short of total is its own number (p. 394): "-1 to -9", which is
+ * what Night Vision takes off. Total darkness is the last option of the
+ * select, since it is not a worse penalty but the foe unseen.
+ */
 function sightField(): string {
   const options = SIGHT_OPTIONS.map(
     (sight) =>
@@ -1179,17 +1226,36 @@ function sightField(): string {
   return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
     <span>${game.i18n.localize("GWORLD.Sight.Label")}</span>
     <select name="sight" style="width:150px">${options}</select>
+  </label>
+  <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <span>${game.i18n.localize("GWORLD.Sight.Darkness")}</span>
+    <input type="number" name="darkness" value="0" min="0" max="9" step="1" style="width:90px">
   </label>`;
 }
 
 /** What the chosen sight costs, as a modifier line. */
-function sightModifier(sight: Sight, lightSource: boolean): RollModifier | null {
-  const penalty = attackWithoutSight({ sight, lightSource });
+function sightModifier(sight: Sight, lightSource: boolean, eyes: Eyes = {}): RollModifier | null {
+  // Somebody blind attacks blind whatever the light, at the practised -6.
+  if (eyes.blindness) {
+    return {
+      label: game.i18n.localize("GWORLD.Sight.Blindness"),
+      value: attackWithoutSight({ sight: "blind", accustomedToBlindness: true }).modifier,
+    };
+  }
+  const penalty = attackWithoutSight({ sight, lightSource, eyes });
   if (penalty.modifier === 0) return null;
   return {
     label: game.i18n.localize(`GWORLD.Sight.${sight}`),
     value: penalty.modifier,
   };
+}
+
+/** What the darkness costs after the eyes, as a modifier line. */
+function darknessModifier(darkness: number, eyes: Eyes = {}): RollModifier | null {
+  if (eyes.blindness) return null;
+  const value = darknessPenalty(darkness, eyes);
+  if (value === 0) return null;
+  return { label: game.i18n.localize("GWORLD.Sight.Darkness"), value };
 }
 
 /**
@@ -1213,6 +1279,8 @@ export async function promptForMeleeAttack(options: {
   ambidextrous?: boolean;
   /** Levels of Off-Hand Weapon Training, for somebody who is not. */
   offHandTraining?: number;
+  /** The attacker's eyes, for the dark. */
+  eyes?: Eyes;
 }): Promise<{
   modifiers: RollModifier[];
   defensePenalty: number;
@@ -1329,6 +1397,7 @@ export async function promptForMeleeAttack(options: {
           mighty: ticked("mighty"),
           sight: (form?.querySelector<HTMLSelectElement>('select[name="sight"]')?.value ??
             "clear") as Sight,
+          darkness: num("darkness"),
           calledShot:
             form?.querySelector<HTMLSelectElement>('select[name="calledShot"]')?.value ?? UNAIMED,
           turned: ticked("turned"),
@@ -1344,7 +1413,8 @@ export async function promptForMeleeAttack(options: {
 
   if (!result || typeof result !== "object") return null;
   const {
-    deceptive, modifier, rapid, flurry, mighty, sight, calledShot, turned, ground, dual, charging,
+    deceptive, modifier, rapid, flurry, mighty, sight, darkness, calledShot, turned, ground, dual,
+    charging,
   } = result as {
     deceptive: number;
     modifier: number;
@@ -1352,6 +1422,7 @@ export async function promptForMeleeAttack(options: {
     flurry: boolean;
     mighty: boolean;
     sight: Sight;
+    darkness: number;
     calledShot: string;
     turned: boolean;
     ground: number;
@@ -1406,8 +1477,10 @@ export async function promptForMeleeAttack(options: {
   const aimed = calledShotModifier(calledShot, options.damageType, false);
   if (aimed.modifier) modifiers.push(aimed.modifier);
 
-  const unseen = sightModifier(sight, false);
+  const unseen = sightModifier(sight, false, options.eyes);
   if (unseen) modifiers.push(unseen);
+  const dark = darknessModifier(darkness, options.eyes);
+  if (dark) modifiers.push(dark);
 
   if (modifier !== 0) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: modifier });

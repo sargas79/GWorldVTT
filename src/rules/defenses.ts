@@ -49,6 +49,13 @@ export interface DefenseContext {
   situational?: number;
   /** Combat Reflexes: "+1 to all active defense rolls" (Characters p. 43). */
   combatReflexes?: boolean;
+  /**
+   * Enhanced Dodge, Parry or Block (Characters p. 51): the levels bought of
+   * whichever this is, "+1 per level".
+   */
+  enhanced?: number;
+  /** Lame (Characters p. 141): -3 with crippled legs, -6 without them. */
+  lame?: number;
 }
 
 export interface DodgeContext extends DefenseContext {
@@ -102,6 +109,8 @@ function commonModifiers(context: DefenseContext): DefenseModifier[] {
     modifiers.push({ label: "All-Out Defense (Increased)", value: 2 });
   }
   if (context.combatReflexes) modifiers.push({ label: "Combat Reflexes", value: 1 });
+  if (context.enhanced) modifiers.push({ label: "Enhanced defense", value: context.enhanced });
+  if (context.lame) modifiers.push({ label: "Lame", value: context.lame });
   // "A rider can Dodge, Block, or Parry. If he has Riding at 12+, all of these
   // defenses are at normal levels" -- and worse by the shortfall if not.
   if (context.mountedPenalty) {

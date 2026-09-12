@@ -169,8 +169,14 @@ export const FP_PER_REST_MINUTES = 10;
  * Reading, talking and thinking are rest; walking around is not, which is the
  * GM's judgement and not a parameter.
  */
-export function fatigueRecovered(options: { minutes: number; meal?: boolean }): number {
-  const rested = Math.floor(Math.max(0, options.minutes) / FP_PER_REST_MINUTES);
+export function fatigueRecovered(options: {
+  minutes: number;
+  meal?: boolean;
+  /** Fit and Very Fit "recover FP at twice the normal rate" (Characters p. 55). */
+  multiplier?: number;
+}): number {
+  const rate = FP_PER_REST_MINUTES / Math.max(1, options.multiplier ?? 1);
+  const rested = Math.floor(Math.max(0, options.minutes) / rate);
   return rested + (options.meal ? 1 : 0);
 }
 

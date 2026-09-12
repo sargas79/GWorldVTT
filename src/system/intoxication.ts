@@ -8,6 +8,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { healthRollScore } from "./attributes.js";
 import { setCondition } from "./conditions.js";
 import {
   PINK_ELEPHANTS_MODIFIER,
@@ -131,7 +132,7 @@ export async function drinkForAnHour(options: {
     return after.level;
   }
 
-  const health = Number(actor.system?.attributes?.HT) || 10;
+  const health = healthRollScore(actor);
   const carousing = Number(actor.system?.derived?.recovery?.carousing) || 0;
   const base = Math.max(health, carousing);
 
@@ -229,7 +230,7 @@ export async function soberUpRoll(options: { actor: any; modifier: number }): Pr
   const state = drinkingState(actor);
   if (state.level === "sober") return "sober";
 
-  const health = Number(actor.system?.attributes?.HT) || 10;
+  const health = healthRollScore(actor);
   const roll = new Roll("3d6");
   await roll.evaluate();
   const outcome = resolveSuccess(roll.total, health + options.modifier, dieResults(roll));
@@ -270,7 +271,7 @@ export async function hangoverRoll(options: { actor: any; modifier: number }): P
   const state = drinkingState(actor);
   if (!risksHangover(state.level)) return false;
 
-  const health = Number(actor.system?.attributes?.HT) || 10;
+  const health = healthRollScore(actor);
   const target = health + hangoverModifier(state.level) + options.modifier;
 
   const roll = new Roll("3d6");

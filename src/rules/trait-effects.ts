@@ -19,6 +19,8 @@
  */
 
 import { injuryToleranceFrom, noInjuryTolerance, type InjuryTolerance } from "./injury-tolerance.js";
+import { isTalent } from "./talents.js";
+import { isSocialTrait } from "./social.js";
 
 /** What a character's traits do to the rolls this system makes. */
 export interface TraitEffects {
@@ -93,6 +95,54 @@ export interface TraitEffects {
    * of anyone casting a spell on you, and add it to your roll to resist".
    */
   magicResistance: number;
+  /** Enhanced Dodge (p. 51): added to Dodge. */
+  enhancedDodge: number;
+  /** Enhanced Parry (p. 51): to every parry, or to bare-handed ones alone. */
+  enhancedParry: { all: number; bareHands: number };
+  /** Enhanced Block (p. 51): added to Block. */
+  enhancedBlock: number;
+  /**
+   * Fit or Very Fit (p. 55): "+1 to all HT rolls" for Fit and +2 for Very
+   * Fit, which is also what is added to every HT roll this system makes.
+   */
+  htRolls: number;
+  /** Fit and Very Fit both "recover FP at twice the normal rate". */
+  fatigueRecoveryMultiplier: number;
+  /** Very Fit alone "lose[s] FP at only half the normal rate". */
+  fatigueLossHalved: boolean;
+  /** Night Vision (p. 71): each level cancels a point of darkness penalty, to nine. */
+  nightVision: number;
+  /** Dark Vision (p. 47): no darkness penalty at all, even in total darkness. */
+  darkVision: boolean;
+  /** Infravision (p. 60): the same against anything warm, which a foe is. */
+  infravision: boolean;
+  /** Acute Senses (p. 35): a level each to the Perception roll for that sense. */
+  acute: { vision: number; hearing: number; tasteSmell: number; touch: number };
+  /** Bad Sight (p. 123): nearsighted is -2 to ranged attacks, farsighted -3 to melee. */
+  badSight: "nearsighted" | "farsighted" | null;
+  /** One Eye (p. 147): -1 to ranged attacks, from the lack of depth. */
+  oneEye: boolean;
+  /** Hard of Hearing (p. 138): -4 on Hearing rolls. */
+  hardOfHearing: boolean;
+  /** Deafness (p. 129): no Hearing roll at all. */
+  deafness: boolean;
+  /** Blindness (p. 124): no Vision roll, and every attack is made blind, at the accustomed -6. */
+  blindness: boolean;
+  /**
+   * Lame (p. 141): crippled legs halve Basic Move; missing legs leave Move 2;
+   * legless or paraplegic leaves none. Each is a penalty to attacks and defenses
+   * on foot as well.
+   */
+  lame: "crippled" | "missing" | "none" | null;
+  /** One Arm (p. 147): nothing two-handed can be used. */
+  oneArm: boolean;
+  /**
+   * Temperature Tolerance (p. 93): degrees added to the comfort zone on the
+   * cold side and on the hot side. The book gives ten a level to divide as the
+   * player chooses; a modifier named Cold or Heat on the trait puts them all on
+   * one side, and without one they are split.
+   */
+  temperatureTolerance: { coldF: number; heatF: number };
 }
 
 /** What no traits at all come to, and the shape everything is added onto. */
@@ -126,6 +176,24 @@ export function noTraitEffects(): TraitEffects {
     magery: null,
     ritualMagery: null,
     magicResistance: 0,
+    enhancedDodge: 0,
+    enhancedParry: { all: 0, bareHands: 0 },
+    enhancedBlock: 0,
+    htRolls: 0,
+    fatigueRecoveryMultiplier: 1,
+    fatigueLossHalved: false,
+    nightVision: 0,
+    darkVision: false,
+    infravision: false,
+    acute: { vision: 0, hearing: 0, tasteSmell: 0, touch: 0 },
+    badSight: null,
+    oneEye: false,
+    hardOfHearing: false,
+    deafness: false,
+    blindness: false,
+    lame: null,
+    oneArm: false,
+    temperatureTolerance: { coldF: 0, heatF: 0 },
   };
 }
 
@@ -253,7 +321,73 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
 
   // "-3 to cast spells on you and you get +3 to resist" for three levels (p. 67).
   "magic resistance": (levels) => ({ magicResistance: levels }),
+
+  // "+1 to Dodge", "+1 to Parry" and "+1 to Block" a level (p. 51). The
+  // compendium prices two Enhanced Parries: one for all parries, one for the
+  // bare hands.
+  "enhanced dodge": (levels) => ({ enhancedDodge: levels }),
+  "enhanced block": (levels) => ({ enhancedBlock: levels }),
+  "enhanced parry (all parries)": (levels) => ({ enhancedParry: { all: levels, bareHands: 0 } }),
+  "enhanced parry (bare hands)": (levels) => ({ enhancedParry: { all: 0, bareHands: levels } }),
+
+  // Fit: "+1 to all HT rolls ... you recover FP at twice the normal rate."
+  // Very Fit: "+2 to all HT rolls ... you lose FP at only half the normal
+  // rate" and recover them twice as fast (p. 55). The compendium carries Very
+  // Fit as a trait of its own and as Fit's second level, so both are read.
+  fit: (levels) =>
+    levels >= 2
+      ? { htRolls: 2, fatigueRecoveryMultiplier: 2, fatigueLossHalved: true }
+      : { htRolls: 1, fatigueRecoveryMultiplier: 2 },
+  "very fit": () => ({ htRolls: 2, fatigueRecoveryMultiplier: 2, fatigueLossHalved: true }),
+
+  // "Each level of Night Vision allows you to ignore -1 in darkness penalties"
+  // (p. 71); Dark Vision "can see in total darkness" (p. 47); Infravision sees
+  // the warmth of a living foe (p. 60).
+  "night vision": (levels) => ({ nightVision: Math.min(9, levels) }),
+  "dark vision": () => ({ darkVision: true }),
+  infravision: () => ({ infravision: true }),
+
+  // "+1 per level to all Sense rolls" for that sense (p. 35).
+  "acute vision": (levels) => ({ acute: { vision: levels, hearing: 0, tasteSmell: 0, touch: 0 } }),
+  "acute hearing": (levels) => ({ acute: { vision: 0, hearing: levels, tasteSmell: 0, touch: 0 } }),
+  "acute taste and smell": (levels) => ({ acute: { vision: 0, hearing: 0, tasteSmell: levels, touch: 0 } }),
+  "acute touch": (levels) => ({ acute: { vision: 0, hearing: 0, tasteSmell: 0, touch: levels } }),
+
+  // "Nearsighted ... -2 to hit with ranged weapons. Farsighted ... -3 to hit
+  // in melee combat" (p. 123), and the senses that are missing outright.
+  "bad sight (nearsighted)": () => ({ badSight: "nearsighted" }),
+  "bad sight (farsighted)": () => ({ badSight: "farsighted" }),
+  "one eye": () => ({ oneEye: true }),
+  "hard of hearing": () => ({ hardOfHearing: true }),
+  deafness: () => ({ deafness: true }),
+  blindness: () => ({ blindness: true }),
+  "one arm": () => ({ oneArm: true }),
+
+  // Lame (p. 141): "Crippled Legs: ... halve your Basic Move (round down)";
+  // "Missing Legs: ... Basic Move 2"; "Legless" and "Paraplegic" have none.
+  "lame (crippled legs)": () => ({ lame: "crippled" }),
+  "lame (missing legs)": () => ({ lame: "missing" }),
+  "lame (legless)": () => ({ lame: "none" }),
+  "lame (paraplegic)": () => ({ lame: "none" }),
 };
+
+/**
+ * Temperature Tolerance is read from its modifiers as well as its levels:
+ * "each level adds 10 degrees to your comfort zone. You may divide the range
+ * ... as you see fit" (p. 93). A modifier called Cold or Heat on the trait is
+ * how the sheet says which side; without one the ten is split five and five.
+ */
+const TEMPERATURE_TOLERANCE = /^temperature tolerance\b/;
+const DEGREES_PER_LEVEL = 10;
+
+function temperatureTolerance(trait: HeldTrait): { coldF: number; heatF: number } {
+  const levels = Math.max(1, Math.floor(trait.levels ?? 0) || 1);
+  const degrees = levels * DEGREES_PER_LEVEL;
+  const side = (trait.modifiers ?? []).map((m) => m.trim().toLowerCase());
+  if (side.includes("cold")) return { coldF: degrees, heatF: 0 };
+  if (side.includes("heat")) return { coldF: 0, heatF: degrees };
+  return { coldF: degrees / 2, heatF: degrees / 2 };
+}
 
 /**
  * Injury Tolerance is one trait whose kind is in its modifiers or its name:
@@ -277,7 +411,13 @@ function matchName(name: string): string {
 /** Whether a named trait is one this system reads at all. */
 export function isReadTrait(name: string): boolean {
   const key = matchName(name);
-  return key in TRAIT_EFFECTS || INJURY_TOLERANCE.test(key);
+  return (
+    key in TRAIT_EFFECTS ||
+    INJURY_TOLERANCE.test(key) ||
+    TEMPERATURE_TOLERANCE.test(key) ||
+    isTalent(key) ||
+    isSocialTrait(key)
+  );
 }
 
 /** Every trait name this system reads, for showing what is understood. */
@@ -303,6 +443,12 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
         [trait.name, ...(trait.modifiers ?? [])],
         total.injuryTolerance,
       );
+      continue;
+    }
+    if (TEMPERATURE_TOLERANCE.test(key)) {
+      const zone = temperatureTolerance(trait);
+      total.temperatureTolerance.coldF += zone.coldF;
+      total.temperatureTolerance.heatF += zone.heatF;
       continue;
     }
 
@@ -351,6 +497,30 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
     total.magery = highest(total.magery, applied.magery);
     total.ritualMagery = highest(total.ritualMagery, applied.ritualMagery);
     total.magicResistance += applied.magicResistance ?? 0;
+    total.enhancedDodge += applied.enhancedDodge ?? 0;
+    total.enhancedBlock += applied.enhancedBlock ?? 0;
+    total.enhancedParry.all += applied.enhancedParry?.all ?? 0;
+    total.enhancedParry.bareHands += applied.enhancedParry?.bareHands ?? 0;
+    // Fit and Very Fit do not add: whoever has both is Very Fit.
+    total.htRolls = Math.max(total.htRolls, applied.htRolls ?? 0);
+    total.fatigueRecoveryMultiplier = Math.max(
+      total.fatigueRecoveryMultiplier, applied.fatigueRecoveryMultiplier ?? 1,
+    );
+    total.fatigueLossHalved ||= applied.fatigueLossHalved ?? false;
+    total.nightVision = Math.min(9, total.nightVision + (applied.nightVision ?? 0));
+    total.darkVision ||= applied.darkVision ?? false;
+    total.infravision ||= applied.infravision ?? false;
+    for (const sense of ["vision", "hearing", "tasteSmell", "touch"] as const) {
+      total.acute[sense] += applied.acute?.[sense] ?? 0;
+    }
+    if (applied.badSight) total.badSight = applied.badSight;
+    total.oneEye ||= applied.oneEye ?? false;
+    total.hardOfHearing ||= applied.hardOfHearing ?? false;
+    total.deafness ||= applied.deafness ?? false;
+    total.blindness ||= applied.blindness ?? false;
+    total.oneArm ||= applied.oneArm ?? false;
+    // Two kinds of Lame do not add either: the worse one is the one you have.
+    if (applied.lame) total.lame = worseLameness(total.lame, applied.lame);
   }
 
   return total;
@@ -360,6 +530,47 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
 function highest(a: number | null, b: number | null | undefined): number | null {
   if (b === null || b === undefined) return a;
   return a === null ? b : Math.max(a, b);
+}
+
+const LAMENESS_ORDER: ReadonlyArray<TraitEffects["lame"]> = [null, "crippled", "missing", "none"];
+
+function worseLameness(a: TraitEffects["lame"], b: TraitEffects["lame"]): TraitEffects["lame"] {
+  return LAMENESS_ORDER.indexOf(a) >= LAMENESS_ORDER.indexOf(b) ? a : b;
+}
+
+/**
+ * Basic Move after Lame (p. 141).
+ *
+ * "Crippled Legs ... halve your Basic Move (round down)", "Missing Legs ...
+ * Basic Move 2", and the legless or paraplegic "have a Basic Move of 0".
+ */
+export function lameMove(basicMove: number, lame: TraitEffects["lame"]): number {
+  switch (lame) {
+    case "crippled":
+      return Math.floor(basicMove / 2);
+    case "missing":
+      return Math.min(basicMove, 2);
+    case "none":
+      return 0;
+    default:
+      return basicMove;
+  }
+}
+
+/**
+ * What Lame costs in a fight (p. 141): "-3 to attack and defense rolls" with
+ * crippled legs, and "-6" without them.
+ */
+export function lameCombatPenalty(lame: TraitEffects["lame"]): number {
+  switch (lame) {
+    case "crippled":
+      return -3;
+    case "missing":
+    case "none":
+      return -6;
+    default:
+      return 0;
+  }
 }
 
 /**
@@ -381,4 +592,31 @@ export function shockAfterTraits(shock: number, effects: TraitEffects): number {
  */
 export function afterSuperJump(distance: number, levels: number): number {
   return distance * 2 ** Math.max(0, Math.floor(levels));
+}
+
+/** One penalty a physical disadvantage puts on an attack, with the trait to blame. */
+export interface ImpairedAttack {
+  trait: string;
+  value: number;
+}
+
+/**
+ * What the physical disadvantages cost an attack (pp. 123, 141, 147).
+ *
+ * Nearsighted is "-2 to hit with ranged weapons" and farsighted "-3 to hit
+ * in melee combat"; One Eye is "-1 to all ranged attacks"; Lame is a penalty
+ * to every attack made on foot. Each is listed under its own name, because a
+ * roll at -6 should say which three things it was.
+ */
+export function impairedAttacks(
+  effects: Pick<TraitEffects, "badSight" | "oneEye" | "lame">,
+  ranged: boolean,
+): ImpairedAttack[] {
+  const out: ImpairedAttack[] = [];
+  if (ranged && effects.badSight === "nearsighted") out.push({ trait: "Bad Sight", value: -2 });
+  if (!ranged && effects.badSight === "farsighted") out.push({ trait: "Bad Sight", value: -3 });
+  if (ranged && effects.oneEye) out.push({ trait: "One Eye", value: -1 });
+  const lame = lameCombatPenalty(effects.lame);
+  if (lame !== 0) out.push({ trait: "Lame", value: lame });
+  return out;
 }

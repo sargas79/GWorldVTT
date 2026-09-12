@@ -122,6 +122,8 @@ import {
 import { nextTraitLevel, previousTraitLevel } from "../../rules/traits.js";
 import { awardsNewestFirst, type PointAward } from "../../rules/character-points.js";
 import { isReadTrait } from "../../rules/trait-effects.js";
+import { unconditionalReaction, type ReactionSource } from "../../rules/social.js";
+import { SENSES } from "../../rules/senses.js";
 import {
   handleDamageAction,
   handleRollAction,
@@ -1005,13 +1007,32 @@ async function promptForSplash(): Promise<{
  * have a -5 reaction to anybody" -- and applying it by hand afterwards means
  * remembering it at the moment the dice land.
  */
-async function promptForReaction(): Promise<{
+async function promptForReaction(sources: ReactionSource[]): Promise<{
   modifier: number;
   best: Reaction | null;
   worst: Reaction | null;
   open: boolean;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Reaction.${key}`);
+
+  // What the sheet already says: the modifiers that always apply are added
+  // up and filled in, and the ones that apply only to some people -- a
+  // Reputation among those who know it -- are offered as boxes, unticked.
+  const always = unconditionalReaction(sources);
+  const alwaysList = sources
+    .filter((s) => s.condition === "")
+    .map((s) => `${s.label} ${s.value >= 0 ? "+" : "−"}${Math.abs(s.value)}`)
+    .join(", ");
+  const conditional = sources
+    .map((s, i) => ({ ...s, i }))
+    .filter((s) => s.condition !== "")
+    .map(
+      (s) => `<label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="source-${s.i}" data-value="${s.value}">
+        <span>${s.label} ${s.value >= 0 ? "+" : "−"}${Math.abs(s.value)}: ${L(`When.${s.condition}`)}</span>
+      </label>`,
+    )
+    .join("");
   const bands = (selected: string) =>
     [`<option value="">${L("Unbounded")}</option>`]
       .concat(
@@ -1027,8 +1048,10 @@ async function promptForReaction(): Promise<{
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Modifier")}</span>
-        <input type="number" name="modifier" value="0" step="1" autofocus style="width:90px">
+        <input type="number" name="modifier" value="${always}" step="1" autofocus style="width:90px">
       </label>
+      ${alwaysList ? `<p class="ihint" style="margin:0">${L("FromTraits")}: ${alwaysList}</p>` : ""}
+      ${conditional}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Best")}</span>
         <select name="best" style="width:150px">${bands("")}</select>
@@ -1048,9 +1071,15 @@ async function promptForReaction(): Promise<{
         const form = button.closest<HTMLElement>(".application");
         const chosen = (name: string) =>
           form?.querySelector<HTMLSelectElement>(`select[name="${name}"]`)?.value ?? "";
+        // The boxes ticked are the conditional modifiers that apply today.
+        let ticked = 0;
+        form?.querySelectorAll<HTMLInputElement>('input[name^="source-"]').forEach((box) => {
+          if (box.checked) ticked += Number(box.dataset.value) || 0;
+        });
         return {
           modifier:
-            Number(form?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value ?? 0) || 0,
+            (Number(form?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value ?? 0) || 0) +
+            ticked,
           best: (chosen("best") || null) as Reaction | null,
           worst: (chosen("worst") || null) as Reaction | null,
           open: form?.querySelector<HTMLInputElement>('input[name="open"]')?.checked ?? false,
@@ -1963,6 +1992,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       })),
 
       secondaryCells: this.#secondaryCells(system, derived),
+      // The four senses as Perception rolls, after Acute Senses and the rest
+      // (Characters pp. 35, 124, 129, 138). A missing sense has no die.
+      senseCells: SENSES.map((sense) => {
+        const found = (derived.senses ?? []).find((s: any) => s.sense === sense);
+        return {
+          key: sense,
+          label: game.i18n.localize(`GWORLD.Senses.${sense}`),
+          score: found?.score ?? null,
+          modifier: found?.modifier ?? 0,
+          missing: found ? found.score === null : false,
+        };
+      }),
       maneuvers: MANEUVER_ORDER.map((key) => ({
         key,
         label: game.i18n.localize(`GWORLD.Maneuver.${key}`),
@@ -3385,7 +3426,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onReaction(this: GWorldCharacterSheet) {
     if (!isRuleOn("reactions")) return;
 
-    const asked = await promptForReaction();
+    const asked = await promptForReaction(this.actor.system?.derived?.reactions ?? []);
     if (!asked) return;
 
     await rollReaction({ actor: this.actor, ...asked });

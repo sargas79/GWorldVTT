@@ -31,6 +31,43 @@ export interface SightPenalty {
 /** The Hearing penalty for locating an unseen foe (p. 394). */
 export const HEARING_PENALTY = -2;
 
+/** The eyes an attacker brings to the dark. */
+export interface VisionTraits {
+  /** Levels of Night Vision, each cancelling a point of darkness penalty (p. 71). */
+  nightVision?: number;
+  /** Dark Vision: "you can see in total darkness" (p. 47). */
+  darkVision?: boolean;
+  /**
+   * Infravision: "you can see people and objects in the dark by the heat
+   * they give off" (p. 60), which a living foe does.
+   */
+  infravision?: boolean;
+}
+
+/** The darkness penalty in total darkness, past which the foe is simply unseen. */
+export const TOTAL_DARKNESS = 10;
+
+/**
+ * What partial darkness costs, after the eyes (pp. 71, 394).
+ *
+ * "Darkness gives -1 to -9 to attacks" and "each level of Night Vision allows
+ * you to ignore -1 in darkness penalties"; Dark Vision and Infravision ignore
+ * them entirely. Night Vision does nothing in total darkness, which is not a
+ * penalty of nine but the foe unseen, and is handled by `attackWithoutSight`.
+ */
+export function darknessPenalty(darkness: number, eyes: VisionTraits = {}): number {
+  const penalty = Math.max(0, Math.min(TOTAL_DARKNESS - 1, Math.floor(darkness)));
+  if (penalty === 0) return 0;
+  if (eyes.darkVision || eyes.infravision) return 0;
+  const left = Math.max(0, penalty - Math.max(0, Math.floor(eyes.nightVision ?? 0)));
+  return left === 0 ? 0 : -left;
+}
+
+/** Whether these eyes see a foe in total darkness as though it were day. */
+export function seesInTotalDarkness(eyes: VisionTraits): boolean {
+  return Boolean(eyes.darkVision || eyes.infravision);
+}
+
 /**
  * What attacking blind costs (p. 394).
  *
@@ -44,10 +81,18 @@ export function attackWithoutSight(options: {
   accustomedToBlindness?: boolean;
   /** A torch or flashlight in line of sight, which cuts darkness to -3. */
   lightSource?: boolean;
+  /** Eyes that see in the dark, for whom total darkness is not blindness. */
+  eyes?: VisionTraits;
 }): SightPenalty {
   const { sight } = options;
 
   if (sight === "clear") {
+    return { modifier: 0, hearingRoll: false, randomHitLocation: false };
+  }
+
+  // Total darkness is only darkness: Dark Vision sees through it, and so does
+  // Infravision when what is being looked for is warm. Being blind is not.
+  if (sight === "blind" && !options.accustomedToBlindness && options.eyes && seesInTotalDarkness(options.eyes)) {
     return { modifier: 0, hearingRoll: false, randomHitLocation: false };
   }
 

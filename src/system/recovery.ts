@@ -22,7 +22,7 @@ import {
   wakingFrom,
 } from "../rules/recovery.js";
 import { resolveSuccess } from "../rules/success.js";
-import { attributeOf } from "./attributes.js";
+import { healthRollScore } from "./attributes.js";
 
 const RECOVERY_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/recovery.hbs`;
 
@@ -125,7 +125,12 @@ export async function restForFatigue(options: {
   const current = Number(fp.value) || 0;
   const max = Number(fp.max) || 0;
 
-  const wanted = fatigueRecovered({ minutes, meal });
+  // Fit and Very Fit "recover FP at twice the normal rate" (Characters p. 55).
+  const wanted = fatigueRecovered({
+    minutes,
+    meal,
+    multiplier: Number(actor.system?.derived?.traitEffects?.fatigueRecoveryMultiplier) || 1,
+  });
   const gained = Math.max(0, Math.min(wanted, max - current));
   if (gained > 0) await actor.update({ "system.fp.value": current + gained });
 
@@ -164,7 +169,7 @@ export async function restForADay(options: {
   const hp = actor.system?.hp ?? { value: 0, max: 0 };
   const current = Number(hp.value) || 0;
   const max = Number(hp.max) || 0;
-  const ht = attributeOf(actor, "HT");
+  const ht = healthRollScore(actor);
 
   const roll = new Roll("3d6");
   await roll.evaluate();
@@ -284,7 +289,7 @@ export async function tryToWake(options: { actor: any }): Promise<boolean> {
 
   const hp = actor?.system?.hp ?? { value: 0, max: 0 };
   const waking = wakingFrom(Number(hp.value) || 0, Number(hp.max) || 0);
-  const ht = attributeOf(actor, "HT");
+  const ht = healthRollScore(actor);
 
   const roll = waking.needsRoll ? new Roll("3d6") : null;
   if (roll) await roll.evaluate();

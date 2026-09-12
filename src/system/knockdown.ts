@@ -18,7 +18,7 @@ import {
   type KnockdownResult,
 } from "../rules/knockdown.js";
 import { resolveSuccess } from "../rules/success.js";
-import { attributeOf } from "./attributes.js";
+import { attributeOf, healthRollScore } from "./attributes.js";
 
 const KNOCKDOWN_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/knockdown.hbs`;
 
@@ -46,6 +46,8 @@ export async function rollKnockdown(options: {
     return null;
   }
 
+  // Fit's bonus is in the modifier the damage card worked out; a knockdown
+  // rolled from elsewhere reads it here so it is never left out.
   const ht = attributeOf(actor, "HT");
   const roll = new Roll("3d6");
   await roll.evaluate();
@@ -117,7 +119,8 @@ export async function rollStunRecovery(options: {
   if (!actor?.isOwner) return false;
 
   const attribute = mental ? "IQ" : "HT";
-  const score = attributeOf(actor, attribute);
+  // A HT roll reads Fit; the IQ roll for mental stun does not.
+  const score = mental ? attributeOf(actor, attribute) : healthRollScore(actor);
 
   const roll = new Roll("3d6");
   await roll.evaluate();

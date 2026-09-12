@@ -67,9 +67,15 @@ export function spendFatigue(options: {
   maxFp: number;
   /** Fatigue points the rule says to take off. A gain is not spending. */
   lost: number;
+  /**
+   * Very Fit: "you lose FP at only half the normal rate" (Characters p. 55).
+   * Halved and rounded up, so that a single point is still a point.
+   */
+  halved?: boolean;
 }): FatigueSpent {
   const max = Math.max(0, options.maxFp);
-  const lost = Math.max(0, options.lost);
+  const asked = Math.max(0, options.lost);
+  const lost = options.halved ? Math.ceil(asked / 2) : asked;
 
   // A sheet with no fatigue pool recorded is missing a number, not a character
   // at the end of their strength: charge it the fatigue and no injury, rather

@@ -13,6 +13,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { activePoisons, POISON_FLAG, type ActivePoison } from "./poison.js";
+import { healthRollScore } from "./attributes.js";
 import {
   INFECTION_BASE,
   antibioticsPreventInfection,
@@ -126,7 +127,7 @@ export async function exposeToDisease(options: {
     return false;
   }
 
-  const ht = Number(actor.system?.attributes?.HT) || 10;
+  const ht = healthRollScore(actor);
   const contact = contagionModifier(options.exposures);
   const target = ht + disease.resistanceModifier + contact + (options.modifier ?? 0);
 
@@ -188,7 +189,7 @@ export async function checkInfection(options: {
     return false;
   }
 
-  const ht = Number(actor.system?.attributes?.HT) || 10;
+  const ht = healthRollScore(actor);
   const target = ht + infectionModifier(options.dirt);
 
   const roll = new Roll("3d6");

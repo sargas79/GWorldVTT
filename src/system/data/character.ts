@@ -21,7 +21,17 @@ import { catalogSkill, defaultLevelFrom } from "../skill-catalog.js";
 import { isUnarmedSkill } from "../../rules/criticals.js";
 import { reachForSize } from "../../rules/size.js";
 import { pointsLedger, type PointAward } from "../../rules/character-points.js";
-import { afterSuperJump, traitEffects, type TraitEffects } from "../../rules/trait-effects.js";
+import {
+  afterSuperJump,
+  impairedAttacks,
+  lameCombatPenalty,
+  lameMove,
+  traitEffects,
+  type TraitEffects,
+} from "../../rules/trait-effects.js";
+import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
+import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
+import { senseScores } from "../../rules/senses.js";
 import { baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import { usableInCloseCombat } from "../../rules/tactical.js";
 import { isRuleOn } from "../optional-rules.js";
@@ -132,6 +142,8 @@ export interface DerivedAttack {
   damageType: DamageType;
   reach: string;
   parry: number | null;
+  /** The weapon's own parry modifier: -1 for a knife, +2 for a quarterstaff. */
+  parryModifier: number;
   minSt: number | null;
   armorDivisor: number;
   /** False when the damage formula cannot be parsed, so the UI can omit the roll. */
@@ -875,16 +887,20 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // What this character's traits do to the numbers. Read first, because a
     // few of them are the numbers: Extra ST is a point of ST wherever ST is
     // read, and everything below reads it.
-    const traits = traitEffects(
-      this.itemsOfType("trait").map((item) => ({
-        name: String(item.name ?? ""),
-        levels: Number(item.system?.levels ?? 0),
-        // Injury Tolerance keeps its kind in its modifiers.
-        modifiers: ((item.system?.modifiers ?? []) as Array<{ name?: string }>).map((m) =>
-          String(m.name ?? ""),
-        ),
-      })),
-    );
+    const heldTraits = this.itemsOfType("trait").map((item) => ({
+      name: String(item.name ?? ""),
+      levels: Number(item.system?.levels ?? 0),
+      // Injury Tolerance keeps its kind in its modifiers, and Temperature
+      // Tolerance which side of the thermometer it was bought for.
+      modifiers: ((item.system?.modifiers ?? []) as Array<{ name?: string }>).map((m) =>
+        String(m.name ?? ""),
+      ),
+      // A reaction modifier typed onto the trait by the GM.
+      reactionModifier: Number(item.system?.reactionModifier ?? 0) || 0,
+    }));
+    const traits = traitEffects(heldTraits);
+    // Talents: a level each to every skill on the talent's list (p. 89).
+    const talents = talentBonuses(heldTraits);
 
     // The attributes as bought on the sheet, plus what traits add to them.
     // The points ledger bills the bought figure; the trait bills itself.
@@ -921,6 +937,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       basicMove: b.basicMove + p.basicMove + t.basicMove,
     });
     secondary.basicLift = basicLift(liftingSt);
+    // Lame legs are read here, before encumbrance takes its share (p. 141).
+    secondary.basicMove = lameMove(secondary.basicMove, traits.lame);
 
     this.hp.max = secondary.hp;
     this.fp.max = secondary.fp;
@@ -958,11 +976,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // Magery goes on Thaumatology (p. 66), and Ritual Magery on the ritual
       // style's core and college skills (p. 242): the one place a trait adds
       // to a skill by name rather than through an attribute.
+      // What the talents add to this skill by name, on top of anything typed
+      // into the skill's own bonus field.
+      const talentBonus = talentBonusFor(String(item.name ?? ""), talents);
       const resolved = effectiveSkillLevel({
         attributeScore: attributeScore(sys.attribute),
         difficulty: sys.difficulty,
         points: sys.points,
-        bonus: sys.bonus + magicSkillBonus(String(item.name ?? ""), talent),
+        bonus: sys.bonus + magicSkillBonus(String(item.name ?? ""), talent) + talentBonus,
         defaults: attributeDefaults,
       });
       sys.derived = {
@@ -970,6 +991,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         fromDefault: resolved?.fromDefault ?? true,
         relativeLevel: relativeLevelForPoints(sys.points, sys.difficulty),
         hasDefault: attributeDefaults.length > 0,
+        talentBonus,
       };
     }
 
@@ -1204,14 +1226,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           reach: reachForSize(String(mode.reach ?? "C"), this.sm),
           parry:
             mode.canParry && skillLevel !== null
-              ? baseParry(skillLevel) + (mode.parryModifier ?? 0)
+              ? baseParry(skillLevel) + (mode.parryModifier ?? 0) + traits.enhancedParry.all
               : null,
+          parryModifier: Number(mode.parryModifier ?? 0) || 0,
           minSt: mode.minSt ?? null,
-          // Inside a foe's hex only a weapon that reaches close is any use.
+          // Inside a foe's hex only a weapon that reaches close is any use --
+          // and "you cannot use two-handed weapons" with One Arm (p. 147).
           usable:
-            !isRuleOn("closeCombat") ||
-            !this.conditions.closeCombat ||
-            usableInCloseCombat(String(mode.reach ?? "C")),
+            (!isRuleOn("closeCombat") ||
+              !this.conditions.closeCombat ||
+              usableInCloseCombat(String(mode.reach ?? "C"))) &&
+            !(traits.oneArm && Boolean(mode.twoHanded)),
           unbalanced: Boolean(mode.unbalanced),
           isFencing: Boolean(mode.isFencing),
           // Which critical miss table a fumble is read on is decided by the
@@ -1257,6 +1282,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           damageRollable: !mode.affliction && parseDiceAdds(rangedDamage) !== null,
           reach: "",
           parry: null,
+          parryModifier: 0,
           minSt: mode.minSt ?? null,
           accuracy: mode.accuracy ?? 0,
           scopeBonus: mode.scopeBonus ?? 0,
@@ -1311,7 +1337,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         armorDivisor: 1,
         damageRollable: true,
         reach: reachForSize(attack.reach, this.sm),
-        parry: attack.canParry ? baseParry(attack.skillLevel) : null,
+        // Enhanced Parry (Bare Hands) is exactly this parry and no other.
+        parry: attack.canParry
+          ? baseParry(attack.skillLevel) + traits.enhancedParry.all + traits.enhancedParry.bareHands
+          : null,
+        parryModifier: 0,
         minSt: null,
         usable: true,
         unbalanced: false,
@@ -1342,6 +1372,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const ridingSkill = this.skillLevelByName("Riding") ?? (attrs.DX ?? 10) - 5;
     const mountedPenalty = this.mounted ? mountedDefensePenalty(ridingSkill) : 0;
 
+    // Enhanced Dodge, Parry and Block each raise the one defense they name
+    // (p. 51); Lame lowers all three (p. 141).
+    const enhancedFor = { dodge: traits.enhancedDodge, parry: traits.enhancedParry.all, block: traits.enhancedBlock };
     const contextFor = (which: "dodge" | "parry" | "block") => ({
       shieldDb: shieldDb + deflectDb,
       posture: this.posture,
@@ -1350,6 +1383,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       allOutDefenseIncreased: increasing && this.allOutDefenseTarget === which,
       cannotSeeAttacker: this.conditions.blindToAttacker,
       combatReflexes: traits.activeDefense > 0,
+      enhanced: enhancedFor[which],
+      lame: lameCombatPenalty(traits.lame),
     });
 
     const describe = (base: number, mods: Array<{ label: string; value: number }>): string =>
@@ -1377,7 +1412,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     );
     const parryResult =
       parryAvailable && bestParry && bestParry.skillLevel !== null
-        ? parry(bestParry.skillLevel, contextFor("parry"))
+        ? parry(bestParry.skillLevel, {
+            ...contextFor("parry"),
+            // The weapon's own figure: a quarterstaff parries at +2, a knife at
+            // -1 (Characters p. 269), and a bare-handed parry adds Enhanced
+            // Parry (Bare Hands) as if it were the weapon's.
+            weaponParryModifier:
+              bestParry.parryModifier + (bestParry.natural ? traits.enhancedParry.bareHands : 0),
+          })
         : null;
 
     const blockResult =
@@ -1500,6 +1542,28 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // One attack a turn, plus a level of Extra Attack for each beyond it.
       attacksPerTurn: 1 + traits.extraAttacks,
       extraArms: traits.extraArms,
+      // What the physical disadvantages take off an attack, by kind, each
+      // under its own name (pp. 123, 141, 147).
+      attackPenalties: {
+        melee: impairedAttacks(traits, false),
+        ranged: impairedAttacks(traits, true),
+      },
+      // The eyes brought to the dark, for the attack dialog to read.
+      vision: {
+        nightVision: traits.nightVision,
+        darkVision: traits.darkVision,
+        infravision: traits.infravision,
+        blindness: traits.blindness,
+      },
+      // The four senses as Perception rolls, each after the traits that
+      // sharpen or blunt it (pp. 35, 124, 129, 138).
+      senses: senseScores(secondary.per, traits),
+      // What the social traits do to a reaction roll, and Charisma's bonus
+      // to the Influence roll itself (pp. 21-29, 41).
+      reactions: reactionSources(heldTraits),
+      charismaInfluence: charismaInfluenceBonus(heldTraits),
+      // Fit's bonus to every HT roll, for the rolls made outside this block.
+      healthRollBonus: traits.htRolls,
       regeneration: regenerationRate(traits.regeneration),
       // The attributes as everything else reads them: bought plus what traits
       // add. The sheet's inputs edit the bought figure and show this one.

@@ -14,6 +14,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { syncHealthConditions } from "./conditions.js";
 import { applyFatigue } from "./fatigue.js";
+import { healthRollScore } from "./attributes.js";
 import {
   delayForSize,
   dosage,
@@ -218,7 +219,7 @@ export async function advancePoison(options: { actor: any; id: string }): Promis
   const dose = doses.find((d) => d.id === options.id);
   if (!dose) return 0;
 
-  const ht = Number(actor.system?.attributes?.HT) || 10;
+  const ht = healthRollScore(actor);
   const target = ht + (dose.resistanceModifier ?? 0) + dose.treatment;
 
   // A poison that allows no roll is not resisted, and no dice are wasted on it.
