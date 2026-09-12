@@ -20,3 +20,9 @@ packs-src/*/.rejected*.txt
 
 # Obsidian vault settings, if the folder is opened as a vault
 .obsidian/
+
+# The knowledge graph is a derived artifact: 2MB of JSON rebuilt by the
+# post-commit hook on every commit, plus a machine-specific interpreter path in
+# .graphify_python. Each clone builds its own with `graphify update .` (AST
+# only, no API cost).
+graphify-out/
