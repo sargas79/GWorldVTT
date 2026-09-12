@@ -7,6 +7,7 @@
 
 import { SYSTEM_ID } from "../constants.js";
 import { handleDamageAction, handleRollAction } from "../roll.js";
+import { castSpell } from "../casting.js";
 import type { Attribute } from "../../rules/types.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -27,6 +28,7 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       roll: GWorldNpcSheet.#onRoll,
       rollDamage: GWorldNpcSheet.#onRollDamage,
       editItem: GWorldNpcSheet.#onEditItem,
+      castSpell: GWorldNpcSheet.#onCastSpell,
     },
   };
 
@@ -66,7 +68,7 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     // DR, not on another sheet.
     const notableSpells = [...actor.items]
       .filter((i: any) => i.type === "spell" && i.system.points >= NOTABLE_SKILL_MINIMUM_POINTS)
-      .map((i: any) => ({ name: i.name, level: i.system.derived?.level }))
+      .map((i: any) => ({ id: i.id, name: i.name, level: i.system.derived?.level }))
       .filter((s) => s.level !== null && s.level !== undefined)
       .sort((a, b) => (b.level as number) - (a.level as number));
 
@@ -128,5 +130,11 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static async #onEditItem(this: GWorldNpcSheet, _event: Event, target: HTMLElement) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     if (id) this.actor.items.get(id)?.sheet?.render({ force: true });
+  }
+
+  static async #onCastSpell(this: GWorldNpcSheet, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (item) await castSpell(this.actor, item);
   }
 }

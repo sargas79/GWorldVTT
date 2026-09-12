@@ -291,6 +291,26 @@
           "Name": "Magic",
           "Hint": "The whole chapter: Magery, spells learned as skills, and a Magic tab on the sheet. Off, the campaign has no magic and the tab is not shown."
         },
+        "manaLevels": {
+          "Name": "Mana levels",
+          "Hint": "The mana of the world or the scene decides who can cast and at what: -5 in low mana, none at all with no mana, and every failure critical in very high mana."
+        },
+        "magicRituals": {
+          "Name": "Magic rituals",
+          "Hint": "High skill takes energy off the cost and time off the casting; low skill demands a full ritual and doubles the time."
+        },
+        "criticalSpellFailure": {
+          "Name": "Critical Spell Failure Table",
+          "Hint": "A critical failure rolls on the table: a backfire, a wrong target, a stunned caster, a demon."
+        },
+        "maintainingSpells": {
+          "Name": "Spells running",
+          "Hint": "Every spell still up costs the next casting -1, and one being concentrated on -3."
+        },
+        "spellDistraction": {
+          "Name": "Distraction and injury",
+          "Hint": "A caster who defends, is hurt or is knocked about while concentrating rolls Will-3 to keep the spell."
+        },
         "feint": {
           "Name": "Feint",
           "Hint": "Fake an attack: your margin over the foe's roll comes off his defense against your next attack."
@@ -651,6 +671,101 @@
       "Explosive": "Explosive",
       "AttackHint": "Only for a Missile or Melee spell: the skill it is thrown or struck with once cast, and what each point of energy does.",
       "SpecialDamage": "As described"
+    },
+    "Cast": {
+      "Title": "Cast",
+      "Cast": "Cast",
+      "Skill": "Skill",
+      "Energy": "Energy",
+      "BaseCost": "base cost",
+      "Radius": "Radius in yards",
+      "RadiusOf": "{yards}-yard radius",
+      "SubjectSm": "Subject's SM",
+      "Distance": "Yards to the subject (0 = touching)",
+      "DistanceLabel": "distance",
+      "CannotSeeOrTouch": "Cannot see or touch the subject (-5)",
+      "BurnHp": "HP to burn instead of FP (-1 each)",
+      "RunningPenalty": "spells running",
+      "Time": "Time",
+      "Reduced": "{by} off for skill",
+      "Ritual": {
+        "elaborate": "Full ritual: both hands and feet free, words of power spoken aloud; time doubled",
+        "spoken": "A few quiet words and a gesture",
+        "quiet": "A word or a small gesture; cost -1",
+        "none": "No ritual needed; cost and time reduced"
+      },
+      "Success": "Cast, by {margin}",
+      "Failure": "Failed by {margin} — the spell does not work",
+      "CriticalSuccess": "Critical success — the spell works especially well, at no cost",
+      "CriticalFailure": "Critical failure — the spell fails badly",
+      "CriticalSuccessNote": "Details of how well are the GM's, who should be both generous and creative.",
+      "Paid": "Paid {energy}",
+      "FatigueReturns": "Very high mana: the FP come back at the start of your next turn.",
+      "Lasts": "Lasts",
+      "Maintain": "· maintain for",
+      "FailureTable": "Critical Spell Failure Table: {roll}",
+      "Injury": "{hp} injury to the caster",
+      "MildFailure": "Low mana: a critical failure has mild effects or none.",
+      "NotKnown": "{spell} is not known — no points are in it, so it cannot be cast.",
+      "Stunned": "A stunned caster cannot cast: the spell is spoiled.",
+      "NoMana": "There is no mana here. Magic does not work.",
+      "MagesOnly": "Only mages can cast spells at this mana level.",
+      "Running": "Spells running",
+      "RunningHint": "-1 to every casting per spell kept up, -3 per spell concentrated on",
+      "Remaining": "Left",
+      "MaintainCost": "Maintain",
+      "MaintainAction": "Maintain",
+      "Concentrating": "concentrating",
+      "Concentrate": "Concentrate",
+      "StopConcentrating": "Release",
+      "ConcentratingHint": "A spell that needs constant manipulation, such as steering a levitated object, is concentrated on: -3 to other castings rather than -1.",
+      "Expired": "run out",
+      "UntilDropped": "until dropped",
+      "Drop": "Let the spell end",
+      "Cancel": "Cancel the spell early (1 energy)",
+      "CannotMaintain": "{spell} cannot be maintained.",
+      "Maintained": "{spell} maintained for {energy} energy.",
+      "Cancelled": "{spell} cancelled early, for {energy} energy.",
+      "Ended": "{spell} ended.",
+      "KeepConcentration": "Keep casting",
+      "KeepConcentrationHint": "Distracted, injured or knocked about while concentrating: Will-3 to keep the spell (Characters p. 236).",
+      "Distracted": "distracted",
+      "Seconds": "{n} sec.",
+      "Minutes": "{n} min.",
+      "Hours": "{n} hr.",
+      "Days": "{n} days"
+    },
+    "Mana": {
+      "Title": "Mana level",
+      "Setting": "Mana level",
+      "SettingHint": "The ambient magical energy of the campaign world (Characters p. 235). A scene can set its own from the Magic tab.",
+      "Hint": "Very high: anyone who knows a spell can cast, FP spent come back next turn, every failure is critical. High: anyone who knows a spell can cast. Normal: mages only. Low: mages only at -5, with mild critical failures. None: no magic at all.",
+      "Here": "Mana here",
+      "ThisScene": "This scene:",
+      "World": "Campaign default",
+      "Inherit": "As the campaign",
+      "SceneTag": "this scene",
+      "Change": "Change",
+      "none": "No mana",
+      "low": "Low mana",
+      "normal": "Normal mana",
+      "high": "High mana",
+      "veryHigh": "Very high mana"
+    },
+    "SpellFailure": {
+      "failsInjuryDice": "The spell fails entirely; the caster takes 1d of injury.",
+      "onCasterOrFoe": "The spell is cast on the caster if harmful, or on a random nearby foe if beneficial.",
+      "onCompanionOrFoe": "The spell is cast on one of the caster's companions if harmful, or on a random nearby foe if beneficial.",
+      "wrongTarget": "The spell affects someone or something other than its intended target.",
+      "failsInjuryOne": "The spell fails entirely; the caster takes 1 point of injury.",
+      "failsStunned": "The spell fails entirely; the caster is stunned, with an IQ roll to recover.",
+      "noiseOnly": "Nothing but a loud noise, a bright flash, an awful odor or the like.",
+      "weakShadow": "A weak and useless shadow of the intended effect.",
+      "reversed": "The reverse of the intended effect.",
+      "uselessIllusion": "It seems to work, but is only a useless illusion.",
+      "reversedWrongTarget": "The reverse of the intended effect, on the wrong target.",
+      "forgotten": "The spell fails entirely; the caster forgets it, with an IQ roll each week to remember.",
+      "demon": "The spell fails entirely; a demon or other malign entity appears and attacks the caster."
     },
     "Trait": {
       "Levels": "levels",

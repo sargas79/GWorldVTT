@@ -161,8 +161,24 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   and never above the college skill. Which style a character uses follows from
   whether they have Magery or Ritual Magery, and can be set by hand.
 - **Magery, Ritual Magery and Magic Resistance** read from the traits tab.
+- **Casting.** The die on a spell asks what the book leaves to the caster —
+  energy for a spell whose effect scales, radius for an Area spell, the
+  subject's size and distance for a Regular one, HP burned in place of FP — and
+  works out the rest: the mana here, what the caster's skill takes off the cost
+  and the casting time, what the spells still running cost, the target's Magic
+  Resistance. The roll pays what its outcome costs (nothing on a critical
+  success, one point on a failure, everything on a critical failure or for an
+  Information spell), and a critical failure rolls on the Critical Spell
+  Failure Table.
+- **Mana**, as a campaign default and per scene, from none to very high, with
+  everything each level changes.
+- **Spells running** are kept on the sheet with what is left of their
+  duration, counted in world time a second a round; maintain one for its cost,
+  concentrate on it, or let it go, and every one still up costs the next
+  casting. Distraction while concentrating is a Will-3 roll.
 - A campaign without magic switches the whole chapter off under **GURPS rules
-  in play**, and the tab goes with it.
+  in play**, and the tab goes with it; the rituals, the failure table, mana,
+  the running-spell penalty and distraction each have a switch of their own.
 
 ### Which rules are in play
 

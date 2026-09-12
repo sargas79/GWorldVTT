@@ -23,7 +23,84 @@
       </label>
       <span class="sub">{{magic.styleHint}}</span>
     </div>
+    {{!-- Where the magic is being done: the mana here, and the roll to keep
+         casting through a distraction. The mana is the GM's to change. --}}
+    <div class="npcline" style="gap: 14px; align-items: center">
+      {{#if magic.mana.inPlay}}
+        <span>
+          <span class="fl">{{localize "GWORLD.Mana.Here"}}</span>
+          <strong>{{magic.mana.label}}</strong>
+          {{#if magic.mana.fromScene}}<span class="tag">{{localize "GWORLD.Mana.SceneTag"}}</span>{{/if}}
+          {{#if @root.isGM}}
+            <button type="button" class="ibtn" data-action="changeMana">{{localize "GWORLD.Mana.Change"}}</button>
+          {{/if}}
+        </span>
+      {{/if}}
+      {{#if @root.rules.spellDistraction}}
+        <button type="button" class="ibtn" data-action="keepConcentration"
+                data-tooltip="{{localize 'GWORLD.Cast.KeepConcentrationHint'}}">
+          {{> "gworld.die"}} {{localize "GWORLD.Cast.KeepConcentration"}}
+        </button>
+      {{/if}}
+    </div>
   </div>
+
+  {{!-- Spells still running (Characters pp. 237-238): each with what is
+       left of its duration, what keeping it up costs, and whether it is
+       being concentrated on, which is what the next casting pays for. --}}
+  {{#if magic.active.length}}
+    <div class="isec" style="gap: 0">
+      <div class="grph">
+        {{localize "GWORLD.Cast.Running"}}
+        <span class="sub">{{localize "GWORLD.Cast.RunningHint"}}</span>
+      </div>
+      <table class="gt">
+        <thead>
+          <tr>
+            <th>{{localize "GWORLD.Column.Spell"}}</th>
+            <th>{{localize "GWORLD.Cast.Remaining"}}</th>
+            <th class="n">{{localize "GWORLD.Cast.MaintainCost"}}</th>
+            <th></th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each magic.active as |spell|}}
+            <tr data-spell-id="{{spell.id}}" {{#if spell.expired}}class="dim"{{/if}}>
+              <td>
+                <span class="wname">{{spell.name}}</span>
+                {{#if spell.concentrating}}<span class="tag tag-accent">{{localize "GWORLD.Cast.Concentrating"}}</span>{{/if}}
+              </td>
+              <td class="wmode">{{spell.remaining}}</td>
+              <td class="n wmode">{{#if spell.canMaintain}}{{spell.maintainCost}}{{else}}&mdash;{{/if}}</td>
+              <td class="c">
+                {{#if @root.editable}}{{#if spell.canMaintain}}
+                  <button type="button" class="ibtn" data-action="maintainSpell">{{localize "GWORLD.Cast.MaintainAction"}}</button>
+                {{/if}}{{/if}}
+              </td>
+              <td class="c">
+                {{#if @root.editable}}
+                  <button type="button" class="ibtn" data-action="toggleConcentrating"
+                          data-tooltip="{{localize 'GWORLD.Cast.ConcentratingHint'}}">
+                    {{#if spell.concentrating}}{{localize "GWORLD.Cast.StopConcentrating"}}{{else}}{{localize "GWORLD.Cast.Concentrate"}}{{/if}}
+                  </button>
+                {{/if}}
+              </td>
+              <td class="c">
+                {{#if @root.editable}}
+                  <button type="button" class="rollable iconbtn" data-action="dropSpell"
+                          title="{{#if spell.expired}}{{localize 'GWORLD.Cast.Drop'}}{{else}}{{localize 'GWORLD.Cast.Cancel'}}{{/if}}">
+                    {{> "gworld.trash"}}
+                  </button>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{/if}}
 
   <div class="toolbar">
     <div class="srch">
@@ -124,9 +201,7 @@
               </td>
               <td class="c">
                 {{#if row.rollable}}
-                  <span class="rollable" data-action="roll" data-roll-type="skill"
-                        data-roll-label="{{spell.name}}" data-roll-target="{{spell.system.derived.level}}"
-                        data-based-on="IQ">
+                  <span class="rollable" data-action="castSpell" data-tooltip="{{localize 'GWORLD.Cast.Title'}}">
                     {{> "gworld.die"}}
                   </span>
                 {{/if}}

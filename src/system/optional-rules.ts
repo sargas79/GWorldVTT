@@ -107,6 +107,11 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     // The whole chapter. A campaign without magic has no Magic tab, no
     // spells offered, nothing to explain.
     { key: "magic", reference: "Characters pp. 234-253", default: true },
+    { key: "manaLevels", reference: "Characters p. 235", default: true },
+    { key: "magicRituals", reference: "Characters p. 237", default: true },
+    { key: "criticalSpellFailure", reference: "Characters p. 236", default: true },
+    { key: "maintainingSpells", reference: "Characters p. 238", default: true },
+    { key: "spellDistraction", reference: "Characters p. 236", default: true },
   ],
 };
 
