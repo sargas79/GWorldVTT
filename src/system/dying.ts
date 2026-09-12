@@ -21,7 +21,7 @@ import {
   mortalWoundTarget,
 } from "../rules/mortal-wounds.js";
 import { resolveSuccess } from "../rules/success.js";
-import { attributeOf } from "./attributes.js";
+import { attributeOf, healthRollBonus, healthRollScore } from "./attributes.js";
 
 const DYING_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/dying.hbs`;
 
@@ -61,7 +61,8 @@ export async function rollDeathCheck(options: { actor: any }): Promise<void> {
   }
 
   const ht = attributeOf(actor, "HT");
-  const bonus = traitsOf(actor).survival;
+  // Hard to Kill, and Fit's bonus to every HT roll with it (pp. 55, 58).
+  const bonus = traitsOf(actor).survival + healthRollBonus(actor);
 
   const roll = new Roll("3d6");
   await roll.evaluate();
@@ -107,7 +108,7 @@ export async function rollMortalWound(options: {
   const { actor, physician = null, traumaMaintenance = false } = options;
   if (!actor?.isOwner) return;
 
-  const ht = attributeOf(actor, "HT");
+  const ht = healthRollScore(actor);
   const target = mortalWoundTarget({ health: ht, physician });
 
   const roll = new Roll("3d6");
@@ -154,7 +155,7 @@ export async function rollCripplingDuration(options: {
   const { actor, treatedAtTl = null } = options;
   if (!actor?.isOwner) return;
 
-  const ht = attributeOf(actor, "HT");
+  const ht = healthRollScore(actor);
 
   const roll = new Roll("3d6");
   await roll.evaluate();

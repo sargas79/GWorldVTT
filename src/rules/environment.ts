@@ -111,13 +111,21 @@ export function coldModifier(options: {
   wetClothes?: boolean;
   /** Effective temperature in Fahrenheit, wind chill included. */
   temperatureF: number;
+  /**
+   * Temperature Tolerance on the cold side (Characters p. 93): degrees the
+   * comfort zone reaches below where a human's does, which the weather has to
+   * get through before it counts.
+   */
+  toleranceF?: number;
 }): number {
   // Clothing can be a bonus, so this half is a plain sum rather than a penalty.
   let modifier = COLD_CLOTHING[options.clothing];
   if (options.wetClothes) modifier -= 5;
 
-  // "-1 per every 10 degrees below 0F effective temperature."
-  const belowZero = options.temperatureF < 0 ? Math.floor(-options.temperatureF / 10) : 0;
+  // "-1 per every 10 degrees below 0F effective temperature" -- measured from
+  // the bottom of the comfort zone, which Temperature Tolerance lowers.
+  const felt = options.temperatureF + Math.max(0, options.toleranceF ?? 0);
+  const belowZero = felt < 0 ? Math.floor(-felt / 10) : 0;
 
   return modifier + penalty(belowZero);
 }
@@ -137,9 +145,11 @@ export function heatModifier(options: {
   /** 0 for None through 4 for Extra-Heavy. */
   encumbranceLevel?: number;
   temperatureF: number;
+  /** Temperature Tolerance on the hot side (Characters p. 93), in degrees. */
+  toleranceF?: number;
 }): number {
   const encumbrance = Math.max(0, options.encumbranceLevel ?? 0);
-  const over = Math.max(0, options.temperatureF - SWELTERING_F);
+  const over = Math.max(0, options.temperatureF - Math.max(0, options.toleranceF ?? 0) - SWELTERING_F);
   return totalPenalty(encumbrance, Math.floor(over / 10));
 }
 

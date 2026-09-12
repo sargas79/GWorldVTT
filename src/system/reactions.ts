@@ -118,6 +118,9 @@ export async function rollInfluence(options: {
   reactionModifier?: number;
 }): Promise<Reaction> {
   const will = Number(options.subject?.system?.derived?.will) || 10;
+  // "+1 per level to Influence rolls" (Characters p. 41).
+  const charisma = Number(options.actor?.system?.derived?.charismaInfluence) || 0;
+  const skill = options.skillLevel + options.modifier + charisma;
 
   // Some subjects settle it before the dice: Slave Mentality loses outright,
   // Unfazeable cannot be intimidated, and the Indomitable cannot be swayed.
@@ -139,7 +142,7 @@ export async function rollInfluence(options: {
     rolls.push(mine, theirs);
 
     const contest = quickContest(
-      resolveSuccess(mine.total, options.skillLevel + options.modifier, dieResults(mine)),
+      resolveSuccess(mine.total, skill, dieResults(mine)),
       resolveSuccess(theirs.total, will, dieResults(theirs)),
     );
     won = contest.outcome === "first";
@@ -175,7 +178,7 @@ export async function rollInfluence(options: {
       influence: true,
       skill: String(options.skill),
       subject: String(options.subject?.name ?? ""),
-      target: options.skillLevel + options.modifier,
+      target: skill,
       will,
       settled: settled !== null,
       won,

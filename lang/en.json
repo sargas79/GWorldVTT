@@ -1179,6 +1179,14 @@
     },
     "Reaction": {
       "Action": "Reaction",
+      "FromTraits": "From the sheet",
+      "When": {
+        "attracted": "from those attracted to your sex",
+        "knowing": "from those who know the reputation",
+        "respectful": "from those who respect status",
+        "pitying": "from those who might feel pity",
+        "stylish": "where clothing might matter"
+      },
       "Hint": "What an NPC makes of this character: 3d, modifiers on the dice, high is good",
       "Title": "Reaction",
       "Rolled": "Rolled {rolled}",
@@ -1631,6 +1639,8 @@
     },
     "Sight": {
       "Label": "What you can see",
+      "Darkness": "Darkness (0 to 9)",
+      "Blindness": "Blind (-6, attacking as the blind do)",
       "clear": "The target, clearly",
       "positionKnown": "Nothing, but you know where they are (-4)",
       "foeUnseen": "Everything but the target (-6)",
@@ -1902,7 +1912,16 @@
       "punch": "Punch",
       "kick": "Kick"
     },
+    "Senses": {
+      "vision": "Vision",
+      "hearing": "Hearing",
+      "tasteSmell": "Taste/Smell",
+      "touch": "Touch",
+      "Missing": "no roll"
+    },
     "Attack": {
+      "ImpairedMelee": "Taken off every melee attack roll (Characters pp. 123, 141)",
+      "ImpairedRanged": "Taken off every ranged attack roll (Characters pp. 123, 147)",
       "AtDefaultHint": "The skill is not on the sheet; this is the book's default for it.",
       "PerTurn": "{count} attacks a turn",
       "ExtraAttackHint": "Extra Attack: one more attack on each Attack maneuver.",

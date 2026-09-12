@@ -14,6 +14,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { syncHealthConditions } from "./conditions.js";
 import { applyFatigue } from "./fatigue.js";
+import { healthRollScore } from "./attributes.js";
 import {
   coldInterval,
   coldModifier,
@@ -86,15 +87,22 @@ export async function rollExposure(options: {
   const { actor, heat } = options;
   if (!mayChange(actor)) return 0;
 
-  const ht = Number(actor.system?.attributes?.HT) || 10;
+  const ht = healthRollScore(actor);
   const encumbrance = Number(actor.system?.derived?.encumbrance?.level) || 0;
+  // Temperature Tolerance widens the comfort zone (Characters p. 93).
+  const zone = actor.system?.derived?.traitEffects?.temperatureTolerance ?? { coldF: 0, heatF: 0 };
 
   const conditions = heat
-    ? heatModifier({ encumbranceLevel: encumbrance, temperatureF: options.temperatureF })
+    ? heatModifier({
+        encumbranceLevel: encumbrance,
+        temperatureF: options.temperatureF,
+        toleranceF: Number(zone.heatF) || 0,
+      })
     : coldModifier({
         clothing: options.clothing,
         wetClothes: options.wetClothes,
         temperatureF: options.temperatureF,
+        toleranceF: Number(zone.coldF) || 0,
       });
 
   const target = ht + conditions + options.modifier;

@@ -63,3 +63,6 @@ export * from "./ranged.js";
 export * from "./scatter.js";
 export * from "./reactions.js";
 export * from "./recovery.js";
+export * from "./senses.js";
+export * from "./social.js";
+export * from "./talents.js";

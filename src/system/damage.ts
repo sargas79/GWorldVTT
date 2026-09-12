@@ -245,10 +245,11 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     critical: damage.critical ?? null,
     knockback: shoved,
     naturalDr: traits.damageResistance,
+    // Fit's "+1 to all HT rolls" goes on each of the three (Characters p. 55).
     htModifiers: {
-      knockdown: traits.knockdown,
-      consciousness: traits.consciousness,
-      survival: traits.survival,
+      knockdown: traits.knockdown + traits.htRolls,
+      consciousness: traits.consciousness + traits.htRolls,
+      survival: traits.survival + traits.htRolls,
     },
     knockdown: required
       ? {
@@ -257,7 +258,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
             majorWound: consequences.majorWound,
             hitLocation: damage.hitLocation,
             shock: consequences.shock,
-            traitModifier: traits.knockdown,
+            traitModifier: traits.knockdown + traits.htRolls,
           }),
         }
       : null,

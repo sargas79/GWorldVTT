@@ -26,6 +26,25 @@
 
   <div class="isec">
     <div class="ish"><span class="num">02</span>{{localize "GWORLD.Section.Secondary"}}</div>
+    <div class="cellgrid" style="margin-bottom: 8px">
+      {{#each senseCells as |sense|}}
+        <div class="cell">
+          <span class="cl">{{sense.label}}</span>
+          {{#if sense.missing}}
+            <span class="cv" style="color: var(--color-neutral-700)">&mdash;</span>
+            <span class="cd">{{localize "GWORLD.Senses.Missing"}}</span>
+          {{else}}
+            <span style="display: flex; align-items: baseline; gap: 6px">
+              <span class="cv">{{sense.score}}</span>
+              <span class="iroll rollable" data-action="roll" data-roll-type="attribute"
+                    data-roll-label="{{sense.label}}" data-roll-target="{{sense.score}}"
+                    data-based-on="Per">{{> "gworld.die"}}</span>
+            </span>
+            <span class="cd">= Per{{#if sense.modifier}} {{signed sense.modifier}}{{/if}}</span>
+          {{/if}}
+        </div>
+      {{/each}}
+    </div>
     <div class="cellgrid">
       {{#each secondaryCells as |cell|}}
         <div class="cell">

@@ -38,7 +38,13 @@ export async function applyFatigue(actor: any, lost: number): Promise<FatigueApp
   const fpMax = Number(fp.max) || 0;
   const hpMax = Number(hp.max) || 0;
 
-  const spent = spendFatigue({ currentFp: fpBefore, maxFp: fpMax, lost });
+  const spent = spendFatigue({
+    currentFp: fpBefore,
+    maxFp: fpMax,
+    lost,
+    // Very Fit: "you lose FP at only half the normal rate" (Characters p. 55).
+    halved: actor?.system?.derived?.traitEffects?.fatigueLossHalved === true,
+  });
 
   const changes: Record<string, number> = {};
   if (spent.fpLost !== 0) changes["system.fp.value"] = spent.fp;

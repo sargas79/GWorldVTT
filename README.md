@@ -41,8 +41,16 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
 - **Traits that change the numbers.** Combat Reflexes, High and Low Pain
   Threshold, Damage Resistance, Hard to Kill, Hard to Subdue, Fearlessness,
   Fearfulness, Combat Paralysis, Unfazeable, Ambidexterity, Indomitable, Slave
-  Mentality, Super Jump, Enhanced Move and Amphibious are all read and applied;
-  the traits tab marks which ones are.
+  Mentality, Super Jump, Enhanced Move, Amphibious, Extra Attack, Extra Arms,
+  Arm ST, Regeneration, Unkillable and Injury Tolerance are all read and
+  applied; so are Enhanced Dodge, Parry and Block, Fit and Very Fit on every
+  HT roll and on fatigue, Night Vision, Dark Vision and Infravision against the
+  dark, the ten Talents and Voice on their skills, Acute Senses on the four
+  sense rolls, Temperature Tolerance against the weather, and Bad Sight, One
+  Eye, One Arm, Hard of Hearing, Deafness, Blindness and Lame where each
+  bites. Appearance, Charisma, Reputation, Status, Voice, Social Stigma and an
+  Odious Personal Habit fill in the reaction roll. The traits tab marks which
+  ones are read.
 
 ### Combat
 
