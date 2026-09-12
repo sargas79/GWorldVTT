@@ -32,7 +32,6 @@ import {
   techniqueLevelsForPoints,
   techniquePointCost,
 } from "../skills.js";
-import type { Difficulty } from "../types.js";
 
 describe("attribute costs (GURPS Lite p. 4)", () => {
   it("charges 10 points per level of ST and HT, 20 for DX and IQ", () => {
@@ -100,7 +99,7 @@ describe("the Skill Cost Table (GURPS Lite p. 12)", () => {
   ];
 
   it.each(printed)("buys the printed relative levels for $points points", (row) => {
-    for (const difficulty of ["E", "A", "H", "VH"] as Difficulty[]) {
+    for (const difficulty of ["E", "A", "H", "VH"] as const) {
       expect(relativeLevelForPoints(row.points, difficulty), `${row.points} pts, ${difficulty}`).toBe(
         row[difficulty],
       );
@@ -109,7 +108,7 @@ describe("the Skill Cost Table (GURPS Lite p. 12)", () => {
 
   it("inverts cleanly back to point costs", () => {
     for (const row of printed) {
-      for (const difficulty of ["E", "A", "H", "VH"] as Difficulty[]) {
+      for (const difficulty of ["E", "A", "H", "VH"] as const) {
         expect(pointsForRelativeLevel(row[difficulty], difficulty)).toBe(row.points);
       }
     }

@@ -8,8 +8,14 @@
 /** The four basic attributes (GURPS Lite p. 4). */
 export type Attribute = "ST" | "DX" | "IQ" | "HT";
 
-/** Skill difficulty levels (GURPS Basic Set: Characters p. 168). */
-export type Difficulty = "E" | "A" | "H" | "VH";
+/**
+ * Skill difficulty levels (GURPS Basic Set: Characters p. 168).
+ *
+ * "W" is a wildcard skill (p. 175): Very Hard, at three times the cost, and
+ * standing in for a whole group of skills at once -- Gun! for every Guns
+ * specialty, Sword! for every blade.
+ */
+export type Difficulty = "E" | "A" | "H" | "VH" | "W";
 
 /**
  * Attributes a skill can be based on.

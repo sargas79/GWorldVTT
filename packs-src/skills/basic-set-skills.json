@@ -20107,6 +20107,66 @@
     }
   },
   {
+    "_id": "d662ca7359fbf41d",
+    "name": "Detective!",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "W",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters p. 175"
+    }
+  },
+  {
+    "_id": "5f74fd4da103a3dd",
+    "name": "Gun!",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "W",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters p. 175"
+    }
+  },
+  {
+    "_id": "5e22943cd5c44436",
+    "name": "Science!",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "W",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters p. 175"
+    }
+  },
+  {
+    "_id": "f0c2ca9c36075cf3",
+    "name": "Sword!",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "W",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters p. 175"
+    }
+  },
+  {
     "_id": "c853c815b40cf7d4",
     "name": "Path of Air",
     "type": "skill",

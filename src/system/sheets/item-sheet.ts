@@ -12,6 +12,7 @@
 
 import { parseCostTable, parseLevelNames } from "../../rules/traits.js";
 import { SYSTEM_ID } from "../constants.js";
+import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
 
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -93,7 +94,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       // Attributes are stored by their abbreviation, whose label is the same in
       // every locale, so the key carries the full name rather than "ST".
       attributes: keyed("Attribute", ["ST", "DX", "IQ", "HT", "Will", "Per"]),
-      difficulties: keyed("Difficulty", ["E", "A", "H", "VH"]),
+      difficulties: keyed("Difficulty", ["E", "A", "H", "VH", "W"]),
       techniqueDifficulties: keyed("Difficulty", ["A", "H"]),
       categories: keyed("TraitCategory", ["advantage", "disadvantage", "perk", "quirk"]),
       damageBases: keyed("DamageBase", ["thr", "sw", "fixed"]),
@@ -109,6 +110,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",
       ],
       comprehension: keyed("Language", ["none", "broken", "accented", "native"]),
+      equipmentCategories: keyed("GearCategory", [...EQUIPMENT_CATEGORIES]),
     };
 
     return context;

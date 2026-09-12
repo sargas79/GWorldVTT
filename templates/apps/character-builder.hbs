@@ -25,14 +25,15 @@
       <div class="ifields">
         <label>{{localize "GWORLD.Points.Starting"}}
           <input type="number" step="5" min="0" value="{{system.points.starting}}"
-                 data-path="system.points.starting" />
+                 id="{{appId}}-starting" data-path="system.points.starting" />
         </label>
         <label>{{localize "GWORLD.Section.DisadvantageLimit"}}
           <input type="number" step="5" min="0" value="{{system.points.disadvantageLimit}}"
-                 data-path="system.points.disadvantageLimit" />
+                 id="{{appId}}-limit" data-path="system.points.disadvantageLimit" />
         </label>
         <label>{{localize "GWORLD.Attribute.TL"}}
-          <input type="number" step="1" min="0" value="{{system.tl}}" data-path="system.tl" />
+          <input type="number" step="1" min="0" value="{{system.tl}}"
+                 id="{{appId}}-tl" data-path="system.tl" />
         </label>
       </div>
     {{/if}}
@@ -42,7 +43,7 @@
         {{#each attributes as |attr|}}
           <label>{{localize (concat "GWORLD.Attribute." attr.key)}}
             <input type="number" step="1" value="{{attr.value}}"
-                   data-path="system.attributes.{{attr.key}}" />
+                   id="{{@root.appId}}-{{attr.key}}" data-path="system.attributes.{{attr.key}}" />
           </label>
         {{/each}}
       </div>
@@ -61,6 +62,7 @@
             {{#if item.field}}
               <label class="gb-spend">
                 <input type="number" min="0" step="1" value="{{item.value}}"
+                       id="{{@root.appId}}-{{item.id}}-spend"
                        data-item-id="{{item.id}}" data-item-field="{{item.field}}"
                        aria-label="{{item.unit}}" />
                 <span>{{item.unit}}</span>

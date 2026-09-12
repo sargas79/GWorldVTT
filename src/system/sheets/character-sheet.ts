@@ -73,6 +73,9 @@ import { attackDirection, facingOf } from "../hex.js";
 import { facingChangeAtEndOfMove, hexMovementCost } from "../../rules/tactical.js";
 import { CompendiumPicker } from "../apps/compendium-picker.js";
 import { SYSTEM_ID } from "../constants.js";
+import { SKILL_ORDER } from "../settings.js";
+import { asSkillOrder, groupSkills, otherOrder } from "../skill-groups.js";
+import { GEAR_GROUPS, gearGroupOf, type GearGroup } from "../gear-groups.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
 import {
   BASIC_SPEED_STEP,
@@ -1621,8 +1624,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       editItem: GWorldCharacterSheet.#onEditItem,
       deleteItem: GWorldCharacterSheet.#onDeleteItem,
       toggleEquipped: GWorldCharacterSheet.#onToggleEquipped,
+      toggleSkillOrder: GWorldCharacterSheet.#onToggleSkillOrder,
     },
   };
+
+  /** Which kind of gear the Gear tab is showing, or "" for all of it. */
+  #gearFilter: GearGroup | "" = "";
 
   static override PARTS = {
     header: { template: `${TEMPLATE_ROOT}/header.hbs` },
@@ -1684,6 +1691,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // same list that removing an award will write back.
     const stored: PointAward[] = derived.points.awards ?? [];
 
+    const skillOrder = asSkillOrder(game.settings.get(SYSTEM_ID, SKILL_ORDER));
+
     return {
       ...context,
       actor,
@@ -1694,6 +1703,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       editable: this.isEditable,
       limited: actor.limited,
       isOwner: actor.isOwner,
+      // Controls edited in place carry ids built from this, so the redraw
+      // that follows every edit can put focus back where it was.
+      sheetId: this.id,
+      skillOrderAlphabetical: skillOrder === "alphabetical",
 
       attributeCards: ATTRIBUTE_KEYS.map((key) => ({
         key,
@@ -1849,9 +1862,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       ],
 
       encumbranceTiers: this.#encumbranceTiers(derived),
-      carriedRows: this.#carriedRows(items),
+      gearGroups: this.#gearGroups(items),
 
-      skillSummary: { count: items.skillGroups.reduce((n, g) => n + g.skills.length, 0) },
+      skillSummary: {
+        count: items.skillGroups.reduce(
+          (n, g) => n + g.rows.filter((row) => row.trained).length,
+          0,
+        ),
+      },
 
       biographyHTML: await enrich(system.details.biography ?? ""),
       notesHTML: await enrich(system.details.notes ?? ""),
@@ -1886,6 +1904,26 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         }
         void item.update({ [field]: Math.max(0, value) });
       });
+    }
+
+    // The gear filter shows one kind of gear at a time. Not a form field, and
+    // remembered on the sheet rather than the actor: which part of the
+    // inventory someone is looking at is not a fact about the character.
+    const gearFilter = this.element.querySelector<HTMLSelectElement>("select[data-gear-filter]");
+    if (gearFilter) {
+      const applyGearFilter = () => {
+        const wanted = gearFilter.value;
+        for (const group of this.element.querySelectorAll<HTMLElement>("[data-gear-group]")) {
+          group.hidden = wanted !== "" && group.dataset.gearGroup !== wanted;
+        }
+      };
+      gearFilter.addEventListener("change", () => {
+        this.#gearFilter = (GEAR_GROUPS as readonly string[]).includes(gearFilter.value)
+          ? (gearFilter.value as GearGroup)
+          : "";
+        applyGearFilter();
+      });
+      applyGearFilter();
     }
 
     // The Combat tab's posture chip is a select without a form name, since the
@@ -2026,9 +2064,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
   /**
    * Equipment, armor and shields share one carried list so weight and cost read
-   * as a single inventory rather than three.
+   * as a single inventory rather than three -- shown under the kind of thing
+   * each is, so a hardsuit, a laser sight and a week of rations are not one
+   * undifferentiated run.
    */
-  #carriedRows(items: { carried: any[]; armor: any[]; shields: any[] }) {
+  #gearGroups(items: { carried: any[]; armor: any[]; shields: any[] }) {
     const rows = [
       ...items.carried.map((i: any) => ({ item: i, notes: describeModes(i), equippable: false })),
       // Armour arrives wrapped with its coverage text for the protection card,
@@ -2039,18 +2079,24 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         equippable: true,
       })),
       ...items.shields.map((i: any) => ({ item: i, notes: `DB ${i.system.db}`, equippable: true })),
-    ];
-
-    return rows.map(({ item, notes, equippable }) => ({
+    ].map(({ item, notes, equippable }) => ({
       id: item.id,
       name: item.name,
+      group: gearGroupOf(item),
       quantity: item.system.quantity ?? 1,
       weight: (item.system.weight ?? 0) * (item.system.quantity ?? 1),
       cost: (item.system.cost ?? 0) * (item.system.quantity ?? 1),
       equipped: Boolean(item.system.equipped),
       equippable: equippable || Boolean(item.system.meleeModes?.length || item.system.rangedModes?.length),
       notes,
-    }));
+    })).sort((a, b) => a.name.localeCompare(b.name));
+
+    return GEAR_GROUPS.map((key) => ({
+      key,
+      label: `GWORLD.Gear.Group.${key}`,
+      selected: this.#gearFilter === key,
+      rows: rows.filter((row) => row.group === key),
+    })).filter((group) => group.rows.length > 0);
   }
 
   /** Splits embedded items into the buckets each tab renders. */
@@ -2059,31 +2105,34 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const all = [...actor.items];
     const byType = (type: string) => all.filter((i: any) => i.type === type);
 
-    const skills = byType("skill");
-    const trained = skills.filter((s: any) => s.system.points > 0);
-    const untrained = skills.filter((s: any) => s.system.points <= 0);
-
-    // Skills group by controlling attribute, matching the printed sheet.
-    const skillGroups = (["DX", "IQ", "HT", "ST", "Will", "Per"] as const)
-      .map((attribute) => ({
-        attribute,
-        score:
-          attribute === "Will"
-            ? actor.system.derived.will
-            : attribute === "Per"
-              ? actor.system.derived.per
-              : actor.system.attributes[attribute],
-        skills: trained
-          .filter((s: any) => s.system.attribute === attribute)
-          .sort((a: any, b: any) => a.name.localeCompare(b.name)),
-      }))
-      .filter((g) => g.skills.length > 0);
+    // Skills group by controlling attribute, matching the printed sheet, or
+    // run as one alphabetical list when the user prefers that. Either way an
+    // untrained skill sits with the rest, marked, rather than under a heading
+    // of its own.
+    const skillGroups = groupSkills(
+      byType("skill").map((item: any) => ({
+        id: String(item.id),
+        name: String(item.name ?? ""),
+        attribute: item.system.attribute,
+        points: Number(item.system.points ?? 0),
+        level: item.system.derived?.level ?? null,
+        hasDefault: Boolean(item.system.derived?.hasDefault),
+        item,
+      })),
+      {
+        order: asSkillOrder(game.settings.get(SYSTEM_ID, SKILL_ORDER)),
+        scores: {
+          ...actor.system.attributes,
+          Will: actor.system.derived.will,
+          Per: actor.system.derived.per,
+        },
+      },
+    );
 
     const equipment = byType("equipment");
 
     return {
       skillGroups,
-      untrainedSkills: untrained.sort((a: any, b: any) => a.name.localeCompare(b.name)),
       advantages: byType("trait").filter((t: any) => ["advantage", "perk"].includes(t.system.category)),
       disadvantages: byType("trait").filter((t: any) => t.system.category === "disadvantage"),
       quirks: byType("trait").filter((t: any) => t.system.category === "quirk"),
@@ -2151,11 +2200,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // A technique is not a skill and does not use the Skill Cost Table: it
     // costs a point per level, so stepping it along the table would jump from
     // 2 to 4 and skip a level that can be bought.
-    const step = item.type === "technique"
-      ? (down ? previousTechniquePoints : nextTechniquePoints)
-      : (down ? previousSkillPoints : nextSkillPoints);
-
-    const next = step(current);
+    // A wildcard skill walks the same table at three times each figure, so
+    // the stepper is told the difficulty rather than assuming the printed one.
+    const difficulty = item.system?.difficulty;
+    const next = item.type === "technique"
+      ? (down ? previousTechniquePoints(current) : nextTechniquePoints(current))
+      : (down ? previousSkillPoints(current, difficulty) : nextSkillPoints(current, difficulty));
     if (next === current) return;
 
     await item.update({ "system.points": next });
@@ -3265,6 +3315,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       content: `<p>${game.i18n.format("GWORLD.Prompt.DeleteItem", { name: item.name })}</p>`,
     });
     if (confirmed) await item.delete();
+  }
+
+  /**
+   * Flips the Skills tab between the printed sheet's order and one
+   * alphabetical list. A client setting, because it is a way of reading the
+   * sheet rather than a fact about the character.
+   */
+  static async #onToggleSkillOrder(this: GWorldCharacterSheet) {
+    const current = asSkillOrder(game.settings.get(SYSTEM_ID, SKILL_ORDER));
+    await game.settings.set(SYSTEM_ID, SKILL_ORDER, otherOrder(current));
+    await this.render();
   }
 
   static async #onToggleEquipped(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

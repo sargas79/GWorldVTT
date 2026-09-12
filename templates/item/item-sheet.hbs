@@ -265,6 +265,16 @@
           {{localize "GWORLD.Column.Equipped"}}
         </label>
       </div>
+      {{#if isEquipment}}
+        <div class="ifields">
+          <label>{{localize "GWORLD.Gear.Category"}}
+            <select name="system.category" {{#unless editable}}disabled{{/unless}}>
+              {{selectOptions choices.equipmentCategories selected=system.category localize=true}}
+            </select>
+          </label>
+        </div>
+        <p class="ihint">{{localize "GWORLD.Gear.CategoryHint"}}</p>
+      {{/if}}
     {{/if}}
 
     {{#if isArmed}}

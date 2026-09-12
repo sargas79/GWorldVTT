@@ -182,6 +182,9 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     return {
       actor: this.#actor,
       system,
+      // Fields carry ids built from this, so focus survives the redraw that
+      // follows every change to the actor.
+      appId: this.id,
       stepId: step.id,
       stepNumber: this.#step + 1,
       stepCount: STEPS.length,

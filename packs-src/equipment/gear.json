@@ -12,6 +12,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 266",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -29,6 +30,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 266",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -46,6 +48,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 266",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -63,6 +66,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 266",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -80,6 +84,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 266",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -97,6 +102,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 460",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -114,6 +120,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 459",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -131,6 +138,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 459",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -148,6 +156,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 459",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -165,6 +174,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 459",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -182,6 +192,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 460",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -199,6 +210,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 460",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -216,6 +228,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 460",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -233,6 +246,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 460",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -250,6 +264,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 460",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -267,6 +282,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 460",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -284,6 +300,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 460",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -301,6 +318,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 457",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -318,6 +336,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 457",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -335,6 +354,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 456",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -352,6 +372,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -369,6 +390,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -386,6 +408,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -403,6 +426,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -420,6 +444,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -437,6 +462,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -454,6 +480,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -471,6 +498,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -488,6 +516,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -505,6 +534,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -522,6 +552,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -539,6 +570,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -556,6 +588,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -573,6 +606,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -590,6 +624,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -607,6 +642,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -624,6 +660,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -641,6 +678,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -658,6 +696,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -675,6 +714,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -692,6 +732,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -709,6 +750,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -726,6 +768,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -743,6 +786,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -760,6 +804,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -777,6 +822,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -794,6 +840,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -811,6 +858,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -828,6 +876,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -845,6 +894,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -862,6 +912,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -879,6 +930,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -896,6 +948,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -913,6 +966,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -930,6 +984,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -947,6 +1002,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -964,6 +1020,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -981,6 +1038,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -998,6 +1056,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1015,6 +1074,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1032,6 +1092,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1049,6 +1110,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1066,6 +1128,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1083,6 +1146,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1100,6 +1164,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1117,6 +1182,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1134,6 +1200,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1151,6 +1218,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1168,6 +1236,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1185,6 +1254,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1202,6 +1272,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1219,6 +1290,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1236,6 +1308,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1253,6 +1326,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1270,6 +1344,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1287,6 +1362,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1304,6 +1380,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1321,6 +1398,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1338,6 +1416,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1355,6 +1434,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1372,6 +1452,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1389,6 +1470,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1406,6 +1488,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1423,6 +1506,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1440,6 +1524,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 288",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1457,6 +1542,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1474,6 +1560,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1491,6 +1578,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1508,6 +1596,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1525,6 +1614,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1542,6 +1632,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1559,6 +1650,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1576,6 +1668,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1593,6 +1686,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1610,6 +1704,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1627,6 +1722,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1644,6 +1740,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1661,6 +1758,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1678,6 +1776,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1695,6 +1794,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1712,6 +1812,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1729,6 +1830,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1746,6 +1848,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1763,6 +1866,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1780,6 +1884,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1797,6 +1902,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1814,6 +1920,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1831,6 +1938,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1848,6 +1956,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1865,6 +1974,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1882,6 +1992,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1899,6 +2010,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1916,6 +2028,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1933,6 +2046,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1950,6 +2064,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1967,6 +2082,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -1984,6 +2100,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2001,6 +2118,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2018,6 +2136,7 @@
       "tl": "4",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2035,6 +2154,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2052,6 +2172,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2069,6 +2190,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2086,6 +2208,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2103,6 +2226,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2120,6 +2244,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2137,6 +2262,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2154,6 +2280,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2171,6 +2298,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2188,6 +2316,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2205,6 +2334,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2222,6 +2352,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2239,6 +2370,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2256,6 +2388,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2273,6 +2406,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2290,6 +2424,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2307,6 +2442,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2324,6 +2460,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2341,6 +2478,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2358,6 +2496,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2375,6 +2514,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2392,6 +2532,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2409,6 +2550,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2426,6 +2568,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2443,6 +2586,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2460,6 +2604,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2477,6 +2622,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2494,6 +2640,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2511,6 +2658,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2528,6 +2676,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "tool",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2545,6 +2694,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 289",
+      "category": "misc",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -2562,6 +2712,7 @@
       "tl": "4",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -2607,6 +2758,7 @@
       "tl": "4",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -2652,6 +2804,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -2697,6 +2850,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -2742,6 +2896,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -2787,6 +2942,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -2832,6 +2988,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -2877,6 +3034,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -2922,6 +3080,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -2967,6 +3126,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3012,6 +3172,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3057,6 +3218,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3102,6 +3264,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3147,6 +3310,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3192,6 +3356,7 @@
       "tl": "9",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3237,6 +3402,7 @@
       "tl": "9",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3282,6 +3448,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3327,6 +3494,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3372,6 +3540,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3417,6 +3586,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3462,6 +3632,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3507,6 +3678,7 @@
       "tl": "10",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3552,6 +3724,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3597,6 +3770,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3642,6 +3816,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3687,6 +3862,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 278",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3732,6 +3908,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3777,6 +3954,7 @@
       "tl": "4",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3822,6 +4000,7 @@
       "tl": "4",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3867,6 +4046,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3912,6 +4092,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -3957,6 +4138,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4002,6 +4184,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4047,6 +4230,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4092,6 +4276,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4137,6 +4322,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4182,6 +4368,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4227,6 +4414,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4272,6 +4460,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4317,6 +4506,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4362,6 +4552,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4407,6 +4598,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4452,6 +4644,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4497,6 +4690,7 @@
       "tl": "9",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4569,6 +4763,7 @@
       "tl": "10",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4614,6 +4809,7 @@
       "tl": "4",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4659,6 +4855,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4731,6 +4928,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4803,6 +5001,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 279",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4875,6 +5074,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 281",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4920,6 +5120,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 281",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -4965,6 +5166,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 281",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -5010,6 +5212,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 281",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -5055,6 +5258,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 281",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -5100,6 +5304,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 281",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -5145,6 +5350,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 281",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -5190,6 +5396,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 281",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -5235,6 +5442,7 @@
       "tl": "9",
       "description": "",
       "reference": "Basic Set: Characters p. 280",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -5307,6 +5515,7 @@
       "tl": "10",
       "description": "",
       "reference": "Basic Set: Characters p. 280",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -5352,6 +5561,7 @@
       "tl": "9",
       "description": "",
       "reference": "Basic Set: Characters p. 280",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -5424,6 +5634,7 @@
       "tl": "9",
       "description": "",
       "reference": "Basic Set: Characters p. 280",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -5469,6 +5680,7 @@
       "tl": "10",
       "description": "",
       "reference": "Basic Set: Characters p. 280",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -5514,6 +5726,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 271",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -5555,6 +5768,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 271",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -5596,6 +5810,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 271",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -5637,6 +5852,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 271",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -5678,6 +5894,7 @@
       "tl": "8",
       "description": "",
       "reference": "Basic Set: Characters p. 271",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -5719,6 +5936,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 271",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -5783,6 +6001,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 271",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -5847,6 +6066,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 271",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -5911,6 +6131,7 @@
       "tl": "4",
       "description": "",
       "reference": "Basic Set: Characters p. 271",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -5975,6 +6196,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 272",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -6016,6 +6238,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 272",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -6057,6 +6280,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 272",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -6098,6 +6322,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 272",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -6139,6 +6364,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 272",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -6203,6 +6429,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 272",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing/cut",
@@ -6290,6 +6517,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 272",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing/cut",
@@ -6354,6 +6582,7 @@
       "tl": "4",
       "description": "",
       "reference": "Basic Set: Characters p. 273",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -6395,6 +6624,7 @@
       "tl": "4",
       "description": "",
       "reference": "Basic Set: Characters p. 273",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -6459,6 +6689,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 273",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -6523,6 +6754,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 273",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -6587,6 +6819,7 @@
       "tl": "4",
       "description": "",
       "reference": "Basic Set: Characters p. 273",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -6674,6 +6907,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 273",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Primary",
@@ -6738,6 +6972,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 273",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -6802,6 +7037,7 @@
       "tl": "4",
       "description": "",
       "reference": "Basic Set: Characters p. 273",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -6843,6 +7079,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 273",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "1H",
@@ -6907,6 +7144,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -6948,6 +7186,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -6989,6 +7228,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing cut",
@@ -7053,6 +7293,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -7094,6 +7335,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -7135,6 +7377,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 273, 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Staff swing",
@@ -7245,6 +7488,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 272, 273, 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "2H sword swing",
@@ -7401,6 +7645,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 271, 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "1H Swing",
@@ -7511,6 +7756,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -7575,6 +7821,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 271, 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "1H Swing",
@@ -7685,6 +7932,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 271, 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "1H Swing",
@@ -7795,6 +8043,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -7859,6 +8108,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -7900,6 +8150,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -7941,6 +8192,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -7982,6 +8234,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -8023,6 +8276,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -8064,6 +8318,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -8105,6 +8360,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 274",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "attack",
@@ -8146,6 +8402,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 271, 276",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -8215,6 +8472,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 271, 276",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -8284,6 +8542,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 271, 276",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -8353,6 +8612,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 271, 276",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -8422,6 +8682,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 273, 276",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "1H Thrust",
@@ -8514,6 +8775,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 273, 276",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Thrust",
@@ -8610,6 +8872,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 272, 276",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -8702,6 +8965,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 272, 276",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Swing",
@@ -8794,6 +9058,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 272, 276",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Thrust",
@@ -8863,6 +9128,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 272, 276",
+      "category": "weapon",
       "meleeModes": [
         {
           "name": "Thrust",
@@ -8932,6 +9198,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 275",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -8977,6 +9244,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 275",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9022,6 +9290,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 275",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9067,6 +9336,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 275",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9112,6 +9382,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 275",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9157,6 +9428,7 @@
       "tl": "1",
       "description": "",
       "reference": "Basic Set: Characters p. 275",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9202,6 +9474,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 276",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9247,6 +9520,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 276",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9292,6 +9566,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 276",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9337,6 +9612,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 276",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9409,6 +9685,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 276",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9481,6 +9758,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 276",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9526,6 +9804,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 276",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9571,6 +9850,7 @@
       "tl": "3",
       "description": "",
       "reference": "Basic Set: Characters p. 276",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9616,6 +9896,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 275",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -9633,6 +9914,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 276",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -9650,6 +9932,7 @@
       "tl": "0",
       "description": "",
       "reference": "Basic Set: Characters p. 275",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -9667,6 +9950,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 276",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -9684,6 +9968,7 @@
       "tl": "2",
       "description": "",
       "reference": "Basic Set: Characters p. 276",
+      "category": "consumable",
       "meleeModes": [],
       "rangedModes": []
     }
@@ -9701,6 +9986,7 @@
       "tl": "5",
       "description": "",
       "reference": "Basic Set: Characters p. 277",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9746,6 +10032,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 277",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9791,6 +10078,7 @@
       "tl": "6",
       "description": "",
       "reference": "Basic Set: Characters p. 277",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9836,6 +10124,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 277",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9881,6 +10170,7 @@
       "tl": "7",
       "description": "",
       "reference": "Basic Set: Characters p. 277",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {
@@ -9926,6 +10216,7 @@
       "tl": "",
       "description": "",
       "reference": "Basic Set: Characters p. 277",
+      "category": "weapon",
       "meleeModes": [],
       "rangedModes": [
         {

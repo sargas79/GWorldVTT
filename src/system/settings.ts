@@ -15,6 +15,9 @@ import { OPTIONAL_RULES_KEY, defaultRuleState } from "./optional-rules.js";
 
 export const COMBAT_STYLE = "combatStyle";
 
+/** How the Skills tab is ordered: by attribute, or one alphabetical list. */
+export const SKILL_ORDER = "skillOrder";
+
 export type CombatStyle = "basic" | "tactical";
 
 export function registerSettings(): void {
@@ -54,6 +57,21 @@ export function registerSettings(): void {
     icon: "fa-solid fa-book-atlas",
     type: CompendiumSourcesSettings,
     restricted: true,
+  });
+
+  // A way of reading the sheet, not a fact about the character or the world,
+  // so each player keeps their own.
+  game.settings.register(SYSTEM_ID, SKILL_ORDER, {
+    name: "GWORLD.Settings.SkillOrder.Name",
+    hint: "GWORLD.Settings.SkillOrder.Hint",
+    scope: "client",
+    config: true,
+    type: String,
+    choices: {
+      attribute: "GWORLD.Settings.SkillOrder.attribute",
+      alphabetical: "GWORLD.Settings.SkillOrder.alphabetical",
+    },
+    default: "attribute",
   });
 
   game.settings.register(SYSTEM_ID, COMBAT_STYLE, {

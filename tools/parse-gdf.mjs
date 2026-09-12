@@ -45,7 +45,7 @@ const ATTRIBUTES = new Map([
   ["Will", "Will"], ["Per", "Per"], ["Perception", "Per"],
 ]);
 
-const DIFFICULTIES = new Set(["E", "A", "H", "VH"]);
+const DIFFICULTIES = new Set(["E", "A", "H", "VH", "W"]);
 
 /**
  * A name GCA fills in from the character sheet rather than the book:
@@ -266,11 +266,6 @@ function parseSkills(recs, reject) {
 
     const bare = nameOf(r);
     if (PLACEHOLDER.test(bare)) { reject(bare, "name is a GCA placeholder"); continue; }
-    // A wildcard skill such as Gun! stands in for a whole group at once
-    // (p. 175). It has no difficulty the model can hold and is not a skill you
-    // roll against, so it is reported rather than invented.
-    if (bare.endsWith("!")) { reject(bare, "wildcard skill"); continue; }
-
     // The pair usually sits in the second field, but a few records state it as
     // type(IQ/VH) instead.
     const second = (splitTop(r.text)[1] ?? "").trim();
@@ -278,7 +273,9 @@ function parseSkills(recs, reject) {
     const parts = pair.split("/");
     if (parts.length !== 2) { reject(bare, `no attribute/difficulty pair: "${pair}"`); continue; }
 
-    const [attr, diff] = parts.map((p) => p.trim());
+    // GCA writes a wildcard skill's difficulty as "WC" -- Gun!, DX/WC. The
+    // model spells it "W": Very Hard, at three times the cost (p. 175).
+    const [attr, diff] = parts.map((p) => p.trim()).map((p) => (p === "WC" ? "W" : p));
 
     if (attr === "Tech") {
       const technique = parseTechnique(bare, diff, f, ids, reject);
@@ -787,6 +784,27 @@ function physical(f) {
   };
 }
 
+/**
+ * What kind of thing a piece of gear is, for the Gear tab to sort by.
+ *
+ * GCA categorises weapons, armour and vehicles and nothing else, so the rest
+ * is read off the name. A weapon is anything with an attack mode; of what is
+ * left, a kit or an instrument is a tool, something used up -- fuel, light,
+ * food, ammunition, medicine -- is a consumable, and everything else is
+ * miscellaneous gear. The sheet lets a GM refile any of them.
+ */
+const TOOL_NAMES = /\b(kit|tools?|lockpicks|crowbar|pickaxe|saw|shovel|whetstone|cutting torch|plow|spinning wheel|knitting needles|balance|wheelbarrow|lab|instruments|compass|gps|binoculars|telescope|camera|camcorder|recorder|radio|computer|phone|flashlight|lantern|climbing gear|grapnel|fishhooks|metal detector|goggles|handcuffs|bug|microphone|mike|beacon|nanobug|typewriter|wax tablet|lighter|stove|wristwatch|tv set|silencer|laser sight)\b/i;
+const CONSUMABLE_NAMES = /\b(water|gasoline|kerosene|oil|candle|torch|matches|rations|tablets|batteries|film|antibiotic|antitoxin|bandages|arrow|bolt|dart|pellet|gas bottle)\b/i;
+
+function categoryOf(name, armed) {
+  if (armed) return "weapon";
+  // A cutting torch's gas bottle is used up; the torch itself is not.
+  if (/gas bottle/i.test(name)) return "consumable";
+  if (TOOL_NAMES.test(name)) return "tool";
+  if (CONSUMABLE_NAMES.test(name)) return "consumable";
+  return "misc";
+}
+
 function parseEquipment(recs, reject, note) {
   const ids = existingIds("equipment");
   const armor = [];
@@ -931,11 +949,12 @@ function parseEquipment(recs, reject, note) {
     if (!usable) continue;
 
     taken.add(name);
+    const armed = meleeModes.length > 0 || rangedModes.length > 0;
     gear.push({
-      _id: ids.get(name) ?? id(meleeModes.length || rangedModes.length ? "weapon" : "gear", name),
+      _id: ids.get(name) ?? id(armed ? "weapon" : "gear", name),
       name,
       type: "equipment",
-      system: { ...common, meleeModes, rangedModes },
+      system: { ...common, category: categoryOf(name, armed), meleeModes, rangedModes },
     });
   }
 

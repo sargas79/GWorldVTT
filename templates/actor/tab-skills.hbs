@@ -6,6 +6,12 @@
       <input type="search" class="gworld-skill-filter" placeholder="{{localize 'GWORLD.Action.FilterSkills'}}"
              autocomplete="off" data-tooltip="{{localize 'GWORLD.Action.FilterSkills'}}">
     </div>
+    {{!-- One list or six: by attribute as the printed sheet has it, or one
+         alphabetical run for people who know their skills by name. --}}
+    <button type="button" class="ibtn" data-action="toggleSkillOrder"
+            data-tooltip="{{localize 'GWORLD.Settings.SkillOrder.Hint'}}">
+      {{#if skillOrderAlphabetical}}{{localize "GWORLD.Action.OrderByAttribute"}}{{else}}{{localize "GWORLD.Action.OrderByName"}}{{/if}}
+    </button>
     {{#if editable}}
       <button type="button" class="ibtn" data-action="createItem" data-item-type="technique">
         {{> "gworld.plus"}} {{localize "GWORLD.Action.AddTechnique"}}
@@ -20,11 +26,19 @@
     {{/if}}
   </div>
 
+  {{!-- Every skill sits in its group, trained or not. An untrained one is
+       dimmed and marked as rolled at default, rather than filed under a
+       heading of its own that it leaves the moment a point is spent. --}}
   {{#each items.skillGroups as |group|}}
     <div class="isec" style="gap: 0">
       <div class="grph">
-        {{group.attribute}}-{{localize "GWORLD.Section.Based"}}
-        <span class="sub">{{group.attribute}} {{group.score}}</span>
+        {{#if group.attribute}}
+          {{group.attribute}}-{{localize "GWORLD.Section.Based"}}
+          <span class="sub">{{group.attribute}} {{group.score}}</span>
+        {{else}}
+          {{localize "GWORLD.Section.AllSkills"}}
+          <span class="sub">{{localize "GWORLD.Section.Alphabetical"}}</span>
+        {{/if}}
       </div>
       <table class="gt">
         <thead>
@@ -39,91 +53,51 @@
           </tr>
         </thead>
         <tbody>
-          {{#each group.skills as |skill|}}
-            <tr data-item-id="{{skill.id}}">
+          {{#each group.rows as |row|}}
+            {{#with row.skill.item as |skill|}}
+            <tr data-item-id="{{skill.id}}" {{#unless row.trained}}class="dim"{{/unless}}>
               <td>
                 <span class="wname" data-action="editItem">{{skill.name}}</span>
                 {{#if skill.system.techLevel}}<span class="wmode">TL{{skill.system.techLevel}}</span>{{/if}}
+                {{#unless row.trained}}
+                  <span class="tag" data-tooltip="{{localize 'GWORLD.Section.RolledAtDefault'}}">{{localize "GWORLD.Skill.Untrained"}}</span>
+                {{/unless}}
               </td>
               <td class="wmode">{{skill.system.attribute}}/{{skill.system.difficulty}}</td>
               <td class="n">
                 {{#if @root.editable}}
+                  {{!-- Each control carries an id so focus survives the redraw
+                       that follows every edit; without one, Tab from the points
+                       field lands nowhere. --}}
                   <span class="ptstep">
                     <button type="button" data-action="stepPoints" data-step="down"
+                            id="{{@root.sheetId}}-{{skill.id}}-down"
                             aria-label="{{localize "GWORLD.Skill.SpendLess"}}"
                             title="{{localize "GWORLD.Skill.SpendLess"}}">&minus;</button>
                     <input type="number" class="npts" min="0" step="1"
+                           id="{{@root.sheetId}}-{{skill.id}}-pts"
                            value="{{skill.system.points}}" data-item-field="system.points"
                            aria-label="{{localize "GWORLD.Column.Pts"}}" />
                     <button type="button" data-action="stepPoints" data-step="up"
+                            id="{{@root.sheetId}}-{{skill.id}}-up"
                             aria-label="{{localize "GWORLD.Skill.SpendMore"}}"
                             title="{{localize "GWORLD.Skill.SpendMore"}}">+</button>
                   </span>
-                {{else}}{{skill.system.points}}{{/if}}
-              </td>
-              <td class="n wmode">{{relativeLabel skill}}</td>
-              <td class="n"><span class="lvl">{{skill.system.derived.level}}</span></td>
-              <td class="c">
-                <span class="rollable" data-action="roll" data-roll-type="skill"
-                      data-roll-label="{{skill.name}}" data-roll-target="{{skill.system.derived.level}}"
-                      data-based-on="{{skill.system.attribute}}">
-                  {{> "gworld.die"}}
-                </span>
-              </td>
-              <td class="c">
-                {{#if @root.editable}}
-                  <button type="button" class="rollable iconbtn" data-action="deleteItem" title="{{localize 'GWORLD.Action.Delete'}}">
-                    {{> "gworld.trash"}}
-                  </button>
-                {{/if}}
-              </td>
-            </tr>
-          {{/each}}
-        </tbody>
-      </table>
-    </div>
-  {{/each}}
-
-  {{#if items.untrainedSkills.length}}
-    <div class="isec" style="gap: 0">
-      <div class="grph">
-        {{localize "GWORLD.Section.Untrained"}}
-        <span class="sub">{{localize "GWORLD.Section.RolledAtDefault"}}</span>
-      </div>
-      <table class="gt">
-        <tbody>
-          {{#each items.untrainedSkills as |skill|}}
-            <tr class="dim" data-item-id="{{skill.id}}">
-              <td><span class="wname" data-action="editItem">{{skill.name}}</span></td>
-              <td class="wmode">{{skill.system.attribute}}/{{skill.system.difficulty}}</td>
-              <td class="n">
-                {{#if @root.editable}}
-                  <span class="ptstep">
-                    <button type="button" data-action="stepPoints" data-step="down"
-                            aria-label="{{localize "GWORLD.Skill.SpendLess"}}"
-                            title="{{localize "GWORLD.Skill.SpendLess"}}">&minus;</button>
-                    <input type="number" class="npts" min="0" step="1"
-                           value="{{skill.system.points}}" data-item-field="system.points"
-                           aria-label="{{localize "GWORLD.Column.Pts"}}" />
-                    <button type="button" data-action="stepPoints" data-step="up"
-                            aria-label="{{localize "GWORLD.Skill.SpendMore"}}"
-                            title="{{localize "GWORLD.Skill.SpendMore"}}">+</button>
-                  </span>
-                {{else}}&mdash;{{/if}}
+                {{else}}{{#if row.trained}}{{skill.system.points}}{{else}}&mdash;{{/if}}{{/if}}
               </td>
               <td class="n wmode">{{relativeLabel skill}}</td>
               <td class="n">
-                {{#if skill.system.derived.hasDefault}}
+                {{#if row.rollable}}
                   <span class="lvl">{{skill.system.derived.level}}</span>
                 {{else}}
                   <span class="tag tag-danger">{{localize "GWORLD.Skill.NoDefault"}}</span>
                 {{/if}}
               </td>
               <td class="c">
-                {{#if skill.system.derived.hasDefault}}
+                {{#if row.rollable}}
                   <span class="rollable" data-action="roll" data-roll-type="skill"
                         data-roll-label="{{skill.name}}" data-roll-target="{{skill.system.derived.level}}"
-                      data-based-on="{{skill.system.attribute}}">
+                        data-based-on="{{skill.system.attribute}}">
                     {{> "gworld.die"}}
                   </span>
                 {{/if}}
@@ -136,11 +110,12 @@
                 {{/if}}
               </td>
             </tr>
+            {{/with}}
           {{/each}}
         </tbody>
       </table>
     </div>
-  {{/if}}
+  {{/each}}
 
   {{#if items.techniques.length}}
     <div class="isec" style="gap: 0">
@@ -174,12 +149,15 @@
                 {{#if @root.editable}}
                   <span class="ptstep">
                     <button type="button" data-action="stepPoints" data-step="down"
+                            id="{{@root.sheetId}}-{{entry.item.id}}-down"
                             aria-label="{{localize "GWORLD.Skill.SpendLess"}}"
                             title="{{localize "GWORLD.Skill.SpendLess"}}">&minus;</button>
                     <input type="number" class="npts" min="0" step="1"
+                           id="{{@root.sheetId}}-{{entry.item.id}}-pts"
                            value="{{entry.item.system.points}}" data-item-field="system.points"
                            aria-label="{{localize "GWORLD.Column.Pts"}}" />
                     <button type="button" data-action="stepPoints" data-step="up"
+                            id="{{@root.sheetId}}-{{entry.item.id}}-up"
                             aria-label="{{localize "GWORLD.Skill.SpendMore"}}"
                             title="{{localize "GWORLD.Skill.SpendMore"}}">+</button>
                   </span>

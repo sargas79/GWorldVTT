@@ -16,14 +16,18 @@
             <span data-action="editItem">{{trait.name}}</span>
             {{#if trait.levelled}}
               {{#if @root.editable}}
+                {{!-- Ids so focus survives the redraw that follows every edit. --}}
                 <span class="tag taglevels ptstep">
                   <button type="button" data-action="stepLevels" data-step="down"
+                          id="{{@root.sheetId}}-{{trait.id}}-down"
                           aria-label="{{localize "GWORLD.Trait.OneLess"}}"
                           title="{{localize "GWORLD.Trait.OneLess"}}">&minus;</button>
                   <input type="number" min="0" step="1" value="{{trait.system.levels}}"
+                         id="{{@root.sheetId}}-{{trait.id}}-levels"
                          data-item-field="system.levels"
                          aria-label="{{localize "GWORLD.Trait.Levels"}}" />
                   <button type="button" data-action="stepLevels" data-step="up"
+                          id="{{@root.sheetId}}-{{trait.id}}-up"
                           aria-label="{{localize "GWORLD.Trait.OneMore"}}"
                           title="{{localize "GWORLD.Trait.OneMore"}}">+</button>
                   <span>{{#if trait.levelName}}{{trait.levelName}}{{else}}{{localize "GWORLD.Trait.Levels"}}{{/if}}</span>

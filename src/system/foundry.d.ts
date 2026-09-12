@@ -102,6 +102,8 @@ declare global {
             string,
             { tabs: Array<{ id: string; cssClass?: string; label?: string }>; initial?: string; labelPrefix?: string }
           >;
+          /** The unique element id Foundry gives this window. */
+          readonly id: string;
           readonly element: HTMLElement;
           readonly tabGroups: Record<string, string>;
           render(options?: object | boolean): Promise<this>;

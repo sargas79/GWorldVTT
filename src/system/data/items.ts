@@ -4,6 +4,7 @@
 
 import { relativeLevelForPoints } from "../../rules/skills.js";
 import { traitPoints } from "../../rules/traits.js";
+import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from "../gear-groups.js";
 import type { DamageType, Difficulty, SkillAttribute } from "../../rules/types.js";
 
 const fields = foundry.data.fields;
@@ -149,7 +150,8 @@ export class SkillData extends foundry.abstract.TypeDataModel {
         required: true,
         nullable: false,
         initial: "A",
-        choices: ["E", "A", "H", "VH"],
+        // "W" is a wildcard skill: Very Hard at three times the cost.
+        choices: ["E", "A", "H", "VH", "W"],
       }),
       points: new fields.NumberField({
         required: true,
@@ -461,6 +463,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare cost: number;
   declare carried: boolean;
   declare equipped: boolean;
+  declare category: EquipmentCategory;
   declare meleeModes: unknown[];
   declare rangedModes: unknown[];
 
@@ -468,6 +471,17 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
     return {
       ...descriptionFields(),
       ...physicalFields(),
+      /**
+       * What kind of thing this is, for the Gear tab to sort by. Anything
+       * with an attack mode is shown as a weapon whatever this says; the
+       * field is for telling a tool kit from a week of rations.
+       */
+      category: new fields.StringField({
+        required: true,
+        nullable: false,
+        initial: "misc",
+        choices: [...EQUIPMENT_CATEGORIES],
+      }),
       meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: [] }),
       rangedModes: new fields.ArrayField(rangedModeField(), { required: true, initial: [] }),
     };
