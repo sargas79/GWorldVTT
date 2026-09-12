@@ -29,6 +29,7 @@ import { tacticalOnScene } from "./settings.js";
 import { handednessOf, visionOf } from "./tactical-context.js";
 import { HIT_LOCATION_ORDER, type HitLocation } from "../rules/hit-locations.js";
 import { defenseChoices, type DefenseChoice, type DefenseKey } from "./defense-choices.js";
+import { loseAim } from "./aim.js";
 import type { DamageType } from "../rules/types.js";
 
 const APPLIED_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-applied.hbs`;
@@ -48,6 +49,8 @@ interface DamageFlag {
   hitLocation?: HitLocation;
   /** True when it went for a gap in the armour, which halves what it finds. */
   chink?: boolean;
+  /** Pellets striking as one: the figure the target's DR is multiplied by. */
+  drMultiplier?: number;
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -201,6 +204,7 @@ async function applyFromCard(options: {
     // (p. 400), so it goes in beside the critical's halving rather than
     // instead of it.
     ...(flag.chink ? { chink: true } : {}),
+    ...(flag.drMultiplier && flag.drMultiplier > 1 ? { drMultiplier: flag.drMultiplier } : {}),
     // The maximum belongs to the dice as rolled, so it is only the maximum for
     // someone the blast struck directly: collateral damage has already been
     // scaled down by distance, and pairing it with the undiminished maximum
@@ -612,6 +616,9 @@ async function rollDefense(options: {
     kind: "defense",
     modifiers,
   });
+
+  // "... or forced to make an active defense, you lose your aim."
+  await loseAim(defender, "defended");
 }
 
 /** What an applied blow recorded about who still owes a knockdown roll. */

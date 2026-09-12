@@ -146,7 +146,9 @@
       "Maneuver": "This Turn",
       "EvaluateTurns": "Turns Evaluating",
       "Defenses": "Defenses",
-      "PostureHint": "Change posture. Lying down, a character crawls, kneels or sits up first, then stands."
+      "PostureHint": "Change posture. Lying down, a character crawls, kneels or sits up first, then stands.",
+      "AimTurns": "Turns aimed",
+      "Braced": "Braced"
     },
     "Points": {
       "Starting": "Starting points",
@@ -405,6 +407,10 @@
         "highSpeed": {
           "Name": "High-speed movement",
           "Hint": "Going faster than you can stop: turning radius, and pushing the envelope."
+        },
+        "battleFatigue": {
+          "Name": "Battle fatigue",
+          "Hint": "A fight that runs past ten seconds costs everyone in it a point of fatigue when the tracker closes."
         }
       }
     },
@@ -786,7 +792,10 @@
       "Elevation": "Height over target (yards)",
       "SpeedRangeUphill": "Speed/Range at {yards} yards",
       "QuickShotHint": "Click: shoot at the range measured to the targeted token. Shift-click: every option.",
-      "Measured": "range measured: {yards} yd"
+      "Measured": "range measured: {yards} yd",
+      "AimedLonger": "aimed longer",
+      "Braced": "braced",
+      "AimTurns": "{turns} turns aimed"
     },
     "Malfunction": {
       "Jammed": "The weapon malfunctions",
@@ -947,7 +956,8 @@
       "DeathCheck": "HT roll to avoid death",
       "SubtractDR": "Subtract the target's DR from basic damage, then apply the wounding modifier.",
       "SubtractDRDivisor": "Divide the target's DR by {divisor} (rounding down), subtract it from basic damage, then apply the wounding modifier.",
-      "Cancel": "Cancel"
+      "Cancel": "Cancel",
+      "MassShot": "pellets as one mass: damage and DR ×{times}"
     },
     "HitLocation": {
       "torso": "Torso",
@@ -1227,7 +1237,18 @@
       "AlreadyWell": "Already as well as they are going to get",
       "NoBetter": "No better for it",
       "MealHint": "Ate a decent meal while resting (+1 FP)",
-      "RestedFed": "{minutes} minutes of quiet rest, with a meal"
+      "RestedFed": "{minutes} minutes of quiet rest, with a meal",
+      "Regeneration": "Regenerate",
+      "RegenerationHint": "Heal by Regeneration for the time that has passed",
+      "RegenerationMinutes": "Minutes passed",
+      "RegenerationDetail": "{rate}, over {seconds} seconds",
+      "Rate": {
+        "slow": "1 HP / 12 hours",
+        "regular": "1 HP / hour",
+        "fast": "1 HP / minute",
+        "veryFast": "1 HP / second",
+        "extreme": "10 HP / second"
+      }
     },
     "Knockdown": {
       "Title": "Knockdown and stunning",
@@ -1561,12 +1582,35 @@
       "kick": "Kick"
     },
     "Attack": {
-      "AtDefaultHint": "The skill is not on the sheet; this is the book's default for it."
+      "AtDefaultHint": "The skill is not on the sheet; this is the book's default for it.",
+      "PerTurn": "{count} attacks a turn",
+      "ExtraAttackHint": "Extra Attack: one more attack on each Attack maneuver.",
+      "ExtraArms": "{count} extra arms"
     },
     "Keybinding": {
       "TurnLeft": "Turn selected tokens left",
       "TurnRight": "Turn selected tokens right",
       "TurnHint": "One hex side on a hex map, one diagonal on a square map."
+    },
+    "Aim": {
+      "Lost": {
+        "injured": "{name} was hit and loses the aim.",
+        "defended": "{name} had to defend and loses the aim.",
+        "fired": "{name} fires; the aim is spent."
+      }
+    },
+    "Ready": {
+      "Unready": "unready",
+      "UnreadyHint": "Swung and not yet brought back up. A Ready maneuver readies it; until then it neither attacks nor parries.",
+      "AfterAttackHint": "Becomes unready after each attack in these hands: it needs 1.5 times its minimum ST to stay ready.",
+      "Action": "Ready",
+      "Hint": "Take a Ready maneuver to bring the weapon back up",
+      "NowUnready": "{name} is unready until a Ready maneuver."
+    },
+    "BattleFatigue": {
+      "Title": "Battle fatigue",
+      "Seconds": "{seconds} seconds of fighting",
+      "Charged": "{fp} FP from {names}"
     }
   }
 }

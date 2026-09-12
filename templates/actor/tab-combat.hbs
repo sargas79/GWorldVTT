@@ -36,6 +36,26 @@
           </div>
         {{/if}}
       {{/if}}
+      {{#if isAiming}}
+        {{!-- Turns spent aiming, and bracing: Accuracy after one, +1 and +2
+             for the next two, +1 braced. Each weapon adds its own Acc when
+             the shot is taken; the figure here is what the turns are worth. --}}
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Field.AimTurns"}}</span>
+          <div class="fi">
+            <input type="number" name="system.aim.turns" value="{{system.aim.turns}}"
+                   min="0" max="3" step="1"
+                   style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+                   {{#unless editable}}disabled{{/unless}}>
+            <span style="font-size: 10px; color: var(--color-accent-700)">Acc {{signed derived.aim.extra}}</span>
+          </div>
+        </div>
+        <label class="fld icheck">
+          <input type="checkbox" name="system.aim.braced"
+                 {{#if system.aim.braced}}checked{{/if}} {{#unless editable}}disabled{{/unless}}>
+          <span>{{localize "GWORLD.Field.Braced"}}</span>
+        </label>
+      {{/if}}
       {{#if isEvaluating}}
         <div class="fld">
           <span class="fl">{{localize "GWORLD.Field.EvaluateTurns"}}</span>
@@ -114,6 +134,14 @@
       {{#if derived.reeling}}
         <span class="ichip warn">{{localize "GWORLD.Health.reeling"}}</span>
       {{/if}}
+      {{#if (gt derived.attacksPerTurn 1)}}
+        <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Attack.ExtraAttackHint'}}">
+          {{localize "GWORLD.Attack.PerTurn" count=derived.attacksPerTurn}}
+        </span>
+      {{/if}}
+      {{#if derived.extraArms}}
+        <span class="ichip warn">{{localize "GWORLD.Attack.ExtraArms" count=derived.extraArms}}</span>
+      {{/if}}
     </div>
   </div>
 
@@ -159,6 +187,8 @@
               <td>
                 <span class="wname">{{atk.name}}</span> <span class="wmode">{{atk.mode}}</span>
                 {{#if atk.atDefault}}<span class="tag" data-tooltip="{{localize 'GWORLD.Attack.AtDefaultHint'}}">{{localize "GWORLD.Skill.Untrained"}}</span>{{/if}}
+                {{#if atk.unready}}<span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.Ready.UnreadyHint'}}">{{localize "GWORLD.Ready.Unready"}}</span>
+                {{else if atk.readiesAfterAttack}}<span class="tag" data-tooltip="{{localize 'GWORLD.Ready.AfterAttackHint'}}">&Dagger;</span>{{/if}}
               </td>
               <td class="n">
                 {{#if atk.skillLevel}}<span class="lvl">{{atk.skillLevel}}</span>{{else}}<span class="bad">&mdash;</span>{{/if}}
@@ -187,11 +217,20 @@
               <td class="c">{{#if atk.parry}}{{atk.parry}}{{else}}&mdash;{{/if}}</td>
               <td class="c">{{#if atk.minSt}}{{atk.minSt}}{{else}}&mdash;{{/if}}</td>
               <td class="c">
-                {{#if atk.skillLevel}}
+                {{#if atk.unready}}
+                  {{!-- Swung and not yet back up: a Ready maneuver, not an attack. --}}
+                  {{#if @root.editable}}
+                    <button type="button" class="ibtn tiny" data-action="readyWeapon"
+                            data-tooltip="{{localize 'GWORLD.Ready.Hint'}}">
+                      {{localize "GWORLD.Ready.Action"}}
+                    </button>
+                  {{/if}}
+                {{else if atk.skillLevel}}
                   {{#if atk.usable}}
                     <span class="rollable" data-action="roll" data-roll-type="attack"
                           data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
                           data-damage-type="{{atk.damageType}}"
+                          data-unready-after="{{#if atk.readiesAfterAttack}}1{{/if}}"
                           data-unarmed="{{#if atk.unarmed}}1{{/if}}">
                       {{> "gworld.die"}}
                     </span>
@@ -261,7 +300,7 @@
               {{/if}}
               <td class="c">{{atk.accuracy}}</td>
               <td class="c">{{atk.range}}</td>
-              <td class="c">{{atk.rateOfFire}}</td>
+              <td class="c">{{atk.rateOfFire}}{{#if (gt atk.projectiles 1)}}&times;{{atk.projectiles}}{{/if}}</td>
               <td class="c">{{atk.shots}}</td>
               <td class="c">
                 {{#if atk.skillLevel}}
@@ -272,6 +311,7 @@
                         data-ranged="1" data-accuracy="{{atk.accuracy}}"
                         data-scope-bonus="{{atk.scopeBonus}}"
                         data-rate-of-fire="{{atk.rateOfFire}}" data-recoil="{{atk.recoil}}"
+                        data-projectiles="{{atk.projectiles}}" data-half-damage-range="{{atk.halfDamageRange}}"
                         data-bulk="{{atk.bulk}}" data-malfunction="{{atk.malfunction}}">
                     {{> "gworld.die"}}
                   </span>

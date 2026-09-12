@@ -21,6 +21,9 @@ import {
 import { consumeTurnedBlade, recordTurnedBlade } from "./turned-blade.js";
 import { isRuleOn } from "./optional-rules.js";
 import { targetedTokens } from "./targets.js";
+import { aimTurnsOf, loseAim } from "./aim.js";
+import { aimBonus } from "../rules/aim.js";
+import { multipleProjectiles } from "../rules/shotguns.js";
 import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import {
   criticalEntry,
@@ -354,6 +357,11 @@ export interface DamageRollOptions {
   fragmentation?: string;
   /** Where the attack that earned this damage was aimed. */
   calledShot?: CalledShot | null;
+  /**
+   * Pellets striking as one mass (Campaigns p. 409): the rolled damage and
+   * the target's DR are both multiplied by this.
+   */
+  massMultiplier?: number;
 }
 
 /**
@@ -386,9 +394,13 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
   const roll = new Roll(toRollFormula(rolled));
   await roll.evaluate();
 
+  // A shotgun's pellets up close are one blow of several times the damage,
+  // against several times the DR; the second half travels on the flag.
+  const mass = Math.max(1, Math.floor(Number(options.massMultiplier ?? 1)));
+
   // The floor lives in the rules engine; duplicating it here would let chat
   // damage drift from the rules if it ever changes.
-  const basicDamage = applyDamageFloor(roll.total, damageType);
+  const basicDamage = applyDamageFloor(roll.total * mass, damageType);
 
   // Shown against DR 0 so the card states raw injury; the GM subtracts real DR.
   const undefended = computeInjury({ basicDamage, dr: 0, type: damageType });
@@ -405,6 +417,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     hasArmorDivisor: armorDivisor !== 1,
     modifiers: modifiers.filter((m) => m.value !== 0),
     basicDamage,
+    massMultiplier: mass > 1 ? mass : null,
     woundingModifier: undefended.woundingModifier,
     injuryIfUnarmored: undefended.injury,
 
@@ -443,7 +456,8 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
             : {}),
           // The most these dice could have come up, for the critical results
           // that replace the roll with maximum damage.
-          maxDamage: applyDamageFloor(maxRoll(rolled), damageType),
+          maxDamage: applyDamageFloor(maxRoll(rolled) * mass, damageType),
+          ...(mass > 1 ? { drMultiplier: mass } : {}),
           explosive,
           // The dice, not the rolled total: the blast radius is set by how
           // many dice the attack rolls, whatever they came up -- and a
@@ -517,6 +531,14 @@ export async function handleRollAction(
     rateOfFire: Number(target.dataset.rateOfFire) || 1,
     recoil,
     bulk: Number(target.dataset.bulk) || 0,
+    // A shotgun's pellets, and the range inside which they strike as one.
+    projectiles: Math.max(1, Number(target.dataset.projectiles) || 1),
+    halfDamageRange: Number(target.dataset.halfDamageRange) || 0,
+    // The turns spent on an Aim maneuver, which is what buys the Accuracy.
+    aim: {
+      turns: aimTurnsOf(actor),
+      braced: Boolean(actor?.system?.aim?.braced),
+    },
     // A shooter on a Wait is covering ground, and the area they declared
     // is what the penalty comes off.
     watching:
@@ -598,6 +620,9 @@ export async function handleRollAction(
     await recordCalledShot(actor, melee?.calledShot ?? shot?.calledShot ?? null);
     await recordTurnedBlade(actor, melee?.turned === true);
     if (melee?.charging) await recordCharge(actor);
+    // Pellets striking as one mass are a fact about this shot that the damage
+    // roll, a separate click, has to be told.
+    await recordMassShot(actor, shot?.coneMultiplier ?? null);
   }
 
   // A Feint made last turn is spent by this attack, whether or not it is aimed
@@ -637,11 +662,42 @@ export async function handleRollAction(
         }
       : {}),
     // Only a burst needs its hits counted; a single shot either hits or does
-    // not, and saying "1 hit" on every arrow would be noise.
+    // not, and saying "1 hit" on every arrow would be noise. A spread of
+    // pellets counts as a burst at Rcl 1, however many shells were fired.
     ...(shot && shot.shotsFired > 1
-      ? { rapidFire: { shotsFired: shot.shotsFired, recoil } }
+      ? { rapidFire: { shotsFired: shot.shotsFired, recoil: shot.recoil } }
       : {}),
   });
+
+  // The shot spends the aim, and a swing of a weapon too heavy to hold
+  // steady leaves it needing a Ready maneuver before the next.
+  if (rollType === "attack" && ranged) await loseAim(actor, "fired");
+  if (rollType === "attack" && !ranged && target.dataset.unreadyAfter === "1") {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? actor?.items?.get(id) : null;
+    if (item?.isOwner) {
+      await item.update({ "system.unready": true });
+      ui.notifications?.info(game.i18n.format("GWORLD.Ready.NowUnready", { name: String(item.name) }));
+    }
+  }
+}
+
+/** Where a shot's pellets striking as one mass are kept for the damage roll. */
+const MASS_SHOT_FLAG = "massShot";
+
+async function recordMassShot(actor: any, multiplier: number | null): Promise<void> {
+  if (!actor?.isOwner) return;
+  if (multiplier === null || multiplier <= 1) {
+    if (actor.getFlag?.(SYSTEM_ID, MASS_SHOT_FLAG)) await actor.unsetFlag(SYSTEM_ID, MASS_SHOT_FLAG);
+    return;
+  }
+  await actor.setFlag(SYSTEM_ID, MASS_SHOT_FLAG, multiplier);
+}
+
+async function consumeMassShot(actor: any): Promise<number> {
+  const multiplier = Number(actor?.getFlag?.(SYSTEM_ID, MASS_SHOT_FLAG) ?? 1);
+  if (multiplier > 1 && actor.isOwner) await actor.unsetFlag(SYSTEM_ID, MASS_SHOT_FLAG);
+  return multiplier > 1 ? multiplier : 1;
 }
 
 /** What the map knows about a shot: how far, and at what size. */
@@ -693,20 +749,47 @@ export function measuredShot(actor: any): MeasuredShot | null {
 function quickShot(
   measured: MeasuredShot,
   weapon: Parameters<typeof promptForRangedAttack>[0],
-): { modifiers: RollModifier[]; shotsFired: number; calledShot: CalledShot | null } {
+): RangedShot {
+  // One shell, however many pellets are in it, and no aim unless the shooter
+  // is on an Aim maneuver -- in which case its turns are what they are.
+  const pellets = multipleProjectiles({
+    shotsFired: 1,
+    projectiles: weapon.projectiles ?? 1,
+    recoil: weapon.recoil,
+    rangeYards: measured.rangeYards,
+    halfDamageRange: weapon.halfDamageRange ?? 0,
+  });
   const modifiers = rangedModifiers(
     {
       range: measured.rangeYards,
       speed: 0,
       size: measured.targetSizeModifier,
       modifier: 0,
-      shots: 1,
+      shots: pellets.effectiveShots,
       situation: "normal",
-      aimed: false,
+      aimed: (weapon.aim?.turns ?? 0) > 0,
     },
     weapon,
   );
-  return { modifiers, shotsFired: 1, calledShot: null };
+  return {
+    modifiers,
+    shotsFired: pellets.effectiveShots,
+    recoil: pellets.recoil,
+    coneMultiplier: pellets.coneMultiplier,
+    calledShot: null,
+  };
+}
+
+/** What a ranged attack was resolved into, by the dialog or by the map. */
+interface RangedShot {
+  modifiers: RollModifier[];
+  /** Shots for the rapid-fire arithmetic: shells times pellets. */
+  shotsFired: number;
+  /** Recoil to count hits with; 1 for a spread of pellets. */
+  recoil: number;
+  /** Pellets striking as one mass, or null when they spread. */
+  coneMultiplier: number | null;
+  calledShot: CalledShot | null;
 }
 
 /**
@@ -735,15 +818,27 @@ export async function promptForRangedAttack(options: {
    * forfeits Accuracy.
    */
   watching?: { hexesWatched: number; coveringLine: boolean } | null;
-}): Promise<{
-  modifiers: RollModifier[];
-  shotsFired: number;
-  calledShot: CalledShot | null;
-} | null> {
+  /** Pellets per shell, for a shotgun; one for everything else. */
+  projectiles?: number;
+  /** The weapon's 1/2D range, inside a tenth of which pellets strike as one. */
+  halfDamageRange?: number;
+  /** The Aim maneuver as it stands: turns spent, and whether braced. */
+  aim?: { turns: number; braced: boolean } | null;
+}): Promise<RangedShot | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
-  const accuracyLabel = options.scopeBonus
-    ? `${L("Aimed")} (+${options.accuracy}+${options.scopeBonus})`
-    : `${L("Aimed")} (+${options.accuracy})`;
+  // What aiming is worth: Accuracy after a turn, more for the second and
+  // third, more again for bracing. The box is ticked for somebody aiming and
+  // says what it buys; anyone else may tick it to say they aimed off-sheet.
+  const aiming = aimBonus({
+    turnsAimed: options.aim?.turns ?? 0,
+    accuracy: options.accuracy + options.scopeBonus,
+    braced: options.aim?.braced ?? false,
+  });
+  const accuracyLabel = aiming.total > 0
+    ? `${L("Aimed")} (+${aiming.total}: ${game.i18n.format("GWORLD.Ranged.AimTurns", { turns: options.aim?.turns ?? 0 })})`
+    : options.scopeBonus
+      ? `${L("Aimed")} (+${options.accuracy}+${options.scopeBonus})`
+      : `${L("Aimed")} (+${options.accuracy})`;
 
   const field = (name: string, label: string, value: string) => `
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
@@ -786,7 +881,7 @@ export async function promptForRangedAttack(options: {
         </select>
       </label>
       <label style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" name="aimed">
+        <input type="checkbox" name="aimed" ${aiming.total > 0 ? "checked" : ""}>
         <span>${accuracyLabel}</span>
       </label>
     </div>`,
@@ -828,13 +923,28 @@ export async function promptForRangedAttack(options: {
 
   const input = result as RangedInput & { calledShot?: string };
   // A weapon cannot fire more shots than its Rate of Fire, nor fewer than one.
-  const shotsFired = Math.min(rateOfFire, Math.max(1, Math.floor(input.shots || 1)));
+  const shellsFired = Math.min(rateOfFire, Math.max(1, Math.floor(input.shots || 1)));
+
+  // Each shell may be several pellets, which count as shots of their own.
+  const pellets = multipleProjectiles({
+    shotsFired: shellsFired,
+    projectiles: options.projectiles ?? 1,
+    recoil: options.recoil,
+    rangeYards: input.range,
+    halfDamageRange: options.halfDamageRange ?? 0,
+  });
 
   const aimed = calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, false);
-  const modifiers = rangedModifiers({ ...input, shots: shotsFired }, options);
+  const modifiers = rangedModifiers({ ...input, shots: pellets.effectiveShots }, options);
   if (aimed.modifier) modifiers.push(aimed.modifier);
 
-  return { modifiers, shotsFired, calledShot: aimed.shot };
+  return {
+    modifiers,
+    shotsFired: pellets.effectiveShots,
+    recoil: pellets.recoil,
+    coneMultiplier: pellets.coneMultiplier,
+    calledShot: aimed.shot,
+  };
 }
 
 interface RangedInput {
@@ -875,6 +985,8 @@ export function rangedModifiers(
     /** A laser, which the slope does not affect at all. */
     beamWeapon?: boolean;
     watching?: { hexesWatched: number; coveringLine: boolean } | null;
+    /** The Aim maneuver as it stands, for the extra turns and the bracing. */
+    aim?: { turns: number; braced: boolean } | null;
   },
 ): RollModifier[] {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
@@ -946,8 +1058,17 @@ export function rangedModifiers(
   const mayAim =
     situation !== "moveAndAttack" &&
     (!watching || (!watching.coveringLine && canAimWhileWatching(watching.hexesWatched)));
-  if (input.aimed && mayAim && weapon.accuracy + weapon.scopeBonus !== 0) {
-    modifiers.push({ label: L("Accuracy"), value: weapon.accuracy + weapon.scopeBonus });
+  if (input.aimed && mayAim) {
+    // Aimed on the sheet: Accuracy, the second and third turns, the bracing.
+    // Aimed by the checkbox alone: Accuracy, as one turn's aim is worth.
+    const aiming = aimBonus({
+      turnsAimed: Math.max(1, weapon.aim?.turns ?? 0),
+      accuracy: weapon.accuracy + weapon.scopeBonus,
+      braced: weapon.aim?.braced ?? false,
+    });
+    if (aiming.accuracy !== 0) modifiers.push({ label: L("Accuracy"), value: aiming.accuracy });
+    if (aiming.extraTurns !== 0) modifiers.push({ label: L("AimedLonger"), value: aiming.extraTurns });
+    if (aiming.braced !== 0) modifiers.push({ label: L("Braced"), value: aiming.braced });
   }
   const rapidFire = rapidFireBonus(input.shots ?? 1);
   if (rapidFire !== 0) modifiers.push({ label: L("RapidFire"), value: rapidFire });
@@ -1315,6 +1436,8 @@ export async function handleDamageAction(
   // Where the attack was aimed, so the apply control opens on that location
   // rather than asking again -- and, for a chink, so the DR it found is halved.
   const aimed = await consumeCalledShot(actor);
+  // Pellets that struck as one mass, recorded by the attack roll.
+  const mass = await consumeMassShot(actor);
 
   // A blow struck with the flat of a blade crushes rather than cuts, and one
   // struck with the butt of a spear crushes for a point less.
@@ -1367,6 +1490,7 @@ export async function handleDamageAction(
     damageType: struck ? struck.type : (damageType as DamageType),
     armorDivisor: Number(armorDivisor) || 1,
     ...(aimed ? { calledShot: aimed } : {}),
+    ...(mass > 1 ? { massMultiplier: mass } : {}),
     explosive: target.dataset.explosive === "1",
     fragmentation: target.dataset.fragmentation ?? "",
     modifiers,

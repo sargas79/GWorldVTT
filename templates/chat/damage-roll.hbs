@@ -10,6 +10,9 @@
   </div>
 
   <div class="gc-mods">
+    {{#if massMultiplier}}
+      <span class="gc-mod">{{localize "GWORLD.Chat.MassShot" times=massMultiplier}}</span>
+    {{/if}}
     <span>{{localize "GWORLD.Chat.WoundingModifier"}} &times;{{woundingModifier}}</span>
     {{#each modifiers as |mod|}}<span class="gc-mod">{{signed mod.value}} {{mod.label}}</span>{{/each}}
     {{#if hasArmorDivisor}}

@@ -11,6 +11,8 @@ import "./styles/gworld.css";
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
 import { registerFacing } from "./system/facing.js";
+import { registerAimTracking } from "./system/aim.js";
+import { registerBattleFatigue } from "./system/battle-fatigue.js";
 import { loadSkillCatalog } from "./system/skill-catalog.js";
 import { registerConditions, registerPostureSync } from "./system/conditions.js";
 import { GWorldCombat } from "./system/combat.js";
@@ -76,6 +78,11 @@ Hooks.once("init", () => {
   // Which way a token faces, drawn on it, and the keys that turn it a hex
   // side at a time.
   registerFacing();
+
+  // An aim is lost by doing anything else with the turn, and a battle that
+  // ran on costs everyone in it a point of fatigue when the tracker closes.
+  registerAimTracking();
+  registerBattleFatigue();
 
   const { DocumentSheetConfig } = foundry.applications.apps;
   DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.applications.sheets.ActorSheetV2);
