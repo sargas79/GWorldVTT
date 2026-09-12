@@ -173,11 +173,15 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   Rating.
 - **Temporary attribute penalties** — off the skills the attribute governs, and
   off nothing else: never a defense, a resistance roll or a Fright Check.
-- **Compendia** of advantages, disadvantages, skills, spells, equipment and
-  templates, carrying names, point costs and statistics. The templates are the
+- **Compendia** of advantages, disadvantages, skills, spells, equipment,
+  templates, enhancements and limitations, and the Basic Set's animals and
+  monsters, carrying names, point costs and statistics. The templates are the
   Basic Set's four racial ones, its three sample character templates, and
   eighteen meta-traits; every one is checked at build time against the cost
-  the book states for it.
+  the book states for it. A trait's modifiers are picked off the enhancements
+  compendium at the level wanted, and a creature dragged from the bestiary
+  arrives with its traits, its skills, and the bite, claws and strikers its
+  traits give it.
 
 ### Magic
 
