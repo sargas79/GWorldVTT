@@ -1,5 +1,6 @@
 /**
- * Builds the trait, skill and technique compendia from a GCA 5 data file.
+ * Builds the trait, skill, technique and equipment compendia from a GCA 5
+ * data file.
  *
  * The books' own tables were extracted with `pdftotext` first, and that work is
  * still in `tools/parse-*.mjs`. This reads the same books through GCA's data
@@ -19,7 +20,17 @@
  * drops those fields when it parses a record, so nothing downstream has to
  * remember to.
  *
- * Usage: node tools/parse-gdf.mjs <file.gdf> [--write]
+ * Usage:
+ *   node tools/parse-gdf.mjs <file.gdf> [--write]
+ *        [--out <packs-src dir>] [--prefix B] [--book "Basic Set: Characters"]
+ *        [--overlap <file>]
+ *
+ * With no options it reads the Basic Set (page prefix "B") into this
+ * repository's packs-src. Pointed at another book's GDF with that book's
+ * prefix, it writes only the records citing that book, under a module's
+ * own packs-src. A supplement restates some of the Basic Set's records with
+ * its own page beside the original; those the Basic Set pack already
+ * carries, so they are skipped, and `--overlap` writes the list of them.
  */
 
 import { createHash } from "node:crypto";
@@ -27,7 +38,16 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { fields, isExpression, modes, nameOf, records, splitTop } from "./gdf.mjs";
+import {
+  citesBook,
+  fields,
+  isExpression,
+  modes,
+  nameOf,
+  records,
+  reference,
+  splitTop,
+} from "./gdf.mjs";
 import { existingIds as existingSpellIds, parseSpells } from "./parse-gdf-spells.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -55,20 +75,66 @@ const DIFFICULTIES = new Set(["E", "A", "H", "VH", "W"]);
  */
 const PLACEHOLDER = /[%[\]]/;
 
-/** The page citation, e.g. "B271" or "B271, B276". */
-function reference(page) {
-  const pages = [...(page ?? "").matchAll(/\bB(\d+)\b/g)].map((m) => m[1]);
-  if (pages.length === 0) return "Basic Set: Characters";
-  return `Basic Set: Characters p. ${pages.join(", ")}`;
+/** The book everything else is a supplement to. */
+const BASIC_SET = { prefix: "B", book: "Basic Set: Characters" };
+
+export { reference };
+
+/**
+ * Where a record belongs, for the pack being built.
+ *
+ * "own" is a record of this book; "elsewhere" one that does not cite it at
+ * all. "overlap" is a supplement's record that also cites the Basic Set:
+ * Martial Arts restates Karate with its own page beside B203, and the Basic
+ * Set pack already has it. Nothing overlaps when the Basic Set itself is
+ * being read, whatever else a record cites.
+ */
+export function classifyCitation(page, prefix, base = BASIC_SET.prefix) {
+  if (!citesBook(page, prefix)) return "elsewhere";
+  if (prefix !== base && citesBook(page, base)) return "overlap";
+  return "own";
 }
 
-/** Whether a record cites a page in the Basic Set, which is all this reads. */
-function isBasicSet(f) {
-  return /\bB\d/.test(f.get("page") ?? "");
+/**
+ * Whether a record is this book's to keep. One that cites another book, or
+ * one the Basic Set already carries, is not; the latter is reported to the
+ * overlap list so the module's author can see what was left out.
+ */
+function keeps(r, f, source) {
+  const where = classifyCitation(f.get("page"), source.prefix);
+  if (where === "overlap") source.overlap(r.section, nameOf(r), f.get("page") ?? "");
+  return where === "own";
 }
 
 const id = (kind, name) =>
   createHash("sha1").update(`${kind}:${name}`).digest("hex").slice(0, 16);
+
+/**
+ * Ids from the files of a pack that this parser does not write.
+ *
+ * The equipment pack holds three files the parser generates and two written
+ * by hand -- an atlatl's darts as modes of the atlatl, a punch as a weapon --
+ * and a name in a hand-written file is the one to keep. So those names are
+ * read separately from the generated ones and taken off the table.
+ */
+function handWrittenIds(outDir, pack, generated) {
+  const byName = new Map();
+  const dir = join(outDir, pack);
+  if (!existsSync(dir)) return byName;
+  for (const file of readdirSync(dir).filter((f) => f.endsWith(".json") && !generated.includes(f))) {
+    for (const doc of JSON.parse(readFileSync(join(dir, file), "utf8"))) {
+      byName.set(doc.name, doc._id);
+    }
+  }
+  return byName;
+}
+
+/** What a run reads when nobody says otherwise: the Basic Set, in place. */
+const BASIC_SET_SOURCE = {
+  ...BASIC_SET,
+  outDir: join(projectRoot, "packs-src"),
+  overlap: () => {},
+};
 
 /**
  * Ids already published for a pack, by name.
@@ -78,12 +144,12 @@ const id = (kind, name) =>
  * changed would break every such reference, so a name that already exists keeps
  * the id it already had.
  */
-function existingIds(pack, except = []) {
+function existingIds(outDir, ...packs) {
   const byName = new Map();
-  {
-    const dir = join(projectRoot, "packs-src", pack);
-    if (!existsSync(dir)) return byName;
-    for (const file of readdirSync(dir).filter((f) => f.endsWith(".json") && !except.includes(f))) {
+  for (const pack of packs) {
+    const dir = join(outDir, pack);
+    if (!existsSync(dir)) continue;
+    for (const file of readdirSync(dir).filter((f) => f.endsWith(".json"))) {
       for (const doc of JSON.parse(readFileSync(join(dir, file), "utf8"))) {
         byName.set(doc.name, doc._id);
       }
@@ -148,10 +214,10 @@ function parseLevelNames(value) {
   return levels.some((n) => n !== "") ? levels : [];
 }
 
-function parseTraits(recs, reject, note) {
+function parseTraits(recs, reject, note, source) {
   // Advantages and disadvantages are separate compendia, but they are one
   // body of records in the source and share a name space: Wealth is both.
-  const ids = existingIds("advantages", "disadvantages");
+  const ids = existingIds(source.outDir, "advantages", "disadvantages");
   const out = [];
   const taken = new Map();
 
@@ -160,7 +226,7 @@ function parseTraits(recs, reject, note) {
     if (!category) continue;
 
     const f = fields(r.text);
-    if (!isBasicSet(f)) continue;
+    if (!keeps(r, f, source)) continue;
 
     // GCA asks which core skill Ritual Magery boosts and writes the answer
     // into the name; the trait the book prices is Ritual Magery (p. 242).
@@ -213,7 +279,7 @@ function parseTraits(recs, reject, note) {
         maxLevels,
         reactionModifier: 0,
         description: "",
-        reference: reference(f.get("page")),
+        reference: reference(f.get("page"), source.prefix, source.book),
       },
     });
   }
@@ -255,8 +321,8 @@ function withTechLevel(name) {
   return specialty ? `${specialty[1]}/TL${specialty[2]}` : `${name}/TL`;
 }
 
-function parseSkills(recs, reject) {
-  const ids = existingIds("skills");
+function parseSkills(recs, reject, source) {
+  const ids = existingIds(source.outDir, "skills");
   const skills = [];
   const techniques = [];
   const taken = new Set();
@@ -265,7 +331,7 @@ function parseSkills(recs, reject) {
     if (r.section !== "SKILLS") continue;
 
     const f = fields(r.text);
-    if (!isBasicSet(f)) continue;
+    if (!keeps(r, f, source)) continue;
 
     const bare = nameOf(r);
     if (PLACEHOLDER.test(bare)) { reject(bare, "name is a GCA placeholder"); continue; }
@@ -281,7 +347,7 @@ function parseSkills(recs, reject) {
     const [attr, diff] = parts.map((p) => p.trim()).map((p) => (p === "WC" ? "W" : p));
 
     if (attr === "Tech") {
-      const technique = parseTechnique(bare, diff, f, ids, reject);
+      const technique = parseTechnique(bare, diff, f, ids, reject, source);
       if (technique) techniques.push(technique);
       continue;
     }
@@ -323,7 +389,7 @@ function parseSkills(recs, reject) {
         defaults,
         techLevel: "",
         description: "",
-        reference: reference(f.get("page")),
+        reference: reference(f.get("page"), source.prefix, source.book),
       },
     });
   }
@@ -341,7 +407,7 @@ function parseSkills(recs, reject) {
  * means. Its ceiling is written `upto(SK:Bow)` rather than `upto(prereq)`,
  * naming the same skill the long way round.
  */
-function parseTechnique(name, difficulty, f, ids, reject) {
+function parseTechnique(name, difficulty, f, ids, reject, source) {
   if (difficulty !== "A" && difficulty !== "H") {
     reject(name, `technique difficulty not in the model: "${difficulty}"`);
     return null;
@@ -377,7 +443,7 @@ function parseTechnique(name, difficulty, f, ids, reject) {
       points: 0,
       maxRelativeToPrerequisite: cap[2] ? Number(`${cap[1]}${cap[2]}`) : 0,
       description: "",
-      reference: reference(f.get("page")),
+      reference: reference(f.get("page"), source.prefix, source.book),
     },
   };
 }
@@ -1031,22 +1097,22 @@ function categoryOf(name, armed) {
   return "misc";
 }
 
-export function parseEquipment(recs, reject, note) {
-  const ids = existingIds("equipment");
+export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
+  const ids = existingIds(source.outDir, "equipment");
   const armor = [];
   const gear = [];
   const shields = [];
   // The hand-written files carry what the tables give and GCA does not --
   // an atlatl's darts as modes of the atlatl -- and an entry there is the
   // one to keep. The parser writes only its own three files.
-  const handMade = existingIds("equipment", ["armor.json", "gear.json", "shields.json"]);
+  const handMade = handWrittenIds(source.outDir, "equipment", ["armor.json", "gear.json", "shields.json"]);
   const taken = new Set(handMade.keys());
 
   for (const r of recs) {
     if (r.section !== "EQUIPMENT") continue;
 
     const f = fields(r.text);
-    if (!isBasicSet(f)) continue;
+    if (!keeps(r, f, source)) continue;
 
     // A bow is named for the ST it is built to, which GCA leaves for the
     // player to pick: "Longbow (ST%choice%)". The compendium carries the
@@ -1063,7 +1129,7 @@ export function parseEquipment(recs, reject, note) {
     const common = {
       ...physical(f),
       description: "",
-      reference: reference(f.get("page")),
+      reference: reference(f.get("page"), source.prefix, source.book),
     };
 
     // Shields first: their dr() field runs DR and HP together on one entry, so
@@ -1247,36 +1313,98 @@ function report(label, count, rejected) {
   }
 }
 
+/** Command-line options, with the Basic Set as the default. */
+function option(flag, fallback) {
+  const at = process.argv.indexOf(flag);
+  return at !== -1 && process.argv[at + 1] ? process.argv[at + 1] : fallback;
+}
+
+/** A book's name as a file stem: "Martial Arts" becomes "martial-arts". */
+function slug(book) {
+  return book.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+/**
+ * The files a run writes, by pack.
+ *
+ * The Basic Set keeps the names it has always had, since the packs are
+ * checked in under them. Another book's files carry its name, so a module
+ * holding two books can keep both in one packs-src.
+ */
+function fileNames(basic, book) {
+  const stem = basic ? "basic-set" : slug(book);
+  const gear = (name) => (basic ? `${name}.json` : `${stem}-${name}.json`);
+  return {
+    advantages: `${stem}-advantages.json`,
+    disadvantages: `${stem}-disadvantages.json`,
+    skills: `${stem}-skills.json`,
+    techniques: `${stem}-techniques.json`,
+    armor: gear("armor"),
+    gear: gear("gear"),
+    shields: gear("shields"),
+    spells: `${stem}-spells.json`,
+  };
+}
+
 function main() {
-  const [, , source, write] = process.argv;
-  if (!source) {
-    console.error("Usage: node tools/parse-gdf.mjs <file.gdf> [--write]");
+  const file = process.argv[2];
+  if (!file || file.startsWith("--")) {
+    console.error(
+      "Usage: node tools/parse-gdf.mjs <file.gdf> [--write] [--out <dir>] [--prefix B] [--book <name>] [--overlap <file>]",
+    );
     process.exit(1);
   }
+  const write = process.argv.includes("--write");
+  const outDir = resolve(option("--out", join(projectRoot, "packs-src")));
+  const prefix = option("--prefix", BASIC_SET.prefix);
+  const book = option("--book", BASIC_SET.book);
+  const overlapFile = option("--overlap", null);
+  const basic = prefix === BASIC_SET.prefix;
 
-  const recs = records(readFileSync(source, "utf8"));
+  // What was left to the Basic Set pack: section, name and the citation
+  // that put it there, so the list can be checked against the book.
+  const overlaps = [];
+  const source = {
+    prefix,
+    book,
+    outDir,
+    overlap: (section, name, page) => overlaps.push({ section, name, page }),
+  };
+
+  const recs = records(readFileSync(file, "utf8"));
 
   const notes = [];
   const traitRejects = [];
-  const traits = parseTraits(recs, (what, why) => traitRejects.push({ what, why }), (n) => notes.push(n));
+  const traits = parseTraits(
+    recs,
+    (what, why) => traitRejects.push({ what, why }),
+    (n) => notes.push(n),
+    source,
+  );
 
   const skillRejects = [];
-  const { skills, techniques } = parseSkills(recs, (what, why) => skillRejects.push({ what, why }));
+  const { skills, techniques } = parseSkills(
+    recs,
+    (what, why) => skillRejects.push({ what, why }),
+    source,
+  );
 
   const gearRejects = [];
   const { armor, gear, shields } = parseEquipment(
     recs,
     (what, why) => gearRejects.push({ what, why }),
     (n) => notes.push(n),
+    source,
   );
 
   // The spells, through the tool a module would use for another book's.
   const spellRejects = [];
   const spells = parseSpells(recs, {
     reject: (what, why) => spellRejects.push({ what, why }),
-    ids: existingSpellIds(join(projectRoot, "packs-src", "spells")),
-    prefix: "B",
-    book: "Basic Set: Characters",
+    ids: existingSpellIds(join(outDir, "spells")),
+    prefix,
+    book,
+    overlap: source.overlap,
   });
 
   const positive = traits.filter((t) => ["advantage", "perk"].includes(t.system.category));
@@ -1297,56 +1425,59 @@ function main() {
     console.log(`\nrecorded but not modelled: ${notes.length}`);
     for (const n of notes.slice(0, 6)) console.log(`    ${n}`);
   }
+  if (overlaps.length) {
+    console.log(`\nleft to the Basic Set pack: ${overlaps.length}`);
+    for (const o of overlaps.slice(0, 6)) console.log(`    ${o.name} (${o.page})`);
+  }
 
-  if (write === "--write") {
+  if (write) {
     // Two packs rather than one. A list of 641 traits with advantages and
     // disadvantages interleaved is not a list anyone can choose from: you go
     // looking for something to spend points on and half of what you scroll
     // past charges you nothing.
     const negative = traits.filter((t) => !positive.includes(t));
+    const names = fileNames(basic, book);
 
+    // A supplement with no armour, say, gets no armour file: an empty pack
+    // file would be a pack with nothing in it, which validates but says
+    // nothing. The Basic Set writes every file, as it always has.
     const files = [
-      ["advantages", "basic-set-advantages.json", positive],
-      ["disadvantages", "basic-set-disadvantages.json", negative],
-      ["skills", "basic-set-skills.json", skills],
-      ["skills", "basic-set-techniques.json", techniques],
-      ["equipment", "armor.json", armor],
-      ["equipment", "gear.json", gear],
-      ["equipment", "shields.json", shields],
-      ["spells", "basic-set-spells.json", spells],
+      ["advantages", names.advantages, positive],
+      ["disadvantages", names.disadvantages, negative],
+      ["skills", names.skills, skills],
+      ["skills", names.techniques, techniques],
+      ["equipment", names.armor, armor],
+      ["equipment", names.gear, gear],
+      ["equipment", names.shields, shields],
+      ["spells", names.spells, spells],
+    ].filter(([, , docs]) => basic || docs.length > 0);
+    for (const [pack, name, docs] of files) {
+      mkdirSync(join(outDir, pack), { recursive: true });
+      writeFileSync(join(outDir, pack, name), `${JSON.stringify(docs, null, 2)}\n`, "utf8");
+    }
+
+    const rejected = [
+      ["advantages", traitRejects.map((r) => `${r.why}\t${r.what}`)],
+      ["skills", skillRejects.map((r) => `${r.why}\t${r.what}`)],
+      ["equipment", [
+        ...gearRejects.map((r) => `${r.why}\t${r.what}`),
+        ...notes.map((n) => `not modelled\t${n}`),
+      ]],
+      ["spells", spellRejects.map((r) => `${r.why}\t${r.what}`)],
     ];
-    for (const [pack, file, docs] of files) {
-      mkdirSync(join(projectRoot, "packs-src", pack), { recursive: true });
+    for (const [pack, lines] of rejected) {
+      if (!existsSync(join(outDir, pack))) continue;
+      writeFileSync(join(outDir, pack, ".rejected-gdf.txt"), lines.join("\n"), "utf8");
+    }
+
+    if (overlapFile) {
       writeFileSync(
-        join(projectRoot, "packs-src", pack, file),
-        `${JSON.stringify(docs, null, 2)}\n`,
+        resolve(overlapFile),
+        overlaps.map((o) => `${o.section}\t${o.name}\t${o.page}`).join("\n") + (overlaps.length ? "\n" : ""),
         "utf8",
       );
     }
-    writeFileSync(
-      join(projectRoot, "packs-src", "advantages", ".rejected-gdf.txt"),
-      traitRejects.map((r) => `${r.why}\t${r.what}`).join("\n"),
-      "utf8",
-    );
-    writeFileSync(
-      join(projectRoot, "packs-src", "skills", ".rejected-gdf.txt"),
-      skillRejects.map((r) => `${r.why}\t${r.what}`).join("\n"),
-      "utf8",
-    );
-    writeFileSync(
-      join(projectRoot, "packs-src", "equipment", ".rejected-gdf.txt"),
-      [
-        ...gearRejects.map((r) => `${r.why}\t${r.what}`),
-        ...notes.map((n) => `not modelled\t${n}`),
-      ].join("\n"),
-      "utf8",
-    );
-    writeFileSync(
-      join(projectRoot, "packs-src", "spells", ".rejected-gdf.txt"),
-      spellRejects.map((r) => `${r.why}\t${r.what}`).join("\n"),
-      "utf8",
-    );
-    console.log("\nwrote traits, skills, techniques, armour, equipment, shields and spells");
+    console.log(`\nwrote ${files.map(([pack, name]) => join(pack, name)).join(", ")}`);
   }
 }
 

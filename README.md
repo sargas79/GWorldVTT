@@ -286,15 +286,35 @@ Foundry **Data** directory, then `npm run dev` to build and link `dist/` into
 Other scripts: `npm run watch`, `npm run typecheck`, `npm run lint`,
 `npm run test:coverage`, `npm run validate:packs`.
 
-### Spells from other books, as a module
+### Other books, as a module
 
-The system's own spells pack is built from the GURPS Character Assistant data
-file for the Basic Set. A module can carry another book's spells — GURPS Magic,
-Thaumatology — the same way, and the sheet, the picker and the guided build
-read them alongside the book's without any change to the system:
+The system's own packs are built from the GURPS Character Assistant data file
+for the Basic Set. A module can carry another book — Martial Arts, Low-Tech,
+GURPS Magic — the same way, and the sheet, the picker and the guided build read
+its packs alongside the book's without any change to the system:
 
 1. Build the JSON from that book's GDF with the same tool, naming the page
-   prefix the book uses and where the file should go:
+   prefix the book uses, the name the references should carry, and where the
+   files should go:
+
+   ```bash
+   node tools/parse-gdf.mjs "GURPS Martial Arts 4e.gdf" --prefix MA --book "Martial Arts" --out my-module/packs-src --overlap my-module/overlap.txt --write
+   ```
+
+   Only records citing that book's pages are written, one file per pack —
+   `advantages/martial-arts-advantages.json`, `skills/martial-arts-techniques.json`
+   and so on — and each reference reads "Martial Arts p. N". A supplement
+   restates some of the Basic Set's entries with its own page beside the
+   original; those the system's packs already carry, so they are skipped, and
+   `--overlap` writes the list of them for checking. Running the tool again
+   over the same `--out` keeps the ids of every entry already there, so a
+   character that dragged one in still points at it.
+
+   With no options the tool reads the Basic Set into this repository's own
+   `packs-src`, which is how the system's packs are regenerated.
+
+   A book that is only spells can use the spells tool on its own, with the
+   same options:
 
    ```bash
    node tools/parse-gdf-spells.mjs "GURPS Magic 4e.gdf" --prefix M --book "Magic" --out my-module/packs-src --pack spells --write
@@ -310,9 +330,11 @@ read them alongside the book's without any change to the system:
    node tools/build-packs.mjs --src my-module/packs-src --out my-module/packs
    ```
 
-3. Declare the pack in the module's `module.json` as an `Item` pack with
-   `"system": "gworld"`, and list the module under **Configure Settings →
-   Compendium sources** in the world.
+3. Declare each pack in the module's `module.json` as an `Item` pack with
+   `"system": "gworld"`. Give every pack of one book the same
+   `"flags": {"gworld": {"book": "martial-arts", "bookTitle": "Martial Arts"}}`
+   and **Configure Settings → Compendium sources** shows the book as one row
+   with one switch for all its packs.
 
 A spell record is a name and statistics: colleges, classes, cost, time and
 duration as the book writes them, the Magery it needs, and a prerequisite line
