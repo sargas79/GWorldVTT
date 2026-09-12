@@ -67,7 +67,22 @@ import {
   type MagicStylePreference,
   type MagicTalent,
 } from "../../rules/magic.js";
+import { activeSpellCounts } from "../../rules/casting.js";
 import type { SpellDerived } from "./items.js";
+
+/** A spell running on a character, as stored. */
+export interface ActiveSpell {
+  id: string;
+  itemId: string;
+  name: string;
+  castCost: number;
+  maintainCost: number | null;
+  durationSeconds: number | null;
+  expiresAt: number | null;
+  startedAt: number;
+  concentrating: boolean;
+  permanent: boolean;
+}
 import {
   broadJumpFeet,
   highJumpInches,
@@ -221,6 +236,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     itemIds: string[];
   }>;
   declare magic: { style: MagicStylePreference };
+  declare activeSpells: ActiveSpell[];
   declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
   declare points: {
     starting: number;
@@ -468,6 +484,34 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           choices: ["auto", "standard", "ritual"],
         }),
       }),
+
+      /**
+       * The spells this character has running (Characters pp. 237-238). Each
+       * is what the sheet needs to keep it up or let it go: when it runs out
+       * in world time, what maintaining it costs, and whether it is being
+       * concentrated on, which is what decides the penalty on the next
+       * casting. A permanent spell is not kept, since it carries no penalty
+       * and nothing about it changes.
+       */
+      activeSpells: new fields.ArrayField(
+        new fields.SchemaField({
+          id: new fields.StringField({ required: true, blank: false }),
+          itemId: new fields.StringField({ required: true, blank: true, initial: "" }),
+          name: new fields.StringField({ required: true, blank: true, initial: "" }),
+          /** Energy the casting cost, after skill. */
+          castCost: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+          /** Energy to keep it up another interval, after skill; null where it cannot be kept up. */
+          maintainCost: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
+          /** One interval of duration in seconds, or null where the book does not count it. */
+          durationSeconds: new fields.NumberField({ required: true, nullable: true, initial: null, min: 0 }),
+          /** World time at which it runs out, or null for a spell kept until dropped. */
+          expiresAt: new fields.NumberField({ required: true, nullable: true, initial: null }),
+          startedAt: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
+          concentrating: new fields.BooleanField({ initial: false }),
+          permanent: new fields.BooleanField({ initial: false }),
+        }),
+        { required: true, initial: [] },
+      ),
 
       /**
        * Attributes something has temporarily knocked down (Campaigns p. 421).
@@ -806,6 +850,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       standardMagery: talent.magery,
       ritualMagery: talent.ritualMagery,
       magicResistance,
+      // What the spells still running cost the next casting (p. 238).
+      ...activeSpellCounts(this.activeSpells ?? []),
     };
   }
 
