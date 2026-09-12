@@ -131,8 +131,8 @@
       <div class="grph">{{localize "GWORLD.Section.SpellsKnown"}}</div>
       <div class="npcline">
         {{#each notableSpells as |spell|}}
-          <span class="rollable" data-action="roll" data-roll-type="skill"
-                data-roll-label="{{spell.name}}" data-roll-target="{{spell.level}}" data-based-on="IQ">
+          <span class="rollable" data-action="castSpell" data-item-id="{{spell.id}}"
+                data-tooltip="{{localize 'GWORLD.Cast.Title'}}">
             {{spell.name}} <b>{{spell.level}}</b>
           </span>
         {{/each}}

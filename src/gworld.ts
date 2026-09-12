@@ -60,6 +60,12 @@ Hooks.once("init", () => {
   CONFIG.Combat.initiative = { formula: "@derived.basicSpeed", decimals: 2 };
   CONFIG.Combat.documentClass = GWorldCombat;
 
+  // A GURPS turn is one second (Campaigns p. 363), so a round of combat
+  // advances world time by one. A spell that lasts a minute runs out sixty
+  // rounds later, which is what its duration on the sheet counts against.
+  CONFIG.time.roundTime = 1;
+  CONFIG.time.turnTime = 0;
+
   registerSettings();
   registerTemplateHelpers();
   // Partials kept in files rather than in strings. Not awaited: init is

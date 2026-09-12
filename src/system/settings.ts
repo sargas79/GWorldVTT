@@ -12,6 +12,8 @@ import { CompendiumSourcesSettings } from "./apps/compendium-sources.js";
 import { SYSTEM_ID } from "./constants.js";
 import { COMPENDIUM_SOURCES_KEY } from "./compendium-sources.js";
 import { OPTIONAL_RULES_KEY, defaultRuleState } from "./optional-rules.js";
+import { MANA_LEVEL_KEY } from "./casting.js";
+import { MANA_LEVELS } from "../rules/casting.js";
 
 /** Redraws every token's facing arrow; the facing module listens for it. */
 function refreshAllFacing(): void {
@@ -37,6 +39,19 @@ export function registerSettings(): void {
     config: false,
     type: Object,
     default: defaultRuleState(),
+  });
+
+  // "Magic will work only if the mana level of the game world or specific
+  // area allows it" (Characters p. 235): the world's level here, a scene's
+  // own as a flag on the scene, set from the Magic tab.
+  game.settings.register(SYSTEM_ID, MANA_LEVEL_KEY, {
+    name: "GWORLD.Mana.Setting",
+    hint: "GWORLD.Mana.SettingHint",
+    scope: "world",
+    config: true,
+    type: String,
+    choices: Object.fromEntries(MANA_LEVELS.map((level) => [level, `GWORLD.Mana.${level}`])),
+    default: "normal",
   });
 
   game.settings.registerMenu(SYSTEM_ID, "rules", {

@@ -91,6 +91,16 @@ import { SKILL_ORDER } from "../settings.js";
 import { attributeOf } from "../attributes.js";
 import { asSkillOrder, groupSkills, otherOrder } from "../skill-groups.js";
 import { groupSpells } from "../spell-groups.js";
+import {
+  castSpell,
+  describeActiveSpell,
+  describeMana,
+  dropSpell,
+  maintainSpell,
+  promptForMana,
+  rollKeepConcentration,
+  toggleConcentrating,
+} from "../casting.js";
 import { nextSpellPoints, previousSpellPoints, type MagicStyle } from "../../rules/magic.js";
 import { GEAR_GROUPS, gearGroupOf, type GearGroup } from "../gear-groups.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
@@ -1838,6 +1848,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       toggleSkillOrder: GWorldCharacterSheet.#onToggleSkillOrder,
       readyWeapon: GWorldCharacterSheet.#onReadyWeapon,
       regenerate: GWorldCharacterSheet.#onRegenerate,
+      castSpell: GWorldCharacterSheet.#onCastSpell,
+      maintainSpell: GWorldCharacterSheet.#onMaintainSpell,
+      dropSpell: GWorldCharacterSheet.#onDropSpell,
+      toggleConcentrating: GWorldCharacterSheet.#onToggleConcentrating,
+      keepConcentration: GWorldCharacterSheet.#onKeepConcentration,
+      changeMana: GWorldCharacterSheet.#onChangeMana,
     },
   };
 
@@ -1929,6 +1945,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       editable: this.isEditable,
       limited: actor.limited,
       isOwner: actor.isOwner,
+      isGM: game.user?.isGM === true,
       // Controls edited in place carry ids built from this, so the redraw
       // that follows every edit can put focus back where it was.
       sheetId: this.id,
@@ -2109,7 +2126,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         ),
       },
 
-      magic: this.#magicPanel(derived, items.spellGroups),
+      magic: this.#magicPanel(derived, items.spellGroups, system.activeSpells ?? []),
 
       biographyHTML: await enrich(system.details.biography ?? ""),
       notesHTML: await enrich(system.details.notes ?? ""),
@@ -2213,7 +2230,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * are not met, one on a character with no Magery, a ritual spell with no
    * college skill to be read off.
    */
-  #magicPanel(derived: any, groups: ReturnType<typeof groupSpells<any>>) {
+  #magicPanel(derived: any, groups: ReturnType<typeof groupSpells<any>>, activeSpells: any[]) {
     const magic = derived.magic ?? {};
     const style: MagicStyle = magic.style ?? "standard";
     const L = (key: string) => game.i18n.localize(`GWORLD.Spell.${key}`);
@@ -2280,7 +2297,49 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       styleHint: L(style === "ritual" ? "RitualHint" : "StandardHint"),
       groups: rows,
       count: groups.reduce((n, g) => n + g.rows.filter((r) => r.known).length, 0),
+      // Where the casting happens, and what is already running (pp. 235, 238).
+      mana: describeMana(),
+      active: activeSpells.map((spell: any) => ({
+        ...spell,
+        ...describeActiveSpell(spell),
+        canMaintain: spell.maintainCost !== null && spell.maintainCost !== undefined,
+      })),
     };
+  }
+
+  /** Casts the spell whose row was clicked (Characters pp. 235-239). */
+  static async #onCastSpell(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.#itemFrom(target);
+    if (item) await castSpell(this.actor, item);
+  }
+
+  #activeSpellId(target: HTMLElement): string | null {
+    return target.closest<HTMLElement>("[data-spell-id]")?.dataset.spellId ?? null;
+  }
+
+  static async #onMaintainSpell(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = this.#activeSpellId(target);
+    if (id) await maintainSpell(this.actor, id);
+  }
+
+  static async #onDropSpell(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = this.#activeSpellId(target);
+    if (id) await dropSpell(this.actor, id);
+  }
+
+  static async #onToggleConcentrating(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = this.#activeSpellId(target);
+    if (id) await toggleConcentrating(this.actor, id);
+  }
+
+  /** Will-3 to keep casting through a distraction (p. 236). */
+  static async #onKeepConcentration(this: GWorldCharacterSheet) {
+    await rollKeepConcentration(this.actor);
+  }
+
+  /** The GM sets the mana here and the campaign's default (p. 235). */
+  static async #onChangeMana(this: GWorldCharacterSheet) {
+    await promptForMana();
   }
 
   /**

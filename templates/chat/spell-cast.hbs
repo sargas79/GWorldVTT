@@ -1,0 +1,58 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{spell}}</span>
+    <span class="gc-target">{{localize "GWORLD.Chat.Target"}} {{effective}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>{{base}} {{localize "GWORLD.Chat.Base"}}</span>
+    {{#each modifiers as |mod|}}
+      <span class="gc-mod">{{signed mod.value}} {{mod.label}}</span>
+    {{/each}}
+  </div>
+
+  {{!-- What the casting was: the class, the energy asked for, how long it
+       takes to concentrate and what ritual the caster's skill still demands. --}}
+  <div class="gc-mods">
+    <span>{{classes}}</span>
+    {{#if subject}}<span class="gc-mod">{{subject}}</span>{{/if}}
+    <span class="gc-mod">{{localize "GWORLD.Cast.Energy"}} {{cost}}{{#if reduced}} ({{localize "GWORLD.Cast.Reduced" by=reduced}}){{/if}}</span>
+    <span class="gc-mod">{{localize "GWORLD.Cast.Time"}} {{time}}</span>
+    <span class="gc-mod">{{ritual}}</span>
+  </div>
+
+  <div class="gc-dice">
+    {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+    <span class="gc-total">{{roll}}</span>
+  </div>
+
+  <div class="gc-result {{resultClass}}">{{resultLabel}}</div>
+
+  {{#if paid}}
+    <div class="gc-mods">
+      <span class="gc-mod">{{paid}}</span>
+      {{#if fatigueReturns}}<span>{{localize "GWORLD.Cast.FatigueReturns"}}</span>{{/if}}
+    </div>
+  {{/if}}
+
+  {{#if duration}}
+    <div class="gc-mods">
+      <span>{{localize "GWORLD.Cast.Lasts"}} {{duration}}</span>
+      {{#if maintain}}<span class="gc-mod">{{localize "GWORLD.Cast.Maintain"}} {{maintain}}</span>{{/if}}
+    </div>
+  {{/if}}
+
+  {{#if failure}}
+    <div class="gc-result crit-failure">
+      {{localize "GWORLD.Cast.FailureTable" roll=failure.roll}} &mdash; {{failure.effect}}
+      {{#if failure.injury}}<span class="gc-mod">{{failure.injury}}</span>{{/if}}
+      {{#if failure.gmDecides}}<span class="gc-mod">{{localize "GWORLD.Critical.GmDecides"}}</span>{{/if}}
+    </div>
+  {{/if}}
+
+  {{#if mildFailure}}
+    <div class="gc-result failure">{{localize "GWORLD.Cast.MildFailure"}}</div>
+  {{/if}}
+
+  {{#if note}}<div class="gc-foot">{{note}}</div>{{/if}}
+</div>
