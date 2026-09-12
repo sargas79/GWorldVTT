@@ -155,8 +155,11 @@
         </thead>
         <tbody>
           {{#each derived.melee as |atk|}}
-            <tr data-item-id="{{atk.itemId}}">
-              <td><span class="wname">{{atk.name}}</span> <span class="wmode">{{atk.mode}}</span></td>
+            <tr data-item-id="{{atk.itemId}}" {{#if atk.atDefault}}class="dim"{{/if}}>
+              <td>
+                <span class="wname">{{atk.name}}</span> <span class="wmode">{{atk.mode}}</span>
+                {{#if atk.atDefault}}<span class="tag" data-tooltip="{{localize 'GWORLD.Attack.AtDefaultHint'}}">{{localize "GWORLD.Skill.Untrained"}}</span>{{/if}}
+              </td>
               <td class="n">
                 {{#if atk.skillLevel}}<span class="lvl">{{atk.skillLevel}}</span>{{else}}<span class="bad">&mdash;</span>{{/if}}
               </td>
@@ -208,8 +211,6 @@
           {{/each}}
         </tbody>
       </table>
-    {{else}}
-      <div class="inote">{{> "gworld.info"}}<span>{{localize "GWORLD.Hint.NoMeleeAttacks"}}</span></div>
     {{/if}}
   </div>
 
@@ -231,8 +232,11 @@
         </thead>
         <tbody>
           {{#each derived.ranged as |atk|}}
-            <tr data-item-id="{{atk.itemId}}">
-              <td><span class="wname">{{atk.name}}</span> <span class="wmode">{{atk.mode}}</span></td>
+            <tr data-item-id="{{atk.itemId}}" {{#if atk.atDefault}}class="dim"{{/if}}>
+              <td>
+                <span class="wname">{{atk.name}}</span> <span class="wmode">{{atk.mode}}</span>
+                {{#if atk.atDefault}}<span class="tag" data-tooltip="{{localize 'GWORLD.Attack.AtDefaultHint'}}">{{localize "GWORLD.Skill.Untrained"}}</span>{{/if}}
+              </td>
               <td class="n">
                 {{#if atk.skillLevel}}<span class="lvl">{{atk.skillLevel}}</span>{{else}}<span class="bad">&mdash;</span>{{/if}}
               </td>
@@ -262,6 +266,7 @@
               <td class="c">
                 {{#if atk.skillLevel}}
                   <span class="rollable" data-action="roll" data-roll-type="attack"
+                        data-tooltip="{{localize 'GWORLD.Ranged.QuickShotHint'}}"
                         data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
                         data-damage-type="{{atk.damageType}}"
                         data-ranged="1" data-accuracy="{{atk.accuracy}}"

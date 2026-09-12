@@ -40,7 +40,8 @@
       "IQAbbr": "IQ",
       "HTAbbr": "HT",
       "Will": "Will",
-      "Per": "Perception"
+      "Per": "Perception",
+      "FromTraits": "from traits"
     },
     "Secondary": {
       "HP": "Hit Points",
@@ -424,6 +425,13 @@
         "Hint": "How the Skills tab lists skills: grouped by controlling attribute as the printed sheet does, or as one alphabetical list.",
         "attribute": "By attribute",
         "alphabetical": "One alphabetical list"
+      },
+      "Facing": {
+        "Name": "Facing arrow on tokens",
+        "Hint": "Draws an arrow on each token showing which way it faces, with its front arc marked. Facing is the token's rotation: turn a selected token with Shift and the mouse wheel, Shift with an arrow key, or Q and E for one hex side at a time.",
+        "tactical": "When the world is on tactical combat",
+        "always": "Always",
+        "off": "Never"
       }
     },
     "Builder": {
@@ -575,7 +583,18 @@
       "TabledNote": "priced from the table",
       "TotalHint": "Total cost:",
       "Applied": "applied",
-      "AppliedHint": "This system applies this trait itself — its bonus is already in the numbers on the sheet."
+      "AppliedHint": "This system applies this trait itself — its bonus is already in the numbers on the sheet.",
+      "Modifiers": "Enhancements and limitations",
+      "ModifierName": "Modifier",
+      "ModifierValue": "Percent",
+      "NoModifiers": "None. The trait costs what the book prints.",
+      "ModifiersHint": "Each modifier is a percentage of the base cost: Reliable +20, Costs Fatigue -40. The net is never below -80%. A self-control number multiplies a disadvantage's value: 6 doubles it, 15 halves it. Fractions round away from zero.",
+      "SelfControl": "Self-control number",
+      "NoSelfControl": "None",
+      "SelfControl6": "6 (almost never resisted, ×2)",
+      "SelfControl9": "9 (rarely, ×1.5)",
+      "SelfControl12": "12 (fairly often, ×1)",
+      "SelfControl15": "15 (almost always, ×0.5)"
     },
     "Language": {
       "none": "None",
@@ -711,7 +730,9 @@
       "Shots": "Shots fired",
       "RapidFire": "rapid fire",
       "Elevation": "Height over target (yards)",
-      "SpeedRangeUphill": "Speed/Range at {yards} yards"
+      "SpeedRangeUphill": "Speed/Range at {yards} yards",
+      "QuickShotHint": "Click: shoot at the range measured to the targeted token. Shift-click: every option.",
+      "Measured": "range measured: {yards} yd"
     },
     "Malfunction": {
       "Jammed": "The weapon malfunctions",
@@ -1479,6 +1500,18 @@
       "tool": "Tool",
       "consumable": "Consumable",
       "misc": "Miscellaneous"
+    },
+    "Natural": {
+      "punch": "Punch",
+      "kick": "Kick"
+    },
+    "Attack": {
+      "AtDefaultHint": "The skill is not on the sheet; this is the book's default for it."
+    },
+    "Keybinding": {
+      "TurnLeft": "Turn selected tokens left",
+      "TurnRight": "Turn selected tokens right",
+      "TurnHint": "One hex side on a hex map, one diagonal on a square map."
     }
   }
 }

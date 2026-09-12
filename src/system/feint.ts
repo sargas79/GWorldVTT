@@ -20,6 +20,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { targetedTokens } from "./targets.js";
+import { attributeOf } from "./attributes.js";
 
 /** Where the pending feint is kept on the attacker. */
 export const FEINT_FLAG = "feint";
@@ -118,7 +119,7 @@ export async function consumeFeint(attacker: any): Promise<number> {
  * asked: the foe defends with their best, which is what they would choose.
  */
 export function feintDefenseScore(foe: any): { score: number; source: string } {
-  const dx = Number(foe?.system?.attributes?.DX) || 10;
+  const dx = attributeOf(foe, "DX");
   let best = { score: dx, source: "DX" };
 
   // Every melee mode the foe has is a combat skill they could roll against,

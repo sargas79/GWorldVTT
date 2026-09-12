@@ -13,10 +13,18 @@ import { SYSTEM_ID } from "./constants.js";
 import { COMPENDIUM_SOURCES_KEY } from "./compendium-sources.js";
 import { OPTIONAL_RULES_KEY, defaultRuleState } from "./optional-rules.js";
 
+/** Redraws every token's facing arrow; the facing module listens for it. */
+function refreshAllFacing(): void {
+  Hooks.callAll(`${SYSTEM_ID}.refreshFacing`);
+}
+
 export const COMBAT_STYLE = "combatStyle";
 
 /** How the Skills tab is ordered: by attribute, or one alphabetical list. */
 export const SKILL_ORDER = "skillOrder";
+
+/** When the facing arrow is drawn on tokens. */
+export const FACING_INDICATOR = "facingIndicator";
 
 export type CombatStyle = "basic" | "tactical";
 
@@ -74,6 +82,24 @@ export function registerSettings(): void {
     default: "attribute",
   });
 
+  // The arrow on the token that says which way it faces. Drawn when the
+  // world is on tactical combat, where facing decides what can be defended;
+  // a player may want it always, or never.
+  game.settings.register(SYSTEM_ID, FACING_INDICATOR, {
+    name: "GWORLD.Settings.Facing.Name",
+    hint: "GWORLD.Settings.Facing.Hint",
+    scope: "client",
+    config: true,
+    type: String,
+    choices: {
+      tactical: "GWORLD.Settings.Facing.tactical",
+      always: "GWORLD.Settings.Facing.always",
+      off: "GWORLD.Settings.Facing.off",
+    },
+    default: "tactical",
+    onChange: () => refreshAllFacing(),
+  });
+
   game.settings.register(SYSTEM_ID, COMBAT_STYLE, {
     name: "GWORLD.Settings.CombatStyle.Name",
     hint: "GWORLD.Settings.CombatStyle.Hint",
@@ -85,6 +111,8 @@ export function registerSettings(): void {
       tactical: "GWORLD.Settings.CombatStyle.Tactical",
     },
     default: "basic",
+    // Facing is drawn by this, so the tokens redraw when it changes.
+    onChange: () => refreshAllFacing(),
   });
 }
 

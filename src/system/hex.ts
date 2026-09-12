@@ -7,8 +7,11 @@
  * east, a flat-topped one has a neighbour to the north, and the two are thirty
  * degrees out from each other.
  *
- * Angles here are degrees clockwise from north, which is how Foundry states a
- * token's rotation: a token at rotation 0 faces up the screen.
+ * Angles here are degrees clockwise from north. Foundry states a token's
+ * rotation the other way up: rotation 0 faces the bottom of the screen and
+ * grows clockwise, which is what its keyboard turning and auto-rotation both
+ * write. The two differ by a half turn, and `facingOf` is where that is
+ * reconciled.
  */
 
 import { hexDirection, type HexDirection } from "../rules/tactical.js";
@@ -76,17 +79,22 @@ export function tokenCentre(token: any): { x: number; y: number } {
   return { x: x + (width * size) / 2, y: y + (height * size) / 2 };
 }
 
+/** Foundry's rotation 0 faces down the screen; a bearing of 0 is north. */
+export const ROTATION_TO_BEARING = 180;
+
 /**
  * Which way a token faces, from its rotation.
  *
- * A token that has never been turned is at rotation 0, which is up the screen.
- * That is a real facing rather than a missing one, so it is read as such: a GM
- * who has not turned anyone is running a fight where everyone faces north,
- * which is at least consistent.
+ * A token that has never been turned is at rotation 0, which Foundry draws
+ * facing the bottom of the screen -- south. That is a real facing rather than
+ * a missing one, so it is read as such: a GM who has not turned anyone is
+ * running a fight where everyone faces south, which is at least consistent,
+ * and matches the arrow the token wears.
  */
 export function facingOf(token: any, gridType: number): HexDirection {
   const rotation = Number(token?.document?.rotation ?? token?.rotation ?? 0);
-  return hexDirectionFromAngle(Number.isFinite(rotation) ? rotation : 0, gridType);
+  const bearing = ((Number.isFinite(rotation) ? rotation : 0) + ROTATION_TO_BEARING) % 360;
+  return hexDirectionFromAngle(bearing, gridType);
 }
 
 /**

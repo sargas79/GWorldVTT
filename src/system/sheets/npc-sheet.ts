@@ -89,7 +89,7 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
       statCells: [
         ...(["ST", "DX", "IQ", "HT"] as Attribute[]).map((key) =>
-          cell(`GWORLD.Attribute.${key}Abbr`, system.attributes[key], true),
+          cell(`GWORLD.Attribute.${key}Abbr`, derived.attributes?.[key] ?? system.attributes[key], true),
         ),
         cell("GWORLD.Secondary.WillAbbr", derived.will, true),
         cell("GWORLD.Secondary.PerAbbr", derived.per, true),

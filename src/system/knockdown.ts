@@ -18,6 +18,7 @@ import {
   type KnockdownResult,
 } from "../rules/knockdown.js";
 import { resolveSuccess } from "../rules/success.js";
+import { attributeOf } from "./attributes.js";
 
 const KNOCKDOWN_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/knockdown.hbs`;
 
@@ -45,7 +46,7 @@ export async function rollKnockdown(options: {
     return null;
   }
 
-  const ht = Number(actor.system?.attributes?.HT) || 10;
+  const ht = attributeOf(actor, "HT");
   const roll = new Roll("3d6");
   await roll.evaluate();
   const outcome = resolveSuccess(roll.total, ht + modifier, dieResults(roll));
@@ -116,7 +117,7 @@ export async function rollStunRecovery(options: {
   if (!actor?.isOwner) return false;
 
   const attribute = mental ? "IQ" : "HT";
-  const score = Number(actor.system?.attributes?.[attribute]) || 10;
+  const score = attributeOf(actor, attribute);
 
   const roll = new Roll("3d6");
   await roll.evaluate();

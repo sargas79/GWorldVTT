@@ -27,22 +27,78 @@ export interface TraitCost {
    * not 10 + 20 + 30.
    */
   costTable: readonly number[];
+  /**
+   * Enhancements and limitations, each as a percentage: +20 for Reliable,
+   * -40 for Costs Fatigue. Empty for a trait taken as printed.
+   */
+  modifiers?: readonly number[];
+  /** A disadvantage's self-control number -- 6, 9, 12 or 15 -- or null for none. */
+  selfControl?: number | null;
 }
 
 /**
- * Total character points a trait costs.
+ * The base cost of a trait, before any modifier.
  *
  * A tabled trait is always worth at least its first step: a character who has
  * Wealth at all is at least Comfortable, and level 0 is the ordinary person who
  * simply does not take the trait. Levels above the table's end stay at its last
  * figure rather than extrapolating a step the book never prints.
  */
-export function traitPoints(trait: TraitCost): number {
+export function baseTraitPoints(trait: TraitCost): number {
   if (trait.costTable.length > 0) {
     const step = Math.min(Math.max(trait.levels, 1), trait.costTable.length);
     return trait.costTable[step - 1]!;
   }
   return trait.points + trait.levels * trait.pointsPerLevel;
+}
+
+/** Total character points a trait costs, modifiers and self-control included. */
+export function traitPoints(trait: TraitCost): number {
+  return modifiedPoints(baseTraitPoints(trait), trait.modifiers ?? [], trait.selfControl ?? null);
+}
+
+/**
+ * "The net modifier can never be less than -80%" (GURPS Basic Set: Characters
+ * p. 102): however many limitations are piled on, a trait is worth a fifth of
+ * its cost.
+ */
+export const MIN_NET_MODIFIER = -80;
+
+/**
+ * What a self-control number does to a disadvantage's cost (Characters
+ * p. 120): the harder it is to resist, the more it pays back.
+ */
+export const SELF_CONTROL_MULTIPLIERS: Readonly<Record<number, number>> = {
+  6: 2,
+  9: 1.5,
+  12: 1,
+  15: 0.5,
+};
+
+/** The sum of a trait's modifiers, floored where the book floors it. */
+export function netModifier(modifiers: readonly number[]): number {
+  const net = modifiers.reduce((sum, value) => sum + (Number(value) || 0), 0);
+  return Math.max(MIN_NET_MODIFIER, net);
+}
+
+/**
+ * A cost after its self-control number and its modifiers (Characters
+ * pp. 102, 120).
+ *
+ * The self-control multiplier goes on first, because it is part of what the
+ * disadvantage is; the enhancements and limitations then scale the whole.
+ * A fraction rounds away from zero -- 6.5 points is 7, and -6.5 is -7 -- so
+ * a limitation never quite makes an advantage free, and a disadvantage pays
+ * back what it costs to live with.
+ */
+export function modifiedPoints(
+  base: number,
+  modifiers: readonly number[],
+  selfControl: number | null = null,
+): number {
+  const control = selfControl === null ? 1 : (SELF_CONTROL_MULTIPLIERS[selfControl] ?? 1);
+  const scaled = base * control * (1 + netModifier(modifiers) / 100);
+  return scaled < 0 ? -Math.ceil(-scaled - 1e-9) : Math.ceil(scaled - 1e-9);
 }
 
 /**

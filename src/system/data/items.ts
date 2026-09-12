@@ -3,7 +3,7 @@
  */
 
 import { relativeLevelForPoints } from "../../rules/skills.js";
-import { traitPoints } from "../../rules/traits.js";
+import { netModifier, traitPoints } from "../../rules/traits.js";
 import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from "../gear-groups.js";
 import type { DamageType, Difficulty, SkillAttribute } from "../../rules/types.js";
 
@@ -52,6 +52,8 @@ export class TraitData extends foundry.abstract.TypeDataModel {
   declare levelNames: string[];
   declare maxLevels: number;
   declare reactionModifier: number;
+  declare modifiers: Array<{ name: string; value: number }>;
+  declare selfControl: number | null;
 
   static override defineSchema() {
     return {
@@ -61,6 +63,29 @@ export class TraitData extends foundry.abstract.TypeDataModel {
         nullable: false,
         initial: "advantage",
         choices: ["advantage", "disadvantage", "quirk", "perk"],
+      }),
+      /**
+       * Enhancements and limitations (Characters pp. 101-102), each a name
+       * and a percentage: Reliable +20, Costs Fatigue -40. They scale the
+       * trait's cost, and `totalPoints` reads them.
+       */
+      modifiers: new fields.ArrayField(
+        new fields.SchemaField({
+          name: new fields.StringField({ required: true, blank: true, initial: "" }),
+          value: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        }),
+        { required: true, initial: [] },
+      ),
+      /**
+       * A disadvantage's self-control number (pp. 120-121): how often it can be
+       * resisted, and so what it pays back. Null for a trait that has none.
+       */
+      selfControl: new fields.NumberField({
+        required: true,
+        nullable: true,
+        integer: true,
+        initial: null,
+        choices: [6, 9, 12, 15],
       }),
       /** Flat point cost, used when the trait has no levels. */
       points: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
@@ -116,9 +141,21 @@ export class TraitData extends foundry.abstract.TypeDataModel {
     };
   }
 
-  /** Total character points this trait costs, counting levels. */
+  /** Total character points this trait costs, counting levels, modifiers and self-control. */
   get totalPoints(): number {
-    return traitPoints(this);
+    return traitPoints({
+      points: this.points,
+      levels: this.levels,
+      pointsPerLevel: this.pointsPerLevel,
+      costTable: this.costTable,
+      modifiers: (this.modifiers ?? []).map((m) => Number(m.value) || 0),
+      selfControl: this.selfControl ?? null,
+    });
+  }
+
+  /** The net of the modifiers, as a percentage, for showing beside the cost. */
+  get netModifier(): number {
+    return netModifier((this.modifiers ?? []).map((m) => Number(m.value) || 0));
   }
 
   /** The book's name for the level bought, where it names one. */

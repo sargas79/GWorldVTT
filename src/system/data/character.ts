@@ -8,10 +8,13 @@
 
 import {
   BASIC_SPEED_STEP,
+  basicLift,
   basicSpeedPointCost,
   secondaryCharacteristics,
   secondaryPointCost,
 } from "../../rules/attributes.js";
+import { naturalAttacks } from "../../rules/natural-attacks.js";
+import { catalogSkill, defaultLevelFrom } from "../skill-catalog.js";
 import { isUnarmedSkill } from "../../rules/criticals.js";
 import { reachForSize } from "../../rules/size.js";
 import { pointsLedger, type PointAward } from "../../rules/character-points.js";
@@ -105,6 +108,13 @@ export interface DerivedAttack {
    * a reach-1 weapon while sharing a hex with a foe.
    */
   usable: boolean;
+  /**
+   * True when the skill is not on the sheet and the level shown is the
+   * book's default for it -- anybody can pull a trigger, at DX-4.
+   */
+  atDefault: boolean;
+  /** True for a punch or a kick, which every character has and no item carries. */
+  natural: boolean;
   /** True for a punch, kick, bite or grapple, which fumbles on its own table. */
   unarmed: boolean;
   /**
@@ -550,20 +560,45 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   }
 
   private buildDerived() {
-    const attrs = this.attributes;
+    // What this character's traits do to the numbers. Read first, because a
+    // few of them are the numbers: Extra ST is a point of ST wherever ST is
+    // read, and everything below reads it.
+    const traits = traitEffects(
+      this.itemsOfType("trait").map((item) => ({
+        name: String(item.name ?? ""),
+        levels: Number(item.system?.levels ?? 0),
+      })),
+    );
+
+    // The attributes as bought on the sheet, plus what traits add to them.
+    // The points ledger bills the bought figure; the trait bills itself.
+    const bought = this.attributes;
+    const attrs = {
+      ST: bought.ST + traits.attributes.ST,
+      DX: bought.DX + traits.attributes.DX,
+      IQ: bought.IQ + traits.attributes.IQ,
+      HT: bought.HT + traits.attributes.HT,
+    };
+    // Striking ST counts for damage alone and Lifting ST for what can be
+    // carried, so each is its own figure rather than a change to ST.
+    const strikingSt = attrs.ST + traits.strikingSt;
+    const liftingSt = attrs.ST + traits.liftingSt;
 
     // Granted and purchased levels both move the score; only purchased ones
-    // are billed, which is why they are stored apart.
+    // are billed, which is why they are stored apart. Levels bought as traits
+    // are billed by the trait.
     const p = this.purchased;
     const b = this.bonuses;
+    const t = traits.secondary;
     const secondary = secondaryCharacteristics(attrs, {
-      hp: b.hp + p.hp,
-      will: b.will + p.will,
-      per: b.per + p.per,
-      fp: b.fp + p.fp,
-      basicSpeed: b.basicSpeed + p.basicSpeed,
-      basicMove: b.basicMove + p.basicMove,
+      hp: b.hp + p.hp + t.hp,
+      will: b.will + p.will + t.will,
+      per: b.per + p.per + t.per,
+      fp: b.fp + p.fp + t.fp,
+      basicSpeed: b.basicSpeed + p.basicSpeed + t.basicSpeed,
+      basicMove: b.basicMove + p.basicMove + t.basicMove,
     });
+    secondary.basicLift = basicLift(liftingSt);
 
     this.hp.max = secondary.hp;
     this.fp.max = secondary.fp;
@@ -647,15 +682,6 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         maxRelativeToPrerequisite: sys.maxRelativeToPrerequisite,
       });
     }
-
-    // What this character's traits do to the numbers. Read once, here, so that
-    // every rule downstream asks the same question of the same answer.
-    const traits = traitEffects(
-      this.itemsOfType("trait").map((item) => ({
-        name: String(item.name ?? ""),
-        levels: Number(item.system?.levels ?? 0),
-      })),
-    );
 
     // ── protection ──────────────────────────────────────────────────────
     // DR is tracked per location: a breastplate covering torso and vitals must
@@ -756,15 +782,33 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ...this.itemsOfType("shield").filter((i) => i.system?.equipped),
     ];
 
+    /**
+     * The level a weapon's skill is rolled at: the character's own if they
+     * have the skill, else the book's default for it. A pistol in the hands
+     * of somebody who never learned Guns is still a pistol, at DX-4.
+     */
+    const weaponSkill = (name: string): { level: number | null; atDefault: boolean } => {
+      const own = this.skillLevelByName(name);
+      if (own !== null) return { level: own, atDefault: false };
+      const listed = catalogSkill(name);
+      if (!listed) return { level: null, atDefault: false };
+      const level = defaultLevelFrom(
+        listed.defaults,
+        attributeScore,
+        (other) => this.skillLevelByName(other),
+      );
+      return { level, atDefault: level !== null };
+    };
+
     for (const item of armed) {
       const sys = item.system as {
         meleeModes?: any[]; rangedModes?: any[]; equipped?: boolean;
       };
 
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
-        const skillLevel = this.skillLevelByName(mode.skill);
+        const { level: skillLevel, atDefault } = weaponSkill(mode.skill);
         const meleeDamage = resolveDamage(
-          attrs.ST, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
+          strikingSt, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
         );
         melee.push({
           itemId: item.id,
@@ -773,6 +817,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           mode: mode.name ?? "",
           skillName: mode.skill ?? "",
           skillLevel,
+          atDefault,
+          natural: false,
           damage: meleeDamage,
           damageType: mode.damageType,
           armorDivisor: mode.armorDivisor ?? 1,
@@ -805,14 +851,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       });
 
       (sys.rangedModes ?? []).forEach((mode: any, index: number) => {
-        // Bows and crossbows use their own ST for damage and range.
-        const st = mode.weaponSt ?? attrs.ST;
+        // Bows and crossbows use their own ST for damage and range; a thrown
+        // weapon uses the thrower's, Striking ST included.
+        const st = mode.weaponSt ?? strikingSt;
         const rangedDamage = resolveDamage(
           st, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
         );
         const range = mode.rangeIsStMultiple
-          ? musclePoweredRange(st, mode.halfDamageRange, mode.maxRange)
+          ? musclePoweredRange(mode.weaponSt ?? attrs.ST, mode.halfDamageRange, mode.maxRange)
           : { halfDamage: mode.halfDamageRange, max: mode.maxRange };
+        const { level: skillLevel, atDefault } = weaponSkill(mode.skill);
 
         ranged.push({
           itemId: item.id,
@@ -820,7 +868,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           name: item.name,
           mode: mode.name ?? "",
           skillName: mode.skill ?? "",
-          skillLevel: this.skillLevelByName(mode.skill),
+          skillLevel,
+          atDefault,
+          natural: false,
           damage: rangedDamage,
           damageType: mode.damageType,
           armorDivisor: mode.armorDivisor ?? 1,
@@ -849,6 +899,48 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           afflictionAttribute: mode.afflictionAttribute ?? "",
           afflictionModifier: Number(mode.afflictionModifier ?? 0),
         });
+      });
+    }
+
+    // ── natural attacks ─────────────────────────────────────────────────
+    // A punch and a kick, which everybody has (Characters p. 271). They sit
+    // in the melee list like any weapon, so a character with nothing in hand
+    // still has an attack to roll -- and the kick's -2 is already in its level.
+    for (const attack of naturalAttacks({
+      st: strikingSt,
+      dx: attrs.DX,
+      skills: {
+        ...(this.skillLevelByName("Brawling") !== null ? { Brawling: this.skillLevelByName("Brawling")! } : {}),
+        ...(this.skillLevelByName("Boxing") !== null ? { Boxing: this.skillLevelByName("Boxing")! } : {}),
+        ...(this.skillLevelByName("Karate") !== null ? { Karate: this.skillLevelByName("Karate")! } : {}),
+      },
+    })) {
+      melee.push({
+        itemId: "",
+        modeIndex: 0,
+        name: game.i18n.localize(`GWORLD.Natural.${attack.key}`),
+        mode: attack.skillName,
+        skillName: attack.skillName,
+        skillLevel: attack.skillLevel,
+        atDefault: false,
+        natural: true,
+        damage: formatDiceAdds(attack.damage),
+        damageType: "cr",
+        armorDivisor: 1,
+        damageRollable: true,
+        reach: reachForSize(attack.reach, this.sm),
+        parry: attack.canParry ? baseParry(attack.skillLevel) : null,
+        minSt: null,
+        usable: true,
+        unbalanced: false,
+        isFencing: false,
+        unarmed: true,
+        stBased: true,
+        explosive: false,
+        fragmentation: "",
+        affliction: false,
+        afflictionAttribute: "",
+        afflictionModifier: 0,
       });
     }
 
@@ -944,8 +1036,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         .filter((i) => i.system?.category === category)
         .reduce((sum, i) => sum + (i.system?.totalPoints ?? i.system?.points ?? 0), 0);
 
+    // Billed on what was bought as an attribute; a level of Extra ST is
+    // billed by the trait that bought it.
     const attributePoints =
-      (attrs.ST - 10) * 10 + (attrs.HT - 10) * 10 + (attrs.DX - 10) * 20 + (attrs.IQ - 10) * 20;
+      (bought.ST - 10) * 10 + (bought.HT - 10) * 10 + (bought.DX - 10) * 20 + (bought.IQ - 10) * 20;
     const advantages = sumTraits("advantage") + sumTraits("perk");
     const disadvantages = sumTraits("disadvantage");
     const quirks = sumTraits("quirk");
@@ -993,6 +1087,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         movement: MANEUVERS[this.maneuver].movement,
       },
       evaluateBonus: this.maneuver === "evaluate" ? evaluateBonus(this.evaluateTurns) : 0,
+      // The attributes as everything else reads them: bought plus what traits
+      // add. The sheet's inputs edit the bought figure and show this one.
+      attributes: attrs,
+      attributeBonuses: traits.attributes,
+      strikingSt,
+      liftingSt,
       will: secondary.will,
       per: secondary.per,
       basicLift: secondary.basicLift,
@@ -1002,8 +1102,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         (move, halve) => (halve ? halveForReeling(move) : move),
         encumbrance.move,
       ),
-      thrust: formatDiceAdds(thrustDamage(attrs.ST)),
-      swing: formatDiceAdds(swingDamage(attrs.ST)),
+      thrust: formatDiceAdds(thrustDamage(strikingSt)),
+      swing: formatDiceAdds(swingDamage(strikingSt)),
       dr,
       drByLocation,
       hitLocations: HIT_LOCATION_ORDER.map((key) => {

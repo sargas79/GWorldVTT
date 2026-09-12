@@ -74,15 +74,19 @@ describe("hexDirectionFromAngle", () => {
 describe("facingOf", () => {
   const token = (rotation: unknown) => ({ document: { rotation } });
 
-  it("reads a token's rotation", () => {
-    expect(facingOf(token(0), FLAT)).toBe(0);
-    expect(facingOf(token(180), FLAT)).toBe(3);
+  /** Foundry's rotation 0 faces the bottom of the screen: south, direction 3. */
+  it("reads a token's rotation the way Foundry draws it", () => {
+    expect(facingOf(token(0), FLAT)).toBe(3);
+    expect(facingOf(token(180), FLAT)).toBe(0);
+    // Rotation grows clockwise: 60 faces south-west, which on a flat-topped
+    // grid is the fifth side round from north.
+    expect(facingOf(token(60), FLAT)).toBe(4);
   });
 
-  /** An unturned token faces up the screen, which is a facing, not a gap. */
-  it("treats a token that has never been turned as facing north", () => {
-    expect(facingOf({ document: {} }, FLAT)).toBe(0);
-    expect(facingOf(token("not a number"), FLAT)).toBe(0);
+  /** An unturned token faces down the screen, which is a facing, not a gap. */
+  it("treats a token that has never been turned as facing south", () => {
+    expect(facingOf({ document: {} }, FLAT)).toBe(3);
+    expect(facingOf(token("not a number"), FLAT)).toBe(3);
   });
 });
 

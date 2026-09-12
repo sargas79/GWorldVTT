@@ -10,6 +10,8 @@ import "./styles/gworld.css";
 
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
+import { registerFacing } from "./system/facing.js";
+import { loadSkillCatalog } from "./system/skill-catalog.js";
 import { registerConditions, registerPostureSync } from "./system/conditions.js";
 import { GWorldCombat } from "./system/combat.js";
 import { SYSTEM_ID } from "./system/constants.js";
@@ -66,6 +68,10 @@ Hooks.once("init", () => {
   // grows an apply control when it renders.
   registerChatHooks();
 
+  // Which way a token faces, drawn on it, and the keys that turn it a hex
+  // side at a time.
+  registerFacing();
+
   const { DocumentSheetConfig } = foundry.applications.apps;
   DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.applications.sheets.ActorSheetV2);
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheet, {
@@ -95,6 +101,9 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", () => {
   console.log(`${SYSTEM_ID} | Ready`);
+  // What the compendia know about skills nobody on the sheet has learned,
+  // so a weapon whose skill is missing is rolled at the book's default.
+  void loadSkillCatalog();
 });
 
 export { rules };
