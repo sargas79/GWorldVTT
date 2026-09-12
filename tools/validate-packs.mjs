@@ -245,6 +245,15 @@ function validateItem(entry, file) {
     check(EQUIPMENT_CATEGORIES.has(sys.category), file, name, `bad category "${sys.category}"`);
   }
 
+  for (const mode of sys.rangedModes ?? []) {
+    if (mode.projectiles !== undefined) {
+      check(
+        Number.isInteger(mode.projectiles) && mode.projectiles >= 1,
+        file, name, `projectiles must be a whole number of at least 1, got "${mode.projectiles}"`,
+      );
+    }
+  }
+
   for (const mode of [...(sys.meleeModes ?? []), ...(sys.rangedModes ?? [])]) {
     // An affliction does no damage at all: the target rolls an attribute at a
     // penalty and something happens to them. Its damage fields are inert, so

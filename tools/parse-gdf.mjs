@@ -705,7 +705,9 @@ function rangedMode(name, f, thrown) {
       halfDamageRange: half?.distance ?? 0,
       maxRange: max?.distance ?? 0,
       rangeIsStMultiple: max?.stMultiple ?? false,
+      // "3x9" is three shells of nine pellets (Campaigns p. 409).
       rateOfFire: Math.max(1, number(f.get("rof"), 1)),
+      projectiles: Math.max(1, number((/x(\d+)/i.exec(f.get("rof") ?? "") ?? [])[1], 1)),
       shots: (f.get("shots") ?? "").trim(),
       minSt,
       twoHanded,
