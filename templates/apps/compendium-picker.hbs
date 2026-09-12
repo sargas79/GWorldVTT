@@ -29,7 +29,7 @@
     {{else}}
       {{#each entries as |entry|}}
         <li class="gp-row{{#if entry.added}} added{{/if}}{{#if entry.amountKind}} has-amount{{/if}}">
-          <span class="gp-name">{{entry.name}}</span>
+          <span class="gp-name">{{entry.name}}{{#if @root.showSource}} <span class="gp-source">{{entry.source}}</span>{{/if}}</span>
           <span class="gp-summary">{{entry.summary}}</span>
           {{#if entry.amountKind}}
             <label class="gp-amount">

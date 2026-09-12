@@ -11,6 +11,7 @@
  */
 
 import { parseCostTable, parseLevelNames } from "../../rules/traits.js";
+import { SPELL_CLASSES } from "../../rules/magic.js";
 import { SYSTEM_ID } from "../constants.js";
 import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
 
@@ -61,9 +62,17 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
 
     // One flag per type, so the template can branch without a comparison helper.
     for (const t of [
-      "skill", "technique", "trait", "equipment", "armor", "shield", "language", "template",
+      "skill", "technique", "trait", "equipment", "armor", "shield", "language", "template", "spell",
     ]) {
       context[`is${t.charAt(0).toUpperCase()}${t.slice(1)}`] = item.type === t;
+    }
+
+    // A spell's colleges are a list, edited as one line: "Movement,
+    // Protection & Warning". Its classes are checkboxes, since a spell may be
+    // several at once (Characters p. 239).
+    if (item.type === "spell") {
+      context.collegesText = (item.system.colleges ?? []).join(", ");
+      context.isAttackSpell = (item.system.classes ?? []).some((c: string) => c === "missile" || c === "melee");
     }
 
     // A trait's cost table and level names are arrays, which a form cannot
@@ -148,6 +157,14 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",
       ],
       comprehension: keyed("Language", ["none", "broken", "accented", "native"]),
+      spellDifficulties: keyed("Difficulty", ["H", "VH"]),
+      spellClasses: [...SPELL_CLASSES],
+      // A spell's damage type may be blank, where its own description says
+      // what it does to whoever it hits.
+      spellDamageTypes: {
+        "": "GWORLD.Spell.SpecialDamage",
+        ...keyed("DamageType", ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"]),
+      },
       equipmentCategories: keyed("GearCategory", [...EQUIPMENT_CATEGORIES]),
       // The self-control numbers, with "none" first. Keys are strings because
       // a select's values are, and the form reader turns the number back.
@@ -188,7 +205,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
    * be cleared. An empty array is supplied for each group the form actually
    * carries.
    */
-  static readonly CHECKBOX_GROUPS = ["system.locations", "system.drSplitAppliesTo"];
+  static readonly CHECKBOX_GROUPS = ["system.locations", "system.drSplitAppliesTo", "system.classes"];
 
   override _processFormData(event: Event | null, form: HTMLFormElement, formData: object): object {
     const data = super._processFormData(event, form, formData) as Record<string, any>;
@@ -219,6 +236,15 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       } else {
         data.system.selfControl = Number(data.system.selfControl);
       }
+    }
+
+    // The colleges are typed as one line and stored as a list. An empty line
+    // is a spell of no college, which the tab files last rather than refusing.
+    if (this.item.type === "spell" && data.system && typeof data.system.colleges === "string") {
+      data.system.colleges = data.system.colleges
+        .split(",")
+        .map((c: string) => c.trim())
+        .filter(Boolean);
     }
 
     // A split DR is only valid as a pair, and the sheet submits on every change,

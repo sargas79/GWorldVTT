@@ -5,12 +5,16 @@
  * Compendium content lives in git as plain JSON so it can be diffed and
  * reviewed; the binary packs are a build artifact, never committed.
  *
- * Usage: node tools/build-packs.mjs [--out <dir>]
+ * Usage: node tools/build-packs.mjs [--src <dir>] [--out <dir>]
  *
  * The output directory is `dist/packs` unless another is given. A running
  * Foundry holds those files open, and rebuilding them under it fails on
  * Windows -- so a release build can put them somewhere else rather than
  * needing the GM to shut down first.
+ *
+ * The source is this repository's packs-src unless `--src` names another:
+ * a module carrying, say, another book's spells keeps the same layout -- one
+ * directory per pack, JSON arrays inside -- and builds with this same tool.
  */
 
 import { existsSync } from "node:fs";
@@ -21,13 +25,14 @@ import { fileURLToPath } from "node:url";
 import { compilePack, extractPack } from "@foundryvtt/foundryvtt-cli";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const SOURCE = join(projectRoot, "packs-src");
 
-const outFlag = process.argv.indexOf("--out");
-const OUT =
-  outFlag !== -1 && process.argv[outFlag + 1]
-    ? resolve(process.argv[outFlag + 1])
-    : join(projectRoot, "dist", "packs");
+function flag(name, fallback) {
+  const at = process.argv.indexOf(name);
+  return at !== -1 && process.argv[at + 1] ? resolve(process.argv[at + 1]) : fallback;
+}
+
+const SOURCE = flag("--src", join(projectRoot, "packs-src"));
+const OUT = flag("--out", join(projectRoot, "dist", "packs"));
 
 /**
  * Every value a Foundry document needs that the source JSON should not repeat.
@@ -49,7 +54,7 @@ function normalise(entry, type) {
 
 async function main() {
   if (!existsSync(SOURCE)) {
-    console.error(`No packs-src/ directory at ${SOURCE}.`);
+    console.error(`No pack source directory at ${SOURCE}.`);
     process.exit(1);
   }
 

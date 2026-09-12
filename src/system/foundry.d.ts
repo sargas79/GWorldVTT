@@ -110,6 +110,8 @@ declare global {
           close(options?: object): Promise<this>;
           changeTab(tab: string, group: string, options?: object): void;
           _prepareContext(options: object): Promise<object>;
+          /** The tabs of one group as the nav renders them, keyed by id. */
+          _prepareTabs(group: string): Record<string, unknown>;
         }
 
         class DocumentSheetV2 extends ApplicationV2 {

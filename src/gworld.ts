@@ -25,6 +25,7 @@ import {
   LanguageData,
   ShieldData,
   SkillData,
+  SpellData,
   TechniqueData,
   TemplateData,
   TraitData,
@@ -51,6 +52,7 @@ Hooks.once("init", () => {
   CONFIG.Item.dataModels.shield = ShieldData;
   CONFIG.Item.dataModels.language = LanguageData;
   CONFIG.Item.dataModels.template = TemplateData;
+  CONFIG.Item.dataModels.spell = SpellData;
 
   // Initiative is Basic Speed, fixed for the whole fight (GURPS Lite p. 25):
   // nothing random goes into the formula, so it does not change between rounds.
@@ -103,7 +105,7 @@ Hooks.once("init", () => {
   DocumentSheetConfig.unregisterSheet(Item, "core", foundry.applications.sheets.ItemSheetV2);
   DocumentSheetConfig.registerSheet(Item, SYSTEM_ID, GWorldItemSheet, {
     types: [
-      "trait", "skill", "technique", "equipment", "armor", "shield", "language", "template",
+      "trait", "skill", "technique", "equipment", "armor", "shield", "language", "template", "spell",
     ],
     makeDefault: true,
     label: "GWORLD.Sheet.Item",

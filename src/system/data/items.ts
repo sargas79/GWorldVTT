@@ -3,6 +3,7 @@
  */
 
 import { relativeLevelForPoints } from "../../rules/skills.js";
+import { SPELL_CLASSES, spellRelativeLevel, type MagicStyle, type SpellClass, type SpellDifficulty } from "../../rules/magic.js";
 import { netModifier, traitPoints } from "../../rules/traits.js";
 import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from "../gear-groups.js";
 import { templateCost } from "../../rules/templates.js";
@@ -927,4 +928,185 @@ function nonZero<T extends Record<string, number>>(values: T): Partial<T> {
     if (value !== 0) out[key as keyof T] = value as T[keyof T];
   }
   return out;
+}
+
+/** A figure a spell description gives, kept beside the text it was read from. */
+function spellFigure(text: string) {
+  return new fields.NumberField({ required: true, nullable: true, initial: null, min: 0, label: text });
+}
+
+/** What a spell resolves to on a character. */
+export interface SpellDerived {
+  /** The level it is cast at, or null when it cannot be cast at all. */
+  level: number | null;
+  /** The relative level the points bought under the standard system. */
+  relativeLevel: number | null;
+  /** Which arithmetic produced the level. */
+  style: MagicStyle;
+  /** Under the ritual style, the college skill the spell was read off, or null when the character lacks one. */
+  collegeSkill: string | null;
+  /** Under the ritual style, the technique levels the points bought, after the cap. */
+  levels: number;
+  /** Under the ritual style, true when the points bought more than the college skill allows. */
+  cappedByCollege: boolean;
+  /** True for a standard-style spell on somebody with no Magery at all. */
+  needsMagery: boolean;
+  /** Whether every prerequisite is met, and the clauses that are not. */
+  prerequisitesMet: boolean;
+  missing: string[];
+}
+
+/**
+ * A spell (GURPS Basic Set: Characters pp. 235, 242-253).
+ *
+ * A spell is a skill with more written beside it: its colleges, its classes,
+ * what it costs to cast and keep up, how long it takes and how long it lasts,
+ * and what has to be known before it. The figures the casting rules read are
+ * stored as numbers; the book's own wording is kept beside each, because some
+ * spells say "Varies" or "1 to Magery" and a number alone cannot.
+ *
+ * One record serves both ways of learning magic. Under the standard system
+ * the points walk the Skill Cost Table; under Ritual Magic (p. 242) they buy a
+ * Hard technique off the college skill, starting `prerequisiteCount` below it.
+ * Which applies is decided on the character, not on the spell.
+ */
+export class SpellData extends foundry.abstract.TypeDataModel {
+  declare colleges: string[];
+  declare difficulty: SpellDifficulty;
+  declare points: number;
+  declare bonus: number;
+  declare classes: SpellClass[];
+  declare resistedBy: string;
+  declare castingTime: { seconds: number | null; text: string };
+  declare duration: { seconds: number | null; text: string };
+  declare energy: { cast: number | null; castMax: number | null; maintain: number | null; text: string };
+  declare mageryRequired: number;
+  declare prerequisiteCount: number;
+  declare prerequisites: string;
+  declare attack: {
+    skill: string;
+    damage: string;
+    damageType: string;
+    accuracy: number;
+    halfDamageRange: number;
+    maxRange: number;
+    explosive: boolean;
+  };
+  declare derived: SpellDerived;
+
+  static override defineSchema() {
+    return {
+      ...descriptionFields(),
+      /**
+       * The colleges the spell belongs to, the first being the one it is
+       * filed under. A list rather than a choice, because "Some spells fall
+       * into more than one college" (p. 239) and because a spell from another
+       * book may name a college this one never heard of.
+       */
+      colleges: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: false }),
+        { required: true, initial: [] },
+      ),
+      /** "Most spells are IQ/Hard skills, but a few potent spells are IQ/Very Hard." */
+      difficulty: new fields.StringField({
+        required: true, nullable: false, initial: "H", choices: ["H", "VH"],
+      }),
+      points: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 0, min: 0,
+      }),
+      /** Flat bonus from a talent, an item, or the GM. */
+      bonus: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+      /** "Each spell falls into one or more classes" (p. 239). */
+      classes: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: false, choices: [...SPELL_CLASSES] }),
+        { required: true, initial: ["regular"] },
+      ),
+      /**
+       * What a Resisted spell is resisted with: "HT", "Will", another spell,
+       * or something the description names. Blank for a spell nobody resists.
+       */
+      resistedBy: new fields.StringField({ required: true, blank: true, initial: "" }),
+      /** Time to cast. The seconds are the figure the concentration rule reads; null where the book says "Varies". */
+      castingTime: new fields.SchemaField({
+        seconds: spellFigure("seconds"),
+        text: new fields.StringField({ required: true, blank: true, initial: "" }),
+      }),
+      /** How long it lasts before it has to be maintained. Null for an instant or permanent effect, which the text says. */
+      duration: new fields.SchemaField({
+        seconds: spellFigure("seconds"),
+        text: new fields.StringField({ required: true, blank: true, initial: "" }),
+      }),
+      /**
+       * Energy to cast and to maintain. `cast` is the least that can be spent
+       * and `castMax` the most, for a spell whose effect scales with energy;
+       * a fixed cost has the two equal. Null where only the text can say.
+       */
+      energy: new fields.SchemaField({
+        cast: spellFigure("cast"),
+        castMax: spellFigure("castMax"),
+        maintain: spellFigure("maintain"),
+        text: new fields.StringField({ required: true, blank: true, initial: "" }),
+      }),
+      /** The least Magery the spell can be learned with. Zero for a spell any mage may learn. */
+      mageryRequired: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 0, min: 0,
+      }),
+      /**
+       * How many prerequisites the spell has, counting its prerequisites'
+       * prerequisites: the "cumulative -1" a ritual mage starts at (p. 242).
+       */
+      prerequisiteCount: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 0, min: 0,
+      }),
+      /**
+       * The prerequisites as the book writes them -- "Magery 1, Create Fire,
+       * Shape Fire" -- read by the rules engine's grammar. Text rather than a
+       * structure so a GM can type one and a spell from another book can
+       * carry whatever that book asks.
+       */
+      prerequisites: new fields.StringField({ required: true, blank: true, initial: "" }),
+      /**
+       * How a Missile or Melee spell is delivered once cast (pp. 240-241): the
+       * skill it is thrown or struck with, and the damage each point of energy
+       * buys. Blank on a spell that is neither.
+       */
+      attack: new fields.SchemaField({
+        skill: new fields.StringField({ required: true, blank: true, initial: "" }),
+        /** Damage per point of energy, as dice: "1d", "1d-1". */
+        damage: new fields.StringField({ required: true, blank: true, initial: "" }),
+        /** Blank where the spell's own description says what it does. */
+        damageType: new fields.StringField({
+          required: true, blank: true, initial: "",
+          choices: ["", "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
+        }),
+        accuracy: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        halfDamageRange: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        maxRange: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        explosive: new fields.BooleanField({ initial: false }),
+      }),
+    };
+  }
+
+  override prepareDerivedData(): void {
+    super.prepareDerivedData();
+    // The level needs the owning actor's IQ and Magery, and its magic style,
+    // so it is resolved there. Alone, a spell can only say what its points
+    // bought under the standard system.
+    this.derived = {
+      level: null,
+      relativeLevel: spellRelativeLevel(this.points, this.difficulty),
+      style: "standard",
+      collegeSkill: null,
+      levels: 0,
+      cappedByCollege: false,
+      needsMagery: false,
+      prerequisitesMet: true,
+      missing: [],
+    };
+  }
+
+  /** The college the spell is filed under. */
+  get college(): string {
+    return this.colleges[0] ?? "";
+  }
 }

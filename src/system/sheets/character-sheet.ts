@@ -83,6 +83,8 @@ import { SYSTEM_ID } from "../constants.js";
 import { SKILL_ORDER } from "../settings.js";
 import { attributeOf } from "../attributes.js";
 import { asSkillOrder, groupSkills, otherOrder } from "../skill-groups.js";
+import { groupSpells } from "../spell-groups.js";
+import { nextSpellPoints, previousSpellPoints, type MagicStyle } from "../../rules/magic.js";
 import { GEAR_GROUPS, gearGroupOf, type GearGroup } from "../gear-groups.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
 import {
@@ -1809,6 +1811,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     nav: { template: `${TEMPLATE_ROOT}/nav.hbs` },
     attributes: { template: `${TEMPLATE_ROOT}/tab-attributes.hbs`, scrollable: [""] },
     skills: { template: `${TEMPLATE_ROOT}/tab-skills.hbs`, scrollable: [""] },
+    magic: { template: `${TEMPLATE_ROOT}/tab-magic.hbs`, scrollable: [""] },
     traits: { template: `${TEMPLATE_ROOT}/tab-traits.hbs`, scrollable: [""] },
     combat: { template: `${TEMPLATE_ROOT}/tab-combat.hbs`, scrollable: [""] },
     body: { template: `${TEMPLATE_ROOT}/tab-body.hbs`, scrollable: [""] },
@@ -1823,6 +1826,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       tabs: [
         { id: "attributes" },
         { id: "skills" },
+        { id: "magic" },
         { id: "traits" },
         { id: "combat" },
         { id: "body" },
@@ -1839,7 +1843,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
   override _configureRenderParts(options: object): Record<string, unknown> {
     if (this.document.limited) return foundry.utils.deepClone(GWorldCharacterSheet.LIMITED_PARTS);
-    return super._configureRenderParts(options);
+    const parts = super._configureRenderParts(options) as Record<string, unknown>;
+    // A campaign without magic has no Magic tab: the rule being off means
+    // the chapter was never written, and a tab for it would be a tab for
+    // nothing.
+    if (!isRuleOn("magic")) delete parts.magic;
+    return parts;
+  }
+
+  override _prepareTabs(group: string): Record<string, any> {
+    const tabs = super._prepareTabs(group) as Record<string, any>;
+    if (group === "primary" && !isRuleOn("magic")) delete tabs.magic;
+    return tabs;
   }
 
   override async _prepareContext(options: object): Promise<Record<string, unknown>> {
@@ -2056,6 +2071,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         ),
       },
 
+      magic: this.#magicPanel(derived, items.spellGroups),
+
       biographyHTML: await enrich(system.details.biography ?? ""),
       notesHTML: await enrich(system.details.notes ?? ""),
     };
@@ -2120,17 +2137,26 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       void this.actor.update({ "system.posture": posture.value });
     });
 
-    const filter = this.element.querySelector<HTMLInputElement>(".gworld-skill-filter");
+    // The same filter serves the Skills tab and the Magic tab: a hundred
+    // spells across two dozen colleges wants finding by name as much as six
+    // hundred skills do.
+    this.#wireFilter(".gworld-skill-filter", "skills");
+    this.#wireFilter(".gworld-spell-filter", "magic");
+  }
+
+  /** Narrows one tab's tables to the rows whose name contains what was typed. */
+  #wireFilter(selector: string, tab: string): void {
+    const filter = this.element.querySelector<HTMLInputElement>(selector);
     if (!filter) return;
 
     const apply = () => {
       const needle = filter.value.trim().toLowerCase();
-      for (const row of this.element.querySelectorAll<HTMLElement>("[data-tab='skills'] tbody tr")) {
+      for (const row of this.element.querySelectorAll<HTMLElement>(`[data-tab='${tab}'] tbody tr`)) {
         const name = row.querySelector(".wname")?.textContent?.toLowerCase() ?? "";
         row.hidden = needle.length > 0 && !name.includes(needle);
       }
       // A group whose rows are all hidden should not leave a stray header.
-      for (const group of this.element.querySelectorAll<HTMLElement>("[data-tab='skills'] .isec")) {
+      for (const group of this.element.querySelectorAll<HTMLElement>(`[data-tab='${tab}'] .isec`)) {
         const rows = [...group.querySelectorAll<HTMLElement>("tbody tr")];
         group.hidden = rows.length > 0 && rows.every((r) => r.hidden);
       }
@@ -2138,6 +2164,85 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
     filter.addEventListener("input", apply);
     apply();
+  }
+
+  /**
+   * The Magic tab's header and rows (Characters pp. 235, 242).
+   *
+   * Each row carries the book's own wording for cost, time and duration --
+   * "1 to Magery", "sec. = cost" -- because the numbers alone cannot say
+   * those. What the sheet can decide, it marks: a spell whose prerequisites
+   * are not met, one on a character with no Magery, a ritual spell with no
+   * college skill to be read off.
+   */
+  #magicPanel(derived: any, groups: ReturnType<typeof groupSpells<any>>) {
+    const magic = derived.magic ?? {};
+    const style: MagicStyle = magic.style ?? "standard";
+    const L = (key: string) => game.i18n.localize(`GWORLD.Spell.${key}`);
+
+    const mageryLabel = (() => {
+      if (style === "ritual") {
+        return magic.ritualMagery === null || magic.ritualMagery === undefined
+          ? L("NoRitualMagery")
+          : `${L("RitualMagery")} ${magic.ritualMagery}`;
+      }
+      return magic.standardMagery === null || magic.standardMagery === undefined
+        ? L("NoMagery")
+        : `${L("Magery")} ${magic.standardMagery}`;
+    })();
+
+    const rows = groups.map((group) => ({
+      college: group.college,
+      rows: group.rows.map((row) => {
+        const item = row.spell.item;
+        const sys = item.system ?? {};
+        const d = sys.derived ?? {};
+        const classes: string[] = sys.classes ?? [];
+        const relative = (() => {
+          if (style === "ritual") {
+            if (!d.collegeSkill) return "—";
+            const offset = -Number(sys.prerequisiteCount ?? 0) + Number(d.levels ?? 0);
+            return `${d.collegeSkill}${offset >= 0 ? "+" : ""}${offset}`;
+          }
+          const rel = d.relativeLevel;
+          if (rel === null || rel === undefined) return "—";
+          return `IQ${rel >= 0 ? "+" : ""}${rel}`;
+        })();
+        return {
+          spell: row.spell,
+          known: row.known,
+          rollable: row.rollable,
+          otherColleges: row.otherColleges,
+          veryHard: sys.difficulty === "VH",
+          classes: classes.map((c) => L(`Class.${c}`)).join(" / "),
+          resisted: String(sys.resistedBy ?? ""),
+          energy: String(sys.energy?.text ?? "") || "—",
+          time: String(sys.castingTime?.text ?? "") || "—",
+          duration: String(sys.duration?.text ?? "") || "—",
+          mageryRequired: Number(sys.mageryRequired ?? 0),
+          needsMagery: Boolean(d.needsMagery),
+          missing: (d.missing ?? []) as string[],
+          missingText: `${L("MissingHint")} ${((d.missing ?? []) as string[]).join("; ")}`,
+          cappedByCollege: Boolean(d.cappedByCollege),
+          noCollegeSkill: style === "ritual" && !d.collegeSkill,
+          relative,
+        };
+      }),
+    }));
+
+    return {
+      style,
+      mageryLabel,
+      magicResistance: Number(magic.magicResistance ?? 0),
+      styleOptions: (["auto", "standard", "ritual"] as const).map((key) => ({
+        key,
+        label: L(`Style${key.charAt(0).toUpperCase()}${key.slice(1)}`),
+        selected: (magic.preference ?? "auto") === key,
+      })),
+      styleHint: L(style === "ritual" ? "RitualHint" : "StandardHint"),
+      groups: rows,
+      count: groups.reduce((n, g) => n + g.rows.filter((r) => r.known).length, 0),
+    };
   }
 
   /**
@@ -2316,8 +2421,21 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
     const equipment = byType("equipment");
 
+    // Spells by college, as the book's list is and a grimoire would be.
+    const spellGroups = groupSpells(
+      byType("spell").map((item: any) => ({
+        id: String(item.id),
+        name: String(item.name ?? ""),
+        colleges: (item.system.colleges ?? []) as string[],
+        points: Number(item.system.points ?? 0),
+        level: item.system.derived?.level ?? null,
+        item,
+      })),
+    );
+
     return {
       skillGroups,
+      spellGroups,
       advantages: byType("trait").filter((t: any) => ["advantage", "perk"].includes(t.system.category)),
       disadvantages: byType("trait").filter((t: any) => t.system.category === "disadvantage"),
       quirks: byType("trait").filter((t: any) => t.system.category === "quirk"),
@@ -2387,10 +2505,16 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // 2 to 4 and skip a level that can be bought.
     // A wildcard skill walks the same table at three times each figure, so
     // the stepper is told the difficulty rather than assuming the printed one.
+    // A spell walks whichever table its style says: the Skill Cost Table for
+    // a standard mage, a point at a time for a ritual one (p. 242).
     const difficulty = item.system?.difficulty;
     const next = item.type === "technique"
       ? (down ? previousTechniquePoints(current) : nextTechniquePoints(current))
-      : (down ? previousSkillPoints(current, difficulty) : nextSkillPoints(current, difficulty));
+      : item.type === "spell"
+        ? (down
+            ? previousSpellPoints(current, difficulty, item.system?.derived?.style ?? "standard")
+            : nextSpellPoints(current, difficulty, item.system?.derived?.style ?? "standard"))
+        : (down ? previousSkillPoints(current, difficulty) : nextSkillPoints(current, difficulty));
     if (next === current) return;
 
     await item.update({ "system.points": next });

@@ -61,6 +61,15 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       .filter((s) => s.level !== null && s.level !== undefined)
       .sort((a, b) => (b.level as number) - (a.level as number));
 
+    // The spells an NPC actually knows, at the level they cast them: a GM
+    // running a wizard mid-fight needs Fireball 15 in the same glance as the
+    // DR, not on another sheet.
+    const notableSpells = [...actor.items]
+      .filter((i: any) => i.type === "spell" && i.system.points >= NOTABLE_SKILL_MINIMUM_POINTS)
+      .map((i: any) => ({ name: i.name, level: i.system.derived?.level }))
+      .filter((s) => s.level !== null && s.level !== undefined)
+      .sort((a, b) => (b.level as number) - (a.level as number));
+
     // A GM reading this mid-fight needs the DR, and needs to know when it is not
     // one number: an NPC in a ballistic vest stops a bullet far better than a
     // club, and a sheet showing only the higher figure would have them subtract
@@ -99,6 +108,7 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
       allAttacks: [...derived.melee, ...derived.ranged],
       notableSkills,
+      notableSpells,
 
       biographyHTML: await foundry.applications.ux.TextEditor.implementation.enrichHTML(
         system.details.biography ?? "",

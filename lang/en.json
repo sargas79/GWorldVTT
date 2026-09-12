@@ -12,7 +12,8 @@
       "shield": "Shield",
       "language": "Language",
       "technique": "Technique",
-      "template": "Template"
+      "template": "Template",
+      "spell": "Spell"
     }
   },
   "GWORLD": {
@@ -24,6 +25,7 @@
     "Tab": {
       "attributes": "Attr",
       "skills": "Skills",
+      "magic": "Magic",
       "traits": "Traits",
       "combat": "Combat",
       "body": "Body",
@@ -94,7 +96,9 @@
       "Recovery": "Recovery",
       "Hazards": "Poison, Illness & Drink",
       "AllSkills": "All skills",
-      "Alphabetical": "alphabetical"
+      "Alphabetical": "alphabetical",
+      "Magery": "Magery",
+      "SpellsKnown": "Spells"
     },
     "Column": {
       "Skill": "Skill",
@@ -128,7 +132,12 @@
       "Quantity": "Quantity",
       "Carried": "Carried",
       "Equipped": "Equipped",
-      "Description": "Description"
+      "Description": "Description",
+      "Spell": "Spell",
+      "Class": "Class",
+      "Energy": "Cost",
+      "Time": "Time",
+      "Duration": "Duration"
     },
     "Field": {
       "ThrustSwing": "Thrust / Swing",
@@ -160,6 +169,7 @@
       "Languages": "Languages",
       "Spent": "Spent",
       "PointsLabel": "points",
+      "Spells": "Spells",
       "Unspent": "Unspent",
       "Over": "{points} points over budget.",
       "Exact": "Every point spent.",
@@ -273,9 +283,14 @@
         "Combat": "Combat options",
         "Injury": "Damage and injury",
         "Rolls": "Rolls and contests",
-        "Activities": "Outside combat"
+        "Activities": "Outside combat",
+        "Magic": "Magic"
       },
       "Rule": {
+        "magic": {
+          "Name": "Magic",
+          "Hint": "The whole chapter: Magery, spells learned as skills, and a Magic tab on the sheet. Off, the campaign has no magic and the tab is not shown."
+        },
         "feint": {
           "Name": "Feint",
           "Hint": "Fake an attack: your margin over the foe's roll comes off his defense against your next attack."
@@ -452,6 +467,7 @@
         "advantages": "Advantages",
         "disadvantages": "Disadvantages",
         "skills": "Skills and techniques",
+        "spells": "Spells",
         "gear": "Gear",
         "review": "Review",
         "templates": "Template"
@@ -462,6 +478,7 @@
         "advantages": "What the character is unusually good at. The cost comes off the budget above.",
         "disadvantages": "What the character is stuck with. These pay points back, up to the limit above.",
         "skills": "What the character has learned. Points spent on each are set on the sheet afterwards.",
+        "spells": "Spells are skills: IQ/Hard or Very Hard, off IQ plus Magery, with no default. A mage needs Magery 0 to learn any, and each spell names what must be known before it.",
         "gear": "What the character carries. Weight counts against encumbrance once it is marked carried.",
         "review": "What the character has come to. Nothing here is fixed — the sheet edits all of it.",
         "templates": "Optional. A template buys a package of traits in one go; everything after this step customises what it left you."
@@ -470,6 +487,7 @@
         "advantages": "Add an advantage",
         "disadvantages": "Add a disadvantage",
         "skills": "Add a skill or technique",
+        "spells": "Add a spell",
         "gear": "Add gear, armour or a shield"
       },
       "Opening": "Opening…",
@@ -485,6 +503,7 @@
       "Advantages": "Add an advantage or perk",
       "Disadvantages": "Add a disadvantage or quirk",
       "Quirks": "Add a quirk",
+      "Spells": "Add a spell",
       "Gear": "Add gear, armour or a shield",
       "Search": "Search by name",
       "Add": "Add",
@@ -570,6 +589,68 @@
       "NoDefaultsYet": "No defaults. Without one this skill cannot be rolled untrained.",
       "DefaultSource": "Default source",
       "Untrained": "default"
+    },
+    "Spell": {
+      "Magery": "Magery",
+      "NoMagery": "No Magery",
+      "RitualMagery": "Ritual Magery",
+      "NoRitualMagery": "No Ritual Magery",
+      "MagicResistance": "Magic Resistance",
+      "Style": "Style",
+      "StyleAuto": "From traits",
+      "StyleStandard": "Standard",
+      "StyleRitual": "Ritual Magic",
+      "StandardHint": "Spells are skills off IQ plus Magery, with no default.",
+      "RitualHint": "Spells are techniques off the college skill, at -1 per prerequisite, and can be cast at default.",
+      "College": "college",
+      "NoCollege": "No college",
+      "Resisted": "vs",
+      "ResistedHint": "A Resisted spell is a Quick Contest against this, plus the subject's Magic Resistance.",
+      "NeedsMagery": "no Magery",
+      "NeedsMageryHint": "This character has no Magery. In a normal-mana world only mages can learn or cast spells.",
+      "Prerequisites": "prerequisites",
+      "MissingHint": "Not yet met:",
+      "Capped": "capped",
+      "CappedHint": "Spells cannot exceed the college skill; the extra points buy nothing until it is raised.",
+      "NoCollegeSkill": "no college skill",
+      "NoCollegeSkillHint": "A ritual spell is read off its college skill (\"Path of Fire\"), which this character does not have.",
+      "NotKnown": "Not known",
+      "NoneYet": "No spells yet. Add one, or browse the compendia for the book's.",
+      "Known": "spells known",
+      "Class": {
+        "regular": "Regular",
+        "area": "Area",
+        "melee": "Melee",
+        "missile": "Missile",
+        "blocking": "Blocking",
+        "information": "Information",
+        "enchantment": "Enchantment",
+        "special": "Special"
+      },
+      "Colleges": "Colleges, comma-separated; the first is where it is filed",
+      "MageryRequired": "Magery required",
+      "ResistedBy": "Resisted by",
+      "ClassesHint": "A spell may be several classes at once: Sense Foes is Information and Area.",
+      "Casting": "Casting",
+      "EnergyText": "Cost, as the book writes it",
+      "EnergyCast": "Cost to cast",
+      "EnergyCastMax": "Most that can be spent",
+      "EnergyMaintain": "Cost to maintain",
+      "TimeText": "Time to cast, as written",
+      "TimeSeconds": "Seconds",
+      "DurationText": "Duration, as written",
+      "DurationSeconds": "Seconds",
+      "CastingHint": "The numbers are what the casting rules read; the text is what the sheet shows. Leave a number blank where only the text can say — \"Varies\", \"1 to Magery\".",
+      "PrerequisitesText": "Prerequisites",
+      "PrerequisiteCount": "Prerequisite count",
+      "PrerequisitesHint": "Commas separate requirements, \"or\" offers alternatives: \"Magery 1, Create Fire, Shape Fire or Seek Fire\". A bare name is a spell; write \"IQ 13\", \"6 Air spells\", \"spells from 10 colleges\", \"Empathy (advantage)\" or \"Locksmith (skill)\" for the rest. The count, prerequisites of prerequisites included, is what a ritual mage's default sits below the college skill by.",
+      "Attack": "Missile or Melee delivery",
+      "DamagePerEnergy": "Damage per energy point",
+      "HalfDamageRange": "1/2D range",
+      "MaxRange": "Max range",
+      "Explosive": "Explosive",
+      "AttackHint": "Only for a Missile or Melee spell: the skill it is thrown or struck with once cast, and what each point of energy does.",
+      "SpecialDamage": "As described"
     },
     "Trait": {
       "Levels": "levels",
@@ -731,6 +812,9 @@
       "FilterSkills": "Filter skills",
       "Delete": "Delete",
       "AddTechnique": "Add Technique",
+      "AddSpell": "Add Spell",
+      "BrowseSpells": "Browse",
+      "FilterSpells": "Filter spells",
       "Add": "Add",
       "OrderByName": "A–Z",
       "OrderByAttribute": "By attribute"

@@ -43,6 +43,7 @@ export const RULE_GROUPS = [
   { id: "injury", label: "GWORLD.Rules.Group.Injury" },
   { id: "rolls", label: "GWORLD.Rules.Group.Rolls" },
   { id: "activities", label: "GWORLD.Rules.Group.Activities" },
+  { id: "magic", label: "GWORLD.Rules.Group.Magic" },
 ] as const;
 
 export type RuleGroup = (typeof RULE_GROUPS)[number]["id"];
@@ -101,6 +102,11 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "intoxication", reference: "Campaigns pp. 439-441", default: true },
     { key: "disease", reference: "Campaigns pp. 442-444", default: true },
     { key: "battleFatigue", reference: "Campaigns p. 426", default: true },
+  ],
+  magic: [
+    // The whole chapter. A campaign without magic has no Magic tab, no
+    // spells offered, nothing to explain.
+    { key: "magic", reference: "Characters pp. 234-253", default: true },
   ],
 };
 

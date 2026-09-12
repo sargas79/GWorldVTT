@@ -1,0 +1,4511 @@
+[
+  {
+    "_id": "c38f48cd9cf135db",
+    "name": "Purify Air",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Air"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 1,
+        "maintain": null,
+        "text": "1"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 0,
+      "prerequisites": "",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 243"
+    }
+  },
+  {
+    "_id": "7b44967a2bd511a1",
+    "name": "Create Air",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Air"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 5,
+        "text": "5 sec."
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 1,
+        "maintain": null,
+        "text": "1"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 1,
+      "prerequisites": "Purify Air",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 243"
+    }
+  },
+  {
+    "_id": "1a669a0fcd71f87b",
+    "name": "Shape Air",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Air"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 10,
+        "maintain": null,
+        "text": "1 to 10"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 2,
+      "prerequisites": "Create Air",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 243"
+    }
+  },
+  {
+    "_id": "e3fd38eb2baefd99",
+    "name": "No-Smell",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Air"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 3600,
+        "text": "1 hr."
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": 2,
+        "text": "2/2"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 1,
+      "prerequisites": "Purify Air",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 243"
+    }
+  },
+  {
+    "_id": "fb98bfa94945d4e0",
+    "name": "Predict Weather",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Weather",
+        "Air"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "information"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 5,
+        "text": "5 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 4,
+      "prerequisites": "4 Air spells",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 243"
+    }
+  },
+  {
+    "_id": "21cbaf55bbca261b",
+    "name": "Breathe Water",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Water",
+        "Air"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 4,
+        "castMax": 4,
+        "maintain": 2,
+        "text": "4/2"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 6,
+      "prerequisites": "Create Air, Destroy Water",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 243"
+    }
+  },
+  {
+    "_id": "ec5df1a78277a1db",
+    "name": "Walk on Air",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Air"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": 2,
+        "text": "3/2"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 3,
+      "prerequisites": "Shape Air",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 243"
+    }
+  },
+  {
+    "_id": "cda28751dd204414",
+    "name": "Earth to Air",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Air",
+        "Earth"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 2,
+        "text": "2 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 5,
+        "castMax": 5,
+        "maintain": null,
+        "text": "5/cu. yd."
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 4,
+      "prerequisites": "Create Air, Shape Earth",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 243"
+    }
+  },
+  {
+    "_id": "c6dec61aa40b3a3d",
+    "name": "Stench",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Air"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 300,
+        "text": "5 min."
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 1,
+        "maintain": null,
+        "text": "1"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 1,
+      "prerequisites": "Purify Air",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 244"
+    }
+  },
+  {
+    "_id": "cc2c233555dbe6ad",
+    "name": "Lightning",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Weather",
+        "Air"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "missile"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 to 3 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": null,
+        "maintain": null,
+        "text": "1 to Magery"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 6,
+      "prerequisites": "Magery 1, 6 Air spells",
+      "attack": {
+        "skill": "Innate Attack (Beam)",
+        "damage": "1d-1",
+        "damageType": "burn",
+        "accuracy": 3,
+        "halfDamageRange": 50,
+        "maxRange": 100,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 244"
+    }
+  },
+  {
+    "_id": "19e843e76c33e0d5",
+    "name": "Itch",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Body Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "HT",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Scratch"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 0,
+      "prerequisites": "",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 244"
+    }
+  },
+  {
+    "_id": "00f49e97204fb46b",
+    "name": "Spasm",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Body Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "HT",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 1,
+      "prerequisites": "Itch",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 244"
+    }
+  },
+  {
+    "_id": "b1017e5ee910996a",
+    "name": "Pain",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Body Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "HT",
+      "castingTime": {
+        "seconds": 2,
+        "text": "2 sec."
+      },
+      "duration": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 2,
+      "prerequisites": "Spasm",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 244"
+    }
+  },
+  {
+    "_id": "ef7cc3ad50eb6835",
+    "name": "Clumsiness",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Body Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "HT",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 5,
+        "maintain": null,
+        "text": "1 to 5/H"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 2,
+      "prerequisites": "Spasm",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 244"
+    }
+  },
+  {
+    "_id": "7eb10042575628de",
+    "name": "Hinder",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Body Control",
+        "Movement"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 4,
+        "maintain": null,
+        "text": "1 to 4/S"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 1,
+      "prerequisites": "Haste or Clumsiness",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 244"
+    }
+  },
+  {
+    "_id": "e7d52f364f327944",
+    "name": "Rooted Feet",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Body Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "ST",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": null,
+        "text": "3"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 2,
+      "prerequisites": "Hinder",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 244"
+    }
+  },
+  {
+    "_id": "3976fe44cd1ef806",
+    "name": "Paralyze Limb",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Body Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "melee"
+      ],
+      "resistedBy": "HT",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": null,
+        "text": "3"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 5,
+      "prerequisites": "Magery 1, 5 Body Control spells, Clumsiness",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 244"
+    }
+  },
+  {
+    "_id": "e58517ba7eb6ddfd",
+    "name": "Wither Limb",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Body Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "melee"
+      ],
+      "resistedBy": "HT",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 5,
+        "castMax": 5,
+        "maintain": null,
+        "text": "5"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 6,
+      "prerequisites": "Magery 2, Paralyze Limb",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 244"
+    }
+  },
+  {
+    "_id": "47dbea7065dbb260",
+    "name": "Deathtouch",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Body Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "melee"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 3,
+        "maintain": null,
+        "text": "1 to 3"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 7,
+      "prerequisites": "Wither Limb",
+      "attack": {
+        "skill": "",
+        "damage": "1d",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 245"
+    }
+  },
+  {
+    "_id": "cf138aea8a3edbcd",
+    "name": "Sense Foes",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Communication & Empathy"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "information",
+        "area"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 0,
+      "prerequisites": "",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 245"
+    }
+  },
+  {
+    "_id": "5841bc297cb03b9e",
+    "name": "Sense Emotion",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Communication & Empathy"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 1,
+      "prerequisites": "Sense Foes",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 245"
+    }
+  },
+  {
+    "_id": "3210b7b117263993",
+    "name": "Truthsayer",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Communication & Empathy"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "information"
+      ],
+      "resistedBy": "Will",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 2,
+      "prerequisites": "Sense Emotion",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 245"
+    }
+  },
+  {
+    "_id": "25043245156b031f",
+    "name": "Mind-Reading",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Communication & Empathy"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "Will",
+      "castingTime": {
+        "seconds": 10,
+        "text": "10 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 4,
+        "castMax": 4,
+        "maintain": 2,
+        "text": "4/2"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 3,
+      "prerequisites": "Truthsayer",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 245"
+    }
+  },
+  {
+    "_id": "74b2f163cc3e9888",
+    "name": "Hide Thoughts",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Communication & Empathy"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 600,
+        "text": "10 min."
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": 1,
+        "text": "3/1"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 3,
+      "prerequisites": "Truthsayer",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 245"
+    }
+  },
+  {
+    "_id": "8e5e012bdd20d1fc",
+    "name": "Seek Earth",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Earth"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "information"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 10,
+        "text": "10 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": null,
+        "text": "3"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 0,
+      "prerequisites": "",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 245"
+    }
+  },
+  {
+    "_id": "9c48867fa2710b86",
+    "name": "Shape Earth",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Earth"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 1,
+        "maintain": null,
+        "text": "1/cu. yd./h"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 1,
+      "prerequisites": "Seek Earth",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 245"
+    }
+  },
+  {
+    "_id": "7db6d353a9f35ade",
+    "name": "Earth to Stone",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Earth"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": null,
+        "text": "3/cu. yd."
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 2,
+      "prerequisites": "Magery 1, Shape Earth",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 245"
+    }
+  },
+  {
+    "_id": "a584f59215b88c69",
+    "name": "Create Earth",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Earth"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2/cu. yd."
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 3,
+      "prerequisites": "Earth to Stone",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 246"
+    }
+  },
+  {
+    "_id": "e392073084403efd",
+    "name": "Flesh to Stone",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Earth"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "HT",
+      "castingTime": {
+        "seconds": 2,
+        "text": "2 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 10,
+        "castMax": 10,
+        "maintain": null,
+        "text": "10"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 3,
+      "prerequisites": "Earth to Stone",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 246"
+    }
+  },
+  {
+    "_id": "dda19218344cd8b1",
+    "name": "Stone to Earth",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Earth"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 6,
+        "castMax": 6,
+        "maintain": null,
+        "text": "6/cu. yd."
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 3,
+      "prerequisites": "Earth to Stone or 4 Earth spells",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 246"
+    }
+  },
+  {
+    "_id": "cb6f58a53da109f5",
+    "name": "Stone to Flesh",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Earth"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 5,
+        "text": "5 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 10,
+        "castMax": 10,
+        "maintain": null,
+        "text": "10"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 5,
+      "prerequisites": "Magery 2, Flesh to Stone, Stone to Earth",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 246"
+    }
+  },
+  {
+    "_id": "904796349bb2fb59",
+    "name": "Entombment",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Earth"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "HT",
+      "castingTime": {
+        "seconds": 3,
+        "text": "3 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 10,
+        "castMax": 10,
+        "maintain": null,
+        "text": "10"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 5,
+      "prerequisites": "Magery 2, 5 Earth spells",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 246"
+    }
+  },
+  {
+    "_id": "20b2e35f0218d0ee",
+    "name": "Accuracy",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Enchantment"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "enchantment"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": null,
+        "text": ""
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 15,
+      "prerequisites": "Enchant, 5 Air spells",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 480"
+    }
+  },
+  {
+    "_id": "4d3bd6ea0712524e",
+    "name": "Deflect",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Enchantment"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "enchantment"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": null,
+        "text": ""
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 11,
+      "prerequisites": "Enchant",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 480"
+    }
+  },
+  {
+    "_id": "2445ca05894854eb",
+    "name": "Enchant",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Enchantment"
+      ],
+      "difficulty": "VH",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "enchantment"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": null,
+        "text": "Varies"
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 10,
+      "prerequisites": "Magery 2, spells from 10 colleges",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 480"
+    }
+  },
+  {
+    "_id": "8718e261456cb3b3",
+    "name": "Fortify",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Enchantment"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "enchantment"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": null,
+        "text": ""
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 11,
+      "prerequisites": "Enchant",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 480"
+    }
+  },
+  {
+    "_id": "179d69002c3fd5d8",
+    "name": "Power",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Enchantment"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "enchantment"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": null,
+        "text": ""
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 12,
+      "prerequisites": "Enchant, Recover Energy",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 480"
+    }
+  },
+  {
+    "_id": "61f8b47a2e806ecf",
+    "name": "Puissance",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Enchantment"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "enchantment"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": null,
+        "text": ""
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 15,
+      "prerequisites": "Enchant, 5 Earth spells",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 481"
+    }
+  },
+  {
+    "_id": "d53b264cf3bf09de",
+    "name": "Staff",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Enchantment"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "enchantment"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": null,
+        "text": ""
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 30,
+        "castMax": 30,
+        "maintain": null,
+        "text": "30"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 11,
+      "prerequisites": "Enchant",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 481"
+    }
+  },
+  {
+    "_id": "c7f31f31b070e22e",
+    "name": "Ignite Fire",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Fire"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 4,
+        "maintain": null,
+        "text": "1 to 4/S"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 0,
+      "prerequisites": "",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 246"
+    }
+  },
+  {
+    "_id": "7e89b73dcac7a3a7",
+    "name": "Create Fire",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Fire"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": 1,
+        "text": "2/H"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 1,
+      "prerequisites": "Ignite Fire",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 246"
+    }
+  },
+  {
+    "_id": "18cda68f9089ee30",
+    "name": "Shape Fire",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Fire"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": 1,
+        "text": "2/H"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 1,
+      "prerequisites": "Ignite Fire",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 246"
+    }
+  },
+  {
+    "_id": "df169676c88c8bfd",
+    "name": "Deflect Energy",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Fire"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "blocking"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 1,
+        "maintain": null,
+        "text": "1"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 2,
+      "prerequisites": "Magery 1, Shape Fire",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 246"
+    }
+  },
+  {
+    "_id": "caf131de9afcb5b6",
+    "name": "Extinguish Fire",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Fire"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": null,
+        "text": "3"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 1,
+      "prerequisites": "Ignite Fire",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 247"
+    }
+  },
+  {
+    "_id": "b7b1b8447d30a910",
+    "name": "Heat",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Fire"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 3,
+      "prerequisites": "Create Fire, Shape Fire",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 247"
+    }
+  },
+  {
+    "_id": "d4ec41f5a4881841",
+    "name": "Cold",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Fire"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 4,
+      "prerequisites": "Heat",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 247"
+    }
+  },
+  {
+    "_id": "a0ca02dce2d13559",
+    "name": "Resist Cold",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Fire"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": 1,
+        "text": "2/1"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 4,
+      "prerequisites": "Heat",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 247"
+    }
+  },
+  {
+    "_id": "08a5a83377ae4831",
+    "name": "Resist Fire",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Fire"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": 1,
+        "text": "2/1"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 3,
+      "prerequisites": "Extinguish Fire, Cold",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 247"
+    }
+  },
+  {
+    "_id": "4167b66ac1d93827",
+    "name": "Fireball",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Fire"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "missile"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 to 3 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": null,
+        "maintain": null,
+        "text": "1 to Magery"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 3,
+      "prerequisites": "Magery 1, Create Fire, Shape Fire",
+      "attack": {
+        "skill": "Innate Attack (Projectile)",
+        "damage": "1d",
+        "damageType": "burn",
+        "accuracy": 1,
+        "halfDamageRange": 25,
+        "maxRange": 50,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 247"
+    }
+  },
+  {
+    "_id": "1725c33a4bf63465",
+    "name": "Explosive Fireball",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Fire"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "missile"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 to 3 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": null,
+        "maintain": null,
+        "text": "2 to 2xMagery"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 4,
+      "prerequisites": "Fireball",
+      "attack": {
+        "skill": "Innate Attack (Projectile)",
+        "damage": "1d",
+        "damageType": "burn",
+        "accuracy": 1,
+        "halfDamageRange": 25,
+        "maxRange": 50,
+        "explosive": true
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 247"
+    }
+  },
+  {
+    "_id": "aa768a34dfd97904",
+    "name": "Planar Summons",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Gate"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "special"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 300,
+        "text": "5 min."
+      },
+      "duration": {
+        "seconds": 3600,
+        "text": "1 hr."
+      },
+      "energy": {
+        "cast": 20,
+        "castMax": 20,
+        "maintain": null,
+        "text": "20"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 10,
+      "prerequisites": "Magery 1, spells from 10 colleges",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 247"
+    }
+  },
+  {
+    "_id": "faace63d44205eff",
+    "name": "Plane Shift",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Gate"
+      ],
+      "difficulty": "VH",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "special"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 5,
+        "text": "5 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 20,
+        "castMax": 20,
+        "maintain": null,
+        "text": "20"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 11,
+      "prerequisites": "Planar Summons",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 248"
+    }
+  },
+  {
+    "_id": "4174d7d25b2b9626",
+    "name": "Lend Energy",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Healing"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 0,
+      "prerequisites": "Magery 1 or Empathy (advantage)",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 248"
+    }
+  },
+  {
+    "_id": "373ec65ac46f8f86",
+    "name": "Lend Vitality",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Healing"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 3600,
+        "text": "1 hr."
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": null,
+        "maintain": null,
+        "text": "1 per HP loaned"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 1,
+      "prerequisites": "Lend Energy",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 248"
+    }
+  },
+  {
+    "_id": "34dd48ed63008d55",
+    "name": "Recover Energy",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Healing"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "special"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": null,
+        "text": "Special"
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Special"
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "none"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 1,
+      "prerequisites": "Magery 1, Lend Energy",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 248"
+    }
+  },
+  {
+    "_id": "a0b9e1f4a6a6f6c5",
+    "name": "Awaken",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Healing"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 1,
+        "maintain": null,
+        "text": "1"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 2,
+      "prerequisites": "Lend Vitality",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 248"
+    }
+  },
+  {
+    "_id": "df5eb569e19e51b1",
+    "name": "Minor Healing",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Healing"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 3,
+        "maintain": null,
+        "text": "1 to 3"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 2,
+      "prerequisites": "Lend Vitality",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 248"
+    }
+  },
+  {
+    "_id": "3fc75ec98b14d432",
+    "name": "Major Healing",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Healing"
+      ],
+      "difficulty": "VH",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 4,
+        "maintain": null,
+        "text": "1 to 4"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 3,
+      "prerequisites": "Magery 1, Minor Healing",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 248"
+    }
+  },
+  {
+    "_id": "4a2ec4c7441b1bc0",
+    "name": "Great Healing",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Healing"
+      ],
+      "difficulty": "VH",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 20,
+        "castMax": 20,
+        "maintain": null,
+        "text": "20"
+      },
+      "mageryRequired": 3,
+      "prerequisiteCount": 4,
+      "prerequisites": "Magery 3, Major Healing",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 248"
+    }
+  },
+  {
+    "_id": "14ee009b3230cba2",
+    "name": "Detect Magic",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Knowledge"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 5,
+        "text": "5 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 0,
+      "prerequisites": "Magery 1",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 249"
+    }
+  },
+  {
+    "_id": "ae172268cc072c9d",
+    "name": "Aura",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Knowledge"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "information"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": null,
+        "text": "3"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 1,
+      "prerequisites": "Detect Magic",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 249"
+    }
+  },
+  {
+    "_id": "30f81c5a9d92a143",
+    "name": "Seeker",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Knowledge"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "information"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": null,
+        "text": "3"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 2,
+      "prerequisites": "Magery 1, IQ 12",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 249"
+    }
+  },
+  {
+    "_id": "a1e0e5f51de3cd19",
+    "name": "Trace",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Knowledge"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "duration": {
+        "seconds": 3600,
+        "text": "1 hr."
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": 1,
+        "text": "3/1"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 3,
+      "prerequisites": "Seeker",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 249"
+    }
+  },
+  {
+    "_id": "ce2cf03c599e3dd2",
+    "name": "Identify Spell",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Knowledge"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "information"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 1,
+      "prerequisites": "Detect Magic",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 249"
+    }
+  },
+  {
+    "_id": "1ba85784409fd881",
+    "name": "Analyze Magic",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Knowledge"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "information"
+      ],
+      "resistedBy": "spell",
+      "castingTime": {
+        "seconds": 3600,
+        "text": "1 hr."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 8,
+        "castMax": 8,
+        "maintain": null,
+        "text": "8"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 3,
+      "prerequisites": "Identify Spell",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 249"
+    }
+  },
+  {
+    "_id": "e6b7db0aac3c0acf",
+    "name": "Light",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Light & Darkness"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 1,
+        "maintain": 1,
+        "text": "1/1"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 0,
+      "prerequisites": "",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 249"
+    }
+  },
+  {
+    "_id": "839ab6c1ca80315d",
+    "name": "Continual Light",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Light & Darkness"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Varies"
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 1,
+      "prerequisites": "Light",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 249"
+    }
+  },
+  {
+    "_id": "211df45d58459fd7",
+    "name": "Darkness",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Light & Darkness"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": 1,
+        "text": "2/1"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 2,
+      "prerequisites": "Continual Light",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 250"
+    }
+  },
+  {
+    "_id": "7e299bcf9da9e482",
+    "name": "Blur",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Light & Darkness"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 2,
+        "text": "2 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 5,
+        "maintain": null,
+        "text": "1 to 5/S"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 3,
+      "prerequisites": "Darkness",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 250"
+    }
+  },
+  {
+    "_id": "941d6e3a71d3f69a",
+    "name": "Counterspell",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Meta-Spells"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "spell",
+      "castingTime": {
+        "seconds": 5,
+        "text": "5 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 0,
+      "prerequisites": "Magery 1",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 250"
+    }
+  },
+  {
+    "_id": "ef95873dab72487a",
+    "name": "Dispel Magic",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Meta-Spells"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "spell",
+      "castingTime": {
+        "seconds": null,
+        "text": "sec.=cost"
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": null,
+        "text": "3"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 13,
+      "prerequisites": "Counterspell, 12 spells",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 250"
+    }
+  },
+  {
+    "_id": "b7f12d4934d60563",
+    "name": "Foolishness",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Mind Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "Will",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": null,
+        "maintain": null,
+        "text": "1 per IQ-/H"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 0,
+      "prerequisites": "IQ 12",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 250"
+    }
+  },
+  {
+    "_id": "ae4ef1476ef53392",
+    "name": "Forgetfulness",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Mind Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "Will or skill",
+      "castingTime": {
+        "seconds": 10,
+        "text": "10 sec."
+      },
+      "duration": {
+        "seconds": 3600,
+        "text": "1 hr."
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": 3,
+        "text": "3/3"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 1,
+      "prerequisites": "Magery 1, Foolishness",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 250"
+    }
+  },
+  {
+    "_id": "410e8818668190ea",
+    "name": "Daze",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Mind Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "HT",
+      "castingTime": {
+        "seconds": 2,
+        "text": "2 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": 2,
+        "text": "3/2"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 1,
+      "prerequisites": "Foolishness",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 250"
+    }
+  },
+  {
+    "_id": "fec623ebba74fbe9",
+    "name": "Mass Daze",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Mind Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "HT",
+      "castingTime": {
+        "seconds": null,
+        "text": "sec.=cost"
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": 1,
+        "text": "2/1"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 2,
+      "prerequisites": "Daze, IQ 13",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 251"
+    }
+  },
+  {
+    "_id": "b3cf97d65859476b",
+    "name": "Sleep",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Mind Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "HT",
+      "castingTime": {
+        "seconds": 3,
+        "text": "3 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 4,
+        "castMax": 4,
+        "maintain": null,
+        "text": "4"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 2,
+      "prerequisites": "Daze",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 251"
+    }
+  },
+  {
+    "_id": "eacbf04585efb11b",
+    "name": "Mass Sleep",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Mind Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "HT",
+      "castingTime": {
+        "seconds": null,
+        "text": "sec.=cost"
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": null,
+        "text": "3"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 3,
+      "prerequisites": "Sleep, IQ 13",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 251"
+    }
+  },
+  {
+    "_id": "ae5bbb4cd959759a",
+    "name": "Command",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Mind Control"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "blocking"
+      ],
+      "resistedBy": "Will",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 2,
+      "prerequisites": "Magery 2, Forgetfulness",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 251"
+    }
+  },
+  {
+    "_id": "ff91d053f1a9ec4c",
+    "name": "Haste",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Movement"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 2,
+        "text": "2 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2/pt./H"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 0,
+      "prerequisites": "",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 251"
+    }
+  },
+  {
+    "_id": "8b6da22fb6224cb9",
+    "name": "Great Haste",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Movement"
+      ],
+      "difficulty": "VH",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 3,
+        "text": "3 sec."
+      },
+      "duration": {
+        "seconds": 10,
+        "text": "10 sec."
+      },
+      "energy": {
+        "cast": 5,
+        "castMax": 5,
+        "maintain": null,
+        "text": "5"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 1,
+      "prerequisites": "Magery 1, Haste, IQ 12",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 251"
+    }
+  },
+  {
+    "_id": "cf50b9f67215e2b3",
+    "name": "Apportation",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Movement"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "Will",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 0,
+      "prerequisites": "Magery 1",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 251"
+    }
+  },
+  {
+    "_id": "463cc9683e8996e5",
+    "name": "Lockmaster",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Movement"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "Magelock",
+      "castingTime": {
+        "seconds": 10,
+        "text": "10 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": null,
+        "text": "3"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 1,
+      "prerequisites": "Magery 2, Apportation",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 251"
+    }
+  },
+  {
+    "_id": "3f250244c2c9adc3",
+    "name": "Deflect Missile",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Movement",
+        "Protection & Warning"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "blocking"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 1,
+        "maintain": null,
+        "text": "1"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 1,
+      "prerequisites": "Apportation",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 251"
+    }
+  },
+  {
+    "_id": "4d811b00130b3626",
+    "name": "Death Vision",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Necromancy"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 3,
+        "text": "3 sec."
+      },
+      "duration": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 0,
+      "prerequisites": "Magery 1",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 251"
+    }
+  },
+  {
+    "_id": "8c42359d994cc529",
+    "name": "Sense Spirit",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Necromancy"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "information",
+        "area"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 1,
+        "maintain": null,
+        "text": "1"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 1,
+      "prerequisites": "Magery 1 or Death Vision",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 252"
+    }
+  },
+  {
+    "_id": "d491e4738f611d83",
+    "name": "Summon Spirit",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Necromancy"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "information"
+      ],
+      "resistedBy": "Will",
+      "castingTime": {
+        "seconds": 300,
+        "text": "5 min."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 20,
+        "castMax": 20,
+        "maintain": 10,
+        "text": "20/10"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 1,
+      "prerequisites": "Magery 2, Death Vision",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 252"
+    }
+  },
+  {
+    "_id": "3d24d138b41bad11",
+    "name": "Zombie",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Necromancy"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 8,
+        "castMax": 8,
+        "maintain": null,
+        "text": "8"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 4,
+      "prerequisites": "Summon Spirit, Lend Vitality",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 252"
+    }
+  },
+  {
+    "_id": "7d7ed089e79d76f5",
+    "name": "Turn Zombie",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Necromancy"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 4,
+        "text": "4 sec."
+      },
+      "duration": {
+        "seconds": 86400,
+        "text": "1 day"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 5,
+      "prerequisites": "Zombie",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 252"
+    }
+  },
+  {
+    "_id": "abfdf1ef23d75380",
+    "name": "Summon Demon",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Necromancy"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "special"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 300,
+        "text": "5 min."
+      },
+      "duration": {
+        "seconds": 3600,
+        "text": "1 hr."
+      },
+      "energy": {
+        "cast": 20,
+        "castMax": 20,
+        "maintain": null,
+        "text": "20"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 10,
+      "prerequisites": "Magery 1, spells from 10 colleges",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 252"
+    }
+  },
+  {
+    "_id": "7e7684872a7ab733",
+    "name": "Banish",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Necromancy"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "special"
+      ],
+      "resistedBy": "Will",
+      "castingTime": {
+        "seconds": 5,
+        "text": "5 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 10,
+      "prerequisites": "Magery 1, spells from 10 colleges",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 252"
+    }
+  },
+  {
+    "_id": "2aba63bc16a6ebc8",
+    "name": "Shield",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Protection & Warning"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 0,
+      "prerequisites": "Magery 2",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 252"
+    }
+  },
+  {
+    "_id": "df21b92fa22c5b28",
+    "name": "Armor",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Protection & Warning"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": null,
+        "castMax": null,
+        "maintain": null,
+        "text": "Varies"
+      },
+      "mageryRequired": 2,
+      "prerequisiteCount": 1,
+      "prerequisites": "Shield",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 253"
+    }
+  },
+  {
+    "_id": "b7a3c579944a57bb",
+    "name": "Magelock",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Protection & Warning"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 4,
+        "text": "4 sec."
+      },
+      "duration": {
+        "seconds": 21600,
+        "text": "6 hrs."
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": 2,
+        "text": "3/2"
+      },
+      "mageryRequired": 1,
+      "prerequisiteCount": 0,
+      "prerequisites": "Magery 1",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 253"
+    }
+  },
+  {
+    "_id": "bb551e1a0e867cf6",
+    "name": "Seek Water",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Water"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "information"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Instant"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 0,
+      "prerequisites": "",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 253"
+    }
+  },
+  {
+    "_id": "1aa7b205022bc8ba",
+    "name": "Purify Water",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Water"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "special"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": null,
+        "text": "5-10 sec./gal."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 1,
+        "maintain": null,
+        "text": "1/gal."
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 1,
+      "prerequisites": "Seek Water",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 253"
+    }
+  },
+  {
+    "_id": "a8d84fb2ae7a0201",
+    "name": "Create Water",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Water"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": null,
+        "text": "2/gal."
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 2,
+      "prerequisites": "Purify Water",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 253"
+    }
+  },
+  {
+    "_id": "dbdf804e1c4a0efe",
+    "name": "Destroy Water",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Water"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": null,
+        "text": "Permanent"
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": 3,
+        "text": "3/S"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 3,
+      "prerequisites": "Create Water",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 253"
+    }
+  },
+  {
+    "_id": "4f6ec8deb1ba1c72",
+    "name": "Shape Water",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Water"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 2,
+        "text": "2 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 1,
+        "castMax": 1,
+        "maintain": 1,
+        "text": "1/1"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 3,
+      "prerequisites": "Create Water",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 253"
+    }
+  },
+  {
+    "_id": "80617c2231f88f34",
+    "name": "Fog",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Weather",
+        "Water"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "area"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 1,
+        "text": "1 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 2,
+        "castMax": 2,
+        "maintain": 1,
+        "text": "2/H"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 4,
+      "prerequisites": "Shape Water",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 253"
+    }
+  },
+  {
+    "_id": "27e1c59bfbd3a6fc",
+    "name": "Icy Weapon",
+    "type": "spell",
+    "system": {
+      "colleges": [
+        "Water"
+      ],
+      "difficulty": "H",
+      "points": 0,
+      "bonus": 0,
+      "classes": [
+        "regular"
+      ],
+      "resistedBy": "",
+      "castingTime": {
+        "seconds": 3,
+        "text": "3 sec."
+      },
+      "duration": {
+        "seconds": 60,
+        "text": "1 min."
+      },
+      "energy": {
+        "cast": 3,
+        "castMax": 3,
+        "maintain": 1,
+        "text": "3/1"
+      },
+      "mageryRequired": 0,
+      "prerequisiteCount": 3,
+      "prerequisites": "Create Water",
+      "attack": {
+        "skill": "",
+        "damage": "",
+        "damageType": "",
+        "accuracy": 0,
+        "halfDamageRange": 0,
+        "maxRange": 0,
+        "explosive": false
+      },
+      "description": "",
+      "reference": "Basic Set: Characters p. 253"
+    }
+  }
+]

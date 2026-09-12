@@ -20175,7 +20175,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20190,7 +20203,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20205,7 +20231,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20220,7 +20259,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20235,7 +20287,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20250,7 +20315,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20265,7 +20343,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20280,7 +20371,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20295,7 +20399,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20310,7 +20427,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20325,7 +20455,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20340,7 +20483,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20355,7 +20511,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20370,7 +20539,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20385,7 +20567,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"
@@ -20400,7 +20595,20 @@
       "difficulty": "VH",
       "points": 0,
       "bonus": 0,
-      "defaults": [],
+      "defaults": [
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Ritual Magic",
+          "modifier": -6
+        },
+        {
+          "from": "skill",
+          "attribute": "IQ",
+          "skill": "Thaumatology",
+          "modifier": -6
+        }
+      ],
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 242"

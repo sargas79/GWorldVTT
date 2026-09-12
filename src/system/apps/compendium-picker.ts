@@ -43,6 +43,9 @@ const INDEX_FIELDS = [
   "system.cost",
   "system.prerequisite",
   "system.defaultModifier",
+  "system.colleges",
+  "system.classes",
+  "system.energy",
 ];
 
 /** One row in the list. */
@@ -56,6 +59,12 @@ export interface PickerEntry {
   search: string;
   /** What the index knows of the entry, enough to price an amount before it is taken. */
   system: Record<string, any>;
+  /**
+   * The pack the entry came from. Shown only when more than one pack feeds
+   * the list: a module's spells reprint the Basic Set's, and two rows called
+   * Fireball need to say which book each is from.
+   */
+  source: string;
 }
 
 /**
@@ -91,6 +100,7 @@ export async function collectEntries(
         summary: summarise(entry.type, entry.system),
         search: String(entry.name).toLowerCase(),
         system: entry.system ?? {},
+        source: String(pack.title ?? pack.metadata?.label ?? pack.collection ?? ""),
       });
     }
   }
@@ -184,10 +194,14 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     const shown = matching.slice(0, 200);
 
     const points = this.#actor?.system?.derived?.points ?? {};
+    const sources = new Set(all.map((entry) => entry.source));
 
     return {
       loading: this.#entries === null,
       query: this.#query,
+      // Where an entry came from matters once two packs contribute: the
+      // Basic Set's Fireball and a module's are two rows with one name.
+      showSource: sources.size > 1,
       entries: shown.map((entry) => this.#row(entry)),
       total: matching.length,
       truncated: matching.length > shown.length,

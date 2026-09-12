@@ -33,6 +33,21 @@ export function summarise(type: string, system: any): string {
       return `DB ${system?.db ?? 0}`;
     case "language":
       return "";
+    case "spell": {
+      // A spell is told from another by where it is filed and what it costs:
+      // "Fire · Missile · 1 to Magery" says more than IQ/H, which nearly
+      // every spell is.
+      const colleges: string[] = Array.isArray(system?.colleges) ? system.colleges : [];
+      const classes: string[] = Array.isArray(system?.classes) ? system.classes : [];
+      const cost = String(system?.energy?.text ?? "").trim();
+      return [
+        colleges.join("/"),
+        classes.map((c) => c.charAt(0).toUpperCase() + c.slice(1)).join("/"),
+        cost,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+    }
     default: {
       const weight = Number(system?.weight ?? 0);
       const cost = Number(system?.cost ?? 0);

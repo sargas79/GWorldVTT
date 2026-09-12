@@ -54,6 +54,7 @@ const STEPS: readonly Step[] = [
   { id: "advantages", types: ["trait"], categories: ["advantage", "perk"] },
   { id: "disadvantages", types: ["trait"], categories: ["disadvantage", "quirk"] },
   { id: "skills", types: ["skill", "technique"] },
+  { id: "spells", types: ["spell"] },
   { id: "gear", types: ["equipment", "armor", "shield"] },
   { id: "review" },
 ];
@@ -193,6 +194,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
         row("GWORLD.Points.Quirks", points.quirks, traits("quirk"), true),
         row("GWORLD.Points.Skills", points.skills, count((item) => item.type === "skill")),
         row("GWORLD.Points.Techniques", points.techniques, count((item) => item.type === "technique")),
+        row("GWORLD.Points.Spells", points.spells, count((item) => item.type === "spell")),
         row("GWORLD.Points.Languages", points.languages, count((item) => item.type === "language")),
       ].filter((entry) => entry.value !== 0 || (entry.items ?? 0) > 0),
       spent: points.spent ?? 0,
@@ -408,7 +410,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
 function spendableOn(item: any): { field: string; value: number; unit: string } | null {
   const system = item.system ?? {};
 
-  if (item.type === "skill" || item.type === "technique") {
+  if (item.type === "skill" || item.type === "technique" || item.type === "spell") {
     return { field: "system.points", value: Number(system.points ?? 0), unit: "pts" };
   }
 
@@ -428,7 +430,8 @@ function detailFor(item: any): string {
     case "trait":
       return `${system.totalPoints ?? 0} pts`;
     case "skill":
-    case "technique": {
+    case "technique":
+    case "spell": {
       // The points are in the field beside this; what is worth showing is what
       // they bought, which is the whole reason for spending them.
       const level = system.derived?.level;

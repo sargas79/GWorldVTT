@@ -126,6 +126,20 @@
     </div>
   {{/if}}
 
+  {{#if notableSpells.length}}
+    <div class="isec" style="gap: 7px">
+      <div class="grph">{{localize "GWORLD.Section.SpellsKnown"}}</div>
+      <div class="npcline">
+        {{#each notableSpells as |spell|}}
+          <span class="rollable" data-action="roll" data-roll-type="skill"
+                data-roll-label="{{spell.name}}" data-roll-target="{{spell.level}}" data-based-on="IQ">
+            {{spell.name}} <b>{{spell.level}}</b>
+          </span>
+        {{/each}}
+      </div>
+    </div>
+  {{/if}}
+
   {{#if system.tactics}}
     <div class="inote">
       {{> "gworld.info"}}<span>{{system.tactics}}</span>

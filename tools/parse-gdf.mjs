@@ -28,6 +28,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { fields, isExpression, modes, nameOf, records, splitTop } from "./gdf.mjs";
+import { existingIds as existingSpellIds, parseSpells } from "./parse-gdf-spells.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -161,7 +162,9 @@ function parseTraits(recs, reject, note) {
     const f = fields(r.text);
     if (!isBasicSet(f)) continue;
 
-    const bare = nameOf(r);
+    // GCA asks which core skill Ritual Magery boosts and writes the answer
+    // into the name; the trait the book prices is Ritual Magery (p. 242).
+    const bare = nameOf(r).replace(/^Ritual Magery \(\[skill\]\)$/, "Ritual Magery");
     if (PLACEHOLDER.test(bare)) { reject(bare, "name is a GCA placeholder"); continue; }
 
     const cost = parseCost(splitTop(r.text)[1], f);
@@ -298,6 +301,14 @@ function parseSkills(recs, reject) {
     for (const entry of splitTop(f.get("default") ?? "")) {
       const parsed = parseDefault(entry);
       if (parsed) defaults.push(parsed);
+    }
+    // A college skill "defaults to the core skill at -6" (p. 242), and GCA
+    // leaves which core skill as a blank for the player. The book names the
+    // two usual ones, so both are offered and the GM can trim.
+    if (/^Path of /.test(name) && /SK:\[skill\]/.test(f.get("default") ?? "")) {
+      for (const core of ["Ritual Magic", "Thaumatology"]) {
+        defaults.push({ from: "skill", attribute: "IQ", skill: core, modifier: -6 });
+      }
     }
 
     skills.push({
@@ -995,6 +1006,15 @@ function main() {
     (n) => notes.push(n),
   );
 
+  // The spells, through the tool a module would use for another book's.
+  const spellRejects = [];
+  const spells = parseSpells(recs, {
+    reject: (what, why) => spellRejects.push({ what, why }),
+    ids: existingSpellIds(join(projectRoot, "packs-src", "spells")),
+    prefix: "B",
+    book: "Basic Set: Characters",
+  });
+
   const positive = traits.filter((t) => ["advantage", "perk"].includes(t.system.category));
   report("traits", traits.length, traitRejects);
   console.log(`  advantages ${positive.length}, disadvantages ${traits.length - positive.length}`);
@@ -1008,6 +1028,7 @@ function main() {
   console.log(`armour: ${armor.length}`);
   console.log(`equipment: ${gear.length} (${armed.length} carrying attack modes)`);
   report("shields", shields.length, gearRejects);
+  report("spells", spells.length, spellRejects);
   if (notes.length) {
     console.log(`\nrecorded but not modelled: ${notes.length}`);
     for (const n of notes.slice(0, 6)) console.log(`    ${n}`);
@@ -1028,6 +1049,7 @@ function main() {
       ["equipment", "armor.json", armor],
       ["equipment", "gear.json", gear],
       ["equipment", "shields.json", shields],
+      ["spells", "basic-set-spells.json", spells],
     ];
     for (const [pack, file, docs] of files) {
       mkdirSync(join(projectRoot, "packs-src", pack), { recursive: true });
@@ -1055,7 +1077,12 @@ function main() {
       ].join("\n"),
       "utf8",
     );
-    console.log("\nwrote traits, skills, techniques, armour, equipment and shields");
+    writeFileSync(
+      join(projectRoot, "packs-src", "spells", ".rejected-gdf.txt"),
+      spellRejects.map((r) => `${r.why}\t${r.what}`).join("\n"),
+      "utf8",
+    );
+    console.log("\nwrote traits, skills, techniques, armour, equipment, shields and spells");
   }
 }
 

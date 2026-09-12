@@ -79,6 +79,20 @@ export interface TraitEffects {
   unkillable: number;
   /** Injury Tolerance (pp. 60-61): what parts the body lacks and how it is hurt. */
   injuryTolerance: InjuryTolerance;
+  /**
+   * Magery (Characters p. 66): null for somebody with none, 0 for Magery 0
+   * alone, and the level bought above that otherwise. Kept apart from a plain
+   * number because "no Magery" and "Magery 0" are different things: one
+   * cannot learn spells in a normal-mana world and the other can.
+   */
+  magery: number | null;
+  /** Ritual Magery, the separate advantage the ritual style of magic uses (p. 242). */
+  ritualMagery: number | null;
+  /**
+   * Magic Resistance (p. 67): "Subtract your Magic Resistance from the skill
+   * of anyone casting a spell on you, and add it to your roll to resist".
+   */
+  magicResistance: number;
 }
 
 /** What no traits at all come to, and the shape everything is added onto. */
@@ -109,6 +123,9 @@ export function noTraitEffects(): TraitEffects {
     regeneration: 0,
     unkillable: 0,
     injuryTolerance: noInjuryTolerance(),
+    magery: null,
+    ritualMagery: null,
+    magicResistance: 0,
   };
 }
 
@@ -224,6 +241,18 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   // Extreme -- and Unkillable's are how far past death it goes (pp. 80, 95).
   regeneration: (levels) => ({ regeneration: levels }),
   unkillable: (levels) => ({ unkillable: levels }),
+  // "Magery 0 costs 5 points for all mages ... 10 points/level (on top of the
+  // 5 points for Magery 0)" (p. 66). GCA carries the two as separate records,
+  // and so do the compendia: Magery 0 is the awareness, Magery the levels.
+  "magery 0": () => ({ magery: 0 }),
+  magery: (levels) => ({ magery: levels }),
+  // The ritual style's own Magery, "separate advantages" when both systems
+  // are in play (p. 242).
+  "ritual magery 0": () => ({ ritualMagery: 0 }),
+  "ritual magery": (levels) => ({ ritualMagery: levels }),
+
+  // "-3 to cast spells on you and you get +3 to resist" for three levels (p. 67).
+  "magic resistance": (levels) => ({ magicResistance: levels }),
 };
 
 /**
@@ -315,9 +344,22 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
 
     total.shockMultiplier = Math.max(total.shockMultiplier, applied.shockMultiplier ?? 1);
     total.enhancedMove = Math.max(total.enhancedMove, applied.enhancedMove ?? 1);
+
+    // Magery 0 and Magery N are two records for one talent, so the level is
+    // the highest either says rather than their sum: Magery 0 beside Magery 3
+    // is Magery 3, not Magery 3 counted twice.
+    total.magery = highest(total.magery, applied.magery);
+    total.ritualMagery = highest(total.ritualMagery, applied.ritualMagery);
+    total.magicResistance += applied.magicResistance ?? 0;
   }
 
   return total;
+}
+
+/** The higher of two levels, where null means the talent is absent. */
+function highest(a: number | null, b: number | null | undefined): number | null {
+  if (b === null || b === undefined) return a;
+  return a === null ? b : Math.max(a, b);
 }
 
 /**

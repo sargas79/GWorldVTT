@@ -50,7 +50,7 @@ export function isLevelledTrait(system: Record<string, any> | undefined): boolea
 /** Whether the picker should ask how much of this entry to take. */
 export function amountKind(item: PlannedItem): "levels" | "points" | null {
   if (item.type === "trait") return isLevelledTrait(item.system) ? "levels" : null;
-  if (item.type === "skill" || item.type === "technique") return "points";
+  if (item.type === "skill" || item.type === "technique" || item.type === "spell") return "points";
   return null;
 }
 
