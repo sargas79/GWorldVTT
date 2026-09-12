@@ -18,6 +18,8 @@
  * applying the book's numbers to it would be a guess.
  */
 
+import { injuryToleranceFrom, noInjuryTolerance, type InjuryTolerance } from "./injury-tolerance.js";
+
 /** What a character's traits do to the rolls this system makes. */
 export interface TraitEffects {
   /** Added to every active defense roll (Combat Reflexes). */
@@ -62,6 +64,21 @@ export interface TraitEffects {
   liftingSt: number;
   /** Levels of the secondary characteristics bought as traits. */
   secondary: { hp: number; fp: number; will: number; per: number; basicMove: number; basicSpeed: number };
+  /**
+   * Arm ST (Characters p. 40): ST for lifting and striking with the arms,
+   * and nothing else -- not HP, not ST-based skills.
+   */
+  armSt: number;
+  /** Extra Attack (p. 53): attacks beyond the one an Attack maneuver allows. */
+  extraAttacks: number;
+  /** Extra Arms (p. 53): arms beyond the usual two. */
+  extraArms: number;
+  /** Regeneration (p. 80), as the level bought: 1 slow to 5 extreme, 0 for none. */
+  regeneration: number;
+  /** Unkillable (p. 95), as its level: 0 for the mortal. */
+  unkillable: number;
+  /** Injury Tolerance (pp. 60-61): what parts the body lacks and how it is hurt. */
+  injuryTolerance: InjuryTolerance;
 }
 
 /** What no traits at all come to, and the shape everything is added onto. */
@@ -86,13 +103,24 @@ export function noTraitEffects(): TraitEffects {
     strikingSt: 0,
     liftingSt: 0,
     secondary: { hp: 0, fp: 0, will: 0, per: 0, basicMove: 0, basicSpeed: 0 },
+    armSt: 0,
+    extraAttacks: 0,
+    extraArms: 0,
+    regeneration: 0,
+    unkillable: 0,
+    injuryTolerance: noInjuryTolerance(),
   };
 }
 
-/** A trait as the sheet holds it: a name, and how many levels were bought. */
+/** A trait as the sheet holds it: a name, how many levels were bought, and its modifiers by name. */
 export interface HeldTrait {
   name: string;
   levels?: number;
+  /**
+   * The names of its enhancements and limitations. Most say nothing this
+   * module reads; Injury Tolerance's kind is one that does.
+   */
+  modifiers?: readonly string[];
 }
 
 type EffectOf = (levels: number) => Partial<TraitEffects>;
@@ -184,7 +212,27 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   "extra perception": (levels) => ({ secondary: { hp: 0, fp: 0, will: 0, per: levels, basicMove: 0, basicSpeed: 0 } }),
   "extra basic move": (levels) => ({ secondary: { hp: 0, fp: 0, will: 0, per: 0, basicMove: levels, basicSpeed: 0 } }),
   "extra basic speed": (levels) => ({ secondary: { hp: 0, fp: 0, will: 0, per: 0, basicMove: 0, basicSpeed: levels * 0.25 } }),
+
+  // "Arm ST ... adds to ST for the purpose of lifting or striking with that
+  // arm" (p. 40): it goes where Striking ST and Lifting ST go, and nowhere else.
+  "arm st": (levels) => ({ armSt: levels }),
+  // One more attack a turn per level (p. 53), and more arms to hold things in.
+  "extra attack": (levels) => ({ extraAttacks: levels }),
+  "extra arms": (levels) => ({ extraArms: levels }),
+
+  // Regeneration's levels are its rates -- Slow, Regular, Fast, Very Fast,
+  // Extreme -- and Unkillable's are how far past death it goes (pp. 80, 95).
+  regeneration: (levels) => ({ regeneration: levels }),
+  unkillable: (levels) => ({ unkillable: levels }),
 };
+
+/**
+ * Injury Tolerance is one trait whose kind is in its modifiers or its name:
+ * "Injury Tolerance (Unliving)", or "Injury Tolerance" with a modifier
+ * called Unliving. Both are read, so it is matched by prefix rather than
+ * looked up whole.
+ */
+const INJURY_TOLERANCE = /^injury tolerance\b/;
 
 /**
  * The name a trait is matched by.
@@ -199,7 +247,8 @@ function matchName(name: string): string {
 
 /** Whether a named trait is one this system reads at all. */
 export function isReadTrait(name: string): boolean {
-  return matchName(name) in TRAIT_EFFECTS;
+  const key = matchName(name);
+  return key in TRAIT_EFFECTS || INJURY_TOLERANCE.test(key);
 }
 
 /** Every trait name this system reads, for showing what is understood. */
@@ -219,7 +268,16 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
   const total = noTraitEffects();
 
   for (const trait of traits) {
-    const effect = TRAIT_EFFECTS[matchName(trait.name)];
+    const key = matchName(trait.name);
+    if (INJURY_TOLERANCE.test(key)) {
+      total.injuryTolerance = injuryToleranceFrom(
+        [trait.name, ...(trait.modifiers ?? [])],
+        total.injuryTolerance,
+      );
+      continue;
+    }
+
+    const effect = TRAIT_EFFECTS[key];
     if (!effect) continue;
 
     // A trait with no levels field is a flat one, and counts once.
@@ -235,6 +293,12 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
     total.superJump += applied.superJump ?? 0;
     total.strikingSt += applied.strikingSt ?? 0;
     total.liftingSt += applied.liftingSt ?? 0;
+    total.armSt += applied.armSt ?? 0;
+    total.extraAttacks += applied.extraAttacks ?? 0;
+    total.extraArms += applied.extraArms ?? 0;
+    // Two Regenerations or two Unkillables do not add: the better one holds.
+    total.regeneration = Math.max(total.regeneration, applied.regeneration ?? 0);
+    total.unkillable = Math.max(total.unkillable, applied.unkillable ?? 0);
     for (const key of ["ST", "DX", "IQ", "HT"] as const) {
       total.attributes[key] += applied.attributes?.[key] ?? 0;
     }

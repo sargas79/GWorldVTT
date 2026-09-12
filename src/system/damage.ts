@@ -35,6 +35,8 @@ import {
 } from "../rules/trait-effects.js";
 import type { DamageType } from "../rules/types.js";
 import { attributeOf } from "./attributes.js";
+import { loseAim } from "./aim.js";
+import { hasInjuryTolerance } from "../rules/injury-tolerance.js";
 
 /** A critical hit, already rolled for on one of the tables. */
 export interface CriticalHit {
@@ -65,6 +67,11 @@ export interface IncomingDamage {
    * critical did to it.
    */
   chink?: boolean;
+  /**
+   * A shotgun's pellets striking as one mass multiply the target's DR as
+   * well as the damage (Campaigns p. 409). One for every other blow.
+   */
+  drMultiplier?: number;
 }
 
 /** What applying a blow did. */
@@ -155,7 +162,8 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   // A blow that found a chink meets half the armour. It is applied to the worn
   // figure rather than inside the pipeline because natural DR is not armour
   // with gaps in it -- "joints or weak points in a suit of armor".
-  const armour = damage.chink ? chinkDr(wornDr) : wornDr;
+  const drMultiplier = Math.max(1, Math.floor(Number(damage.drMultiplier ?? 1)));
+  const armour = (damage.chink ? chinkDr(wornDr) : wornDr) * drMultiplier;
 
   // A critical can double or triple the blow, or replace the roll with the
   // most the dice could have given. All of that happens to basic damage, before
@@ -180,6 +188,8 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     // Halving or ignoring DR is the critical's doing and belongs inside the
     // pipeline, because the tables halve what is left after the armour divisor.
     ...(critical ? { critical } : {}),
+    // A body that is not flesh is hurt as its substance allows.
+    ...(hasInjuryTolerance(traits.injuryTolerance) ? { tolerance: traits.injuryTolerance } : {}),
   });
 
   // Fatigue comes off FP, and the consequences that follow -- shock, major
@@ -187,7 +197,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   const pool = result.costsFatigue ? fp : hp;
   const previous = Number(pool.value) || 0;
   const max = Number(pool.max) || 0;
-  const applied = applyInjury(result.injury, previous, max);
+  const applied = applyInjury(result.injury, previous, max, { unkillable: traits.unkillable });
 
   // Knockback is worked out from damage before DR, and a crushing blow causes
   // it whether or not it got through (p. 378).
@@ -251,7 +261,11 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
           }),
         }
       : null,
-    bleeds: result.injury > 0 && woundBleeds(damage.type, consequences.majorWound),
+    // Nothing bleeds that has no blood.
+    bleeds:
+      result.injury > 0 &&
+      !traits.injuryTolerance.noBlood &&
+      woundBleeds(damage.type, consequences.majorWound),
   };
 }
 
@@ -273,5 +287,7 @@ export async function applyDamageToActor(
 
   const path = resolved.costsFatigue ? "system.fp.value" : "system.hp.value";
   await actor.update({ [path]: resolved.current });
+  // "If you are injured while aiming ... you lose your aim."
+  await loseAim(actor, "injured");
   return resolved;
 }

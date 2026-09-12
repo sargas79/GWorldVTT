@@ -2734,13 +2734,15 @@
           "maxRange": 450,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(20)",
           "minSt": 10,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -3,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 14
         }
       ]
     }
@@ -2780,13 +2782,15 @@
           "maxRange": 400,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(20)",
           "minSt": 10,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -3,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 14
         }
       ]
     }
@@ -2826,13 +2830,15 @@
           "maxRange": 650,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "2(3i)",
           "minSt": 9,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -1,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 16
         }
       ]
     }
@@ -2872,13 +2878,15 @@
           "maxRange": 1300,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "6(3i)",
           "minSt": 10,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -2,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 16
         }
       ]
     }
@@ -2918,13 +2926,15 @@
           "maxRange": 1700,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "7+1(3)",
           "minSt": 10,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -2,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 17
         }
       ]
     }
@@ -2964,13 +2974,15 @@
           "maxRange": 1850,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "8+1(3)",
           "minSt": 9,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -2,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -3010,13 +3022,15 @@
           "maxRange": 1500,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "6(3i)",
           "minSt": 8,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -2,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -3056,13 +3070,15 @@
           "maxRange": 1250,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "5(3i)",
           "minSt": 8,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -1,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 17
         }
       ]
     }
@@ -3102,13 +3118,15 @@
           "maxRange": 1850,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "15+1(3)",
           "minSt": 9,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -2,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -3148,13 +3166,15 @@
           "maxRange": 1500,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "5+1(3)",
           "minSt": 8,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -1,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 17
         }
       ]
     }
@@ -3194,13 +3214,15 @@
           "maxRange": 2000,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "6(3i)",
           "minSt": 10,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -2,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 17
         }
       ]
     }
@@ -3240,13 +3262,15 @@
           "maxRange": 2500,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "6(3i)",
           "minSt": 11,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -3,
-          "recoil": 4
+          "recoil": 4,
+          "malfunction": 17
         }
       ]
     }
@@ -3286,13 +3310,15 @@
           "maxRange": 2500,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "9+1(3)",
           "minSt": 12,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -3,
-          "recoil": 4
+          "recoil": 4,
+          "malfunction": 17
         }
       ]
     }
@@ -3332,13 +3358,15 @@
           "maxRange": 1900,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "15+1(3)",
           "minSt": 9,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -2,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -3378,13 +3406,15 @@
           "maxRange": 1900,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "18+1(3)",
           "minSt": 9,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -2,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -3424,13 +3454,15 @@
           "maxRange": 1900,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "4(3i)",
           "minSt": 9,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -2,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": 17
         }
       ]
     }
@@ -3470,13 +3502,15 @@
           "maxRange": 1750,
           "rangeIsStMultiple": false,
           "rateOfFire": 13,
+          "projectiles": 1,
           "shots": "50+1(5)",
           "minSt": 11,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 17
         }
       ]
     }
@@ -3516,13 +3550,15 @@
           "maxRange": 1900,
           "rangeIsStMultiple": false,
           "rateOfFire": 8,
+          "projectiles": 1,
           "shots": "32(3)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -3562,13 +3598,15 @@
           "maxRange": 1900,
           "rangeIsStMultiple": false,
           "rateOfFire": 20,
+          "projectiles": 1,
           "shots": "25+1(3)",
           "minSt": 12,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -3,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 17
         }
       ]
     }
@@ -3608,13 +3646,15 @@
           "maxRange": 1900,
           "rangeIsStMultiple": false,
           "rateOfFire": 13,
+          "projectiles": 1,
           "shots": "30+1(3)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -3654,13 +3694,15 @@
           "maxRange": 2000,
           "rangeIsStMultiple": false,
           "rateOfFire": 15,
+          "projectiles": 1,
           "shots": "20+1(3)",
           "minSt": 7,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -3,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -3700,13 +3742,15 @@
           "maxRange": 2900,
           "rangeIsStMultiple": false,
           "rateOfFire": 16,
+          "projectiles": 1,
           "shots": "80(3)",
           "minSt": 9,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -3,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -3746,13 +3790,15 @@
           "maxRange": 1750,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "50+1(5)",
           "minSt": 11,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 17
         }
       ]
     }
@@ -3792,13 +3838,15 @@
           "maxRange": 1900,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "32(3)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -3838,13 +3886,15 @@
           "maxRange": 1900,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "25+1(3)",
           "minSt": 12,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -3,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 17
         }
       ]
     }
@@ -3884,13 +3934,15 @@
           "maxRange": 1900,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "30+1(3)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -3930,13 +3982,15 @@
           "maxRange": 600,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(60)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -6,
-          "recoil": 4
+          "recoil": 4,
+          "malfunction": 12
         }
       ]
     }
@@ -3976,13 +4030,15 @@
           "maxRange": 600,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(60)",
           "minSt": 10,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -6,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 14
         }
       ]
     }
@@ -4022,13 +4078,15 @@
           "maxRange": 1500,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(15)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -6,
-          "recoil": 4
+          "recoil": 4,
+          "malfunction": 14
         }
       ]
     }
@@ -4068,13 +4126,15 @@
           "maxRange": 2100,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(15)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -6,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 16
         }
       ]
     }
@@ -4114,13 +4174,15 @@
           "maxRange": 2000,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(4)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -6,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 16
         }
       ]
     }
@@ -4160,13 +4222,15 @@
           "maxRange": 3000,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "6+1(3i)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 16
         }
       ]
     }
@@ -4206,13 +4270,15 @@
           "maxRange": 4200,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "5+1(3i)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 4
+          "recoil": 4,
+          "malfunction": 17
         }
       ]
     }
@@ -4252,13 +4318,15 @@
           "maxRange": 4200,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "8(3)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 17
         }
       ]
     }
@@ -4298,13 +4366,15 @@
           "maxRange": 3500,
           "rangeIsStMultiple": false,
           "rateOfFire": 12,
+          "projectiles": 1,
           "shots": "30+1(3)",
           "minSt": 9,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -4344,13 +4414,15 @@
           "maxRange": 3000,
           "rangeIsStMultiple": false,
           "rateOfFire": 10,
+          "projectiles": 1,
           "shots": "30+1(3)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -4390,13 +4462,15 @@
           "maxRange": 4200,
           "rangeIsStMultiple": false,
           "rateOfFire": 11,
+          "projectiles": 1,
           "shots": "20+1(3)",
           "minSt": 11,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 17
         }
       ]
     }
@@ -4436,13 +4510,15 @@
           "maxRange": 3000,
           "rangeIsStMultiple": false,
           "rateOfFire": 15,
+          "projectiles": 1,
           "shots": "30+1(3)",
           "minSt": 9,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -3,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -4482,13 +4558,15 @@
           "maxRange": 3500,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "30+1(3)",
           "minSt": 9,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -4528,13 +4606,15 @@
           "maxRange": 3000,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "30+1(3)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -4574,13 +4654,15 @@
           "maxRange": 4200,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "20+1(3)",
           "minSt": 11,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": 17
         }
       ]
     }
@@ -4620,13 +4702,15 @@
           "maxRange": 3000,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "30+1(3)",
           "minSt": 9,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -3,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -4666,13 +4750,15 @@
           "maxRange": 145,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(3)",
           "minSt": 9,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -4712,13 +4798,15 @@
           "maxRange": 4000,
           "rangeIsStMultiple": false,
           "rateOfFire": 15,
+          "projectiles": 1,
           "shots": "25+1(3)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": null
         },
         {
           "name": "25mm Grenade",
@@ -4739,13 +4827,15 @@
           "maxRange": 2200,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "3(3)",
           "minSt": 10,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": 0,
-          "recoil": 3
+          "recoil": 3,
+          "malfunction": null
         }
       ]
     }
@@ -4785,13 +4875,15 @@
           "maxRange": 4800,
           "rangeIsStMultiple": false,
           "rateOfFire": 12,
+          "projectiles": 1,
           "shots": "60(3)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -4831,13 +4923,15 @@
           "maxRange": 100,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 9,
           "shots": "1(15)",
           "minSt": 11,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": 14
         }
       ]
     }
@@ -4877,13 +4971,15 @@
           "maxRange": 125,
           "rangeIsStMultiple": false,
           "rateOfFire": 2,
+          "projectiles": 9,
           "shots": "2(3i)",
           "minSt": 11,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": 16
         },
         {
           "name": "Slug",
@@ -4904,13 +5000,15 @@
           "maxRange": 188,
           "rangeIsStMultiple": false,
           "rateOfFire": 2,
+          "projectiles": 1,
           "shots": "2(3i)",
           "minSt": 11,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 5
+          "recoil": 5,
+          "malfunction": 16
         }
       ]
     }
@@ -4950,13 +5048,15 @@
           "maxRange": 125,
           "rangeIsStMultiple": false,
           "rateOfFire": 2,
+          "projectiles": 9,
           "shots": "5(3i)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": 17
         },
         {
           "name": "Slug",
@@ -4977,13 +5077,15 @@
           "maxRange": 188,
           "rangeIsStMultiple": false,
           "rateOfFire": 2,
+          "projectiles": 1,
           "shots": "5(3i)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 4
+          "recoil": 4,
+          "malfunction": 17
         }
       ]
     }
@@ -5023,13 +5125,15 @@
           "maxRange": 125,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 9,
           "shots": "6+1(3i)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": 17
         },
         {
           "name": "Slug",
@@ -5050,13 +5154,15 @@
           "maxRange": 188,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "6+1(3i)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 4
+          "recoil": 4,
+          "malfunction": 17
         }
       ]
     }
@@ -5096,13 +5202,15 @@
           "maxRange": 8800,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(20)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -8,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": 17
         }
       ]
     }
@@ -5142,13 +5250,15 @@
           "maxRange": 520,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(30)",
           "minSt": 45,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -10,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -5188,13 +5298,15 @@
           "maxRange": 7400,
           "rangeIsStMultiple": false,
           "rateOfFire": 8,
+          "projectiles": 1,
           "shots": "100(5)",
           "minSt": 20,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -8,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -5234,13 +5346,15 @@
           "maxRange": 440,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(3)",
           "minSt": 11,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": 0,
-          "recoil": 2
+          "recoil": 2,
+          "malfunction": 17
         }
       ]
     }
@@ -5280,13 +5394,15 @@
           "maxRange": 650,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(4)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -6,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": 17
         }
       ]
     }
@@ -5326,13 +5442,15 @@
           "maxRange": 1000,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(5)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -6,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": 17
         }
       ]
     }
@@ -5372,13 +5490,15 @@
           "maxRange": 2300,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(-)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -5,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": 17
         }
       ]
     }
@@ -5418,13 +5538,15 @@
           "maxRange": 50,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "10",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -8,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": 17
         }
       ]
     }
@@ -5464,13 +5586,15 @@
           "maxRange": 80,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "180(3)",
           "minSt": 4,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -2,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": null
         },
         {
           "name": "Linked",
@@ -5491,13 +5615,15 @@
           "maxRange": 80,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "180(3)",
           "minSt": 4,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -2,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": null
         }
       ]
     }
@@ -5537,13 +5663,15 @@
           "maxRange": 750,
           "rangeIsStMultiple": false,
           "rateOfFire": 10,
+          "projectiles": 1,
           "shots": "400(3)",
           "minSt": 6,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -2,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": 17
         }
       ]
     }
@@ -5583,13 +5711,15 @@
           "maxRange": 470,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "360(3)",
           "minSt": 4,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": null
         },
         {
           "name": "Linked",
@@ -5610,13 +5740,15 @@
           "maxRange": 470,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "360(3)",
           "minSt": 4,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": null
         }
       ]
     }
@@ -5656,13 +5788,15 @@
           "maxRange": 3300,
           "rangeIsStMultiple": false,
           "rateOfFire": 3,
+          "projectiles": 1,
           "shots": "75(3)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -8,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": 17
         }
       ]
     }
@@ -5702,13 +5836,15 @@
           "maxRange": 2100,
           "rangeIsStMultiple": false,
           "rateOfFire": 10,
+          "projectiles": 1,
           "shots": "150(3)",
           "minSt": 7,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 1
+          "recoil": 1,
+          "malfunction": 17
         }
       ]
     }
@@ -8448,13 +8584,15 @@
           "maxRange": 2.5,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 8,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -2,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -8518,13 +8656,15 @@
           "maxRange": 1.5,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 11,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -3,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -8588,13 +8728,15 @@
           "maxRange": 1,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 12,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -4,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -8658,13 +8800,15 @@
           "maxRange": 1.5,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 10,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -3,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -8751,13 +8895,15 @@
           "maxRange": 1.5,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 9,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -3,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -8821,13 +8967,15 @@
           "maxRange": 2.5,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 6,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -4,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         },
         {
           "name": "Atlatl",
@@ -8848,13 +8996,15 @@
           "maxRange": 3,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 6,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -4,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -8941,13 +9091,15 @@
           "maxRange": 1.5,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 6,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -2,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9034,13 +9186,15 @@
           "maxRange": 1,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 5,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -1,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9104,13 +9258,15 @@
           "maxRange": 1,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 5,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -2,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9174,13 +9330,15 @@
           "maxRange": 1,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 5,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -1,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9220,13 +9378,15 @@
           "maxRange": 4,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(2)",
           "minSt": 2,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -6,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9266,13 +9426,15 @@
           "maxRange": 3,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 7,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -2,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9312,13 +9474,15 @@
           "maxRange": 20,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(2)",
           "minSt": 11,
           "twoHanded": true,
           "weaponSt": 11,
           "thrown": false,
           "bulk": -8,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9358,13 +9522,15 @@
           "maxRange": 20,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(2)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": 10,
           "thrown": false,
           "bulk": -7,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9404,13 +9570,15 @@
           "maxRange": 15,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(2)",
           "minSt": 7,
           "twoHanded": true,
           "weaponSt": 7,
           "thrown": false,
           "bulk": -6,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9450,13 +9618,15 @@
           "maxRange": 25,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(2)",
           "minSt": 10,
           "twoHanded": true,
           "weaponSt": 10,
           "thrown": false,
           "bulk": -7,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9496,13 +9666,15 @@
           "maxRange": 25,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(4)",
           "minSt": 7,
           "twoHanded": true,
           "weaponSt": 7,
           "thrown": false,
           "bulk": -6,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9542,13 +9714,15 @@
           "maxRange": 20,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(4)",
           "minSt": 7,
           "twoHanded": false,
           "weaponSt": 7,
           "thrown": false,
           "bulk": -4,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9588,13 +9762,15 @@
           "maxRange": 25,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(4)",
           "minSt": 7,
           "twoHanded": true,
           "weaponSt": 7,
           "thrown": false,
           "bulk": -6,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9634,13 +9810,15 @@
           "maxRange": 10,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(2)",
           "minSt": 6,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         },
         {
           "name": "Lead bullet",
@@ -9661,13 +9839,15 @@
           "maxRange": 20,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(2)",
           "minSt": 6,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": false,
           "bulk": -4,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9707,13 +9887,15 @@
           "maxRange": 15,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(2)",
           "minSt": 7,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -6,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         },
         {
           "name": "Lead bullet",
@@ -9734,13 +9916,15 @@
           "maxRange": 30,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "1(2)",
           "minSt": 7,
           "twoHanded": true,
           "weaponSt": null,
           "thrown": false,
           "bulk": -6,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9780,13 +9964,15 @@
           "maxRange": 4,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 5,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -3,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9826,13 +10012,15 @@
           "maxRange": 1.5,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 11,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -6,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -9872,13 +10060,15 @@
           "maxRange": 1,
           "rangeIsStMultiple": true,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 5,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": 0,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": null
         }
       ]
     }
@@ -10008,13 +10198,15 @@
           "maxRange": 0,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 5,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -2,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": 16
         }
       ]
     }
@@ -10054,13 +10246,15 @@
           "maxRange": 0,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 5,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -2,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": 17
         }
       ]
     }
@@ -10100,13 +10294,15 @@
           "maxRange": 0,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 5,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -2,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": 17
         }
       ]
     }
@@ -10146,13 +10342,15 @@
           "maxRange": 0,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 5,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -2,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": 17
         }
       ]
     }
@@ -10192,13 +10390,15 @@
           "maxRange": 0,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 5,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -2,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": 17
         }
       ]
     }
@@ -10238,13 +10438,15 @@
           "maxRange": 0,
           "rangeIsStMultiple": false,
           "rateOfFire": 1,
+          "projectiles": 1,
           "shots": "T(1)",
           "minSt": 5,
           "twoHanded": false,
           "weaponSt": null,
           "thrown": true,
           "bulk": -2,
-          "recoil": 0
+          "recoil": 0,
+          "malfunction": 17
         }
       ]
     }

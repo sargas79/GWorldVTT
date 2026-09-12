@@ -25,6 +25,41 @@ export function healingMultiplier(maxHp: number): number {
   return Math.floor(maxHp / 10);
 }
 
+// ── regeneration (Characters p. 80) ───────────────────────────────────────
+
+/** A rate of Regeneration: how many seconds each hit point takes to come back. */
+export interface RegenerationRate {
+  key: "slow" | "regular" | "fast" | "veryFast" | "extreme";
+  /** Seconds per hit point regained. Under one for Extreme, which is ten a second. */
+  secondsPerHp: number;
+}
+
+/** The five rates the book prices, in the order the compendium levels them. */
+export const REGENERATION_RATES: readonly RegenerationRate[] = [
+  { key: "slow", secondsPerHp: 12 * 3600 },
+  { key: "regular", secondsPerHp: 3600 },
+  { key: "fast", secondsPerHp: 60 },
+  { key: "veryFast", secondsPerHp: 1 },
+  { key: "extreme", secondsPerHp: 0.1 },
+];
+
+/** The rate a trait at this level regenerates at, or null for no Regeneration. */
+export function regenerationRate(level: number): RegenerationRate | null {
+  const index = Math.floor(level);
+  if (index <= 0) return null;
+  return REGENERATION_RATES[Math.min(index, REGENERATION_RATES.length) - 1] ?? null;
+}
+
+/**
+ * Hit points regained in a span of time, whole points only: a Slow
+ * regenerator eleven hours into their twelfth has nothing back yet.
+ */
+export function regeneratedHp(rate: RegenerationRate["key"], seconds: number): number {
+  const found = REGENERATION_RATES.find((r) => r.key === rate);
+  if (!found || seconds <= 0) return 0;
+  return Math.floor(seconds / found.secondsPerHp + 1e-9);
+}
+
 // ── natural recovery (p. 424) ───────────────────────────────────────────────
 
 /**

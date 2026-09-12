@@ -14,6 +14,9 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { naturalAttacks } from "../../rules/natural-attacks.js";
+import { becomesUnreadyAfterAttack } from "../../rules/readiness.js";
+import { aimBonus } from "../../rules/aim.js";
+import { regenerationRate } from "../../rules/recovery.js";
 import { catalogSkill, defaultLevelFrom } from "../skill-catalog.js";
 import { isUnarmedSkill } from "../../rules/criticals.js";
 import { reachForSize } from "../../rules/size.js";
@@ -115,6 +118,14 @@ export interface DerivedAttack {
   atDefault: boolean;
   /** True for a punch or a kick, which every character has and no item carries. */
   natural: boolean;
+  /** True while the weapon is unready and cannot attack or parry (p. 270). */
+  unready: boolean;
+  /** True when a swing of this weapon will leave it unready in these hands. */
+  readiesAfterAttack: boolean;
+  /** Projectiles per shot: nine for a shotgun, one for everything else. Ranged only. */
+  projectiles?: number;
+  /** The 1/2D range in yards, inside a tenth of which pellets strike as one. Ranged only. */
+  halfDamageRange?: number;
   /** True for a punch, kick, bite or grapple, which fumbles on its own table. */
   unarmed: boolean;
   /**
@@ -203,6 +214,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare sm: number;
   declare maneuver: Maneuver;
   declare evaluateTurns: number;
+  declare aim: { turns: number; braced: boolean };
   declare allOutDefenseOption: "increased" | "double";
   declare allOutDefenseTarget: "dodge" | "parry" | "block";
   declare posture: Posture;
@@ -320,6 +332,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       /** Consecutive Evaluate maneuvers taken, which accumulate +1 each to +3. */
       evaluateTurns: new fields.NumberField({
         required: true, nullable: false, integer: true, initial: 0, min: 0,
+      }),
+
+      /**
+       * The Aim maneuver as it stands (Campaigns p. 364): how many turns have
+       * been spent on it, and whether the weapon is braced. Lost -- turns back
+       * to zero -- by firing, by being hurt, by defending, or by doing
+       * anything else with the turn.
+       */
+      aim: new fields.SchemaField({
+        turns: new fields.NumberField({
+          required: true, nullable: false, integer: true, initial: 0, min: 0,
+        }),
+        braced: new fields.BooleanField({ initial: false }),
       }),
 
       /**
@@ -642,6 +667,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       this.itemsOfType("trait").map((item) => ({
         name: String(item.name ?? ""),
         levels: Number(item.system?.levels ?? 0),
+        // Injury Tolerance keeps its kind in its modifiers.
+        modifiers: ((item.system?.modifiers ?? []) as Array<{ name?: string }>).map((m) =>
+          String(m.name ?? ""),
+        ),
       })),
     );
 
@@ -660,8 +689,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     };
     // Striking ST counts for damage alone and Lifting ST for what can be
     // carried, so each is its own figure rather than a change to ST.
-    const strikingSt = attrs.ST + traits.strikingSt;
-    const liftingSt = attrs.ST + traits.liftingSt;
+    // Arm ST is both: strength "for the purpose of lifting or striking with
+    // that arm", and for nothing that is not done with the arms.
+    const strikingSt = attrs.ST + traits.strikingSt + traits.armSt;
+    const liftingSt = attrs.ST + traits.liftingSt + traits.armSt;
 
     // Granted and purchased levels both move the score; only purchased ones
     // are billed, which is why they are stored apart. Levels bought as traits
@@ -884,6 +915,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         meleeModes?: any[]; rangedModes?: any[]; equipped?: boolean;
       };
 
+      // Swung and not yet readied again: the whole item is down, whichever of
+      // its modes was used.
+      const unready = Boolean((sys as any).unready);
+
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
         const { level: skillLevel, atDefault } = weaponSkill(mode.skill);
         const meleeDamage = resolveDamage(
@@ -898,6 +933,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           skillLevel,
           atDefault,
           natural: false,
+          unready,
+          // "‡ ... becomes unready after you attack with it, unless you have
+          // at least 1.5 times the listed ST" -- and it is the arms that hold it.
+          readiesAfterAttack: becomesUnreadyAfterAttack({
+            unreadyAfterAttack: Boolean(mode.unreadyAfterAttack),
+            st: strikingSt,
+            minSt: mode.minSt ?? null,
+          }),
           damage: meleeDamage,
           damageType: mode.damageType,
           armorDivisor: mode.armorDivisor ?? 1,
@@ -950,6 +993,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           skillLevel,
           atDefault,
           natural: false,
+          unready: false,
+          readiesAfterAttack: false,
+          projectiles: Math.max(1, Number(mode.projectiles ?? 1)),
+          halfDamageRange: Number(range.halfDamage ?? 0) || 0,
           damage: rangedDamage,
           damageType: mode.damageType,
           armorDivisor: mode.armorDivisor ?? 1,
@@ -1003,6 +1050,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         skillLevel: attack.skillLevel,
         atDefault: false,
         natural: true,
+        unready: false,
+        readiesAfterAttack: false,
         damage: formatDiceAdds(attack.damage),
         damageType: "cr",
         armorDivisor: 1,
@@ -1067,8 +1116,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // already attacked in: an axe swung this turn is not coming back in time to
     // turn a blade (p. 269). It stays available on a turn nothing was swung, so
     // the flag is read here rather than baked into the parry score.
+    // An unready weapon is not in a position to parry either.
     const bestParry = bestParryOption(
-      melee.filter((atk) => atk.usable),
+      melee.filter((atk) => atk.usable && !atk.unready),
       this.conditions.attackedThisTurn,
     );
     const parryResult =
@@ -1175,6 +1225,21 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         movement: MANEUVERS[this.maneuver].movement,
       },
       evaluateBonus: this.maneuver === "evaluate" ? evaluateBonus(this.evaluateTurns) : 0,
+      // The aim as it stands, and what it is worth against a weapon of Acc 0:
+      // the +1 and +2 for the extra turns, and the +1 for bracing. Each
+      // weapon adds its own Accuracy when the shot is taken.
+      aim: {
+        active: this.maneuver === "aim",
+        turns: this.aim?.turns ?? 0,
+        braced: Boolean(this.aim?.braced),
+        extra: this.maneuver === "aim"
+          ? aimBonus({ turnsAimed: this.aim?.turns ?? 0, accuracy: 0, braced: Boolean(this.aim?.braced) }).total
+          : 0,
+      },
+      // One attack a turn, plus a level of Extra Attack for each beyond it.
+      attacksPerTurn: 1 + traits.extraAttacks,
+      extraArms: traits.extraArms,
+      regeneration: regenerationRate(traits.regeneration),
       // The attributes as everything else reads them: bought plus what traits
       // add. The sheet's inputs edit the bought figure and show this one.
       attributes: attrs,
@@ -1246,7 +1311,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         carousing: this.skillLevelByName("Carousing") ?? (attrs.HT ?? 10) - 4,
       },
       traitEffects: traits,
-      status: healthStatus(this.hp.value, this.hp.max),
+      // Unkillable is not dead at -5xHP; only destruction at -10xHP is the end.
+      status: healthStatus(this.hp.value, this.hp.max, { unkillable: traits.unkillable }),
       reeling,
       mounted: this.mounted,
       ridingSkill,

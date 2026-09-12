@@ -17,6 +17,8 @@ import {
   firstAidAt,
   firstAidRecovery,
   naturalRecovery,
+  regeneratedHp,
+  regenerationRate,
   wakingFrom,
 } from "../rules/recovery.js";
 import { resolveSuccess } from "../rules/success.js";
@@ -67,6 +69,43 @@ async function post(actor: any, context: Record<string, unknown>): Promise<void>
     content,
     rolls: (context.rolls as any[]) ?? [],
   });
+}
+
+/**
+ * Heals by Regeneration for a span of time (Characters p. 80).
+ *
+ * No roll: a regenerator heals at a rate, and the only question is how much
+ * time has passed. Whole points only, so a Slow regenerator asked about eleven
+ * hours has nothing back yet.
+ */
+export async function regenerate(options: { actor: any; seconds: number }): Promise<number> {
+  const { actor, seconds } = options;
+  if (!mayChange(actor)) return 0;
+
+  const rate = regenerationRate(Number(actor.system?.derived?.traitEffects?.regeneration ?? 0));
+  if (!rate) return 0;
+
+  const hp = actor.system?.hp ?? { value: 0, max: 0 };
+  const previous = Number(hp.value) || 0;
+  const max = Number(hp.max) || 0;
+  const gained = Math.min(Math.max(0, max - previous), regeneratedHp(rate.key, seconds));
+
+  if (gained > 0) await actor.update({ "system.hp.value": previous + gained });
+
+  await post(actor, {
+    kind: game.i18n.localize("GWORLD.Recovery.Regeneration"),
+    detail: game.i18n.format("GWORLD.Recovery.RegenerationDetail", {
+      rate: game.i18n.localize(`GWORLD.Recovery.Rate.${rate.key}`),
+      seconds,
+    }),
+    full: previous >= max,
+    gained,
+    pool: "HP",
+    previous,
+    now: previous + gained,
+    max,
+  });
+  return gained;
 }
 
 /**

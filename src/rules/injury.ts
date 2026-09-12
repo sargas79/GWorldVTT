@@ -75,10 +75,23 @@ export function isDestroyed(currentHp: number, maxHp: number): boolean {
 
 export type HealthStatus = "healthy" | "reeling" | "collapsing" | "dead" | "destroyed";
 
+/**
+ * What the traits that cheat death say about it.
+ *
+ * Unkillable (Characters p. 95): "you cannot die from ordinary damage. You
+ * never have to make HT rolls to avoid death, and you do not die at -5xHP"
+ * -- only total destruction at -10xHP is the end of it. The higher levels
+ * come back from that as well, which is the GM's to run; every level gets
+ * the first level's protection here.
+ */
+export interface DeathTraits {
+  unkillable?: number;
+}
+
 /** The character's overall condition at a given HP total. */
-export function healthStatus(currentHp: number, maxHp: number): HealthStatus {
+export function healthStatus(currentHp: number, maxHp: number, traits: DeathTraits = {}): HealthStatus {
   if (isDestroyed(currentHp, maxHp)) return "destroyed";
-  if (isDead(currentHp, maxHp)) return "dead";
+  if (isDead(currentHp, maxHp) && !(traits.unkillable ?? 0)) return "dead";
   if (currentHp <= 0) return "collapsing";
   if (isReeling(currentHp, maxHp)) return "reeling";
   return "healthy";
@@ -106,10 +119,12 @@ export function applyInjury(
   injury: number,
   previousHp: number,
   maxHp: number,
+  traits: DeathTraits = {},
 ): InjuryConsequences & { currentHp: number } {
   const currentHp = previousHp - injury;
-  const status = healthStatus(currentHp, maxHp);
+  const status = healthStatus(currentHp, maxHp, traits);
   const dead = status === "dead" || status === "destroyed";
+  const unkillable = (traits.unkillable ?? 0) > 0;
 
   return {
     currentHp,
@@ -118,7 +133,8 @@ export function applyInjury(
     majorWound: isMajorWound(injury, maxHp),
     consciousnessRollRequired: !dead && currentHp <= 0,
     consciousnessRollPenalty: consciousnessRollPenalty(currentHp, maxHp),
-    deathCheckRequired: !dead && crossedDeathThreshold(previousHp, currentHp, maxHp),
+    // "You never have to make HT rolls to avoid death."
+    deathCheckRequired: !dead && !unkillable && crossedDeathThreshold(previousHp, currentHp, maxHp),
     reeling: status === "reeling" || status === "collapsing",
   };
 }

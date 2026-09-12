@@ -79,7 +79,7 @@ import {
 } from "../grappling.js";
 import { grappleSizeBonus } from "../../rules/size.js";
 import { rollStunRecovery } from "../knockdown.js";
-import { applyFirstAid, restForADay, restForFatigue, tryToWake } from "../recovery.js";
+import { applyFirstAid, regenerate, restForADay, restForFatigue, tryToWake } from "../recovery.js";
 import { rollFrightCheck } from "../fright.js";
 import { traitsOf } from "../damage.js";
 import { feintDefenseScore, recordFeint } from "../feint.js";
@@ -1834,6 +1834,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       deleteItem: GWorldCharacterSheet.#onDeleteItem,
       toggleEquipped: GWorldCharacterSheet.#onToggleEquipped,
       toggleSkillOrder: GWorldCharacterSheet.#onToggleSkillOrder,
+      readyWeapon: GWorldCharacterSheet.#onReadyWeapon,
+      regenerate: GWorldCharacterSheet.#onRegenerate,
     },
   };
 
@@ -1956,6 +1958,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         selected: system.maneuver === key,
       })),
       isEvaluating: system.maneuver === "evaluate",
+      isAiming: system.maneuver === "aim",
       isWaiting: system.maneuver === "wait",
       // The area covered only matters if opportunity fire is being played.
       showOpportunityFire: system.maneuver === "wait" && isRuleOn("opportunityFire"),
@@ -3642,6 +3645,33 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const current = asSkillOrder(game.settings.get(SYSTEM_ID, SKILL_ORDER));
     await game.settings.set(SYSTEM_ID, SKILL_ORDER, otherOrder(current));
     await this.render();
+  }
+
+  /**
+   * Brings an unready weapon back up (Campaigns p. 366).
+   *
+   * A Ready maneuver, so the maneuver is set as well as the flag cleared: it
+   * is the turn's action, not a free one.
+   */
+  static async #onReadyWeapon(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.#itemFrom(target);
+    if (!item) return;
+    await item.update({ "system.unready": false });
+    await this.actor.update({ "system.maneuver": "ready" });
+  }
+
+  /**
+   * Heals by Regeneration (Characters p. 80) for however long has passed,
+   * which is the GM's to say.
+   */
+  static async #onRegenerate(this: GWorldCharacterSheet) {
+    const minutes = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Recovery.Regeneration"),
+      label: game.i18n.localize("GWORLD.Recovery.RegenerationMinutes"),
+      initial: 10,
+    });
+    if (minutes === null || minutes <= 0) return;
+    await regenerate({ actor: this.actor, seconds: minutes * 60 });
   }
 
   static async #onToggleEquipped(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

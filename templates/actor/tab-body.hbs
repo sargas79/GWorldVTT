@@ -156,6 +156,12 @@
               data-tooltip="{{localize "GWORLD.Recovery.WakingHint"}}">
         {{localize "GWORLD.Recovery.Waking"}}
       </button>
+      {{#if derived.regeneration}}
+        <button type="button" class="ibtn" data-action="regenerate"
+                data-tooltip="{{localize "GWORLD.Recovery.RegenerationHint"}}">
+          {{localize "GWORLD.Recovery.Regeneration"}} ({{localize (concat "GWORLD.Recovery.Rate." derived.regeneration.key)}})
+        </button>
+      {{/if}}
       {{#if rules.bleeding}}
         <button type="button" class="ibtn" data-action="bleed"
                 data-tooltip="{{localize "GWORLD.Bleeding.Hint"}}">

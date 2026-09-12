@@ -6,6 +6,12 @@
 import { criticalDr, type CriticalDamage } from "./criticals.js";
 import { addModifier, parseDiceAdds } from "./dice.js";
 import {
+  diffuseInjuryCap,
+  toleratedLocation,
+  toleratedWoundingModifier,
+  type InjuryTolerance,
+} from "./injury-tolerance.js";
+import {
   applyCrippling,
   locationDrAgainst,
   woundingModifierAt,
@@ -170,6 +176,12 @@ export function halveDamage(basicDamage: number, type: DamageType): number {
 }
 
 export interface InjuryInput {
+  /**
+   * How the target's body takes injury, where it is not flesh (Characters
+   * pp. 60-61): where a blow to a part it lacks actually lands, what piercing
+   * and impaling are worth against it, and the cap on a Diffuse body.
+   */
+  tolerance?: InjuryTolerance;
   /** Basic damage rolled, after any 1/2D halving. */
   basicDamage: number;
   /** The target's total Damage Resistance from armor, tough skin, cover, etc. */
@@ -231,22 +243,35 @@ export function computeInjury({
   maxHp,
   qualifiers = {},
   critical,
+  tolerance,
 }: InjuryInput): InjuryResult {
   const divisor = armorDivisor > 0 ? armorDivisor : 1;
 
   // Fatigue damage costs FP and always ignores hit location, so it skips the
   // location DR, the wounding overrides, and the crippling cap entirely.
   const fatigue = costsFatigue(type);
-  const location = fatigue ? undefined : hitLocation;
+  // A body missing the part struck takes the blow on the part that is there:
+  // a skull with no brain in it is a face, a missing neck is a torso.
+  const location = fatigue
+    ? undefined
+    : hitLocation && tolerance
+      ? toleratedLocation(hitLocation, tolerance)
+      : hitLocation;
 
   // The skull's extra DR is natural armor, so the divisor applies to it too —
   // and toxic damage is exempt from it, as it is from the skull multiplier.
   const locationDr = location ? locationDrAgainst(location, type) : 0;
   const effectiveDr = criticalDr(Math.floor((Math.max(0, dr) + locationDr) / divisor), critical);
   const penetrating = Math.max(0, basicDamage - effectiveDr);
-  const woundingModifier = location
-    ? woundingModifierAt(type, location, qualifiers)
-    : WOUNDING_MODIFIERS[type];
+  // A machine or a stone takes piercing and impaling as its substance allows,
+  // wherever it was struck: the tolerance's figure replaces the location's.
+  const tolerated = tolerance ? toleratedWoundingModifier(type, tolerance) : null;
+  const woundingModifier =
+    tolerated !== null
+      ? tolerated
+      : location
+        ? woundingModifierAt(type, location, qualifiers)
+        : WOUNDING_MODIFIERS[type];
 
   const base = { effectiveDr, penetrating, woundingModifier, costsFatigue: fatigue };
 
@@ -254,7 +279,13 @@ export function computeInjury({
     return { ...base, penetrating: 0, injury: 0, excessLost: 0, crippled: false };
   }
 
-  const raw = Math.max(1, Math.floor(penetrating * woundingModifier));
+  // A Diffuse body is barely there to hurt: a point from anything that
+  // pierces, two from anything else, however hard it was hit.
+  const cap = tolerance ? diffuseInjuryCap(type, tolerance) : null;
+  const raw = Math.min(
+    cap ?? Number.POSITIVE_INFINITY,
+    Math.max(1, Math.floor(penetrating * woundingModifier)),
+  );
 
   // Injury past what cripples a limb is lost rather than carried to the body.
   if (location && maxHp !== undefined) {

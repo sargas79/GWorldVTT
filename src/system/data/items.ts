@@ -426,6 +426,17 @@ function rangedModeField() {
     }),
     thrown: new fields.BooleanField({ initial: false }),
     /**
+     * Projectiles per shot, for a shotgun's "3x9" (Campaigns p. 409). One for
+     * everything that fires a single bullet, arrow or bolt.
+     */
+    projectiles: new fields.NumberField({
+      required: true,
+      nullable: false,
+      integer: true,
+      initial: 1,
+      min: 1,
+    }),
+    /**
      * How unwieldy the weapon is, as a penalty: it applies when firing from a
      * vehicle or in close combat, and to attempts to keep the weapon hidden
      * (GURPS Basic Set: Characters p. 270). Zero or negative, never positive.
@@ -508,6 +519,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare carried: boolean;
   declare equipped: boolean;
   declare category: EquipmentCategory;
+  declare unready: boolean;
   declare meleeModes: unknown[];
   declare rangedModes: unknown[];
 
@@ -515,6 +527,12 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
     return {
       ...descriptionFields(),
       ...physicalFields(),
+      /**
+       * Swung and not yet brought back up (Characters p. 270, the "‡"). Set
+       * by an attack with a weapon that becomes unready, cleared by a Ready
+       * maneuver; while set the weapon neither attacks nor parries.
+       */
+      unready: new fields.BooleanField({ initial: false }),
       /**
        * What kind of thing this is, for the Gear tab to sort by. Anything
        * with an attack mode is shown as a weapon whatever this says; the
