@@ -171,7 +171,7 @@ export async function enlargeMissile(actor: any): Promise<void> {
   });
   if (more === null) return;
   const added = Math.max(1, Math.min(magery, Math.floor(more)));
-  await applyFatigue(actor, added);
+  await applyFatigue(actor, added, { exertion: false });
   await holdSpell(actor, { ...held, energy: held.energy + added, seconds: held.seconds + 1 });
   ui.notifications?.info(game.i18n.format("GWORLD.Held.Enlarged", { spell: held.name, energy: held.energy + added }));
 }

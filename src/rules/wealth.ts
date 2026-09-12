@@ -13,8 +13,6 @@ export const STARTING_WEALTH_BY_TL: readonly number[] = [
   250, 500, 750, 1000, 2000, 5000, 10000, 15000, 20000, 30000, 50000, 75000, 100000,
 ];
 
-/** The tech level whose starting wealth the Status table is written for (p. 265). */
-export const STATUS_TABLE_TL = 8;
 
 export type WealthLevel =
   | "deadBroke"
@@ -108,12 +106,11 @@ export function startingWealth(tl: number, standing: WealthStanding): number {
 }
 
 /**
- * The Status Table's monthly cost of living, by Status (p. 265).
- *
- * Written for TL8; "at other TLs, multiply by the TL's starting wealth divided
- * by $20,000", which is the same ratio the rest of the money is on.
+ * The Cost of Living Table's monthly figure by Status (p. 265) -- "a
+ * 'generic' cost of living for each Status level", the same at every tech
+ * level, in the constant $ the book prices everything in.
  */
-const COST_OF_LIVING_TL8: Readonly<Record<number, number>> = {
+const COST_OF_LIVING: Readonly<Record<number, number>> = {
   [-2]: 100,
   [-1]: 300,
   0: 600,
@@ -138,24 +135,51 @@ export function statusFrom(traits: readonly WealthTrait[]): number {
   return Math.max(-2, Math.min(8, status));
 }
 
-/** What a month at this Status costs at this tech level (p. 265). */
-export function costOfLiving(status: number, tl: number): number {
+/** What a month at this Status costs (p. 265). */
+export function costOfLiving(status: number): number {
   const clamped = Math.max(-2, Math.min(8, Math.floor(status)));
-  const atTl8 = COST_OF_LIVING_TL8[clamped]!;
-  return Math.round(atTl8 * (averageStartingWealth(tl) / averageStartingWealth(STATUS_TABLE_TL)));
+  return COST_OF_LIVING[clamped]!;
 }
 
 /**
- * What a job pays a month (Campaigns p. 517).
- *
- * "The monthly pay for a job is ... a multiple of the average monthly pay,
- * which is starting wealth for the TL divided by 10" -- so an Average job at
- * TL8 pays $2,000, and a Wealthy one five times that.
+ * "A fair monthly pay for someone of Average wealth working at a 'typical'
+ * job for his tech level" (Campaigns p. 517), TL0 to TL12.
  */
-export const MONTHS_OF_STARTING_WEALTH = 10;
+export const TYPICAL_MONTHLY_PAY_BY_TL: readonly number[] = [
+  625, 650, 675, 700, 800, 1100, 1600, 2100, 2600, 3600, 5600, 8100, 10600,
+];
 
+/**
+ * What a job pays a month (Campaigns p. 517): the typical pay of the tech
+ * level, "multipl[ied] ... by the starting wealth multiplier for that wealth
+ * level". A Comfortable job at TL8 pays $5,200.
+ */
 export function monthlyPay(tl: number, jobLevel: Exclude<WealthLevel, "multimillionaire" | "deadBroke">): number {
-  return Math.round((averageStartingWealth(tl) / MONTHS_OF_STARTING_WEALTH) * WEALTH_MULTIPLIERS[jobLevel]);
+  const index = Math.max(0, Math.min(TYPICAL_MONTHLY_PAY_BY_TL.length - 1, Math.floor(tl)));
+  return Math.round(TYPICAL_MONTHLY_PAY_BY_TL[index]! * WEALTH_MULTIPLIERS[jobLevel]);
+}
+
+/**
+ * Independent Income and Debt (Characters p. 26): each level is "1% of your
+ * starting wealth (adjusted for wealth level)" a month, coming in or going
+ * out, to a most of 20%.
+ */
+export function monthlyIncomeFromTraits(
+  traits: readonly WealthTrait[],
+  starting: number,
+): { income: number; debt: number } {
+  let incomeLevels = 0;
+  let debtLevels = 0;
+  for (const trait of traits) {
+    const key = trait.name.trim().toLowerCase();
+    if (key === "independent income") incomeLevels += levelsOf(trait);
+    else if (key === "debt") debtLevels += levelsOf(trait);
+  }
+  const percent = (levels: number) => Math.min(20, levels) / 100;
+  return {
+    income: Math.round(starting * percent(incomeLevels)),
+    debt: Math.round(starting * percent(debtLevels)),
+  };
 }
 
 /** The cost of what is carried and stored, for reading against starting wealth. */

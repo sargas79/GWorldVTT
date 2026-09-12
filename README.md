@@ -48,9 +48,9 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   dark, the ten Talents and Voice on their skills, Acute Senses on the four
   sense rolls, Temperature Tolerance against the weather, and Bad Sight, One
   Eye, One Arm, Hard of Hearing, Deafness, Blindness and Lame where each
-  bites. Appearance, Charisma, Reputation, Status, Voice, Social Stigma and an
-  Odious Personal Habit fill in the reaction roll. The traits tab marks which
-  ones are read.
+  bites. Appearance, Charisma, Reputation, Status, Voice, Social Stigma, an
+  Odious Personal Habit and the Talents fill in the reaction roll. The traits
+  tab marks which ones are read.
 
 ### Combat
 
@@ -150,14 +150,15 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   alone or on the job every 400; the points go into the skill and onto the
   ledger, and the hours short of a point are banked.
 - **Money** — what the Wealth trait is worth at the character's tech level,
-  what the gear cost, a month's cost of living at their Status, and a job
-  rolled monthly against its skill that pays, or does not, or is lost.
+  what the gear cost, a month's cost of living at their Status with any Debt
+  and Independent Income, and a job rolled monthly against its skill: a wage
+  paid on anything but a critical, or freelance work paid by the margin.
 - **Languages and cultures** — a Broken or Accented language costs an
   Influence roll, and an unfamiliar culture costs reactions and Influence
   alike, unless the character adapts to any.
-- **Aging** — a HT roll a year from 50, oftener later, that costs a point of
-  an attribute when it fails; Longevity, Extended and Short Lifespan and
-  Unaging are read.
+- **Aging** — from 50, a series of four HT rolls a year, one per attribute
+  and oftener later, that costs a level of the attribute when it fails;
+  Longevity, Extended and Short Lifespan and Unaging are read.
 - **Temporary attribute penalties** — off the skills the attribute governs, and
   off nothing else: never a defense, a resistance roll or a Fright Check.
 - **Compendia** of advantages, disadvantages, skills, spells, equipment and

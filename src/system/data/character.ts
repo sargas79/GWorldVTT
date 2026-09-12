@@ -33,7 +33,8 @@ import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { senseScores } from "../../rules/senses.js";
 import {
-  costOfLiving, gearCost, monthlyPay, startingWealth, statusFrom, wealthFrom, type WealthLevel,
+  costOfLiving, gearCost, monthlyIncomeFromTraits, monthlyPay, startingWealth, statusFrom, wealthFrom,
+  type WealthLevel,
 } from "../../rules/wealth.js";
 import { agingRollsPerYear, lifespanFrom } from "../../rules/aging.js";
 import { culturallyAdaptable, languagePenalty, type Comprehension } from "../../rules/languages.js";
@@ -294,7 +295,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     closeCombat: boolean;
   };
   declare money: number;
-  declare job: { title: string; skill: string; level: string; risk: string };
+  declare job: { title: string; skill: string; level: string; kind: "wage" | "freelance"; risk: string };
   declare details: {
     player: string; height: string; weight: string; age: string;
     appearance: string; biography: string; notes: string;
@@ -629,6 +630,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           required: true, nullable: false, initial: "average",
           choices: ["poor", "struggling", "average", "comfortable", "wealthy", "veryWealthy", "filthyRich"],
         }),
+        /** A fixed wage, or freelance work paid by the margin (p. 516). */
+        kind: new fields.StringField({
+          required: true, nullable: false, initial: "wage", choices: ["wage", "freelance"],
+        }),
         risk: new fields.StringField({ required: true, blank: true, initial: "" }),
       }),
 
@@ -802,16 +807,22 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         .map((i) => ({ cost: Number(i.system.cost), quantity: Number(i.system.quantity ?? 1) })),
     );
     const jobLevel = String(this.job?.level ?? "average") as Exclude<WealthLevel, "multimillionaire" | "deadBroke">;
+    const starting = startingWealth(tl, standing);
+    const monthly = monthlyIncomeFromTraits(traits, starting);
     return {
       level: standing.level,
       multimillionaire: standing.multimillionaire,
-      startingWealth: startingWealth(tl, standing),
+      startingWealth: starting,
       gearCost: gear,
       money: Number(this.money) || 0,
       status,
-      costOfLiving: costOfLiving(status, tl),
+      costOfLiving: costOfLiving(status),
+      // Independent Income and Debt, a percentage of starting wealth a month (p. 26).
+      independentIncome: monthly.income,
+      debt: monthly.debt,
       averagePay: monthlyPay(tl, "average"),
       jobPay: this.job?.title ? monthlyPay(tl, jobLevel) : 0,
+      jobKind: String(this.job?.kind ?? "wage"),
     };
   }
 
@@ -1007,8 +1018,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       basicMove: b.basicMove + p.basicMove + t.basicMove,
     });
     secondary.basicLift = basicLift(liftingSt);
-    // Lame legs are read here, before encumbrance takes its share (p. 141).
-    secondary.basicMove = lameMove(secondary.basicMove, traits.lame);
+    // Lame legs are read here, before encumbrance takes its share: half of
+    // Basic Speed, or 2, or none (p. 141).
+    secondary.basicMove = lameMove(secondary.basicMove, traits.lame, secondary.basicSpeed);
 
     this.hp.max = secondary.hp;
     this.fp.max = secondary.fp;
@@ -1228,14 +1240,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ...this.itemsOfType("shield").filter((i) => i.system?.equipped),
     ];
 
+    // "-3 to use any skill that requires the use of your legs, including all
+    // Melee Weapon and unarmed combat skills (but not ranged combat skills)"
+    // (p. 141): read into the melee levels, so the parry built on them follows.
+    const legs = lameCombatPenalty(traits.lame);
+
     /**
      * The level a weapon's skill is rolled at: the character's own if they
      * have the skill, else the book's default for it. A pistol in the hands
      * of somebody who never learned Guns is still a pistol, at DX-4.
      */
-    const weaponSkill = (name: string): { level: number | null; atDefault: boolean } => {
+    const weaponSkill = (name: string, melee = false): { level: number | null; atDefault: boolean } => {
       const own = this.skillLevelByName(name);
-      if (own !== null) return { level: own, atDefault: false };
+      if (own !== null) return { level: own + (melee ? legs : 0), atDefault: false };
       const listed = catalogSkill(name);
       if (!listed) return { level: null, atDefault: false };
       const level = defaultLevelFrom(
@@ -1243,7 +1260,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         attributeScore,
         (other) => this.skillLevelByName(other),
       );
-      return { level, atDefault: level !== null };
+      return { level: level === null ? null : level + (melee ? legs : 0), atDefault: level !== null };
     };
 
     for (const item of armed) {
@@ -1266,7 +1283,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const unready = Boolean((sys as any).unready);
 
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
-        const { level: skillLevel, atDefault } = enchantedSkill(weaponSkill(mode.skill));
+        const { level: skillLevel, atDefault } = enchantedSkill(weaponSkill(mode.skill, true));
         const meleeDamage = withPuissance(resolveDamage(
           strikingSt, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
         ));
@@ -1397,7 +1414,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         name: game.i18n.localize(`GWORLD.Natural.${attack.key}`),
         mode: attack.skillName,
         skillName: attack.skillName,
-        skillLevel: attack.skillLevel,
+        skillLevel: attack.skillLevel + legs,
         atDefault: false,
         natural: true,
         unready: false,
@@ -1409,7 +1426,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         reach: reachForSize(attack.reach, this.sm),
         // Enhanced Parry (Bare Hands) is exactly this parry and no other.
         parry: attack.canParry
-          ? baseParry(attack.skillLevel) + traits.enhancedParry.all + traits.enhancedParry.bareHands
+          ? baseParry(attack.skillLevel + legs) + traits.enhancedParry.all + traits.enhancedParry.bareHands
           : null,
         parryModifier: 0,
         minSt: null,
@@ -1442,8 +1459,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const ridingSkill = this.skillLevelByName("Riding") ?? (attrs.DX ?? 10) - 5;
     const mountedPenalty = this.mounted ? mountedDefensePenalty(ridingSkill) : 0;
 
-    // Enhanced Dodge, Parry and Block each raise the one defense they name
-    // (p. 51); Lame lowers all three (p. 141).
+    // Enhanced Dodge, Parry and Block each raise the one defense they name (p. 51).
     const enhancedFor = { dodge: traits.enhancedDodge, parry: traits.enhancedParry.all, block: traits.enhancedBlock };
     const contextFor = (which: "dodge" | "parry" | "block") => ({
       shieldDb: shieldDb + deflectDb,
@@ -1454,7 +1470,6 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       cannotSeeAttacker: this.conditions.blindToAttacker,
       combatReflexes: traits.activeDefense > 0,
       enhanced: enhancedFor[which],
-      lame: lameCombatPenalty(traits.lame),
     });
 
     const describe = (base: number, mods: Array<{ label: string; value: number }>): string =>
@@ -1612,18 +1627,22 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // One attack a turn, plus a level of Extra Attack for each beyond it.
       attacksPerTurn: 1 + traits.extraAttacks,
       extraArms: traits.extraArms,
-      // What the physical disadvantages take off an attack, by kind, each
-      // under its own name (pp. 123, 141, 147).
+      // What the eyes take off an attack, by kind, each under its own name
+      // (pp. 123, 147) -- as things stand on the sheet; the roll itself asks
+      // again, knowing whether the shot was aimed.
       attackPenalties: {
-        melee: impairedAttacks(traits, false),
-        ranged: impairedAttacks(traits, true),
+        melee: impairedAttacks(traits, { ranged: false, closeCombat: this.conditions.closeCombat }),
+        ranged: impairedAttacks(traits, { ranged: true, aimed: this.maneuver === "aim" && (this.aim?.turns ?? 0) > 0 }),
       },
-      // The eyes brought to the dark, for the attack dialog to read.
+      // What the legs take off every melee skill (p. 141), for the chip.
+      legPenalty: legs,
+      // The eyes brought to the dark and to the range, for the attack dialog.
       vision: {
         nightVision: traits.nightVision,
         darkVision: traits.darkVision,
         infravision: traits.infravision,
         blindness: traits.blindness,
+        nearsighted: traits.badSight === "nearsighted",
       },
       // The four senses as Perception rolls, each after the traits that
       // sharpen or blunt it (pp. 35, 124, 129, 138).

@@ -1022,7 +1022,7 @@ function socialBackgroundOf(actor: any): SocialBackground | null {
   };
 }
 
-async function promptForReaction(sources: ReactionSource[], background: SocialBackground | null = null): Promise<{
+async function promptForReaction(sources: ReactionSource[]): Promise<{
   modifier: number;
   best: Reaction | null;
   worst: Reaction | null;
@@ -1067,10 +1067,6 @@ async function promptForReaction(sources: ReactionSource[], background: SocialBa
       </label>
       ${alwaysList ? `<p class="ihint" style="margin:0">${L("FromTraits")}: ${alwaysList}</p>` : ""}
       ${conditional}
-      ${background ? `<label style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" name="unfamiliar">
-        <span>${game.i18n.localize(background.adaptable ? "GWORLD.Life.UnfamiliarAdaptable" : "GWORLD.Life.Unfamiliar")}</span>
-      </label>` : ""}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Best")}</span>
         <select name="best" style="width:150px">${bands("")}</select>
@@ -1095,11 +1091,7 @@ async function promptForReaction(sources: ReactionSource[], background: SocialBa
         form?.querySelectorAll<HTMLInputElement>('input[name^="source-"]').forEach((box) => {
           if (box.checked) ticked += Number(box.dataset.value) || 0;
         });
-        // "-3 on all ... reaction rolls" in a culture you do not know (p. 23).
-        if (background) {
-          const unfamiliar = form?.querySelector<HTMLInputElement>('input[name="unfamiliar"]')?.checked ?? false;
-          ticked += culturePenalty(unfamiliar, background.adaptable ? [{ name: "Cultural Adaptability" }] : []);
-        }
+
         return {
           modifier:
             (Number(form?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value ?? 0) || 0) +
@@ -1127,7 +1119,7 @@ async function promptForStudy(
         `<option value="${skill.id}">${skill.name}${skill.banked ? ` (${game.i18n.format("GWORLD.Life.BankedShort", { hours: skill.banked })})` : ""}</option>`,
     )
     .join("");
-  const methods = (["education", "selfTeaching", "onTheJob"] as const)
+  const methods = (["education", "intensive", "selfTeaching", "onTheJob"] as const)
     .map((m) => `<option value="${m}">${L(`Method.${m}`)}</option>`)
     .join("");
 
@@ -2232,6 +2224,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // nobody is using.
       rules: activeRules(),
 
+      // A fixed wage, or freelance work paid by the margin (Campaigns p. 516).
+      jobKinds: (["wage", "freelance"] as const).map((key) => ({
+        key,
+        label: game.i18n.localize(`GWORLD.Life.JobKind.${key}`),
+        selected: (system.job?.kind ?? "wage") === key,
+      })),
       // The levels of Wealth a job can pay at (Campaigns p. 517).
       jobLevels: (["poor", "struggling", "average", "comfortable", "wealthy", "veryWealthy", "filthyRich"] as const).map((key) => ({
         key,
@@ -3556,10 +3554,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onReaction(this: GWorldCharacterSheet) {
     if (!isRuleOn("reactions")) return;
 
-    const asked = await promptForReaction(
-      this.actor.system?.derived?.reactions ?? [],
-      socialBackgroundOf(this.actor),
-    );
+    const asked = await promptForReaction(this.actor.system?.derived?.reactions ?? []);
     if (!asked) return;
 
     await rollReaction({ actor: this.actor, ...asked });

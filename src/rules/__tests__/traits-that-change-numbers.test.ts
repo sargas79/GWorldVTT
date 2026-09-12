@@ -82,39 +82,39 @@ describe("the trait table", () => {
 });
 
 describe("lame legs", () => {
-  it("halve Move when crippled, leave 2 when missing, none when legless", () => {
-    expect(lameMove(7, "crippled")).toBe(3);
-    expect(lameMove(7, "missing")).toBe(2);
-    expect(lameMove(1, "missing")).toBe(1);
-    expect(lameMove(7, "none")).toBe(0);
-    expect(lameMove(7, null)).toBe(7);
+  it("leave half Basic Speed when crippled, 2 when missing, none when legless", () => {
+    expect(lameMove(7, "crippled", 6.75)).toBe(3);
+    expect(lameMove(7, "missing", 6.75)).toBe(2);
+    expect(lameMove(1, "missing", 6.75)).toBe(1);
+    expect(lameMove(7, "none", 6.75)).toBe(0);
+    expect(lameMove(7, null, 6.75)).toBe(7);
   });
 
-  it("cost -3 or -6 in a fight", () => {
+  it("cost -3 or -6 to every skill that needs legs", () => {
     expect(lameCombatPenalty("crippled")).toBe(-3);
     expect(lameCombatPenalty("missing")).toBe(-6);
     expect(lameCombatPenalty(null)).toBe(0);
   });
 });
 
-describe("what the body takes off an attack", () => {
-  it("is nearsighted -2 at range, farsighted -3 in melee, One Eye -1 at range", () => {
-    const near = { badSight: "nearsighted" as const, oneEye: true, lame: null };
-    expect(impairedAttacks(near, true)).toEqual([
+describe("what the eyes take off an attack", () => {
+  it("is nearsighted -2 in melee, farsighted -3 in close combat, and One Eye -1, or -4 at range unaimed", () => {
+    const near = { badSight: "nearsighted" as const, oneEye: true };
+    expect(impairedAttacks(near, { ranged: false })).toEqual([
       { trait: "Bad Sight", value: -2 }, { trait: "One Eye", value: -1 },
     ]);
-    expect(impairedAttacks(near, false)).toEqual([]);
-    const far = { badSight: "farsighted" as const, oneEye: false, lame: "crippled" as const };
-    expect(impairedAttacks(far, false)).toEqual([
-      { trait: "Bad Sight", value: -3 }, { trait: "Lame", value: -3 },
-    ]);
+    expect(impairedAttacks(near, { ranged: true })).toEqual([{ trait: "One Eye", value: -4 }]);
+    expect(impairedAttacks(near, { ranged: true, aimed: true })).toEqual([{ trait: "One Eye", value: -1 }]);
+    const far = { badSight: "farsighted" as const, oneEye: false };
+    expect(impairedAttacks(far, { ranged: false })).toEqual([]);
+    expect(impairedAttacks(far, { ranged: false, closeCombat: true })).toEqual([{ trait: "Bad Sight", value: -3 }]);
   });
 });
 
 describe("enhanced defenses", () => {
-  it("add their levels under their own label, and Lame takes its off", () => {
+  it("add their levels under their own label", () => {
     expect(dodge(6, { enhanced: 2 }).total).toBe(11);
-    expect(parry(14, { enhanced: 1, lame: -3 }).total).toBe(8);
+    expect(parry(14, { enhanced: 1 }).total).toBe(11);
     expect(block(12, { enhanced: 1 }).modifiers).toEqual([{ label: "Enhanced defense", value: 1 }]);
   });
 });
@@ -209,10 +209,20 @@ describe("reaction modifiers from the sheet", () => {
       { name: "Social Stigma (Monster)" },
       { name: "Bad Temper", reactionModifier: -1 },
     ]);
+    // Beautiful +2, Charisma +2, an Odious Personal Habit -1, a Monster -3, the typed -1.
     expect(unconditionalReaction(sources)).toBe(2 + 2 - 1 - 3 - 1);
     const attracted = sources.find((s) => s.condition === "attracted");
     expect(attracted?.value).toBe(2);
     expect(sources.find((s) => s.condition === "knowing")?.value).toBe(3);
+  });
+
+  it("has the book's figures for the ugly, caps reputations at four, and offers a talent", () => {
+    expect(unconditionalReaction(reactionSources([{ name: "Appearance (Disadvantage)", levels: 5 }]))).toBe(-6);
+    expect(unconditionalReaction(reactionSources([{ name: "Appearance", levels: 6 }]))).toBe(2);
+    const capped = reactionSources([{ name: "Reputation", levels: 4 }, { name: "Reputation", levels: 2 }]);
+    expect(capped.reduce((sum, s) => sum + s.value, 0)).toBe(4);
+    expect(reactionSources([{ name: "Healer", levels: 2 }])).toEqual([{ label: "Healer", value: 2, condition: "impressed" }]);
+    expect(reactionSources([{ name: "Social Stigma (Minority Group)" }])[0]).toMatchObject({ value: -2, condition: "ownKind" });
   });
 
   it("reads Charisma onto Influence rolls too", () => {

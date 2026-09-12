@@ -10,9 +10,10 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
-import { attributeOf, healthRollScore } from "./attributes.js";
-import { agedAttribute, agingResult, type AgedAttribute } from "../rules/aging.js";
-import { jobRoll } from "../rules/jobs.js";
+import { attributeOf } from "./attributes.js";
+import { AGED_ATTRIBUTES, agingModifier, agingRoll, diesOfAge } from "../rules/aging.js";
+import { CRITICAL_RAISE, jobRoll, type JobKind } from "../rules/jobs.js";
+import { setCondition } from "./conditions.js";
 import { normalizeSkillName } from "../rules/skills.js";
 import { resolveSuccess } from "../rules/success.js";
 import { studyPoints, type StudyMethod } from "../rules/study.js";
@@ -117,10 +118,12 @@ export async function studySkill(options: {
 }
 
 /**
- * A month at the job (Campaigns p. 517).
+ * A month at the job (Campaigns p. 516).
  *
  * Rolled against the job's skill, at the level the sheet has it -- or, for a
- * skill the character never learned, not at all: a job needs its skill.
+ * skill the character never learned, not at all: "candidates must have at
+ * least one point in the skill -- default skill will not suffice!" A wage is
+ * paid on anything but a critical; freelance work is paid by the margin.
  */
 export async function workAMonth(options: { actor: any; modifier: number }): Promise<void> {
   const { actor } = options;
@@ -134,74 +137,97 @@ export async function workAMonth(options: { actor: any; modifier: number }): Pro
     return;
   }
 
+  const kind = (job.kind === "freelance" ? "freelance" : "wage") as JobKind;
   const target = level + options.modifier;
   const roll = new Roll("3d6");
   await roll.evaluate();
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
   const result = jobRoll({
+    kind,
     success: outcome.success,
     criticalSuccess: outcome.criticalSuccess,
     criticalFailure: outcome.criticalFailure,
     margin: outcome.margin,
   });
 
-  const earned = pay * result.monthsPaid;
+  const earned = Math.round(pay * result.payMultiplier);
   const changes: Record<string, unknown> = {};
   if (earned > 0) changes["system.money"] = (Number(actor.system?.money) || 0) + earned;
-  if (result.fired) changes["system.job.title"] = "";
   if (Object.keys(changes).length > 0) await actor.update(changes);
 
   const lines: string[] = [];
   if (earned > 0) lines.push(game.i18n.format("GWORLD.Life.Paid", { amount: earned }));
   else lines.push(game.i18n.localize("GWORLD.Life.NotPaid"));
-  if (result.promoted) lines.push(game.i18n.localize("GWORLD.Life.Promoted"));
-  if (result.fired) lines.push(game.i18n.localize("GWORLD.Life.Fired"));
-  if (result.risk) {
+  if (kind === "freelance" && result.payMultiplier !== 1 && result.payMultiplier > 0) {
+    lines.push(game.i18n.format("GWORLD.Life.ByMargin", { percent: Math.round(result.payMultiplier * 100) }));
+  }
+  if (result.raise) lines.push(game.i18n.format("GWORLD.Life.Raise", { percent: Math.round(CRITICAL_RAISE * 100) }));
+  if (result.disaster) {
     lines.push(
       job.risk
-        ? game.i18n.format("GWORLD.Life.RiskNamed", { risk: String(job.risk) })
-        : game.i18n.localize("GWORLD.Life.Risk"),
+        ? game.i18n.format("GWORLD.Life.DisasterNamed", { risk: String(job.risk) })
+        : game.i18n.localize("GWORLD.Life.Disaster"),
     );
   }
 
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Life.Job"),
-    detail: game.i18n.format("GWORLD.Life.Worked", { title: String(job.title), skill: String(job.skill) }),
+    detail: game.i18n.format("GWORLD.Life.Worked", {
+      title: String(job.title),
+      skill: String(job.skill),
+      kind: game.i18n.localize(`GWORLD.Life.JobKind.${kind}`),
+    }),
     target,
     dice: dieResults(roll),
     roll: roll.total,
     lines,
-    good: result.monthsPaid > 0,
-    bad: result.fired,
+    good: earned > 0,
+    bad: result.disaster,
     rolls: [roll],
   });
 }
 
-/** Pays a month's cost of living out of the money on the sheet (Characters p. 265). */
+/**
+ * Settles a month's accounts (Characters pp. 26, 265): the cost of living at
+ * the character's Status, a Debt's payment, and an Independent Income's
+ * receipts, out of and into the money on the sheet.
+ */
 export async function payCostOfLiving(options: { actor: any; months: number }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
-  const monthly = Number(actor.system?.derived?.wealth?.costOfLiving) || 0;
+  const wealth = actor.system?.derived?.wealth ?? {};
+  const monthly = Number(wealth.costOfLiving) || 0;
+  const debt = Number(wealth.debt) || 0;
+  const income = Number(wealth.independentIncome) || 0;
   const months = Math.max(0, Math.floor(options.months));
-  const due = monthly * months;
+  const due = (monthly + debt) * months;
+  const received = income * months;
   const before = Number(actor.system?.money) || 0;
-  await actor.update({ "system.money": before - due });
+  const after = before - due + received;
+  await actor.update({ "system.money": after });
+
+  const lines = [game.i18n.format("GWORLD.Life.MoneyLeft", { amount: after })];
+  if (debt > 0) lines.unshift(game.i18n.format("GWORLD.Life.DebtPaid", { amount: debt * months }));
+  if (income > 0) lines.unshift(game.i18n.format("GWORLD.Life.IncomeReceived", { amount: received }));
 
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Life.CostOfLiving"),
-    detail: game.i18n.format("GWORLD.Life.PaidMonths", { months, amount: due }),
-    lines: [game.i18n.format("GWORLD.Life.MoneyLeft", { amount: before - due })],
-    bad: before - due < 0,
+    detail: game.i18n.format("GWORLD.Life.PaidMonths", { months, amount: monthly * months }),
+    lines,
+    bad: after < 0,
   });
 }
 
 /**
- * An aging roll (Campaigns p. 444).
+ * A series of aging rolls (Campaigns p. 444): "four HT rolls -- one for each
+ * of your four basic attributes, in the following order: ST, DX, IQ, HT."
  *
- * A failure takes a point off the attribute a die names, and the sheet is
- * written down by that point: it is the bought figure that ages.
+ * The medical tech level is taken as the character's own unless the GM says
+ * otherwise, and Fit's bonus is the one the page names rather than the
+ * general HT-roll bonus, so it is not counted twice. A level lost comes off
+ * the bought figure, and an attribute that reaches 0 is a natural death.
  */
-export async function rollAging(options: { actor: any; modifier: number }): Promise<void> {
+export async function rollAging(options: { actor: any; modifier: number; medicalTl?: number }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
 
@@ -211,43 +237,63 @@ export async function rollAging(options: { actor: any; modifier: number }): Prom
     return;
   }
 
-  const target = healthRollScore(actor) + options.modifier;
-  const roll = new Roll("3d6");
-  await roll.evaluate();
-  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
-  const result = agingResult({
-    success: outcome.success,
-    criticalFailure: outcome.criticalFailure,
-    rolled: roll.total,
-    longevity: aging.longevity === true,
-    ht: attributeOf(actor, "HT"),
-  });
+  const ht = attributeOf(actor, "HT");
+  const fit = Number(actor.system?.derived?.traitEffects?.htRolls) || 0;
+  const medicalTl = options.medicalTl ?? (Number(actor.system?.tl) || 0);
+  const modifier = agingModifier({ medicalTl, fit }) + options.modifier;
+  const target = ht + modifier;
 
-  const rolls: any[] = [roll];
-  let attribute: AgedAttribute | null = null;
-  if (!result.held) {
-    const die = new Roll("1d6");
-    await die.evaluate();
-    rolls.push(die);
-    attribute = agedAttribute(die.total);
-    const bought = Number(actor.system?.attributes?.[attribute]) || 10;
-    await actor.update({ [`system.attributes.${attribute}`]: Math.max(1, bought - result.lost) });
+  const rolls: any[] = [];
+  const lines: string[] = [];
+  const changes: Record<string, number> = {};
+  let dead = false;
+
+  for (const attribute of AGED_ATTRIBUTES) {
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    rolls.push(roll);
+    const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+    const result = agingRoll({
+      attribute,
+      success: outcome.success,
+      criticalFailure: outcome.criticalFailure,
+      rolled: roll.total,
+      longevity: aging.longevity === true,
+      modifiedHt: target,
+    });
+    if (result.lost > 0) {
+      const bought = Number(actor.system?.attributes?.[attribute]) || 10;
+      const after = bought - result.lost;
+      changes[`system.attributes.${attribute}`] = Math.max(1, after);
+      if (diesOfAge(after)) dead = true;
+      lines.push(game.i18n.format("GWORLD.Life.Lost", { attribute, roll: roll.total, points: result.lost }));
+    } else {
+      lines.push(
+        game.i18n.format(result.savedByLongevity ? "GWORLD.Life.HeldByLongevity" : "GWORLD.Life.Held", {
+          attribute,
+          roll: roll.total,
+        }),
+      );
+    }
   }
 
-  const lines: string[] = [];
-  if (result.savedByLongevity) lines.push(game.i18n.localize("GWORLD.Life.Longevity"));
-  if (result.held) lines.push(game.i18n.localize("GWORLD.Life.Held"));
-  else lines.push(game.i18n.format("GWORLD.Life.Lost", { points: result.lost, attribute }));
+  if (Object.keys(changes).length > 0) await actor.update(changes);
+  if (dead) {
+    await setCondition(actor, "dead", true);
+    lines.push(game.i18n.localize("GWORLD.Life.NaturalDeath"));
+  }
 
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Life.Aging"),
-    detail: game.i18n.format("GWORLD.Life.AgingDetail", { age: aging.age ?? "?", rolls: aging.rollsPerYear ?? 0 }),
+    detail: game.i18n.format("GWORLD.Life.AgingDetail", {
+      age: aging.age ?? "?",
+      rolls: aging.rollsPerYear ?? 0,
+      modifier: modifier >= 0 ? `+${modifier}` : String(modifier),
+    }),
     target,
-    dice: dieResults(roll),
-    roll: roll.total,
     lines,
-    good: result.held,
-    bad: !result.held,
+    good: Object.keys(changes).length === 0,
+    bad: Object.keys(changes).length > 0,
     rolls,
   });
 }

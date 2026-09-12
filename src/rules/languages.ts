@@ -3,10 +3,11 @@
  * Characters pp. 23-24).
  *
  * A language is known at one of four levels, and the sheet has held that
- * since GURPS Lite. What it did not do was charge for it. "Broken: ... -3 on
- * any skill roll that involves the language", "Accented: ... -1", and at None
- * there is no roll at all. Cultural Familiarity is the same idea for manners:
- * without it, "-3 on all Influence rolls and reaction rolls" in that culture.
+ * since GURPS Lite. What it did not do was charge for it. Broken is "-3 when
+ * using skills that depend on language", Accented "-1", Native nothing, and
+ * at None "you are completely incapable of functioning in the language".
+ * Cultural Familiarity is the same idea for manners: without it, "-3 to use
+ * any skill with a significant cultural component".
  */
 
 export type Comprehension = "none" | "broken" | "accented" | "native";
@@ -27,7 +28,11 @@ export function languagePenalty(level: Comprehension): number | null {
   return COMPREHENSION_PENALTY[level];
 }
 
-/** "-3 on all Influence rolls and reaction rolls" in an unfamiliar culture (p. 23). */
+/**
+ * "When dealing with an unfamiliar culture, you have -3 to use any skill with
+ * a significant cultural component" (p. 23) -- the Influence skills among
+ * them. Not a reaction modifier.
+ */
 export const UNFAMILIAR_CULTURE_PENALTY = -3;
 
 /** A trait as the sheet holds it, for reading Cultural Adaptability off. */

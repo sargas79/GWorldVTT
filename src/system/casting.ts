@@ -339,7 +339,7 @@ async function promptForCast(options: {
 async function payEnergy(actor: any, total: number, hpBurn: number): Promise<{ fp: number; hp: number }> {
   const hp = Math.max(0, Math.min(Math.floor(hpBurn), total));
   const fp = total - hp;
-  if (fp > 0) await applyFatigue(actor, fp);
+  if (fp > 0) await applyFatigue(actor, fp, { exertion: false });
   if (hp > 0) {
     // "Treat HP lost this way just like any other injury" (p. 237).
     await actor.update({ "system.hp.value": (Number(actor.system?.hp?.value) || 0) - hp });
@@ -822,7 +822,7 @@ export async function maintainSpell(actor: any, id: string): Promise<void> {
     ui.notifications?.warn(game.i18n.format("GWORLD.Cast.CannotMaintain", { spell: spell.name }));
     return;
   }
-  if (spell.maintainCost > 0) await applyFatigue(actor, spell.maintainCost);
+  if (spell.maintainCost > 0) await applyFatigue(actor, spell.maintainCost, { exertion: false });
   const now = Number((game as any).time?.worldTime ?? 0) || 0;
   list[index] = { ...spell, expiresAt: maintainedExpiry(spell.expiresAt, spell.durationSeconds, now) };
   await actor.update({ "system.activeSpells": list });
@@ -840,7 +840,7 @@ export async function dropSpell(actor: any, id: string): Promise<void> {
   if (!spell) return;
   const now = Number((game as any).time?.worldTime ?? 0) || 0;
   const cost = cancelCost(spell.expiresAt, now);
-  if (cost > 0) await applyFatigue(actor, cost);
+  if (cost > 0) await applyFatigue(actor, cost, { exertion: false });
   list.splice(index, 1);
   await actor.update({ "system.activeSpells": list });
   ui.notifications?.info(

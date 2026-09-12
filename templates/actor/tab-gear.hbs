@@ -160,7 +160,7 @@
       <div class="cell">
         <span class="cl">{{localize "GWORLD.Life.CostOfLiving"}}</span>
         <span class="cv">${{derived.wealth.costOfLiving}}</span>
-        <span class="cd">{{localize "GWORLD.Life.PerMonth"}}</span>
+        <span class="cd">{{localize "GWORLD.Life.PerMonth"}}{{#if derived.wealth.debt}} &middot; {{localize "GWORLD.Life.DebtLine" amount=derived.wealth.debt}}{{/if}}{{#if derived.wealth.independentIncome}} &middot; {{localize "GWORLD.Life.IncomeLine" amount=derived.wealth.independentIncome}}{{/if}}</span>
         {{#if (and editable rules.jobs)}}
           <div class="toolbar">
             <button type="button" class="ibtn tiny" data-action="payLiving">{{localize "GWORLD.Life.Pay"}}</button>
@@ -184,6 +184,16 @@
             <select name="system.job.level" {{#unless editable}}disabled{{/unless}}>
               {{#each jobLevels as |level|}}
                 <option value="{{level.key}}" {{#if level.selected}}selected{{/if}}>{{level.label}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Life.JobKindLabel"}}</span>
+          <div class="fi">
+            <select name="system.job.kind" {{#unless editable}}disabled{{/unless}}>
+              {{#each jobKinds as |kind|}}
+                <option value="{{kind.key}}" {{#if kind.selected}}selected{{/if}}>{{kind.label}}</option>
               {{/each}}
             </select>
           </div>

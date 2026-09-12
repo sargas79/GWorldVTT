@@ -462,11 +462,11 @@
         },
         "aging": {
           "Name": "Aging",
-          "Hint": "From 50, a HT roll a year against the years; a failure costs a point of an attribute."
+          "Hint": "From 50, a series of four HT rolls a year, one per attribute; a failure costs a level of it."
         },
         "socialBackground": {
           "Name": "Languages and cultures",
-          "Hint": "A broken language is -3 and an accented one -1 on Influence rolls; an unfamiliar culture is -3 on reactions and Influence."
+          "Hint": "A Broken language is -3 and an Accented one -1 on Influence rolls, and an unfamiliar culture -3 on the same skills."
         },
         "battleFatigue": {
           "Name": "Battle fatigue",
@@ -1198,10 +1198,14 @@
       "FromTraits": "From the sheet",
       "When": {
         "attracted": "from those attracted to your sex",
-        "knowing": "from those who know the reputation",
-        "respectful": "from those who respect status",
+        "knowing": "from those who know of it",
+        "respectful": "from those in your culture who respect Status",
         "pitying": "from those who might feel pity",
-        "stylish": "where clothing might matter"
+        "stylish": "where clothing might matter",
+        "impressed": "from those who notice the talent and would be impressed",
+        "ownKind": "from anyone but your own kind",
+        "faithful": "from followers of the faith",
+        "adult": "when dealing with others as an adult"
       },
       "Hint": "What an NPC makes of this character: 3d, modifiers on the dice, high is good",
       "Title": "Reaction",
@@ -1930,11 +1934,12 @@
     },
     "Life": {
       "Study": "Study",
-      "StudyHint": "Hours with a teacher make a point every 200; teaching yourself, or learning on the job, every 400 (Characters p. 292). Hours short of a point are banked on the skill.",
+      "StudyHint": "200 hours of learning make a point: an hour of instruction is an hour, intensive training counts double, self-teaching counts half and work a quarter (Characters pp. 292-293). Hours short of a point are banked on the skill.",
       "StudyAward": "Study: {skill}",
       "Studied": "{hours} hours of {method} on {skill}",
       "Method": {
         "education": "instruction",
+        "intensive": "intensive training",
         "selfTeaching": "self-teaching",
         "onTheJob": "work"
       },
@@ -1953,6 +1958,10 @@
       "GearHint": "what everything owned cost",
       "CostOfLiving": "Cost of living",
       "PerMonth": "a month, at this Status (Characters p. 265)",
+      "DebtLine": "Debt ${amount} a month",
+      "IncomeLine": "Independent Income ${amount} a month",
+      "DebtPaid": "Debt paid: ${amount}",
+      "IncomeReceived": "Independent Income received: ${amount}",
       "Pay": "Pay a month",
       "PaidMonths": "{months} month(s) of living paid: ${amount}",
       "MoneyLeft": "${amount} left",
@@ -1973,28 +1982,34 @@
       "JobTitle": "Job",
       "JobSkill": "Rolled against",
       "JobLevel": "Pays at",
+      "JobKindLabel": "Paid as",
+      "JobKind": {
+        "wage": "a fixed wage",
+        "freelance": "freelance, by the margin"
+      },
       "JobRisk": "Risk",
-      "JobPays": "Pays ${amount} a month on a successful roll (Campaigns p. 517).",
-      "JobHint": "Name a job and the skill it is rolled against; an Average job here pays ${amount} a month (Campaigns p. 517).",
+      "JobPays": "Pays ${amount} a month (Campaigns pp. 516-517).",
+      "JobHint": "Name a job and the skill it is rolled against; a typical job at this tech level pays ${amount} a month (Campaigns p. 517).",
       "WorkMonth": "Work a month",
-      "Worked": "A month as {title}, rolled against {skill}",
+      "Worked": "A month as {title}, rolled against {skill}, paid as {kind}",
       "NoJob": "No job to work: give it a title and a skill the character has",
       "Paid": "Paid ${amount}",
       "NotPaid": "Not paid this month",
-      "Promoted": "A bonus month's pay is in that; the GM may make it a raise or a promotion instead",
-      "Fired": "Out of a job",
-      "Risk": "The job's risk lands as well",
-      "RiskNamed": "The job's risk lands as well: {risk}",
+      "ByMargin": "{percent}% of the monthly pay, by the margin",
+      "Raise": "A critical success: a {percent}% permanent raise",
+      "Disaster": "A critical failure is always bad: demotion, lost savings, the sack, an injury or an arrest, as the GM decides",
+      "DisasterNamed": "A critical failure is always bad, and this job's risk is: {risk}",
       "Aging": "Aging roll",
-      "AgingHint": "{rolls} roll(s) a year against HT (Campaigns p. 444)",
-      "AgingDetail": "Age {age}: {rolls} roll(s) a year",
-      "Held": "Holding up",
-      "Lost": "{points} point(s) off {attribute}",
-      "Longevity": "Longevity: only a 17 or 18 fails",
+      "AgingHint": "{rolls} series a year of four HT rolls, one per attribute (Campaigns p. 444)",
+      "AgingDetail": "Age {age}: {rolls} series a year, at {modifier} for medical tech level and fitness",
+      "Held": "{attribute}: rolled {roll}, holding up",
+      "HeldByLongevity": "{attribute}: rolled {roll}, held by Longevity",
+      "Lost": "{attribute}: rolled {roll}, {points} level(s) lost",
+      "NaturalDeath": "An attribute has reached 0: a natural death",
       "Unaging": "Unaging: no aging rolls at all",
       "LanguageUsed": "Language used",
       "NoLanguage": "Native, or none needed",
-      "Unfamiliar": "In an unfamiliar culture (-3)",
+      "Unfamiliar": "In an unfamiliar culture (-3 to the skill)",
       "UnfamiliarAdaptable": "In an unfamiliar culture (Cultural Adaptability: no penalty)"
     },
     "Senses": {

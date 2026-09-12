@@ -1,43 +1,54 @@
 /**
  * Working for a living (GURPS Basic Set: Campaigns pp. 516-518).
  *
- * A job is a skill, a level of Wealth it pays at, and a risk. Once a month
- * the character rolls against the skill: "on a success, you earn your monthly
- * pay"; a critical success is worth a bonus, a raise or a promotion; a failure
- * costs the month's pay or the job; a critical failure costs the job and
- * brings the risk down on you -- a fine, an injury, a lawsuit, whatever the
- * job's entry says.
+ * "At the end of every month in which a character works, he must roll
+ * against one of the prerequisite skills for his job." What the roll is worth
+ * depends on the kind of job. "Most jobs offer a fixed wage or salary. On
+ * anything but a critical success or critical failure, the worker collects
+ * the monthly pay ... On a critical success, he gets a 10% permanent raise."
+ * Freelance work "on commission" is paid by the margin: "the worker earns the
+ * monthly pay if he makes his job roll exactly. For greater success, increase
+ * that month's income by 10% times the margin of success; a critical success
+ * triples the month's income! On a failure, decrease that month's income by
+ * 10% times the margin of failure."
  *
- * What a failure by less than five costs is the GM's option in the book, and
- * this takes the gentler reading: the pay is lost and the job is kept. The
- * harsher one is a click away, since the card says what happened.
+ * "For any kind of job, a critical failure is always bad. At best, the worker
+ * will earn no pay for the month." The rest of what it might mean --
+ * demotion, lost savings, the sack, an injury, an arrest -- is the GM's, and
+ * the card says so.
  */
 
-/** How badly a job roll has to fail before the job goes with the pay. */
-export const FIRED_AT_MARGIN = 5;
+export type JobKind = "wage" | "freelance";
 
 export interface JobOutcome {
-  /** Months of pay earned: 0, 1, or 2 for a bonus month. */
-  monthsPaid: number;
-  /** True when the critical success is worth more than money: a raise or a promotion. */
-  promoted: boolean;
-  /** True when the job is gone. */
-  fired: boolean;
-  /** True when the job's risk lands as well. */
-  risk: boolean;
+  /** The month's income as a multiple of the monthly pay: 1 for the pay itself. */
+  payMultiplier: number;
+  /** A critical success at a wage: "a 10% permanent raise". */
+  raise: boolean;
+  /** A critical failure, which "is always bad" and is the GM's to name. */
+  disaster: boolean;
 }
 
-/** What a month's roll came to (p. 517). */
-export function jobRoll(outcome: {
+/** The raise a critical success at a fixed wage is worth. */
+export const CRITICAL_RAISE = 0.1;
+
+/** What a month's roll came to (p. 516). */
+export function jobRoll(options: {
+  kind: JobKind;
   success: boolean;
   criticalSuccess?: boolean;
   criticalFailure?: boolean;
-  /** Margin of failure, positive, on a failed roll. */
+  /** Margin of success (positive) or failure (negative). */
   margin?: number;
 }): JobOutcome {
-  if (outcome.criticalFailure) return { monthsPaid: 0, promoted: false, fired: true, risk: true };
-  if (outcome.criticalSuccess) return { monthsPaid: 2, promoted: true, fired: false, risk: false };
-  if (outcome.success) return { monthsPaid: 1, promoted: false, fired: false, risk: false };
-  const margin = Math.abs(outcome.margin ?? 0);
-  return { monthsPaid: 0, promoted: false, fired: margin >= FIRED_AT_MARGIN, risk: false };
+  if (options.criticalFailure) return { payMultiplier: 0, raise: false, disaster: true };
+
+  if (options.kind === "wage") {
+    return { payMultiplier: 1, raise: options.criticalSuccess === true, disaster: false };
+  }
+
+  if (options.criticalSuccess) return { payMultiplier: 3, raise: false, disaster: false };
+  const margin = options.margin ?? 0;
+  const swing = options.success ? Math.max(0, margin) : -Math.abs(margin);
+  return { payMultiplier: Math.max(0, 1 + 0.1 * swing), raise: false, disaster: false };
 }
