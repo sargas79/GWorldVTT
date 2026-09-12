@@ -103,6 +103,7 @@ import {
   strikeWithMelee,
   throwMissile,
 } from "../held-spells.js";
+import { castFromItem, enchantItem } from "../enchanting.js";
 import { nextSpellPoints, previousSpellPoints, type MagicStyle } from "../../rules/magic.js";
 import { GEAR_GROUPS, gearGroupOf, type GearGroup } from "../gear-groups.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
@@ -1830,6 +1831,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       strikeMelee: GWorldCharacterSheet.#onStrikeMelee,
       dissipateSpell: GWorldCharacterSheet.#onDissipateSpell,
       heldInjury: GWorldCharacterSheet.#onHeldInjury,
+      castFromItem: GWorldCharacterSheet.#onCastFromItem,
+      enchantItem: GWorldCharacterSheet.#onEnchantItem,
     },
   };
 
@@ -2280,6 +2283,25 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         const held = heldSpell(this.actor);
         return held ? describeHeld(held) : null;
       })(),
+      // The magic items carried, with what each does here (Campaigns pp. 480-482).
+      items: ((magic.items ?? []) as any[]).map((entry) => ({
+        ...entry,
+        effects: [
+          entry.magic.accuracy ? `${game.i18n.localize("GWORLD.Enchant.Effect.Accuracy")} +${entry.magic.accuracy}` : "",
+          entry.magic.puissance ? `${game.i18n.localize("GWORLD.Enchant.Effect.Puissance")} +${entry.magic.puissance}` : "",
+          entry.magic.fortify ? `${game.i18n.localize("GWORLD.Enchant.Effect.Fortify")} +${entry.magic.fortify}` : "",
+          entry.magic.deflect ? `${game.i18n.localize("GWORLD.Enchant.Effect.Deflect")} +${entry.magic.deflect}` : "",
+          entry.magic.powerReduction ? `${game.i18n.localize("GWORLD.Enchant.Effect.Power")} ${entry.magic.powerReduction}` : "",
+          entry.magic.staff ? game.i18n.localize("GWORLD.Enchant.Effect.Staff") : "",
+        ].filter(Boolean),
+      })),
+      // Whether this character can enchant at all: Enchant known at 15, or
+      // 20 in low mana (Campaigns p. 481).
+      canEnchant: isRuleOn("magicItems") && (() => {
+        const enchant = this.actor.items.find((i: any) => i.type === "spell" && /^enchant$/i.test(String(i.name ?? "").trim()));
+        const level = enchant?.system?.derived?.level;
+        return typeof level === "number" && level >= 15;
+      })(),
       active: activeSpells.map((spell: any) => ({
         ...spell,
         ...describeActiveSpell(spell),
@@ -2343,6 +2365,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
   static async #onHeldInjury(this: GWorldCharacterSheet) {
     await injuredWhileHolding(this.actor);
+  }
+
+  /* ── magic items (Campaigns pp. 480-482) ──────────────────────────────── */
+
+  static async #onCastFromItem(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.#itemFrom(target);
+    const index = Number(target.dataset.enchantmentIndex);
+    if (item && Number.isInteger(index)) await castFromItem(this.actor, item, index);
+  }
+
+  static async #onEnchantItem(this: GWorldCharacterSheet) {
+    await enchantItem(this.actor);
   }
 
   /**

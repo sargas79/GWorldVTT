@@ -5,6 +5,7 @@
 import { relativeLevelForPoints } from "../../rules/skills.js";
 import { SPELL_CLASSES, spellRelativeLevel, type MagicStyle, type SpellClass, type SpellDifficulty } from "../../rules/magic.js";
 import { netModifier, traitPoints } from "../../rules/traits.js";
+import type { Enchantment } from "../../rules/enchanting.js";
 import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from "../gear-groups.js";
 import { templateCost } from "../../rules/templates.js";
 import type {
@@ -33,6 +34,27 @@ function physicalFields() {
     carried: new fields.BooleanField({ initial: true }),
     equipped: new fields.BooleanField({ initial: false }),
     tl: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /**
+     * The spells enchanted onto it (GURPS Basic Set: Campaigns pp. 480-482),
+     * each with a Power of its own. Six are effects on the item -- Accuracy,
+     * Deflect, Fortify, Puissance, Power, Staff -- and the sheet reads them
+     * into skill, DR, damage and defenses; any other is a spell the wearer
+     * has on them or the user can cast, at the item's Power.
+     */
+    enchantments: new fields.ArrayField(
+      new fields.SchemaField({
+        spell: new fields.StringField({ required: true, blank: true, initial: "" }),
+        /** The level of an effect -- Fortify +2 -- or times a per-level spell was put on. */
+        level: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 1, min: 0 }),
+        /** The lower of the enchanter's Enchant and the spell, when it was made. */
+        power: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 15, min: 0 }),
+        /** Energy it took, which is also its price. */
+        energy: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        alwaysOn: new fields.BooleanField({ initial: false }),
+        mageOnly: new fields.BooleanField({ initial: false }),
+      }),
+      { required: true, initial: [] },
+    ),
   };
 }
 
@@ -514,6 +536,7 @@ function rangedModeField() {
  * Modes model that directly instead of forcing duplicate items.
  */
 export class EquipmentData extends foundry.abstract.TypeDataModel {
+  declare enchantments: Enchantment[];
   declare quantity: number;
   declare weight: number;
   declare cost: number;
@@ -585,6 +608,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
     }
   }
 
+  declare enchantments: Enchantment[];
   declare dr: number;
   declare drSplit: number | null;
   declare drSplitAppliesTo: DamageType[];
@@ -656,6 +680,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
 
 /** A shield, which adds its Defense Bonus to every active defense (GURPS Lite p. 19). */
 export class ShieldData extends foundry.abstract.TypeDataModel {
+  declare enchantments: Enchantment[];
   declare db: number;
   declare skill: string;
   declare meleeModes: unknown[];

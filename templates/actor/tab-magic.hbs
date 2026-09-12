@@ -80,6 +80,54 @@
     </div>
   {{/if}}
 
+  {{!-- Magic items carried (Campaigns pp. 480-482): what each enchantment
+       does here, the spells it carries at its Power, and a Use for each the
+       user can cast. --}}
+  {{#if magic.items.length}}
+    <div class="isec" style="gap: 0">
+      <div class="grph">
+        {{localize "GWORLD.Enchant.Items"}}
+        <span class="sub">{{localize "GWORLD.Enchant.ItemsHint"}}</span>
+      </div>
+      <table class="gt">
+        <thead>
+          <tr>
+            <th>{{localize "GWORLD.Column.Item"}}</th>
+            <th>{{localize "GWORLD.Enchant.Effects"}}</th>
+            <th>{{localize "GWORLD.Enchant.Spells"}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each magic.items as |entry|}}
+            <tr data-item-id="{{entry.itemId}}" {{#unless entry.equipped}}class="dim"{{/unless}}>
+              <td>
+                <span class="wname" data-action="editItem">{{entry.name}}</span>
+                {{#unless entry.equipped}}<span class="tag">{{localize "GWORLD.Item.Stowed"}}</span>{{/unless}}
+              </td>
+              <td>
+                {{#each entry.effects as |effect|}}<span class="tag tag-accent">{{effect}}</span> {{/each}}
+              </td>
+              <td>
+                {{#each entry.magic.spells as |spell|}}
+                  <span class="npcline" style="gap: 6px; align-items: center">
+                    <span>{{spell.spell}} <b>{{spell.powerHere}}</b></span>
+                    {{#if spell.alwaysOn}}<span class="tag">{{localize "GWORLD.Enchant.AlwaysOnTag"}}</span>{{/if}}
+                    {{#if spell.mageOnly}}<span class="tag">{{localize "GWORLD.Enchant.MageOnly"}}</span>{{/if}}
+                    {{#unless spell.works}}<span class="tag tag-danger">{{localize "GWORLD.Enchant.NotWorking"}}</span>{{/unless}}
+                    {{#if @root.editable}}{{#if spell.works}}{{#unless spell.alwaysOn}}
+                      <span class="rollable" data-action="castFromItem" data-enchantment-index="{{spell.index}}"
+                            data-tooltip="{{localize 'GWORLD.Enchant.Use'}}">{{> "gworld.die"}}</span>
+                    {{/unless}}{{/if}}{{/if}}
+                  </span>
+                {{/each}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{/if}}
+
   {{!-- Spells still running (Characters pp. 237-238): each with what is
        left of its duration, what keeping it up costs, and whether it is
        being concentrated on, which is what the next casting pays for. --}}
@@ -151,6 +199,12 @@
               data-item-types="spell" data-browse-title="GWORLD.Picker.Spells">
         {{> "gworld.search"}} {{localize "GWORLD.Action.BrowseSpells"}}
       </button>
+      {{#if magic.canEnchant}}
+        <button type="button" class="ibtn" data-action="enchantItem"
+                data-tooltip="{{localize 'GWORLD.Enchant.ButtonHint'}}">
+          {{> "gworld.die"}} {{localize "GWORLD.Enchant.Button"}}
+        </button>
+      {{/if}}
     {{/if}}
   </div>
 

@@ -16,9 +16,9 @@
   <div class="gc-mods">
     <span>{{classes}}</span>
     {{#if subject}}<span class="gc-mod">{{subject}}</span>{{/if}}
-    <span class="gc-mod">{{localize "GWORLD.Cast.Energy"}} {{cost}}{{#if reduced}} ({{localize "GWORLD.Cast.Reduced" by=reduced}}){{/if}}</span>
+    <span class="gc-mod">{{localize "GWORLD.Cast.Energy"}} {{cost}}{{#if reducedText}} ({{reducedText}}){{/if}}</span>
     <span class="gc-mod">{{localize "GWORLD.Cast.Time"}} {{time}}</span>
-    <span class="gc-mod">{{ritual}}</span>
+    {{#if ritual}}<span class="gc-mod">{{ritual}}</span>{{/if}}
   </div>
 
   <div class="gc-dice">
