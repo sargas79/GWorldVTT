@@ -47,8 +47,7 @@ import { rollThrow } from "../throwing.js";
 import { summariseDescription } from "../description-summary.js";
 import {
   applyTemplateToActor,
-  appliedTemplates,
-  removeTemplateFromActor,
+  confirmAndRemoveTemplate,
   templateFromItem,
 } from "../character-templates.js";
 import {
@@ -4020,35 +4019,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onRemoveTemplate(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const index = Number(target.dataset.index);
     if (!Number.isInteger(index)) return;
-
-    const record = appliedTemplates(this.actor)[index];
-    if (!record) return;
-
-    // What to do with the items is a real question rather than a confirmation:
-    // a character who has played a few sessions has made those traits their
-    // own, and deleting them is not always what "remove the template" means.
-    const keep = await foundry.applications.api.DialogV2.wait({
-      window: { title: game.i18n.localize("GWORLD.Template.Remove") },
-      content: `<p>${game.i18n.format("GWORLD.Template.RemoveAsk", {
-        name: foundry.utils.escapeHTML(record.name),
-        count: record.itemIds.length,
-      })}</p>`,
-      buttons: [
-        { action: "items", label: game.i18n.localize("GWORLD.Template.RemoveItems") },
-        { action: "keep", label: game.i18n.localize("GWORLD.Template.KeepItems") },
-        { action: "cancel", label: game.i18n.localize("GWORLD.Chat.Cancel") },
-      ],
-      rejectClose: false,
-    });
-
-    if (keep === "cancel" || keep === null) return;
-
-    await removeTemplateFromActor({
-      actor: this.actor,
-      index,
-      keepItems: keep === "keep",
-    });
-    this.render();
+    if (await confirmAndRemoveTemplate(this.actor, index)) this.render();
   }
 
   /** Opens the template this character was built from, to read it again. */

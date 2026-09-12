@@ -220,6 +220,8 @@ declare global {
     namespace utils {
       function mergeObject<T extends object>(original: T, other?: object, options?: object): T;
       function getProperty(object: object, key: string): unknown;
+      /** An object's nested keys as one level of dotted paths. */
+      function flattenObject(object: object): Record<string, unknown>;
       function setProperty(object: object, key: string, value: unknown): boolean;
       function deepClone<T>(original: T): T;
       function randomID(length?: number): string;
