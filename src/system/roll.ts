@@ -111,6 +111,11 @@ export interface SuccessRollOptions {
    * (GURPS Basic Set: Campaigns p. 407).
    */
   malfunction?: { number: number; techLevel: number; revolver: boolean } | null;
+  /**
+   * The defender may dodge or block but not parry: a Missile spell
+   * (Characters p. 241). Recorded on the message for the defense card.
+   */
+  noParry?: boolean;
 }
 
 /**
@@ -122,7 +127,7 @@ export interface SuccessRollOptions {
 export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessRollResult | null> {
   const {
     actor, base, label, kind = "skill", modifiers = [], rapidFire, defensePenalty = 0,
-    unarmed = false,
+    unarmed = false, noParry = false,
   } = options;
 
   const totalModifier = modifiers.reduce((sum, m) => sum + m.value, 0);
@@ -197,7 +202,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     // defender rolls afterwards, by which time the attacker may well have
     // changed their target. A miss needs no defense, so it carries nothing.
     ...(kind === "attack" && outcome.success
-      ? { flags: attackFlags(actor, label, defensePenalty, criticalHit) }
+      ? { flags: attackFlags(actor, label, defensePenalty, criticalHit, noParry) }
       : {}),
   });
 
@@ -314,6 +319,7 @@ function attackFlags(
   label: string,
   defensePenalty: number,
   criticalHit: boolean,
+  noParry = false,
 ): object {
   const defenders = targetedTokens()
     .filter((token: any) => token?.actor?.uuid)
@@ -338,6 +344,8 @@ function attackFlags(
         // "In all cases, the target gets no active defense against the attack"
         // (p. 556) -- so the defense card offers none.
         noDefense: criticalHit,
+        // A thrown Missile spell cannot be parried (Characters p. 241).
+        ...(noParry ? { noParry: true } : {}),
       },
     },
   };
@@ -511,10 +519,10 @@ export async function handleRollAction(
   actor: any,
   event: Event,
   target: HTMLElement,
-): Promise<void> {
+): Promise<SuccessRollResult | null> {
   const { rollType, rollLabel, rollTarget, ranged } = target.dataset;
   const base = Number(rollTarget);
-  if (!Number.isFinite(base)) return;
+  if (!Number.isFinite(base)) return null;
 
   // A ranged attack needs its range, which is not optional the way a
   // situational modifier is: defaulting it to zero would quietly roll every
@@ -555,7 +563,7 @@ export async function handleRollAction(
       ? quickShot(measured, weapon)
       : await promptForRangedAttack(weapon)
     : null;
-  if (ranged && shot === null) return;
+  if (ranged && shot === null) return null;
 
   // A melee attack asks only when asked -- shift-click, as every other roll --
   // but when it does ask, it asks about Deceptive Attack and Rapid Strike too,
@@ -572,7 +580,7 @@ export async function handleRollAction(
         offHandTraining: Number(actor?.system?.derived?.techniques?.offHandWeaponTraining) || 0,
       })
     : null;
-  if (asksAboutMelee && melee === null) return;
+  if (asksAboutMelee && melee === null) return null;
 
   // "Firing from atop a moving animal tests both marksmanship and riding. Roll
   // against the lower of Riding or ranged weapon skill to hit" (p. 396).
@@ -594,7 +602,7 @@ export async function handleRollAction(
     : melee
       ? melee.modifiers
       : await maybePromptModifiers(event);
-  if (modifiers === null) return;
+  if (modifiers === null) return null;
 
   // Something has temporarily knocked an attribute down (p. 421). It comes off
   // every skill that attribute governs -- and off nothing else: a defense, a
@@ -610,7 +618,7 @@ export async function handleRollAction(
   // the option, so the roll is abandoned rather than made on a promise.
   if (melee && melee.fatigue > 0) {
     const paid = await spendFatigue(actor, melee.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"));
-    if (!paid) return;
+    if (!paid) return null;
     if (melee.mightyBlows) await recordMightyBlows(actor);
   }
 
@@ -637,11 +645,13 @@ export async function handleRollAction(
     ? `${rollLabel ?? rollType ?? "Roll"} (${game.i18n.format("GWORLD.Ranged.Measured", { yards: measured.rangeYards })})`
     : (rollLabel ?? rollType ?? "Roll");
 
-  await rollSuccess({
+  const outcome = await rollSuccess({
     actor,
     base,
     label,
     kind: rollKind(rollType),
+    // A Missile spell "may block or dodge, but not parry" (Characters p. 241).
+    noParry: target.dataset.noParry === "1",
     modifiers,
     // Which critical miss table a fumble reads is decided by the attack, and
     // the sheet is where that is known.
@@ -680,6 +690,8 @@ export async function handleRollAction(
       ui.notifications?.info(game.i18n.format("GWORLD.Ready.NowUnready", { name: String(item.name) }));
     }
   }
+
+  return outcome;
 }
 
 /** Where a shot's pellets striking as one mass are kept for the damage roll. */

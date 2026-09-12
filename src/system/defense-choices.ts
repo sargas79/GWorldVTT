@@ -45,7 +45,9 @@ export type DefenseRefusal =
   /** Nothing in hand that can parry. */
   | "noParry"
   /** No shield to block with. */
-  | "noBlock";
+  | "noBlock"
+  /** A thrown Missile spell, which "may block or dodge, but not parry" (Characters p. 241). */
+  | "missile";
 
 export interface DefenseChoice {
   key: DefenseKey;

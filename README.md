@@ -176,9 +176,19 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   duration, counted in world time a second a round; maintain one for its cost,
   concentrate on it, or let it go, and every one still up costs the next
   casting. Distraction while concentrating is a Will-3 roll.
+- **Spells in a fight.** A Missile spell goes into the hand with the energy
+  put into it, can be enlarged for two more seconds, and is thrown with Innate
+  Attack through the same range table and defense card as an arrow, which
+  offers dodge and block but not parry; a hit rolls a die of damage per point
+  of energy. A Melee spell charges the hand and is struck with at DX or an
+  unarmed skill. A Resisted spell posts the caster's roll with a resistance
+  button for each targeted subject, under the Rule of 16, with Magic
+  Resistance added and doubled against an Area spell. A Blocking spell sits
+  on the defense card beside dodge, parry and block.
 - A campaign without magic switches the whole chapter off under **GURPS rules
   in play**, and the tab goes with it; the rituals, the failure table, mana,
-  the running-spell penalty and distraction each have a switch of their own.
+  the running-spell penalty, distraction and the Rule of 16 each have a
+  switch of their own.
 
 ### Which rules are in play
 

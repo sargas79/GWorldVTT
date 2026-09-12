@@ -1,0 +1,21 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{spell}}</span>
+    <span class="gc-target">{{localize "GWORLD.Resist.Title"}}</span>
+  </div>
+
+  {{!-- What the caster brought to the contest: their roll and the skill it
+       was made against. The subject's half is a button on this card, since
+       "the subject always has a chance to resist" and may choose not to. --}}
+  <div class="gc-mods">
+    <span>{{localize "GWORLD.Resist.ResistedBy"}} <strong>{{resistedBy}}</strong></span>
+    {{#if area}}<span class="gc-mod">{{localize "GWORLD.Resist.Area"}}</span>{{/if}}
+    <span class="gc-mod">{{localize "GWORLD.Resist.CasterRolled" roll=casterRoll skill=casterSkill margin=casterMargin}}</span>
+  </div>
+
+  {{#if subjects.length}}
+    <div class="gc-foot">{{localize "GWORLD.Resist.Hint"}}</div>
+  {{else}}
+    <div class="gc-foot">{{localize "GWORLD.Resist.NoSubjects"}}</div>
+  {{/if}}
+</div>
