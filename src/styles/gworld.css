@@ -1619,6 +1619,10 @@
 }
 .gworld-rules .gr-rule:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
 .gworld-rules .gr-rule input { flex: 0 0 auto; margin-top: 2px; }
+/* One row per book, its packs indented under it. */
+.gworld-rules .gr-book > .gr-rule { font-weight: 600; }
+.gworld-rules .gr-book .gr-packs { margin-left: 22px; border-left: 1px solid var(--color-divider); }
+.gworld-rules .gr-book .gr-packs .gr-name { font-weight: 400; }
 .gworld-rules .gr-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .gworld-rules .gr-name { font-weight: 500; }
 /* The page it comes from, so a ruling can be checked rather than argued. */

@@ -32,6 +32,12 @@
       "path": "packs/skills",
       "type": "Item",
       "system": "gworld",
+      "flags": {
+        "gworld": {
+          "book": "basic-set",
+          "bookTitle": "Basic Set"
+        }
+      },
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
@@ -43,6 +49,12 @@
       "path": "packs/advantages",
       "type": "Item",
       "system": "gworld",
+      "flags": {
+        "gworld": {
+          "book": "basic-set",
+          "bookTitle": "Basic Set"
+        }
+      },
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
@@ -54,6 +66,12 @@
       "path": "packs/disadvantages",
       "type": "Item",
       "system": "gworld",
+      "flags": {
+        "gworld": {
+          "book": "basic-set",
+          "bookTitle": "Basic Set"
+        }
+      },
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
@@ -65,6 +83,12 @@
       "path": "packs/equipment",
       "type": "Item",
       "system": "gworld",
+      "flags": {
+        "gworld": {
+          "book": "basic-set",
+          "bookTitle": "Basic Set"
+        }
+      },
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
@@ -76,6 +100,12 @@
       "path": "packs/templates",
       "type": "Item",
       "system": "gworld",
+      "flags": {
+        "gworld": {
+          "book": "basic-set",
+          "bookTitle": "Basic Set"
+        }
+      },
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
@@ -87,6 +117,12 @@
       "path": "packs/spells",
       "type": "Item",
       "system": "gworld",
+      "flags": {
+        "gworld": {
+          "book": "basic-set",
+          "bookTitle": "Basic Set"
+        }
+      },
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
@@ -98,6 +134,12 @@
       "path": "packs/modifiers",
       "type": "Item",
       "system": "gworld",
+      "flags": {
+        "gworld": {
+          "book": "basic-set",
+          "bookTitle": "Basic Set"
+        }
+      },
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"

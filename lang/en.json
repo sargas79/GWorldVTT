@@ -2094,6 +2094,7 @@
       "Saved": "Compendium sources updated.",
       "NoPacks": "No Item compendia are available in this world.",
       "NoneHint": "Nothing is ticked, so the picker will offer the system's own packs.",
+      "BookAll": "Every pack of {book}",
       "Group": {
         "system": "This system",
         "world": "This world",
