@@ -27,8 +27,17 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   trait's levels have steppers on the sheet itself: a skill's walk the Skill Cost
   Table, a trait's move a level at a time and stop at the cap.
 - **Two ways to build a character.** Every tab can browse the compendia filtered
-  to what it holds, and a guided build walks points, attributes, advantages,
-  disadvantages, skills and gear in order with the ledger in view.
+  to what it holds, and a guided build walks points, templates, attributes,
+  advantages, disadvantages, skills and gear in order with the ledger in view.
+- **Templates, racial templates and meta-traits.** Drop one on a sheet: it asks
+  for the choices it leaves open — "select two skills from", "20 points chosen
+  from among" — adds what it grants, moves the numbers and records exactly what
+  it did, so taking it off again gives back precisely that. A racial template's
+  modifiers move the score without being billed, because the racial cost already
+  paid for them; a character template's attributes are bought in the ordinary
+  way. **A GM writes their own the way they write an advantage:** make an Item
+  of type Template, fill in its modifiers, its entries and its choice groups,
+  and drag it onto a character.
 - **Traits that change the numbers.** Combat Reflexes, High and Low Pain
   Threshold, Damage Resistance, Hard to Kill, Hard to Subdue, Fearlessness,
   Fearfulness, Combat Paralysis, Unfazeable, Ambidexterity, Indomitable, Slave
@@ -131,8 +140,11 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   buys a stated reaction, Diplomacy's second chance included.
 - **Temporary attribute penalties** — off the skills the attribute governs, and
   off nothing else: never a defense, a resistance roll or a Fright Check.
-- **Compendia** of advantages, disadvantages, skills and equipment, carrying
-  names, point costs and statistics.
+- **Compendia** of advantages, disadvantages, skills, equipment and templates,
+  carrying names, point costs and statistics. The templates are the Basic Set's
+  four racial ones, its three sample character templates, and eighteen
+  meta-traits; every one is checked at build time against the cost the book
+  states for it.
 
 ### Which rules are in play
 

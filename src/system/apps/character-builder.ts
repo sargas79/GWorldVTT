@@ -18,6 +18,7 @@
 
 import { SYSTEM_ID } from "../constants.js";
 import { CompendiumPicker } from "./compendium-picker.js";
+import { applyTemplateToActor, templateFromItem } from "../character-templates.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -39,10 +40,16 @@ interface Step {
 /**
  * The order to build in: what you can afford, then what you are, then what you
  * have. Disadvantages come before skills because what they pay for is what
- * there is to spend.
+ * there is to spend, and a template comes before all of it because it is a
+ * shortcut through the lot.
  */
 const STEPS: readonly Step[] = [
   { id: "points" },
+  // Templates come before attributes because that is the order they are used
+  // in: "first, buy the template... do this instead of buying individual
+  // attributes, secondary characteristics, advantages, disadvantages, skills"
+  // (Characters p. 258). Skipping the step is the ordinary case.
+  { id: "templates" },
   { id: "attributes" },
   { id: "advantages", types: ["trait"], categories: ["advantage", "perk"] },
   { id: "disadvantages", types: ["trait"], categories: ["disadvantage", "quirk"] },
@@ -50,6 +57,28 @@ const STEPS: readonly Step[] = [
   { id: "gear", types: ["equipment", "armor", "shield"] },
   { id: "review" },
 ];
+
+/**
+ * The template chooser, shared with the character sheet.
+ *
+ * Imported where it is used rather than at the top of the file: the sheet
+ * imports this application, so a static import back would be a cycle in the
+ * source. The bundler inlines this one, so it costs nothing at runtime.
+ */
+async function chooseAndApply(actor: any): Promise<boolean> {
+  const sheet = await import("../sheets/character-sheet.js");
+  const chosen = await sheet.pickTemplateItem();
+  if (!chosen) return false;
+
+  const template = templateFromItem(chosen);
+  if (!template) return false;
+
+  const picks = await sheet.chooseTemplateOptions(template);
+  if (picks === null) return false;
+
+  await applyTemplateToActor({ actor, template, uuid: chosen.uuid ?? "", picks });
+  return true;
+}
 
 /** The document hooks that mean this actor may have changed. */
 const WATCHED_HOOKS = ["updateActor", "createItem", "updateItem", "deleteItem"] as const;
@@ -65,6 +94,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       browse: CharacterBuilder.#onBrowse,
       deleteItem: CharacterBuilder.#onDeleteItem,
       finish: CharacterBuilder.#onFinish,
+      applyTemplate: CharacterBuilder.#onApplyTemplate,
     },
   };
 
@@ -200,6 +230,15 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
         value: system.attributes?.[key] ?? 10,
       })),
 
+      // What this character has already been built from, so the step shows
+      // progress rather than offering the same button twice.
+      templates: (this.#actor.system?.derived?.templates ?? []).map(
+        (applied: { name: string; kind: string; attributeCost: number }) => ({
+          ...applied,
+          kindLabel: `GWORLD.Template.${applied.kind}`,
+        }),
+      ),
+
       // The ledger rides along on every step. Losing track of it across six
       // tabs is the thing this whole application exists to prevent.
       points: {
@@ -281,6 +320,11 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
   static async #onNext(this: CharacterBuilder): Promise<void> {
     this.#step = Math.min(STEPS.length - 1, this.#step + 1);
     await this.render();
+  }
+
+  /** Takes a template, which is what this step is for (Characters p. 258). */
+  static async #onApplyTemplate(this: CharacterBuilder) {
+    if (await chooseAndApply(this.#actor)) this.render();
   }
 
   static async #onFinish(this: CharacterBuilder): Promise<void> {

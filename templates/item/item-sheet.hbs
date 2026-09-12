@@ -275,6 +275,152 @@
       </div>
     {{/if}}
 
+    {{#if isTemplate}}
+      <div class="ifields">
+        <label>{{localize "GWORLD.Template.Kind"}}
+          <select name="system.kind" {{#unless editable}}disabled{{/unless}}>
+            {{selectOptions choices.templateKinds selected=system.kind localize=true}}
+          </select>
+        </label>
+        <label>{{localize "GWORLD.Template.StatedCost"}}
+          <input type="number" name="system.statedCost" value="{{system.statedCost}}" step="1"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Template.AddsUpTo"}}
+          <input type="number" value="{{templateCost}}" disabled />
+        </label>
+      </div>
+      {{#unless costMatches}}
+        <p class="ihint warn">{{localize "GWORLD.Template.Mismatch"}}</p>
+      {{/unless}}
+
+      <div class="isub">
+        <div class="isub-head">
+          {{#if isRacial}}
+            {{localize "GWORLD.Template.AttributeModifiers"}}
+          {{else}}
+            {{localize "GWORLD.Template.AttributeScores"}}
+          {{/if}}
+        </div>
+        <div class="ifields">
+          {{#each choices.attributeKeys as |key|}}
+            <label>{{localize (concat "GWORLD.Attribute." key)}}
+              <input type="number" name="system.attributes.{{key}}"
+                     value="{{lookup @root.system.attributes key}}" step="1"
+                     {{#unless @root.editable}}disabled{{/unless}} />
+            </label>
+          {{/each}}
+        </div>
+        <div class="ifields">
+          {{#each choices.secondaryKeys as |sec|}}
+            <label>{{localize sec.label}}
+              <input type="number" name="system.secondary.{{sec.key}}"
+                     value="{{lookup @root.system.secondary sec.key}}" step="1"
+                     {{#unless @root.editable}}disabled{{/unless}} />
+            </label>
+          {{/each}}
+          <label>{{localize "GWORLD.Field.SizeModifier"}}
+            <input type="number" name="system.sizeModifier" value="{{system.sizeModifier}}" step="1"
+                   {{#unless editable}}disabled{{/unless}} />
+          </label>
+        </div>
+        {{#if isRacial}}
+          <label class="ifull">{{localize "GWORLD.Template.AttributeCost"}}
+            <input type="number" name="system.attributeCost" value="{{system.attributeCost}}" step="1"
+                   {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <p class="ihint">{{localize "GWORLD.Template.AttributeCostHint"}}</p>
+        {{/if}}
+      </div>
+
+      <div class="isub" data-mode-path="entries">
+        <div class="isub-head">
+          {{localize "GWORLD.Template.Required"}}
+          {{#if editable}}
+            <button type="button" class="ibtn tiny" data-action="addEntry" data-group="">
+              {{> "gworld.plus"}} {{localize "GWORLD.Action.Add"}}
+            </button>
+          {{/if}}
+        </div>
+        {{#each requiredEntries as |entry|}}
+          {{> "gworld.templateEntry" entry=entry}}
+        {{else}}
+          <p class="ihint">{{localize "GWORLD.Template.NoEntries"}}</p>
+        {{/each}}
+      </div>
+
+      <div class="isub" data-mode-path="choices">
+        <div class="isub-head">
+          {{localize "GWORLD.Template.Choices"}}
+          {{#if editable}}
+            <button type="button" class="ibtn tiny" data-action="addChoice">
+              {{localize "GWORLD.Template.AddChoice"}}
+            </button>
+          {{/if}}
+        </div>
+        {{#each choiceGroups as |group i|}}
+          <div class="irow" data-index="{{i}}">
+            <div class="ifields">
+              <label>{{localize "GWORLD.Template.GroupLabel"}}
+                <input type="text" name="system.choices.{{i}}.label" value="{{group.label}}"
+                       {{#unless @root.editable}}disabled{{/unless}} />
+              </label>
+              <label>{{localize "GWORLD.Template.GroupKind"}}
+                <select name="system.choices.{{i}}.kind" {{#unless @root.editable}}disabled{{/unless}}>
+                  {{selectOptions @root.choices.choiceKinds selected=group.kind localize=true}}
+                </select>
+              </label>
+              <label>{{localize "GWORLD.Template.GroupRequired"}}
+                <input type="number" name="system.choices.{{i}}.required" value="{{group.required}}"
+                       step="1" {{#unless @root.editable}}disabled{{/unless}} />
+              </label>
+              {{#if @root.editable}}
+                <button type="button" class="ibtn tiny" data-action="deleteMode" data-index="{{i}}"
+                        aria-label="{{localize "GWORLD.Action.Delete"}}"
+                        title="{{localize "GWORLD.Action.Delete"}}">
+                  {{> "gworld.trash"}}
+                </button>
+              {{/if}}
+            </div>
+            <div data-mode-path="entries">
+              {{#each group.options as |entry|}}
+                {{> "gworld.templateEntry" entry=entry}}
+              {{/each}}
+              {{#if @root.editable}}
+                <button type="button" class="ibtn tiny" data-action="addEntry" data-group="{{group.id}}">
+                  {{localize "GWORLD.Template.AddOption"}}
+                </button>
+              {{/if}}
+            </div>
+          </div>
+        {{else}}
+          <p class="ihint">{{localize "GWORLD.Template.NoChoices"}}</p>
+        {{/each}}
+      </div>
+
+      {{#if orphanEntries.length}}
+        <div class="isub" data-mode-path="entries">
+          <div class="isub-head warn">{{localize "GWORLD.Template.Orphans"}}</div>
+          {{#each orphanEntries as |entry|}}
+            {{> "gworld.templateEntry" entry=entry}}
+          {{/each}}
+        </div>
+      {{/if}}
+
+      <div class="isub">
+        <div class="isub-head">{{localize "GWORLD.Template.FreeNotes"}}</div>
+        <label class="ifull">{{localize "GWORLD.Template.Features"}}
+          <textarea name="featuresText" rows="3"
+                    {{#unless editable}}disabled{{/unless}}>{{featuresText}}</textarea>
+        </label>
+        <label class="ifull">{{localize "GWORLD.Template.Taboo"}}
+          <textarea name="tabooText" rows="3"
+                    {{#unless editable}}disabled{{/unless}}>{{tabooText}}</textarea>
+        </label>
+        <p class="ihint">{{localize "GWORLD.Template.FreeHint"}}</p>
+      </div>
+    {{/if}}
+
     {{#if isPhysical}}
       <div class="ifields">
         <label>{{localize "GWORLD.Column.Quantity"}}

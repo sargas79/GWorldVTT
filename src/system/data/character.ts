@@ -183,6 +183,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare hp: { value: number; max: number };
   declare fp: { value: number; max: number };
   declare mounted: boolean;
+  declare racial: { ST: number; DX: number; IQ: number; HT: number };
+  declare templates: Array<{
+    name: string;
+    kind: "character" | "racial" | "lens" | "metaTrait";
+    uuid: string;
+    attributeCost: number;
+    granted: Record<string, number>;
+    previous: Record<string, number>;
+    itemIds: string[];
+  }>;
   declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
   declare points: {
     starting: number;
@@ -335,6 +345,71 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
       /** In the saddle, which caps active defenses by Riding (Campaigns p. 397). */
       mounted: new fields.BooleanField({ initial: false }),
+
+      /**
+       * Attribute levels a racial template granted (Characters p. 261).
+       *
+       * Apart from the bought ones because they are not billed: "there is no
+       * added point cost for any of this! You paid for these bonuses or
+       * penalties when you paid your racial cost." What the racial cost was is
+       * recorded on the template entry below.
+       */
+      racial: new fields.SchemaField({
+        ST: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        DX: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        IQ: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        HT: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+      }),
+
+      /**
+       * The templates this character was built from (Characters pp. 258-263).
+       *
+       * Kept so that a template can be taken off again: applying one creates
+       * items and moves numbers, and nothing else on the sheet would remember
+       * which of them came from where.
+       */
+      templates: new fields.ArrayField(
+        new fields.SchemaField({
+          name: new fields.StringField({ required: true, blank: true, initial: "" }),
+          kind: new fields.StringField({
+            required: true, nullable: false, initial: "character",
+            choices: ["character", "racial", "lens", "metaTrait"],
+          }),
+          /** The template item this came from, for showing what it says. */
+          uuid: new fields.StringField({ required: true, blank: true, initial: "" }),
+          /** Points billed for the modifiers themselves; a racial cost. */
+          attributeCost: new fields.NumberField({
+            required: true, nullable: false, integer: true, initial: 0,
+          }),
+          /** Attribute levels this one granted, so they can be given back. */
+          granted: new fields.SchemaField({
+            ST: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+            DX: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+            IQ: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+            HT: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+            hp: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+            will: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+            per: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+            fp: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+            basicSpeed: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
+            basicMove: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+            /** Size, which stacks and comes back off with the rest. */
+            sm: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+          }),
+          /**
+           * What the sheet held before, keyed by the path each value came
+           * from ("attributes.ST", "purchased.hp"). Free-form because which
+           * paths a template writes depends on the template.
+           */
+          previous: new fields.ObjectField({ required: true, initial: {} }),
+          /** The items it added, so removing it removes exactly those. */
+          itemIds: new fields.ArrayField(
+            new fields.StringField({ required: true, blank: true, initial: "" }),
+            { required: true, initial: [] },
+          ),
+        }),
+        { required: true, initial: [] },
+      ),
 
       /**
        * Attributes something has temporarily knocked down (Campaigns p. 421).
@@ -572,12 +647,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     // The attributes as bought on the sheet, plus what traits add to them.
     // The points ledger bills the bought figure; the trait bills itself.
+    // A racial template's modifiers move the score alongside the bought
+    // levels and the traits, and are billed by neither: the racial cost paid
+    // for them (Characters p. 261).
     const bought = this.attributes;
+    const racial = this.racial;
     const attrs = {
-      ST: bought.ST + traits.attributes.ST,
-      DX: bought.DX + traits.attributes.DX,
-      IQ: bought.IQ + traits.attributes.IQ,
-      HT: bought.HT + traits.attributes.HT,
+      ST: bought.ST + traits.attributes.ST + racial.ST,
+      DX: bought.DX + traits.attributes.DX + racial.DX,
+      IQ: bought.IQ + traits.attributes.IQ + racial.IQ,
+      HT: bought.HT + traits.attributes.HT + racial.HT,
     };
     // Striking ST counts for damage alone and Lifting ST for what can be
     // carried, so each is its own figure rather than a change to ST.
@@ -1066,9 +1145,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       secondaryPointCost("basicMove", p.basicMove) +
       basicSpeedPointCost(p.basicSpeed);
 
+    // What the templates themselves cost. Only the modifiers are billed here:
+    // every trait and skill a template granted is an item of its own and bills
+    // itself, so charging the template's whole stated cost would count them
+    // twice (Characters pp. 258, 261).
+    const templatePoints = (this.templates ?? []).reduce(
+      (sum, applied) => sum + Number(applied.attributeCost ?? 0),
+      0,
+    );
+
     const spent =
       attributePoints + secondaryPoints + advantages + disadvantages + quirks +
-      skillPoints + techniquePoints + languagePoints;
+      skillPoints + techniquePoints + languagePoints + templatePoints;
 
     // Worked out once, beside the spending it is measured against.
     const ledger = pointsLedger({
@@ -1162,6 +1250,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       reeling,
       mounted: this.mounted,
       ridingSkill,
+      // What this character was built from, for the sheet to list and unpick.
+      templates: (this.templates ?? []).map((applied) => ({ ...applied })),
       // What a temporary penalty comes to, for the rolls that read it. The
       // penalties themselves stay where they were entered; this is only their
       // arithmetic, IQ dragging Will and Per with it (Campaigns p. 421).
@@ -1177,6 +1267,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       points: {
         attributes: attributePoints,
         secondaries: secondaryPoints,
+        templates: templatePoints,
         advantages,
         disadvantages,
         quirks,

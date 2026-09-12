@@ -38,6 +38,25 @@
       </div>
     {{/if}}
 
+    {{#if (eq stepId "templates")}}
+      <ul class="gb-list">
+        {{#each templates as |applied|}}
+          <li class="gb-row">
+            <span class="gb-name">{{applied.name}}</span>
+            <span class="gb-detail">
+              {{localize applied.kindLabel}}
+              {{#if applied.attributeCost}} &middot; {{applied.attributeCost}} pts{{/if}}
+            </span>
+          </li>
+        {{else}}
+          <li class="gb-row"><span class="gb-detail">{{localize "GWORLD.Template.NoneApplied"}}</span></li>
+        {{/each}}
+      </ul>
+      <button type="button" class="ibtn gb-browse" data-action="applyTemplate">
+        {{> "gworld.plus"}} {{localize "GWORLD.Template.Apply"}}
+      </button>
+    {{/if}}
+
     {{#if (eq stepId "attributes")}}
       <div class="ifields">
         {{#each attributes as |attr|}}

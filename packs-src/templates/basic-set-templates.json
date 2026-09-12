@@ -1,0 +1,4179 @@
+[
+  {
+    "_id": "3d2f0d95331ba999",
+    "name": "Dragon",
+    "type": "template",
+    "system": {
+      "kind": "racial",
+      "statedCost": 260,
+      "attributes": {
+        "ST": 15,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 3,
+        "per": 3,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 2,
+      "attributeCost": 150,
+      "entries": [
+        {
+          "name": "Burning Attack 4d (Cone, 5 yards, +100%; Limited Use, 3/day, -20%; Reduced Range, x1/5, -20%)",
+          "itemType": "trait",
+          "points": 32,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Claws (Talons)",
+          "itemType": "trait",
+          "points": 8,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Discriminatory Smell",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Damage Resistance 6 (Can't Wear Armor, -40%)",
+          "itemType": "trait",
+          "points": 18,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Enhanced Move 1/2 (Air)",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Extra Attack",
+          "itemType": "trait",
+          "points": 25,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Extra Legs (Four Legs)",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Flight (Winged, -25%)",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Longevity",
+          "itemType": "trait",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Magery 0",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Night Vision 8",
+          "itemType": "trait",
+          "points": 8,
+          "levels": 8,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Striker (Tail; Crushing)",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Teeth (Fangs)",
+          "itemType": "trait",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Bad Grip 3",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 3,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Gluttony (12)",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Greed (12)",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Horizontal",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Miserliness (12)",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 261"
+    }
+  },
+  {
+    "_id": "cb0361542647ff1e",
+    "name": "Dwarf",
+    "type": "template",
+    "system": {
+      "kind": "racial",
+      "statedCost": 35,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 1
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 1,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": -1,
+      "attributeCost": 15,
+      "entries": [
+        {
+          "name": "Artificer 1",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 1,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Detect (Gold) (Vague, -50%)",
+          "itemType": "trait",
+          "points": 3,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Extended Lifespan 1",
+          "itemType": "trait",
+          "points": 2,
+          "levels": 1,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Night Vision 5",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 5,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 261"
+    }
+  },
+  {
+    "_id": "137e4b1da33f6425",
+    "name": "Felinoid",
+    "type": "template",
+    "system": {
+      "kind": "racial",
+      "statedCost": 35,
+      "attributes": {
+        "ST": -1,
+        "DX": 1,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 10,
+      "entries": [
+        {
+          "name": "Acute Hearing 2",
+          "itemType": "trait",
+          "points": 4,
+          "levels": 2,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Acute Taste and Smell 1",
+          "itemType": "trait",
+          "points": 2,
+          "levels": 1,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Catfall",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Claws (Sharp)",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Combat Reflexes",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Damage Resistance 1",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 1,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Teeth (Sharp)",
+          "itemType": "trait",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Temperature Tolerance 1",
+          "itemType": "trait",
+          "points": 1,
+          "levels": 1,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Impulsiveness (12)",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Sleepy (1/2 of the time)",
+          "itemType": "trait",
+          "points": -8,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Purring Voice",
+        "Tail"
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 261"
+    }
+  },
+  {
+    "_id": "10d40018a74365a7",
+    "name": "Vampire",
+    "type": "template",
+    "system": {
+      "kind": "racial",
+      "statedCost": 150,
+      "attributes": {
+        "ST": 6,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 4,
+        "will": 0,
+        "per": 3,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 83,
+      "entries": [
+        {
+          "name": "Alternate Forms (Bat, Wolf)",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Doesn't Breathe",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Dominance",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Immunity to Metabolic Hazards",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Injury Tolerance (Unliving)",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Insubstantiality (Costs Fatigue, 2 FP, -10%)",
+          "itemType": "trait",
+          "points": 72,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Night Vision 5",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 5,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Speak With Animals (Wolves and bats, -60%)",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Unaging",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Unkillable 2 (Achilles' Heel: Wood, -50%)",
+          "itemType": "trait",
+          "points": 50,
+          "levels": 2,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Vampiric Bite",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Dependency (Coffin with soil of homeland; Daily)",
+          "itemType": "trait",
+          "points": -60,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Divine Curse (Cannot enter dwelling for first time unless invited)",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Draining (Human Blood; Illegal)",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Dread (Garlic)",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Dread (Religious Symbols; 5 yards)",
+          "itemType": "trait",
+          "points": -14,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Dread (Running Water)",
+          "itemType": "trait",
+          "points": -20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Supernatural Features (No Body Heat, No Reflection, Pallor)",
+          "itemType": "trait",
+          "points": -16,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Uncontrollable Appetite (12) (Human Blood)",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Unhealing (Partial)",
+          "itemType": "trait",
+          "points": -20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Weakness (Sunlight; 1d/minute)",
+          "itemType": "trait",
+          "points": -60,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Sterile"
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 262"
+    }
+  },
+  {
+    "_id": "daa502faf9f75e83",
+    "name": "Body of Air",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": 36,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Strength 0",
+          "itemType": "trait",
+          "points": -100,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Hit Points +10",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Doesn't Breathe",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Flight (Lighter Than Air, -10%)",
+          "itemType": "trait",
+          "points": 36,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Immunity to Metabolic Hazards",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Injury Tolerance (Diffuse)",
+          "itemType": "trait",
+          "points": 100,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "No Legs (Aerial)",
+          "itemType": "trait",
+          "points": 0,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "No Manipulators",
+          "itemType": "trait",
+          "points": -50,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Vulnerability (Vacuum and wind-based attacks x2)",
+          "itemType": "trait",
+          "points": -20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [
+        "Fixed ST"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters p. 262"
+    }
+  },
+  {
+    "_id": "561d8591021c67bb",
+    "name": "Body of Earth",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": 175,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Doesn't Breathe",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Damage Resistance 2",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 2,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Immunity to Metabolic Hazards",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Injury Tolerance (Diffuse)",
+          "itemType": "trait",
+          "points": 100,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Pressure Support 3",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 3,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Sealed",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Vacuum Support",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Invertebrate",
+          "itemType": "trait",
+          "points": -20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 262"
+    }
+  },
+  {
+    "_id": "d23afc3837dca7f7",
+    "name": "Body of Fire",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": 6,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Strength 0",
+          "itemType": "trait",
+          "points": -100,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Hit Points +10",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Burning Attack 1d (Always On, -40%; Aura, +80%; Melee Attack, Reach C, -30%)",
+          "itemType": "trait",
+          "points": 6,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Doesn't Breathe (Oxygen Combustion, -50%)",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Damage Resistance 10 (Limited: Heat/Fire, -40%)",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 10,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Immunity to Metabolic Hazards",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Injury Tolerance (Diffuse)",
+          "itemType": "trait",
+          "points": 100,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "No Manipulators",
+          "itemType": "trait",
+          "points": -50,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Weakness (Water; 1d/minute)",
+          "itemType": "trait",
+          "points": -40,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [
+        "Fixed ST"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters p. 262"
+    }
+  },
+  {
+    "_id": "ea41b779ec6cf11d",
+    "name": "Body of Ice",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": 99,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Doesn't Breathe",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Damage Resistance 3",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 3,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Immunity to Metabolic Hazards",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Injury Tolerance (Homogenous, No Blood)",
+          "itemType": "trait",
+          "points": 45,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Pressure Support 3",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 3,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Sealed",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Slippery 3",
+          "itemType": "trait",
+          "points": 6,
+          "levels": 3,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Terrain Adaptation (Ice)",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Vacuum Support",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Fragile (Brittle)",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Vulnerability (Heat/fire attacks x2)",
+          "itemType": "trait",
+          "points": -30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Weakness (Intense normal heat; 1d/minute; Variable, -40%)",
+          "itemType": "trait",
+          "points": -12,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 262"
+    }
+  },
+  {
+    "_id": "2affb01aa1a45347",
+    "name": "Body of Metal",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": 175,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Doesn't Breathe",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Damage Resistance 9",
+          "itemType": "trait",
+          "points": 45,
+          "levels": 9,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Immunity to Metabolic Hazards",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Injury Tolerance (Homogenous, No Blood)",
+          "itemType": "trait",
+          "points": 45,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Pressure Support 3",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 3,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Sealed",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Vacuum Support",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 262"
+    }
+  },
+  {
+    "_id": "b06d244099810c6d",
+    "name": "Body of Stone",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": 140,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Doesn't Breathe",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Damage Resistance 5",
+          "itemType": "trait",
+          "points": 25,
+          "levels": 5,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Immunity to Metabolic Hazards",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Injury Tolerance (Homogenous, No Blood)",
+          "itemType": "trait",
+          "points": 45,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Pressure Support 3",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 3,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Sealed",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Vacuum Support",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Fragile (Brittle)",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 262"
+    }
+  },
+  {
+    "_id": "2927aae234131197",
+    "name": "Body of Water",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": 175,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Amphibious",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Chameleon 1",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 1,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Constriction Attack",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Doesn't Breathe",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Immunity to Metabolic Hazards",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Injury Tolerance (Diffuse)",
+          "itemType": "trait",
+          "points": 100,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Pressure Support 3",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 3,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Slippery 5",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 5,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Invertebrate",
+          "itemType": "trait",
+          "points": -20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Vulnerability (Dehydration attacks x2)",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 262"
+    }
+  },
+  {
+    "_id": "2119170f636ea592",
+    "name": "Machine",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": 25,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Immunity to Metabolic Hazards",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Injury Tolerance (No Blood, Unliving)",
+          "itemType": "trait",
+          "points": 25,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Unhealing (Total)",
+          "itemType": "trait",
+          "points": -30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Eight-hour energy reserve; needs refuelling three times a day",
+        "Neither has nor can spend Fatigue Points",
+        "Does not age; wears out instead"
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 262"
+    }
+  },
+  {
+    "_id": "ac51cf5688ff19b7",
+    "name": "AI",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": 32,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Absolute Timing",
+          "itemType": "trait",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Digital Mind",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Doesn't Sleep",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Intuitive Mathematician",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Photographic Memory",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Reprogrammable",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 263"
+    }
+  },
+  {
+    "_id": "8593dbad7c2a1f59",
+    "name": "Automaton",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": -85,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Hidebound",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Incurious (6)",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Low Empathy",
+          "itemType": "trait",
+          "points": -20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "No Sense of Humor",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Slave Mentality",
+          "itemType": "trait",
+          "points": -40,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 263"
+    }
+  },
+  {
+    "_id": "21c74a668fc41278",
+    "name": "Domestic Animal",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": -30,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Cannot Speak",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Hidebound",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Social Stigma (Valuable Property)",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [
+        "Fixed IQ"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters p. 263"
+    }
+  },
+  {
+    "_id": "46a683f1196667f8",
+    "name": "Wild Animal",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": -30,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Bestial",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Cannot Speak",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Hidebound",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [
+        "Fixed IQ"
+      ],
+      "description": "",
+      "reference": "Basic Set: Characters p. 263"
+    }
+  },
+  {
+    "_id": "b647fbb1347a4584",
+    "name": "Ground Vehicle",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": -100,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Horizontal",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "No Legs (Tracked or Wheeled)",
+          "itemType": "trait",
+          "points": -20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "No Manipulators",
+          "itemType": "trait",
+          "points": -50,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Numb",
+          "itemType": "trait",
+          "points": -20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 263"
+    }
+  },
+  {
+    "_id": "354a29f4d82ed5fa",
+    "name": "Ichthyoid",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": -50,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "No Legs (Aquatic)",
+          "itemType": "trait",
+          "points": 0,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "No Manipulators",
+          "itemType": "trait",
+          "points": -50,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 263"
+    }
+  },
+  {
+    "_id": "2da60dc72d2e4596",
+    "name": "Quadruped",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": -35,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Extra Legs (Four Legs)",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Horizontal",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "No Fine Manipulators",
+          "itemType": "trait",
+          "points": -30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 263"
+    }
+  },
+  {
+    "_id": "5ffdbc71e72e6a09",
+    "name": "Vermiform",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": -35,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Double-Jointed",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "No Legs (Slithers)",
+          "itemType": "trait",
+          "points": 0,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "No Manipulators",
+          "itemType": "trait",
+          "points": -50,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 263"
+    }
+  },
+  {
+    "_id": "4464bd34ab311e21",
+    "name": "Spirit",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": 261,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Doesn't Breathe",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Doesn't Eat or Drink",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Doesn't Sleep",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Immunity to Metabolic Hazards",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Insubstantiality (Affect Substantial, +100%; Usually On, -40%)",
+          "itemType": "trait",
+          "points": 128,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Invisibility (Substantial Only, -10%; Usually On, +5%)",
+          "itemType": "trait",
+          "points": 38,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Unaging",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 263"
+    }
+  },
+  {
+    "_id": "0a6cf480496834f8",
+    "name": "Astral Entity",
+    "type": "template",
+    "system": {
+      "kind": "metaTrait",
+      "statedCost": 171,
+      "attributes": {
+        "ST": 0,
+        "DX": 0,
+        "IQ": 0,
+        "HT": 0
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Doesn't Breathe",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Doesn't Eat or Drink",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Doesn't Sleep",
+          "itemType": "trait",
+          "points": 20,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Immunity to Metabolic Hazards",
+          "itemType": "trait",
+          "points": 30,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Insubstantiality (Always On, -50%)",
+          "itemType": "trait",
+          "points": 40,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Invisibility (Substantial Only, -10%)",
+          "itemType": "trait",
+          "points": 36,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Unaging",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 263"
+    }
+  },
+  {
+    "_id": "92c8d28cd3c3096e",
+    "name": "Investigator",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 100,
+      "attributes": {
+        "ST": 10,
+        "DX": 12,
+        "IQ": 12,
+        "HT": 11
+      },
+      "secondary": {
+        "hp": 1,
+        "will": 0,
+        "per": 1,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Alternate Identity",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "5 or 15"
+        },
+        {
+          "name": "Charisma 1-3",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "5-15"
+        },
+        {
+          "name": "Contacts",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "varies"
+        },
+        {
+          "name": "Cultural Familiarity",
+          "itemType": "trait",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "1 per culture"
+        },
+        {
+          "name": "Danger Sense",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Gizmos 1-3",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "5-15"
+        },
+        {
+          "name": "Languages (any)",
+          "itemType": "trait",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "2-6 per language"
+        },
+        {
+          "name": "Legal Enforcement Powers",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "5-15"
+        },
+        {
+          "name": "Luck",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Rapid Healing",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Security Clearance",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "5-15"
+        },
+        {
+          "name": "Smooth Operator 1",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Zeroed",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "+1 to +3 to Per",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "5-15"
+        },
+        {
+          "name": "Appearance (Attractive)",
+          "itemType": "trait",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "or Handsome [12]"
+        },
+        {
+          "name": "Alcoholism",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": ""
+        },
+        {
+          "name": "Curious",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "self-control"
+        },
+        {
+          "name": "Duty",
+          "itemType": "trait",
+          "points": -2,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "-2 to -15"
+        },
+        {
+          "name": "Greed",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "self-control"
+        },
+        {
+          "name": "Honesty",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "self-control"
+        },
+        {
+          "name": "Pacifism",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "-5 to -15"
+        },
+        {
+          "name": "Secret",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "-5 to -30"
+        },
+        {
+          "name": "Sense of Duty (Comrades)",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": ""
+        },
+        {
+          "name": "Stubbornness",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": ""
+        },
+        {
+          "name": "Wealth (Struggling)",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": ""
+        },
+        {
+          "name": "Workaholic",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": ""
+        },
+        {
+          "name": "-1 to ST",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": ""
+        },
+        {
+          "name": "Climbing",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) DX+1"
+        },
+        {
+          "name": "Filch",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) DX+1"
+        },
+        {
+          "name": "Stealth",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) DX+1"
+        },
+        {
+          "name": "Criminology",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Disguise",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Electronics Operation (any)",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Holdout",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Interrogation",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Lockpicking",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Occultism",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Photography",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Research",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Shadowing",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Smuggling",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Traps",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Writing",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Observation",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) Per+1"
+        },
+        {
+          "name": "Search",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) Per+1"
+        },
+        {
+          "name": "Pickpocket",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(H) DX"
+        },
+        {
+          "name": "Computer Programming",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Diagnosis",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Expert Skill (any)",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Forensics",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Intelligence Analysis",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Law (any)",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Detect Lies",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(H) Per"
+        },
+        {
+          "name": "Computer Hacking",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(VH) IQ-1"
+        },
+        {
+          "name": "Beam Weapons (Pistol or Rifle)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Brawling",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Crossbow",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Forced Entry",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Garrote",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Guns (Pistol, Rifle, or Shotgun)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Knife",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Thrown Weapon (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Boxing",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(A) DX"
+        },
+        {
+          "name": "Cloak",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(A) DX"
+        },
+        {
+          "name": "Rapier",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(A) DX"
+        },
+        {
+          "name": "Shortsword",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(A) DX"
+        },
+        {
+          "name": "Acting",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(A) IQ"
+        },
+        {
+          "name": "Fast-Talk",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(A) IQ"
+        },
+        {
+          "name": "Sex Appeal",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(A) HT"
+        },
+        {
+          "name": "Acrobatics",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(H) DX-1"
+        },
+        {
+          "name": "Judo",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(H) DX-1"
+        },
+        {
+          "name": "Karate",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(H) DX-1"
+        },
+        {
+          "name": "Area Knowledge (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Computer Operation",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Current Affairs (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Carousing",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(E) HT+1"
+        },
+        {
+          "name": "Swimming",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(E) HT+1"
+        },
+        {
+          "name": "Boating (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) DX"
+        },
+        {
+          "name": "Driving (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) DX"
+        },
+        {
+          "name": "Piloting (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) DX"
+        },
+        {
+          "name": "Riding (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) DX"
+        },
+        {
+          "name": "Streetwise",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) IQ"
+        },
+        {
+          "name": "Hiking",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) HT"
+        },
+        {
+          "name": "Running",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) HT"
+        }
+      ],
+      "choices": [
+        {
+          "id": "adv",
+          "label": "Advantages",
+          "kind": "points",
+          "required": 15
+        },
+        {
+          "id": "dis",
+          "label": "Disadvantages",
+          "kind": "points",
+          "required": -30
+        },
+        {
+          "id": "primary",
+          "label": "Primary Skills",
+          "kind": "count",
+          "required": 3
+        },
+        {
+          "id": "secondary",
+          "label": "Secondary Skills",
+          "kind": "count",
+          "required": 2
+        },
+        {
+          "id": "background",
+          "label": "Background Skills",
+          "kind": "count",
+          "required": 1
+        }
+      ],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 258"
+    }
+  },
+  {
+    "_id": "a12079c9633acec0",
+    "name": "Mage",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 100,
+      "attributes": {
+        "ST": 9,
+        "DX": 11,
+        "IQ": 13,
+        "HT": 11
+      },
+      "secondary": {
+        "hp": 1,
+        "will": 0,
+        "per": -3,
+        "fp": 2,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Language (Accented)",
+          "itemType": "trait",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Magery 2",
+          "itemType": "trait",
+          "points": 25,
+          "levels": 2,
+          "uuid": "",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Spell",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": "(H) IQ+2"
+        },
+        {
+          "name": "Spell",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": "(H) IQ+2"
+        },
+        {
+          "name": "Spell",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Spell",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Spell",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Spell",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Spell",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Spell",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Spell",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Spell",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Spell",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Spell",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Eidetic Memory",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Reputation +1",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Single-Minded",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Status 1",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Versatile",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "+1 to Will",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Absent-Mindedness",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": ""
+        },
+        {
+          "name": "Bad Sight (Mitigator: Glasses, -60%)",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": ""
+        },
+        {
+          "name": "Bad Temper",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "self-control"
+        },
+        {
+          "name": "Curious",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "self-control"
+        },
+        {
+          "name": "Duty",
+          "itemType": "trait",
+          "points": -2,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "-2 to -15"
+        },
+        {
+          "name": "Gluttony",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "self-control"
+        },
+        {
+          "name": "Obsession",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "-5 or -10, self-control"
+        },
+        {
+          "name": "Secret",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "-5 to -30"
+        },
+        {
+          "name": "Sense of Duty",
+          "itemType": "trait",
+          "points": -2,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "-2 to -15"
+        },
+        {
+          "name": "Shyness",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "-5, -10 or -20"
+        },
+        {
+          "name": "Hidden Lore (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(A) IQ"
+        },
+        {
+          "name": "Occultism",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(A) IQ"
+        },
+        {
+          "name": "Research",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(A) IQ"
+        },
+        {
+          "name": "Expert Skill (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(H) IQ-1"
+        },
+        {
+          "name": "Mathematics (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(H) IQ-1"
+        },
+        {
+          "name": "Naturalist",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(H) IQ-1"
+        },
+        {
+          "name": "Theology (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(H) IQ-1"
+        },
+        {
+          "name": "Dreaming",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(H) Will-1"
+        },
+        {
+          "name": "Meditation",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(H) Will-1"
+        },
+        {
+          "name": "Alchemy",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(VH) IQ-2"
+        },
+        {
+          "name": "Thaumatology",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary",
+          "note": "(VH) IQ-2"
+        },
+        {
+          "name": "Guns (Pistol or Shotgun)",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(E) DX"
+        },
+        {
+          "name": "Knife",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(E) DX"
+        },
+        {
+          "name": "Computer Operation",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(E) IQ"
+        },
+        {
+          "name": "Driving (any)",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) DX-1"
+        },
+        {
+          "name": "Riding (any)",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) DX-1"
+        },
+        {
+          "name": "Shortsword",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) DX-1"
+        },
+        {
+          "name": "Staff",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) DX-1"
+        }
+      ],
+      "choices": [
+        {
+          "id": "adv",
+          "label": "One of these",
+          "kind": "count",
+          "required": 1
+        },
+        {
+          "id": "dis",
+          "label": "Disadvantages",
+          "kind": "points",
+          "required": -30
+        },
+        {
+          "id": "secondary",
+          "label": "Secondary Skills",
+          "kind": "count",
+          "required": 2
+        },
+        {
+          "id": "background",
+          "label": "Background Skills",
+          "kind": "count",
+          "required": 1
+        }
+      ],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 259"
+    }
+  },
+  {
+    "_id": "6b6bc2d65d0e9d80",
+    "name": "Soldier of Fortune",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 100,
+      "attributes": {
+        "ST": 11,
+        "DX": 13,
+        "IQ": 11,
+        "HT": 11
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "First Aid",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "",
+          "note": "(E) IQ"
+        },
+        {
+          "name": "Ambidexterity",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Charisma 1-4",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "5-20"
+        },
+        {
+          "name": "Combat Reflexes",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Fit",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "or Very Fit [15]"
+        },
+        {
+          "name": "High Pain Threshold",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Luck",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Magic Resistance 1-10",
+          "itemType": "trait",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "2-20"
+        },
+        {
+          "name": "Outdoorsman 1",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Rank 1-4",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "5-20"
+        },
+        {
+          "name": "Rapid Healing",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "Reputation",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "varies"
+        },
+        {
+          "name": "Status 1-4",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "5-20"
+        },
+        {
+          "name": "Wealth (Comfortable)",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "+1 to ST or HT",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": ""
+        },
+        {
+          "name": "+1 to +4 to HP",
+          "itemType": "trait",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "2-8"
+        },
+        {
+          "name": "+1 to +4 to Per",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "",
+          "group": "adv",
+          "note": "5-20"
+        },
+        {
+          "name": "Alcoholism",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": ""
+        },
+        {
+          "name": "Bad Temper",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "self-control"
+        },
+        {
+          "name": "Bloodlust",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "self-control"
+        },
+        {
+          "name": "Code of Honor",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "-5 to -15"
+        },
+        {
+          "name": "Compulsive Carousing or Spending",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "self-control"
+        },
+        {
+          "name": "Duty",
+          "itemType": "trait",
+          "points": -2,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "-2 to -15"
+        },
+        {
+          "name": "Fanaticism",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": ""
+        },
+        {
+          "name": "Flashbacks (Mild)",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": ""
+        },
+        {
+          "name": "Honesty",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "self-control"
+        },
+        {
+          "name": "Impulsiveness",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "self-control"
+        },
+        {
+          "name": "Lecherousness",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "self-control"
+        },
+        {
+          "name": "Overconfidence",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": "self-control"
+        },
+        {
+          "name": "Sense of Duty (Comrades)",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": ""
+        },
+        {
+          "name": "Trademark (Simple)",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "",
+          "group": "dis",
+          "note": ""
+        },
+        {
+          "name": "Beam Weapons (any)",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(E) DX+2"
+        },
+        {
+          "name": "Crossbow",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(E) DX+2"
+        },
+        {
+          "name": "Guns (any)",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(E) DX+2"
+        },
+        {
+          "name": "Axe/Mace",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) DX+1"
+        },
+        {
+          "name": "Bow",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) DX+1"
+        },
+        {
+          "name": "Broadsword",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) DX+1"
+        },
+        {
+          "name": "Lance",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) DX+1"
+        },
+        {
+          "name": "Rapier",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) DX+1"
+        },
+        {
+          "name": "Spear",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(A) DX+1"
+        },
+        {
+          "name": "Karate",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(H) DX"
+        },
+        {
+          "name": "Tactics",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "",
+          "group": "primary",
+          "note": "(H) IQ"
+        },
+        {
+          "name": "Brawling",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary1",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Fast-Draw (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary1",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Gunner (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary1",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Knife",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary1",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Shield (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary1",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Artillery (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary1",
+          "note": "(A) IQ"
+        },
+        {
+          "name": "Forward Observer",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary1",
+          "note": "(A) IQ"
+        },
+        {
+          "name": "Crewman (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary2",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Driving (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary2",
+          "note": "(A) DX"
+        },
+        {
+          "name": "Environment Suit (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary2",
+          "note": "(A) DX"
+        },
+        {
+          "name": "Piloting (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary2",
+          "note": "(A) DX"
+        },
+        {
+          "name": "Riding (any)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary2",
+          "note": "(A) DX"
+        },
+        {
+          "name": "Hiking",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary2",
+          "note": "(A) HT"
+        },
+        {
+          "name": "Acrobatics",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "",
+          "group": "secondary2",
+          "note": "(H) DX-1"
+        },
+        {
+          "name": "Camouflage",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(E) IQ"
+        },
+        {
+          "name": "Savoir-Faire (any)",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(E) IQ"
+        },
+        {
+          "name": "Carousing",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(E) HT"
+        },
+        {
+          "name": "Swimming",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(E) HT"
+        },
+        {
+          "name": "Free Fall",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) DX-1"
+        },
+        {
+          "name": "Stealth",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) DX-1"
+        },
+        {
+          "name": "Electronics Operation (Comm or Sensors)",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) IQ-1"
+        },
+        {
+          "name": "Explosives (any)",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) IQ-1"
+        },
+        {
+          "name": "Leadership",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) IQ-1"
+        },
+        {
+          "name": "Observation",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) Per-1"
+        },
+        {
+          "name": "Survival (any)",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) Per-1"
+        },
+        {
+          "name": "Tracking",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) Per-1"
+        },
+        {
+          "name": "Urban Survival",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "",
+          "group": "background",
+          "note": "(A) Per-1"
+        }
+      ],
+      "choices": [
+        {
+          "id": "adv",
+          "label": "Advantages",
+          "kind": "points",
+          "required": 20
+        },
+        {
+          "id": "dis",
+          "label": "Disadvantages",
+          "kind": "points",
+          "required": -35
+        },
+        {
+          "id": "primary",
+          "label": "Primary Skills",
+          "kind": "count",
+          "required": 2
+        },
+        {
+          "id": "secondary1",
+          "label": "Secondary Skills (one)",
+          "kind": "count",
+          "required": 1
+        },
+        {
+          "id": "secondary2",
+          "label": "Secondary Skills (one more)",
+          "kind": "count",
+          "required": 1
+        },
+        {
+          "id": "background",
+          "label": "Background Skills (two)",
+          "kind": "count",
+          "required": 2
+        }
+      ],
+      "features": [],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 259"
+    }
+  }
+]

@@ -1,0 +1,35 @@
+{{!-- One line of a template: what it grants, at what cost. --}}
+<div class="irow" data-index="{{entry.index}}">
+  <div class="ifields">
+    <label>{{localize "GWORLD.Item.Name"}}
+      <input type="text" name="system.entries.{{entry.index}}.name" value="{{entry.name}}"
+             {{#unless @root.editable}}disabled{{/unless}} />
+    </label>
+    <label>{{localize "GWORLD.Template.EntryType"}}
+      <select name="system.entries.{{entry.index}}.itemType"
+              {{#unless @root.editable}}disabled{{/unless}}>
+        {{selectOptions @root.choices.entryTypes selected=entry.itemType localize=true}}
+      </select>
+    </label>
+    <label>{{localize "GWORLD.Template.Points"}}
+      <input type="number" name="system.entries.{{entry.index}}.points" value="{{entry.points}}"
+             step="1" {{#unless @root.editable}}disabled{{/unless}} />
+    </label>
+    <label>{{localize "GWORLD.Template.Levels"}}
+      <input type="number" name="system.entries.{{entry.index}}.levels" value="{{entry.levels}}"
+             step="1" min="0" {{#unless @root.editable}}disabled{{/unless}} />
+    </label>
+    {{#if @root.editable}}
+      <button type="button" class="ibtn tiny" data-action="deleteMode" data-index="{{entry.index}}"
+              aria-label="{{localize "GWORLD.Action.Delete"}}"
+              title="{{localize "GWORLD.Action.Delete"}}">
+        {{> "gworld.trash"}}
+      </button>
+    {{/if}}
+  </div>
+  <label class="ifull">{{localize "GWORLD.Template.EntryNote"}}
+    <input type="text" name="system.entries.{{entry.index}}.note" value="{{entry.note}}"
+           placeholder="{{localize "GWORLD.Template.EntryNotePlaceholder"}}"
+           {{#unless @root.editable}}disabled{{/unless}} />
+  </label>
+</div>

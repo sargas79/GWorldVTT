@@ -5,6 +5,13 @@
 import { relativeLevelForPoints } from "../../rules/skills.js";
 import { netModifier, traitPoints } from "../../rules/traits.js";
 import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from "../gear-groups.js";
+import { templateCost } from "../../rules/templates.js";
+import type {
+  ChoiceGroup,
+  Template,
+  TemplateEntry,
+  TemplateKind,
+} from "../../rules/templates.js";
 import type { DamageType, Difficulty, SkillAttribute } from "../../rules/types.js";
 
 const fields = foundry.data.fields;
@@ -745,4 +752,161 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
       }),
     };
   }
+}
+
+/**
+ * A character or racial template (GURPS Basic Set: Characters pp. 258-263).
+ *
+ * "A partially completed character sheet that contains only those traits
+ * required for a character to fill a certain role believably." It is an item
+ * rather than anything cleverer so that a GM can write one the same way they
+ * write an advantage: make one in the Items directory, fill it in, drag it onto
+ * a character.
+ *
+ * What it holds is a list of entries and a set of choice groups. An entry with
+ * no group is something everybody who takes the template gets; one with a group
+ * is an option in "select two skills from" or "20 points chosen from among".
+ */
+export class TemplateData extends foundry.abstract.TypeDataModel {
+  declare kind: TemplateKind;
+  declare statedCost: number;
+  declare attributes: { ST: number; DX: number; IQ: number; HT: number };
+  declare secondary: {
+    hp: number; will: number; per: number; fp: number; basicSpeed: number; basicMove: number;
+  };
+  declare sizeModifier: number;
+  declare attributeCost: number;
+  declare entries: TemplateEntry[];
+  declare choices: ChoiceGroup[];
+  declare features: string[];
+  declare tabooTraits: string[];
+  declare derived: { cost: number; matchesStated: boolean };
+
+  static override defineSchema() {
+    const modifier = () =>
+      new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 });
+
+    return {
+      ...descriptionFields(),
+      kind: new fields.StringField({
+        required: true,
+        nullable: false,
+        initial: "character",
+        choices: ["character", "racial", "lens", "metaTrait"],
+      }),
+      /** What the book states the whole thing costs, for checking against. */
+      statedCost: modifier(),
+      /**
+       * Attribute scores for a character template, modifiers for a racial one.
+       * Which it is follows from `kind`: "ST 9 [-10]" is a score to buy, and
+       * "ST+2" is a modifier to whatever was bought.
+       */
+      attributes: new fields.SchemaField({
+        ST: modifier(), DX: modifier(), IQ: modifier(), HT: modifier(),
+      }),
+      secondary: new fields.SchemaField({
+        hp: modifier(),
+        will: modifier(),
+        per: modifier(),
+        fp: modifier(),
+        basicSpeed: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
+        basicMove: modifier(),
+      }),
+      sizeModifier: modifier(),
+      /**
+       * What the template says its attribute and secondary modifiers cost.
+       *
+       * Only a racial template uses it, and it exists because those modifiers
+       * are otherwise free: the Dragon's "ST+15 (Size, -20%) [120]" costs 120
+       * however little fifteen unmodified levels would come to.
+       */
+      attributeCost: modifier(),
+      entries: new fields.ArrayField(
+        new fields.SchemaField({
+          name: new fields.StringField({ required: true, blank: true, initial: "" }),
+          itemType: new fields.StringField({
+            required: true,
+            nullable: false,
+            initial: "trait",
+            choices: ["trait", "skill", "technique", "language", "equipment"],
+          }),
+          points: modifier(),
+          levels: new fields.NumberField({
+            required: true, nullable: false, integer: true, initial: 0, min: 0,
+          }),
+          /** The compendium document to copy, where the entry names a real one. */
+          uuid: new fields.StringField({ required: true, blank: true, initial: "" }),
+          /** The choice group this belongs to, or blank for a required entry. */
+          group: new fields.StringField({ required: true, blank: true, initial: "" }),
+          /** "(A) DX+1 [2]-13", as the book prints it. */
+          note: new fields.StringField({ required: true, blank: true, initial: "" }),
+        }),
+        { required: true, initial: [] },
+      ),
+      choices: new fields.ArrayField(
+        new fields.SchemaField({
+          id: new fields.StringField({ required: true, blank: true, initial: "" }),
+          label: new fields.StringField({ required: true, blank: true, initial: "" }),
+          kind: new fields.StringField({
+            required: true, nullable: false, initial: "count", choices: ["count", "points"],
+          }),
+          required: modifier(),
+        }),
+        { required: true, initial: [] },
+      ),
+      /** Notes that cost nothing: "sterility and an ordinary tail" (p. 261). */
+      features: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: true, initial: "" }),
+        { required: true, initial: [] },
+      ),
+      /** Traits members of the race may not have. Also free (p. 261). */
+      tabooTraits: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: true, initial: "" }),
+        { required: true, initial: [] },
+      ),
+    };
+  }
+
+  override prepareDerivedData(): void {
+    const cost = templateCost(this.toTemplate());
+    this.derived = {
+      cost,
+      // A template whose parts do not add up to what it says is not wrong --
+      // the GM may have meant it -- but it is worth showing on the sheet.
+      matchesStated: cost === this.statedCost,
+    };
+  }
+
+  /** This item as the rules layer's plain object. */
+  toTemplate(): Template {
+    return {
+      name: String((this.parent as { name?: string })?.name ?? ""),
+      kind: this.kind,
+      statedCost: this.statedCost,
+      attributes: nonZero(this.attributes),
+      secondary: nonZero(this.secondary),
+      ...(this.sizeModifier ? { sizeModifier: this.sizeModifier } : {}),
+      attributeCost: this.attributeCost,
+      entries: this.entries.map((entry) => ({ ...entry })),
+      choices: this.choices.map((choice) => ({ ...choice })),
+      features: [...this.features],
+      tabooTraits: [...this.tabooTraits],
+    };
+  }
+}
+
+/**
+ * The entries of an object that are not zero.
+ *
+ * A schema field is always present and defaults to zero, but a template that
+ * says nothing about IQ must not be read as saying IQ 0 -- "if an attribute or
+ * secondary characteristic does not appear in the racial template, assume it is
+ * unchanged from the human norm" (p. 261).
+ */
+function nonZero<T extends Record<string, number>>(values: T): Partial<T> {
+  const out: Partial<T> = {};
+  for (const [key, value] of Object.entries(values)) {
+    if (value !== 0) out[key as keyof T] = value as T[keyof T];
+  }
+  return out;
 }

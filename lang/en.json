@@ -11,7 +11,8 @@
       "armor": "Armor",
       "shield": "Shield",
       "language": "Language",
-      "technique": "Technique"
+      "technique": "Technique",
+      "template": "Template"
     }
   },
   "GWORLD": {
@@ -235,12 +236,6 @@
       "Maneuver": "This turn's maneuver allows no defense",
       "Arc": "Not from that side"
     },
-    "Defense": {
-      "NoParry": "Nothing to parry with",
-      "NoBlock": "No shield to block with",
-      "Maneuver": "This turn's maneuver allows no defense",
-      "Arc": "Not from that side"
-    },
     "Tactical": {
       "front": "from the front",
       "side": "from the side",
@@ -452,7 +447,8 @@
         "disadvantages": "Disadvantages",
         "skills": "Skills and techniques",
         "gear": "Gear",
-        "review": "Review"
+        "review": "Review",
+        "templates": "Template"
       },
       "Hint": {
         "points": "How many points the character is built on, and how many may come back from disadvantages. Both are the GM's call for the campaign.",
@@ -461,7 +457,8 @@
         "disadvantages": "What the character is stuck with. These pay points back, up to the limit above.",
         "skills": "What the character has learned. Points spent on each are set on the sheet afterwards.",
         "gear": "What the character carries. Weight counts against encumbrance once it is marked carried.",
-        "review": "What the character has come to. Nothing here is fixed — the sheet edits all of it."
+        "review": "What the character has come to. Nothing here is fixed — the sheet edits all of it.",
+        "templates": "Optional. A template buys a package of traits in one go; everything after this step customises what it left you."
       },
       "Browse": {
         "advantages": "Add an advantage",
@@ -595,6 +592,63 @@
       "SelfControl9": "9 (rarely, ×1.5)",
       "SelfControl12": "12 (fairly often, ×1)",
       "SelfControl15": "15 (almost always, ×0.5)"
+    },
+    "Template": {
+      "Title": "Templates",
+      "Kind": "Kind",
+      "character": "Character template",
+      "racial": "Racial template",
+      "lens": "Lens",
+      "count": "Pick this many",
+      "points": "Spend this many points",
+      "trait": "Trait",
+      "skill": "Skill",
+      "technique": "Technique",
+      "language": "Language",
+      "equipment": "Equipment",
+      "StatedCost": "Cost as written",
+      "AddsUpTo": "Adds up to",
+      "Mismatch": "The parts do not add up to the stated cost.",
+      "AttributeModifiers": "Attribute modifiers",
+      "AttributeScores": "Attribute scores",
+      "AttributeCost": "Cost of the modifiers",
+      "AttributeCostHint": "Racial modifiers are free once the racial cost is paid, so what they cost is stated here rather than charged by the sheet.",
+      "Required": "Everybody gets",
+      "Choices": "Choices",
+      "AddChoice": "Add a choice",
+      "AddOption": "Add an option",
+      "NoEntries": "Nothing yet.",
+      "NoChoices": "No choices to make.",
+      "Orphans": "Options whose choice was deleted",
+      "GroupLabel": "Label",
+      "GroupKind": "Requirement",
+      "GroupRequired": "How many",
+      "EntryType": "Type",
+      "EntryNote": "Note",
+      "EntryNotePlaceholder": "(A) DX+1 [2]-13",
+      "FreeNotes": "Costing nothing",
+      "Features": "Features",
+      "Taboo": "Taboo traits",
+      "FreeHint": "One per line. A feature is how the race differs from humanity without granting a trait; a taboo trait is one its members may not have. Both cost 0 points.",
+      "Points": "Points",
+      "Levels": "Levels",
+      "Apply": "Apply a template",
+      "ApplyHint": "Take a character or racial template: it adds what it grants and records what it moved",
+      "Applied": "{name} applied, adding {count} items",
+      "Removed": "{name} removed",
+      "Remove": "Remove",
+      "RemoveAsk": "Remove {name}? It added {count} items to this sheet.",
+      "RemoveItems": "Remove them too",
+      "KeepItems": "Keep them",
+      "NoneApplied": "Built from nothing in particular.",
+      "NoneFound": "No templates anywhere. Make one as an Item of type Template.",
+      "Choose": "Which template",
+      "Billed": "{points} pts billed",
+      "Granted": "{count} items granted",
+      "PickCount": "Pick {count}.",
+      "PickPoints": "Take {points} points' worth.",
+      "Short": "{group} is short of what the template asks for.",
+      "metaTrait": "Meta-trait"
     },
     "Language": {
       "none": "None",
@@ -892,7 +946,8 @@
       "ConsciousnessRoll": "HT roll to stay conscious, at",
       "DeathCheck": "HT roll to avoid death",
       "SubtractDR": "Subtract the target's DR from basic damage, then apply the wounding modifier.",
-      "SubtractDRDivisor": "Divide the target's DR by {divisor} (rounding down), subtract it from basic damage, then apply the wounding modifier."
+      "SubtractDRDivisor": "Divide the target's DR by {divisor} (rounding down), subtract it from basic damage, then apply the wounding modifier.",
+      "Cancel": "Cancel"
     },
     "HitLocation": {
       "torso": "Torso",

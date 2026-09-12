@@ -39,6 +39,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       editItemImage: GWorldItemSheet.#onEditImage,
       addModifier: GWorldItemSheet.#onAddModifier,
       deleteModifier: GWorldItemSheet.#onDeleteModifier,
+      addEntry: GWorldItemSheet.#onAddEntry,
+      addChoice: GWorldItemSheet.#onAddChoice,
     },
   };
 
@@ -58,7 +60,9 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     context.isArmed = ARMED_TYPES.has(item.type);
 
     // One flag per type, so the template can branch without a comparison helper.
-    for (const t of ["skill", "technique", "trait", "equipment", "armor", "shield", "language"]) {
+    for (const t of [
+      "skill", "technique", "trait", "equipment", "armor", "shield", "language", "template",
+    ]) {
       context[`is${t.charAt(0).toUpperCase()}${t.slice(1)}`] = item.type === t;
     }
 
@@ -74,6 +78,36 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       context.levelName = item.system.levelName;
       context.netModifier = item.system.netModifier;
       context.hasModifiers = (item.system.modifiers ?? []).length > 0;
+    }
+
+    // A template is a list of things and a set of choices to make between
+    // them, so the sheet shows each choice group with its own options under it
+    // and everything ungrouped under "required" -- which is how the book
+    // prints one, and the only arrangement in which the thing is readable.
+    if (item.type === "template") {
+      const entries = (item.system.entries ?? []) as Array<{ group?: string }>;
+      const indexed = entries.map((entry, index) => ({ ...entry, index }));
+
+      context.requiredEntries = indexed.filter((entry) => !entry.group);
+      context.choiceGroups = ((item.system.choices ?? []) as Array<Record<string, unknown>>).map(
+        (group) => ({
+          ...group,
+          options: indexed.filter((entry) => entry.group === group.id),
+        }),
+      );
+      // An entry pointing at a group nobody kept is still on the sheet and
+      // still costs points, so it is shown rather than silently dropped.
+      const groupIds = new Set(
+        ((item.system.choices ?? []) as Array<{ id?: string }>).map((group) => group.id),
+      );
+      context.orphanEntries = indexed.filter(
+        (entry) => entry.group && !groupIds.has(entry.group),
+      );
+      context.featuresText = ((item.system.features ?? []) as string[]).join("\n");
+      context.tabooText = ((item.system.tabooTraits ?? []) as string[]).join("\n");
+      context.isRacial = item.system.kind === "racial";
+      context.templateCost = item.system.derived?.cost ?? 0;
+      context.costMatches = item.system.derived?.matchesStated !== false;
     }
 
     // The description is rich text, so it has to be enriched before display or
@@ -117,6 +151,23 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       equipmentCategories: keyed("GearCategory", [...EQUIPMENT_CATEGORIES]),
       // The self-control numbers, with "none" first. Keys are strings because
       // a select's values are, and the form reader turns the number back.
+      templateKinds: keyed("Template", ["character", "racial", "lens", "metaTrait"]),
+      choiceKinds: keyed("Template", ["count", "points"]),
+      entryTypes: keyed("Template", ["trait", "skill", "technique", "language", "equipment"]),
+      // Rendered as plain lists rather than selects: they are the keys the
+      // template's number fields are named after, not a choice anybody makes.
+      attributeKeys: ["ST", "DX", "IQ", "HT"],
+      // The field name and its label differ in case -- system.secondary.hp is
+      // labelled GWORLD.Secondary.HP -- so both travel rather than the template
+      // trying to derive one from the other.
+      secondaryKeys: [
+        { key: "hp", label: "GWORLD.Secondary.HP" },
+        { key: "will", label: "GWORLD.Secondary.Will" },
+        { key: "per", label: "GWORLD.Secondary.Per" },
+        { key: "fp", label: "GWORLD.Secondary.FP" },
+        { key: "basicSpeed", label: "GWORLD.Secondary.BasicSpeed" },
+        { key: "basicMove", label: "GWORLD.Secondary.BasicMove" },
+      ],
       selfControl: {
         "": "GWORLD.Trait.NoSelfControl",
         "6": "GWORLD.Trait.SelfControl6",
@@ -198,6 +249,23 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       }
     }
 
+    // A line each, the way a trait's level names are: several features are
+    // phrases with commas of their own.
+    if (this.item.type === "template") {
+      for (const [field, text] of [
+        ["features", data.featuresText],
+        ["tabooTraits", data.tabooText],
+      ] as const) {
+        if (typeof text !== "string") continue;
+        data.system[field] = text
+          .split("\n")
+          .map((line: string) => line.trim())
+          .filter((line: string) => line.length > 0);
+      }
+      delete data.featuresText;
+      delete data.tabooText;
+    }
+
     return data;
   }
 
@@ -215,6 +283,30 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // An empty object takes every field's declared initial value, so the new row
     // arrives valid rather than half-filled.
     await this.item.update({ [`system.${found.path}`]: [...found.list, {}] });
+  }
+
+  /**
+   * Adds one entry to a template, in the group the button belongs to.
+   *
+   * The group is carried on the button rather than chosen afterwards, because
+   * the button sits under the group it adds to: "select two skills from" and
+   * its options are one block on the sheet.
+   */
+  static async #onAddEntry(this: GWorldItemSheet, _event: Event, target: HTMLElement) {
+    const entries = [...((this.item.system.entries ?? []) as object[])];
+    const group = target.dataset.group ?? "";
+    await this.item.update({ "system.entries": [...entries, { group }] });
+  }
+
+  /** Adds a choice group, with an id nothing else is using. */
+  static async #onAddChoice(this: GWorldItemSheet) {
+    const choices = [...((this.item.system.choices ?? []) as Array<{ id?: string }>)];
+    const taken = new Set(choices.map((choice) => choice.id));
+
+    let id = "group1";
+    for (let n = 1; taken.has(id); n += 1) id = `group${n + 1}`;
+
+    await this.item.update({ "system.choices": [...choices, { id, label: id }] });
   }
 
   static async #onDeleteMode(this: GWorldItemSheet, _event: Event, target: HTMLElement) {
