@@ -20,8 +20,10 @@
              step="1" min="0" {{#unless @root.editable}}disabled{{/unless}} />
     </label>
     {{#if @root.editable}}
-      <button type="button" class="ibtn tiny" data-action="deleteMode" data-index="{{entry.index}}">
-        {{localize "GWORLD.Item.DeleteMode"}}
+      <button type="button" class="ibtn tiny" data-action="deleteMode" data-index="{{entry.index}}"
+              aria-label="{{localize "GWORLD.Action.Delete"}}"
+              title="{{localize "GWORLD.Action.Delete"}}">
+        {{> "gworld.trash"}}
       </button>
     {{/if}}
   </div>

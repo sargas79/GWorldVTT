@@ -312,10 +312,10 @@
           {{/each}}
         </div>
         <div class="ifields">
-          {{#each choices.secondaryKeys as |key|}}
-            <label>{{localize (concat "GWORLD.Secondary." key)}}
-              <input type="number" name="system.secondary.{{key}}"
-                     value="{{lookup @root.system.secondary key}}" step="1"
+          {{#each choices.secondaryKeys as |sec|}}
+            <label>{{localize sec.label}}
+              <input type="number" name="system.secondary.{{sec.key}}"
+                     value="{{lookup @root.system.secondary sec.key}}" step="1"
                      {{#unless @root.editable}}disabled{{/unless}} />
             </label>
           {{/each}}
@@ -338,7 +338,7 @@
           {{localize "GWORLD.Template.Required"}}
           {{#if editable}}
             <button type="button" class="ibtn tiny" data-action="addEntry" data-group="">
-              {{localize "GWORLD.Item.AddMode"}}
+              {{> "gworld.plus"}} {{localize "GWORLD.Action.Add"}}
             </button>
           {{/if}}
         </div>
@@ -375,8 +375,10 @@
                        step="1" {{#unless @root.editable}}disabled{{/unless}} />
               </label>
               {{#if @root.editable}}
-                <button type="button" class="ibtn tiny" data-action="deleteMode" data-index="{{i}}">
-                  {{localize "GWORLD.Item.DeleteMode"}}
+                <button type="button" class="ibtn tiny" data-action="deleteMode" data-index="{{i}}"
+                        aria-label="{{localize "GWORLD.Action.Delete"}}"
+                        title="{{localize "GWORLD.Action.Delete"}}">
+                  {{> "gworld.trash"}}
                 </button>
               {{/if}}
             </div>

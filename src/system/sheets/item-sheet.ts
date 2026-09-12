@@ -157,7 +157,17 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       // Rendered as plain lists rather than selects: they are the keys the
       // template's number fields are named after, not a choice anybody makes.
       attributeKeys: ["ST", "DX", "IQ", "HT"],
-      secondaryKeys: ["hp", "will", "per", "fp", "basicSpeed", "basicMove"],
+      // The field name and its label differ in case -- system.secondary.hp is
+      // labelled GWORLD.Secondary.HP -- so both travel rather than the template
+      // trying to derive one from the other.
+      secondaryKeys: [
+        { key: "hp", label: "GWORLD.Secondary.HP" },
+        { key: "will", label: "GWORLD.Secondary.Will" },
+        { key: "per", label: "GWORLD.Secondary.Per" },
+        { key: "fp", label: "GWORLD.Secondary.FP" },
+        { key: "basicSpeed", label: "GWORLD.Secondary.BasicSpeed" },
+        { key: "basicMove", label: "GWORLD.Secondary.BasicMove" },
+      ],
       selfControl: {
         "": "GWORLD.Trait.NoSelfControl",
         "6": "GWORLD.Trait.SelfControl6",

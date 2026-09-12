@@ -392,6 +392,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             fp: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
             basicSpeed: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
             basicMove: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+            /** Size, which stacks and comes back off with the rest. */
+            sm: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
           }),
           /** The items it added, so removing it removes exactly those. */
           itemIds: new fields.ArrayField(

@@ -95,7 +95,9 @@ Hooks.once("init", () => {
   // nothing else that can be changed.
   DocumentSheetConfig.unregisterSheet(Item, "core", foundry.applications.sheets.ItemSheetV2);
   DocumentSheetConfig.registerSheet(Item, SYSTEM_ID, GWorldItemSheet, {
-    types: ["trait", "skill", "technique", "equipment", "armor", "shield", "language"],
+    types: [
+      "trait", "skill", "technique", "equipment", "armor", "shield", "language", "template",
+    ],
     makeDefault: true,
     label: "GWORLD.Sheet.Item",
   });

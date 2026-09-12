@@ -136,7 +136,14 @@ export async function applyTemplateToActor(options: {
     changes[`system.bonuses.${key}`] = current + value;
     granted[key] = value;
   }
-  if (applied.sizeModifier !== null) changes["system.sm"] = applied.sizeModifier;
+  // Size adds rather than replaces, which is the stacking rule for two racial
+  // templates -- "add traits that come in levels" -- and is also what lets
+  // removal give back exactly what was granted.
+  if (applied.sizeModifier) {
+    const current = Number(actor.system?.sm) || 0;
+    changes["system.sm"] = current + applied.sizeModifier;
+    granted["sm"] = applied.sizeModifier;
+  }
 
   const record: AppliedTemplate = {
     name: template.name,
@@ -188,6 +195,10 @@ export async function removeTemplateFromActor(options: {
 
   const changes: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(record.granted ?? {})) {
+    if (key === "sm") {
+      changes["system.sm"] = (Number(actor.system?.sm) || 0) - value;
+      continue;
+    }
     const where = ["ST", "DX", "IQ", "HT"].includes(key) ? "racial" : "bonuses";
     const current = Number(actor.system?.[where]?.[key]) || 0;
     changes[`system.${where}.${key}`] = current - value;
@@ -196,9 +207,6 @@ export async function removeTemplateFromActor(options: {
   changes["system.templates"] = templates.filter((_, index) => index !== options.index);
   await actor.update(changes);
 
-  // The Size Modifier is deliberately left where it is: a character template
-  // does not set one, and a racial template's is the character's size now --
-  // there is no earlier value to put back that would not be a guess.
   ui.notifications?.info(
     game.i18n.format("GWORLD.Template.Removed", { name: record.name }),
   );
