@@ -24,13 +24,14 @@ import {
   ShieldData,
   SkillData,
   TechniqueData,
+  TemplateData,
   TraitData,
 } from "./system/data/items.js";
 import { GWorldCharacterSheet } from "./system/sheets/character-sheet.js";
 import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
 import { registerSettings } from "./system/settings.js";
-import { registerTemplateHelpers } from "./system/templates.js";
+import { loadFilePartials, registerTemplateHelpers } from "./system/templates.js";
 
 export { SYSTEM_ID };
 
@@ -47,6 +48,7 @@ Hooks.once("init", () => {
   CONFIG.Item.dataModels.armor = ArmorData;
   CONFIG.Item.dataModels.shield = ShieldData;
   CONFIG.Item.dataModels.language = LanguageData;
+  CONFIG.Item.dataModels.template = TemplateData;
 
   // Initiative is Basic Speed, fixed for the whole fight (GURPS Lite p. 25):
   // nothing random goes into the formula, so it does not change between rounds.
@@ -56,6 +58,9 @@ Hooks.once("init", () => {
 
   registerSettings();
   registerTemplateHelpers();
+  // Partials kept in files rather than in strings. Not awaited: init is
+  // synchronous, and nothing renders before it has finished.
+  void loadFilePartials();
 
   // Foundry's own status effects are another game's. These are the states a
   // GURPS wound actually leaves somebody in.

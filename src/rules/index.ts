@@ -22,6 +22,7 @@ export * from "./armor.js";
 export * from "./size.js";
 export * from "./skills.js";
 export * from "./trait-effects.js";
+export * from "./templates.js";
 export * from "./traits.js";
 export * from "./visibility.js";
 export * from "./disease.js";

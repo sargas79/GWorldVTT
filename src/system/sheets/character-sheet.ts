@@ -39,6 +39,20 @@ import { checkInfection, exposeToDisease } from "../disease.js";
 import { checkOverpenetration, rollScatter, splashInTheFace } from "../gunplay.js";
 import { rollInfluence, rollReaction } from "../reactions.js";
 import { rollPushingTheEnvelope, rollStayOn } from "../mounted.js";
+import {
+  applyTemplateToActor,
+  appliedTemplates,
+  removeTemplateFromActor,
+  templateFromItem,
+} from "../character-templates.js";
+import {
+  choiceSatisfied,
+  entriesInGroup,
+  requiredEntries,
+  templateCost,
+  type Template,
+  type TemplateEntry,
+} from "../../rules/templates.js";
 import { INFLUENCE_SKILLS, REACTIONS, type Reaction } from "../../rules/reactions.js";
 import type { CoverKind } from "../../rules/overpenetration.js";
 import {
@@ -1217,6 +1231,195 @@ async function promptForPenalties(current: {
 }
 
 /**
+ * Shows what a template will do and asks for the choices it leaves open
+ * (Characters p. 258).
+ *
+ * Everything ungrouped is listed rather than offered: those are the traits that
+ * make the template what it is, and for a racial template they are not optional
+ * at all. Each choice group gets its options as checkboxes, with what the group
+ * asks for stated above them, because "select two skills from" is a rule the
+ * player is meant to be able to see themselves keeping.
+ */
+async function promptForTemplate(template: Template): Promise<TemplateEntry[] | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Template.${key}`);
+  const escape = (text: string) => foundry.utils.escapeHTML(String(text ?? ""));
+
+  const line = (entry: TemplateEntry) =>
+    `${escape(entry.name)}${entry.note ? ` <span class="gc-mod">${escape(entry.note)}</span>` : ""}` +
+    ` <span class="gc-mod">[${entry.points}]</span>`;
+
+  const required = requiredEntries(template);
+  const requiredList = required.length
+    ? `<div class="isub">
+         <div class="isub-head">${L("Required")}</div>
+         <ul style="margin:0;padding-left:18px">
+           ${required.map((entry) => `<li>${line(entry)}</li>`).join("")}
+         </ul>
+       </div>`
+    : "";
+
+  const groups = template.choices
+    .map((group, groupIndex) => {
+      const options = entriesInGroup(template, group.id)
+        .map(
+          (entry, index) => `
+            <label style="display:flex;align-items:center;gap:8px">
+              <input type="checkbox" name="pick" data-group="${groupIndex}"
+                     value="${escape(entry.name)}" data-entry="${index}">
+              <span>${line(entry)}</span>
+            </label>`,
+        )
+        .join("");
+
+      const asks =
+        group.kind === "count"
+          ? game.i18n.format("GWORLD.Template.PickCount", { count: group.required })
+          : game.i18n.format("GWORLD.Template.PickPoints", { points: group.required });
+
+      return `<div class="isub">
+                <div class="isub-head">${escape(group.label)}</div>
+                <p class="ihint">${asks}</p>
+                ${options}
+              </div>`;
+    })
+    .join("");
+
+  const modifiers = [
+    ...Object.entries(template.attributes).map(([key, value]) => `${key} ${value}`),
+    ...Object.entries(template.secondary).map(([key, value]) => `${key} ${value}`),
+    ...(template.sizeModifier ? [`SM ${template.sizeModifier}`] : []),
+  ].join(", ");
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: `${template.name} — ${templateCost(template)} ${L("Points")}` },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <p class="ihint">${L(template.kind === "racial" ? "racial" : "character")}${
+        modifiers ? ` · ${escape(modifiers)}` : ""
+      }</p>
+      ${requiredList}
+      ${groups}
+      ${
+        template.features.length
+          ? `<p class="ihint">${L("Features")}: ${escape(template.features.join(", "))}</p>`
+          : ""
+      }
+      ${
+        template.tabooTraits.length
+          ? `<p class="ihint">${L("Taboo")}: ${escape(template.tabooTraits.join(", "))}</p>`
+          : ""
+      }
+    </div>`,
+    ok: {
+      label: L("Apply"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const picks: TemplateEntry[] = [];
+
+        for (const box of form?.querySelectorAll<HTMLInputElement>('input[name="pick"]') ?? []) {
+          if (!box.checked) continue;
+          const group = template.choices[Number(box.dataset.group)];
+          const entry = entriesInGroup(template, group?.id ?? "")[Number(box.dataset.entry)];
+          if (entry) picks.push(entry);
+        }
+
+        return { picks };
+      },
+    },
+    rejectClose: false,
+  });
+
+  if (!result || typeof result !== "object") return null;
+  const { picks } = result as { picks: TemplateEntry[] };
+
+  // A group short of its requirement is worth saying out loud, but not worth
+  // refusing: "character templates are not rules", and a GM may have said so.
+  for (const group of template.choices) {
+    const chosen = picks.filter((pick) =>
+      entriesInGroup(template, group.id).some((entry) => entry.name === pick.name),
+    );
+    if (!choiceSatisfied({ group, picks: chosen })) {
+      ui.notifications?.warn(
+        game.i18n.format("GWORLD.Template.Short", { group: group.label }),
+      );
+    }
+  }
+
+  return picks;
+}
+
+/**
+ * Asks which template to apply.
+ *
+ * Looks in the world's items and in every compendium the user can read, since
+ * a table's own templates and the shipped ones are equally likely to be wanted.
+ */
+async function promptForTemplateItem(): Promise<any | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Template.${key}`);
+
+  const found: Array<{ uuid: string; name: string; kind: string; cost: number }> = [];
+
+  for (const item of game.items ?? []) {
+    if (item.type === "template") {
+      found.push({
+        uuid: item.uuid,
+        name: item.name,
+        kind: item.system?.kind ?? "character",
+        cost: item.system?.derived?.cost ?? item.system?.statedCost ?? 0,
+      });
+    }
+  }
+
+  for (const pack of game.packs ?? []) {
+    if (pack.documentName !== "Item") continue;
+    for (const entry of pack.index ?? []) {
+      if (entry.type !== "template") continue;
+      found.push({
+        uuid: `Compendium.${pack.collection}.${entry._id}`,
+        name: entry.name,
+        kind: "character",
+        cost: 0,
+      });
+    }
+  }
+
+  if (found.length === 0) {
+    ui.notifications?.warn(L("NoneFound"));
+    return null;
+  }
+
+  found.sort((a, b) => a.name.localeCompare(b.name));
+
+  const options = found
+    .map(
+      (entry) =>
+        `<option value="${entry.uuid}">${foundry.utils.escapeHTML(entry.name)}${
+          entry.cost ? ` — ${entry.cost}` : ""
+        }</option>`,
+    )
+    .join("");
+
+  const chosen = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Choose") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Title")}</span>
+        <select name="template" style="width:260px">${options}</select>
+      </label>
+    </div>`,
+    ok: {
+      label: L("Apply"),
+      callback: (_event: Event, button: HTMLElement) =>
+        button.closest<HTMLElement>(".application")?.querySelector<HTMLSelectElement>(
+          'select[name="template"]',
+        )?.value ?? "",
+    },
+    rejectClose: false,
+  });
+
+  return typeof chosen === "string" && chosen ? await fromUuid(chosen) : null;
+}
+
+/**
  * Asks what the session was worth, and what for.
  *
  * Returns null when the dialog is dismissed, which awards nothing.
@@ -1612,6 +1815,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       stayOn: GWorldCharacterSheet.#onStayOn,
       pushEnvelope: GWorldCharacterSheet.#onPushEnvelope,
       attributePenalties: GWorldCharacterSheet.#onAttributePenalties,
+      applyTemplate: GWorldCharacterSheet.#onApplyTemplate,
+      removeTemplate: GWorldCharacterSheet.#onRemoveTemplate,
+      openTemplate: GWorldCharacterSheet.#onOpenTemplate,
       shakeOffStun: GWorldCharacterSheet.#onShakeOffStun,
       grapple: GWorldCharacterSheet.#onGrapple,
       disarm: GWorldCharacterSheet.#onDisarm,
@@ -1765,6 +1971,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       })),
 
       pointsWarning: this.#pointsWarning(derived),
+
+      // The templates section follows the three trait groups on the same tab,
+      // so its number follows theirs rather than being written twice.
+      templateSectionNum: "04",
 
       // A trait is levelled if it is priced per level or from a table. Only
       // those get a levels field: a flat 15-point advantage has nothing to
@@ -3048,6 +3258,102 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!asked) return;
 
     await this.actor.update({ "system.attributePenalties": asked });
+  }
+
+
+  /**
+   * A template dropped on the sheet (Characters p. 258).
+   *
+   * A template is not a thing a character owns, so dropping one must not leave
+   * an item behind: it is a set of instructions to carry out once. Everything
+   * else drops as it always did.
+   */
+  override async _onDropItem(event: DragEvent, item: any): Promise<unknown> {
+    if (item?.type !== "template") return super._onDropItem(event, item);
+
+    const template = templateFromItem(item);
+    if (!template) return null;
+
+    const picks = await promptForTemplate(template);
+    if (picks === null) return null;
+
+    await applyTemplateToActor({
+      actor: this.actor,
+      template,
+      uuid: item.uuid ?? "",
+      picks,
+    });
+    this.render();
+    return null;
+  }
+
+  /**
+   * Picks a template out of the world and applies it.
+   *
+   * The drop is the natural gesture and this is the one for people who would
+   * rather not go looking for the compendium first.
+   */
+  static async #onApplyTemplate(this: GWorldCharacterSheet) {
+    const chosen = await promptForTemplateItem();
+    if (!chosen) return;
+
+    const template = templateFromItem(chosen);
+    if (!template) return;
+
+    const picks = await promptForTemplate(template);
+    if (picks === null) return;
+
+    await applyTemplateToActor({
+      actor: this.actor,
+      template,
+      uuid: chosen.uuid ?? "",
+      picks,
+    });
+    this.render();
+  }
+
+  /** Takes a template back off, with what it added. */
+  static async #onRemoveTemplate(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const index = Number(target.dataset.index);
+    if (!Number.isInteger(index)) return;
+
+    const record = appliedTemplates(this.actor)[index];
+    if (!record) return;
+
+    // What to do with the items is a real question rather than a confirmation:
+    // a character who has played a few sessions has made those traits their
+    // own, and deleting them is not always what "remove the template" means.
+    const keep = await foundry.applications.api.DialogV2.wait({
+      window: { title: game.i18n.localize("GWORLD.Template.Remove") },
+      content: `<p>${game.i18n.format("GWORLD.Template.RemoveAsk", {
+        name: foundry.utils.escapeHTML(record.name),
+        count: record.itemIds.length,
+      })}</p>`,
+      buttons: [
+        { action: "items", label: game.i18n.localize("GWORLD.Template.RemoveItems") },
+        { action: "keep", label: game.i18n.localize("GWORLD.Template.KeepItems") },
+        { action: "cancel", label: game.i18n.localize("GWORLD.Chat.Cancel") },
+      ],
+      rejectClose: false,
+    });
+
+    if (keep === "cancel" || keep === null) return;
+
+    await removeTemplateFromActor({
+      actor: this.actor,
+      index,
+      keepItems: keep === "keep",
+    });
+    this.render();
+  }
+
+  /** Opens the template this character was built from, to read it again. */
+  static async #onOpenTemplate(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const uuid = target.dataset.uuid;
+    if (!uuid) return;
+
+    const document = await fromUuid(uuid);
+    (document as { sheet?: { render: (force: boolean) => void } })?.sheet?.render(true);
   }
 
   /** A drink in somebody's face (Campaigns p. 405). */

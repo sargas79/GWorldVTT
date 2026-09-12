@@ -16,7 +16,7 @@ const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE = join(projectRoot, "packs-src");
 
 const ITEM_TYPES = new Set([
-  "trait", "skill", "technique", "equipment", "armor", "shield", "language",
+  "trait", "skill", "technique", "equipment", "armor", "shield", "language", "template",
 ]);
 const TRAIT_CATEGORIES = new Set(["advantage", "disadvantage", "quirk", "perk"]);
 const SKILL_ATTRIBUTES = new Set(["ST", "DX", "IQ", "HT", "Will", "Per"]);
@@ -66,6 +66,43 @@ function validateItem(entry, file) {
   }
 
   const sys = entry.system ?? {};
+
+  if (entry.type === "template") {
+    const sum = (list, of) => (list ?? []).reduce((total, item) => total + (of(item) ?? 0), 0);
+    const required = sum(
+      (sys.entries ?? []).filter((e) => !e.group),
+      (e) => e.points,
+    );
+    const chosen = sum(sys.choices ?? [], (group) => {
+      if (group.kind === "points") return group.required;
+      const options = (sys.entries ?? [])
+        .filter((e) => e.group === group.id)
+        .map((e) => e.points)
+        .sort((a, b) => a - b);
+      return options.slice(0, group.required).reduce((a, b) => a + b, 0);
+    });
+
+    // A character template's attributes are bought at the ordinary rate; a
+    // racial one's are granted, and priced in attributeCost instead.
+    let bought = 0;
+    if (sys.kind === "character") {
+      const a = sys.attributes ?? {};
+      const sec = sys.secondary ?? {};
+      bought += ((a.ST ?? 10) - 10) * 10 + ((a.HT ?? 10) - 10) * 10;
+      bought += ((a.DX ?? 10) - 10) * 20 + ((a.IQ ?? 10) - 10) * 20;
+      bought += (sec.hp ?? 0) * 2 + (sec.fp ?? 0) * 3;
+      bought += ((sec.will ?? 0) + (sec.per ?? 0)) * 5;
+      bought += (sec.basicMove ?? 0) * 5 + Math.round((sec.basicSpeed ?? 0) * 4) * 5;
+    }
+
+    const total = (sys.attributeCost ?? 0) + bought + required + chosen;
+    check(
+      total === sys.statedCost,
+      file,
+      name,
+      `parts add to ${total} but statedCost is ${sys.statedCost}`,
+    );
+  }
 
   if (entry.type === "trait") {
     check(TRAIT_CATEGORIES.has(sys.category), file, name, `bad category "${sys.category}"`);

@@ -69,6 +69,17 @@
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
       }
+    },
+    {
+      "name": "templates",
+      "label": "GURPS Templates",
+      "path": "packs/templates",
+      "type": "Item",
+      "system": "gworld",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
     }
   ],
   "gridDistance": 1,
@@ -87,7 +98,8 @@
       "armor": {},
       "shield": {},
       "language": {},
-      "technique": {}
+      "technique": {},
+      "template": {}
     }
   },
   "url": "https://github.com/sargas79/GWorldVTT",

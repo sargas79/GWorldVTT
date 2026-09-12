@@ -156,6 +156,12 @@ declare global {
       namespace sheets {
         class ActorSheetV2 extends foundry.applications.api.DocumentSheetV2 {
           readonly actor: any;
+          /**
+           * Handles one dropped Item. The default creates it on the actor;
+           * returning a nullish value means nothing was created. Verified
+           * against `client/applications/sheets/actor-sheet.mjs`.
+           */
+          _onDropItem(event: DragEvent, item: any): Promise<unknown>;
         }
         class ItemSheetV2 extends foundry.applications.api.DocumentSheetV2 {
           readonly item: any;
@@ -198,7 +204,13 @@ declare global {
       }
 
       namespace handlebars {
-        function loadTemplates(paths: string[]): Promise<unknown>;
+        /**
+         * Preloads and compiles templates. Given a record, each key becomes the
+         * name the partial is registered under -- verified against
+         * `client/applications/handlebars.mjs`, which calls `getTemplate(p, k)`
+         * for each entry.
+         */
+        function loadTemplates(paths: string[] | Record<string, string>): Promise<unknown>;
         function renderTemplate(path: string, data: object): Promise<string>;
       }
     }
@@ -209,6 +221,11 @@ declare global {
       function setProperty(object: object, key: string, value: unknown): boolean;
       function deepClone<T>(original: T): T;
       function randomID(length?: number): string;
+      /**
+       * Escapes &, <, >, " and ' for insertion into markup. Verified against
+       * `common/utils/helpers.mjs`.
+       */
+      function escapeHTML(value: unknown): string;
     }
   }
 

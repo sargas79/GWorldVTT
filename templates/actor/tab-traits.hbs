@@ -81,6 +81,56 @@
     </div>
   {{/each}}
 
+  {{!-- What this character was built from. A template is not a thing they own,
+        so it is listed here rather than sitting in the trait list. --}}
+  <div class="isec">
+    <div class="ish">
+      <span class="num">{{templateSectionNum}}</span>{{localize "GWORLD.Template.Title"}}
+      {{#if derived.points.templates}}
+        <span style="font-family: var(--font-body); font-size: 11px; letter-spacing: .04em; text-transform: none; color: var(--color-neutral-700)">
+          {{derived.points.templates}} pts
+        </span>
+      {{/if}}
+    </div>
+
+    {{#each derived.templates as |applied i|}}
+      <div class="cell">
+        <span class="cl">{{localize (concat "GWORLD.Template." applied.kind)}}</span>
+        <span class="cv" style="font-size: 16px">
+          {{#if applied.uuid}}
+            <a data-action="openTemplate" data-uuid="{{applied.uuid}}">{{applied.name}}</a>
+          {{else}}
+            {{applied.name}}
+          {{/if}}
+        </span>
+        <span class="cd">
+          {{#if applied.attributeCost}}
+            {{localize "GWORLD.Template.Billed" points=applied.attributeCost}} &middot;
+          {{/if}}
+          {{localize "GWORLD.Template.Granted" count=applied.itemIds.length}}
+        </span>
+        {{#if @root.editable}}
+          <div class="toolbar">
+            <button type="button" class="ibtn tiny" data-action="removeTemplate" data-index="{{i}}">
+              {{localize "GWORLD.Template.Remove"}}
+            </button>
+          </div>
+        {{/if}}
+      </div>
+    {{else}}
+      <p class="ihint">{{localize "GWORLD.Template.NoneApplied"}}</p>
+    {{/each}}
+
+    {{#if editable}}
+      <div class="toolbar">
+        <button type="button" class="ibtn" data-action="applyTemplate"
+                data-tooltip="{{localize "GWORLD.Template.ApplyHint"}}">
+          {{localize "GWORLD.Template.Apply"}}
+        </button>
+      </div>
+    {{/if}}
+  </div>
+
   <div class="meterwrap">
     <div style="display: flex; justify-content: space-between; font-size: 11px">
       <span class="fl">{{localize "GWORLD.Section.DisadvantageLimit"}}</span>

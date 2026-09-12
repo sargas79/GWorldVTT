@@ -5,6 +5,8 @@
  * system: Lucide geometry at stroke-width 1.5.
  */
 
+import { SYSTEM_ID } from "./constants.js";
+
 declare const Handlebars: {
   registerHelper(name: string, fn: (...args: any[]) => unknown): void;
   registerPartial(name: string, source: string): void;
@@ -33,6 +35,22 @@ const ICONS: Record<string, string> = {
     <rect x="4" y="10" width="16" height="10"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
   </svg>`,
 };
+
+/**
+ * Partials that are too long to keep as a string in this file.
+ *
+ * One entry of a template is a row of six fields, and it is rendered in three
+ * different places on the item sheet -- required, inside a choice group, and
+ * orphaned -- so it lives in its own file and is registered by name.
+ */
+const FILE_PARTIALS: Record<string, string> = {
+  "gworld.templateEntry": `systems/${SYSTEM_ID}/templates/item/template-entry.hbs`,
+};
+
+/** Loads the partials that live in files. Awaited during init. */
+export async function loadFilePartials(): Promise<void> {
+  await foundry.applications.handlebars.loadTemplates(FILE_PARTIALS);
+}
 
 export function registerTemplateHelpers(): void {
   for (const [name, svg] of Object.entries(ICONS)) Handlebars.registerPartial(name, svg);
