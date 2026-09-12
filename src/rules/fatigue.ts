@@ -98,3 +98,18 @@ export function spendFatigue(options: {
     status: fatigueStatus(fp, max),
   };
 }
+
+// ── fatigue costs (Campaigns p. 426) ─────────────────────────────────────────
+
+/** How long a fight has to last before it costs anything: ten seconds. */
+export const BATTLE_FATIGUE_AFTER_SECONDS = 10;
+
+/**
+ * What a battle costs in fatigue: "After any battle that lasts longer than
+ * 10 seconds, lose 1 FP." A skirmish over in a few turns costs nothing; a
+ * fight that ran on costs a point, however long it ran, with extra effort
+ * charged separately as it is spent.
+ */
+export function battleFatigueCost(seconds: number): number {
+  return seconds > BATTLE_FATIGUE_AFTER_SECONDS ? 1 : 0;
+}

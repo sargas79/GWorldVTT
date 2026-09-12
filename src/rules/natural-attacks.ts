@@ -12,10 +12,13 @@
  *   Brawling, Karate or DX. Boxing does not kick, and a kick cannot parry.
  *
  * The -2 for a kick is folded into the skill level shown, since that is the
- * number the dice are rolled against. Karate's bonus damage (+1 per die at
- * DX+1, +2 per die at DX+2) is not applied: it depends on the skill's level
- * relative to DX, which the sheet knows, but it is the sort of thing a table
- * house-rules, and a wrong bonus would be worse than none.
+ * number the dice are rolled against.
+ *
+ * Skill at unarmed combat hits harder (Characters pp. 182, 203): Brawling is
+ * +1 per die of damage at DX+2, Boxing +1 per die at DX+1 and +2 at DX+2,
+ * Karate +1 per die at DX itself and +2 at DX+1. The bonus goes on the dice
+ * of thrust, and only for a blow made with that skill -- Boxing punches and
+ * does not kick.
  */
 
 import { thrustDamage } from "./damage.js";
@@ -31,6 +34,30 @@ export interface NaturalAttackInput {
   dx: number;
   /** Levels of the unarmed skills the character has, by name; missing means untrained. */
   skills: Partial<Record<"Brawling" | "Boxing" | "Karate", number>>;
+}
+
+/** The unarmed skills that hit harder with training, and from what level. */
+export type UnarmedSkill = "Brawling" | "Boxing" | "Karate";
+
+/**
+ * Bonus damage per die for a blow made with an unarmed skill at a level.
+ *
+ * Measured against DX because that is how the book states it: "Brawling at
+ * DX+2 or better", "Boxing at DX+1", "Karate at DX". Anything else -- DX
+ * itself, or a skill not on the list -- adds nothing.
+ */
+export function unarmedDamageBonusPerDie(skill: string, level: number, dx: number): number {
+  const above = level - dx;
+  switch (skill) {
+    case "Brawling":
+      return above >= 2 ? 1 : 0;
+    case "Boxing":
+      return above >= 2 ? 2 : above >= 1 ? 1 : 0;
+    case "Karate":
+      return above >= 1 ? 2 : above >= 0 ? 1 : 0;
+    default:
+      return 0;
+  }
 }
 
 export interface NaturalAttack {
@@ -69,12 +96,17 @@ export function naturalAttacks(input: NaturalAttackInput): NaturalAttack[] {
   // rolled against, so it goes on after the best skill is chosen.
   const kick = best([["Brawling", skills.Brawling], ["Karate", skills.Karate]], dx);
 
+  // Training adds per die of thrust: a fighter with ST 17 (2d) and Karate at
+  // DX+1 punches for 2d-1+4.
+  const bonus = (chosen: { name: string; level: number }) =>
+    unarmedDamageBonusPerDie(chosen.name, chosen.level, dx) * thrust.dice;
+
   return [
     {
       key: "punch",
       skillName: punch.name,
       skillLevel: punch.level,
-      damage: addModifier(thrust, -1),
+      damage: addModifier(thrust, -1 + bonus(punch)),
       reach: "C",
       canParry: true,
     },
@@ -82,7 +114,7 @@ export function naturalAttacks(input: NaturalAttackInput): NaturalAttack[] {
       key: "kick",
       skillName: kick.name,
       skillLevel: kick.level + KICK_PENALTY,
-      damage: thrust,
+      damage: addModifier(thrust, bonus(kick)),
       reach: "C, 1",
       canParry: false,
     },
