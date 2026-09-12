@@ -15,7 +15,7 @@ import { setCondition, syncHealthConditions } from "./conditions.js";
 import { resolveDamageAgainst, type IncomingDamage } from "./damage.js";
 import { applyFatigue } from "./fatigue.js";
 import { collisionDamage, collisionVelocity, overrunDamage, type CollisionAngle } from "../rules/collisions.js";
-import { formatDiceAdds, toRollFormula } from "../rules/dice.js";
+import { formatDiceAdds, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import {
   lethalShock, lethalShockModifier, localizedShock, nonlethalShock, METAL_ARMOR_DR,
 } from "../rules/electricity.js";
@@ -308,8 +308,14 @@ export async function shock(options: {
   let injuryModifier = 0;
   let injury = 0;
 
-  if (options.kind !== "nonlethal" && options.formula.trim()) {
-    const hit = await takeDamage(actor, options.formula, "burn", {
+  // "1d-3" as the book writes it, made into a formula the dice can roll.
+  const dice = options.kind !== "nonlethal" ? parseDiceAdds(options.formula) : null;
+  if (options.kind !== "nonlethal" && options.formula.trim() && !dice) {
+    ui.notifications?.warn(F("BadFormula", { formula: options.formula }));
+    return;
+  }
+  if (dice) {
+    const hit = await takeDamage(actor, toRollFormula(dice), "burn", {
       drOverride: options.metalArmor ? METAL_ARMOR_DR : null,
     });
     rolls.push(hit.roll, hit.locationRoll);

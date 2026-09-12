@@ -2018,6 +2018,7 @@
       "Injury": "{injury} HP of injury: {previous} → {now}",
       "Overrun": "Overrun, two sizes larger: thrust {formula} = {rolled}, {injury} HP more",
       "Shock": "Shock",
+      "BadFormula": "Not a damage roll: {formula}",
       "ShockHint": "Electricity: a HT roll not to be stunned, or burning damage and a HT roll not to be knocked out (Campaigns pp. 432-433)",
       "ShockKindLabel": "Kind of shock",
       "ShockKind": {
@@ -2209,7 +2210,9 @@
       "Missing": "no roll"
     },
     "Attack": {
-      "ImpairedMelee": "Taken off every melee attack roll (Characters pp. 123, 141)",
+      "ImpairedMelee": "Taken off every melee attack roll (Characters p. 123)",
+      "Lame": "Lame {penalty}",
+      "LameHint": "Taken off every Melee Weapon and unarmed combat skill, and so off the parry (Characters p. 141)",
       "ImpairedRanged": "Taken off every ranged attack roll (Characters pp. 123, 147)",
       "AtDefaultHint": "The skill is not on the sheet; this is the book's default for it.",
       "PerTurn": "{count} attacks a turn",
