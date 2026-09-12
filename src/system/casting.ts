@@ -385,6 +385,10 @@ interface Casting {
   /** A label in place of the spell's name, for a Blocking spell cast against something. */
   label?: string;
   note?: string;
+  /** What the card says of the ritual, in place of the list's own wording. */
+  ritualText?: string;
+  /** The key the card says the reduction with, in place of "off for skill". */
+  reducedBy?: string;
 }
 
 /**
@@ -525,9 +529,12 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
     modifiers,
     effective,
     cost,
-    reduced: Math.max(0, casting.invested - cost),
+    reducedText:
+      casting.invested - cost > 0
+        ? game.i18n.format(casting.reducedBy ?? "GWORLD.Cast.Reduced", { by: casting.invested - cost })
+        : "",
     time: casting.time,
-    ritual: isRuleOn("magicRituals") ? L(`Ritual.${casting.ritual.ritual}`) : "",
+    ritual: casting.ritualText ?? (isRuleOn("magicRituals") ? L(`Ritual.${casting.ritual.ritual}`) : ""),
     dice: outcome.dice,
     roll: roll.total,
     resultLabel: outcome.criticalSuccess
@@ -571,6 +578,18 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
 
 // ── casting from the sheet ───────────────────────────────────────────────────
 
+/** How a casting differs when it comes from a magic item rather than the caster's own knowledge. */
+export interface CastOptions {
+  fromItem?: {
+    itemName: string;
+    /** The item's Power where it is, which is the skill the spell is cast at. */
+    power: number;
+    /** What the item's Power enchantment takes off the cost here. */
+    costReduction: number;
+    mageOnly: boolean;
+  };
+}
+
 /**
  * Casts a spell from the sheet, start to finish.
  *
@@ -579,10 +598,13 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
  * automatically spoiled", p. 236), one already holding a spell ("You cannot
  * cast another spell while holding a Melee spell", p. 240).
  */
-export async function castSpell(actor: any, item: any): Promise<void> {
+export async function castSpell(actor: any, item: any, options: CastOptions = {}): Promise<void> {
   if (!actor?.isOwner || item?.type !== "spell") return;
   const derived = item.system?.derived ?? {};
-  const level: number | null = derived.level ?? null;
+  const fromItem = options.fromItem ?? null;
+  // A magic item casts at its own Power, "as the caster's base skill"
+  // (Campaigns p. 481); the user need not know the spell at all.
+  const level: number | null = fromItem ? fromItem.power : (derived.level ?? null);
   if (level === null) {
     ui.notifications?.warn(game.i18n.format("GWORLD.Cast.NotKnown", { spell: item.name }));
     return;
@@ -601,16 +623,24 @@ export async function castSpell(actor: any, item: any): Promise<void> {
   const manaInPlay = isRuleOn("manaLevels");
   const mana: ManaLevel = manaInPlay ? currentMana() : "normal";
   const isMage = magic.magery !== null && magic.magery !== undefined;
-  if (manaInPlay && !mayCast(mana, isMage)) {
-    ui.notifications?.warn(L(mana === "none" ? "NoMana" : "MagesOnly"));
+  // "Anyone can use any magic item that doesn't explicitly require Magery"
+  // (p. 480), but nothing works without mana, and a mage-only item is a
+  // mage's.
+  if (manaInPlay && mana === "none") {
+    ui.notifications?.warn(L("NoMana"));
+    return;
+  }
+  if (fromItem ? fromItem.mageOnly && !isMage : manaInPlay && !mayCast(mana, isMage)) {
+    ui.notifications?.warn(L("MagesOnly"));
     return;
   }
 
   const shape = shapeOf(item);
   const manaMod = manaInPlay ? manaSkillModifier(mana) : 0;
   // "'skill' refers to base skill, not effective skill. The only modifier
-  // that matters here is the -5 for low mana."
-  const ritual = isRuleOn("magicRituals") ? ritualForSkill(level + manaMod) : NO_RITUAL;
+  // that matters here is the -5 for low mana." An item has no ritual at all:
+  // "The user just wills the item to work" (p. 482).
+  const ritual = fromItem || !isRuleOn("magicRituals") ? NO_RITUAL : ritualForSkill(level + manaMod);
   const bounds = energyBounds(item.system.energy ?? { cast: null, castMax: null, text: "" }, magic.magery ?? null);
   const running = {
     spellsOn: Number(magic.spellsOn ?? 0),
@@ -635,7 +665,11 @@ export async function castSpell(actor: any, item: any): Promise<void> {
     if (bounds.max !== null) invested = Math.min(bounds.max, invested);
     if (shape.regular) invested = subjectSizeEnergy(invested, choices.subjectSm);
   }
-  const cost = energyAfterSkill(invested, ritual, { blocking: shape.blocking });
+  // An item's Power enchantment takes its points off the cost to cast and
+  // to maintain (p. 480); high Power itself does not.
+  const reduce = (amount: number) =>
+    fromItem ? Math.max(0, amount - fromItem.costReduction) : energyAfterSkill(amount, ritual, { blocking: shape.blocking });
+  const cost = reduce(invested);
   // Maintaining an Area spell scales with the area as casting did.
   const maintainBase =
     energy.maintain === null || energy.maintain === undefined
@@ -643,7 +677,7 @@ export async function castSpell(actor: any, item: any): Promise<void> {
       : shape.area
         ? areaEnergy(energy.maintain, choices.radius)
         : Number(energy.maintain);
-  const maintain = maintainBase === null ? null : energyAfterSkill(maintainBase, ritual, { blocking: shape.blocking });
+  const maintain = maintainBase === null ? null : reduce(maintainBase);
   const seconds: number | null = item.system.castingTime?.seconds ?? null;
   const time = seconds === null
     ? String(item.system.castingTime?.text ?? "") || "—"
@@ -671,6 +705,15 @@ export async function castSpell(actor: any, item: any): Promise<void> {
   await resolveCasting({
     actor, item, shape, level, mana, manaInPlay, ritual, invested, cost, maintain, time,
     modifiers, hpBurn, subject: subjectParts.join(", "), track: true,
+    ...(fromItem
+      ? {
+          label: `${item.name} (${fromItem.itemName})`,
+          note: game.i18n.format("GWORLD.Enchant.CastFromItem", { item: fromItem.itemName, power: fromItem.power }),
+          // "There is no ritual. The user just wills the item to work" (p. 482).
+          ritualText: L("NoRitualItem"),
+          reducedBy: "GWORLD.Cast.ReducedByPower",
+        }
+      : {}),
   });
 }
 

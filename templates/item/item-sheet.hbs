@@ -598,6 +598,55 @@
       {{/if}}
     {{/if}}
 
+    {{#if isPhysical}}
+      {{!-- What is enchanted onto it (Campaigns pp. 480-482): each spell
+           with its own Power. Six names are effects on the item itself;
+           any other is a spell the wearer has or the user casts. --}}
+      <div class="isub">
+        <div class="isub-head">
+          {{localize "GWORLD.Enchant.OnItem"}}
+          {{#if editable}}
+            <button type="button" class="ibtn" data-action="addEnchantment">
+              {{> "gworld.plus"}} {{localize "GWORLD.Action.Add"}}
+            </button>
+          {{/if}}
+        </div>
+        {{#each system.enchantments as |e i|}}
+          <div class="imode" data-index="{{i}}">
+            <div class="irow">
+              <input type="text" name="system.enchantments.{{i}}.spell" value="{{e.spell}}"
+                     aria-label="{{localize 'GWORLD.Enchant.Spell'}}" placeholder="{{localize 'GWORLD.Enchant.Spell'}}"
+                     {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.enchantments.{{i}}.level" value="{{e.level}}" step="1" min="0"
+                     aria-label="{{localize 'GWORLD.Enchant.Level'}}" title="{{localize 'GWORLD.Enchant.Level'}}"
+                     {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.enchantments.{{i}}.power" value="{{e.power}}" step="1" min="0"
+                     aria-label="{{localize 'GWORLD.Enchant.Power'}}" title="{{localize 'GWORLD.Enchant.Power'}}"
+                     {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.enchantments.{{i}}.energy" value="{{e.energy}}" step="1" min="0"
+                     aria-label="{{localize 'GWORLD.Enchant.Energy'}}" title="{{localize 'GWORLD.Enchant.Energy'}}"
+                     {{#unless @root.editable}}disabled{{/unless}} />
+              {{#if @root.editable}}
+                <button type="button" class="rollable iconbtn" data-action="deleteEnchantment"
+                      title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
+              {{/if}}
+            </div>
+            <div class="irow iflags">
+              <label class="icheck"><input type="checkbox" name="system.enchantments.{{i}}.alwaysOn"
+                     {{#if e.alwaysOn}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Enchant.AlwaysOnTag"}}</label>
+              <label class="icheck"><input type="checkbox" name="system.enchantments.{{i}}.mageOnly"
+                     {{#if e.mageOnly}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Enchant.MageOnly"}}</label>
+            </div>
+          </div>
+        {{else}}
+          <p class="ihint">{{localize "GWORLD.Enchant.NoneOnItem"}}</p>
+        {{/each}}
+        <p class="ihint">{{localize "GWORLD.Enchant.OnItemHint"}}</p>
+      </div>
+    {{/if}}
+
     {{#if isArmed}}
       <div class="isub" data-mode-path="meleeModes">
         <div class="isub-head">

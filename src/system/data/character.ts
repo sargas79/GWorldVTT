@@ -67,7 +67,10 @@ import {
   type MagicStylePreference,
   type MagicTalent,
 } from "../../rules/magic.js";
-import { activeSpellCounts } from "../../rules/casting.js";
+import { activeSpellCounts, type ManaLevel } from "../../rules/casting.js";
+import { readEnchantments, type ItemMagic } from "../../rules/enchanting.js";
+import { currentMana } from "../casting.js";
+import { addModifier } from "../../rules/dice.js";
 import type { SpellDerived } from "./items.js";
 
 /** A spell running on a character, as stored. */
@@ -210,6 +213,19 @@ interface DefenseView {
   skillName: string;
   /** Whether the weapon parried with is a fencing weapon, which retreats better. */
   isFencing: boolean;
+}
+
+/**
+ * The mana where this character is, for what their magic items can do. Read
+ * defensively: derived data is prepared while the world is still loading,
+ * before the settings a mana level lives in can be asked.
+ */
+function manaHere(): ManaLevel {
+  try {
+    return isRuleOn("manaLevels") ? currentMana() : "normal";
+  } catch {
+    return "normal";
+  }
 }
 
 export class CharacterData extends foundry.abstract.TypeDataModel {
@@ -998,6 +1014,23 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // ── spells ──────────────────────────────────────────────────────────
     const magic = this.#resolveSpells(attrs, secondary.will, secondary.per, talent, traits.magicResistance);
 
+    // ── magic items ─────────────────────────────────────────────────────
+    // What the enchantments on the gear come to where the character is
+    // (Campaigns pp. 480-482): an item's Power is -5 in low mana and nothing
+    // with none, and an effect whose Power does not reach 15 here does nothing.
+    const mana = manaHere();
+    const magicOf = (item: Record<string, any>): ItemMagic =>
+      readEnchantments(isRuleOn("magicItems") ? (item.system?.enchantments ?? []) : [], mana);
+    const magicItems = this.items
+      .filter((i) => ["equipment", "armor", "shield"].includes(i.type) && (i.system?.enchantments ?? []).length > 0)
+      .filter((i) => i.system?.carried !== false)
+      .map((i) => ({
+        itemId: String(i.id),
+        name: String(i.name ?? ""),
+        equipped: Boolean(i.system?.equipped),
+        magic: magicOf(i),
+      }));
+
     // ── protection ──────────────────────────────────────────────────────
     // DR is tracked per location: a breastplate covering torso and vitals must
     // not protect the head. Armor listing no locations covers the whole body,
@@ -1008,7 +1041,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     const armorItems = this.itemsOfType("armor").filter((i) => i.system?.equipped);
     const worn: ArmorPiece[] = armorItems.map((item) => ({
-      dr: Number(item.system?.dr ?? 0),
+      // Fortify "Increases the DR of clothing or a suit of armor" (p. 480).
+      dr: Number(item.system?.dr ?? 0) + magicOf(item).fortify,
       drSplit: item.system?.drSplit ?? null,
       drSplitAppliesTo: item.system?.drSplitAppliesTo ?? [],
       locations: item.system?.locations ?? [],
@@ -1048,6 +1082,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     const shieldItem = this.itemsOfType("shield").find((i) => i.system?.equipped) ?? null;
     const shieldDb = shieldItem ? Number(shieldItem.system?.db ?? 0) : 0;
+    // Deflect "Adds a Defense Bonus to armor, clothing, a shield, or a weapon.
+    // This adds to all active defense rolls made by the user" (p. 480).
+    const deflectDb = this.items
+      .filter((i) => ["equipment", "armor", "shield"].includes(i.type) && i.system?.equipped)
+      .reduce((sum, i) => sum + magicOf(i).deflect, 0);
     const shieldSkill = shieldItem ? this.skillLevelByName(shieldItem.system?.skill ?? "Shield") : null;
 
     // ── encumbrance ─────────────────────────────────────────────────────
@@ -1119,16 +1158,26 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const sys = item.system as {
         meleeModes?: any[]; rangedModes?: any[]; equipped?: boolean;
       };
+      // Accuracy adds to the user's skill with the weapon and Puissance to
+      // its basic damage (Campaigns pp. 480-481).
+      const magic = magicOf(item);
+      const enchantedSkill = (found: { level: number | null; atDefault: boolean }) =>
+        found.level === null ? found : { ...found, level: found.level + magic.accuracy };
+      const withPuissance = (damage: string): string => {
+        if (!magic.puissance) return damage;
+        const parsed = parseDiceAdds(damage);
+        return parsed ? formatDiceAdds(addModifier(parsed, magic.puissance)) : damage;
+      };
 
       // Swung and not yet readied again: the whole item is down, whichever of
       // its modes was used.
       const unready = Boolean((sys as any).unready);
 
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
-        const { level: skillLevel, atDefault } = weaponSkill(mode.skill);
-        const meleeDamage = resolveDamage(
+        const { level: skillLevel, atDefault } = enchantedSkill(weaponSkill(mode.skill));
+        const meleeDamage = withPuissance(resolveDamage(
           strikingSt, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
-        );
+        ));
         melee.push({
           itemId: item.id,
           modeIndex: index,
@@ -1181,13 +1230,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // Bows and crossbows use their own ST for damage and range; a thrown
         // weapon uses the thrower's, Striking ST included.
         const st = mode.weaponSt ?? strikingSt;
-        const rangedDamage = resolveDamage(
+        const rangedDamage = withPuissance(resolveDamage(
           st, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
-        );
+        ));
         const range = mode.rangeIsStMultiple
           ? musclePoweredRange(mode.weaponSt ?? attrs.ST, mode.halfDamageRange, mode.maxRange)
           : { halfDamage: mode.halfDamageRange, max: mode.maxRange };
-        const { level: skillLevel, atDefault } = weaponSkill(mode.skill);
+        const { level: skillLevel, atDefault } = enchantedSkill(weaponSkill(mode.skill));
 
         ranged.push({
           itemId: item.id,
@@ -1294,7 +1343,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const mountedPenalty = this.mounted ? mountedDefensePenalty(ridingSkill) : 0;
 
     const contextFor = (which: "dodge" | "parry" | "block") => ({
-      shieldDb,
+      shieldDb: shieldDb + deflectDb,
       posture: this.posture,
       mountedPenalty,
       stunned: this.conditions.stunned,
@@ -1523,7 +1572,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         carousing: this.skillLevelByName("Carousing") ?? (attrs.HT ?? 10) - 4,
       },
       traitEffects: traits,
-      magic,
+      magic: { ...magic, mana, items: magicItems },
       // Unkillable is not dead at -5xHP; only destruction at -10xHP is the end.
       status: healthStatus(this.hp.value, this.hp.max, { unkillable: traits.unkillable }),
       reeling,

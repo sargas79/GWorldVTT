@@ -185,10 +185,21 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   button for each targeted subject, under the Rule of 16, with Magic
   Resistance added and doubled against an Area spell. A Blocking spell sits
   on the defense card beside dodge, parry and block.
+- **Magic items.** Gear carries enchantments, each with its own Power: Fortify
+  goes into the armour's DR, Deflect into every active defense, Accuracy into
+  the weapon's skill and Puissance into its damage, all of it only where the
+  item's Power reaches 15 after the mana. Any other spell on an item is worn,
+  if always on, or cast from the item at its Power with no ritual, the item's
+  Power enchantment paying part of the cost.
+- **Enchanting**, as ceremonial magic: Enchant and the spell both at 15,
+  assistants each costing a point of skill and supplying energy, Quick and
+  Dirty at an hour per hundred points paid now or Slow and Sure at a mage-day
+  per point paid never, a 16 that always fails and a 17 or 18 that destroys
+  the item. What succeeds is written onto the item.
 - A campaign without magic switches the whole chapter off under **GURPS rules
   in play**, and the tab goes with it; the rituals, the failure table, mana,
-  the running-spell penalty, distraction and the Rule of 16 each have a
-  switch of their own.
+  the running-spell penalty, distraction, the Rule of 16 and magic items each
+  have a switch of their own.
 
 ### Which rules are in play
 

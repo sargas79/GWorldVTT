@@ -40,6 +40,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       editItemImage: GWorldItemSheet.#onEditImage,
       addModifier: GWorldItemSheet.#onAddModifier,
       deleteModifier: GWorldItemSheet.#onDeleteModifier,
+      addEnchantment: GWorldItemSheet.#onAddEnchantment,
+      deleteEnchantment: GWorldItemSheet.#onDeleteEnchantment,
       addEntry: GWorldItemSheet.#onAddEntry,
       addChoice: GWorldItemSheet.#onAddChoice,
     },
@@ -364,6 +366,19 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       },
     });
     await fp.browse();
+  }
+
+  static async #onAddEnchantment(this: GWorldItemSheet) {
+    const list = [...(this.item.system.enchantments ?? [])];
+    await this.item.update({ "system.enchantments": [...list, {}] });
+  }
+
+  static async #onDeleteEnchantment(this: GWorldItemSheet, _event: Event, target: HTMLElement) {
+    const index = Number(target.closest<HTMLElement>("[data-index]")?.dataset.index);
+    if (!Number.isInteger(index)) return;
+    const list = [...(this.item.system.enchantments ?? [])];
+    list.splice(index, 1);
+    await this.item.update({ "system.enchantments": list });
   }
 
   static async #onAddModifier(this: GWorldItemSheet) {

@@ -1,0 +1,30 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{localize "GWORLD.Enchant.Title"}}: {{spell}}{{#if level}} +{{level}}{{/if}}</span>
+    <span class="gc-target">{{localize "GWORLD.Chat.Target"}} {{effective}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>{{item}}</span>
+    <span class="gc-mod">{{method}}</span>
+    <span class="gc-mod">{{time}}</span>
+    <span class="gc-mod">{{localize "GWORLD.Enchant.EnergyLine" energy=energy}}</span>
+    {{#if casterShare}}<span class="gc-mod">{{localize "GWORLD.Enchant.CasterShare" energy=casterShare}}</span>{{/if}}
+    {{#if assistantEnergy}}<span class="gc-mod">{{localize "GWORLD.Enchant.AssistantShare" energy=assistantEnergy}}</span>{{/if}}
+  </div>
+
+  <div class="gc-mods">
+    <span>{{base}} {{localize "GWORLD.Chat.Base"}}</span>
+    {{#each modifiers as |mod|}}<span class="gc-mod">{{signed mod.value}} {{mod.label}}</span>{{/each}}
+  </div>
+
+  <div class="gc-dice">
+    {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+    <span class="gc-total">{{roll}}</span>
+  </div>
+
+  <div class="gc-result {{resultClass}}">{{resultLabel}}</div>
+  {{#if sixteen}}<div class="gc-foot">{{localize "GWORLD.Enchant.Sixteen"}}</div>{{/if}}
+  {{#if powerHere}}<div class="gc-foot">{{localize "GWORLD.Enchant.PowerHere" power=powerHere}}</div>{{/if}}
+  {{#if resistedNote}}<div class="gc-foot">{{resistedNote}}</div>{{/if}}
+</div>
