@@ -343,7 +343,22 @@ declare global {
   }
 
   const Actor: any;
-  const Item: any;
+  /**
+   * Declared as a class rather than `any` so the system's own Item can
+   * extend it with `override`: only what that subclass touches is typed.
+   */
+  class Item {
+    static DEFAULT_ICON: string;
+    static getDefaultArtwork(itemData: unknown): { img: string };
+    static [key: string]: any;
+    img: string;
+    type: string;
+    name: string;
+    system: any;
+    _source: unknown;
+    prepareBaseData(): void;
+    [key: string]: any;
+  }
   const ui: any;
 
   /** Foundry's dice roller. Formula evaluation and dice animation go through it. */

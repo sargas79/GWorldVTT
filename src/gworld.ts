@@ -19,6 +19,7 @@ import { GWorldCombat } from "./system/combat.js";
 import { SYSTEM_ID } from "./system/constants.js";
 import { CharacterData } from "./system/data/character.js";
 import { NpcData } from "./system/data/npc.js";
+import { GWorldItem } from "./system/documents/item.js";
 import {
   ArmorData,
   EquipmentData,
@@ -44,6 +45,9 @@ Hooks.once("init", () => {
 
   CONFIG.Actor.dataModels.character = CharacterData;
   CONFIG.Actor.dataModels.npc = NpcData;
+
+  // Each kind of item gets its own picture rather than Foundry's one bag.
+  CONFIG.Item.documentClass = GWorldItem;
 
   CONFIG.Item.dataModels.trait = TraitData;
   CONFIG.Item.dataModels.skill = SkillData;

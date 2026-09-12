@@ -4290,7 +4290,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const type = target.dataset.itemType;
     if (!type) return;
     const label = game.i18n.localize(`TYPES.Item.${type}`);
-    await this.actor.createEmbeddedDocuments("Item", [{ name: `New ${label}`, type }]);
+    // The button under Disadvantages makes a disadvantage: the category is
+    // part of what was asked for, not something to set afterwards.
+    const category = target.dataset.category;
+    const data: Record<string, unknown> = { name: `New ${label}`, type };
+    if (category) data.system = { category };
+    await this.actor.createEmbeddedDocuments("Item", [data]);
   }
 
   static async #onEditItem(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
