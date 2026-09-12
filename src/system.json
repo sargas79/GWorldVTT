@@ -80,6 +80,17 @@
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
       }
+    },
+    {
+      "name": "spells",
+      "label": "GURPS Spells",
+      "path": "packs/spells",
+      "type": "Item",
+      "system": "gworld",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
     }
   ],
   "gridDistance": 1,
@@ -99,7 +110,8 @@
       "shield": {},
       "language": {},
       "technique": {},
-      "template": {}
+      "template": {},
+      "spell": {}
     }
   },
   "url": "https://github.com/sargas79/GWorldVTT",

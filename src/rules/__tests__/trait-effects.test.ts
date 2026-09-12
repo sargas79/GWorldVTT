@@ -139,3 +139,28 @@ describe("Super Jump", () => {
     expect(afterSuperJump(9, 3)).toBe(72);
   });
 });
+
+describe("reading a character's Magery (Characters pp. 66-67, 242)", () => {
+  it("has no Magery at all by default, which is not Magery 0", () => {
+    expect(traitEffects([]).magery).toBeNull();
+    expect(traitEffects([held("Magery 0")]).magery).toBe(0);
+  });
+
+  /** "10 points/level (on top of the 5 points for Magery 0)" -- two records, one level. */
+  it("reads Magery 0 beside Magery 3 as Magery 3", () => {
+    expect(traitEffects([held("Magery 0"), held("Magery", 3)]).magery).toBe(3);
+    expect(traitEffects([held("Magery", 2)]).magery).toBe(2);
+  });
+
+  it("keeps Ritual Magery apart from Magery", () => {
+    const effects = traitEffects([held("Ritual Magery 0"), held("Ritual Magery", 1)]);
+    expect(effects.ritualMagery).toBe(1);
+    expect(effects.magery).toBeNull();
+  });
+
+  /** "-3 to cast spells on you and you get +3 to resist" */
+  it("reads Magic Resistance by level", () => {
+    expect(traitEffects([held("Magic Resistance", 3)]).magicResistance).toBe(3);
+    expect(traitEffects([]).magicResistance).toBe(0);
+  });
+});

@@ -146,3 +146,26 @@ describe("planAddition", () => {
     expect(plan.action).toBe("create");
   });
 });
+
+describe("adding a spell", () => {
+  /** A spell is bought with points, like a skill, and merges by name like one. */
+  it("asks for points, and raises a spell the character already has", () => {
+    const source = { type: "spell", name: "Fireball", system: { points: 0, colleges: ["Fire"] } };
+    expect(amountKind(source)).toBe("points");
+    const plan = planAddition({
+      source,
+      existing: [{ id: "f1", type: "spell", name: "fireball", system: { points: 2 } }],
+      chosen: { points: 2 },
+    });
+    expect(plan).toMatchObject({ action: "update", itemId: "f1", changes: { "system.points": 4 } });
+  });
+
+  it("creates a new spell with the chosen points", () => {
+    const plan = planAddition({
+      source: { type: "spell", name: "Fireball", system: { points: 0 } },
+      existing: [],
+      chosen: { points: 1 },
+    });
+    expect(plan).toMatchObject({ action: "create", data: { system: { points: 1 } } });
+  });
+});

@@ -115,6 +115,142 @@
       <p class="ihint">{{localize "GWORLD.Technique.MaxRelativeHint"}}</p>
     {{/if}}
 
+    {{#if isSpell}}
+      <div class="ifields">
+        <label class="wide">{{localize "GWORLD.Spell.Colleges"}}
+          <input type="text" name="system.colleges" value="{{collegesText}}"
+                 placeholder="Fire, Movement" {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Column.Difficulty"}}
+          <select name="system.difficulty" {{#unless editable}}disabled{{/unless}}>
+            {{selectOptions choices.spellDifficulties selected=system.difficulty localize=true}}
+          </select>
+        </label>
+        <label>{{localize "GWORLD.Column.Pts"}}
+          <input type="number" name="system.points" value="{{system.points}}" step="1" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Column.Bonus"}}
+          <input type="number" name="system.bonus" value="{{system.bonus}}" step="1"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Spell.MageryRequired"}}
+          <input type="number" name="system.mageryRequired" value="{{system.mageryRequired}}" step="1" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Spell.ResistedBy"}}
+          <input type="text" name="system.resistedBy" value="{{system.resistedBy}}" placeholder="—"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+
+      <p class="ihint">{{localize "GWORLD.Spell.ClassesHint"}}</p>
+      <div class="ichecks">
+        {{#each choices.spellClasses as |cls|}}
+          <label class="icheck">
+            <input type="checkbox" name="system.classes" value="{{cls}}"
+                   {{#if (includes @root.system.classes cls)}}checked{{/if}}
+                   {{#unless @root.editable}}disabled{{/unless}} />
+            {{localize (concat "GWORLD.Spell.Class." cls)}}
+          </label>
+        {{/each}}
+      </div>
+
+      {{!-- Each figure the casting rules read sits beside the book's own
+           wording for it, because "1 to Magery" and "Varies" are wordings a
+           number cannot carry. --}}
+      <div class="isub">
+        <div class="isub-head">{{localize "GWORLD.Spell.Casting"}}</div>
+        <div class="ifields">
+          <label>{{localize "GWORLD.Spell.EnergyText"}}
+            <input type="text" name="system.energy.text" value="{{system.energy.text}}"
+                   placeholder="3/1" {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label>{{localize "GWORLD.Spell.EnergyCast"}}
+            <input type="number" name="system.energy.cast" value="{{system.energy.cast}}" step="1" min="0"
+                   placeholder="—" {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label>{{localize "GWORLD.Spell.EnergyCastMax"}}
+            <input type="number" name="system.energy.castMax" value="{{system.energy.castMax}}" step="1" min="0"
+                   placeholder="—" {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label>{{localize "GWORLD.Spell.EnergyMaintain"}}
+            <input type="number" name="system.energy.maintain" value="{{system.energy.maintain}}" step="1" min="0"
+                   placeholder="—" {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label>{{localize "GWORLD.Spell.TimeText"}}
+            <input type="text" name="system.castingTime.text" value="{{system.castingTime.text}}"
+                   placeholder="1 sec." {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label>{{localize "GWORLD.Spell.TimeSeconds"}}
+            <input type="number" name="system.castingTime.seconds" value="{{system.castingTime.seconds}}" step="1" min="0"
+                   placeholder="—" {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label>{{localize "GWORLD.Spell.DurationText"}}
+            <input type="text" name="system.duration.text" value="{{system.duration.text}}"
+                   placeholder="1 min." {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label>{{localize "GWORLD.Spell.DurationSeconds"}}
+            <input type="number" name="system.duration.seconds" value="{{system.duration.seconds}}" step="1" min="0"
+                   placeholder="—" {{#unless editable}}disabled{{/unless}} />
+          </label>
+        </div>
+        <p class="ihint">{{localize "GWORLD.Spell.CastingHint"}}</p>
+      </div>
+
+      <div class="isub">
+        <div class="isub-head">{{localize "GWORLD.Spell.Prerequisites"}}</div>
+        <div class="ifields">
+          <label class="wide">{{localize "GWORLD.Spell.PrerequisitesText"}}
+            <input type="text" name="system.prerequisites" value="{{system.prerequisites}}"
+                   placeholder="Magery 1, Create Fire, Shape Fire" {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label>{{localize "GWORLD.Spell.PrerequisiteCount"}}
+            <input type="number" name="system.prerequisiteCount" value="{{system.prerequisiteCount}}" step="1" min="0"
+                   {{#unless editable}}disabled{{/unless}} />
+          </label>
+        </div>
+        <p class="ihint">{{localize "GWORLD.Spell.PrerequisitesHint"}}</p>
+      </div>
+
+      <div class="isub">
+        <div class="isub-head">{{localize "GWORLD.Spell.Attack"}}</div>
+        <div class="ifields">
+          <label>{{localize "GWORLD.Column.Skill"}}
+            <input type="text" name="system.attack.skill" value="{{system.attack.skill}}"
+                   placeholder="Innate Attack (Projectile)" {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label>{{localize "GWORLD.Spell.DamagePerEnergy"}}
+            <input type="text" name="system.attack.damage" value="{{system.attack.damage}}"
+                   placeholder="1d" {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label>{{localize "GWORLD.Item.DamageType"}}
+            <select name="system.attack.damageType" {{#unless editable}}disabled{{/unless}}>
+              {{selectOptions choices.spellDamageTypes selected=system.attack.damageType localize=true}}
+            </select>
+          </label>
+          <label>{{localize "GWORLD.Column.Acc"}}
+            <input type="number" name="system.attack.accuracy" value="{{system.attack.accuracy}}" step="1"
+                   {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label>{{localize "GWORLD.Spell.HalfDamageRange"}}
+            <input type="number" name="system.attack.halfDamageRange" value="{{system.attack.halfDamageRange}}" step="1" min="0"
+                   {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label>{{localize "GWORLD.Spell.MaxRange"}}
+            <input type="number" name="system.attack.maxRange" value="{{system.attack.maxRange}}" step="1" min="0"
+                   {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label class="icheck">
+            <input type="checkbox" name="system.attack.explosive" {{#if system.attack.explosive}}checked{{/if}}
+                   {{#unless editable}}disabled{{/unless}} />
+            {{localize "GWORLD.Spell.Explosive"}}
+          </label>
+        </div>
+        <p class="ihint">{{localize "GWORLD.Spell.AttackHint"}}</p>
+      </div>
+    {{/if}}
+
     {{#if isTrait}}
       <div class="ifields">
         <label>{{localize "GWORLD.Trait.Category"}}

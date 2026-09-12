@@ -51,3 +51,21 @@ describe("summarise", () => {
     expect(summarise("skill", {})).toBe("?/?");
   });
 });
+
+describe("summarise a spell", () => {
+  it("says where a spell is filed, what class it is and what it costs", () => {
+    expect(
+      summarise("spell", { colleges: ["Fire"], classes: ["missile"], energy: { text: "1 to Magery" } }),
+    ).toBe("Fire · Missile · 1 to Magery");
+  });
+
+  it("lists every college and class the spell has", () => {
+    expect(
+      summarise("spell", { colleges: ["Movement", "Protection & Warning"], classes: ["information", "area"], energy: { text: "2" } }),
+    ).toBe("Movement/Protection & Warning · Information/Area · 2");
+  });
+
+  it("leaves out what a spell does not say", () => {
+    expect(summarise("spell", { colleges: [], classes: [], energy: { text: "" } })).toBe("");
+  });
+});

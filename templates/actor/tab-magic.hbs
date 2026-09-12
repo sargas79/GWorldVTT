@@ -1,0 +1,156 @@
+<section class="tab ibody{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+
+  {{!-- What the character's magic rests on: the Magery the traits give, and
+       which of the book's two ways of learning spells their points are read
+       by. The style is a select on the sheet itself because a character who
+       has both kinds of Magery has to be able to say which they mean. --}}
+  <div class="isec">
+    <div class="ish"><span class="num">01</span>{{localize "GWORLD.Section.Magery"}}</div>
+    <div class="npcline" style="gap: 14px; align-items: center">
+      <span>
+        <strong>{{magic.mageryLabel}}</strong>
+        {{#if magic.magicResistance}}
+          <span class="tag tag-accent">{{localize "GWORLD.Spell.MagicResistance"}} {{magic.magicResistance}}</span>
+        {{/if}}
+      </span>
+      <label style="display: inline-flex; gap: 6px; align-items: center">
+        <span class="fl">{{localize "GWORLD.Spell.Style"}}</span>
+        <select name="system.magic.style" {{#unless editable}}disabled{{/unless}}>
+          {{#each magic.styleOptions as |option|}}
+            <option value="{{option.key}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+          {{/each}}
+        </select>
+      </label>
+      <span class="sub">{{magic.styleHint}}</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="srch">
+      {{> "gworld.search"}}
+      <input type="search" class="gworld-spell-filter" placeholder="{{localize 'GWORLD.Action.FilterSpells'}}"
+             autocomplete="off" data-tooltip="{{localize 'GWORLD.Action.FilterSpells'}}">
+    </div>
+    {{#if editable}}
+      <button type="button" class="ibtn" data-action="createItem" data-item-type="spell">
+        {{> "gworld.plus"}} {{localize "GWORLD.Action.AddSpell"}}
+      </button>
+      <button type="button" class="ibtn" data-action="browseCompendium"
+              data-item-types="spell" data-browse-title="GWORLD.Picker.Spells">
+        {{> "gworld.search"}} {{localize "GWORLD.Action.BrowseSpells"}}
+      </button>
+    {{/if}}
+  </div>
+
+  {{#each magic.groups as |group|}}
+    <div class="isec" style="gap: 0">
+      <div class="grph">
+        {{#if group.college}}{{group.college}}{{else}}{{localize "GWORLD.Spell.NoCollege"}}{{/if}}
+        <span class="sub">{{localize "GWORLD.Spell.College"}}</span>
+      </div>
+      <table class="gt">
+        <thead>
+          <tr>
+            <th>{{localize "GWORLD.Column.Spell"}}</th>
+            <th>{{localize "GWORLD.Column.Class"}}</th>
+            <th>{{localize "GWORLD.Column.Energy"}}</th>
+            <th>{{localize "GWORLD.Column.Time"}}</th>
+            <th>{{localize "GWORLD.Column.Duration"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Pts"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Relative"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Level"}}</th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each group.rows as |row|}}
+            {{#with row.spell.item as |spell|}}
+            <tr data-item-id="{{spell.id}}" {{#unless row.known}}class="dim"{{/unless}}>
+              <td>
+                <span class="wname" data-action="editItem">{{spell.name}}</span>
+                {{#if row.veryHard}}<span class="wmode">(VH)</span>{{/if}}
+                {{#each row.otherColleges as |college|}}
+                  <span class="tag">{{college}}</span>
+                {{/each}}
+                {{#if row.resisted}}
+                  <span class="tag" data-tooltip="{{localize 'GWORLD.Spell.ResistedHint'}}">{{localize "GWORLD.Spell.Resisted"}} {{row.resisted}}</span>
+                {{/if}}
+                {{#if row.mageryRequired}}
+                  <span class="tag">{{localize "GWORLD.Spell.Magery"}} {{row.mageryRequired}}</span>
+                {{/if}}
+                {{#if row.needsMagery}}
+                  <span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.Spell.NeedsMageryHint'}}">{{localize "GWORLD.Spell.NeedsMagery"}}</span>
+                {{/if}}
+                {{#if row.missing.length}}
+                  <span class="tag tag-danger" data-tooltip="{{row.missingText}}">{{localize "GWORLD.Spell.Prerequisites"}}</span>
+                {{/if}}
+                {{#if row.cappedByCollege}}
+                  <span class="tag" data-tooltip="{{localize 'GWORLD.Spell.CappedHint'}}">{{localize "GWORLD.Spell.Capped"}}</span>
+                {{/if}}
+                {{#if row.noCollegeSkill}}
+                  <span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.Spell.NoCollegeSkillHint'}}">{{localize "GWORLD.Spell.NoCollegeSkill"}}</span>
+                {{/if}}
+              </td>
+              <td class="wmode">{{row.classes}}</td>
+              <td class="wmode">{{row.energy}}</td>
+              <td class="wmode">{{row.time}}</td>
+              <td class="wmode">{{row.duration}}</td>
+              <td class="n">
+                {{#if @root.editable}}
+                  <span class="ptstep">
+                    <button type="button" data-action="stepPoints" data-step="down"
+                            id="{{@root.sheetId}}-{{spell.id}}-down"
+                            aria-label="{{localize "GWORLD.Skill.SpendLess"}}"
+                            title="{{localize "GWORLD.Skill.SpendLess"}}">&minus;</button>
+                    <input type="number" class="npts" min="0" step="1"
+                           id="{{@root.sheetId}}-{{spell.id}}-pts"
+                           value="{{spell.system.points}}" data-item-field="system.points"
+                           aria-label="{{localize "GWORLD.Column.Pts"}}" />
+                    <button type="button" data-action="stepPoints" data-step="up"
+                            id="{{@root.sheetId}}-{{spell.id}}-up"
+                            aria-label="{{localize "GWORLD.Skill.SpendMore"}}"
+                            title="{{localize "GWORLD.Skill.SpendMore"}}">+</button>
+                  </span>
+                {{else}}{{#if row.known}}{{spell.system.points}}{{else}}&mdash;{{/if}}{{/if}}
+              </td>
+              <td class="n wmode">{{row.relative}}</td>
+              <td class="n">
+                {{#if row.rollable}}
+                  <span class="lvl">{{spell.system.derived.level}}</span>
+                {{else}}
+                  <span class="tag tag-danger">{{localize "GWORLD.Spell.NotKnown"}}</span>
+                {{/if}}
+              </td>
+              <td class="c">
+                {{#if row.rollable}}
+                  <span class="rollable" data-action="roll" data-roll-type="skill"
+                        data-roll-label="{{spell.name}}" data-roll-target="{{spell.system.derived.level}}"
+                        data-based-on="IQ">
+                    {{> "gworld.die"}}
+                  </span>
+                {{/if}}
+              </td>
+              <td class="c">
+                {{#if @root.editable}}
+                  <button type="button" class="rollable iconbtn" data-action="deleteItem" title="{{localize 'GWORLD.Action.Delete'}}">
+                    {{> "gworld.trash"}}
+                  </button>
+                {{/if}}
+              </td>
+            </tr>
+            {{/with}}
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{else}}
+    <p class="ihint">{{localize "GWORLD.Spell.NoneYet"}}</p>
+  {{/each}}
+
+  <div class="npcline" style="justify-content: space-between; color: var(--color-neutral-700)">
+    <span>{{magic.count}} {{localize "GWORLD.Spell.Known"}}</span>
+    <span>{{derived.points.spells}} {{localize "GWORLD.Points.PointsLabel"}}</span>
+  </div>
+
+</section>

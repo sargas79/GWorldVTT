@@ -140,11 +140,29 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   buys a stated reaction, Diplomacy's second chance included.
 - **Temporary attribute penalties** — off the skills the attribute governs, and
   off nothing else: never a defense, a resistance roll or a Fright Check.
-- **Compendia** of advantages, disadvantages, skills, equipment and templates,
-  carrying names, point costs and statistics. The templates are the Basic Set's
-  four racial ones, its three sample character templates, and eighteen
-  meta-traits; every one is checked at build time against the cost the book
-  states for it.
+- **Compendia** of advantages, disadvantages, skills, spells, equipment and
+  templates, carrying names, point costs and statistics. The templates are the
+  Basic Set's four racial ones, its three sample character templates, and
+  eighteen meta-traits; every one is checked at build time against the cost
+  the book states for it.
+
+### Magic
+
+- **Spells as the book has them** — a Magic tab filed by college, each spell
+  with its class, cost, casting time and duration, bought on the Skill Cost
+  Table off IQ plus Magery, with no default. The hundred spells of the Basic
+  Set are in a compendium of their own.
+- **Prerequisites, checked** — other spells known to at least a point, a Magery
+  level, an IQ minimum, a count of spells from a college or from several, an
+  advantage or a skill. A spell that is not yet earned says what is missing.
+- **Ritual Magic** (p. 242), from the same spell records: a core skill, a
+  college skill per college defaulting from it at -6, and every spell a Hard
+  technique off its college skill at -1 per prerequisite, castable at default
+  and never above the college skill. Which style a character uses follows from
+  whether they have Magery or Ritual Magery, and can be set by hand.
+- **Magery, Ritual Magery and Magic Resistance** read from the traits tab.
+- A campaign without magic switches the whole chapter off under **GURPS rules
+  in play**, and the tab goes with it.
 
 ### Which rules are in play
 
@@ -181,6 +199,43 @@ Foundry **Data** directory, then `npm run dev` to build and link `dist/` into
 
 Other scripts: `npm run watch`, `npm run typecheck`, `npm run lint`,
 `npm run test:coverage`, `npm run validate:packs`.
+
+### Spells from other books, as a module
+
+The system's own spells pack is built from the GURPS Character Assistant data
+file for the Basic Set. A module can carry another book's spells — GURPS Magic,
+Thaumatology — the same way, and the sheet, the picker and the guided build
+read them alongside the book's without any change to the system:
+
+1. Build the JSON from that book's GDF with the same tool, naming the page
+   prefix the book uses and where the file should go:
+
+   ```bash
+   node tools/parse-gdf-spells.mjs "GURPS Magic 4e.gdf" --prefix M --book "Magic" --out my-module/packs-src --pack spells --write
+   ```
+
+2. Check and compile it with the same two scripts, pointed at the module:
+
+   ```bash
+   node tools/validate-packs.mjs --src my-module/packs-src
+   ```
+
+   ```bash
+   node tools/build-packs.mjs --src my-module/packs-src --out my-module/packs
+   ```
+
+3. Declare the pack in the module's `module.json` as an `Item` pack with
+   `"system": "gworld"`, and list the module under **Configure Settings →
+   Compendium sources** in the world.
+
+A spell record is a name and statistics: colleges, classes, cost, time and
+duration as the book writes them, the Magery it needs, and a prerequisite line
+in the grammar the sheet reads — `Magery 1, Create Fire, Shape Fire or Seek
+Fire`, `6 Air spells`, `spells from 10 colleges`, `IQ 13`, `Empathy
+(advantage)`, `Locksmith (skill)`. A spell entered by hand on an item sheet
+follows the same shape. Where two packs hold a spell of one name, the picker
+says which pack each row is from, and adding one a character already has
+raises its points rather than adding a copy.
 
 ## Licensing note
 

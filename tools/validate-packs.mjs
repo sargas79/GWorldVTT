@@ -13,10 +13,22 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const SOURCE = join(projectRoot, "packs-src");
+
+/**
+ * The source directory: this repository's packs-src unless `--src` names
+ * another, which is how a module validates its own packs with the same tool.
+ */
+const srcFlag = process.argv.indexOf("--src");
+const SOURCE =
+  srcFlag !== -1 && process.argv[srcFlag + 1]
+    ? resolve(process.argv[srcFlag + 1])
+    : join(projectRoot, "packs-src");
 
 const ITEM_TYPES = new Set([
-  "trait", "skill", "technique", "equipment", "armor", "shield", "language", "template",
+  "trait", "skill", "technique", "equipment", "armor", "shield", "language", "template", "spell",
+]);
+const SPELL_CLASSES = new Set([
+  "regular", "area", "melee", "missile", "blocking", "information", "enchantment", "special",
 ]);
 const TRAIT_CATEGORIES = new Set(["advantage", "disadvantage", "quirk", "perk"]);
 const SKILL_ATTRIBUTES = new Set(["ST", "DX", "IQ", "HT", "Will", "Per"]);
@@ -208,6 +220,66 @@ function validateItem(entry, file) {
     );
   }
 
+  if (entry.type === "spell") {
+    check(["H", "VH"].includes(sys.difficulty), file, name, `spell difficulty must be H or VH`);
+    check(
+      Array.isArray(sys.colleges) && sys.colleges.length > 0 && sys.colleges.every((c) => typeof c === "string" && c),
+      file, name, "spell names no college",
+    );
+    check(Array.isArray(sys.classes) && sys.classes.length > 0, file, name, "spell has no class");
+    for (const c of Array.isArray(sys.classes) ? sys.classes : []) {
+      check(SPELL_CLASSES.has(c), file, name, `unknown spell class "${c}"`);
+    }
+    check(typeof sys.prerequisites === "string", file, name, "prerequisites must be a string");
+    check(
+      Number.isInteger(sys.prerequisiteCount) && sys.prerequisiteCount >= 0,
+      file, name, "prerequisiteCount must be a non-negative integer",
+    );
+    check(
+      Number.isInteger(sys.mageryRequired) && sys.mageryRequired >= 0,
+      file, name, "mageryRequired must be a non-negative integer",
+    );
+    // Each figure is a non-negative number or absent; the text beside it is
+    // what the sheet shows, so a figure with no text would be a number nobody
+    // can read the meaning of.
+    for (const [group, keys] of [
+      ["energy", ["cast", "castMax", "maintain"]],
+      ["castingTime", ["seconds"]],
+      ["duration", ["seconds"]],
+    ]) {
+      const block = sys[group] ?? {};
+      check(typeof block.text === "string", file, name, `${group}.text must be a string`);
+      for (const key of keys) {
+        const value = block[key];
+        check(
+          value === null || value === undefined || (typeof value === "number" && value >= 0),
+          file, name, `${group}.${key} must be a non-negative number or null`,
+        );
+      }
+    }
+    const energy = sys.energy ?? {};
+    check(
+      !(typeof energy.cast === "number" && typeof energy.castMax === "number" && energy.castMax < energy.cast),
+      file, name, `energy castMax ${energy.castMax} is below cast ${energy.cast}`,
+    );
+    const attack = sys.attack ?? {};
+    const delivered = (sys.classes ?? []).some((c) => c === "missile" || c === "melee");
+    if (attack.damage) {
+      check(parsesAsDice(attack.damage), file, name, `spell damage "${attack.damage}" does not parse`);
+      check(delivered, file, name, "spell carries damage but is neither Missile nor Melee");
+    }
+    if (attack.damageType) {
+      check(DAMAGE_TYPES.has(attack.damageType), file, name, `unknown damage type "${attack.damageType}"`);
+    }
+    if ((sys.classes ?? []).includes("missile")) {
+      check(Boolean(attack.skill), file, name, "a Missile spell names no skill to throw it with");
+      check(
+        !(attack.halfDamageRange > 0 && attack.halfDamageRange > attack.maxRange),
+        file, name, `half-damage range ${attack.halfDamageRange} exceeds maximum range ${attack.maxRange}`,
+      );
+    }
+  }
+
   if (entry.type === "armor") {
     check(Number.isInteger(sys.dr) && sys.dr >= 0, file, name, `bad DR "${sys.dr}"`);
     for (const loc of sys.locations ?? []) {
@@ -329,7 +401,7 @@ function validateItem(entry, file) {
 
 async function main() {
   if (!existsSync(SOURCE)) {
-    console.log("No packs-src/ to validate.");
+    console.log(`No pack source directory at ${SOURCE} to validate.`);
     return;
   }
 
@@ -354,7 +426,7 @@ async function main() {
     for (const p of problems) console.error(`  ${p}`);
     process.exit(1);
   }
-  console.log(`packs-src: ${count} entries valid across ${packs.length} pack(s)`);
+  console.log(`${SOURCE}: ${count} entries valid across ${packs.length} pack(s)`);
 }
 
 await main();

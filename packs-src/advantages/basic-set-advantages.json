@@ -3142,6 +3142,23 @@
     }
   },
   {
+    "_id": "571959367f4a9fbd",
+    "name": "Ritual Magery",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "reactionModifier": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 66"
+    }
+  },
+  {
     "_id": "e9801756c11b2bac",
     "name": "Magic Resistance",
     "type": "trait",

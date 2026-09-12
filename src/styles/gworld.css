@@ -1322,6 +1322,14 @@
 /* Already taken this session: still addable, since a character may want two. */
 .gworld-picker .gp-row.added .gp-name { color: var(--color-neutral-800); }
 .gworld-picker .gp-name { min-width: 0; overflow-wrap: anywhere; }
+/* Which pack a row came from, shown only when more than one contributes. */
+.gworld-picker .gp-source {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+  margin-left: 4px;
+}
 .gworld-picker .gp-summary {
   font-size: 11px;
   letter-spacing: 0.04em;

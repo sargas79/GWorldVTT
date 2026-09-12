@@ -53,6 +53,22 @@ import {
 } from "../../rules/skills.js";
 import { musclePoweredRange } from "../../rules/ranged.js";
 import {
+  checkPrerequisites,
+  collegeSkillNames,
+  magicSkillBonus,
+  magicStyleFor,
+  mageryForStyle,
+  parsePrerequisites,
+  ritualSpellLevel,
+  spellLevel,
+  spellRelativeLevel,
+  type KnownSpell,
+  type MagicStyle,
+  type MagicStylePreference,
+  type MagicTalent,
+} from "../../rules/magic.js";
+import type { SpellDerived } from "./items.js";
+import {
   broadJumpFeet,
   highJumpInches,
   jumpingMove,
@@ -204,6 +220,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     previous: Record<string, number>;
     itemIds: string[];
   }>;
+  declare magic: { style: MagicStylePreference };
   declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
   declare points: {
     starting: number;
@@ -437,6 +454,22 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ),
 
       /**
+       * How this character's spells are read (Characters pp. 235, 242):
+       * bought as skills off IQ plus Magery, or as techniques off a college
+       * skill under Ritual Magic. "Auto" follows the traits -- Ritual Magery
+       * without Magery means ritual -- and the two named choices override it
+       * for a character who has both, or a GM who says otherwise.
+       */
+      magic: new fields.SchemaField({
+        style: new fields.StringField({
+          required: true,
+          nullable: false,
+          initial: "auto",
+          choices: ["auto", "standard", "ritual"],
+        }),
+      }),
+
+      /**
        * Attributes something has temporarily knocked down (Campaigns p. 421).
        *
        * Kept apart from the attributes themselves, because a temporary penalty
@@ -659,6 +692,123 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     this.derived = this.buildDerived();
   }
 
+  /**
+   * What this character's spells come to (Characters pp. 235, 242).
+   *
+   * Under the standard system a spell is a skill off IQ plus Magery. Under
+   * Ritual Magic it is a technique off the college skill, at -1 per
+   * prerequisite, and a ritual mage "can ignore the spell's prerequisites
+   * under the standard system" -- so the check is only made for the standard
+   * style. Either way the level lands on the item, where the tab reads it.
+   */
+  #resolveSpells(
+    attrs: Record<string, number>,
+    will: number,
+    per: number,
+    talent: MagicTalent,
+    magicResistance: number,
+  ) {
+    const style: MagicStyle = magicStyleFor(this.magic?.style ?? "auto", talent);
+    const magery = mageryForStyle(style, talent);
+    const spells = this.itemsOfType("spell");
+
+    // Every spell on the sheet, for the prerequisites that count them. A
+    // spell with no points is written down but not known (p. 235), which the
+    // checker decides for itself from the points.
+    const knownSpells: KnownSpell[] = spells.map((item) => ({
+      name: String(item.name ?? ""),
+      colleges: (item.system?.colleges ?? []) as string[],
+      points: Number(item.system?.points ?? 0),
+    }));
+    const traitNames = new Set(
+      this.itemsOfType("trait").map((t) => normalizeSkillName(String(t.name ?? ""))),
+    );
+    const context = {
+      magery,
+      attributes: { ...attrs, Will: will, Per: per } as Record<SkillAttribute, number>,
+      spells: knownSpells,
+      hasTrait: (name: string) => traitNames.has(normalizeSkillName(name)),
+      hasSkill: (name: string) => this.skillLevelByName(name) !== null,
+    };
+
+    for (const item of spells) {
+      const sys = item.system as {
+        difficulty: "H" | "VH"; points: number; bonus: number; colleges: string[];
+        prerequisiteCount: number; prerequisites: string; mageryRequired: number;
+        derived?: SpellDerived;
+      };
+      const points = Number(sys.points ?? 0);
+      const bonus = Number(sys.bonus ?? 0);
+      const relativeLevel = spellRelativeLevel(points, sys.difficulty);
+
+      if (style === "ritual") {
+        // The best college skill the spell can be read off; a spell of two
+        // colleges belongs to both and a ritual mage uses whichever they know.
+        let collegeSkill: string | null = null;
+        let collegeLevel: number | null = null;
+        for (const college of sys.colleges ?? []) {
+          for (const name of collegeSkillNames(college)) {
+            const level = this.skillLevelByName(name);
+            if (level !== null && (collegeLevel === null || level > collegeLevel)) {
+              collegeSkill = name;
+              collegeLevel = level;
+            }
+          }
+        }
+        const resolved =
+          collegeLevel === null
+            ? null
+            : ritualSpellLevel({
+                collegeLevel,
+                prerequisiteCount: Number(sys.prerequisiteCount ?? 0),
+                points,
+                bonus,
+              });
+        sys.derived = {
+          level: resolved?.level ?? null,
+          relativeLevel,
+          style,
+          collegeSkill,
+          levels: resolved?.levels ?? 0,
+          cappedByCollege: resolved?.cappedByCollege ?? false,
+          needsMagery: false,
+          prerequisitesMet: true,
+          missing: [],
+        };
+        continue;
+      }
+
+      // The Magery the spell requires is a field of its own as well as
+      // whatever the prerequisite line says, so a spell that states only
+      // "Magery 2" in its field is still held to it.
+      const mageryRequired = Number(sys.mageryRequired ?? 0);
+      const clauses = parsePrerequisites(String(sys.prerequisites ?? ""));
+      if (mageryRequired > 0) clauses.push([{ kind: "magery", level: mageryRequired }]);
+      const check = checkPrerequisites(clauses, context);
+      sys.derived = {
+        level: spellLevel({ iq: attrs.IQ ?? 10, magery, points, difficulty: sys.difficulty, bonus }),
+        relativeLevel,
+        style,
+        collegeSkill: null,
+        levels: 0,
+        cappedByCollege: false,
+        needsMagery: magery === null,
+        prerequisitesMet: check.met,
+        missing: check.missing,
+      };
+    }
+
+    return {
+      style,
+      preference: this.magic?.style ?? "auto",
+      magery,
+      // What the traits say, whichever style is in use, for the tab's header.
+      standardMagery: talent.magery,
+      ritualMagery: talent.ritualMagery,
+      magicResistance,
+    };
+  }
+
   private buildDerived() {
     // What this character's traits do to the numbers. Read first, because a
     // few of them are the numbers: Extra ST is a point of ST wherever ST is
@@ -727,6 +877,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     const skillItems = this.itemsOfType("skill");
 
+    // What the character's Magery is, before the skills it adds to are read.
+    const talent: MagicTalent = { magery: traits.magery, ritualMagery: traits.ritualMagery };
+
     // Pass one: levels that depend only on attributes.
     for (const item of skillItems) {
       const sys = item.system as {
@@ -740,11 +893,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         .filter((d) => d.from !== "skill")
         .map((d) => namedDefaultLevel(attributeScore(d.attribute), d.modifier));
 
+      // Magery goes on Thaumatology (p. 66), and Ritual Magery on the ritual
+      // style's core and college skills (p. 242): the one place a trait adds
+      // to a skill by name rather than through an attribute.
       const resolved = effectiveSkillLevel({
         attributeScore: attributeScore(sys.attribute),
         difficulty: sys.difficulty,
         points: sys.points,
-        bonus: sys.bonus,
+        bonus: sys.bonus + magicSkillBonus(String(item.name ?? ""), talent),
         defaults: attributeDefaults,
       });
       sys.derived = {
@@ -792,6 +948,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         maxRelativeToPrerequisite: sys.maxRelativeToPrerequisite,
       });
     }
+
+    // ── spells ──────────────────────────────────────────────────────────
+    const magic = this.#resolveSpells(attrs, secondary.will, secondary.per, talent, traits.magicResistance);
 
     // ── protection ──────────────────────────────────────────────────────
     // DR is tracked per location: a breastplate covering torso and vitals must
@@ -1184,6 +1343,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       (sum, i) => sum + Number(i.system?.totalPoints ?? 0),
       0,
     );
+    // "Each magic spell is a separate skill, learned just like any other
+    // skill" (p. 235), and billed like one -- on its own line, because a
+    // mage wants to know what the magic came to.
+    const spellPoints = this.itemsOfType("spell").reduce(
+      (sum, i) => sum + Number(i.system?.points ?? 0),
+      0,
+    );
 
     // Only purchased levels are billed. Granted ones (racial templates, GM
     // rulings) move the score for free.
@@ -1206,7 +1372,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     const spent =
       attributePoints + secondaryPoints + advantages + disadvantages + quirks +
-      skillPoints + techniquePoints + languagePoints + templatePoints;
+      skillPoints + techniquePoints + languagePoints + templatePoints + spellPoints;
 
     // Worked out once, beside the spending it is measured against.
     const ledger = pointsLedger({
@@ -1311,6 +1477,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         carousing: this.skillLevelByName("Carousing") ?? (attrs.HT ?? 10) - 4,
       },
       traitEffects: traits,
+      magic,
       // Unkillable is not dead at -5xHP; only destruction at -10xHP is the end.
       status: healthStatus(this.hp.value, this.hp.max, { unkillable: traits.unkillable }),
       reeling,
@@ -1340,6 +1507,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         skills: skillPoints,
         techniques: techniquePoints,
         languages: languagePoints,
+        spells: spellPoints,
         // What they started with, what they have earned since, and what is
         // left after the sheet is paid for -- three numbers rather than one,
         // because they answer three different questions.
