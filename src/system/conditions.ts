@@ -75,6 +75,46 @@ export function registerConditions(): void {
   }
 }
 
+/**
+ * Keeps the posture field and the prone icon saying the same thing.
+ *
+ * A takedown or a failed knockdown roll writes both -- posture "lying" on the
+ * sheet, prone on the token -- and until now nothing wrote them back. A player
+ * who chose "standing" on the sheet kept the prone icon, and a GM who cleared
+ * the icon from the token left the sheet lying down, with its posture
+ * penalties still applied. Either control now moves the other.
+ *
+ * Only the client that made the change acts on it, so a table of six does not
+ * write the same update six times.
+ */
+export function registerPostureSync(): void {
+  Hooks.on("updateActor", (actor: any, changes: any, _options: unknown, userId: string) => {
+    if (userId !== game.user?.id) return;
+    const posture = changes?.system?.posture;
+    if (typeof posture !== "string") return;
+    void setCondition(actor, "prone", posture === "lying");
+  });
+
+  const fromEffect = (active: boolean) => (effect: any, _options: unknown, userId: string) => {
+    if (userId !== game.user?.id) return;
+    if (!effect?.statuses?.has?.("prone")) return;
+    const actor = effect.parent;
+    if (!actor?.isOwner || typeof actor.system?.posture !== "string") return;
+
+    // Lying down when knocked prone; standing when the icon is cleared. The
+    // book's Change Posture progression -- crawl, kneel, sit, then stand --
+    // is the sheet's to offer, and a GM taking the icon off a token is saying
+    // the character is up.
+    if (active && actor.system.posture !== "lying") {
+      void actor.update({ "system.posture": "lying" });
+    } else if (!active && actor.system.posture === "lying") {
+      void actor.update({ "system.posture": "standing" });
+    }
+  };
+  Hooks.on("createActiveEffect", fromEffect(true));
+  Hooks.on("deleteActiveEffect", fromEffect(false));
+}
+
 /** Whether an actor is currently in a given state. */
 export function hasCondition(actor: any, id: string): boolean {
   return actor?.statuses?.has?.(id) === true;

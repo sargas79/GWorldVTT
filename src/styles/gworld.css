@@ -623,6 +623,23 @@
   border-color: var(--color-accent);
   color: #fff;
 }
+/* The posture chip holds a select, so the posture can be changed where it is
+   read. The select wears the chip's colours; its dropdown keeps the page's. */
+.gworld .ichip.iposture { padding-right: 6px; cursor: default; }
+.gworld .ichip .ichip-label { opacity: 0.8; }
+.gworld .ichip select {
+  height: 100%;
+  padding: 0 2px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+.gworld .ichip select:disabled { cursor: default; }
+.gworld .ichip select option { color: var(--color-text); text-transform: none; }
 .gworld .ichip.warn {
   border-color: var(--color-accent-700);
   color: var(--color-accent-800);
@@ -769,6 +786,15 @@
 .gworld .npcline { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; }
 .gworld .npcline b { font-family: var(--font-heading); font-size: 13px; letter-spacing: 0.06em; }
 
+/* The NPC sheet's one root element: the header and the scrolling body inside
+   it lay out exactly as they did when they were the window's own children. */
+.gworld .isheet-npc {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 /* ── limited view ──────────────────────────────────────────────────────── */
 
 .gworld .limited {
@@ -833,11 +859,14 @@
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 2px 8px;
   padding-bottom: 5px;
   border-bottom: 1px solid var(--color-divider);
 }
 .gworld-chat .gc-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-family: var(--font-heading);
   font-size: 15px;
   font-weight: 600;
@@ -892,10 +921,28 @@
 .gworld-chat .gc-apply {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: 6px;
   padding-top: 6px;
   border-top: 1px solid var(--color-neutral-300);
+}
+/* A name is a word, not a layout: however long it is, it wraps inside the
+   card rather than pushing the buttons out of it. */
+.gworld-chat .gc-who {
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+}
+.gworld-chat .gc-who .gc-mod { font-weight: 400; margin-left: 6px; }
+.gworld-chat .gc-who .gc-warn { margin-left: 6px; }
+/* A defense that cannot be rolled is still named, so the card reads the same
+   for everyone and says why the button is not there. */
+.gworld-chat .gc-apply-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 .gworld-chat .gc-distance {
   flex: 0 0 auto;

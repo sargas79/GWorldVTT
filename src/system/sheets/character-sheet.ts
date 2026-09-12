@@ -1888,6 +1888,15 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       });
     }
 
+    // The Combat tab's posture chip is a select without a form name, since the
+    // Attributes tab already submits system.posture and a form cannot carry
+    // the same name twice. It writes the actor directly instead.
+    const posture = this.element.querySelector<HTMLSelectElement>("select[data-posture-select]");
+    posture?.addEventListener("change", () => {
+      if (!POSTURES.includes(posture.value as Posture)) return;
+      void this.actor.update({ "system.posture": posture.value });
+    });
+
     const filter = this.element.querySelector<HTMLInputElement>(".gworld-skill-filter");
     if (!filter) return;
 

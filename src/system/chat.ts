@@ -28,6 +28,7 @@ import { attackDirection, facingOf } from "./hex.js";
 import { tacticalOnScene } from "./settings.js";
 import { handednessOf, visionOf } from "./tactical-context.js";
 import { HIT_LOCATION_ORDER, type HitLocation } from "../rules/hit-locations.js";
+import { defenseChoices, type DefenseChoice, type DefenseKey } from "./defense-choices.js";
 import type { DamageType } from "../rules/types.js";
 
 const APPLIED_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-applied.hbs`;
@@ -353,24 +354,34 @@ function defenseFlag(message: any): DefenseFlag | null {
   return flag as DefenseFlag;
 }
 
-/**
- * The three active defenses, in the order the sheet lists them, with the
- * localization key each is labelled by.
- */
-const DEFENSES = {
+/** The localization key each defense is labelled by. */
+const DEFENSE_LABELS: Record<DefenseKey, string> = {
   dodge: "GWORLD.Secondary.Dodge",
   parry: "GWORLD.Secondary.Parry",
   block: "GWORLD.Secondary.Block",
-} as const;
-type DefenseKey = keyof typeof DEFENSES;
+};
+
+/** Why a defense is not on offer, as the card says it. */
+const REFUSAL_LABELS: Record<NonNullable<DefenseChoice["reason"]>, string> = {
+  helpless: "GWORLD.Tactical.Helpless",
+  arc: "GWORLD.Defense.Arc",
+  maneuver: "GWORLD.Defense.Maneuver",
+  noParry: "GWORLD.Defense.NoParry",
+  noBlock: "GWORLD.Defense.NoBlock",
+};
 
 /**
  * Adds a defense control per defender to an attack that connected.
  *
  * Only defenders this user can roll for are offered, so a table of players does
- * not each see three buttons for everyone else's character. A defense that is
- * not available -- no shield to block with, a maneuver that forfeits the
- * defense entirely -- is left out rather than shown as a button that refuses.
+ * not each see three buttons for everyone else's character. All three defenses
+ * are named for each of them: one that cannot be rolled -- no shield to block
+ * with, a maneuver that forfeits it, an attack from the wrong side -- is shown
+ * disabled with the reason, rather than left out and leaving the defender to
+ * wonder whether the card forgot it.
+ *
+ * The defender's name has a line of its own. A long one used to sit in the
+ * same row as the buttons and push the last of them out of the card.
  */
 async function addDefenseControls(message: any, html: HTMLElement): Promise<void> {
   const flag = defenseFlag(message);
@@ -383,47 +394,30 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     const defender: any = await fromUuid(entry.uuid).catch(() => null);
     if (!defender?.isOwner) continue;
 
+    const row = document.createElement("div");
+    row.className = "gc-apply";
+    row.dataset.gworldDefend = entry.uuid;
+
+    const who = document.createElement("div");
+    who.className = "gc-who";
+    who.textContent = String(defender.name ?? entry.name);
+    row.append(who);
+
     // "In all cases, the target gets no active defense against the attack"
     // (p. 556). Saying so is worth more than three buttons nobody may press.
     if (flag.noDefense) {
-      const row = document.createElement("div");
-      row.className = "gc-apply";
-      row.dataset.gworldDefend = entry.uuid;
-      const who = document.createElement("span");
-      who.className = "gc-mod";
-      who.textContent = String(defender.name ?? entry.name);
       const note = document.createElement("span");
       note.className = "gc-warn";
       note.textContent = game.i18n.localize("GWORLD.Critical.NoDefense");
-      row.append(who, note);
+      who.append(note);
       root.append(row);
       continue;
     }
-
-    const defenses = defender.system?.derived?.defenses ?? {};
 
     // In tactical combat the arc the attack came from decides what is even
     // possible: a blow from behind cannot be defended at all by most people,
     // and one from the side reaches only the hand on that side.
     const arc = await tacticalArc(flag, entry, defender);
-    const available = (Object.keys(DEFENSES) as DefenseKey[]).filter((key) => {
-      if (defenses[key] == null) return false;
-      if (!arc) return true;
-      if (arc.helpless) return false;
-      if (key === "parry") return arc.canParry;
-      if (key === "block") return arc.canBlock;
-      return arc.canDodge;
-    });
-
-    const row = document.createElement("div");
-    row.className = "gc-apply";
-    row.dataset.gworldDefend = entry.uuid;
-
-    const who = document.createElement("span");
-    who.className = "gc-mod";
-    who.textContent = String(defender.name ?? entry.name);
-    row.append(who);
-
     if (arc) {
       const note = document.createElement("span");
       note.className = arc.helpless ? "gc-warn" : "gc-mod";
@@ -432,10 +426,19 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         : game.i18n.format("GWORLD.Tactical.Arc", {
             arc: game.i18n.localize(`GWORLD.Tactical.${arc.arc}`),
           });
-      row.append(note);
+      who.append(note);
     }
 
-    if (available.length === 0) {
+    const deception = flag.defensePenalty ?? 0;
+    const choices = defenseChoices({
+      defenses: defender.system?.derived?.defenses ?? {},
+      arc,
+      deception,
+      maneuver: defender.system?.derived?.maneuver ?? null,
+    });
+
+    if (!choices.some((choice) => choice.available)) {
+      for (const choice of choices) row.append(refusedButton(choice));
       root.append(row);
       continue;
     }
@@ -468,26 +471,27 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       row.append(feverish);
     }
 
-    for (const key of available) {
+    for (const choice of choices) {
+      if (!choice.available) {
+        row.append(refusedButton(choice));
+        continue;
+      }
       const button = document.createElement("button");
       button.type = "button";
       button.className = "gc-apply-button";
-      const label = game.i18n.localize(DEFENSES[key]);
-      const arcPenalty = arc ? arc.modifier + (key === "parry" ? arc.parryModifier : 0) : 0;
-      const deception = flag.defensePenalty ?? 0;
-      button.textContent = `${label} ${defenses[key].total + arcPenalty + deception}`;
+      button.textContent = `${game.i18n.localize(DEFENSE_LABELS[choice.key])} ${choice.shown}`;
       button.addEventListener("click", () => {
         void rollDefense({
           defender,
-          key,
-          total: defenses[key].total,
+          key: choice.key,
+          total: choice.total,
           attack: flag.attack,
-          arcPenalty,
+          arcPenalty: choice.arcPenalty,
           deception,
           retreating: retreatBox?.checked ?? false,
           feverish: feverishBox?.checked ?? false,
-          skill: defenses[key].skillName ?? "",
-          isFencing: Boolean(defenses[key].isFencing),
+          skill: choice.skillName,
+          isFencing: choice.isFencing,
         });
       });
       row.append(button);
@@ -495,6 +499,21 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
 
     root.append(row);
   }
+}
+
+/** A defense that cannot be rolled: named, greyed, and carrying its reason. */
+function refusedButton(choice: DefenseChoice): HTMLButtonElement {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "gc-apply-button";
+  button.disabled = true;
+  button.textContent = `${game.i18n.localize(DEFENSE_LABELS[choice.key])} \u2014`;
+  if (choice.reason) {
+    const why = game.i18n.localize(REFUSAL_LABELS[choice.reason]);
+    button.title = why;
+    button.setAttribute("aria-label", `${game.i18n.localize(DEFENSE_LABELS[choice.key])}: ${why}`);
+  }
+  return button;
 }
 
 /**
@@ -550,7 +569,7 @@ async function rollDefense(options: {
   const {
     defender, key, total, attack, arcPenalty, deception, retreating, feverish, skill, isFencing,
   } = options;
-  const name = game.i18n.localize(DEFENSES[key]);
+  const name = game.i18n.localize(DEFENSE_LABELS[key]);
 
   // Paid before the roll, and a defender who cannot pay does not get the bonus
   // -- so the defense is abandoned rather than rolled on a promise, and they
@@ -624,8 +643,8 @@ async function addKnockdownControls(message: any, html: HTMLElement): Promise<vo
     row.className = "gc-apply";
     row.dataset.gworldKnockdown = entry.uuid;
 
-    const who = document.createElement("span");
-    who.className = "gc-mod";
+    const who = document.createElement("div");
+    who.className = "gc-who";
     who.textContent = entry.name;
 
     const button = document.createElement("button");
@@ -668,8 +687,8 @@ async function addDeathCheckControls(message: any, html: HTMLElement): Promise<v
     row.className = "gc-apply";
     row.dataset.gworldDeath = entry.uuid;
 
-    const who = document.createElement("span");
-    who.className = "gc-mod";
+    const who = document.createElement("div");
+    who.className = "gc-who";
     who.textContent = entry.name;
 
     const button = document.createElement("button");

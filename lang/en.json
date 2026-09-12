@@ -141,7 +141,8 @@
       "DisadvantageLimit": "Disadv. Limit",
       "Maneuver": "This Turn",
       "EvaluateTurns": "Turns Evaluating",
-      "Defenses": "Defenses"
+      "Defenses": "Defenses",
+      "PostureHint": "Change posture. Lying down, a character crawls, kneels or sits up first, then stands."
     },
     "Points": {
       "Starting": "Starting points",
@@ -224,6 +225,12 @@
       "DualNone": "One weapon",
       "DualPrimary": "Dual-Weapon Attack",
       "DualOff": "Dual-Weapon Attack, off hand"
+    },
+    "Defense": {
+      "NoParry": "Nothing to parry with",
+      "NoBlock": "No shield to block with",
+      "Maneuver": "This turn's maneuver allows no defense",
+      "Arc": "Not from that side"
     },
     "Tactical": {
       "front": "from the front",

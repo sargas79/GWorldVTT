@@ -5,8 +5,12 @@
 
   <header class="ihead blueprint">
     <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    {{!-- The button carries the action and nothing else. A [data-edit] on it
+         would be read by the form on every submit -- as the button's inner
+         HTML, since it is not an <img> -- and sent to the item as its image,
+         which no item could be saved with. --}}
     {{#if editable}}
-      <button type="button" class="iimgbtn" data-edit="img" data-action="editImage"
+      <button type="button" class="iimgbtn" data-action="editItemImage"
               aria-label="{{localize 'GWORLD.Item.EditImage'}}"
               title="{{localize 'GWORLD.Item.EditImage'}}">
         <img class="iimg editable" src="{{item.img}}" alt="" />

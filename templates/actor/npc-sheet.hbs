@@ -1,4 +1,10 @@
-{{!-- The NPC sheet: one pane, no tabs. Everything a GM needs mid-combat. --}}
+{{!-- The NPC sheet: one pane, no tabs. Everything a GM needs mid-combat.
+
+     One root element, because the sheet is a single Handlebars part and
+     Foundry refuses to render a part that comes back as two: the header and
+     the body used to sit side by side at the top level, and the sheet never
+     opened. --}}
+<div class="isheet-npc">
 <div class="ihdr" style="grid-template-columns: 52px 1fr; padding: 13px 14px 12px">
   <div class="iport blueprint">
     <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -126,4 +132,5 @@
     </div>
   {{/if}}
 
+</div>
 </div>
