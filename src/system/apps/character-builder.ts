@@ -10,6 +10,10 @@
  * It edits the actor as it goes rather than staging changes and applying them
  * at the end. Going back a step therefore shows what is really there, and
  * closing half-way leaves a half-built character rather than losing the work.
+ *
+ * It also watches the actor: anything that changes them while it is open --
+ * the picker adding a skill, the sheet stepping a trait -- redraws the step
+ * and the ledger at once, so what it shows is never a screen behind.
  */
 
 import { SYSTEM_ID } from "../constants.js";
@@ -47,6 +51,9 @@ const STEPS: readonly Step[] = [
   { id: "review" },
 ];
 
+/** The document hooks that mean this actor may have changed. */
+const WATCHED_HOOKS = ["updateActor", "createItem", "updateItem", "deleteItem"] as const;
+
 export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) {
   static override DEFAULT_OPTIONS = {
     classes: ["gworld", "gworld-builder"],
@@ -70,6 +77,8 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
 
   #actor: any;
   #step = 0;
+  /** The hook ids registered for this window, so they can be taken down with it. */
+  #hooks: Array<[string, number]> = [];
 
   constructor(options: { actor: any }) {
     super({});
@@ -124,6 +133,46 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       });
   }
 
+  /**
+   * The review: one row per category, with how many of each were chosen and
+   * what they came to, and the total set apart.
+   *
+   * The header ledger is hidden on this step, because the total is the point
+   * of the page and saying it twice on one screen made both harder to find.
+   */
+  #review() {
+    const points = this.#actor.system?.derived?.points ?? {};
+    const items: any[] = [...(this.#actor.items ?? [])];
+    const count = (predicate: (item: any) => boolean) => items.filter(predicate).length;
+    const traits = (category: string) =>
+      count((item) => item.type === "trait" && item.system?.category === category);
+
+    const row = (label: string, value: number, items: number | null, negative = false) => ({
+      label,
+      value: value ?? 0,
+      items,
+      negative,
+    });
+
+    return {
+      rows: [
+        row("GWORLD.Points.Attributes", points.attributes, null),
+        row("GWORLD.Points.Secondaries", points.secondaries, null),
+        row("GWORLD.Points.Advantages", points.advantages, traits("advantage") + traits("perk")),
+        row("GWORLD.Points.Disadvantages", points.disadvantages, traits("disadvantage"), true),
+        row("GWORLD.Points.Quirks", points.quirks, traits("quirk"), true),
+        row("GWORLD.Points.Skills", points.skills, count((item) => item.type === "skill")),
+        row("GWORLD.Points.Techniques", points.techniques, count((item) => item.type === "technique")),
+        row("GWORLD.Points.Languages", points.languages, count((item) => item.type === "language")),
+      ].filter((entry) => entry.value !== 0 || (entry.items ?? 0) > 0),
+      spent: points.spent ?? 0,
+      available: points.available ?? 0,
+      unspent: points.unspent ?? points.remaining ?? 0,
+      over: Boolean(points.overBudget),
+      gear: count((item) => ["equipment", "armor", "shield"].includes(item.type)),
+    };
+  }
+
   override async _prepareContext(): Promise<Record<string, unknown>> {
     const step = this.#current;
     const derived = this.#actor.system?.derived ?? {};
@@ -138,6 +187,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       stepCount: STEPS.length,
       isFirst: this.#step === 0,
       isLast: this.#step === STEPS.length - 1,
+      isReview: step.id === "review",
       hasBrowse: Boolean(step.types),
       browseTypes: (step.types ?? []).join(","),
       items: this.#itemsForStep(step),
@@ -166,7 +216,35 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       },
       overBudget: points.overBudget ?? false,
       overDisadvantageLimit: (points.disadvantageTotal ?? 0) > (points.disadvantageLimit ?? 0),
+      review: step.id === "review" ? this.#review() : null,
     };
+  }
+
+  /**
+   * Watches the actor from the moment the window opens.
+   *
+   * The picker writes straight to the actor, and so does the sheet if it is
+   * open beside this; neither used to tell the builder, which went on showing
+   * the list and the ledger as they were when the step was drawn.
+   */
+  override async _onFirstRender(context: object, options: object): Promise<void> {
+    await super._onFirstRender(context, options);
+
+    const mine = (document: any) =>
+      document === this.#actor || document?.parent === this.#actor;
+
+    for (const hook of WATCHED_HOOKS) {
+      const id = Hooks.on(hook, (document: any) => {
+        if (mine(document)) void this.render();
+      });
+      this.#hooks.push([hook, id]);
+    }
+  }
+
+  override async _onClose(options: object): Promise<void> {
+    for (const [hook, id] of this.#hooks) Hooks.off(hook, id);
+    this.#hooks = [];
+    await super._onClose(options);
   }
 
   override async _onRender(context: object, options: object): Promise<void> {
@@ -174,6 +252,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
 
     // The number fields write straight through to the actor. There is no
     // submit button because there is nothing to submit: this edits the sheet.
+    // The redraw comes from the update hook, as it does for every other change.
     for (const input of this.element.querySelectorAll<HTMLInputElement>("input[data-item-field]")) {
       input.addEventListener("change", (event) => {
         void CharacterBuilder.#onSpend.call(this, event, input);
@@ -186,7 +265,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
         if (!path) return;
         const value = Number(input.value);
         if (!Number.isFinite(value)) return;
-        void this.#actor.update({ [path]: value }).then(() => this.render());
+        void this.#actor.update({ [path]: value });
       });
     }
   }
@@ -206,25 +285,38 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     await this.#actor.sheet?.render(true);
   }
 
-  static async #onBrowse(this: CharacterBuilder): Promise<void> {
+  /**
+   * Opens the picker for this step.
+   *
+   * The button says it is busy until the window is up. The picker itself
+   * opens at once and reads the compendia afterwards, so the wait is short
+   * now -- but a control that does nothing visible for even a moment invites
+   * a second press, and a second picker.
+   */
+  static async #onBrowse(this: CharacterBuilder, _event: Event, target: HTMLElement): Promise<void> {
     const step = this.#current;
     if (!step.types) return;
 
-    const picker = await CompendiumPicker.open({
-      actor: this.#actor,
-      types: step.types,
-      ...(step.categories ? { categories: step.categories } : {}),
-      title: game.i18n.localize(`GWORLD.Builder.Browse.${step.id}`),
-    });
+    const button = target.closest<HTMLButtonElement>("button") ?? null;
+    const label = button?.innerHTML ?? "";
+    if (button) {
+      button.disabled = true;
+      button.textContent = game.i18n.localize("GWORLD.Builder.Opening");
+    }
 
-    // The picker adds straight to the actor, so this step's list is stale the
-    // moment anything is picked. Re-rendering when it closes catches up.
-    const close = picker.close.bind(picker);
-    picker.close = async (closeOptions?: object) => {
-      const result = await close(closeOptions);
-      await this.render();
-      return result;
-    };
+    try {
+      await CompendiumPicker.open({
+        actor: this.#actor,
+        types: step.types,
+        ...(step.categories ? { categories: step.categories } : {}),
+        title: game.i18n.localize(`GWORLD.Builder.Browse.${step.id}`),
+      });
+    } finally {
+      if (button?.isConnected) {
+        button.disabled = false;
+        button.innerHTML = label;
+      }
+    }
   }
 
   /** Writes a points or levels change straight through to the item. */
@@ -246,7 +338,6 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       return;
     }
     await item.update({ [field]: Math.max(0, value) });
-    await this.render();
   }
 
   static async #onDeleteItem(
@@ -257,7 +348,6 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     const id = target.dataset.itemId;
     if (!id) return;
     await this.#actor.deleteEmbeddedDocuments("Item", [id]);
-    await this.render();
   }
 }
 

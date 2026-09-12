@@ -4,15 +4,19 @@
     <strong class="gb-title">{{localize (concat "GWORLD.Builder.Heading." stepId)}}</strong>
   </div>
 
-  <div class="gb-ledger">
-    <span class="{{#if overBudget}}over{{/if}}">
-      <strong>{{points.spent}}</strong> / {{points.available}} {{localize "GWORLD.Builder.Points"}}
-    </span>
-    <span class="{{#if overDisadvantageLimit}}over{{/if}}">
-      {{localize "GWORLD.Section.DisadvantageLimit"}}
-      <strong>{{points.disadvantageTotal}}</strong> / {{points.disadvantageLimit}}
-    </span>
-  </div>
+  {{!-- The review says the total itself, set apart, so the ledger above it
+       would only say the same thing smaller. --}}
+  {{#unless isReview}}
+    <div class="gb-ledger">
+      <span class="{{#if overBudget}}over{{/if}}">
+        <strong>{{points.spent}}</strong> / {{points.available}} {{localize "GWORLD.Builder.Points"}}
+      </span>
+      <span class="{{#if overDisadvantageLimit}}over{{/if}}">
+        {{localize "GWORLD.Section.DisadvantageLimit"}}
+        <strong>{{points.disadvantageTotal}}</strong> / {{points.disadvantageLimit}}
+      </span>
+    </div>
+  {{/unless}}
 
   <div class="gb-body">
     <p class="gb-hint">{{localize (concat "GWORLD.Builder.Hint." stepId)}}</p>
@@ -74,17 +78,47 @@
       </ul>
     {{/if}}
 
-    {{#if (eq stepId "review")}}
-      <dl class="gb-review">
-        <div><dt>{{localize "GWORLD.Points.Attributes"}}</dt><dd>{{points.attributes}}</dd></div>
-        <div><dt>{{localize "GWORLD.Points.Advantages"}}</dt><dd>{{points.advantages}}</dd></div>
-        <div><dt>{{localize "GWORLD.Points.Disadvantages"}}</dt><dd>{{points.disadvantages}}</dd></div>
-        <div><dt>{{localize "GWORLD.Points.Skills"}}</dt><dd>{{points.skills}}</dd></div>
-        <div class="gb-total">
-          <dt>{{localize "GWORLD.Points.Spent"}}</dt>
-          <dd class="{{#if overBudget}}over{{/if}}">{{points.spent}} / {{points.available}}</dd>
+    {{#if review}}
+      <table class="gt gb-review">
+        <thead>
+          <tr>
+            <th>{{localize "GWORLD.Builder.Review.Category"}}</th>
+            <th class="n">{{localize "GWORLD.Builder.Review.Chosen"}}</th>
+            <th class="n">{{localize "GWORLD.Builder.Points"}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each review.rows as |row|}}
+            <tr>
+              <td>{{localize row.label}}</td>
+              <td class="n wmode">{{#if row.items}}{{row.items}}{{else}}&mdash;{{/if}}</td>
+              <td class="n {{#if row.negative}}neg{{/if}}">{{row.value}}</td>
+            </tr>
+          {{/each}}
+          {{#if review.gear}}
+            <tr class="dim">
+              <td>{{localize "GWORLD.Builder.Heading.gear"}}</td>
+              <td class="n wmode">{{review.gear}}</td>
+              <td class="n wmode">{{localize "GWORLD.Builder.Review.NoPoints"}}</td>
+            </tr>
+          {{/if}}
+        </tbody>
+      </table>
+
+      <div class="ledger">
+        <div class="lrow ltot">
+          <span>{{localize "GWORLD.Points.Spent"}}</span>
+          <span class="{{#if review.over}}over{{/if}}">{{review.spent}} / {{review.available}}</span>
         </div>
-      </dl>
+        <div class="lrow">
+          <span>{{localize "GWORLD.Points.Unspent"}}</span>
+          <span class="{{#if review.over}}neg{{/if}}"><strong>{{review.unspent}}</strong></span>
+        </div>
+        <div class="lrow">
+          <span>{{localize "GWORLD.Section.DisadvantageLimit"}}</span>
+          <span class="{{#if overDisadvantageLimit}}neg{{/if}}">{{points.disadvantageTotal}} / {{points.disadvantageLimit}}</span>
+        </div>
+      </div>
     {{/if}}
   </div>
 

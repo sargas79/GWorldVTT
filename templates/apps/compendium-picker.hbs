@@ -3,7 +3,9 @@
     <input type="search" name="search" value="{{query}}" autocomplete="off"
            placeholder="{{localize "GWORLD.Picker.Search"}}" autofocus />
     <span class="gp-count">
-      {{#if truncated}}
+      {{#if loading}}
+        {{localize "GWORLD.Picker.Loading"}}
+      {{else if truncated}}
         {{localize "GWORLD.Picker.Truncated" shown=entries.length total=total}}
       {{else}}
         {{localize "GWORLD.Picker.Count" total=total}}
@@ -11,17 +13,42 @@
     </span>
   </div>
 
-  <ul class="gp-list">
-    {{#each entries as |entry|}}
-      <li class="gp-row{{#if entry.added}} added{{/if}}">
-        <span class="gp-name">{{entry.name}}</span>
-        <span class="gp-summary">{{entry.summary}}</span>
-        <button type="button" class="gp-add" data-action="add" data-uuid="{{entry.uuid}}">
-          {{#if entry.added}}{{localize "GWORLD.Picker.AddAgain"}}{{else}}{{localize "GWORLD.Picker.Add"}}{{/if}}
-        </button>
+  {{!-- The ledger, so what an entry costs can be weighed against what is
+       left without going back to the sheet to look. --}}
+  <div class="gp-ledger {{#if ledger.over}}over{{/if}}">
+    <span><strong>{{ledger.spent}}</strong> / {{ledger.available}} {{localize "GWORLD.Builder.Points"}}</span>
+    <span>{{localize "GWORLD.Picker.Unspent" points=ledger.unspent}}</span>
+  </div>
+
+  <ul class="gp-list" aria-busy="{{#if loading}}true{{else}}false{{/if}}">
+    {{#if loading}}
+      <li class="gp-empty gp-loading">
+        <span class="gp-spinner" aria-hidden="true"></span>
+        {{localize "GWORLD.Picker.LoadingHint"}}
       </li>
     {{else}}
-      <li class="gp-empty">{{localize "GWORLD.Picker.Empty"}}</li>
-    {{/each}}
+      {{#each entries as |entry|}}
+        <li class="gp-row{{#if entry.added}} added{{/if}}{{#if entry.amountKind}} has-amount{{/if}}">
+          <span class="gp-name">{{entry.name}}</span>
+          <span class="gp-summary">{{entry.summary}}</span>
+          {{#if entry.amountKind}}
+            <label class="gp-amount">
+              <input type="number" min="1" step="1" value="{{entry.amount}}"
+                     {{#if entry.max}}max="{{entry.max}}"{{/if}}
+                     data-amount-for="{{entry.uuid}}" aria-label="{{entry.unit}}" />
+              <span class="gp-unit">{{entry.unit}}</span>
+              <span class="gp-cost">{{entry.cost}}</span>
+            </label>
+          {{else}}
+            <span class="gp-amount"></span>
+          {{/if}}
+          <button type="button" class="gp-add" data-action="add" data-uuid="{{entry.uuid}}">
+            {{#if entry.added}}{{localize "GWORLD.Picker.AddAgain"}}{{else}}{{localize "GWORLD.Picker.Add"}}{{/if}}
+          </button>
+        </li>
+      {{else}}
+        <li class="gp-empty">{{localize "GWORLD.Picker.Empty"}}</li>
+      {{/each}}
+    {{/if}}
   </ul>
 </div>

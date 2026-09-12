@@ -232,6 +232,12 @@
       "Maneuver": "This turn's maneuver allows no defense",
       "Arc": "Not from that side"
     },
+    "Defense": {
+      "NoParry": "Nothing to parry with",
+      "NoBlock": "No shield to block with",
+      "Maneuver": "This turn's maneuver allows no defense",
+      "Arc": "Not from that side"
+    },
     "Tactical": {
       "front": "from the front",
       "side": "from the side",
@@ -446,6 +452,12 @@
         "disadvantages": "Add a disadvantage",
         "skills": "Add a skill or technique",
         "gear": "Add gear, armour or a shield"
+      },
+      "Opening": "Opening…",
+      "Review": {
+        "Category": "Category",
+        "Chosen": "Chosen",
+        "NoPoints": "no points"
       }
     },
     "Picker": {
@@ -462,7 +474,17 @@
       "NotFound": "That compendium entry could not be loaded.",
       "Count": "{total} entries",
       "Truncated": "showing {shown} of {total}",
-      "Empty": "Nothing matches."
+      "Empty": "Nothing matches.",
+      "Loading": "loading…",
+      "LoadingHint": "Reading the compendia…",
+      "Points": "pts",
+      "Cost": "= {points} pts",
+      "Unspent": "{points} unspent",
+      "Raised": {
+        "levels": "{name}: {from} → {to} levels.",
+        "points": "{name}: {from} → {to} points.",
+        "quantity": "{name}: {from} → {to}."
+      }
     },
     "Condition": {
       "AllOutDefense": "All-Out Defense",
@@ -1412,6 +1434,21 @@
       "Higher3": "Three feet above them (they defend at -1)",
       "Higher4": "Four feet above them (-2)",
       "Higher5": "Five feet or more above them (-3)"
+    },
+    "Sources": {
+      "Title": "Compendium sources",
+      "MenuLabel": "Choose compendia",
+      "MenuHint": "Which compendia the Add and Browse buttons draw from. The system's own by default; a world or module pack of your own can be offered beside them or instead of them.",
+      "Intro": "Tick the compendia the picker should offer. A private pack of expanded descriptions or campaign-specific gear can be offered beside the book's, or instead of it. Nothing ticked means the system's own packs.",
+      "Restore": "System packs only",
+      "Saved": "Compendium sources updated.",
+      "NoPacks": "No Item compendia are available in this world.",
+      "NoneHint": "Nothing is ticked, so the picker will offer the system's own packs.",
+      "Group": {
+        "system": "This system",
+        "world": "This world",
+        "module": "Modules"
+      }
     }
   }
 }
