@@ -112,6 +112,7 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "criticalSpellFailure", reference: "Characters p. 236", default: true },
     { key: "maintainingSpells", reference: "Characters p. 238", default: true },
     { key: "spellDistraction", reference: "Characters p. 236", default: true },
+    { key: "ruleOf16", reference: "Campaigns p. 349", default: true },
   ],
 };
 

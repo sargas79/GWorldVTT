@@ -30,6 +30,8 @@ import { handednessOf, visionOf } from "./tactical-context.js";
 import { HIT_LOCATION_ORDER, type HitLocation } from "../rules/hit-locations.js";
 import { defenseChoices, type DefenseChoice, type DefenseKey } from "./defense-choices.js";
 import { loseAim } from "./aim.js";
+import { blockingSpellsOf, castBlockingSpell } from "./casting.js";
+import { addResistControls } from "./spell-resistance.js";
 import type { DamageType } from "../rules/types.js";
 
 const APPLIED_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-applied.hbs`;
@@ -350,6 +352,8 @@ interface DefenseFlag {
   defensePenalty?: number;
   /** True for a critical hit, which no active defense may be rolled against. */
   noDefense?: boolean;
+  /** True for a thrown Missile spell, which may be dodged or blocked but not parried. */
+  noParry?: boolean;
 }
 
 function defenseFlag(message: any): DefenseFlag | null {
@@ -372,6 +376,7 @@ const REFUSAL_LABELS: Record<NonNullable<DefenseChoice["reason"]>, string> = {
   maneuver: "GWORLD.Defense.Maneuver",
   noParry: "GWORLD.Defense.NoParry",
   noBlock: "GWORLD.Defense.NoBlock",
+  missile: "GWORLD.Defense.MissileSpell",
 };
 
 /**
@@ -440,8 +445,20 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       deception,
       maneuver: defender.system?.derived?.maneuver ?? null,
     });
+    // "Your target may block or dodge, but not parry" a Missile spell
+    // (Characters p. 241): the parry stays on the card, refused, with why.
+    if (flag.noParry) {
+      for (const choice of choices) {
+        if (choice.key === "parry") Object.assign(choice, { available: false, shown: null, reason: "missile" });
+      }
+    }
 
-    if (!choices.some((choice) => choice.available)) {
+    // A Blocking spell "is cast instantly as a defense against either a
+    // physical attack or another spell" (Characters p. 241), so a defender
+    // who knows one is offered it beside the three ordinary defenses.
+    const blocking = isRuleOn("magic") ? blockingSpellsOf(defender) : [];
+
+    if (!choices.some((choice) => choice.available) && blocking.length === 0) {
       for (const choice of choices) row.append(refusedButton(choice));
       root.append(row);
       continue;
@@ -497,6 +514,18 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
           skill: choice.skillName,
           isFencing: choice.isFencing,
         });
+      });
+      row.append(button);
+    }
+
+    for (const spell of blocking) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "gc-apply-button";
+      button.textContent = `${spell.name} ${spell.level}${spell.cost !== null ? ` (${spell.cost})` : ""}`;
+      button.title = game.i18n.localize("GWORLD.Cast.BlockingHint");
+      button.addEventListener("click", () => {
+        void castBlockingSpell(defender, spell.item, flag.attack);
       });
       row.append(button);
     }
@@ -719,5 +748,6 @@ export function registerChatHooks(): void {
     void addDefenseControls(message, html);
     void addKnockdownControls(message, html);
     void addDeathCheckControls(message, html);
+    void addResistControls(message, html);
   });
 }

@@ -23,6 +23,7 @@ export * from "./size.js";
 export * from "./skills.js";
 export * from "./magic.js";
 export * from "./casting.js";
+export * from "./spell-attacks.js";
 export * from "./trait-effects.js";
 export * from "./templates.js";
 export * from "./traits.js";

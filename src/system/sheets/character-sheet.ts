@@ -94,6 +94,15 @@ import {
   rollKeepConcentration,
   toggleConcentrating,
 } from "../casting.js";
+import {
+  describeHeld,
+  dissipateSpell,
+  enlargeMissile,
+  heldSpell,
+  injuredWhileHolding,
+  strikeWithMelee,
+  throwMissile,
+} from "../held-spells.js";
 import { nextSpellPoints, previousSpellPoints, type MagicStyle } from "../../rules/magic.js";
 import { GEAR_GROUPS, gearGroupOf, type GearGroup } from "../gear-groups.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
@@ -1816,6 +1825,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       toggleConcentrating: GWorldCharacterSheet.#onToggleConcentrating,
       keepConcentration: GWorldCharacterSheet.#onKeepConcentration,
       changeMana: GWorldCharacterSheet.#onChangeMana,
+      enlargeMissile: GWorldCharacterSheet.#onEnlargeMissile,
+      throwMissile: GWorldCharacterSheet.#onThrowMissile,
+      strikeMelee: GWorldCharacterSheet.#onStrikeMelee,
+      dissipateSpell: GWorldCharacterSheet.#onDissipateSpell,
+      heldInjury: GWorldCharacterSheet.#onHeldInjury,
     },
   };
 
@@ -2261,6 +2275,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       count: groups.reduce((n, g) => n + g.rows.filter((r) => r.known).length, 0),
       // Where the casting happens, and what is already running (pp. 235, 238).
       mana: describeMana(),
+      // What is in the hand, waiting to be thrown or struck with (pp. 240-241).
+      held: (() => {
+        const held = heldSpell(this.actor);
+        return held ? describeHeld(held) : null;
+      })(),
       active: activeSpells.map((spell: any) => ({
         ...spell,
         ...describeActiveSpell(spell),
@@ -2302,6 +2321,28 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   /** The GM sets the mana here and the campaign's default (p. 235). */
   static async #onChangeMana(this: GWorldCharacterSheet) {
     await promptForMana();
+  }
+
+  /* ── a spell in the hand (Characters pp. 240-241) ─────────────────────── */
+
+  static async #onEnlargeMissile(this: GWorldCharacterSheet) {
+    await enlargeMissile(this.actor);
+  }
+
+  static async #onThrowMissile(this: GWorldCharacterSheet, event: Event) {
+    await throwMissile(this.actor, event);
+  }
+
+  static async #onStrikeMelee(this: GWorldCharacterSheet, event: Event) {
+    await strikeWithMelee(this.actor, event);
+  }
+
+  static async #onDissipateSpell(this: GWorldCharacterSheet) {
+    await dissipateSpell(this.actor);
+  }
+
+  static async #onHeldInjury(this: GWorldCharacterSheet) {
+    await injuredWhileHolding(this.actor);
   }
 
   /**

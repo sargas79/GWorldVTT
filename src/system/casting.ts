@@ -9,6 +9,10 @@
  * Spell Failure Table if it must, and puts a spell with a duration on the
  * caster's list of spells running, where it can be maintained or dropped.
  *
+ * A Missile or Melee spell that succeeds goes into the caster's hand instead
+ * (pp. 240-241), and a Resisted one hands its subject a resistance card
+ * (p. 241). A Blocking spell is cast from the defense card, with no dialog.
+ *
  * The arithmetic is all in `rules/casting.ts`; this is the asking, the dice
  * and the writing to the sheet.
  */
@@ -19,6 +23,8 @@ import { applyFatigue } from "./fatigue.js";
 import { isRuleOn } from "./optional-rules.js";
 import { rollSuccess } from "./roll.js";
 import { targetedTokens } from "./targets.js";
+import { heldSpell, holdSpell, type HeldSpell } from "./held-spells.js";
+import { postResistCard } from "./spell-resistance.js";
 import { penaltyForRoll } from "../rules/attribute-penalties.js";
 import {
   DISTRACTION_PENALTY,
@@ -49,7 +55,7 @@ import {
   type ManaLevel,
   type Ritual,
 } from "../rules/casting.js";
-import { canAttempt, resolveSuccess } from "../rules/success.js";
+import { canAttempt, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import type { ActiveSpell } from "./data/character.js";
 
 const CAST_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/spell-cast.hbs`;
@@ -80,16 +86,18 @@ export function sceneMana(scene: any): ManaLevel | null {
   return isManaLevel(flag) ? flag : null;
 }
 
+function activeScene(): any {
+  return (canvas as any)?.scene ?? (game as any).scenes?.active ?? null;
+}
+
 /** The mana where spells are being cast now: the active scene's, else the world's. */
 export function currentMana(): ManaLevel {
-  const scene = (canvas as any)?.scene ?? (game as any).scenes?.active ?? null;
-  return effectiveMana(worldMana(), sceneMana(scene));
+  return effectiveMana(worldMana(), sceneMana(activeScene()));
 }
 
 /** The mana level a sheet should say, with where it came from. */
 export function describeMana(): { level: ManaLevel; label: string; fromScene: boolean; inPlay: boolean } {
-  const scene = (canvas as any)?.scene ?? (game as any).scenes?.active ?? null;
-  const own = sceneMana(scene);
+  const own = sceneMana(activeScene());
   const level = effectiveMana(worldMana(), own);
   return {
     level,
@@ -106,7 +114,7 @@ export function describeMana(): { level: ManaLevel; label: string; fromScene: bo
  */
 export async function promptForMana(): Promise<void> {
   if (!game.user?.isGM) return;
-  const scene = (canvas as any)?.scene ?? (game as any).scenes?.active ?? null;
+  const scene = activeScene();
   const own = sceneMana(scene);
   const world = worldMana();
   const M = (key: string) => game.i18n.localize(`GWORLD.Mana.${key}`);
@@ -161,21 +169,10 @@ export async function promptForMana(): Promise<void> {
   }
 }
 
-// ── the casting ──────────────────────────────────────────────────────────────
-
-/** What the dialog asked for. */
-interface CastChoices {
-  energy: number;
-  radius: number;
-  subjectSm: number;
-  distance: number;
-  cannotSeeOrTouch: boolean;
-  hpBurn: number;
-  modifier: number;
-}
+// ── what a spell is ──────────────────────────────────────────────────────────
 
 /** What a spell's record says about how it is cast, read once. */
-interface SpellShape {
+export interface SpellShape {
   classes: string[];
   area: boolean;
   blocking: boolean;
@@ -185,7 +182,7 @@ interface SpellShape {
   regular: boolean;
 }
 
-function shapeOf(item: any): SpellShape {
+export function shapeOf(item: any): SpellShape {
   const classes: string[] = item.system?.classes ?? [];
   const has = (c: string) => classes.includes(c);
   return {
@@ -206,6 +203,43 @@ function targetResistance(): { name: string; resistance: number } | null {
   const actor = targets[0]?.actor;
   const resistance = Number(actor?.system?.derived?.magic?.magicResistance ?? 0) || 0;
   return actor && resistance > 0 ? { name: String(actor.name ?? ""), resistance } : null;
+}
+
+/** The modifiers every casting carries, from the mana and the sheet. */
+function standingModifiers(actor: any, options: {
+  mana: ManaLevel;
+  manaInPlay: boolean;
+}): Array<{ label: string; value: number }> {
+  const modifiers: Array<{ label: string; value: number }> = [];
+  const manaMod = options.manaInPlay ? manaSkillModifier(options.mana) : 0;
+  if (manaMod !== 0) modifiers.push({ label: game.i18n.localize(`GWORLD.Mana.${options.mana}`), value: manaMod });
+  const magic = actor.system?.derived?.magic ?? {};
+  if (isRuleOn("maintainingSpells")) {
+    const penalty = maintenancePenalty({
+      spellsOn: Number(magic.spellsOn ?? 0),
+      concentratingOn: Number(magic.concentratingOn ?? 0),
+    });
+    if (penalty !== 0) modifiers.push({ label: L("RunningPenalty"), value: penalty });
+  }
+  // A lowered IQ lowers every spell with it (Campaigns p. 421).
+  const temporary = actor.system?.attributePenalties
+    ? penaltyForRoll({ penalties: actor.system.attributePenalties, basedOn: "IQ", kind: "skill" })
+    : 0;
+  if (temporary !== 0) modifiers.push({ label: game.i18n.localize("GWORLD.Penalties.Label"), value: temporary });
+  return modifiers;
+}
+
+// ── the dialog ───────────────────────────────────────────────────────────────
+
+/** What the dialog asked for. */
+interface CastChoices {
+  energy: number;
+  radius: number;
+  subjectSm: number;
+  distance: number;
+  cannotSeeOrTouch: boolean;
+  hpBurn: number;
+  modifier: number;
 }
 
 /**
@@ -299,6 +333,8 @@ async function promptForCast(options: {
   return result && typeof result === "object" ? (result as CastChoices) : null;
 }
 
+// ── paying and rolling ───────────────────────────────────────────────────────
+
 /** Takes energy off the caster: HP first where they chose to burn it, the rest as fatigue. */
 async function payEnergy(actor: any, total: number, hpBurn: number): Promise<{ fp: number; hp: number }> {
   const hp = Math.max(0, Math.min(Math.floor(hpBurn), total));
@@ -324,12 +360,224 @@ export function describeSeconds(seconds: number): string {
   return game.i18n.format("GWORLD.Cast.Seconds", { n: seconds });
 }
 
+/** Everything a casting has decided before the dice are thrown. */
+interface Casting {
+  actor: any;
+  item: any;
+  shape: SpellShape;
+  /** The spell's own level: what the ritual list and the card's base read. */
+  level: number;
+  mana: ManaLevel;
+  manaInPlay: boolean;
+  ritual: Ritual;
+  /** Energy put into the spell, which is what its effect scales with. */
+  invested: number;
+  /** Energy actually owed on a success, after skill. */
+  cost: number;
+  maintain: number | null;
+  time: string;
+  modifiers: Array<{ label: string; value: number }>;
+  hpBurn: number;
+  /** A line for the card: the radius, the subject's size. */
+  subject: string;
+  /** Whether a spell with a duration goes on the running list. */
+  track: boolean;
+  /** A label in place of the spell's name, for a Blocking spell cast against something. */
+  label?: string;
+  note?: string;
+}
+
+/**
+ * Rolls a casting that has been decided, pays for it, and writes what
+ * followed: a running spell, a spell in hand, a resistance card, a critical
+ * failure's effect, and the card itself.
+ */
+async function resolveCasting(casting: Casting): Promise<SuccessRollResult | null> {
+  const { actor, item, shape, level, mana, manaInPlay, cost, modifiers, hpBurn } = casting;
+
+  const effective = level + modifiers.reduce((sum, m) => sum + m.value, 0);
+  if (!canAttempt(effective)) {
+    ui.notifications?.warn(game.i18n.format("GWORLD.Roll.TooLowToAttempt", { label: item.name, effective }));
+    return null;
+  }
+
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  let outcome = resolveSuccess(roll.total, effective, dieResults(roll));
+  if (manaInPlay) outcome = outcomeUnderMana(outcome, mana);
+
+  const owed = energyOnOutcome({ cost, outcome, information: shape.information });
+  const paid = owed > 0 ? await payEnergy(actor, owed, hpBurn) : { fp: 0, hp: 0 };
+
+  // ── a critical failure ───────────────────────────────────────────────
+  const rolls: any[] = [roll];
+  let failure: { roll: number; effect: string; injury: string; gmDecides: boolean } | null = null;
+  const mild = manaInPlay && criticalFailuresAreMild(mana);
+  if (outcome.criticalFailure && isRuleOn("criticalSpellFailure") && !mild) {
+    const table = new Roll("3d6");
+    await table.evaluate();
+    rolls.push(table);
+    const entry = criticalSpellFailure(table.total);
+    let injury = "";
+    if (entry.injuryDice) {
+      const hurt = new Roll(`${entry.injuryDice}d6`);
+      await hurt.evaluate();
+      rolls.push(hurt);
+      injury = game.i18n.format("GWORLD.Cast.Injury", { hp: hurt.total });
+    } else if (entry.injury) {
+      injury = game.i18n.format("GWORLD.Cast.Injury", { hp: entry.injury });
+    }
+    if (entry.stunned) await setCondition(actor, "stunned", true);
+    failure = {
+      roll: table.total,
+      effect: game.i18n.localize(`GWORLD.SpellFailure.${entry.effect}`),
+      injury,
+      gmDecides: Boolean(entry.gmDecides),
+    };
+  }
+
+  // ── what a success leaves behind ─────────────────────────────────────
+  const durationText = String(item.system.duration?.text ?? "");
+  const durationSeconds: number | null = item.system.duration?.seconds ?? null;
+  const instant = /^instant/i.test(durationText) || (!durationText && durationSeconds === null);
+  const permanent = /^perm/i.test(durationText);
+  const notes: string[] = casting.note ? [casting.note] : [];
+
+  // A Missile or Melee spell is held rather than running (pp. 240-241): it
+  // goes into the hand with the energy that was put into it.
+  const held = outcome.success && (shape.missile || shape.melee);
+  if (held) {
+    const attack = item.system.attack ?? {};
+    const entry: HeldSpell = {
+      itemId: String(item.id),
+      name: String(item.name),
+      kind: shape.missile ? "missile" : "melee",
+      energy: casting.invested,
+      seconds: 1,
+      damage: String(attack.damage ?? ""),
+      damageType: String(attack.damageType ?? ""),
+      explosive: Boolean(attack.explosive),
+      skill: String(attack.skill ?? ""),
+      accuracy: Number(attack.accuracy ?? 0) || 0,
+      halfDamageRange: Number(attack.halfDamageRange ?? 0) || 0,
+      maxRange: Number(attack.maxRange ?? 0) || 0,
+      resistedBy: String(item.system.resistedBy ?? ""),
+    };
+    await holdSpell(actor, entry);
+    notes.push(L(shape.missile ? "MissileHeld" : "MeleeHeld"));
+  }
+
+  // A Blocking one is over as it is cast, and an Information one has no
+  // duration (p. 241); the rest with a duration go on the list.
+  const runs = casting.track && outcome.success && !instant && !permanent && !held && !shape.blocking && !shape.information;
+  if (runs) {
+    const now = Number((game as any).time?.worldTime ?? 0) || 0;
+    const entry: ActiveSpell = {
+      id: foundry.utils.randomID(),
+      itemId: String(item.id),
+      name: String(item.name),
+      castCost: cost,
+      maintainCost: casting.maintain,
+      durationSeconds,
+      expiresAt: spellExpiry(now, durationSeconds),
+      startedAt: now,
+      concentrating: false,
+      permanent: false,
+    };
+    await actor.update({ "system.activeSpells": [...(actor.system.activeSpells ?? []), entry] });
+  }
+
+  // A Resisted spell cast on somebody hands them their roll (p. 241): "A
+  // spell like this works automatically only on a critical success." A held
+  // Melee spell resists when it lands, and a Missile is not resisted at all.
+  const resistedBy = String(item.system.resistedBy ?? "");
+  if (resistedBy && outcome.success && !held && !shape.blocking) {
+    if (outcome.criticalSuccess) {
+      notes.push(L("ResistAutomatic"));
+    } else {
+      const subjects = targetedTokens()
+        .map((token: any) => token?.actor)
+        .filter((subject: any) => subject?.uuid)
+        .slice(0, shape.area ? undefined : 1);
+      await postResistCard({
+        caster: actor,
+        spell: String(item.name),
+        casterRoll: roll.total,
+        casterEffective: effective,
+        resistedBy,
+        area: shape.area,
+        subjects,
+      });
+    }
+  }
+
+  // ── the card ─────────────────────────────────────────────────────────
+  const paidText = owed > 0
+    ? [paid.fp > 0 ? `${paid.fp} FP` : "", paid.hp > 0 ? `${paid.hp} HP` : ""].filter(Boolean).join(" + ")
+    : "";
+  if (outcome.criticalSuccess) notes.push(L("CriticalSuccessNote"));
+
+  const content = await foundry.applications.handlebars.renderTemplate(CAST_TEMPLATE, {
+    spell: casting.label ?? item.name,
+    classes: shape.classes.map((c) => game.i18n.localize(`GWORLD.Spell.Class.${c}`)).join(" / "),
+    subject: casting.subject,
+    base: level,
+    modifiers,
+    effective,
+    cost,
+    reduced: Math.max(0, casting.invested - cost),
+    time: casting.time,
+    ritual: isRuleOn("magicRituals") ? L(`Ritual.${casting.ritual.ritual}`) : "",
+    dice: outcome.dice,
+    roll: roll.total,
+    resultLabel: outcome.criticalSuccess
+      ? L("CriticalSuccess")
+      : outcome.success
+        ? game.i18n.format("GWORLD.Cast.Success", { margin: outcome.margin })
+        : outcome.criticalFailure
+          ? L("CriticalFailure")
+          : game.i18n.format("GWORLD.Cast.Failure", { margin: outcome.margin }),
+    resultClass: outcome.criticalSuccess
+      ? "crit-success"
+      : outcome.success
+        ? "success"
+        : outcome.criticalFailure
+          ? "crit-failure"
+          : "failure",
+    paid: paidText ? game.i18n.format("GWORLD.Cast.Paid", { energy: paidText }) : "",
+    fatigueReturns: manaInPlay && paid.fp > 0 && fatigueReturnsNextTurn(mana),
+    duration: runs
+      ? durationSeconds !== null
+        ? describeSeconds(durationSeconds)
+        : durationText
+      : outcome.success && permanent
+        ? durationText
+        : "",
+    maintain: runs && casting.maintain !== null ? casting.maintain : null,
+    failure,
+    mildFailure: outcome.criticalFailure && mild,
+    note: notes.join(" "),
+  });
+
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content,
+    rolls,
+  });
+
+  return outcome;
+}
+
+// ── casting from the sheet ───────────────────────────────────────────────────
+
 /**
  * Casts a spell from the sheet, start to finish.
  *
  * Refuses, with a reason, what the book refuses: a spell not known, no mana,
  * a non-mage in ordinary mana, a caster who is stunned ("your spell is
- * automatically spoiled", p. 236).
+ * automatically spoiled", p. 236), one already holding a spell ("You cannot
+ * cast another spell while holding a Melee spell", p. 240).
  */
 export async function castSpell(actor: any, item: any): Promise<void> {
   if (!actor?.isOwner || item?.type !== "spell") return;
@@ -341,6 +589,11 @@ export async function castSpell(actor: any, item: any): Promise<void> {
   }
   if (actor.system?.conditions?.stunned) {
     ui.notifications?.warn(L("Stunned"));
+    return;
+  }
+  const holding = heldSpell(actor);
+  if (holding) {
+    ui.notifications?.warn(game.i18n.format("GWORLD.Cast.Holding", { spell: holding.name }));
     return;
   }
 
@@ -374,16 +627,15 @@ export async function castSpell(actor: any, item: any): Promise<void> {
 
   // ── the cost, before and after skill ─────────────────────────────────
   const energy = item.system.energy ?? {};
-  let asked: number;
+  let invested: number;
   if (shape.area) {
-    asked = energy.cast === null ? Math.max(1, Math.floor(choices.energy)) : areaEnergy(energy.cast, choices.radius);
+    invested = energy.cast === null ? Math.max(1, Math.floor(choices.energy)) : areaEnergy(energy.cast, choices.radius);
   } else {
-    asked = Math.max(bounds.min, Math.floor(choices.energy));
-    if (bounds.max !== null) asked = Math.min(bounds.max, asked);
-    if (shape.regular) asked = subjectSizeEnergy(asked, choices.subjectSm);
+    invested = Math.max(bounds.min, Math.floor(choices.energy));
+    if (bounds.max !== null) invested = Math.min(bounds.max, invested);
+    if (shape.regular) invested = subjectSizeEnergy(invested, choices.subjectSm);
   }
-  const cost = energyAfterSkill(asked, ritual, { blocking: shape.blocking });
-  const reduced = asked - cost;
+  const cost = energyAfterSkill(invested, ritual, { blocking: shape.blocking });
   // Maintaining an Area spell scales with the area as casting did.
   const maintainBase =
     energy.maintain === null || energy.maintain === undefined
@@ -398,12 +650,7 @@ export async function castSpell(actor: any, item: any): Promise<void> {
     : describeSeconds(castingTimeAfterSkill(seconds, ritual, { missile: shape.missile }));
 
   // ── the modifiers ────────────────────────────────────────────────────
-  const modifiers: Array<{ label: string; value: number }> = [];
-  if (manaMod !== 0) modifiers.push({ label: game.i18n.localize(`GWORLD.Mana.${mana}`), value: manaMod });
-  if (isRuleOn("maintainingSpells")) {
-    const penalty = maintenancePenalty(running);
-    if (penalty !== 0) modifiers.push({ label: L("RunningPenalty"), value: penalty });
-  }
+  const modifiers = standingModifiers(actor, { mana, manaInPlay });
   if (shape.regular || shape.area) {
     const penalty = distancePenalty({ yards: choices.distance, cannotSeeOrTouch: choices.cannotSeeOrTouch });
     if (penalty !== 0) modifiers.push({ label: L("DistanceLabel"), value: penalty });
@@ -413,138 +660,91 @@ export async function castSpell(actor: any, item: any): Promise<void> {
   }
   const hpBurn = Math.max(0, Math.floor(choices.hpBurn));
   if (hpBurn > 0) modifiers.push({ label: L("BurnHp"), value: hpBurnPenalty(hpBurn) });
-  // A lowered IQ lowers every spell with it (Campaigns p. 421).
-  const temporary = actor.system?.attributePenalties
-    ? penaltyForRoll({ penalties: actor.system.attributePenalties, basedOn: "IQ", kind: "skill" })
-    : 0;
-  if (temporary !== 0) modifiers.push({ label: game.i18n.localize("GWORLD.Penalties.Label"), value: temporary });
   if (choices.modifier !== 0) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: choices.modifier });
   }
 
-  const effective = level + modifiers.reduce((sum, m) => sum + m.value, 0);
-  if (!canAttempt(effective)) {
-    ui.notifications?.warn(game.i18n.format("GWORLD.Roll.TooLowToAttempt", { label: item.name, effective }));
-    return;
-  }
-
-  // ── the roll ─────────────────────────────────────────────────────────
-  const roll = new Roll("3d6");
-  await roll.evaluate();
-  let outcome = resolveSuccess(roll.total, effective, dieResults(roll));
-  if (manaInPlay) outcome = outcomeUnderMana(outcome, mana);
-
-  // ── what it cost ─────────────────────────────────────────────────────
-  const owed = energyOnOutcome({ cost, outcome, information: shape.information });
-  const paid = owed > 0 ? await payEnergy(actor, owed, hpBurn) : { fp: 0, hp: 0 };
-
-  // ── a critical failure ───────────────────────────────────────────────
-  const rolls: any[] = [roll];
-  let failure: { roll: number; effect: string; injury: string; gmDecides: boolean } | null = null;
-  const mild = manaInPlay && criticalFailuresAreMild(mana);
-  if (outcome.criticalFailure && isRuleOn("criticalSpellFailure") && !mild) {
-    const table = new Roll("3d6");
-    await table.evaluate();
-    rolls.push(table);
-    const entry = criticalSpellFailure(table.total);
-    let injury = "";
-    if (entry.injuryDice) {
-      const hurt = new Roll(`${entry.injuryDice}d6`);
-      await hurt.evaluate();
-      rolls.push(hurt);
-      injury = game.i18n.format("GWORLD.Cast.Injury", { hp: hurt.total });
-    } else if (entry.injury) {
-      injury = game.i18n.format("GWORLD.Cast.Injury", { hp: entry.injury });
-    }
-    if (entry.stunned) await setCondition(actor, "stunned", true);
-    failure = {
-      roll: table.total,
-      effect: game.i18n.localize(`GWORLD.SpellFailure.${entry.effect}`),
-      injury,
-      gmDecides: Boolean(entry.gmDecides),
-    };
-  }
-
-  // ── a spell now running ──────────────────────────────────────────────
-  const durationText = String(item.system.duration?.text ?? "");
-  const durationSeconds: number | null = item.system.duration?.seconds ?? null;
-  const instant = /^instant/i.test(durationText) || (!durationText && durationSeconds === null);
-  const permanent = /^perm/i.test(durationText);
-  // A Missile or Melee spell is held rather than running, a Blocking one is
-  // over as it is cast, and an Information spell has no duration (p. 241).
-  const runs = outcome.success && !instant && !permanent && !shape.missile && !shape.melee && !shape.blocking && !shape.information;
-  if (runs) {
-    const now = Number((game as any).time?.worldTime ?? 0) || 0;
-    const entry: ActiveSpell = {
-      id: foundry.utils.randomID(),
-      itemId: String(item.id),
-      name: String(item.name),
-      castCost: cost,
-      maintainCost: maintain,
-      durationSeconds,
-      expiresAt: spellExpiry(now, durationSeconds),
-      startedAt: now,
-      concentrating: false,
-      permanent: false,
-    };
-    await actor.update({ "system.activeSpells": [...(actor.system.activeSpells ?? []), entry] });
-  }
-
-  // ── the card ─────────────────────────────────────────────────────────
   const subjectParts: string[] = [];
   if (shape.area) subjectParts.push(game.i18n.format("GWORLD.Cast.RadiusOf", { yards: Math.max(1, Math.floor(choices.radius)) }));
   if (shape.regular && choices.subjectSm > 0) subjectParts.push(`SM +${Math.floor(choices.subjectSm)}`);
-  const paidText = owed > 0
-    ? [paid.fp > 0 ? `${paid.fp} FP` : "", paid.hp > 0 ? `${paid.hp} HP` : ""].filter(Boolean).join(" + ")
-    : "";
 
-  const content = await foundry.applications.handlebars.renderTemplate(CAST_TEMPLATE, {
-    spell: item.name,
-    classes: shape.classes.map((c) => game.i18n.localize(`GWORLD.Spell.Class.${c}`)).join(" / "),
-    subject: subjectParts.join(", "),
-    base: level,
-    modifiers,
-    effective,
-    cost,
-    reduced,
-    time,
-    ritual: isRuleOn("magicRituals") ? L(`Ritual.${ritual.ritual}`) : "",
-    dice: outcome.dice,
-    roll: roll.total,
-    resultLabel: outcome.criticalSuccess
-      ? L("CriticalSuccess")
-      : outcome.success
-        ? game.i18n.format("GWORLD.Cast.Success", { margin: outcome.margin })
-        : outcome.criticalFailure
-          ? L("CriticalFailure")
-          : game.i18n.format("GWORLD.Cast.Failure", { margin: outcome.margin }),
-    resultClass: outcome.criticalSuccess
-      ? "crit-success"
-      : outcome.success
-        ? "success"
-        : outcome.criticalFailure
-          ? "crit-failure"
-          : "failure",
-    paid: paidText ? game.i18n.format("GWORLD.Cast.Paid", { energy: paidText }) : "",
-    fatigueReturns: manaInPlay && paid.fp > 0 && fatigueReturnsNextTurn(mana),
-    duration: runs
-      ? durationSeconds !== null
-        ? describeSeconds(durationSeconds)
-        : durationText
-      : outcome.success && permanent
-        ? durationText
-        : "",
-    maintain: runs && maintain !== null ? maintain : null,
-    failure,
-    mildFailure: outcome.criticalFailure && mild,
-    note: outcome.criticalSuccess ? L("CriticalSuccessNote") : "",
+  await resolveCasting({
+    actor, item, shape, level, mana, manaInPlay, ritual, invested, cost, maintain, time,
+    modifiers, hpBurn, subject: subjectParts.join(", "), track: true,
   });
+}
 
-  await ChatMessage.implementation.create({
-    speaker: ChatMessage.implementation.getSpeaker({ actor }),
-    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
-    content,
-    rolls,
+// ── Blocking spells ──────────────────────────────────────────────────────────
+
+/** A Blocking spell a defender knows, as the defense card offers it. */
+export interface BlockingOffer {
+  item: any;
+  name: string;
+  level: number;
+  /** What it costs, which no skill reduces (p. 236). Null where the record cannot say. */
+  cost: number | null;
+}
+
+/** The Blocking spells a defender could cast right now. */
+export function blockingSpellsOf(defender: any): BlockingOffer[] {
+  const held = heldSpell(defender);
+  return [...(defender?.items ?? [])]
+    .filter((item: any) => item.type === "spell" && shapeOf(item).blocking)
+    .filter((item: any) => item.system?.derived?.level !== null && item.system?.derived?.level !== undefined)
+    // A caster holding a Missile "cannot cast another spell"; a held Melee
+    // spell is unaffected by a Blocking one (p. 241), so only the Missile bars it.
+    .filter(() => !(held && held.kind === "missile"))
+    .map((item: any) => ({
+      item,
+      name: String(item.name),
+      level: Number(item.system.derived.level),
+      cost: item.system.energy?.cast ?? null,
+    }));
+}
+
+/**
+ * Casts a Blocking spell as a defense (Characters p. 241): no dialog, since
+ * there is nothing to choose; the mana, the spells running and a lowered IQ
+ * still count, and "Blocking spells do not get an energy cost reduction for
+ * high skill."
+ */
+export async function castBlockingSpell(defender: any, item: any, attack: string): Promise<void> {
+  if (!defender?.isOwner || item?.type !== "spell") return;
+  const level: number | null = item.system?.derived?.level ?? null;
+  if (level === null) return;
+
+  const manaInPlay = isRuleOn("manaLevels");
+  const mana: ManaLevel = manaInPlay ? currentMana() : "normal";
+  const isMage = defender.system?.derived?.magic?.magery !== null && defender.system?.derived?.magic?.magery !== undefined;
+  if (manaInPlay && !mayCast(mana, isMage)) {
+    ui.notifications?.warn(L(mana === "none" ? "NoMana" : "MagesOnly"));
+    return;
+  }
+
+  const shape = shapeOf(item);
+  const invested = Math.max(0, Number(item.system.energy?.cast ?? 0) || 0);
+  const ritual = isRuleOn("magicRituals") ? ritualForSkill(level + (manaInPlay ? manaSkillModifier(mana) : 0)) : NO_RITUAL;
+
+  await resolveCasting({
+    actor: defender,
+    item,
+    shape,
+    level,
+    mana,
+    manaInPlay,
+    ritual,
+    invested,
+    cost: energyAfterSkill(invested, ritual, { blocking: true }),
+    maintain: null,
+    time: L("Instantly"),
+    modifiers: standingModifiers(defender, { mana, manaInPlay }),
+    hpBurn: 0,
+    subject: "",
+    track: false,
+    label: game.i18n.format("GWORLD.Chat.DefendingAgainst", { defense: String(item.name), attack }),
+    // "If you try a Blocking spell, it automatically interrupts your own
+    // concentration" and "You may cast only one Blocking spell per turn".
+    note: L("BlockingNote"),
   });
 }
 

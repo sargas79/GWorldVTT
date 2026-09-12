@@ -45,6 +45,41 @@
     </div>
   </div>
 
+  {{!-- A spell in the hand (Characters pp. 240-241): a Missile to enlarge or
+       throw, a Melee charge to strike with. Nothing else can be cast until
+       it is used or let go. --}}
+  {{#if magic.held}}
+    <div class="isec">
+      <div class="grph">
+        {{localize "GWORLD.Held.InHand"}}
+        <span class="sub">{{magic.held.kind}}</span>
+      </div>
+      <div class="npcline" style="gap: 10px; align-items: center; flex-wrap: wrap">
+        <strong>{{magic.held.name}}</strong>
+        <span class="tag">{{magic.held.energy}} {{localize "GWORLD.Held.Energy"}}</span>
+        {{#if magic.held.damage}}<span class="tag tag-accent">{{magic.held.damage}} {{magic.held.damageType}}</span>{{/if}}
+        {{#if magic.held.missile}}<span class="tag">{{magic.held.seconds}}/3 {{localize "GWORLD.Held.Seconds"}}</span>{{/if}}
+        {{#if @root.editable}}
+          {{#if magic.held.canEnlarge}}
+            <button type="button" class="ibtn" data-action="enlargeMissile"
+                    data-tooltip="{{localize 'GWORLD.Held.EnlargeHint'}}">{{localize "GWORLD.Held.Enlarge"}}</button>
+          {{/if}}
+          {{#if magic.held.missile}}
+            <button type="button" class="ibtn" data-action="throwMissile"
+                    data-tooltip="{{localize 'GWORLD.Held.ThrowHint'}}">{{> "gworld.die"}} {{localize "GWORLD.Held.Throw"}}</button>
+            <button type="button" class="ibtn" data-action="heldInjury"
+                    data-tooltip="{{localize 'GWORLD.Held.InjuredHint'}}">{{localize "GWORLD.Held.Injured"}}</button>
+          {{else}}
+            <button type="button" class="ibtn" data-action="strikeMelee"
+                    data-tooltip="{{localize 'GWORLD.Held.StrikeHint'}}">{{> "gworld.die"}} {{localize "GWORLD.Held.Strike"}}</button>
+          {{/if}}
+          <button type="button" class="ibtn" data-action="dissipateSpell"
+                  data-tooltip="{{localize 'GWORLD.Held.DissipateHint'}}">{{localize "GWORLD.Held.Dissipate"}}</button>
+        {{/if}}
+      </div>
+    </div>
+  {{/if}}
+
   {{!-- Spells still running (Characters pp. 237-238): each with what is
        left of its duration, what keeping it up costs, and whether it is
        being concentrated on, which is what the next casting pays for. --}}

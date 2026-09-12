@@ -245,6 +245,7 @@
     "Defense": {
       "NoParry": "Nothing to parry with",
       "NoBlock": "No shield to block with",
+      "MissileSpell": "A Missile spell can be dodged or blocked, not parried",
       "Maneuver": "This turn's maneuver allows no defense",
       "Arc": "Not from that side"
     },
@@ -310,6 +311,10 @@
         "spellDistraction": {
           "Name": "Distraction and injury",
           "Hint": "A caster who defends, is hurt or is knocked about while concentrating rolls Will-3 to keep the spell."
+        },
+        "ruleOf16": {
+          "Name": "The Rule of 16",
+          "Hint": "A Resisted spell's effective skill against a living subject is capped at 16, or at the subject's resistance if that is higher."
         },
         "feint": {
           "Name": "Feint",
@@ -710,6 +715,13 @@
       "Stunned": "A stunned caster cannot cast: the spell is spoiled.",
       "NoMana": "There is no mana here. Magic does not work.",
       "MagesOnly": "Only mages can cast spells at this mana level.",
+      "Holding": "{spell} is still in hand. Throw it, strike with it or dissipate it before casting again.",
+      "MissileHeld": "The missile is in hand: enlarge it, throw it, or hold it.",
+      "MeleeHeld": "The hand is charged: strike with it, or hold it.",
+      "ResistAutomatic": "A critical success works automatically — no resistance roll.",
+      "Instantly": "instantly",
+      "BlockingHint": "Cast instantly as a defense. One Blocking spell a turn, never against a critical hit, and it spoils any spell being cast.",
+      "BlockingNote": "A Blocking spell interrupts the caster's own concentration; only one may be cast a turn.",
       "Running": "Spells running",
       "RunningHint": "-1 to every casting per spell kept up, -3 per spell concentrated on",
       "Remaining": "Left",
@@ -751,6 +763,44 @@
       "normal": "Normal mana",
       "high": "High mana",
       "veryHigh": "Very high mana"
+    },
+    "Held": {
+      "InHand": "In hand",
+      "missile": "Missile spell, built up and ready to throw",
+      "melee": "Melee spell, charging the hand",
+      "Energy": "energy",
+      "Seconds": "sec.",
+      "Enlarge": "Enlarge",
+      "EnlargeBy": "Energy to add (1 to {max}, one second more)",
+      "EnlargeHint": "Concentrate another second and put more energy in, up to your Magery. Three seconds at most.",
+      "Enlarged": "{spell} enlarged to {energy} energy.",
+      "NoMoreEnlarging": "A Missile spell cannot be built up for more than three seconds.",
+      "Throw": "Throw",
+      "ThrowHint": "A ranged attack with Innate Attack. The target may dodge or block, not parry. Shift-click to set the range by hand.",
+      "Strike": "Strike",
+      "StrikeHint": "A melee attack with the charged hand, at DX or an unarmed skill. The target defends as usual; a hit discharges the spell into them.",
+      "Dissipate": "Dissipate",
+      "DissipateHint": "Let the spell go harmlessly, as a free action.",
+      "Dissipated": "{spell} dissipated.",
+      "Injured": "Hit while holding",
+      "InjuredHint": "Injured with a missile in hand: a Will roll, and on a failure the missile goes off on you.",
+      "InjuredLabel": "Holding {spell} while injured",
+      "OnSelf": "{spell} — on {name}",
+      "AsDescribed": "{spell} has landed; what it does is in its description."
+    },
+    "Resist": {
+      "Title": "Resisted spell",
+      "ResistedBy": "Resisted by",
+      "Area": "Area: everyone in it resists, Magic Resistance counting twice",
+      "CasterRolled": "caster rolled {roll} against {skill}, a margin of {margin}",
+      "Hint": "Each subject rolls below. A subject may choose not to resist.",
+      "NoSubjects": "No token was targeted, so nobody is offered a resistance roll.",
+      "Resist": "Resist:",
+      "ScorePrompt": "Score to resist with ({with})",
+      "Label": "{name} resists {spell} with {with}",
+      "Affected": "Affected by {spell} — the caster won by {by}",
+      "Resisted": "Resisted — {spell} has no effect (caster's skill {caster})",
+      "CasterCapped": "{skill}, capped by the Rule of 16"
     },
     "SpellFailure": {
       "failsInjuryDice": "The spell fails entirely; the caster takes 1d of injury.",
