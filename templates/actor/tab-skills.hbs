@@ -23,6 +23,12 @@
               data-item-types="skill,technique" data-browse-title="GWORLD.Picker.Skills">
         {{> "gworld.search"}} {{localize "GWORLD.Action.BrowseSkills"}}
       </button>
+      {{#if rules.study}}
+        <button type="button" class="ibtn" data-action="study"
+                data-tooltip="{{localize 'GWORLD.Life.StudyHint'}}">
+          {{localize "GWORLD.Life.Study"}}
+        </button>
+      {{/if}}
     {{/if}}
   </div>
 

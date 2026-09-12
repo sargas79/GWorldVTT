@@ -134,4 +134,74 @@
     </div>
   {{/if}}
 
+  {{!-- What the Wealth on the traits tab is worth in money, and what keeping
+        up the Status costs (Characters pp. 25-27, 265; Campaigns p. 517). --}}
+  <div class="isec">
+    <div class="ish">
+      <span class="num">04</span>{{localize "GWORLD.Life.Money"}}
+      <span style="font-family: var(--font-body); font-size: 11px; letter-spacing: .04em; text-transform: none; color: var(--color-neutral-700)">
+        {{localize (concat "GWORLD.Life.Wealth." derived.wealth.level)}}{{#if derived.wealth.multimillionaire}} {{derived.wealth.multimillionaire}}{{/if}}
+        &middot; {{localize "GWORLD.Life.Status"}} {{signed derived.wealth.status}}
+      </span>
+    </div>
+    <div class="cellgrid">
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Life.Cash"}}</span>
+        <span class="cv">$<input type="number" name="system.money" value="{{system.money}}" step="1"
+               style="width: 110px; background: none; border: 1px solid var(--color-divider); font: inherit; color: inherit"
+               {{#unless editable}}disabled{{/unless}}></span>
+        <span class="cd">{{localize "GWORLD.Life.StartingWealth"}} ${{derived.wealth.startingWealth}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Life.GearCost"}}</span>
+        <span class="cv">${{derived.wealth.gearCost}}</span>
+        <span class="cd">{{localize "GWORLD.Life.GearHint"}}</span>
+      </div>
+      <div class="cell">
+        <span class="cl">{{localize "GWORLD.Life.CostOfLiving"}}</span>
+        <span class="cv">${{derived.wealth.costOfLiving}}</span>
+        <span class="cd">{{localize "GWORLD.Life.PerMonth"}}</span>
+        {{#if (and editable rules.jobs)}}
+          <div class="toolbar">
+            <button type="button" class="ibtn tiny" data-action="payLiving">{{localize "GWORLD.Life.Pay"}}</button>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+    {{#if rules.jobs}}
+      <div class="g4" style="margin-top: 8px">
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Life.JobTitle"}}</span>
+          <div class="fi"><input type="text" name="system.job.title" value="{{system.job.title}}" {{#unless editable}}disabled{{/unless}}></div>
+        </div>
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Life.JobSkill"}}</span>
+          <div class="fi"><input type="text" name="system.job.skill" value="{{system.job.skill}}" {{#unless editable}}disabled{{/unless}}></div>
+        </div>
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Life.JobLevel"}}</span>
+          <div class="fi">
+            <select name="system.job.level" {{#unless editable}}disabled{{/unless}}>
+              {{#each jobLevels as |level|}}
+                <option value="{{level.key}}" {{#if level.selected}}selected{{/if}}>{{level.label}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Life.JobRisk"}}</span>
+          <div class="fi"><input type="text" name="system.job.risk" value="{{system.job.risk}}" {{#unless editable}}disabled{{/unless}}></div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <span style="font-size: 11px; color: var(--color-neutral-700)">
+          {{#if derived.wealth.jobPay}}{{localize "GWORLD.Life.JobPays" amount=derived.wealth.jobPay}}{{else}}{{localize "GWORLD.Life.JobHint" amount=derived.wealth.averagePay}}{{/if}}
+        </span>
+        {{#if editable}}
+          <button type="button" class="ibtn" data-action="workMonth">{{localize "GWORLD.Life.WorkMonth"}}</button>
+        {{/if}}
+      </div>
+    {{/if}}
+  </div>
+
 </section>

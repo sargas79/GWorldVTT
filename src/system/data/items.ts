@@ -202,6 +202,7 @@ export class SkillData extends foundry.abstract.TypeDataModel {
   declare bonus: number;
   declare defaults: Array<{ from: "attribute" | "skill"; attribute: SkillAttribute; skill: string; modifier: number }>;
   declare techLevel: string;
+  declare studyHours: number;
   declare derived: { level: number | null; relativeLevel: number | null; fromDefault: boolean };
 
   static override defineSchema() {
@@ -263,6 +264,11 @@ export class SkillData extends foundry.abstract.TypeDataModel {
       ),
       /** Set for skills marked /TL, recording which tech level was learned. */
       techLevel: new fields.StringField({ required: true, blank: true, initial: "" }),
+      /**
+       * Hours of study banked toward the next character point (Characters
+       * p. 292): what is left over once the whole points have gone in.
+       */
+      studyHours: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
     };
   }
 

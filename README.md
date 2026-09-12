@@ -146,6 +146,18 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
 - **Reaction and Influence rolls** — the Reaction Table with its modifiers on the
   dice rather than on a target, whispered to the GM; and the Quick Contest that
   buys a stated reaction, Diplomacy's second chance included.
+- **Study** — hours with a teacher make a character point every 200, hours
+  alone or on the job every 400; the points go into the skill and onto the
+  ledger, and the hours short of a point are banked.
+- **Money** — what the Wealth trait is worth at the character's tech level,
+  what the gear cost, a month's cost of living at their Status, and a job
+  rolled monthly against its skill that pays, or does not, or is lost.
+- **Languages and cultures** — a Broken or Accented language costs an
+  Influence roll, and an unfamiliar culture costs reactions and Influence
+  alike, unless the character adapts to any.
+- **Aging** — a HT roll a year from 50, oftener later, that costs a point of
+  an attribute when it fails; Longevity, Extended and Short Lifespan and
+  Unaging are read.
 - **Temporary attribute penalties** — off the skills the attribute governs, and
   off nothing else: never a defense, a resistance roll or a Fright Check.
 - **Compendia** of advantages, disadvantages, skills, spells, equipment and

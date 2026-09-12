@@ -32,6 +32,11 @@ import {
 import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { senseScores } from "../../rules/senses.js";
+import {
+  costOfLiving, gearCost, monthlyPay, startingWealth, statusFrom, wealthFrom, type WealthLevel,
+} from "../../rules/wealth.js";
+import { agingRollsPerYear, lifespanFrom } from "../../rules/aging.js";
+import { culturallyAdaptable, languagePenalty, type Comprehension } from "../../rules/languages.js";
 import { baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import { usableInCloseCombat } from "../../rules/tactical.js";
 import { isRuleOn } from "../optional-rules.js";
@@ -288,6 +293,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     attackedThisTurn: boolean;
     closeCombat: boolean;
   };
+  declare money: number;
+  declare job: { title: string; skill: string; level: string; risk: string };
   declare details: {
     player: string; height: string; weight: string; age: string;
     appearance: string; biography: string; notes: string;
@@ -607,6 +614,24 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         closeCombat: new fields.BooleanField({ initial: false }),
       }),
 
+      /** Cash in hand, in $ (Characters p. 25). Starting wealth less the gear is where it begins. */
+      money: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
+
+      /**
+       * A job (Campaigns pp. 516-518): what it is called, the skill it is
+       * rolled against each month, the level of Wealth it pays at, and what
+       * a critical failure brings down.
+       */
+      job: new fields.SchemaField({
+        title: new fields.StringField({ required: true, blank: true, initial: "" }),
+        skill: new fields.StringField({ required: true, blank: true, initial: "" }),
+        level: new fields.StringField({
+          required: true, nullable: false, initial: "average",
+          choices: ["poor", "struggling", "average", "comfortable", "wealthy", "veryWealthy", "filthyRich"],
+        }),
+        risk: new fields.StringField({ required: true, blank: true, initial: "" }),
+      }),
+
       details: new fields.SchemaField({
         player: new fields.StringField({ required: true, blank: true, initial: "" }),
         height: new fields.StringField({ required: true, blank: true, initial: "" }),
@@ -757,6 +782,51 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       }
     }
     return null;
+  }
+
+  /**
+   * What the money comes to (Characters pp. 25-27, 265; Campaigns p. 517).
+   *
+   * Starting wealth is the tech level's figure times the level of Wealth;
+   * the gear is what has been spent of it; the cost of living is what a
+   * month at this Status costs; and the job pays at the level of Wealth it
+   * was written for.
+   */
+  #wealth(traits: ReadonlyArray<{ name: string; levels?: number }>) {
+    const standing = wealthFrom(traits);
+    const status = statusFrom(traits);
+    const tl = Number(this.tl) || 0;
+    const gear = gearCost(
+      this.items
+        .filter((i) => i.system && typeof i.system.cost === "number")
+        .map((i) => ({ cost: Number(i.system.cost), quantity: Number(i.system.quantity ?? 1) })),
+    );
+    const jobLevel = String(this.job?.level ?? "average") as Exclude<WealthLevel, "multimillionaire" | "deadBroke">;
+    return {
+      level: standing.level,
+      multimillionaire: standing.multimillionaire,
+      startingWealth: startingWealth(tl, standing),
+      gearCost: gear,
+      money: Number(this.money) || 0,
+      status,
+      costOfLiving: costOfLiving(status, tl),
+      averagePay: monthlyPay(tl, "average"),
+      jobPay: this.job?.title ? monthlyPay(tl, jobLevel) : 0,
+    };
+  }
+
+  /** How old, and how often the aging roll comes round (Campaigns p. 444). */
+  #aging(traits: ReadonlyArray<{ name: string; levels?: number }>) {
+    const lifespan = lifespanFrom(traits);
+    const parsed = parseInt(String(this.details?.age ?? ""), 10);
+    const age = Number.isFinite(parsed) ? parsed : null;
+    return {
+      age,
+      rollsPerYear: age === null ? 0 : agingRollsPerYear(age, lifespan),
+      longevity: lifespan.longevity,
+      unaging: lifespan.unaging,
+      lifespanMultiplier: lifespan.multiplier,
+    };
   }
 
   override prepareDerivedData(): void {
@@ -1564,6 +1634,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       charismaInfluence: charismaInfluenceBonus(heldTraits),
       // Fit's bonus to every HT roll, for the rolls made outside this block.
       healthRollBonus: traits.htRolls,
+      wealth: this.#wealth(heldTraits),
+      aging: this.#aging(heldTraits),
+      // Each language with what using it costs (Characters p. 24), and
+      // whether an unfamiliar culture costs anything at all (p. 46).
+      languages: this.itemsOfType("language").map((item) => ({
+        id: String(item.id ?? ""),
+        name: String(item.name ?? ""),
+        spoken: String(item.system?.spoken ?? "none") as Comprehension,
+        written: String(item.system?.written ?? "none") as Comprehension,
+        spokenPenalty: languagePenalty(String(item.system?.spoken ?? "none") as Comprehension),
+        writtenPenalty: languagePenalty(String(item.system?.written ?? "none") as Comprehension),
+      })),
+      culturallyAdaptable: culturallyAdaptable(heldTraits),
       regeneration: regenerationRate(traits.regeneration),
       // The attributes as everything else reads them: bought plus what traits
       // add. The sheet's inputs edit the bought figure and show this one.

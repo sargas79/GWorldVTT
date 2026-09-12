@@ -102,6 +102,10 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "intoxication", reference: "Campaigns pp. 439-441", default: true },
     { key: "disease", reference: "Campaigns pp. 442-444", default: true },
     { key: "battleFatigue", reference: "Campaigns p. 426", default: true },
+    { key: "study", reference: "Characters p. 292", default: true },
+    { key: "jobs", reference: "Campaigns pp. 516-518", default: true },
+    { key: "aging", reference: "Campaigns p. 444", default: true },
+    { key: "socialBackground", reference: "Characters pp. 23-24", default: true },
   ],
   magic: [
     // The whole chapter. A campaign without magic has no Magic tab, no

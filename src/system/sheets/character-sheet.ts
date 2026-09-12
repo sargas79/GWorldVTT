@@ -30,6 +30,9 @@ import { drinkForAnHour, drinkingState, hangoverRoll, soberUpRoll } from "../int
 import { checkInfection, exposeToDisease } from "../disease.js";
 import { checkOverpenetration, rollScatter, splashInTheFace } from "../gunplay.js";
 import { rollInfluence, rollReaction } from "../reactions.js";
+import { payCostOfLiving, rollAging, studySkill, workAMonth } from "../life.js";
+import { culturePenalty, languagePenalty, type Comprehension } from "../../rules/languages.js";
+import type { StudyMethod } from "../../rules/study.js";
 import { rollPushingTheEnvelope, rollStayOn } from "../mounted.js";
 import { rollThrow } from "../throwing.js";
 import {
@@ -1007,7 +1010,19 @@ async function promptForSplash(): Promise<{
  * have a -5 reaction to anybody" -- and applying it by hand afterwards means
  * remembering it at the moment the dice land.
  */
-async function promptForReaction(sources: ReactionSource[]): Promise<{
+/** What the sheet says about the languages spoken, or null when the rule is off. */
+function socialBackgroundOf(actor: any): SocialBackground | null {
+  if (!isRuleOn("socialBackground")) return null;
+  return {
+    languages: (actor?.system?.derived?.languages ?? []).map((lang: any) => ({
+      name: String(lang.name ?? ""),
+      spoken: String(lang.spoken ?? "none") as Comprehension,
+    })),
+    adaptable: actor?.system?.derived?.culturallyAdaptable === true,
+  };
+}
+
+async function promptForReaction(sources: ReactionSource[], background: SocialBackground | null = null): Promise<{
   modifier: number;
   best: Reaction | null;
   worst: Reaction | null;
@@ -1052,6 +1067,10 @@ async function promptForReaction(sources: ReactionSource[]): Promise<{
       </label>
       ${alwaysList ? `<p class="ihint" style="margin:0">${L("FromTraits")}: ${alwaysList}</p>` : ""}
       ${conditional}
+      ${background ? `<label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="unfamiliar">
+        <span>${game.i18n.localize(background.adaptable ? "GWORLD.Life.UnfamiliarAdaptable" : "GWORLD.Life.Unfamiliar")}</span>
+      </label>` : ""}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Best")}</span>
         <select name="best" style="width:150px">${bands("")}</select>
@@ -1076,6 +1095,11 @@ async function promptForReaction(sources: ReactionSource[]): Promise<{
         form?.querySelectorAll<HTMLInputElement>('input[name^="source-"]').forEach((box) => {
           if (box.checked) ticked += Number(box.dataset.value) || 0;
         });
+        // "-3 on all ... reaction rolls" in a culture you do not know (p. 23).
+        if (background) {
+          const unfamiliar = form?.querySelector<HTMLInputElement>('input[name="unfamiliar"]')?.checked ?? false;
+          ticked += culturePenalty(unfamiliar, background.adaptable ? [{ name: "Cultural Adaptability" }] : []);
+        }
         return {
           modifier:
             (Number(form?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value ?? 0) || 0) +
@@ -1092,8 +1116,99 @@ async function promptForReaction(sources: ReactionSource[]): Promise<{
   return result && typeof result === "object" ? (result as never) : null;
 }
 
+/** Asks what was studied, for how long, and how (Characters p. 292). */
+async function promptForStudy(
+  skills: Array<{ id: string; name: string; banked: number }>,
+): Promise<{ skillId: string; hours: number; method: StudyMethod } | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Life.${key}`);
+  const options = skills
+    .map(
+      (skill) =>
+        `<option value="${skill.id}">${skill.name}${skill.banked ? ` (${game.i18n.format("GWORLD.Life.BankedShort", { hours: skill.banked })})` : ""}</option>`,
+    )
+    .join("");
+  const methods = (["education", "selfTeaching", "onTheJob"] as const)
+    .map((m) => `<option value="${m}">${L(`Method.${m}`)}</option>`)
+    .join("");
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Study") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Skill")}</span>
+        <select name="skill" style="width:200px">${options}</select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Hours")}</span>
+        <input type="number" name="hours" value="200" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("How")}</span>
+        <select name="method" style="width:200px">${methods}</select>
+      </label>
+      <p class="ihint" style="margin:0">${L("StudyHint")}</p>
+    </div>`,
+    ok: {
+      label: L("Study"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        return {
+          skillId: form?.querySelector<HTMLSelectElement>('select[name="skill"]')?.value ?? "",
+          hours: Number(form?.querySelector<HTMLInputElement>('input[name="hours"]')?.value ?? 0) || 0,
+          method: (form?.querySelector<HTMLSelectElement>('select[name="method"]')?.value ?? "education") as StudyMethod,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+
+  return result && typeof result === "object" && (result as { skillId: string }).skillId
+    ? (result as never)
+    : null;
+}
+
+/** The languages and manners a social roll is made in (Characters pp. 23-24). */
+interface SocialBackground {
+  languages: Array<{ name: string; spoken: Comprehension }>;
+  adaptable: boolean;
+}
+
+/** The markup for the language select and the culture box, or nothing when the rule is off. */
+function socialBackgroundFields(background: SocialBackground | null): string {
+  if (!background) return "";
+  const L = (key: string) => game.i18n.localize(`GWORLD.Life.${key}`);
+  const languages = [`<option value="">${L("NoLanguage")}</option>`]
+    .concat(
+      background.languages.map(
+        (lang) =>
+          `<option value="${lang.spoken}">${lang.name} (${game.i18n.localize(`GWORLD.Language.${lang.spoken}`)})</option>`,
+      ),
+    )
+    .join("");
+  return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <span>${L("LanguageUsed")}</span>
+      <select name="language" style="width:200px">${languages}</select>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" name="unfamiliar">
+      <span>${background.adaptable ? L("UnfamiliarAdaptable") : L("Unfamiliar")}</span>
+    </label>`;
+}
+
+/** What the language chosen and the culture ticked cost (Characters pp. 23-24). */
+function socialBackgroundPenalty(form: HTMLElement | null, background: SocialBackground | null): number {
+  if (!background || !form) return 0;
+  const spoken = form.querySelector<HTMLSelectElement>('select[name="language"]')?.value ?? "";
+  const language = spoken ? (languagePenalty(spoken as Comprehension) ?? 0) : 0;
+  const unfamiliar = form.querySelector<HTMLInputElement>('input[name="unfamiliar"]')?.checked ?? false;
+  return language + culturePenalty(unfamiliar, background.adaptable ? [{ name: "Cultural Adaptability" }] : []);
+}
+
 /** Asks which Influence skill is being tried, and how (Campaigns p. 359). */
-async function promptForInfluence(skills: Array<{ name: string; level: number }>): Promise<{
+async function promptForInfluence(
+  skills: Array<{ name: string; level: number }>,
+  background: SocialBackground | null = null,
+): Promise<{
   skill: string;
   skillLevel: number;
   modifier: number;
@@ -1125,6 +1240,7 @@ async function promptForInfluence(skills: Array<{ name: string; level: number }>
         <input type="checkbox" name="specious">
         <span>${L("Specious")}</span>
       </label>
+      ${socialBackgroundFields(background)}
     </div>`,
     ok: {
       label: game.i18n.localize("GWORLD.Chat.Roll"),
@@ -1134,8 +1250,11 @@ async function promptForInfluence(skills: Array<{ name: string; level: number }>
         return {
           skill: name,
           skillLevel: skills.find((skill) => skill.name === name)?.level ?? 4,
+          // The language spoken and the culture it is spoken in come off the
+          // Influence roll (Characters pp. 23-24).
           modifier:
-            Number(form?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value ?? 0) || 0,
+            (Number(form?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value ?? 0) || 0) +
+            socialBackgroundPenalty(form, background),
           reactionModifier:
             Number(form?.querySelector<HTMLInputElement>('input[name="reaction"]')?.value ?? 0) || 0,
           specious:
@@ -1849,6 +1968,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       toggleSkillOrder: GWorldCharacterSheet.#onToggleSkillOrder,
       readyWeapon: GWorldCharacterSheet.#onReadyWeapon,
       regenerate: GWorldCharacterSheet.#onRegenerate,
+      study: GWorldCharacterSheet.#onStudy,
+      workMonth: GWorldCharacterSheet.#onWorkMonth,
+      payLiving: GWorldCharacterSheet.#onPayLiving,
+      agingRoll: GWorldCharacterSheet.#onAgingRoll,
       castSpell: GWorldCharacterSheet.#onCastSpell,
       maintainSpell: GWorldCharacterSheet.#onMaintainSpell,
       dropSpell: GWorldCharacterSheet.#onDropSpell,
@@ -2108,6 +2231,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // not disabled, it is absent: there is nothing to explain about a rule
       // nobody is using.
       rules: activeRules(),
+
+      // The levels of Wealth a job can pay at (Campaigns p. 517).
+      jobLevels: (["poor", "struggling", "average", "comfortable", "wealthy", "veryWealthy", "filthyRich"] as const).map((key) => ({
+        key,
+        label: game.i18n.localize(`GWORLD.Life.Wealth.${key}`),
+        selected: (system.job?.level ?? "average") === key,
+      })),
 
       // "-2 DX, -1 IQ" for the button, or nothing at all when nothing is down.
       penaltiesShowing: (["ST", "DX", "IQ", "HT"] as const)
@@ -3426,7 +3556,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onReaction(this: GWorldCharacterSheet) {
     if (!isRuleOn("reactions")) return;
 
-    const asked = await promptForReaction(this.actor.system?.derived?.reactions ?? []);
+    const asked = await promptForReaction(
+      this.actor.system?.derived?.reactions ?? [],
+      socialBackgroundOf(this.actor),
+    );
     if (!asked) return;
 
     await rollReaction({ actor: this.actor, ...asked });
@@ -3458,7 +3591,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       level: this.actor.system?.derived?.influence?.[name] ?? 4,
     }));
 
-    const asked = await promptForInfluence(skills);
+    const asked = await promptForInfluence(skills, socialBackgroundOf(this.actor));
     if (!asked) return;
 
     await rollInfluence({ actor: this.actor, subject, ...asked });
@@ -3919,6 +4052,63 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (minutes === null || minutes <= 0) return;
     await regenerate({ actor: this.actor, seconds: minutes * 60 });
+  }
+
+  /**
+   * Hours with a teacher, a book or the job (Characters p. 292).
+   *
+   * The skills offered are the ones on the sheet: study improves a skill the
+   * character already has some of, and a new one is added first.
+   */
+  static async #onStudy(this: GWorldCharacterSheet) {
+    if (!isRuleOn("study")) return;
+    const skills = [...this.actor.items]
+      .filter((item: any) => item.type === "skill")
+      .map((item: any) => ({ id: String(item.id), name: String(item.name), banked: Number(item.system?.studyHours) || 0 }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (skills.length === 0) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Life.NoSkills"));
+      return;
+    }
+    const asked = await promptForStudy(skills);
+    if (!asked) return;
+    await studySkill({ actor: this.actor, ...asked });
+  }
+
+  /** A month at the job (Campaigns p. 517). */
+  static async #onWorkMonth(this: GWorldCharacterSheet) {
+    if (!isRuleOn("jobs")) return;
+    const modifier = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Life.Job"),
+      label: game.i18n.localize("GWORLD.Chat.Modifier"),
+      initial: 0,
+    });
+    if (modifier === null) return;
+    await workAMonth({ actor: this.actor, modifier });
+  }
+
+  /** The month's cost of living, out of the money on the sheet (Characters p. 265). */
+  static async #onPayLiving(this: GWorldCharacterSheet) {
+    if (!isRuleOn("jobs")) return;
+    const months = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Life.CostOfLiving"),
+      label: game.i18n.localize("GWORLD.Life.Months"),
+      initial: 1,
+    });
+    if (months === null || months <= 0) return;
+    await payCostOfLiving({ actor: this.actor, months });
+  }
+
+  /** A year older (Campaigns p. 444). */
+  static async #onAgingRoll(this: GWorldCharacterSheet) {
+    if (!isRuleOn("aging")) return;
+    const modifier = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Life.Aging"),
+      label: game.i18n.localize("GWORLD.Chat.Modifier"),
+      initial: 0,
+    });
+    if (modifier === null) return;
+    await rollAging({ actor: this.actor, modifier });
   }
 
   static async #onToggleEquipped(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

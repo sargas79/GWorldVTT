@@ -91,6 +91,12 @@ export function registerTemplateHelpers(): void {
     return args.some(Boolean);
   });
 
+  /** All of these, for a control that needs a rule on and something to act on. */
+  Handlebars.registerHelper("and", (...args: unknown[]) => {
+    args.pop();
+    return args.every(Boolean);
+  });
+
   /** Whether a list holds a value, for checkbox sets such as armor locations. */
   Handlebars.registerHelper("includes", (list: unknown, value: unknown) =>
     Array.isArray(list) && list.includes(value),

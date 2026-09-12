@@ -452,6 +452,22 @@
           "Name": "High-speed movement",
           "Hint": "Going faster than you can stop: turning radius, and pushing the envelope."
         },
+        "study": {
+          "Name": "Improvement through study",
+          "Hint": "Hours of study become character points in the skill studied: 200 with a teacher, 400 alone or on the job."
+        },
+        "jobs": {
+          "Name": "Jobs and cost of living",
+          "Hint": "Money on the sheet: a monthly job roll that pays or does not, and a month's cost of living at your Status."
+        },
+        "aging": {
+          "Name": "Aging",
+          "Hint": "From 50, a HT roll a year against the years; a failure costs a point of an attribute."
+        },
+        "socialBackground": {
+          "Name": "Languages and cultures",
+          "Hint": "A broken language is -3 and an accented one -1 on Influence rolls; an unfamiliar culture is -3 on reactions and Influence."
+        },
         "battleFatigue": {
           "Name": "Battle fatigue",
           "Hint": "A fight that runs past ten seconds costs everyone in it a point of fatigue when the tracker closes."
@@ -1911,6 +1927,75 @@
     "Natural": {
       "punch": "Punch",
       "kick": "Kick"
+    },
+    "Life": {
+      "Study": "Study",
+      "StudyHint": "Hours with a teacher make a point every 200; teaching yourself, or learning on the job, every 400 (Characters p. 292). Hours short of a point are banked on the skill.",
+      "StudyAward": "Study: {skill}",
+      "Studied": "{hours} hours of {method} on {skill}",
+      "Method": {
+        "education": "instruction",
+        "selfTeaching": "self-teaching",
+        "onTheJob": "work"
+      },
+      "Skill": "Skill",
+      "Hours": "Hours",
+      "How": "How",
+      "PointsEarned": "{points} character point(s) into the skill",
+      "NoPointYet": "Not a whole point yet",
+      "Banked": "{hours} hours banked toward the next",
+      "BankedShort": "{hours} h banked",
+      "NoSkills": "Nothing to study: add a skill first",
+      "Money": "Money",
+      "Cash": "Cash",
+      "StartingWealth": "started with",
+      "GearCost": "Gear",
+      "GearHint": "what everything owned cost",
+      "CostOfLiving": "Cost of living",
+      "PerMonth": "a month, at this Status (Characters p. 265)",
+      "Pay": "Pay a month",
+      "PaidMonths": "{months} month(s) of living paid: ${amount}",
+      "MoneyLeft": "${amount} left",
+      "Months": "Months",
+      "Status": "Status",
+      "Wealth": {
+        "deadBroke": "Dead Broke",
+        "poor": "Poor",
+        "struggling": "Struggling",
+        "average": "Average",
+        "comfortable": "Comfortable",
+        "wealthy": "Wealthy",
+        "veryWealthy": "Very Wealthy",
+        "filthyRich": "Filthy Rich",
+        "multimillionaire": "Multimillionaire"
+      },
+      "Job": "Job",
+      "JobTitle": "Job",
+      "JobSkill": "Rolled against",
+      "JobLevel": "Pays at",
+      "JobRisk": "Risk",
+      "JobPays": "Pays ${amount} a month on a successful roll (Campaigns p. 517).",
+      "JobHint": "Name a job and the skill it is rolled against; an Average job here pays ${amount} a month (Campaigns p. 517).",
+      "WorkMonth": "Work a month",
+      "Worked": "A month as {title}, rolled against {skill}",
+      "NoJob": "No job to work: give it a title and a skill the character has",
+      "Paid": "Paid ${amount}",
+      "NotPaid": "Not paid this month",
+      "Promoted": "A bonus month's pay is in that; the GM may make it a raise or a promotion instead",
+      "Fired": "Out of a job",
+      "Risk": "The job's risk lands as well",
+      "RiskNamed": "The job's risk lands as well: {risk}",
+      "Aging": "Aging roll",
+      "AgingHint": "{rolls} roll(s) a year against HT (Campaigns p. 444)",
+      "AgingDetail": "Age {age}: {rolls} roll(s) a year",
+      "Held": "Holding up",
+      "Lost": "{points} point(s) off {attribute}",
+      "Longevity": "Longevity: only a 17 or 18 fails",
+      "Unaging": "Unaging: no aging rolls at all",
+      "LanguageUsed": "Language used",
+      "NoLanguage": "Native, or none needed",
+      "Unfamiliar": "In an unfamiliar culture (-3)",
+      "UnfamiliarAdaptable": "In an unfamiliar culture (Cultural Adaptability: no penalty)"
     },
     "Senses": {
       "vision": "Vision",
