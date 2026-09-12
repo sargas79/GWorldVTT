@@ -17,15 +17,7 @@ import {
   slamDamage,
 } from "../../rules/attack-options.js";
 import { attackArc } from "../../rules/tactical.js";
-import {
-  CLIMBS,
-  climb,
-  climbingModifier,
-  swimmingModifier,
-  throwingDistance,
-  thrownDamage,
-} from "../../rules/physical.js";
-import { parseDiceAdds, formatDiceAdds } from "../../rules/dice.js";
+import { CLIMBS, climb, climbingModifier, swimmingModifier } from "../../rules/physical.js";
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
@@ -39,6 +31,7 @@ import { checkInfection, exposeToDisease } from "../disease.js";
 import { checkOverpenetration, rollScatter, splashInTheFace } from "../gunplay.js";
 import { rollInfluence, rollReaction } from "../reactions.js";
 import { rollPushingTheEnvelope, rollStayOn } from "../mounted.js";
+import { rollThrow } from "../throwing.js";
 import {
   applyTemplateToActor,
   appliedTemplates,
@@ -1635,37 +1628,6 @@ async function promptForChoice(options: {
   return typeof result === "string" && result ? result : null;
 }
 
-/** Posts what a thrown object does, since nothing is rolled for it. */
-async function postThrow(options: {
-  actor: any;
-  weight: number;
-  basicLift: number;
-  distance: number | null;
-  damage: string;
-}): Promise<void> {
-  const { actor, weight, basicLift, distance, damage } = options;
-
-  const content = await foundry.applications.handlebars.renderTemplate(
-    `systems/${SYSTEM_ID}/templates/chat/throw.hbs`,
-    {
-      name: String(actor?.name ?? ""),
-      weight,
-      basicLift,
-      // Null means it is past a two-handed lift, which is not a short throw but
-      // no throw at all.
-      tooHeavy: distance === null,
-      distance: distance === null ? 0 : Math.round(distance * 10) / 10,
-      damage,
-    },
-  );
-
-  await ChatMessage.implementation.create({
-    speaker: ChatMessage.implementation.getSpeaker({ actor }),
-    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
-    content,
-  });
-}
-
 /** The attributes a contest can be rolled on, in the order the dialog lists them. */
 const CONTEST_ATTRIBUTES = ["ST", "DX", "IQ", "HT", "Will", "Per"] as const;
 
@@ -2763,21 +2725,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (weight === null) return;
 
-    const feats = this.actor.system?.derived?.feats;
-    const strength = Number(feats?.throwing?.strength) || 10;
-    const basicLift = Number(feats?.throwing?.basicLift) || 0;
-
-    const distance = throwingDistance({ strength, basicLift, weight });
-    const thrust = parseDiceAdds(String(this.actor.system?.derived?.thrust ?? ""));
-    const damage = thrust ? thrownDamage(thrust, weight, basicLift) : null;
-
-    await postThrow({
-      actor: this.actor,
-      weight,
-      basicLift,
-      distance,
-      damage: damage ? formatDiceAdds(damage) : "",
-    });
+    await rollThrow({ actor: this.actor, weight });
   }
 
   /**
