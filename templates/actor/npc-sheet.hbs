@@ -176,5 +176,24 @@
     </div>
   {{/if}}
 
+  {{!-- What the creature is, in words. Folded to its first line like a
+       trait's description, so a bestiary entry of several paragraphs does not
+       push the stat block off a one-pane sheet. Shown when there is anything
+       to read, and to whoever can edit it so a GM can write one. --}}
+  {{#if (or system.details.description editable)}}
+    <details class="isec tdfold npcdesc">
+      <summary title="{{localize "GWORLD.Npc.DescriptionHint"}}">
+        <span class="grph">{{localize "GWORLD.Npc.Description"}}</span>
+        {{#if description.first}}<span class="tdfirst">{{description.first}}</span>{{/if}}
+      </summary>
+      {{#if editable}}
+        <prose-mirror class="box editor prose" name="system.details.description"
+                      value="{{system.details.description}}" toggled>{{{descriptionHTML}}}</prose-mirror>
+      {{else}}
+        <div class="tdfull prose">{{{descriptionHTML}}}</div>
+      {{/if}}
+    </details>
+  {{/if}}
+
 </div>
 </div>

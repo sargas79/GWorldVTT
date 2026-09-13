@@ -176,6 +176,27 @@ function poolField() {
   });
 }
 
+/**
+ * The fields of an actor's `details`, built fresh on every call.
+ *
+ * Fresh because Foundry lets a data field belong to one schema only: an NPC
+ * that adds a field to its details cannot spread the character's field
+ * instances into a schema of its own, or loading the world fails with "the
+ * 'player' field already belongs to some other parent". So a subclass calls
+ * this and adds to what it gets back.
+ */
+export function detailsFields() {
+  return {
+    player: new fields.StringField({ required: true, blank: true, initial: "" }),
+    height: new fields.StringField({ required: true, blank: true, initial: "" }),
+    weight: new fields.StringField({ required: true, blank: true, initial: "" }),
+    age: new fields.StringField({ required: true, blank: true, initial: "" }),
+    appearance: new fields.StringField({ required: true, blank: true, initial: "" }),
+    biography: new fields.HTMLField({ required: true, blank: true, initial: "" }),
+    notes: new fields.HTMLField({ required: true, blank: true, initial: "" }),
+  };
+}
+
 /** A resolved attack mode, ready for the Combat tab to render. */
 export interface DerivedAttack {
   itemId: string;
@@ -800,15 +821,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         risk: new fields.StringField({ required: true, blank: true, initial: "" }),
       }),
 
-      details: new fields.SchemaField({
-        player: new fields.StringField({ required: true, blank: true, initial: "" }),
-        height: new fields.StringField({ required: true, blank: true, initial: "" }),
-        weight: new fields.StringField({ required: true, blank: true, initial: "" }),
-        age: new fields.StringField({ required: true, blank: true, initial: "" }),
-        appearance: new fields.StringField({ required: true, blank: true, initial: "" }),
-        biography: new fields.HTMLField({ required: true, blank: true, initial: "" }),
-        notes: new fields.HTMLField({ required: true, blank: true, initial: "" }),
-      }),
+      details: new fields.SchemaField(detailsFields()),
     };
   }
 
