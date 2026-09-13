@@ -9,6 +9,7 @@ import { thrustDamage } from "../damage.js";
 import { formatDiceAdds } from "../dice.js";
 import { mayUseVehicleSystem, vehicleMovement } from "../vehicle-combat.js";
 import { jumpFromVehicle } from "../collisions.js";
+import { TONS_PER_PERSON, cargoCapacity, curbWeight, endurance, leaveSeat } from "../vehicles.js";
 import {
   cappedAimBonus, crippleThreshold, locationsOf, lossOfControl, mediumOf, occupantDamage,
   occupantHitTarget, targetingSystemBonus, unexpectedDodgePenalty, vehicleHitLocation,
@@ -281,5 +282,58 @@ describe("vehicle maneuvers (Campaigns p. 467)", () => {
     const still = jumpFromVehicle({ hitPoints: 10, vehicleSpeed: 0 });
     expect(still.dice).toBe(1);
     expect(still.modifier).toBeLessThan(0);
+  });
+});
+
+describe("what the vehicle table's columns come to (Campaigns p. 463)", () => {
+  it("takes the people out of the load to leave the cargo", () => {
+    expect(TONS_PER_PERSON).toBe(0.1);
+    // A van with 2 tons of Load carrying five people has 1.5 tons left.
+    expect(cargoCapacity({ load: 2, people: 5 })).toBe(1.5);
+    // More people than it can hold carries no cargo, not negative cargo.
+    expect(cargoCapacity({ load: 0.2, people: 5 })).toBe(0);
+  });
+
+  it("takes the load off the loaded weight to leave the curb weight", () => {
+    expect(curbWeight({ loadedWeight: 2.5, load: 0.5 })).toBe(2);
+    expect(curbWeight({ loadedWeight: 1, load: 3 })).toBe(0);
+  });
+
+  it("divides range by cruising speed for the hours it can stay out", () => {
+    expect(endurance({ rangeMiles: 300, cruisingSpeedMph: 30 })).toBe(10);
+    // Oars and sails have no range on the table, and so no endurance to work out.
+    expect(endurance({ rangeMiles: 0, cruisingSpeedMph: 20 })).toBe(null);
+    expect(endurance({ rangeMiles: 300, cruisingSpeedMph: 0 })).toBe(null);
+  });
+});
+
+/**
+ * "To control his vehicle, the operator must take a Move or Move and Attack
+ * maneuver on his turn" (Campaigns p. 467) -- which only means anything while
+ * somebody has the wheel. A car full of people and nobody driving is a state
+ * getting out of a car must not be able to reach.
+ */
+describe("who has the wheel when somebody gets out (p. 467)", () => {
+  const driver = { uuid: "Actor.a", operator: true };
+  const rider = { uuid: "Actor.b", operator: false };
+  const second = { uuid: "Actor.c", operator: false };
+
+  it("passes the wheel on when the driver leaves", () => {
+    expect(leaveSeat([driver, rider, second], "Actor.a")).toEqual([
+      { uuid: "Actor.b", operator: true },
+      { uuid: "Actor.c", operator: false },
+    ]);
+  });
+
+  it("leaves the wheel where it is when a passenger goes", () => {
+    expect(leaveSeat([driver, rider], "Actor.b")).toEqual([{ uuid: "Actor.a", operator: true }]);
+  });
+
+  it("empties the vehicle when the last one out was driving", () => {
+    expect(leaveSeat([driver], "Actor.a")).toEqual([]);
+  });
+
+  it("says nothing about somebody who was never aboard", () => {
+    expect(leaveSeat([driver, rider], "Actor.z")).toEqual([driver, rider]);
   });
 });

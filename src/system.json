@@ -170,7 +170,8 @@
   "documentTypes": {
     "Actor": {
       "character": {},
-      "npc": {}
+      "npc": {},
+      "vehicle": {}
     },
     "Item": {
       "trait": {},

@@ -19,6 +19,7 @@ import { GWorldCombat } from "./system/combat.js";
 import { SYSTEM_ID } from "./system/constants.js";
 import { CharacterData } from "./system/data/character.js";
 import { NpcData } from "./system/data/npc.js";
+import { VehicleData } from "./system/data/vehicle.js";
 import { GWorldItem } from "./system/documents/item.js";
 import {
   ArmorData,
@@ -35,6 +36,7 @@ import {
 import { GWorldCharacterSheet } from "./system/sheets/character-sheet.js";
 import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
+import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
 import { registerSettings } from "./system/settings.js";
 import { loadFilePartials, registerTemplateHelpers } from "./system/templates.js";
 
@@ -45,6 +47,7 @@ Hooks.once("init", () => {
 
   CONFIG.Actor.dataModels.character = CharacterData;
   CONFIG.Actor.dataModels.npc = NpcData;
+  CONFIG.Actor.dataModels.vehicle = VehicleData;
 
   // Each kind of item gets its own picture rather than Foundry's one bag.
   CONFIG.Item.documentClass = GWorldItem;
@@ -109,6 +112,12 @@ Hooks.once("init", () => {
     types: ["npc"],
     makeDefault: true,
     label: "GWORLD.Sheet.Npc",
+  });
+  // A car in a chase is not a line on a shopping list (Campaigns pp. 462-469).
+  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldVehicleSheet, {
+    types: ["vehicle"],
+    makeDefault: true,
+    label: "GWORLD.Sheet.Vehicle",
   });
 
   // Without this, items fall back to Foundry's core sheet, which knows nothing

@@ -23,6 +23,17 @@ declare global {
         prepareBaseData(): void;
         prepareDerivedData(): void;
         /**
+         * Runs before the document is created, with the data it was asked
+         * for. Returning false cancels the creation; `updateSource` on the
+         * parent changes what is written. Verified against
+         * `common/abstract/type-data.mjs`.
+         */
+        _preCreate(
+          data: Record<string, any>,
+          options: object,
+          user: object,
+        ): Promise<boolean | void>;
+        /**
          * Checks a document as a whole, after each field has validated itself.
          * The place for rules that relate two fields to each other.
          */
@@ -164,6 +175,12 @@ declare global {
            * against `client/applications/sheets/actor-sheet.mjs`.
            */
           _onDropItem(event: DragEvent, item: any): Promise<unknown>;
+          /**
+           * Handles one dropped Actor. The default does nothing on a sheet
+           * that has no use for one. Verified against
+           * `client/applications/sheets/actor-sheet.mjs`.
+           */
+          _onDropActor(event: DragEvent, actor: any): Promise<unknown>;
         }
         class ItemSheetV2 extends foundry.applications.api.DocumentSheetV2 {
           readonly item: any;
@@ -310,7 +327,13 @@ declare global {
      * player says who they are shooting at (User#targets, a UserTargets set of
      * Token placeables).
      */
-    user: { id: string; isGM: boolean; targets: Set<any> } | null;
+    user: {
+      id: string;
+      isGM: boolean;
+      targets: Set<any>;
+      /** Whether this user holds a named permission, e.g. "ACTOR_CREATE". */
+      can(permission: string): boolean;
+    } | null;
     system: { id: string; version: string };
     ready: boolean;
     [key: string]: any;
@@ -334,6 +357,13 @@ declare global {
    * client/global.mjs, from foundry.utils).
    */
   function fromUuid(uuid: string, options?: object): Promise<any>;
+
+  /**
+   * The same, without awaiting: resolves a UUID that is already in memory --
+   * a world document, or an embedded one inside it -- and returns null for
+   * anything that would need loading from a pack.
+   */
+  function fromUuidSync(uuid: string, options?: object): any;
 
   /**
    * The Combat document. Only what a subclass overrides is declared:

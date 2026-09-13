@@ -29,7 +29,10 @@ export function controlRoll(options: {
   return Math.abs(options.margin ?? 0) <= Math.max(0, options.stabilityRating) ? "minor" : "major";
 }
 
-export type Locomotion = "wheels" | "tracks" | "legs" | "runners" | "water" | "air";
+/** How a vehicle moves, in the order a picker should offer them. */
+export const LOCOMOTIONS = ["wheels", "tracks", "legs", "runners", "water", "air"] as const;
+
+export type Locomotion = (typeof LOCOMOTIONS)[number];
 
 /**
  * Cruising speed in mph, from Top Speed in yards a second (p. 466).
@@ -100,4 +103,65 @@ export function occupants(entry: string): { crew: number; passengers: number } {
   const m = /^\s*(\d+)\s*(?:\+\s*(\d+))?/.exec(entry);
   if (!m) return { crew: 0, passengers: 0 };
   return { crew: Number(m[1]), passengers: Number(m[2] ?? 0) };
+}
+
+/** Weight in tons the book assumes for one person and their gear (p. 463). */
+export const TONS_PER_PERSON = 0.1;
+
+/**
+ * The weight the vehicle carries once its people are aboard (p. 463).
+ *
+ * "To find cargo capacity, subtract the weight of occupants (for simplicity,
+ * assume 0.1 ton/person, including gear)." A vehicle loaded with more people
+ * than it has room for carries no cargo rather than negative cargo.
+ */
+export function cargoCapacity(options: { load: number; people: number }): number {
+  const left = options.load - Math.max(0, options.people) * TONS_PER_PERSON;
+  return Math.max(0, Math.round(left * 100) / 100);
+}
+
+/**
+ * What the vehicle weighs with fuel and nothing else (p. 463).
+ *
+ * "To find 'curb weight' (with fuel but no other payload), subtract Load from
+ * LWt."
+ */
+export function curbWeight(options: { loadedWeight: number; load: number }): number {
+  return Math.max(0, Math.round((options.loadedWeight - options.load) * 100) / 100);
+}
+
+/**
+ * How long it can stay out, in hours (p. 463).
+ *
+ * "Divide Range in miles by cruising speed in mph to determine endurance in
+ * hours for situations where 'loiter' capability matters more than range."
+ * A vehicle with no range on the table -- oars, sails, draft animals -- has
+ * no endurance to work out, which is null rather than an infinity.
+ */
+export function endurance(options: { rangeMiles: number; cruisingSpeedMph: number }): number | null {
+  if (options.rangeMiles <= 0 || options.cruisingSpeedMph <= 0) return null;
+  return Math.round((options.rangeMiles / options.cruisingSpeedMph) * 10) / 10;
+}
+
+/** Somebody aboard a vehicle, and whether they have the wheel. */
+export interface Seat {
+  uuid: string;
+  operator: boolean;
+}
+
+/**
+ * The crew without one of them, with the wheel still in somebody's hands.
+ *
+ * "To control his vehicle, the operator must take a Move or Move and Attack
+ * maneuver on his turn" (p. 467), which only means anything while somebody is
+ * driving. So a driver who gets out hands the wheel on: a vehicle with people
+ * in it and nobody at the controls is not a state to be able to reach by
+ * getting out of a car.
+ *
+ * An empty vehicle is another matter, and stays empty.
+ */
+export function leaveSeat(crew: readonly Seat[], uuid: string): Seat[] {
+  const left = crew.filter((seat) => seat.uuid !== uuid).map((seat) => ({ ...seat }));
+  if (left.length > 0 && !left.some((seat) => seat.operator)) left[0]!.operator = true;
+  return left;
 }

@@ -502,12 +502,13 @@ export async function irradiate(options: {
  */
 export async function jumpOutOfVehicle(options: {
   actor: any;
-  itemId: string;
+  /** The vehicle: an item on the Gear tab, or a vehicle actor on the map. */
+  vehicle: any;
   speed: number;
 }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
-  const item = actor.items?.get(options.itemId);
+  const item = options.vehicle;
   const vehicle = item?.system?.vehicle;
   if (!item || !vehicle) return;
 
@@ -538,10 +539,16 @@ export async function jumpOutOfVehicle(options: {
 }
 
 /** A control roll, against the skill the vehicle names, at its Handling. */
-export async function controlVehicle(options: { actor: any; itemId: string; modifier: number }): Promise<void> {
+export async function controlVehicle(options: {
+  /** The operator: the one whose skill this is rolled against. */
+  actor: any;
+  /** The vehicle: an item on the Gear tab, or a vehicle actor on the map. */
+  vehicle: any;
+  modifier: number;
+}): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
-  const item = actor.items?.get(options.itemId);
+  const item = options.vehicle;
   const vehicle = item?.system?.vehicle;
   if (!item || !vehicle) return;
 
@@ -624,13 +631,15 @@ export async function controlVehicle(options: { actor: any; itemId: string; modi
  * Table", and whoever was hit takes "1d cutting damage per five full points".
  */
 export async function shootAtVehicle(options: {
+  /** Whose card this is: the shooter, or the vehicle itself. */
   actor: any;
-  itemId: string;
+  /** The vehicle: an item on the Gear tab, or a vehicle actor on the map. */
+  vehicle: any;
   penetrating: number;
   occupants: number;
 }): Promise<void> {
   const { actor } = options;
-  const item = actor.items?.get(options.itemId);
+  const item = options.vehicle;
   const vehicle = item?.system?.vehicle;
   if (!item || !vehicle) return;
 
@@ -694,6 +703,15 @@ export async function shootAtVehicle(options: {
     } else {
       lines.push(F("OccupantMissed", { roll: occupantRoll.total, target }));
     }
+  }
+
+  // A vehicle on the map keeps hit points, and this is what takes them off.
+  // A catalogue entry on somebody's Gear tab has none to take: the card says
+  // what the shot did, and the GM decides what became of the car.
+  if (item.documentName === "Actor" && item.isOwner && penetrating > 0) {
+    const before = Number(item.system?.hp?.value) || 0;
+    await item.update({ "system.hp.value": before - penetrating });
+    lines.push(F("VehicleHp", { previous: before, now: before - penetrating, max: hitPoints }));
   }
 
   await post(actor, {
