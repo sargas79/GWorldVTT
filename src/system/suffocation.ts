@@ -15,11 +15,11 @@ import { SYSTEM_ID } from "./constants.js";
 import { setCondition } from "./conditions.js";
 import { applyFatigue } from "./fatigue.js";
 import {
-  DROWNING_ROLL_SECONDS,
   SECONDS_TO_DEATH,
   brainDamageRoll,
   suffocationSecond,
   type AirSupply,
+  drowningRollDue,
 } from "../rules/suffocation.js";
 import { resolveSuccess } from "../rules/success.js";
 
@@ -68,7 +68,10 @@ export async function rollSuffocation(options: {
   } else {
     // One Swimming roll per five seconds of the span, each failure a point.
     const swimming = Number(actor.system?.derived?.feats?.swimming?.skill) || 6;
-    const attempts = Math.floor(after / DROWNING_ROLL_SECONDS) - Math.floor(before / DROWNING_ROLL_SECONDS);
+    let attempts = 0;
+    for (let second = before + 1; second <= after; second += 1) {
+      if (drowningRollDue(second)) attempts += 1;
+    }
 
     for (let i = 0; i < attempts; i += 1) {
       const roll = new Roll("3d6");

@@ -43,6 +43,7 @@ import {
 import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
 import { useTechnique, type Victim } from "../unarmed-techniques.js";
 import { canParryLiquid } from "../../rules/dirty-tricks.js";
+import { pressureAtDepth } from "../../rules/pressure.js";
 import { isStepPostureChange, postureMove, reachablePostures } from "../../rules/posture.js";
 import { affectsSecondary } from "../../rules/attribute-penalties.js";
 import { canMoveWhileGrappled } from "../../rules/grappling.js";
@@ -1594,7 +1595,11 @@ async function promptForAir(): Promise<{
   atmospheres: number;
   hazard: AtmosphereHazard | "none";
   strength: HazardStrength;
+  hpLostToAir: number;
+  exertion: "none" | "mild" | "heavy";
 } | null> {
+  const exertions: Array<[string, string]> = (["mild", "none", "heavy"] as const)
+    .map((k) => [k, HZ(`Exertion.${k}`)]);
   const hazards: Array<[string, string]> = (["none", "corrosive", "toxic", "suffocating"] as const)
     .map((k) => [k, HZ(`AirHazard.${k}`)]);
   const strengths: Array<[string, string]> = (["trace", "lethal", "mostly"] as const)
@@ -1607,11 +1612,15 @@ async function promptForAir(): Promise<{
       </label>` +
       hazardSelect("hazard", HZ("AirHazardLabel"), hazards) +
       hazardSelect("strength", HZ("AirStrengthLabel"), strengths) +
+      hazardField("hpLostToAir", HZ("HpLostToAir"), 0, 'min="0"') +
+      hazardSelect("exertion", HZ("ExertionLabel"), exertions) +
       `<p class="ihint" style="margin:0">${HZ("BadAirHint")}</p>`,
     (form) => ({
       atmospheres: num(form, "atm"),
       hazard: str(form, "hazard") as AtmosphereHazard | "none",
       strength: str(form, "strength") as HazardStrength,
+      hpLostToAir: num(form, "hpLostToAir"),
+      exertion: (str(form, "exertion") || "mild") as "none" | "mild" | "heavy",
     }),
   );
 }
@@ -1622,6 +1631,7 @@ async function promptForPressure(): Promise<{
   support: PressureSupport;
   ascending: boolean;
   explosive: boolean;
+  minutes: number;
 } | null> {
   const supports: Array<[string, string]> = (["0", "1", "2", "3"] as const)
     .map((k) => [k, HZ(`PressureSupport.${k}`)]);
@@ -1631,15 +1641,20 @@ async function promptForPressure(): Promise<{
         <span>${HZ("Atmospheres")}</span>
         <input type="number" name="atm" value="1" step="0.5" min="0" style="width:90px">
       </label>` +
+      hazardField("depth", HZ("DepthFeet"), 0, 'min="0"') +
+      hazardField("minutes", HZ("MinutesAtDepth"), 0, 'min="0"') +
       hazardSelect("support", HZ("PressureSupportLabel"), supports) +
       hazardCheck("ascending", HZ("Ascending")) +
       hazardCheck("explosive", HZ("Explosive")) +
       `<p class="ihint" style="margin:0">${HZ("PressureHint")}</p>`,
     (form) => ({
-      atmospheres: num(form, "atm"),
+      // A depth of water, where given, is what the pressure is read off: "about
+      // 33' underwater" is 2 atm, counting the air above it.
+      atmospheres: num(form, "depth") > 0 ? pressureAtDepth(num(form, "depth")) : num(form, "atm"),
       support: Number(str(form, "support") || 0) as PressureSupport,
       ascending: ticked(form, "ascending"),
       explosive: ticked(form, "explosive"),
+      minutes: num(form, "minutes"),
     }),
   );
 }
@@ -5316,6 +5331,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         actor: this.actor,
         atmospheres: asked.atmospheres,
         explosive: asked.explosive,
+        // Both were asked and then dropped: a diver with Pressure Support 1
+        // rolled for the bends coming up from 3 atm, which that support removes.
+        support: asked.support,
+        minutes: asked.minutes,
       });
       return;
     }

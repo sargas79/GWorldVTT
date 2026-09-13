@@ -9,6 +9,7 @@
  * the same names; this is the part that rolls and writes.
  */
 
+import { holdBreathSeconds, type Exertion } from "../rules/suffocation.js";
 import { SYSTEM_ID } from "./constants.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
@@ -47,13 +48,20 @@ import {
   type AcidContact, type AcidLanding,
 } from "../rules/acid.js";
 import {
-  ALTITUDE_SICKNESS_BONUS, EXPLOSIVE_DECOMPRESSION, airDensity, airEffect,
-  altitudeOutcome, atmosphereHarm,
-  type AtmosphereHazard, type HazardStrength,
+  ALTITUDE_SICKNESS_BONUS,
+  EXPLOSIVE_DECOMPRESSION,
+  airDensity,
+  airEffect,
+  altitudeOutcome,
+  atmosphereHarm,
+  type AtmosphereHazard,
+  type HazardStrength,
+  corrosiveToll,
+  vacuumBreathSeconds,
+  HELD_BREATH_LUNG_DAMAGE,
 } from "../rules/atmosphere.js";
 import {
-  RECOMPRESSION_BONUS, bendsOutcome, crushingInjury, crushingTarget, crushingThreshold,
-  type PressureSupport,
+  RECOMPRESSION_BONUS, bendsOutcome, crushingInjury, crushingTarget, crushingThreshold, type PressureSupport, risksBends,
 } from "../rules/pressure.js";
 import {
   SPACE_SICKNESS_RECOVERY_HOURS, accelerationHarm, accelerationNeedsRoll, accelerationTarget,
@@ -90,6 +98,17 @@ async function post(actor: any, context: Record<string, unknown>): Promise<void>
 
 const H = (key: string) => game.i18n.localize(`GWORLD.Hazard.${key}`);
 const F = (key: string, data: Record<string, unknown>) => game.i18n.format(`GWORLD.Hazard.${key}`, data);
+
+/** Levels of a trait by name, 0 where the character lacks it. */
+function traitLevels(actor: any, name: string): number {
+  const wanted = name.trim().toLowerCase();
+  for (const item of actor?.items ?? []) {
+    if (item.type !== "trait") continue;
+    if (String(item.name ?? "").trim().toLowerCase() !== wanted) continue;
+    return Math.max(1, Math.floor(Number(item.system?.levels ?? 1)) || 1);
+  }
+  return 0;
+}
 
 /** The level of a skill by name, or null when the character lacks it. */
 function skillLevelOf(actor: any, name: string): number | null {
@@ -856,6 +875,10 @@ export async function breatheBadAir(options: {
   atmospheres: number;
   hazard: AtmosphereHazard | "none";
   strength: HazardStrength;
+  /** HP a corrosive atmosphere has already taken, which is what its symptoms are keyed to. */
+  hpLostToAir: number;
+  /** How hard they are working, which is what a held breath lasts on. */
+  exertion: Exertion;
 }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
@@ -865,8 +888,24 @@ export async function breatheBadAir(options: {
   const lines = [F("AirDensity", { band: H(`AirBand.${density}`), atm: options.atmospheres })];
   if (air.vision !== 0) lines.push(F("AirVision", { penalty: air.vision }));
   if (air.extraFatigue > 0) lines.push(F("AirFatigue", { fp: air.extraFatigue }));
-  if (air.vacuum) lines.push(H("AirVacuum"));
-  else if (air.suffocates) lines.push(H("AirSuffocates"));
+  if (air.vacuum) {
+    lines.push(H("AirVacuum"));
+    // "If you exhale and leave your mouth open, you can operate on the oxygen
+    // in your blood for half the time listed under Holding Your Breath" --
+    // holding it instead ruptures the lungs (p. 437).
+    const held = holdBreathSeconds({
+      health: attributeOf(actor, "HT"),
+      exertion: options.exertion,
+      breathHoldingLevels: traitLevels(actor, "Breath-Holding"),
+    });
+    lines.push(F("VacuumClock", {
+      seconds: vacuumBreathSeconds({ heldBreathSeconds: held, mouthOpen: true }),
+      held,
+      formula: formatDiceAdds(HELD_BREATH_LUNG_DAMAGE),
+    }));
+  } else if (air.suffocates) {
+    lines.push(H("AirSuffocates"));
+  }
 
   const rolls: any[] = [];
 
@@ -886,6 +925,21 @@ export async function breatheBadAir(options: {
   if (options.hazard !== "none") {
     const harm = atmosphereHarm({ hazard: options.hazard, strength: options.strength });
     if (harm.suffocates && !air.suffocates) lines.push(H("AirSuffocates"));
+    // "Victims suffer coughing after losing 1/3 their HP, blindness after
+    // losing 2/3 their HP" to a corrosive atmosphere (p. 429).
+    if (options.hazard === "corrosive") {
+      const toll = corrosiveToll({
+        hpLost: options.hpLostToAir,
+        maxHp: Number(actor.system?.hp?.max ?? 0) || 0,
+      });
+      if (toll.blinded) {
+        lines.push(H("CorrosiveBlinded"));
+        await setCondition(actor, "coughing", true);
+      } else if (toll.coughing) {
+        lines.push(H("CorrosiveCoughing"));
+        await setCondition(actor, "coughing", true);
+      }
+    }
     if (options.hazard !== "suffocating") {
       lines.push(
         harm.unresistable
@@ -972,9 +1026,31 @@ export async function decompress(options: {
   atmospheres: number;
   /** True for a blowout rather than a slow ascent. */
   explosive: boolean;
+  /** Levels of Pressure Support, which raise or remove the risk. */
+  support: PressureSupport;
+  /** Minutes spent at that pressure, which is what the safe time is measured in. */
+  minutes: number;
 }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
+
+  // "You risk the bends if you return to normal pressure after experiencing
+  // pressure greater than twice your native pressure", and even then "at up
+  // to 2.5 atm ... a human can safely operate for up to 80 minutes" (p. 435).
+  // A diver who never went deep, or not for long, has nothing to roll for.
+  // A blowout is different: the air goes all at once and the roll is always
+  // made (p. 437).
+  if (
+    !options.explosive &&
+    !risksBends({ atmospheres: options.atmospheres, minutes: options.minutes, support: options.support })
+  ) {
+    await post(actor, {
+      kind: H("Bends"),
+      lines: [F("BendsNoRisk", { atm: options.atmospheres, minutes: options.minutes })],
+      good: true,
+    });
+    return;
+  }
 
   const rolls: any[] = [];
   const lines: string[] = [];

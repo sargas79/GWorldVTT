@@ -2033,7 +2033,8 @@
         "drowning": "Drowning",
         "asphyxiation": "Asphyxiation",
         "heartAttack": "Heart attack"
-      }
+      },
+      "ResuscitateNeedsTl": "Resuscitation needs Physician or First Aid of TL7 or later; this healer's is TL{tl}"
     },
     "Knockdown": {
       "Title": "Knockdown and stunning",
@@ -2676,7 +2677,20 @@
         "crushed": "Caught in the open as it came down.",
         "sheltered": "Behind a structural member: the wall's DR stands between them and it.",
         "unharmed": "Totally unharmed."
-      }
+      },
+      "DepthFeet": "Depth of water in feet (0 to use atmospheres)",
+      "MinutesAtDepth": "Minutes spent at that pressure",
+      "BendsNoRisk": "{minutes} minutes at {atm} atm is within the safe time: no risk of the bends",
+      "HpLostToAir": "HP already lost to this atmosphere",
+      "ExertionLabel": "Exertion",
+      "Exertion": {
+        "none": "None (sitting quietly)",
+        "mild": "Mild (walking, treading water)",
+        "heavy": "Heavy (climbing, combat, running)"
+      },
+      "VacuumClock": "Exhaling with the mouth open buys {seconds} seconds on the blood's oxygen, half of {held}; holding the breath ruptures the lungs for {formula}",
+      "CorrosiveCoughing": "Past a third of HP lost to it: coughing",
+      "CorrosiveBlinded": "Past two-thirds of HP lost to it: blinded, as well as coughing"
     },
     "Vehicle": {
       "Statistics": "Vehicle statistics",
