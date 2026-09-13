@@ -724,6 +724,22 @@
           {{/if}}
         {{/if}}
         <p class="ihint">{{localize "GWORLD.Gear.CategoryHint"}}</p>
+        <label data-tooltip="{{localize 'GWORLD.Gear.ComplexityHint'}}">
+          {{localize "GWORLD.Gear.Complexity"}}
+          <input type="number" name="system.complexity" value="{{system.complexity}}" step="1" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        {{#if complexity}}
+          <div class="inote">
+            {{> "gworld.info"}}
+            <span>
+              {{localize "GWORLD.Gear.Runs"}}
+              {{#each complexity.runs as |row|}}
+                {{row.count}} &times; C{{row.program}}{{#unless @last}}, {{/unless}}
+              {{/each}}
+            </span>
+          </div>
+        {{/if}}
         {{#if isVehicle}}
           {{!-- The stat line as the tables print it (Campaigns pp. 462-465). --}}
           <div class="isub">

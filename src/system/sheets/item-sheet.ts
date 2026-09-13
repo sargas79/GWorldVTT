@@ -17,6 +17,7 @@ import { sourceCollections } from "../compendium-sources.js";
 import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
 import { isRuleOn } from "../optional-rules.js";
 import { weaponFacts } from "../weapon-damage.js";
+import { programsAtOnce } from "../../rules/invention.js";
 import { damageState, exposureCheck, repairItem, repairSkillOf } from "../repairs.js";
 import { promptForNumber } from "../roll.js";
 import {
@@ -220,6 +221,20 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // A vehicle is equipment with a stat line, and the sheet shows the line
     // only when the category says so.
     context.isVehicle = item.type === "equipment" && item.system?.category === "vehicle";
+
+    // What a computer can run at once (Campaigns p. 472). Only shown for
+    // something that has a Complexity at all, which is not most gear.
+    const complexity = Number(item.system?.complexity) || 0;
+    context.complexity = complexity > 0
+      ? {
+          rating: complexity,
+          // Its own level, and every level below it, down to one.
+          runs: Array.from({ length: complexity }, (_, index) => {
+            const program = complexity - index;
+            return { program, count: programsAtOnce({ computer: complexity, program }) };
+          }),
+        }
+      : null;
     context.modifierKinds = (["enhancement", "limitation", "special"] as const).map((key) => ({
       key,
       label: game.i18n.localize(`GWORLD.Modifier.Kinds.${key}`),
