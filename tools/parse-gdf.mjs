@@ -312,6 +312,32 @@ const id = (kind, name) =>
   createHash("sha1").update(`${kind}:${name}`).digest("hex").slice(0, 16);
 
 /**
+ * A new entry's id. A supplement often restates a Basic Set entry under the
+ * same name with its own figures -- Monster Hunters 1's firearms table, its
+ * gear list -- and a name-based id would then be the Basic Set entry's. Where
+ * it would be, the book's prefix goes into the seed, so the two are distinct
+ * and every other id is what it always was.
+ */
+function newId(kind, name, source) {
+  const plain = id(kind, name);
+  return source.basicIds?.has(plain) ? id(kind, `${bookPrefix(source.prefix)}:${name}`) : plain;
+}
+
+/** Every id in the Basic Set's own packs, for a supplement to stay clear of. */
+function basicSetIds() {
+  const found = new Set();
+  const root = join(projectRoot, "packs-src");
+  if (!existsSync(root)) return found;
+  for (const dir of readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory())) {
+    for (const file of readdirSync(join(root, dir.name)).filter((f) => f.endsWith(".json"))) {
+      const docs = JSON.parse(readFileSync(join(root, dir.name, file), "utf8"));
+      if (Array.isArray(docs)) for (const doc of docs) if (doc?._id) found.add(doc._id);
+    }
+  }
+  return found;
+}
+
+/**
  * Ids from the files of a pack that this parser does not write.
  *
  * The equipment pack holds three files the parser generates and two written
@@ -475,7 +501,7 @@ function parseTraits(recs, reject, note, source) {
     if (attack.note) note(`${name}: ${attack.note}`);
 
     out.push({
-      _id: ids.get(name) ?? id("trait", name),
+      _id: ids.get(name) ?? newId("trait", name, source),
       name,
       type: "trait",
       system: {
@@ -613,7 +639,7 @@ function parseSkills(recs, reject, source) {
     }
 
     skills.push({
-      _id: ids.get(name) ?? id("skill", name),
+      _id: ids.get(name) ?? newId("skill", name, source),
       name,
       type: "skill",
       system: {
@@ -668,7 +694,7 @@ function parseTechnique(name, difficulty, f, ids, reject, source) {
   const cap = /prereq\s*(?:([+-])\s*(\d+))?/i.exec(relative);
 
   return {
-    _id: ids.get(name) ?? id("technique", name),
+    _id: ids.get(name) ?? newId("technique", name, source),
     name,
     type: "technique",
     system: {
@@ -899,17 +925,26 @@ export function parseDamage(damage, damtype) {
  * `skillused(SK:Sword!, SK:Broadsword, ST:DX-5, SK:Rapier-4, ...)` -- of which
  * the first real skill is the one the weapon is actually used with; the rest
  * are what you fall back to. A leading wildcard group is skipped.
+ *
+ * Not every file writes the `SK:` prefix. Monster Hunters 1's lists the bare
+ * names -- `skillused(Gun!, Guns (Submachine Gun), DX-4, ...)` -- so a name
+ * with no prefix counts as a skill too, unless it is an attribute or carries
+ * another of GCA's prefixes (`ST:DX`).
  */
-function parseSkillUsed(value) {
+export function parseSkillUsed(value) {
   for (const entry of splitTop(value ?? "")) {
-    const text = entry.trim();
+    const text = entry.trim().replace(/^"|"$/g, "").trim();
     // An entry carrying a modifier is a default -- what you fall back to if you
     // lack the real skill -- not the skill the weapon is used with. A shield's
     // list reads "ST:DX-4, SK:Shield (Buckler)-2, SK:Shield (Force)-2,
     // SK:Shield (Shield)", and the unmodified one at the end is the answer.
     if (/[+-]\s*\d+$/.test(text)) continue;
-    const m = /^"?SK:(.+?)"?$/.exec(text);
-    if (m && !m[1].endsWith("!")) return m[1].trim();
+    const prefixed = /^SK:(.+)$/i.exec(text);
+    if (!prefixed && /^[A-Z]{2}:/.test(text)) continue;
+    const name = (prefixed ? prefixed[1] : text).replace(/^"|"$/g, "").trim();
+    // A blank the player fills in -- %examplealiaslist% -- names no skill yet.
+    if (!name || name.endsWith("!") || ATTRIBUTES.has(name) || PLACEHOLDER.test(name)) continue;
+    return name;
   }
   return "";
 }
@@ -1407,7 +1442,7 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
         || "Shield";
 
       shields.push({
-        _id: ids.get(name) ?? id("shield", name),
+        _id: ids.get(name) ?? newId("shield", name, source),
         name,
         type: "shield",
         system: {
@@ -1451,7 +1486,7 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
       taken.add(name);
 
       armor.push({
-        _id: ids.get(name) ?? id("armor", name),
+        _id: ids.get(name) ?? newId("armor", name, source),
         name,
         type: "armor",
         system: {
@@ -1519,7 +1554,7 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
     taken.add(name);
     const armed = meleeModes.length > 0 || rangedModes.length > 0;
     gear.push({
-      _id: ids.get(name) ?? id(armed ? "weapon" : "gear", name),
+      _id: ids.get(name) ?? newId(armed ? "weapon" : "gear", name, source),
       name,
       type: "equipment",
       system: {
@@ -1615,6 +1650,8 @@ function main() {
     book,
     outDir,
     overlap: (section, name, page) => overlaps.push({ section, name, page }),
+    // A supplement's new ids stay clear of the Basic Set's.
+    basicIds: basic ? null : basicSetIds(),
   };
 
   const text = readFileSync(file, "utf8");

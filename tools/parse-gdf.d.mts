@@ -80,6 +80,12 @@ export declare function entryName(
   options?: { supplement?: boolean; blankSpecialty?: boolean },
 ): string;
 
+/** Whether a record is GCA's own bookkeeping (a Basic Set record with a leading underscore). */
+export declare function isBookkeeping(raw: string, options?: { supplement?: boolean }): boolean;
+
+/** The skill a weapon mode is used with, from GCA's skillused list, or "" for none. */
+export declare function parseSkillUsed(value: string | undefined): string;
+
 /** The skills a Talent record gives its level to, from the file's group of its name. */
 export declare function talentSkillsOf(
   name: string,
