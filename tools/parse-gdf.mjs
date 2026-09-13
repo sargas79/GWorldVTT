@@ -866,7 +866,30 @@ function physical(f) {
     equipped: false,
     tl: techLevel(f.get("techlvl")),
     lc: legalityClass(f.get("lc")),
+    costOfLivingPercent: 0,
   };
+}
+
+/**
+ * The share of a month's cost of living an article of clothing costs
+ * (Characters p. 266). GCA prices these by asking the player, and states the
+ * figure in the question: "Average cost is 20% of the characters cost of
+ * living". The percentage is the book's statistic, so it is kept; the
+ * question is not.
+ */
+export function costOfLivingPercent(text) {
+  const m = /(\d+)% of cost of living/i.exec(text ?? "");
+  return m ? Number(m[1]) : 0;
+}
+
+/**
+ * A weight GCA states only for display, because the record's own is a
+ * placeholder the player fills in: a complete wardrobe is "20+" pounds
+ * (Characters p. 266).
+ */
+export function displayWeight(text) {
+  const m = /displayweight\((\d+(?:\.\d+)?)\+?\)/i.exec(text ?? "");
+  return m ? Number(m[1]) : 0;
 }
 
 /**
@@ -1185,7 +1208,15 @@ export function parseEquipment(recs, reject, note) {
       type: "equipment",
       system: {
         ...common,
+        // Clothing is priced off the wearer's Status rather than sold at a
+        // figure (Characters p. 266).
+        costOfLivingPercent: costOfLivingPercent(r.text),
+        // A record whose weight is a placeholder states it for display
+        // instead, and that figure is the book's.
+        weight: common.weight || displayWeight(r.text),
         category: categoryOf(name, armed),
+        equipmentQuality: "basic",
+        forSkills: [],
         // The table's price buys good quality (Characters p. 274), and the
         // class GCA prices the weapon in is the book's own.
         quality: "good",

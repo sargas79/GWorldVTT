@@ -28,6 +28,8 @@ interface Packed {
     flexible?: boolean;
     weaponClass?: string;
     quality?: string;
+    costOfLivingPercent?: number;
+    weight?: number;
     listCost?: number;
     cost?: number;
     meleeModes?: Mode[];
@@ -243,6 +245,16 @@ describe("the equipment compendium", () => {
     expect(byName(gear, "Longbow").system.rangedModes?.[0]).toMatchObject({ loaded: 1 });
     // A thrown weapon is one shot: "to 'reload,' pick it up".
     expect(byName(gear, "Throwing Axe").system.rangedModes?.[0]).toMatchObject({ shots: "T(1)", loaded: 1 });
+  });
+
+  it("prices clothing as a share of the cost of living rather than at a figure (p. 266)", () => {
+    expect(byName(gear, "Complete Wardrobe").system).toMatchObject({ costOfLivingPercent: 100, weight: 20 });
+    expect(byName(gear, "Ordinary Clothes").system).toMatchObject({ costOfLivingPercent: 20, weight: 2 });
+    expect(byName(gear, "Winter Clothes").system).toMatchObject({ costOfLivingPercent: 30, weight: 4 });
+    expect(byName(gear, "Formal Wear").system).toMatchObject({ costOfLivingPercent: 40, weight: 2 });
+    expect(byName(gear, "Cosmetics").system).toMatchObject({ costOfLivingPercent: 10, weight: 2 });
+    // Everything sold at a price says nothing about cost of living.
+    expect(byName(gear, "Broadsword").system.costOfLivingPercent).toBe(0);
   });
 
   it("marks the ‡ weapons as unready after a swing (p. 270)", () => {

@@ -61,3 +61,5 @@ export declare function alternatives(
 ): Array<{ name: string; f: Map<string, string> }>;
 export declare function weaponClassOf(mods: string | undefined): "" | "sword" | "cutting" | "crushing" | "firearm" | "bow";
 export declare function fullLoad(shots: string | undefined): number;
+export declare function costOfLivingPercent(text: string | undefined): number;
+export declare function displayWeight(text: string | undefined): number;

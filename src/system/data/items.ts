@@ -7,6 +7,7 @@ import { SPELL_CLASSES, spellRelativeLevel, type MagicStyle, type SpellClass, ty
 import { netModifier, traitPoints } from "../../rules/traits.js";
 import type { Enchantment } from "../../rules/enchanting.js";
 import { AMMUNITION_TYPES } from "../../rules/ammunition.js";
+import { EQUIPMENT_QUALITIES, type EquipmentQuality } from "../../rules/wealth.js";
 import {
   WEAPON_CLASSES,
   WEAPON_MATERIALS,
@@ -43,6 +44,18 @@ function physicalFields() {
     carried: new fields.BooleanField({ initial: true }),
     equipped: new fields.BooleanField({ initial: false }),
     tl: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /**
+     * An article whose price is a share of the wearer's monthly cost of
+     * living rather than a figure of its own (GURPS Basic Set: Characters
+     * p. 266): a complete wardrobe is all of it, ordinary clothes a fifth.
+     * Zero for everything sold at a price.
+     */
+    costOfLivingPercent: new fields.NumberField({
+      required: true,
+      nullable: false,
+      initial: 0,
+      min: 0,
+    }),
     /**
      * Legality Class (GURPS Basic Set: Characters p. 267), 0 banned to 4
      * open. Null for gear the book gives no class -- "ordinary clothing and
@@ -661,6 +674,8 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare weaponClass: WeaponClass;
   declare listCost: number;
   declare hpLost: number;
+  declare equipmentQuality: EquipmentQuality;
+  declare forSkills: string[];
   declare meleeModes: unknown[];
   declare rangedModes: unknown[];
   declare vehicle: {
@@ -693,6 +708,26 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
       }),
       meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: [] }),
       rangedModes: new fields.ArrayField(rangedModeField(), { required: true, initial: [] }),
+      /**
+       * The grade of a tool, and what it is worth to the skill that uses it
+       * (GURPS Basic Set: Campaigns p. 345). Not the same axis as a weapon's
+       * quality: this is the difference between a surgeon's crash kit and a
+       * handful of leaves and clean mud.
+       */
+      equipmentQuality: new fields.StringField({
+        required: true,
+        nullable: false,
+        initial: "basic",
+        choices: [...EQUIPMENT_QUALITIES],
+      }),
+      /**
+       * The skills this equipment is the tools of, by name. A skill on this
+       * list is rolled at the grade's modifier while the item is carried.
+       */
+      forSkills: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: true, initial: "" }),
+        { required: true, initial: [] },
+      ),
       /**
        * The grade it was bought in (GURPS Basic Set: Characters p. 274). The
        * tables' prices buy good quality through TL6; a finer weapon cuts

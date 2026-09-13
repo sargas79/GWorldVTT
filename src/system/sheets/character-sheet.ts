@@ -74,6 +74,7 @@ import { POISON_EXAMPLES, poisonNamed, type Poison, type Treatment } from "../..
 import { rollDisarm } from "../disarm.js";
 import { rollStrikeToBreak, weaponsInHand } from "../weapon-damage.js";
 import { reloadWeapon } from "../ammunition.js";
+import { clothingCost } from "../../rules/wealth.js";
 import {
   beginGrapple,
   endGrapple,
@@ -2915,6 +2916,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * undifferentiated run.
    */
   #gearGroups(items: { carried: any[]; armor: any[]; shields: any[] }) {
+    // Clothing is priced as a share of the wearer's monthly cost of living
+    // rather than at a figure of its own (Characters p. 266), so the row
+    // shows what it costs this character.
+    const status = Number(this.actor.system?.derived?.wealth?.status ?? 0) || 0;
+    const priceOf = (item: any): number => {
+      const share = Number(item.system?.costOfLivingPercent ?? 0) || 0;
+      return share > 0 ? clothingCost(share, status) : Number(item.system?.cost ?? 0) || 0;
+    };
     const rows = [
       ...items.carried.map((i: any) => ({ item: i, notes: describeModes(i), equippable: false })),
       // Armour arrives wrapped with its coverage text for the protection card,
@@ -2931,7 +2940,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       group: gearGroupOf(item),
       quantity: item.system.quantity ?? 1,
       weight: (item.system.weight ?? 0) * (item.system.quantity ?? 1),
-      cost: (item.system.cost ?? 0) * (item.system.quantity ?? 1),
+      cost: priceOf(item) * (item.system.quantity ?? 1),
       equipped: Boolean(item.system.equipped),
       equippable: equippable || Boolean(item.system.meleeModes?.length || item.system.rangedModes?.length),
       notes: item.system.category === "vehicle" ? vehicleNotes(item) : notes,

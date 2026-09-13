@@ -33,7 +33,9 @@ import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { senseScores } from "../../rules/senses.js";
 import {
-  costOfLiving, gearCost, monthlyIncomeFromTraits, monthlyPay, startingWealth, statusFrom, wealthFrom,
+  clothingCost, costOfLiving, equipmentQualityModifier, gearCost, monthlyIncomeFromTraits, monthlyPay,
+  pointsForMoney, signatureGearPoints, signatureGearValue, startingWealth, statusFrom, wealthFrom,
+  type EquipmentQuality,
   type WealthLevel,
 } from "../../rules/wealth.js";
 import { agingRollsPerYear, lifespanFrom } from "../../rules/aging.js";
@@ -356,6 +358,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare points: {
     starting: number;
     disadvantageLimit: number;
+    tradedForMoney: number;
     awards: PointAward[];
   };
   declare tl: number;
@@ -437,6 +440,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         starting: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 150 }),
         // A rule of thumb, not a hard cap (GURPS Lite p. 4).
         disadvantageLimit: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 75 }),
+        /**
+         * Points traded for money (Characters p. 26). "Unlike Wealth, points
+         * traded for money do not appear on your character sheet -- they are
+         * gone", so they are held here rather than as a trait, and spend
+         * from the points the character was built on.
+         */
+        tradedForMoney: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
         /**
          * Points earned since the character was made, one award at a time
          * (Campaigns pp. 292-294). The log is the record rather than a running
@@ -896,12 +906,25 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const gear = gearCost(
       this.items
         .filter((i) => i.system && typeof i.system.cost === "number")
-        .map((i) => ({ cost: Number(i.system.cost), quantity: Number(i.system.quantity ?? 1) })),
+        .map((i) => ({
+          // Clothing is priced off the wearer's Status (p. 266).
+          cost: this.#priceOf(i, status),
+          quantity: Number(i.system.quantity ?? 1),
+        })),
     );
     const jobLevel = String(this.job?.level ?? "average") as Exclude<WealthLevel, "multimillionaire" | "deadBroke">;
     const starting = startingWealth(tl, standing);
     const monthly = monthlyIncomeFromTraits(traits, starting);
+    // Points spent on money and on Signature Gear, which buy from the
+    // campaign's average rather than from this character's own wealth
+    // (Characters pp. 26, 85).
+    const traded = Math.max(0, Number(this.points?.tradedForMoney ?? 0) || 0);
+    const signaturePoints = signatureGearPoints(traits);
     return {
+      tradedPoints: traded,
+      tradedForMoney: pointsForMoney(traded, tl),
+      signatureGearPoints: signaturePoints,
+      signatureGear: signatureGearValue(signaturePoints, tl),
       level: standing.level,
       multimillionaire: standing.multimillionaire,
       startingWealth: starting,
@@ -916,6 +939,42 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       jobPay: this.job?.title ? monthlyPay(tl, jobLevel) : 0,
       jobKind: String(this.job?.kind ?? "wage"),
     };
+  }
+
+  /**
+   * What an item costs this character (Characters p. 266).
+   *
+   * Nearly everything is sold at a price. An article of clothing is sold at
+   * a share of the wearer's monthly cost of living, so its price is a fact
+   * about who is wearing it.
+   */
+  #priceOf(item: any, status: number): number {
+    const share = Number(item.system?.costOfLivingPercent ?? 0) || 0;
+    if (share > 0) return clothingCost(share, status);
+    return Number(item.system?.cost ?? 0) || 0;
+  }
+
+  /**
+   * What the tools carried are worth to the skills they serve (Campaigns
+   * p. 345), by skill name. The best grade carried wins: nobody operates
+   * with the crash kit and the leaves at once.
+   */
+  #equipmentBonuses(tl: number): Record<string, number> {
+    const best: Record<string, number> = {};
+    if (!isRuleOn("equipmentModifiers")) return best;
+    for (const item of this.itemsOfType("equipment")) {
+      const sys = item.system as any;
+      if (sys?.carried === false) continue;
+      const skills: string[] = Array.isArray(sys?.forSkills) ? sys.forSkills : [];
+      if (skills.length === 0) continue;
+      const bonus = equipmentQualityModifier(String(sys.equipmentQuality ?? "basic") as EquipmentQuality, { tl });
+      for (const raw of skills) {
+        const skill = String(raw ?? "").trim();
+        if (!skill) continue;
+        if (best[skill] === undefined || bonus > best[skill]) best[skill] = bonus;
+      }
+    }
+    return best;
   }
 
   /** What is left of the dose written on the sheet, as of now (Campaigns p. 435). */
@@ -1154,6 +1213,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       return a === "DX" ? attrs.DX + layering : attrs[a];
     };
 
+    // "The quality of your equipment modifies your skill rolls for tasks
+    // that normally require equipment" (Campaigns p. 345): what is carried,
+    // by the skill it is the tools of.
+    const toolBonuses = this.#equipmentBonuses(Number(this.tl) || 0);
+
     const skillItems = this.itemsOfType("skill");
 
     // What the character's Magery is, before the skills it adds to are read.
@@ -1178,11 +1242,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // What the talents add to this skill by name, on top of anything typed
       // into the skill's own bonus field.
       const talentBonus = talentBonusFor(String(item.name ?? ""), talents);
+      // The tools of this trade, if any are carried (Campaigns p. 345).
+      const toolBonus = toolBonuses[String(item.name ?? "").trim()] ?? 0;
       const resolved = effectiveSkillLevel({
         attributeScore: attributeScore(sys.attribute),
         difficulty: sys.difficulty,
         points: sys.points,
-        bonus: sys.bonus + magicSkillBonus(String(item.name ?? ""), talent) + talentBonus,
+        bonus: sys.bonus + magicSkillBonus(String(item.name ?? ""), talent) + talentBonus + toolBonus,
         defaults: attributeDefaults,
       });
       sys.derived = {
@@ -1191,6 +1257,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         relativeLevel: relativeLevelForPoints(sys.points, sys.difficulty),
         hasDefault: attributeDefaults.length > 0,
         talentBonus,
+        toolBonus,
       };
     }
 
