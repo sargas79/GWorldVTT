@@ -308,14 +308,14 @@
     }
   },
   {
-    "_id": "4895d27dd1259b37",
-    "name": "_New Alternative Attacks",
+    "_id": "cd7c3ab033fcffdb",
+    "name": "Racial Skill Bonus",
     "type": "trait",
     "system": {
       "category": "advantage",
       "points": 0,
-      "levels": 0,
-      "pointsPerLevel": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
       "costTable": [],
       "levelNames": [],
       "maxLevels": 0,
@@ -326,7 +326,73 @@
       "meleeModes": [],
       "rangedModes": [],
       "description": "",
-      "reference": "Basic Set: Characters p. 61"
+      "reference": "Basic Set: Campaigns p. 452"
+    }
+  },
+  {
+    "_id": "b05dc8bf1dfbf031",
+    "name": "Racial Skill Point Bonus",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 1,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "reactionModifier": 0,
+      "talentSkills": [],
+      "power": "",
+      "powerTalent": false,
+      "meleeModes": [],
+      "rangedModes": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 452"
+    }
+  },
+  {
+    "_id": "c8ab81125233f493",
+    "name": "Racial Spell Bonus",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 2,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "reactionModifier": 0,
+      "talentSkills": [],
+      "power": "",
+      "powerTalent": false,
+      "meleeModes": [],
+      "rangedModes": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 452"
+    }
+  },
+  {
+    "_id": "39c4707cad1a0a97",
+    "name": "Racial Spell Point Bonus",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 1,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "reactionModifier": 0,
+      "talentSkills": [],
+      "power": "",
+      "powerTalent": false,
+      "meleeModes": [],
+      "rangedModes": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 452"
     }
   },
   {
