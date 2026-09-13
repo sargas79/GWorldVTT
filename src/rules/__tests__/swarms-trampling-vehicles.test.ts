@@ -7,6 +7,8 @@ import { canTrample, trampleDamage, trampleSkill } from "../trampling.js";
 import { beastAttacks, beastTraitsFrom } from "../natural-attacks.js";
 import { thrustDamage } from "../damage.js";
 import { formatDiceAdds } from "../dice.js";
+import { mayUseVehicleSystem, vehicleMovement } from "../vehicle-combat.js";
+import { jumpFromVehicle } from "../collisions.js";
 import {
   cappedAimBonus, crippleThreshold, locationsOf, lossOfControl, mediumOf, occupantDamage,
   occupantHitTarget, targetingSystemBonus, unexpectedDodgePenalty, vehicleHitLocation,
@@ -238,5 +240,46 @@ describe("a beast's kick (Campaigns p. 460)", () => {
     expect(beastTraitsFrom(["Vermiform"])).toMatchObject({ legless: true });
     expect(beastTraitsFrom(["No Legs (Aquatic)"])).toMatchObject({ legless: true });
     expect(beastTraitsFrom(["Sharp Teeth"])).toMatchObject({ horizontal: false, legless: false });
+  });
+});
+
+describe("vehicle maneuvers (Campaigns p. 467)", () => {
+  it("puts the operator in charge on a Move or a Move and Attack", () => {
+    expect(vehicleMovement({ maneuver: "move" })).toBe("controlled");
+    expect(vehicleMovement({ maneuver: "moveAndAttack" })).toBe("controlled");
+  });
+
+  it("plows ahead on any other maneuver, or when the operator is stunned", () => {
+    // "If the operator takes any other maneuver, or is stunned or otherwise
+    // incapacitated, his vehicle plows ahead with the same speed and course
+    // it had on the previous turn."
+    for (const maneuver of ["attack", "aim", "doNothing", "allOutDefense", "ready"]) {
+      expect(vehicleMovement({ maneuver })).toBe("plowsAhead");
+    }
+    expect(vehicleMovement({ maneuver: "move", incapacitated: true })).toBe("plowsAhead");
+  });
+
+  it("lets an occupant work a system only from the controls and on the right maneuver", () => {
+    const at = { atTheControls: true };
+    expect(mayUseVehicleSystem({ ...at, maneuver: "concentrate", system: "sensors" })).toBe(true);
+    expect(mayUseVehicleSystem({ ...at, maneuver: "attack", system: "sensors" })).toBe(false);
+    expect(mayUseVehicleSystem({ ...at, maneuver: "attack", system: "weapons" })).toBe(true);
+    expect(mayUseVehicleSystem({ ...at, maneuver: "allOutAttack", system: "weapons" })).toBe(true);
+    expect(mayUseVehicleSystem({ ...at, maneuver: "move", system: "weapons" })).toBe(false);
+    // Not stationed by the controls, nothing doing.
+    expect(mayUseVehicleSystem({ atTheControls: false, maneuver: "attack", system: "weapons" })).toBe(false);
+  });
+
+  it("throws a jumper into the ground at the vehicle's speed", () => {
+    // "a collision with an immovable object at the vehicle's speed", and an
+    // immovable object is the hard kind, which doubles the hit points.
+    const slow = jumpFromVehicle({ hitPoints: 10, vehicleSpeed: 10 });
+    const fast = jumpFromVehicle({ hitPoints: 10, vehicleSpeed: 40 });
+    expect(fast.dice).toBeGreaterThan(slow.dice);
+    expect(slow.type).toBe("cr");
+    // Stepping down from a standstill is the least the slam table gives.
+    const still = jumpFromVehicle({ hitPoints: 10, vehicleSpeed: 0 });
+    expect(still.dice).toBe(1);
+    expect(still.modifier).toBeLessThan(0);
   });
 });

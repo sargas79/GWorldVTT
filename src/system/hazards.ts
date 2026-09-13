@@ -35,7 +35,10 @@ import { controlRoll, type Locomotion } from "../rules/vehicles.js";
 import {
   crippleThreshold, hitsAPerson, locationsOf, lossOfControl, mediumOf, occupantDamage,
   occupantHitTarget, OCCUPANT_RISK_DAMAGE, vehicleHitLocation, windowDr,
+  vehicleMovement,
 } from "../rules/vehicle-combat.js";
+import { jumpFromVehicle } from "../rules/collisions.js";
+import { isRuleOn } from "./optional-rules.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/life.hbs`;
 
@@ -488,6 +491,52 @@ export async function irradiate(options: {
 
 // ── vehicles (p. 466) ───────────────────────────────────────────────────
 
+/**
+ * Leaving a moving vehicle (Campaigns p. 467): "Anyone who jumps or falls
+ * from a moving vehicle and hits the ground takes a collision with an
+ * immovable object at the vehicle's speed. If the vehicle is flying, add
+ * falling damage."
+ *
+ * The fall is the existing falling card's business, so this rolls the
+ * collision and says when a fall is owed on top of it.
+ */
+export async function jumpOutOfVehicle(options: {
+  actor: any;
+  itemId: string;
+  speed: number;
+}): Promise<void> {
+  const { actor } = options;
+  if (!mayChange(actor)) return;
+  const item = actor.items?.get(options.itemId);
+  const vehicle = item?.system?.vehicle;
+  if (!item || !vehicle) return;
+
+  const hitPoints = Number(actor.system?.hp?.max) || 10;
+  const speed = Math.max(0, options.speed);
+  const damage = jumpFromVehicle({ hitPoints, vehicleSpeed: speed });
+  const formula = toRollFormula({ dice: damage.dice, adds: damage.modifier });
+  const hit = await takeDamage(actor, formula, damage.type);
+
+  // "If the vehicle is flying, add falling damage" -- which is the falling
+  // card's own business, and how far it fell is the table's to say.
+  const flying = mediumOf(String(vehicle.locomotion ?? "wheels") as Locomotion) === "air";
+  await post(actor, {
+    kind: H("JumpOut"),
+    detail: F("JumpedFrom", { vehicle: String(item.name), speed }),
+    lines: [
+      F("JumpDamage", {
+        formula,
+        rolled: hit.roll.total,
+        location: game.i18n.localize(`GWORLD.HitLocation.${hit.location}`),
+        dr: hit.dr,
+      }),
+      F("Injury", { injury: hit.injury, previous: hit.previous, now: hit.current }),
+      ...(flying ? [H("JumpFalling")] : []),
+    ],
+    rolls: [hit.roll, hit.locationRoll],
+  });
+}
+
 /** A control roll, against the skill the vehicle names, at its Handling. */
 export async function controlVehicle(options: { actor: any; itemId: string; modifier: number }): Promise<void> {
   const { actor } = options;
@@ -514,7 +563,20 @@ export async function controlVehicle(options: { actor: any; itemId: string; modi
     stabilityRating,
   });
 
-  const lines = [H(`ControlResult.${result}`)];
+  // "To control his vehicle, the operator must take a Move or Move and
+  // Attack maneuver on his turn... If the operator takes any other
+  // maneuver, or is stunned or otherwise incapacitated, his vehicle plows
+  // ahead with the same speed and course it had on the previous turn"
+  // (Campaigns p. 467).
+  const lines: string[] = [];
+  if (isRuleOn("vehicleManeuvers")) {
+    const movement = vehicleMovement({
+      maneuver: String(actor.system?.maneuver ?? ""),
+      incapacitated: actor.system?.conditions?.stunned === true,
+    });
+    lines.push(H(`Movement.${movement}`));
+  }
+  lines.push(H(`ControlResult.${result}`));
   if (result !== "ok") {
     // What losing control actually does depends on what the thing moves
     // through (Campaigns p. 469).
