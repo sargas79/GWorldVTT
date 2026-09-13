@@ -31,8 +31,11 @@ import { checkInfection, exposeToDisease } from "../disease.js";
 import { checkOverpenetration, rollScatter, splashInTheFace } from "../gunplay.js";
 import { rollInfluence, rollReaction } from "../reactions.js";
 import { payCostOfLiving, rollAging, studySkill, workAMonth } from "../life.js";
+import { trample } from "../trampling.js";
+import { fightOffSwarm } from "../swarms.js";
 import {
-  burn, catchFire, controlVehicle, hike, irradiate, shock, sleepFor, stayAwake, struckBy,
+  burn, catchFire, controlVehicle, hike, irradiate, shock, shootAtVehicle, sleepFor, stayAwake,
+  struckBy,
 } from "../hazards.js";
 import type { CollisionAngle } from "../../rules/collisions.js";
 import type { DamageType } from "../../rules/types.js";
@@ -1332,6 +1335,43 @@ function vehicleNotes(item: any): string {
   return `${v.stHp ?? 0} · Hnd/SR ${signed(Number(v.handling) || 0)}/${v.stability ?? 0} · HT ${v.ht ?? 10} · Move ${v.acceleration ?? 0}/${v.topSpeed ?? 0} · DR ${v.dr ?? 0}${v.skill ? ` · ${v.skill}` : ""}`;
 }
 
+/** Asks what a trample is at, and whether it is the automatic kind (p. 404). */
+async function promptForTrample(): Promise<{ modifier: number; overrun: boolean } | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Trample.${key}`);
+  return hazardPrompt(
+    L("Title"),
+    hazardField("modifier", game.i18n.localize("GWORLD.Chat.Modifier"), 0) +
+      hazardCheck("overrun", L("Overrun")) +
+      `<p class="ihint" style="margin:0">${L("Hint")}</p>`,
+    (form) => ({ modifier: num(form, "modifier"), overrun: ticked(form, "overrun") }),
+  );
+}
+
+/** Asks what was swung at the swarm this turn (p. 461). */
+async function promptForFightingOffSwarm(): Promise<{ weaponDamage: number; shield: boolean; stomp: boolean } | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Swarm.${key}`);
+  return hazardPrompt(
+    L("FightOff"),
+    hazardField("weapon", L("WeaponDamage"), 0, 'min="0"') +
+      hazardCheck("shield", L("Shield")) +
+      hazardCheck("stomp", L("Stomp")) +
+      `<p class="ihint" style="margin:0">${L("FightOffHint")}</p>`,
+    (form) => ({ weaponDamage: num(form, "weapon"), shield: ticked(form, "shield"), stomp: ticked(form, "stomp") }),
+  );
+}
+
+/** Asks how much got through the vehicle, and how many are aboard (pp. 554-555). */
+async function promptForVehicleHit(): Promise<{ penetrating: number; occupants: number } | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Vehicle.${key}`);
+  return hazardPrompt(
+    L("ShotAt"),
+    hazardField("damage", L("Penetrating"), 0, 'min="0"') +
+      hazardField("occupants", L("Aboard"), 1, 'min="0"') +
+      `<p class="ihint" style="margin:0">${L("ShotAtHint")}</p>`,
+    (form) => ({ penetrating: num(form, "damage"), occupants: num(form, "occupants") }),
+  );
+}
+
 /** The languages and manners a social roll is made in (Characters pp. 23-24). */
 interface SocialBackground {
   languages: Array<{ name: string; spoken: Comprehension }>;
@@ -2146,6 +2186,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       catchFire: GWorldCharacterSheet.#onCatchFire,
       irradiate: GWorldCharacterSheet.#onIrradiate,
       controlVehicle: GWorldCharacterSheet.#onControlVehicle,
+      shotAtVehicle: GWorldCharacterSheet.#onShotAtVehicle,
+      trample: GWorldCharacterSheet.#onTrample,
+      fightOffSwarm: GWorldCharacterSheet.#onFightOffSwarm,
       castSpell: GWorldCharacterSheet.#onCastSpell,
       maintainSpell: GWorldCharacterSheet.#onMaintainSpell,
       dropSpell: GWorldCharacterSheet.#onDropSpell,
@@ -4355,6 +4398,32 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const asked = await promptForRadiation();
     if (!asked) return;
     await irradiate({ actor: this.actor, ...asked });
+  }
+
+  /** Underfoot (Campaigns p. 404). */
+  static async #onTrample(this: GWorldCharacterSheet) {
+    if (!isRuleOn("trampling")) return;
+    const asked = await promptForTrample();
+    if (!asked) return;
+    await trample({ actor: this.actor, ...asked });
+  }
+
+  /** Beating a swarm off for a turn (Campaigns p. 461). */
+  static async #onFightOffSwarm(this: GWorldCharacterSheet) {
+    if (!isRuleOn("swarms")) return;
+    const asked = await promptForFightingOffSwarm();
+    if (!asked) return;
+    await fightOffSwarm({ actor: this.actor, ...asked });
+  }
+
+  /** Where a shot at this vehicle landed, and who inside it caught something (Campaigns pp. 554-555). */
+  static async #onShotAtVehicle(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    if (!isRuleOn("vehicles")) return;
+    const item = this.#itemFrom(target);
+    if (!item) return;
+    const asked = await promptForVehicleHit();
+    if (!asked) return;
+    await shootAtVehicle({ actor: this.actor, itemId: String(item.id), ...asked });
   }
 
   /** A control roll for the vehicle on this row (Campaigns p. 466). */

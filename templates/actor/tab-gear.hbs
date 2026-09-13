@@ -87,6 +87,8 @@
                   {{#if row.vehicle}}
                     <span class="rollable" data-action="controlVehicle"
                           data-tooltip="{{localize 'GWORLD.Hazard.ControlHint'}}">{{> "gworld.die"}}</span>
+                    <span class="rollable" data-action="shotAtVehicle"
+                          data-tooltip="{{localize 'GWORLD.Vehicle.ShotAtHint'}}">{{> "gworld.die"}}</span>
                   {{/if}}
                 </td>
                 <td class="n">{{row.quantity}}</td>

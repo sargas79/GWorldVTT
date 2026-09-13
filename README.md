@@ -111,6 +111,18 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   and the roll for stopping or turning harder than that allows.
 - **Dirty tricks** — a drink in the face as a thrown weapon, and the Will roll
   not to flinch.
+- **Trampling** — walking over somebody two sizes smaller, or one size and on
+  the ground: a melee attack a dodge is the only answer to, and an overrun
+  after a knockdown that is not rolled for at all.
+- **Swarms** — a cloud of bats, bees or rats as one attacker that hits
+  automatically and allows no defense, with clothing keeping insects out for
+  two seconds and armour for five; fought off by the hit point, with a shield
+  crushing fliers and a boot for the rest.
+- **Vehicles in a fight** — losing control means one thing for a car and
+  another for an aeroplane, a boat or a submarine; a shot is placed on the
+  vehicle's own hit location table, each location crippled at its share of
+  the hull, and five points through an occupied one puts the people inside at
+  risk.
 
 ### Everything else
 

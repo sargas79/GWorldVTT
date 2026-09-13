@@ -74,6 +74,10 @@ const FLAT = {
   "Striker (Impaling)": { category: "advantage", points: 8, reference: "Basic Set: Characters p. 88" },
   "Striker (Piercing)": { category: "advantage", points: 5, reference: "Basic Set: Characters p. 88" },
   "Enhanced Move (Ground) 1/2": { category: "advantage", points: 5, reference: "Basic Set: Characters p. 52" },
+  // A swarm is Diffuse: "a swarm takes damage as if it were Diffuse"
+  // (Campaigns p. 461). The compendium carries Injury Tolerance's kinds as
+  // modifiers rather than as records of their own.
+  "Injury Tolerance (Diffuse)": { category: "advantage", points: 100, reference: "Basic Set: Characters p. 60" },
 };
 
 /** Skill points for a level relative to the attribute (Characters p. 170). */
@@ -221,18 +225,22 @@ function build() {
       system: {
         attributes: attrs,
         purchased: {
-          hp: 0, fp: 0,
+          hp: (c.hp ?? c.ST) - c.ST, fp: 0,
           will: c.will - c.IQ,
           per: c.per - c.IQ,
           basicSpeed: Math.round((c.speed - speed) * 4) / 4,
           basicMove: c.move - Math.floor(c.speed),
         },
-        hp: { value: c.ST, max: c.ST },
+        // "Assume that HP equal ST and FP equal HT, unless noted otherwise"
+        // -- and a swarm is noted otherwise: its hit points are what it takes
+        // to disperse it (Campaigns p. 461).
+        hp: { value: c.hp ?? c.ST, max: c.hp ?? c.ST },
         fp: { value: c.HT, max: c.HT },
         sm: c.sm,
         points: { starting: 0, disadvantageLimit: 0, awards: [] },
         groupSize: 1,
         tactics: "",
+        ...(c.swarm ? { swarm: c.swarm } : {}),
         details: {
           weight: c.weight,
           notes: [
