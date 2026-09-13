@@ -10,6 +10,13 @@
       {{#each modifiers as |m|}}<span class="gc-mod">{{m}}</span>{{/each}}
     </div>
   {{/if}}
+  {{#if notes.length}}
+    <div class="gc-mods">
+      {{#each notes as |note|}}
+        <span class="{{#if note.grave}}gc-warn{{else}}gc-mod{{/if}}">{{localize (concat "GWORLD.Affliction.Note." note.key) fatigue=note.data.fatigue bonus=note.data.bonus penalty=note.data.penalty target=note.data.target seconds=note.data.seconds success=note.data.success successFor=note.data.successFor failure=note.data.failure failureFor=note.data.failureFor freakOutFor=note.data.freakOutFor minutes=note.data.minutes hp=note.data.hp}}</span>
+      {{/each}}
+    </div>
+  {{/if}}
   <div class="gc-mods">
     {{#if helpless}}<span class="gc-warn">{{localize "GWORLD.Affliction.NoAction"}}</span>{{/if}}
     {{#if fallsDown}}<span class="gc-mod">{{localize "GWORLD.Affliction.FallsDown"}}</span>{{/if}}

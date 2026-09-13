@@ -97,7 +97,7 @@ import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
 import { mountedDefensePenalty } from "../../rules/mounted.js";
 import { supportEffect } from "../../rules/accessories.js";
 import { penaltyEffects } from "../../rules/attribute-penalties.js";
-import { afflictionsOn } from "../afflictions.js";
+import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { psionicsOf } from "../../rules/psionics.js";
 import {
   effectiveSkillLevel,
@@ -1222,7 +1222,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const traits = traitEffects(heldTraits);
     // What the afflictions on this character come to (pp. 428-429). Read once,
     // because the penalties reach the attributes, the defenses and the sheet.
-    const afflicted = afflictionsOn(this.parent);
+    // Pain Threshold changes what pain and agony cost (p. 428).
+    const afflicted = afflictionsOn(this.parent, painThresholdOf(traits));
     // Levels of the Appearance advantage: Attractive is 1, and nothing below
     // it counts for Bulletproof Nudity (p. 417).
     const appearanceLevels = Math.max(

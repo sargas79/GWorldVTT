@@ -284,6 +284,18 @@
         "unconsciousness": "Knocked out, as surely as by a wound.",
         "coma": "Collapsed. One HT roll to wake after twelve hours, and a roll every twelve hours after that, any failure of which is death.",
         "heartAttack": "Cardiac arrest. Straight to -1×FP, and dead in HT/3 minutes without resuscitation."
+      },
+      "ImmuneToHeartAttack": "{name} has no vitals to stop, and cannot have a heart attack",
+      "Note": {
+        "AgonyDrain": "Loses {fatigue} FP a minute while it lasts",
+        "TortureBonus": "Anyone who can threaten more of it gets +{bonus} to Interrogation and Intimidation",
+        "EcstasyInfluence": "Anyone offering more of it gets +{bonus} to Influence rolls",
+        "AgonyFunctions": "High Pain Threshold: able to act, at {penalty} to DX and IQ",
+        "NauseaRoll": "Roll HT {target} after eating, a foul smell, a failed Fright Check or being stunned",
+        "Vomits": "On a failure, vomits for {seconds} seconds — treat as Retching",
+        "HallucinationRoll": "Roll Will before each success roll: success {success} for {successFor}; failure {failure} for {failureFor}; critical failure freaks out for {freakOutFor}",
+        "HeartAttackClock": "Drops to -FP, and dies in {minutes} minutes unless resuscitated",
+        "HeartAttackSurvives": "If survived: {hp} HP"
       }
     },
     "Slam": {
