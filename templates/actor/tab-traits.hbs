@@ -158,4 +158,37 @@
     </div>
   </div>
 
+  {{#if psionics.length}}
+    {{!-- The psi powers this character holds, and what each Talent is worth to
+         a roll using it (Characters pp. 254-255). --}}
+    <div class="isec">
+      <div class="ish">{{localize "GWORLD.Psi.Powers"}}</div>
+      {{#each psionics as |power|}}
+        <div class="trait blueprint">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span class="tn">
+            <span>{{power.label}}</span>
+            {{#if power.talent}}
+              <span class="tag" data-tooltip="{{localize 'GWORLD.Psi.TalentHint'}}">
+                {{localize "GWORLD.Psi.Talent" bonus=power.signed}}
+              </span>
+            {{/if}}
+            {{#if power.latent}}
+              <span class="tag" data-tooltip="{{localize 'GWORLD.Psi.LatentHint'}}">
+                {{localize "GWORLD.Psi.Latent"}}
+              </span>
+            {{/if}}
+          </span>
+          <span class="td">
+            {{#if power.abilities.length}}
+              {{#each power.abilities as |name|}}{{name}}{{#unless @last}}, {{/unless}}{{/each}}
+            {{else}}
+              {{localize "GWORLD.Psi.NoAbilities"}}
+            {{/if}}
+          </span>
+        </div>
+      {{/each}}
+    </div>
+  {{/if}}
+
 </section>
