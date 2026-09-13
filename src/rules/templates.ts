@@ -299,6 +299,63 @@ export function combineTemplates(first: Template, second: Template): Template {
   return combined;
 }
 
+/** What stacking one more character template onto those already taken does. */
+export interface StackingPlan {
+  /** Attribute scores to write: the highest from among the templates. */
+  attributes: Partial<Record<Attribute, number>>;
+  /** Secondary levels to buy on top of what the earlier templates bought. */
+  secondary: Partial<Record<SecondaryKey, number>>;
+  /** Entries nothing taken earlier covers, to be added. */
+  create: TemplateEntry[];
+  /** Entries taken earlier at a lower level, at the level now required. */
+  raise: TemplateEntry[];
+}
+
+/**
+ * A character template taken on top of others (p. 259).
+ *
+ * `earlier` is what the templates already taken add up to, and `entries` what
+ * the new one would add -- its required entries and the picks made from it.
+ * The combined template is worked out by {@link combineTemplates}, and what is
+ * returned is only the difference: "choose the highest level of each attribute
+ * and secondary characteristic", and where a leveled trait was already taken,
+ * "meet the most difficult requirement -- do not take repeated traits at higher
+ * levels (e.g., a Status 2 knight who is also a Status 1 merchant is Status 2,
+ * not Status 3)."
+ */
+export function stackTemplate(options: {
+  earlier: Template;
+  next: Template;
+  entries: readonly TemplateEntry[];
+}): StackingPlan {
+  const { earlier, next } = options;
+  const combined = combineTemplates(earlier, { ...next, entries: [...options.entries] });
+
+  const attributes: Partial<Record<Attribute, number>> = {};
+  for (const key of Object.keys(next.attributes) as Attribute[]) {
+    const value = combined.attributes[key];
+    if (value !== undefined) attributes[key] = value;
+  }
+
+  const secondary: Partial<Record<SecondaryKey, number>> = {};
+  for (const key of Object.keys(next.secondary) as SecondaryKey[]) {
+    const more = (combined.secondary[key] ?? 0) - (earlier.secondary[key] ?? 0);
+    if (more > 0) secondary[key] = more;
+  }
+
+  const keyOf = (entry: TemplateEntry) => `${entry.itemType}:${entry.name.toLowerCase()}`;
+  const taken = new Map(earlier.entries.map((entry) => [keyOf(entry), entry]));
+  const create: TemplateEntry[] = [];
+  const raise: TemplateEntry[] = [];
+  for (const entry of combined.entries) {
+    const before = taken.get(keyOf(entry));
+    if (!before) create.push(entry);
+    else if (entry !== before) raise.push(entry);
+  }
+
+  return { attributes, secondary, create, raise };
+}
+
 /** It costs nothing to be human (p. 261). */
 export const HUMAN_RACIAL_COST = 0;
 

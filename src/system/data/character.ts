@@ -690,6 +690,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             new fields.StringField({ required: true, blank: true, initial: "" }),
             { required: true, initial: [] },
           ),
+          /**
+           * Items an earlier template added that this one raised, and what
+           * they were, so taking it off lowers them again (p. 259).
+           */
+          raised: new fields.ArrayField(
+            new fields.SchemaField({
+              id: new fields.StringField({ required: true, blank: true, initial: "" }),
+              points: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
+              levels: new fields.NumberField({ required: false, nullable: true, initial: null }),
+            }),
+            { required: true, initial: [] },
+          ),
         }),
         { required: true, initial: [] },
       ),

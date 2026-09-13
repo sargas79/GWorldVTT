@@ -8,6 +8,7 @@ import {
   emptyTemplate,
   entriesInGroup,
   requiredEntries,
+  stackTemplate,
   templateCost,
   type Template,
   type TemplateEntry,
@@ -272,5 +273,49 @@ describe("stacking templates (Characters pp. 259, 261)", () => {
   it("keeps the features and taboo traits of both, without duplicates", () => {
     const other: Template = { ...emptyTemplate("racial"), name: "Other", features: ["Tail"] };
     expect(combineTemplates(felinoid, other).features).toEqual(["Purring Voice", "Tail"]);
+  });
+});
+
+describe("stackTemplate (Characters p. 259)", () => {
+  const knight: Template = {
+    ...emptyTemplate("character"),
+    name: "Knight",
+    attributes: { ST: 12, DX: 12 },
+    secondary: { hp: 2 },
+    entries: [
+      { name: "Status", itemType: "trait", points: 10, levels: 2 },
+      { name: "Riding (Horse)", itemType: "skill", points: 2 },
+    ],
+  };
+
+  it("makes a Status 2 knight who is also a Status 1 merchant Status 2, not Status 3", () => {
+    const merchant: Template = {
+      ...emptyTemplate("character"),
+      name: "Merchant",
+      attributes: { IQ: 12, DX: 10 },
+      entries: [
+        { name: "Status", itemType: "trait", points: 5, levels: 1 },
+        { name: "Merchant", itemType: "skill", points: 4 },
+      ],
+    };
+    const plan = stackTemplate({ earlier: knight, next: merchant, entries: merchant.entries });
+    expect(plan.create.map((entry) => entry.name)).toEqual(["Merchant"]);
+    expect(plan.raise).toEqual([]);
+    // The higher of each: the knight's DX stands, the merchant's IQ is new.
+    expect(plan.attributes).toEqual({ IQ: 12, DX: 12 });
+  });
+
+  it("raises a trait taken earlier where the new template asks for more", () => {
+    const noble: Template = {
+      ...emptyTemplate("character"),
+      name: "Noble",
+      secondary: { hp: 3 },
+      entries: [{ name: "Status", itemType: "trait", points: 15, levels: 3 }],
+    };
+    const plan = stackTemplate({ earlier: knight, next: noble, entries: noble.entries });
+    expect(plan.create).toEqual([]);
+    expect(plan.raise).toMatchObject([{ name: "Status", levels: 3 }]);
+    // HP +3 is the requirement; +2 was already bought, so one more.
+    expect(plan.secondary).toEqual({ hp: 1 });
   });
 });
