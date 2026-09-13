@@ -803,7 +803,12 @@
       "kneeling": "Kneeling",
       "crawling": "Crawling",
       "sitting": "Sitting",
-      "lying": "Lying Down"
+      "lying": "Lying Down",
+      "AStep": "a step",
+      "TwoManeuvers": "two maneuvers",
+      "Move": "Move {move}",
+      "MoveHint": "Move in this posture: two-thirds crouching, a third kneeling or crawling, none sitting, a yard lying down.",
+      "Free": "a free action"
     },
     "Encumbrance": {
       "none": "None",

@@ -43,6 +43,7 @@ import {
 import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
 import { useTechnique, type Victim } from "../unarmed-techniques.js";
 import { canParryLiquid } from "../../rules/dirty-tricks.js";
+import { isStepPostureChange, postureMove, reachablePostures } from "../../rules/posture.js";
 import { affectsSecondary } from "../../rules/attribute-penalties.js";
 import { canMoveWhileGrappled } from "../../rules/grappling.js";
 import { formatDiceAdds } from "../../rules/dice.js";
@@ -2851,11 +2852,34 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         cost: (system.attributes[key] - 10) * (key === "DX" || key === "IQ" ? 20 : 10),
       })),
 
-      postures: POSTURES.map((key) => ({
-        key,
-        label: game.i18n.localize(`GWORLD.Posture.${key}`),
-        selected: system.posture === key,
-      })),
+      // Getting from one posture to another is not always one maneuver
+      // (Campaigns p. 364): from lying down a character must "rise to a
+      // crawling, kneeling, or sitting posture first"; kneeling and standing
+      // trade for the step of any maneuver; and "crouching does not require a
+      // Change Posture maneuver". Each option says which it is from here.
+      postures: POSTURES.map((key) => {
+        const from = (system.posture ?? "standing") as Posture;
+        const note = key === from
+          ? ""
+          : key === "crouching" && from === "standing"
+            ? game.i18n.localize("GWORLD.Posture.Free")
+            : isStepPostureChange(from, key)
+              ? game.i18n.localize("GWORLD.Posture.AStep")
+              : reachablePostures(from).includes(key)
+                ? ""
+                : game.i18n.localize("GWORLD.Posture.TwoManeuvers");
+        return {
+          key,
+          label: note
+            ? `${game.i18n.localize(`GWORLD.Posture.${key}`)} (${note})`
+            : game.i18n.localize(`GWORLD.Posture.${key}`),
+          selected: system.posture === key,
+        };
+      }),
+      // What the posture leaves of Move, dropping fractions: two-thirds
+      // crouching, a third kneeling or crawling, none sitting, a yard lying down.
+      postureMove: postureMove(Number(derived.encumbrance?.move ?? 0) || 0, (system.posture ?? "standing") as Posture),
+      postureMoveShown: (system.posture ?? "standing") !== "standing",
 
       hands: (["right", "left"] as const).map((key) => ({
         key,

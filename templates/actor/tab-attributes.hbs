@@ -87,6 +87,9 @@
               <option value="{{posture.key}}" {{#if posture.selected}}selected{{/if}}>{{posture.label}}</option>
             {{/each}}
           </select>
+          {{#if postureMoveShown}}
+            <span class="ichip" data-tooltip="{{localize 'GWORLD.Posture.MoveHint'}}">{{localize "GWORLD.Posture.Move" move=postureMove}}</span>
+          {{/if}}
         </div>
       </div>
       <div class="fld">
