@@ -2774,7 +2774,21 @@
       "Action": "TV action violence",
       "Averted": "The blow that should have landed does not.",
       "Cost": "{fp} FP",
-      "LosesTurn": "Loses their next turn"
+      "LosesTurn": "Loses their next turn",
+      "Dress": "Wearing",
+      "DressHint": "What a good-looking character has on, which is worth up to +2 to every active defense and, with nothing on at all, +1 Move and +2 water Move (Campaigns p. 417). Armour is worn or not worn on the Gear tab as usual.",
+      "DressState": {
+        "clothed": "Dressed",
+        "bares": "Bares legs, chest or midriff",
+        "skimpy": "Loincloth or skimpy swimwear",
+        "nude": "Nothing at all"
+      },
+      "Topless": "Bare chest",
+      "ToplessHint": "The extra +1 the book gives a bare chest. It is set here rather than read off the sheet (Campaigns p. 417).",
+      "CannonFodder": "Cannon fodder",
+      "CannonFodderHint": "A mook: fails every defense roll, never takes All-Out Attack, and collapses the moment any damage gets through their DR. Nobody keeps track of their HP (Campaigns p. 417).",
+      "CannonFodderDefense": "Cannon fodder: automatically fails",
+      "Collapses": "{name} goes down."
     }
   }
 }

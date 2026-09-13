@@ -129,6 +129,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
+import { DRESS_STATES } from "../../rules/cinematic.js";
 import {
   nextSkillPoints,
   nextTechniquePoints,
@@ -2393,6 +2394,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         key,
         label: game.i18n.localize(`GWORLD.Maneuver.${key}`),
         selected: system.maneuver === key,
+      })),
+      // How much they are wearing, for Bulletproof Nudity (Campaigns p. 417).
+      dressStates: DRESS_STATES.map((key) => ({
+        key,
+        label: game.i18n.localize(`GWORLD.Cinematic.DressState.${key}`),
+        selected: (system.dress?.state ?? "clothed") === key,
       })),
       isEvaluating: system.maneuver === "evaluate",
       isAiming: system.maneuver === "aim",

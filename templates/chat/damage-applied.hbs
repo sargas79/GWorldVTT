@@ -25,7 +25,10 @@
         </div>
       {{/if}}
 
-      {{#if r.cinematicBlast}}
+      {{#if r.collapsed}}
+        {{!-- A mook, who drops at the first thing that gets through (p. 417). --}}
+        <div class="gc-result failure">{{localize "GWORLD.Cinematic.Collapses" name=r.actorName}}</div>
+      {{else if r.cinematicBlast}}
         {{!-- A blast that does no direct damage: a token point a yard (p. 417). --}}
         <div class="gc-mods">
           <span>{{localize "GWORLD.Cinematic.BlastNoDamage"}}</span>

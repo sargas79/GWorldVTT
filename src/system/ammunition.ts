@@ -10,6 +10,8 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { isRuleOn } from "./optional-rules.js";
+import { shotsAfterFiring } from "../rules/cinematic.js";
+import { hasInfiniteAmmunition } from "./cinematic.js";
 import {
   crossbowReloadTime,
   fullLoad,
@@ -181,7 +183,13 @@ export async function spendShots(item: any, modeIndex: number, shellsFired: numb
   const { mode, entry } = found;
   if (entry.thrown || fullLoad(entry) <= 0) return;
   const loaded = Math.max(0, Number(mode.loaded ?? 0) || 0);
-  const after = Math.max(0, loaded - Math.max(1, Math.floor(shellsFired)));
+  // Infinite Ammunition (Campaigns p. 417): the count simply never goes down,
+  // which is what "they immediately find more" comes to at the table.
+  const after = shotsAfterFiring({
+    loaded,
+    fired: Math.max(1, Math.floor(shellsFired)),
+    infinite: hasInfiniteAmmunition((item as { actor?: any }).actor ?? null),
+  });
   if (after === loaded) return;
   await setLoaded(item, modeIndex, after);
   if (after === 0) ui.notifications?.info(L("Empty", { name: String(item.name) }));

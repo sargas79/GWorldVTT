@@ -7,10 +7,13 @@
  */
 
 import { CharacterData } from "./character.js";
+import { cannonFodderMayUse } from "../../rules/cinematic.js";
+import { isCannonFodder } from "../cinematic.js";
 
 const fields = foundry.data.fields;
 
 export class NpcData extends CharacterData {
+  declare cannonFodder: boolean;
   declare groupSize: number;
   declare tactics: string;
   declare swarm: {
@@ -60,6 +63,30 @@ export class NpcData extends CharacterData {
       }),
       /** A one-line behavioural note: morale, tactics, when they break. */
       tactics: new fields.StringField({ required: true, blank: true, initial: "" }),
+
+      /**
+       * A mook (Campaigns p. 417): "The GM may rule that minor NPCs are mere
+       * 'cannon fodder'." They fail every defense, never go all out, and drop
+       * the moment anything gets through their DR. It does nothing at all
+       * unless the table is playing the cinematic rules.
+       */
+      cannonFodder: new fields.BooleanField({ initial: false }),
     };
+  }
+
+  /**
+   * "They automatically fail all defense rolls . . . yet never All-Out
+   * Attack" (Campaigns p. 417).
+   *
+   * Enforced here rather than by leaving the maneuver off a picker, because
+   * the NPC sheet has no picker: a mook's maneuver is set by a macro, by the
+   * combat tracker, or by whatever else reaches the field, and the rule has to
+   * hold wherever it is set. A mook told to go all out attacks instead.
+   */
+  override prepareBaseData(): void {
+    super.prepareBaseData();
+    if (isCannonFodder(this.parent) && !cannonFodderMayUse(this.maneuver)) {
+      this.maneuver = "attack";
+    }
   }
 }

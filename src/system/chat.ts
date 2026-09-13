@@ -36,7 +36,10 @@ import { loseAim } from "./aim.js";
 import { blockingSpellsOf, castBlockingSpell } from "./casting.js";
 import { addResistControls } from "./spell-resistance.js";
 import { buyDefenseBack, declareFleshWound, type FleshWoundEntry, type TvActionEntry } from "./cinematic.js";
-import { canAvertWithFatigue, worthDeclaring, type Delivery } from "../rules/cinematic.js";
+import {
+  canAvertWithFatigue, facesHimSquarely, worthDeclaring, type Delivery,
+} from "../rules/cinematic.js";
+import { isCannonFodder } from "./cinematic.js";
 import type { DamageType } from "../rules/types.js";
 
 const APPLIED_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-applied.hbs`;
@@ -360,6 +363,7 @@ async function applyFromCard(options: {
       // asks for, and only where the blow actually shoved them (p. 417).
       knockbackStun: isRuleOn("knockback") ? result.knockbackStun : null,
       cinematicBlast: result.cinematicBlast,
+      collapsed: result.collapsed,
       // A critical may have changed what the dice said, which is worth showing
       // beside the injury rather than leaving to be inferred.
       criticalDamage:
@@ -394,9 +398,16 @@ async function applyFromCard(options: {
         // attack that damaged you ... was just a flesh wound" (p. 417). The
         // offer stands on the card that did the damage, which is the only
         // place "immediately after" can mean anything.
+        // A mook is not offered it: they have no unspent character points, and
+        // the whole of Cannon Fodder is that they go down.
         fleshWound: isRuleOn("fleshWounds")
           ? knockdowns
-              .filter((entry) => worthDeclaring(entry.result.injury))
+              .filter(
+                (entry) =>
+                  entry.actor?.type === "character" &&
+                  !entry.result.collapsed &&
+                  worthDeclaring(entry.result.injury),
+              )
               .map((entry) => ({
                 uuid: String(entry.actor.uuid ?? ""),
                 name: String(entry.actor.name ?? ""),
@@ -466,6 +477,7 @@ const REFUSAL_LABELS: Record<NonNullable<DefenseChoice["reason"]>, string> = {
   noParry: "GWORLD.Defense.NoParry",
   noBlock: "GWORLD.Defense.NoBlock",
   missile: "GWORLD.Defense.MissileSpell",
+  cannonFodder: "GWORLD.Cinematic.CannonFodderDefense",
 };
 
 /**
@@ -515,7 +527,16 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     // In tactical combat the arc the attack came from decides what is even
     // possible: a blow from behind cannot be defended at all by most people,
     // and one from the side reaches only the hand on that side.
-    const arc = await tacticalArc(flag, entry, defender);
+    //
+    // Unless the table is playing Melee Etiquette, under which "his opponents
+    // always face him one-on-one, one at a time" (p. 417): nobody gets at a
+    // player character's flank or back while they are fighting hand to hand,
+    // whatever the tokens on the map are doing. Gunfire is untouched.
+    const squarely =
+      isRuleOn("meleeEtiquette") &&
+      defender?.type === "character" &&
+      facesHimSquarely((flag.delivery ?? "ranged") as Delivery);
+    const arc = squarely ? null : await tacticalArc(flag, entry, defender);
     if (arc) {
       const note = document.createElement("span");
       note.className = arc.helpless ? "gc-warn" : "gc-mod";
@@ -533,6 +554,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       arc,
       deception,
       maneuver: defender.system?.derived?.maneuver ?? null,
+      cannonFodder: isCannonFodder(defender),
     });
     // "Your target may block or dodge, but not parry" a Missile spell
     // (Characters p. 241): the parry stays on the card, refused, with why.

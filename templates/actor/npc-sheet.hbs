@@ -160,6 +160,16 @@
     </div>
   {{/if}}
 
+  {{#if cannonFodderInPlay}}
+    {{!-- A mook (Campaigns p. 417): fails every defense, never goes all out,
+         and drops the moment anything gets through. --}}
+    <label class="inote icheck" data-tooltip="{{localize 'GWORLD.Cinematic.CannonFodderHint'}}">
+      <input type="checkbox" name="system.cannonFodder"
+             {{#if system.cannonFodder}}checked{{/if}} {{#unless editable}}disabled{{/unless}}>
+      <span>{{localize "GWORLD.Cinematic.CannonFodder"}}</span>
+    </label>
+  {{/if}}
+
   {{#if system.tactics}}
     <div class="inote">
       {{> "gworld.info"}}<span>{{system.tactics}}</span>

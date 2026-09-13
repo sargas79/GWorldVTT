@@ -33,7 +33,8 @@ import {
 import { applyDamageFloor, computeInjury } from "../rules/damage.js";
 import { formatDiceAdds, maxRoll, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import { blastRadius, fragmentationRadius } from "../rules/explosions.js";
-import type { Delivery } from "../rules/cinematic.js";
+import { canMalfunction, type Delivery } from "../rules/cinematic.js";
+import { hasInfiniteAmmunition } from "./cinematic.js";
 import {
   EXTRA_EFFORT_FP,
   flurryOfBlowsPenalty,
@@ -191,8 +192,12 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
 
   // A gun that jams does so on the attack roll itself, whether or not the shot
   // would otherwise have hit -- "on any attack roll of Malf. or more".
+  // "Furthermore, weapons never malfunction" (p. 417).
   const jam =
-    kind === "attack" && isRuleOn("malfunctions") && options.malfunction
+    kind === "attack" &&
+    isRuleOn("malfunctions") &&
+    canMalfunction(hasInfiniteAmmunition(actor)) &&
+    options.malfunction
       ? await rollMalfunction(roll.total, options.malfunction)
       : null;
 

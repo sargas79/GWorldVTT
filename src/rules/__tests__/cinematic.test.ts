@@ -5,8 +5,16 @@ import {
   FLESH_WOUND_COST,
   TV_ACTION_FP,
   canAvertWithFatigue,
+  canMalfunction,
+  cannonFodderCollapses,
+  cannonFodderDefends,
+  cannonFodderMayUse,
   cinematicExplosionInjury,
+  facesHimSquarely,
   fleshWound,
+  nudityDefenseBonus,
+  nudityMoveBonus,
+  shotsAfterFiring,
   knockbackStunPenalty,
   shovesLikeCrushing,
   worthDeclaring,
@@ -99,5 +107,67 @@ describe("TV action violence (p. 417)", () => {
 
   it("never buys off a blow struck at his sword rather than at him", () => {
     expect(canAvertWithFatigue({ ...lethal, atPossession: true })).toBe(false);
+  });
+});
+
+describe("bulletproof nudity (p. 417)", () => {
+  const attractive = { appearance: 1 } as const;
+
+  it("pays for wearing less, and only to the good-looking", () => {
+    expect(nudityDefenseBonus({ ...attractive, dress: "clothed" })).toBe(0);
+    expect(nudityDefenseBonus({ ...attractive, dress: "bares" })).toBe(1);
+    expect(nudityDefenseBonus({ ...attractive, dress: "skimpy" })).toBe(2);
+    // "Total nudity gives no further bonus to defense."
+    expect(nudityDefenseBonus({ ...attractive, dress: "nude" })).toBe(2);
+    expect(nudityDefenseBonus({ appearance: 0, dress: "nude" })).toBe(0);
+  });
+
+  it("adds the book's extra point for a bare chest", () => {
+    expect(nudityDefenseBonus({ ...attractive, dress: "bares", topless: true })).toBe(2);
+    expect(nudityDefenseBonus({ ...attractive, dress: "skimpy", topless: true })).toBe(3);
+    // Nothing to add it to while they are dressed.
+    expect(nudityDefenseBonus({ ...attractive, dress: "clothed", topless: true })).toBe(0);
+  });
+
+  it("makes a naked swimmer faster, however they look", () => {
+    expect(nudityMoveBonus("nude")).toEqual({ move: 1, water: 2 });
+    expect(nudityMoveBonus("skimpy")).toEqual({ move: 0, water: 0 });
+  });
+});
+
+describe("cannon fodder (p. 417)", () => {
+  it("never defends and never goes all out", () => {
+    expect(cannonFodderDefends()).toBe(false);
+    expect(cannonFodderMayUse("attack")).toBe(true);
+    expect(cannonFodderMayUse("allOutDefense")).toBe(true);
+    expect(cannonFodderMayUse("allOutAttack")).toBe(false);
+  });
+
+  it("drops the moment anything gets through", () => {
+    expect(cannonFodderCollapses(1)).toBe(true);
+    expect(cannonFodderCollapses(20)).toBe(true);
+    expect(cannonFodderCollapses(0)).toBe(false);
+  });
+});
+
+describe("infinite ammunition (p. 417)", () => {
+  it("never empties the magazine", () => {
+    expect(shotsAfterFiring({ loaded: 8, fired: 3 })).toBe(5);
+    expect(shotsAfterFiring({ loaded: 8, fired: 3, infinite: true })).toBe(8);
+    expect(shotsAfterFiring({ loaded: 2, fired: 5 })).toBe(0);
+  });
+
+  it("stops the gun jamming", () => {
+    expect(canMalfunction(false)).toBe(true);
+    expect(canMalfunction(true)).toBe(false);
+  });
+});
+
+describe("melee etiquette (p. 417)", () => {
+  it("faces a hand-to-hand fighter squarely, and leaves gunfire alone", () => {
+    expect(facesHimSquarely("unarmed")).toBe(true);
+    expect(facesHimSquarely("melee")).toBe(true);
+    expect(facesHimSquarely("thrown")).toBe(false);
+    expect(facesHimSquarely("ranged")).toBe(false);
   });
 });
