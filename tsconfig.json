@@ -14,6 +14,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
+    // The build tools are ES modules, and one of them -- the item icon table --
+    // is shared with the system itself, because the compendium's pictures are
+    // stamped in at build time and a character's are resolved at run time.
+    "allowJs": true,
     "noEmit": true,
     "types": ["node", "vitest/globals"]
   },

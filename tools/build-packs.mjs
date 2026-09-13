@@ -24,6 +24,8 @@ import { fileURLToPath } from "node:url";
 
 import { compilePack, extractPack } from "@foundryvtt/foundryvtt-cli";
 
+import { defaultItemIcon, isGenericIcon } from "./item-icons.mjs";
+
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 function flag(name, fallback) {
@@ -51,7 +53,16 @@ function normalise(entry, type) {
     _id: entry._id,
     name: entry.name,
     type: documentType,
-    img: entry.img ?? undefined,
+    // The picture is stamped in here rather than left to the document class.
+    // The compendium sidebar renders a pack's index, which carries what was
+    // stored and never runs a class, so an entry with no picture of its own
+    // is an entry that shows Foundry's bag in the compendium however well the
+    // run-time half behaves. An entry that chose an image keeps it.
+    img: actor
+      ? (entry.img ?? undefined)
+      : isGenericIcon(entry.img)
+        ? defaultItemIcon(documentType, entry.system ?? {})
+        : entry.img,
     system: entry.system ?? {},
     // A creature carries its traits and skills with it, each keyed under it:
     // compilePack wants every document in the hierarchy to say where it sits.
@@ -60,6 +71,11 @@ function normalise(entry, type) {
           items: (entry.items ?? []).map((item) => ({
             _key: `!actors.items!${entry._id}.${item._id}`,
             ...item,
+            // A creature's own traits and skills are items too, and are
+            // listed on its sheet with a picture apiece.
+            img: isGenericIcon(item.img)
+              ? defaultItemIcon(String(item.type ?? ""), item.system ?? {})
+              : item.img,
           })),
           prototypeToken: entry.prototypeToken ?? undefined,
         }
