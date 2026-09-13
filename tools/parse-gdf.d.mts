@@ -59,3 +59,4 @@ export declare function alternatives(
   name: string,
   f: Map<string, string>,
 ): Array<{ name: string; f: Map<string, string> }>;
+export declare function weaponClassOf(mods: string | undefined): "" | "sword" | "cutting" | "crushing" | "firearm" | "bow";

@@ -6,6 +6,14 @@ import { relativeLevelForPoints } from "../../rules/skills.js";
 import { SPELL_CLASSES, spellRelativeLevel, type MagicStyle, type SpellClass, type SpellDifficulty } from "../../rules/magic.js";
 import { netModifier, traitPoints } from "../../rules/traits.js";
 import type { Enchantment } from "../../rules/enchanting.js";
+import {
+  WEAPON_CLASSES,
+  WEAPON_MATERIALS,
+  WEAPON_QUALITIES,
+  type WeaponClass,
+  type WeaponMaterial,
+  type WeaponQuality,
+} from "../../rules/weapon-quality.js";
 import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from "../gear-groups.js";
 import { templateCost } from "../../rules/templates.js";
 import type {
@@ -623,6 +631,11 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare equipped: boolean;
   declare category: EquipmentCategory;
   declare unready: boolean;
+  declare quality: WeaponQuality;
+  declare material: WeaponMaterial;
+  declare weaponClass: WeaponClass;
+  declare listCost: number;
+  declare hpLost: number;
   declare meleeModes: unknown[];
   declare rangedModes: unknown[];
   declare vehicle: {
@@ -655,6 +668,51 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
       }),
       meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: [] }),
       rangedModes: new fields.ArrayField(rangedModeField(), { required: true, initial: [] }),
+      /**
+       * The grade it was bought in (GURPS Basic Set: Characters p. 274). The
+       * tables' prices buy good quality through TL6; a finer weapon cuts
+       * deeper, shoots straighter and breaks less, a cheap one the reverse.
+       */
+      quality: new fields.StringField({
+        required: true,
+        nullable: false,
+        initial: "good",
+        choices: [...WEAPON_QUALITIES],
+      }),
+      /**
+       * What the blade is made of, where it matters (p. 275): stone, bronze
+       * and iron take no fine bonus and break as cheap against better metal;
+       * silver is priced and breaks by its own paragraph. Blank for the
+       * usual material of the weapon's TL.
+       */
+      material: new fields.StringField({
+        required: true,
+        nullable: false,
+        blank: true,
+        initial: "",
+        choices: [...WEAPON_MATERIALS],
+      }),
+      /**
+       * The class it is priced in -- sword, cutting, crushing, firearm, bow --
+       * as the compendium recorded it. Blank means the modes decide.
+       */
+      weaponClass: new fields.StringField({
+        required: true,
+        nullable: false,
+        blank: true,
+        initial: "",
+        choices: [...WEAPON_CLASSES],
+      }),
+      /**
+       * The table's price, before quality (p. 274). The cost above is what
+       * this one paid; the sheet works it out from this and the grade.
+       */
+      listCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+      /**
+       * Damage the weapon has taken (Campaigns p. 483): struck at, or worn.
+       * Against the HP its weight gives it, this says whether it still works.
+       */
+      hpLost: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
       /**
        * The vehicle statistics (Campaigns pp. 462-463), read when the
        * category is "vehicle": ST/HP, Hnd/SR, HT, Move as acceleration and
@@ -834,6 +892,7 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
   declare db: number;
   declare dr: number;
   declare hp: number | null;
+  declare hpLost: number;
   declare skill: string;
   declare meleeModes: unknown[];
   declare quantity: number;
@@ -861,6 +920,8 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
        */
       dr: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
       hp: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
+      /** Damage the shield has taken under Damage to Shields (Campaigns p. 484). */
+      hpLost: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
       skill: new fields.StringField({ required: true, blank: true, initial: "Shield" }),
       /**
        * Bashing someone with the shield (GURPS Basic Set: Characters p. 273).

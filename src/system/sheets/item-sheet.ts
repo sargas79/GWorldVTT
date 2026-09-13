@@ -15,6 +15,15 @@ import { SPELL_CLASSES } from "../../rules/magic.js";
 import { SYSTEM_ID } from "../constants.js";
 import { sourceCollections } from "../compendium-sources.js";
 import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
+import { isRuleOn } from "../optional-rules.js";
+import { repairWeapon, weaponFacts } from "../weapon-damage.js";
+import {
+  WEAPON_CLASSES,
+  WEAPON_MATERIALS,
+  availableQualities,
+  qualityCostMultiplier,
+  silverCostMultiplier,
+} from "../../rules/weapon-quality.js";
 
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -130,6 +139,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
       addMode: GWorldItemSheet.#onAddMode,
+      repairWeapon: GWorldItemSheet.#onRepairWeapon,
       deleteMode: GWorldItemSheet.#onDeleteMode,
       addDefault: GWorldItemSheet.#onAddDefault,
       deleteDefault: GWorldItemSheet.#onDeleteDefault,
@@ -158,6 +168,23 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     context.type = item.type;
     context.isPhysical = PHYSICAL_TYPES.has(item.type);
     context.isArmed = ARMED_TYPES.has(item.type);
+
+    // What the weapon is as an object and what its grade costs (Characters
+    // p. 274, Campaigns p. 483), for the sheet to show beside the fields.
+    if (item.type === "equipment" || item.type === "shield") {
+      const facts = weaponFacts(item);
+      const tl = Number(item.system?.tl) || 3;
+      const grades = availableQualities(facts.weaponClass, tl);
+      context.weapon = {
+        armed: facts.skill !== "" || item.type === "shield",
+        facts,
+        qualities: Object.fromEntries(grades.map((q) => [q, `GWORLD.Quality.${q}`])),
+        multiplier: qualityCostMultiplier(facts.weaponClass, facts.quality, tl),
+        conditionLabel: `GWORLD.Breakage.Condition.${facts.condition}`,
+        showQuality: item.type === "equipment" && isRuleOn("weaponQuality"),
+        showObject: isRuleOn("weaponBreakage") && facts.hp > 0,
+      };
+    }
 
     // One flag per type, so the template can branch without a comparison helper.
     for (const t of [
@@ -285,6 +312,14 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         "": "GWORLD.Mount.none",
         ...keyed("Mount", ["rest", "bipod", "mounted"]),
       },
+      materials: {
+        "": "GWORLD.Material.none",
+        ...keyed("Material", WEAPON_MATERIALS.filter((m) => m !== "")),
+      },
+      weaponClasses: {
+        "": "GWORLD.WeaponClass.none",
+        ...keyed("WeaponClass", WEAPON_CLASSES.filter((c) => c !== "")),
+      },
       // The self-control numbers, with "none" first. Keys are strings because
       // a select's values are, and the form reader turns the number back.
       templateKinds: keyed("Template", ["character", "racial", "lens", "metaTrait"]),
@@ -328,6 +363,23 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
 
   override _processFormData(event: Event | null, form: HTMLFormElement, formData: object): object {
     const data = super._processFormData(event, form, formData) as Record<string, any>;
+
+    // A change of grade or material reprices the weapon from its list price
+    // (Characters pp. 274-275): what it costs is a fact about the grade, not a
+    // second thing to type. A weapon with no list price is left alone.
+    if (this.item.type === "equipment" && data.system) {
+      const current = this.item.system as any;
+      const quality = data.system.quality ?? current.quality;
+      const material = data.system.material ?? current.material;
+      const listCost = Number(data.system.listCost ?? current.listCost) || 0;
+      const changed = quality !== current.quality || material !== current.material;
+      if (changed && listCost > 0) {
+        const facts = weaponFacts(this.item);
+        const tl = Number(data.system.tl ?? current.tl) || 3;
+        const grade = qualityCostMultiplier(facts.weaponClass, quality, tl) ?? 1;
+        data.system.cost = Math.round(listCost * grade * silverCostMultiplier(material));
+      }
+    }
 
     for (const path of GWorldItemSheet.CHECKBOX_GROUPS) {
       if (!form.querySelector(`input[type="checkbox"][name="${path}"]`)) continue;
@@ -432,6 +484,11 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     if (!path) return null;
     const list = foundry.utils.getProperty(this.item, `system.${path}`);
     return Array.isArray(list) ? { path, list: [...list] } : null;
+  }
+
+  /** Puts a damaged weapon or shield back to full HP (Campaigns p. 484). */
+  static async #onRepairWeapon(this: GWorldItemSheet) {
+    await repairWeapon(this.item);
   }
 
   static async #onAddMode(this: GWorldItemSheet, _event: Event, target: HTMLElement) {

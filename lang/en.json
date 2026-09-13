@@ -514,6 +514,18 @@
         "legalityClass": {
           "Name": "Legality Class",
           "Hint": "Every controlled item carries a class from 0 (banned) to 4 (open). With a Control Rating set for the campaign, the Gear tab says what carrying each piece here would take: registration, a license, or a uniform."
+        },
+        "weaponQuality": {
+          "Name": "Weapon quality",
+          "Hint": "Cheap, good, fine and very fine (Characters pp. 274-279): a fine blade cuts a point deeper, a fine rifle is a point more accurate and jams a point later, a cheap weapon breaks sooner. Off, every weapon is as the table lists it."
+        },
+        "minimumSt": {
+          "Name": "Minimum ST",
+          "Hint": "A weapon that needs more ST than you have is -1 to skill per point you lack, and costs an extra FP at the end of a tiring fight (Characters p. 270)."
+        },
+        "weaponBreakage": {
+          "Name": "Weapons that break",
+          "Hint": "Parrying something three times your weapon’s weight may snap it; a fumble may break it, unless it is one of the resistant kinds; a foe may strike at it. A damaged weapon rolls on the Broken Weapons table (Campaigns pp. 376, 400, 485)."
         }
       }
     },
@@ -1096,7 +1108,22 @@
       "Thrown": "Thrown",
       "ThrownHint": "A weapon you let go of, whose range comes off your ST.",
       "StMultiple": "Range × ST",
-      "StMultipleHint": "The ranges are multiples of ST rather than yards, as ×10/×15 on the muscle-powered table."
+      "StMultipleHint": "The ranges are multiples of ST rather than yards, as ×10/×15 on the muscle-powered table.",
+      "Quality": "Quality",
+      "QualityHint": "The grade it was bought in (Characters p. 274). Changing it reprices the weapon from its list price.",
+      "Material": "Material",
+      "MaterialHint": "What the blade is made of (p. 275): stone, bronze and iron take no fine bonus and break as cheap against better metal; silver is priced by its own paragraph.",
+      "WeaponClass": "Priced as",
+      "WeaponClassHint": "The class its quality is priced in: swords ×4 for fine, cutting weapons ×10, crushing ×3, firearms ×2, bows ×4.",
+      "ListCost": "List price",
+      "ListCostHint": "The table’s price, which buys good quality through TL6. The cost above is what this one paid.",
+      "QualityPrice": "This grade costs ×{multiplier} the list price.",
+      "ObjectStats": "As an object",
+      "HpLost": "HP lost",
+      "HpLostHint": "Damage the weapon has taken (Campaigns p. 483). At a third of its HP it may work worse; at zero it is disabled; at -5×HP it is destroyed.",
+      "Condition": "Condition",
+      "Repair": "Repair",
+      "RepairHint": "Puts it back to full HP. The repair rules (Campaigns p. 484) say what that takes."
     },
     "Gear": {
       "Carried": "Carried",
@@ -1496,7 +1523,10 @@
       "stumble": "You stumble past your foe and end your turn facing away from him",
       "trip": "You trip: roll against DX to avoid falling down",
       "dropGuard": "You drop your guard: defenses at -2, and Evaluate and Feint count double",
-      "tearMuscle": "You tear a muscle: 1d-3 injury to the limb, off balance next turn"
+      "tearMuscle": "You tear a muscle: 1d-3 injury to the limb, off balance next turn",
+      "weaponBreaksTwice": "Your weapon breaks — it resisted, and broke on the second roll too",
+      "dropWeaponInstead": "Your weapon resists breaking: you drop it instead",
+      "ResistantAgain": "rolled again for a resistant weapon: {roll}"
     },
     "Knockback": {
       "Pushed": "Knocked back {yards} yd",
@@ -2347,7 +2377,8 @@
     "BattleFatigue": {
       "Title": "Battle fatigue",
       "Seconds": "{seconds} seconds of fighting",
-      "Charged": "{fp} FP from {names}"
+      "Charged": "{fp} FP from {names}",
+      "Strained": "{name} (+1 for a weapon above their ST)"
     },
     "Modifier": {
       "Browse": "Browse the book's",
@@ -2449,6 +2480,79 @@
       "rest": "Musket rest",
       "bipod": "Bipod",
       "mounted": "Mounted"
+    },
+    "Quality": {
+      "cheap": "Cheap",
+      "good": "Good",
+      "fine": "Fine",
+      "veryFine": "Very fine"
+    },
+    "Material": {
+      "none": "As usual for its TL",
+      "stone": "Stone",
+      "bronze": "Bronze",
+      "iron": "Iron",
+      "steel": "Steel",
+      "wood": "Wood",
+      "plastic": "Plastic",
+      "silver": "Solid silver",
+      "silverCoated": "Silver-coated or -edged"
+    },
+    "WeaponClass": {
+      "none": "From its attacks",
+      "fencing": "Fencing weapon",
+      "sword": "Sword",
+      "cutting": "Cutting weapon",
+      "crushing": "Crushing or impaling only",
+      "firearm": "Firearm",
+      "bow": "Bow, crossbow or blowpipe"
+    },
+    "Breakage": {
+      "Object": "DR {dr}, HP {hp}",
+      "TooHeavy": "Too heavy to parry",
+      "TooHeavyText": "A {weight} lb attack is more than a parry can meet at Basic Lift {lift} (Campaigns p. 376): it fails automatically and sweeps the weapon aside.",
+      "HeavyParry": "{name} parries something far heavier",
+      "Odds": "{chance} in 6 to break",
+      "Held": "The weapon holds.",
+      "Snapped": "The weapon snaps.",
+      "ParryVoid": "The odds passed six: the parry does not count.",
+      "SnappedParrying": "{name} snapped on the parry",
+      "SnappedFumbling": "{name} broke on the fumble",
+      "Struck": "{name} is struck",
+      "Injury": "{injury} HP of damage: {lost} of {hp} lost.",
+      "BrokenRoll": "Broken Weapons table: {roll}",
+      "Condition": {
+        "sound": "Sound",
+        "damaged": "Damaged",
+        "disabled": "Disabled",
+        "destroyed": "Destroyed"
+      },
+      "Broken": {
+        "useless": "The weapon is useless.",
+        "axeHeadOff": "The head breaks off; what is left is a light club.",
+        "polearmPole": "An 8-foot pole is left: a long spear doing thrust+2 crushing.",
+        "polearmStaffAndAxe": "A quarterstaff is left, and a clumsy (-4) axe with reach 1 lies in front of you.",
+        "polearmClubAndGreatAxe": "A light club is left, and a clumsy (-2) great axe with reach 2 lies on the ground.",
+        "rapierShortened": "A broken smallsword is a dagger, a broken rapier a smallsword; still impaling.",
+        "spearHeadOff": "The head breaks off where it joins the shaft: a quarterstaff.",
+        "spearBroken": "The spear breaks further down: a baton in hand, and a reach 1 spear at normal damage lies in front of you.",
+        "swordHalved": "The blade breaks at the halfway mark: cutting at -2 damage, a thrust does crushing, reach 2 becomes 1.",
+        "twoHandedHeadOff": "The head breaks off where it joins the shaft: a quarterstaff.",
+        "twoHandedBroken": "It breaks further down: a light club in hand, and a very clumsy (-4) axe with reach 1 lies in front of you.",
+        "gmDecides": "Use the closest kind on the table; the GM has the final say."
+      },
+      "ApplyToWeapon": "Apply to the weapon",
+      "CannotApply": "You cannot change that weapon.",
+      "StrikeLabel": "Strike at {foe}’s {weapon}",
+      "StrikePenalty": "striking at the weapon",
+      "DamageLabel": "Damage to {weapon}",
+      "MinStHint": "This weapon needs more ST than you have: -1 to skill per point lacking, and an extra FP at the end of a tiring fight (Characters p. 270).",
+      "ConditionHint": "What state the weapon is in after the damage it has taken (Campaigns p. 484).",
+      "Aim": "Aim",
+      "AimDisarm": "To disarm",
+      "AimBreak": "To break the weapon",
+      "Weapon": "Weapon",
+      "NoWeaponToStrike": "The foe has no weapon in hand to strike at."
     }
   }
 }

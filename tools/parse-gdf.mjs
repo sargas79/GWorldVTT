@@ -966,6 +966,22 @@ export function alternatives(name, f) {
 const TOOL_NAMES = /\b(kit|tools?|lockpicks|crowbar|pickaxe|saw|shovel|whetstone|cutting torch|plow|spinning wheel|knitting needles|balance|wheelbarrow|lab|instruments|compass|gps|binoculars|telescope|camera|camcorder|recorder|radio|computer|phone|flashlight|lantern|climbing gear|grapnel|fishhooks|metal detector|goggles|handcuffs|bug|microphone|mike|beacon|nanobug|typewriter|wax tablet|lighter|stove|wristwatch|tv set|silencer|laser sight)\b/i;
 const CONSUMABLE_NAMES = /\b(water|gasoline|kerosene|oil|candle|torch|matches|rations|tablets|batteries|film|antibiotic|antitoxin|bandages|arrow|bolt|dart|pellet|gas bottle)\b/i;
 
+/**
+ * The class a weapon is priced in (Characters p. 274), which GCA names in
+ * the modifier groups it offers the weapon: "Sword Class Quality", "Cutting
+ * Class Quality", "Crushing/Imp Class Quality", "Guns", "Beams", "Bow
+ * Quality". Blank where it offers none, and the sheet reads the modes.
+ */
+export function weaponClassOf(mods) {
+  const text = mods ?? "";
+  if (/Sword Class/i.test(text)) return "sword";
+  if (/Cutting Class/i.test(text)) return "cutting";
+  if (/Crushing\/Imp Class/i.test(text)) return "crushing";
+  if (/\b(Guns|Beams)\b/.test(text)) return "firearm";
+  if (/Bow Quality/i.test(text)) return "bow";
+  return "";
+}
+
 function categoryOf(name, armed) {
   if (armed) return "weapon";
   // A cutting torch's gas bottle is used up; the torch itself is not.
@@ -1149,7 +1165,19 @@ export function parseEquipment(recs, reject, note) {
       _id: ids.get(name) ?? id(armed ? "weapon" : "gear", name),
       name,
       type: "equipment",
-      system: { ...common, category: categoryOf(name, armed), meleeModes, rangedModes },
+      system: {
+        ...common,
+        category: categoryOf(name, armed),
+        // The table's price buys good quality (Characters p. 274), and the
+        // class GCA prices the weapon in is the book's own.
+        quality: "good",
+        material: "",
+        weaponClass: weaponClassOf(f.get("mods")),
+        listCost: common.cost,
+        hpLost: 0,
+        meleeModes,
+        rangedModes,
+      },
     });
   }
 

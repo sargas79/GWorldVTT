@@ -57,6 +57,8 @@ export * from "./injury-tolerance.js";
 export * from "./mortal-wounds.js";
 export * from "./mounted.js";
 export * from "./objects.js";
+export * from "./breakage.js";
+export * from "./weapon-quality.js";
 export * from "./overpenetration.js";
 export * from "./posture.js";
 export * from "./ranged.js";

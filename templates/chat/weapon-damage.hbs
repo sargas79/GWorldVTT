@@ -1,0 +1,57 @@
+{{!-- A weapon struck, snapped or worn out (GURPS Basic Set: Campaigns pp. 376, 483-485). --}}
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{label}}</span>
+    {{#if facts}}
+      <span class="gc-target">{{localize "GWORLD.Breakage.Object" dr=facts.dr hp=facts.hp}}</span>
+    {{/if}}
+  </div>
+
+  {{#if tooHeavy}}
+    <div class="gc-result failure">
+      {{localize "GWORLD.Breakage.TooHeavyText" weight=tooHeavy.attackWeight lift=tooHeavy.basicLift}}
+    </div>
+  {{/if}}
+
+  {{#if heavy}}
+    <div class="gc-mods">
+      <span>{{localize "GWORLD.Breakage.Odds" chance=heavy.chance}}</span>
+      <span class="gc-die">{{heavy.die}}</span>
+    </div>
+    {{#if heavy.held}}
+      <div class="gc-result success">{{localize "GWORLD.Breakage.Held"}}</div>
+    {{else}}
+      <div class="gc-result crit-failure">
+        {{localize "GWORLD.Breakage.Snapped"}}
+        {{#unless heavy.parryCounts}}<span class="gc-mod">{{localize "GWORLD.Breakage.ParryVoid"}}</span>{{/unless}}
+      </div>
+    {{/if}}
+  {{/if}}
+
+  {{#if struck}}
+    <div class="gc-mods">
+      <span>{{localize "GWORLD.Chat.DrSubtracted"}} {{struck.effectiveDr}}</span>
+      <span>{{localize "GWORLD.Chat.Penetrating"}} {{struck.penetrating}}</span>
+      <span>&times;{{struck.modifier}}</span>
+    </div>
+    <div class="gc-result {{#if struck.injury}}failure{{else}}success{{/if}}">
+      {{#if struck.injury}}
+        {{localize "GWORLD.Breakage.Injury" injury=struck.injury lost=facts.hpLost hp=facts.hp}}
+      {{else}}
+        {{localize "GWORLD.Chat.Stopped" dr=struck.effectiveDr}}
+      {{/if}}
+    </div>
+  {{/if}}
+
+  {{#if facts}}
+    <div class="gc-mods">
+      <span class="gc-mod">{{localize (concat "GWORLD.Breakage.Condition." facts.condition)}}</span>
+    </div>
+  {{/if}}
+
+  {{#if broken}}
+    <div class="gc-result crit-failure">
+      {{localize "GWORLD.Breakage.BrokenRoll" roll=broken.roll.total}} &mdash; {{broken.text}}
+    </div>
+  {{/if}}
+</div>

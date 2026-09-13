@@ -29,6 +29,9 @@
       {{localize "GWORLD.Critical.Fumbled" roll=criticalMiss.total}}
       &mdash; {{criticalMiss.effect}}
       {{#if criticalMiss.gmDecides}}<span class="gc-mod">{{localize "GWORLD.Critical.GmDecides"}}</span>{{/if}}
+      {{#if criticalMiss.again}}
+        <span class="gc-mod">{{localize "GWORLD.Critical.ResistantAgain" roll=criticalMiss.again.total}}</span>
+      {{/if}}
     </div>
   {{/if}}
 
