@@ -65,8 +65,18 @@ describe("rangedModifiers", () => {
     expect(valueOf(rangedModifiers(shot(), bow), "Accuracy")).toBeUndefined();
   });
 
-  it("counts a scope with the Accuracy it is aimed alongside", () => {
-    expect(valueOf(rangedModifiers(shot({ aimed: true }), rifle), "Accuracy")).toBe(7);
+  /**
+   * A scope pays out for the seconds actually spent behind it (Campaigns
+   * p. 411): "with a variable-power scope, you may Aim for fewer seconds, but
+   * this reduces your bonus by a like amount", and scopes are variable-power
+   * unless the table says otherwise.
+   *
+   * So a rifle with Acc 5 and a +2 scope, aimed for the one second a ticked
+   * box is worth, comes to 6 rather than 7. This test asserted 7 before the
+   * rule was implemented, which was the whole scope for one second of aiming.
+   */
+  it("counts only as much of a scope as the aiming has paid for", () => {
+    expect(valueOf(rangedModifiers(shot({ aimed: true }), rifle), "Accuracy")).toBe(6);
   });
 
   it("keeps a situational modifier alongside the rest", () => {

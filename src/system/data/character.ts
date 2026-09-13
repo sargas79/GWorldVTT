@@ -95,6 +95,7 @@ import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js"
 import { fatigueStatus, isVeryTired } from "../../rules/fatigue.js";
 import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
 import { mountedDefensePenalty } from "../../rules/mounted.js";
+import { supportEffect } from "../../rules/accessories.js";
 import { penaltyEffects } from "../../rules/attribute-penalties.js";
 import { afflictionsOn } from "../afflictions.js";
 import { psionicsOf } from "../../rules/psionics.js";
@@ -1574,7 +1575,20 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         const parsed = parseDiceAdds(damage);
         return parsed ? formatDiceAdds(addModifier(parsed, bonus)) : damage;
       };
-      const lacking = isRuleOn("minimumSt") ? (minSt: number | null) => minStPenalty(attrs.ST, minSt) : () => 0;
+      // What a weapon takes to hold depends on what is holding it up
+      // (Campaigns p. 411): a bipod under a prone shooter cuts the ST
+      // requirement to two thirds, and a mount lifts it entirely. The field
+      // recording which was already on every ranged mode and had never been
+      // read by anything.
+      const supported = (minSt: number | null, mount: string) =>
+        supportEffect({
+          support: mount === "mounted" ? "tripod" : mount === "bipod" ? "bipod" : "hands",
+          minimumSt: minSt,
+          prone: this.posture === "lying",
+        }).minimumSt;
+      const lacking = isRuleOn("minimumSt")
+        ? (minSt: number | null, mount = "") => minStPenalty(attrs.ST, supported(minSt, mount))
+        : () => 0;
       const short = (found: { level: number | null; atDefault: boolean }, minSt: number | null) =>
         found.level === null ? found : { ...found, level: found.level + lacking(minSt) };
       const withPuissance = (damage: string): string => {
@@ -1729,7 +1743,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           quality,
           material,
           resistsBreakage: resists,
-          minStPenalty: lacking(mode.minSt ?? null),
+          minStPenalty: lacking(mode.minSt ?? null, String(mode.mount ?? "")),
           condition,
           twoHanded: Boolean(mode.twoHanded),
           swung: mode.damageBase === "sw",
