@@ -142,11 +142,6 @@ const TABLES: Record<CriticalTable, readonly CriticalEntry[]> = {
   missUnarmed: CRITICAL_MISS_UNARMED,
 };
 
-/** Every row of one table, for showing it. */
-export function criticalTable(table: CriticalTable): readonly CriticalEntry[] {
-  return TABLES[table];
-}
-
 /**
  * The row a 3d roll lands on.
  *

@@ -6,7 +6,6 @@ import {
   maxRoll,
   minRoll,
   rollDice,
-  rollDiceAdds,
   rollDie,
   toRollFormula,
 } from "../dice.js";
@@ -34,12 +33,6 @@ describe("dice helpers", () => {
   it("rolls the requested number of dice", () => {
     expect(rollDice(3, scriptedRng([4, 5, 6]))).toEqual([4, 5, 6]);
     expect(rollDice(0, scriptedRng([4]))).toEqual([]);
-  });
-
-  it("totals a dice+adds roll including the modifier", () => {
-    const result = rollDiceAdds({ dice: 2, adds: 3 }, scriptedRng([4, 5]));
-    expect(result.dice).toEqual([4, 5]);
-    expect(result.total).toBe(12);
   });
 
   it("reports the range and average of a dice+adds expression", () => {

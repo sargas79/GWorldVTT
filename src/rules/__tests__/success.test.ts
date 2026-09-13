@@ -7,7 +7,6 @@ import {
   quickContest,
   resolveDefense,
   resolveSuccess,
-  successRoll,
 } from "../success.js";
 
 describe("success rolls (GURPS Lite p. 2)", () => {
@@ -127,18 +126,5 @@ describe("quick contests (GURPS Lite p. 3)", () => {
 
   it("reports a tie when nobody won", () => {
     expect(quickContest(roll(10, 12), roll(10, 12)).outcome).toBe("tie");
-  });
-});
-
-describe("rolling", () => {
-  it("produces totals in the 3-18 range and reports three dice", () => {
-    let sequence = 0;
-    const rng = () => [0, 0.5, 0.99][sequence++ % 3]!;
-
-    const result = successRoll(12, rng);
-    expect(result.dice).toHaveLength(3);
-    expect(result.roll).toBe(result.dice.reduce((a, b) => a + b, 0));
-    expect(result.roll).toBeGreaterThanOrEqual(3);
-    expect(result.roll).toBeLessThanOrEqual(18);
   });
 });

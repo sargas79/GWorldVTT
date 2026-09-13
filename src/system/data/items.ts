@@ -4,7 +4,11 @@
 
 import { relativeLevelForPoints } from "../../rules/skills.js";
 import { SPELL_CLASSES, spellRelativeLevel, type MagicStyle, type SpellClass, type SpellDifficulty } from "../../rules/magic.js";
-import { netModifier, traitPoints } from "../../rules/traits.js";
+import {
+  netModifier,
+  traitPoints,
+  traitLevelName,
+} from "../../rules/traits.js";
 import type { Enchantment } from "../../rules/enchanting.js";
 import { AMMUNITION_TYPES } from "../../rules/ammunition.js";
 import { EQUIPMENT_QUALITIES, type EquipmentQuality } from "../../rules/wealth.js";
@@ -294,7 +298,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
 
   /** The book's name for the level bought, where it names one. */
   get levelName(): string | null {
-    return this.levelNames[this.levels - 1] || null;
+    return traitLevelName(this.levelNames, this.levels);
   }
 }
 
