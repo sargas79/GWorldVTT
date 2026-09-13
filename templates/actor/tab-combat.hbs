@@ -371,6 +371,13 @@
                     data-fragmentation="{{atk.fragmentation}}"{{/if}}>{{atk.damage}}
                   <span class="dt">{{atk.damageType}}</span>
                   {{#if atk.ignoresDr}}<span class="tag" data-tooltip="{{localize 'GWORLD.Malediction.IgnoresDrHint'}}">{{localize "GWORLD.Malediction.IgnoresDr"}}</span>{{/if}}
+                  {{!-- Special ammunition (Monster Hunters 1 p. 63): a follow-up to roll, and what needs the GM. --}}
+                  {{#if atk.followUp}}
+                    <span class="tag rollable" data-action="rollDamage" data-damage-formula="{{atk.followUp.damage}}" data-damage-type="{{atk.followUp.damageType}}"
+                          data-damage-label="{{atk.name}} {{localize 'GWORLD.SpecialAmmo.FollowUp'}}" data-armor-divisor="1"
+                          data-explosive="{{#if atk.followUp.explosive}}1{{/if}}" data-tooltip="{{localize 'GWORLD.SpecialAmmo.FollowUpHint'}}">+{{atk.followUp.damage}} {{atk.followUp.damageType}}</span>
+                  {{/if}}
+                  {{#each atk.ammoNotes as |n|}}<span class="tag" data-tooltip="{{n.hint}}">{{n.label}}</span>{{/each}}
                 </td>
               {{/if}}
               {{#if atk.malediction}}

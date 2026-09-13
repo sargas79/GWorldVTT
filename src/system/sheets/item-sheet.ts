@@ -21,6 +21,17 @@ import { collectionWeight, grimoirePrice } from "../../rules/ritual-tricks.js";
 import { breakCharm } from "../ritual-casting.js";
 import { gadgetCostFactor, gadgetWeightFactor, improvedGadget } from "../../rules/gadgets.js";
 import { allowedWeapon, improvedWeaponPrice, weaponImprovementProblems, type ImprovedWeapon } from "../../rules/weapon-improvements.js";
+import {
+  HAND_LOADED,
+  PAYLOAD_OPTIONS,
+  POWDER_OPTIONS,
+  ammunitionProblems,
+  isShotgun,
+  specialReloadCost,
+  type PayloadOption,
+  type PowderOption,
+} from "../../rules/special-ammunition.js";
+import { resolveSuccess } from "../../rules/success.js";
 import { SYSTEM_ID } from "../constants.js";
 import { sourceCollections } from "../compendium-sources.js";
 import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
@@ -161,6 +172,16 @@ async function promptForModifier(): Promise<{ name: string; value: number } | nu
   return result && typeof result === "object" ? (result as { name: string; value: number }) : null;
 }
 
+/** A ranged mode's special ammunition load. */
+function loadOf(mode: any): { powder: PowderOption; payload: PayloadOption; powderAdjust: number; payloadAdjust: number } {
+  return {
+    powder: String(mode?.powder ?? "") as PowderOption,
+    payload: String(mode?.payload ?? "") as PayloadOption,
+    powderAdjust: Number(mode?.powderAdjust) || 0,
+    payloadAdjust: Number(mode?.payloadAdjust) || 0,
+  };
+}
+
 /** The skills a weapon's modes are used with. */
 function modeSkillsOf(system: any): string[] {
   return [...(system?.meleeModes ?? []), ...(system?.rangedModes ?? [])].map((m: any) => String(m?.skill ?? ""));
@@ -186,6 +207,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     actions: {
       addMode: GWorldItemSheet.#onAddMode,
       recordMastery: GWorldItemSheet.#onRecordMastery,
+      handLoad: GWorldItemSheet.#onHandLoad,
       breakCharm: GWorldItemSheet.#onBreakCharm,
       repairWeapon: GWorldItemSheet.#onRepairWeapon,
       exposureCheck: GWorldItemSheet.#onExposureCheck,
@@ -228,9 +250,23 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       const tl = Number(item.system?.tl) || 3;
       const grades = availableQualities(facts.weaponClass, tl);
       // "Assume that ammo cost is $20 times this weight" (Characters p. 278).
-      const reloads = ((item.system as any).rangedModes ?? []).map((m: any) =>
-        Number(m.reloadWeight) > 0 ? ammunitionCost(Number(m.reloadWeight)) : null,
-      );
+      // Special ammunition multiplies the rounds by (1 + CF), not the
+      // magazine (Monster Hunters 1 p. 63).
+      const special = isRuleOn("monsterHuntersGear") && facts.weaponClass === "firearm";
+      const reloads = ((item.system as any).rangedModes ?? []).map((m: any) => {
+        if (!(Number(m.reloadWeight) > 0)) return null;
+        const rounds = ammunitionCost(Number(m.reloadWeight));
+        return special
+          ? specialReloadCost({ ammunition: rounds, magazine: Number(m.magazineCost) || 0, load: loadOf(m) })
+          : rounds;
+      });
+      context.specialAmmo = special
+        ? ((item.system as any).rangedModes ?? []).map((m: any) => ({
+            handLoaded: HAND_LOADED.has(String(m.powder ?? "")) || HAND_LOADED.has(String(m.payload ?? "")),
+            shotgun: isShotgun({ skill: String(m.skill ?? ""), name: String(item.name ?? ""), projectiles: Number(m.projectiles ?? 1) || 1 }),
+            adjust: [m.powderAdjust, m.payloadAdjust].map((a: number) => Number(a) || 0).filter(Boolean).map((a: number) => (a > 0 ? `+${a}` : String(a))).join(", "),
+          }))
+        : null;
       const damage = damageState(item);
       context.weapon = {
         armed: facts.skill !== "" || item.type === "shield",
@@ -505,6 +541,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       ritualDamageKinds: keyed("Ritual.DamageKind", ["standard", "small", "large", "heavy"]),
       ritualDeliveries: keyed("Ritual.Delivery", ["malediction", "external", "externalExplosive"]),
       ritualRangeKinds: keyed("Ritual.RangeKind", ["yards", "information", "crossTime"]),
+      powders: { "": "GWORLD.SpecialAmmo.Powder.none", ...keyed("SpecialAmmo.Powder", POWDER_OPTIONS.filter((p) => p !== "")) },
+      payloads: { "": "GWORLD.SpecialAmmo.Payload.none", ...keyed("SpecialAmmo.Payload", PAYLOAD_OPTIONS.filter((p) => p !== "")) },
       equipmentCategories: keyed("GearCategory", [...EQUIPMENT_CATEGORIES]),
       // The mark after a firearm's ST: none, a rest, a bipod, a mount (p. 270).
       mounts: {
@@ -594,6 +632,26 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
 
   override _processFormData(event: Event | null, form: HTMLFormElement, formData: object): object {
     const data = super._processFormData(event, form, formData) as Record<string, any>;
+
+    // An attack mode's form carries only the fields the sheet shows, and an
+    // array is replaced whole, so every field it does not show -- a shotgun's
+    // projectiles, a load's hand-loading adjustment -- would go back to its
+    // initial value on any edit. Each submitted mode is laid over the stored
+    // one instead.
+    for (const key of ["meleeModes", "rangedModes"] as const) {
+      const submitted = data.system?.[key];
+      if (!submitted || typeof submitted !== "object") continue;
+      const stored = (((this.item.system as any)[key] ?? []) as any[]);
+      const entries = Array.isArray(submitted)
+        ? submitted.map((mode, index) => [index, mode] as const)
+        : Object.entries(submitted).map(([index, mode]) => [Number(index), mode] as const);
+      const merged = stored.map((mode) => ({ ...mode }));
+      for (const [index, mode] of entries) {
+        if (!Number.isInteger(index) || index < 0) continue;
+        merged[index] = { ...(stored[index] ?? {}), ...(mode as object) };
+      }
+      data.system[key] = merged;
+    }
 
     // A change of grade or material reprices the weapon from its list price
     // (Characters pp. 274-275): what it costs is a fact about the grade, not a
@@ -789,6 +847,29 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       }
     }
 
+    // A load the book does not allow is refused (Monster Hunters 1 p. 63):
+    // shotgun payloads on a shotgun, bullets on a pistol, rifle or SMG, and
+    // no powder with Dragon's Breath. A changed option starts again unloaded
+    // by hand.
+    const submittedModes = data.system?.rangedModes;
+    if (this.item.type === "equipment" && submittedModes && typeof submittedModes === "object" && isRuleOn("monsterHuntersGear")) {
+      const before = ((this.item.system as any).rangedModes ?? []) as any[];
+      for (const [key, mode] of Object.entries(submittedModes as Record<string, any>)) {
+        const previous = before[Number(key)] ?? {};
+        const load = { powder: String(mode.powder ?? previous.powder ?? ""), payload: String(mode.payload ?? previous.payload ?? "") } as { powder: PowderOption; payload: PayloadOption };
+        const problems = ammunitionProblems(load, {
+          shotgun: isShotgun({ skill: String(mode.skill ?? previous.skill ?? ""), name: String(this.item.name ?? ""), projectiles: Number(mode.projectiles ?? previous.projectiles ?? 1) || 1 }),
+        });
+        if (problems.length) {
+          ui.notifications?.warn(game.i18n.localize(`GWORLD.SpecialAmmo.Problem.${problems[0]}`));
+          if (problems.includes("dragonsBreathPowder")) mode.powder = "";
+          else mode.payload = previous.payload && previous.payload !== mode.payload ? previous.payload : "";
+        }
+        if (mode.powder !== undefined && mode.powder !== previous.powder) mode.powderAdjust = 0;
+        if (mode.payload !== undefined && mode.payload !== previous.payload) mode.payloadAdjust = 0;
+      }
+    }
+
     // A grimoire remembers the ritual it teaches as that ritual is defined when
     // it is chosen, so a ritual changed afterwards is no longer the book's.
     // The form carries each entry's ritual and bonus, not what it remembers,
@@ -978,6 +1059,51 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   static async #onRecordMastery(this: GWorldItemSheet) {
     if (this.item.type !== "ritual") return;
     await this.item.update({ "system.masteredAs": String((this.item.system as any).derived?.identity ?? "") });
+  }
+
+  /**
+   * Hand-loads a batch of special ammunition (Monster Hunters 1 p. 63): an
+   * Armoury (Small Arms) roll for each asterisked option in the load, each
+   * moving that option's CF down 2 on a success or up 2 on a failure.
+   */
+  static async #onHandLoad(this: GWorldItemSheet, _event: Event, target: HTMLElement) {
+    const index = Number(target.closest<HTMLElement>("[data-index]")?.dataset.index);
+    const modes = [...(((this.item.system as any).rangedModes ?? []) as any[])].map((m) => ({ ...m }));
+    const mode = modes[index];
+    if (!mode) return;
+    const actor = (this.item as { actor?: any }).actor ?? null;
+    const skill = actor?.items?.find?.((i: any) => i.type === "skill" && /^armou?ry\s*\(small arms\)$/i.test(String(i.name)));
+    const level = skill?.system?.derived?.level ?? await promptForNumber({
+      title: game.i18n.localize("GWORLD.SpecialAmmo.HandLoad"),
+      label: game.i18n.localize("GWORLD.SpecialAmmo.ArmourySkill"),
+      initial: 10,
+    });
+    if (level === null || level === undefined) return;
+    const lines: string[] = [];
+    const rolls: any[] = [];
+    for (const [option, field] of [[mode.powder, "powderAdjust"], [mode.payload, "payloadAdjust"]] as const) {
+      if (!HAND_LOADED.has(String(option ?? ""))) continue;
+      const roll = new Roll("3d6");
+      await roll.evaluate();
+      rolls.push(roll);
+      const outcome = resolveSuccess(roll.total, Number(level));
+      mode[field] = outcome.success ? -2 : 2;
+      lines.push(game.i18n.format(outcome.success ? "GWORLD.SpecialAmmo.HandLoadGood" : "GWORLD.SpecialAmmo.HandLoadWaste", {
+        option: game.i18n.localize(`GWORLD.SpecialAmmo.${field === "powderAdjust" ? "Powder" : "Payload"}.${option}`),
+        roll: roll.total,
+        level,
+      }));
+    }
+    if (!lines.length) return;
+    await this.item.update({ "system.rangedModes": modes });
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor }),
+      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+      rolls,
+      content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${foundry.utils.escapeHTML(String(this.item.name))}</span>`
+        + `<span class="gc-target">${foundry.utils.escapeHTML(game.i18n.localize("GWORLD.SpecialAmmo.HandLoad"))}</span></div>`
+        + lines.map((l) => `<div class="gc-result">${foundry.utils.escapeHTML(l)}</div>`).join("") + `</div>`,
+    });
   }
 
   /** Breaks a charm, setting off its ritual (Monster Hunters 1 p. 38). */

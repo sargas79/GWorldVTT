@@ -1447,6 +1447,25 @@
                 <span class="wmode" data-tooltip="{{localize 'GWORLD.Item.ReloadCostHint'}}">{{localize "GWORLD.Item.ReloadCost" cost=this}}</span>
               {{/with}}
             </div>
+            {{#with (lookup @root.specialAmmo i) as |ammo|}}
+              {{!-- Special ammunition (Monster Hunters 1 p. 63): one powder and one payload. --}}
+              <div class="irow">
+                <select name="system.rangedModes.{{i}}.powder" aria-label="{{localize 'GWORLD.SpecialAmmo.PowderLabel'}}" data-tooltip="{{localize 'GWORLD.SpecialAmmo.PowderHint'}}" {{#unless @root.editable}}disabled{{/unless}}>
+                  {{selectOptions @root.choices.powders selected=m.powder localize=true}}
+                </select>
+                <select name="system.rangedModes.{{i}}.payload" aria-label="{{localize 'GWORLD.SpecialAmmo.PayloadLabel'}}" data-tooltip="{{localize 'GWORLD.SpecialAmmo.PayloadHint'}}" {{#unless @root.editable}}disabled{{/unless}}>
+                  {{selectOptions @root.choices.payloads selected=m.payload localize=true}}
+                </select>
+                <input type="number" name="system.rangedModes.{{i}}.magazineCost" value="{{m.magazineCost}}" step="1" min="0"
+                       aria-label="{{localize 'GWORLD.SpecialAmmo.Magazine'}}" data-tooltip="{{localize 'GWORLD.SpecialAmmo.MagazineHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
+                {{#if ammo.handLoaded}}
+                  {{#if @root.editable}}
+                    <button type="button" class="ibtn" data-action="handLoad" data-tooltip="{{localize 'GWORLD.SpecialAmmo.HandLoadHint'}}">{{localize "GWORLD.SpecialAmmo.HandLoad"}}</button>
+                  {{/if}}
+                  {{#if ammo.adjust}}<span class="tag">CF {{ammo.adjust}}</span>{{/if}}
+                {{/if}}
+              </div>
+            {{/with}}
             <div class="irow iflags">
               <label class="icheck"><input type="checkbox" name="system.rangedModes.{{i}}.twoHanded"
                      {{#if m.twoHanded}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
