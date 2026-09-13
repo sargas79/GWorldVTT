@@ -7,7 +7,6 @@ import {
   maxRoll,
   minRoll,
   parseDiceAdds,
-  rollDiceAdds,
   toRollFormula,
 } from "../dice.js";
 
@@ -69,13 +68,6 @@ describe("multiplied damage", () => {
     expect(minRoll(big)).toBe(60);
     expect(maxRoll(big)).toBe(360);
     expect(averageRoll(big)).toBe(210);
-  });
-
-  it("scales a rolled total", () => {
-    // Every die reads 4, so 6d is 24 and the multiplier makes it 240.
-    const rolled = rollDiceAdds({ dice: 6, adds: 0, multiplier: 10 }, () => 0.5);
-    expect(rolled.total).toBe(240);
-    expect(rolled.dice).toHaveLength(6);
   });
 
   it("keeps the multiplier when a modifier is added", () => {

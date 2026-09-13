@@ -466,6 +466,9 @@
             <input type="text" value="{{localize weapon.conditionLabel}}" disabled />
           </label>
         </div>
+        {{#if weapon.mustRollInUse}}
+          <p class="ihint warn">{{localize "GWORLD.Item.MustRollInUse"}}</p>
+        {{/if}}
       </div>
     {{/if}}
 
@@ -687,6 +690,9 @@
             <input type="number" name="system.costOfLivingPercent" value="{{system.costOfLivingPercent}}" step="1" min="0"
                    {{#unless editable}}disabled{{/unless}} />
           </label>
+          {{#if license}}
+            <p class="ihint ifull">{{localize "GWORLD.Item.LicenseCost" low=license.low high=license.high}}</p>
+          {{/if}}
           <label data-tooltip="{{localize 'GWORLD.Item.EquipmentQualityHint'}}">{{localize "GWORLD.Item.EquipmentQuality"}}
             <select name="system.equipmentQuality" {{#unless editable}}disabled{{/unless}}>
               {{selectOptions choices.equipmentQualities selected=system.equipmentQuality localize=true}}
@@ -1039,7 +1045,7 @@
               <input type="number" name="system.rangedModes.{{i}}.reloadWeight" value="{{m.reloadWeight}}" aria-label="{{localize 'GWORLD.Item.ReloadWeight'}}" step="0.01" min="0"
                      data-tooltip="{{localize 'GWORLD.Item.ReloadWeightHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <select name="system.rangedModes.{{i}}.ammunition" aria-label="{{localize 'GWORLD.Item.Ammunition'}}" data-tooltip="{{localize 'GWORLD.Item.AmmunitionHint'}}" {{#unless @root.editable}}disabled{{/unless}}>
-                {{selectOptions @root.choices.ammunition selected=m.ammunition localize=true}}
+                {{selectOptions (lookup @root.ammunitionFor i) selected=m.ammunition localize=true}}
               </select>
               {{#with (lookup @root.weapon.reloads i)}}
                 <span class="wmode" data-tooltip="{{localize 'GWORLD.Item.ReloadCostHint'}}">{{localize "GWORLD.Item.ReloadCost" cost=this}}</span>

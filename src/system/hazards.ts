@@ -9,6 +9,7 @@
  * the same names; this is the part that rolls and writes.
  */
 
+import { holdBreathSeconds, type Exertion } from "../rules/suffocation.js";
 import { SYSTEM_ID } from "./constants.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
@@ -20,7 +21,9 @@ import { formatDiceAdds, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import {
   lethalShock, lethalShockModifier, localizedShock, nonlethalShock, METAL_ARMOR_DR,
 } from "../rules/electricity.js";
-import { catchingFire, FIRE_DAMAGE, type FireExposure } from "../rules/fire.js";
+import {
+  catchingFire, FIRE_DAMAGE, ignites, prolongedContactTarget, type FireExposure, type Flammability,
+} from "../rules/fire.js";
 import { dailyMiles, marchingFatiguePerHour, type Terrain, type TravelWeather } from "../rules/hiking.js";
 import { randomHitLocation, type HitLocation } from "../rules/hit-locations.js";
 import { applyInjury } from "../rules/injury.js";
@@ -35,25 +38,33 @@ import { controlRoll, type Locomotion } from "../rules/vehicles.js";
 import {
   crippleThreshold, hitsAPerson, locationsOf, lossOfControl, mediumOf, occupantDamage,
   occupantHitTarget, OCCUPANT_RISK_DAMAGE, vehicleHitLocation, windowDr,
-  vehicleMovement,
+  vehicleInjury, vehicleMovement, vehicleWoundingModifier,
 } from "../rules/vehicle-combat.js";
 import { jumpFromVehicle } from "../rules/collisions.js";
 import { isRuleOn } from "./optional-rules.js";
 import {
-  collapseDamage, collapseShelter, trappedInRubble, type CollapseShelter,
+  buildingHealth, buildingHitPoints, collapseDamage, collapseShelter, mustRollToStand, structureState,
+  trappedInRubble, type BuildingFrame, type CollapseShelter, type Construction,
 } from "../rules/structures.js";
 import {
   ACID_DAMAGE_TYPE, acidHarm, eyeOutcome, eyeRisk,
   type AcidContact, type AcidLanding,
 } from "../rules/acid.js";
 import {
-  ALTITUDE_SICKNESS_BONUS, EXPLOSIVE_DECOMPRESSION, airDensity, airEffect,
-  altitudeOutcome, atmosphereHarm,
-  type AtmosphereHazard, type HazardStrength,
+  ALTITUDE_SICKNESS_BONUS,
+  EXPLOSIVE_DECOMPRESSION,
+  airDensity,
+  airEffect,
+  altitudeOutcome,
+  atmosphereHarm,
+  type AtmosphereHazard,
+  type HazardStrength,
+  corrosiveToll,
+  vacuumBreathSeconds,
+  HELD_BREATH_LUNG_DAMAGE,
 } from "../rules/atmosphere.js";
 import {
-  RECOMPRESSION_BONUS, bendsOutcome, crushingInjury, crushingTarget, crushingThreshold,
-  type PressureSupport,
+  RECOMPRESSION_BONUS, bendsOutcome, crushingInjury, crushingTarget, crushingThreshold, type PressureSupport, risksBends,
 } from "../rules/pressure.js";
 import {
   SPACE_SICKNESS_RECOVERY_HOURS, accelerationHarm, accelerationNeedsRoll, accelerationTarget,
@@ -90,6 +101,17 @@ async function post(actor: any, context: Record<string, unknown>): Promise<void>
 
 const H = (key: string) => game.i18n.localize(`GWORLD.Hazard.${key}`);
 const F = (key: string, data: Record<string, unknown>) => game.i18n.format(`GWORLD.Hazard.${key}`, data);
+
+/** Levels of a trait by name, 0 where the character lacks it. */
+function traitLevels(actor: any, name: string): number {
+  const wanted = name.trim().toLowerCase();
+  for (const item of actor?.items ?? []) {
+    if (item.type !== "trait") continue;
+    if (String(item.name ?? "").trim().toLowerCase() !== wanted) continue;
+    return Math.max(1, Math.floor(Number(item.system?.levels ?? 1)) || 1);
+  }
+  return 0;
+}
 
 /** The level of a skill by name, or null when the character lacks it. */
 function skillLevelOf(actor: any, name: string): number | null {
@@ -436,6 +458,54 @@ export async function burn(options: { actor: any; exposure: FireExposure; second
   });
 }
 
+/**
+ * Whether a flame sets a material alight (Campaigns p. 433).
+ *
+ * A flame strong enough lights it outright. One a category or two short can
+ * still do it given time: "for every 10 seconds of contact", materials one
+ * category up "catch fire on a 16 or less; those two categories up ... on a 6
+ * or less" -- so the contact is rolled out in ten-second spells until it
+ * catches or the time runs out.
+ */
+export async function setAlight(options: {
+  actor: any;
+  material: Flammability;
+  flameDamagePerSecond: number;
+  seconds: number;
+}): Promise<void> {
+  const { actor } = options;
+  const lines: string[] = [];
+  const rolls: any[] = [];
+
+  if (ignites(options.material, options.flameDamagePerSecond)) {
+    lines.push(H("AlightAtOnce"));
+    await post(actor, { kind: H("Fire"), lines, bad: true });
+    return;
+  }
+
+  const target = prolongedContactTarget(options.material, options.flameDamagePerSecond);
+  if (target === null) {
+    lines.push(H("NeverAlight"));
+    await post(actor, { kind: H("Fire"), lines, good: true });
+    return;
+  }
+
+  const spells = Math.max(1, Math.floor(Math.max(0, options.seconds) / 10));
+  let caughtAfter: number | null = null;
+  for (let spell = 1; spell <= spells; spell += 1) {
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    rolls.push(roll);
+    if (roll.total <= target) {
+      caughtAfter = spell * 10;
+      break;
+    }
+  }
+  lines.push(F("ProlongedContact", { target, spells }));
+  lines.push(caughtAfter === null ? H("DidNotCatch") : F("CaughtAfter", { seconds: caughtAfter }));
+  await post(actor, { kind: H("Fire"), lines, bad: caughtAfter !== null, rolls });
+}
+
 /** A single blow of burning damage, and whether it set the clothes alight. */
 export async function catchFire(options: { actor: any; basicBurningDamage: number; tightBeam: boolean }): Promise<void> {
   const { actor } = options;
@@ -657,6 +727,10 @@ export async function shootAtVehicle(options: {
   vehicle: any;
   penetrating: number;
   occupants: number;
+  /** What got through: a bullet and a flamethrower do very different things to a car. */
+  damageType: DamageType;
+  /** True for a tight-beam burn, which a vital area doubles and a torch does not. */
+  tightBeam: boolean;
 }): Promise<void> {
   const { actor } = options;
   const item = options.vehicle;
@@ -666,6 +740,10 @@ export async function shootAtVehicle(options: {
   const hitPoints = Number(vehicle.stHp) || 0;
   const sm = Number(vehicle.sm) || 0;
   const rolls: any[] = [];
+  // "A powered vehicle (anything with a ST attribute) has vital areas", and is
+  // Unliving where an unpowered one is Homogenous (p. 555). The same test the
+  // vehicle's own sheet uses, so the two cannot disagree about one car.
+  const powered = hitPoints > 0 && Number(vehicle.acceleration) > 0;
 
   const locationRoll = new Roll("3d6");
   await locationRoll.evaluate();
@@ -673,8 +751,7 @@ export async function shootAtVehicle(options: {
   const hit = vehicleHitLocation({
     roll: locationRoll.total,
     has: locationsOf(String(vehicle.locations ?? "")),
-    // "A powered vehicle (anything with a ST attribute) has vital areas."
-    powered: hitPoints > 0 && Number(vehicle.topSpeed) > 0,
+    powered,
   });
 
   const lines: string[] = [];
@@ -694,16 +771,32 @@ export async function shootAtVehicle(options: {
   }
 
   const penetrating = Math.max(0, options.penetrating);
+  // The wound, not the raw damage, is what comes off: a bullet into a car's
+  // body is a third of itself, and into its fuel tank three times (pp. 380, 555).
+  const wound = {
+    damageType: options.damageType,
+    tightBeam: options.tightBeam,
+    location: hit.location,
+    powered,
+  };
+  const injury = vehicleInjury({ penetrating, ...wound });
   const threshold = crippleThreshold(hit.location, hitPoints, {
     wheels: countOf(String(vehicle.locations ?? ""), "W"),
     masts: countOf(String(vehicle.locations ?? ""), "M"),
   });
   if (threshold !== null) {
     lines.push(
-      penetrating > threshold
+      injury > threshold
         ? F("Crippled", { location: name, threshold: Math.floor(threshold) })
         : F("NotCrippled", { location: name, threshold: Math.floor(threshold) }),
     );
+  }
+  if (penetrating > 0) {
+    lines.push(F("Wound", {
+      penetrating,
+      modifier: Math.round(vehicleWoundingModifier(wound) * 100) / 100,
+      injury,
+    }));
   }
   if (hit.location === "vitalArea") lines.push(H("VitalArea"));
   if (hit.location === "largeWindow" || hit.location === "smallWindow") {
@@ -729,10 +822,10 @@ export async function shootAtVehicle(options: {
   // A vehicle on the map keeps hit points, and this is what takes them off.
   // A catalogue entry on somebody's Gear tab has none to take: the card says
   // what the shot did, and the GM decides what became of the car.
-  if (item.documentName === "Actor" && item.isOwner && penetrating > 0) {
+  if (item.documentName === "Actor" && item.isOwner && injury > 0) {
     const before = Number(item.system?.hp?.value) || 0;
-    await item.update({ "system.hp.value": before - penetrating });
-    lines.push(F("VehicleHp", { previous: before, now: before - penetrating, max: hitPoints }));
+    await item.update({ "system.hp.value": before - injury });
+    lines.push(F("VehicleHp", { previous: before, now: before - injury, max: hitPoints }));
   }
 
   await post(actor, {
@@ -833,6 +926,10 @@ export async function breatheBadAir(options: {
   atmospheres: number;
   hazard: AtmosphereHazard | "none";
   strength: HazardStrength;
+  /** HP a corrosive atmosphere has already taken, which is what its symptoms are keyed to. */
+  hpLostToAir: number;
+  /** How hard they are working, which is what a held breath lasts on. */
+  exertion: Exertion;
 }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
@@ -842,8 +939,24 @@ export async function breatheBadAir(options: {
   const lines = [F("AirDensity", { band: H(`AirBand.${density}`), atm: options.atmospheres })];
   if (air.vision !== 0) lines.push(F("AirVision", { penalty: air.vision }));
   if (air.extraFatigue > 0) lines.push(F("AirFatigue", { fp: air.extraFatigue }));
-  if (air.vacuum) lines.push(H("AirVacuum"));
-  else if (air.suffocates) lines.push(H("AirSuffocates"));
+  if (air.vacuum) {
+    lines.push(H("AirVacuum"));
+    // "If you exhale and leave your mouth open, you can operate on the oxygen
+    // in your blood for half the time listed under Holding Your Breath" --
+    // holding it instead ruptures the lungs (p. 437).
+    const held = holdBreathSeconds({
+      health: attributeOf(actor, "HT"),
+      exertion: options.exertion,
+      breathHoldingLevels: traitLevels(actor, "Breath-Holding"),
+    });
+    lines.push(F("VacuumClock", {
+      seconds: vacuumBreathSeconds({ heldBreathSeconds: held, mouthOpen: true }),
+      held,
+      formula: formatDiceAdds(HELD_BREATH_LUNG_DAMAGE),
+    }));
+  } else if (air.suffocates) {
+    lines.push(H("AirSuffocates"));
+  }
 
   const rolls: any[] = [];
 
@@ -863,6 +976,21 @@ export async function breatheBadAir(options: {
   if (options.hazard !== "none") {
     const harm = atmosphereHarm({ hazard: options.hazard, strength: options.strength });
     if (harm.suffocates && !air.suffocates) lines.push(H("AirSuffocates"));
+    // "Victims suffer coughing after losing 1/3 their HP, blindness after
+    // losing 2/3 their HP" to a corrosive atmosphere (p. 429).
+    if (options.hazard === "corrosive") {
+      const toll = corrosiveToll({
+        hpLost: options.hpLostToAir,
+        maxHp: Number(actor.system?.hp?.max ?? 0) || 0,
+      });
+      if (toll.blinded) {
+        lines.push(H("CorrosiveBlinded"));
+        await setCondition(actor, "coughing", true);
+      } else if (toll.coughing) {
+        lines.push(H("CorrosiveCoughing"));
+        await setCondition(actor, "coughing", true);
+      }
+    }
     if (options.hazard !== "suffocating") {
       lines.push(
         harm.unresistable
@@ -949,9 +1077,31 @@ export async function decompress(options: {
   atmospheres: number;
   /** True for a blowout rather than a slow ascent. */
   explosive: boolean;
+  /** Levels of Pressure Support, which raise or remove the risk. */
+  support: PressureSupport;
+  /** Minutes spent at that pressure, which is what the safe time is measured in. */
+  minutes: number;
 }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
+
+  // "You risk the bends if you return to normal pressure after experiencing
+  // pressure greater than twice your native pressure", and even then "at up
+  // to 2.5 atm ... a human can safely operate for up to 80 minutes" (p. 435).
+  // A diver who never went deep, or not for long, has nothing to roll for.
+  // A blowout is different: the air goes all at once and the roll is always
+  // made (p. 437).
+  if (
+    !options.explosive &&
+    !risksBends({ atmospheres: options.atmospheres, minutes: options.minutes, support: options.support })
+  ) {
+    await post(actor, {
+      kind: H("Bends"),
+      lines: [F("BendsNoRisk", { atm: options.atmospheres, minutes: options.minutes })],
+      good: true,
+    });
+    return;
+  }
 
   const rolls: any[] = [];
   const lines: string[] = [];
@@ -1120,6 +1270,59 @@ export async function motionSickness(options: {
     good: result === "immune",
     rolls: [roll],
   });
+}
+
+/**
+ * What damage has done to a building, and whether it is still standing
+ * (Campaigns pp. 484, 558).
+ *
+ * A building is not a token here, so its figures are worked out from what the
+ * GM knows: "HP = 100 x (cube root of building's empty weight in tons)", with
+ * the weight read off its area and frame; "a structurally sound building in
+ * good repair has HT 12", shoddy less and quake-resistant more. At zero HP a
+ * failed HT roll breaches it, and "at -1xHP or less, it must make HT rolls to
+ * avoid collapse ... It collapses automatically at -5xHP."
+ */
+export async function damageBuilding(options: {
+  actor: any;
+  squareFeet: number;
+  frame: BuildingFrame;
+  construction: Construction;
+  damageTaken: number;
+  /** True once it has failed the roll that zero hit points called for. */
+  failedDisabling: boolean;
+}): Promise<void> {
+  const { actor } = options;
+  const maxHp = buildingHitPoints({ squareFeet: options.squareFeet, frame: options.frame });
+  const ht = buildingHealth(options.construction);
+  const hp = maxHp - Math.max(0, options.damageTaken);
+  const before = structureState({ hp, maxHp, failedDisabling: options.failedDisabling });
+  const lines = [
+    F("BuildingFigures", { hp: maxHp, ht, now: hp }),
+    H(`BuildingState.${before}`),
+  ];
+
+  const rolls: any[] = [];
+  let collapsed = before === "collapsed";
+  if (mustRollToStand({ hp, maxHp })) {
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    rolls.push(roll);
+    const stands = resolveSuccess(roll.total, ht, dieResults(roll)).success;
+    collapsed = !stands;
+    lines.push(F("BuildingRoll", { roll: roll.total, ht }));
+    lines.push(H(stands ? "BuildingStands" : "BuildingFalls"));
+  } else if (hp <= 0 && !options.failedDisabling && before !== "collapsed") {
+    // At zero it rolls once to keep from being disabled.
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    rolls.push(roll);
+    const holds = resolveSuccess(roll.total, ht, dieResults(roll)).success;
+    lines.push(F("BuildingRoll", { roll: roll.total, ht }));
+    lines.push(H(holds ? "BuildingHolds" : "BuildingState.breached"));
+  }
+
+  await post(actor, { kind: H("Building"), lines, bad: collapsed, rolls });
 }
 
 /**

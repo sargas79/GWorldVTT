@@ -106,11 +106,6 @@ export function swarmProtection(options: {
   return { dr: lasted ? options.dr : 0, immune: lasted, lasted };
 }
 
-/** What a swarm does to somebody in its hex this second, before any armour. */
-export function swarmAttackDamage(swarm: Swarm): { damage: DiceAdds | null; flatInjury: number } {
-  return { damage: swarm.damage, flatInjury: swarm.flatInjury };
-}
-
 /** Whether the damage taken has broken the swarm up (p. 461). */
 export function dispersed(hpTaken: number, swarm: Swarm): boolean {
   return hpTaken >= swarm.disperseAt;

@@ -24,9 +24,18 @@ import { resolveSuccess } from "../rules/success.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import {
-  ANESTHESIA_TL, RESUSCITATION_MINUTES, careBonus, competentCare, cureHitPoints, cureResult,
-  resuscitationModifier, risksInfection, surgeryEquipment, surgeryModifier,
+  ANESTHESIA_TL,
+  RESUSCITATION_MINUTES,
+  careBonus,
+  competentCare,
+  cureHitPoints,
+  cureResult,
+  resuscitationModifier,
+  risksInfection,
+  surgeryEquipment,
+  surgeryModifier,
   type ResuscitationCause,
+  canResuscitate,
 } from "../rules/medicine.js";
 
 const RECOVERY_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/recovery.hbs`;
@@ -460,6 +469,19 @@ export async function resuscitate(options: {
 }): Promise<void> {
   const { healer, patient } = options;
   if (!mayChange(patient)) return;
+
+  // "Make a successful Physician/TL7+ roll - or a First Aid/TL7+ roll at -4"
+  // (p. 425). A healer whose skill is of an earlier TL has no resuscitation to
+  // offer, however good at it they are.
+  const healerTl = Number.parseInt(String(healer?.system?.tl ?? ""), 10) || 0;
+  if (!canResuscitate(healerTl)) {
+    await post(patient, {
+      kind: R("Resuscitate"),
+      detail: F("ResuscitateBy", { healer: String(healer?.name ?? ""), cause: R(`Cause.${options.cause}`) }),
+      lines: [F("ResuscitateNeedsTl", { tl: healerTl })],
+    });
+    return;
+  }
 
   const physician = skillLevelOf(healer, "Physician");
   const firstAid = skillLevelOf(healer, "First Aid");

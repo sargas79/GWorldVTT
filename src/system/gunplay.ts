@@ -8,6 +8,7 @@
  * are buttons rather than attacks.
  */
 
+import { hearingTarget, heardUpClose, type Silencer } from "../rules/accessories.js";
 import { SYSTEM_ID } from "./constants.js";
 import {
   DIRECTIONS,
@@ -17,7 +18,7 @@ import {
   scatterBearing,
   scatterDistance,
 } from "../rules/scatter.js";
-import { coverDr, damageThrough, overpenetrates, type CoverKind } from "../rules/overpenetration.js";
+import { canOverpenetrate, coverDr, damageThrough, overpenetrates, type CoverKind } from "../rules/overpenetration.js";
 import { FLINCH_PENALTY, LIQUID_IN_THE_FACE, liquidInTheFace } from "../rules/dirty-tricks.js";
 import { resolveSuccess } from "../rules/success.js";
 
@@ -104,7 +105,25 @@ export async function checkOverpenetration(options: {
   coverKind: CoverKind;
   armorDivisor: number;
   behindDr: number;
+  /** What the shot does: only a piercing, impaling or tight-beam burning one goes through. */
+  damageType: string;
+  tightBeam: boolean;
 }): Promise<number> {
+  // "When you inflict piercing, impaling, or tight-beam burning damage with a
+  // ranged attack" (p. 408) -- and nothing else. A club through a door is a
+  // club stopped by a door, and a flamethrower does not drill through people.
+  if (!canOverpenetrate({ type: options.damageType, ranged: true, tightBeam: options.tightBeam })) {
+    await post(options.actor, {
+      overpenetration: true,
+      basicDamage: options.basicDamage,
+      cannotOverpenetrate: true,
+      damageType: options.damageType,
+      went: false,
+      through: 0,
+    });
+    return 0;
+  }
+
   const cover = coverDr({
     dr: options.coverDr,
     hp: options.coverHp,
@@ -131,6 +150,52 @@ export async function checkOverpenetration(options: {
 }
 
 /**
+ * Whether somebody hears a shot, and can tell where it came from (p. 411).
+ *
+ * Somebody in front of the gun and close enough to be shot at "automatically
+ * hears the shot - even with a silencer", but a silencer leaves them an IQ roll
+ * rather than a sight of the shooter to place it. Anybody further off rolls
+ * Hearing+5, less the silencer, give or take four for the gun and the room.
+ */
+export async function hearTheShot(options: {
+  actor: any;
+  listener: any;
+  silencer: Silencer;
+  loudness: number;
+  upClose: boolean;
+  inPlainSight: boolean;
+}): Promise<void> {
+  const name = String(options.listener?.name ?? "");
+
+  if (options.upClose) {
+    const close = heardUpClose({ silencer: options.silencer, inPlainSight: options.inPlainSight });
+    await post(options.actor, {
+      hearing: true,
+      victim: name,
+      line: game.i18n.localize(close.locates ? "GWORLD.Hearing.HeardAndPlaced" : "GWORLD.Hearing.HeardNotPlaced"),
+    });
+    return;
+  }
+
+  const senses = options.listener?.system?.derived?.senses ?? [];
+  const hearing = Number(senses.find((s: any) => s.sense === "hearing")?.score)
+    || Number(options.listener?.system?.derived?.per) || 10;
+  const target = hearingTarget({ hearing, silencer: options.silencer, loudness: options.loudness });
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  const heard = resolveSuccess(roll.total, target, dieResults(roll)).success;
+  await post(options.actor, {
+    hearing: true,
+    victim: name,
+    target,
+    dice: dieResults(roll),
+    roll: roll.total,
+    line: game.i18n.localize(heard ? "GWORLD.Hearing.Heard" : "GWORLD.Hearing.NotHeard"),
+    rolls: [roll],
+  });
+}
+
+/**
  * A drink in somebody's face (p. 405).
  *
  * The throw itself is an ordinary ranged attack at -5 for the face, which the
@@ -145,6 +210,8 @@ export async function splashInTheFace(options: {
   hit: boolean;
   criticalHit: boolean;
   defended: boolean;
+  /** True where a parry was tried, which does nothing against a liquid. */
+  parried?: boolean;
 }): Promise<void> {
   const will = Number(options.victim?.system?.derived?.will) || 10;
 
@@ -182,6 +249,7 @@ export async function splashInTheFace(options: {
     maxRange: LIQUID_IN_THE_FACE.maxRangeYards,
     faceModifier: LIQUID_IN_THE_FACE.faceModifier,
     ...result,
+    triedToParry: options.parried === true,
     flinchPenalty: FLINCH_PENALTY,
     dice: rolls[0] ? dieResults(rolls[0]) : null,
     roll: rolls[0]?.total ?? null,

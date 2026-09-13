@@ -17,7 +17,9 @@
 import { SYSTEM_ID } from "./constants.js";
 import {
   applyTemplate,
+  emptyTemplate,
   requiredEntries,
+  stackTemplate,
   type Template,
   type TemplateEntry,
 } from "../rules/templates.js";
@@ -50,6 +52,11 @@ export interface AppliedTemplate {
   /** When it was applied; null on records made before this was kept. */
   at?: number | null;
   itemIds: string[];
+  /**
+   * Items an earlier template had already added that this one raised, with
+   * what they were before, so taking it off lowers them again (p. 259).
+   */
+  raised?: Array<{ id: string; points: number; levels?: number | null }>;
 }
 
 /** The templates already on an actor. */
@@ -94,6 +101,59 @@ async function itemDataFor(entry: TemplateEntry): Promise<object | null> {
 }
 
 /**
+ * The character templates already on an actor, as one template (p. 259).
+ *
+ * Read back off what they did rather than out of the compendium, which may have
+ * moved or changed since: the scores they wrote, the secondary levels they
+ * bought, and the items they added as those items stand now. Null where there
+ * are none, which is taking a first template.
+ */
+function earlierCharacterTemplate(actor: any): Template | null {
+  const records = appliedTemplates(actor).filter((record) => record.kind === "character");
+  if (!records.length) return null;
+  const earlier = emptyTemplate("character");
+  for (const record of records) {
+    const written = flatPaths(record.written);
+    const previous = flatPaths(record.previous);
+    for (const [path, value] of Object.entries(written)) {
+      const [where, key] = path.split(".") as [string, string];
+      if (where === "attributes") {
+        const attribute = key as keyof Template["attributes"];
+        earlier.attributes[attribute] = Math.max(earlier.attributes[attribute] ?? value, value);
+      } else if (where === "purchased") {
+        const secondary = key as keyof Template["secondary"];
+        earlier.secondary[secondary] = (earlier.secondary[secondary] ?? 0) + value - (previous[path] ?? 0);
+      }
+    }
+    for (const id of record.itemIds) {
+      const item = actor.items?.get(id);
+      if (!item) continue;
+      earlier.entries.push({
+        name: String(item.name ?? ""),
+        itemType: item.type,
+        points: Number(item.system?.points) || 0,
+        ...(Number(item.system?.levels) ? { levels: Number(item.system.levels) } : {}),
+      });
+    }
+  }
+  return earlier;
+}
+
+/** The actor's item an earlier template added under this entry's name. */
+function earlierItemFor(actor: any, entry: TemplateEntry): any {
+  for (const record of appliedTemplates(actor)) {
+    if (record.kind !== "character") continue;
+    for (const id of record.itemIds) {
+      const item = actor.items?.get(id);
+      if (item?.type === entry.itemType && String(item.name ?? "").toLowerCase() === entry.name.toLowerCase()) {
+        return item;
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Puts a template on a character (pp. 258, 261).
  *
  * `picks` are the entries chosen from the template's choice groups; everything
@@ -120,9 +180,35 @@ export async function applyTemplateToActor(options: {
     template,
     bought: actor.system?.attributes ?? { ST: 10, DX: 10, IQ: 10, HT: 10 },
   });
+  let entries = [...requiredEntries(template), ...options.picks];
+
+  // A second character template is combined with the first rather than laid
+  // over it (p. 259): the higher score of each, the secondary levels the more
+  // demanding of them asks for, and a trait both require taken once, at the
+  // higher level.
+  const earlier = template.kind === "character" ? earlierCharacterTemplate(actor) : null;
+  const raised: NonNullable<AppliedTemplate["raised"]> = [];
+  if (earlier) {
+    const plan = stackTemplate({ earlier, next: template, entries });
+    applied.attributes = plan.attributes;
+    applied.purchased = plan.secondary;
+    entries = plan.create;
+    for (const entry of plan.raise) {
+      const item = earlierItemFor(actor, entry);
+      if (!item) continue;
+      raised.push({
+        id: item.id,
+        points: Number(item.system?.points) || 0,
+        ...(item.system?.levels !== undefined ? { levels: Number(item.system.levels) || 0 } : {}),
+      });
+      await item.update({
+        "system.points": entry.points,
+        ...(entry.levels ? { "system.levels": entry.levels } : {}),
+      });
+    }
+  }
 
   // ── the items ─────────────────────────────────────────────────────────
-  const entries = [...requiredEntries(template), ...options.picks];
   const documents = (await Promise.all(entries.map(itemDataFor))).filter(
     (data): data is object => data !== null,
   );
@@ -182,6 +268,7 @@ export async function applyTemplateToActor(options: {
     // After the items were made, so nothing it created counts as edited.
     at: Date.now(),
     itemIds: created.map((item: { id: string }) => item.id),
+    ...(raised.length ? { raised } : {}),
   };
 
   changes["system.templates"] = [...appliedTemplates(actor), record];
@@ -260,6 +347,16 @@ export async function removeTemplateFromActor(options: {
 
   if (!options.keepItems && plan.present.length) {
     await actor.deleteEmbeddedDocuments("Item", plan.present.map((item) => item.id));
+  }
+  // What it raised on an earlier template's items goes back to that template's
+  // level, since those items are the earlier template's to keep.
+  for (const was of record.raised ?? []) {
+    const item = actor.items?.get(was.id);
+    if (!item) continue;
+    await item.update({
+      "system.points": was.points,
+      ...(typeof was.levels === "number" ? { "system.levels": was.levels } : {}),
+    });
   }
 
   const changes: Record<string, unknown> = {};

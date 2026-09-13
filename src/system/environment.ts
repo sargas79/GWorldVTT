@@ -27,6 +27,7 @@ import {
   HEAT_INTERVAL_MINUTES,
   type Climate,
   type ColdClothing,
+  mealsRecoveredByRest,
 } from "../rules/environment.js";
 import { resolveSuccess } from "../rules/success.js";
 
@@ -152,6 +153,34 @@ export async function rollExposure(options: {
   });
 
   return pools.fpLost;
+}
+
+/**
+ * Days of rest after going hungry (p. 426).
+ *
+ * "You can only recover 'starvation' fatigue with a day of rest: no fighting or
+ * travel, and three full meals. Each day of rest makes up for three skipped
+ * meals" -- a point of FP back for each.
+ */
+export async function restFromHunger(options: { actor: any; days: number }): Promise<number> {
+  const { actor } = options;
+  if (!mayChange(actor)) return 0;
+  const fp = actor.system?.fp ?? { value: 0, max: 0 };
+  const now = Number(fp.value) || 0;
+  const max = Number(fp.max) || 0;
+  const regained = Math.max(0, Math.min(mealsRecoveredByRest(options.days), max - now));
+  if (regained > 0) await actor.update({ "system.fp.value": now + regained });
+
+  await post(actor, {
+    kind: game.i18n.localize("GWORLD.Weather.RestTitle"),
+    detail: game.i18n.format("GWORLD.Weather.RestDetail", {
+      days: Math.max(0, Math.floor(options.days)),
+      meals: mealsRecoveredByRest(options.days),
+    }),
+    regained,
+    fp: { previous: now, now: now + regained, max },
+  });
+  return regained;
 }
 
 /**

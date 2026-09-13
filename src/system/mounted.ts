@@ -19,6 +19,11 @@ import {
   stayingOn,
   tightTurnModifier,
   turningRadius,
+  atHighSpeed,
+  sprintTopSpeed,
+  diving,
+  flightMoveCost,
+  stallSpeed,
 } from "../rules/mounted.js";
 import { resolveSuccess } from "../rules/success.js";
 
@@ -133,6 +138,16 @@ export async function rollPushingTheEnvelope(options: {
     safe: safeDeceleration(basicMove),
     most: maximumDeceleration(basicMove),
     radius: turningRadius({ velocity: options.velocity, basicMove }),
+    // "High-speed movement" is anything past Basic Move (p. 394), and a runner
+    // may start the next turn at up to 20% over Move -- or double Basic Move
+    // with Enhanced Move -- which is the fastest they could have got here.
+    highSpeed: atHighSpeed({ velocity: options.velocity, basicMove }),
+    sprintTop: Math.round(
+      sprintTopSpeed({
+        basicMove,
+        enhancedMove: Number(actor?.system?.derived?.traitEffects?.enhancedMove ?? 1) > 1,
+      }) * 10,
+    ) / 10,
     modifier,
     target,
     dice: dieResults(roll),
@@ -142,6 +157,37 @@ export async function rollPushingTheEnvelope(options: {
   });
 
   return outcome.success;
+}
+
+/**
+ * A turn in the air (Campaigns p. 397).
+ *
+ * Flight is not modelled on the sheet, so this asks what the table knows and
+ * says what the rules make of it: what the move costs -- "moving a yard
+ * vertically and a yard horizontally simultaneously ... costs the same as 1.5
+ * horizontal yards" -- and, for a flyer who cannot hover, the speed below which
+ * they stall and start to fall.
+ */
+export async function flyingTurn(options: {
+  actor: any;
+  horizontal: number;
+  vertical: number;
+  topAirspeed: number;
+  canHover: boolean;
+}): Promise<void> {
+  const { actor } = options;
+  const cost = flightMoveCost({ horizontal: options.horizontal, vertical: options.vertical });
+  const stall = options.canHover ? null : stallSpeed(options.topAirspeed);
+  const dive = diving({ airMove: Number(actor?.system?.derived?.basicMove) || 0, topAirspeed: options.topAirspeed });
+
+  await post(actor, {
+    flying: true,
+    horizontal: options.horizontal,
+    vertical: options.vertical,
+    cost: Math.round(cost * 10) / 10,
+    stall: stall === null ? null : Math.round(stall * 10) / 10,
+    diveTop: dive.topAirspeed,
+  });
 }
 
 /** Where a charge bought at the attack roll waits for the damage roll. */

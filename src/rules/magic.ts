@@ -189,16 +189,16 @@ export function magicSkillBonus(skillName: string, talent: MagicTalent): number 
 
 /**
  * The next point total that buys something for a spell. A standard spell walks
- * the Skill Cost Table at its difficulty; a ritual one is a technique and
- * steps a point at a time.
+ * the Skill Cost Table at its difficulty; a ritual one "is a Hard technique"
+ * (p. 242), and steps as one.
  */
 export function nextSpellPoints(points: number, difficulty: SpellDifficulty, style: MagicStyle): number {
-  return style === "ritual" ? nextTechniquePoints(points) : nextSkillPoints(points, difficulty);
+  return style === "ritual" ? nextTechniquePoints(points, "H") : nextSkillPoints(points, difficulty);
 }
 
 /** The previous point total for a spell, or zero. */
 export function previousSpellPoints(points: number, difficulty: SpellDifficulty, style: MagicStyle): number {
-  return style === "ritual" ? previousTechniquePoints(points) : previousSkillPoints(points, difficulty);
+  return style === "ritual" ? previousTechniquePoints(points, "H") : previousSkillPoints(points, difficulty);
 }
 
 /** The relative level a spell's points bought, for the sheet's column. */

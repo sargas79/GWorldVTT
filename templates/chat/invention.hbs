@@ -1,0 +1,28 @@
+{{!-- Inventing something (Campaigns pp. 472-474). --}}
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{title}}</span>
+    <span class="gc-target">{{grade}}</span>
+  </div>
+  {{#if short}}
+    <div class="gc-result failure">{{localize "GWORLD.Invention.TooHard" required=requiredSkill skill=skill}}</div>
+  {{else}}
+    <div class="gc-mods">
+      <span class="gc-mod">{{localize "GWORLD.Invention.Against" skill=skill modifier=(signed modifier) target=target}}</span>
+    </div>
+    <div class="gc-dice">
+      {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+      <span class="gc-total">{{total}}</span>
+    </div>
+    <div class="gc-result {{#if outcome.success}}success{{else}}failure{{/if}}">
+      {{#if outcome.success}}{{localize "GWORLD.Invention.Success"}}{{else}}{{localize "GWORLD.Invention.Failure"}}{{/if}}
+    </div>
+  {{/if}}
+  {{#if lines.length}}
+    <div class="gc-mods">
+      {{#each lines as |line|}}
+        <span class="{{#if line.grave}}gc-warn{{else}}gc-mod{{/if}}">{{localize (concat "GWORLD.Invention.Line." line.key) cost=line.data.cost dice=line.data.dice unit=line.data.unit people=line.data.people minimum=line.data.minimum count=line.data.count damage=line.data.damage computer=line.data.computer}}</span>
+      {{/each}}
+    </div>
+  {{/if}}
+</div>

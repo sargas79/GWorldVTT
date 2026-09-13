@@ -85,6 +85,17 @@ describe("stepping technique points", () => {
     expect(previousTechniquePoints(0)).toBe(0);
   });
 
+  /** "Default+1: 1 point, 2 points" -- a single point in a Hard one buys nothing. */
+  it("takes a Hard technique straight to 2 points, and back to none", () => {
+    expect(nextTechniquePoints(0, "H")).toBe(2);
+    expect(nextTechniquePoints(2, "H")).toBe(3);
+    expect(previousTechniquePoints(2, "H")).toBe(0);
+    expect(previousTechniquePoints(3, "H")).toBe(2);
+    // A stray single point steps up to the level and down to nothing.
+    expect(nextTechniquePoints(1, "H")).toBe(2);
+    expect(previousTechniquePoints(1, "H")).toBe(0);
+  });
+
   it("buys a level with every step, for either difficulty", () => {
     for (const difficulty of ["A", "H"] as const) {
       let points = difficulty === "A" ? 0 : 1;

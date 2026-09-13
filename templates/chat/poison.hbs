@@ -44,7 +44,24 @@
   {{/if}}
 
   {{#if treatment}}
-    <div class="gc-result success">{{treatment}} &mdash; {{localize "GWORLD.Poison.Bonus" bonus=bonus}}</div>
+    {{#if treatmentFailed}}
+      <div class="gc-result failure">
+        {{treatment}} &mdash; {{#if noSkill}}{{localize "GWORLD.Poison.NoSkill"}}{{else}}{{localize "GWORLD.Poison.TreatmentFailed"}}{{/if}}
+      </div>
+    {{else}}
+      <div class="gc-result success">{{treatment}} &mdash; {{localize "GWORLD.Poison.Bonus" bonus=bonus}}</div>
+    {{/if}}
+  {{/if}}
+
+  {{#if symptomsNow.length}}
+    <div class="gc-mods">
+      {{#each symptomsNow as |share|}}
+        <span class="gc-warn">{{localize "GWORLD.Poison.Symptom" share=share}}</span>
+      {{/each}}
+    </div>
+  {{/if}}
+  {{#if effectFor}}
+    <div class="gc-mods"><span class="gc-mod">{{localize "GWORLD.Poison.EffectLasts" minutes=effectFor}}</span></div>
   {{/if}}
 
   <div class="gc-mods">

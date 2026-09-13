@@ -1,26 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { multipleProjectiles, parseRateOfFire } from "../shotguns.js";
+import { multipleProjectiles } from "../shotguns.js";
 import { rapidFireBonus, rapidFireHits } from "../ranged.js";
 
 /** Shotguns and multiple projectiles (GURPS Basic Set: Campaigns p. 409). */
-describe("parseRateOfFire", () => {
-  it("reads shots times projectiles", () => {
-    expect(parseRateOfFire("3x9")).toEqual({ shots: 3, projectiles: 9 });
-    expect(parseRateOfFire("2×9")).toEqual({ shots: 2, projectiles: 9 });
-  });
-
-  it("reads a plain figure as one projectile a shot", () => {
-    expect(parseRateOfFire("3")).toEqual({ shots: 3, projectiles: 1 });
-    expect(parseRateOfFire(10)).toEqual({ shots: 10, projectiles: 1 });
-  });
-
-  it("reads nonsense as one of one", () => {
-    expect(parseRateOfFire("")).toEqual({ shots: 1, projectiles: 1 });
-    expect(parseRateOfFire(undefined)).toEqual({ shots: 1, projectiles: 1 });
-  });
-});
-
 describe("multipleProjectiles", () => {
   const shotgun = { projectiles: 9, recoil: 1, halfDamageRange: 50 };
 

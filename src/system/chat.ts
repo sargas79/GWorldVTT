@@ -41,6 +41,9 @@ import {
 } from "../rules/cinematic.js";
 import { isCannonFodder } from "./cinematic.js";
 import { inflict } from "./afflictions.js";
+import { vehicleAboard } from "./vehicle-aboard.js";
+import { defendWithoutSight } from "../rules/visibility.js";
+import { occupantMayDodge } from "../rules/scale.js";
 import { afflictionsOf, type Affliction } from "../rules/afflictions.js";
 import type { DamageType } from "../rules/types.js";
 
@@ -65,6 +68,8 @@ interface DamageFlag {
   drMultiplier?: number;
   /** A blow aimed at a weapon rather than at its wielder (Campaigns p. 401). */
   weaponTarget?: { actorUuid: string; itemId: string; name: string };
+  /** What the weapon is made of, for a Vulnerability to silver (Characters p. 161). */
+  material?: string;
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -251,6 +256,7 @@ async function applyFromCard(options: {
     // instead of it.
     ...(flag.chink ? { chink: true } : {}),
     ...(flag.drMultiplier && flag.drMultiplier > 1 ? { drMultiplier: flag.drMultiplier } : {}),
+    ...(flag.material ? { material: flag.material } : {}),
     // The maximum belongs to the dice as rolled, so it is only the maximum for
     // someone the blast struck directly: collateral damage has already been
     // scaled down by distance, and pairing it with the undiminished maximum
@@ -462,6 +468,8 @@ interface DefenseFlag {
   noParry?: boolean;
   /** The attacking weapon, for the parry to weigh (Campaigns p. 376). */
   weapon?: { weight: number; material: string; swung: boolean };
+  /** +1 to Dodge alone, for a target who saw the laser dot (Campaigns p. 411). */
+  dodgeBonus?: number;
 }
 
 function defenseFlag(message: any): DefenseFlag | null {
@@ -485,6 +493,8 @@ const REFUSAL_LABELS: Record<NonNullable<DefenseChoice["reason"]>, string> = {
   noParry: "GWORLD.Defense.NoParry",
   noBlock: "GWORLD.Defense.NoBlock",
   missile: "GWORLD.Defense.MissileSpell",
+  strappedIn: "GWORLD.Defense.StrappedIn",
+  occupant: "GWORLD.Defense.Occupant",
   cannonFodder: "GWORLD.Cinematic.CannonFodderDefense",
 };
 
@@ -572,6 +582,22 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       maneuver: defender.system?.derived?.maneuver ?? null,
       cannonFodder: isCannonFodder(defender),
     });
+    // Aboard a vehicle (Campaigns p. 469): "Occupants who are free to move (not
+    // strapped in, etc.) may dodge attacks specifically targeted on them" --
+    // and that is all. Anybody on this card was targeted, so the question is
+    // only whether they are strapped in.
+    const seat = vehicleAboard(defender);
+    if (seat) {
+      const strappedIn = (seat.vehicle.system?.crew ?? [])
+        .find((s: { uuid: string }) => s.uuid === defender.uuid)?.strappedIn === true;
+      const mayDodge = occupantMayDodge({ strappedIn, targeted: true });
+      for (const choice of choices) {
+        if (!choice.available) continue;
+        if (!mayDodge) Object.assign(choice, { available: false, shown: null, reason: "strappedIn" });
+        else if (choice.key !== "dodge") Object.assign(choice, { available: false, shown: null, reason: "occupant" });
+      }
+    }
+
     // "Your target may block or dodge, but not parry" a Missile spell
     // (Characters p. 241): the parry stays on the card, refused, with why.
     if (flag.noParry) {
@@ -605,6 +631,22 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       row.append(retreat);
     }
 
+    // An attacker the defender cannot see (Campaigns p. 394): "he may dodge at
+    // -4. If the defender makes a Hearing-2 roll, he may also parry or block --
+    // still at -4. If he is completely unaware of his attacker, he gets no
+    // defense at all!" Chosen here, since only the table knows who saw what.
+    const sightSelect = document.createElement("select");
+    sightSelect.className = "gc-sight";
+    for (const [value, key] of [
+      ["sees", "Sees"], ["heard", "Heard"], ["unheard", "Unheard"], ["unaware", "Unaware"],
+    ] as const) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = game.i18n.localize(`GWORLD.Defense.Unseen.${key}`);
+      sightSelect.append(option);
+    }
+    row.append(sightSelect);
+
     // A point of fatigue for +2 on this one defense (Campaigns p. 357). Ticked
     // before the button is pressed, because the FP is spent whatever the roll
     // then does.
@@ -629,9 +671,23 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       button.className = "gc-apply-button";
       button.textContent = `${game.i18n.localize(DEFENSE_LABELS[choice.key])} ${choice.shown}`;
       button.addEventListener("click", () => {
+        const sight = sightSelect.value;
+        const blind = sight === "sees"
+          ? null
+          : defendWithoutSight({ aware: sight !== "unaware", heardAttacker: sight === "heard" });
+        if (blind && !blind.anyDefense) {
+          ui.notifications?.warn(game.i18n.localize("GWORLD.Defense.Unseen.NoDefense"));
+          return;
+        }
+        if (blind && choice.key !== "dodge" && !blind.canParryOrBlock) {
+          ui.notifications?.warn(game.i18n.localize("GWORLD.Defense.Unseen.OnlyDodge"));
+          return;
+        }
         void rollDefense({
           defender,
           key: choice.key,
+          unseenPenalty: blind?.modifier ?? 0,
+          laserDodge: choice.key === "dodge" ? (flag.dodgeBonus ?? 0) : 0,
           total: choice.total,
           attack: flag.attack,
           arcPenalty: choice.arcPenalty,
@@ -733,6 +789,10 @@ async function rollDefense(options: {
   /** How the blow arrived, and what it does (p. 417). */
   delivery?: Delivery;
   damageType?: string;
+  /** -4 for an attacker the defender cannot see (Campaigns p. 394), or 0. */
+  unseenPenalty?: number;
+  /** +1 to a Dodge against a shot whose laser dot the defender saw (p. 411). */
+  laserDodge?: number;
 }): Promise<void> {
   const {
     defender, key, total, attack, arcPenalty, deception, retreating, feverish, skill, isFencing,
@@ -765,6 +825,12 @@ async function rollDefense(options: {
   }
 
   const modifiers = [];
+  if (options.laserDodge) {
+    modifiers.push({ label: game.i18n.localize("GWORLD.Ranged.LaserSeen"), value: options.laserDodge });
+  }
+  if (options.unseenPenalty) {
+    modifiers.push({ label: game.i18n.localize("GWORLD.Defense.Unseen.Label"), value: options.unseenPenalty });
+  }
   if (arcPenalty !== 0) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Tactical.ArcPenalty"), value: arcPenalty });
   }

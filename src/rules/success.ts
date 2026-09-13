@@ -2,8 +2,6 @@
  * Success rolls, critical results, and contests (GURPS Lite pp. 2-3).
  */
 
-import { rollDice, type Rng } from "./dice.js";
-
 /** The lowest effective skill at which a non-defense roll may be attempted. */
 export const MINIMUM_EFFECTIVE_SKILL = 3;
 
@@ -74,13 +72,6 @@ export function resolveSuccess(
   return { dice, roll, effectiveSkill, success, criticalSuccess, criticalFailure, margin };
 }
 
-/** Rolls 3d6 against an effective skill. */
-export function successRoll(effectiveSkill: number, rng: Rng = Math.random): SuccessRollResult {
-  const dice = rollDice(3, rng);
-  const roll = dice.reduce((sum, d) => sum + d, 0);
-  return resolveSuccess(roll, effectiveSkill, dice);
-}
-
 /**
  * Resolves an active defense roll (GURPS Lite p. 28).
  *
@@ -107,13 +98,6 @@ export function resolveDefense(
     criticalFailure: false,
     margin,
   };
-}
-
-/** Rolls 3d6 as an active defense. */
-export function defenseRoll(effectiveDefense: number, rng: Rng = Math.random): SuccessRollResult {
-  const dice = rollDice(3, rng);
-  const roll = dice.reduce((sum, d) => sum + d, 0);
-  return resolveDefense(roll, effectiveDefense, dice);
 }
 
 export type ContestOutcome = "first" | "second" | "tie";
