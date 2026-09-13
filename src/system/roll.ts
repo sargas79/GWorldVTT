@@ -23,6 +23,7 @@ import { isRuleOn } from "./optional-rules.js";
 import { targetedTokens } from "./targets.js";
 import { aimTurnsOf, loseAim } from "./aim.js";
 import { aimBonus } from "../rules/aim.js";
+import { scopeBonus } from "../rules/accessories.js";
 import { multipleProjectiles } from "../rules/shotguns.js";
 import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import {
@@ -1008,15 +1009,20 @@ export async function promptForRangedAttack(options: {
   // What aiming is worth: Accuracy after a turn, more for the second and
   // third, more again for bracing. The box is ticked for somebody aiming and
   // says what it buys; anyone else may tick it to say they aimed off-sheet.
+  // "With a variable-power scope, you may Aim for fewer seconds, but this
+  // reduces your bonus by a like amount" (Campaigns p. 411). A +6 scope after
+  // one second of aiming is worth +1, not +6, which is what this used to give.
+  const turnsAimed = options.aim?.turns ?? 0;
+  const scope = scopeBonus({ bonus: options.scopeBonus, secondsAimed: turnsAimed });
   const aiming = aimBonus({
-    turnsAimed: options.aim?.turns ?? 0,
-    accuracy: options.accuracy + options.scopeBonus,
+    turnsAimed,
+    accuracy: options.accuracy + scope,
     braced: options.aim?.braced ?? false,
   });
   const accuracyLabel = aiming.total > 0
     ? `${L("Aimed")} (+${aiming.total}: ${game.i18n.format("GWORLD.Ranged.AimTurns", { turns: options.aim?.turns ?? 0 })})`
     : options.scopeBonus
-      ? `${L("Aimed")} (+${options.accuracy}+${options.scopeBonus})`
+      ? `${L("Aimed")} (+${options.accuracy}+${scope})`
       : `${L("Aimed")} (+${options.accuracy})`;
 
   const field = (name: string, label: string, value: string) => `
@@ -1255,9 +1261,11 @@ export function rangedModifiers(
   if (input.aimed && mayAim) {
     // Aimed on the sheet: Accuracy, the second and third turns, the bracing.
     // Aimed by the checkbox alone: Accuracy, as one turn's aim is worth.
+    const aimedFor = Math.max(1, weapon.aim?.turns ?? 0);
     const aiming = aimBonus({
-      turnsAimed: Math.max(1, weapon.aim?.turns ?? 0),
-      accuracy: weapon.accuracy + weapon.scopeBonus,
+      turnsAimed: aimedFor,
+      accuracy:
+        weapon.accuracy + scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: aimedFor }),
       braced: weapon.aim?.braced ?? false,
     });
     if (aiming.accuracy !== 0) modifiers.push({ label: L("Accuracy"), value: aiming.accuracy });
