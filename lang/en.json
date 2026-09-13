@@ -1140,7 +1140,7 @@
       "Quality": "Quality",
       "QualityHint": "The grade it was bought in (Characters p. 274). Changing it reprices the weapon from its list price.",
       "Material": "Material",
-      "MaterialHint": "What the blade is made of (p. 275): stone, bronze and iron take no fine bonus and break as cheap against better metal; silver is priced by its own paragraph.",
+      "MaterialHint": "What the blade is made of (p. 275): stone, bronze and iron take no fine bonus and break as cheap against better metal; obsidian cuts a point deeper but shatters; plastic is half the weight at twice the price and no better than good; silver is priced by its own paragraph.",
       "WeaponClass": "Priced as",
       "WeaponClassHint": "The class its quality is priced in: swords ×4 for fine, cutting weapons ×10, crushing ×3, firearms ×2, bows ×4.",
       "ListCost": "List price",
@@ -1530,7 +1530,9 @@
       "Through": "{damage} punched through the shield.",
       "ThroughWhere": "1d: {die} — {location}",
       "Disabled": "The shield is disabled: no Defense Bonus until it is repaired.",
-      "FellOff": "The shield is destroyed and falls off the arm."
+      "FellOff": "The shield is destroyed and falls off the arm.",
+      "Composition": "Made of",
+      "CompositionHint": "An iron shield costs five times as much, weighs twice as much and is +3 DR with twice the HP; a plastic riot shield weighs half. Composition never changes the Defense Bonus (Characters p. 287)."
     },
     "TraitCategory": {
       "advantage": "Advantage",
@@ -2566,7 +2568,8 @@
       "wood": "Wood",
       "plastic": "Plastic",
       "silver": "Solid silver",
-      "silverCoated": "Silver-coated or -edged"
+      "silverCoated": "Silver-coated or -edged",
+      "obsidian": "Obsidian"
     },
     "WeaponClass": {
       "none": "From its attacks",
@@ -2657,6 +2660,11 @@
       "good": "Good (+1)",
       "fine": "Fine (+2)",
       "best": "Best at this TL"
+    },
+    "ShieldComposition": {
+      "wood": "Wood (as the table lists it)",
+      "iron": "Iron (TL3+)",
+      "plastic": "Plastic riot shield (TL7+)"
     }
   }
 }

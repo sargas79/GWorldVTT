@@ -18,11 +18,15 @@ import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
 import { isRuleOn } from "../optional-rules.js";
 import { repairWeapon, weaponFacts } from "../weapon-damage.js";
 import {
+  SHIELD_COMPOSITIONS,
   WEAPON_CLASSES,
   WEAPON_MATERIALS,
   availableQualities,
+  materialCostMultiplier,
+  materialWeightMultiplier,
+  maxQualityFor,
   qualityCostMultiplier,
-  silverCostMultiplier,
+  shieldComposition,
 } from "../../rules/weapon-quality.js";
 import { AMMUNITION_TYPES, ammunitionCost } from "../../rules/ammunition.js";
 import { EQUIPMENT_QUALITIES } from "../../rules/wealth.js";
@@ -328,6 +332,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         "": "GWORLD.Material.none",
         ...keyed("Material", WEAPON_MATERIALS.filter((m) => m !== "")),
       },
+      shieldCompositions: keyed("ShieldComposition", [...SHIELD_COMPOSITIONS]),
       weaponClasses: {
         "": "GWORLD.WeaponClass.none",
         ...keyed("WeaponClass", WEAPON_CLASSES.filter((c) => c !== "")),
@@ -388,8 +393,32 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       if (changed && listCost > 0) {
         const facts = weaponFacts(this.item);
         const tl = Number(data.system.tl ?? current.tl) || 3;
-        const grade = qualityCostMultiplier(facts.weaponClass, quality, tl) ?? 1;
-        data.system.cost = Math.round(listCost * grade * silverCostMultiplier(material));
+        // "Blades cannot exceed good quality" in plastic (Characters p. 275).
+        const ceiling = maxQualityFor(material);
+        const graded = ceiling && quality === "fine" ? ceiling : ceiling && quality === "veryFine" ? ceiling : quality;
+        if (graded !== quality) data.system.quality = graded;
+        const grade = qualityCostMultiplier(facts.weaponClass, graded, tl) ?? 1;
+        data.system.cost = Math.round(listCost * grade * materialCostMultiplier(material));
+        const listWeight = Number(current.listWeight ?? current.weight) || 0;
+        if (listWeight > 0) data.system.weight = Math.round(listWeight * materialWeightMultiplier(material) * 100) / 100;
+      }
+    }
+
+    // A shield is priced the same way off what it is made of (p. 287).
+    if (this.item.type === "shield" && data.system) {
+      const current = this.item.system as any;
+      const composition = data.system.composition ?? current.composition;
+      if (composition !== current.composition) {
+        const effect = shieldComposition(composition);
+        const listCost = Number(current.listCost ?? current.cost) || 0;
+        const listWeight = Number(current.listWeight ?? current.weight) || 0;
+        const listDr = Number(current.dr) || 0;
+        const listHp = current.hp === null ? null : Number(current.hp) || 0;
+        const wasEffect = shieldComposition(current.composition ?? "wood");
+        if (listCost > 0) data.system.cost = Math.round(listCost * effect.costFactor);
+        if (listWeight > 0) data.system.weight = Math.round(listWeight * effect.weightFactor * 100) / 100;
+        data.system.dr = Math.max(0, listDr - wasEffect.drBonus + effect.drBonus);
+        if (listHp !== null) data.system.hp = Math.round((listHp / wasEffect.hpFactor) * effect.hpFactor);
       }
     }
 

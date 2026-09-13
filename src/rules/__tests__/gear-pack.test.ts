@@ -196,7 +196,11 @@ describe("the equipment compendium", () => {
   });
 
   it("gives a shield its DR and HP (p. 287)", () => {
-    expect(byName(shields, "Medium Shield").system).toMatchObject({ db: 2, dr: 7, hp: 40 });
+    // The table's shield is the wooden one; iron and plastic are worked out
+    // from the list price and weight it also carries.
+    expect(byName(shields, "Medium Shield").system).toMatchObject({
+      db: 2, dr: 7, hp: 40, composition: "wood", listCost: 60, listWeight: 15,
+    });
     expect(byName(shields, "Light Cloak").system).toMatchObject({ dr: 1, hp: 3 });
     expect(byName(shields, "Force Shield").system).toMatchObject({ dr: 100, hp: null });
   });
