@@ -196,6 +196,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "ritualPathMagic", reference: "Monster Hunters 1 pp. 32-39", default: false },
     // Gadgets and clothing improved by cost factors, and Signature Gear at a point per $10,000.
     { key: "monsterHuntersGear", reference: "Monster Hunters 1 pp. 53-54, 59", default: false },
+    // Unspent, destiny and wildcard bonus points spent on outcomes.
+    { key: "bonusPointSpending", reference: "Monster Hunters 1 pp. 23, 28, 31", default: false },
   ],
 };
 

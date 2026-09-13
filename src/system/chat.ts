@@ -37,6 +37,7 @@ import { loseAim } from "./aim.js";
 import { blockingSpellsOf, castBlockingSpell } from "./casting.js";
 import { addResistControls } from "./spell-resistance.js";
 import { addRitualControls, blockingRitualsOf, castBlockingRitual } from "./ritual-casting.js";
+import { addBuySuccessControls, addGuidanceControls } from "./bonus-points.js";
 import { buyDefenseBack, declareFleshWound, type FleshWoundEntry, type TvActionEntry } from "./cinematic.js";
 import {
   canAvertWithFatigue, facesHimSquarely, worthDeclaring, type Delivery,
@@ -415,7 +416,8 @@ async function applyFromCard(options: {
         // place "immediately after" can mean anything.
         // A mook is not offered it: they have no unspent character points, and
         // the whole of Cannon Fodder is that they go down.
-        fleshWound: isRuleOn("fleshWounds")
+        // Monster Hunters 1 offers it too, paid from any pool of points (p. 31).
+        fleshWound: isRuleOn("fleshWounds") || isRuleOn("bonusPointSpending")
           ? knockdowns
               .filter(
                 (entry) =>
@@ -1067,7 +1069,7 @@ async function addDeathCheckControls(message: any, html: HTMLElement): Promise<v
  */
 async function addFleshWoundControls(message: any, html: HTMLElement): Promise<void> {
   const entries = message?.getFlag?.(SYSTEM_ID, "fleshWound") as FleshWoundEntry[] | undefined;
-  if (!Array.isArray(entries) || entries.length === 0 || !isRuleOn("fleshWounds")) return;
+  if (!Array.isArray(entries) || entries.length === 0 || !(isRuleOn("fleshWounds") || isRuleOn("bonusPointSpending"))) return;
 
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-flesh]")) return;
@@ -1211,5 +1213,7 @@ export function registerChatHooks(): void {
     void addTvActionControls(message, html);
     void addAfflictionControls(message, html);
     void addRitualControls(message, html);
+    void addBuySuccessControls(message, html);
+    void addGuidanceControls(message, html);
   });
 }

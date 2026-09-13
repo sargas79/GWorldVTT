@@ -296,7 +296,7 @@
                   {{/if}}
                 {{else if atk.skillLevel}}
                   {{#if atk.usable}}
-                    <span class="rollable" data-action="roll" data-roll-type="attack"
+                    <span class="rollable" data-action="roll" data-roll-type="attack" data-roll-skill="{{atk.skillName}}"
                           data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
                           data-damage-type="{{atk.damageType}}"
                           data-unready-after="{{#if atk.readiesAfterAttack}}1{{/if}}"
@@ -407,7 +407,7 @@
                 {{#if atk.empty}}
                   <span class="bad" data-tooltip="{{localize 'GWORLD.Reload.EmptyHint'}}">{{localize "GWORLD.Reload.EmptyShort"}}</span>
                 {{else if atk.skillLevel}}
-                  <span class="rollable" data-action="roll" data-roll-type="attack"
+                  <span class="rollable" data-action="roll" data-roll-type="attack" data-roll-skill="{{atk.skillName}}"
                         data-tooltip="{{localize 'GWORLD.Ranged.QuickShotHint'}}"
                         data-mode-index="{{atk.modeIndex}}"
                         data-loaded="{{#if atk.shotsCapacity}}{{atk.shotsLoaded}}{{/if}}"

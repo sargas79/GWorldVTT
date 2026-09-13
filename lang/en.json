@@ -697,6 +697,10 @@
           "Name": "Ritual Path Magic",
           "Hint": "Magic as nine IQ/Very Hard Path skills, each held to the lower of Thaumatology and 12 + Magery and defaulting to Thaumatology-6 (no higher than 12), with a mana reserve of Magery x 3. Magery no longer adds to Thaumatology (Monster Hunters 1 pp. 24, 32-39)."
         },
+        "bonusPointSpending": {
+          "Name": "Spending points on outcomes",
+          "Hint": "Unspent points, destiny points and wildcard bonus points buy successes, flesh wounds and player guidance; the GM starts each session to refresh them (Monster Hunters 1 pp. 23, 28, 31)."
+        },
         "monsterHuntersGear": {
           "Name": "Monster Hunters gear",
           "Hint": "Gadgets and clothing take improvements priced by cost factor (cutting-edge, disguised, rugged, good and fine quality, scent-masking, undercover), and Signature Gear costs a point per $10,000 of each item (Monster Hunters 1 pp. 53-54, 59)."
@@ -3386,6 +3390,57 @@
       "TopOff": "Top off",
       "Capped": "capped",
       "Default": "default"
+    },
+    "BonusPoints": {
+      "Title": "Points to spend",
+      "Unspent": "Unspent {value}",
+      "UnspentName": "unspent points",
+      "DestinyName": "destiny points",
+      "Destiny": "Destiny {value}/{max}",
+      "DestinyHint": "Spent as bonus character points; one regained each session, never more than you started with (Monster Hunters 1 p. 23).",
+      "Wildcard": "{skill} {value}/{max}",
+      "WildcardHint": "One bonus point per 12 points in the wildcard skill, handed out each session; they don't accumulate, and pay only for that skill's rolls (Monster Hunters 1 pp. 28, 31).",
+      "GmDestiny": "GM destiny {value}",
+      "GmDestinyHint": "A negative Destiny: the GM sets these aside each session to spend against you (Monster Hunters 1 p. 23).",
+      "Familiarity": "Fully trained",
+      "FamiliarityHint": "12+ points in a wildcard skill: ignore penalties for familiarity, exotic equipment and tech level differences, but not improvised or low-quality gear (Monster Hunters 1 p. 28).",
+      "NewSession": "New session",
+      "NewSessionHint": "Hand out wildcard bonus points, regain a destiny point, and set aside the GM's destiny points (Monster Hunters 1 pp. 23, 28).",
+      "NothingToRefresh": "Nobody had points to refresh.",
+      "Guidance": "Ask for guidance",
+      "GuidanceHint": "Propose a plausible addition to the scene. The GM prices it at 1, 2 or 3 points, and it cannot undo a failure (Monster Hunters 1 p. 31).",
+      "GuidancePlaceholder": "What you'd like to find, or to be true",
+      "AfterCritical": "I just rolled a critical success (-1 point)",
+      "Ask": "Ask the GM",
+      "Price": "{level} ({cost})",
+      "Level": {
+        "minor": "Minor",
+        "moderate": "Moderate",
+        "major": "Major"
+      },
+      "Refuse": "Refuse",
+      "Refused": "The GM refused this.",
+      "Approved": "Approved as {level}: {cost} points spent.",
+      "BuySuccess": "Spend points",
+      "BuySuccessHint": "Buy this roll up: critical failure to failure 2, failure to success 1, success to critical 2 (not in combat) (Monster Hunters 1 p. 31).",
+      "BuyTo": "Make it",
+      "PayFrom": "Pay from",
+      "Spend": "Spend",
+      "StepCost": "{step} ({cost})",
+      "Step": {
+        "criticalFailure": "Critical failure",
+        "failure": "Failure",
+        "success": "Success",
+        "criticalSuccess": "Critical success"
+      },
+      "CombatHint": "In combat, a critical success cannot be bought.",
+      "Bought": "Bought up to {step} for {cost} points ({source}).",
+      "BoughtNote": "Bought a roll up to {step}",
+      "NotEnough": "Not enough points in that pool.",
+      "NoSources": "No points to spend.",
+      "GmCheckHint": "* Only if the GM agrees the wildcard skill was involved.",
+      "FleshWound": "Flesh wound",
+      "FleshWoundHint": "1 point reduces the injury to 1 HP or FP (Monster Hunters 1 p. 31)."
     },
     "SpecialAmmo": {
       "PowderLabel": "Powder",
