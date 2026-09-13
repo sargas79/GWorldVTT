@@ -78,6 +78,14 @@
     </div>
   </div>
 
+  {{#if decadeScale}}
+    {{!-- Big enough that the battle is better fought ten to one (p. 470). --}}
+    <div class="inote">
+      {{> "gworld.info"}}
+      <span>{{localize "GWORLD.Vehicle.DecadeScale" dr=decadeScale.dr hp=decadeScale.hp}}</span>
+    </div>
+  {{/if}}
+
   {{!-- Who is aboard, and which of them has the wheel (p. 467). --}}
   <div class="isec">
     <div class="ish">
