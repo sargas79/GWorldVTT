@@ -434,14 +434,17 @@ function matchName(name: string): string {
   return name.trim().toLowerCase();
 }
 
-/** Whether a named trait is one this system reads at all. */
-export function isReadTrait(name: string): boolean {
+/**
+ * Whether a named trait is one this system reads at all. A trait carrying its
+ * own list of skills is read, whatever it is called.
+ */
+export function isReadTrait(name: string, talentSkills: readonly string[] = []): boolean {
   const key = matchName(name);
   return (
     key in TRAIT_EFFECTS ||
     INJURY_TOLERANCE.test(key) ||
     TEMPERATURE_TOLERANCE.test(key) ||
-    isTalent(key) ||
+    isTalent(key, talentSkills) ||
     isSocialTrait(key)
   );
 }

@@ -80,6 +80,16 @@ export declare function entryName(
   options?: { supplement?: boolean; blankSpecialty?: boolean },
 ): string;
 
+/** The skills a Talent record gives its level to, from the file's group of its name. */
+export declare function talentSkillsOf(
+  name: string,
+  f: Map<string, string>,
+  groups: ReadonlyMap<string, readonly string[]>,
+): string[];
+
+/** The file's `[GROUPS]`, by group name. */
+export declare function groupsOf(text: string): Map<string, string[]>;
+
 /** The base item a "(Good)" or "(Fine)" record restates, or null. */
 export declare function qualityVariantOf(name: string, siblings: ReadonlySet<string>): string | null;
 

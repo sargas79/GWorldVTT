@@ -64,6 +64,14 @@ export const CHARISMA_SKILLS: readonly string[] = [
 export interface BonusTrait {
   name: string;
   levels?: number;
+  /**
+   * The skills this trait gives its level to, as its own compendium entry
+   * states them. A Talent from another book -- Monster Hunters 1's
+   * Craftiness is Acting, Camouflage, Disguise, Holdout, Shadowing and
+   * Stealth (p. 24) -- is known only this way. Empty for a trait that states
+   * none, which is read by name from the Basic Set's lists instead.
+   */
+  talentSkills?: readonly string[];
 }
 
 /**
@@ -87,7 +95,10 @@ export function talentBonuses(traits: readonly BonusTrait[]): Map<string, number
     const key = trait.name.trim().toLowerCase();
     const levels = Math.max(1, Math.floor(trait.levels ?? 0) || 1);
 
-    const listed = TALENT_SKILLS[key];
+    // The trait's own list first. A Basic Set Talent already on a character
+    // from before the list was a field carries none, and is read by name.
+    const own = (trait.talentSkills ?? []).filter((skill) => skill.trim());
+    const listed = own.length ? own : TALENT_SKILLS[key];
     if (listed) {
       for (const skill of listed) add(skill, levels);
       continue;
@@ -107,15 +118,28 @@ export function talentBonuses(traits: readonly BonusTrait[]): Map<string, number
  * The specialty is tried first and then the base: "Musical Instrument
  * (Flute)" is looked up whole, and then as "Musical Instrument".
  */
-export function talentBonusFor(skillName: string, bonuses: ReadonlyMap<string, number>): number {
+export function talentBonusFor(
+  skillName: string,
+  bonuses: ReadonlyMap<string, number>,
+  options: { difficulty?: string; wildcardsExcluded?: boolean } = {},
+): number {
+  // "Talents never add to wildcard skills" (Monster Hunters 1 p. 24): a
+  // wildcard already stands for every skill it covers, so a Talent covering
+  // one of them does not reach it. The Basic Set says nothing either way, so
+  // this applies only where that book's rules are in play.
+  if (options.wildcardsExcluded && options.difficulty === "W") return 0;
   const whole = normalizeSkillName(skillName);
   if (bonuses.has(whole)) return bonuses.get(whole)!;
   const base = whole.replace(/\s*\(.*\)\s*$/, "");
   return base !== whole ? (bonuses.get(base) ?? 0) : 0;
 }
 
-/** Whether a trait is one of the talents, or one of the two that act like one. */
-export function isTalent(name: string): boolean {
+/**
+ * Whether a trait is one of the talents, or one of the two that act like one.
+ * A trait carrying its own skill list is a talent whatever it is called.
+ */
+export function isTalent(name: string, talentSkills: readonly string[] = []): boolean {
+  if (talentSkills.some((skill) => skill.trim())) return true;
   const key = name.trim().toLowerCase();
   return key in TALENT_SKILLS || key === "voice" || key === "charisma";
 }

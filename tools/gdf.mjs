@@ -100,6 +100,36 @@ export function records(text) {
 }
 
 /**
+ * The file's named groups: `[GROUPS]` sections, where `<Healer>` heads a list
+ * of members one per line -- `SK:First Aid`, `SK:Surgery`. They are not
+ * records (a member line has no comma to split), so `records` passes over
+ * them. A group named twice, or in two `[GROUPS]` sections, gathers both.
+ */
+export function groupsOf(text) {
+  const groups = new Map();
+  let inGroups = false;
+  let current = null;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    const header = /^\[([A-Z][A-Z ]*)\]$/.exec(line);
+    if (header) {
+      inGroups = header[1].trim() === "GROUPS";
+      current = null;
+      continue;
+    }
+    if (!inGroups || !line || line.startsWith("*")) continue;
+    const name = /^<(.+)>$/.exec(line);
+    if (name) {
+      current = name[1].trim();
+      if (!groups.has(current)) groups.set(current, []);
+      continue;
+    }
+    if (current && !line.startsWith("#")) groups.get(current).push(line);
+  }
+  return groups;
+}
+
+/**
  * A record's `key(value)` fields, with prose dropped. Later duplicates of a key
  * win, which is how GCA itself reads an overriding line.
  */

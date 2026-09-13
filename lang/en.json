@@ -383,7 +383,8 @@
         "Activities": "Outside combat",
         "Magic": "Magic",
         "Equipment": "Equipment",
-        "Cinematic": "Cinematic combat"
+        "Cinematic": "Cinematic combat",
+        "MonsterHunters": "Monster Hunters 1: Champions"
       },
       "Rule": {
         "magic": {
@@ -689,6 +690,10 @@
         "meleeEtiquette": {
           "Name": "Melee etiquette",
           "Hint": "A hero fighting hand to hand is faced one at a time. The rest wait their turn (Campaigns p. 417)."
+        },
+        "talentsSkipWildcards": {
+          "Name": "Talents skip wildcard skills",
+          "Hint": "A Talent adds nothing to a wildcard skill, even one covering the skills on its list (Monster Hunters 1 p. 24)."
         }
       }
     },
@@ -1141,6 +1146,8 @@
       "OneLess": "One level fewer",
       "CostTable": "Cost table",
       "LevelNames": "Level names, one per line",
+      "TalentSkills": "Skills this Talent adds its level to, one per line",
+      "TalentSkillsHint": "Fill this in for a Talent and each skill named gets +1 per level; a specialty counts as its skill. The Basic Set's Talents are read by name when this is empty.",
       "CostTableHint": "A few traits are priced from a table rather than at a flat rate per level: Wealth runs 10/20/30/50/75. Fill this in and it replaces the points and per-level figures. Leave it empty for the great majority, which are priced evenly.",
       "TabledNote": "priced from the table",
       "TotalHint": "Total cost:",

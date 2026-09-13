@@ -43,6 +43,7 @@ import {
   bookPrefix,
   citesBook,
   fields,
+  groupsOf,
   isExpression,
   modes,
   nameOf,
@@ -139,10 +140,31 @@ export function qualityVariantOf(name, siblings) {
   return m && siblings.has(m[1]) ? m[1] : null;
 }
 
+/**
+ * The skills a Talent gives its level to, from the file's group of that name.
+ *
+ * GCA wires a Talent to its skills with `gives(+1 To GR:Healer)` and lists
+ * the group under `[GROUPS]`. It uses groups for other things as well --
+ * Voice, Absolute Direction, Flexibility -- so only a record filed as a Talent
+ * and giving to a group of its own name counts. Members other than skills
+ * (`ST:`, another group) are left out; so is any member GCA fills in from the
+ * sheet. Empty for everything else.
+ */
+export function talentSkillsOf(name, f, groups) {
+  if (!/\bTalents\b/.test(f.get("cat") ?? "")) return [];
+  const own = name.trim().toLowerCase();
+  const gives = [...(f.get("gives") ?? "").matchAll(/GR:\s*"?([^,")]+)"?/gi)].map((m) => m[1].trim().toLowerCase());
+  if (!gives.includes(own)) return [];
+  const group = [...groups.entries()].find(([group]) => group.trim().toLowerCase() === own)?.[1] ?? [];
+  return group
+    .map((member) => /^SK:\s*"?(.+?)"?$/.exec(member)?.[1]?.trim())
+    .filter((skill) => skill && !PLACEHOLDER.test(skill));
+}
+
 /** The book everything else is a supplement to. */
 const BASIC_SET = { prefix: "B", book: "Basic Set: Characters" };
 
-export { assertCitesBook, bookPrefix, reference };
+export { assertCitesBook, bookPrefix, groupsOf, reference };
 
 /**
  * Where a record belongs, for the pack being built.
@@ -349,6 +371,7 @@ function parseTraits(recs, reject, note, source) {
         levelNames: maxLevels > 0 ? levelNames.slice(0, maxLevels) : levelNames,
         maxLevels,
         reactionModifier: 0,
+        talentSkills: talentSkillsOf(bare, f, source.groups ?? new Map()),
         description: "",
         reference: reference(f.get("page"), source.prefix, source.book),
       },
@@ -1453,7 +1476,10 @@ function main() {
     overlap: (section, name, page) => overlaps.push({ section, name, page }),
   };
 
-  const recs = records(readFileSync(file, "utf8"));
+  const text = readFileSync(file, "utf8");
+  const recs = records(text);
+  // A Talent's skills are listed apart from the Talent, in the file's groups.
+  source.groups = groupsOf(text);
   try {
     assertCitesBook(recs, prefix);
   } catch (error) {

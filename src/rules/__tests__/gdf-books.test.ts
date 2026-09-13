@@ -9,8 +9,10 @@ import {
   bookPrefix,
   classifyCitation,
   entryName,
+  groupsOf,
   qualityVariantOf,
   reference,
+  talentSkillsOf,
 } from "../../../tools/parse-gdf.mjs";
 
 describe("reference", () => {
@@ -103,6 +105,49 @@ describe("entryName", () => {
     const skills = { blankSpecialty: false };
     expect(entryName("Feint (%Melee Combat Skill%)", siblings, skills)).toBe("Feint (%Melee Combat Skill%)");
     expect(entryName("_Hidden Lore", siblings, skills)).toBe("Hidden Lore");
+  });
+});
+
+describe("a Talent's skills", () => {
+  // As the Monster Hunters 1 file writes them, in two sections of the file.
+  const text = [
+    "[ADVANTAGES]",
+    '"Craftiness", 5/10, gives(+1 To GR:Craftiness), page(MH1:25), cat(Mundane, Mental, Talents)',
+    "[GROUPS]",
+    "<Craftiness>",
+    "",
+    "SK:Acting",
+    "SK:Camouflage",
+    "SK:Holdout",
+    "* a comment",
+    "<Voice>",
+    "SK:Singing",
+    "[EQUIPMENT]",
+    '"Rope", basecost(1)',
+    "[GROUPS]",
+    "<Craftiness>",
+    "SK:Stealth",
+    "ST:Per",
+  ].join("\n");
+  const groups = groupsOf(text);
+
+  it("reads every group, gathering a group listed twice", () => {
+    expect(groups.get("Craftiness")).toEqual(["SK:Acting", "SK:Camouflage", "SK:Holdout", "SK:Stealth", "ST:Per"]);
+    expect(groups.get("Voice")).toEqual(["SK:Singing"]);
+  });
+
+  it("gives a Talent the skills of the group named for it, and nothing else", () => {
+    const talent = new Map([["gives", "+1 To GR:Craftiness"], ["cat", "Mundane, Mental, Talents"]]);
+    expect(talentSkillsOf("Craftiness", talent, groups)).toEqual(["Acting", "Camouflage", "Holdout", "Stealth"]);
+  });
+
+  it("leaves alone a trait that gives to a group but is not a Talent", () => {
+    // Voice is +2 to its group, which the system reads as a rule of its own.
+    const voice = new Map([["gives", "+2 To GR:Voice"], ["cat", "Mundane, Physical"]]);
+    expect(talentSkillsOf("Voice", voice, groups)).toEqual([]);
+    // A power Talent names no group; its skills are a blank GCA fills in.
+    const power = new Map([["gives", "+1 to SK:Skill Name Here"], ["cat", "Paranormal, Talents - Powers"]]);
+    expect(talentSkillsOf("Mysticism Talent", power, groups)).toEqual([]);
   });
 });
 

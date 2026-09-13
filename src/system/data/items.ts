@@ -192,6 +192,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
   declare reactionModifier: number;
   declare modifiers: Array<{ name: string; value: number }>;
   declare selfControl: number | null;
+  declare talentSkills: string[];
 
   static override defineSchema() {
     return {
@@ -276,6 +277,16 @@ export class TraitData extends foundry.abstract.TypeDataModel {
         integer: true,
         initial: 0,
       }),
+      /**
+       * The skills a Talent adds its level to (Characters pp. 89-91), one name
+       * each; a specialty matches its base skill. Empty for every other
+       * trait. A Talent from another book is only known this way; one of the
+       * Basic Set's that predates the field is still read by name.
+       */
+      talentSkills: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: false }),
+        { required: true, initial: [] },
+      ),
     };
   }
 
