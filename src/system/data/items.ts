@@ -676,6 +676,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare weaponClass: WeaponClass;
   declare listCost: number;
   declare hpLost: number;
+  declare missedMaintenance: number;
   declare equipmentQuality: EquipmentQuality;
   declare forSkills: string[];
   declare meleeModes: unknown[];
@@ -775,6 +776,12 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
        * Against the HP its weight gives it, this says whether it still works.
        */
       hpLost: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+      /**
+       * Maintenance checks missed (Campaigns p. 485). "Missed or failed
+       * maintenance checks result in HT loss. This HT loss is cumulative",
+       * and it is what the exposure roll is made against.
+       */
+      missedMaintenance: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
       /**
        * The vehicle statistics (Campaigns pp. 462-463), read when the
        * category is "vehicle": ST/HP, Hnd/SR, HT, Move as acceleration and

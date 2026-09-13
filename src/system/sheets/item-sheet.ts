@@ -16,7 +16,9 @@ import { SYSTEM_ID } from "../constants.js";
 import { sourceCollections } from "../compendium-sources.js";
 import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
 import { isRuleOn } from "../optional-rules.js";
-import { repairWeapon, weaponFacts } from "../weapon-damage.js";
+import { weaponFacts } from "../weapon-damage.js";
+import { damageState, exposureCheck, repairItem, repairSkillOf } from "../repairs.js";
+import { promptForNumber } from "../roll.js";
 import {
   SHIELD_COMPOSITIONS,
   WEAPON_CLASSES,
@@ -146,6 +148,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     actions: {
       addMode: GWorldItemSheet.#onAddMode,
       repairWeapon: GWorldItemSheet.#onRepairWeapon,
+      exposureCheck: GWorldItemSheet.#onExposureCheck,
       deleteMode: GWorldItemSheet.#onDeleteMode,
       addDefault: GWorldItemSheet.#onAddDefault,
       deleteDefault: GWorldItemSheet.#onDeleteDefault,
@@ -185,8 +188,13 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       const reloads = ((item.system as any).rangedModes ?? []).map((m: any) =>
         Number(m.reloadWeight) > 0 ? ammunitionCost(Number(m.reloadWeight)) : null,
       );
+      const damage = damageState(item);
       context.weapon = {
         armed: facts.skill !== "" || item.type === "shield",
+        // What mending it would take, for the button to say (p. 484).
+        repairKind: damage.kind,
+        repairLabel: `GWORLD.Repair.Kind.${damage.kind}`,
+        repairs: isRuleOn("repairs"),
         reloads,
         facts,
         qualities: Object.fromEntries(grades.map((q) => [q, `GWORLD.Quality.${q}`])),
@@ -536,9 +544,48 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     return Array.isArray(list) ? { path, list: [...list] } : null;
   }
 
-  /** Puts a damaged weapon or shield back to full HP (Campaigns p. 484). */
+  /**
+   * One repair attempt on a damaged thing (Campaigns p. 484): half an hour,
+   * a skill roll against its price, and the margin back in hit points.
+   */
   static async #onRepairWeapon(this: GWorldItemSheet) {
-    await repairWeapon(this.item);
+    if (!isRuleOn("repairs")) return;
+    const actor = (this.item as { actor?: any }).actor ?? null;
+    const own = actor ? repairSkillOf(actor) : null;
+    const skill = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Repair.Action"),
+      label: game.i18n.format("GWORLD.Repair.SkillLabel", {
+        skill: own?.name ?? game.i18n.localize("GWORLD.Repair.AnySkill"),
+      }),
+      initial: own?.level ?? 10,
+    });
+    if (skill === null) return;
+    const modifier = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Repair.Action"),
+      label: game.i18n.localize("GWORLD.Chat.Modifier"),
+      initial: 0,
+    });
+    if (modifier === null) return;
+    await repairItem({
+      actor,
+      item: this.item,
+      skill,
+      skillName: own?.name ?? game.i18n.localize("GWORLD.Repair.AnySkill"),
+      modifier,
+    });
+  }
+
+  /** A day in the sand, or a month of neglect (Campaigns p. 485). */
+  static async #onExposureCheck(this: GWorldItemSheet) {
+    if (!isRuleOn("repairs")) return;
+    const actor = (this.item as { actor?: any }).actor ?? null;
+    const brutal = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Repair.ExposureAction"),
+      label: game.i18n.localize("GWORLD.Repair.BrutalLabel"),
+      initial: 0,
+    });
+    if (brutal === null) return;
+    await exposureCheck({ actor, item: this.item, cleaned: false, brutal });
   }
 
   static async #onAddMode(this: GWorldItemSheet, _event: Event, target: HTMLElement) {
