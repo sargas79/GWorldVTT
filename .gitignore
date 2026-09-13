@@ -6,9 +6,6 @@ foundry-config.json
 .DS_Store
 Thumbs.db
 
-# Imported design-system export (vendor files, not ours to lint or edit)
-design/import/
-
 # Release artifact, built on demand
 gworld.zip
 
