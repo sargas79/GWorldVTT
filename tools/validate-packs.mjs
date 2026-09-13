@@ -12,6 +12,8 @@ import { readdir, readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { basicSetVolume } from "./gdf.mjs";
+
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 /**
@@ -94,21 +96,27 @@ function validateActor(entry, file) {
  * is not a matter of taste -- the page number decides it, and a reference that
  * disagrees with its own number sends the reader to a book that has no such
  * page. Twenty-two of them shipped that way before this check existed.
+ *
+ * The boundary is the parsers' own, so the check and what writes the packs
+ * cannot come to disagree. A reference may list several pages, and a record
+ * citing both volumes names each ("...p. 88; Basic Set: Campaigns p. 400"):
+ * every page is checked against the volume written before it.
  */
-const CHARACTERS_LAST_PAGE = 336;
-
 function validateReference(reference, file, name) {
-  const match = /^Basic Set: (Characters|Campaigns) p\. (\d+)$/.exec(String(reference ?? ""));
-  if (!match) return;
-  const [, book, page] = match;
-  const number = Number(page);
-  const shouldBe = number <= CHARACTERS_LAST_PAGE ? "Characters" : "Campaigns";
-  check(
-    book === shouldBe,
-    file,
-    name,
-    `p. ${number} is in ${shouldBe}, but the reference says ${book}`,
-  );
+  for (const part of String(reference ?? "").split(/;\s*/)) {
+    const match = /^Basic Set: (Characters|Campaigns) p\. (\d+(?:, \d+)*)$/.exec(part);
+    if (!match) continue;
+    const [, book, list] = match;
+    for (const number of list.split(", ").map(Number)) {
+      const shouldBe = basicSetVolume(number).replace("Basic Set: ", "");
+      check(
+        book === shouldBe,
+        file,
+        name,
+        `p. ${number} is in ${shouldBe}, but the reference says ${book}`,
+      );
+    }
+  }
 }
 
 function validateItem(entry, file) {

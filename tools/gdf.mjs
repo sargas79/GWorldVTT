@@ -225,14 +225,54 @@ export function pagesCited(page, prefix) {
 }
 
 /**
+ * The last page of Basic Set: Characters.
+ *
+ * The Basic Set is two books with one run of page numbers: Characters is
+ * pages 1-336 and Campaigns carries on at 337. GCA cites both as `B`, so the
+ * page number is what says which volume a citation is in.
+ */
+export const CHARACTERS_LAST_PAGE = 336;
+
+/** Which volume of the Basic Set a page is in. */
+export function basicSetVolume(page) {
+  return page <= CHARACTERS_LAST_PAGE ? "Basic Set: Characters" : "Basic Set: Campaigns";
+}
+
+/**
+ * Whether a reading is of the Basic Set, whose one prefix covers two volumes.
+ *
+ * Named by the book as well as the prefix: a supplement read under its own
+ * prefix is its own book, and so is anything a caller has named otherwise.
+ */
+function readsBasicSet(prefix, book) {
+  return bookPrefix(prefix) === "B" && /^Basic Set\b/.test(String(book ?? ""));
+}
+
+/**
  * The page reference for one book, as the compendium prints it: "Martial
  * Arts p. 52", or "Basic Set: Characters p. 271, 276" where a record spans
  * two pages. A record that cites the book without a page number gets the
  * book alone.
+ *
+ * The Basic Set names the volume each page is in, whatever `book` says:
+ * p. 460 is "Basic Set: Campaigns p. 460". A record citing pages in both
+ * volumes names each, "Basic Set: Characters p. 88; Basic Set: Campaigns
+ * p. 400", in the order the volumes are first cited.
  */
 export function reference(page, prefix, book) {
   const pages = pagesCited(page, prefix);
-  return pages.length ? `${book} p. ${pages.join(", ")}` : book;
+  if (!pages.length) return book;
+  if (!readsBasicSet(prefix, book)) return `${book} p. ${pages.join(", ")}`;
+
+  const byVolume = new Map();
+  for (const n of pages) {
+    const volume = basicSetVolume(n);
+    if (!byVolume.has(volume)) byVolume.set(volume, []);
+    byVolume.get(volume).push(n);
+  }
+  return [...byVolume.entries()]
+    .map(([volume, numbers]) => `${volume} p. ${numbers.join(", ")}`)
+    .join("; ");
 }
 
 /**

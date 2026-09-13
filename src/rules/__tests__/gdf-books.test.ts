@@ -27,6 +27,26 @@ describe("reference", () => {
     expect(reference("B271, B276", "B", "Basic Set: Characters")).toBe("Basic Set: Characters p. 271, 276");
   });
 
+  // The Basic Set's one prefix covers two volumes: Characters is pp. 1-336
+  // and Campaigns carries on at 337 (sargas79/GWorldVTT#155).
+  it("names the Basic Set volume a page is in, on each side of p. 336", () => {
+    expect(reference("B336", "B", "Basic Set: Characters")).toBe("Basic Set: Characters p. 336");
+    expect(reference("B337", "B", "Basic Set: Characters")).toBe("Basic Set: Campaigns p. 337");
+    expect(reference("B460", "B", "Basic Set: Characters")).toBe("Basic Set: Campaigns p. 460");
+  });
+
+  it("names each volume for a record that cites both", () => {
+    expect(reference("B88, B400, B401", "B", "Basic Set: Characters"))
+      .toBe("Basic Set: Characters p. 88; Basic Set: Campaigns p. 400, 401");
+    expect(reference("B400, B88", "B", "Basic Set: Characters"))
+      .toBe("Basic Set: Campaigns p. 400; Basic Set: Characters p. 88");
+  });
+
+  it("leaves a supplement's pages under its own name, however high they run", () => {
+    expect(reference("MA400", "MA", "Martial Arts")).toBe("Martial Arts p. 400");
+    expect(reference("B400, MA52", "MA", "Martial Arts")).toBe("Martial Arts p. 52");
+  });
+
   it("names the book alone when the record cites no page of it", () => {
     expect(reference("B203", "MA", "Martial Arts")).toBe("Martial Arts");
     expect(reference(undefined, "B", "Basic Set: Characters")).toBe("Basic Set: Characters");
