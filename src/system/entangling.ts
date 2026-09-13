@@ -18,14 +18,27 @@ import { resolveSuccess } from "../rules/success.js";
 import { attributeOf } from "./attributes.js";
 import {
   BOLAS_ESCAPE_ROLLS,
+  BOLAS_FALL_DAMAGE,
+  LARIAT_LENGTH_YARDS,
+  MOLOTOV_BURNS_FOR,
   NET_ESCAPE_ROLLS,
+  bolasDefense,
   bolasEscapeModifier,
+  bolasHit,
+  bolasTrips,
+  bottleBreaks,
+  lariatHold,
+  lariatReadyTurns,
+  molotovEffect,
+  molotovLanding,
   mustBeCutFree,
   netEscapeTarget,
   type Limbs,
 } from "../rules/entangling.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/entangled.hbs`;
+const MOLOTOV_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/molotov.hbs`;
+const BOTTLES_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/bottles.hbs`;
 
 const L = (key: string, data?: Record<string, unknown>) =>
   data
@@ -87,9 +100,21 @@ export async function tryToEscape(options: {
   entanglement: Entanglement;
   limbs: Limbs;
   oneHanded: boolean;
+  /** Where it caught them, which is what it is doing to them. */
+  where?: string;
+  /** True where they were running when it caught them. */
+  running?: boolean;
 }): Promise<void> {
   const { actor } = options;
   if (!actor?.isOwner) return;
+
+  const where = options.where ?? String(actor.system?.entangled?.where ?? "");
+  const running = options.running ?? Boolean(actor.system?.entangled?.running);
+  await actor.update({
+    "system.entangled.kind": options.entanglement,
+    "system.entangled.where": where,
+    "system.entangled.running": running,
+  });
 
   const { target, needed, countsFailures } = escapeTarget(options);
   const roll = new Roll("3d6");
@@ -126,6 +151,139 @@ export async function tryToEscape(options: {
       needed,
       free,
       stuck,
+      // What it is doing to them while they are still in it.
+      doing: free ? [] : entanglementEffect({ entanglement: options.entanglement, where, running }),
+    }),
+    rolls: [roll],
+  });
+}
+
+/** One line of what is being done to somebody, for the card. */
+export interface EntanglementNote {
+  /** The localisation key under GWORLD.Entangled.Doing. */
+  key: string;
+  /** What the line needs filled in, where it needs anything. */
+  data?: Record<string, unknown>;
+  /** True where the line is bad enough to be worth colouring. */
+  grave?: boolean;
+}
+
+/**
+ * What the thing holding them is actually doing (Campaigns pp. 410-411).
+ *
+ * Escaping is only half of being caught. A bolas round the legs trips a
+ * running man and ties a standing one; round an arm it takes what he was
+ * holding; round the neck it stops him breathing. A lariat is a Quick Contest
+ * every turn, and the neck is that Contest five worse.
+ */
+export function entanglementEffect(options: {
+  entanglement: Entanglement;
+  where: string;
+  running: boolean;
+}): EntanglementNote[] {
+  const notes: EntanglementNote[] = [];
+  const where = options.where || "torso";
+
+  if (options.entanglement === "bolas") {
+    const hit = bolasHit(where);
+    if (hit === "disarms") notes.push({ key: "Disarms" });
+    if (hit === "trips") {
+      notes.push({
+        key: bolasTrips(options.running) ? "TripsRunning" : "TiesTheLegs",
+        data: { damage: `${BOLAS_FALL_DAMAGE.dice}d${BOLAS_FALL_DAMAGE.adds}` },
+      });
+    }
+    // "If you hit the neck, the bolas cuts off the target's breathing (see
+    // Suffocation, p. 436) until he escapes."
+    if (hit === "neck") notes.push({ key: "Suffocates", grave: true });
+    // "A successful parry with a cutting weapon cuts the cords, ruining the
+    // bolas!" -- worth knowing while it is still round you.
+    const parried = bolasDefense({ defense: "parry", cuttingWeapon: true });
+    if (parried.cutsTheCords) notes.push({ key: "CutByCutting" });
+  }
+
+  if (options.entanglement === "lariat") {
+    const hold = lariatHold({ location: where, running: options.running });
+    if (hold.contestModifier !== 0) {
+      notes.push({ key: "ContestAt", data: { modifier: hold.contestModifier } });
+    } else if (!hold.rollsToStand) {
+      notes.push({ key: "Contest" });
+    }
+    if (hold.suffocates) notes.push({ key: "Suffocates", grave: true });
+    if (hold.rollsToStand) {
+      notes.push({
+        key: "RollsToStand",
+        data: { damage: hold.fallDamage ? `${hold.fallDamage.dice}d${hold.fallDamage.adds}` : "" },
+      });
+    }
+    notes.push({ key: "LariatReady", data: { turns: lariatReadyTurns(LARIAT_LENGTH_YARDS) } });
+  }
+
+  return notes;
+}
+
+/**
+ * A Molotov cocktail, thrown or dropped (p. 411).
+ *
+ * Three separate questions the book answers separately: whether the bottle
+ * broke where it was aimed, what it does to whoever it caught, and -- for the
+ * ones still on your belt -- whether falling over has just set you on fire.
+ */
+export async function throwMolotov(options: {
+  actor: any;
+  /** What the target did about it. */
+  defense: "dodge" | "block" | "none";
+  /** The DR where it struck, since it needs DR 3+ to break on anybody. */
+  targetDr: number;
+  /** True where the attack roll reached the Molotov's Malf. of 12. */
+  malfunctioned: boolean;
+  /** True for sealed armour, which keeps the fire out entirely. */
+  sealed: boolean;
+}): Promise<void> {
+  const { actor } = options;
+  if (!actor?.isOwner) return;
+
+  const landing = molotovLanding({
+    defense: options.defense,
+    targetDr: options.targetDr,
+    malfunctioned: options.malfunctioned,
+  });
+  const effect = molotovEffect({ landing, sealed: options.sealed });
+
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content: await foundry.applications.handlebars.renderTemplate(MOLOTOV_TEMPLATE, {
+      name: String(actor.name ?? ""),
+      landing,
+      effect,
+      // "Most DR protects at only 1/5 value; sealed armor protects completely."
+      fifthDr: effect.drFraction < 1,
+      burnsFor: MOLOTOV_BURNS_FOR,
+    }),
+  });
+}
+
+/**
+ * Whether the bottles on somebody's belt survived a fall (p. 411).
+ *
+ * "Roll 1d for each bottle if you fall; it breaks on a roll of 1-4."
+ */
+export async function checkBottles(actor: any, bottles: number): Promise<void> {
+  if (!actor?.isOwner) return;
+  const roll = new Roll(`${Math.max(1, bottles)}d6`);
+  await roll.evaluate();
+  const results = faces(roll);
+  const broken = results.filter((die) => bottleBreaks(die)).length;
+
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content: await foundry.applications.handlebars.renderTemplate(BOTTLES_TEMPLATE, {
+      name: String(actor.name ?? ""),
+      dice: results,
+      broken,
+      bottles: Math.max(1, bottles),
     }),
     rolls: [roll],
   });

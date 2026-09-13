@@ -39,7 +39,7 @@ import {
   decompress, hike,
   irradiate, jumpOutOfVehicle, motionSickness, shock, shootAtVehicle, sleepFor, splashAcid,
 } from "../hazards.js";
-import { tryToEscape, type Entanglement } from "../entangling.js";
+import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
 import { attendPatient, operate, resuscitate } from "../recovery.js";
 import type { ResuscitationCause } from "../../rules/medicine.js";
 import type { Limbs } from "../../rules/entangling.js";
@@ -1298,26 +1298,61 @@ async function promptForResuscitation(): Promise<{
 }
 
 /** What is holding them, and what they have to get out with (pp. 410-411). */
-async function promptForEscape(current: Entanglement): Promise<{
+async function promptForEscape(current: Entanglement, currentWhere: string, wasRunning: boolean): Promise<{
   entanglement: Entanglement;
   limbs: Limbs;
   oneHanded: boolean;
+  where: string;
+  running: boolean;
 } | null> {
   const kinds: Array<[string, string]> = (["net", "smallNet", "bolas", "lariat"] as const)
     .map((k) => [k, game.i18n.localize(`GWORLD.Entangled.What.${k}`)]);
   const limbs: Array<[string, string]> = (["hands", "paws", "hooves"] as const)
     .map((k) => [k, game.i18n.localize(`GWORLD.Entangled.Limbs.${k}`)]);
+  const wheres: Array<[string, string]> = (["torso", "arm", "hand", "weapon", "leg", "foot", "neck"] as const)
+    .map((k) => [k, game.i18n.localize(`GWORLD.Entangled.WhereOptions.${k}`)]);
   return hazardPrompt(
     game.i18n.localize("GWORLD.Entangled.Escape"),
     hazardSelect("kind", game.i18n.localize("GWORLD.Entangled.Caught"), kinds)
       .replace(`value="${current}"`, `value="${current}" selected`) +
       hazardSelect("limbs", game.i18n.localize("GWORLD.Entangled.LimbsLabel"), limbs) +
+      // Where it caught them decides what it is doing to them (p. 410).
+      hazardSelect("where", game.i18n.localize("GWORLD.Entangled.Where"), wheres)
+        .replace(`value="${currentWhere || "torso"}"`, `value="${currentWhere || "torso"}" selected`) +
+      hazardCheck("running", game.i18n.localize("GWORLD.Entangled.Running"))
+        .replace('name="running"', `name="running"${wasRunning ? " checked" : ""}`) +
       hazardCheck("oneHanded", game.i18n.localize("GWORLD.Entangled.OneHanded")) +
       `<p class="ihint" style="margin:0">${game.i18n.localize("GWORLD.Entangled.EscapeHint")}</p>`,
     (form) => ({
       entanglement: str(form, "kind") as Entanglement,
       limbs: str(form, "limbs") as Limbs,
       oneHanded: ticked(form, "oneHanded"),
+      where: str(form, "where"),
+      running: ticked(form, "running"),
+    }),
+  );
+}
+
+/** How a thrown Molotov cocktail met its target (Campaigns p. 411). */
+async function promptForMolotov(): Promise<{
+  defense: "dodge" | "block" | "none";
+  targetDr: number;
+  malfunctioned: boolean;
+  sealed: boolean;
+} | null> {
+  const defenses: Array<[string, string]> = (["none", "dodge", "block"] as const)
+    .map((k) => [k, game.i18n.localize(`GWORLD.Molotov.DefenseOptions.${k}`)]);
+  return hazardPrompt(
+    game.i18n.localize("GWORLD.Molotov.Throw"),
+    hazardSelect("defense", game.i18n.localize("GWORLD.Molotov.Defense"), defenses) +
+      hazardField("targetDr", game.i18n.localize("GWORLD.Molotov.TargetDr"), 0, 'min="0"') +
+      hazardCheck("malfunctioned", game.i18n.localize("GWORLD.Molotov.Malfunctioned")) +
+      hazardCheck("sealed", game.i18n.localize("GWORLD.Molotov.Sealed")),
+    (form) => ({
+      defense: str(form, "defense") as "dodge" | "block" | "none",
+      targetDr: num(form, "targetDr"),
+      malfunctioned: ticked(form, "malfunctioned"),
+      sealed: ticked(form, "sealed"),
     }),
   );
 }
@@ -2469,6 +2504,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       operate: GWorldCharacterSheet.#onOperate,
       resuscitate: GWorldCharacterSheet.#onResuscitate,
       tryToEscape: GWorldCharacterSheet.#onEscapeEntanglement,
+      throwMolotov: GWorldCharacterSheet.#onThrowMolotov,
+      checkBottles: GWorldCharacterSheet.#onCheckBottles,
       buildingCollapse: GWorldCharacterSheet.#onCollapse,
       splashAcid: GWorldCharacterSheet.#onAcid,
       breatheBadAir: GWorldCharacterSheet.#onBadAir,
@@ -4825,11 +4862,32 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * things the roll turns on and the two the sheet cannot know.
    */
   static async #onEscapeEntanglement(this: GWorldCharacterSheet) {
+    const held = this.actor.system.entangled ?? {};
     const asked = await promptForEscape(
-      (this.actor.system.entangled?.kind || "net") as Entanglement,
+      (held.kind || "net") as Entanglement,
+      String(held.where ?? ""),
+      Boolean(held.running),
     );
     if (!asked) return;
     await tryToEscape({ actor: this.actor, ...asked });
+  }
+
+  /** A Molotov cocktail thrown at somebody (Campaigns p. 411). */
+  static async #onThrowMolotov(this: GWorldCharacterSheet) {
+    const asked = await promptForMolotov();
+    if (!asked) return;
+    await throwMolotov({ actor: this.actor, ...asked });
+  }
+
+  /** A fall with bottles on the belt, each of which may break (p. 411). */
+  static async #onCheckBottles(this: GWorldCharacterSheet) {
+    const bottles = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Molotov.CheckBottles"),
+      label: game.i18n.localize("GWORLD.Molotov.Bottles"),
+      initial: 1,
+    });
+    if (bottles === null) return;
+    await checkBottles(this.actor, bottles);
   }
 
   /** A building coming down on them (Campaigns p. 484). */

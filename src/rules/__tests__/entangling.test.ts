@@ -103,12 +103,21 @@ describe("Molotov cocktails (p. 411)", () => {
     expect(MOLOTOV_MALFUNCTION).toBe(12);
   });
 
-  it("bounces off anybody without hard armour to break on", () => {
+  it("bounces off anybody without hard armour and bursts at his feet", () => {
     // "the bottle bursts upon hitting a hard surface (anything with DR 3+)."
     expect(molotovLanding({ defense: "none", targetDr: 4 })).toBe("target");
-    expect(molotovLanding({ defense: "none", targetDr: 1 })).toBe("unbroken");
+    // "If he dodges, the bottle shatters on the ground at his feet. The same
+    // thing happens if he fails to defend but does not have DR 3+." The same
+    // thing -- the ground, not a bottle that never breaks.
+    expect(molotovLanding({ defense: "none", targetDr: 1 })).toBe("ground");
     expect(molotovLanding({ defense: "dodge", targetDr: 9 })).toBe("ground");
     expect(molotovLanding({ defense: "block", targetDr: 9 })).toBe("shield");
+  });
+
+  it("stays whole only when it malfunctions", () => {
+    // "on any attack roll of 12+ ... the bottle fails to break."
+    expect(molotovLanding({ defense: "none", targetDr: 9, malfunctioned: true })).toBe("unbroken");
+    expect(molotovLanding({ defense: "block", targetDr: 9, malfunctioned: true })).toBe("unbroken");
   });
 
   it("burns for three dice and then one a second on whoever it burst on", () => {

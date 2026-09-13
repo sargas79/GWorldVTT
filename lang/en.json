@@ -3119,7 +3119,58 @@
         "hands": "Hands",
         "paws": "Paws",
         "hooves": "Hooves"
+      },
+      "Where": "Where it caught",
+      "Running": "Running when it caught",
+      "WhereOptions": {
+        "torso": "Torso",
+        "arm": "Arm",
+        "hand": "Hand",
+        "weapon": "Weapon",
+        "leg": "Leg",
+        "foot": "Foot",
+        "neck": "Neck"
+      },
+      "Doing": {
+        "Disarms": "Round the arm: roll Bolas vs. ST, and on a loss they drop what they carry",
+        "TripsRunning": "Round the legs while running: DX roll or fall for {damage}",
+        "TiesTheLegs": "Round the legs: both are tied together",
+        "Suffocates": "Round the neck: no breathing until free (see Suffocation)",
+        "CutByCutting": "A parry with a cutting weapon would have cut the cords",
+        "Contest": "A Quick Contest of ST every turn to keep it",
+        "ContestAt": "A Quick Contest of ST every turn, the victim at {modifier}",
+        "RollsToStand": "Round the foot: DX roll to stay standing, or fall for {damage}",
+        "LariatReady": "A missed lariat takes {turns} turns to gather up"
       }
+    },
+    "Molotov": {
+      "Title": "{name} throws a Molotov cocktail",
+      "Throw": "Throw a Molotov",
+      "Defense": "What the target did",
+      "DefenseOptions": {
+        "none": "Nothing",
+        "dodge": "Dodged",
+        "block": "Blocked"
+      },
+      "TargetDr": "DR where it struck",
+      "Malfunctioned": "Attack roll of 12 or more",
+      "Sealed": "Sealed armour",
+      "Landing": {
+        "target": "It bursts on the target",
+        "shield": "It bursts on the shield, which takes the damage instead",
+        "ground": "It bursts on the ground at their feet",
+        "unbroken": "The fuse fails, the bottle holds, or the fuel will not light"
+      },
+      "Initial": "{dice}d burning at once",
+      "PerSecond": "then {dice}d{adds} burning a second",
+      "Radius": "sets fire to a {yards}-yard radius",
+      "FifthDr": "DR protects at a fifth",
+      "BurnsFor": "burns for {dice}d seconds",
+      "CheckBottles": "Fell with bottles",
+      "Bottles": "Bottles on the belt",
+      "BottlesTitle": "{name} falls with {bottles} bottles",
+      "Broken": "{broken} broke — and are burning",
+      "Intact": "None broke"
     }
   }
 }

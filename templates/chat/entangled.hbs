@@ -8,6 +8,13 @@
     {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
     <span class="gc-total">{{roll}}</span>
   </div>
+  {{#if doing.length}}
+    <div class="gc-mods">
+      {{#each doing as |note|}}
+        <span class="{{#if note.grave}}gc-warn{{else}}gc-mod{{/if}}">{{localize (concat "GWORLD.Entangled.Doing." note.key) modifier=note.data.modifier damage=note.data.damage turns=note.data.turns}}</span>
+      {{/each}}
+    </div>
+  {{/if}}
   {{#if free}}
     <div class="gc-result success">{{localize "GWORLD.Entangled.Free"}}</div>
   {{else if stuck}}

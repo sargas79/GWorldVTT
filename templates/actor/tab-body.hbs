@@ -261,6 +261,13 @@
             {{localize "GWORLD.Hazard.Radiation"}}
           </button>
         {{/if}}
+        {{!-- A Molotov cocktail, and the bottles still on the belt (p. 411). --}}
+        <button type="button" class="ibtn" data-action="throwMolotov">
+          {{localize "GWORLD.Molotov.Throw"}}
+        </button>
+        <button type="button" class="ibtn" data-action="checkBottles">
+          {{localize "GWORLD.Molotov.CheckBottles"}}
+        </button>
         {{#if entangled.caught}}
           {{!-- Caught in something, and trying to get out (pp. 410-411). --}}
           <button type="button" class="ibtn" data-action="tryToEscape"

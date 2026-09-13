@@ -373,6 +373,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     successes: number;
     failures: number;
     mustBeCut: boolean;
+    where: string;
+    running: boolean;
   };
   declare points: {
     starting: number;
@@ -518,6 +520,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         failures: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
         /** True past three failures running: "he must be cut free." */
         mustBeCut: new fields.BooleanField({ initial: false }),
+        /**
+         * Where it caught them (Campaigns pp. 410-411). A bolas does something
+         * different to every part of the body, and a lariat round the neck is
+         * a different Contest from one round the arm, so the escape is not the
+         * whole of what is happening to them.
+         */
+        where: new fields.StringField({
+          required: true, nullable: false, blank: true, initial: "",
+          choices: ["", "torso", "arm", "hand", "weapon", "leg", "foot", "neck"],
+        }),
+        /** True where they were running when it caught them, which is what trips them. */
+        running: new fields.BooleanField({ initial: false }),
       }),
 
       tl: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 3 }),
