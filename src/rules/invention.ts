@@ -135,8 +135,8 @@ export function gradeForPrice(retail: number): InventionGrade {
  * Which grade a computer program's Complexity falls in (p. 473).
  *
  * "If a cost or time calculation requires one of the four ratings above, treat
- * Complexity 1-3 as Simple, 4-5 as Average" -- and the pattern the sentence is
- * cut off mid-way through continues with the two that are left.
+ * Complexity 1-3 as Simple, 4-5 as Average, 6-7 as Complex, and 8+ as
+ * Amazing."
  */
 export function gradeForComplexity(complexity: number): InventionGrade {
   if (complexity <= 3) return "simple";

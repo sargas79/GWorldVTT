@@ -10,6 +10,7 @@ import {
   bolasDefense,
   bolasEscapeModifier,
   bolasHit,
+  bolasSuffocates,
   bolasTrips,
   bottleBreaks,
   lariatHold,
@@ -45,6 +46,15 @@ describe("bolas (Campaigns p. 410)", () => {
     expect(bolasHit("leg")).toBe("trips");
     expect(bolasHit("torso")).toBe("entangles");
     expect(bolasHit("neck")).toBe("neck");
+  });
+
+  it("stops the breathing of whoever it caught by the neck", () => {
+    // "If you hit the neck, the bolas cuts off the target's breathing (see
+    // Suffocation, p. 436) until he escapes."
+    expect(bolasSuffocates("neck")).toBe(true);
+    expect(bolasSuffocates("Neck")).toBe(true);
+    expect(bolasSuffocates("torso")).toBe(false);
+    expect(bolasSuffocates("leg")).toBe(false);
   });
 
   it("trips only somebody who was running", () => {
