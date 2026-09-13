@@ -658,6 +658,41 @@ function rangedModeField() {
       choices: ["", "rest", "bipod", "mounted"],
     }),
     /**
+     * How the projectile finds its way (GURPS Basic Set: Campaigns p. 412).
+     * "guided" is flown by the firer, who must Concentrate each turn and keep
+     * the target in sight; "homing" steers itself and asks nothing of him once
+     * launched. Both ignore range modifiers, and for both the 1/2D figure is
+     * the projectile's speed in yards a second rather than the range past
+     * which damage halves. Blank for an ordinary shell or bullet.
+     */
+    guidance: new fields.StringField({
+      required: true,
+      nullable: false,
+      blank: true,
+      initial: "",
+      choices: ["", "guided", "homing"],
+    }),
+    /**
+     * An attack that covers ground rather than striking a point (p. 413), like
+     * a flamethrower or a gas cloud. "Active defenses don't protect against an
+     * area attack, but victims may dive for cover or retreat out of the area",
+     * and its damage does not fall off with distance the way an explosion's
+     * does.
+     */
+    areaAttack: new fields.BooleanField({ initial: false }),
+    /**
+     * How wide a cone attack is at its widest, in yards (p. 413). The spread
+     * is that width over the weapon's Max range; zero means the table does not
+     * say, and the cone then spreads a yard per yard. Only read when
+     * `areaAttack` is set.
+     */
+    coneMaxWidth: new fields.NumberField({
+      required: true,
+      nullable: false,
+      initial: 0,
+      min: 0,
+    }),
+    /**
      * How unwieldy the weapon is, as a penalty: it applies when firing from a
      * vehicle or in close combat, and to attempts to keep the weapon hidden
      * (GURPS Basic Set: Characters p. 270). Zero or negative, never positive.

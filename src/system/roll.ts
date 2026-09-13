@@ -93,7 +93,19 @@ import { spendShots } from "./ammunition.js";
 import type { DamageType } from "../rules/types.js";
 
 import { cappedAimBonus, targetingSystemBonus, unexpectedDodgePenalty } from "../rules/vehicle-combat.js";
-import { halvesDamage, type Guidance } from "../rules/guided.js";
+import {
+  accuracyApplies,
+  areaDamageFallsOff,
+  coneMayStillCatch,
+  coneWidth,
+  defendsAgainstArea,
+  flightPlan,
+  guidanceModifiers,
+  halvesDamage,
+  projectileSpeed,
+  steeringDuty,
+  type Guidance,
+} from "../rules/guided.js";
 import { allOutAttackBonus, strongAttackDamageBonus, type AllOutAttackOption } from "../rules/maneuvers.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
@@ -107,6 +119,93 @@ export type RollKind = "skill" | "attribute" | "attack" | "defense";
 export interface RollModifier {
   label: string;
   value: number;
+}
+
+/**
+ * What the card says about a steered or area attack (Campaigns pp. 412-413).
+ *
+ * Assembled where the range is known, because every line of it depends on how
+ * far away the target is.
+ */
+export interface GuidanceReport {
+  /** "guided", "homing", or blank for an ordinary shot. */
+  guidance: Guidance;
+  /** Seconds until the projectile arrives, counting the turn it was fired. */
+  seconds: number;
+  /** True where it reaches the target on the turn it is launched. */
+  hitsThisTurn: boolean;
+  /** True where it runs out of reach first and crashes. */
+  falls: boolean;
+  /** True where 1/2D is the projectile's speed rather than a damage threshold. */
+  speedNotDamage: boolean;
+  /** True where the firer's own state and senses do not count. */
+  ignoresFirer: boolean;
+  /** True for an attack that covers ground, which no active defense stops. */
+  area: boolean;
+  /** How wide the cone is at this range, in yards; null where it is not a cone. */
+  coneYards: number | null;
+  /** True where a cone that missed may still catch the target. */
+  coneMayCatch: boolean;
+  /** True where the firer must Concentrate each turn and keep the target in sight. */
+  mustSteer: boolean;
+  /** True where damage holds up across the area instead of falling off. */
+  damageHoldsUp: boolean;
+}
+
+/**
+ * Works out what a steered or area attack does at this range (pp. 412-413).
+ *
+ * Returns null for an ordinary shot, which is most of them -- the card then
+ * carries nothing extra, as it always has.
+ */
+export function guidanceReport(options: {
+  guidance: string;
+  rangeYards: number;
+  halfDamageRange: number;
+  maxRange: number;
+  areaAttack: boolean;
+  coneMaxWidth: number;
+}): GuidanceReport | null {
+  const guidance = (options.guidance || "none") as Guidance;
+  const area = options.areaAttack === true;
+  if (guidance === "none" && !area) return null;
+
+  // "If a guided or homing attack has a 1/2D statistic, do not halve damage.
+  // Instead, read this as the attack's speed in yards/second."
+  const speed = projectileSpeed(options.halfDamageRange);
+  const plan = flightPlan({
+    rangeYards: options.rangeYards,
+    speed,
+    maxRange: options.maxRange,
+  });
+  const modifiers = guidanceModifiers(guidance);
+
+  return {
+    guidance,
+    seconds: plan.seconds,
+    hitsThisTurn: plan.hitsThisTurn,
+    falls: plan.falls,
+    speedNotDamage: !halvesDamage(guidance),
+    ignoresFirer: !modifiers.firersCondition,
+    area,
+    coneYards:
+      area && options.coneMaxWidth >= 0 && options.maxRange > 0
+        ? coneWidth({
+            rangeYards: options.rangeYards,
+            maxRange: options.maxRange,
+            maxWidth: options.coneMaxWidth > 0 ? options.coneMaxWidth : null,
+          })
+        : null,
+    coneMayCatch: area && coneMayStillCatch(),
+    // "Take a Concentrate maneuver each turn to steer the weapon. Should you
+    // lose sight of the target while the attack is en route, your attack
+    // misses automatically!" -- which only bites on a journey of more than the
+    // turn it was fired on.
+    mustSteer: steeringDuty(guidance).concentrates && !plan.hitsThisTurn && !plan.falls,
+    // "Damage does not usually decline with distance" -- which is what tells
+    // an area attack apart from an explosion, where it very much does.
+    damageHoldsUp: area && !areaDamageFallsOff(),
+  };
 }
 
 export interface SuccessRollOptions {
@@ -151,6 +250,13 @@ export interface SuccessRollOptions {
   weapon?: { weight: number; material: string; swung: boolean; resistsBreakage: boolean };
   /** A bonus the target's Dodge alone gets, from a laser dot they saw (p. 411). */
   dodgeBonus?: number;
+  /**
+   * What a steered or area attack has to say for itself (Campaigns pp. 412-413):
+   * how long the projectile is in the air, whether it will get there at all,
+   * how wide the cone is here, and whether an active defense is any use. Shown
+   * on the card, and the area part decides what the defense card offers.
+   */
+  guidance?: GuidanceReport | null;
   /** How an attack reached its target, for TV Action Violence (p. 417). */
   delivery?: Delivery;
   /** What the attack does, blank where it does nothing (a grapple). */
@@ -252,6 +358,9 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
         : null,
     shotsFired: rapidFire?.shotsFired ?? null,
     jam,
+    // A steered or area attack, which the ordinary ranged line cannot describe
+    // (Campaigns pp. 412-413).
+    guidance: options.guidance ?? null,
   });
 
   await ChatMessage.implementation.create({
@@ -281,7 +390,11 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
       ? {
           flags: attackFlags(
             actor, label, defensePenalty, criticalHit, noParry, options.weapon,
-            options.delivery, options.damageType, options.dodgeBonus ?? 0,
+            options.delivery, options.damageType,
+            // "Active defenses don't protect against an area attack, but
+            // victims may dive for cover or retreat out of the area" (p. 413).
+            options.guidance?.area === true && !defendsAgainstArea(),
+            options.dodgeBonus ?? 0,
           ),
         }
       : {}),
@@ -418,6 +531,8 @@ function attackFlags(
   weapon?: { weight: number; material: string; swung: boolean },
   delivery?: Delivery,
   damageType?: string,
+  /** True for an area attack, which no active defense stops (p. 413). */
+  areaAttack = false,
   /** +1 to Dodge for a target who saw a laser dot (Campaigns p. 411). */
   dodgeBonus = 0,
 ): object {
@@ -442,8 +557,11 @@ function attackFlags(
         attackerToken: attackerToken ? String(attackerToken) : "",
         defensePenalty,
         // "In all cases, the target gets no active defense against the attack"
-        // (p. 556) -- so the defense card offers none.
-        noDefense: criticalHit,
+        // (p. 556) -- so the defense card offers none. An area attack is the
+        // other case: "active defenses don't protect against an area attack,
+        // but victims may dive for cover or retreat out of the area" (p. 413).
+        noDefense: criticalHit || areaAttack,
+        ...(areaAttack ? { areaAttack: true } : {}),
         // A thrown Missile spell cannot be parried (Characters p. 241).
         ...(noParry ? { noParry: true } : {}),
         // What the defender's parry has to weigh (Campaigns p. 376).
@@ -670,6 +788,12 @@ export async function handleRollAction(
     // A shotgun's pellets, and the range inside which they strike as one.
     projectiles: Math.max(1, Number(target.dataset.projectiles) || 1),
     halfDamageRange: Number(target.dataset.halfDamageRange) || 0,
+    // How the projectile steers and how far it can fly (Campaigns p. 412),
+    // and whether it covers ground rather than striking a point (p. 413).
+    guidance: String(target.dataset.guidance ?? ""),
+    maxRange: Number(target.dataset.maxRange) || 0,
+    areaAttack: target.dataset.areaAttack === "1",
+    coneMaxWidth: Number(target.dataset.coneMaxWidth) || 0,
     // The turns spent on an Aim maneuver, which is what buys the Accuracy.
     aim: {
       turns: aimTurnsOf(actor),
@@ -891,6 +1015,20 @@ export async function handleRollAction(
       ? { rapidFire: { shotsFired: shot.shotsFired, recoil: shot.recoil } }
       : {}),
     ...(shot?.dodgeBonus ? { dodgeBonus: shot.dodgeBonus } : {}),
+    // A steered or area attack says what it is doing, which needs the range
+    // it was actually fired at (Campaigns pp. 412-413).
+    ...(rollType === "attack" && ranged && shot
+      ? {
+          guidance: guidanceReport({
+            guidance: weapon.guidance,
+            rangeYards: shot.rangeYards,
+            halfDamageRange: weapon.halfDamageRange,
+            maxRange: weapon.maxRange,
+            areaAttack: weapon.areaAttack,
+            coneMaxWidth: weapon.coneMaxWidth,
+          }),
+        }
+      : {}),
   });
 
   // A shot at a random location behind cover (p. 407): "For shots that hit a
@@ -1423,8 +1561,12 @@ export function rangedModifiers(
     aim?: { turns: number; braced: boolean } | null;
     /** The shooter's eyes, which decide what the dark costs. */
     eyes?: Eyes;
-    /** The 1/2D figure, which a laser sight's reach defaults to (p. 411). */
+    /** How the projectile steers, blank for one that does not (p. 412). */
+    guidance?: string;
+    /** The 1/2D figure, which for a steered weapon is its speed in yards/second. */
     halfDamageRange?: number;
+    /** How far it can fly before it crashes. */
+    maxRange?: number;
   },
 ): RollModifier[] {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
@@ -1448,6 +1590,19 @@ export function rangedModifiers(
 
   const situation = input.situation ?? "normal";
 
+  // What a steered weapon still takes (p. 412). "Treat a guided weapon as any
+  // other firearm when assessing modifiers, but ignore range modifiers!" -- and
+  // a homing one ignores the firer's senses as well, because the seeker is
+  // what is looking.
+  const guidance = ((weapon.guidance || "none") as Guidance);
+  const steering = guidanceModifiers(guidance);
+  // How long it is in the air, which is what makes the shot count as aimed.
+  const flight = flightPlan({
+    rangeYards: effectiveRange,
+    speed: projectileSpeed(weapon.halfDamageRange ?? 0),
+    maxRange: weapon.maxRange ?? 0,
+  });
+
   // Opportunity fire: the wider the ground being covered, the worse the shot
   // (p. 390). Watching a single line is a flat -2 whatever its length.
   const watching = isRuleOn("opportunityFire") ? weapon.watching : null;
@@ -1461,7 +1616,7 @@ export function rangedModifiers(
   }
   // In close combat the speed/range penalty is dropped and Bulk stands in its
   // place: the target is right there, and the weapon is in the way.
-  if (speedRange !== 0 && situation !== "closeCombat") {
+  if (speedRange !== 0 && situation !== "closeCombat" && steering.range) {
     modifiers.push({
       label:
         seenRange === input.range
@@ -1472,10 +1627,15 @@ export function rangedModifiers(
   }
   if (size !== 0) modifiers.push({ label: L("TargetSize"), value: size });
 
-  const unseen = sightModifier(input.sight ?? "clear", false, weapon.eyes);
-  if (unseen) modifiers.push(unseen);
-  const dark = darknessModifier(input.darkness ?? 0, weapon.eyes);
-  if (dark) modifiers.push(dark);
+  // "Base visibility modifiers on the projectile's homing sense, not on your
+  // senses" -- so the firer's dark and the firer's smoke stop counting, and
+  // what the seeker can make out is the GM's to say.
+  if (steering.firersSenses) {
+    const unseen = sightModifier(input.sight ?? "clear", false, weapon.eyes);
+    if (unseen) modifiers.push(unseen);
+    const dark = darknessModifier(input.darkness ?? 0, weapon.eyes);
+    if (dark) modifiers.push(dark);
+  }
 
   // Cover is a choice between three ways of dealing with it, not one modifier
   // (p. 407), so what it costs depends on which one was taken.
@@ -1518,15 +1678,22 @@ export function rangedModifiers(
   const mayAim =
     situation !== "moveAndAttack" &&
     (!watching || (!watching.coveringLine && canAimWhileWatching(watching.hexesWatched)));
-  if (input.aimed && mayAim) {
+  // "If you Aim a guided weapon before you Attack, you receive its Acc bonus -
+  // but you don't have to aim. If the projectile takes multiple seconds to
+  // reach its target, the attack is automatically aimed and gets its Acc
+  // bonus." So a steered shot with a journey ahead of it is aimed whether the
+  // firer took the maneuver or not -- but only the maneuver buys the extra
+  // turns and the bracing, which is why those stay behind the checkbox.
+  const deliberatelyAimed = input.aimed && mayAim;
+  if (accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds })) {
     // Aimed on the sheet: Accuracy, the second and third turns, the bracing.
     // Aimed by the checkbox alone: Accuracy, as one turn's aim is worth.
-    const aimedFor = Math.max(1, weapon.aim?.turns ?? 0);
+    const aimedFor = deliberatelyAimed ? Math.max(1, weapon.aim?.turns ?? 0) : 1;
     const aiming = aimBonus({
       turnsAimed: aimedFor,
       accuracy:
         weapon.accuracy + scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: aimedFor }),
-      braced: weapon.aim?.braced ?? false,
+      braced: deliberatelyAimed ? (weapon.aim?.braced ?? false) : false,
     });
     if (aiming.accuracy !== 0) modifiers.push({ label: L("Accuracy"), value: aiming.accuracy });
     if (aiming.extraTurns !== 0) modifiers.push({ label: L("AimedLonger"), value: aiming.extraTurns });

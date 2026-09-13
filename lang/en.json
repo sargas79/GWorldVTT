@@ -1318,7 +1318,16 @@
       "MissedMaintenance": "Missed checks",
       "MissedMaintenanceHint": "Maintenance checks missed, each costing a point of HT that the exposure roll is made against (Campaigns p. 485).",
       "MustRollInUse": "At zero HP or below: it rolls HT every second it is used under stress, or stops working",
-      "LicenseCost": "A license to carry it costs 1d x 10% of the price: ${low} to ${high}"
+      "LicenseCost": "A license to carry it costs 1d x 10% of the price: ${low} to ${high}",
+      "Guidance": "Guidance",
+      "GuidanceHint": "How the projectile finds its way (Campaigns p. 412). Guided is flown by the firer, who must Concentrate each turn and keep the target in sight; homing steers itself. Both ignore range modifiers, and for both the 1/2D figure is the speed in yards a second.",
+      "GuidanceNone": "Not steered",
+      "GuidanceGuided": "Guided",
+      "GuidanceHoming": "Homing",
+      "AreaAttack": "Area attack",
+      "AreaAttackHint": "Covers ground rather than striking a point (p. 413) — a flamethrower, a gas cloud. No active defense protects against it, though victims may dive for cover, and its damage does not fall off with distance the way an explosion's does.",
+      "ConeMaxWidth": "Cone width",
+      "ConeMaxWidthHint": "How wide the cone is at its widest, in yards. It spreads by that width over the weapon's Max range; leave at zero where the table does not say, and it spreads a yard per yard."
     },
     "Gear": {
       "Carried": "Carried",
@@ -3522,6 +3531,18 @@
       "NotHeard": "Does not hear it",
       "HeardAndPlaced": "Hears it, and knows where it came from",
       "HeardNotPlaced": "Hears it, but the silencer hides where from: an IQ roll to place it"
+    },
+    "Guided": {
+      "Arrives": "In the air — reaches the target in {seconds} seconds",
+      "ArrivesNow": "Reaches the target this turn",
+      "Falls": "Out of reach before it arrives — it crashes",
+      "SpeedNotDamage": "1/2D is its speed, not a damage threshold",
+      "IgnoresFirer": "Ignores the firer's injury, movement, posture and senses",
+      "NoDefense": "No active defense — dive for cover or retreat out of the area",
+      "ConeWidth": "The cone is {yards} yards wide here",
+      "MayStillCatch": "A miss may still catch the target in the area",
+      "MustSteer": "Concentrate each turn to steer it — lose sight of the target and it misses; Attack on the turn it arrives",
+      "DamageHoldsUp": "Damage does not fall off with distance"
     }
   }
 }

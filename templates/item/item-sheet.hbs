@@ -1028,6 +1028,18 @@
               </select>
             </div>
             <div class="irow">
+              <select name="system.rangedModes.{{i}}.guidance" aria-label="{{localize 'GWORLD.Item.Guidance'}}" data-tooltip="{{localize 'GWORLD.Item.GuidanceHint'}}" {{#unless @root.editable}}disabled{{/unless}}>
+                {{selectOptions @root.choices.guidance selected=m.guidance localize=true}}
+              </select>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.AreaAttackHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.areaAttack"
+                     {{#if m.areaAttack}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.AreaAttack"}}</label>
+              {{#if m.areaAttack}}
+                <input type="number" name="system.rangedModes.{{i}}.coneMaxWidth" value="{{m.coneMaxWidth}}" aria-label="{{localize 'GWORLD.Item.ConeMaxWidth'}}" step="1" min="0"
+                       data-tooltip="{{localize 'GWORLD.Item.ConeMaxWidthHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              {{/if}}
+            </div>
+            <div class="irow">
               <input type="number" name="system.rangedModes.{{i}}.loaded" value="{{m.loaded}}" aria-label="{{localize 'GWORLD.Item.Loaded'}}" step="1" min="0"
                      data-tooltip="{{localize 'GWORLD.Item.LoadedHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <input type="number" name="system.rangedModes.{{i}}.reloadWeight" value="{{m.reloadWeight}}" aria-label="{{localize 'GWORLD.Item.ReloadWeight'}}" step="0.01" min="0"

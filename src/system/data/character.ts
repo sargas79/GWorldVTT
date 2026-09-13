@@ -221,6 +221,17 @@ export interface DerivedAttack {
   projectiles?: number;
   /** The 1/2D range in yards, inside a tenth of which pellets strike as one. Ranged only. */
   halfDamageRange?: number;
+  /** The Max range in yards, which is how far a steered projectile can fly. Ranged only. */
+  maxRange?: number;
+  /**
+   * How the projectile steers, blank for one that does not (Campaigns p. 412).
+   * A steered weapon reads 1/2D as its speed rather than a damage threshold.
+   */
+  guidance?: string;
+  /** True for an attack that covers ground rather than striking a point (p. 413). */
+  areaAttack?: boolean;
+  /** A cone's widest, in yards; zero where the table does not say. */
+  coneMaxWidth?: number;
   /** True for a punch, kick, bite or grapple, which fumbles on its own table. */
   unarmed: boolean;
   /**
@@ -1808,6 +1819,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           readiesAfterAttack: false,
           projectiles: Math.max(1, Number(mode.projectiles ?? 1)),
           halfDamageRange: Number(range.halfDamage ?? 0) || 0,
+          maxRange: Number(range.max ?? 0) || 0,
+          guidance: String(mode.guidance ?? ""),
+          areaAttack: Boolean(mode.areaAttack),
+          coneMaxWidth: Number(mode.coneMaxWidth ?? 0) || 0,
           damage: loadedDamage(rangedDamage),
           damageType: mode.damageSpecial ? "" : (round?.damageType ?? mode.damageType),
           armorDivisor: round?.armorDivisor ?? materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
