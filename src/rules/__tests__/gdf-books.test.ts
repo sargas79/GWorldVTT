@@ -10,6 +10,7 @@ import {
   classifyCitation,
   entryName,
   groupsOf,
+  isBookkeeping,
   powerOfRecord,
   qualityVariantOf,
   reference,
@@ -117,10 +118,18 @@ describe("entryName", () => {
     expect(entryName("Brave ([kind])", siblings)).toBe("Brave ([kind])");
   });
 
-  it("changes nothing for the Basic Set, whose published names are kept", () => {
+  it("files the Basic Set's blank-specialty entries under their own names (#152)", () => {
     const basicSet = { supplement: false };
-    expect(entryName("_Unused Quirk 1", siblings, basicSet)).toBe("_Unused Quirk 1");
-    expect(entryName("Area Knowledge ([Area])", siblings, basicSet)).toBe("Area Knowledge ([Area])");
+    expect(entryName("Incompetence ([skill])", siblings, basicSet)).toBe("Incompetence");
+    expect(entryName("Area Knowledge ([Area])", siblings, basicSet)).toBe("Area Knowledge");
+    expect(entryName("Riding (%beast%)", siblings, basicSet)).toBe("Riding (%beast%)");
+  });
+
+  it("drops the Basic Set's GCA bookkeeping records, but not a supplement's hidden entries", () => {
+    expect(isBookkeeping("_Unused Quirk 1", { supplement: false })).toBe(true);
+    expect(isBookkeeping("_New Alternative Attacks", { supplement: false })).toBe(true);
+    expect(isBookkeeping("_Basic Gear", { supplement: true })).toBe(false);
+    expect(isBookkeeping("Brave", { supplement: false })).toBe(false);
   });
 
   it("leaves a skill or technique its blank, since it needs the skill it is bought for", () => {

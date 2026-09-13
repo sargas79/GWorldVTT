@@ -110,22 +110,29 @@ function namesIn(recs, section) {
  * nothing without the skill it is bought for, and its defaults name the blank
  * too, so it stays rejected.
  *
- * Neither rule is applied to the Basic Set. Its packs are published and
- * characters hold their ids, and both rules would change them: six GCA
- * bookkeeping records (`_Unused Quirk 1`) would be renamed where they should
- * be dropped, and five blank-specialty traits (Incompetence, Racial Skill
- * Bonus) would appear. That wants a review of each record, not a side effect of
- * reading another book, so a supplement gets the rules and the Basic Set
- * keeps its names until then.
+ * The Basic Set takes the blank-specialty rule but not the underscore one.
+ * Its underscored records are GCA's bookkeeping -- an empty parent for new
+ * Alternative Attacks, five "unused quirk" slots -- and `isBookkeeping` drops
+ * them instead of renaming them into traits nobody can buy.
  */
 export function entryName(raw, siblings, { supplement = true, blankSpecialty = true } = {}) {
-  if (!supplement) return raw;
-  const name = raw.replace(/^_/, "");
+  const name = supplement ? raw.replace(/^_/, "") : raw;
   const blank = blankSpecialty ? BLANK_SPECIALTY.exec(name) : null;
   if (!blank || PLACEHOLDER.test(blank[1])) return name;
   const base = blank[1];
   const specialised = [...siblings].some((n) => n.startsWith(`${base} (`));
   return specialised || siblings.has(base) ? name : base;
+}
+
+/**
+ * Whether a record is GCA's own bookkeeping rather than something the book
+ * sells. In the Basic Set a leading underscore marks one: `_Unused Quirk 1`
+ * holds a place on GCA's sheet, and `_New Alternative Attacks` is an empty
+ * parent to hang attacks under. A supplement uses the underscore to hide a
+ * real entry from GCA's lists (`_Basic Gear`), so it keeps them.
+ */
+export function isBookkeeping(raw, { supplement = true } = {}) {
+  return !supplement && raw.startsWith("_");
 }
 
 /**
@@ -424,6 +431,8 @@ function parseTraits(recs, reject, note, source) {
     const f = fields(r.text);
     if (!keeps(r, f, source)) continue;
 
+    if (isBookkeeping(nameOf(r), { supplement: isSupplement(source) })) { reject(nameOf(r), "GCA bookkeeping record"); continue; }
+
     // GCA asks which core skill Ritual Magery boosts and writes the answer
     // into the name; the trait the book prices is Ritual Magery (p. 242).
     const bare = entryName(nameOf(r), siblings.get(r.section), { supplement: isSupplement(source) })
@@ -533,6 +542,14 @@ function parseSkills(recs, reject, source) {
   const taken = new Set();
 
   const siblings = namesIn(recs, "SKILLS");
+  // How many blank-specialty records each skill has: one is the skill itself,
+  // several are told apart by what their blanks say.
+  const blanksOf = new Map();
+  for (const r of recs) {
+    if (r.section !== "SKILLS") continue;
+    const m = BLANK_SPECIALTY.exec(nameOf(r));
+    if (m) blanksOf.set(m[1], (blanksOf.get(m[1]) ?? 0) + 1);
+  }
 
   for (const r of recs) {
     if (r.section !== "SKILLS") continue;
@@ -540,13 +557,23 @@ function parseSkills(recs, reject, source) {
     const f = fields(r.text);
     if (!keeps(r, f, source)) continue;
 
-    const bare = entryName(nameOf(r), siblings, { supplement: isSupplement(source), blankSpecialty: false });
-    if (PLACEHOLDER.test(bare)) { reject(bare, "name is a GCA placeholder"); continue; }
+    if (isBookkeeping(nameOf(r), { supplement: isSupplement(source) })) { reject(nameOf(r), "GCA bookkeeping record"); continue; }
     // The pair usually sits in the second field, but a few records state it as
     // type(IQ/VH) instead.
     const second = (splitTop(r.text)[1] ?? "").trim();
     const pair = /^type\(/.test(second) ? (f.get("type") ?? "") : second;
     const parts = pair.split("/");
+    // A skill of the Basic Set written with only a blank for its specialty is
+    // the skill itself -- Area Knowledge ([Area]) is Area Knowledge (p. 176).
+    // A technique keeps its blank, since it is nothing without its skill, and
+    // so does every supplement's skill, which #138 left to the traits and gear.
+    const skillBlank = !isSupplement(source) && parts[0]?.trim() !== "Tech";
+    let bare = entryName(nameOf(r), siblings, { supplement: isSupplement(source), blankSpecialty: skillBlank });
+    // Two blank records of one skill differ in what the blank says: Hobby
+    // Skill ([DX-based]) and ([IQ-based]) are the DX and IQ hobbies (p. 200).
+    const blankText = skillBlank ? /\((?:%([^%()]*)%|\[([^\][()]*)\])\)$/.exec(nameOf(r)) : null;
+    if (blankText && bare !== nameOf(r) && (blanksOf.get(bare) ?? 0) > 1) bare = `${bare} (${blankText[1] ?? blankText[2]})`;
+    if (PLACEHOLDER.test(bare)) { reject(bare, "name is a GCA placeholder"); continue; }
     if (parts.length !== 2) { reject(bare, `no attribute/difficulty pair: "${pair}"`); continue; }
 
     // GCA writes a wildcard skill's difficulty as "WC" -- Gun!, DX/WC. The
@@ -573,7 +600,8 @@ function parseSkills(recs, reject, source) {
     const defaults = [];
     for (const entry of splitTop(f.get("default") ?? "")) {
       const parsed = parseDefault(entry);
-      if (parsed) defaults.push(parsed);
+      // "SK:Geography ([Area])" names a skill only the player can fill in.
+      if (parsed && !(parsed.skill && PLACEHOLDER.test(parsed.skill))) defaults.push(parsed);
     }
     // A college skill "defaults to the core skill at -6" (p. 242), and GCA
     // leaves which core skill as a blank for the player. The book names the
@@ -1326,6 +1354,7 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
     // player to pick: "Longbow (ST%choice%)". The compendium carries the
     // weapon, and the ST it was built to is edited on the item, so the
     // placeholder comes off the name rather than the record being skipped.
+    if (isBookkeeping(nameOf(r), { supplement: isSupplement(source) })) { reject(nameOf(r), "GCA bookkeeping record"); continue; }
     const hidden = nameOf(r).startsWith("_");
     const name = entryName(nameOf(r), siblings, { supplement: isSupplement(source) }).replace(/\s*\(ST%choice%\)$/, "");
     // A GCA directive body -- "#ReplaceTags in ... with { basecost(60), ... }"

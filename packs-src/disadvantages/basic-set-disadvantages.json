@@ -6307,116 +6307,6 @@
     }
   },
   {
-    "_id": "09a08e3a9de2c881",
-    "name": "_Unused Quirk 1",
-    "type": "trait",
-    "system": {
-      "category": "quirk",
-      "points": -1,
-      "levels": 0,
-      "pointsPerLevel": 0,
-      "costTable": [],
-      "levelNames": [],
-      "maxLevels": 0,
-      "reactionModifier": 0,
-      "talentSkills": [],
-      "power": "",
-      "powerTalent": false,
-      "meleeModes": [],
-      "rangedModes": [],
-      "description": "",
-      "reference": "Basic Set: Characters p. 163"
-    }
-  },
-  {
-    "_id": "b9b26834c88857a7",
-    "name": "_Unused Quirk 2",
-    "type": "trait",
-    "system": {
-      "category": "quirk",
-      "points": -1,
-      "levels": 0,
-      "pointsPerLevel": 0,
-      "costTable": [],
-      "levelNames": [],
-      "maxLevels": 0,
-      "reactionModifier": 0,
-      "talentSkills": [],
-      "power": "",
-      "powerTalent": false,
-      "meleeModes": [],
-      "rangedModes": [],
-      "description": "",
-      "reference": "Basic Set: Characters p. 163"
-    }
-  },
-  {
-    "_id": "e0e4570e6c0733f9",
-    "name": "_Unused Quirk 3",
-    "type": "trait",
-    "system": {
-      "category": "quirk",
-      "points": -1,
-      "levels": 0,
-      "pointsPerLevel": 0,
-      "costTable": [],
-      "levelNames": [],
-      "maxLevels": 0,
-      "reactionModifier": 0,
-      "talentSkills": [],
-      "power": "",
-      "powerTalent": false,
-      "meleeModes": [],
-      "rangedModes": [],
-      "description": "",
-      "reference": "Basic Set: Characters p. 163"
-    }
-  },
-  {
-    "_id": "446391dd1f9a36a2",
-    "name": "_Unused Quirk 4",
-    "type": "trait",
-    "system": {
-      "category": "quirk",
-      "points": -1,
-      "levels": 0,
-      "pointsPerLevel": 0,
-      "costTable": [],
-      "levelNames": [],
-      "maxLevels": 0,
-      "reactionModifier": 0,
-      "talentSkills": [],
-      "power": "",
-      "powerTalent": false,
-      "meleeModes": [],
-      "rangedModes": [],
-      "description": "",
-      "reference": "Basic Set: Characters p. 163"
-    }
-  },
-  {
-    "_id": "b6b06b64d0f6517d",
-    "name": "_Unused Quirk 5",
-    "type": "trait",
-    "system": {
-      "category": "quirk",
-      "points": -1,
-      "levels": 0,
-      "pointsPerLevel": 0,
-      "costTable": [],
-      "levelNames": [],
-      "maxLevels": 0,
-      "reactionModifier": 0,
-      "talentSkills": [],
-      "power": "",
-      "powerTalent": false,
-      "meleeModes": [],
-      "rangedModes": [],
-      "description": "",
-      "reference": "Basic Set: Characters p. 163"
-    }
-  },
-  {
     "_id": "1cc080e7ace5a002",
     "name": "Attentive",
     "type": "trait",
@@ -6705,6 +6595,28 @@
   {
     "_id": "060ebb0748682d28",
     "name": "Imaginative",
+    "type": "trait",
+    "system": {
+      "category": "quirk",
+      "points": -1,
+      "levels": 0,
+      "pointsPerLevel": 0,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "reactionModifier": 0,
+      "talentSkills": [],
+      "power": "",
+      "powerTalent": false,
+      "meleeModes": [],
+      "rangedModes": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 164"
+    }
+  },
+  {
+    "_id": "babf653ca603ea76",
+    "name": "Incompetence",
     "type": "trait",
     "system": {
       "category": "quirk",

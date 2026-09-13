@@ -10799,6 +10799,28 @@
     }
   },
   {
+    "_id": "f70bd677ccd18378",
+    "name": "Area Knowledge",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters p. 176"
+    }
+  },
+  {
     "_id": "7b8502210c93ed71",
     "name": "Computer Operation/TL",
     "type": "skill",
@@ -11342,6 +11364,50 @@
       "techLevel": "",
       "description": "",
       "reference": "Basic Set: Characters p. 199"
+    }
+  },
+  {
+    "_id": "a41a4e74e6c213a8",
+    "name": "Hobby Skill (DX-based)",
+    "type": "skill",
+    "system": {
+      "attribute": "DX",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "DX",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters p. 200"
+    }
+  },
+  {
+    "_id": "31000f624363d7c5",
+    "name": "Hobby Skill (IQ-based)",
+    "type": "skill",
+    "system": {
+      "attribute": "IQ",
+      "difficulty": "E",
+      "points": 0,
+      "bonus": 0,
+      "defaults": [
+        {
+          "from": "attribute",
+          "attribute": "IQ",
+          "skill": "",
+          "modifier": -4
+        }
+      ],
+      "techLevel": "",
+      "description": "",
+      "reference": "Basic Set: Characters p. 200"
     }
   },
   {
