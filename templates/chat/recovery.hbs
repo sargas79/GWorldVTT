@@ -16,7 +16,14 @@
     </div>
   {{/if}}
 
-  {{#if full}}
+  {{#if lines}}
+    {{!-- A doctor's roll says several things rather than moving one number:
+         what the tools were worth, what the operation did, what still has to
+         be checked (Campaigns pp. 424-425). --}}
+    <div class="gc-result {{#if good}}success{{/if}}{{#if bad}}failure{{/if}}">
+      {{#each lines as |line|}}<div>{{line}}</div>{{/each}}
+    </div>
+  {{else if full}}
     <div class="gc-result">{{localize "GWORLD.Recovery.AlreadyWell"}}</div>
   {{else if gained}}
     <div class="gc-result {{#if criticalFailure}}crit-failure{{else}}success{{/if}}">

@@ -53,6 +53,7 @@ export * from "./malfunctions.js";
 export * from "./physical.js";
 export * from "./poison.js";
 export * from "./melee-situations.js";
+export * from "./medicine.js";
 export * from "./modifiers.js";
 export * from "./motion.js";
 export * from "./pressure.js";
