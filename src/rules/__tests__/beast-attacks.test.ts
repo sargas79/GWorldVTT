@@ -42,12 +42,11 @@ describe("beast attacks", () => {
     const tiger = beastAttacks({
       st: 17, dx: 13, skills: { Brawling: 15 }, beast: { teeth: "sharp", claws: "sharp" },
     });
-    // Bite, claw and kick: the bite and claw at thrust-1 +1/die, and the
-    // kick at thrust with no bonus for sharp claws.
+    // Bite and claw at thrust-1, +1 a die for the training. This tiger is
+    // not flagged Quadruped, so it is not given the four-footed kick.
     expect(tiger.map((a) => [a.key, a.damage])).toEqual([
       ["bite", { dice: 1, adds: 2 }],
       ["claw", { dice: 1, adds: 2 }],
-      ["kick", { dice: 1, adds: 3 }],
     ]);
     expect(tiger[0]?.skillLevel).toBe(15);
   });
@@ -55,11 +54,15 @@ describe("beast attacks", () => {
   it("reads the traits by their compendium names and the pages' short ones", () => {
     expect(beastTraitsFrom(["Teeth (Sharp Teeth)", "Claws (Hooves)", "Weak Bite", "Striker (Impaling): Antlers"]))
       .toEqual({
-        teeth: "sharp", weakBite: true, claws: "hooves", horizontal: false, legless: false,
+        teeth: "sharp", weakBite: true, claws: "hooves",
+        horizontal: false, legless: false, handless: false,
         strikers: [{ name: "Antlers", type: "imp" }],
       });
     expect(beastTraitsFrom(["Fangs", "Sharp Claws"])).toMatchObject({ teeth: "fangs", claws: "sharp" });
     expect(beastTraitsFrom(["Combat Reflexes"]))
-      .toEqual({ teeth: null, weakBite: false, claws: null, strikers: [], horizontal: false, legless: false });
+      .toEqual({
+        teeth: null, weakBite: false, claws: null, strikers: [],
+        horizontal: false, legless: false, handless: false,
+      });
   });
 });

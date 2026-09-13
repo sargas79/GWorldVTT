@@ -138,8 +138,13 @@ export interface BeastTraits {
    * not let you put your full weight behind a kick" (Characters p. 139).
    */
   horizontal?: boolean;
-  /** Nothing to kick with: a snake, a fish, a bird on the wing. */
+  /** Nothing to kick with: a snake, a fish, an octopus. */
   legless?: boolean;
+  /**
+   * No hands to make a fist with: "No Fine Manipulators" (Characters
+   * p. 145), which every bird and most beasts carry.
+   */
+  handless?: boolean;
 }
 
 /** An animal attack, beside the punch and the kick. */
@@ -201,21 +206,26 @@ export function beastAttacks(input: NaturalAttackInput & { beast: BeastTraits })
     });
   }
 
-  // "A kick does thrust." Only a beast with something to kick with is given
-  // one: the hooves and claws the rule names are what make a kick worth
-  // listing, and a snake has neither the trait nor the legs.
-  if (!beast.legless && (beast.claws === "hooves" || beast.claws === "blunt" || beast.claws === "sharp")) {
+  // "A kick does thrust." The creatures given one are those the rule is
+  // written about: the four-footed, and anything shod. A bird's talons and
+  // a shark's snout are already its claw and its striker, and listing a
+  // kick beside them would be the same foot twice.
+  if ((beast.horizontal || beast.claws === "hooves") && !beast.legless) {
+    // "Blunt Claws or Hooves give +1 per die, and inflict crushing damage;
+    // Sharp Claws give no bonus, but cause cutting damage."
     const shod = beast.claws === "hooves" || beast.claws === "blunt";
-    // "The Quadruped meta-trait includes Horizontal, which gives -1 per die
-    // to kicking damage to creatures without Claws" -- and Characters p. 139
-    // is explicit that "the penalty does apply if you have Hooves".
-    const flat = beast.horizontal && beast.claws === "hooves" ? -thrust.dice : 0;
+    const cutting = beast.claws === "sharp";
+    // "...which gives -1 per die to kicking damage to creatures without
+    // Claws" -- and Characters p. 139 is explicit that "the penalty does
+    // apply if you have Hooves". So only Claws proper escape it.
+    const clawed = beast.claws === "blunt" || beast.claws === "sharp";
+    const flat = beast.horizontal && !clawed ? -thrust.dice : 0;
     out.push({
       key: "kick",
       skillName: skill.name,
       skillLevel: skill.level + KICK_PENALTY,
       damage: addModifier(thrust, trained + (shod ? thrust.dice : 0) + flat),
-      damageType: shod ? "cr" : "cut",
+      damageType: cutting ? "cut" : "cr",
       reach: "C, 1",
       canParry: false,
     });
@@ -239,7 +249,8 @@ export function beastAttacks(input: NaturalAttackInput & { beast: BeastTraits })
 /** The natural weapons a beast has, read off the names of its traits. */
 export function beastTraitsFrom(names: readonly string[]): BeastTraits {
   const beast: BeastTraits = {
-    teeth: null, weakBite: false, claws: null, strikers: [], horizontal: false, legless: false,
+    teeth: null, weakBite: false, claws: null, strikers: [],
+    horizontal: false, legless: false, handless: false,
   };
   for (const raw of names) {
     const name = raw.trim().toLowerCase();
@@ -255,7 +266,11 @@ export function beastTraitsFrom(names: readonly string[]): BeastTraits {
     // Quadruped brings Horizontal with it, and either costs a kick a point
     // per die where the creature has no Claws proper (Characters p. 139).
     else if (name === "quadruped" || name === "horizontal") beast.horizontal = true;
-    else if (name === "no legs" || name.startsWith("no legs (") || name === "vermiform") beast.legless = true;
+    // Nothing to kick with, however the meta-trait spells it: a snake, a
+    // fish, an octopus.
+    else if (name === "no legs" || name.startsWith("no legs (") || name === "vermiform"
+      || name === "ichthyoid" || name === "aquatic" || name === "octopoid") beast.legless = true;
+    else if (name === "no fine manipulators" || name === "no manipulators") beast.handless = true;
     else {
       const striker = /^striker \((crushing|cutting|impaling|piercing|large piercing)(?:; )?([^)]*)\)(?:: (.*))?$/.exec(name);
       if (striker) {

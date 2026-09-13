@@ -214,9 +214,18 @@ describe("a beast's kick (Campaigns p. 460)", () => {
     expect(blunt.damageType).toBe("cr");
   });
 
+  it("kicks with bare feet too, at the horizontal penalty", () => {
+    // An ox has neither claws nor hooves: thrust, less a point per die.
+    const ox = horse({ claws: null })!;
+    expect(formatDiceAdds(ox.damage)).toBe("2d-3");
+    expect(ox.damageType).toBe("cr");
+  });
+
   it("gives no kick to a beast with nothing to kick with", () => {
-    expect(horse({ claws: null })).toBeUndefined();
+    // A snake, a shark: legless however the meta-trait spells it.
     expect(horse({ legless: true })).toBeUndefined();
+    // An upright beast is given the punch and kick a person gets instead.
+    expect(horse({ horizontal: false, claws: "sharp" })).toBeUndefined();
   });
 
   it("kicks at the same -2 a person does, and reaches a hex further", () => {
