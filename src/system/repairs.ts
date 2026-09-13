@@ -8,6 +8,7 @@
  * it, for a day in the sand or a month of neglect.
  */
 
+import { RUGGED_BONUS } from "../rules/gadgets.js";
 import { SYSTEM_ID } from "./constants.js";
 import { isRuleOn } from "./optional-rules.js";
 import { resolveSuccess } from "../rules/success.js";
@@ -157,12 +158,15 @@ export async function exposureCheck(options: {
   // rule does not apply to items without moving parts" (p. 485): a sword left
   // uncleaned is a dirty sword, not a failing one.
   const maintained = needsMaintenance({ movingParts: facts.firearm });
+  // "Shockproof and waterproof, giving +2 on rolls to avoid breakage, water
+  // damage, etc." (Monster Hunters 1 p. 54).
+  const rugged = isRuleOn("monsterHuntersGear") && item.system?.improvements?.rugged ? RUGGED_BONUS : 0;
   const target = equipmentFailureTarget({
     health,
     missedChecks: maintained ? Number(item.system?.missedMaintenance ?? 0) || 0 : 0,
     cleaned: options.care > 0,
     brutal: options.care < 0 ? options.care : 0,
-  });
+  }) + rugged;
   const roll = new Roll("3d6");
   await roll.evaluate();
   const outcome = resolveSuccess(roll.total, target, faces(roll));

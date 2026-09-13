@@ -19,6 +19,7 @@ import { RITUAL_DURATIONS, RITUAL_EFFECTS } from "../../rules/ritual-cost.js";
 import { PATHS } from "../../rules/ritual-path.js";
 import { collectionWeight, grimoirePrice } from "../../rules/ritual-tricks.js";
 import { breakCharm } from "../ritual-casting.js";
+import { gadgetCostFactor, gadgetWeightFactor, improvedGadget } from "../../rules/gadgets.js";
 import { SYSTEM_ID } from "../constants.js";
 import { sourceCollections } from "../compendium-sources.js";
 import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
@@ -318,6 +319,26 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
 
     // A grimoire's rituals (Monster Hunters 1 pp. 39, 56-57), and what the book
     // would cost: the table's price for each, and a collection's weight.
+    // Improvements by cost factor (Monster Hunters 1 pp. 53-54, 59): for
+    // clothing and armour, and for gadgets that are not weapons, whose own
+    // modifiers are priced with the weapon.
+    const hasModes = ((item.system as any).meleeModes ?? []).length + ((item.system as any).rangedModes ?? []).length > 0;
+    context.gadget = isRuleOn("monsterHuntersGear") && (item.type === "armor" || (item.type === "equipment" && !hasModes))
+      ? (() => {
+          const sys = item.system as any;
+          const quality = item.type === "equipment" && sys.category !== "tool" ? sys.equipmentQuality : "basic";
+          return {
+            clothing: item.type === "armor",
+            costFactor: gadgetCostFactor(sys.improvements ?? {}, quality),
+            weightFactor: Math.round(gadgetWeightFactor(sys.improvements ?? {}) * 100) / 100,
+            listCost: Number(sys.listCost) || 0,
+            listWeight: Number(sys.listWeight) || 0,
+            undercover: { "0": "GWORLD.Gadget.UndercoverNone", "1": "GWORLD.Gadget.Undercover1", "2": "GWORLD.Gadget.Undercover2" },
+            undercoverValue: String(sys.improvements?.undercover ?? 0),
+          };
+        })()
+      : null;
+
     // A charm travels with its object, and whoever holds it can break it (p. 38).
     context.charm = item.type === "equipment" && (item.system as any).charm?.ritual
       ? { mayBreak: item.isOwner }
@@ -570,7 +591,11 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // list price where one is kept, and otherwise worked back out of what the
     // item costs at the grade it is at now, so changing grade twice does not
     // compound. "Best" is not sold, so it leaves the price alone.
-    if (this.item.type === "equipment" && data.system?.equipmentQuality !== undefined) {
+    const byCostFactor = isRuleOn("monsterHuntersGear")
+      && (this.item.type === "armor" || (this.item.type === "equipment"
+        && ((this.item.system as any).meleeModes ?? []).length + ((this.item.system as any).rangedModes ?? []).length === 0));
+    if (this.item.type === "equipment" && data.system?.equipmentQuality !== undefined
+      && !(byCostFactor && (data.system.category ?? (this.item.system as any).category) !== "tool")) {
       const current = this.item.system as any;
       const was = String(current.equipmentQuality ?? "basic") as EquipmentQuality;
       const now = String(data.system.equipmentQuality) as EquipmentQuality;
@@ -582,6 +607,39 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
           data.system.listCost = basic;
           data.system.cost = Math.round(basic * toMultiple);
         }
+      }
+    }
+
+    // Improvements reprice a gadget or an article of clothing from its list
+    // figures: cost times (1 + total CF), weight times the weight effects
+    // (Monster Hunters 1 p. 54). The list figures are worked back out of the
+    // current ones where none are kept, so a second change does not compound.
+    if (byCostFactor && data.system) {
+      const current = this.item.system as any;
+      const pick = (key: string) => ({ ...(current.improvements ?? {}), ...(data.system.improvements ?? {}) })[key];
+      const improvements = {
+        cuttingEdge: Boolean(pick("cuttingEdge")),
+        disguised: Boolean(pick("disguised")),
+        rugged: Boolean(pick("rugged")),
+        scentMasking: Boolean(pick("scentMasking")),
+        undercover: Number(pick("undercover")) || 0,
+      };
+      if (data.system.improvements) data.system.improvements = improvements;
+      const tool = (data.system.category ?? current.category) === "tool";
+      const qualityOf = (sys: any) => (this.item.type === "equipment" && !tool ? String(sys.equipmentQuality ?? "basic") : "basic");
+      const quality = qualityOf({ equipmentQuality: data.system.equipmentQuality ?? current.equipmentQuality });
+      const was = improvedGadget({ listCost: 1, listWeight: 1, improvements: current.improvements ?? {}, quality: qualityOf(current) });
+      const now = improvedGadget({ listCost: 1, listWeight: 1, improvements, quality });
+      if (was.costFactor !== now.costFactor || was.weightFactor !== now.weightFactor) {
+        const listCost = Number(current.listCost) || (Number(current.cost) || 0) / (1 + was.costFactor);
+        const listWeight = Number(current.listWeight) || (Number(current.weight) || 0) / was.weightFactor;
+        const priced = improvedGadget({ listCost, listWeight, improvements, quality });
+        Object.assign(data.system, {
+          listCost: Math.round(listCost * 100) / 100,
+          listWeight: Math.round(listWeight * 100) / 100,
+          cost: priced.cost,
+          weight: priced.weight,
+        });
       }
     }
 

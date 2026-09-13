@@ -697,6 +697,10 @@
           "Name": "Ritual Path Magic",
           "Hint": "Magic as nine IQ/Very Hard Path skills, each held to the lower of Thaumatology and 12 + Magery and defaulting to Thaumatology-6 (no higher than 12), with a mana reserve of Magery x 3. Magery no longer adds to Thaumatology (Monster Hunters 1 pp. 24, 32-39)."
         },
+        "monsterHuntersGear": {
+          "Name": "Monster Hunters gear",
+          "Hint": "Gadgets and clothing take improvements priced by cost factor (cutting-edge, disguised, rugged, good and fine quality, scent-masking, undercover), and Signature Gear costs a point per $10,000 of each item (Monster Hunters 1 pp. 53-54, 59)."
+        },
         "holyAttacks": {
           "Name": "Holy attacks",
           "Hint": "Contact with holy water or a holy weapon burns a creature with a Weakness to holy things for 1d, ignoring DR, then fizzes for a minute in which no holy source hurts it again (Monster Hunters 1 p. 51)."
@@ -3382,6 +3386,30 @@
       "TopOff": "Top off",
       "Capped": "capped",
       "Default": "default"
+    },
+    "Gadget": {
+      "Title": "Improvements",
+      "CuttingEdge": "Cutting-edge",
+      "CuttingEdgeHint": "The latest materials: weight x2/3, +1 CF (Monster Hunters 1 p. 54).",
+      "Disguised": "Disguised",
+      "DisguisedHint": "Resembles something else of a similar shape; finding it out takes a Search roll, or Observation in plain sight. +4 CF (Monster Hunters 1 p. 54).",
+      "Rugged": "Rugged",
+      "RuggedHint": "Shockproof and waterproof: +2 on rolls to avoid breakage and water damage, weight x1.2, +1 CF (Monster Hunters 1 p. 54).",
+      "ScentMasking": "Scent-masking",
+      "ScentMaskingHint": "-4 to Smell rolls to find or track the wearer. +2 CF (Monster Hunters 1 p. 59).",
+      "Undercover": "Undercover",
+      "UndercoverHint": "Helps conceal weapons: +1 Holdout for +4 CF, +2 for +19 CF (Monster Hunters 1 p. 59).",
+      "UndercoverNone": "No",
+      "Undercover1": "+1 Holdout (+4 CF)",
+      "Undercover2": "+2 Holdout (+19 CF)",
+      "Holdout": "Holdout",
+      "HoldoutHint": "The Holdout bonus the article gives of itself; Undercover adds to it.",
+      "Signature": "Signature Gear",
+      "Priced": "Cost factor +{cf}, weight x{weight}, from a list price of ${cost} and {listWeight} lbs. Good and fine quality add +4 and +19 CF, except on tool kits and labs.",
+      "SignatureNeeded": "points needed / bought",
+      "SignatureHint": "Each item marked as Signature Gear costs 1 point for every $10,000 or fraction of its price (Monster Hunters 1 p. 53).",
+      "Concealment": "Concealment",
+      "SmellNote": "{penalty} to Smell rolls to find them"
     },
     "Grimoire": {
       "Title": "Grimoire",

@@ -931,6 +931,36 @@
           {{localize "GWORLD.Column.Equipped"}}
         </label>
       </div>
+      {{#if gadget}}
+        {{!-- Cost factors (Monster Hunters 1 pp. 53-54, 59): each improvement
+             adds to the factor, and the price and weight are worked out from
+             the list figures. --}}
+        <div class="isub">
+          <div class="isub-head">{{localize "GWORLD.Gadget.Title"}}</div>
+          <div class="ichecks">
+            <label class="icheck" data-tooltip="{{localize 'GWORLD.Gadget.CuttingEdgeHint'}}"><input type="checkbox" name="system.improvements.cuttingEdge" {{#if system.improvements.cuttingEdge}}checked{{/if}} {{#unless editable}}disabled{{/unless}} /> {{localize "GWORLD.Gadget.CuttingEdge"}}</label>
+            <label class="icheck" data-tooltip="{{localize 'GWORLD.Gadget.DisguisedHint'}}"><input type="checkbox" name="system.improvements.disguised" {{#if system.improvements.disguised}}checked{{/if}} {{#unless editable}}disabled{{/unless}} /> {{localize "GWORLD.Gadget.Disguised"}}</label>
+            <label class="icheck" data-tooltip="{{localize 'GWORLD.Gadget.RuggedHint'}}"><input type="checkbox" name="system.improvements.rugged" {{#if system.improvements.rugged}}checked{{/if}} {{#unless editable}}disabled{{/unless}} /> {{localize "GWORLD.Gadget.Rugged"}}</label>
+            {{#if gadget.clothing}}
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Gadget.ScentMaskingHint'}}"><input type="checkbox" name="system.improvements.scentMasking" {{#if system.improvements.scentMasking}}checked{{/if}} {{#unless editable}}disabled{{/unless}} /> {{localize "GWORLD.Gadget.ScentMasking"}}</label>
+            {{/if}}
+            <label class="icheck"><input type="checkbox" name="system.signature" {{#if system.signature}}checked{{/if}} {{#unless editable}}disabled{{/unless}} /> {{localize "GWORLD.Gadget.Signature"}}</label>
+          </div>
+          <div class="ifields">
+            {{#if gadget.clothing}}
+              <label data-tooltip="{{localize 'GWORLD.Gadget.UndercoverHint'}}">{{localize "GWORLD.Gadget.Undercover"}}
+                <select name="system.improvements.undercover" {{#unless editable}}disabled{{/unless}}>
+                  {{selectOptions gadget.undercover selected=gadget.undercoverValue localize=true}}
+                </select>
+              </label>
+            {{/if}}
+            <label data-tooltip="{{localize 'GWORLD.Gadget.HoldoutHint'}}">{{localize "GWORLD.Gadget.Holdout"}}
+              <input type="number" name="system.holdout" value="{{system.holdout}}" step="1" min="0" {{#unless editable}}disabled{{/unless}} />
+            </label>
+          </div>
+          <p class="ihint">{{localize "GWORLD.Gadget.Priced" cf=gadget.costFactor weight=gadget.weightFactor cost=gadget.listCost listWeight=gadget.listWeight}}</p>
+        </div>
+      {{/if}}
       {{#if isEquipment}}
         <div class="ifields">
           <label>{{localize "GWORLD.Gear.Category"}}

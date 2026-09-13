@@ -36,6 +36,7 @@ import {
 import { governingPath } from "../../rules/ritual-cost.js";
 import { grimoireBonus, masteredRitual, ritualMasteryBonus } from "../../rules/ritual-tricks.js";
 import { conditionalLimit } from "../../rules/ritual-lasting.js";
+import { SCENT_MASKING_PENALTY, holdoutBonus, signatureGearPointCost } from "../../rules/gadgets.js";
 
 /** A ritual still in effect, or hanging until its condition is met (Monster Hunters 1 pp. 37-39). */
 export interface RitualInEffect {
@@ -1141,6 +1142,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       multimillionaire: standing.multimillionaire,
       startingWealth: starting,
       gearCost: gear,
+      // "1 point for every $10,000 or fraction thereof that the gear costs"
+      // (Monster Hunters 1 p. 53), for what is marked as Signature Gear.
+      signatureGearNeeded: isRuleOn("monsterHuntersGear")
+        ? this.items
+          .filter((i) => (i.system as any)?.signature)
+          .reduce((sum, i) => sum + signatureGearPointCost((Number((i.system as any).cost) || 0) * Math.max(1, Number((i.system as any).quantity ?? 1))), 0)
+        : null,
+      concealment: this.#concealment(),
       money: Number(this.money) || 0,
       status,
       costOfLiving: costOfLiving(status),
@@ -1171,6 +1180,26 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
    * p. 345), by skill name. The best grade carried wins: nobody operates
    * with the crash kit and the leaves at once.
    */
+  /**
+   * What the character wears to hide things and themselves (Monster Hunters 1
+   * p. 59): the best Holdout any article worn or carried gives, its own bonus
+   * and Undercover's together, and Scent-Masking's -4 to Smell rolls to find
+   * them. Nothing unless that book's gear rules are in play.
+   */
+  #concealment(): { holdout: number; smell: number; source: string } {
+    const out = { holdout: 0, smell: 0, source: "" };
+    if (!isRuleOn("monsterHuntersGear")) return out;
+    for (const item of [...this.itemsOfType("armor"), ...this.itemsOfType("equipment")]) {
+      const sys = item.system as any;
+      const worn = item.type === "armor" ? sys?.equipped : sys?.carried !== false;
+      if (!worn) continue;
+      const bonus = holdoutBonus({ own: Number(sys?.holdout) || 0, undercover: Number(sys?.improvements?.undercover) || 0 });
+      if (bonus > out.holdout) Object.assign(out, { holdout: bonus, source: String(item.name ?? "") });
+      if (sys?.improvements?.scentMasking && item.type === "armor") out.smell = SCENT_MASKING_PENALTY;
+    }
+    return out;
+  }
+
   #equipmentBonuses(tl: number): Record<string, number> {
     const best: Record<string, number> = {};
     if (!isRuleOn("equipmentModifiers")) return best;
@@ -1494,7 +1523,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         wildcardsExcluded: isRuleOn("talentsSkipWildcards"),
       });
       // The tools of this trade, if any are carried (Campaigns p. 345).
-      const toolBonus = toolBonuses[String(item.name ?? "").trim()] ?? 0;
+      const toolBonus = (toolBonuses[String(item.name ?? "").trim()] ?? 0)
+        + (String(item.name ?? "").trim().toLowerCase() === "holdout" ? this.#concealment().holdout : 0);
       const resolved = effectiveSkillLevel({
         attributeScore: attributeScore(sys.attribute),
         difficulty: sys.difficulty,
