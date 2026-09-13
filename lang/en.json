@@ -1696,6 +1696,10 @@
       }
     },
     "Technique": {
+      "Prerequisite": "Prerequisite skill",
+      "DefaultModifier": "Default modifier",
+      "MaxRelative": "Level cap",
+      "MaxRelativeHint": "Relative to the prerequisite skill. Zero lets the technique reach that skill but not exceed it.",
       "Button": "Unarmed technique",
       "Title": "Unarmed technique",
       "Which": "Technique",
