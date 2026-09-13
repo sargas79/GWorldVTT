@@ -112,8 +112,8 @@ function namesIn(recs, section) {
  * Neither rule is applied to the Basic Set. Its packs are published and
  * characters hold their ids, and both rules would change them: six GCA
  * bookkeeping records (`_Unused Quirk 1`) would be renamed where they should
- * be dropped, and thirteen blank-specialty records (Area Knowledge, Feint)
- * would appear. That wants a review of each record, not a side effect of
+ * be dropped, and five blank-specialty traits (Incompetence, Racial Skill
+ * Bonus) would appear. That wants a review of each record, not a side effect of
  * reading another book, so a supplement gets the rules and the Basic Set
  * keeps its names until then.
  */
