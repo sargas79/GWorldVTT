@@ -720,6 +720,12 @@
             <input type="text" name="system.forSkills" value="{{join system.forSkills ", "}}" placeholder="Surgery, First Aid"
                    {{#unless editable}}disabled{{/unless}} />
           </label>
+          {{#if holyAttacks}}
+            <label class="icheck" data-tooltip="{{localize 'GWORLD.Holy.ContactHint'}}">
+              <input type="checkbox" name="system.holy" {{#if system.holy}}checked{{/if}}
+                     {{#unless editable}}disabled{{/unless}} />
+              {{localize "GWORLD.Item.Holy"}}</label>
+          {{/if}}
         </div>
         {{#if weapon.showQuality}}
           <div class="ifields">

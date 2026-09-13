@@ -608,6 +608,8 @@ export interface DamageRollOptions {
   material?: string;
   /** True when DR has no effect on the blow, as for a Malediction (Characters p. 106). */
   ignoresDr?: boolean;
+  /** A holy weapon's blow (Monster Hunters 1 p. 51). */
+  holy?: boolean;
 }
 
 /**
@@ -715,6 +717,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(mass > 1 ? { drMultiplier: mass } : {}),
           ...(options.material ? { material: options.material } : {}),
           ...(options.ignoresDr ? { ignoresDr: true } : {}),
+          ...(options.holy ? { holy: true } : {}),
           ...(options.weaponTarget ? { weaponTarget: options.weaponTarget } : {}),
           explosive,
           // The dice, not the rolled total: the blast radius is set by how
@@ -2335,6 +2338,7 @@ export async function handleDamageAction(
     ...(halved ? { halfDamage: true } : {}),
     ...(target.dataset.material ? { material: target.dataset.material } : {}),
     ...(target.dataset.ignoresDr === "1" ? { ignoresDr: true } : {}),
+    ...(target.dataset.holy === "1" ? { holy: true } : {}),
     explosive: target.dataset.explosive === "1",
     fragmentation: target.dataset.fragmentation ?? "",
     modifiers,

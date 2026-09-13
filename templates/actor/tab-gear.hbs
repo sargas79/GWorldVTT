@@ -84,6 +84,10 @@
                 </td>
                 <td>
                   <span class="wname" data-action="editItem">{{row.name}}</span>
+                  {{#if row.holy}}
+                    <button type="button" class="ibtn tiny" data-action="holyContact"
+                            data-tooltip="{{localize 'GWORLD.Holy.ContactHint'}}">{{localize "GWORLD.Holy.Contact"}}</button>
+                  {{/if}}
                   {{#if row.vehicle}}
                     <span class="rollable" data-action="controlVehicle"
                           data-tooltip="{{localize 'GWORLD.Hazard.ControlHint'}}">{{> "gworld.die"}}</span>

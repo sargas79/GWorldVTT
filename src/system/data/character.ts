@@ -314,6 +314,8 @@ export interface DerivedAttack {
   malediction?: number;
   /** True when DR does nothing against it, as for a Malediction. */
   ignoresDr?: boolean;
+  /** A holy weapon's blow, which also burns what holy things hurt (Monster Hunters 1 p. 51). */
+  holy?: boolean;
   rateOfFire?: number;
   /** Recoil, which decides how many of a burst's shots hit. */
   recoil?: number;
@@ -1750,6 +1752,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           }),
           damage: meleeDamage,
           damageType: mode.damageSpecial ? "" : mode.damageType,
+          holy: Boolean((sys as any).holy),
           // "A stone blade has an armor divisor of (0.5)" (Characters p. 275).
           armorDivisor: materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
           damageRollable: !mode.affliction && !mode.damageSpecial && parseDiceAdds(meleeDamage) !== null,
@@ -1886,6 +1889,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
           malediction,
           ignoresDr: malediction > 0,
+          holy: Boolean((sys as any).holy),
           rateOfFire: mode.rateOfFire ?? 1,
           recoil: mode.recoil ?? 0,
           bulk: mode.bulk ?? 0,

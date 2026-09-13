@@ -190,6 +190,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
   monsterHunters: [
     // A Talent does not reach a wildcard skill.
     { key: "talentsSkipWildcards", reference: "Monster Hunters 1 p. 24", default: false },
+    // Holy water and holy things burn demons and vampires, once a minute.
+    { key: "holyAttacks", reference: "Monster Hunters 1 p. 51", default: false },
   ],
 };
 
