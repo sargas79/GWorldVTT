@@ -3846,7 +3846,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // a standard mage, a point at a time for a ritual one (p. 242).
     const difficulty = item.system?.difficulty;
     const next = item.type === "technique"
-      ? (down ? previousTechniquePoints(current) : nextTechniquePoints(current))
+      ? (down
+          ? previousTechniquePoints(current, difficulty === "H" ? "H" : "A")
+          : nextTechniquePoints(current, difficulty === "H" ? "H" : "A"))
       : item.type === "spell"
         ? (down
             ? previousSpellPoints(current, difficulty, item.system?.derived?.style ?? "standard")
