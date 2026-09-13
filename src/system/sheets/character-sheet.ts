@@ -196,6 +196,8 @@ import {
 import { nextTraitLevel, previousTraitLevel } from "../../rules/traits.js";
 import { awardsNewestFirst, type PointAward } from "../../rules/character-points.js";
 import { isReadTrait } from "../../rules/trait-effects.js";
+import { weaknessOf } from "../../rules/weakness.js";
+import { exposeToWeakness } from "../weakness.js";
 import { unconditionalReaction, type ReactionSource } from "../../rules/social.js";
 import { SENSES } from "../../rules/senses.js";
 import {
@@ -294,6 +296,8 @@ function withLevels(trait: any, openDescriptions: ReadonlySet<string> = new Set(
     // badge -- a player who buys Combat Reflexes should be able to see that
     // the +1 is already in their Dodge.
     applied: isReadTrait(String(trait.name ?? ""), system.talentSkills ?? []),
+    // A Weakness offers exposure to its source from its own row (p. 161).
+    weakness: weaknessOf({ name: String(trait.name ?? "") }) !== null,
   };
 }
 
@@ -2782,6 +2786,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       deleteAward: GWorldCharacterSheet.#onDeleteAward,
       slam: GWorldCharacterSheet.#onSlam,
       affliction: GWorldCharacterSheet.#onAffliction,
+      weaknessExposure: GWorldCharacterSheet.#onWeaknessExposure,
       evade: GWorldCharacterSheet.#onEvade,
       feint: GWorldCharacterSheet.#onFeint,
       contest: GWorldCharacterSheet.#onContest,
@@ -4992,6 +4997,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * the weapon's own notes, which the compendium does not carry, so this rolls
    * the resistance and leaves the effect to the GM.
    */
+  /** Exposure to a Weakness, from the trait's own row (Characters p. 161). */
+  static async #onWeaknessExposure(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (item) await exposeToWeakness(this.actor, item);
+  }
+
   static async #onAffliction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     if (!isRuleOn("afflictions")) return;
     const attribute = target.dataset.resist ?? "";

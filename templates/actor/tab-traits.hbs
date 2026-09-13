@@ -50,6 +50,10 @@
             {{#if trait.system.selfControl}}
               <span class="tag">CR {{trait.system.selfControl}}</span>
             {{/if}}
+            {{#if trait.weakness}}
+              <button type="button" class="tag rollable" data-action="weaknessExposure"
+                      data-tooltip="{{localize "GWORLD.Weakness.ExposedHint"}}">{{localize "GWORLD.Weakness.Exposed"}}</button>
+            {{/if}}
             {{#each trait.system.modifiers as |m|}}
               <span class="tag">{{signed m.value}}%{{#if m.name}} {{m.name}}{{/if}}</span>
             {{/each}}

@@ -1,0 +1,26 @@
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">{{localize "GWORLD.Weakness.Title" source=source}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>{{localize "GWORLD.Weakness.Exposure" minutes=minutes}}</span>
+    {{#if intensityLabel}}<span class="gc-mod">{{intensityLabel}}</span>{{/if}}
+    <span class="gc-mod">{{localize "GWORLD.Weakness.Dice" dice=diceCount}}</span>
+  </div>
+
+  {{#if diceCount}}
+    <div class="gc-dice">
+      {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+      <span class="gc-total">{{total}}</span>
+    </div>
+    <div class="gc-result failure">
+      {{#if fatigue}}{{localize "GWORLD.Weakness.LostFp" points=total}}{{else}}{{localize "GWORLD.Weakness.LostHp" points=total}}{{/if}}
+      <span class="gc-mod">{{previous}} &rarr; {{now}} / {{max}}</span>
+    </div>
+    <div class="gc-note">{{localize "GWORLD.Weakness.NoDr"}}</div>
+  {{else}}
+    <div class="gc-result">{{localize "GWORLD.Weakness.NotYet" interval=interval}}</div>
+  {{/if}}
+</div>

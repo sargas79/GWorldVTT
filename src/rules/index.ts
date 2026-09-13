@@ -74,6 +74,7 @@ export * from "./repairs.js";
 export * from "./breakage.js";
 export * from "./ammunition.js";
 export * from "./weapon-quality.js";
+export * from "./weakness.js";
 export * from "./overpenetration.js";
 export * from "./posture.js";
 export * from "./ranged.js";

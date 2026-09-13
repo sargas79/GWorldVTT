@@ -3339,6 +3339,25 @@
       "CannonFodderDefense": "Cannon fodder: automatically fails",
       "Collapses": "{name} goes down."
     },
+    "Weakness": {
+      "Exposed": "Exposed",
+      "ExposedHint": "Apply exposure to what this Weakness is to. One 1d per interval, straight off HP (or FP for Fatigue Only), regardless of DR (Characters p. 161).",
+      "Title": "Weakness: {source}",
+      "MinutesPrompt": "Minutes exposed",
+      "IntensityPrompt": "Exposure",
+      "Intensity": {
+        "normal": "Ordinary",
+        "shielded": "Behind its barrier (half rate)",
+        "intense": "Intense source (double rate)"
+      },
+      "Apply": "Apply",
+      "Exposure": "{minutes} min. exposed",
+      "Dice": "{dice}d",
+      "LostHp": "{points} HP lost",
+      "LostFp": "{points} FP lost",
+      "NoDr": "Weakness ignores DR and defensive advantages.",
+      "NotYet": "Not yet a full interval ({interval} min.): no injury."
+    },
     "Malediction": {
       "Label": "{name} (Malediction {level})",
       "Range": "Range, {yards} yd. (Malediction {level})",
