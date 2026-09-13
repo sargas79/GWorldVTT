@@ -7,12 +7,15 @@ on:
 jobs:
   add-to-project:
     name: Add issue to project
-    runs-with: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Add Issue to Project
-        uses: actions/add-to-project@v1
+        uses: actions/add-to-project@v1.0.2
         with:
-          # Your Project URL number from Step 1
-          project-url: https://github.com{{ github.repository_owner }}/projects/4
-          # The secret token you saved in Step 3
+          # A user-owned project lives under /users/<owner>/projects/<number>;
+          # an organisation's under /orgs/<owner>/projects/<number>.
+          project-url: https://github.com/users/${{ github.repository_owner }}/projects/4
+          # A personal access token with project write scope. The built-in
+          # GITHUB_TOKEN cannot write to a project that lives outside this
+          # repository, so this cannot fall back to it.
           github-token: ${{ secrets.PERSONAL_PROJECT_TOKEN }}
