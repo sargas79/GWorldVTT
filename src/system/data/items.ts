@@ -195,6 +195,8 @@ export class TraitData extends foundry.abstract.TypeDataModel {
   declare talentSkills: string[];
   declare power: string;
   declare powerTalent: boolean;
+  declare meleeModes: unknown[];
+  declare rangedModes: unknown[];
 
   static override defineSchema() {
     return {
@@ -298,6 +300,14 @@ export class TraitData extends foundry.abstract.TypeDataModel {
       power: new fields.StringField({ required: true, blank: true, initial: "" }),
       /** True for the power's Talent rather than one of its abilities. */
       powerTalent: new fields.BooleanField({ required: true, initial: false }),
+      /**
+       * The attacks this trait is, in the shape a weapon's are: Innate Attack
+       * and its kin (Characters pp. 61-62), and a power's attacks (Monster
+       * Hunters 1 pp. 44-47). They join the character's attack list beside
+       * what is carried. Empty for every trait that is not an attack.
+       */
+      meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: [] }),
+      rangedModes: new fields.ArrayField(rangedModeField(), { required: true, initial: [] }),
     };
   }
 
@@ -530,6 +540,12 @@ function meleeModeField() {
     }),
     /** The weapon becomes unready after each attack unless ST is high enough. */
     unreadyAfterAttack: new fields.BooleanField({ initial: false }),
+    /**
+     * Damage per level of the trait carrying this mode (Characters p. 61):
+     * "1d" per level, rolled as many dice as levels held. Only a trait has
+     * levels to read, so a weapon leaves this off.
+     */
+    perLevel: new fields.BooleanField({ initial: false }),
   });
 }
 
@@ -778,6 +794,22 @@ function rangedModeField() {
       integer: true,
       initial: 0,
       max: 0,
+    }),
+    /** Damage per level of the trait carrying this mode (Characters p. 61). */
+    perLevel: new fields.BooleanField({ initial: false }),
+    /**
+     * A Malediction (Characters p. 106), and which: 1 takes -1 a yard, 2 the
+     * Size and Speed/Range Table, 3 the Long-Distance Modifiers. It rolls
+     * against Will, the victim may resist in a Quick Contest, and DR does
+     * nothing against it. Zero for every ordinary ranged attack.
+     */
+    malediction: new fields.NumberField({
+      required: true,
+      nullable: false,
+      integer: true,
+      initial: 0,
+      min: 0,
+      max: 3,
     }),
   });
 }

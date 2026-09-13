@@ -93,6 +93,13 @@ export declare function powerOfRecord(
   pattern: RegExp | null,
 ): { power: string; powerTalent: boolean };
 
+/** The attack an advantage is, as a ranged mode, or a note saying why there is none. */
+export declare function traitAttackModes(f: Map<string, string>): {
+  rangedModes: Array<Record<string, unknown>>;
+  meleeModes: Array<Record<string, unknown>>;
+  note?: string;
+};
+
 /** The file's `[GROUPS]`, by group name. */
 export declare function groupsOf(text: string): Map<string, string[]>;
 

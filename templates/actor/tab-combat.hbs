@@ -366,13 +366,20 @@
                     data-damage-formula="{{atk.damage}}" data-damage-type="{{atk.damageType}}"
                     data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}" data-material="{{atk.material}}"
                     data-explosive="{{#if atk.explosive}}1{{/if}}"
+                    data-ignores-dr="{{#if atk.ignoresDr}}1{{/if}}"
                     data-st-based="{{#if atk.stBased}}1{{/if}}"
                     data-fragmentation="{{atk.fragmentation}}"{{/if}}>{{atk.damage}}
                   <span class="dt">{{atk.damageType}}</span>
+                  {{#if atk.ignoresDr}}<span class="tag" data-tooltip="{{localize 'GWORLD.Malediction.IgnoresDrHint'}}">{{localize "GWORLD.Malediction.IgnoresDr"}}</span>{{/if}}
                 </td>
               {{/if}}
-              <td class="c">{{atk.accuracy}}</td>
-              <td class="c">{{atk.range}}</td>
+              {{#if atk.malediction}}
+                <td class="c">&mdash;</td>
+                <td class="c" data-tooltip="{{localize 'GWORLD.Malediction.RangeHint'}}">{{localize "GWORLD.Malediction.Short" level=atk.malediction}}</td>
+              {{else}}
+                <td class="c">{{atk.accuracy}}</td>
+                <td class="c">{{atk.range}}</td>
+              {{/if}}
               <td class="c">{{atk.rateOfFire}}{{#if (gt atk.projectiles 1)}}&times;{{atk.projectiles}}{{/if}}</td>
               <td class="c">
                 {{#if atk.shotsCapacity}}
@@ -400,6 +407,8 @@
                         data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
                         data-damage-type="{{atk.damageType}}"
                         data-ranged="1" data-thrown="{{#if atk.thrown}}1{{/if}}"
+                        data-malediction="{{atk.malediction}}"
+                        data-resist-with="{{#if atk.affliction}}{{atk.afflictionAttribute}}{{/if}}"
                         data-accuracy="{{atk.accuracy}}"
                         data-scope-bonus="{{atk.scopeBonus}}"
                         data-rate-of-fire="{{atk.rateOfFire}}" data-recoil="{{atk.recoil}}"
