@@ -1,0 +1,92 @@
+<div class="gworld gworld-chat gworld-ritual">
+  <div class="gc-head">
+    <span class="gc-label">{{name}}</span>
+    <span class="gc-target">{{skillName}}-{{skill}}</span>
+  </div>
+
+  {{!-- Energy against cost, and how long it has taken (Monster Hunters 1 p. 35). --}}
+  <div class="gc-mods">
+    <span><strong>{{energy}}</strong> / {{cost}} {{localize "GWORLD.RitualCast.Energy"}}</span>
+    <span class="gc-mod">{{elapsed}}</span>
+    {{#if attempts}}<span class="gc-mod">{{localize "GWORLD.RitualCast.Attempts" count=attempts}}</span>{{/if}}
+    {{#if quirks}}<span class="gc-mod">{{localize "GWORLD.RitualCast.Quirks" count=quirks}}</span>{{/if}}
+    {{#if adept}}<span class="gc-mod">{{localize "GWORLD.RitualPath.Adept"}}</span>{{else}}<span class="gc-mod">{{localize "GWORLD.RitualPath.NonAdept"}}</span>{{/if}}
+    {{#if information}}<span class="gc-mod">{{localize "GWORLD.RitualCast.Information"}}</span>{{/if}}
+  </div>
+  <div class="gc-meter" style="align-self: stretch; width: 100%; height: 6px; background: rgba(0,0,0,0.15); border-radius: 3px; overflow: hidden">
+    <div style="width: {{percent}}%; height: 100%; background: var(--color-level-success, #4a8)"></div>
+  </div>
+
+  {{#if log.length}}
+    <ol class="gc-log" style="margin: 4px 0; padding-left: 18px">
+      {{#each log as |entry|}}
+        <li class="gc-log-{{entry.kind}}">{{entry.text}}</li>
+      {{/each}}
+    </ol>
+  {{/if}}
+
+  {{#if open}}
+    {{!-- What the GM says about where and how it is worked (p. 36). --}}
+    <div class="gc-settings" data-ritual-settings style="display: flex; flex-direction: column; gap: 3px">
+      {{#unless adept}}
+        <label style="display: flex; gap: 6px; align-items: center">
+          <input type="checkbox" data-ritual-setting="connected" {{#if conditions.connected}}checked{{/if}}>
+          {{localize "GWORLD.RitualCast.Connected"}}
+        </label>
+        <label style="display: flex; gap: 6px; align-items: center; justify-content: space-between">
+          <span style="white-space: nowrap">{{localize "GWORLD.RitualCast.ConsecrationLabel"}}</span>
+          <select data-ritual-setting="consecration">
+            {{#each consecrations as |c|}}<option value="{{c.value}}" {{#if c.selected}}selected{{/if}}>{{c.label}}</option>{{/each}}
+          </select>
+        </label>
+        <label style="display: flex; gap: 6px; align-items: center">
+          <input type="checkbox" data-ritual-setting="adeptTimes" {{#if conditions.adeptTimes}}checked{{/if}}>
+          {{localize "GWORLD.RitualCast.AdeptTimes"}}
+        </label>
+      {{/unless}}
+      <label style="display: flex; gap: 6px; align-items: center; justify-content: space-between">
+        <span style="white-space: nowrap">{{localize "GWORLD.RitualCast.SiteLabel"}}</span>
+        <select data-ritual-setting="siteYears">
+          {{#each sites as |s|}}<option value="{{s.value}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}
+        </select>
+      </label>
+      {{#if (or adept conditions.adeptTimes)}}
+        <label style="display: flex; gap: 6px; align-items: center; justify-content: space-between">
+          <span style="white-space: nowrap">{{localize "GWORLD.RitualCast.HurriedLabel"}}</span>
+          <input type="number" data-ritual-setting="hurriedTo" value="{{hurriedTo}}" min="1" max="5" step="1" style="width: 48px">
+        </label>
+      {{/if}}
+    </div>
+
+    <div class="gc-actions" data-ritual-controls style="display: flex; flex-direction: column; gap: 4px">
+      {{#if enough}}
+        <button type="button" class="gc-apply-button" data-ritual-action="cast">
+          {{localize "GWORLD.RitualCast.CastAction" target=final.target}}
+        </button>
+        {{#if final.modifiers.length}}
+          <div class="gc-note">{{#each final.modifiers as |m|}}{{m.label}} {{signed m.value}}{{#unless @last}}, {{/unless}}{{/each}}</div>
+        {{/if}}
+      {{else}}
+        {{#if desecrated}}
+          <div class="gc-note">{{localize "GWORLD.RitualCast.DesecratedHint"}}</div>
+        {{else}}
+          <button type="button" class="gc-apply-button" data-ritual-action="gather">
+            {{localize "GWORLD.RitualCast.GatherAction" target=gathering.target time=gathering.time}}
+          </button>
+          {{#if gathering.modifiers.length}}
+            <div class="gc-note">{{#each gathering.modifiers as |m|}}{{m.label}} {{signed m.value}}{{#unless @last}}, {{/unless}}{{/each}}</div>
+          {{/if}}
+        {{/if}}
+        {{#if reserve}}
+          <button type="button" class="gc-apply-button" data-ritual-action="reserve">
+            {{localize "GWORLD.RitualCast.ReserveAction" reserve=reserve time=tap.time}}{{#if tap.roll}} ({{localize "GWORLD.RitualCast.TapRoll" target=tap.target}}){{/if}}
+          </button>
+        {{/if}}
+        <button type="button" class="gc-apply-button" data-ritual-action="sacrifice">
+          {{localize "GWORLD.RitualCast.SacrificeAction" time=tap.time}}{{#if tap.roll}} ({{localize "GWORLD.RitualCast.TapRoll" target=tap.target}}){{/if}}
+        </button>
+      {{/if}}
+      <button type="button" class="gc-apply-button" data-ritual-action="abandon">{{localize "GWORLD.RitualCast.AbandonAction"}}</button>
+    </div>
+  {{/if}}
+</div>

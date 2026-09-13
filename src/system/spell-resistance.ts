@@ -18,6 +18,7 @@ import { SYSTEM_ID } from "./constants.js";
 import { isRuleOn } from "./optional-rules.js";
 import { promptForNumber } from "./roll.js";
 import { quickContest, resolveSuccess } from "../rules/success.js";
+import { ritualResistance } from "../rules/ritual-casting.js";
 import {
   resistanceAttribute,
   resistanceScore,
@@ -45,6 +46,11 @@ interface ResistFlag {
    * Contest (Characters p. 106) -- which Magic Resistance does nothing to.
    */
   magical?: boolean;
+  /**
+   * A Ritual Path Magic ritual, resisted with "the better of his HT or Will,
+   * plus any Magic Resistance" (Monster Hunters 1 p. 36).
+   */
+  ritual?: boolean;
 }
 
 /** Posts the caster's half of a Resisted spell, with a roll for each subject. */
@@ -58,6 +64,8 @@ export async function postResistCard(options: {
   subjects: any[];
   /** False where Magic Resistance does not apply. Spells leave it out. */
   magical?: boolean;
+  /** A ritual, resisted with the better of HT or Will. */
+  ritual?: boolean;
 }): Promise<void> {
   const flag: ResistFlag = {
     spell: options.spell,
@@ -71,6 +79,7 @@ export async function postResistCard(options: {
       name: String(subject.name ?? ""),
     })),
     ...(options.magical === false ? { magical: false } : {}),
+    ...(options.ritual ? { ritual: true } : {}),
   };
 
   const content = await foundry.applications.handlebars.renderTemplate(RESIST_TEMPLATE, {
@@ -119,8 +128,10 @@ export async function addResistControls(message: any, html: HTMLElement): Promis
     row.append(who);
 
     const attribute = resistanceAttribute(flag.resistedBy);
-    const score = attribute === null ? null : attributeOf(subject, attribute);
     const resistance = flag.magical === false ? 0 : Number(subject.system?.derived?.magic?.magicResistance ?? 0) || 0;
+    const score = flag.ritual
+      ? ritualResistance({ ht: attributeOf(subject, "HT"), will: attributeOf(subject, "Will"), magicResistance: 0 })
+      : attribute === null ? null : attributeOf(subject, attribute);
 
     const button = document.createElement("button");
     button.type = "button";
@@ -153,7 +164,9 @@ function attributeOf(subject: any, attribute: string): number {
  */
 async function rollResistance(subject: any, flag: ResistFlag): Promise<void> {
   const attribute = resistanceAttribute(flag.resistedBy);
-  let score: number | null = attribute === null ? null : attributeOf(subject, attribute);
+  let score: number | null = flag.ritual
+    ? ritualResistance({ ht: attributeOf(subject, "HT"), will: attributeOf(subject, "Will"), magicResistance: 0 })
+    : attribute === null ? null : attributeOf(subject, attribute);
   if (score === null) {
     score = await promptForNumber({
       title: `${L("Resist")} ${flag.spell}`,
