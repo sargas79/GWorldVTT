@@ -8,6 +8,7 @@
  * than being a label.
  */
 
+import { shovesLikeCrushing } from "./cinematic.js";
 import type { DamageType } from "./types.js";
 
 export type Maneuver =
@@ -142,6 +143,12 @@ export interface KnockbackInput {
   penetratedDr: boolean;
   /** The target's ST, or its HP when it has no ST (a wall, say). */
   targetStrength: number;
+  /**
+   * Cinematic Knockback (p. 417), under which "a big gun can blast foes
+   * through windows and even walls": a piercing attack shoves as a crushing
+   * one would. Nothing else about the rule changes here.
+   */
+  cinematic?: boolean;
 }
 
 export interface KnockbackResult {
@@ -170,8 +177,13 @@ export function knockback({
   type,
   penetratedDr,
   targetStrength,
+  cinematic = false,
 }: KnockbackInput): KnockbackResult {
-  const causes = type === "cr" || (type === "cut" && !penetratedDr);
+  // "Work out knockback for a piercing attack just as if it were a crushing
+  // attack" (p. 417) -- which means it shoves whether or not it penetrated,
+  // exactly as a crushing blow does.
+  const crushing = type === "cr" || (cinematic && shovesLikeCrushing(type));
+  const causes = crushing || (type === "cut" && !penetratedDr);
   if (!causes || basicDamage <= 0) return { yards: 0, fallRollPenalty: 0 };
 
   const perYard = targetStrength <= 3 ? 1 : targetStrength - 2;

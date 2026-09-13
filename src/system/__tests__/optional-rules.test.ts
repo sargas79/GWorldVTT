@@ -54,8 +54,23 @@ describe("the rule catalogue", () => {
   it("starts with everything in play but the ones the book marks optional", () => {
     const off = Object.entries(defaultRuleState())
       .filter(([, on]) => !on)
-      .map(([key]) => key);
+      .map(([key]) => key)
+      .filter((key) => !OPTIONAL_RULES.cinematic.some((rule) => rule.key === key));
     expect(off.sort()).toEqual(["bleeding", "damageToShields"]);
+  });
+
+  /**
+   * The cinematic rules are the other way round from every other group. They
+   * are not realism a table may not want the bookkeeping for; they are
+   * "shamelessly unrealistic and strictly optional", so none of them is on
+   * until somebody asks for it.
+   */
+  it("starts with every cinematic rule switched off", () => {
+    const state = defaultRuleState();
+    for (const rule of OPTIONAL_RULES.cinematic) {
+      expect(state[rule.key]).toBe(false);
+      expect(rule.reference).toBe("Campaigns p. 417");
+    }
   });
 });
 

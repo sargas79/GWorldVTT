@@ -45,6 +45,7 @@ export const RULE_GROUPS = [
   { id: "activities", label: "GWORLD.Rules.Group.Activities" },
   { id: "magic", label: "GWORLD.Rules.Group.Magic" },
   { id: "equipment", label: "GWORLD.Rules.Group.Equipment" },
+  { id: "cinematic", label: "GWORLD.Rules.Group.Cinematic" },
 ] as const;
 
 export type RuleGroup = (typeof RULE_GROUPS)[number]["id"];
@@ -157,6 +158,25 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "equipmentModifiers", reference: "Campaigns p. 345", default: true },
     // Mending what is broken, and the sand that breaks it.
     { key: "repairs", reference: "Campaigns pp. 484-485", default: true },
+  ],
+  // "Shamelessly unrealistic and strictly optional, but can be fun in
+  // larger-than-life games!" -- the book's own words, and the reason every one
+  // of these starts switched off. The rest of the list is realism a table may
+  // not want the bookkeeping for; this group is the opposite, and switching it
+  // on is a decision about what kind of game is being played.
+  cinematic: [
+    // A blast that throws people about and hurts nobody.
+    { key: "cinematicExplosions", reference: "Campaigns p. 417", default: false },
+    // A bullet that shoves like a club, and leaves the mind reeling.
+    { key: "cinematicKnockback", reference: "Campaigns p. 417", default: false },
+    // A character point to make a wound a scratch.
+    { key: "fleshWounds", reference: "Campaigns p. 417", default: false },
+    // A point of fatigue and the next turn to undo a failed defense.
+    { key: "tvActionViolence", reference: "Campaigns p. 417", default: false },
+    { key: "bulletproofNudity", reference: "Campaigns p. 417", default: false, implemented: false },
+    { key: "cannonFodder", reference: "Campaigns p. 417", default: false, implemented: false },
+    { key: "infiniteAmmunition", reference: "Campaigns p. 417", default: false, implemented: false },
+    { key: "meleeEtiquette", reference: "Campaigns p. 417", default: false, implemented: false },
   ],
 };
 

@@ -288,7 +288,8 @@
         "Rolls": "Rolls and contests",
         "Activities": "Outside combat",
         "Magic": "Magic",
-        "Equipment": "Equipment"
+        "Equipment": "Equipment",
+        "Cinematic": "Cinematic combat"
       },
       "Rule": {
         "magic": {
@@ -562,6 +563,38 @@
         "repairs": {
           "Name": "Repairs and breakdowns",
           "Hint": "Mending a damaged thing is half an hour and a skill roll against its price, and gives back as many hit points as the roll beat its target by; a thing at zero needs spare parts first. Gear left in the sand or the damp rolls to keep working at all (Campaigns pp. 484-485)."
+        },
+        "cinematicExplosions": {
+          "Name": "Cinematic explosions",
+          "Hint": "A blast does no direct damage and throws no fragments. All it does is knock people about, at a token 1 HP a yard (Campaigns p. 417)."
+        },
+        "cinematicKnockback": {
+          "Name": "Cinematic knockback",
+          "Hint": "A bullet shoves a man as a club would, and anyone knocked back rolls against IQ at -1 a yard or is mentally stunned next turn (Campaigns p. 417)."
+        },
+        "fleshWounds": {
+          "Name": "Flesh wounds",
+          "Hint": "One unspent character point turns a wound into a scratch: all but 1 point of the damage is ignored. A character with nothing to spend goes into debt (Campaigns p. 417)."
+        },
+        "tvActionViolence": {
+          "Name": "TV action violence",
+          "Hint": "A point of fatigue and the next turn convert a failed defense into a success. Not against a punch, a club or a thrown rock, unless it was aimed at the skull or neck (Campaigns p. 417)."
+        },
+        "bulletproofNudity": {
+          "Name": "Bulletproof nudity",
+          "Hint": "A good-looking character defends better the less they are wearing, and moves faster with nothing on at all (Campaigns p. 417)."
+        },
+        "cannonFodder": {
+          "Name": "Cannon fodder",
+          "Hint": "Minor NPCs fail every defense, never go all out, and drop the moment anything gets through their DR (Campaigns p. 417)."
+        },
+        "infiniteAmmunition": {
+          "Name": "Infinite ammunition",
+          "Hint": "Heroes never run out of ammunition or power cells, and their weapons never malfunction (Campaigns p. 417)."
+        },
+        "meleeEtiquette": {
+          "Name": "Melee etiquette",
+          "Hint": "A hero fighting hand to hand is faced one at a time. The rest wait their turn (Campaigns p. 417)."
         }
       }
     },
@@ -2723,6 +2756,25 @@
         "needsMajorRepair": "It fails badly: major repairs, spare parts and all."
       },
       "CareLabel": "How it has been treated: +1 cleaned daily, 0 ordinary, -1 or -2 abused"
+    },
+    "Cinematic": {
+      "BlastNoDamage": "The blast does no direct damage — a token point a yard of knockback",
+      "StunRoll": "IQ roll or mentally stunned",
+      "FleshWound": "Just a flesh wound",
+      "FleshWoundHint": "Spend one unspent character point to ignore all but 1 point of this damage (Campaigns p. 417).",
+      "FleshWoundTitle": "{name} shrugs it off",
+      "Shrugged": "{ignored} {pool} ignored — {taken} {pool} taken",
+      "AwardNote": "Flesh wound",
+      "PointsLeft": "{points} unspent",
+      "InDebt": "In debt: {points} points, to come out of the next award",
+      "NothingToIgnore": "There is nothing there to shrug off.",
+      "TvAction": "Take it anyway",
+      "TvActionHint": "Spend 1 FP and your next turn to convert this failed defense into a success (Campaigns p. 417).",
+      "TvActionTitle": "{name} twists aside",
+      "Action": "TV action violence",
+      "Averted": "The blow that should have landed does not.",
+      "Cost": "{fp} FP",
+      "LosesTurn": "Loses their next turn"
     }
   }
 }

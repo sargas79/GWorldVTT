@@ -40,6 +40,7 @@ import type { DamageType } from "../rules/types.js";
 import { attributeOf } from "./attributes.js";
 import { loseAim } from "./aim.js";
 import { hasInjuryTolerance } from "../rules/injury-tolerance.js";
+import { cinematicExplosionInjury, knockbackStunPenalty } from "../rules/cinematic.js";
 
 /** A critical hit, already rolled for on one of the tables. */
 export interface CriticalHit {
@@ -75,6 +76,12 @@ export interface IncomingDamage {
    * well as the damage (Campaigns p. 409). One for every other blow.
    */
   drMultiplier?: number;
+  /**
+   * True when this is a blast and Cinematic Explosions is in play (p. 417).
+   * The rolled figure then buys knockback and nothing else, and what the
+   * victim loses is a token point a yard.
+   */
+  cinematicBlast?: boolean;
   /**
    * The arc the blow came from, where the table is playing with facing.
    * Armour marked "F" protects against the front alone (Characters p. 282);
@@ -130,6 +137,13 @@ export interface AppliedDamage {
   knockdown: { required: boolean; modifier: number } | null;
   /** True when a wound of this kind would bleed, which the GM may overrule. */
   bleeds: boolean;
+  /**
+   * The IQ roll Cinematic Knockback asks of anyone thrown about (p. 417),
+   * or null when the rule is off or the blow shoved nobody.
+   */
+  knockbackStun: { required: boolean; penalty: number } | null;
+  /** True when the injury is the token point a yard of a cinematic blast. */
+  cinematicBlast: boolean;
 }
 
 /**
@@ -231,21 +245,29 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
         })
       : 0;
 
-  const pool = result.costsFatigue ? fp : hp;
-  const previous = Number(pool.value) || 0;
-  const max = Number(pool.max) || 0;
-  // Blunt trauma "is actual injury, not basic damage. There is no wounding
-  // multiplier", so it is added after the pipeline rather than inside it.
-  const applied = applyInjury(result.injury + trauma, previous, max, { unkillable: traits.unkillable });
-
   // Knockback is worked out from damage before DR, and a crushing blow causes
-  // it whether or not it got through (p. 378).
+  // it whether or not it got through (p. 378). It comes before the injury
+  // because under Cinematic Explosions the injury is worked out from it.
   const shoved = knockback({
     basicDamage,
     type: damage.type,
     penetratedDr: result.penetrating > 0,
     targetStrength: attributeOf(actor, "ST", Number(hp.max) || 10),
+    cinematic: isRuleOn("cinematicKnockback"),
   });
+
+  const pool = result.costsFatigue ? fp : hp;
+  const previous = Number(pool.value) || 0;
+  const max = Number(pool.max) || 0;
+  // "Explosions do no direct damage! Ignore fragmentation, too... Every yard
+  // of knockback from a cinematic explosion causes a token 1 HP of crushing
+  // damage" (p. 417). Whatever the pipeline made of the blast is thrown away:
+  // it was only ever there to say how far the victim flew.
+  const blast = damage.cinematicBlast === true;
+  // Blunt trauma "is actual injury, not basic damage. There is no wounding
+  // multiplier", so it is added after the pipeline rather than inside it.
+  const injury = blast ? cinematicExplosionInjury(shoved.yards) : result.injury + trauma;
+  const applied = applyInjury(injury, previous, max, { unkillable: traits.unkillable });
 
   // Two of the critical results change what follows from the injury rather than
   // the injury itself: one doubles shock past its usual floor, and the others
@@ -272,8 +294,8 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     effectiveDr: result.effectiveDr,
     penetrating: result.penetrating,
     woundingModifier: result.woundingModifier,
-    injury: result.injury + trauma,
-    bluntTrauma: trauma,
+    injury,
+    bluntTrauma: blast ? 0 : trauma,
     excessLost: result.excessLost,
     crippled: result.crippled,
     costsFatigue: result.costsFatigue,
@@ -284,6 +306,13 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     basicDamage,
     critical: damage.critical ?? null,
     knockback: shoved,
+    // Being blasted off your feet leaves you reeling (p. 417). The roll is the
+    // victim's to make; what it is at is not.
+    knockbackStun:
+      isRuleOn("cinematicKnockback") && shoved.yards > 0
+        ? { required: true, penalty: knockbackStunPenalty(shoved.yards) }
+        : null,
+    cinematicBlast: blast,
     naturalDr,
     // Fit's "+1 to all HT rolls" goes on each of the three (Characters p. 55).
     htModifiers: {

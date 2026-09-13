@@ -25,7 +25,17 @@
         </div>
       {{/if}}
 
-      {{#if r.stopped}}
+      {{#if r.cinematicBlast}}
+        {{!-- A blast that does no direct damage: a token point a yard (p. 417). --}}
+        <div class="gc-mods">
+          <span>{{localize "GWORLD.Cinematic.BlastNoDamage"}}</span>
+        </div>
+        <div class="gc-result">
+          <strong>{{r.injury}}</strong> {{r.pool}}
+          <span class="gc-mod">{{r.previous}} &rarr; {{r.current}} / {{r.max}}</span>
+          <span class="gc-mod">{{r.status}}</span>
+        </div>
+      {{else if r.stopped}}
         <div class="gc-result">
           {{localize "GWORLD.Chat.Stopped" dr=r.effectiveDr}}
         </div>
@@ -69,6 +79,12 @@
           <span class="gc-warn">{{localize "GWORLD.Knockback.Pushed" yards=r.knockback.yards}}</span>
           {{#if r.knockback.fallRollPenalty}}
             <span class="gc-mod">{{localize "GWORLD.Knockback.StayUp"}} {{r.knockback.fallRollPenalty}}</span>
+          {{/if}}
+          {{#if r.knockbackStun}}
+            {{!-- "must make an IQ roll or be mentally stunned" (p. 417). --}}
+            <span class="gc-warn">
+              {{localize "GWORLD.Cinematic.StunRoll"}} {{r.knockbackStun.penalty}}
+            </span>
           {{/if}}
         </div>
       {{/if}}

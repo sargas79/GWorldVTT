@@ -33,6 +33,7 @@ import {
 import { applyDamageFloor, computeInjury } from "../rules/damage.js";
 import { formatDiceAdds, maxRoll, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import { blastRadius, fragmentationRadius } from "../rules/explosions.js";
+import type { Delivery } from "../rules/cinematic.js";
 import {
   EXTRA_EFFORT_FP,
   flurryOfBlowsPenalty,
@@ -126,6 +127,12 @@ export interface SuccessRollOptions {
    * whether it rolls again on "your weapon breaks".
    */
   weapon?: { weight: number; material: string; swung: boolean; resistsBreakage: boolean };
+  /** How an attack reached its target, for TV Action Violence (p. 417). */
+  delivery?: Delivery;
+  /** What the attack does, blank where it does nothing (a grapple). */
+  damageType?: string;
+  /** Where TV Action Violence could buy a failed defense back (p. 417). */
+  tvAction?: { uuid: string; name: string; attack: string };
 }
 
 /** A critical miss, with what the table said and whether the weapon resisted. */
@@ -227,8 +234,18 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     // An attack that connects is the moment to record who it was aimed at: the
     // defender rolls afterwards, by which time the attacker may well have
     // changed their target. A miss needs no defense, so it carries nothing.
+    // "The hero can choose to convert his failed defense roll into a success"
+    // (p. 417) -- which is an offer made on the card that failed.
+    ...(kind === "defense" && !outcome.success && options.tvAction
+      ? { flags: { [SYSTEM_ID]: { tvAction: options.tvAction } } }
+      : {}),
     ...(kind === "attack" && outcome.success
-      ? { flags: attackFlags(actor, label, defensePenalty, criticalHit, noParry, options.weapon) }
+      ? {
+          flags: attackFlags(
+            actor, label, defensePenalty, criticalHit, noParry, options.weapon,
+            options.delivery, options.damageType,
+          ),
+        }
       : {}),
   });
 
@@ -361,6 +378,8 @@ function attackFlags(
   criticalHit: boolean,
   noParry = false,
   weapon?: { weight: number; material: string; swung: boolean },
+  delivery?: Delivery,
+  damageType?: string,
 ): object {
   const defenders = targetedTokens()
     .filter((token: any) => token?.actor?.uuid)
@@ -389,6 +408,11 @@ function attackFlags(
         ...(noParry ? { noParry: true } : {}),
         // What the defender's parry has to weigh (Campaigns p. 376).
         ...(weapon ? { weapon: { weight: weapon.weight, material: weapon.material, swung: weapon.swung } } : {}),
+        // How the blow arrived and what it does, which is what decides whether
+        // a point of fatigue can buy the defense back (p. 417). A punch cannot
+        // be ducked this way; a bullet can.
+        ...(delivery ? { delivery } : {}),
+        ...(damageType ? { damageType } : {}),
       },
     },
   };
@@ -432,6 +456,8 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     fragmentation = "",
   } = options;
   const explosive = options.explosive === true && isRuleOn("explosions");
+  const cinematicBlast = explosive && isRuleOn("cinematicExplosions");
+  const fragments = cinematicBlast ? "" : fragmentation;
 
   const parsed = parseDiceAdds(formula);
   if (!parsed) {
@@ -484,10 +510,14 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     // "if an explosion does 6dx2 damage, everyone within 24 yards is
     // vulnerable" -- twelve dice, not six. The multiplier counts.
     blastRadius: explosive ? blastRadius(parsed.dice * (parsed.multiplier ?? 1)) : 0,
-    fragmentation,
-    fragmentationRadius: fragmentation
-      ? fragmentationRadius(parseDiceAdds(fragmentation)?.dice ?? 0)
+    // "In cinematic combat, explosions do no direct damage! Ignore
+    // fragmentation, too" (p. 417) -- so a cinematic grenade throws none, and
+    // the card does not offer a radius for fragments nobody will roll.
+    fragmentation: fragments,
+    fragmentationRadius: fragments
+      ? fragmentationRadius(parseDiceAdds(fragments)?.dice ?? 0)
       : 0,
+    cinematicBlast,
   });
 
   await ChatMessage.implementation.create({
@@ -731,11 +761,24 @@ export async function handleRollAction(
       }
     : undefined;
 
+  // Unarmed, in hand, thrown, or shot: the four the cinematic rules tell
+  // apart (p. 417). A spell or anything else that says nothing is treated as
+  // having been shot, which is the case the rule is permissive about.
+  const delivery: Delivery =
+    target.dataset.unarmed === "1"
+      ? "unarmed"
+      : target.dataset.ranged !== "1"
+        ? "melee"
+        : target.dataset.thrown === "1"
+          ? "thrown"
+          : "ranged";
+
   const outcome = await rollSuccess({
     actor,
     base,
     label,
     kind: rollKind(rollType),
+    ...(rollType === "attack" ? { delivery, damageType: target.dataset.damageType ?? "" } : {}),
     // A Missile spell "may block or dodge, but not parry" (Characters p. 241).
     noParry: target.dataset.noParry === "1",
     ...(wielded ? { weapon: wielded } : {}),
