@@ -855,6 +855,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare forSkills: string[];
   declare meleeModes: unknown[];
   declare rangedModes: unknown[];
+  declare charm: { ritual: string; margin: number; casterUuid: string; activeId: string; condition: string };
   declare grimoire: {
     rituals: Array<{ ritual: string; identity: string; bonus: number }>;
     deadLanguage: string;
@@ -880,6 +881,19 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
        * and remembered by its definition, so a changed ritual is not the one
        * the book teaches.
        */
+      /**
+       * A charm (Monster Hunters 1 pp. 38-39): a conditional ritual bound to
+       * this fragile object. It travels with the object, and breaking it sets
+       * the ritual off "using its original margin of success". Blank ritual
+       * for an object that is not a charm.
+       */
+      charm: new fields.SchemaField({
+        ritual: new fields.StringField({ required: true, blank: true, initial: "" }),
+        margin: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+        casterUuid: new fields.StringField({ required: true, blank: true, initial: "" }),
+        activeId: new fields.StringField({ required: true, blank: true, initial: "" }),
+        condition: new fields.StringField({ required: true, blank: true, initial: "" }),
+      }),
       grimoire: new fields.SchemaField({
         rituals: new fields.ArrayField(
           new fields.SchemaField({

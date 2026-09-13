@@ -1093,6 +1093,22 @@
       </div>
     {{/if}}
 
+    {{#if charm}}
+      {{!-- A charm (Monster Hunters 1 pp. 38-39): the conditional ritual bound
+           to this object, set off by breaking it. --}}
+      <div class="isub">
+        <div class="isub-head">{{localize "GWORLD.RitualCast.CharmTitle"}}</div>
+        <div class="npcline" style="gap: 10px; align-items: center; flex-wrap: wrap">
+          <strong>{{system.charm.ritual}}</strong>
+          <span class="tag">{{localize "GWORLD.RitualCast.Margin"}} {{system.charm.margin}}</span>
+          {{#if system.charm.condition}}<span class="sub">{{system.charm.condition}}</span>{{/if}}
+          {{#if charm.mayBreak}}
+            <button type="button" class="ibtn" data-action="breakCharm" data-tooltip="{{localize 'GWORLD.RitualCast.BreakHint'}}">{{localize "GWORLD.RitualCast.Break"}}</button>
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
+
     {{#if grimoire}}
       {{!-- A grimoire (Monster Hunters 1 pp. 39, 56-57): the rituals it
            teaches, each with its bonus, and what it takes to read. On a

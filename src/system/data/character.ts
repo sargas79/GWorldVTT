@@ -35,6 +35,24 @@ import {
 } from "../../rules/ritual-path.js";
 import { governingPath } from "../../rules/ritual-cost.js";
 import { grimoireBonus, masteredRitual, ritualMasteryBonus } from "../../rules/ritual-tricks.js";
+import { conditionalLimit } from "../../rules/ritual-lasting.js";
+
+/** A ritual still in effect, or hanging until its condition is met (Monster Hunters 1 pp. 37-39). */
+export interface RitualInEffect {
+  id: string;
+  itemId: string;
+  name: string;
+  energy: number;
+  margin: number;
+  effects: Array<{ path: string; effect: string; greater: boolean }>;
+  durationSeconds: number;
+  originalSeconds: number;
+  startedAt: number;
+  expiresAt: number | null;
+  conditional: boolean;
+  condition: string;
+  charm: string;
+}
 import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
@@ -418,7 +436,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     itemIds: string[];
   }>;
   declare magic: { style: MagicStylePreference };
-  declare ritualPath: { manaReserve: number };
+  declare ritualPath: { manaReserve: number; active: RitualInEffect[] };
   declare activeSpells: ActiveSpell[];
   declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
   declare dress: { state: Dress; topless: boolean };
@@ -774,6 +792,40 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
        */
       ritualPath: new fields.SchemaField({
         manaReserve: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+        /**
+         * Rituals this character has cast that are still in effect, and those
+         * cast conditionally and hanging until their condition is met
+         * (Monster Hunters 1 pp. 37-39). Oldest first, which is the order the
+         * conditional limit defuses them in.
+         */
+        active: new fields.ArrayField(
+          new fields.SchemaField({
+            id: new fields.StringField({ required: true, blank: false }),
+            itemId: new fields.StringField({ required: true, blank: true, initial: "" }),
+            name: new fields.StringField({ required: true, blank: true, initial: "" }),
+            /** The energy it took, which decides which of two overlapping rituals remains (p. 37). */
+            energy: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+            /** "using its original margin of success if it matters" when a charm goes off (p. 38). */
+            margin: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+            effects: new fields.ArrayField(new fields.SchemaField({
+              path: new fields.StringField({ required: true, blank: false, initial: "Magic" }),
+              effect: new fields.StringField({ required: true, blank: false, initial: "sense" }),
+              greater: new fields.BooleanField({ initial: false }),
+            }), { required: true, initial: [] }),
+            /** How long it lasts once in effect; zero for a momentary ritual. */
+            durationSeconds: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+            /** The longest one extension may add: the original duration (p. 37). */
+            originalSeconds: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+            startedAt: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
+            /** World time it runs out; null while it hangs as a conditional ritual. */
+            expiresAt: new fields.NumberField({ required: true, nullable: true, initial: null }),
+            conditional: new fields.BooleanField({ initial: false }),
+            condition: new fields.StringField({ required: true, blank: true, initial: "" }),
+            /** The charm it is bound to, by name, for the sheet to say. */
+            charm: new fields.StringField({ required: true, blank: true, initial: "" }),
+          }),
+          { required: true, initial: [] },
+        ),
       }),
 
       /**
@@ -1512,6 +1564,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       reserve: {
         value: Math.min(reserveMax, Math.max(0, Number(this.ritualPath?.manaReserve ?? 0) || 0)),
         max: reserveMax,
+      },
+      // "(Thaumatology + Magery) conditional rituals 'hanging' at once" (p. 38).
+      conditional: {
+        hanging: (this.ritualPath?.active ?? []).filter((r) => r.conditional).length,
+        limit: conditionalLimit({ thaumatology, magery: traits.magery }),
       },
       paths: PATHS.map((path) => {
         const name = pathSkillName(path);
