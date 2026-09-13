@@ -11,6 +11,7 @@ import {
   entryName,
   groupsOf,
   isBookkeeping,
+  parseSkillUsed,
   powerOfRecord,
   qualityVariantOf,
   reference,
@@ -290,5 +291,22 @@ describe("classifyCitation", () => {
   it("can be told which book is the base", () => {
     expect(classifyCitation("MA52, LT10", "MA", "LT")).toBe("overlap");
     expect(classifyCitation("MA52, B203", "MA", "LT")).toBe("own");
+  });
+});
+
+describe("the skill a weapon is used with (#174)", () => {
+  it("reads the Basic Set's SK: form, skipping wildcards and defaults", () => {
+    expect(parseSkillUsed("SK:Sword!, SK:Broadsword, ST:DX-5, SK:Rapier-4")).toBe("Broadsword");
+    expect(parseSkillUsed("ST:DX-4, SK:Shield (Buckler)-2, SK:Shield (Shield)")).toBe("Shield (Shield)");
+  });
+
+  it("reads a bare name, as Monster Hunters 1 writes them", () => {
+    expect(parseSkillUsed("Gun!, Guns (Submachine Gun), DX-4, Guns (Pistol)-2")).toBe("Guns (Submachine Gun)");
+    expect(parseSkillUsed("Knife, DX-4, Force Sword-3")).toBe("Knife");
+  });
+
+  it("names no skill for an attribute or a blank the player fills in", () => {
+    expect(parseSkillUsed("Will")).toBe("");
+    expect(parseSkillUsed("%examplealiaslist%")).toBe("");
   });
 });
