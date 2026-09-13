@@ -1,0 +1,20 @@
+{{!-- Trying to get out of a net or a bolas (Campaigns pp. 410-411). --}}
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{localize "GWORLD.Entangled.Title" name=name what=what}}</span>
+    <span class="gc-target">{{localize "GWORLD.Chat.Target"}} {{target}}</span>
+  </div>
+  <div class="gc-dice">
+    {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+    <span class="gc-total">{{roll}}</span>
+  </div>
+  {{#if free}}
+    <div class="gc-result success">{{localize "GWORLD.Entangled.Free"}}</div>
+  {{else if stuck}}
+    <div class="gc-result failure">{{localize "GWORLD.Entangled.MustBeCut"}}</div>
+  {{else}}
+    <div class="gc-result {{#if outcome.success}}success{{else}}failure{{/if}}">
+      {{localize "GWORLD.Entangled.Progress" successes=successes needed=needed}}
+    </div>
+  {{/if}}
+</div>

@@ -39,6 +39,8 @@ export const CONDITIONS: readonly ConditionDefinition[] = [
   { id: "grappling", label: "GWORLD.Condition.Grappling", img: "icons/svg/net.svg" },
   { id: "grappled", label: "GWORLD.Condition.Grappled", img: "icons/svg/padlock.svg" },
   { id: "pinned", label: "GWORLD.Condition.Pinned", img: "icons/svg/paralysis.svg" },
+  // Caught in a net, a bolas or a lariat (Campaigns pp. 410-411).
+  { id: "entangled", label: "GWORLD.Condition.Entangled", img: "icons/svg/net.svg" },
   { id: "suffocating", label: "GWORLD.Condition.Suffocating", img: "icons/svg/silenced.svg" },
   {
     id: "mortallyWounded",

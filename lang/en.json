@@ -768,7 +768,8 @@
       "Grappled": "Grappled",
       "Pinned": "Pinned",
       "MortallyWounded": "Mortally wounded",
-      "Suffocating": "Suffocating"
+      "Suffocating": "Suffocating",
+      "Entangled": "Entangled"
     },
     "Posture": {
       "standing": "Standing",
@@ -3041,6 +3042,28 @@
         "psychokinesis": "Psychokinesis",
         "telepathy": "Telepathy",
         "teleportation": "Teleportation"
+      }
+    },
+    "Entangled": {
+      "Escape": "Get loose",
+      "EscapeHint": "One attempt to get out, which costs the whole turn. Three successes and you are free; three failures running in a net and you must be cut out (Campaigns pp. 410-411).",
+      "Caught": "Caught in",
+      "LimbsLabel": "Getting out with",
+      "OneHanded": "Only one hand free",
+      "Title": "{name} against {what}",
+      "Free": "Loose.",
+      "MustBeCut": "Too tangled to get out of. Somebody has to cut them free.",
+      "Progress": "{successes} of {needed}",
+      "What": {
+        "net": "a net",
+        "smallNet": "a small net",
+        "bolas": "a bolas",
+        "lariat": "a lariat"
+      },
+      "Limbs": {
+        "hands": "Hands",
+        "paws": "Paws",
+        "hooves": "Hooves"
       }
     }
   }
