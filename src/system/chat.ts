@@ -36,6 +36,7 @@ import { defenseChoices, type DefenseChoice, type DefenseKey } from "./defense-c
 import { loseAim } from "./aim.js";
 import { blockingSpellsOf, castBlockingSpell } from "./casting.js";
 import { addResistControls } from "./spell-resistance.js";
+import { addRitualControls } from "./ritual-casting.js";
 import { buyDefenseBack, declareFleshWound, type FleshWoundEntry, type TvActionEntry } from "./cinematic.js";
 import {
   canAvertWithFatigue, facesHimSquarely, worthDeclaring, type Delivery,
@@ -1195,5 +1196,6 @@ export function registerChatHooks(): void {
     void addFleshWoundControls(message, html);
     void addTvActionControls(message, html);
     void addAfflictionControls(message, html);
+    void addRitualControls(message, html);
   });
 }

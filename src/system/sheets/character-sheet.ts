@@ -198,6 +198,7 @@ import { awardsNewestFirst, type PointAward } from "../../rules/character-points
 import { isReadTrait } from "../../rules/trait-effects.js";
 import { weaknessOf } from "../../rules/weakness.js";
 import { exposeToWeakness } from "../weakness.js";
+import { startRitualCasting } from "../ritual-casting.js";
 import { applyHolyContact } from "../holy.js";
 import { unconditionalReaction, type ReactionSource } from "../../rules/social.js";
 import { SENSES } from "../../rules/senses.js";
@@ -2891,6 +2892,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       trample: GWorldCharacterSheet.#onTrample,
       fightOffSwarm: GWorldCharacterSheet.#onFightOffSwarm,
       castSpell: GWorldCharacterSheet.#onCastSpell,
+      castRitual: GWorldCharacterSheet.#onCastRitual,
       maintainSpell: GWorldCharacterSheet.#onMaintainSpell,
       dropSpell: GWorldCharacterSheet.#onDropSpell,
       toggleConcentrating: GWorldCharacterSheet.#onToggleConcentrating,
@@ -3555,6 +3557,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onCastSpell(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const item = this.#itemFrom(target);
     if (item) await castSpell(this.actor, item);
+  }
+
+  /** Starts working a ritual: its casting card (Monster Hunters 1 pp. 35-37). */
+  static async #onCastRitual(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.#itemFrom(target);
+    if (item) await startRitualCasting(this.actor, item);
   }
 
   #activeSpellId(target: HTMLElement): string | null {

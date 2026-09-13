@@ -63,6 +63,7 @@
             <th>{{localize "GWORLD.Column.Skill"}}</th>
             <th class="n">{{localize "GWORLD.Column.Level"}}</th>
             <th></th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -88,6 +89,13 @@
                 {{else}}&mdash;{{/if}}
               </td>
               <td class="c">
+                {{#if r.castable}}
+                  <span class="rollable" data-action="castRitual" data-tooltip="{{localize 'GWORLD.RitualCast.Start'}}">
+                    {{> "gworld.die"}}
+                  </span>
+                {{/if}}
+              </td>
+              <td class="c">
                 {{#if @root.editable}}
                   <button type="button" class="rollable iconbtn" data-action="deleteItem" title="{{localize 'GWORLD.Action.Delete'}}">
                     {{> "gworld.trash"}}
@@ -96,7 +104,7 @@
               </td>
             </tr>
           {{else}}
-            <tr><td colspan="6" class="ihint">{{localize "GWORLD.Ritual.NoneYet"}}</td></tr>
+            <tr><td colspan="7" class="ihint">{{localize "GWORLD.Ritual.NoneYet"}}</td></tr>
           {{/each}}
         </tbody>
       </table>
