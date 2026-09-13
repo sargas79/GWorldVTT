@@ -2604,7 +2604,9 @@
       "LoadShort": "Load",
       "RangeShort": "Range",
       "LocationsShort": "Locations",
-      "SkillShort": "Skill"
+      "SkillShort": "Skill",
+      "Dodge": "Dodge",
+      "DecadeScale": "At decade scale, to save rolling a hundred dice: DR {dr}, HP {hp}. Divide damage dice by ten too, and multiply what is left back afterwards."
     },
     "GearCategory": {
       "weapon": "Weapon",

@@ -22,6 +22,8 @@ import {
   safeDecelerationPerTurn, type Locomotion,
 } from "../../rules/vehicles.js";
 import { locationsOf, mediumOf } from "../../rules/vehicle-combat.js";
+import { scaleScore, vehicleDodge } from "../../rules/scale.js";
+import { normalizeSkillName } from "../../rules/skills.js";
 
 const fields = foundry.data.fields;
 
@@ -29,6 +31,26 @@ const fields = foundry.data.fields;
 export interface Occupant {
   uuid: string;
   operator: boolean;
+}
+
+/**
+ * The operator's level in the skill this vehicle names, or null when they do
+ * not have it.
+ *
+ * Read off the driver's own sheet rather than asked for, because the vehicle
+ * already knows which skill it takes and the driver already knows how good
+ * they are at it.
+ */
+function controlSkillOf(driver: any, skillName: string): number | null {
+  const wanted = normalizeSkillName(String(skillName ?? ""));
+  if (!wanted) return null;
+  for (const item of driver?.items ?? []) {
+    if (item.type !== "skill") continue;
+    if (normalizeSkillName(String(item.name ?? "")) !== wanted) continue;
+    const level = Number(item.system?.derived?.level);
+    return Number.isFinite(level) ? level : null;
+  }
+  return null;
 }
 
 export class VehicleData extends foundry.abstract.TypeDataModel {
@@ -149,8 +171,22 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
     const operator = this.crew.find((seat) => seat.operator);
     const driver = operator ? fromUuidSync(operator.uuid) : null;
 
+    // "A vehicle's Dodge score is (operator's control skill/2) + vehicle's
+    // Handling, rounded down" (p. 469). A vehicle nobody is driving does not
+    // dodge, which is the same fact as its plowing ahead on nobody's turn.
+    const control = driver ? controlSkillOf(driver, v.skill) : null;
+
     this.derived = {
       basicSpeed: Number(driver?.system?.derived?.basicSpeed) || 0,
+      dodge: vehicleDodge({ controlSkill: control, handling: v.handling }),
+      controlSkill: control,
+      // "To avoid excessive die rolling, it is best to adjust the damage
+      // scale" (p. 470). Only worth showing for something big enough to need
+      // it; a car reads the same at either scale and saying so twice is noise.
+      decadeScale:
+        v.stHp >= 100 || v.dr >= 100
+          ? { dr: scaleScore(v.dr, "decade"), hp: scaleScore(v.stHp, "decade") }
+          : null,
       medium: mediumOf(locomotion),
       // Top Speed in yards a second, doubled: "double this to get mph".
       topSpeedMph: Math.round(v.topSpeed * 2 * 10) / 10,

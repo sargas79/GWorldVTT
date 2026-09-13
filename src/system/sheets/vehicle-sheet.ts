@@ -161,7 +161,16 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
           label: L("SafeDeceleration"),
           value: L("YardsPerSecond", { yards: derived.safeDeceleration }),
         },
+        {
+          label: L("Dodge"),
+          // Nobody at the wheel, nobody to swerve (p. 469).
+          value: derived.dodge === null ? NOTHING : String(derived.dodge),
+        },
       ],
+
+      // What a tank's numbers come to once the battle is being fought ten to
+      // one (p. 470). Null for anything small enough not to need it.
+      decadeScale: derived.decadeScale ?? null,
 
       // Only where it means something: a boat's draft, an aircraft's stall.
       draft: derived.medium === "water" && v.draft > 0 ? v.draft : null,
