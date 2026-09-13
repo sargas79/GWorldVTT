@@ -42,6 +42,8 @@ import {
 import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
 import { useTechnique, type Victim } from "../unarmed-techniques.js";
 import { rollInvention, type InventionPlan } from "../invention.js";
+import { stimulantWearsOff, takeDepressant, takeStimulant, withdrawalRoll } from "../drugs.js";
+import type { DrugKind } from "../../rules/intoxication.js";
 import type { InventionGrade } from "../../rules/invention.js";
 import type { UnarmedTechnique } from "../../rules/unarmed-techniques.js";
 import { attendPatient, operate, resuscitate } from "../recovery.js";
@@ -1444,6 +1446,34 @@ async function promptForInvention(tl: number): Promise<{
   );
 }
 
+/** Which depressant, how much of it, and whether there was drink too (p. 441). */
+async function promptForDepressant(): Promise<{ drug: DrugKind; doses: number; anyAlcohol: boolean } | null> {
+  const D = (key: string) => game.i18n.localize(`GWORLD.Drug.${key}`);
+  const kinds: Array<[string, string]> = (["sedative", "painkiller", "heroin"] as const)
+    .map((k) => [k, D(`Kind.${k}`)]);
+  return hazardPrompt(
+    D("Depressant"),
+    hazardSelect("drug", D("Which"), kinds) +
+      hazardField("doses", D("Doses"), 1, 'min="1"') +
+      hazardCheck("anyAlcohol", D("AnyAlcohol")),
+    (form) => ({
+      drug: str(form, "drug") as DrugKind,
+      doses: Math.max(1, num(form, "doses")),
+      anyAlcohol: ticked(form, "anyAlcohol"),
+    }),
+  );
+}
+
+/** Which kind of dependency, and whether the drug is to hand (p. 440). */
+async function promptForWithdrawal(): Promise<{ psychological: boolean; drugAvailable: boolean } | null> {
+  const D = (key: string) => game.i18n.localize(`GWORLD.Drug.${key}`);
+  return hazardPrompt(
+    D("Withdrawal"),
+    hazardCheck("psychological", D("Psychological")) + hazardCheck("drugAvailable", D("DrugAvailable")),
+    (form) => ({ psychological: ticked(form, "psychological"), drugAvailable: ticked(form, "drugAvailable") }),
+  );
+}
+
 /** How a thrown Molotov cocktail met its target (Campaigns p. 411). */
 async function promptForMolotov(): Promise<{
   defense: "dodge" | "block" | "none";
@@ -2618,6 +2648,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       throwMolotov: GWorldCharacterSheet.#onThrowMolotov,
       unarmedTechnique: GWorldCharacterSheet.#onUnarmedTechnique,
       invent: GWorldCharacterSheet.#onInvent,
+      stimulant: GWorldCharacterSheet.#onStimulant,
+      stimulantWearsOff: GWorldCharacterSheet.#onStimulantWearsOff,
+      depressant: GWorldCharacterSheet.#onDepressant,
+      withdrawal: GWorldCharacterSheet.#onWithdrawal,
       checkBottles: GWorldCharacterSheet.#onCheckBottles,
       buildingCollapse: GWorldCharacterSheet.#onCollapse,
       splashAcid: GWorldCharacterSheet.#onAcid,
@@ -4998,6 +5032,46 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const asked = await promptForInvention(Number(this.actor.system?.tl) || 3);
     if (!asked) return;
     await rollInvention({ actor: this.actor, ...asked });
+  }
+
+  /** A dose of a stimulant, and the HT roll a second one in a day calls for (p. 440). */
+  static async #onStimulant(this: GWorldCharacterSheet) {
+    if (!isRuleOn("intoxication")) return;
+    const doses = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Drug.Stimulant"),
+      label: game.i18n.localize("GWORLD.Drug.DosesToday"),
+      initial: 1,
+    });
+    if (doses === null) return;
+    await takeStimulant({ actor: this.actor, dosesToday: doses });
+  }
+
+  /** The stimulant wearing off: twice the FP it restored, taken back (p. 440). */
+  static async #onStimulantWearsOff(this: GWorldCharacterSheet) {
+    if (!isRuleOn("intoxication")) return;
+    const fp = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Drug.StimulantWearsOff"),
+      label: game.i18n.localize("GWORLD.Drug.FpRestored"),
+      initial: 0,
+    });
+    if (fp === null) return;
+    await stimulantWearsOff(this.actor, fp);
+  }
+
+  /** A depressant, and the overdose that comes of more than one (p. 441). */
+  static async #onDepressant(this: GWorldCharacterSheet) {
+    if (!isRuleOn("intoxication")) return;
+    const asked = await promptForDepressant();
+    if (!asked) return;
+    await takeDepressant({ actor: this.actor, ...asked });
+  }
+
+  /** One day of trying to give a drug up (p. 440). */
+  static async #onWithdrawal(this: GWorldCharacterSheet) {
+    if (!isRuleOn("intoxication")) return;
+    const asked = await promptForWithdrawal();
+    if (!asked) return;
+    await withdrawalRoll({ actor: this.actor, ...asked });
   }
 
   /** A Molotov cocktail thrown at somebody (Campaigns p. 411). */

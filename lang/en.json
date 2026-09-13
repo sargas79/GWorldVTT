@@ -3278,6 +3278,48 @@
         "FlawedTheory": "A flawed theory: it looks good, and will never work",
         "WontRun": "It will not run on a Complexity {computer} computer"
       }
+    },
+    "Drug": {
+      "Stimulant": "Stimulant",
+      "StimulantWearsOff": "Stimulant wears off",
+      "Depressant": "Depressant",
+      "Withdrawal": "Withdrawal",
+      "DosesToday": "Doses in the last 24 hours, this one included",
+      "Doses": "Doses taken together",
+      "AnyAlcohol": "Any alcohol as well",
+      "Which": "Drug",
+      "FpRestored": "FP the stimulant restored",
+      "Psychological": "Psychological dependency (Will, not HT)",
+      "DrugAvailable": "The drug is to hand",
+      "Kind": {
+        "sedative": "Sedative",
+        "painkiller": "Painkiller",
+        "heroin": "Heroin",
+        "stimulant": "Stimulant",
+        "hallucinogen": "Hallucinogen"
+      },
+      "StimulantTitle": "{name} takes a stimulant (dose {doses})",
+      "DepressantTitle": "{name} takes {drug} ({doses})",
+      "WithdrawalTitle": "{name}: a day of withdrawal",
+      "Resisted": "Resisted",
+      "Failed": "Failed",
+      "Line": {
+        "Restores": "Restores {fp} FP",
+        "Lasts": "Doesn't Sleep and Overconfidence (12) for {hours} hours",
+        "Crash": "Then loses {fp} FP, with Bad Temper (12) and Chronic Depression (9) for {hours} hours",
+        "HeartStops": "A critical failure on a second dose: a heart attack",
+        "Affected": "The drug takes effect",
+        "RiskedOverdose": "More than one dose: this roll was the overdose risk",
+        "Overdose": "Overdose: unconscious for {hours} hours",
+        "OverdosePoison": "And poisoned: {damage} toxic every {minutes} minutes for {cycles} cycles",
+        "GaveIn": "Gave in and took a dose — the attempt starts again",
+        "HurtByWithdrawal": "Loses {hp} HP, which will not heal until this is over",
+        "Quirk": "Gains a drug-related quirk, chosen by the GM",
+        "Progress": "{days} of {needed} days clear",
+        "Withdrawn": "The habit is beaten — buy off the Addiction",
+        "FinalWillKept": "The final Will roll succeeds: the quirks go too",
+        "FinalWillFailed": "The final Will roll fails: the quirks and disadvantages stay"
+      }
     }
   }
 }
