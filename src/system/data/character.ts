@@ -41,6 +41,28 @@ import { culturallyAdaptable, languagePenalty, type Comprehension } from "../../
 import { sleepPeriodFrom } from "../../rules/sleep.js";
 import { radiationRow, radiationToleranceFrom, remainingDose } from "../../rules/radiation.js";
 import { baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
+import {
+  materialArmorDivisor,
+  minStPenalty,
+  qualityAccuracyBonus,
+  qualityDamageBonus,
+  qualityMalfunction,
+  qualityRangeMultiplier,
+  weaponClassOf,
+  type WeaponClass,
+  type WeaponMaterial,
+  type WeaponQuality,
+} from "../../rules/weapon-quality.js";
+import {
+  brokenWeaponKindFor,
+  isSolidCrushing,
+  resistsBreakage,
+  unarmedAttackWeight,
+  weaponCondition,
+  weaponHitPoints,
+  weaponState,
+  type WeaponCondition,
+} from "../../rules/breakage.js";
 import { usableInCloseCombat } from "../../rules/tactical.js";
 import { isRuleOn } from "../optional-rules.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
@@ -201,6 +223,26 @@ export interface DerivedAttack {
   unbalanced: boolean;
   /** A fencing weapon, marked "F", which defends by its own rules. */
   isFencing: boolean;
+  /**
+   * The weapon's weight, which decides whether a parry can meet it and
+   * whether the parrying weapon breaks (Campaigns p. 376). A punch weighs a
+   * tenth of the ST behind it.
+   */
+  weight: number;
+  /** The grade the weapon was bought in (Characters p. 274). */
+  quality: WeaponQuality;
+  /** What the blade is made of, where the record says (p. 275). */
+  material: WeaponMaterial;
+  /** True for a weapon that rolls again on a "weapon breaks" fumble (Campaigns p. 556). */
+  resistsBreakage: boolean;
+  /** The skill penalty for a weapon needing more ST than the wielder has (p. 270). Zero or negative. */
+  minStPenalty: number;
+  /** What state the weapon is in after the damage it has taken (Campaigns p. 484). */
+  condition: WeaponCondition;
+  /** True when the weapon needs two hands, which lets a parry meet twice the weight. */
+  twoHanded: boolean;
+  /** True for a swing, which is what blade composition compares (p. 275). */
+  swung: boolean;
   /** Ranged only. */
   accuracy?: number;
   /**
@@ -231,6 +273,19 @@ interface DefenseView {
    * itself rather than on a sentence about it.
    */
   skillName: string;
+  /**
+   * The weapon a parry is made with, for Parrying Heavy Weapons (Campaigns
+   * p. 376): its weight, grade and material, and whether it is a pair of
+   * bare hands, which cannot snap.
+   */
+  weapon?: {
+    itemId: string;
+    weight: number;
+    quality: WeaponQuality;
+    material: WeaponMaterial;
+    twoHanded: boolean;
+    natural: boolean;
+  };
   /** Whether the weapon parried with is a fencing weapon, which retreats better. */
   isFencing: boolean;
 }
@@ -1298,6 +1353,57 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const magic = magicOf(item);
       const enchantedSkill = (found: { level: number | null; atDefault: boolean }) =>
         found.level === null ? found : { ...found, level: found.level + magic.accuracy };
+
+      // The grade it was bought in and what it is made of (Characters
+      // pp. 274-275): a fine blade cuts a point deeper, a fine rifle is a
+      // point more accurate and jams a point later, a stone edge faces
+      // double DR. And what it is as an object (Campaigns p. 483): its
+      // weight, and the DR and HP that weight gives it, which say whether it
+      // still works and whether a parry can meet it.
+      const modesOf = [...(sys.meleeModes ?? []), ...(sys.rangedModes ?? [])];
+      const skillsOf = modesOf.map((m: any) => String(m.skill ?? ""));
+      const typesOf = modesOf.map((m: any) => String(m.damageType ?? "") as DamageType);
+      const quality = (isRuleOn("weaponQuality") ? String((sys as any).quality ?? "good") : "good") as WeaponQuality;
+      const material = String((sys as any).material ?? "") as WeaponMaterial;
+      const weaponClass = (String((sys as any).weaponClass ?? "") ||
+        weaponClassOf({
+          skills: skillsOf,
+          damageTypes: typesOf,
+          hasMalfunction: (sys.rangedModes ?? []).some((m: any) => m.malfunction),
+          isFencing: (sys.meleeModes ?? []).some((m: any) => m.isFencing),
+        })) as WeaponClass;
+      const firearm = weaponClass === "firearm";
+      const weight = Number((sys as any).weight ?? 0) || 0;
+      const objectHp = item.type === "shield" ? Number((sys as any).hp ?? 0) || 0 : weaponHitPoints(weight, firearm);
+      const hpLost = Number((sys as any).hpLost ?? 0) || 0;
+      const condition: WeaponCondition =
+        isRuleOn("weaponBreakage") && objectHp > 0 ? weaponCondition(weaponState(hpLost, objectHp)) : "sound";
+      const brokenKind = brokenWeaponKindFor({
+        skill: skillsOf[0] ?? "",
+        weightLbs: weight,
+        ranged: (sys.meleeModes ?? []).length === 0,
+      });
+      // "An extremely light weapon... or a missile weapon... is useless even
+      // when merely disabled" (Campaigns p. 485); anything destroyed is.
+      const wrecked =
+        condition === "destroyed" ||
+        (condition === "disabled" && (brokenKind === "light" || brokenKind === "missile"));
+      const resists = resistsBreakage({
+        quality,
+        solidCrushing: isSolidCrushing(skillsOf[0] ?? "", typesOf),
+        magic: Array.isArray((sys as any).enchantments) && (sys as any).enchantments.length > 0,
+        firearm,
+        wheelLockOrGuidedOrBeam: skillsOf.some((s) => /Beam Weapons|Guided Missile/i.test(s)),
+      });
+      const withQuality = (damage: string, type: DamageType): string => {
+        const bonus = qualityDamageBonus(quality, type, material);
+        if (!bonus) return damage;
+        const parsed = parseDiceAdds(damage);
+        return parsed ? formatDiceAdds(addModifier(parsed, bonus)) : damage;
+      };
+      const lacking = isRuleOn("minimumSt") ? (minSt: number | null) => minStPenalty(attrs.ST, minSt) : () => 0;
+      const short = (found: { level: number | null; atDefault: boolean }, minSt: number | null) =>
+        found.level === null ? found : { ...found, level: found.level + lacking(minSt) };
       const withPuissance = (damage: string): string => {
         if (!magic.puissance) return damage;
         const parsed = parseDiceAdds(damage);
@@ -1309,11 +1415,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const unready = Boolean((sys as any).unready);
 
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
-        const { level: skillLevel, atDefault } = enchantedSkill(weaponSkill(mode.skill, true));
-        const meleeDamage = mode.damageSpecial ? SPECIAL : withPuissance(resolveDamage(
+        const { level: skillLevel, atDefault } = short(enchantedSkill(weaponSkill(mode.skill, true)), mode.minSt ?? null);
+        const meleeDamage = mode.damageSpecial ? SPECIAL : withQuality(withPuissance(resolveDamage(
           strikingSt, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
           Number(mode.damageExtraDice ?? 0) || 0,
-        ));
+        )), mode.damageType);
         melee.push({
           itemId: item.id,
           modeIndex: index,
@@ -1333,8 +1439,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           }),
           damage: meleeDamage,
           damageType: mode.damageSpecial ? "" : mode.damageType,
-          armorDivisor: mode.armorDivisor ?? 1,
+          // "A stone blade has an armor divisor of (0.5)" (Characters p. 275).
+          armorDivisor: materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
           damageRollable: !mode.affliction && !mode.damageSpecial && parseDiceAdds(meleeDamage) !== null,
+          weight,
+          quality,
+          material,
+          resistsBreakage: resists,
+          minStPenalty: lacking(mode.minSt ?? null),
+          condition,
+          twoHanded: Boolean(mode.twoHanded),
+          swung: mode.damageBase === "sw",
           // A big fighter's arms are longer, so their weapons reach further
           // (Campaigns p. 402). Only the upper end moves.
           reach: reachForSize(String(mode.reach ?? "C"), this.sm),
@@ -1350,7 +1465,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             (!isRuleOn("closeCombat") ||
               !this.conditions.closeCombat ||
               usableInCloseCombat(String(mode.reach ?? "C"))) &&
-            !(traits.oneArm && Boolean(mode.twoHanded)),
+            !(traits.oneArm && Boolean(mode.twoHanded)) &&
+            !wrecked,
           unbalanced: Boolean(mode.unbalanced),
           isFencing: Boolean(mode.isFencing),
           // Which critical miss table a fumble is read on is decided by the
@@ -1369,14 +1485,24 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // Bows and crossbows use their own ST for damage and range; a thrown
         // weapon uses the thrower's, Striking ST included.
         const st = mode.weaponSt ?? strikingSt;
-        const rangedDamage = mode.damageSpecial ? SPECIAL : withPuissance(resolveDamage(
-          st, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
-          Number(mode.damageExtraDice ?? 0) || 0,
-        ));
-        const range = mode.rangeIsStMultiple
+        // "Thrown weapons, and arrows and bolts, use the rules under Melee
+        // Weapon Quality" (Characters p. 276): the cutting and impaling bonus
+        // is theirs; a firearm's fine grade is in its Acc and Malf. instead.
+        const rangedDamage = mode.damageSpecial ? SPECIAL : (firearm ? (d: string) => d : (d: string) => withQuality(d, mode.damageType))(
+          withPuissance(resolveDamage(
+            st, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
+            Number(mode.damageExtraDice ?? 0) || 0,
+          )),
+        );
+        const stretch = qualityRangeMultiplier(weaponClass, quality);
+        const baseRange = mode.rangeIsStMultiple
           ? musclePoweredRange(mode.weaponSt ?? attrs.ST, mode.halfDamageRange, mode.maxRange)
           : { halfDamage: mode.halfDamageRange, max: mode.maxRange };
-        const { level: skillLevel, atDefault } = enchantedSkill(weaponSkill(mode.skill));
+        const range = {
+          halfDamage: Math.round((Number(baseRange.halfDamage) || 0) * stretch),
+          max: Math.round((Number(baseRange.max) || 0) * stretch),
+        };
+        const { level: skillLevel, atDefault } = short(enchantedSkill(weaponSkill(mode.skill)), mode.minSt ?? null);
 
         ranged.push({
           itemId: item.id,
@@ -1393,21 +1519,31 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           halfDamageRange: Number(range.halfDamage ?? 0) || 0,
           damage: rangedDamage,
           damageType: mode.damageSpecial ? "" : mode.damageType,
-          armorDivisor: mode.armorDivisor ?? 1,
+          armorDivisor: materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
           damageRollable: !mode.affliction && !mode.damageSpecial && parseDiceAdds(rangedDamage) !== null,
           reach: "",
           parry: null,
           parryModifier: 0,
           minSt: mode.minSt ?? null,
-          accuracy: mode.accuracy ?? 0,
+          weight,
+          quality,
+          material,
+          resistsBreakage: resists,
+          minStPenalty: lacking(mode.minSt ?? null),
+          condition,
+          twoHanded: Boolean(mode.twoHanded),
+          swung: mode.damageBase === "sw",
+          // "+1 to Acc" for a fine firearm, "-1 Acc" for a cheap thrown weapon.
+          accuracy: (mode.accuracy ?? 0) + qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown)),
           scopeBonus: mode.scopeBonus ?? 0,
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
           rateOfFire: mode.rateOfFire ?? 1,
           recoil: mode.recoil ?? 0,
           bulk: mode.bulk ?? 0,
-          malfunction: mode.malfunction ?? null,
+          // "+1 to Malf." for a fine firearm, -1 for a cheap one (Campaigns p. 407).
+          malfunction: qualityMalfunction(mode.malfunction ?? null, quality),
           shots: mode.shots ?? "",
-          usable: true,
+          usable: !wrecked,
           unbalanced: false,
           isFencing: false,
           // A ranged attack never reads the unarmed miss table: a thrown rock
@@ -1461,6 +1597,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         usable: true,
         unbalanced: false,
         isFencing: false,
+        // "Treat a punch, kick, bite, etc. as a weapon with an effective
+        // weight of 1/10 the attacker's ST" (Campaigns p. 376).
+        weight: unarmedAttackWeight(attrs.ST),
+        quality: "good",
+        material: "",
+        resistsBreakage: false,
+        minStPenalty: 0,
+        condition: "sound",
+        twoHanded: false,
+        swung: false,
         unarmed: true,
         stBased: true,
         explosive: false,
@@ -1502,6 +1648,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         usable: true,
         unbalanced: false,
         isFencing: false,
+        // "Treat a punch, kick, bite, etc. as a weapon with an effective
+        // weight of 1/10 the attacker's ST" (Campaigns p. 376).
+        weight: unarmedAttackWeight(attrs.ST),
+        quality: "good",
+        material: "",
+        resistsBreakage: false,
+        minStPenalty: 0,
+        condition: "sound",
+        twoHanded: false,
+        swung: false,
         unarmed: true,
         stBased: true,
         explosive: false,
@@ -1595,6 +1751,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
               math: describe(parryResult.base, parryResult.modifiers),
               skillName: bestParry.skillName,
               isFencing: bestParry.isFencing,
+              weapon: {
+                itemId: bestParry.itemId,
+                weight: bestParry.weight,
+                quality: bestParry.quality,
+                material: bestParry.material,
+                twoHanded: bestParry.twoHanded,
+                natural: bestParry.natural,
+              },
             }
           : null,
       block:

@@ -13,6 +13,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { applyDamageToActor, type AppliedDamage, type IncomingDamage } from "./damage.js";
+import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy } from "./weapon-damage.js";
 import { rollSuccess } from "./roll.js";
 import { currentTargets } from "./targets.js";
 import { blastAt } from "../rules/explosions.js";
@@ -53,6 +54,8 @@ interface DamageFlag {
   chink?: boolean;
   /** Pellets striking as one: the figure the target's DR is multiplied by. */
   drMultiplier?: number;
+  /** A blow aimed at a weapon rather than at its wielder (Campaigns p. 401). */
+  weaponTarget?: { actorUuid: string; itemId: string; name: string };
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -76,6 +79,13 @@ function addApplyControls(message: any, html: HTMLElement): void {
 
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-apply]")) return;
+
+  // A blow at a weapon lands on the item, not on a token: one button, no
+  // hit location, and the weapon's own DR and HP do the rest (p. 483).
+  if (flag.weaponTarget) {
+    addWeaponApplyControl(root, flag, flag.weaponTarget);
+    return;
+  }
 
   const row = document.createElement("div");
   row.className = "gc-apply";
@@ -354,6 +364,8 @@ interface DefenseFlag {
   noDefense?: boolean;
   /** True for a thrown Missile spell, which may be dodged or blocked but not parried. */
   noParry?: boolean;
+  /** The attacking weapon, for the parry to weigh (Campaigns p. 376). */
+  weapon?: { weight: number; material: string; swung: boolean };
 }
 
 function defenseFlag(message: any): DefenseFlag | null {
@@ -513,6 +525,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
           feverish: feverishBox?.checked ?? false,
           skill: choice.skillName,
           isFencing: choice.isFencing,
+          ...(flag.weapon ? { attackWeapon: flag.weapon } : {}),
         });
       });
       row.append(button);
@@ -598,11 +611,26 @@ async function rollDefense(options: {
   feverish: boolean;
   skill: string;
   isFencing: boolean;
+  /** The attacking weapon, which a parry has to weigh (Campaigns p. 376). */
+  attackWeapon?: { weight: number; material: string; swung: boolean };
 }): Promise<void> {
   const {
     defender, key, total, attack, arcPenalty, deception, retreating, feverish, skill, isFencing,
   } = options;
   const name = game.i18n.localize(DEFENSE_LABELS[key]);
+
+  // "You cannot parry a weapon heavier than your Basic Lift -- or twice BL,
+  // if using a two-handed weapon. Attempts to parry anything heavier fail
+  // automatically" (p. 376).
+  const parryWeapon = key === "parry" ? defender.system?.derived?.defenses?.parry?.weapon : undefined;
+  const heavy = key === "parry" && options.attackWeapon && isRuleOn("weaponBreakage");
+  if (heavy && options.attackWeapon) {
+    const basicLift = Number(defender.system?.derived?.basicLift ?? 0) || 0;
+    if (parryTooHeavy({ basicLift, twoHanded: parryWeapon?.twoHanded === true, attackWeight: options.attackWeapon.weight })) {
+      await postParryTooHeavy(defender, options.attackWeapon.weight, basicLift);
+      return;
+    }
+  }
 
   // Paid before the roll, and a defender who cannot pay does not get the bonus
   // -- so the defense is abandoned rather than rolled on a promise, and they
@@ -638,7 +666,7 @@ async function rollDefense(options: {
     });
   }
 
-  await rollSuccess({
+  const outcome = await rollSuccess({
     actor: defender,
     base: total,
     label: game.i18n.format("GWORLD.Chat.DefendingAgainst", { defense: name, attack }),
@@ -646,8 +674,55 @@ async function rollDefense(options: {
     modifiers,
   });
 
+  // "Your weapon may break if it parries anything three or more times its
+  // own weight" (p. 376) -- whether or not the parry succeeded.
+  if (heavy && options.attackWeapon) {
+    await heavyParryCheck({
+      defender,
+      parryWeapon,
+      attackWeapon: options.attackWeapon,
+      parried: outcome?.success === true,
+    });
+  }
+
   // "... or forced to make an active defense, you lose your aim."
   await loseAim(defender, "defended");
+}
+
+/** The apply control for a blow aimed at a weapon (Campaigns p. 401). */
+function addWeaponApplyControl(
+  root: HTMLElement,
+  flag: DamageFlag,
+  target: NonNullable<DamageFlag["weaponTarget"]>,
+): void {
+  const row = document.createElement("div");
+  row.className = "gc-apply";
+  row.dataset.gworldApply = "";
+
+  const who = document.createElement("span");
+  who.className = "gc-who";
+  who.textContent = target.name;
+  row.append(who);
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "gc-apply-button";
+  button.textContent = game.i18n.localize("GWORLD.Breakage.ApplyToWeapon");
+  button.addEventListener("click", async () => {
+    const owner: any = await fromUuid(target.actorUuid).catch(() => null);
+    const item = owner?.items?.get?.(target.itemId);
+    if (!item?.isOwner) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Breakage.CannotApply"));
+      return;
+    }
+    await applyDamageToWeapon(owner, item, {
+      basicDamage: flag.basicDamage,
+      damageType: flag.damageType,
+      armorDivisor: flag.armorDivisor,
+    });
+  });
+  row.append(button);
+  root.append(row);
 }
 
 /** What an applied blow recorded about who still owes a knockdown roll. */

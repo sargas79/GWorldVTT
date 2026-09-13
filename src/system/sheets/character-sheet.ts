@@ -72,6 +72,7 @@ import {
 } from "../../rules/disease.js";
 import { POISON_EXAMPLES, poisonNamed, type Poison, type Treatment } from "../../rules/poison.js";
 import { rollDisarm } from "../disarm.js";
+import { rollStrikeToBreak, weaponsInHand } from "../weapon-damage.js";
 import {
   beginGrapple,
   endGrapple,
@@ -1836,21 +1837,42 @@ async function promptForAward(): Promise<{ points: number; note: string } | null
  * whether it is a jitte or a whip, and whether the foe has both hands on
  * theirs are facts about this moment rather than about the characters.
  */
-async function promptForDisarm(): Promise<{
+async function promptForDisarm(foe: any): Promise<{
+  aim: "disarm" | "break";
+  itemId: string;
   fencingWeapon: boolean;
   jitteOrWhip: boolean;
   foeTwoHanded: boolean;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Disarm.${key}`);
+  const B = (key: string) => game.i18n.localize(`GWORLD.Breakage.${key}`);
   const check = (name: string, label: string) => `
       <label style="display:flex;align-items:center;gap:8px">
         <input type="checkbox" name="${name}">
         <span>${label}</span>
       </label>`;
 
+  // "State whether you are striking to disarm or to break the weapon"
+  // (Campaigns p. 400) -- and which weapon, where the foe holds more than
+  // one, since the penalty to hit is the weapon's size.
+  const weapons = weaponsInHand(foe);
+  const breaking = isRuleOn("weaponBreakage");
+  const weaponOptions = weapons
+    .map((w) => `<option value="${w.id}">${foundry.utils.escapeHTML(w.name)} (${w.penalty})</option>`)
+    .join("");
+  const row = (label: string, control: string) => `
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${label}</span>${control}
+      </label>`;
+
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Title") },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      ${breaking ? row(B("Aim"), `<select name="aim" style="width:200px">
+        <option value="disarm">${B("AimDisarm")}</option>
+        <option value="break">${B("AimBreak")}</option>
+      </select>`) : ""}
+      ${weapons.length ? row(B("Weapon"), `<select name="weapon" style="width:200px">${weaponOptions}</select>`) : ""}
       ${check("fencing", L("Fencing"))}
       ${check("jitte", L("JitteOption"))}
       ${check("twoHanded", L("TwoHandedOption"))}
@@ -1861,7 +1883,10 @@ async function promptForDisarm(): Promise<{
         const form = button.closest<HTMLElement>(".application");
         const ticked = (name: string) =>
           form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+        const chosen = (name: string) => form?.querySelector<HTMLSelectElement>(`select[name="${name}"]`)?.value ?? "";
         return {
+          aim: chosen("aim") === "break" ? "break" : "disarm",
+          itemId: chosen("weapon"),
           fencingWeapon: ticked("fencing"),
           jitteOrWhip: ticked("jitte"),
           foeTwoHanded: ticked("twoHanded"),
@@ -3546,10 +3571,41 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const foe = targets[0]?.actor;
     if (!foe) return;
 
-    const asked = await promptForDisarm();
+    const asked = await promptForDisarm(foe);
     if (!asked) return;
 
-    await rollDisarm({ actor: this.actor, foe, ...asked });
+    // Striking to break (p. 401) is the attacker's own best blow at the
+    // weapon; the sheet's melee list is where that blow is.
+    if (asked.aim === "break") {
+      if (!asked.itemId) {
+        ui.notifications?.warn(game.i18n.localize("GWORLD.Breakage.NoWeaponToStrike"));
+        return;
+      }
+      const melee: any[] = this.actor.system?.derived?.melee ?? [];
+      const best = melee
+        .filter((a) => a.damageRollable && typeof a.skillLevel === "number" && a.usable && !a.unready)
+        .sort((a, b) => b.skillLevel - a.skillLevel)[0];
+      if (!best) {
+        ui.notifications?.warn(game.i18n.localize("GWORLD.Disarm.NoWeapon"));
+        return;
+      }
+      await rollStrikeToBreak({
+        actor: this.actor,
+        foe,
+        itemId: asked.itemId,
+        attack: {
+          name: String(best.name),
+          skillLevel: Number(best.skillLevel),
+          damage: String(best.damage),
+          damageType: best.damageType,
+          armorDivisor: Number(best.armorDivisor ?? 1) || 1,
+        },
+      });
+      return;
+    }
+
+    const { fencingWeapon, jitteOrWhip, foeTwoHanded } = asked;
+    await rollDisarm({ actor: this.actor, foe, fencingWeapon, jitteOrWhip, foeTwoHanded });
   }
 
   /** Tries to get loose (Campaigns p. 371). */

@@ -40,6 +40,9 @@ const DAMAGE_TYPES = new Set([
   "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox",
 ]);
 const EQUIPMENT_CATEGORIES = new Set(["weapon", "tool", "consumable", "vehicle", "misc"]);
+const WEAPON_QUALITIES = new Set(["cheap", "good", "fine", "veryFine"]);
+const WEAPON_MATERIALS = new Set(["", "stone", "bronze", "iron", "steel", "wood", "plastic", "silver", "silverCoated"]);
+const WEAPON_CLASSES = new Set(["", "fencing", "sword", "cutting", "crushing", "firearm", "bow"]);
 const HIT_LOCATIONS = new Set([
   "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",
 ]);
@@ -374,6 +377,17 @@ function validateItem(entry, file) {
 
   if (entry.type === "equipment" && sys.category !== undefined) {
     check(EQUIPMENT_CATEGORIES.has(sys.category), file, name, `bad category "${sys.category}"`);
+  }
+  if (entry.type === "equipment") {
+    // The grade, the material and the class it is priced in (Characters
+    // pp. 274-275), each one of the book's own words or blank.
+    if (sys.quality !== undefined) check(WEAPON_QUALITIES.has(sys.quality), file, name, `bad quality "${sys.quality}"`);
+    if (sys.material !== undefined) check(WEAPON_MATERIALS.has(sys.material), file, name, `bad material "${sys.material}"`);
+    if (sys.weaponClass !== undefined) check(WEAPON_CLASSES.has(sys.weaponClass), file, name, `bad weapon class "${sys.weaponClass}"`);
+    if (sys.listCost !== undefined) check(typeof sys.listCost === "number" && sys.listCost >= 0, file, name, `bad list cost "${sys.listCost}"`);
+  }
+  if (["equipment", "shield"].includes(entry.type) && sys.hpLost !== undefined) {
+    check(Number.isInteger(sys.hpLost) && sys.hpLost >= 0, file, name, `bad HP lost "${sys.hpLost}"`);
   }
 
   for (const mode of sys.rangedModes ?? []) {

@@ -133,6 +133,12 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     // "An item has a LC only if it is likely to be controlled", and what the
     // class means depends on the campaign's Control Rating.
     { key: "legalityClass", reference: "Characters p. 267", default: true },
+    // Cheap, good, fine and very fine: what each costs and does.
+    { key: "weaponQuality", reference: "Characters pp. 274-279", default: true },
+    // "-1 to weapon skill per point of ST you lack", and the FP at the end.
+    { key: "minimumSt", reference: "Characters p. 270", default: true },
+    // Parrying heavy weapons, striking at weapons, the Broken Weapons table.
+    { key: "weaponBreakage", reference: "Campaigns pp. 376, 400, 485", default: true },
   ],
 };
 

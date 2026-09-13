@@ -425,6 +425,36 @@
       </div>
     {{/if}}
 
+    {{#if weapon.showObject}}
+      <div class="isub">
+        <div class="isub-head">
+          {{localize "GWORLD.Item.ObjectStats"}}
+          {{#if editable}}
+            {{#if weapon.facts.hpLost}}
+              <button type="button" class="ibtn" data-action="repairWeapon" data-tooltip="{{localize 'GWORLD.Item.RepairHint'}}">
+                {{localize "GWORLD.Item.Repair"}}
+              </button>
+            {{/if}}
+          {{/if}}
+        </div>
+        <div class="ifields">
+          <label>{{localize "GWORLD.Column.DR"}}
+            <input type="number" value="{{weapon.facts.dr}}" disabled />
+          </label>
+          <label>{{localize "GWORLD.Secondary.HP"}}
+            <input type="number" value="{{weapon.facts.hp}}" disabled />
+          </label>
+          <label data-tooltip="{{localize 'GWORLD.Item.HpLostHint'}}">{{localize "GWORLD.Item.HpLost"}}
+            <input type="number" name="system.hpLost" value="{{system.hpLost}}" step="1" min="0"
+                   {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label>{{localize "GWORLD.Item.Condition"}}
+            <input type="text" value="{{localize weapon.conditionLabel}}" disabled />
+          </label>
+        </div>
+      </div>
+    {{/if}}
+
     {{#if isShield}}
       <div class="ifields">
         <label>{{localize "GWORLD.Shield.DB"}}
@@ -633,6 +663,32 @@
             </select>
           </label>
         </div>
+        {{#if weapon.showQuality}}
+          <div class="ifields">
+            <label data-tooltip="{{localize 'GWORLD.Item.QualityHint'}}">{{localize "GWORLD.Item.Quality"}}
+              <select name="system.quality" {{#unless editable}}disabled{{/unless}}>
+                {{selectOptions weapon.qualities selected=system.quality localize=true}}
+              </select>
+            </label>
+            <label data-tooltip="{{localize 'GWORLD.Item.MaterialHint'}}">{{localize "GWORLD.Item.Material"}}
+              <select name="system.material" {{#unless editable}}disabled{{/unless}}>
+                {{selectOptions choices.materials selected=system.material localize=true}}
+              </select>
+            </label>
+            <label data-tooltip="{{localize 'GWORLD.Item.WeaponClassHint'}}">{{localize "GWORLD.Item.WeaponClass"}}
+              <select name="system.weaponClass" {{#unless editable}}disabled{{/unless}}>
+                {{selectOptions choices.weaponClasses selected=system.weaponClass localize=true}}
+              </select>
+            </label>
+            <label data-tooltip="{{localize 'GWORLD.Item.ListCostHint'}}">{{localize "GWORLD.Item.ListCost"}}
+              <input type="number" name="system.listCost" value="{{system.listCost}}" step="1" min="0"
+                     {{#unless editable}}disabled{{/unless}} />
+            </label>
+          </div>
+          {{#if weapon.multiplier}}
+            <p class="ihint">{{localize "GWORLD.Item.QualityPrice" multiplier=weapon.multiplier}}</p>
+          {{/if}}
+        {{/if}}
         <p class="ihint">{{localize "GWORLD.Gear.CategoryHint"}}</p>
         {{#if isVehicle}}
           {{!-- The stat line as the tables print it (Campaigns pp. 462-465). --}}

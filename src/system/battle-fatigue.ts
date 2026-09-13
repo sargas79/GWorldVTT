@@ -20,6 +20,12 @@ export function registerBattleFatigue(): void {
   });
 }
 
+/** Whether any weapon in hand needs more ST than its wielder has (Characters p. 270). */
+function wieldsAboveStrength(actor: any): boolean {
+  const rows: any[] = [...(actor?.system?.derived?.melee ?? []), ...(actor?.system?.derived?.ranged ?? [])];
+  return rows.some((row) => Number(row?.minStPenalty ?? 0) < 0);
+}
+
 /** Charges everyone in a finished battle what it cost them, and says so. */
 export async function chargeBattleFatigue(combat: any): Promise<void> {
   const rounds = Math.max(0, Math.floor(Number(combat?.round ?? 0)));
@@ -37,8 +43,14 @@ export async function chargeBattleFatigue(combat: any): Promise<void> {
 
     const current = Number(actor.system?.fp?.value);
     if (!Number.isFinite(current)) continue;
-    await actor.update({ "system.fp.value": current - cost });
-    charged.push(String(actor.name ?? ""));
+    // "If you try to use a weapon that requires more ST than you have, you
+    // will be... lose one extra FP at the end of any fight that lasts long
+    // enough to fatigue you" (Characters p. 270).
+    const strained = isRuleOn("minimumSt") && wieldsAboveStrength(actor) ? 1 : 0;
+    await actor.update({ "system.fp.value": current - cost - strained });
+    charged.push(strained
+      ? game.i18n.format("GWORLD.BattleFatigue.Strained", { name: String(actor.name ?? "") })
+      : String(actor.name ?? ""));
   }
 
   if (charged.length === 0) return;

@@ -71,6 +71,7 @@ import { impairedAttacks } from "../rules/trait-effects.js";
 import { levelDifference } from "../rules/melee-situations.js";
 import { turnedBlade } from "../rules/subduing.js";
 import { coverShot, type CoverApproach } from "../rules/cover.js";
+import { breakWeapon } from "./weapon-damage.js";
 import type { DamageType } from "../rules/types.js";
 
 const CHAT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/success-roll.hbs`;
@@ -117,6 +118,24 @@ export interface SuccessRollOptions {
    * (Characters p. 241). Recorded on the message for the defense card.
    */
   noParry?: boolean;
+  /**
+   * The weapon the attack is made with, for the defender's parry to weigh
+   * (Campaigns p. 376) and for the Critical Miss Table's resistant weapons
+   * (p. 556): its weight, its blade's material, whether it was swung, and
+   * whether it rolls again on "your weapon breaks".
+   */
+  weapon?: { weight: number; material: string; swung: boolean; resistsBreakage: boolean };
+}
+
+/** A critical miss, with what the table said and whether the weapon resisted. */
+export interface CriticalMissResult {
+  roll: any;
+  total: number;
+  effect: string;
+  effectKey: string;
+  gmDecides: boolean;
+  /** The second roll a resistant weapon made, and what it came to. */
+  again?: { roll: any; total: number; broke: boolean };
 }
 
 /**
@@ -158,7 +177,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   // location and the target's DR are both known.
   const criticalMiss =
     kind === "attack" && outcome.criticalFailure && isRuleOn("criticalTables")
-      ? await rollCriticalMiss(criticalMissTableFor(unarmed))
+      ? await rollCriticalMiss(criticalMissTableFor(unarmed), options.weapon?.resistsBreakage === true)
       : null;
   const criticalHit = kind === "attack" && outcome.criticalSuccess && isRuleOn("criticalTables");
 
@@ -198,16 +217,23 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     speaker: ChatMessage.implementation.getSpeaker({ actor }),
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
-    rolls: [roll, ...(criticalMiss ? [criticalMiss.roll] : []), ...(jam ? [jam.roll] : [])],
+    rolls: [
+      roll,
+      ...(criticalMiss ? [criticalMiss.roll] : []),
+      ...(criticalMiss?.again ? [criticalMiss.again.roll] : []),
+      ...(jam ? [jam.roll] : []),
+    ],
     // An attack that connects is the moment to record who it was aimed at: the
     // defender rolls afterwards, by which time the attacker may well have
     // changed their target. A miss needs no defense, so it carries nothing.
     ...(kind === "attack" && outcome.success
-      ? { flags: attackFlags(actor, label, defensePenalty, criticalHit, noParry) }
+      ? { flags: attackFlags(actor, label, defensePenalty, criticalHit, noParry, options.weapon) }
       : {}),
   });
 
-  return outcome;
+  // What the fumble did to the weapon travels back to whoever rolled, who
+  // knows which item it was and can break it.
+  return Object.assign(outcome, { criticalMissEffect: criticalMiss?.effectKey ?? null });
 }
 
 /**
@@ -287,21 +313,33 @@ async function rollMalfunction(
  * in the log and animates -- a result this unpleasant should be visibly rolled
  * rather than asserted.
  */
-async function rollCriticalMiss(table: CriticalTable): Promise<{
-  roll: any;
-  total: number;
-  effect: string;
-  gmDecides: boolean;
-}> {
+async function rollCriticalMiss(table: CriticalTable, resistsBreakage = false): Promise<CriticalMissResult> {
   const roll = new Roll("3d6");
   await roll.evaluate();
   const entry = criticalEntry(table, roll.total);
-  return {
+  const result: CriticalMissResult = {
     roll,
     total: roll.total,
     effect: game.i18n.localize(`GWORLD.Critical.${entry.effect}`),
+    effectKey: entry.effect,
     gmDecides: entry.gmDecides === true,
   };
+
+  // "Certain weapons are resistant to breakage... If you have a weapon like
+  // that, roll again. Only if you get a 'broken weapon' result a second time
+  // does the weapon really break. If you get any other result, you drop the
+  // weapon instead." (p. 556)
+  if (entry.effect === "weaponBreaks" && resistsBreakage && isRuleOn("weaponBreakage")) {
+    const again = new Roll("3d6");
+    await again.evaluate();
+    const second = criticalEntry(table, again.total);
+    const broke = second.effect === "weaponBreaks";
+    result.again = { roll: again, total: again.total, broke };
+    result.effectKey = broke ? "weaponBreaks" : "dropWeapon";
+    result.effect = game.i18n.localize(`GWORLD.Critical.${broke ? "weaponBreaksTwice" : "dropWeaponInstead"}`);
+    result.gmDecides = false;
+  }
+  return result;
 }
 
 /**
@@ -321,6 +359,7 @@ function attackFlags(
   defensePenalty: number,
   criticalHit: boolean,
   noParry = false,
+  weapon?: { weight: number; material: string; swung: boolean },
 ): object {
   const defenders = targetedTokens()
     .filter((token: any) => token?.actor?.uuid)
@@ -347,6 +386,8 @@ function attackFlags(
         noDefense: criticalHit,
         // A thrown Missile spell cannot be parried (Characters p. 241).
         ...(noParry ? { noParry: true } : {}),
+        // What the defender's parry has to weigh (Campaigns p. 376).
+        ...(weapon ? { weapon: { weight: weapon.weight, material: weapon.material, swung: weapon.swung } } : {}),
       },
     },
   };
@@ -371,6 +412,11 @@ export interface DamageRollOptions {
    * the target's DR are both multiplied by this.
    */
   massMultiplier?: number;
+  /**
+   * A blow aimed at a weapon rather than its wielder (Campaigns p. 401).
+   * The card applies it to the item instead of to a token.
+   */
+  weaponTarget?: { actorUuid: string; itemId: string; name: string };
 }
 
 /**
@@ -467,6 +513,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           // that replace the roll with maximum damage.
           maxDamage: applyDamageFloor(maxRoll(rolled) * mass, damageType),
           ...(mass > 1 ? { drMultiplier: mass } : {}),
+          ...(options.weaponTarget ? { weaponTarget: options.weaponTarget } : {}),
           explosive,
           // The dice, not the rolled total: the blast radius is set by how
           // many dice the attack rolls, whatever they came up -- and a
@@ -668,6 +715,19 @@ export async function handleRollAction(
     ? `${rollLabel ?? rollType ?? "Roll"} (${game.i18n.format("GWORLD.Ranged.Measured", { yards: measured.rangeYards })})`
     : (rollLabel ?? rollType ?? "Roll");
 
+  // What the weapon is, for the defender's parry to weigh and the fumble
+  // table to read (Campaigns pp. 376, 556). A weapon that says nothing
+  // weighs nothing, which is what a spell or a natural attack should say.
+  const weaponWeight = Number(target.dataset.weaponWeight);
+  const wielded = Number.isFinite(weaponWeight)
+    ? {
+        weight: weaponWeight,
+        material: target.dataset.material ?? "",
+        swung: target.dataset.swung === "1",
+        resistsBreakage: target.dataset.resistsBreakage === "1",
+      }
+    : undefined;
+
   const outcome = await rollSuccess({
     actor,
     base,
@@ -675,6 +735,7 @@ export async function handleRollAction(
     kind: rollKind(rollType),
     // A Missile spell "may block or dodge, but not parry" (Characters p. 241).
     noParry: target.dataset.noParry === "1",
+    ...(wielded ? { weapon: wielded } : {}),
     modifiers,
     // Which critical miss table a fumble reads is decided by the attack, and
     // the sheet is where that is known.
@@ -701,6 +762,13 @@ export async function handleRollAction(
       ? { rapidFire: { shotsFired: shot.shotsFired, recoil: shot.recoil } }
       : {}),
   });
+
+  // A fumble that broke the weapon (Campaigns p. 556) is applied to it.
+  if (rollType === "attack" && (outcome as any)?.criticalMissEffect === "weaponBreaks" && isRuleOn("weaponBreakage")) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? actor?.items?.get(id) : null;
+    if (item?.isOwner) await breakWeapon(actor, item, "fumble");
+  }
 
   // The shot spends the aim, and a swing of a weapon too heavy to hold
   // steady leaves it needing a Ready maneuver before the next.

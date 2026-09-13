@@ -26,6 +26,10 @@ interface Packed {
   system: Record<string, unknown> & {
     lc?: number | null;
     flexible?: boolean;
+    weaponClass?: string;
+    quality?: string;
+    listCost?: number;
+    cost?: number;
     meleeModes?: Mode[];
     rangedModes?: Mode[];
   };
@@ -218,6 +222,19 @@ describe("the equipment compendium", () => {
     expect(byName(gear, "Blaster Pistol").system.rangedModes?.[0]?.surge).toBe(true);
     // A goat's foot cocks a crossbow; it attacks nobody.
     expect(byName(gear, "Goat's Foot").system.rangedModes).toEqual([]);
+  });
+
+  it("records the class each weapon's quality is priced in (p. 274)", () => {
+    expect(byName(gear, "Broadsword").system.weaponClass).toBe("sword");
+    expect(byName(gear, "Large Knife").system.weaponClass).toBe("sword");
+    expect(byName(gear, "Axe").system.weaponClass).toBe("cutting");
+    expect(byName(gear, "Quarterstaff").system.weaponClass).toBe("crushing");
+    expect(byName(gear, "Assault Rifle, 5.56mm").system.weaponClass).toBe("firearm");
+    expect(byName(gear, "Longbow").system.weaponClass).toBe("bow");
+    // The table's price buys good quality, and is kept as the list price.
+    const sword = byName(gear, "Broadsword").system;
+    expect(sword.quality).toBe("good");
+    expect(sword.listCost).toBe(sword.cost);
   });
 
   it("marks the ‡ weapons as unready after a swing (p. 270)", () => {
