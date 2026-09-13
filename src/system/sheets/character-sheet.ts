@@ -35,7 +35,8 @@ import { payCostOfLiving, rollAging, studySkill, workAMonth } from "../life.js";
 import { trample } from "../trampling.js";
 import { fightOffSwarm } from "../swarms.js";
 import {
-  burn, catchFire, controlVehicle, hike, irradiate, jumpOutOfVehicle, shock, shootAtVehicle, sleepFor,
+  accelerate, breatheBadAir, burn, catchFire, controlVehicle, crushingPressure, decompress, hike,
+  irradiate, jumpOutOfVehicle, motionSickness, shock, shootAtVehicle, sleepFor, splashAcid,
   stayAwake,
   struckBy,
 } from "../hazards.js";
@@ -130,6 +131,9 @@ import {
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
 import { DRESS_STATES } from "../../rules/cinematic.js";
+import type { AcidContact, AcidLanding } from "../../rules/acid.js";
+import type { AtmosphereHazard, HazardStrength } from "../../rules/atmosphere.js";
+import type { PressureSupport } from "../../rules/pressure.js";
 import {
   nextSkillPoints,
   nextTechniquePoints,
@@ -1224,6 +1228,130 @@ const str = (form: HTMLElement | null, name: string) =>
 const ticked = (form: HTMLElement | null, name: string) =>
   form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
 
+/** How the acid was met, and where it landed (Campaigns p. 428). */
+async function promptForAcid(): Promise<{ contact: AcidContact; landing: AcidLanding } | null> {
+  const contacts: Array<[string, string]> = (["splashed", "immersed", "swallowed"] as const)
+    .map((k) => [k, HZ(`AcidContact.${k}`)]);
+  const landings: Array<[string, string]> = (["body", "face", "eyes"] as const)
+    .map((k) => [k, HZ(`AcidLanding.${k}`)]);
+  return hazardPrompt(
+    HZ("Acid"),
+    hazardSelect("contact", HZ("AcidContactLabel"), contacts) +
+      hazardSelect("landing", HZ("AcidLandingLabel"), landings) +
+      `<p class="ihint" style="margin:0">${HZ("AcidHint")}</p>`,
+    (form) => ({
+      contact: str(form, "contact") as AcidContact,
+      landing: str(form, "landing") as AcidLanding,
+    }),
+  );
+}
+
+/** How thick the air is and what is wrong with it (Campaigns p. 429). */
+async function promptForAir(): Promise<{
+  atmospheres: number;
+  hazard: AtmosphereHazard | "none";
+  strength: HazardStrength;
+} | null> {
+  const hazards: Array<[string, string]> = (["none", "corrosive", "toxic", "suffocating"] as const)
+    .map((k) => [k, HZ(`AirHazard.${k}`)]);
+  const strengths: Array<[string, string]> = (["trace", "lethal", "mostly"] as const)
+    .map((k) => [k, HZ(`AirStrength.${k}`)]);
+  return hazardPrompt(
+    HZ("BadAir"),
+    `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${HZ("Atmospheres")}</span>
+        <input type="number" name="atm" value="1" step="0.01" min="0" style="width:90px">
+      </label>` +
+      hazardSelect("hazard", HZ("AirHazardLabel"), hazards) +
+      hazardSelect("strength", HZ("AirStrengthLabel"), strengths) +
+      `<p class="ihint" style="margin:0">${HZ("BadAirHint")}</p>`,
+    (form) => ({
+      atmospheres: num(form, "atm"),
+      hazard: str(form, "hazard") as AtmosphereHazard | "none",
+      strength: str(form, "strength") as HazardStrength,
+    }),
+  );
+}
+
+/** How deep, and what Pressure Support they have (Campaigns p. 435). */
+async function promptForPressure(): Promise<{
+  atmospheres: number;
+  support: PressureSupport;
+  ascending: boolean;
+  explosive: boolean;
+} | null> {
+  const supports: Array<[string, string]> = (["0", "1", "2", "3"] as const)
+    .map((k) => [k, HZ(`PressureSupport.${k}`)]);
+  return hazardPrompt(
+    HZ("Pressure"),
+    `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${HZ("Atmospheres")}</span>
+        <input type="number" name="atm" value="1" step="0.5" min="0" style="width:90px">
+      </label>` +
+      hazardSelect("support", HZ("PressureSupportLabel"), supports) +
+      hazardCheck("ascending", HZ("Ascending")) +
+      hazardCheck("explosive", HZ("Explosive")) +
+      `<p class="ihint" style="margin:0">${HZ("PressureHint")}</p>`,
+    (form) => ({
+      atmospheres: num(form, "atm"),
+      support: Number(str(form, "support") || 0) as PressureSupport,
+      ascending: ticked(form, "ascending"),
+      explosive: ticked(form, "explosive"),
+    }),
+  );
+}
+
+/** How hard, from what gravity, and how they were sitting (Campaigns p. 434). */
+async function promptForAcceleration(): Promise<{
+  gForce: number;
+  homeGravity: number;
+  braced: boolean;
+  inverted: boolean;
+} | null> {
+  return hazardPrompt(
+    HZ("Acceleration"),
+    `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${HZ("GForce")}</span>
+        <input type="number" name="g" value="3" step="0.5" min="0" style="width:90px">
+      </label>` +
+      `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${HZ("HomeGravity")}</span>
+        <input type="number" name="home" value="1" step="0.1" min="0" style="width:90px">
+      </label>` +
+      hazardCheck("braced", HZ("Braced")) +
+      hazardCheck("inverted", HZ("Inverted")) +
+      `<p class="ihint" style="margin:0">${HZ("AccelerationHint")}</p>`,
+    (form) => ({
+      gForce: num(form, "g"),
+      homeGravity: num(form, "home"),
+      braced: ticked(form, "braced"),
+      inverted: ticked(form, "inverted"),
+    }),
+  );
+}
+
+/** The sea or free fall, and whether they are prone to either (pp. 434, 436). */
+async function promptForMotionSickness(): Promise<{
+  kind: "sea" | "freeFall";
+  motionSickness: boolean;
+  spaceSickness: boolean;
+} | null> {
+  const kinds: Array<[string, string]> = (["sea", "freeFall"] as const)
+    .map((k) => [k, HZ(`MotionKind.${k}`)]);
+  return hazardPrompt(
+    HZ("MotionSickness"),
+    hazardSelect("kind", HZ("MotionKindLabel"), kinds) +
+      hazardCheck("motionSickness", HZ("HasMotionSickness")) +
+      hazardCheck("spaceSickness", HZ("HasSpaceSickness")) +
+      `<p class="ihint" style="margin:0">${HZ("MotionHint")}</p>`,
+    (form) => ({
+      kind: str(form, "kind") as "sea" | "freeFall",
+      motionSickness: ticked(form, "motionSickness"),
+      spaceSickness: ticked(form, "spaceSickness"),
+    }),
+  );
+}
+
 async function promptForStayingUp(): Promise<{ hoursAwake: number; missedSleepHours: number } | null> {
   return hazardPrompt(
     HZ("Sleep"),
@@ -2223,6 +2351,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       burn: GWorldCharacterSheet.#onBurn,
       catchFire: GWorldCharacterSheet.#onCatchFire,
       irradiate: GWorldCharacterSheet.#onIrradiate,
+      splashAcid: GWorldCharacterSheet.#onAcid,
+      breatheBadAir: GWorldCharacterSheet.#onBadAir,
+      crushingPressure: GWorldCharacterSheet.#onPressure,
+      accelerate: GWorldCharacterSheet.#onAcceleration,
+      motionSickness: GWorldCharacterSheet.#onMotionSickness,
       controlVehicle: GWorldCharacterSheet.#onControlVehicle,
       jumpOutOfVehicle: GWorldCharacterSheet.#onJumpOutOfVehicle,
       shotAtVehicle: GWorldCharacterSheet.#onShotAtVehicle,
@@ -4511,6 +4644,63 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const asked = await promptForFightingOffSwarm();
     if (!asked) return;
     await fightOffSwarm({ actor: this.actor, ...asked });
+  }
+
+  /** A splash, a bath or a mouthful of acid (Campaigns p. 428). */
+  static async #onAcid(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+    const asked = await promptForAcid();
+    if (!asked) return;
+    await splashAcid({ actor: this.actor, ...asked });
+  }
+
+  /** Air too thin to breathe, or made of the wrong thing (Campaigns p. 429). */
+  static async #onBadAir(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+    const asked = await promptForAir();
+    if (!asked) return;
+    await breatheBadAir({ actor: this.actor, ...asked });
+  }
+
+  /**
+   * Depth, and coming back up from it (Campaigns p. 435).
+   *
+   * One control for both, because they are the same dive: going down risks
+   * being crushed, and coming up risks the bends.
+   */
+  static async #onPressure(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+    const asked = await promptForPressure();
+    if (!asked) return;
+    if (asked.ascending || asked.explosive) {
+      await decompress({
+        actor: this.actor,
+        atmospheres: asked.atmospheres,
+        explosive: asked.explosive,
+      });
+      return;
+    }
+    await crushingPressure({
+      actor: this.actor,
+      atmospheres: asked.atmospheres,
+      support: asked.support,
+    });
+  }
+
+  /** A sudden acceleration (Campaigns p. 434). */
+  static async #onAcceleration(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+    const asked = await promptForAcceleration();
+    if (!asked) return;
+    await accelerate({ actor: this.actor, ...asked });
+  }
+
+  /** A day at sea, or the first hour of free fall (Campaigns pp. 434, 436). */
+  static async #onMotionSickness(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+    const asked = await promptForMotionSickness();
+    if (!asked) return;
+    await motionSickness({ actor: this.actor, ...asked });
   }
 
   /** Where a shot at this vehicle landed, and who inside it caught something (Campaigns pp. 554-555). */
