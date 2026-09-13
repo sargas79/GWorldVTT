@@ -26,7 +26,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { citesBook, fields, nameOf, records, reference, splitTop } from "./gdf.mjs";
+import { assertCitesBook, bookPrefix, citesBook, fields, nameOf, records, reference, splitTop } from "./gdf.mjs";
 
 // The citation readers live with the record reader, since every parser
 // needs them; they are re-exported here for the tests that read them off
@@ -380,7 +380,7 @@ export function parseSpells(recs, options) {
     if (attr !== "IQ") continue;
     // A supplement's record that also cites the Basic Set is one the Basic
     // Set pack already carries, and is left to it when the caller asks.
-    if (overlap && prefix !== "B" && citesBook(f.get("page"), "B")) {
+    if (overlap && bookPrefix(prefix) !== "B" && citesBook(f.get("page"), "B")) {
       overlap(r.section, spellName(bare), f.get("page") ?? "");
       continue;
     }
@@ -456,10 +456,16 @@ function main() {
   const outDir = resolve(option("--out", join(projectRoot, "packs-src")));
   const pack = option("--pack", "spells");
   const file = option("--file", "basic-set-spells.json");
-  const prefix = option("--prefix", "B");
+  const prefix = bookPrefix(option("--prefix", "B"));
   const book = option("--book", "Basic Set: Characters");
 
   const recs = records(readFileSync(source, "utf8"));
+  try {
+    assertCitesBook(recs, prefix);
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
   const rejects = [];
   const spells = parseSpells(recs, {
     reject: (what, why) => rejects.push({ what, why }),

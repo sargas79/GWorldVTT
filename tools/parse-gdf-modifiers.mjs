@@ -23,7 +23,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { fields, nameOf, records, splitTop } from "./gdf.mjs";
+import { assertCitesBook, bookPrefix, fields, nameOf, pagesCited, records, reference, splitTop } from "./gdf.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -40,14 +40,7 @@ function existingIds(dir) {
 
 /** The first page cited in the book being read, or null. */
 function firstPage(page, prefix) {
-  const m = new RegExp(`\\b${prefix}(\\d+)\\b`).exec(page ?? "");
-  return m ? Number(m[1]) : null;
-}
-
-function reference(page, prefix, book) {
-  const re = new RegExp(`\\b${prefix}(\\d+)\\b`, "g");
-  const pages = [...(page ?? "").matchAll(re)].map((m) => m[1]);
-  return pages.length ? `${book} p. ${pages.join(", ")}` : book;
+  return pagesCited(page, prefix)[0] ?? null;
 }
 
 /**
@@ -160,12 +153,18 @@ function main() {
   const outDir = resolve(option("--out", join(projectRoot, "packs-src")));
   const pack = option("--pack", "modifiers");
   const file = option("--file", "basic-set-modifiers.json");
-  const prefix = option("--prefix", "B");
+  const prefix = bookPrefix(option("--prefix", "B"));
   const book = option("--book", "Basic Set: Characters");
   const from = Number(option("--from", "101"));
   const to = Number(option("--to", "117"));
 
   const recs = records(readFileSync(source, "utf8"));
+  try {
+    assertCitesBook(recs, prefix);
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
   const rejects = [];
   const modifiers = parseModifiers(recs, {
     reject: (what, why) => rejects.push({ what, why }),

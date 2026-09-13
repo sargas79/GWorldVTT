@@ -67,6 +67,22 @@ export declare function displayWeight(text: string | undefined): number;
 /** The page reference for one book: "Martial Arts p. 52". */
 export declare function reference(page: string | undefined, prefix: string, book: string): string;
 
+/** A page prefix as the book prints it, without GCA's colon: "MH1:" is "MH1". */
+export declare function bookPrefix(prefix: string): string;
+
+/** Throws, naming the citation forms the file uses, when no record cites this prefix. */
+export declare function assertCitesBook(recs: ReadonlyArray<{ section: string; text: string }>, prefix: string): void;
+
+/** The name a record is filed under, given the other names in its section. */
+export declare function entryName(
+  raw: string,
+  siblings: ReadonlySet<string>,
+  options?: { supplement?: boolean; blankSpecialty?: boolean },
+): string;
+
+/** The base item a "(Good)" or "(Fine)" record restates, or null. */
+export declare function qualityVariantOf(name: string, siblings: ReadonlySet<string>): string | null;
+
 /** Where a record belongs, for the pack being built. */
 export declare function classifyCitation(
   page: string | undefined,
