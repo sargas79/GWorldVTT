@@ -3170,8 +3170,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       },
       cell("basicMove", L("BasicMove"), derived.basicMove, "= ⌊Speed⌋"),
       {
-        key: "dodge", label: L("Dodge"), value: derived.defenses.dodge.total,
-        derivation: "= Move + 3", editable: false, cost: 0, granted: 0, purchased: 0, step: 1,
+        // No Dodge at all on a turn that forfeited every defense -- All-Out
+        // Attack -- where the derived figure is null rather than a number.
+        // Reading .total off it took the whole sheet down with it.
+        key: "dodge", label: L("Dodge"), value: derived.defenses?.dodge?.total ?? "—",
+        derivation: derived.defenses?.dodge ? "= Move + 3" : game.i18n.localize("GWORLD.Secondary.NoDefense"),
+        editable: false, cost: 0, granted: 0, purchased: 0, step: 1,
       },
     ];
   }
