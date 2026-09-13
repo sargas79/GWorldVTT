@@ -1369,7 +1369,9 @@
       "Runs": "Runs at once:"
     },
     "Npc": {
-      "InScene": "x{count} in scene"
+      "InScene": "x{count} in scene",
+      "Description": "Description",
+      "DescriptionHint": "What this creature is. Click to show or hide the rest."
     },
     "Action": {
       "BrowseSkills": "Browse",

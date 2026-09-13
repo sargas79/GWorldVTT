@@ -12,6 +12,7 @@ import { isRuleOn } from "../optional-rules.js";
 import { swarmAttack, swarmOf } from "../swarms.js";
 import type { SwarmProtection } from "../../rules/swarms.js";
 import type { Attribute } from "../../rules/types.js";
+import { summariseDescription } from "../description-summary.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -163,6 +164,16 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
       biographyHTML: await foundry.applications.ux.TextEditor.implementation.enrichHTML(
         system.details.biography ?? "",
+        { relativeTo: actor, secrets: actor.isOwner },
+      ),
+
+      // A bestiary entry's description can run to several paragraphs, so the
+      // sheet folds it to its first line the way the traits tab folds a
+      // trait's, rather than pushing the stat block off the bottom of a
+      // one-pane sheet.
+      description: summariseDescription(system.details.description ?? ""),
+      descriptionHTML: await foundry.applications.ux.TextEditor.implementation.enrichHTML(
+        system.details.description ?? "",
         { relativeTo: actor, secrets: actor.isOwner },
       ),
     };
