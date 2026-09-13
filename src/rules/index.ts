@@ -87,6 +87,7 @@ export * from "./wealth.js";
 export * from "./collisions.js";
 export * from "./electricity.js";
 export * from "./fire.js";
+export * from "./entangling.js";
 export * from "./guided.js";
 export * from "./hiking.js";
 export * from "./radiation.js";

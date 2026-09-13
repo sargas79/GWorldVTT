@@ -368,6 +368,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare activeSpells: ActiveSpell[];
   declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
   declare dress: { state: Dress; topless: boolean };
+  declare entangled: {
+    kind: "" | "net" | "smallNet" | "bolas" | "lariat";
+    successes: number;
+    failures: number;
+    mustBeCut: boolean;
+  };
   declare points: {
     starting: number;
     disadvantageLimit: number;
@@ -495,6 +501,23 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         }),
         /** The book's extra +1 for a bare chest, which the player sets. */
         topless: new fields.BooleanField({ initial: false }),
+      }),
+
+      /**
+       * Caught in a net, a bolas or a lariat (Campaigns pp. 410-411). The
+       * book counts three successes to get out, and for a net three failures
+       * in a row to be past getting out at all, so the count lives here
+       * rather than in somebody's head.
+       */
+      entangled: new fields.SchemaField({
+        kind: new fields.StringField({
+          required: true, nullable: false, blank: true, initial: "",
+          choices: ["", "net", "smallNet", "bolas", "lariat"],
+        }),
+        successes: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+        failures: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+        /** True past three failures running: "he must be cut free." */
+        mustBeCut: new fields.BooleanField({ initial: false }),
       }),
 
       tl: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 3 }),

@@ -37,6 +37,10 @@ import { fightOffSwarm } from "../swarms.js";
 import {
   accelerate, breatheBadAir, burn, catchFire, controlVehicle, crushingPressure, decompress, hike,
   irradiate, jumpOutOfVehicle, motionSickness, shock, shootAtVehicle, sleepFor, splashAcid,
+} from "../hazards.js";
+import { tryToEscape, type Entanglement } from "../entangling.js";
+import type { Limbs } from "../../rules/entangling.js";
+import {
   stayAwake,
   struckBy,
 } from "../hazards.js";
@@ -1228,6 +1232,31 @@ const str = (form: HTMLElement | null, name: string) =>
 const ticked = (form: HTMLElement | null, name: string) =>
   form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
 
+/** What is holding them, and what they have to get out with (pp. 410-411). */
+async function promptForEscape(current: Entanglement): Promise<{
+  entanglement: Entanglement;
+  limbs: Limbs;
+  oneHanded: boolean;
+} | null> {
+  const kinds: Array<[string, string]> = (["net", "smallNet", "bolas", "lariat"] as const)
+    .map((k) => [k, game.i18n.localize(`GWORLD.Entangled.What.${k}`)]);
+  const limbs: Array<[string, string]> = (["hands", "paws", "hooves"] as const)
+    .map((k) => [k, game.i18n.localize(`GWORLD.Entangled.Limbs.${k}`)]);
+  return hazardPrompt(
+    game.i18n.localize("GWORLD.Entangled.Escape"),
+    hazardSelect("kind", game.i18n.localize("GWORLD.Entangled.Caught"), kinds)
+      .replace(`value="${current}"`, `value="${current}" selected`) +
+      hazardSelect("limbs", game.i18n.localize("GWORLD.Entangled.LimbsLabel"), limbs) +
+      hazardCheck("oneHanded", game.i18n.localize("GWORLD.Entangled.OneHanded")) +
+      `<p class="ihint" style="margin:0">${game.i18n.localize("GWORLD.Entangled.EscapeHint")}</p>`,
+    (form) => ({
+      entanglement: str(form, "kind") as Entanglement,
+      limbs: str(form, "limbs") as Limbs,
+      oneHanded: ticked(form, "oneHanded"),
+    }),
+  );
+}
+
 /** How the acid was met, and where it landed (Campaigns p. 428). */
 async function promptForAcid(): Promise<{ contact: AcidContact; landing: AcidLanding } | null> {
   const contacts: Array<[string, string]> = (["splashed", "immersed", "swallowed"] as const)
@@ -2351,6 +2380,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       burn: GWorldCharacterSheet.#onBurn,
       catchFire: GWorldCharacterSheet.#onCatchFire,
       irradiate: GWorldCharacterSheet.#onIrradiate,
+      tryToEscape: GWorldCharacterSheet.#onEscapeEntanglement,
       splashAcid: GWorldCharacterSheet.#onAcid,
       breatheBadAir: GWorldCharacterSheet.#onBadAir,
       crushingPressure: GWorldCharacterSheet.#onPressure,
@@ -2543,6 +2573,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           signed: held.talent > 0 ? `+${held.talent}` : String(held.talent),
         }),
       ),
+      // Caught in something, and how far through getting out they are.
+      entangled: {
+        caught: this.actor.statuses?.has?.("entangled") === true,
+        kind: system.entangled?.kind ?? "",
+        successes: system.entangled?.successes ?? 0,
+        needed: 3,
+        mustBeCut: system.entangled?.mustBeCut === true,
+      },
       isEvaluating: system.maneuver === "evaluate",
       isAiming: system.maneuver === "aim",
       isWaiting: system.maneuver === "wait",
@@ -4653,6 +4691,20 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const asked = await promptForFightingOffSwarm();
     if (!asked) return;
     await fightOffSwarm({ actor: this.actor, ...asked });
+  }
+
+  /**
+   * One attempt to get out of a net or a bolas (Campaigns pp. 410-411).
+   *
+   * What is holding them, and whether they have a hand free, are the two
+   * things the roll turns on and the two the sheet cannot know.
+   */
+  static async #onEscapeEntanglement(this: GWorldCharacterSheet) {
+    const asked = await promptForEscape(
+      (this.actor.system.entangled?.kind || "net") as Entanglement,
+    );
+    if (!asked) return;
+    await tryToEscape({ actor: this.actor, ...asked });
   }
 
   /** A splash, a bath or a mouthful of acid (Campaigns p. 428). */

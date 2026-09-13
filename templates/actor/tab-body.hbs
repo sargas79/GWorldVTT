@@ -248,6 +248,19 @@
             {{localize "GWORLD.Hazard.Radiation"}}
           </button>
         {{/if}}
+        {{#if entangled.caught}}
+          {{!-- Caught in something, and trying to get out (pp. 410-411). --}}
+          <button type="button" class="ibtn" data-action="tryToEscape"
+                  data-tooltip="{{localize 'GWORLD.Entangled.EscapeHint'}}">
+            {{localize "GWORLD.Entangled.Escape"}}
+            {{#if entangled.successes}}
+              &middot; {{entangled.successes}}/{{entangled.needed}}
+            {{/if}}
+          </button>
+          {{#if entangled.mustBeCut}}
+            <span class="ichip warn">{{localize "GWORLD.Entangled.MustBeCut"}}</span>
+          {{/if}}
+        {{/if}}
         {{#if rules.exposure}}
           {{!-- The rest of the hazards chapter (Campaigns pp. 428-437). --}}
           <button type="button" class="ibtn" data-action="splashAcid" data-tooltip="{{localize "GWORLD.Hazard.AcidHint"}}">
