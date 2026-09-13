@@ -22,9 +22,9 @@ import {
   WEAPON_CLASSES,
   WEAPON_MATERIALS,
   availableQualities,
+  gradeAfterMaterial,
   materialCostMultiplier,
   materialWeightMultiplier,
-  maxQualityFor,
   qualityCostMultiplier,
   shieldComposition,
 } from "../../rules/weapon-quality.js";
@@ -390,13 +390,14 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       const material = data.system.material ?? current.material;
       const listCost = Number(data.system.listCost ?? current.listCost) || 0;
       const changed = quality !== current.quality || material !== current.material;
+      // What the material allows is a fact about the material, so the grade
+      // is held to it whether or not the weapon has a price to work from:
+      // "blades cannot exceed good quality" in plastic (Characters p. 275).
+      const graded = gradeAfterMaterial(quality, material);
+      if (changed && graded !== quality) data.system.quality = graded;
       if (changed && listCost > 0) {
         const facts = weaponFacts(this.item);
         const tl = Number(data.system.tl ?? current.tl) || 3;
-        // "Blades cannot exceed good quality" in plastic (Characters p. 275).
-        const ceiling = maxQualityFor(material);
-        const graded = ceiling && quality === "fine" ? ceiling : ceiling && quality === "veryFine" ? ceiling : quality;
-        if (graded !== quality) data.system.quality = graded;
         const grade = qualityCostMultiplier(facts.weaponClass, graded, tl) ?? 1;
         data.system.cost = Math.round(listCost * grade * materialCostMultiplier(material));
         const listWeight = Number(current.listWeight ?? current.weight) || 0;

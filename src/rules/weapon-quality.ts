@@ -118,8 +118,10 @@ const NO_FINE_BONUS = new Set<WeaponMaterial>(["stone", "bronze", "iron"]);
  * whatever grade the blade was bought in.
  *
  * "It loses its damage bonus if used to parry any weapon (but not an
- * unarmed attack) or to strike DR 2+" -- which is a thing that happens in
- * the fight rather than a fact about the blade, so it is asked for.
+ * unarmed attack) or to strike DR 2+" -- a thing that happens in the fight
+ * rather than a fact about the blade. Nothing on a sheet or a card decides
+ * it yet: the caller says whether the edge has been blunted, and today no
+ * caller passes anything but the default.
  */
 export function obsidianDamageBonus(type: DamageType, blunted = false): number {
   if (blunted) return 0;
@@ -154,6 +156,17 @@ export function qualityDamageBonus(
  */
 export function maxQualityFor(material: WeaponMaterial): WeaponQuality | null {
   return material === "plastic" ? "good" : null;
+}
+
+/**
+ * The grade a blade of this material actually comes out at: what was asked
+ * for, or the material's ceiling where that is lower. A cheap plastic blade
+ * stays cheap; a fine one is good, which is as fine as plastic gets.
+ */
+export function gradeAfterMaterial(quality: WeaponQuality, material: WeaponMaterial): WeaponQuality {
+  const ceiling = maxQualityFor(material);
+  if (ceiling === null) return quality;
+  return WEAPON_QUALITIES.indexOf(quality) > WEAPON_QUALITIES.indexOf(ceiling) ? ceiling : quality;
 }
 
 /**

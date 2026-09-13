@@ -4,6 +4,7 @@ import {
   availableQualities,
   breakageModifier,
   breakageQuality,
+  gradeAfterMaterial,
   materialCostMultiplier,
   materialWeightMultiplier,
   maxQualityFor,
@@ -144,6 +145,11 @@ describe("obsidian, plastic and what a shield is made of (pp. 275, 287)", () => 
     expect(materialCostMultiplier("plastic")).toBe(2);
     expect(maxQualityFor("plastic")).toBe("good");
     expect(maxQualityFor("steel")).toBeNull();
+    // The ceiling holds a grade down and never pushes one up.
+    expect(gradeAfterMaterial("veryFine", "plastic")).toBe("good");
+    expect(gradeAfterMaterial("fine", "plastic")).toBe("good");
+    expect(gradeAfterMaterial("cheap", "plastic")).toBe("cheap");
+    expect(gradeAfterMaterial("veryFine", "steel")).toBe("veryFine");
     // "Treat them as equivalent to steel for breakage."
     expect(outranks("steel", "plastic")).toBe(false);
     expect(outranks("plastic", "bronze")).toBe(true);
