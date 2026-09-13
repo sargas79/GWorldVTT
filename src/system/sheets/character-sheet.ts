@@ -19,14 +19,25 @@ import {
   slamOutcome,
 } from "../../rules/attack-options.js";
 import { attackArc } from "../../rules/tactical.js";
-import { CLIMBS, climb, climbingModifier, swimmingModifier } from "../../rules/physical.js";
+import {
+  CLIMBS,
+  climb,
+  climbingModifier,
+  swimmingModifier,
+  liftingSkillCapacity,
+  maximumDrag,
+} from "../../rules/physical.js";
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding, stopBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
 import { catchBreath, rollSuffocation } from "../suffocation.js";
-import { applyDeprivation, rollExposure } from "../environment.js";
+import {
+  applyDeprivation,
+  rollExposure,
+  restFromHunger,
+} from "../environment.js";
 import { activePoisons, advancePoison, clearPoison, dosePoison, treatPoison, treatIllness } from "../poison.js";
 import { drinkForAnHour, drinkingState, hangoverRoll, soberUpRoll } from "../intoxication.js";
 import { checkInfection, exposeToDisease } from "../disease.js";
@@ -41,13 +52,29 @@ import { payCostOfLiving, rollAging, studySkill, workAMonth } from "../life.js";
 import { trample } from "../trampling.js";
 import { fightOffSwarm } from "../swarms.js";
 import {
-  accelerate, breatheBadAir, buildingCollapse, damageBuilding, burn, catchFire, controlVehicle, crushingPressure,
-  decompress, hike,
-  irradiate, jumpOutOfVehicle, motionSickness, shock, shootAtVehicle, sleepFor, splashAcid,
+  accelerate,
+  breatheBadAir,
+  buildingCollapse,
+  damageBuilding,
+  burn,
+  catchFire,
+  controlVehicle,
+  crushingPressure,
+  decompress,
+  hike,
+  irradiate,
+  jumpOutOfVehicle,
+  motionSickness,
+  shock,
+  shootAtVehicle,
+  sleepFor,
+  splashAcid,
+  setAlight,
 } from "../hazards.js";
 import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
 import { useTechnique, type Victim } from "../unarmed-techniques.js";
 import { canParryLiquid } from "../../rules/dirty-tricks.js";
+import { resolveSuccess as rollOutcome } from "../../rules/success.js";
 import { pressureAtDepth } from "../../rules/pressure.js";
 import { isStepPostureChange, postureMove, reachablePostures } from "../../rules/posture.js";
 import { affectsSecondary } from "../../rules/attribute-penalties.js";
@@ -1061,6 +1088,27 @@ async function promptForHearing(): Promise<{
       loudness: Math.max(-4, Math.min(4, num(form, "loudness"))),
       upClose: ticked(form, "upClose"),
       inPlainSight: ticked(form, "inPlainSight"),
+    }),
+  );
+}
+
+/** A flame against a material (Campaigns p. 433). */
+async function promptForAlight(): Promise<{
+  material: "superFlammable" | "highlyFlammable" | "flammable" | "resistant" | "highlyResistant" | "nonflammable";
+  flameDamagePerSecond: number;
+  seconds: number;
+} | null> {
+  const kinds = ["superFlammable", "highlyFlammable", "flammable", "resistant", "highlyResistant", "nonflammable"] as const;
+  const materials: Array<[string, string]> = kinds.map((k) => [k, HZ(`Flammability.${k}`)]);
+  return hazardPrompt(
+    HZ("SetAlight"),
+    hazardSelect("material", HZ("MaterialLabel"), materials) +
+      hazardField("damage", HZ("FlameDamage"), 1, 'min="0"') +
+      hazardField("seconds", HZ("ContactSeconds"), 10, 'min="0"'),
+    (form) => ({
+      material: (str(form, "material") || "flammable") as (typeof kinds)[number],
+      flameDamagePerSecond: num(form, "damage"),
+      seconds: num(form, "seconds"),
     }),
   );
 }
@@ -2754,6 +2802,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       catchBreath: GWorldCharacterSheet.#onCatchBreath,
       exposure: GWorldCharacterSheet.#onExposure,
       rations: GWorldCharacterSheet.#onRations,
+      restFromHunger: GWorldCharacterSheet.#onRestFromHunger,
+      setAlight: GWorldCharacterSheet.#onSetAlight,
+      liftingRoll: GWorldCharacterSheet.#onLiftingRoll,
       poison: GWorldCharacterSheet.#onPoison,
       poisonCycle: GWorldCharacterSheet.#onPoisonCycle,
       poisonTreat: GWorldCharacterSheet.#onPoisonTreat,
@@ -2995,6 +3046,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // crouching, a third kneeling or crawling, none sitting, a yard lying down.
       postureMove: postureMove(Number(derived.encumbrance?.move ?? 0) || 0, (system.posture ?? "standing") as Posture),
       postureMoveShown: (system.posture ?? "standing") !== "standing",
+      // "Final effective weight pulled, after all modifiers, cannot exceed
+      // 15xBL" (Campaigns p. 353).
+      maxDrag: maximumDrag(Number(derived.basicLift) || 0),
 
       hands: (["right", "left"] as const).map((key) => ({
         key,
@@ -4807,6 +4861,56 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!asked) return;
 
     await applyDeprivation({ actor: this.actor, ...asked });
+  }
+
+  /** A flame held against something, and whether it catches (p. 433). */
+  static async #onSetAlight(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+    const asked = await promptForAlight();
+    if (!asked) return;
+    await setAlight({ actor: this.actor, ...asked });
+  }
+
+  /**
+   * A Lifting roll for one heavy lift (Campaigns p. 353): success "increases
+   * your Basic Lift by 5% times your margin of success for the purpose of
+   * picking up heavy objects".
+   */
+  static async #onLiftingRoll(this: GWorldCharacterSheet) {
+    const skill = this.actor.system?.derived?.feats?.lifting?.skill;
+    const basicLift = Number(this.actor.system?.derived?.basicLift) || 0;
+    if (typeof skill !== "number") {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Feats.NoLifting"));
+      return;
+    }
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    const dice = (roll.dice[0]?.results ?? []).map((r: { result: number }) => r.result);
+    const outcome = rollOutcome(roll.total, skill, dice);
+    const lift = outcome.success ? liftingSkillCapacity(basicLift, outcome.margin) : basicLift;
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor: this.actor }),
+      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+      content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${game.i18n.localize("GWORLD.Feats.LiftingRoll")}</span>
+        <span class="gc-target">${game.i18n.localize("GWORLD.Chat.Target")} ${skill}</span></div>
+        <div class="gc-dice">${dice.map((d: number) => `<span class="gc-die">${d}</span>`).join("")}<span class="gc-total">${roll.total}</span></div>
+        <div class="gc-result ${outcome.success ? "success" : "failure"}">${game.i18n.format("GWORLD.Feats.LiftedAs", {
+          lift: Math.round(lift * 10) / 10, base: basicLift,
+        })}</div></div>`,
+      rolls: [roll],
+    });
+  }
+
+  /** Days of rest and full meals, which is the only cure for going hungry (p. 426). */
+  static async #onRestFromHunger(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+    const days = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Weather.RestTitle"),
+      label: game.i18n.localize("GWORLD.Weather.RestDays"),
+      initial: 1,
+    });
+    if (days === null) return;
+    await restFromHunger({ actor: this.actor, days });
   }
 
   /**

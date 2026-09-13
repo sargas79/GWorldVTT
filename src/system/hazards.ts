@@ -21,7 +21,9 @@ import { formatDiceAdds, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import {
   lethalShock, lethalShockModifier, localizedShock, nonlethalShock, METAL_ARMOR_DR,
 } from "../rules/electricity.js";
-import { catchingFire, FIRE_DAMAGE, type FireExposure } from "../rules/fire.js";
+import {
+  catchingFire, FIRE_DAMAGE, ignites, prolongedContactTarget, type FireExposure, type Flammability,
+} from "../rules/fire.js";
 import { dailyMiles, marchingFatiguePerHour, type Terrain, type TravelWeather } from "../rules/hiking.js";
 import { randomHitLocation, type HitLocation } from "../rules/hit-locations.js";
 import { applyInjury } from "../rules/injury.js";
@@ -454,6 +456,54 @@ export async function burn(options: { actor: any; exposure: FireExposure; second
     bad: injury > 0,
     rolls,
   });
+}
+
+/**
+ * Whether a flame sets a material alight (Campaigns p. 433).
+ *
+ * A flame strong enough lights it outright. One a category or two short can
+ * still do it given time: "for every 10 seconds of contact", materials one
+ * category up "catch fire on a 16 or less; those two categories up ... on a 6
+ * or less" -- so the contact is rolled out in ten-second spells until it
+ * catches or the time runs out.
+ */
+export async function setAlight(options: {
+  actor: any;
+  material: Flammability;
+  flameDamagePerSecond: number;
+  seconds: number;
+}): Promise<void> {
+  const { actor } = options;
+  const lines: string[] = [];
+  const rolls: any[] = [];
+
+  if (ignites(options.material, options.flameDamagePerSecond)) {
+    lines.push(H("AlightAtOnce"));
+    await post(actor, { kind: H("Fire"), lines, bad: true });
+    return;
+  }
+
+  const target = prolongedContactTarget(options.material, options.flameDamagePerSecond);
+  if (target === null) {
+    lines.push(H("NeverAlight"));
+    await post(actor, { kind: H("Fire"), lines, good: true });
+    return;
+  }
+
+  const spells = Math.max(1, Math.floor(Math.max(0, options.seconds) / 10));
+  let caughtAfter: number | null = null;
+  for (let spell = 1; spell <= spells; spell += 1) {
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    rolls.push(roll);
+    if (roll.total <= target) {
+      caughtAfter = spell * 10;
+      break;
+    }
+  }
+  lines.push(F("ProlongedContact", { target, spells }));
+  lines.push(caughtAfter === null ? H("DidNotCatch") : F("CaughtAfter", { seconds: caughtAfter }));
+  await post(actor, { kind: H("Fire"), lines, bad: caughtAfter !== null, rolls });
 }
 
 /** A single blow of burning damage, and whether it set the clothes alight. */

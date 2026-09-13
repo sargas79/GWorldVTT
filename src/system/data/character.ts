@@ -93,7 +93,10 @@ import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
 import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js";
 import { fatigueStatus, isVeryTired } from "../../rules/fatigue.js";
-import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
+import {
+  INFLUENCE_SKILLS,
+  automaticSkillBonus,
+} from "../../rules/reactions.js";
 import { mountedDefensePenalty } from "../../rules/mounted.js";
 import { supportEffect } from "../../rules/accessories.js";
 import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalties.js";
@@ -2197,7 +2200,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // The psi powers a character holds, the abilities under each and what
       // its Talent is worth to a roll using them (Characters pp. 254-255).
       psionics: psionicsOf(heldTraits),
-      reactions: reactionSources(heldTraits),
+      // "In a few cases, skill 20+ gives an automatic +2 to reactions.
+      // Diplomacy and Fast-Talk work this way if you are allowed to talk -- as
+      // does Merchant skill, during commercial transactions" (p. 494). Offered
+      // as conditional sources, since only the table knows who is talking.
+      reactions: [
+        ...reactionSources(heldTraits),
+        ...(["Diplomacy", "Fast-Talk"] as const)
+          .filter((skill) => automaticSkillBonus(this.skillLevelByName(skill) ?? 0))
+          .map((skill) => ({ label: skill, value: 2, condition: "talking" as const })),
+        ...(automaticSkillBonus(this.skillLevelByName("Merchant") ?? 0)
+          ? [{ label: "Merchant", value: 2, condition: "commercial" as const }]
+          : []),
+      ],
       charismaInfluence: charismaInfluenceBonus(heldTraits),
       // Fit's bonus to every HT roll, for the rolls made outside this block.
       healthRollBonus: traits.htRolls,

@@ -104,7 +104,8 @@
       <div class="cell">
         <span class="cl">{{localize "GWORLD.Feats.CarryOnBack"}}</span>
         <span class="cv">{{derived.feats.lift.carryOnBack}} lb</span>
-        <span class="cd">{{localize "GWORLD.Feats.Shift" value=derived.feats.lift.shiftSlightly}}</span>
+        <span class="cd">{{localize "GWORLD.Feats.Shift" value=derived.feats.lift.shiftSlightly}} &middot; {{localize "GWORLD.Feats.MaxDrag" value=maxDrag}}</span>
+        <button type="button" class="ibtn tiny" data-action="liftingRoll">{{localize "GWORLD.Feats.LiftingRoll"}}</button>
       </div>
       <div class="cell">
         <span class="cl">{{localize "GWORLD.Feats.Sprint"}}</span>
@@ -202,6 +203,8 @@
                 data-tooltip="{{localize "GWORLD.Weather.Hint"}}">
           {{localize "GWORLD.Weather.Action"}}
         </button>
+        <button type="button" class="ibtn" data-action="setAlight">{{localize "GWORLD.Hazard.SetAlight"}}</button>
+        <button type="button" class="ibtn" data-action="restFromHunger">{{localize "GWORLD.Weather.RestTitle"}}</button>
         <button type="button" class="ibtn" data-action="rations"
                 data-tooltip="{{localize "GWORLD.Weather.DeprivationHint"}}">
           {{localize "GWORLD.Weather.DeprivationAction"}}

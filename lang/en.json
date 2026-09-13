@@ -1521,7 +1521,9 @@
         "impressed": "from those who notice the talent and would be impressed",
         "ownKind": "from anyone but your own kind",
         "faithful": "from followers of the faith",
-        "adult": "when dealing with others as an adult"
+        "adult": "when dealing with others as an adult",
+        "talking": "when they are allowed to talk",
+        "commercial": "in a commercial transaction"
       },
       "Hint": "What an NPC makes of this character: 3d, modifiers on the dice, high is good",
       "Title": "Reaction",
@@ -1960,7 +1962,11 @@
         "ropeUp": "Rope, going up",
         "ropeDown": "Rope, going down",
         "ropeDownRigged": "Rope, going down with equipment"
-      }
+      },
+      "MaxDrag": "drag at most {value} lb",
+      "LiftingRoll": "Lifting roll",
+      "NoLifting": "No Lifting skill to roll",
+      "LiftedAs": "Lifts as though Basic Lift were {lift} lb (from {base})"
     },
     "Fall": {
       "Action": "Fall",
@@ -2207,7 +2213,10 @@
       "Hunger": "{fp} FP to hunger",
       "Thirst": "{fp} FP to thirst",
       "Parched": "Under a quart all day",
-      "PastEmpty": "Past empty — fatigue coming out of hit points"
+      "PastEmpty": "Past empty — fatigue coming out of hit points",
+      "RestTitle": "Rest and eat",
+      "RestDays": "Days of rest and full meals",
+      "RestDetail": "{days} days of rest make up for {meals} missed meals"
     },
     "Poison": {
       "Action": "Poison",
@@ -2737,7 +2746,24 @@
       "BuildingRoll": "Rolled {roll} against HT {ht}",
       "BuildingStands": "It stays up, for now",
       "BuildingFalls": "It comes down",
-      "BuildingHolds": "It holds together at zero"
+      "BuildingHolds": "It holds together at zero",
+      "SetAlight": "Set something alight",
+      "MaterialLabel": "Material",
+      "Flammability": {
+        "superFlammable": "Superflammable",
+        "highlyFlammable": "Highly flammable",
+        "flammable": "Flammable",
+        "resistant": "Resistant",
+        "highlyResistant": "Highly resistant",
+        "nonflammable": "Nonflammable"
+      },
+      "FlameDamage": "The flame's burning damage a second",
+      "ContactSeconds": "Seconds of contact",
+      "AlightAtOnce": "The flame is strong enough: it catches at once",
+      "NeverAlight": "Too weak to light it however long it is held there",
+      "ProlongedContact": "A 3d roll of {target} or less for each of {spells} ten-second spells",
+      "CaughtAfter": "It catches after {seconds} seconds",
+      "DidNotCatch": "It has not caught"
     },
     "Vehicle": {
       "Statistics": "Vehicle statistics",
