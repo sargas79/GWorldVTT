@@ -198,6 +198,7 @@ import { awardsNewestFirst, type PointAward } from "../../rules/character-points
 import { isReadTrait } from "../../rules/trait-effects.js";
 import { weaknessOf } from "../../rules/weakness.js";
 import { exposeToWeakness } from "../weakness.js";
+import { applyHolyContact } from "../holy.js";
 import { unconditionalReaction, type ReactionSource } from "../../rules/social.js";
 import { SENSES } from "../../rules/senses.js";
 import {
@@ -2882,6 +2883,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       accelerate: GWorldCharacterSheet.#onAcceleration,
       motionSickness: GWorldCharacterSheet.#onMotionSickness,
       controlVehicle: GWorldCharacterSheet.#onControlVehicle,
+      holyContact: GWorldCharacterSheet.#onHolyContact,
       jumpOutOfVehicle: GWorldCharacterSheet.#onJumpOutOfVehicle,
       shotAtVehicle: GWorldCharacterSheet.#onShotAtVehicle,
       trample: GWorldCharacterSheet.#onTrample,
@@ -3732,6 +3734,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       equippable: equippable || Boolean(item.system.meleeModes?.length || item.system.rangedModes?.length),
       notes: item.system.category === "vehicle" ? vehicleNotes(item) : notes,
       vehicle: item.system.category === "vehicle" && isRuleOn("vehicles"),
+      // Holy water and a significant symbol touch a demon without a blow
+      // (Monster Hunters 1 pp. 51, 57).
+      holy: Boolean(item.system.holy) && isRuleOn("holyAttacks"),
       // Its Legality Class, and what carrying it here takes under the
       // campaign's Control Rating (Characters p. 267, Campaigns p. 507).
       legality: legalityNote(item.system.lc ?? null),
@@ -4997,6 +5002,27 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * the weapon's own notes, which the compendium does not carry, so this rolls
    * the resistance and leaves the effect to the GM.
    */
+  /** Holy contact with whoever is targeted, from a holy item's row (Monster Hunters 1 p. 51). */
+  static async #onHolyContact(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    const targets = currentTargets();
+    if (!item || targets.length === 0) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Holy.NoTarget"));
+      return;
+    }
+    const seen = new Set<string>();
+    let touched = 0;
+    for (const token of targets) {
+      const victim = token?.actor;
+      const key = String(victim?.uuid ?? "");
+      if (!victim || seen.has(key)) continue;
+      seen.add(key);
+      if (await applyHolyContact(victim, String(item.name))) touched++;
+    }
+    if (touched === 0) ui.notifications?.info(game.i18n.localize("GWORLD.Holy.NoEffect"));
+  }
+
   /** Exposure to a Weakness, from the trait's own row (Characters p. 161). */
   static async #onWeaknessExposure(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;

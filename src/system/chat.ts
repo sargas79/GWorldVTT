@@ -13,6 +13,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { applyDamageToActor, type AppliedDamage, type IncomingDamage } from "./damage.js";
+import { applyHolyContact } from "./holy.js";
 import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy } from "./weapon-damage.js";
 import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shields.js";
 import { rollSuccess } from "./roll.js";
@@ -72,6 +73,8 @@ interface DamageFlag {
   material?: string;
   /** True when DR has no effect on the blow, as for a Malediction (Characters p. 106). */
   ignoresDr?: boolean;
+  /** A holy weapon's blow (Monster Hunters 1 p. 51). */
+  holy?: boolean;
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -429,6 +432,12 @@ async function applyFromCard(options: {
       },
     },
   });
+
+  // A holy weapon also burns what holy things hurt, once a minute -- said
+  // after the blow itself, which is the order it happens in.
+  if (flag.holy) {
+    for (const { actor } of knockdowns) await applyHolyContact(actor, String(flag.label ?? "").trim());
+  }
 }
 
 /**

@@ -194,6 +194,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     context.type = item.type;
     context.isPhysical = PHYSICAL_TYPES.has(item.type);
     context.isArmed = ARMED_TYPES.has(item.type);
+    // A holy item is only a thing to mark where Monster Hunters 1 is in play.
+    context.holyAttacks = isRuleOn("holyAttacks");
 
     // What the weapon is as an object and what its grade costs (Characters
     // p. 274, Campaigns p. 483), for the sheet to show beside the fields.

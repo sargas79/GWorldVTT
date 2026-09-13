@@ -886,6 +886,13 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
         choices: [...EQUIPMENT_QUALITIES],
       }),
       /**
+       * A holy thing: a Holy weapon, holy water, a symbol with significance
+       * (Monster Hunters 1 pp. 51, 57, 59). Contact burns a creature with a
+       * Weakness to holy things for 1d, ignoring DR, where that book's rules
+       * are in play.
+       */
+      holy: new fields.BooleanField({ required: true, initial: false }),
+      /**
        * The skills this equipment is the tools of, by name. A skill on this
        * list is rolled at the grade's modifier while the item is carried.
        */

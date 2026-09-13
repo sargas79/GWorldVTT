@@ -691,6 +691,10 @@
           "Name": "Melee etiquette",
           "Hint": "A hero fighting hand to hand is faced one at a time. The rest wait their turn (Campaigns p. 417)."
         },
+        "holyAttacks": {
+          "Name": "Holy attacks",
+          "Hint": "Contact with holy water or a holy weapon burns a creature with a Weakness to holy things for 1d, ignoring DR, then fizzes for a minute in which no holy source hurts it again (Monster Hunters 1 p. 51)."
+        },
         "talentsSkipWildcards": {
           "Name": "Talents skip wildcard skills",
           "Hint": "A Talent adds nothing to a wildcard skill, even one covering the skills on its list (Monster Hunters 1 p. 24)."
@@ -1272,6 +1276,7 @@
       "DefaultModifier": "Modifier",
       "EditImage": "Change item image",
       "UnreadyAfterAttack": "Unready after attack",
+      "Holy": "Holy",
       "PerLevel": "Per level",
       "PerLevelHint": "Damage per level of the trait: 1d at three levels rolls 3d (Characters p. 61).",
       "Malediction": "Malediction",
@@ -3338,6 +3343,16 @@
       "CannonFodderHint": "A mook: fails every defense roll, never takes All-Out Attack, and collapses the moment any damage gets through their DR. Nobody keeps track of their HP (Campaigns p. 417).",
       "CannonFodderDefense": "Cannon fodder: automatically fails",
       "Collapses": "{name} goes down."
+    },
+    "Holy": {
+      "Title": "Holy attack",
+      "Burns": "{name} is burned by {source}: {injury} injury, ignoring DR ({from} → {to} HP). It fizzes for a minute.",
+      "Fizzing": "{name} is still fizzing from the last burn: {source} does nothing for another {seconds} s.",
+      "Rule": "1d ignoring DR, then a minute in which no holy source does more (Monster Hunters 1 p. 51).",
+      "Contact": "Holy contact",
+      "ContactHint": "Touch whoever is targeted with this: a creature with a Weakness to holy things takes 1d, ignoring DR, unless it is still fizzing (Monster Hunters 1 p. 51).",
+      "NoTarget": "Target who is being touched with it first.",
+      "NoEffect": "Nobody targeted is hurt by holy things, or all of them are still fizzing."
     },
     "Weakness": {
       "Exposed": "Exposed",
