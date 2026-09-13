@@ -35,7 +35,8 @@ import { payCostOfLiving, rollAging, studySkill, workAMonth } from "../life.js";
 import { trample } from "../trampling.js";
 import { fightOffSwarm } from "../swarms.js";
 import {
-  burn, catchFire, controlVehicle, hike, irradiate, shock, shootAtVehicle, sleepFor, stayAwake,
+  burn, catchFire, controlVehicle, hike, irradiate, jumpOutOfVehicle, shock, shootAtVehicle, sleepFor,
+  stayAwake,
   struckBy,
 } from "../hazards.js";
 import type { CollisionAngle } from "../../rules/collisions.js";
@@ -2222,6 +2223,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       catchFire: GWorldCharacterSheet.#onCatchFire,
       irradiate: GWorldCharacterSheet.#onIrradiate,
       controlVehicle: GWorldCharacterSheet.#onControlVehicle,
+      jumpOutOfVehicle: GWorldCharacterSheet.#onJumpOutOfVehicle,
       shotAtVehicle: GWorldCharacterSheet.#onShotAtVehicle,
       trample: GWorldCharacterSheet.#onTrample,
       fightOffSwarm: GWorldCharacterSheet.#onFightOffSwarm,
@@ -4519,6 +4521,22 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (modifier === null) return;
     await controlVehicle({ actor: this.actor, itemId: String(item.id), modifier });
+  }
+
+  /** Jumping or falling from a moving vehicle (Campaigns p. 467). */
+  static async #onJumpOutOfVehicle(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    if (!isRuleOn("vehicleManeuvers")) return;
+    const item = this.#itemFrom(target);
+    if (!item) return;
+    // The vehicle's top speed is what the sheet knows; how fast it was
+    // actually going is the table's to say.
+    const speed = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Hazard.JumpOut"),
+      label: game.i18n.localize("GWORLD.Hazard.JumpSpeed"),
+      initial: Math.round(Number(item.system?.vehicle?.topSpeed) || 0),
+    });
+    if (speed === null) return;
+    await jumpOutOfVehicle({ actor: this.actor, itemId: String(item.id), speed });
   }
 
   static async #onToggleEquipped(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

@@ -116,6 +116,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "fire", reference: "Campaigns pp. 433-434", default: true },
     { key: "radiation", reference: "Campaigns pp. 435-436", default: true },
     { key: "vehicles", reference: "Campaigns pp. 462-468", default: true },
+    // The vehicle moves on its operator's turn, and plows ahead without them.
+    { key: "vehicleManeuvers", reference: "Campaigns p. 467", default: true },
   ],
   magic: [
     // The whole chapter. A campaign without magic has no Magic tab, no

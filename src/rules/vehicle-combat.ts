@@ -18,6 +18,52 @@ import type { Locomotion } from "./vehicles.js";
 export type VehicleMedium = "ground" | "air" | "water" | "spaceOrUnderwater";
 
 /** Which of those a locomotion is (p. 469). */
+/**
+ * What a vehicle does on its operator's turn (Campaigns p. 467).
+ *
+ * "Treat a vehicle as an extension of its operator. It moves on the
+ * operator's turn, at his place in the turn sequence... To control his
+ * vehicle, the operator must take a Move or Move and Attack maneuver on his
+ * turn -- but it's the vehicle that moves or attacks, while the operator
+ * remains at the controls. If the operator takes any other maneuver, or is
+ * stunned or otherwise incapacitated, his vehicle plows ahead with the same
+ * speed and course it had on the previous turn."
+ */
+export type VehicleMovement = "controlled" | "plowsAhead";
+
+/** The two maneuvers that put the operator in charge of the vehicle. */
+export const CONTROLLING_MANEUVERS = ["move", "moveAndAttack"] as const;
+
+export function vehicleMovement(options: {
+  /** The maneuver the operator took this turn. */
+  maneuver: string;
+  /** Stunned, unconscious, or otherwise not at the controls. */
+  incapacitated?: boolean;
+}): VehicleMovement {
+  if (options.incapacitated) return "plowsAhead";
+  return (CONTROLLING_MANEUVERS as readonly string[]).includes(options.maneuver)
+    ? "controlled"
+    : "plowsAhead";
+}
+
+/**
+ * Whether an occupant may work a vehicle system this turn (p. 467): "They
+ * may use vehicle systems provided they are stationed next to the
+ * appropriate controls and take a suitable maneuver: Concentrate to use
+ * sensors or electronics, Attack or All-Out Attack to fire vehicular
+ * weapons."
+ */
+export function mayUseVehicleSystem(options: {
+  maneuver: string;
+  system: "sensors" | "weapons";
+  atTheControls: boolean;
+}): boolean {
+  if (!options.atTheControls) return false;
+  return options.system === "sensors"
+    ? options.maneuver === "concentrate"
+    : options.maneuver === "attack" || options.maneuver === "allOutAttack";
+}
+
 export function mediumOf(locomotion: Locomotion): VehicleMedium {
   if (locomotion === "air") return "air";
   if (locomotion === "water") return "water";

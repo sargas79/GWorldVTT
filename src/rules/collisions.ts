@@ -86,3 +86,24 @@ export function overrunDamage(options: { strikerSm: number; struckSm: number; st
 
 /** What a seatbelt or an airbag stops of the whiplash (p. 432). */
 export const RESTRAINT_DR = { seatbelt: 5, airbag: 10 } as const;
+
+/**
+ * Leaving a moving vehicle the hard way (Campaigns p. 467).
+ *
+ * "Anyone who jumps or falls from a moving vehicle and hits the ground
+ * takes a collision with an immovable object at the vehicle's speed. If the
+ * vehicle is flying, add falling damage."
+ *
+ * The jumper's own hit points are what strike the ground, and the ground
+ * does not give, so the collision is the hard kind.
+ */
+export function jumpFromVehicle(options: {
+  hitPoints: number;
+  vehicleSpeed: number;
+}): CollisionDamage {
+  return collisionDamage({
+    hitPoints: options.hitPoints,
+    velocity: options.vehicleSpeed,
+    hard: true,
+  });
+}

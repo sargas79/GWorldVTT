@@ -89,6 +89,12 @@
                           data-tooltip="{{localize 'GWORLD.Hazard.ControlHint'}}">{{> "gworld.die"}}</span>
                     <span class="rollable" data-action="shotAtVehicle"
                           data-tooltip="{{localize 'GWORLD.Vehicle.ShotAtHint'}}">{{> "gworld.die"}}</span>
+                    {{#if @root.rules.vehicleManeuvers}}
+                      <button type="button" class="ibtn tiny" data-action="jumpOutOfVehicle"
+                              data-tooltip="{{localize 'GWORLD.Hazard.JumpOutHint'}}">
+                        {{localize "GWORLD.Hazard.JumpOut"}}
+                      </button>
+                    {{/if}}
                   {{/if}}
                 </td>
                 <td class="n">{{row.quantity}}</td>

@@ -554,6 +554,10 @@
         "equipmentModifiers": {
           "Name": "Equipment modifiers",
           "Hint": "The tools of a trade are worth something to the roll that uses them: nothing for basic gear, +1 for good, +2 for fine, TL/2 for the best there is, and a penalty for improvising or working bare-handed (Campaigns p. 345)."
+        },
+        "vehicleManeuvers": {
+          "Name": "Vehicle maneuvers",
+          "Hint": "A vehicle moves on its operator’s turn: a Move or Move and Attack puts them in charge, and any other maneuver — or being stunned — leaves it plowing ahead on last turn’s course. Jumping out is a collision at the vehicle’s speed (Campaigns p. 467)."
         }
       }
     },
@@ -2263,7 +2267,17 @@
       "HitsAPerson": "{location}: the person there is struck instead, and the vehicle's DR does not protect them",
       "OccupantHit": "Rolled {roll} against {target}: an occupant is hit for {dice}d cutting, at a random location",
       "OccupantMissed": "Rolled {roll} against {target}: nobody inside was hit",
-      "ShotAtDetail": "{vehicle}, {damage} points through its DR"
+      "ShotAtDetail": "{vehicle}, {damage} points through its DR",
+      "Movement": {
+        "controlled": "At the controls: the vehicle goes where it is steered.",
+        "plowsAhead": "Not at the controls: the vehicle plows ahead at last turn’s speed and course."
+      },
+      "JumpOut": "Jump out",
+      "JumpOutHint": "Jumping or falling from a moving vehicle: a collision with an immovable object at the vehicle’s speed (Campaigns p. 467)",
+      "JumpSpeed": "Speed when they jumped (yards/second)",
+      "JumpedFrom": "from {vehicle}, at {speed} yards a second",
+      "JumpDamage": "{formula} crushing into the ground: {rolled} on the {location}, through DR {dr}",
+      "JumpFalling": "It was flying: add the falling damage for the height as well."
     },
     "Vehicle": {
       "Statistics": "Vehicle statistics",
