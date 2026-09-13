@@ -234,9 +234,17 @@ export async function strikeWithMelee(actor: any, event: Event): Promise<void> {
   const outcome = await handleRollAction(actor, event, control);
   if (!outcome || !outcome.success) return;
 
-  // The hand is discharged by the blow, whatever the defense then does; a
-  // successful defense means "you may try again next turn", which is a new
-  // casting in this system rather than a held charge kept through a parry.
+  // The hand is discharged by the blow, whatever the defense then does.
+  //
+  // The book keeps the charge: "if he succeeds, your spell is not triggered;
+  // you may try again next turn" (p. 240). Restoring it automatically would
+  // mean the defender's client writing a flag on the caster's actor, which
+  // ownership does not allow, or the caster's client watching every defense
+  // card for one of its own -- machinery out of proportion to the case.
+  //
+  // So this is left to the table: on a successful defense the caster simply
+  // holds the spell again, which costs what it cost the first time. Deliberate,
+  // and not to be "fixed" without deciding to build that machinery.
   await releaseSpell(actor);
   if (held.damage) await rollHeldDamage(actor, held, held.name);
 

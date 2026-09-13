@@ -452,6 +452,12 @@ interface DefenseFlag {
   damageType?: string;
   /** True for a critical hit, which no active defense may be rolled against. */
   noDefense?: boolean;
+  /**
+   * True where what stopped the defense was an area attack rather than a
+   * critical hit (Campaigns p. 413): the defender may still dive for cover or
+   * retreat out of the area, which is worth saying instead of "no defense".
+   */
+  areaAttack?: boolean;
   /** True for a thrown Missile spell, which may be dodged or blocked but not parried. */
   noParry?: boolean;
   /** The attacking weapon, for the parry to weigh (Campaigns p. 376). */
@@ -520,7 +526,9 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     if (flag.noDefense) {
       const note = document.createElement("span");
       note.className = "gc-warn";
-      note.textContent = game.i18n.localize("GWORLD.Critical.NoDefense");
+      note.textContent = game.i18n.localize(
+        flag.areaAttack ? "GWORLD.Guided.NoDefense" : "GWORLD.Critical.NoDefense",
+      );
       who.append(note);
       root.append(row);
       continue;

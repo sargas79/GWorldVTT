@@ -167,3 +167,61 @@ describe("opportunity fire (p. 390)", () => {
     ).toBeUndefined();
   });
 });
+
+/**
+ * Guided and homing weapons (GURPS Basic Set: Campaigns p. 412). The missile
+ * is a Complexity all its own: it ignores the distance, it may ignore the
+ * firer entirely, and it is aimed by the time it arrives without anybody
+ * having taken an Aim maneuver.
+ */
+describe("steered weapons", () => {
+  // Acc 5, 1/2D 200 (its speed in yards a second), Max 2000.
+  const missile = {
+    accuracy: 5,
+    scopeBonus: 0,
+    bulk: -8,
+    halfDamageRange: 200,
+    maxRange: 2000,
+  };
+
+  it("still takes the speed/range penalty when it is not steered", () => {
+    const mods = rangedModifiers(shot({ range: 500 }), { ...missile, guidance: "" });
+    expect(valueOf(mods, "SpeedRange")).toBe(-14);
+  });
+
+  it("ignores range modifiers once it steers", () => {
+    for (const guidance of ["guided", "homing"]) {
+      const mods = rangedModifiers(shot({ range: 500 }), { ...missile, guidance });
+      expect(valueOf(mods, "SpeedRange")).toBeUndefined();
+    }
+  });
+
+  it("keeps the target's size, which applies to everything", () => {
+    const mods = rangedModifiers(shot({ range: 500, size: -2 }), { ...missile, guidance: "homing" });
+    expect(valueOf(mods, "TargetSize")).toBe(-2);
+  });
+
+  it("is aimed by a journey of more than a second, with no Aim maneuver", () => {
+    // 500 yards at 200 a second is three seconds in the air.
+    const mods = rangedModifiers(shot({ range: 500 }), { ...missile, guidance: "guided" });
+    expect(valueOf(mods, "Accuracy")).toBe(5);
+  });
+
+  it("gets no Accuracy on a shot that arrives the same second unaimed", () => {
+    // 100 yards at 200 a second arrives on the turn it was fired.
+    const mods = rangedModifiers(shot({ range: 100 }), { ...missile, guidance: "guided" });
+    expect(valueOf(mods, "Accuracy")).toBeUndefined();
+  });
+
+  it("takes the firer's darkness for a guided weapon but not a homing one", () => {
+    const dark = shot({ range: 500, darkness: 5 });
+    expect(total(rangedModifiers(dark, { ...missile, guidance: "guided" }))).toBeLessThan(
+      total(rangedModifiers(dark, { ...missile, guidance: "homing" })),
+    );
+    expect(
+      rangedModifiers(dark, { ...missile, guidance: "homing" }).some((m) =>
+        m.label.includes("Darkness"),
+      ),
+    ).toBe(false);
+  });
+});

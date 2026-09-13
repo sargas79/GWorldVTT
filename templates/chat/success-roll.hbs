@@ -41,6 +41,41 @@
     </div>
   {{/if}}
 
+  {{#if guidance}}
+    <div class="gc-mods gc-guidance">
+      {{#if guidance.falls}}
+        <span class="gc-warn">{{localize "GWORLD.Guided.Falls"}}</span>
+      {{else if guidance.hitsThisTurn}}
+        {{#unless guidance.area}}
+          <span>{{localize "GWORLD.Guided.ArrivesNow"}}</span>
+        {{/unless}}
+      {{else}}
+        <span>{{localize "GWORLD.Guided.Arrives" seconds=guidance.seconds}}</span>
+      {{/if}}
+      {{#if guidance.speedNotDamage}}
+        <span class="gc-mod">{{localize "GWORLD.Guided.SpeedNotDamage"}}</span>
+      {{/if}}
+      {{#if guidance.ignoresFirer}}
+        <span class="gc-mod">{{localize "GWORLD.Guided.IgnoresFirer"}}</span>
+      {{/if}}
+      {{#if guidance.mustSteer}}
+        <span class="gc-warn">{{localize "GWORLD.Guided.MustSteer"}}</span>
+      {{/if}}
+      {{#if guidance.area}}
+        <span class="gc-mod">{{localize "GWORLD.Guided.NoDefense"}}</span>
+        {{#if guidance.coneYards}}
+          <span class="gc-mod">{{localize "GWORLD.Guided.ConeWidth" yards=guidance.coneYards}}</span>
+        {{/if}}
+        {{#if guidance.damageHoldsUp}}
+          <span class="gc-mod">{{localize "GWORLD.Guided.DamageHoldsUp"}}</span>
+        {{/if}}
+        {{#if guidance.coneMayCatch}}
+          <span class="gc-mod">{{localize "GWORLD.Guided.MayStillCatch"}}</span>
+        {{/if}}
+      {{/if}}
+    </div>
+  {{/if}}
+
   {{#if jam}}
     <div class="gc-result crit-failure">
       {{localize "GWORLD.Malfunction.Jammed"}} &mdash; {{jam.label}}
