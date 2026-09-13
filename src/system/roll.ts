@@ -72,6 +72,7 @@ import {
 import { attackWithoutSight, darknessPenalty, type Sight, type VisionTraits } from "../rules/visibility.js";
 import { impairedAttacks } from "../rules/trait-effects.js";
 import { levelDifference } from "../rules/melee-situations.js";
+import { effectiveLevelDifference } from "../rules/unarmed-techniques.js";
 import { turnedBlade } from "../rules/subduing.js";
 import { coverShot, type CoverApproach } from "../rules/cover.js";
 import { breakWeapon } from "./weapon-damage.js";
@@ -677,6 +678,8 @@ export async function handleRollAction(
         ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true,
         offHandTraining: Number(actor?.system?.derived?.techniques?.offHandWeaponTraining) || 0,
         eyes: eyesOf(actor),
+        // "C, 1" and "1, 2" both reach as far as their last number does.
+        reachYards: longestReach(target.dataset.reach ?? ""),
       })
     : null;
   if (asksAboutMelee && melee === null) return null;
@@ -1450,6 +1453,11 @@ export async function promptForMeleeAttack(options: {
   offHandTraining?: number;
   /** The attacker's eyes, for the dark. */
   eyes?: Eyes;
+  /**
+   * The weapon's reach in yards, which closes a vertical gap without closing
+   * it for the other fellow (Campaigns p. 402).
+   */
+  reachYards?: number;
 }): Promise<{
   modifiers: RollModifier[];
   defensePenalty: number;
@@ -1659,7 +1667,14 @@ export async function promptForMeleeAttack(options: {
   // grows (p. 402). Only the defense half is applied: the rest of that rule is
   // about which locations each fighter can reach, which needs a called shot to
   // matter and a map to know.
-  const levels = levelDifference(ground);
+  //
+  // A long weapon closes the gap first: "each yard past the first brings the
+  // foe three feet closer to you. This does not bring you any closer to your
+  // foe!" So a man with a greatsword fighting somebody six feet above him
+  // fights as though the drop were three.
+  const levels = levelDifference(
+    effectiveLevelDifference({ feet: ground, reachYards: options.reachYards ?? 1 }),
+  );
   const groundPenalty = levels.negligible ? 0 : levels.lower.defense;
 
   const mightyBlows = mighty && effortAllowed;
@@ -1673,6 +1688,21 @@ export async function promptForMeleeAttack(options: {
     turned: turned === true,
     charging: charging === true,
   };
+}
+
+/**
+ * The furthest a reach column reaches, in yards.
+ *
+ * The column is a list -- "C, 1" for a weapon usable in close combat and at a
+ * yard, "1, 2" for a spear -- and what matters for closing a vertical gap is
+ * the longest of them. A "C" alone is no reach at all.
+ */
+export function longestReach(reach: string): number {
+  const yards = reach
+    .split(",")
+    .map((part) => Number(part.trim().replace("*", "")))
+    .filter((value) => Number.isFinite(value));
+  return yards.length > 0 ? Math.max(1, Math.max(...yards)) : 1;
 }
 
 /** Handles a click on any element carrying the damage dataset. */
