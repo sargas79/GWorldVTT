@@ -156,6 +156,21 @@
       {{#if derived.legPenalty}}
         <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Attack.LameHint'}}">{{localize "GWORLD.Attack.Lame" penalty=derived.legPenalty}}</span>
       {{/if}}
+      {{#if derived.armorNotes.layeringPenalty}}
+        <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Armor.LayeringHint'}}">{{localize "GWORLD.Armor.Layering" penalty=derived.armorNotes.layeringPenalty}}</span>
+      {{/if}}
+      {{#if derived.armorNotes.illegalLayering}}
+        <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Armor.IllegalLayerHint'}}">{{localize "GWORLD.Armor.IllegalLayer"}}</span>
+      {{/if}}
+      {{#if derived.armorNotes.noPeripheralVision}}
+        <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Armor.NoPeripheralHint'}}">{{localize "GWORLD.Armor.NoPeripheral"}}</span>
+      {{/if}}
+      {{#if derived.armorNotes.frontOnly}}
+        <span class="ichip" data-tooltip="{{localize 'GWORLD.Armor.FrontOnlyHint'}}">{{localize "GWORLD.Armor.FrontOnly"}}</span>
+      {{/if}}
+      {{#if derived.shieldBroken}}
+        <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Shield.BrokenHint'}}">{{localize "GWORLD.Shield.Broken"}}</span>
+      {{/if}}
     </div>
   </div>
 

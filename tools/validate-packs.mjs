@@ -353,7 +353,7 @@ function validateItem(entry, file) {
   }
 
   if (entry.type === "armor") {
-    for (const flag of ["flexible", "frontOnly", "concealable"]) {
+    for (const flag of ["flexible", "frontOnly", "concealable", "blocksPeripheralVision"]) {
       check(
         sys[flag] === undefined || typeof sys[flag] === "boolean",
         file, name, `${flag} must be true or false`,

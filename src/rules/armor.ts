@@ -43,6 +43,12 @@ export interface ArmorPiece {
   drSplitAppliesTo: readonly DamageType[];
   /** Locations covered. An empty list means the whole body. */
   locations: readonly HitLocation[];
+  /** The "*": flexible, and so open to blunt trauma (Characters p. 282). */
+  flexible?: boolean;
+  /** The "F": the DR protects against attacks from the front alone. */
+  frontOnly?: boolean;
+  /** Concealable as or under clothing, which is what layering needs (p. 286). */
+  concealable?: boolean;
 }
 
 /** The DR one piece offers against one kind of damage. */

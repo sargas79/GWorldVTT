@@ -53,6 +53,8 @@ import {
   type WeaponMaterial,
   type WeaponQuality,
 } from "../../rules/weapon-quality.js";
+import { layeringAt, layeringPenalty } from "../../rules/layered-armor.js";
+import { shieldGivesDb, shieldState } from "../../rules/shield-damage.js";
 import {
   ammunitionEffect,
   calibreOf,
@@ -1130,10 +1132,26 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     //
     // Will and Per are secondary characteristics, so a skill based on either
     // has to wait for them to be derived above.
+    // "Wearing an extra layer of armor anywhere but on the head gives -1 to
+    // DX and DX-based skills" (Characters p. 286). One funnel feeds every
+    // skill's level, so the penalty is applied where DX is read.
+    const wornPieces = this.itemsOfType("armor")
+      .filter((item: any) => item.system?.equipped)
+      .map((item: any) => ({
+        dr: Number(item.system?.dr ?? 0),
+        drSplit: item.system?.drSplit ?? null,
+        drSplitAppliesTo: item.system?.drSplitAppliesTo ?? [],
+        locations: item.system?.locations ?? [],
+        flexible: item.system?.flexible === true,
+        frontOnly: item.system?.frontOnly === true,
+        concealable: item.system?.concealable === true,
+      }));
+    const layering = isRuleOn("layeredArmor") ? layeringPenalty(wornPieces) : 0;
+
     const attributeScore = (a: SkillAttribute): number => {
       if (a === "Will") return secondary.will;
       if (a === "Per") return secondary.per;
-      return attrs[a];
+      return a === "DX" ? attrs.DX + layering : attrs[a];
     };
 
     const skillItems = this.itemsOfType("skill");
@@ -1284,7 +1302,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const dr = drByLocation.torso;
 
     const shieldItem = this.itemsOfType("shield").find((i) => i.system?.equipped) ?? null;
-    const shieldDb = shieldItem ? Number(shieldItem.system?.db ?? 0) : 0;
+    // "If the shield is disabled or destroyed, it no longer provides its DB,
+    // but it still encumbers you until dropped" (Campaigns p. 484).
+    const shieldHp = shieldItem ? Number(shieldItem.system?.hp ?? 0) || 0 : 0;
+    const shieldBroken =
+      isRuleOn("damageToShields") && shieldHp > 0 &&
+      !shieldGivesDb(shieldState(Number(shieldItem?.system?.hpLost ?? 0) || 0, shieldHp));
+    const shieldDb = shieldItem && !shieldBroken ? Number(shieldItem.system?.db ?? 0) : 0;
     // Deflect "Adds a Defense Bonus to armor, clothing, a shield, or a weapon.
     // This adds to all active defense rolls made by the user" (p. 480).
     const deflectDb = this.items
@@ -1614,7 +1638,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // still has an attack to roll -- and the kick's -2 is already in its level.
     for (const attack of naturalAttacks({
       st: strikingSt,
-      dx: attrs.DX,
+      // A punch and a kick are DX-based like any weapon skill, so an extra
+      // layer of armour costs them the same -1 (Characters p. 286).
+      dx: attrs.DX + layering,
       skills: {
         ...(this.skillLevelByName("Brawling") !== null ? { Brawling: this.skillLevelByName("Brawling")! } : {}),
         ...(this.skillLevelByName("Boxing") !== null ? { Boxing: this.skillLevelByName("Boxing")! } : {}),
@@ -1963,6 +1989,22 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       will: secondary.will,
       per: secondary.per,
       basicLift: secondary.basicLift,
+      // What is worn over what (Characters pp. 283, 286): the -1 for an extra
+      // layer, whether any of it is layered where it should not be, and a
+      // great helm that takes the corner of the wearer's eye.
+      armorNotes: {
+        layeringPenalty: layering,
+        illegalLayering:
+          isRuleOn("layeredArmor") &&
+          HIT_LOCATION_ORDER.some((location) => !layeringAt(wornPieces, location).legal),
+        noPeripheralVision:
+          isRuleOn("frontArmor") &&
+          this.itemsOfType("armor").some(
+            (item: any) => item.system?.equipped && item.system?.blocksPeripheralVision,
+          ),
+        frontOnly: wornPieces.some((piece) => piece.frontOnly),
+      },
+      shieldBroken,
       basicSpeed: secondary.basicSpeed,
       basicMove: secondary.basicMove,
       move: [reeling, veryTired].reduce(

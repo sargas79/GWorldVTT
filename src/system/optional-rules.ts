@@ -143,6 +143,14 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "reloading", reference: "Campaigns p. 373", default: true },
     // Hollow-point, armour-piercing, bodkin points, silver.
     { key: "ammunitionTypes", reference: "Characters pp. 276, 279", default: true },
+    // The bruise a mace leaves through mail that stopped it.
+    { key: "bluntTrauma", reference: "Campaigns p. 379", default: true },
+    // A breastplate protects the front alone; a helmet costs the corner of the eye.
+    { key: "frontArmor", reference: "Characters pp. 282-283", default: true },
+    // Armour over armour: -1 to DX, and only over something flexible.
+    { key: "layeredArmor", reference: "Characters p. 286", default: true },
+    // A shield that turned the blow by its own width may have taken it.
+    { key: "damageToShields", reference: "Campaigns p. 484", default: false },
   ],
 };
 

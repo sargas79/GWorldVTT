@@ -33,7 +33,12 @@
         <div class="gc-mods">
           <span>{{localize "GWORLD.Chat.DrSubtracted"}} {{r.effectiveDr}}</span>
           <span>{{localize "GWORLD.Chat.Penetrating"}} {{r.penetrating}}</span>
-          <span>&times;{{r.woundingModifier}}</span>
+          {{#if r.bluntTrauma}}
+            {{!-- Nothing got through: what it cost was the bruise. --}}
+            <span>{{localize "GWORLD.Armor.BluntTrauma"}} {{r.bluntTrauma}}</span>
+          {{else}}
+            <span>&times;{{r.woundingModifier}}</span>
+          {{/if}}
         </div>
         <div class="gc-result">
           <strong>{{r.injury}}</strong> {{r.pool}}

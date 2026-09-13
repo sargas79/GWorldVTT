@@ -1128,6 +1128,7 @@ export function parseEquipment(recs, reject, note) {
           // The footnote is prose the reader drops; only whether the piece
           // carries it comes through, as one fact about the piece.
           concealable: /concealable as or under clothing/i.test(r.text),
+          blocksPeripheralVision: /no peripheral vision/i.test(r.text),
           soleDr: dr.sole ?? null,
         },
       });
