@@ -744,6 +744,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare listCost: number;
   declare hpLost: number;
   declare missedMaintenance: number;
+  declare complexity: number;
   declare equipmentQuality: EquipmentQuality;
   declare forSkills: string[];
   declare meleeModes: unknown[];
@@ -856,6 +857,16 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
        * top speed in yards a second, weights in tons, SM, occupants as
        * "crew+passengers", DR, range in miles, and the control skill.
        */
+      /**
+       * A computer's Complexity (GURPS Basic Set: Campaigns p. 472). "An
+       * abstract measure of processing power... A computer's Complexity
+       * determines what programs it can run." Zero for everything that is not
+       * a computer, which is most things.
+       */
+      complexity: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 0, min: 0,
+      }),
+
       vehicle: new fields.SchemaField(vehicleStatFields()),
     };
   }

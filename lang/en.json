@@ -1294,7 +1294,10 @@
         "consumable": "Consumables",
         "vehicle": "Vehicles",
         "misc": "Miscellaneous"
-      }
+      },
+      "Complexity": "Complexity",
+      "ComplexityHint": "A computer's processing power. Each level is roughly ten times the last, and a program only runs on a machine of its own Complexity or better (Campaigns p. 472). Zero for anything that is not a computer.",
+      "Runs": "Runs at once:"
     },
     "Npc": {
       "InScene": "x{count} in scene"

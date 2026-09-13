@@ -82,6 +82,7 @@ export * from "./senses.js";
 export * from "./social.js";
 export * from "./talents.js";
 export * from "./aging.js";
+export * from "./invention.js";
 export * from "./jobs.js";
 export * from "./languages.js";
 export * from "./study.js";

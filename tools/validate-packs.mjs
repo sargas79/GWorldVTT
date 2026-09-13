@@ -403,6 +403,12 @@ function validateItem(entry, file) {
   if (["equipment", "shield"].includes(entry.type) && sys.hpLost !== undefined) {
     check(Number.isInteger(sys.hpLost) && sys.hpLost >= 0, file, name, `bad HP lost "${sys.hpLost}"`);
   }
+  if (entry.type === "equipment" && sys.complexity !== undefined) {
+    check(
+      Number.isInteger(sys.complexity) && sys.complexity >= 0,
+      file, name, `bad Complexity "${sys.complexity}"`,
+    );
+  }
   if (entry.type === "equipment" && sys.missedMaintenance !== undefined) {
     check(
       Number.isInteger(sys.missedMaintenance) && sys.missedMaintenance >= 0,
