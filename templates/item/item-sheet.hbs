@@ -630,6 +630,8 @@
                 <input type="number" name="system.vehicle.range" value="{{system.vehicle.range}}" step="1" min="0" {{#unless editable}}disabled{{/unless}} /></label>
               <label>{{localize "GWORLD.Vehicle.Skill"}}
                 <input type="text" name="system.vehicle.skill" value="{{system.vehicle.skill}}" placeholder="Driving (Automobile)" {{#unless editable}}disabled{{/unless}} /></label>
+              <label>{{localize "GWORLD.Vehicle.Locations"}}
+                <input type="text" name="system.vehicle.locations" value="{{system.vehicle.locations}}" placeholder="G4W" {{#unless editable}}disabled{{/unless}} /></label>
               <label>{{localize "GWORLD.Vehicle.LocomotionLabel"}}
                 <select name="system.vehicle.locomotion" {{#unless editable}}disabled{{/unless}}>
                   {{#each locomotions as |l|}}

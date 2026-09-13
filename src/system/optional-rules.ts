@@ -74,6 +74,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "highSpeed", reference: "Campaigns pp. 394-395", default: true },
     { key: "overpenetration", reference: "Campaigns p. 408", default: true },
     { key: "dirtyTricks", reference: "Campaigns p. 405", default: true },
+    { key: "trampling", reference: "Campaigns p. 404", default: true },
+    { key: "swarms", reference: "Campaigns p. 461", default: true },
   ],
   injury: [
     { key: "hitLocations", reference: "Campaigns p. 398", default: true },

@@ -78,3 +78,6 @@ export * from "./hiking.js";
 export * from "./radiation.js";
 export * from "./sleep.js";
 export * from "./vehicles.js";
+export * from "./swarms.js";
+export * from "./trampling.js";
+export * from "./vehicle-combat.js";

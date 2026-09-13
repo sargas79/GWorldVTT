@@ -14,6 +14,7 @@ import { attributeOf, healthRollScore } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { resolveDamageAgainst, type IncomingDamage } from "./damage.js";
 import { applyFatigue } from "./fatigue.js";
+import { loseAim } from "./aim.js";
 import { collisionDamage, collisionVelocity, overrunDamage, type CollisionAngle } from "../rules/collisions.js";
 import { formatDiceAdds, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import {
@@ -30,7 +31,11 @@ import { normalizeSkillName } from "../rules/skills.js";
 import { dozingOff, sleepRecovery, stayingUpFatigue, wakingDayHours } from "../rules/sleep.js";
 import { resolveSuccess } from "../rules/success.js";
 import type { DamageType } from "../rules/types.js";
-import { controlRoll } from "../rules/vehicles.js";
+import { controlRoll, type Locomotion } from "../rules/vehicles.js";
+import {
+  crippleThreshold, hitsAPerson, locationsOf, lossOfControl, mediumOf, occupantDamage,
+  occupantHitTarget, OCCUPANT_RISK_DAMAGE, vehicleHitLocation, windowDr,
+} from "../rules/vehicle-combat.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/life.hbs`;
 
@@ -501,12 +506,36 @@ export async function controlVehicle(options: { actor: any; itemId: string; modi
   const roll = new Roll("3d6");
   await roll.evaluate();
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+  const stabilityRating = Number(vehicle.stability) || 0;
   const result = controlRoll({
     success: outcome.success,
     criticalFailure: outcome.criticalFailure,
     margin: outcome.margin,
-    stabilityRating: Number(vehicle.stability) || 0,
+    stabilityRating,
   });
+
+  const lines = [H(`ControlResult.${result}`)];
+  if (result !== "ok") {
+    // What losing control actually does depends on what the thing moves
+    // through (Campaigns p. 469).
+    const medium = mediumOf(String(vehicle.locomotion ?? "wheels") as Locomotion);
+    const lost = lossOfControl({
+      medium,
+      stabilityRating,
+      margin: Math.abs(outcome.margin),
+      criticalFailure: outcome.criticalFailure,
+      velocity: Number(vehicle.topSpeed) || 0,
+    });
+    lines.push(H(`LostControl.${lost.result}`));
+    if (lost.altitudeLost > 0) lines.push(F("AltitudeLost", { yards: lost.altitudeLost }));
+    if (lost.decelerated > 0) lines.push(F("Decelerated", { yards: lost.decelerated }));
+    if (lost.skidYards > 0) lines.push(F("SkidYards", { yards: lost.skidYards }));
+    // "A failed control roll always erases any accumulated bonuses for Aim
+    // maneuvers, and gives a penalty equal to the margin of failure to any
+    // attack from the vehicle until the operator's next turn."
+    lines.push(F("AttacksFrom", { penalty: -Math.abs(outcome.margin) }));
+    await loseAim(actor, "moved");
+  }
 
   await post(actor, {
     kind: H("Control"),
@@ -514,9 +543,111 @@ export async function controlVehicle(options: { actor: any; itemId: string; modi
     target,
     dice: dieResults(roll),
     roll: roll.total,
-    lines: [H(`ControlResult.${result}`)],
+    lines,
     good: result === "ok",
     bad: result === "major" || result === "disaster",
     rolls: [roll],
   });
+}
+
+/**
+ * Where a shot at a vehicle landed, and who inside it caught something
+ * (Campaigns pp. 554-555).
+ *
+ * The location is rolled on the vehicle's own table, and only the locations
+ * the vehicle actually has are on it -- "if a random location doesn't exist
+ * ... treat it as body hit". What it takes to cripple that location is its
+ * own share of the vehicle's HP. Then, "whenever five or more points of
+ * damage penetrate an occupied location ... roll 3d on the Occupant Hit
+ * Table", and whoever was hit takes "1d cutting damage per five full points".
+ */
+export async function shootAtVehicle(options: {
+  actor: any;
+  itemId: string;
+  penetrating: number;
+  occupants: number;
+}): Promise<void> {
+  const { actor } = options;
+  const item = actor.items?.get(options.itemId);
+  const vehicle = item?.system?.vehicle;
+  if (!item || !vehicle) return;
+
+  const hitPoints = Number(vehicle.stHp) || 0;
+  const sm = Number(vehicle.sm) || 0;
+  const rolls: any[] = [];
+
+  const locationRoll = new Roll("3d6");
+  await locationRoll.evaluate();
+  rolls.push(locationRoll);
+  const hit = vehicleHitLocation({
+    roll: locationRoll.total,
+    has: locationsOf(String(vehicle.locations ?? "")),
+    // "A powered vehicle (anything with a ST attribute) has vital areas."
+    powered: hitPoints > 0 && Number(vehicle.topSpeed) > 0,
+  });
+
+  const lines: string[] = [];
+  const name = game.i18n.localize(`GWORLD.Vehicle.Location.${hit.location}`);
+  const toAim = hit.penalty + sm;
+  lines.push(
+    F("HitLocation", {
+      location: name,
+      penalty: toAim >= 0 ? `+${toAim}` : String(toAim),
+      ...(hit.fellToBody ? { note: H("FellToBody") } : { note: "" }),
+    }),
+  );
+  if (hit.choices.length > 1) {
+    lines.push(F("AttackerPicks", {
+      choices: hit.choices.map((c) => game.i18n.localize(`GWORLD.Vehicle.Location.${c}`)).join(", "),
+    }));
+  }
+
+  const penetrating = Math.max(0, options.penetrating);
+  const threshold = crippleThreshold(hit.location, hitPoints, {
+    wheels: countOf(String(vehicle.locations ?? ""), "W"),
+    masts: countOf(String(vehicle.locations ?? ""), "M"),
+  });
+  if (threshold !== null) {
+    lines.push(
+      penetrating > threshold
+        ? F("Crippled", { location: name, threshold: Math.floor(threshold) })
+        : F("NotCrippled", { location: name, threshold: Math.floor(threshold) }),
+    );
+  }
+  if (hit.location === "vitalArea") lines.push(H("VitalArea"));
+  if (hit.location === "largeWindow" || hit.location === "smallWindow") {
+    lines.push(F("WindowDr", { dr: windowDr(Number(vehicle.dr) || 0) }));
+  }
+  if (hitsAPerson(hit.location)) lines.push(F("HitsAPerson", { location: name }));
+
+  // The people inside, when enough got through to matter.
+  if (penetrating >= OCCUPANT_RISK_DAMAGE && !hitsAPerson(hit.location)) {
+    const target = occupantHitTarget(Math.max(1, options.occupants), sm);
+    const occupantRoll = new Roll("3d6");
+    await occupantRoll.evaluate();
+    rolls.push(occupantRoll);
+    if (occupantRoll.total <= target) {
+      const damage = occupantDamage(penetrating);
+      lines.push(F("OccupantHit", { roll: occupantRoll.total, target, dice: damage.dice }));
+    } else {
+      lines.push(F("OccupantMissed", { roll: occupantRoll.total, target }));
+    }
+  }
+
+  await post(actor, {
+    kind: game.i18n.localize("GWORLD.Vehicle.ShotAt"),
+    detail: F("ShotAtDetail", { vehicle: String(item.name), damage: penetrating }),
+    dice: dieResults(locationRoll),
+    roll: locationRoll.total,
+    lines,
+    bad: penetrating > 0,
+    rolls,
+  });
+}
+
+/** How many of a location a vehicle's entry lists: "4W" is four wheels. */
+function countOf(entry: string, code: string): number {
+  const m = new RegExp(`(\\d*)${code}(?![a-z])`).exec(entry);
+  if (!m) return 1;
+  return Number(m[1]) || 1;
 }

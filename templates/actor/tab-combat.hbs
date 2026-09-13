@@ -351,6 +351,18 @@
           {{localize "GWORLD.Evade.Action"}}
         </button>
       {{/if}}
+      {{#if rules.trampling}}
+        <button type="button" class="ibtn" data-action="trample"
+                data-tooltip="{{localize "GWORLD.Trample.Hint"}}">
+          {{localize "GWORLD.Trample.Action"}}
+        </button>
+      {{/if}}
+      {{#if rules.swarms}}
+        <button type="button" class="ibtn" data-action="fightOffSwarm"
+                data-tooltip="{{localize "GWORLD.Swarm.FightOffHint"}}">
+          {{localize "GWORLD.Swarm.FightOff"}}
+        </button>
+      {{/if}}
       <button type="button" class="ibtn" data-action="contest"
               data-tooltip="{{localize "GWORLD.Contest.Hint"}}">
         {{localize "GWORLD.Contest.Action"}}

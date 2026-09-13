@@ -140,6 +140,26 @@
     </div>
   {{/if}}
 
+  {{#if swarm}}
+    <div class="isec" style="gap: 7px">
+      <div class="grph">{{localize "GWORLD.Swarm.Title"}}</div>
+      <div class="npcline">
+        <span>{{localize "GWORLD.Swarm.Line"
+                 damage=(either swarm.damage swarm.flatInjury)
+                 kind=(localize (concat "GWORLD.Swarm.Kind." swarm.kind))}}</span>
+        {{#if swarm.about}}<span class="wmode">{{swarm.about}}</span>{{/if}}
+      </div>
+      {{#if swarm.inPlay}}
+        <div class="toolbar">
+          <button type="button" class="ibtn" data-action="swarmAttack"
+                  data-tooltip="{{localize "GWORLD.Swarm.AttackHint"}}">
+            {{localize "GWORLD.Swarm.Attack"}}
+          </button>
+        </div>
+      {{/if}}
+    </div>
+  {{/if}}
+
   {{#if system.tactics}}
     <div class="inote">
       {{> "gworld.info"}}<span>{{system.tactics}}</span>

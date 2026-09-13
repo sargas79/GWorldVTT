@@ -91,6 +91,11 @@ export function registerTemplateHelpers(): void {
     return args.some(Boolean);
   });
 
+  /** The first of two that is actually there, for a value written one way or the other. */
+  Handlebars.registerHelper("either", (first: unknown, second: unknown) =>
+    first === undefined || first === null || first === "" ? second : first,
+  );
+
   /** A list as one line, for a field edited as text and stored as an array. */
   Handlebars.registerHelper("join", (list: unknown, separator: unknown) =>
     Array.isArray(list) ? list.join(typeof separator === "string" ? separator : ", ") : "",

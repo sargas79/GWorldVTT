@@ -7203,5 +7203,323 @@
         }
       }
     ]
+  },
+  {
+    "_id": "6a61f2cf6fe14b35",
+    "name": "Swarm of Bats",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 10,
+        "DX": 10,
+        "IQ": 10,
+        "HT": 10
+      },
+      "purchased": {
+        "hp": -2,
+        "fp": 0,
+        "will": 0,
+        "per": 0,
+        "basicSpeed": 0,
+        "basicMove": 3
+      },
+      "hp": {
+        "value": 8,
+        "max": 8
+      },
+      "fp": {
+        "value": 10,
+        "max": 10
+      },
+      "sm": 0,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "swarm": {
+        "isSwarm": true,
+        "kind": "large",
+        "damage": "1d",
+        "flatInjury": 0,
+        "damageType": "cut",
+        "flying": true,
+        "about": "about a dozen carnivorous bats"
+      },
+      "details": {
+        "weight": "",
+        "notes": "Swarms. Basic Set: Campaigns p. 461"
+      }
+    },
+    "items": [
+      {
+        "_id": "2a5f87cc27977e37",
+        "name": "Injury Tolerance (Diffuse)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 100,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 60"
+        }
+      },
+      {
+        "_id": "f7a713a36b1f0fb0",
+        "name": "Flight",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 40,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 56",
+          "modifiers": [
+            {
+              "name": "Winged",
+              "value": -25
+            }
+          ],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "05db8f12c4b420b3",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "229da55bb2626809",
+    "name": "Swarm of Bees",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 10,
+        "DX": 10,
+        "IQ": 10,
+        "HT": 10
+      },
+      "purchased": {
+        "hp": 2,
+        "fp": 0,
+        "will": 0,
+        "per": 0,
+        "basicSpeed": 0,
+        "basicMove": 1
+      },
+      "hp": {
+        "value": 12,
+        "max": 12
+      },
+      "fp": {
+        "value": 10,
+        "max": 10
+      },
+      "sm": 0,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "swarm": {
+        "isSwarm": true,
+        "kind": "tiny",
+        "damage": "",
+        "flatInjury": 1,
+        "damageType": "pi-",
+        "flying": true,
+        "about": "about 1,000 common bees"
+      },
+      "details": {
+        "weight": "",
+        "notes": "Swarms. Basic Set: Campaigns p. 461"
+      }
+    },
+    "items": [
+      {
+        "_id": "578b8540c1e1650b",
+        "name": "Injury Tolerance (Diffuse)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 100,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 60"
+        }
+      },
+      {
+        "_id": "2959370f4dda014d",
+        "name": "Flight",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 40,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "description": "",
+          "reference": "Basic Set: Characters p. 56",
+          "modifiers": [
+            {
+              "name": "Winged",
+              "value": -25
+            }
+          ],
+          "selfControl": null
+        }
+      },
+      {
+        "_id": "b6258f475827e64a",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      }
+    ]
+  },
+  {
+    "_id": "59acedcbea811d1d",
+    "name": "Swarm of Rats",
+    "type": "npc",
+    "system": {
+      "attributes": {
+        "ST": 10,
+        "DX": 10,
+        "IQ": 10,
+        "HT": 10
+      },
+      "purchased": {
+        "hp": -4,
+        "fp": 0,
+        "will": 0,
+        "per": 0,
+        "basicSpeed": 0,
+        "basicMove": -1
+      },
+      "hp": {
+        "value": 6,
+        "max": 6
+      },
+      "fp": {
+        "value": 10,
+        "max": 10
+      },
+      "sm": 0,
+      "points": {
+        "starting": 0,
+        "disadvantageLimit": 0,
+        "awards": []
+      },
+      "groupSize": 1,
+      "tactics": "",
+      "swarm": {
+        "isSwarm": true,
+        "kind": "large",
+        "damage": "1d",
+        "flatInjury": 0,
+        "damageType": "cut",
+        "flying": false,
+        "about": "about a dozen rats"
+      },
+      "details": {
+        "weight": "",
+        "notes": "Swarms. Basic Set: Campaigns p. 461"
+      }
+    },
+    "items": [
+      {
+        "_id": "731b4991ecc41c20",
+        "name": "Injury Tolerance (Diffuse)",
+        "type": "trait",
+        "system": {
+          "category": "advantage",
+          "points": 100,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 60"
+        }
+      },
+      {
+        "_id": "862bafbbdc30b7ec",
+        "name": "Wild Animal",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -30,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "reactionModifier": 0,
+          "modifiers": [],
+          "selfControl": null,
+          "description": "",
+          "reference": "Basic Set: Characters p. 263"
+        }
+      }
+    ]
   }
 ]

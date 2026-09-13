@@ -555,7 +555,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare vehicle: {
     stHp: number; handling: number; stability: number; ht: number;
     acceleration: number; topSpeed: number; loadedWeight: number; load: number;
-    sm: number; occupants: string; dr: number; range: number; skill: string;
+    sm: number; occupants: string; dr: number; range: number; skill: string; locations: string;
     locomotion: "wheels" | "tracks" | "legs" | "runners" | "water" | "air"; roadBound: boolean;
   };
 
@@ -602,6 +602,12 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
         dr: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
         range: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
         skill: new fields.StringField({ required: true, blank: true, initial: "" }),
+        /**
+         * The Locations column as the tables print it: "G4W" is a large glass
+         * window and four wheels, "2CX" two caterpillar tracks and an exposed
+         * weapon mount (Campaigns pp. 463, 554).
+         */
+        locations: new fields.StringField({ required: true, blank: true, initial: "" }),
         locomotion: new fields.StringField({
           required: true, nullable: false, initial: "wheels",
           choices: ["wheels", "tracks", "legs", "runners", "water", "air"],

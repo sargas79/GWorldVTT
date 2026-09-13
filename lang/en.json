@@ -500,6 +500,14 @@
         "battleFatigue": {
           "Name": "Battle fatigue",
           "Hint": "A fight that runs past ten seconds costs everyone in it a point of fatigue when the tracker closes."
+        },
+        "trampling": {
+          "Name": "Trampling",
+          "Hint": "Somebody much larger walks over you: a melee attack a dodge is the only answer to."
+        },
+        "swarms": {
+          "Name": "Swarms",
+          "Hint": "A cloud of bats, bees or rats as one attacker: it hits automatically, and is fought off by the hit point."
         }
       }
     },
@@ -2084,7 +2092,32 @@
         "minor": "Failed by no more than the Stability Rating: a minor problem, a skid or lost time",
         "major": "Failed by more than the Stability Rating: a major problem, a crash; the GM may allow a second roll at a hefty penalty",
         "disaster": "A critical failure: disaster is inevitable"
-      }
+      },
+      "LostControl": {
+        "airStumble": "It drops five yards and sheds ten yards a second; low or slow, it could hit the ground or stall",
+        "airDive": "An uncontrollable dive or tailspin: climbing, it stalls and falls; otherwise it dives at Top Speed, and a Piloting-5 roll to pull out",
+        "skid": "It skids and fails to turn, or veers left or right; the GM says what it hit",
+        "rollOut": "It rolls or spins out and crashes, taking falling damage for the velocity it had",
+        "waterSkid": "It skids; anyone on an open deck makes a ST or Seamanship roll not to be washed overboard",
+        "capsize": "It capsizes: everyone on deck goes over the side, and anything but a raft or a surfaced sub sinks",
+        "veers": "It charges ahead or veers instead, and a submarine loses five yards of depth",
+        "stress": "Severe stress: a HT roll for the vehicle, and on a failure a leak or an engine gone"
+      },
+      "AltitudeLost": "{yards} yards of altitude or depth lost",
+      "Decelerated": "{yards} yards a second shed",
+      "SkidYards": "It skids or rolls {yards} yards before it stops",
+      "AttacksFrom": "Aim is lost, and attacks from the vehicle are at {penalty} until the operator's next turn",
+      "FellToBody": "(the vehicle has none, so the body)",
+      "HitLocation": "{location} at {penalty} to aim at deliberately {note}",
+      "AttackerPicks": "The attacker picks which: {choices}",
+      "Crippled": "Crippled: past {threshold} HP, and the excess is lost",
+      "NotCrippled": "Not crippled: it takes more than {threshold} HP",
+      "VitalArea": "A vital area: impaling and piercing wound at ×3, a tight-beam burn at ×2",
+      "WindowDr": "A closed window gives half the vehicle's DR: {dr}",
+      "HitsAPerson": "{location}: the person there is struck instead, and the vehicle's DR does not protect them",
+      "OccupantHit": "Rolled {roll} against {target}: an occupant is hit for {dice}d cutting, at a random location",
+      "OccupantMissed": "Rolled {roll} against {target}: nobody inside was hit",
+      "ShotAtDetail": "{vehicle}, {damage} points through its DR"
     },
     "Vehicle": {
       "Statistics": "Vehicle statistics",
@@ -2111,7 +2144,33 @@
         "air": "air"
       },
       "RoadBound": "Road-bound (an ordinary car)",
-      "Hint": "The line as the tables print it (Campaigns pp. 462-465). The Gear tab offers a control roll against the skill at Handling; a failure by more than the Stability Rating is a crash."
+      "Hint": "The line as the tables print it (Campaigns pp. 462-465). The Gear tab offers a control roll against the skill at Handling; a failure by more than the Stability Rating is a crash.",
+      "Locations": "Locations (G4W, 2CX)",
+      "ShotAt": "Shot at",
+      "ShotAtHint": "Where a shot landed on the vehicle, and who inside caught something (Campaigns pp. 554-555)",
+      "Penetrating": "Damage through its DR",
+      "Aboard": "Occupants",
+      "Location": {
+        "smallWindow": "Small glass window",
+        "weaponMount": "Exposed weapon mount",
+        "smallSuperstructure": "Small superstructure",
+        "independentTurret": "Independent turret",
+        "track": "Caterpillar track",
+        "draftAnimal": "Draft animal",
+        "rotor": "Helicopter rotor",
+        "mast": "Mast",
+        "wing": "Wing",
+        "arm": "Arm",
+        "largeSuperstructure": "Large superstructure",
+        "mainTurret": "Main turret",
+        "body": "Body",
+        "exposedRider": "Exposed rider",
+        "largeWindow": "Large glass window",
+        "openCabin": "Open cabin",
+        "runner": "Runner or skid",
+        "wheel": "Wheel",
+        "vitalArea": "Vital area"
+      }
     },
     "GearCategory": {
       "weapon": "Weapon",
@@ -2266,6 +2325,56 @@
       "CostTable": "Percent at each level",
       "LevelNames": "Level names",
       "Hint": "A flat modifier carries its percent; one priced by level carries the percent at each level, and the names the book gives them, separated by semicolons."
+    },
+    "Swarm": {
+      "Title": "Swarm",
+      "Line": "{damage} a turn, automatically, to everyone in its hex; {kind}",
+      "Kind": {
+        "tiny": "tiny enough to get inside clothing",
+        "large": "too large for clothing to matter"
+      },
+      "Attack": "Swarm attacks",
+      "AttackHint": "Every targeted token in the swarm's hex takes its damage: no attack roll and no defense (Campaigns p. 461)",
+      "Wearing": "The victims are wearing",
+      "Seconds": "Seconds already in it",
+      "Protection": {
+        "none": "Nothing that keeps them out",
+        "clothing": "Ordinary clothing (two seconds against insects)",
+        "armor": "Low-tech armour (five seconds against insects)",
+        "sealed": "A wetsuit, a bee suit or airtight armour"
+      },
+      "Detail": "A second in the swarm, {seconds} second(s) in, against: {protection}",
+      "NoTargets": "Target whoever is in the swarm's hex",
+      "Immune": "{name}: kept out, {seconds} second(s) in",
+      "Bitten": "{name}: {rolled} → {injury} HP, {previous} → {now}",
+      "GotIn": "{name}: they are inside the clothing now, and it is worth nothing",
+      "CannotApply": "{name} is not yours to change",
+      "FightOff": "Fight off a swarm",
+      "FightOffHint": "A turn spent beating at a swarm: it hits automatically, and a shield or a boot adds its own points (Campaigns p. 461)",
+      "WeaponDamage": "Damage rolled with a weapon",
+      "Shield": "Crushing fliers with a shield (2 HP)",
+      "Stomp": "Stamping on crawlers (1 HP)",
+      "TargetOne": "Target exactly one swarm",
+      "FightingOff": "Beating at {name}",
+      "Beaten": "{total} HP: weapon {weapon}, shield {shield}, stamping {stomp}",
+      "Left": "{now} of {max} left before it breaks up",
+      "Dispersed": "The swarm is dispersed",
+      "BadFormula": "Not a damage roll: {formula}"
+    },
+    "Trample": {
+      "Title": "Trample",
+      "Action": "Trample",
+      "Hint": "Underfoot: two Size Modifiers larger, or one against somebody on the ground (Campaigns p. 404)",
+      "Overrun": "An overrun after knocking them down: no rolls, half ST",
+      "OneTarget": "Target exactly one victim to trample",
+      "TooSmall": "Not big enough to trample {name}: SM {mine} against SM {theirs}",
+      "Label": "Trample ({from})",
+      "Damage": "Trample: {name}",
+      "OverrunDamage": "Overrun: {name}",
+      "DodgeOnly": "The victim's only legal defense is a dodge.",
+      "LargeArea": "large area",
+      "LargeAreaHint": "Three sizes larger: a large-area injury, whatever the hit location.",
+      "OnlyBecauseProne": "Possible only because they are on the ground."
     }
   }
 }

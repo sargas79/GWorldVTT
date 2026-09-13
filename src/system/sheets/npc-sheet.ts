@@ -8,6 +8,9 @@
 import { SYSTEM_ID } from "../constants.js";
 import { handleDamageAction, handleRollAction } from "../roll.js";
 import { castSpell } from "../casting.js";
+import { isRuleOn } from "../optional-rules.js";
+import { swarmAttack, swarmOf } from "../swarms.js";
+import type { SwarmProtection } from "../../rules/swarms.js";
 import type { Attribute } from "../../rules/types.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -17,6 +20,42 @@ const TEMPLATE_ROOT = `systems/${SYSTEM_ID}/templates/actor`;
 
 /** How high a skill must be, relative to its attribute, to be worth listing. */
 const NOTABLE_SKILL_MINIMUM_POINTS = 1;
+
+/** Asks what the victims are wearing, and how long they have been in it (p. 461). */
+async function promptForSwarmAttack(): Promise<{ protection: SwarmProtection; secondsExposed: number } | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Swarm.${key}`);
+  const options = (["none", "clothing", "armor", "sealed"] as const)
+    .map((k) => `<option value="${k}">${L(`Protection.${k}`)}</option>`)
+    .join("");
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Attack") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Wearing")}</span>
+        <select name="protection" style="width:220px">${options}</select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Seconds")}</span>
+        <input type="number" name="seconds" value="0" min="0" step="1" style="width:90px">
+      </label>
+      <p class="ihint" style="margin:0">${L("AttackHint")}</p>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        return {
+          protection: (form?.querySelector<HTMLSelectElement>('select[name="protection"]')?.value ?? "none") as SwarmProtection,
+          secondsExposed:
+            Number(form?.querySelector<HTMLInputElement>('input[name="seconds"]')?.value ?? 0) || 0,
+        };
+      },
+    },
+    rejectClose: false,
+  });
+  return result && typeof result === "object" ? (result as never) : null;
+}
 
 export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static override DEFAULT_OPTIONS = {
@@ -29,6 +68,7 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       rollDamage: GWorldNpcSheet.#onRollDamage,
       editItem: GWorldNpcSheet.#onEditItem,
       castSpell: GWorldNpcSheet.#onCastSpell,
+      swarmAttack: GWorldNpcSheet.#onSwarmAttack,
     },
   };
 
@@ -56,6 +96,9 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       value,
       rollable,
     });
+
+    // A swarm is an NPC with a block saying what it does every second.
+    const swarm = swarmOf(actor);
 
     const notableSkills = [...actor.items]
       .filter((i: any) => i.type === "skill" && i.system.points >= NOTABLE_SKILL_MINIMUM_POINTS)
@@ -111,6 +154,8 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       allAttacks: [...derived.melee, ...derived.ranged],
       notableSkills,
       notableSpells,
+      // A swarm attacks with none of those: it has a line of its own.
+      swarm: swarm ? { ...swarm, about: system.swarm?.about ?? "", inPlay: isRuleOn("swarms") } : null,
 
       biographyHTML: await foundry.applications.ux.TextEditor.implementation.enrichHTML(
         system.details.biography ?? "",
@@ -130,6 +175,20 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static async #onEditItem(this: GWorldNpcSheet, _event: Event, target: HTMLElement) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     if (id) this.actor.items.get(id)?.sheet?.render({ force: true });
+  }
+
+  /**
+   * A second of being swarmed (Campaigns p. 461).
+   *
+   * No roll to hit and none to defend; what is asked is what the victims are
+   * wearing and how long they have been in it, since against insects a
+   * covering only holds for a few seconds.
+   */
+  static async #onSwarmAttack(this: GWorldNpcSheet) {
+    if (!isRuleOn("swarms")) return;
+    const asked = await promptForSwarmAttack();
+    if (!asked) return;
+    await swarmAttack({ actor: this.actor, ...asked });
   }
 
   static async #onCastSpell(this: GWorldNpcSheet, _event: Event, target: HTMLElement) {
