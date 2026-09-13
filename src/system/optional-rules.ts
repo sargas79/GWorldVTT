@@ -173,10 +173,14 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "fleshWounds", reference: "Campaigns p. 417", default: false },
     // A point of fatigue and the next turn to undo a failed defense.
     { key: "tvActionViolence", reference: "Campaigns p. 417", default: false },
-    { key: "bulletproofNudity", reference: "Campaigns p. 417", default: false, implemented: false },
-    { key: "cannonFodder", reference: "Campaigns p. 417", default: false, implemented: false },
-    { key: "infiniteAmmunition", reference: "Campaigns p. 417", default: false, implemented: false },
-    { key: "meleeEtiquette", reference: "Campaigns p. 417", default: false, implemented: false },
+    // A defense bonus for wearing very little, and a Move bonus for nothing.
+    { key: "bulletproofNudity", reference: "Campaigns p. 417", default: false },
+    // A mook who never defends and drops at the first scratch.
+    { key: "cannonFodder", reference: "Campaigns p. 417", default: false },
+    // A magazine that never empties and a gun that never jams.
+    { key: "infiniteAmmunition", reference: "Campaigns p. 417", default: false },
+    // A hero fought one at a time, and never from behind.
+    { key: "meleeEtiquette", reference: "Campaigns p. 417", default: false },
   ],
 };
 

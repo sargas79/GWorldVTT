@@ -31,6 +31,7 @@ import {
 } from "../../rules/trait-effects.js";
 import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
+import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
 import { senseScores } from "../../rules/senses.js";
 import {
   clothingCost, costOfLiving, equipmentQualityModifier, gearCost, monthlyIncomeFromTraits, monthlyPay,
@@ -363,6 +364,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare magic: { style: MagicStylePreference };
   declare activeSpells: ActiveSpell[];
   declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
+  declare dress: { state: Dress; topless: boolean };
   declare points: {
     starting: number;
     disadvantageLimit: number;
@@ -476,6 +478,20 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           }),
           { required: true, initial: [] },
         ),
+      }),
+
+      /**
+       * How much they are wearing, for Bulletproof Nudity (Campaigns p. 417).
+       * Ordinary clothing unless the rule is in play and somebody says
+       * otherwise; it changes nothing while the rule is off.
+       */
+      dress: new fields.SchemaField({
+        state: new fields.StringField({
+          required: true, nullable: false, initial: "clothed",
+          choices: ["clothed", "bares", "skimpy", "nude"],
+        }),
+        /** The book's extra +1 for a bare chest, which the player sets. */
+        topless: new fields.BooleanField({ initial: false }),
       }),
 
       tl: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 3 }),
@@ -834,7 +850,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       lift: liftCapacities(basicLift),
       running: { sprint: sprintMove(move), paced: pacedMove(move) },
       swimming: {
-        move: waterMove(move, traits.aquatic),
+        // "+2 water Move" for wearing nothing at all (Campaigns p. 417).
+        move:
+          waterMove(move, traits.aquatic) +
+          (isRuleOn("bulletproofNudity")
+            ? nudityMoveBonus(this.dress?.state ?? "clothed").water
+            : 0),
         // "Swimming defaults to HT-4", and Climbing to DX-5: someone who never
         // learned either can still try.
         skill: this.skillLevelByName("Swimming") ?? (attrs.HT ?? 10) - 4,
@@ -1159,6 +1180,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       reactionModifier: Number(item.system?.reactionModifier ?? 0) || 0,
     }));
     const traits = traitEffects(heldTraits);
+    // Levels of the Appearance advantage: Attractive is 1, and nothing below
+    // it counts for Bulletproof Nudity (p. 417).
+    const appearanceLevels = Math.max(
+      0,
+      ...heldTraits
+        .filter((t) => t.name.trim().toLowerCase() === "appearance")
+        .map((t) => Math.max(1, Math.floor(t.levels) || 1)),
+    );
     // Talents: a level each to every skill on the talent's list (p. 89).
     const talents = talentBonuses(heldTraits);
 
@@ -1200,6 +1229,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // Lame legs are read here, before encumbrance takes its share: half of
     // Basic Speed, or 2, or none (p. 141).
     secondary.basicMove = lameMove(secondary.basicMove, traits.lame, secondary.basicSpeed);
+    // "Total nudity ... adds +1 to Move and +2 water Move" (p. 417). It goes
+    // on Basic Move, before encumbrance takes its share -- somebody wearing
+    // nothing is not carrying their clothes either.
+    const bare = isRuleOn("bulletproofNudity")
+      ? nudityMoveBonus(this.dress?.state ?? "clothed")
+      : { move: 0, water: 0 };
+    secondary.basicMove += bare.move;
 
     this.hp.max = secondary.hp;
     this.fp.max = secondary.fp;
@@ -1858,8 +1894,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     // Enhanced Dodge, Parry and Block each raise the one defense they name (p. 51).
     const enhancedFor = { dodge: traits.enhancedDodge, parry: traits.enhancedParry.all, block: traits.enhancedBlock };
+    // "PCs with Attractive or better appearance can get a bonus to active
+    // defenses simply by undressing!" (Campaigns p. 417).
+    const undressed = isRuleOn("bulletproofNudity")
+      ? nudityDefenseBonus({
+          dress: this.dress?.state ?? "clothed",
+          appearance: appearanceLevels,
+          topless: this.dress?.topless === true,
+        })
+      : 0;
+
     const contextFor = (which: "dodge" | "parry" | "block") => ({
       shieldDb: shieldDb + deflectDb,
+      undressed,
       posture: this.posture,
       mountedPenalty,
       stunned: this.conditions.stunned,

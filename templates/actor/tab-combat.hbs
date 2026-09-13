@@ -122,6 +122,25 @@
           {{/each}}
         </select>
       </label>
+      {{#if rules.bulletproofNudity}}
+        {{!-- How much they are wearing, which is worth something to every
+             active defense under Bulletproof Nudity (Campaigns p. 417). --}}
+        <label class="ichip on" data-tooltip="{{localize 'GWORLD.Cinematic.DressHint'}}">
+          <span class="ichip-label">{{localize "GWORLD.Cinematic.Dress"}}</span>
+          <select name="system.dress.state" aria-label="{{localize 'GWORLD.Cinematic.Dress'}}"
+                  {{#unless editable}}disabled{{/unless}}>
+            {{#each dressStates as |d|}}
+              <option value="{{d.key}}" {{#if d.selected}}selected{{/if}}>{{d.label}}</option>
+            {{/each}}
+          </select>
+        </label>
+        <label class="ichip {{#if system.dress.topless}}on{{/if}}"
+               data-tooltip="{{localize 'GWORLD.Cinematic.ToplessHint'}}">
+          <input type="checkbox" name="system.dress.topless"
+                 {{#if system.dress.topless}}checked{{/if}} {{#unless editable}}disabled{{/unless}}>
+          <span class="ichip-label">{{localize "GWORLD.Cinematic.Topless"}}</span>
+        </label>
+      {{/if}}
       {{#each conditionChips as |chip|}}
         <button type="button" class="ichip {{#if chip.active}}on{{/if}}"
                 data-action="toggleCondition" data-condition="{{chip.key}}">{{localize chip.label}}</button>

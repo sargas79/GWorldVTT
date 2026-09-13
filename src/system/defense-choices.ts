@@ -47,7 +47,9 @@ export type DefenseRefusal =
   /** No shield to block with. */
   | "noBlock"
   /** A thrown Missile spell, which "may block or dodge, but not parry" (Characters p. 241). */
-  | "missile";
+  | "missile"
+  /** A mook, who "automatically fails all defense rolls" (Campaigns p. 417). */
+  | "cannonFodder";
 
 export interface DefenseChoice {
   key: DefenseKey;
@@ -77,6 +79,12 @@ export function defenseChoices(options: {
   /** A penalty the attack imposes on every defense: a Deceptive Attack or a Feint. */
   deception?: number;
   maneuver?: { defenseAvailable?: boolean; parryAvailable?: boolean } | null;
+  /**
+   * Cannon Fodder (Campaigns p. 417): "They automatically fail all defense
+   * rolls." So none of the three is offered, and the card says why rather
+   * than rolling something whose result is already known.
+   */
+  cannonFodder?: boolean;
 }): DefenseChoice[] {
   const { defenses } = options;
   const arc = options.arc ?? null;
@@ -97,6 +105,11 @@ export function defenseChoices(options: {
       skillName: score?.skillName ?? "",
       isFencing: Boolean(score?.isFencing),
     });
+
+    // Being cannon fodder comes before everything: it is not that this mook
+    // has no shield or was struck from a bad angle, it is that a mook never
+    // defends at all.
+    if (options.cannonFodder) return refused("cannonFodder");
 
     // The arc comes first: a fighter struck from behind has no defense however
     // well armed, and saying "no shield" about it would be answering the wrong

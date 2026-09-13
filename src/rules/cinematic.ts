@@ -135,3 +135,120 @@ export function canAvertWithFatigue(options: {
   if (vital) return true;
   return options.damageType !== null && options.damageType !== "cr";
 }
+
+// ── Bulletproof Nudity ──────────────────────────────────────────────────────
+
+/** How much a fighter is wearing, for the rule that rewards wearing less. */
+export type Dress =
+  /** Ordinary clothing, or armour. No bonus. */
+  | "clothed"
+  /** "Any outfit that bares legs, chest, or midriff." */
+  | "bares"
+  /** "Just a loincloth or skimpy swimwear." */
+  | "skimpy"
+  /** Nothing at all. */
+  | "nude";
+
+/** The four states, in the order a picker should offer them. */
+export const DRESS_STATES: readonly Dress[] = ["clothed", "bares", "skimpy", "nude"];
+
+/**
+ * The bonus to active defenses for wearing very little (p. 417).
+ *
+ * "PCs with Attractive or better appearance can get a bonus to active defenses
+ * simply by undressing! Any outfit that bares legs, chest, or midriff is +1.
+ * Just a loincloth or skimpy swimwear is +2. Topless females get an extra +1.
+ * Total nudity gives no further bonus to defense."
+ *
+ * The extra point the book gives a bare chest is a flag of its own rather than
+ * anything read off the sheet: what a character is wearing is the player's to
+ * say, and it is not something to be inferred.
+ */
+export function nudityDefenseBonus(options: {
+  dress: Dress;
+  /** Levels of the Appearance advantage. Attractive is 1, and nothing below counts. */
+  appearance: number;
+  /** The book's extra +1 for a bare chest. */
+  topless?: boolean;
+}): number {
+  if (options.appearance < 1) return 0;
+  const base = options.dress === "clothed" ? 0 : options.dress === "bares" ? 1 : 2;
+  if (base === 0) return 0;
+  return base + (options.topless ? 1 : 0);
+}
+
+/**
+ * What wearing nothing is worth to Move, on land and in water (p. 417).
+ *
+ * "Total nudity ... adds +1 to Move and +2 water Move." Unlike the defense
+ * bonus this is not gated on looks: a swimmer is faster out of their clothes
+ * whoever is watching, and the book gives no reason to read it otherwise.
+ */
+export function nudityMoveBonus(dress: Dress): { move: number; water: number } {
+  return dress === "nude" ? { move: 1, water: 2 } : { move: 0, water: 0 };
+}
+
+// ── Cannon Fodder ───────────────────────────────────────────────────────────
+
+/**
+ * Whether a mook may attempt an active defense (p. 417).
+ *
+ * "They automatically fail all defense rolls" -- so none is rolled. A roll
+ * whose result is known is a roll worth not making.
+ */
+export function cannonFodderDefends(): boolean {
+  return false;
+}
+
+/** "... yet never All-Out Attack." */
+export function cannonFodderMayUse(maneuver: string): boolean {
+  return maneuver !== "allOutAttack";
+}
+
+/**
+ * Whether this blow finishes a mook (p. 417).
+ *
+ * "They collapse (unconscious or dead) if any penetrating damage gets through
+ * DR... In any event, don't bother keeping track of HP!"
+ */
+export function cannonFodderCollapses(penetrating: number): boolean {
+  return penetrating > 0;
+}
+
+// ── Infinite Ammunition ─────────────────────────────────────────────────────
+
+/**
+ * What is left in the magazine after firing (p. 417).
+ *
+ * "PCs always have spare ammunition or power cells. If they use up all they
+ * are carrying, they immediately find more." Which comes to the same thing as
+ * the count never going down.
+ */
+export function shotsAfterFiring(options: {
+  loaded: number;
+  fired: number;
+  infinite?: boolean;
+}): number {
+  if (options.infinite) return options.loaded;
+  return Math.max(0, options.loaded - Math.max(0, Math.floor(options.fired)));
+}
+
+/** "Furthermore, weapons never malfunction." */
+export function canMalfunction(infinite: boolean): boolean {
+  return !infinite;
+}
+
+// ── Melee Etiquette ─────────────────────────────────────────────────────────
+
+/**
+ * Whether the attacker has to come at the defender face to face (p. 417).
+ *
+ * "If a PC chooses to fight unarmed or with melee weapons, his opponents
+ * always face him one-on-one, one at a time." Facing him is the mechanical
+ * half of it: nobody gets at his flank or his back while he is fighting hand
+ * to hand, whatever the tokens on the map are doing. Gunfire is untouched --
+ * the rule is about a melee.
+ */
+export function facesHimSquarely(delivery: Delivery): boolean {
+  return delivery === "unarmed" || delivery === "melee";
+}

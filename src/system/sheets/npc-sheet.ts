@@ -136,6 +136,10 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       editable: this.isEditable,
       isOwner: actor.isOwner,
 
+      // The mook switch is only worth a line on the sheet where the table is
+      // playing the rule (Campaigns p. 417).
+      cannonFodderInPlay: isRuleOn("cannonFodder"),
+
       groupSizeLabel:
         system.groupSize > 1
           ? game.i18n.format("GWORLD.Npc.InScene", { count: system.groupSize })

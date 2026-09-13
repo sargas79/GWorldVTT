@@ -123,3 +123,29 @@ export async function buyDefenseBack(actor: any, entry: TvActionEntry): Promise<
   });
   return true;
 }
+
+/**
+ * Whether this actor is a mook (Campaigns p. 417).
+ *
+ * Only an NPC can be, and only where the table is playing the rule: a flag
+ * left ticked on a sheet does nothing once Cannon Fodder is switched off.
+ */
+export function isCannonFodder(actor: any): boolean {
+  return (
+    isRuleOn("cannonFodder") &&
+    actor?.type === "npc" &&
+    actor?.system?.cannonFodder === true
+  );
+}
+
+/**
+ * Whether this actor never runs out and never jams (Campaigns p. 417).
+ *
+ * "PCs always have spare ammunition or power cells. If they use up all they
+ * are carrying, they immediately find more. Furthermore, weapons never
+ * malfunction." PCs, so a mook's rifle jams and empties as it always did --
+ * which is half of what makes the rule feel the way it is meant to.
+ */
+export function hasInfiniteAmmunition(actor: any): boolean {
+  return isRuleOn("infiniteAmmunition") && actor?.type === "character";
+}

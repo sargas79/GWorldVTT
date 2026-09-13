@@ -40,7 +40,10 @@ import type { DamageType } from "../rules/types.js";
 import { attributeOf } from "./attributes.js";
 import { loseAim } from "./aim.js";
 import { hasInjuryTolerance } from "../rules/injury-tolerance.js";
-import { cinematicExplosionInjury, knockbackStunPenalty } from "../rules/cinematic.js";
+import {
+  cannonFodderCollapses, cinematicExplosionInjury, knockbackStunPenalty,
+} from "../rules/cinematic.js";
+import { isCannonFodder } from "./cinematic.js";
 
 /** A critical hit, already rolled for on one of the tables. */
 export interface CriticalHit {
@@ -144,6 +147,12 @@ export interface AppliedDamage {
   knockbackStun: { required: boolean; penalty: number } | null;
   /** True when the injury is the token point a yard of a cinematic blast. */
   cinematicBlast: boolean;
+  /**
+   * True when this blow simply put a mook down (Campaigns p. 417). Nothing
+   * about the wound is worth reporting then: "don't bother keeping track of
+   * HP!"
+   */
+  collapsed: boolean;
 }
 
 /**
@@ -287,7 +296,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     shock: consequences.shock,
   });
 
-  return {
+  const record: AppliedDamage = {
     actorName: String(actor?.name ?? ""),
     hitLocation: damage.hitLocation,
     wornDr: armour,
@@ -344,7 +353,36 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
       result.injury > 0 &&
       !traits.injuryTolerance.noBlood &&
       woundBleeds(damage.type, consequences.majorWound),
+    collapsed: false,
   };
+
+  // "They collapse (unconscious or dead) if any penetrating damage gets
+  // through DR ... In any event, don't bother keeping track of HP!" (p. 417).
+  // A mook is not wounded by degrees, so nothing that follows from a wound
+  // follows here: no shock, no major wound, no roll to stay standing. The
+  // first thing that gets through is the last thing that happens to them, and
+  // whether it killed them is the GM's to say.
+  if (isCannonFodder(actor) && cannonFodderCollapses(result.penetrating)) {
+    return {
+      ...record,
+      // What they lost is whatever they had. A mook already at or below zero
+      // loses nothing further: they were down before this landed.
+      injury: Math.max(0, previous),
+      current: 0,
+      consequences: {
+        ...consequences,
+        shock: 0,
+        majorWound: false,
+        consciousnessRollRequired: false,
+        deathCheckRequired: false,
+      },
+      knockdown: null,
+      bleeds: false,
+      collapsed: true,
+    };
+  }
+
+  return record;
 }
 
 /**
@@ -361,7 +399,7 @@ export async function applyDamageToActor(
   if (!actor?.isOwner) return null;
 
   const resolved = resolveDamageAgainst(actor, damage);
-  if (resolved.injury === 0) return resolved;
+  if (resolved.injury === 0 && !resolved.collapsed) return resolved;
 
   const path = resolved.costsFatigue ? "system.fp.value" : "system.hp.value";
   await actor.update({ [path]: resolved.current });

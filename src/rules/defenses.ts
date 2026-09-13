@@ -54,6 +54,11 @@ export interface DefenseContext {
    * whichever this is, "+1 per level".
    */
   enhanced?: number;
+  /**
+   * Bulletproof Nudity (Campaigns p. 417): what wearing very little is worth
+   * to every active defense. Zero unless the table is playing that rule.
+   */
+  undressed?: number;
 }
 
 export interface DodgeContext extends DefenseContext {
@@ -107,6 +112,7 @@ function commonModifiers(context: DefenseContext): DefenseModifier[] {
     modifiers.push({ label: "All-Out Defense (Increased)", value: 2 });
   }
   if (context.combatReflexes) modifiers.push({ label: "Combat Reflexes", value: 1 });
+  if (context.undressed) modifiers.push({ label: "Undressed", value: context.undressed });
   if (context.enhanced) modifiers.push({ label: "Enhanced defense", value: context.enhanced });
   // "A rider can Dodge, Block, or Parry. If he has Riding at 12+, all of these
   // defenses are at normal levels" -- and worse by the shortfall if not.
