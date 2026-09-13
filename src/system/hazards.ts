@@ -691,9 +691,10 @@ export async function shootAtVehicle(options: {
   }
   if (hitsAPerson(hit.location)) lines.push(F("HitsAPerson", { location: name }));
 
-  // The people inside, when enough got through to matter.
-  if (penetrating >= OCCUPANT_RISK_DAMAGE && !hitsAPerson(hit.location)) {
-    const target = occupantHitTarget(Math.max(1, options.occupants), sm);
+  // The people inside, when enough got through to matter and there is anybody
+  // in there to matter to. An empty car has no occupant to roll for.
+  if (penetrating >= OCCUPANT_RISK_DAMAGE && !hitsAPerson(hit.location) && options.occupants > 0) {
+    const target = occupantHitTarget(options.occupants, sm);
     const occupantRoll = new Roll("3d6");
     await occupantRoll.evaluate();
     rolls.push(occupantRoll);

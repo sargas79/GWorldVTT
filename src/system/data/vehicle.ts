@@ -61,11 +61,18 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
 
       /**
        * Hit points as an actor keeps them, so the token bar works and damage
-       * lands the ordinary way. The maximum is the ST/HP column and is
-       * derived rather than typed: two figures for one fact drift apart.
+       * lands the ordinary way.
+       *
+       * The maximum is the ST/HP column and is written over every time the
+       * sheet is prepared -- two figures for one fact drift apart. It is in
+       * the schema all the same, because Foundry finds a token's bars by
+       * looking for a value-and-maximum pair there: a maximum that only ever
+       * existed after preparation left a car on the map with no health bar
+       * at all.
        */
       hp: new fields.SchemaField({
         value: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 10 }),
+        max: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 10 }),
       }),
 
       /**

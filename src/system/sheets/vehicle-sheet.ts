@@ -40,7 +40,7 @@ async function promptForHit(aboard: number): Promise<{ penetrating: number; occu
       </label>
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Aboard")}</span>
-        <input type="number" name="occupants" value="${Math.max(1, aboard)}" min="0" step="1" style="width:90px">
+        <input type="number" name="occupants" value="${aboard}" min="0" step="1" style="width:90px">
       </label>
       <p class="ihint" style="margin:0">${L("ShotAtHint")}</p>
     </div>`,
