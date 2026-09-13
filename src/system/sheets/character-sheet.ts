@@ -41,7 +41,7 @@ import { payCostOfLiving, rollAging, studySkill, workAMonth } from "../life.js";
 import { trample } from "../trampling.js";
 import { fightOffSwarm } from "../swarms.js";
 import {
-  accelerate, breatheBadAir, buildingCollapse, burn, catchFire, controlVehicle, crushingPressure,
+  accelerate, breatheBadAir, buildingCollapse, damageBuilding, burn, catchFire, controlVehicle, crushingPressure,
   decompress, hike,
   irradiate, jumpOutOfVehicle, motionSickness, shock, shootAtVehicle, sleepFor, splashAcid,
 } from "../hazards.js";
@@ -1582,6 +1582,33 @@ async function promptForMolotov(): Promise<{
 }
 
 /** How much is overhead, and what the walls are made of (Campaigns p. 484). */
+/** A building and what has been done to it (Campaigns pp. 484, 558). */
+async function promptForBuilding(): Promise<{
+  squareFeet: number;
+  frame: "wood" | "brick" | "stone";
+  construction: "shoddy" | "sound" | "quakeResistant";
+  damageTaken: number;
+  failedDisabling: boolean;
+} | null> {
+  const frames: Array<[string, string]> = (["wood", "brick", "stone"] as const).map((k) => [k, HZ(`Frame.${k}`)]);
+  const builds: Array<[string, string]> = (["sound", "shoddy", "quakeResistant"] as const).map((k) => [k, HZ(`Construction.${k}`)]);
+  return hazardPrompt(
+    HZ("Building"),
+    hazardField("squareFeet", HZ("SquareFeet"), 1000, 'min="0"') +
+      hazardSelect("frame", HZ("FrameLabel"), frames) +
+      hazardSelect("construction", HZ("ConstructionLabel"), builds) +
+      hazardField("damageTaken", HZ("DamageTaken"), 0, 'min="0"') +
+      hazardCheck("failedDisabling", HZ("FailedDisabling")),
+    (form) => ({
+      squareFeet: num(form, "squareFeet"),
+      frame: (str(form, "frame") || "wood") as "wood" | "brick" | "stone",
+      construction: (str(form, "construction") || "sound") as "shoddy" | "sound" | "quakeResistant",
+      damageTaken: num(form, "damageTaken"),
+      failedDisabling: ticked(form, "failedDisabling"),
+    }),
+  );
+}
+
 async function promptForCollapse(): Promise<{
   storiesOverhead: number;
   wallDr: number;
@@ -2792,6 +2819,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       withdrawal: GWorldCharacterSheet.#onWithdrawal,
       checkBottles: GWorldCharacterSheet.#onCheckBottles,
       buildingCollapse: GWorldCharacterSheet.#onCollapse,
+      damageBuilding: GWorldCharacterSheet.#onDamageBuilding,
       splashAcid: GWorldCharacterSheet.#onAcid,
       breatheBadAir: GWorldCharacterSheet.#onBadAir,
       crushingPressure: GWorldCharacterSheet.#onPressure,
@@ -5366,6 +5394,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   }
 
   /** A building coming down on them (Campaigns p. 484). */
+  static async #onDamageBuilding(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+    const asked = await promptForBuilding();
+    if (!asked) return;
+    await damageBuilding({ actor: this.actor, ...asked });
+  }
+
   static async #onCollapse(this: GWorldCharacterSheet) {
     if (!isRuleOn("exposure")) return;
     const asked = await promptForCollapse();

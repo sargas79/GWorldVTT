@@ -41,7 +41,8 @@ import {
 import { jumpFromVehicle } from "../rules/collisions.js";
 import { isRuleOn } from "./optional-rules.js";
 import {
-  collapseDamage, collapseShelter, trappedInRubble, type CollapseShelter,
+  buildingHealth, buildingHitPoints, collapseDamage, collapseShelter, mustRollToStand, structureState,
+  trappedInRubble, type BuildingFrame, type CollapseShelter, type Construction,
 } from "../rules/structures.js";
 import {
   ACID_DAMAGE_TYPE, acidHarm, eyeOutcome, eyeRisk,
@@ -1219,6 +1220,59 @@ export async function motionSickness(options: {
     good: result === "immune",
     rolls: [roll],
   });
+}
+
+/**
+ * What damage has done to a building, and whether it is still standing
+ * (Campaigns pp. 484, 558).
+ *
+ * A building is not a token here, so its figures are worked out from what the
+ * GM knows: "HP = 100 x (cube root of building's empty weight in tons)", with
+ * the weight read off its area and frame; "a structurally sound building in
+ * good repair has HT 12", shoddy less and quake-resistant more. At zero HP a
+ * failed HT roll breaches it, and "at -1xHP or less, it must make HT rolls to
+ * avoid collapse ... It collapses automatically at -5xHP."
+ */
+export async function damageBuilding(options: {
+  actor: any;
+  squareFeet: number;
+  frame: BuildingFrame;
+  construction: Construction;
+  damageTaken: number;
+  /** True once it has failed the roll that zero hit points called for. */
+  failedDisabling: boolean;
+}): Promise<void> {
+  const { actor } = options;
+  const maxHp = buildingHitPoints({ squareFeet: options.squareFeet, frame: options.frame });
+  const ht = buildingHealth(options.construction);
+  const hp = maxHp - Math.max(0, options.damageTaken);
+  const before = structureState({ hp, maxHp, failedDisabling: options.failedDisabling });
+  const lines = [
+    F("BuildingFigures", { hp: maxHp, ht, now: hp }),
+    H(`BuildingState.${before}`),
+  ];
+
+  const rolls: any[] = [];
+  let collapsed = before === "collapsed";
+  if (mustRollToStand({ hp, maxHp })) {
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    rolls.push(roll);
+    const stands = resolveSuccess(roll.total, ht, dieResults(roll)).success;
+    collapsed = !stands;
+    lines.push(F("BuildingRoll", { roll: roll.total, ht }));
+    lines.push(H(stands ? "BuildingStands" : "BuildingFalls"));
+  } else if (hp <= 0 && !options.failedDisabling && before !== "collapsed") {
+    // At zero it rolls once to keep from being disabled.
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    rolls.push(roll);
+    const holds = resolveSuccess(roll.total, ht, dieResults(roll)).success;
+    lines.push(F("BuildingRoll", { roll: roll.total, ht }));
+    lines.push(H(holds ? "BuildingHolds" : "BuildingState.breached"));
+  }
+
+  await post(actor, { kind: H("Building"), lines, bad: collapsed, rolls });
 }
 
 /**

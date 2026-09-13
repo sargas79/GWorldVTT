@@ -2708,7 +2708,34 @@
       },
       "VacuumClock": "Exhaling with the mouth open buys {seconds} seconds on the blood's oxygen, half of {held}; holding the breath ruptures the lungs for {formula}",
       "CorrosiveCoughing": "Past a third of HP lost to it: coughing",
-      "CorrosiveBlinded": "Past two-thirds of HP lost to it: blinded, as well as coughing"
+      "CorrosiveBlinded": "Past two-thirds of HP lost to it: blinded, as well as coughing",
+      "Building": "Damage a building",
+      "SquareFeet": "Floor area (square feet)",
+      "FrameLabel": "Built of",
+      "Frame": {
+        "wood": "Wood frame or mud brick",
+        "brick": "Steel frame or brick",
+        "stone": "Stone"
+      },
+      "ConstructionLabel": "Construction",
+      "Construction": {
+        "sound": "Sound (HT 12)",
+        "shoddy": "Shoddy (HT 10)",
+        "quakeResistant": "Quake-resistant (HT 13)"
+      },
+      "DamageTaken": "Damage it has taken",
+      "FailedDisabling": "Already failed its roll at 0 HP",
+      "BuildingFigures": "{hp} HP and HT {ht}; now at {now} HP",
+      "BuildingState": {
+        "standing": "Standing",
+        "breached": "Breached: one or more large breaches, and the power is out",
+        "failing": "At -1xHP or worse: it rolls HT to stay up",
+        "collapsed": "At -5xHP: it has collapsed"
+      },
+      "BuildingRoll": "Rolled {roll} against HT {ht}",
+      "BuildingStands": "It stays up, for now",
+      "BuildingFalls": "It comes down",
+      "BuildingHolds": "It holds together at zero"
     },
     "Vehicle": {
       "Statistics": "Vehicle statistics",
