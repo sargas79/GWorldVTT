@@ -526,6 +526,14 @@
         "weaponBreakage": {
           "Name": "Weapons that break",
           "Hint": "Parrying something three times your weapon’s weight may snap it; a fumble may break it, unless it is one of the resistant kinds; a foe may strike at it. A damaged weapon rolls on the Broken Weapons table (Campaigns pp. 376, 400, 485)."
+        },
+        "reloading": {
+          "Name": "Shots and reloading",
+          "Hint": "A weapon keeps count of what is in it: each shot fired comes off, and reloading takes the Ready maneuvers the Shots column lists. A crossbow stronger than its user takes longer, or a goat’s foot (Campaigns p. 373, Characters p. 270)."
+        },
+        "ammunitionTypes": {
+          "Name": "Ammunition",
+          "Hint": "Hollow-point, armour-piercing hard core and APDS rounds, bodkin points and silver change what a shot does, and what it costs (Characters pp. 276, 279)."
         }
       }
     },
@@ -1123,7 +1131,15 @@
       "HpLostHint": "Damage the weapon has taken (Campaigns p. 483). At a third of its HP it may work worse; at zero it is disabled; at -5×HP it is destroyed.",
       "Condition": "Condition",
       "Repair": "Repair",
-      "RepairHint": "Puts it back to full HP. The repair rules (Campaigns p. 484) say what that takes."
+      "RepairHint": "Puts it back to full HP. The repair rules (Campaigns p. 484) say what that takes.",
+      "Loaded": "Loaded",
+      "LoadedHint": "Shots in the weapon now. Firing takes them off; the Reload button on the Combat tab puts them back.",
+      "ReloadWeight": "Reload lb",
+      "ReloadWeightHint": "The weight of one full reload, the figure after the slash in the table’s Weight column. Ammunition costs $20 a pound (Characters p. 278).",
+      "Ammunition": "Ammunition",
+      "AmmunitionHint": "What it is loaded with. Hollow-point steps the wound up at (0.5); APHC and APDS add (2), and APDS half again the range and +1 per die; bodkin points make an arrow pierce at (2) (Characters pp. 276, 279).",
+      "ReloadCost": "${cost} a reload",
+      "ReloadCostHint": "$20 per pound of reload (Characters p. 278)."
     },
     "Gear": {
       "Carried": "Carried",
@@ -2553,6 +2569,32 @@
       "AimBreak": "To break the weapon",
       "Weapon": "Weapon",
       "NoWeaponToStrike": "The foe has no weapon in hand to strike at."
+    },
+    "Ammunition": {
+      "none": "Ordinary",
+      "hp": "Hollow-point",
+      "aphc": "Armor-piercing hard core",
+      "apds": "APDS",
+      "bodkin": "Bodkin point",
+      "silver": "Silver"
+    },
+    "Reload": {
+      "Action": "Reload",
+      "Title": "Reload",
+      "Hint": "Reload: {seconds} seconds of Ready maneuvers (Campaigns p. 373)",
+      "HintNoTime": "Reload (the table gives no time)",
+      "Card": "{name} reloaded",
+      "Seconds": "{seconds} seconds of Ready maneuvers.",
+      "PerShot": "{shots} shots loaded one at a time: {seconds} seconds of Ready maneuvers.",
+      "NoTime": "The table gives no reload time.",
+      "WithGoatsFoot": "cocked with a goat’s foot, standing",
+      "HowMany": "Shots to load (up to {most})",
+      "AlreadyFull": "{name} is already full.",
+      "TooStrong": "{name} is five or more ST above you: it cannot be reloaded at all (Characters p. 270).",
+      "NeedsGoatsFoot": "{name} is three or four ST above you: it needs a goat’s foot to cock, and you have none.",
+      "Empty": "{name} is empty.",
+      "EmptyShort": "empty",
+      "EmptyHint": "Nothing left in it: reload before firing."
     }
   }
 }

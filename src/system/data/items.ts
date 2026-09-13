@@ -6,6 +6,7 @@ import { relativeLevelForPoints } from "../../rules/skills.js";
 import { SPELL_CLASSES, spellRelativeLevel, type MagicStyle, type SpellClass, type SpellDifficulty } from "../../rules/magic.js";
 import { netModifier, traitPoints } from "../../rules/traits.js";
 import type { Enchantment } from "../../rules/enchanting.js";
+import { AMMUNITION_TYPES } from "../../rules/ammunition.js";
 import {
   WEAPON_CLASSES,
   WEAPON_MATERIALS,
@@ -511,6 +512,30 @@ function rangedModeField() {
       min: 1,
     }),
     shots: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /**
+     * Shots in the weapon now (GURPS Basic Set: Campaigns p. 373). Firing
+     * takes them off; a Reload puts them back and takes the Ready maneuvers
+     * the Shots column lists.
+     */
+    loaded: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+    /**
+     * The weight of one full reload, in pounds -- the figure after the slash
+     * in the table's Weight column (Characters p. 270), which the GCA file
+     * does not carry. "Ammo cost is $20 times this weight" (p. 278).
+     */
+    reloadWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+    /**
+     * What it is loaded with (Characters pp. 275, 276, 279): hollow-point,
+     * armour-piercing hard core, APDS, bodkin points, silver. Blank for the
+     * ordinary round the table assumes.
+     */
+    ammunition: new fields.StringField({
+      required: true,
+      nullable: false,
+      blank: true,
+      initial: "",
+      choices: [...AMMUNITION_TYPES],
+    }),
     minSt: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null }),
     twoHanded: new fields.BooleanField({ initial: false }),
     /** Bows and crossbows have their own ST, used instead of the wielder's. */

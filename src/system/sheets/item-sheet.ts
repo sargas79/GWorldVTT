@@ -24,6 +24,7 @@ import {
   qualityCostMultiplier,
   silverCostMultiplier,
 } from "../../rules/weapon-quality.js";
+import { AMMUNITION_TYPES, ammunitionCost } from "../../rules/ammunition.js";
 
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -175,8 +176,13 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       const facts = weaponFacts(item);
       const tl = Number(item.system?.tl) || 3;
       const grades = availableQualities(facts.weaponClass, tl);
+      // "Assume that ammo cost is $20 times this weight" (Characters p. 278).
+      const reloads = ((item.system as any).rangedModes ?? []).map((m: any) =>
+        Number(m.reloadWeight) > 0 ? ammunitionCost(Number(m.reloadWeight)) : null,
+      );
       context.weapon = {
         armed: facts.skill !== "" || item.type === "shield",
+        reloads,
         facts,
         qualities: Object.fromEntries(grades.map((q) => [q, `GWORLD.Quality.${q}`])),
         multiplier: qualityCostMultiplier(facts.weaponClass, facts.quality, tl),
@@ -311,6 +317,10 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       mounts: {
         "": "GWORLD.Mount.none",
         ...keyed("Mount", ["rest", "bipod", "mounted"]),
+      },
+      ammunition: {
+        "": "GWORLD.Ammunition.none",
+        ...keyed("Ammunition", AMMUNITION_TYPES.filter((a) => a !== "")),
       },
       materials: {
         "": "GWORLD.Material.none",

@@ -961,6 +961,18 @@
                 {{selectOptions @root.choices.mounts selected=m.mount localize=true}}
               </select>
             </div>
+            <div class="irow">
+              <input type="number" name="system.rangedModes.{{i}}.loaded" value="{{m.loaded}}" aria-label="{{localize 'GWORLD.Item.Loaded'}}" step="1" min="0"
+                     data-tooltip="{{localize 'GWORLD.Item.LoadedHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.rangedModes.{{i}}.reloadWeight" value="{{m.reloadWeight}}" aria-label="{{localize 'GWORLD.Item.ReloadWeight'}}" step="0.01" min="0"
+                     data-tooltip="{{localize 'GWORLD.Item.ReloadWeightHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <select name="system.rangedModes.{{i}}.ammunition" aria-label="{{localize 'GWORLD.Item.Ammunition'}}" data-tooltip="{{localize 'GWORLD.Item.AmmunitionHint'}}" {{#unless @root.editable}}disabled{{/unless}}>
+                {{selectOptions @root.choices.ammunition selected=m.ammunition localize=true}}
+              </select>
+              {{#with (lookup @root.weapon.reloads i)}}
+                <span class="wmode" data-tooltip="{{localize 'GWORLD.Item.ReloadCostHint'}}">{{localize "GWORLD.Item.ReloadCost" cost=this}}</span>
+              {{/with}}
+            </div>
             <div class="irow iflags">
               <label class="icheck"><input type="checkbox" name="system.rangedModes.{{i}}.twoHanded"
                      {{#if m.twoHanded}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />

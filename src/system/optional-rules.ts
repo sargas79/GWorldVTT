@@ -139,6 +139,10 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "minimumSt", reference: "Characters p. 270", default: true },
     // Parrying heavy weapons, striking at weapons, the Broken Weapons table.
     { key: "weaponBreakage", reference: "Campaigns pp. 376, 400, 485", default: true },
+    // Shots counted off, Ready maneuvers to put them back, crossbow cocking.
+    { key: "reloading", reference: "Campaigns p. 373", default: true },
+    // Hollow-point, armour-piercing, bodkin points, silver.
+    { key: "ammunitionTypes", reference: "Characters pp. 276, 279", default: true },
   ],
 };
 

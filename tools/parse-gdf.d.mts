@@ -60,3 +60,4 @@ export declare function alternatives(
   f: Map<string, string>,
 ): Array<{ name: string; f: Map<string, string> }>;
 export declare function weaponClassOf(mods: string | undefined): "" | "sword" | "cutting" | "crushing" | "firearm" | "bow";
+export declare function fullLoad(shots: string | undefined): number;

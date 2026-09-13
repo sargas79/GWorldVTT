@@ -41,6 +41,7 @@ const DAMAGE_TYPES = new Set([
 ]);
 const EQUIPMENT_CATEGORIES = new Set(["weapon", "tool", "consumable", "vehicle", "misc"]);
 const WEAPON_QUALITIES = new Set(["cheap", "good", "fine", "veryFine"]);
+const AMMUNITION_TYPES = new Set(["", "hp", "aphc", "apds", "bodkin", "silver"]);
 const WEAPON_MATERIALS = new Set(["", "stone", "bronze", "iron", "steel", "wood", "plastic", "silver", "silverCoated"]);
 const WEAPON_CLASSES = new Set(["", "fencing", "sword", "cutting", "crushing", "firearm", "bow"]);
 const HIT_LOCATIONS = new Set([
@@ -403,6 +404,18 @@ function validateItem(entry, file) {
     check(
       mode.mount === undefined || ["", "rest", "bipod", "mounted"].includes(mode.mount),
       file, name, `bad mount "${mode.mount}"`,
+    );
+    check(
+      mode.loaded === undefined || (Number.isInteger(mode.loaded) && mode.loaded >= 0),
+      file, name, `bad loaded count "${mode.loaded}"`,
+    );
+    check(
+      mode.reloadWeight === undefined || (typeof mode.reloadWeight === "number" && mode.reloadWeight >= 0),
+      file, name, `bad reload weight "${mode.reloadWeight}"`,
+    );
+    check(
+      mode.ammunition === undefined || AMMUNITION_TYPES.has(mode.ammunition),
+      file, name, `bad ammunition "${mode.ammunition}"`,
     );
   }
 
