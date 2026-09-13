@@ -66,7 +66,10 @@
       "MoveAbbr": "Move",
       "DRAbbr": "DR",
       "AdjustHint": "Levels bought with character points",
-      "Granted": "granted"
+      "Granted": "granted",
+      "LoweredByIq": "from IQ",
+      "LoweredByIqHint": "A temporary IQ penalty lowers Will and Perception with it, and no other secondary characteristic (Campaigns p. 421).",
+      "NoDefense": "none this turn"
     },
     "Section": {
       "Movement": "Movement",

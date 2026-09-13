@@ -61,6 +61,9 @@
             <span class="cv">{{cell.value}}</span>
           {{/if}}
           <span class="cd">{{cell.derivation}}{{#if cell.cost}} &middot; {{cell.cost}} pts{{/if}}{{#if cell.granted}} &middot; {{signed cell.granted}} {{localize "GWORLD.Secondary.Granted"}}{{/if}}</span>
+          {{#if cell.lowered}}
+            <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Secondary.LoweredByIqHint'}}">{{signed cell.lowered}} {{localize "GWORLD.Secondary.LoweredByIq"}}</span>
+          {{/if}}
         </div>
       {{/each}}
     </div>

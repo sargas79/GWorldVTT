@@ -96,7 +96,7 @@ import { fatigueStatus, isVeryTired } from "../../rules/fatigue.js";
 import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
 import { mountedDefensePenalty } from "../../rules/mounted.js";
 import { supportEffect } from "../../rules/accessories.js";
-import { penaltyEffects } from "../../rules/attribute-penalties.js";
+import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalties.js";
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { psionicsOf } from "../../rules/psionics.js";
 import {
@@ -1265,7 +1265,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // carried, so each is its own figure rather than a change to ST.
     // Arm ST is both: strength "for the purpose of lifting or striking with
     // that arm", and for nothing that is not done with the arms.
-    const strikingSt = attrs.ST + traits.strikingSt + traits.armSt;
+    // "ST reductions affect the damage you inflict with muscle-powered
+    // weapons" (p. 421), so a temporary ST penalty comes off the ST damage is
+    // looked up at -- and only there: it leaves HP, Basic Lift and every other
+    // ST-based figure alone, which is why it is applied to this and not to ST.
+    // Very tired is different, and deliberately absent: halved ST "does not
+    // affect ST-based quantities, such as HP and damage" (p. 426).
+    const strikingSt = strengthForDamage({
+      strength: attrs.ST + traits.strikingSt + traits.armSt,
+      penalties: { ST: this.attributePenalties.ST },
+    });
     const liftingSt = attrs.ST + traits.liftingSt + traits.armSt;
 
     // Granted and purchased levels both move the score; only purchased ones

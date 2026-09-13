@@ -43,6 +43,7 @@ import {
 import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
 import { useTechnique, type Victim } from "../unarmed-techniques.js";
 import { canParryLiquid } from "../../rules/dirty-tricks.js";
+import { affectsSecondary } from "../../rules/attribute-penalties.js";
 import { canMoveWhileGrappled } from "../../rules/grappling.js";
 import { formatDiceAdds } from "../../rules/dice.js";
 import { rollInvention, type InventionPlan } from "../invention.js";
@@ -3398,6 +3399,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const p = system.purchased;
     const b = system.bonuses;
 
+    // "IQ penalties apply equally to Will and Per. However, there are no other
+    // effects on secondary characteristics" (p. 421). So Will and Per say what
+    // a lowered IQ is taking off them, and nothing else does.
+    const iqPenalty = Number(derived.attributePenalties?.intelligence ?? 0) || 0;
     const cell = (
       key: "hp" | "will" | "per" | "fp" | "basicMove",
       label: string,
@@ -3413,6 +3418,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       step: 1,
       editable: true,
       cost: secondaryPointCost(key, p[key]),
+      lowered: affectsSecondary(key) ? iqPenalty : 0,
     });
 
     return [
@@ -3431,8 +3437,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       },
       cell("basicMove", L("BasicMove"), derived.basicMove, "= ⌊Speed⌋"),
       {
-        key: "dodge", label: L("Dodge"), value: derived.defenses.dodge.total,
-        derivation: "= Move + 3", editable: false, cost: 0, granted: 0, purchased: 0, step: 1,
+        // No Dodge at all on a turn that forfeited every defense -- All-Out
+        // Attack -- where the derived figure is null rather than a number.
+        // Reading .total off it took the whole sheet down with it.
+        key: "dodge", label: L("Dodge"), value: derived.defenses?.dodge?.total ?? "—",
+        derivation: derived.defenses?.dodge ? "= Move + 3" : game.i18n.localize("GWORLD.Secondary.NoDefense"),
+        editable: false, cost: 0, granted: 0, purchased: 0, step: 1,
       },
     ];
   }
