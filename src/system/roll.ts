@@ -231,14 +231,14 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
       ...(criticalMiss?.again ? [criticalMiss.again.roll] : []),
       ...(jam ? [jam.roll] : []),
     ],
-    // An attack that connects is the moment to record who it was aimed at: the
-    // defender rolls afterwards, by which time the attacker may well have
-    // changed their target. A miss needs no defense, so it carries nothing.
     // "The hero can choose to convert his failed defense roll into a success"
     // (p. 417) -- which is an offer made on the card that failed.
     ...(kind === "defense" && !outcome.success && options.tvAction
       ? { flags: { [SYSTEM_ID]: { tvAction: options.tvAction } } }
       : {}),
+    // An attack that connects is the moment to record who it was aimed at: the
+    // defender rolls afterwards, by which time the attacker may well have
+    // changed their target. A miss needs no defense, so it carries nothing.
     ...(kind === "attack" && outcome.success
       ? {
           flags: attackFlags(

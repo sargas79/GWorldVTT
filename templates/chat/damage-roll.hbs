@@ -30,6 +30,10 @@
       {{#if fragmentation}}
         <span>{{localize "GWORLD.Chat.Fragments" dice=fragmentation yards=fragmentationRadius}}</span>
       {{/if}}
+      {{#if cinematicBlast}}
+        {{!-- The rolled figure buys knockback and nothing else (p. 417). --}}
+        <span class="gc-mod">{{localize "GWORLD.Cinematic.BlastNoDamage"}}</span>
+      {{/if}}
     </div>
   {{/if}}
 
