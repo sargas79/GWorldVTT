@@ -21,6 +21,7 @@ import {
   repairTarget,
   sparePartsCost,
   type RepairKind,
+  needsMaintenance,
 } from "../rules/repairs.js";
 import { weaponFacts } from "./weapon-damage.js";
 import { objectHealth } from "../rules/objects.js";
@@ -152,9 +153,13 @@ export async function exposureCheck(options: {
   // "Most machines and similar artifacts in good repair are HT 10. Swords,
   // tables, shields, and other solid, Homogenous objects are HT 12."
   const health = objectHealth(weaponObjectKind(facts.firearm));
+  // Missed maintenance wears down "machines and similar artifacts", and "this
+  // rule does not apply to items without moving parts" (p. 485): a sword left
+  // uncleaned is a dirty sword, not a failing one.
+  const maintained = needsMaintenance({ movingParts: facts.firearm });
   const target = equipmentFailureTarget({
     health,
-    missedChecks: Number(item.system?.missedMaintenance ?? 0) || 0,
+    missedChecks: maintained ? Number(item.system?.missedMaintenance ?? 0) || 0 : 0,
     cleaned: options.care > 0,
     brutal: options.care < 0 ? options.care : 0,
   });

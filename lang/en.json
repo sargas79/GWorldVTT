@@ -1316,7 +1316,9 @@
       "ForSkills": "Tools for",
       "ForSkillsHint": "The skills these are the tools of, separated by commas. While they are carried, those skills are rolled at the grade’s modifier.",
       "MissedMaintenance": "Missed checks",
-      "MissedMaintenanceHint": "Maintenance checks missed, each costing a point of HT that the exposure roll is made against (Campaigns p. 485)."
+      "MissedMaintenanceHint": "Maintenance checks missed, each costing a point of HT that the exposure roll is made against (Campaigns p. 485).",
+      "MustRollInUse": "At zero HP or below: it rolls HT every second it is used under stress, or stops working",
+      "LicenseCost": "A license to carry it costs 1d x 10% of the price: ${low} to ${high}"
     },
     "Gear": {
       "Carried": "Carried",
@@ -3247,7 +3249,10 @@
         "needsMinorRepair": "It breaks down, jams or otherwise fails: nothing until it is mended.",
         "needsMajorRepair": "It fails badly: major repairs, spare parts and all."
       },
-      "CareLabel": "How it has been treated: +1 cleaned daily, 0 ordinary, -1 or -2 abused"
+      "CareLabel": "How it has been treated: +1 cleaned daily, 0 ordinary, -1 or -2 abused",
+      "HireOffer": "Nobody here has a repair skill. Hire a technician at ${rate} an hour?",
+      "Hired": "A hired technician",
+      "HiredSkill": "A hired technician, skill {skill}, at ${rate} an hour"
     },
     "Cinematic": {
       "BlastNoDamage": "The blast does no direct damage — a token point a yard of knockback",
