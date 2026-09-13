@@ -16,13 +16,18 @@ import { syncHealthConditions } from "./conditions.js";
 import { applyFatigue } from "./fatigue.js";
 import { healthRollScore } from "./attributes.js";
 import {
+  SYMPTOM_THRESHOLDS,
   delayForSize,
   dosage,
+  effectMinutes,
   poisonCycle,
+  symptomShowing,
   treatmentBonus,
+  treatmentRollModifier,
   type Poison,
   type Treatment,
 } from "../rules/poison.js";
+import { diseaseCycle, diseaseTreatmentBonus } from "../rules/disease.js";
 import { resolveSuccess } from "../rules/success.js";
 
 const POISON_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/poison.hbs`;
@@ -49,6 +54,12 @@ export interface ActivePoison {
   delaySeconds: number;
   /** A standing bonus to resist, from an antidote or a course of treatment. */
   treatment: number;
+  /**
+   * Injury this dose has done so far, which is what its worse symptoms are
+   * keyed to: "after the poison causes enough injury (usually 1/3, 1/2, or 2/3
+   * of the victim's HP)" (p. 438).
+   */
+  hpLostToPoison?: number;
   reference: string;
   /**
    * True for an illness rather than a dose of something.
@@ -177,6 +188,11 @@ export async function treatPoison(options: {
   treatment: Treatment;
   /** An antidote's bonus, which is the poison's own and not a general rule. */
   antidoteBonus?: number;
+  /**
+   * The treater's First Aid or Physician -- Physician alone for medical
+   * procedures -- or null where nobody has it. An antidote needs no roll.
+   */
+  skillLevel?: number | null;
 }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
@@ -191,14 +207,82 @@ export async function treatPoison(options: {
   const dose = doses.find((d) => d.id === options.id);
   if (!dose) return;
 
+  // Every treatment but an antidote is a skill roll first (p. 439): sucking the
+  // wound "requires a First Aid or Physician roll at -2", inducing vomiting
+  // "calls for a First Aid or Physician roll", and medical procedures "require
+  // a Physician roll". The bonus is only there if the roll is made.
+  let rolled: { roll: any; target: number; success: boolean } | null = null;
+  if (options.treatment !== "antidote") {
+    const target = (options.skillLevel ?? 0) + treatmentRollModifier(options.treatment);
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+    rolled = { roll, target, success: options.skillLevel != null && outcome.success };
+  }
+  const helped = rolled === null || rolled.success;
+
   // Treatments do not stack into a heap of bonuses: the best one applies.
-  dose.treatment = Math.max(dose.treatment, bonus);
-  await store(actor, doses);
+  if (helped) {
+    dose.treatment = Math.max(dose.treatment, bonus);
+    await store(actor, doses);
+  }
 
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Poison.Treated"),
     poison: dose,
     treatment: game.i18n.localize(`GWORLD.Poison.Treatment_${options.treatment}`),
+    bonus: helped ? bonus : 0,
+    ...(rolled
+      ? {
+          target: rolled.target,
+          dice: dieResults(rolled.roll),
+          roll: rolled.roll.total,
+          success: rolled.success,
+          treatmentFailed: !rolled.success,
+          noSkill: options.skillLevel == null,
+          rolls: [rolled.roll],
+        }
+      : {}),
+  });
+}
+
+/**
+ * Treats an illness rather than a poison (p. 443).
+ *
+ * The poison treatments are the wrong list for a disease: nobody sucks
+ * influenza out of a wound. "At TL6+, antibiotics give +3 to recover from most
+ * bacterial diseases. At any TL, a physician's care provides the same bonuses
+ * to recover from disease that it gives to recover from injuries."
+ */
+export async function treatIllness(options: {
+  actor: any;
+  id: string;
+  antibiotics: boolean;
+  drugResistant: boolean;
+  /** The physician's medical-care bonus, as recovery would give it. */
+  physicianBonus: number;
+}): Promise<void> {
+  const { actor } = options;
+  if (!mayChange(actor)) return;
+
+  const doses = activePoisons(actor);
+  const dose = doses.find((d) => d.id === options.id);
+  if (!dose) return;
+
+  const bonus = diseaseTreatmentBonus({
+    techLevel: Number(actor.system?.tl) || 3,
+    antibiotics: options.antibiotics,
+    drugResistant: options.drugResistant,
+    physicianBonus: options.physicianBonus,
+  });
+  dose.treatment = Math.max(dose.treatment, bonus);
+  await store(actor, doses);
+
+  await post(actor, {
+    kind: game.i18n.localize("GWORLD.Illness.Treated"),
+    illness: true,
+    poison: dose,
+    treatment: game.i18n.localize(options.antibiotics ? "GWORLD.Illness.Antibiotics" : "GWORLD.Illness.Care"),
     bonus,
   });
 }
@@ -227,11 +311,22 @@ export async function advancePoison(options: { actor: any; id: string }): Promis
   if (check) await check.evaluate();
   const outcome = check ? resolveSuccess(check.total, target, dieResults(check)) : null;
 
-  const cycle = poisonCycle({
-    poison: dose,
-    resisted: outcome ? outcome.success : null,
-    cyclesSoFar: dose.cyclesSuffered,
-  });
+  // A caught disease runs on its own rule (p. 442), which is the poison's
+  // shape with a roll always allowed; a poison may allow none at all.
+  const cycle = dose.illness
+    ? (() => {
+        const ill = diseaseCycle({
+          disease: dose,
+          resisted: outcome ? outcome.success : false,
+          cyclesSoFar: dose.cyclesSuffered,
+        });
+        return { shakenOff: ill.recovered, cyclesSuffered: ill.cyclesSuffered, continues: ill.continues };
+      })()
+    : poisonCycle({
+        poison: dose,
+        resisted: outcome ? outcome.success : null,
+        cyclesSoFar: dose.cyclesSuffered,
+      });
 
   const rolls: any[] = check ? [check] : [];
   let damageDice: number[] = [];
@@ -264,6 +359,24 @@ export async function advancePoison(options: { actor: any; id: string }): Promis
   }
 
   dose.cyclesSuffered = cycle.cyclesSuffered;
+
+  // Worse symptoms "occur automatically after the poison causes enough injury
+  // (usually 1/3, 1/2, or 2/3 of the victim's HP)" -- which they are is the
+  // poison's own description, so the card names the thresholds crossed.
+  const lostBefore = Number(dose.hpLostToPoison ?? 0) || 0;
+  dose.hpLostToPoison = lostBefore + (dose.damage === "toxic" ? hpLost : 0);
+  const maxHp = Number(actor.system?.hp?.max ?? 0) || 0;
+  const symptomsNow = SYMPTOM_THRESHOLDS.filter(
+    (threshold) =>
+      symptomShowing({ hpLostToPoison: dose.hpLostToPoison ?? 0, maxHp, threshold }) &&
+      !symptomShowing({ hpLostToPoison: lostBefore, maxHp, threshold }),
+  ).map((threshold) => (threshold === 1 / 3 ? "1/3" : threshold === 1 / 2 ? "1/2" : "2/3"));
+
+  // A poison that does something other than damage lasts, by default, "a
+  // number of minutes equal to the margin of failure on the resistance roll".
+  const effectFor =
+    dose.damage === "none" && outcome && !outcome.success ? effectMinutes(outcome.margin) : null;
+
   const finished = cycle.shakenOff || !cycle.continues;
   await store(
     actor,
@@ -294,6 +407,8 @@ export async function advancePoison(options: { actor: any; id: string }): Promis
     finished,
     hpLost,
     fpLost,
+    symptomsNow,
+    effectFor,
     hp: { now: Number(hp.value) || 0, max: Number(hp.max) || 0 },
     fp: { now: Number(fp.value) || 0, max: Number(fp.max) || 0 },
     rolls,

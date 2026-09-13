@@ -2231,7 +2231,13 @@
       "Cycles": "Cycles",
       "DelayField": "Delay in seconds",
       "Resistible": "Allows a roll to resist",
-      "OfCycles": "cycles left of {cycles}"
+      "OfCycles": "cycles left of {cycles}",
+      "TreaterSkill": "Treater's First Aid or Physician",
+      "TreaterSkillHint": "Sucking the wound is First Aid or Physician at -2; inducing vomiting is either unmodified; medical procedures need Physician. Leave blank if nobody has it. An antidote needs no roll.",
+      "TreatmentFailed": "the roll failed, and it does no good",
+      "NoSkill": "nobody with the skill to do it",
+      "Symptom": "Past {share} of HP lost to it: its worse symptoms now show",
+      "EffectLasts": "Its effect lasts {minutes} minutes, the margin of failure"
     },
     "Drink": {
       "Action": "Drink",
@@ -2300,7 +2306,7 @@
       "Dirt_dung": "Dung or other infected matter — −2",
       "Dirt_specialInfection": "The locale harbours something special — −3",
       "Antibiotic": "Treated with antibiotics",
-      "Antibiotics": "Antibiotics at TL{tl}: no infection",
+      "Antibiotics": "Antibiotics (TL6+, bacterial)",
       "Clean": "The wound stays clean",
       "WentBad": "The wound is infected",
       "Virulence": "HT modifier (virulence)",
@@ -2311,7 +2317,12 @@
       "Name": "Name",
       "Cycle": "Illness",
       "ShakenOff": "Over it",
-      "RanOut": "It has run its course"
+      "RanOut": "It has run its course",
+      "Treat": "Treat the illness",
+      "Treated": "Illness treated",
+      "Care": "A physician's care",
+      "DrugResistant": "A drug-resistant strain",
+      "PhysicianBonus": "Physician's medical-care bonus"
     },
     "CalledShot": {
       "Label": "Aimed at",

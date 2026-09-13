@@ -27,7 +27,7 @@ import { rollBleeding, stopBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
 import { catchBreath, rollSuffocation } from "../suffocation.js";
 import { applyDeprivation, rollExposure } from "../environment.js";
-import { activePoisons, advancePoison, clearPoison, dosePoison, treatPoison } from "../poison.js";
+import { activePoisons, advancePoison, clearPoison, dosePoison, treatPoison, treatIllness } from "../poison.js";
 import { drinkForAnHour, drinkingState, hangoverRoll, soberUpRoll } from "../intoxication.js";
 import { checkInfection, exposeToDisease } from "../disease.js";
 import { checkOverpenetration, rollScatter, splashInTheFace } from "../gunplay.js";
@@ -633,10 +633,18 @@ async function promptForPoison(): Promise<{ poison: Poison; doublings: number } 
 }
 
 /** Asks which treatment was tried against a dose (Campaigns p. 439). */
-async function promptForTreatment(): Promise<{
+async function promptForTreatment(treater: any): Promise<{
   treatment: Treatment;
   antidoteBonus: number;
+  skillLevel: number | null;
 } | null> {
+  // The treater's best of First Aid and Physician, to start the field at; the
+  // victim treating themselves is the ordinary case, and a friend's figure can
+  // be typed over it.
+  const firstAid = treater?.system?.skillLevelByName?.("First Aid") ?? null;
+  const physician = treater?.system?.skillLevelByName?.("Physician") ?? null;
+  const best = [firstAid, physician].filter((v): v is number => typeof v === "number");
+  const skillStart = best.length ? Math.max(...best) : "";
   const L = (key: string) => game.i18n.localize(`GWORLD.Poison.${key}`);
 
   const result = await foundry.applications.api.DialogV2.prompt({
@@ -655,6 +663,11 @@ async function promptForTreatment(): Promise<{
         <span>${L("AntidoteBonus")}</span>
         <input type="number" name="antidote" value="0" min="0" step="1" style="width:90px">
       </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px"
+             title="${L("TreaterSkillHint")}">
+        <span>${L("TreaterSkill")}</span>
+        <input type="number" name="skill" value="${skillStart}" step="1" style="width:90px">
+      </label>
     </div>`,
     ok: {
       label: L("Treat"),
@@ -665,6 +678,11 @@ async function promptForTreatment(): Promise<{
             "medical") as Treatment,
           antidoteBonus:
             Number(form?.querySelector<HTMLInputElement>('input[name="antidote"]')?.value ?? 0) || 0,
+          // Blank is nobody with the skill, which is a failed treatment, not a zero.
+          skillLevel: (() => {
+            const raw = form?.querySelector<HTMLInputElement>('input[name="skill"]')?.value ?? "";
+            return raw.trim() === "" ? null : Number(raw) || 0;
+          })(),
         };
       },
     },
@@ -4323,7 +4341,29 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const id = target.dataset.poison;
     if (!id) return;
 
-    const asked = await promptForTreatment();
+    // An illness is treated with antibiotics and a physician's care, not by
+    // sucking a wound or inducing vomiting (p. 443).
+    const dose = activePoisons(this.actor).find((d) => d.id === id);
+    if (dose?.illness) {
+      const I = (key: string) => game.i18n.localize(`GWORLD.Illness.${key}`);
+      const asked = await hazardPrompt(
+        I("Treat"),
+        hazardCheck("antibiotics", I("Antibiotics")) +
+          hazardCheck("resistant", I("DrugResistant")) +
+          hazardField("physician", I("PhysicianBonus"), 0, 'min="0"'),
+        (form) => ({
+          antibiotics: ticked(form, "antibiotics"),
+          drugResistant: ticked(form, "resistant"),
+          physicianBonus: num(form, "physician"),
+        }),
+      );
+      if (!asked) return;
+      await treatIllness({ actor: this.actor, id, ...asked });
+      this.render();
+      return;
+    }
+
+    const asked = await promptForTreatment(this.actor);
     if (!asked) return;
 
     await treatPoison({ actor: this.actor, id, ...asked });
