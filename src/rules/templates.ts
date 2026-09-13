@@ -168,6 +168,108 @@ export function choiceSatisfied(options: {
   return Math.abs(spent) >= Math.abs(options.group.required);
 }
 
+/**
+ * Whether a choice group is met somewhere other than among its own options.
+ *
+ * A supplement's template can set points aside for another template -- a lens
+ * or a racial template taken with it -- or for raising a skill it already
+ * grants. There is nothing to tick for those, so a group with no options is
+ * one the player meets elsewhere, never one they have fallen short of.
+ */
+export function choiceMetElsewhere(
+  template: Pick<Template, "entries">,
+  group: Pick<ChoiceGroup, "id">,
+): boolean {
+  return entriesInGroup(template, group.id).length === 0;
+}
+
+/** What an entry's compendium document says about its own name and cost. */
+export interface EntryDocument {
+  name: string;
+  points?: number;
+  pointsPerLevel?: number;
+  /** Total cost at each level, level 1 first; empty for a trait priced evenly. */
+  costTable?: readonly number[];
+}
+
+/** The fields an entry's item takes over from the document it copies. */
+export interface EntryItemFields {
+  name: string;
+  points?: number;
+  levels?: number;
+}
+
+/**
+ * The name an entry's item goes by.
+ *
+ * A template may name a generic document more exactly than the document does
+ * -- a Sense of Duty to someone in particular, Physics in one specialty -- and
+ * that qualifier is the point of the entry, so it is kept. A document that
+ * carries a qualifier of its own ("Guns/TL (Pistol)") is already exact and
+ * keeps its name, and so does one the entry doesn't qualify.
+ */
+export function entryItemName(entryName: string, documentName: string): string {
+  if (documentName.includes("(")) return documentName;
+  const withTl = documentName.endsWith("/TL");
+  const base = withTl ? documentName.slice(0, -"/TL".length) : documentName;
+  if (!entryName.startsWith(`${base} (`)) return documentName;
+  return withTl ? `${documentName}${entryName.slice(base.length)}` : entryName;
+}
+
+/**
+ * The name and cost fields an entry's item takes, given the document it copies.
+ *
+ * An entry's points are what the template charges for it in total -- "it lists
+ * the point costs of those traits, and gives the sum as the template's cost"
+ * (p. 258) -- which is not what a document's `points` field holds. A trait
+ * priced by the level adds its levels on top of that field, and a tabled one
+ * reads its table and ignores the field altogether. So:
+ *
+ * - a tabled trait takes the level whose total is the entry's points;
+ * - a trait priced by the level takes the entry's levels, or the levels its
+ *   points buy, with `points` set so the two add up to the entry's total;
+ * - anything else -- a flat trait, a skill -- takes the points as they are.
+ *
+ * An entry of 0 points states no cost, and leaves the document's alone.
+ */
+export function entryItemFields(entry: TemplateEntry, document: EntryDocument): EntryItemFields {
+  const fields: EntryItemFields = { name: entryItemName(entry.name, document.name) };
+  const levels = entry.levels ?? 0;
+
+  if (entry.points === 0) {
+    if (levels) fields.levels = levels;
+    return fields;
+  }
+
+  const table = document.costTable ?? [];
+  if (table.length) {
+    const step = levels || table.indexOf(entry.points) + 1;
+    if (step > 0) fields.levels = step;
+    return fields;
+  }
+
+  const perLevel = document.pointsPerLevel ?? 0;
+  if (perLevel !== 0) {
+    if (levels) {
+      fields.levels = levels;
+      fields.points = entry.points - levels * perLevel;
+      return fields;
+    }
+    const bought = (entry.points - (document.points ?? 0)) / perLevel;
+    if (Number.isInteger(bought) && bought >= 1) {
+      fields.levels = bought;
+    } else {
+      fields.points = entry.points;
+      fields.levels = 0;
+    }
+    return fields;
+  }
+
+  fields.points = entry.points;
+  if (levels) fields.levels = levels;
+  return fields;
+}
+
 /** What applying a template does to an actor's numbers. */
 export interface TemplateApplication {
   /** Attribute scores to write, for a character template. */

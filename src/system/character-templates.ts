@@ -18,6 +18,7 @@ import { SYSTEM_ID } from "./constants.js";
 import {
   applyTemplate,
   emptyTemplate,
+  entryItemFields,
   requiredEntries,
   stackTemplate,
   type Template,
@@ -81,8 +82,16 @@ async function itemDataFor(entry: TemplateEntry): Promise<object | null> {
       delete data._id;
       // The template's own numbers win: a template may take a trait at a level
       // or a skill at a number of points the compendium entry knows nothing of.
-      if (entry.points !== 0) data.system = { ...data.system, points: entry.points };
-      if (entry.levels) data.system = { ...data.system, levels: entry.levels };
+      // They are its total, so they are read against how the document prices
+      // itself rather than written over its `points`.
+      const { name, ...cost } = entryItemFields(entry, {
+        name: String(data.name ?? ""),
+        points: Number(data.system?.points) || 0,
+        pointsPerLevel: Number(data.system?.pointsPerLevel) || 0,
+        costTable: Array.isArray(data.system?.costTable) ? data.system.costTable : [],
+      });
+      data.name = name;
+      data.system = { ...data.system, ...cost };
       return data;
     }
     // A uuid that resolves to nothing is a compendium that moved. Falling back
