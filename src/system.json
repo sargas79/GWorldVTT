@@ -154,6 +154,12 @@
       "ownership": {
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
+      },
+      "flags": {
+        "gworld": {
+          "book": "basic-set",
+          "bookTitle": "Basic Set"
+        }
       }
     }
   ],
