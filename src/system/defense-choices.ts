@@ -113,7 +113,7 @@ export function defenseChoices(options: {
     // Being cannon fodder comes before everything: it is not that this mook
     // has no shield or was struck from a bad angle, it is that a mook never
     // defends at all.
-    if (options.cannonFodder) return refused("cannonFodder");
+    if (options.cannonFodder && !cannonFodderDefends()) return refused("cannonFodder");
 
     // The arc comes first: a fighter struck from behind has no defense however
     // well armed, and saying "no shield" about it would be answering the wrong
@@ -142,4 +142,5 @@ export function defenseChoices(options: {
       isFencing: Boolean(score.isFencing),
     };
   });
-}
+}import { cannonFodderDefends } from "../rules/cinematic.js";
+

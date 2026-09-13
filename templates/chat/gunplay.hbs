@@ -34,9 +34,13 @@
   {{#if overpenetration}}
     <div class="gc-mods">
       <span>{{localize "GWORLD.Overpenetration.Basic" damage=basicDamage}}</span>
-      <span class="gc-mod">{{localize "GWORLD.Overpenetration.CoverDr" dr=cover}}</span>
+      {{#unless cannotOverpenetrate}}
+        <span class="gc-mod">{{localize "GWORLD.Overpenetration.CoverDr" dr=cover}}</span>
+      {{/unless}}
     </div>
-    {{#if went}}
+    {{#if cannotOverpenetrate}}
+      <div class="gc-result success">{{localize "GWORLD.Overpenetration.CannotOverpenetrate" type=damageType}}</div>
+    {{else if went}}
       <div class="gc-result crit-failure">
         {{localize "GWORLD.Overpenetration.Through" damage=through}}
       </div>
@@ -50,6 +54,9 @@
       <span>{{victim}}</span>
       <span class="gc-mod">{{localize "GWORLD.Splash.Thrown" acc=accuracy max=maxRange face=faceModifier}}</span>
     </div>
+    {{#if triedToParry}}
+      <div class="gc-mods"><span class="gc-warn">{{localize "GWORLD.Splash.ParryUseless"}}</span></div>
+    {{/if}}
     {{#if blinded}}
       <div class="gc-result crit-failure">
         {{localize "GWORLD.Splash.Blinded" seconds=blindSeconds}}

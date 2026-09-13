@@ -1456,7 +1456,10 @@
       "Basic": "{damage} basic damage",
       "CoverDr": "cover DR {dr}",
       "Through": "{damage} reaches whoever was behind",
-      "Stopped": "It stops in the cover"
+      "Stopped": "It stops in the cover",
+      "DamageType": "Damage type",
+      "TightBeam": "Tight-beam burn",
+      "CannotOverpenetrate": "{type} does not overpenetrate: only piercing, impaling and tight-beam burning damage goes through"
     },
     "Splash": {
       "Action": "Splash in the face",
@@ -1464,13 +1467,18 @@
       "Title": "In the face",
       "Hit": "It hit",
       "Critical": "Critical hit",
-      "Defended": "They defended",
+      "Defended": "Their defense",
       "Thrown": "thrown weapon: Acc {acc}, {max} yards, {face} for the face",
       "Blinded": "Blinded for {seconds} seconds",
       "Dodged": "Dodged it — and a liquid cannot be parried",
       "Flinched": "Flinched: {penalty} to further defenses, and to DX and Sense next turn",
       "Unmoved": "Did not so much as blink",
-      "OneTarget": "Target exactly one token to splash"
+      "OneTarget": "Target exactly one token to splash",
+      "DefenseNone": "None, or it failed",
+      "DefenseDodge": "A dodge that worked",
+      "DefenseBlock": "A block that worked",
+      "DefenseParry": "A parry",
+      "ParryUseless": "A parry is no use against a liquid"
     },
     "Reaction": {
       "Action": "Reaction",

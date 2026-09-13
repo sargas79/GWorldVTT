@@ -17,7 +17,7 @@ import {
   scatterBearing,
   scatterDistance,
 } from "../rules/scatter.js";
-import { coverDr, damageThrough, overpenetrates, type CoverKind } from "../rules/overpenetration.js";
+import { canOverpenetrate, coverDr, damageThrough, overpenetrates, type CoverKind } from "../rules/overpenetration.js";
 import { FLINCH_PENALTY, LIQUID_IN_THE_FACE, liquidInTheFace } from "../rules/dirty-tricks.js";
 import { resolveSuccess } from "../rules/success.js";
 
@@ -104,7 +104,25 @@ export async function checkOverpenetration(options: {
   coverKind: CoverKind;
   armorDivisor: number;
   behindDr: number;
+  /** What the shot does: only a piercing, impaling or tight-beam burning one goes through. */
+  damageType: string;
+  tightBeam: boolean;
 }): Promise<number> {
+  // "When you inflict piercing, impaling, or tight-beam burning damage with a
+  // ranged attack" (p. 408) -- and nothing else. A club through a door is a
+  // club stopped by a door, and a flamethrower does not drill through people.
+  if (!canOverpenetrate({ type: options.damageType, ranged: true, tightBeam: options.tightBeam })) {
+    await post(options.actor, {
+      overpenetration: true,
+      basicDamage: options.basicDamage,
+      cannotOverpenetrate: true,
+      damageType: options.damageType,
+      went: false,
+      through: 0,
+    });
+    return 0;
+  }
+
   const cover = coverDr({
     dr: options.coverDr,
     hp: options.coverHp,
@@ -145,6 +163,8 @@ export async function splashInTheFace(options: {
   hit: boolean;
   criticalHit: boolean;
   defended: boolean;
+  /** True where a parry was tried, which does nothing against a liquid. */
+  parried?: boolean;
 }): Promise<void> {
   const will = Number(options.victim?.system?.derived?.will) || 10;
 
@@ -182,6 +202,7 @@ export async function splashInTheFace(options: {
     maxRange: LIQUID_IN_THE_FACE.maxRangeYards,
     faceModifier: LIQUID_IN_THE_FACE.faceModifier,
     ...result,
+    triedToParry: options.parried === true,
     flinchPenalty: FLINCH_PENALTY,
     dice: rolls[0] ? dieResults(rolls[0]) : null,
     roll: rolls[0]?.total ?? null,

@@ -41,6 +41,7 @@ import {
 } from "../hazards.js";
 import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
 import { useTechnique, type Victim } from "../unarmed-techniques.js";
+import { canParryLiquid } from "../../rules/dirty-tricks.js";
 import { rollInvention, type InventionPlan } from "../invention.js";
 import { describePowers, unpoweredAbilities } from "../psionics.js";
 import { stimulantWearsOff, takeDepressant, takeStimulant, withdrawalRoll } from "../drugs.js";
@@ -936,6 +937,8 @@ async function promptForOverpenetration(): Promise<{
   coverKind: CoverKind;
   armorDivisor: number;
   behindDr: number;
+  damageType: string;
+  tightBeam: boolean;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Overpenetration.${key}`);
 
@@ -945,6 +948,15 @@ async function promptForOverpenetration(): Promise<{
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("BasicDamage")}</span>
         <input type="number" name="damage" value="0" min="0" step="1" autofocus style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("DamageType")}</span>
+        <select name="damageType" style="width:120px">
+          ${["pi-", "pi", "pi+", "pi++", "imp", "burn", "cr", "cut"].map((t) => `<option value="${t}">${t}</option>`).join("")}
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="tightBeam"><span>${L("TightBeam")}</span>
       </label>
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Kind")}</span>
@@ -986,6 +998,8 @@ async function promptForOverpenetration(): Promise<{
             "flesh") as CoverKind,
           armorDivisor: Math.max(1, num("divisor")),
           behindDr: num("behindDr"),
+          damageType: form?.querySelector<HTMLSelectElement>('select[name="damageType"]')?.value ?? "pi",
+          tightBeam: form?.querySelector<HTMLInputElement>('input[name="tightBeam"]')?.checked ?? false,
         };
       },
     },
@@ -1000,6 +1014,7 @@ async function promptForSplash(): Promise<{
   hit: boolean;
   criticalHit: boolean;
   defended: boolean;
+  parried: boolean;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Splash.${key}`);
 
@@ -1019,9 +1034,14 @@ async function promptForSplash(): Promise<{
         <input type="checkbox" name="critical">
         <span>${L("Critical")}</span>
       </label>
-      <label style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" name="defended">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Defended")}</span>
+        <select name="defense" style="width:150px">
+          <option value="none">${L("DefenseNone")}</option>
+          <option value="dodge">${L("DefenseDodge")}</option>
+          <option value="block">${L("DefenseBlock")}</option>
+          <option value="parry">${L("DefenseParry")}</option>
+        </select>
       </label>
     </div>`,
     ok: {
@@ -1030,10 +1050,14 @@ async function promptForSplash(): Promise<{
         const form = button.closest<HTMLElement>(".application");
         const ticked = (name: string) =>
           form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+        // "It is impossible to parry a liquid" (p. 405): a parry was tried and
+        // did nothing, which is the same as not defending at all.
+        const defense = form?.querySelector<HTMLSelectElement>('select[name="defense"]')?.value ?? "none";
         return {
           hit: ticked("hit"),
           criticalHit: ticked("critical"),
-          defended: ticked("defended"),
+          defended: defense !== "none" && (defense !== "parry" || canParryLiquid()),
+          parried: defense === "parry",
         };
       },
     },
