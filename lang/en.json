@@ -3221,6 +3221,63 @@
       "BottlesTitle": "{name} falls with {bottles} bottles",
       "Broken": "{broken} broke — and are burning",
       "Intact": "None broke"
+    },
+    "Invention": {
+      "Button": "Invent",
+      "Title": "Inventing something",
+      "Stage": "Roll",
+      "Stages": {
+        "concept": "Concept (GM, secret)",
+        "prototype": "Prototype"
+      },
+      "Basis": "How hard it is",
+      "Bases": {
+        "price": "By its retail price",
+        "software": "A program, by its Complexity",
+        "grade": "Set by hand"
+      },
+      "Retail": "Retail price ($)",
+      "Complexity": "Program Complexity",
+      "GradeLabel": "Grade",
+      "Grade": {
+        "simple": "Simple",
+        "average": "Average",
+        "complex": "Complex",
+        "amazing": "Amazing"
+      },
+      "InventorTl": "Inventor's TL",
+      "InventionTl": "The invention's TL",
+      "Skill": "Invention skill level",
+      "WorkingModel": "Has a working model to copy (+5)",
+      "KnownToExist": "Knows it exists, without a model (+2)",
+      "Variant": "Variant on something existing (+0 to +5)",
+      "NewTechnology": "Basic technology new to the campaign (-5)",
+      "WellDescribed": "Clear or clever description (+0 to +2)",
+      "Assistants": "Assistants with skill 20+",
+      "PoorTools": "Short of the best tools (0 to 10)",
+      "People": "Skilled people working",
+      "ReusingFacilities": "Facilities left over from a like project",
+      "Computer": "Complexity of the computer it is for (0 if none)",
+      "ConceptTitle": "{name}: Concept roll",
+      "PrototypeTitle": "{name}: Prototype roll",
+      "TooHard": "Needs skill {required} to have any chance; {skill} is not enough",
+      "Against": "Skill {skill} {modifier} = {target}",
+      "Success": "Success",
+      "Failure": "Failure",
+      "Unit": {
+        "days": "days",
+        "months": "months"
+      },
+      "Line": {
+        "Facilities": "Facilities cost ${cost}",
+        "Time": "Takes {dice} {unit}, divided among {people} (at least {minimum} day)",
+        "Flawless": "No bugs at all",
+        "MajorBugs": "{count} major bugs",
+        "MinorBugs": "{count} minor bugs",
+        "Explodes": "An explosion or accident: {damage} damage to the inventor and each assistant, and the facilities are destroyed",
+        "FlawedTheory": "A flawed theory: it looks good, and will never work",
+        "WontRun": "It will not run on a Complexity {computer} computer"
+      }
     }
   }
 }

@@ -41,6 +41,8 @@ import {
 } from "../hazards.js";
 import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
 import { useTechnique, type Victim } from "../unarmed-techniques.js";
+import { rollInvention, type InventionPlan } from "../invention.js";
+import type { InventionGrade } from "../../rules/invention.js";
 import type { UnarmedTechnique } from "../../rules/unarmed-techniques.js";
 import { attendPatient, operate, resuscitate } from "../recovery.js";
 import type { ResuscitationCause } from "../../rules/medicine.js";
@@ -1388,6 +1390,60 @@ async function promptForTechnique(target: any): Promise<{
   );
 }
 
+/** What is being invented, and which of the two rolls to make (pp. 472-474). */
+async function promptForInvention(tl: number): Promise<{
+  stage: "concept" | "prototype";
+  plan: InventionPlan;
+} | null> {
+  const I = (key: string) => game.i18n.localize(`GWORLD.Invention.${key}`);
+  const opts = (group: string, keys: readonly string[]): Array<[string, string]> =>
+    keys.map((k) => [k, I(`${group}.${k}`)]);
+
+  return hazardPrompt(
+    I("Title"),
+    hazardSelect("stage", I("Stage"), opts("Stages", ["concept", "prototype"])) +
+      hazardField("skill", I("Skill"), 12) +
+      hazardSelect("basis", I("Basis"), opts("Bases", ["price", "software", "grade"])) +
+      hazardField("retail", I("Retail"), 100, 'min="0"') +
+      hazardField("complexity", I("Complexity"), 0, 'min="0"') +
+      hazardSelect("grade", I("GradeLabel"), opts("Grade", ["simple", "average", "complex", "amazing"])) +
+      hazardField("inventorTl", I("InventorTl"), tl) +
+      hazardField("inventionTl", I("InventionTl"), tl) +
+      hazardCheck("workingModel", I("WorkingModel")) +
+      hazardCheck("knownToExist", I("KnownToExist")) +
+      hazardField("variant", I("Variant"), 0, 'min="0" max="5"') +
+      hazardCheck("newTechnology", I("NewTechnology")) +
+      hazardField("wellDescribed", I("WellDescribed"), 0, 'min="0" max="2"') +
+      hazardField("assistants", I("Assistants"), 0, 'min="0"') +
+      hazardField("poorTools", I("PoorTools"), 0, 'min="0" max="10"') +
+      hazardField("people", I("People"), 1, 'min="1"') +
+      hazardCheck("reusingFacilities", I("ReusingFacilities")) +
+      hazardField("computer", I("Computer"), 0, 'min="0"'),
+    (form) => ({
+      stage: str(form, "stage") as "concept" | "prototype",
+      plan: {
+        basis: str(form, "basis") as InventionPlan["basis"],
+        retail: num(form, "retail"),
+        complexity: num(form, "complexity"),
+        grade: str(form, "grade") as InventionGrade,
+        inventorTl: num(form, "inventorTl"),
+        inventionTl: num(form, "inventionTl"),
+        workingModel: ticked(form, "workingModel"),
+        knownToExist: ticked(form, "knownToExist"),
+        variant: num(form, "variant"),
+        newTechnology: ticked(form, "newTechnology"),
+        wellDescribed: num(form, "wellDescribed"),
+        skill: num(form, "skill"),
+        assistants: num(form, "assistants"),
+        poorTools: num(form, "poorTools"),
+        people: Math.max(1, num(form, "people")),
+        reusingFacilities: ticked(form, "reusingFacilities"),
+        computer: num(form, "computer"),
+      },
+    }),
+  );
+}
+
 /** How a thrown Molotov cocktail met its target (Campaigns p. 411). */
 async function promptForMolotov(): Promise<{
   defense: "dodge" | "block" | "none";
@@ -2561,6 +2617,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       tryToEscape: GWorldCharacterSheet.#onEscapeEntanglement,
       throwMolotov: GWorldCharacterSheet.#onThrowMolotov,
       unarmedTechnique: GWorldCharacterSheet.#onUnarmedTechnique,
+      invent: GWorldCharacterSheet.#onInvent,
       checkBottles: GWorldCharacterSheet.#onCheckBottles,
       buildingCollapse: GWorldCharacterSheet.#onCollapse,
       splashAcid: GWorldCharacterSheet.#onAcid,
@@ -4934,6 +4991,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const asked = await promptForTechnique(target);
     if (!asked) return;
     await useTechnique({ actor: this.actor, ...asked });
+  }
+
+  /** A Concept or Prototype roll for something being invented (pp. 472-474). */
+  static async #onInvent(this: GWorldCharacterSheet) {
+    const asked = await promptForInvention(Number(this.actor.system?.tl) || 3);
+    if (!asked) return;
+    await rollInvention({ actor: this.actor, ...asked });
   }
 
   /** A Molotov cocktail thrown at somebody (Campaigns p. 411). */
