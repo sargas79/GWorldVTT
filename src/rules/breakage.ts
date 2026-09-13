@@ -30,13 +30,15 @@ export function heavyParryBreakChance(options: {
   parryingWeight: number;
   attackingWeight: number;
   quality: WeaponQuality;
+  /** Odds of breakage that replace the grade's, where another book sets them. */
+  breakage?: number;
 }): number {
   const { parryingWeight, attackingWeight, quality } = options;
   if (parryingWeight <= 0 || attackingWeight <= 0) return 0;
   const ratio = attackingWeight / parryingWeight;
   if (ratio < HEAVY_PARRY_RATIO) return 0;
   const multiples = Math.floor(ratio);
-  return Math.max(0, 2 + (multiples - HEAVY_PARRY_RATIO) + breakageModifier(quality));
+  return Math.max(0, 2 + (multiples - HEAVY_PARRY_RATIO) + (options.breakage ?? breakageModifier(quality)));
 }
 
 /** What a heavy parry came to, given the chance and the die. */

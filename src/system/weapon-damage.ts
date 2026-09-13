@@ -165,7 +165,7 @@ export async function breakWeapon(actor: any, item: any, reason: "parry" | "fumb
  */
 export async function heavyParryCheck(options: {
   defender: any;
-  parryWeapon: { itemId: string; weight: number; quality: WeaponQuality; material: WeaponMaterial; natural: boolean } | undefined;
+  parryWeapon: { itemId: string; weight: number; quality: WeaponQuality; material: WeaponMaterial; natural: boolean; breakage?: number } | undefined;
   attackWeapon: { weight: number; material: string; swung: boolean };
   parried: boolean;
 }): Promise<void> {
@@ -178,6 +178,8 @@ export async function heavyParryCheck(options: {
     parryingWeight: parryWeapon.weight,
     attackingWeight: attackWeapon.weight,
     quality,
+    // Monster Hunters 1's odds replace the grade's, except against a superior swing.
+    ...(parryWeapon.breakage !== undefined && quality === parryWeapon.quality ? { breakage: parryWeapon.breakage } : {}),
   });
   if (chance <= 0) return;
 

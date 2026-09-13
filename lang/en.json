@@ -3387,6 +3387,27 @@
       "Capped": "capped",
       "Default": "default"
     },
+    "WeaponImprovement": {
+      "Balanced": "Balanced",
+      "BalancedHint": "+1 to skill with the weapon. +4 CF; not for sticks (Monster Hunters 1 p. 59).",
+      "BalancedBowHint": "+1 to Accuracy. +4 CF (Monster Hunters 1 p. 60).",
+      "Titanium": "Titanium",
+      "TitaniumHint": "Weight x3/4 and -2 to odds of breakage, not cumulative with fine or very fine. +1 CF (Monster Hunters 1 p. 60).",
+      "Weighted": "Weighted",
+      "WeightedHint": "+1 damage. Two-handed axes and maces only: +1 CF (Monster Hunters 1 p. 60).",
+      "Compound": "Compound",
+      "CompoundHint": "ST+2 for damage and range. +1 CF (Monster Hunters 1 p. 60).",
+      "Improvised": "Improvised penalty",
+      "ImprovisedHint": "An improvised weapon's skill penalty, e.g. -1 for a pool cue; Improvised Weapons for the skill removes it (Monster Hunters 1 pp. 25, 60).",
+      "Priced": "Cost factor +{cf} from a list price of ${cost} and {weight} lbs. Fine is free; very fine +3 CF (swords and fencing weapons); silver +19; silver-coated +2; holy +4, at least $250 (Monster Hunters 1 pp. 59-61).",
+      "Problem": {
+        "veryFineNotSword": "Very fine is for swords and fencing weapons only (Monster Hunters 1 p. 60).",
+        "silverCombination": "Silver cannot be combined with fine, very fine or titanium (Monster Hunters 1 p. 60).",
+        "weightedNotTwoHandedAxe": "Weighted is for two-handed axes and maces only (Monster Hunters 1 p. 60).",
+        "compoundNotBow": "Compound is for bows and crossbows only (Monster Hunters 1 p. 60).",
+        "cheapNotOffered": "Monster Hunters gear has no cheap grade; the weapon is priced as good (Monster Hunters 1 p. 59)."
+      }
+    },
     "Gadget": {
       "Title": "Improvements",
       "CuttingEdge": "Cutting-edge",
