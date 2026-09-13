@@ -199,6 +199,7 @@ import { isReadTrait } from "../../rules/trait-effects.js";
 import { weaknessOf } from "../../rules/weakness.js";
 import { exposeToWeakness } from "../weakness.js";
 import { cancelRitual, describeRitualInEffect, extendRitual, startRitualCasting, triggerRitual } from "../ritual-casting.js";
+import { requestGuidance, startNewSession } from "../bonus-points.js";
 import { applyHolyContact } from "../holy.js";
 import { unconditionalReaction, type ReactionSource } from "../../rules/social.js";
 import { SENSES } from "../../rules/senses.js";
@@ -2893,6 +2894,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       fightOffSwarm: GWorldCharacterSheet.#onFightOffSwarm,
       castSpell: GWorldCharacterSheet.#onCastSpell,
       castRitual: GWorldCharacterSheet.#onCastRitual,
+      requestGuidance: GWorldCharacterSheet.#onRequestGuidance,
+      newSession: GWorldCharacterSheet.#onNewSession,
       extendRitual: GWorldCharacterSheet.#onExtendRitual,
       triggerRitual: GWorldCharacterSheet.#onTriggerRitual,
       cancelRitual: GWorldCharacterSheet.#onCancelRitual,
@@ -3569,6 +3572,16 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onCastSpell(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const item = this.#itemFrom(target);
     if (item) await castSpell(this.actor, item);
+  }
+
+  /** Asks the GM for a piece of player guidance (Monster Hunters 1 p. 31). */
+  static async #onRequestGuidance(this: GWorldCharacterSheet) {
+    await requestGuidance(this.actor);
+  }
+
+  /** The GM starts a session for this character: points refreshed (pp. 23, 28). */
+  static async #onNewSession(this: GWorldCharacterSheet) {
+    await startNewSession([this.actor]);
   }
 
   /** Starts working a ritual: its casting card (Monster Hunters 1 pp. 35-37). */

@@ -10,6 +10,7 @@ import "./styles/gworld.css";
 
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
+import { registerBonusPointHooks } from "./system/bonus-points.js";
 import { registerFacing } from "./system/facing.js";
 import { registerAimTracking } from "./system/aim.js";
 import { registerBattleFatigue } from "./system/battle-fatigue.js";
@@ -93,6 +94,8 @@ Hooks.once("init", () => {
   // A damage card is posted before anyone has decided who it hits, so the card
   // grows an apply control when it renders.
   registerChatHooks();
+  // The GM's start-of-session refresh of points to spend (Monster Hunters 1 pp. 23, 28).
+  registerBonusPointHooks();
 
   // Which way a token faces, drawn on it, and the keys that turn it a hex
   // side at a time.

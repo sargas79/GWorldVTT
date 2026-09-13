@@ -36,6 +36,8 @@ import {
 import { governingPath } from "../../rules/ritual-cost.js";
 import { grimoireBonus, masteredRitual, ritualMasteryBonus } from "../../rules/ritual-tricks.js";
 import { conditionalLimit } from "../../rules/ritual-lasting.js";
+import { wildcardIgnoresFamiliarity } from "../../rules/bonus-points.js";
+import { bonusPointPools } from "../bonus-points.js";
 import { SCENT_MASKING_PENALTY, holdoutBonus, signatureGearPointCost } from "../../rules/gadgets.js";
 import { improvisedPenalty, weaponImprovementEffects, type ImprovedWeapon } from "../../rules/weapon-improvements.js";
 import { isShotgun, specialAmmunitionEffect, type PayloadOption, type PowderOption } from "../../rules/special-ammunition.js";
@@ -449,6 +451,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   }>;
   declare magic: { style: MagicStylePreference };
   declare ritualPath: { manaReserve: number; active: RitualInEffect[] };
+  declare bonusPoints: { destiny: number | null; gmDestiny: number | null; wildcard: Array<{ skill: string; value: number }> };
   declare activeSpells: ActiveSpell[];
   declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
   declare dress: { state: Dress; topless: boolean };
@@ -802,6 +805,23 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
        * is in the mana reserve now. Its size, Magery x 3, is worked out; this
        * is only how full it is.
        */
+      /**
+       * What is left of this session's points to spend on outcomes (Monster
+       * Hunters 1 pp. 23, 28, 31): destiny points, the GM's destiny points
+       * against a negative Destiny, and each wildcard skill's bonus points.
+       * The most each can hold comes from the traits and skills.
+       */
+      bonusPoints: new fields.SchemaField({
+        destiny: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
+        gmDestiny: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
+        wildcard: new fields.ArrayField(
+          new fields.SchemaField({
+            skill: new fields.StringField({ required: true, blank: false }),
+            value: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+          }),
+          { required: true, initial: [] },
+        ),
+      }),
       ritualPath: new fields.SchemaField({
         manaReserve: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
         /**
@@ -1663,6 +1683,21 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         masteryHeld: traitNames.some((t) => masteredRitual(t)?.toLowerCase() === String(item.name ?? "").trim().toLowerCase()),
         grimoire,
       };
+    }
+
+    // ── bonus points (Monster Hunters 1 pp. 23, 28, 31) ─────────────────
+    const destinyTrait = this.itemsOfType("trait").find((t) => /^\s*destiny\b/i.test(String(t.name ?? "")));
+    const wildcardSkills = skillItems.filter((s) => (s.system as any)?.difficulty === "W");
+    const bonusPoints = bonusPointPools({
+      destinyTraitPoints: destinyTrait ? Number((destinyTrait.system as any)?.totalPoints ?? 0) || 0 : 0,
+      wildcardSkills: wildcardSkills.map((s) => ({ name: String(s.name ?? ""), points: Number((s.system as any)?.points ?? 0) || 0 })),
+      stored: this.bonusPoints ?? undefined,
+    });
+    // "Users with at least 12 points in a wildcard skill ignore penalties for
+    // familiarity, exotic equipment, or tech level differences" (p. 28).
+    for (const skill of wildcardSkills) {
+      const sys = skill.system as any;
+      sys.derived = { ...sys.derived, familiarityExempt: bonusPoints.inPlay && wildcardIgnoresFamiliarity(Number(sys.points) || 0) };
     }
 
     // ── techniques ──────────────────────────────────────────────────────
@@ -2664,6 +2699,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       traitEffects: traits,
       magic: { ...magic, mana, items: magicItems },
       ritualPath,
+      bonusPoints,
       // Unkillable is not dead at -5xHP; only destruction at -10xHP is the end.
       status: healthStatus(this.hp.value, this.hp.max, { unkillable: traits.unkillable }),
       reeling,

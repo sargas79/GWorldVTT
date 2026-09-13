@@ -13,6 +13,8 @@ import { isRuleOn } from "./optional-rules.js";
 import { spendFatigue } from "./extra-effort.js";
 import { syncHealthConditions } from "./conditions.js";
 import { FLESH_WOUND_COST, TV_ACTION_FP, fleshWound } from "../rules/cinematic.js";
+import { FLESH_WOUND_POINTS } from "../rules/bonus-points.js";
+import { payForFleshWound } from "./bonus-points.js";
 
 const L = (key: string, data?: Record<string, unknown>) =>
   data ? game.i18n.format(`GWORLD.Cinematic.${key}`, data) : game.i18n.localize(`GWORLD.Cinematic.${key}`);
@@ -46,7 +48,7 @@ export function unspentPointsOf(actor: any): number {
  * and the log says where it went.
  */
 export async function declareFleshWound(actor: any, entry: FleshWoundEntry): Promise<boolean> {
-  if (!actor?.isOwner || !isRuleOn("fleshWounds")) return false;
+  if (!actor?.isOwner || !(isRuleOn("fleshWounds") || isRuleOn("bonusPointSpending"))) return false;
 
   const { taken, ignored } = fleshWound(entry.injury);
   if (ignored <= 0) {
@@ -59,15 +61,21 @@ export async function declareFleshWound(actor: any, entry: FleshWoundEntry): Pro
   const restored = Math.min(max, (Number(pool?.value) || 0) + ignored);
 
   const unspent = unspentPointsOf(actor);
-  const awards = [
-    ...(actor.system?.points?.awards ?? []),
-    { points: -FLESH_WOUND_COST, note: L("AwardNote"), at: Date.now() },
-  ];
-
-  await actor.update({
-    [`system.${entry.fatigue ? "fp" : "hp"}.value`]: restored,
-    "system.points.awards": awards,
-  });
+  // With Monster Hunters 1's points in play, the point comes from whichever
+  // pool the player picks (p. 31); otherwise from unspent points, as ever.
+  if (isRuleOn("bonusPointSpending")) {
+    if (!(await payForFleshWound(actor, FLESH_WOUND_POINTS))) return false;
+    await actor.update({ [`system.${entry.fatigue ? "fp" : "hp"}.value`]: restored });
+  } else {
+    const awards = [
+      ...(actor.system?.points?.awards ?? []),
+      { points: -FLESH_WOUND_COST, note: L("AwardNote"), at: Date.now() },
+    ];
+    await actor.update({
+      [`system.${entry.fatigue ? "fp" : "hp"}.value`]: restored,
+      "system.points.awards": awards,
+    });
+  }
   await syncHealthConditions(actor);
 
   await ChatMessage.implementation.create({

@@ -7,6 +7,8 @@
  * those rules are defined.
  */
 
+import { outcomeStep } from "../rules/bonus-points.js";
+import { isCombatRoll } from "./bonus-points.js";
 import { SYSTEM_ID } from "./constants.js";
 import { consumeMightyBlows, recordMightyBlows, spendFatigue } from "./extra-effort.js";
 import { consumeFeint } from "./feint.js";
@@ -269,6 +271,8 @@ export interface SuccessRollOptions {
    * book's conditions (Campaigns pp. 428-429).
    */
   affliction?: { uuid: string; name: string; label: string };
+  /** The skill rolled against, for wildcard bonus points (Monster Hunters 1 p. 31). */
+  skill?: string;
 }
 
 /** A critical miss, with what the table said and whether the weapon resisted. */
@@ -364,10 +368,35 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     guidance: options.guidance ?? null,
   });
 
+  // A roll that can be bought up with points (Monster Hunters 1 p. 31)
+  // remembers what it was, and an attack that missed remembers the defense
+  // card it would have posted on a hit.
+  const successRoll = isRuleOn("bonusPointSpending") && actor?.uuid
+    ? {
+        [SYSTEM_ID]: {
+          successRoll: {
+            actorUuid: String(actor.uuid),
+            skill: String(options.skill ?? ""),
+            step: outcomeStep(outcome),
+            combat: isCombatRoll(actor, kind),
+            ...(kind === "attack" && !outcome.success
+              ? {
+                  onSuccess: attackFlags(
+                    actor, label, defensePenalty, false, noParry, options.weapon, options.delivery, options.damageType,
+                    options.guidance?.area === true && !defendsAgainstArea(), options.dodgeBonus ?? 0,
+                  ),
+                }
+              : {}),
+          },
+        },
+      }
+    : null;
+
   await ChatMessage.implementation.create({
     speaker: ChatMessage.implementation.getSpeaker({ actor }),
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
+    ...(successRoll ? { flags: successRoll } : {}),
     rolls: [
       roll,
       ...(criticalMiss ? [criticalMiss.roll] : []),
@@ -377,26 +406,26 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     // An affliction that was not resisted is an affliction somebody now has,
     // and the card that failed is where it is handed out (pp. 428-429).
     ...(!outcome.success && options.affliction
-      ? { flags: { [SYSTEM_ID]: { affliction: options.affliction } } }
+      ? { flags: foundry.utils.mergeObject(foundry.utils.deepClone(successRoll ?? {}), { [SYSTEM_ID]: { affliction: options.affliction } }) }
       : {}),
     // "The hero can choose to convert his failed defense roll into a success"
     // (p. 417) -- which is an offer made on the card that failed.
     ...(kind === "defense" && !outcome.success && options.tvAction
-      ? { flags: { [SYSTEM_ID]: { tvAction: options.tvAction } } }
+      ? { flags: foundry.utils.mergeObject(foundry.utils.deepClone(successRoll ?? {}), { [SYSTEM_ID]: { tvAction: options.tvAction } }) }
       : {}),
     // An attack that connects is the moment to record who it was aimed at: the
     // defender rolls afterwards, by which time the attacker may well have
     // changed their target. A miss needs no defense, so it carries nothing.
     ...(kind === "attack" && outcome.success
       ? {
-          flags: attackFlags(
+          flags: foundry.utils.mergeObject(foundry.utils.deepClone(successRoll ?? {}), attackFlags(
             actor, label, defensePenalty, criticalHit, noParry, options.weapon,
             options.delivery, options.damageType,
             // "Active defenses don't protect against an area attack, but
             // victims may dive for cover or retreat out of the area" (p. 413).
             options.guidance?.area === true && !defendsAgainstArea(),
             options.dodgeBonus ?? 0,
-          ),
+          )),
         }
       : {}),
   });
@@ -1000,6 +1029,8 @@ export async function handleRollAction(
     base,
     label,
     kind: rollKind(rollType),
+    // The skill rolled, for bonus points only that skill's may pay for.
+    ...(target.dataset.rollSkill || rollType === "skill" ? { skill: String(target.dataset.rollSkill ?? rollLabel ?? "") } : {}),
     ...(rollType === "attack" ? { delivery, damageType: target.dataset.damageType ?? "" } : {}),
     // A Missile spell "may block or dodge, but not parry" (Characters p. 241).
     noParry: target.dataset.noParry === "1",
