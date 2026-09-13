@@ -333,7 +333,16 @@
       "Maneuver": "This turn's maneuver allows no defense",
       "Arc": "Not from that side",
       "StrappedIn": "Strapped in: no defense against a shot at the vehicle's occupants",
-      "Occupant": "Aboard a vehicle: only a dodge"
+      "Occupant": "Aboard a vehicle: only a dodge",
+      "Unseen": {
+        "Sees": "Sees it coming",
+        "Heard": "Unseen, but heard (Hearing-2)",
+        "Unheard": "Unseen, not heard",
+        "Unaware": "Completely unaware",
+        "Label": "Can't see the attacker",
+        "NoDefense": "Completely unaware of the attacker: no defense at all",
+        "OnlyDodge": "Against an unseen attacker, only a dodge -- unless a Hearing-2 roll placed them"
+      }
     },
     "Tactical": {
       "front": "from the front",
@@ -2328,7 +2337,10 @@
       "HeldFast": "{foe} holds on to it."
     },
     "Subdue": {
-      "Turned": "Strike with the flat or the butt (crushing)"
+      "Turned": "Strike with the flat or the butt (crushing)",
+      "Pull": "Pull the blow to ST (0 for full)",
+      "PullHint": "Strike at any ST lower than your own with bare hands or a muscle-powered weapon (Campaigns p. 401).",
+      "PulledTo": "pulled to ST {st}"
     },
     "Ground": {
       "Label": "Ground",

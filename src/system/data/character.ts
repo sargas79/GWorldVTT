@@ -232,6 +232,12 @@ export interface DerivedAttack {
    * force sword's flat 8d is not one of them.
    */
   stBased: boolean;
+  /** "thr" or "sw" for an ST-based weapon, blank otherwise: what a pulled blow re-reads. */
+  damageBase?: string;
+  /** The weapon's flat damage modifier on top of its base, for the same. */
+  damageModifier?: number;
+  /** For a punch or a kick, which one: re-derived whole at a pulled ST. */
+  naturalKey?: string;
   /** An affliction, which is resisted rather than damaging. */
   affliction: boolean;
   /** The attribute it is resisted with, e.g. "HT". Blank when not an affliction. */
@@ -1720,6 +1726,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           // skill: a Karate kick fumbles differently from a dropped axe.
           unarmed: isUnarmedSkill(mode.skill),
           stBased: mode.damageBase === "thr" || mode.damageBase === "sw",
+          damageBase: String(mode.damageBase ?? ""),
+          damageModifier: Number(mode.damageModifier ?? 0) || 0,
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),
@@ -1825,6 +1833,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           unarmed: false,
           thrown: Boolean(mode.thrown),
           stBased: mode.damageBase === "thr" || mode.damageBase === "sw",
+          damageBase: String(mode.damageBase ?? ""),
+          damageModifier: Number(mode.damageModifier ?? 0) || 0,
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),
@@ -1863,6 +1873,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         itemId: "",
         modeIndex: 0,
         name: game.i18n.localize(`GWORLD.Natural.${attack.key}`),
+        naturalKey: attack.key,
         mode: attack.skillName,
         skillName: attack.skillName,
         skillLevel: attack.skillLevel + legs,

@@ -19,6 +19,7 @@ import {
   type CalledShot,
 } from "./called-shot.js";
 import { consumeTurnedBlade, recordTurnedBlade } from "./turned-blade.js";
+import { consumePulledBlow, pulledFormula, recordPulledBlow } from "./pulled-blow.js";
 import { isRuleOn } from "./optional-rules.js";
 import { targetedTokens } from "./targets.js";
 import { aimTurnsOf, loseAim } from "./aim.js";
@@ -784,6 +785,7 @@ export async function handleRollAction(
   if (rollType === "attack") {
     await recordCalledShot(actor, melee?.calledShot ?? shot?.calledShot ?? null);
     await recordTurnedBlade(actor, melee?.turned === true);
+    await recordPulledBlow(actor, melee?.pulledSt ?? null);
     if (melee?.charging) await recordCharge(actor);
     // Pellets striking as one mass are a fact about this shot that the damage
     // roll, a separate click, has to be told.
@@ -1689,6 +1691,8 @@ export async function promptForMeleeAttack(options: {
   turned: boolean;
   /** True when it was struck from a mount moving at 7+ relative to the foe. */
   charging: boolean;
+  /** The ST a blow is pulled to, or null for full strength (Campaigns p. 401). */
+  pulledSt: number | null;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Melee.${key}`);
 
@@ -1761,6 +1765,11 @@ export async function promptForMeleeAttack(options: {
              <span>${game.i18n.localize("GWORLD.Subdue.Turned")}</span>
            </label>`
         : ""}
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px"
+             title="${game.i18n.localize("GWORLD.Subdue.PullHint")}">
+        <span>${game.i18n.localize("GWORLD.Subdue.Pull")}</span>
+        <input type="number" name="pullSt" value="0" min="0" step="1" style="width:90px">
+      </label>
       ${sightField()}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Ground.Label")}</span>
@@ -1800,6 +1809,7 @@ export async function promptForMeleeAttack(options: {
             Number(form?.querySelector<HTMLSelectElement>('select[name="ground"]')?.value ?? 0) || 0,
           dual: form?.querySelector<HTMLSelectElement>('select[name="dual"]')?.value ?? "no",
           charging: ticked("charging"),
+          pullSt: num("pullSt"),
         };
       },
     },
@@ -1809,7 +1819,7 @@ export async function promptForMeleeAttack(options: {
   if (!result || typeof result !== "object") return null;
   const {
     deceptive, modifier, rapid, flurry, mighty, sight, darkness, calledShot, turned, ground, dual,
-    charging,
+    charging, pullSt,
   } = result as {
     deceptive: number;
     modifier: number;
@@ -1823,6 +1833,7 @@ export async function promptForMeleeAttack(options: {
     ground: number;
     dual: string;
     charging: boolean;
+    pullSt: number;
   };
 
   // "You may not reduce your final effective skill below 10", so the ceiling is
@@ -1905,6 +1916,7 @@ export async function promptForMeleeAttack(options: {
     calledShot: aimed.shot,
     turned: turned === true,
     charging: charging === true,
+    pulledSt: pullSt > 0 ? Math.floor(pullSt) : null,
   };
 }
 
@@ -1946,6 +1958,28 @@ export async function handleDamageAction(
   // A blow struck with the flat of a blade crushes rather than cuts, and one
   // struck with the butt of a spear crushes for a point less.
   const flat = await consumeTurnedBlade(actor);
+
+  // A blow pulled to a lower ST re-reads its damage at that ST (p. 401), and
+  // everything after this -- a turned blade included -- works on that figure.
+  const pulledSt = await consumePulledBlow(actor);
+  const pulled = pulledSt && target.dataset.melee === "1"
+    ? pulledFormula({
+        strength: Number(actor?.system?.derived?.strikingSt) || Number(actor?.system?.attributes?.ST) || 10,
+        chosen: pulledSt,
+        stBased: target.dataset.stBased === "1",
+        damageBase: target.dataset.damageBase ?? "",
+        damageModifier: Number(target.dataset.damageModifier) || 0,
+        minSt: target.dataset.minSt ? Number(target.dataset.minSt) || null : null,
+        naturalKey: target.dataset.naturalKey ?? "",
+        dx: Number(actor?.system?.derived?.attributes?.DX) || 10,
+        skills: {
+          ...(actor?.system?.skillLevelByName?.("Brawling") != null ? { Brawling: actor.system.skillLevelByName("Brawling") } : {}),
+          ...(actor?.system?.skillLevelByName?.("Boxing") != null ? { Boxing: actor.system.skillLevelByName("Boxing") } : {}),
+          ...(actor?.system?.skillLevelByName?.("Karate") != null ? { Karate: actor.system.skillLevelByName("Karate") } : {}),
+        },
+      })
+    : null;
+  const baseFormula = pulled ?? damageFormula;
 
   // A Mighty Blows bought before the attack is collected here, where the dice
   // are known -- the bonus is "+2 to damage, or +1 per die if that is better".
@@ -1991,7 +2025,7 @@ export async function handleDamageAction(
   // A weapon whose damage cannot be parsed is not turned: substituting dice
   // for it would quietly change what the weapon does, which is worse than
   // simply hitting them with the sharp end.
-  const parsed = flat ? parseDiceAdds(damageFormula) : null;
+  const parsed = flat ? parseDiceAdds(baseFormula) : null;
   const struck = parsed
     ? turnedBlade({
         type: damageType as DamageType,
@@ -2002,10 +2036,12 @@ export async function handleDamageAction(
 
   await rollDamage({
     actor,
-    label: struck
-      ? `${damageLabel ?? "Damage"} (${game.i18n.localize("GWORLD.Subdue.Turned")})`
-      : damageLabel ?? "Damage",
-    formula: struck ? formatDiceAdds(struck.damage) : damageFormula,
+    label: [
+      damageLabel ?? "Damage",
+      ...(pulled ? [game.i18n.format("GWORLD.Subdue.PulledTo", { st: pulledSt })] : []),
+      ...(struck ? [game.i18n.localize("GWORLD.Subdue.Turned")] : []),
+    ].join(" \u2014 "),
+    formula: struck ? formatDiceAdds(struck.damage) : baseFormula,
     damageType: struck ? struck.type : (damageType as DamageType),
     armorDivisor: Number(armorDivisor) || 1,
     ...(aimed ? { calledShot: aimed } : {}),

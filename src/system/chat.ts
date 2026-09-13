@@ -42,6 +42,7 @@ import {
 import { isCannonFodder } from "./cinematic.js";
 import { inflict } from "./afflictions.js";
 import { vehicleAboard } from "./vehicle-aboard.js";
+import { defendWithoutSight } from "../rules/visibility.js";
 import { occupantMayDodge } from "../rules/scale.js";
 import { afflictionsOf, type Affliction } from "../rules/afflictions.js";
 import type { DamageType } from "../rules/types.js";
@@ -617,6 +618,22 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       row.append(retreat);
     }
 
+    // An attacker the defender cannot see (Campaigns p. 394): "he may dodge at
+    // -4. If the defender makes a Hearing-2 roll, he may also parry or block --
+    // still at -4. If he is completely unaware of his attacker, he gets no
+    // defense at all!" Chosen here, since only the table knows who saw what.
+    const sightSelect = document.createElement("select");
+    sightSelect.className = "gc-sight";
+    for (const [value, key] of [
+      ["sees", "Sees"], ["heard", "Heard"], ["unheard", "Unheard"], ["unaware", "Unaware"],
+    ] as const) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = game.i18n.localize(`GWORLD.Defense.Unseen.${key}`);
+      sightSelect.append(option);
+    }
+    row.append(sightSelect);
+
     // A point of fatigue for +2 on this one defense (Campaigns p. 357). Ticked
     // before the button is pressed, because the FP is spent whatever the roll
     // then does.
@@ -641,9 +658,22 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       button.className = "gc-apply-button";
       button.textContent = `${game.i18n.localize(DEFENSE_LABELS[choice.key])} ${choice.shown}`;
       button.addEventListener("click", () => {
+        const sight = sightSelect.value;
+        const blind = sight === "sees"
+          ? null
+          : defendWithoutSight({ aware: sight !== "unaware", heardAttacker: sight === "heard" });
+        if (blind && !blind.anyDefense) {
+          ui.notifications?.warn(game.i18n.localize("GWORLD.Defense.Unseen.NoDefense"));
+          return;
+        }
+        if (blind && choice.key !== "dodge" && !blind.canParryOrBlock) {
+          ui.notifications?.warn(game.i18n.localize("GWORLD.Defense.Unseen.OnlyDodge"));
+          return;
+        }
         void rollDefense({
           defender,
           key: choice.key,
+          unseenPenalty: blind?.modifier ?? 0,
           total: choice.total,
           attack: flag.attack,
           arcPenalty: choice.arcPenalty,
@@ -745,6 +775,8 @@ async function rollDefense(options: {
   /** How the blow arrived, and what it does (p. 417). */
   delivery?: Delivery;
   damageType?: string;
+  /** -4 for an attacker the defender cannot see (Campaigns p. 394), or 0. */
+  unseenPenalty?: number;
 }): Promise<void> {
   const {
     defender, key, total, attack, arcPenalty, deception, retreating, feverish, skill, isFencing,
@@ -777,6 +809,9 @@ async function rollDefense(options: {
   }
 
   const modifiers = [];
+  if (options.unseenPenalty) {
+    modifiers.push({ label: game.i18n.localize("GWORLD.Defense.Unseen.Label"), value: options.unseenPenalty });
+  }
   if (arcPenalty !== 0) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Tactical.ArcPenalty"), value: arcPenalty });
   }
