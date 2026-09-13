@@ -2376,7 +2376,126 @@
       "JumpedFrom": "from {vehicle}, at {speed} yards a second",
       "JumpDamage": "{formula} crushing into the ground: {rolled} on the {location}, through DR {dr}",
       "JumpFalling": "It was flying: add the falling damage for the height as well.",
-      "VehicleHp": "{previous} → {now} of {max} HP"
+      "VehicleHp": "{previous} → {now} of {max} HP",
+      "Acid": "Acid",
+      "AcidHint": "A splash, a bath or a mouthful of strong acid, and what it does to the eyes (Campaigns p. 428).",
+      "AcidContactLabel": "How it was met",
+      "AcidLandingLabel": "Where it landed",
+      "AcidDamage": "{formula} corrosion: {rolled} on the {location}, through DR {dr}",
+      "AcidAgain": "And again every {seconds} s while they are in it",
+      "AcidOverTime": "A point every fifteen minutes until it is stopped. Physician or Poisons halts it, after 2d minutes of treatment.",
+      "AcidEyeRoll": "Rolled {roll} against HT {target} for the eyes",
+      "Atmospheres": "Pressure (atmospheres)",
+      "AcidContact": {
+        "splashed": "Splashed",
+        "immersed": "Immersed",
+        "swallowed": "Swallowed"
+      },
+      "AcidLanding": {
+        "body": "Body",
+        "face": "Face",
+        "eyes": "Straight in the eyes"
+      },
+      "AcidEyes": {
+        "unharmed": "The eyes are spared.",
+        "damaged": "The damage is to the eyes. Read it on the crippling injury rules.",
+        "blinded": "Permanent blindness."
+      },
+      "BadAir": "Bad air",
+      "BadAirHint": "Air too thin to breathe, or corrosive, toxic or simply unbreathable (Campaigns p. 429).",
+      "AirHazardLabel": "What is wrong with it",
+      "AirStrengthLabel": "How much of it",
+      "AirDensity": "{band} air, {atm} atm",
+      "AirVision": "Vision {penalty} without eye protection",
+      "AirFatigue": "Every exertion costs {fp} FP more",
+      "AirVacuum": "This thin is vacuum: read it there.",
+      "AirSuffocates": "Unbreathable. They begin to suffocate.",
+      "AirResistance": "A HT{modifier} roll every {seconds} s, or 1 point of {type}",
+      "AirNoResistance": "{formula} {type} every {seconds} s, and no roll to resist it",
+      "AltitudeRoll": "Rolled {roll} against HT+4 {target} for altitude sickness",
+      "AirBand": {
+        "trace": "Trace",
+        "veryThin": "Very thin",
+        "thin": "Thin",
+        "standard": "Standard",
+        "dense": "Dense"
+      },
+      "AirHazard": {
+        "none": "Nothing, only its pressure",
+        "corrosive": "Corrosive",
+        "toxic": "Toxic",
+        "suffocating": "Suffocating"
+      },
+      "AirStrength": {
+        "trace": "A trace of it",
+        "lethal": "A lethal concentration",
+        "mostly": "Most of the atmosphere"
+      },
+      "Altitude": {
+        "acclimatized": "Acclimatized. No more rolls.",
+        "unaffected": "No effect today.",
+        "sickened": "Altitude sickness: headaches and nausea, -2 to DX and IQ.",
+        "coma": "A coma after 1d hours. A Physician roll a day may revive them before they die."
+      },
+      "Pressure": "Pressure",
+      "PressureHint": "Depth, and coming back up from it: being crushed, and the bends (Campaigns p. 435).",
+      "PressureSupportLabel": "Pressure Support",
+      "Ascending": "Coming back up",
+      "Explosive": "Explosive decompression",
+      "PressureSafe": "{atm} atm is not enough to crush them.",
+      "PressureRoll": "{atm} atm: rolled {roll} against {target}",
+      "PressureHeld": "The body holds.",
+      "PressureAgain": "And again every minute down there.",
+      "Blowout": "Blowout",
+      "Bends": "The bends",
+      "BlowoutDamage": "{formula} as the fluids boil: {rolled}",
+      "BlowoutRolls": "And HT+{eye} for each eye, and HT{hearing} against going hard of hearing",
+      "BendsRoll": "Surfacing from {atm} atm: rolled {roll} against HT {target}",
+      "BendsRecovery": "Recompression allows HT+{bonus} every five minutes to undo it.",
+      "PressureSupport": {
+        "0": "None",
+        "1": "Pressure Support 1",
+        "2": "Pressure Support 2",
+        "3": "Pressure Support 3"
+      },
+      "BendsResult": {
+        "clear": "No ill effects.",
+        "agony": "Severe joint pain: agony. A HT roll every hour to recover.",
+        "collapse": "Unconsciousness, or painful paralysis. A HT roll hourly, and 1d of injury for every failure.",
+        "death": "A painful death."
+      },
+      "Acceleration": "Acceleration",
+      "AccelerationHint": "A sudden G-force, and what it does to somebody who is not strapped down (Campaigns p. 434).",
+      "GForce": "G-force",
+      "HomeGravity": "Home gravity (G)",
+      "Braced": "Seated or lying prone",
+      "Inverted": "Upside down",
+      "AccelerationGentle": "{g} G is not sudden enough to matter.",
+      "AccelerationRoll": "{g} G: rolled {roll} against HT {target}",
+      "AccelerationHeld": "They ride it out.",
+      "AccelerationFatigue": "{fp} FP: {previous} → {now}",
+      "AccelerationBlackout": "Blacked out for {seconds} seconds",
+      "AccelerationThrown": "Thrown against anything solid, this is a collision at {speed} yd/s.",
+      "MotionSickness": "Motion sickness",
+      "MotionKindLabel": "Where",
+      "MotionHint": "A first day at sea, or a first hour of free fall (Campaigns pp. 434, 436).",
+      "HasMotionSickness": "Has Motion Sickness",
+      "HasSpaceSickness": "Has Space Sickness",
+      "Seasickness": "Seasickness",
+      "SpaceSickness": "Space sickness",
+      "MotionRoll": "Rolled {roll} against {target}",
+      "MotionNauseated": "Nauseated, which may bring on vomiting.",
+      "MotionRecover": "A roll every {hours} hours to get used to it.",
+      "MotionNeverAdapts": "With Space Sickness, they never get used to it.",
+      "MotionKind": {
+        "sea": "At sea",
+        "freeFall": "In free fall"
+      },
+      "Motion": {
+        "immune": "No ill effects at all.",
+        "unaffected": "Nothing today.",
+        "nauseated": "Sick."
+      }
     },
     "Vehicle": {
       "Statistics": "Vehicle statistics",

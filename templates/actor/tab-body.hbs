@@ -248,6 +248,24 @@
             {{localize "GWORLD.Hazard.Radiation"}}
           </button>
         {{/if}}
+        {{#if rules.exposure}}
+          {{!-- The rest of the hazards chapter (Campaigns pp. 428-437). --}}
+          <button type="button" class="ibtn" data-action="splashAcid" data-tooltip="{{localize "GWORLD.Hazard.AcidHint"}}">
+            {{localize "GWORLD.Hazard.Acid"}}
+          </button>
+          <button type="button" class="ibtn" data-action="breatheBadAir" data-tooltip="{{localize "GWORLD.Hazard.BadAirHint"}}">
+            {{localize "GWORLD.Hazard.BadAir"}}
+          </button>
+          <button type="button" class="ibtn" data-action="crushingPressure" data-tooltip="{{localize "GWORLD.Hazard.PressureHint"}}">
+            {{localize "GWORLD.Hazard.Pressure"}}
+          </button>
+          <button type="button" class="ibtn" data-action="accelerate" data-tooltip="{{localize "GWORLD.Hazard.AccelerationHint"}}">
+            {{localize "GWORLD.Hazard.Acceleration"}}
+          </button>
+          <button type="button" class="ibtn" data-action="motionSickness" data-tooltip="{{localize "GWORLD.Hazard.MotionHint"}}">
+            {{localize "GWORLD.Hazard.MotionSickness"}}
+          </button>
+        {{/if}}
       </div>
 
       {{#if poisons.length}}

@@ -39,6 +39,23 @@ import {
 } from "../rules/vehicle-combat.js";
 import { jumpFromVehicle } from "../rules/collisions.js";
 import { isRuleOn } from "./optional-rules.js";
+import {
+  ACID_DAMAGE_TYPE, acidHarm, eyeOutcome, eyeRisk,
+  type AcidContact, type AcidLanding,
+} from "../rules/acid.js";
+import {
+  ALTITUDE_SICKNESS_BONUS, EXPLOSIVE_DECOMPRESSION, airDensity, airEffect,
+  altitudeOutcome, atmosphereHarm,
+  type AtmosphereHazard, type HazardStrength,
+} from "../rules/atmosphere.js";
+import {
+  RECOMPRESSION_BONUS, bendsOutcome, crushingInjury, crushingTarget, crushingThreshold,
+  type PressureSupport,
+} from "../rules/pressure.js";
+import {
+  SPACE_SICKNESS_RECOVERY_HOURS, accelerationHarm, accelerationNeedsRoll, accelerationTarget,
+  canAdaptToFreeFall, seasicknessOutcome, seasicknessTarget, spaceSicknessTarget, thrownVelocity,
+} from "../rules/motion.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/life.hbs`;
 
@@ -731,4 +748,373 @@ function countOf(entry: string, code: string): number {
   const m = new RegExp(`(\\d*)${code}(?![a-z])`).exec(entry);
   if (!m) return 1;
   return Number(m[1]) || 1;
+}
+
+// ── acid, air, pressure and motion (pp. 428-437) ────────────────────────────
+
+/**
+ * A splash, a bath or a mouthful of acid (Campaigns p. 428).
+ *
+ * "Most laboratory acids are dangerous only to the eyes, but strong or highly
+ * concentrated acids can 'burn' through equipment and flesh." What is rolled
+ * depends entirely on how it was met, so the contact is the only thing asked
+ * for; where the eyes are at risk, they get their own roll.
+ */
+export async function splashAcid(options: {
+  actor: any;
+  contact: AcidContact;
+  landing: AcidLanding;
+}): Promise<void> {
+  const { actor } = options;
+  if (!mayChange(actor)) return;
+
+  const harm = acidHarm(options.contact);
+  const formula = toRollFormula(harm.damage);
+  // Armour is between the acid and the skin for a splash or a bath. It is not
+  // between the acid and the stomach: "if the victim swallows acid, he takes
+  // 3d damage at the rate of 1 HP per 15 minutes", and a breastplate has
+  // nothing to say about that.
+  const hit = await takeDamage(actor, formula, ACID_DAMAGE_TYPE as DamageType, {
+    ...(options.contact === "swallowed" ? { drOverride: 0 } : {}),
+  });
+  const rolls: any[] = [hit.roll, hit.locationRoll];
+
+  const lines = [
+    F("AcidDamage", {
+      formula,
+      rolled: hit.roll.total,
+      location: game.i18n.localize(`GWORLD.HitLocation.${hit.location}`),
+      dr: hit.dr,
+    }),
+    F("Injury", { injury: hit.injury, previous: hit.previous, now: hit.current }),
+  ];
+  if (harm.everySeconds > 0) {
+    lines.push(harm.overTime ? H("AcidOverTime") : F("AcidAgain", { seconds: harm.everySeconds }));
+  }
+
+  // "If the acid splashes on his face, he must make a HT roll to avoid eye
+  // damage. On a failure, or on a direct hit to the eyes, the damage is to his
+  // eyes." Swallowing it never reaches them.
+  const risk = harm.risksEyes ? eyeRisk(options.landing) : { rolls: false, automatic: false };
+  if (risk.automatic) {
+    lines.push(H("AcidEyes.damaged"));
+  } else if (risk.rolls) {
+    const target = attributeOf(actor, "HT");
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    rolls.push(roll);
+    const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+    lines.push(F("AcidEyeRoll", { roll: roll.total, target }));
+    lines.push(H(`AcidEyes.${eyeOutcome(outcome)}`));
+  }
+
+  await post(actor, {
+    kind: H("Acid"),
+    detail: H(`AcidContact.${options.contact}`),
+    lines,
+    bad: hit.injury > 0,
+    rolls,
+  });
+}
+
+/**
+ * Air that is too thin, or made of the wrong thing (Campaigns p. 429).
+ *
+ * Thin air is tiring and, after an hour, risks altitude sickness; air that is
+ * corrosive or toxic eats at whoever breathes it; air that is none of those
+ * and still unbreathable simply suffocates. All three are one control, because
+ * a GM describing an atmosphere is describing one thing.
+ */
+export async function breatheBadAir(options: {
+  actor: any;
+  atmospheres: number;
+  hazard: AtmosphereHazard | "none";
+  strength: HazardStrength;
+}): Promise<void> {
+  const { actor } = options;
+  if (!mayChange(actor)) return;
+
+  const density = airDensity(options.atmospheres);
+  const air = airEffect(density);
+  const lines = [F("AirDensity", { band: H(`AirBand.${density}`), atm: options.atmospheres })];
+  if (air.vision !== 0) lines.push(F("AirVision", { penalty: air.vision }));
+  if (air.extraFatigue > 0) lines.push(F("AirFatigue", { fp: air.extraFatigue }));
+  if (air.vacuum) lines.push(H("AirVacuum"));
+  else if (air.suffocates) lines.push(H("AirSuffocates"));
+
+  const rolls: any[] = [];
+
+  // "anyone who breathes thin air for an hour or more must check for altitude
+  // sickness. Make a daily HT roll at +4."
+  if (air.altitudeSickness) {
+    const target = attributeOf(actor, "HT") + ALTITUDE_SICKNESS_BONUS;
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    rolls.push(roll);
+    const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+    lines.push(F("AltitudeRoll", { roll: roll.total, target }));
+    lines.push(H(`Altitude.${altitudeOutcome(outcome)}`));
+  }
+
+  // What the air is made of, on top of how much of it there is.
+  if (options.hazard !== "none") {
+    const harm = atmosphereHarm({ hazard: options.hazard, strength: options.strength });
+    if (harm.suffocates && !air.suffocates) lines.push(H("AirSuffocates"));
+    if (options.hazard !== "suffocating") {
+      lines.push(
+        harm.unresistable
+          ? F("AirNoResistance", {
+              formula: toRollFormula(harm.damage),
+              seconds: harm.everySeconds,
+              type: game.i18n.localize(`GWORLD.DamageType.${harm.damageType}`),
+            })
+          : F("AirResistance", {
+              modifier: harm.modifier,
+              seconds: harm.everySeconds,
+              type: game.i18n.localize(`GWORLD.DamageType.${harm.damageType}`),
+            }),
+      );
+    }
+  }
+
+  await post(actor, { kind: H("BadAir"), lines, bad: air.suffocates, rolls });
+}
+
+/**
+ * Being crushed at depth (Campaigns p. 435).
+ *
+ * "On initial exposure and every minute thereafter, roll vs. HT at a basic +3,
+ * but -1 per 10 x native pressure. If you fail, you suffer HP of injury equal
+ * to your margin of failure."
+ */
+export async function crushingPressure(options: {
+  actor: any;
+  atmospheres: number;
+  support: PressureSupport;
+}): Promise<void> {
+  const { actor } = options;
+  if (!mayChange(actor)) return;
+
+  const threshold = crushingThreshold(options.support);
+  if (threshold === null || options.atmospheres <= threshold) {
+    await post(actor, {
+      kind: H("Pressure"),
+      lines: [F("PressureSafe", { atm: options.atmospheres })],
+      good: true,
+    });
+    return;
+  }
+
+  const target = crushingTarget({
+    health: attributeOf(actor, "HT"),
+    multiple: options.atmospheres,
+    support: options.support,
+  });
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+  const lines = [F("PressureRoll", { atm: options.atmospheres, roll: roll.total, target })];
+
+  let hurt = 0;
+  if (!outcome.success) {
+    hurt = crushingInjury({
+      margin: outcome.margin,
+      sizeModifier: Number(actor.system?.sm) || 0,
+    });
+    const hp = actor.system?.hp ?? { value: 0 };
+    const previous = Number(hp.value) || 0;
+    await actor.update({ "system.hp.value": previous - hurt });
+    lines.push(F("Injury", { injury: hurt, previous, now: previous - hurt }));
+  } else {
+    lines.push(H("PressureHeld"));
+  }
+  lines.push(H("PressureAgain"));
+
+  await post(actor, { kind: H("Pressure"), lines, bad: hurt > 0, rolls: [roll] });
+}
+
+/**
+ * Coming up too fast, or a blowout (Campaigns pp. 435, 437).
+ *
+ * The bends roll is the one whose shape is easy to get backwards: a plain
+ * success still leaves the diver in agony, and only a critical success is
+ * clean.
+ */
+export async function decompress(options: {
+  actor: any;
+  /** The pressure they are coming up from. */
+  atmospheres: number;
+  /** True for a blowout rather than a slow ascent. */
+  explosive: boolean;
+}): Promise<void> {
+  const { actor } = options;
+  if (!mayChange(actor)) return;
+
+  const rolls: any[] = [];
+  const lines: string[] = [];
+
+  // "Take 1d of injury immediately" when the air goes all at once.
+  if (options.explosive) {
+    const formula = toRollFormula(EXPLOSIVE_DECOMPRESSION.injury);
+    // "body fluids boil, blood vessels rupture, and eardrums pop" -- all of
+    // which happen inside, where a suit of armour is no help at all.
+    const hit = await takeDamage(actor, formula, "cr", { drOverride: 0 });
+    rolls.push(hit.roll, hit.locationRoll);
+    lines.push(F("BlowoutDamage", { formula, rolled: hit.roll.total }));
+    lines.push(F("Injury", { injury: hit.injury, previous: hit.previous, now: hit.current }));
+    lines.push(
+      F("BlowoutRolls", {
+        eye: EXPLOSIVE_DECOMPRESSION.eyeModifier,
+        hearing: EXPLOSIVE_DECOMPRESSION.hearingModifier,
+      }),
+    );
+  }
+
+  const target = attributeOf(actor, "HT");
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  rolls.push(roll);
+  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+  const result = bendsOutcome(outcome);
+  lines.push(F("BendsRoll", { atm: options.atmospheres, roll: roll.total, target }));
+  lines.push(H(`BendsResult.${result}`));
+  if (result !== "clear") lines.push(F("BendsRecovery", { bonus: RECOMPRESSION_BONUS }));
+
+  // "Success means severe joint pain, causing agony", and worse below that.
+  if (result === "agony") await setCondition(actor, "agony", true);
+  if (result === "collapse") await setCondition(actor, "paralysis", true);
+
+  await post(actor, {
+    kind: options.explosive ? H("Blowout") : H("Bends"),
+    lines,
+    bad: result === "collapse" || result === "death",
+    good: result === "clear",
+    rolls,
+  });
+}
+
+/**
+ * A sudden acceleration (Campaigns p. 434).
+ *
+ * "Make a HT roll whenever you experience a sudden acceleration of at least
+ * 2.5 times your home gravity... On a failure, you lose FP equal to your
+ * margin of failure."
+ */
+export async function accelerate(options: {
+  actor: any;
+  gForce: number;
+  homeGravity: number;
+  braced: boolean;
+  inverted: boolean;
+}): Promise<void> {
+  const { actor } = options;
+  if (!mayChange(actor)) return;
+
+  if (!accelerationNeedsRoll({ gForce: options.gForce, homeGravity: options.homeGravity })) {
+    await post(actor, {
+      kind: H("Acceleration"),
+      lines: [F("AccelerationGentle", { g: options.gForce })],
+      good: true,
+    });
+    return;
+  }
+
+  const target = accelerationTarget({
+    health: attributeOf(actor, "HT"),
+    gForce: options.gForce,
+    homeGravity: options.homeGravity,
+    braced: options.braced,
+    inverted: options.inverted,
+  });
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+  const lines = [F("AccelerationRoll", { g: options.gForce, roll: roll.total, target })];
+
+  let lost = 0;
+  if (!outcome.success) {
+    const harm = accelerationHarm({
+      margin: outcome.margin,
+      criticalFailure: outcome.criticalFailure,
+    });
+    lost = harm.fatigue;
+    const fp = actor.system?.fp ?? { value: 0 };
+    const previous = Number(fp.value) || 0;
+    await actor.update({ "system.fp.value": previous - lost });
+    lines.push(F("AccelerationFatigue", { fp: lost, previous, now: previous - lost }));
+    if (harm.blackoutSeconds > 0) {
+      lines.push(F("AccelerationBlackout", { seconds: harm.blackoutSeconds }));
+      await setCondition(actor, "unconscious", true);
+    }
+  } else {
+    lines.push(H("AccelerationHeld"));
+  }
+  // "A sudden acceleration may throw you against a solid object."
+  lines.push(F("AccelerationThrown", { speed: thrownVelocity(options.gForce) }));
+
+  await post(actor, { kind: H("Acceleration"), lines, bad: lost > 0, rolls: [roll] });
+}
+
+/**
+ * A day at sea, or the first hour of free fall (Campaigns pp. 434, 436).
+ *
+ * Two rules with the same shape and the same ending: a roll, and somebody
+ * nauseated if it fails. The sea gives five to anybody without Motion
+ * Sickness; free fall takes the better of HT and Free Fall.
+ */
+export async function motionSickness(options: {
+  actor: any;
+  kind: "sea" | "freeFall";
+  motionSickness: boolean;
+  spaceSickness: boolean;
+}): Promise<void> {
+  const { actor } = options;
+  if (!mayChange(actor)) return;
+
+  const health = attributeOf(actor, "HT");
+  const target =
+    options.kind === "sea"
+      ? seasicknessTarget({ health, motionSickness: options.motionSickness })
+      : spaceSicknessTarget({
+          health,
+          freeFall: skillLevelOf(actor, "Free Fall"),
+          prone: options.spaceSickness,
+        });
+
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+  const lines = [F("MotionRoll", { roll: roll.total, target })];
+
+  const result =
+    options.kind === "sea"
+      ? seasicknessOutcome({
+          success: outcome.success,
+          margin: outcome.margin,
+          criticalSuccess: outcome.criticalSuccess,
+        })
+      : outcome.success
+        ? "unaffected"
+        : "nauseated";
+
+  lines.push(H(`Motion.${result}`));
+  if (result === "nauseated") {
+    await setCondition(actor, "nauseated", true);
+    lines.push(H("MotionNauseated"));
+    if (options.kind === "freeFall") {
+      lines.push(
+        canAdaptToFreeFall(options.spaceSickness)
+          ? F("MotionRecover", { hours: SPACE_SICKNESS_RECOVERY_HOURS })
+          : H("MotionNeverAdapts"),
+      );
+    }
+  }
+
+  await post(actor, {
+    kind: H(options.kind === "sea" ? "Seasickness" : "SpaceSickness"),
+    lines,
+    bad: result === "nauseated",
+    good: result === "immune",
+    rolls: [roll],
+  });
 }
