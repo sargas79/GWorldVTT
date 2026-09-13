@@ -10,6 +10,7 @@ import { handleDamageAction, handleRollAction } from "../roll.js";
 import { castSpell } from "../casting.js";
 import { isRuleOn } from "../optional-rules.js";
 import { swarmAttack, swarmOf } from "../swarms.js";
+import { GWorldCharacterSheet } from "./character-sheet.js";
 import type { SwarmProtection } from "../../rules/swarms.js";
 import type { Attribute } from "../../rules/types.js";
 
@@ -69,8 +70,12 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       editItem: GWorldNpcSheet.#onEditItem,
       castSpell: GWorldNpcSheet.#onCastSpell,
       swarmAttack: GWorldNpcSheet.#onSwarmAttack,
+      openFullSheet: GWorldNpcSheet.#onOpenFullSheet,
     },
   };
+
+  /** The full sheet this pane hands over to for editing, made the first time it is asked for. */
+  #fullSheet: GWorldCharacterSheet | null = null;
 
   static override PARTS = {
     sheet: { template: `${TEMPLATE_ROOT}/npc-sheet.hbs`, scrollable: [".ibody"] },
@@ -179,6 +184,17 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static async #onEditItem(this: GWorldNpcSheet, _event: Event, target: HTMLElement) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     if (id) this.actor.items.get(id)?.sheet?.render({ force: true });
+  }
+
+  /**
+   * An NPC is built like a character, and this pane only reads it: its
+   * attributes, traits, skills and gear are changed on the character sheet,
+   * which takes this pane's place until its Summary button brings it back.
+   */
+  static async #onOpenFullSheet(this: GWorldNpcSheet) {
+    this.#fullSheet ??= new GWorldCharacterSheet({ document: this.actor });
+    await this.#fullSheet.render({ force: true });
+    await this.close();
   }
 
   /**

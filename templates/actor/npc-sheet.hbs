@@ -15,6 +15,10 @@
       <input class="iname" style="font-size: 22px" type="text" name="name" value="{{actor.name}}"
              {{#unless editable}}disabled{{/unless}}>
       {{#if groupSizeLabel}}<span class="ipts">{{groupSizeLabel}}</span>{{/if}}
+      {{#if editable}}
+        <button type="button" class="ibtn tiny" data-action="openFullSheet"
+                data-tooltip="{{localize "GWORLD.Npc.EditHint"}}">{{localize "GWORLD.Npc.Edit"}}</button>
+      {{/if}}
     </div>
     <div class="ipools">
       <div class="ipool">

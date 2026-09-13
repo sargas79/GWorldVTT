@@ -22,6 +22,7 @@
     "Sheet": {
       "Character": "GURPS Character Sheet",
       "Npc": "GURPS NPC Sheet",
+      "NpcFull": "GURPS NPC Sheet (full)",
       "Item": "GURPS Item",
       "Vehicle": "Vehicle"
     },
@@ -1300,7 +1301,23 @@
       "Runs": "Runs at once:"
     },
     "Npc": {
-      "InScene": "x{count} in scene"
+      "InScene": "x{count} in scene",
+      "Edit": "Edit",
+      "EditHint": "Open the full sheet: attributes, traits, skills, spells and gear",
+      "Summary": "Summary",
+      "SummaryHint": "Back to the one-pane sheet for the table",
+      "Section": "At the Table",
+      "GroupSize": "How many in the scene",
+      "Tactics": "Tactics",
+      "TacticsPlaceholder": "Morale, tactics, when they break",
+      "IsSwarm": "A swarm rather than a creature",
+      "SwarmKind": "Size",
+      "SwarmDamage": "Damage a turn",
+      "SwarmFlatInjury": "Or flat injury",
+      "SwarmDamageType": "Type",
+      "SwarmFlying": "Flies",
+      "SwarmAbout": "What it is",
+      "SwarmAboutPlaceholder": "About a dozen carnivorous bats"
     },
     "Action": {
       "BrowseSkills": "Browse",

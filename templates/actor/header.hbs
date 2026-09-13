@@ -25,6 +25,10 @@
                 data-tooltip="{{localize "GWORLD.Points.AwardHint"}}"
                 aria-label="{{localize "GWORLD.Points.Award"}}">{{> "gworld.plus"}}</button>
       {{/if}}
+      {{#if npc.canShowSummary}}
+        <button type="button" class="ibtn tiny" data-action="showSummary"
+                data-tooltip="{{localize "GWORLD.Npc.SummaryHint"}}">{{localize "GWORLD.Npc.Summary"}}</button>
+      {{/if}}
     </div>
 
     <div class="ipools">

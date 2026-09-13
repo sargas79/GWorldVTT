@@ -113,6 +113,13 @@ Hooks.once("init", () => {
     makeDefault: true,
     label: "GWORLD.Sheet.Npc",
   });
+  // An NPC is built like a character, so it is edited on the character's
+  // sheet: the one-pane NPC sheet is for reading at the table, and opens
+  // this one from its Edit button.
+  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheet, {
+    types: ["npc"],
+    label: "GWORLD.Sheet.NpcFull",
+  });
   // A car in a chase is not a line on a shopping list (Campaigns pp. 462-469).
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldVehicleSheet, {
     types: ["vehicle"],
