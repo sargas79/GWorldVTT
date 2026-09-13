@@ -1374,8 +1374,11 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
   const shields = [];
   // The hand-written files carry what the tables give and GCA does not --
   // an atlatl's darts as modes of the atlatl -- and an entry there is the
-  // one to keep. The parser writes only its own three files.
-  const handMade = handWrittenIds(source.outDir, "equipment", ["armor.json", "gear.json", "shields.json"]);
+  // one to keep. The parser writes only its own three files, named for the
+  // book being read: a supplement's carry its stem, and taking them for
+  // hand-written ones would reject every entry on a second run.
+  const written = fileNames(bookPrefix(source.prefix) === bookPrefix(BASIC_SET.prefix), source.book);
+  const handMade = handWrittenIds(source.outDir, "equipment", [written.armor, written.gear, written.shields]);
   const taken = new Set(handMade.keys());
   const siblings = namesIn(recs, "EQUIPMENT");
 
