@@ -42,6 +42,7 @@ const DAMAGE_TYPES = new Set([
 const EQUIPMENT_CATEGORIES = new Set(["weapon", "tool", "consumable", "vehicle", "misc"]);
 const WEAPON_QUALITIES = new Set(["cheap", "good", "fine", "veryFine"]);
 const AMMUNITION_TYPES = new Set(["", "hp", "aphc", "apds", "bodkin", "silver"]);
+const EQUIPMENT_QUALITIES = new Set(["none", "improvised", "basic", "good", "fine", "best"]);
 const WEAPON_MATERIALS = new Set(["", "stone", "bronze", "iron", "steel", "wood", "plastic", "silver", "silverCoated"]);
 const WEAPON_CLASSES = new Set(["", "fencing", "sword", "cutting", "crushing", "firearm", "bow"]);
 const HIT_LOCATIONS = new Set([
@@ -344,7 +345,15 @@ function validateItem(entry, file) {
     );
   }
 
+  if (entry.type === "equipment" && sys.equipmentQuality !== undefined) {
+    check(EQUIPMENT_QUALITIES.has(sys.equipmentQuality), file, name, `bad equipment quality "${sys.equipmentQuality}"`);
+  }
   if (["equipment", "armor", "shield"].includes(entry.type)) {
+    check(
+      sys.costOfLivingPercent === undefined ||
+        (typeof sys.costOfLivingPercent === "number" && sys.costOfLivingPercent >= 0),
+      file, name, `bad cost of living share "${sys.costOfLivingPercent}"`,
+    );
     // Legality Class is 0 to 4 or absent (Characters p. 267).
     check(
       sys.lc === null || sys.lc === undefined || (Number.isInteger(sys.lc) && sys.lc >= 0 && sys.lc <= 4),

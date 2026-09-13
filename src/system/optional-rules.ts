@@ -151,6 +151,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "layeredArmor", reference: "Characters p. 286", default: true },
     // A shield that turned the blow by its own width may have taken it.
     { key: "damageToShields", reference: "Campaigns p. 484", default: false },
+    // What the tools of a trade are worth to the roll that uses them.
+    { key: "equipmentModifiers", reference: "Campaigns p. 345", default: true },
   ],
 };
 

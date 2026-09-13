@@ -169,6 +169,20 @@
         <span class="cd">{{localize "GWORLD.Life.StartingWealth"}} ${{derived.wealth.startingWealth}}</span>
       </div>
       <div class="cell">
+        <span class="cl">{{localize "GWORLD.Life.TradedPoints"}}</span>
+        <span class="cv"><input type="number" name="system.points.tradedForMoney" value="{{system.points.tradedForMoney}}" step="1" min="0"
+               style="width: 70px; background: none; border: 1px solid var(--color-divider); font: inherit; color: inherit"
+               {{#unless editable}}disabled{{/unless}}></span>
+        <span class="cd" data-tooltip="{{localize 'GWORLD.Life.TradedHint'}}">{{localize "GWORLD.Life.TradedWorth" amount=derived.wealth.tradedForMoney}}</span>
+      </div>
+      {{#if derived.wealth.signatureGearPoints}}
+        <div class="cell">
+          <span class="cl">{{localize "GWORLD.Life.SignatureGear"}}</span>
+          <span class="cv">${{derived.wealth.signatureGear}}</span>
+          <span class="cd" data-tooltip="{{localize 'GWORLD.Life.SignatureHint'}}">{{localize "GWORLD.Life.SignaturePoints" points=derived.wealth.signatureGearPoints}}</span>
+        </div>
+      {{/if}}
+      <div class="cell">
         <span class="cl">{{localize "GWORLD.Life.GearCost"}}</span>
         <span class="cv">${{derived.wealth.gearCost}}</span>
         <span class="cd">{{localize "GWORLD.Life.GearHint"}}</span>

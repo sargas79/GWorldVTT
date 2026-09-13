@@ -668,6 +668,21 @@
             </select>
           </label>
         </div>
+        <div class="ifields">
+          <label data-tooltip="{{localize 'GWORLD.Item.CostOfLivingHint'}}">{{localize "GWORLD.Item.CostOfLivingPercent"}}
+            <input type="number" name="system.costOfLivingPercent" value="{{system.costOfLivingPercent}}" step="1" min="0"
+                   {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label data-tooltip="{{localize 'GWORLD.Item.EquipmentQualityHint'}}">{{localize "GWORLD.Item.EquipmentQuality"}}
+            <select name="system.equipmentQuality" {{#unless editable}}disabled{{/unless}}>
+              {{selectOptions choices.equipmentQualities selected=system.equipmentQuality localize=true}}
+            </select>
+          </label>
+          <label class="ifull" data-tooltip="{{localize 'GWORLD.Item.ForSkillsHint'}}">{{localize "GWORLD.Item.ForSkills"}}
+            <input type="text" name="system.forSkills" value="{{join system.forSkills ", "}}" placeholder="Surgery, First Aid"
+                   {{#unless editable}}disabled{{/unless}} />
+          </label>
+        </div>
         {{#if weapon.showQuality}}
           <div class="ifields">
             <label data-tooltip="{{localize 'GWORLD.Item.QualityHint'}}">{{localize "GWORLD.Item.Quality"}}

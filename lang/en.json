@@ -550,6 +550,10 @@
         "damageToShields": {
           "Name": "Damage to shields",
           "Hint": "A shield that turned a blow by the width of its own Defense Bonus took that blow squarely, and may break. The book calls this bookkeeping in the name of realism, so it is off unless you want it (Campaigns p. 484)."
+        },
+        "equipmentModifiers": {
+          "Name": "Equipment modifiers",
+          "Hint": "The tools of a trade are worth something to the roll that uses them: nothing for basic gear, +1 for good, +2 for fine, TL/2 for the best there is, and a penalty for improvising or working bare-handed (Campaigns p. 345)."
         }
       }
     },
@@ -1155,7 +1159,13 @@
       "Ammunition": "Ammunition",
       "AmmunitionHint": "What it is loaded with. Hollow-point steps the wound up at (0.5); APHC and APDS add (2), and APDS half again the range and +1 per die; bodkin points make an arrow pierce at (2) (Characters pp. 276, 279).",
       "ReloadCost": "${cost} a reload",
-      "ReloadCostHint": "$20 per pound of reload (Characters p. 278)."
+      "ReloadCostHint": "$20 per pound of reload (Characters p. 278).",
+      "CostOfLivingPercent": "% of cost of living",
+      "CostOfLivingHint": "For clothing, whose price is a share of the wearer’s monthly cost of living rather than a figure of its own: a wardrobe 100%, ordinary clothes 20%, winter 30%, formal 40%, cosmetics 10% (Characters p. 266). Zero for everything sold at a price.",
+      "EquipmentQuality": "Equipment grade",
+      "EquipmentQualityHint": "What these tools are worth to the skill that uses them (Campaigns p. 345). Good costs five times basic, fine twenty times.",
+      "ForSkills": "Tools for",
+      "ForSkillsHint": "The skills these are the tools of, separated by commas. While they are carried, those skills are rolled at the grade’s modifier."
     },
     "Gear": {
       "Carried": "Carried",
@@ -2389,7 +2399,13 @@
       "LanguageUsed": "Language used",
       "NoLanguage": "Native, or none needed",
       "Unfamiliar": "In an unfamiliar culture (-3 to the skill)",
-      "UnfamiliarAdaptable": "In an unfamiliar culture (Cultural Adaptability: no penalty)"
+      "UnfamiliarAdaptable": "In an unfamiliar culture (Cultural Adaptability: no penalty)",
+      "TradedPoints": "Points for money",
+      "TradedHint": "Each point traded yields 10% of the campaign’s average starting wealth, and is gone from the sheet (Characters p. 26).",
+      "TradedWorth": "worth ${amount}",
+      "SignatureGear": "Signature Gear",
+      "SignaturePoints": "{points} points",
+      "SignatureHint": "Each point in Signature Gear gives goods worth up to 50% of the campaign’s average starting wealth (Characters p. 85)."
     },
     "Senses": {
       "vision": "Vision",
@@ -2633,6 +2649,14 @@
       "Empty": "{name} is empty.",
       "EmptyShort": "empty",
       "EmptyHint": "Nothing left in it: reload before firing."
+    },
+    "EquipmentQuality": {
+      "none": "No equipment",
+      "improvised": "Improvised",
+      "basic": "Basic",
+      "good": "Good (+1)",
+      "fine": "Fine (+2)",
+      "best": "Best at this TL"
     }
   }
 }

@@ -182,6 +182,100 @@ export function monthlyIncomeFromTraits(
   };
 }
 
+/**
+ * What a point spent on money is worth (Characters p. 26): "Each point
+ * yields 10% of the campaign's average starting wealth." The average, not
+ * the character's own -- a Poor character's point is worth as much as a
+ * Wealthy one's.
+ */
+export const MONEY_PER_POINT = 0.1;
+
+export function pointsForMoney(points: number, tl: number): number {
+  return Math.round(averageStartingWealth(tl) * MONEY_PER_POINT * Math.max(0, points));
+}
+
+/**
+ * What Signature Gear is worth (p. 85): "each point in Signature Gear gives
+ * goods worth up to 50% of the average campaign starting wealth".
+ */
+export const SIGNATURE_GEAR_PER_POINT = 0.5;
+
+export function signatureGearValue(points: number, tl: number): number {
+  return Math.round(averageStartingWealth(tl) * SIGNATURE_GEAR_PER_POINT * Math.max(0, points));
+}
+
+/** The points a character has put into Signature Gear, from the traits held. */
+export function signatureGearPoints(traits: readonly WealthTrait[]): number {
+  let points = 0;
+  for (const trait of traits) {
+    if (trait.name.trim().toLowerCase() === "signature gear") points += levelsOf(trait);
+  }
+  return points;
+}
+
+/**
+ * What an article of clothing costs (p. 266), as a share of the wearer's
+ * monthly cost of living: a complete wardrobe is the whole of it, ordinary
+ * clothes a fifth, winter clothes 30%, formal wear 40%, a month of
+ * cosmetics a tenth.
+ *
+ * "Use full Status to figure the cost of a complete wardrobe... When buying
+ * just one outfit, though, treat Status greater than 3 as Status 3."
+ */
+export const WARDROBE_PERCENT = 100;
+
+export function clothingCost(percentOfCostOfLiving: number, status: number): number {
+  const wholeWardrobe = percentOfCostOfLiving >= WARDROBE_PERCENT;
+  const effective = wholeWardrobe ? status : Math.min(3, status);
+  return Math.round(costOfLiving(effective) * (percentOfCostOfLiving / 100));
+}
+
+/**
+ * Equipment Modifiers (Campaigns p. 345): what the quality of your tools is
+ * worth to the skill that uses them, and what that quality costs.
+ *
+ * "No equipment: -10 for technological skills, -5 for other skills.
+ * Improvised equipment: -5 for technological skills, -2 for other skills.
+ * Basic equipment: No modifier... Good-quality equipment: +1. Costs about
+ * 5x basic price. Fine-quality equipment: +2. Costs about 20x basic price.
+ * Best equipment possible at your TL: +TL/2, round down (minimum +2)."
+ */
+export const EQUIPMENT_QUALITIES = ["none", "improvised", "basic", "good", "fine", "best"] as const;
+export type EquipmentQuality = (typeof EQUIPMENT_QUALITIES)[number];
+
+export function equipmentQualityModifier(
+  quality: EquipmentQuality,
+  options: { technological?: boolean; tl?: number } = {},
+): number {
+  switch (quality) {
+    case "none":
+      return options.technological ? -10 : -5;
+    case "improvised":
+      return options.technological ? -5 : -2;
+    case "basic":
+      return 0;
+    case "good":
+      return 1;
+    case "fine":
+      return 2;
+    case "best":
+      // "+TL/2, round down (minimum +2)".
+      return Math.max(2, Math.floor(Math.max(0, options.tl ?? 0) / 2));
+  }
+}
+
+/** What a grade of equipment costs, as a multiple of the basic price (p. 345). */
+export function equipmentQualityCost(quality: EquipmentQuality): number | null {
+  switch (quality) {
+    case "basic": return 1;
+    case "good": return 5;
+    case "fine": return 20;
+    // Nothing is sold for no equipment, improvised gear is what came to hand,
+    // and the best at a TL is "not usually for sale!"
+    default: return null;
+  }
+}
+
 /** The cost of what is carried and stored, for reading against starting wealth. */
 export function gearCost(items: ReadonlyArray<{ cost?: number; quantity?: number }>): number {
   let total = 0;

@@ -25,6 +25,7 @@ import {
   silverCostMultiplier,
 } from "../../rules/weapon-quality.js";
 import { AMMUNITION_TYPES, ammunitionCost } from "../../rules/ammunition.js";
+import { EQUIPMENT_QUALITIES } from "../../rules/wealth.js";
 
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -318,6 +319,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         "": "GWORLD.Mount.none",
         ...keyed("Mount", ["rest", "bipod", "mounted"]),
       },
+      equipmentQualities: keyed("EquipmentQuality", [...EQUIPMENT_QUALITIES]),
       ammunition: {
         "": "GWORLD.Ammunition.none",
         ...keyed("Ammunition", AMMUNITION_TYPES.filter((a) => a !== "")),
@@ -417,6 +419,14 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       } else {
         data.system.selfControl = Number(data.system.selfControl);
       }
+    }
+
+    // The skills a tool serves are typed as one line and stored as a list.
+    if (this.item.type === "equipment" && data.system && typeof data.system.forSkills === "string") {
+      data.system.forSkills = String(data.system.forSkills)
+        .split(",")
+        .map((part: string) => part.trim())
+        .filter(Boolean);
     }
 
     // The colleges are typed as one line and stored as a list. An empty line
