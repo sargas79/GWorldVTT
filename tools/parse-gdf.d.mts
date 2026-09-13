@@ -12,3 +12,50 @@ export declare const SPLIT_AGAINST: {
   lowTech: readonly DamageType[];
   highTech: readonly DamageType[];
 };
+
+/**
+ * The readers the equipment pack test imports: what the parser makes of the
+ * ST column, the damage column, an armour or shield DR, a Legality Class and
+ * a record with alternative readings of one column.
+ */
+export interface ParsedMinSt {
+  minSt: number | null;
+  twoHanded: boolean;
+  unreadyAfterAttack: boolean;
+  mount: "" | "rest" | "bipod" | "mounted";
+}
+
+export interface ParsedDamage {
+  fields: Record<string, unknown> & {
+    damageBase: "thr" | "sw" | "fixed";
+    damageModifier: number;
+    damageFormula: string;
+    damageType: string;
+    damageExtraDice: number;
+    damageSpecial: boolean;
+    surge: boolean;
+    affliction: boolean;
+    afflictionAttribute: string;
+    afflictionModifier: number;
+  };
+  usesWeaponSt: boolean;
+}
+
+export interface ParsedDr {
+  dr: number;
+  drSplit: number | null;
+  drSplitAppliesTo: readonly DamageType[];
+  flags: string;
+  sole?: number;
+  lowTech?: boolean;
+}
+
+export declare function parseMinSt(value: string | undefined): ParsedMinSt;
+export declare function parseDamage(damage: string | undefined, damtype: string | undefined): ParsedDamage | null;
+export declare function parseDr(value: string | undefined): ParsedDr | null;
+export declare function parseShieldStats(dr: string | undefined, hp: string | undefined): { dr: number; hp: number | null };
+export declare function legalityClass(value: string | undefined): number | null;
+export declare function alternatives(
+  name: string,
+  f: Map<string, string>,
+): Array<{ name: string; f: Map<string, string> }>;

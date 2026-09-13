@@ -280,6 +280,11 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         ...keyed("DamageType", ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"]),
       },
       equipmentCategories: keyed("GearCategory", [...EQUIPMENT_CATEGORIES]),
+      // The mark after a firearm's ST: none, a rest, a bipod, a mount (p. 270).
+      mounts: {
+        "": "GWORLD.Mount.none",
+        ...keyed("Mount", ["rest", "bipod", "mounted"]),
+      },
       // The self-control numbers, with "none" first. Keys are strings because
       // a select's values are, and the form reader turns the number back.
       templateKinds: keyed("Template", ["character", "racial", "lens", "metaTrait"]),

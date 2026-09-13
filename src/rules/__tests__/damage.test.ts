@@ -91,6 +91,13 @@ describe("weapon damage", () => {
   it("leaves ST alone for natural weapons with no minimum ST", () => {
     expect(effectiveStrengthForWeapon(19, null)).toBe(19);
   });
+
+  it("adds whole dice for a chainsaw's sw+1d (p. 274)", () => {
+    // ST 10 swings 1d; the chainsaw adds a die to that.
+    expect(formatDiceAdds(weaponDamage(10, "sw", 0, 10, 1))).toBe("2d");
+    // A monowire whip is sw-2+1d: the die and the modifier both apply.
+    expect(formatDiceAdds(weaponDamage(10, "sw", -2, 5, 1))).toBe("2d-2");
+  });
 });
 
 describe("dice+adds parsing", () => {

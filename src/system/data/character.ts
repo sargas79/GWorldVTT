@@ -1246,13 +1246,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       modifier: number,
       formula: string,
       minSt: number | null,
+      extraDice = 0,
     ): string => {
       if (base === "fixed") {
         const parsed = parseDiceAdds(formula);
         return parsed ? formatDiceAdds(parsed) : formula || "—";
       }
-      return formatDiceAdds(weaponDamage(st, base, modifier, minSt));
+      return formatDiceAdds(weaponDamage(st, base, modifier, minSt, extraDice));
     };
+    // "spec." on the table (Characters p. 269): the weapon's own rules say
+    // what a hit does, and there is no damage to roll.
+    const SPECIAL = game.i18n.localize("GWORLD.Item.SpecialDamageShort");
 
     // A shield is a weapon as well as a defense: bashing with it is an ordinary
     // melee attack (GURPS Basic Set: Characters p. 273). Only an equipped one
@@ -1306,8 +1310,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
         const { level: skillLevel, atDefault } = enchantedSkill(weaponSkill(mode.skill, true));
-        const meleeDamage = withPuissance(resolveDamage(
+        const meleeDamage = mode.damageSpecial ? SPECIAL : withPuissance(resolveDamage(
           strikingSt, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
+          Number(mode.damageExtraDice ?? 0) || 0,
         ));
         melee.push({
           itemId: item.id,
@@ -1327,9 +1332,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             minSt: mode.minSt ?? null,
           }),
           damage: meleeDamage,
-          damageType: mode.damageType,
+          damageType: mode.damageSpecial ? "" : mode.damageType,
           armorDivisor: mode.armorDivisor ?? 1,
-          damageRollable: !mode.affliction && parseDiceAdds(meleeDamage) !== null,
+          damageRollable: !mode.affliction && !mode.damageSpecial && parseDiceAdds(meleeDamage) !== null,
           // A big fighter's arms are longer, so their weapons reach further
           // (Campaigns p. 402). Only the upper end moves.
           reach: reachForSize(String(mode.reach ?? "C"), this.sm),
@@ -1364,8 +1369,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // Bows and crossbows use their own ST for damage and range; a thrown
         // weapon uses the thrower's, Striking ST included.
         const st = mode.weaponSt ?? strikingSt;
-        const rangedDamage = withPuissance(resolveDamage(
+        const rangedDamage = mode.damageSpecial ? SPECIAL : withPuissance(resolveDamage(
           st, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
+          Number(mode.damageExtraDice ?? 0) || 0,
         ));
         const range = mode.rangeIsStMultiple
           ? musclePoweredRange(mode.weaponSt ?? attrs.ST, mode.halfDamageRange, mode.maxRange)
@@ -1386,9 +1392,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           projectiles: Math.max(1, Number(mode.projectiles ?? 1)),
           halfDamageRange: Number(range.halfDamage ?? 0) || 0,
           damage: rangedDamage,
-          damageType: mode.damageType,
+          damageType: mode.damageSpecial ? "" : mode.damageType,
           armorDivisor: mode.armorDivisor ?? 1,
-          damageRollable: !mode.affliction && parseDiceAdds(rangedDamage) !== null,
+          damageRollable: !mode.affliction && !mode.damageSpecial && parseDiceAdds(rangedDamage) !== null,
           reach: "",
           parry: null,
           parryModifier: 0,

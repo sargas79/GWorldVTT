@@ -118,16 +118,24 @@ export function effectiveStrengthForWeapon(st: number, weaponMinSt: number | nul
   return Math.min(st, weaponMinSt * 3);
 }
 
-/** Resolves a weapon's `thr`/`sw` based damage into concrete dice+adds. */
+/**
+ * Resolves a weapon's `thr`/`sw` based damage into concrete dice+adds.
+ *
+ * A few powered weapons add whole dice to the swing rather than points -- a
+ * chainsaw is "sw+1d cut" (GURPS Basic Set: Characters p. 274) -- so the
+ * extra dice ride on top of the modifier.
+ */
 export function weaponDamage(
   st: number,
   base: "thr" | "sw",
   modifier: number,
   weaponMinSt: number | null = null,
+  extraDice = 0,
 ): DiceAdds {
   const effectiveSt = effectiveStrengthForWeapon(st, weaponMinSt);
   const raw = base === "thr" ? thrustDamage(effectiveSt) : swingDamage(effectiveSt);
-  return addModifier(raw, modifier);
+  const withDice = extraDice > 0 ? { ...raw, dice: raw.dice + Math.floor(extraDice) } : raw;
+  return addModifier(withDice, modifier);
 }
 
 /** Wounding modifiers by damage type (GURPS Basic Set: Campaigns p. 379). */
