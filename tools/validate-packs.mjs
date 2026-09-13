@@ -358,9 +358,13 @@ function validateItem(entry, file) {
         Number.isInteger(split) && split >= 0 && split <= sys.dr,
         file, name, `split DR ${split} must be a non-negative integer no greater than ${sys.dr}`,
       );
-      // Both tables agree that crushing takes the lower figure, so a split that
-      // omits it has been read from the wrong footnote.
-      check(against.includes("cr"), file, name, "split DR must apply to crushing");
+      // Both of the Basic Set's tables agree that crushing takes the lower
+      // figure, so a split there that omits it has been read from the wrong
+      // footnote. Other books need not agree: Monster Hunters 1's motorcycle
+      // helmet is at its best against crushing blows (p. 59).
+      if (/^Basic Set\b/.test(String(sys.reference ?? "")) || !sys.reference) {
+        check(against.includes("cr"), file, name, "split DR must apply to crushing");
+      }
     }
     for (const t of against) {
       check(DAMAGE_TYPES.has(t), file, name, `unknown damage type "${t}" in split DR`);
