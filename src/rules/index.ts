@@ -81,6 +81,7 @@ export * from "./posture.js";
 export * from "./ranged.js";
 export * from "./scatter.js";
 export * from "./reactions.js";
+export * from "./ritual-path.js";
 export * from "./recovery.js";
 export * from "./senses.js";
 export * from "./social.js";

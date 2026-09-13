@@ -192,6 +192,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "talentsSkipWildcards", reference: "Monster Hunters 1 p. 24", default: false },
     // Holy water and holy things burn demons and vampires, once a minute.
     { key: "holyAttacks", reference: "Monster Hunters 1 p. 51", default: false },
+    // Magic as nine Path skills and gathered energy, instead of spells.
+    { key: "ritualPathMagic", reference: "Monster Hunters 1 pp. 32-39", default: false },
   ],
 };
 
