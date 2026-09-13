@@ -39,6 +39,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import {
+  assertCitesBook,
+  bookPrefix,
   citesBook,
   fields,
   isExpression,
@@ -75,10 +77,72 @@ const DIFFICULTIES = new Set(["E", "A", "H", "VH", "W"]);
  */
 const PLACEHOLDER = /[%[\]]/;
 
+/** A parenthesis holding nothing but a blank: "(%WeaponList%)", "([skill])". */
+const BLANK_SPECIALTY = /^(.*\S)\s+\((?:%[^%()]*%|\[[^\][()]*\])\)$/;
+
+/**
+ * The names a section of the file gives its records, without GCA's leading
+ * underscore and without any name that is itself a placeholder.
+ */
+function namesIn(recs, section) {
+  const names = new Set();
+  for (const r of recs) {
+    if (r.section !== section) continue;
+    const name = nameOf(r).replace(/^_/, "");
+    if (!PLACEHOLDER.test(name)) names.add(name);
+  }
+  return names;
+}
+
+/**
+ * The name a record is filed under.
+ *
+ * GCA hides a record from its own lists with a leading underscore
+ * (`_Basic Gear`); the compendium has no such lists, so the underscore comes
+ * off. And a trait the player specialises is sometimes written with nothing
+ * but a blank for the specialty -- `Weapon Bond (%WeaponList%)` -- which is
+ * the trait itself, and is kept under its bare name, provided the file has
+ * no specialised records of it already (`Riding (Horse)` would make
+ * `Riding (%beast%)` a menu over those, not a trait of its own) and nothing
+ * else by that name. That second rule is for traits and gear only: a skill or
+ * technique written with a blank -- `Feint (%Melee Combat Skill%)` -- is
+ * nothing without the skill it is bought for, and its defaults name the blank
+ * too, so it stays rejected.
+ *
+ * Neither rule is applied to the Basic Set. Its packs are published and
+ * characters hold their ids, and both rules would change them: six GCA
+ * bookkeeping records (`_Unused Quirk 1`) would be renamed where they should
+ * be dropped, and thirteen blank-specialty records (Area Knowledge, Feint)
+ * would appear. That wants a review of each record, not a side effect of
+ * reading another book, so a supplement gets the rules and the Basic Set
+ * keeps its names until then.
+ */
+export function entryName(raw, siblings, { supplement = true, blankSpecialty = true } = {}) {
+  if (!supplement) return raw;
+  const name = raw.replace(/^_/, "");
+  const blank = blankSpecialty ? BLANK_SPECIALTY.exec(name) : null;
+  if (!blank || PLACEHOLDER.test(blank[1])) return name;
+  const base = blank[1];
+  const specialised = [...siblings].some((n) => n.startsWith(`${base} (`));
+  return specialised || siblings.has(base) ? name : base;
+}
+
+/**
+ * The base item a quality variant repeats: "Camera, Digital (Good)" is the
+ * camera at good quality. Quality is a field on the item, whose price follows
+ * from it, so a record that only restates the base at another grade is not
+ * an item of its own. Null for anything else, including a variant whose base
+ * the file does not carry.
+ */
+export function qualityVariantOf(name, siblings) {
+  const m = /^(.*\S)\s+\((?:Cheap|Good|Fine|Very Fine)\)$/.exec(name);
+  return m && siblings.has(m[1]) ? m[1] : null;
+}
+
 /** The book everything else is a supplement to. */
 const BASIC_SET = { prefix: "B", book: "Basic Set: Characters" };
 
-export { reference };
+export { assertCitesBook, bookPrefix, reference };
 
 /**
  * Where a record belongs, for the pack being built.
@@ -91,8 +155,13 @@ export { reference };
  */
 export function classifyCitation(page, prefix, base = BASIC_SET.prefix) {
   if (!citesBook(page, prefix)) return "elsewhere";
-  if (prefix !== base && citesBook(page, base)) return "overlap";
+  if (bookPrefix(prefix) !== bookPrefix(base) && citesBook(page, base)) return "overlap";
   return "own";
+}
+
+/** Whether the book being read is a supplement rather than the Basic Set. */
+function isSupplement(source) {
+  return bookPrefix(source.prefix) !== BASIC_SET.prefix;
 }
 
 /**
@@ -220,6 +289,7 @@ function parseTraits(recs, reject, note, source) {
   const ids = existingIds(source.outDir, "advantages", "disadvantages");
   const out = [];
   const taken = new Map();
+  const siblings = new Map([...TRAIT_SECTIONS.keys()].map((s) => [s, namesIn(recs, s)]));
 
   for (const r of recs) {
     const category = TRAIT_SECTIONS.get(r.section);
@@ -230,7 +300,8 @@ function parseTraits(recs, reject, note, source) {
 
     // GCA asks which core skill Ritual Magery boosts and writes the answer
     // into the name; the trait the book prices is Ritual Magery (p. 242).
-    const bare = nameOf(r).replace(/^Ritual Magery \(\[skill\]\)$/, "Ritual Magery");
+    const bare = entryName(nameOf(r), siblings.get(r.section), { supplement: isSupplement(source) })
+      .replace(/^Ritual Magery \(\[skill\]\)$/, "Ritual Magery");
     if (PLACEHOLDER.test(bare)) { reject(bare, "name is a GCA placeholder"); continue; }
 
     const cost = parseCost(splitTop(r.text)[1], f);
@@ -327,13 +398,15 @@ function parseSkills(recs, reject, source) {
   const techniques = [];
   const taken = new Set();
 
+  const siblings = namesIn(recs, "SKILLS");
+
   for (const r of recs) {
     if (r.section !== "SKILLS") continue;
 
     const f = fields(r.text);
     if (!keeps(r, f, source)) continue;
 
-    const bare = nameOf(r);
+    const bare = entryName(nameOf(r), siblings, { supplement: isSupplement(source), blankSpecialty: false });
     if (PLACEHOLDER.test(bare)) { reject(bare, "name is a GCA placeholder"); continue; }
     // The pair usually sits in the second field, but a few records state it as
     // type(IQ/VH) instead.
@@ -1107,6 +1180,7 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
   // one to keep. The parser writes only its own three files.
   const handMade = handWrittenIds(source.outDir, "equipment", ["armor.json", "gear.json", "shields.json"]);
   const taken = new Set(handMade.keys());
+  const siblings = namesIn(recs, "EQUIPMENT");
 
   for (const r of recs) {
     if (r.section !== "EQUIPMENT") continue;
@@ -1118,11 +1192,19 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
     // player to pick: "Longbow (ST%choice%)". The compendium carries the
     // weapon, and the ST it was built to is edited on the item, so the
     // placeholder comes off the name rather than the record being skipped.
-    const name = nameOf(r).replace(/\s*\(ST%choice%\)$/, "");
+    const hidden = nameOf(r).startsWith("_");
+    const name = entryName(nameOf(r), siblings, { supplement: isSupplement(source) }).replace(/\s*\(ST%choice%\)$/, "");
     // A GCA directive body -- "#ReplaceTags in ... with { basecost(60), ... }"
     // -- parses as a record whose first field is a field rather than a name.
     if (/^[a-z]+\(/.test(name)) continue;
     if (PLACEHOLDER.test(name)) { reject(name, "name is a GCA placeholder"); continue; }
+    // A hidden record that spells out another one's contents --
+    // "_Basic Gear: Bandages, Cigarette Lighter, ..." beside "_Basic Gear" --
+    // is GCA's longer label for the character sheet, not a second item.
+    const spelledOut = hidden && /^([^:]+):\s/.exec(name);
+    if (spelledOut && siblings.has(spelledOut[1])) { reject(name, `longer label for ${spelledOut[1]}`); continue; }
+    const variantOf = qualityVariantOf(name, siblings);
+    if (variantOf) { reject(name, `quality variant of ${variantOf}, whose quality is a field`); continue; }
     if (/Vehicles/.test(f.get("cat") ?? "")) continue;
     if (taken.has(name)) { reject(name, "duplicate name"); continue; }
 
@@ -1356,7 +1438,7 @@ function main() {
   }
   const write = process.argv.includes("--write");
   const outDir = resolve(option("--out", join(projectRoot, "packs-src")));
-  const prefix = option("--prefix", BASIC_SET.prefix);
+  const prefix = bookPrefix(option("--prefix", BASIC_SET.prefix));
   const book = option("--book", BASIC_SET.book);
   const overlapFile = option("--overlap", null);
   const basic = prefix === BASIC_SET.prefix;
@@ -1372,6 +1454,12 @@ function main() {
   };
 
   const recs = records(readFileSync(file, "utf8"));
+  try {
+    assertCitesBook(recs, prefix);
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
 
   const notes = [];
   const traitRejects = [];

@@ -150,9 +150,33 @@ export function modes(text) {
   return out;
 }
 
-/** A page prefix as a regular expression can hold it: "B", "MA", "LT". */
-function prefixPattern(prefix) {
-  return String(prefix).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/**
+ * A book's page prefix as the book prints it: "B", "MA", "MH1".
+ *
+ * GCA writes a numbered series with a colon between prefix and page --
+ * `page(MH1:23)` -- so the prefix is accepted with or without one, and kept
+ * without.
+ */
+export function bookPrefix(prefix) {
+  return String(prefix).trim().replace(/:$/, "");
+}
+
+/**
+ * A page prefix as a regular expression can hold it, with GCA's colon.
+ *
+ * The colon is optional after a prefix ending in a letter, since `B203` and
+ * `B:203` can only mean one thing. After a digit it is required: `DF11:5` is
+ * Dungeon Fantasy 11, and without the colon a reading of Dungeon Fantasy 1
+ * would take it for page 15.
+ *
+ * The page number is captured, and may not run into a colon: in `MH1:23`
+ * the "1" is part of the prefix, so the book "MH" has no page there.
+ */
+function pagePattern(prefix) {
+  const bare = bookPrefix(prefix);
+  const escaped = bare.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const colon = /\d$/.test(bare) ? ":" : ":?";
+  return `\\b${escaped}${colon}(\\d+)\\b(?!:)`;
 }
 
 /**
@@ -161,7 +185,13 @@ function prefixPattern(prefix) {
  * built from one of them.
  */
 export function citesBook(page, prefix) {
-  return new RegExp(`\\b${prefixPattern(prefix)}\\d`).test(page ?? "");
+  return new RegExp(pagePattern(prefix)).test(page ?? "");
+}
+
+/** Every page of the book with this prefix that a citation names, in order. */
+export function pagesCited(page, prefix) {
+  const re = new RegExp(pagePattern(prefix), "g");
+  return [...(page ?? "").matchAll(re)].map((m) => Number(m[1]));
 }
 
 /**
@@ -171,9 +201,38 @@ export function citesBook(page, prefix) {
  * book alone.
  */
 export function reference(page, prefix, book) {
-  const re = new RegExp(`\\b${prefixPattern(prefix)}(\\d+)\\b`, "g");
-  const pages = [...(page ?? "").matchAll(re)].map((m) => m[1]);
+  const pages = pagesCited(page, prefix);
   return pages.length ? `${book} p. ${pages.join(", ")}` : book;
+}
+
+/**
+ * Throws when no record in the file cites the book being read.
+ *
+ * A prefix that matches nothing is not a book with nothing in it: it is the
+ * wrong prefix, and the parsers would otherwise write empty packs and exit as
+ * though they had succeeded. The message names the citation forms the file
+ * does use, which is usually enough to see the mistake.
+ */
+export function assertCitesBook(recs, prefix) {
+  const forms = new Map();
+  for (const r of recs) {
+    const page = fields(r.text).get("page");
+    if (!page) continue;
+    if (citesBook(page, prefix)) return;
+    // A digit belongs to the prefix only before a colon: "MH1:" but "B", not "B8".
+    for (const m of page.matchAll(/\b([A-Za-z]+(?:\d+:)?)\d+\b/g)) {
+      forms.set(m[1], (forms.get(m[1]) ?? 0) + 1);
+    }
+  }
+  const seen = [...forms.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([form, count]) => `${form} (${count})`)
+    .join(", ");
+  throw new Error(
+    `No record cites a page with the prefix "${bookPrefix(prefix)}".` +
+      (seen ? ` Citations in this file begin: ${seen}.` : " No record in this file cites a page."),
+  );
 }
 
 /**
