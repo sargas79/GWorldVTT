@@ -87,6 +87,12 @@ export declare function talentSkillsOf(
   groups: ReadonlyMap<string, readonly string[]>,
 ): string[];
 
+/** The power a record belongs to by its category, and whether it is the power's Talent. */
+export declare function powerOfRecord(
+  f: Map<string, string>,
+  pattern: RegExp | null,
+): { power: string; powerTalent: boolean };
+
 /** The file's `[GROUPS]`, by group name. */
 export declare function groupsOf(text: string): Map<string, string[]>;
 

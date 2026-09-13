@@ -23,7 +23,7 @@
  * Usage:
  *   node tools/parse-gdf.mjs <file.gdf> [--write]
  *        [--out <packs-src dir>] [--prefix B] [--book "Basic Set: Characters"]
- *        [--overlap <file>]
+ *        [--overlap <file>] [--power-category <pattern>]
  *
  * With no options it reads the Basic Set (page prefix "B") into this
  * repository's packs-src. Pointed at another book's GDF with that book's
@@ -159,6 +159,25 @@ export function talentSkillsOf(name, f, groups) {
   return group
     .map((member) => /^SK:\s*"?(.+?)"?$/.exec(member)?.[1]?.trim())
     .filter((skill) => skill && !PLACEHOLDER.test(skill));
+}
+
+/**
+ * The power a trait belongs to, and whether it is the power's Talent.
+ *
+ * GCA files a power's abilities and its Talent under a category of their own,
+ * and each book names those categories its own way: Monster Hunters 1 writes
+ * "_MH Bioenhancement" and "_MH Psionics - ESP". So the book says how, with a
+ * pattern whose first group is the power's name -- "^_MH (?:Psionics - )?(.+)$"
+ * -- and a Talent is the record GCA also files under "Talents - Powers". With
+ * no pattern, or no category matching it, the trait belongs to no power by its
+ * entry, and the Basic Set's psionics are still found the way the sheet finds
+ * them, by their power modifier.
+ */
+export function powerOfRecord(f, pattern) {
+  const categories = (f.get("cat") ?? "").split(",").map((c) => c.trim());
+  const named = pattern ? categories.map((c) => pattern.exec(c)?.[1]?.trim()).find(Boolean) : null;
+  if (!named) return { power: "", powerTalent: false };
+  return { power: named, powerTalent: categories.some((c) => /^Talents - Powers$/i.test(c)) };
 }
 
 /** The book everything else is a supplement to. */
@@ -372,6 +391,7 @@ function parseTraits(recs, reject, note, source) {
         maxLevels,
         reactionModifier: 0,
         talentSkills: talentSkillsOf(bare, f, source.groups ?? new Map()),
+        ...powerOfRecord(f, source.powerCategory ?? null),
         description: "",
         reference: reference(f.get("page"), source.prefix, source.book),
       },
@@ -1455,7 +1475,7 @@ function main() {
   const file = process.argv[2];
   if (!file || file.startsWith("--")) {
     console.error(
-      "Usage: node tools/parse-gdf.mjs <file.gdf> [--write] [--out <dir>] [--prefix B] [--book <name>] [--overlap <file>]",
+      "Usage: node tools/parse-gdf.mjs <file.gdf> [--write] [--out <dir>] [--prefix B] [--book <name>] [--overlap <file>] [--power-category <pattern>]",
     );
     process.exit(1);
   }
@@ -1464,6 +1484,7 @@ function main() {
   const prefix = bookPrefix(option("--prefix", BASIC_SET.prefix));
   const book = option("--book", BASIC_SET.book);
   const overlapFile = option("--overlap", null);
+  const powerCategory = option("--power-category", null);
   const basic = prefix === BASIC_SET.prefix;
 
   // What was left to the Basic Set pack: section, name and the citation
@@ -1480,6 +1501,8 @@ function main() {
   const recs = records(text);
   // A Talent's skills are listed apart from the Talent, in the file's groups.
   source.groups = groupsOf(text);
+  // Which category names a power, which each book's file does its own way.
+  source.powerCategory = powerCategory ? new RegExp(powerCategory) : null;
   try {
     assertCitesBook(recs, prefix);
   } catch (error) {

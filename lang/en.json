@@ -1147,6 +1147,9 @@
       "CostTable": "Cost table",
       "LevelNames": "Level names, one per line",
       "TalentSkills": "Skills this Talent adds its level to, one per line",
+      "Power": "Power this belongs to",
+      "PowerHint": "The power an ability belongs to, as its book names it (Bioenhancement, Mysticism, ESP). The Basic Set's psi abilities are recognised by their power modifier and can leave this blank. Tick the box on the power's Talent; its maximum level is where the GM's permission starts.",
+      "PowerTalent": "This is the power's Talent",
       "TalentSkillsHint": "Fill this in for a Talent and each skill named gets +1 per level; a specialty counts as its skill. The Basic Set's Talents are read by name when this is empty.",
       "CostTableHint": "A few traits are priced from a table rather than at a flat rate per level: Wealth runs 10/20/30/50/75. Fill this in and it replaces the points and per-level figures. Leave it empty for the great majority, which are priced evenly.",
       "TabledNote": "priced from the table",
@@ -3334,7 +3337,7 @@
       "Collapses": "{name} goes down."
     },
     "Psi": {
-      "Powers": "Psi powers",
+      "Powers": "Powers",
       "Talent": "Talent {bonus}",
       "TalentHint": "A Talent gives a bonus to any roll to activate or otherwise use this power, most often an IQ, Will or Perception roll (Characters p. 255).",
       "Latent": "Latent",
@@ -3348,8 +3351,10 @@
         "telepathy": "Telepathy",
         "teleportation": "Teleportation"
       },
-      "OverCap": "Past level 4",
-      "OverCapHint": "More than four levels of a Talent needs the GM’s permission (Characters p. 255).",
+      "OverCap": "Past level {cap}",
+      "OverCapHint": "More than {cap} levels of this Talent needs the GM’s permission: four in the Basic Set (Characters p. 255), more where a book allows it.",
+      "UseRoll": "{power}: {attribute} + Talent",
+      "UseRollHint": "A roll to use this power, with its Talent added. Most abilities say whether it is IQ, Will or Perception.",
       "HelpedBy": "Helped by {talent}",
       "CouldManifest": "Could manifest as: {abilities}",
       "Unpowered": "{trait} is a {power} ability, but has no power modifier — so it is not psionic. Add the modifier if it is meant to be."

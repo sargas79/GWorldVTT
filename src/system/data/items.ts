@@ -193,6 +193,8 @@ export class TraitData extends foundry.abstract.TypeDataModel {
   declare modifiers: Array<{ name: string; value: number }>;
   declare selfControl: number | null;
   declare talentSkills: string[];
+  declare power: string;
+  declare powerTalent: boolean;
 
   static override defineSchema() {
     return {
@@ -287,6 +289,15 @@ export class TraitData extends foundry.abstract.TypeDataModel {
         new fields.StringField({ required: true, blank: false }),
         { required: true, initial: [] },
       ),
+      /**
+       * The power this trait belongs to, by the name its book gives it --
+       * Bioenhancement, Mysticism, ESP (Characters pp. 254-257; Monster Hunters
+       * 1 pp. 40-48). Blank for a trait of no power, and for a Basic Set psi
+       * ability, which its power modifier already files.
+       */
+      power: new fields.StringField({ required: true, blank: true, initial: "" }),
+      /** True for the power's Talent rather than one of its abilities. */
+      powerTalent: new fields.BooleanField({ required: true, initial: false }),
     };
   }
 

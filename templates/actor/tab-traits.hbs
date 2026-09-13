@@ -168,8 +168,9 @@
   {{/if}}
 
   {{#if psionics.length}}
-    {{!-- The psi powers this character holds, and what each Talent is worth to
-         a roll using it (Characters pp. 254-255). --}}
+    {{!-- The powers this character holds, what each Talent is worth, and a
+         roll to use each: IQ, Will or Perception with the Talent on top
+         (Characters pp. 254-255; Monster Hunters 1 p. 40). --}}
     <div class="isec">
       <div class="ish">{{localize "GWORLD.Psi.Powers"}}</div>
       {{#each psionics as |power|}}
@@ -182,8 +183,8 @@
                 {{localize "GWORLD.Psi.Talent" bonus=power.signed}}
               </span>
               {{#if power.talentNeedsPermission}}
-                <span class="tag warn" data-tooltip="{{localize 'GWORLD.Psi.OverCapHint'}}">
-                  {{localize "GWORLD.Psi.OverCap"}}
+                <span class="tag warn" data-tooltip="{{localize 'GWORLD.Psi.OverCapHint' cap=power.talentCap}}">
+                  {{localize "GWORLD.Psi.OverCap" cap=power.talentCap}}
                 </span>
               {{/if}}
             {{else if power.talentName}}
@@ -196,6 +197,11 @@
                 {{localize "GWORLD.Psi.Latent"}}
               </span>
             {{/if}}
+            {{#each power.rollButtons as |roll|}}
+              <span class="tag rollable" data-action="roll" data-roll-type="attribute"
+                    data-roll-label="{{roll.label}}" data-roll-target="{{roll.target}}"
+                    data-tooltip="{{localize 'GWORLD.Psi.UseRollHint'}}">{{roll.key}} {{roll.target}}</span>
+            {{/each}}
           </span>
           <span class="td">
             {{#if power.abilities.length}}
