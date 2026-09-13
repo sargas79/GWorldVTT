@@ -40,6 +40,9 @@ import {
 import { jumpFromVehicle } from "../rules/collisions.js";
 import { isRuleOn } from "./optional-rules.js";
 import {
+  collapseDamage, collapseShelter, trappedInRubble, type CollapseShelter,
+} from "../rules/structures.js";
+import {
   ACID_DAMAGE_TYPE, acidHarm, eyeOutcome, eyeRisk,
   type AcidContact, type AcidLanding,
 } from "../rules/acid.js";
@@ -1116,5 +1119,66 @@ export async function motionSickness(options: {
     bad: result === "nauseated",
     good: result === "immune",
     rolls: [roll],
+  });
+}
+
+/**
+ * A building coming down on somebody (Campaigns p. 484).
+ *
+ * "Anyone in a collapsing building takes 3d crushing damage, plus 1d per story
+ * overhead. A victim can attempt to dive for cover behind a structural member.
+ * On a success, he receives DR equal to the building's exterior wall DR
+ * against this damage, but is still trapped in the rubble. On a critical
+ * success, he is totally unharmed!"
+ *
+ * The wall DR replaces their armour rather than adding to it: what is over
+ * them is the beam they dived behind, not the coat they are wearing.
+ */
+export async function buildingCollapse(options: {
+  actor: any;
+  storiesOverhead: number;
+  wallDr: number;
+  /** True where they are trying to get behind something. */
+  diving: boolean;
+}): Promise<void> {
+  const { actor } = options;
+  if (!mayChange(actor)) return;
+
+  const rolls: any[] = [];
+  const lines: string[] = [];
+  let shelter: CollapseShelter = "crushed";
+
+  if (options.diving) {
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    rolls.push(roll);
+    const target = attributeOf(actor, "DX");
+    const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+    shelter = collapseShelter(outcome);
+    lines.push(F("CollapseDive", { roll: roll.total, target }));
+  }
+
+  lines.push(H(`CollapseResult.${shelter}`));
+
+  if (shelter !== "unharmed") {
+    const damage = collapseDamage(options.storiesOverhead);
+    const formula = toRollFormula(damage);
+    const hit = await takeDamage(actor, formula, "cr", {
+      // Behind a beam they have the wall's DR; out in the open, their own.
+      ...(shelter === "sheltered" ? { drOverride: Math.max(0, options.wallDr) } : {}),
+    });
+    rolls.push(hit.roll, hit.locationRoll);
+    lines.push(F("CollapseDamage", { formula, rolled: hit.roll.total, dr: hit.dr }));
+    lines.push(F("Injury", { injury: hit.injury, previous: hit.previous, now: hit.current }));
+    if (trappedInRubble(shelter)) lines.push(H("CollapseTrapped"));
+  }
+
+  await post(actor, {
+    kind: H("Collapse"),
+    detail: F("CollapseStories", { stories: options.storiesOverhead }),
+    lines,
+    bad: shelter === "crushed",
+    good: shelter === "unharmed",
+    rolls,
   });
 }

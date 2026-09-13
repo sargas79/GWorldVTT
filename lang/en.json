@@ -2534,6 +2534,20 @@
         "immune": "No ill effects at all.",
         "unaffected": "Nothing today.",
         "nauseated": "Sick."
+      },
+      "Collapse": "Building collapse",
+      "CollapseHint": "A building coming down: 3d crushing and a die more per storey overhead, less whatever they can dive behind (Campaigns p. 484).",
+      "StoriesOverhead": "Storeys overhead",
+      "WallDr": "Exterior wall DR",
+      "DiveForCover": "Dive for cover behind a structural member",
+      "CollapseStories": "{stories} storeys overhead",
+      "CollapseDive": "Rolled {roll} against DX {target} to get behind something",
+      "CollapseDamage": "{formula} crushing: {rolled}, through DR {dr}",
+      "CollapseTrapped": "Alive, and trapped in the rubble.",
+      "CollapseResult": {
+        "crushed": "Caught in the open as it came down.",
+        "sheltered": "Behind a structural member: the wall's DR stands between them and it.",
+        "unharmed": "Totally unharmed."
       }
     },
     "Vehicle": {
