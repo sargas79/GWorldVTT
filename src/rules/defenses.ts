@@ -59,6 +59,12 @@ export interface DefenseContext {
    * to every active defense. Zero unless the table is playing that rule.
    */
   undressed?: number;
+  /**
+   * What the afflictions on the defender come to (Campaigns pp. 428-429):
+   * -1 for being nauseated, -4 for any of the incapacitating ones, which the
+   * book calls being "effectively stunned".
+   */
+  afflicted?: number;
 }
 
 export interface DodgeContext extends DefenseContext {
@@ -113,6 +119,7 @@ function commonModifiers(context: DefenseContext): DefenseModifier[] {
   }
   if (context.combatReflexes) modifiers.push({ label: "Combat Reflexes", value: 1 });
   if (context.undressed) modifiers.push({ label: "Undressed", value: context.undressed });
+  if (context.afflicted) modifiers.push({ label: "Afflicted", value: context.afflicted });
   if (context.enhanced) modifiers.push({ label: "Enhanced defense", value: context.enhanced });
   // "A rider can Dodge, Block, or Parry. If he has Riding at 12+, all of these
   // defenses are at normal levels" -- and worse by the shortfall if not.

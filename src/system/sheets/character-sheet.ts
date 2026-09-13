@@ -4186,6 +4186,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         modifiers: modifier === 0
           ? []
           : [{ label: game.i18n.localize("GWORLD.Affliction.Short"), value: modifier }],
+        // A roll that fails is a condition somebody now has, and the card is
+        // where it is handed out (Campaigns pp. 428-429).
+        affliction: {
+          uuid: String(victim.uuid ?? ""),
+          name: String(victim.name ?? ""),
+          label,
+        },
       });
     }
   }

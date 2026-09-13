@@ -40,6 +40,8 @@ import {
   canAvertWithFatigue, facesHimSquarely, worthDeclaring, type Delivery,
 } from "../rules/cinematic.js";
 import { isCannonFodder } from "./cinematic.js";
+import { inflict } from "./afflictions.js";
+import { afflictionsOf, type Affliction } from "../rules/afflictions.js";
 import type { DamageType } from "../rules/types.js";
 
 const APPLIED_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-applied.hbs`;
@@ -1038,6 +1040,64 @@ async function addTvActionControls(message: any, html: HTMLElement): Promise<voi
   root.append(row);
 }
 
+/**
+ * Adds the control that turns a failed resistance roll into a condition
+ * (Campaigns pp. 428-429).
+ *
+ * Which condition it is belongs to whatever caused it -- a gas, a spell, a
+ * poison -- and the compendium does not carry that, so the card asks rather
+ * than guesses. The list is the book's, in the book's three bands.
+ */
+async function addAfflictionControls(message: any, html: HTMLElement): Promise<void> {
+  const entry = message?.getFlag?.(SYSTEM_ID, "affliction") as
+    | { uuid: string; name: string; label: string }
+    | undefined;
+  if (!entry?.uuid || !isRuleOn("afflictions")) return;
+
+  const root = html.querySelector<HTMLElement>(".gworld-chat");
+  if (!root || root.querySelector("[data-gworld-afflict]")) return;
+
+  const victim: any = await fromUuid(entry.uuid).catch(() => null);
+  if (!victim?.isOwner) return;
+
+  const row = document.createElement("div");
+  row.className = "gc-apply";
+  row.dataset.gworldAfflict = entry.uuid;
+
+  const who = document.createElement("div");
+  who.className = "gc-who";
+  who.textContent = entry.name;
+
+  const select = document.createElement("select");
+  select.className = "gc-location";
+  select.setAttribute("aria-label", game.i18n.localize("GWORLD.Affliction.Inflict"));
+  for (const severity of ["irritating", "incapacitating", "mortal"] as const) {
+    const group = document.createElement("optgroup");
+    group.label = game.i18n.localize(`GWORLD.Affliction.Severity.${severity}`);
+    for (const key of afflictionsOf(severity)) {
+      const option = document.createElement("option");
+      option.value = key;
+      option.textContent = game.i18n.localize(`GWORLD.Affliction.Name.${key}`);
+      group.append(option);
+    }
+    select.append(group);
+  }
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "gc-apply-button";
+  button.textContent = game.i18n.localize("GWORLD.Affliction.Inflict");
+  button.title = game.i18n.localize("GWORLD.Affliction.InflictHint");
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    await inflict(victim, select.value as Affliction);
+    button.disabled = false;
+  });
+
+  row.append(who, select, button);
+  root.append(row);
+}
+
 /** Registers the chat hooks. Called once, at init. */
 export function registerChatHooks(): void {
   Hooks.on("renderChatMessageHTML", (message: any, html: HTMLElement) => {
@@ -1048,5 +1108,6 @@ export function registerChatHooks(): void {
     void addResistControls(message, html);
     void addFleshWoundControls(message, html);
     void addTvActionControls(message, html);
+    void addAfflictionControls(message, html);
   });
 }

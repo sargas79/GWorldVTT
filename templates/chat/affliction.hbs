@@ -1,0 +1,17 @@
+{{!-- An affliction taking hold (Campaigns pp. 428-429). --}}
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{localize "GWORLD.Affliction.Struck" name=name affliction=affliction}}</span>
+    <span class="gc-target">{{severity}}</span>
+  </div>
+  <div class="gc-result {{#if mortal}}failure{{/if}}">{{what}}</div>
+  {{#if modifiers.length}}
+    <div class="gc-mods">
+      {{#each modifiers as |m|}}<span class="gc-mod">{{m}}</span>{{/each}}
+    </div>
+  {{/if}}
+  <div class="gc-mods">
+    {{#if helpless}}<span class="gc-warn">{{localize "GWORLD.Affliction.NoAction"}}</span>{{/if}}
+    {{#if fallsDown}}<span class="gc-mod">{{localize "GWORLD.Affliction.FallsDown"}}</span>{{/if}}
+  </div>
+</div>

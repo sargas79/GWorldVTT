@@ -96,6 +96,7 @@ import { fatigueStatus, isVeryTired } from "../../rules/fatigue.js";
 import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
 import { mountedDefensePenalty } from "../../rules/mounted.js";
 import { penaltyEffects } from "../../rules/attribute-penalties.js";
+import { afflictionsOn } from "../afflictions.js";
 import {
   effectiveSkillLevel,
   namedDefaultLevel,
@@ -1180,6 +1181,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       reactionModifier: Number(item.system?.reactionModifier ?? 0) || 0,
     }));
     const traits = traitEffects(heldTraits);
+    // What the afflictions on this character come to (pp. 428-429). Read once,
+    // because the penalties reach the attributes, the defenses and the sheet.
+    const afflicted = afflictionsOn(this.parent);
     // Levels of the Appearance advantage: Attractive is 1, and nothing below
     // it counts for Bulletproof Nudity (p. 417).
     const appearanceLevels = Math.max(
@@ -1910,6 +1914,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       posture: this.posture,
       mountedPenalty,
       stunned: this.conditions.stunned,
+      // "In addition to their other effects, you're effectively stunned (-4 to
+      // active defenses)" (p. 428). Nausea is -1 on its own.
+      afflicted: afflicted.effect.defense,
       allOutDefenseIncreased: increasing && this.allOutDefenseTarget === which,
       cannotSeeAttacker: this.conditions.blindToAttacker,
       combatReflexes: traits.activeDefense > 0,
@@ -2222,7 +2229,24 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // What a temporary penalty comes to, for the rolls that read it. The
       // penalties themselves stay where they were entered; this is only their
       // arithmetic, IQ dragging Will and Per with it (Campaigns p. 421).
-      attributePenalties: penaltyEffects(this.attributePenalties),
+      // A temporary penalty the GM typed in, plus whatever the afflictions on
+      // the token come to (pp. 428-429). Folding them together here is what
+      // makes an affliction reach every roll: anything that already reads a
+      // lowered DX picks up a coughing fit without being told about
+      // afflictions at all.
+      attributePenalties: penaltyEffects({
+        ST: this.attributePenalties.ST,
+        DX: this.attributePenalties.DX + afflicted.effect.dx,
+        IQ: this.attributePenalties.IQ + afflicted.effect.iq,
+        HT: this.attributePenalties.HT,
+      }),
+      // What is on the token, and what it costs, for the sheet to say so.
+      afflictions: {
+        active: afflicted.active,
+        names: afflicted.active.map((key) => `GWORLD.Affliction.Name.${key}`),
+        effect: afflicted.effect,
+        helpless: afflicted.effect.helpless,
+      },
       fatigue: {
         status: fatigueStatus(this.fp.value, this.fp.max),
         veryTired,
