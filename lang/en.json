@@ -2,7 +2,8 @@
   "TYPES": {
     "Actor": {
       "character": "Character",
-      "npc": "NPC"
+      "npc": "NPC",
+      "vehicle": "Vehicle"
     },
     "Item": {
       "trait": "Trait",
@@ -21,7 +22,8 @@
     "Sheet": {
       "Character": "GURPS Character Sheet",
       "Npc": "GURPS NPC Sheet",
-      "Item": "GURPS Item"
+      "Item": "GURPS Item",
+      "Vehicle": "Vehicle"
     },
     "Tab": {
       "attributes": "Attr",
@@ -2316,7 +2318,8 @@
       "JumpSpeed": "Speed when they jumped (yards/second)",
       "JumpedFrom": "from {vehicle}, at {speed} yards a second",
       "JumpDamage": "{formula} crushing into the ground: {rolled} on the {location}, through DR {dr}",
-      "JumpFalling": "It was flying: add the falling damage for the height as well."
+      "JumpFalling": "It was flying: add the falling damage for the height as well.",
+      "VehicleHp": "{previous} → {now} of {max} HP"
     },
     "Vehicle": {
       "Statistics": "Vehicle statistics",
@@ -2369,7 +2372,63 @@
         "runner": "Runner or skid",
         "wheel": "Wheel",
         "vitalArea": "Vital area"
-      }
+      },
+      "Ht": "HT",
+      "Sm": "SM",
+      "Dr": "DR",
+      "Occ": "Occ.",
+      "Move": "Move",
+      "Cost": "Cost",
+      "HandlingStability": "Hnd/SR",
+      "Fragility": "Fragile",
+      "FragilityHint": "The code beside HT for a vehicle that burns or blows up: Combustible, Flammable or Explosive (Campaigns p. 463).",
+      "Draft": "Draft",
+      "DraftHint": "The minimum depth of water, in feet, a watercraft can safely operate in (Campaigns p. 463).",
+      "Stall": "Stall",
+      "StallHint": "The minimum speed, in yards a second, an aircraft must hold to stay up. Zero means it can hover (Campaigns p. 463).",
+      "LocationsHint": "The Locations column as the tables print it: \"G4W\" is a large glass window and four wheels, \"2CX\" two tracks and an exposed weapon mount (Campaigns pp. 463, 554).",
+      "RoadBoundHint": "A vehicle that uses its Top Speed only on a road. Off road it manages the lower of Top Speed and four times Acceleration (Campaigns p. 466).",
+      "Worked": "Worked out",
+      "TopSpeedMph": "Top speed",
+      "Cruising": "Cruising",
+      "Endurance": "Endurance",
+      "Hours": "{hours} h",
+      "CurbWeight": "Curb weight",
+      "Cargo": "Cargo",
+      "SafeDeceleration": "Safe braking",
+      "YardsPerSecond": "{yards} yd/s",
+      "YardsPerSecondShort": "yd/s",
+      "Speed": "Speed",
+      "Seats": "{crew} crew, {passengers} passengers",
+      "Crowded": "More aboard than it seats",
+      "NobodyAboard": "Nobody is aboard. Drag a character onto this sheet to put them in it.",
+      "AlreadyAboard": "{name} is already aboard.",
+      "Operator": "At the wheel",
+      "OperatorHint": "The vehicle moves on this character’s turn, and the control roll is made against their skill (Campaigns p. 467).",
+      "TakeTheWheel": "Take the wheel",
+      "TakeTheWheelHint": "Make this character the operator. Only one of them can be.",
+      "Disembark": "Out of the vehicle",
+      "NobodyDriving": "Nobody is at the wheel, so there is no one to make the control roll.",
+      "InPlay": "In play",
+      "Edit": "The table’s columns",
+      "Notes": "Notes",
+      "HasLocations": "A shot can land on:",
+      "Wrecked": "Wrecked",
+      "Battered": "Battered",
+      "PutOnTheRoad": "Put it on the road",
+      "PutOnTheRoadHint": "Make the vehicle itself: an actor with these statistics, hit points, a speed and room for people. This entry stays on the shelf (Campaigns pp. 462-469).",
+      "CannotCreate": "You do not have permission to create actors.",
+      "FragilityChoice": {
+        "none": "Not fragile",
+        "c": "c — combustible",
+        "f": "f — flammable",
+        "x": "x — explosive"
+      },
+      "LoadedWeightShort": "LWt.",
+      "LoadShort": "Load",
+      "RangeShort": "Range",
+      "LocationsShort": "Locations",
+      "SkillShort": "Skill"
     },
     "GearCategory": {
       "weapon": "Weapon",

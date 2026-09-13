@@ -4513,7 +4513,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!item) return;
     const asked = await promptForVehicleHit();
     if (!asked) return;
-    await shootAtVehicle({ actor: this.actor, itemId: String(item.id), ...asked });
+    await shootAtVehicle({ actor: this.actor, vehicle: item, ...asked });
   }
 
   /** A control roll for the vehicle on this row (Campaigns p. 466). */
@@ -4527,7 +4527,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       initial: 0,
     });
     if (modifier === null) return;
-    await controlVehicle({ actor: this.actor, itemId: String(item.id), modifier });
+    await controlVehicle({ actor: this.actor, vehicle: item, modifier });
   }
 
   /** Jumping or falling from a moving vehicle (Campaigns p. 467). */
@@ -4543,7 +4543,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       initial: Math.round(Number(item.system?.vehicle?.topSpeed) || 0),
     });
     if (speed === null) return;
-    await jumpOutOfVehicle({ actor: this.actor, itemId: String(item.id), speed });
+    await jumpOutOfVehicle({ actor: this.actor, vehicle: item, speed });
   }
 
   static async #onToggleEquipped(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

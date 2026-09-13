@@ -1,0 +1,221 @@
+{{!-- The vehicle sheet: one pane, no tabs (Campaigns pp. 462-469).
+
+     One root element, for the same reason the NPC sheet has one: Foundry
+     refuses to render a part that comes back as two. --}}
+<div class="isheet-npc isheet-vehicle">
+<div class="ihdr" style="grid-template-columns: 52px 1fr; padding: 13px 14px 12px">
+  <div class="iport blueprint">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <img src="{{actor.img}}" alt="{{actor.name}}">
+  </div>
+  <div class="ihm" style="gap: 7px">
+    <div class="inrow">
+      <input class="iname" style="font-size: 22px" type="text" name="name" value="{{actor.name}}"
+             {{#unless editable}}disabled{{/unless}}>
+      {{#if wrecked}}
+        <span class="ipts bad">{{localize "GWORLD.Vehicle.Wrecked"}}</span>
+      {{else if battered}}
+        <span class="ipts warn">{{localize "GWORLD.Vehicle.Battered"}}</span>
+      {{/if}}
+    </div>
+    <div class="ipools">
+      <div class="ipool">
+        <div class="ipt">
+          <span>HP</span>
+          <span class="ipv">
+            <input type="number" name="system.hp.value" value="{{system.hp.value}}" step="1"
+                   {{#unless editable}}disabled{{/unless}}> / {{system.hp.max}}
+          </span>
+        </div>
+        <div class="itrack">
+          <div class="ifill {{#if battered}}reeling{{/if}}"
+               style="width: {{percent system.hp.value system.hp.max}}%"></div>
+        </div>
+      </div>
+      <div class="ipool">
+        <div class="ipt">
+          <span>{{localize "GWORLD.Vehicle.Speed"}}</span>
+          <span class="ipv">
+            <input type="number" name="system.speed" value="{{system.speed}}" min="0" step="1"
+                   {{#unless editable}}disabled{{/unless}}>
+            {{localize "GWORLD.Vehicle.YardsPerSecondShort"}}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ibody">
+
+  {{!-- The table's own columns, read straight off the page (p. 462). --}}
+  <div class="isec">
+    <div class="ish">{{localize "GWORLD.Vehicle.Statistics"}}</div>
+    <div class="istrip vwrap">
+      {{#each stats as |s|}}
+        <div class="istat"><span class="isl">{{s.label}}</span><span class="isv">{{s.value}}</span></div>
+      {{/each}}
+      {{#if draft}}
+        <div class="istat" data-tooltip="{{localize 'GWORLD.Vehicle.DraftHint'}}">
+          <span class="isl">{{localize "GWORLD.Vehicle.Draft"}}</span><span class="isv">{{draft}} ft</span>
+        </div>
+      {{/if}}
+      {{#if stall}}
+        <div class="istat" data-tooltip="{{localize 'GWORLD.Vehicle.StallHint'}}">
+          <span class="isl">{{localize "GWORLD.Vehicle.Stall"}}</span><span class="isv">{{stall}}</span>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+
+  {{!-- What the legend says to work out from them (p. 463). --}}
+  <div class="isec">
+    <div class="ish">{{localize "GWORLD.Vehicle.Worked"}}</div>
+    <div class="istrip vwrap">
+      {{#each figures as |f|}}
+        <div class="istat"><span class="isl">{{f.label}}</span><span class="isv">{{f.value}}</span></div>
+      {{/each}}
+    </div>
+  </div>
+
+  {{!-- Who is aboard, and which of them has the wheel (p. 467). --}}
+  <div class="isec">
+    <div class="ish">
+      {{localize "GWORLD.Vehicle.Aboard"}}
+      <span class="ihint">{{localize "GWORLD.Vehicle.Seats" crew=seats.crew passengers=seats.passengers}}</span>
+      {{#if crowded}}<span class="ipts warn">{{localize "GWORLD.Vehicle.Crowded"}}</span>{{/if}}
+    </div>
+    {{#if occupants.length}}
+      <div class="icrew">
+        {{#each occupants as |p|}}
+          <div class="icrewrow">
+            <img class="icrewimg" src="{{p.img}}" alt="{{p.name}}" data-action="openOccupant" data-uuid="{{p.uuid}}">
+            <span class="icrewname" data-action="openOccupant" data-uuid="{{p.uuid}}">{{p.name}}</span>
+            {{#if p.hp}}<span class="gc-mod">{{p.hp.value}} / {{p.hp.max}} HP</span>{{/if}}
+            {{#if p.operator}}
+              <span class="tag" data-tooltip="{{localize 'GWORLD.Vehicle.OperatorHint'}}">
+                {{localize "GWORLD.Vehicle.Operator"}}
+              </span>
+            {{else if @root.editable}}
+              <button type="button" class="ibtn tiny" data-action="takeTheWheel" data-uuid="{{p.uuid}}"
+                      data-tooltip="{{localize 'GWORLD.Vehicle.TakeTheWheelHint'}}">
+                {{localize "GWORLD.Vehicle.TakeTheWheel"}}
+              </button>
+            {{/if}}
+            {{#if @root.rules.vehicleManeuvers}}
+              <button type="button" class="ibtn tiny" data-action="jumpOut" data-uuid="{{p.uuid}}"
+                      data-tooltip="{{localize 'GWORLD.Hazard.JumpOutHint'}}">
+                {{localize "GWORLD.Hazard.JumpOut"}}
+              </button>
+            {{/if}}
+            {{#if @root.editable}}
+              <button type="button" class="rollable iconbtn" data-action="removeOccupant" data-uuid="{{p.uuid}}"
+                      title="{{localize 'GWORLD.Vehicle.Disembark'}}">
+                {{> "gworld.trash"}}
+              </button>
+            {{/if}}
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="inote">{{> "gworld.info"}}<span>{{localize "GWORLD.Vehicle.NobodyAboard"}}</span></div>
+    {{/if}}
+  </div>
+
+  {{#if rules.vehicles}}
+    {{!-- The two things that happen to a vehicle in a fight. --}}
+    <div class="isec">
+      <div class="ish">{{localize "GWORLD.Vehicle.InPlay"}}</div>
+      <div class="istance">
+        <button type="button" class="ibtn" data-action="controlVehicle"
+                data-tooltip="{{localize 'GWORLD.Hazard.ControlHint'}}">
+          {{localize "GWORLD.Hazard.Control"}}
+        </button>
+        <button type="button" class="ibtn" data-action="shotAtVehicle"
+                data-tooltip="{{localize 'GWORLD.Vehicle.ShotAtHint'}}">
+          {{localize "GWORLD.Vehicle.ShotAt"}}
+        </button>
+      </div>
+      {{#if hitLocations.length}}
+        <div class="inote">
+          {{> "gworld.info"}}
+          <span>{{localize "GWORLD.Vehicle.HasLocations"}} {{#each hitLocations as |l|}}{{l}}{{#unless @last}}, {{/unless}}{{/each}}</span>
+        </div>
+      {{/if}}
+    </div>
+  {{/if}}
+
+  {{#if editable}}
+    {{!-- The columns as fields, for a vehicle the table is writing down itself. --}}
+    <div class="isec">
+      <div class="ish">{{localize "GWORLD.Vehicle.Edit"}}</div>
+      <div class="ifields">
+        <label><span>{{localize "GWORLD.Vehicle.StHp"}}</span>
+          <input type="number" name="system.vehicle.stHp" value="{{system.vehicle.stHp}}" min="0" step="1"></label>
+        <label><span>{{localize "GWORLD.Vehicle.Handling"}}</span>
+          <input type="number" name="system.vehicle.handling" value="{{system.vehicle.handling}}" step="1"></label>
+        <label><span>{{localize "GWORLD.Vehicle.Stability"}}</span>
+          <input type="number" name="system.vehicle.stability" value="{{system.vehicle.stability}}" min="0" step="1"></label>
+        <label><span>{{localize "GWORLD.Vehicle.Ht"}}</span>
+          <input type="number" name="system.vehicle.ht" value="{{system.vehicle.ht}}" min="1" step="1"></label>
+        <label data-tooltip="{{localize 'GWORLD.Vehicle.FragilityHint'}}">
+          <span>{{localize "GWORLD.Vehicle.Fragility"}}</span>
+          <select name="system.vehicle.fragility">
+            {{#each fragilities as |f|}}
+              <option value="{{f.key}}" {{#if f.selected}}selected{{/if}}>{{f.label}}</option>
+            {{/each}}
+          </select></label>
+        <label><span>{{localize "GWORLD.Vehicle.Acceleration"}}</span>
+          <input type="number" name="system.vehicle.acceleration" value="{{system.vehicle.acceleration}}" min="0" step="0.1"></label>
+        <label><span>{{localize "GWORLD.Vehicle.TopSpeed"}}</span>
+          <input type="number" name="system.vehicle.topSpeed" value="{{system.vehicle.topSpeed}}" min="0" step="0.1"></label>
+        <label><span>{{localize "GWORLD.Vehicle.LoadedWeight"}}</span>
+          <input type="number" name="system.vehicle.loadedWeight" value="{{system.vehicle.loadedWeight}}" min="0" step="0.01"></label>
+        <label><span>{{localize "GWORLD.Vehicle.Load"}}</span>
+          <input type="number" name="system.vehicle.load" value="{{system.vehicle.load}}" min="0" step="0.01"></label>
+        <label><span>{{localize "GWORLD.Vehicle.Sm"}}</span>
+          <input type="number" name="system.vehicle.sm" value="{{system.vehicle.sm}}" step="1"></label>
+        <label><span>{{localize "GWORLD.Vehicle.Occ"}}</span>
+          <input type="text" name="system.vehicle.occupants" value="{{system.vehicle.occupants}}"></label>
+        <label><span>{{localize "GWORLD.Vehicle.Dr"}}</span>
+          <input type="number" name="system.vehicle.dr" value="{{system.vehicle.dr}}" min="0" step="1"></label>
+        <label><span>{{localize "GWORLD.Vehicle.Range"}}</span>
+          <input type="number" name="system.vehicle.range" value="{{system.vehicle.range}}" min="0" step="1"></label>
+        <label><span>{{localize "GWORLD.Vehicle.Skill"}}</span>
+          <input type="text" name="system.vehicle.skill" value="{{system.vehicle.skill}}"></label>
+        <label data-tooltip="{{localize 'GWORLD.Vehicle.LocationsHint'}}">
+          <span>{{localize "GWORLD.Vehicle.Locations"}}</span>
+          <input type="text" name="system.vehicle.locations" value="{{system.vehicle.locations}}"></label>
+        <label><span>{{localize "GWORLD.Vehicle.LocomotionLabel"}}</span>
+          <select name="system.vehicle.locomotion">
+            {{#each locomotions as |l|}}
+              <option value="{{l.key}}" {{#if l.selected}}selected{{/if}}>{{l.label}}</option>
+            {{/each}}
+          </select></label>
+        <label><span>{{localize "GWORLD.Vehicle.Draft"}}</span>
+          <input type="number" name="system.vehicle.draft" value="{{system.vehicle.draft}}" min="0" step="0.1"></label>
+        <label><span>{{localize "GWORLD.Vehicle.Stall"}}</span>
+          <input type="number" name="system.vehicle.stall" value="{{system.vehicle.stall}}" min="0" step="1"></label>
+        <label><span>{{localize "GWORLD.Vehicle.Cost"}}</span>
+          <input type="number" name="system.cost" value="{{system.cost}}" min="0" step="1"></label>
+        <label><span>TL</span>
+          <input type="text" name="system.tl" value="{{system.tl}}"></label>
+        <label class="icheck" data-tooltip="{{localize 'GWORLD.Vehicle.RoadBoundHint'}}">
+          <input type="checkbox" name="system.vehicle.roadBound" {{#if system.vehicle.roadBound}}checked{{/if}}>
+          <span>{{localize "GWORLD.Vehicle.RoadBound"}}</span></label>
+      </div>
+      <label class="wide"><span>{{localize "GWORLD.Vehicle.Notes"}}</span>
+        <input type="text" name="system.notes" value="{{system.notes}}"></label>
+    </div>
+  {{else}}
+    {{#if system.notes}}
+      <div class="inote">{{> "gworld.info"}}<span>{{system.notes}}</span></div>
+    {{/if}}
+  {{/if}}
+
+  {{#if descriptionHTML}}
+    <div class="isec"><div class="idesc">{{{descriptionHTML}}}</div></div>
+  {{/if}}
+
+</div>
+</div>

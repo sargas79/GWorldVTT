@@ -149,6 +149,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       addMode: GWorldItemSheet.#onAddMode,
       repairWeapon: GWorldItemSheet.#onRepairWeapon,
       exposureCheck: GWorldItemSheet.#onExposureCheck,
+      putOnTheRoad: GWorldItemSheet.#onPutOnTheRoad,
       deleteMode: GWorldItemSheet.#onDeleteMode,
       addDefault: GWorldItemSheet.#onAddDefault,
       deleteDefault: GWorldItemSheet.#onDeleteDefault,
@@ -573,6 +574,37 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       skillName: own?.name ?? game.i18n.localize("GWORLD.Repair.AnySkill"),
       modifier,
     });
+  }
+
+  /**
+   * Makes the vehicle this entry describes (Campaigns pp. 462-469).
+   *
+   * The catalogue entry says what a car costs and what you get for the money.
+   * The car itself has hit points, people inside it and a speed it is going
+   * at, so it is an actor with a sheet of its own; this copies the statistics
+   * across and opens it.
+   */
+  static async #onPutOnTheRoad(this: GWorldItemSheet) {
+    const item = this.item;
+    if (item.type !== "equipment" || item.system?.category !== "vehicle") return;
+    if (!game.user?.can?.("ACTOR_CREATE")) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Vehicle.CannotCreate"));
+      return;
+    }
+    const created = await Actor.implementation.create({
+      name: String(item.name),
+      type: "vehicle",
+      img: String(item.img ?? ""),
+      system: {
+        vehicle: foundry.utils.deepClone(item.system.vehicle ?? {}),
+        cost: Number(item.system.cost) || 0,
+        tl: String(item.system.tl ?? ""),
+        description: String(item.system.description ?? ""),
+        // It arrives whole, whatever state the entry on the shelf is in.
+        hp: { value: Number(item.system.vehicle?.stHp) || 0 },
+      },
+    });
+    await created?.sheet?.render(true);
   }
 
   /** A day in the sand, or a month of neglect (Campaigns p. 485). */

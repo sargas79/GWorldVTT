@@ -96,6 +96,73 @@ function physicalFields() {
 }
 
 /** Fields shared by every item type. */
+/**
+ * The vehicle statistics the tables print (GURPS Basic Set: Campaigns
+ * pp. 462-463).
+ *
+ * Shared, because a vehicle is two things: an entry in a catalogue that a
+ * character owns, and a machine on the map that people ride in and shoot at.
+ * Both read the same columns, so both are given the same fields rather than
+ * one copying the other and drifting.
+ */
+export function vehicleStatFields() {
+  return {
+    /**
+     * "The vehicle's ST and HP. These are equal for a powered vehicle." An
+     * unpowered one has HP only, and its ST is zero.
+     */
+    stHp: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 10, min: 0 }),
+    /** "The first number is Handling; the second is Stability Rating." */
+    handling: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+    stability: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 2, min: 0 }),
+    /** "A measure of reliability and ruggedness." */
+    ht: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 10, min: 1 }),
+    /**
+     * How fragile it is, from the code beside HT: "c" for Combustible, "f"
+     * for Flammable, "x" for Explosive. Blank for a vehicle that is none.
+     */
+    fragility: new fields.StringField({
+      required: true, nullable: false, blank: true, initial: "",
+      choices: ["", "c", "f", "x"],
+    }),
+    /** "The first number is Acceleration and the second is Top Speed, in yards/second." */
+    acceleration: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0 }),
+    topSpeed: new fields.NumberField({ required: true, nullable: false, initial: 10, min: 0 }),
+    /** "Loaded Weight, in tons ... with maximum payload and a full load of fuel." */
+    loadedWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+    /** "The weight, in tons, of occupants and cargo the vehicle can carry." */
+    load: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+    sm: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+    /** "The number of occupants ... given as 'crew+passengers'." */
+    occupants: new fields.StringField({ required: true, blank: true, initial: "1" }),
+    dr: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+    /** "The travel distance, in miles, before the vehicle runs out of fuel." */
+    range: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+    skill: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /**
+     * The Locations column as the tables print it: "G4W" is a large glass
+     * window and four wheels, "2CX" two caterpillar tracks and an exposed
+     * weapon mount (Campaigns pp. 463, 554).
+     */
+    locations: new fields.StringField({ required: true, blank: true, initial: "" }),
+    locomotion: new fields.StringField({
+      required: true, nullable: false, initial: "wheels",
+      choices: ["wheels", "tracks", "legs", "runners", "water", "air"],
+    }),
+    roadBound: new fields.BooleanField({ initial: false }),
+    /**
+     * "For a watercraft, the minimum depth of water, in feet, it can safely
+     * operate in." Zero for anything that is not a boat.
+     */
+    draft: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+    /**
+     * "For an aircraft, the minimum speed, in yards/second, it must maintain
+     * to take off and stay airborne. '0' means it can hover."
+     */
+    stall: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+  };
+}
+
 function descriptionFields() {
   return {
     description: new fields.HTMLField({ required: true, blank: true, initial: "" }),
@@ -686,6 +753,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
     acceleration: number; topSpeed: number; loadedWeight: number; load: number;
     sm: number; occupants: string; dr: number; range: number; skill: string; locations: string;
     locomotion: "wheels" | "tracks" | "legs" | "runners" | "water" | "air"; roadBound: boolean;
+    fragility: "" | "c" | "f" | "x"; draft: number; stall: number;
   };
 
   static override defineSchema() {
@@ -788,32 +856,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
        * top speed in yards a second, weights in tons, SM, occupants as
        * "crew+passengers", DR, range in miles, and the control skill.
        */
-      vehicle: new fields.SchemaField({
-        stHp: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 10, min: 0 }),
-        handling: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
-        stability: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 2, min: 0 }),
-        ht: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 10, min: 1 }),
-        acceleration: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0 }),
-        topSpeed: new fields.NumberField({ required: true, nullable: false, initial: 10, min: 0 }),
-        loadedWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
-        load: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
-        sm: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
-        occupants: new fields.StringField({ required: true, blank: true, initial: "1" }),
-        dr: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
-        range: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
-        skill: new fields.StringField({ required: true, blank: true, initial: "" }),
-        /**
-         * The Locations column as the tables print it: "G4W" is a large glass
-         * window and four wheels, "2CX" two caterpillar tracks and an exposed
-         * weapon mount (Campaigns pp. 463, 554).
-         */
-        locations: new fields.StringField({ required: true, blank: true, initial: "" }),
-        locomotion: new fields.StringField({
-          required: true, nullable: false, initial: "wheels",
-          choices: ["wheels", "tracks", "legs", "runners", "water", "air"],
-        }),
-        roadBound: new fields.BooleanField({ initial: false }),
-      }),
+      vehicle: new fields.SchemaField(vehicleStatFields()),
     };
   }
 

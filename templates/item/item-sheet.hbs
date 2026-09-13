@@ -727,7 +727,17 @@
         {{#if isVehicle}}
           {{!-- The stat line as the tables print it (Campaigns pp. 462-465). --}}
           <div class="isub">
-            <div class="isub-head">{{localize "GWORLD.Vehicle.Statistics"}}</div>
+            <div class="isub-head">
+              {{localize "GWORLD.Vehicle.Statistics"}}
+              {{#if editable}}
+                {{!-- The catalogue entry is what a car costs; this makes the
+                     car (Campaigns pp. 462-469). --}}
+                <button type="button" class="ibtn tiny" data-action="putOnTheRoad"
+                        data-tooltip="{{localize 'GWORLD.Vehicle.PutOnTheRoadHint'}}">
+                  {{localize "GWORLD.Vehicle.PutOnTheRoad"}}
+                </button>
+              {{/if}}
+            </div>
             <div class="ifields">
               <label>{{localize "GWORLD.Vehicle.StHp"}}
                 <input type="number" name="system.vehicle.stHp" value="{{system.vehicle.stHp}}" step="1" min="0" {{#unless editable}}disabled{{/unless}} /></label>
