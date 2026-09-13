@@ -32,6 +32,11 @@ function copyStaticAssets(): Plugin {
 
 export default defineConfig({
   plugins: [copyStaticAssets()],
+  // Foundry names a registered sheet after its class -- "gworld.GWorldNpcSheet"
+  // -- and stores that name when a GM chooses a sheet. Minified, the classes
+  // were "D" and "qe", names the next build hands to something else, so a
+  // chosen sheet could come back as the wrong one after an update.
+  esbuild: { keepNames: true },
   build: {
     outDir: "dist",
     emptyOutDir: true,

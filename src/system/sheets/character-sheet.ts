@@ -2845,6 +2845,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       stepPoints: GWorldCharacterSheet.#onStepPoints,
       stepLevels: GWorldCharacterSheet.#onStepLevels,
       editItem: GWorldCharacterSheet.#onEditItem,
+      showSummary: GWorldCharacterSheet.#onShowSummary,
       deleteItem: GWorldCharacterSheet.#onDeleteItem,
       toggleEquipped: GWorldCharacterSheet.#onToggleEquipped,
       toggleSkillOrder: GWorldCharacterSheet.#onToggleSkillOrder,
@@ -3297,6 +3298,22 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       },
 
       magic: this.#magicPanel(derived, items.spellGroups, system.activeSpells ?? []),
+
+      // An NPC is edited here too, and has a few fields a character does not:
+      // how many are in the scene, how they fight, and whether they are a swarm.
+      npc: actor.type === "npc"
+        ? {
+            // Only where this sheet was opened from the one-pane NPC sheet,
+            // which is then still the actor's own sheet to go back to.
+            canShowSummary: actor.sheet !== this,
+            cannonFodderInPlay: isRuleOn("cannonFodder"),
+            swarmKinds: { tiny: "GWORLD.Swarm.Kind.tiny", large: "GWORLD.Swarm.Kind.large" },
+            damageTypes: Object.fromEntries(
+              ["cr", "cut", "imp", "pi-", "pi", "pi+", "pi++", "burn", "cor", "fat", "tox"]
+                .map((t) => [t, `GWORLD.DamageType.${t}`]),
+            ),
+          }
+        : null,
 
       biographyHTML: await enrich(system.details.biography ?? ""),
       notesHTML: await enrich(system.details.notes ?? ""),
@@ -5227,6 +5244,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onEditItem(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const item = this.#itemFrom(target);
     item?.sheet?.render({ force: true });
+  }
+
+  /** From editing an NPC back to the one-pane sheet it was opened from. */
+  static async #onShowSummary(this: GWorldCharacterSheet) {
+    const summary = this.actor.sheet;
+    if (!summary || summary === this) return;
+    await summary.render({ force: true });
+    await this.close();
   }
 
   static async #onDeleteItem(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
