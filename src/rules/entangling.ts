@@ -69,9 +69,10 @@ export type BolasHit =
   /** Anywhere else: it wraps around and is a nuisance. */
   | "entangles"
   /**
-   * The neck. The book's sentence for this is cut off at the page break in
-   * the text this was written from, so it is left to the GM rather than
-   * guessed at.
+   * The neck: "the bolas cuts off the target's breathing (see Suffocation,
+   * p. 436) until he escapes." The same thing a lariat round the neck does,
+   * except that a bolas needs no Contest to keep it there -- it is tied on,
+   * and only the three escape rolls take it off.
    */
   | "neck";
 
@@ -81,6 +82,17 @@ export function bolasHit(location: string): BolasHit {
   if (where === "arm" || where === "hand" || where === "weapon") return "disarms";
   if (where === "leg" || where === "foot") return "trips";
   return "entangles";
+}
+
+/**
+ * Whether a bolas stops the victim breathing (p. 410).
+ *
+ * Only round the neck, and then until he is out of it -- so the caller runs
+ * {@link ../suffocation.js suffocation} for every second the escape rolls are
+ * still being failed.
+ */
+export function bolasSuffocates(location: string): boolean {
+  return bolasHit(location) === "neck";
 }
 
 /** "a running target must make a DX roll or fall, taking 1d-2 damage." */
@@ -276,17 +288,26 @@ export function molotovEffect(options: {
  * happens if he fails to defend but does not have DR 3+ (the bottle bounces
  * off without breaking). If he blocks, it breaks on his shield."
  *
- * Note which way round the second clause reads: a man in soft clothes is not
- * set alight, because the bottle needs something hard to break on.
+ * "The same thing" is the shattering at his feet. The parenthesis explains why
+ * it does not break on him -- nothing hard enough -- not that it fails to
+ * break at all: it bounces off a man in soft clothes and bursts on the ground,
+ * so he is standing in the fire rather than wearing it.
+ *
+ * The bottle that genuinely stays whole is the malfunction: "on any attack roll
+ * of 12+, the fuse separates from the bottle in flight, the bottle fails to
+ * break, or the fuel doesn't ignite."
  */
 export function molotovLanding(options: {
   defense: "dodge" | "block" | "none";
   /** The DR of whatever the bottle would strike. */
   targetDr: number;
+  /** True where the attack roll reached the Molotov's Malf. of 12. */
+  malfunctioned?: boolean;
 }): MolotovLanding {
+  if (options.malfunctioned) return "unbroken";
   if (options.defense === "block") return "shield";
   if (options.defense === "dodge") return "ground";
-  return options.targetDr >= MOLOTOV_BREAKS_ON_DR ? "target" : "unbroken";
+  return options.targetDr >= MOLOTOV_BREAKS_ON_DR ? "target" : "ground";
 }
 
 /**

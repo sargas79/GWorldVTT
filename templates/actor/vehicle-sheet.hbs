@@ -83,6 +83,7 @@
     <div class="inote">
       {{> "gworld.info"}}
       <span>{{localize "GWORLD.Vehicle.DecadeScale" dr=decadeScale.dr hp=decadeScale.hp}}</span>
+      <button type="button" class="ibtn tiny" data-action="scaleDamage">{{localize "GWORLD.Vehicle.ScaleTitle"}}</button>
     </div>
   {{/if}}
 
@@ -108,6 +109,12 @@
               <button type="button" class="ibtn tiny" data-action="takeTheWheel" data-uuid="{{p.uuid}}"
                       data-tooltip="{{localize 'GWORLD.Vehicle.TakeTheWheelHint'}}">
                 {{localize "GWORLD.Vehicle.TakeTheWheel"}}
+              </button>
+            {{/if}}
+            {{#if @root.editable}}
+              <button type="button" class="ibtn tiny {{#if p.strappedIn}}active{{/if}}" data-action="toggleStrappedIn" data-uuid="{{p.uuid}}"
+                      data-tooltip="{{localize 'GWORLD.Vehicle.StrappedInHint'}}">
+                {{#if p.strappedIn}}{{localize "GWORLD.Vehicle.StrappedIn"}}{{else}}{{localize "GWORLD.Vehicle.Loose"}}{{/if}}
               </button>
             {{/if}}
             {{#if @root.rules.vehicleManeuvers}}

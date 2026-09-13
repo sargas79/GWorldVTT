@@ -16,7 +16,10 @@ import { SYSTEM_ID } from "../constants.js";
 import { isRuleOn } from "../optional-rules.js";
 import { controlVehicle, jumpOutOfVehicle, shootAtVehicle } from "../hazards.js";
 import { promptForNumber } from "../roll.js";
+import { damageAtScale, hitPointsAfterBattle } from "../damage-scale.js";
+import type { DamageScale } from "../../rules/scale.js";
 import { LOCOMOTIONS, leaveSeat } from "../../rules/vehicles.js";
+import type { DamageType } from "../../rules/types.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -30,13 +33,25 @@ const L = (key: string, data?: Record<string, unknown>) =>
 const NOTHING = "—";
 
 /** How much damage got through, and how many people are inside to catch it. */
-async function promptForHit(aboard: number): Promise<{ penetrating: number; occupants: number } | null> {
+async function promptForHit(aboard: number): Promise<{
+  penetrating: number;
+  occupants: number;
+  damageType: DamageType;
+  tightBeam: boolean;
+} | null> {
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("ShotAt") },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Penetrating")}</span>
         <input type="number" name="damage" value="0" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("DamageType")}</span>
+        <select name="damageType" style="width:120px"><option value="cr">cr</option><option value="cut">cut</option><option value="imp">imp</option><option value="pi-">pi-</option><option value="pi">pi</option><option value="pi+">pi+</option><option value="pi++">pi++</option><option value="burn">burn</option><option value="cor">cor</option><option value="tox">tox</option><option value="fat">fat</option></select>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="tightBeam"><span>${L("TightBeam")}</span>
       </label>
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Aboard")}</span>
@@ -50,7 +65,12 @@ async function promptForHit(aboard: number): Promise<{ penetrating: number; occu
         const form = button.closest<HTMLElement>(".application");
         const num = (name: string) =>
           Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
-        return { penetrating: num("damage"), occupants: num("occupants") };
+        return {
+          penetrating: num("damage"),
+          occupants: num("occupants"),
+          damageType: (form?.querySelector<HTMLSelectElement>('select[name="damageType"]')?.value || "cr") as DamageType,
+          tightBeam: form?.querySelector<HTMLInputElement>('input[name="tightBeam"]')?.checked ?? false,
+        };
       },
     },
     rejectClose: false,
@@ -69,6 +89,8 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       shotAtVehicle: GWorldVehicleSheet.#onShotAt,
       jumpOut: GWorldVehicleSheet.#onJumpOut,
       takeTheWheel: GWorldVehicleSheet.#onTakeTheWheel,
+      toggleStrappedIn: GWorldVehicleSheet.#onToggleStrappedIn,
+      scaleDamage: GWorldVehicleSheet.#onScaleDamage,
       removeOccupant: GWorldVehicleSheet.#onRemoveOccupant,
       openOccupant: GWorldVehicleSheet.#onOpenOccupant,
     },
@@ -100,6 +122,7 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
         name: String(person.name ?? ""),
         img: String(person.img ?? ""),
         operator: seat.operator === true,
+        strappedIn: seat.strappedIn === true,
         hp: person.system?.hp ?? null,
       });
     }
@@ -230,18 +253,89 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       ui.notifications?.info(L("AlreadyAboard", { name: String(person.name) }));
       return null;
     }
-    crew.push({ uuid, operator: crew.length === 0 });
+    crew.push({ uuid, operator: crew.length === 0, strappedIn: false });
     await this.actor.update({ "system.crew": crew });
     return null;
+  }
+
+  /**
+   * Carries a weapon's damage down to the battle's scale, or this vehicle's
+   * remaining hit points back up once it is over (p. 470).
+   */
+  static async #onScaleDamage(this: GWorldVehicleSheet) {
+    const asked = await foundry.applications.api.DialogV2.prompt({
+      window: { title: L("ScaleTitle") },
+      content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>${L("ScaleWhich")}</span>
+          <select name="scale" style="width:150px">
+            <option value="decade">${L("ScaleDecade")}</option>
+            <option value="century">${L("ScaleCentury")}</option>
+          </select>
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>${L("ScaleDamage")}</span>
+          <input type="text" name="damage" value="6dx10" style="width:120px">
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>${L("ScaleRemaining")}</span>
+          <input type="number" name="remaining" value="0" min="0" step="1" style="width:90px">
+        </label>
+      </div>`,
+      ok: {
+        label: game.i18n.localize("GWORLD.Chat.Roll"),
+        callback: (_event: Event, button: HTMLElement) => {
+          const form = button.closest<HTMLElement>(".application");
+          return {
+            scale: (form?.querySelector<HTMLSelectElement>('select[name="scale"]')?.value ?? "decade") as DamageScale,
+            damage: form?.querySelector<HTMLInputElement>('input[name="damage"]')?.value ?? "",
+            remaining: Number(form?.querySelector<HTMLInputElement>('input[name="remaining"]')?.value ?? 0) || 0,
+          };
+        },
+      },
+      rejectClose: false,
+    });
+    if (!asked || typeof asked !== "object") return;
+    const { scale, damage, remaining } = asked as { scale: DamageScale; damage: string; remaining: number };
+
+    const lines: string[] = [];
+    const scaled = damageAtScale({ damage, scale });
+    if (scaled) lines.push(game.i18n.format("GWORLD.Vehicle.ScaledDamage", { damage, scaled }));
+    if (remaining > 0) {
+      lines.push(game.i18n.format("GWORLD.Vehicle.ScaledBack", {
+        remaining,
+        full: hitPointsAfterBattle({ remaining, scale }),
+      }));
+    }
+    if (lines.length === 0) return;
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor: this.actor }),
+      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+      content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${L("ScaleTitle")}</span></div>
+        <div class="gc-mods">${lines.map((l) => `<span class="gc-mod">${l}</span>`).join("")}</div></div>`,
+    });
+  }
+
+  /** Buckles somebody in, or lets them loose (p. 469). */
+  static async #onToggleStrappedIn(this: GWorldVehicleSheet, _event: Event, target: HTMLElement) {
+    const uuid = target.dataset.uuid;
+    if (!uuid || !this.actor.isOwner) return;
+    const crew = (this.actor.system.crew ?? []).map((seat: { uuid: string; operator: boolean; strappedIn?: boolean }) => ({
+      uuid: seat.uuid,
+      operator: seat.operator === true,
+      strappedIn: seat.uuid === uuid ? !(seat.strappedIn === true) : seat.strappedIn === true,
+    }));
+    await this.actor.update({ "system.crew": crew });
   }
 
   static async #onTakeTheWheel(this: GWorldVehicleSheet, _event: Event, target: HTMLElement) {
     const uuid = target.dataset.uuid;
     if (!uuid || !this.actor.isOwner) return;
     // One pair of hands on the wheel: taking it takes it from whoever had it.
-    const crew = (this.actor.system.crew ?? []).map((seat: { uuid: string }) => ({
+    const crew = (this.actor.system.crew ?? []).map((seat: { uuid: string; strappedIn?: boolean }) => ({
       uuid: seat.uuid,
       operator: seat.uuid === uuid,
+      strappedIn: seat.strappedIn === true,
     }));
     await this.actor.update({ "system.crew": crew });
   }

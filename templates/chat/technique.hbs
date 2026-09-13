@@ -1,0 +1,28 @@
+{{!-- An unarmed technique (Campaigns pp. 403-404). --}}
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{title}}</span>
+    {{#if rolled}}<span class="gc-target">{{skill}} {{target}}</span>{{/if}}
+  </div>
+  {{#if rolled}}
+    {{#if modifiers.length}}
+      <div class="gc-mods">
+        {{#each modifiers as |m|}}<span class="gc-mod">{{m.label}} {{signed m.value}}</span>{{/each}}
+      </div>
+    {{/if}}
+    <div class="gc-dice">
+      {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+      <span class="gc-total">{{total}}</span>
+    </div>
+    <div class="gc-result {{#if outcome.success}}success{{else}}failure{{/if}}">
+      {{#if outcome.success}}{{localize "GWORLD.Technique.Hits"}}{{else}}{{localize "GWORLD.Technique.Misses"}}{{/if}}
+    </div>
+  {{/if}}
+  {{#if notes.length}}
+    <div class="gc-mods">
+      {{#each notes as |note|}}
+        <span class="{{#if note.grave}}gc-warn{{else}}gc-mod{{/if}}">{{localize (concat "GWORLD.Technique.Note." note.key) damage=note.data.damage dr=note.data.dr wounding=note.data.wounding bonus=note.data.bonus penalty=note.data.penalty fp=note.data.fp}}</span>
+      {{/each}}
+    </div>
+  {{/if}}
+</div>

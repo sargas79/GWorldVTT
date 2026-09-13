@@ -29,6 +29,7 @@ import {
   traitEffects,
   type TraitEffects,
 } from "../../rules/trait-effects.js";
+import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
 import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
@@ -93,12 +94,15 @@ import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
 import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js";
 import { fatigueStatus, isVeryTired } from "../../rules/fatigue.js";
-import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
+import {
+  INFLUENCE_SKILLS,
+  automaticSkillBonus,
+} from "../../rules/reactions.js";
 import { mountedDefensePenalty } from "../../rules/mounted.js";
 import { supportEffect } from "../../rules/accessories.js";
-import { penaltyEffects } from "../../rules/attribute-penalties.js";
-import { afflictionsOn } from "../afflictions.js";
-import { psionicsOf } from "../../rules/psionics.js";
+import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalties.js";
+import { afflictionsOn, painThresholdOf } from "../afflictions.js";
+import { powersOf } from "../../rules/powers.js";
 import {
   effectiveSkillLevel,
   namedDefaultLevel,
@@ -176,6 +180,27 @@ function poolField() {
   });
 }
 
+/**
+ * The fields of an actor's `details`, built fresh on every call.
+ *
+ * Fresh because Foundry lets a data field belong to one schema only: an NPC
+ * that adds a field to its details cannot spread the character's field
+ * instances into a schema of its own, or loading the world fails with "the
+ * 'player' field already belongs to some other parent". So a subclass calls
+ * this and adds to what it gets back.
+ */
+export function detailsFields() {
+  return {
+    player: new fields.StringField({ required: true, blank: true, initial: "" }),
+    height: new fields.StringField({ required: true, blank: true, initial: "" }),
+    weight: new fields.StringField({ required: true, blank: true, initial: "" }),
+    age: new fields.StringField({ required: true, blank: true, initial: "" }),
+    appearance: new fields.StringField({ required: true, blank: true, initial: "" }),
+    biography: new fields.HTMLField({ required: true, blank: true, initial: "" }),
+    notes: new fields.HTMLField({ required: true, blank: true, initial: "" }),
+  };
+}
+
 /** A resolved attack mode, ready for the Combat tab to render. */
 export interface DerivedAttack {
   itemId: string;
@@ -218,6 +243,17 @@ export interface DerivedAttack {
   projectiles?: number;
   /** The 1/2D range in yards, inside a tenth of which pellets strike as one. Ranged only. */
   halfDamageRange?: number;
+  /** The Max range in yards, which is how far a steered projectile can fly. Ranged only. */
+  maxRange?: number;
+  /**
+   * How the projectile steers, blank for one that does not (Campaigns p. 412).
+   * A steered weapon reads 1/2D as its speed rather than a damage threshold.
+   */
+  guidance?: string;
+  /** True for an attack that covers ground rather than striking a point (p. 413). */
+  areaAttack?: boolean;
+  /** A cone's widest, in yards; zero where the table does not say. */
+  coneMaxWidth?: number;
   /** True for a punch, kick, bite or grapple, which fumbles on its own table. */
   unarmed: boolean;
   /**
@@ -232,6 +268,12 @@ export interface DerivedAttack {
    * force sword's flat 8d is not one of them.
    */
   stBased: boolean;
+  /** "thr" or "sw" for an ST-based weapon, blank otherwise: what a pulled blow re-reads. */
+  damageBase?: string;
+  /** The weapon's flat damage modifier on top of its base, for the same. */
+  damageModifier?: number;
+  /** For a punch or a kick, which one: re-derived whole at a pulled ST. */
+  naturalKey?: string;
   /** An affliction, which is resisted rather than damaging. */
   affliction: boolean;
   /** The attribute it is resisted with, e.g. "HT". Blank when not an affliction. */
@@ -289,6 +331,12 @@ export interface DerivedAttack {
   /** A built-in scope's bonus, which the table lists separately as in "7+2". */
   scopeBonus?: number;
   range?: string;
+  /** Which Malediction the attack is (Characters p. 106), or 0 for an ordinary one. */
+  malediction?: number;
+  /** True when DR does nothing against it, as for a Malediction. */
+  ignoresDr?: boolean;
+  /** A holy weapon's blow, which also burns what holy things hurt (Monster Hunters 1 p. 51). */
+  holy?: boolean;
   rateOfFire?: number;
   /** Recoil, which decides how many of a burst's shots hit. */
   recoil?: number;
@@ -373,6 +421,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     successes: number;
     failures: number;
     mustBeCut: boolean;
+    where: string;
+    running: boolean;
   };
   declare points: {
     starting: number;
@@ -385,6 +435,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare maneuver: Maneuver;
   declare evaluateTurns: number;
   declare aim: { turns: number; braced: boolean };
+  declare allOutAttackOption: "determined" | "double" | "feint" | "strong" | "suppression";
   declare allOutDefenseOption: "increased" | "double";
   declare allOutDefenseTarget: "dodge" | "parry" | "block";
   declare posture: Posture;
@@ -518,6 +569,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         failures: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
         /** True past three failures running: "he must be cut free." */
         mustBeCut: new fields.BooleanField({ initial: false }),
+        /**
+         * Where it caught them (Campaigns pp. 410-411). A bolas does something
+         * different to every part of the body, and a lariat round the neck is
+         * a different Contest from one round the arm, so the escape is not the
+         * whole of what is happening to them.
+         */
+        where: new fields.StringField({
+          required: true, nullable: false, blank: true, initial: "",
+          choices: ["", "torso", "arm", "hand", "weapon", "leg", "foot", "neck"],
+        }),
+        /** True where they were running when it caught them, which is what trips them. */
+        running: new fields.BooleanField({ initial: false }),
       }),
 
       tl: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 3 }),
@@ -556,6 +619,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           required: true, nullable: false, integer: true, initial: 0, min: 0,
         }),
         braced: new fields.BooleanField({ initial: false }),
+      }),
+
+      /**
+       * All-Out Attack option (GURPS Basic Set: Campaigns p. 365), which "you
+       * must specify ... before you attack". Determined is +4 to hit in melee
+       * and +1 at range; Strong is +2 damage, or +1 a die, for ST-based melee;
+       * Double and Feint are a second action the table takes; Suppression Fire
+       * is the ranged option for RoF 5+.
+       */
+      allOutAttackOption: new fields.StringField({
+        required: true, nullable: false, initial: "determined",
+        choices: ["determined", "double", "feint", "strong", "suppression"],
       }),
 
       /**
@@ -652,6 +727,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           /** The items it added, so removing it removes exactly those. */
           itemIds: new fields.ArrayField(
             new fields.StringField({ required: true, blank: true, initial: "" }),
+            { required: true, initial: [] },
+          ),
+          /**
+           * Items an earlier template added that this one raised, and what
+           * they were, so taking it off lowers them again (p. 259).
+           */
+          raised: new fields.ArrayField(
+            new fields.SchemaField({
+              id: new fields.StringField({ required: true, blank: true, initial: "" }),
+              points: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
+              levels: new fields.NumberField({ required: false, nullable: true, initial: null }),
+            }),
             { required: true, initial: [] },
           ),
         }),
@@ -800,15 +887,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         risk: new fields.StringField({ required: true, blank: true, initial: "" }),
       }),
 
-      details: new fields.SchemaField({
-        player: new fields.StringField({ required: true, blank: true, initial: "" }),
-        height: new fields.StringField({ required: true, blank: true, initial: "" }),
-        weight: new fields.StringField({ required: true, blank: true, initial: "" }),
-        age: new fields.StringField({ required: true, blank: true, initial: "" }),
-        appearance: new fields.StringField({ required: true, blank: true, initial: "" }),
-        biography: new fields.HTMLField({ required: true, blank: true, initial: "" }),
-        notes: new fields.HTMLField({ required: true, blank: true, initial: "" }),
-      }),
+      details: new fields.SchemaField(detailsFields()),
     };
   }
 
@@ -1204,11 +1283,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ),
       // A reaction modifier typed onto the trait by the GM.
       reactionModifier: Number(item.system?.reactionModifier ?? 0) || 0,
+      // A Talent's own list of skills, which is all a Talent from another book has.
+      talentSkills: ((item.system?.talentSkills ?? []) as unknown[]).map((s) => String(s)),
+      // The power the trait belongs to, and whether it is that power's Talent,
+      // as a book's entry states them; a Talent's cap is its maximum level.
+      power: String(item.system?.power ?? ""),
+      powerTalent: item.system?.powerTalent === true,
+      maxLevels: Number(item.system?.maxLevels ?? 0) || 0,
     }));
     const traits = traitEffects(heldTraits);
     // What the afflictions on this character come to (pp. 428-429). Read once,
     // because the penalties reach the attributes, the defenses and the sheet.
-    const afflicted = afflictionsOn(this.parent);
+    // Pain Threshold changes what pain and agony cost (p. 428).
+    const afflicted = afflictionsOn(this.parent, painThresholdOf(traits));
     // Levels of the Appearance advantage: Attractive is 1, and nothing below
     // it counts for Bulletproof Nudity (p. 417).
     const appearanceLevels = Math.max(
@@ -1237,7 +1324,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // carried, so each is its own figure rather than a change to ST.
     // Arm ST is both: strength "for the purpose of lifting or striking with
     // that arm", and for nothing that is not done with the arms.
-    const strikingSt = attrs.ST + traits.strikingSt + traits.armSt;
+    // "ST reductions affect the damage you inflict with muscle-powered
+    // weapons" (p. 421), so a temporary ST penalty comes off the ST damage is
+    // looked up at -- and only there: it leaves HP, Basic Lift and every other
+    // ST-based figure alone, which is why it is applied to this and not to ST.
+    // Very tired is different, and deliberately absent: halved ST "does not
+    // affect ST-based quantities, such as HP and damage" (p. 426).
+    const strikingSt = strengthForDamage({
+      strength: attrs.ST + traits.strikingSt + traits.armSt,
+      penalties: { ST: this.attributePenalties.ST },
+    });
     const liftingSt = attrs.ST + traits.liftingSt + traits.armSt;
 
     // Granted and purchased levels both move the score; only purchased ones
@@ -1325,7 +1421,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // to a skill by name rather than through an attribute.
       // What the talents add to this skill by name, on top of anything typed
       // into the skill's own bonus field.
-      const talentBonus = talentBonusFor(String(item.name ?? ""), talents);
+      const talentBonus = talentBonusFor(String(item.name ?? ""), talents, {
+        difficulty: sys.difficulty,
+        wildcardsExcluded: isRuleOn("talentsSkipWildcards"),
+      });
       // The tools of this trade, if any are carried (Campaigns p. 345).
       const toolBonus = toolBonuses[String(item.name ?? "").trim()] ?? 0;
       const resolved = effectiveSkillLevel({
@@ -1516,6 +1615,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const armed = [
       ...this.itemsOfType("equipment"),
       ...this.itemsOfType("shield").filter((i) => i.system?.equipped),
+      // An advantage that is an attack -- Burning Attack, a power's
+      // Pyrokinesis -- is always to hand (Characters p. 61).
+      ...this.itemsOfType("trait").filter(
+        (i) => (i.system?.meleeModes ?? []).length > 0 || (i.system?.rangedModes ?? []).length > 0,
+      ),
     ];
 
     // "-3 to use any skill that requires the use of your legs, including all
@@ -1529,6 +1633,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
      * of somebody who never learned Guns is still a pistol, at DX-4.
      */
     const weaponSkill = (name: string, melee = false): { level: number | null; atDefault: boolean } => {
+      // "Roll against your Will" (Characters p. 106): a mode may name an
+      // attribute where a weapon names its skill.
+      const attribute = attackAttribute(name);
+      if (attribute) {
+        const score = attribute === "Will" ? secondary.will : attribute === "Per" ? secondary.per : attrs[attribute];
+        return { level: Number(score) || 10, atDefault: false };
+      }
       const own = this.skillLevelByName(name);
       if (own !== null) return { level: own + (melee ? legs : 0), atDefault: false };
       const listed = catalogSkill(name);
@@ -1624,12 +1735,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // its modes was used.
       const unready = Boolean((sys as any).unready);
 
+      // A trait's attack bought in levels does its dice per level (p. 61).
+      const levels = item.type === "trait" ? Number((sys as any).levels ?? 0) || 0 : 0;
+      const perLevel = (mode: any, damage: string): string =>
+        item.type === "trait" && mode.perLevel ? levelledDamage(damage, levels) : damage;
+
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
         const { level: skillLevel, atDefault } = short(enchantedSkill(weaponSkill(mode.skill, true)), mode.minSt ?? null);
-        const meleeDamage = mode.damageSpecial ? SPECIAL : withQuality(withPuissance(resolveDamage(
+        const meleeDamage = mode.damageSpecial ? SPECIAL : withQuality(withPuissance(perLevel(mode, resolveDamage(
           strikingSt, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
           Number(mode.damageExtraDice ?? 0) || 0,
-        )), mode.damageType);
+        ))), mode.damageType);
         melee.push({
           itemId: item.id,
           modeIndex: index,
@@ -1649,6 +1765,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           }),
           damage: meleeDamage,
           damageType: mode.damageSpecial ? "" : mode.damageType,
+          holy: Boolean((sys as any).holy),
           // "A stone blade has an armor divisor of (0.5)" (Characters p. 275).
           armorDivisor: materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
           damageRollable: !mode.affliction && !mode.damageSpecial && parseDiceAdds(meleeDamage) !== null,
@@ -1683,6 +1800,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           // skill: a Karate kick fumbles differently from a dropped axe.
           unarmed: isUnarmedSkill(mode.skill),
           stBased: mode.damageBase === "thr" || mode.damageBase === "sw",
+          damageBase: String(mode.damageBase ?? ""),
+          damageModifier: Number(mode.damageModifier ?? 0) || 0,
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),
@@ -1699,11 +1818,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // Weapon Quality" (Characters p. 276): the cutting and impaling bonus
         // is theirs; a firearm's fine grade is in its Acc and Malf. instead.
         const rangedDamage = mode.damageSpecial ? SPECIAL : (firearm ? (d: string) => d : (d: string) => withQuality(d, mode.damageType))(
-          withPuissance(resolveDamage(
+          withPuissance(perLevel(mode, resolveDamage(
             st, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
             Number(mode.damageExtraDice ?? 0) || 0,
-          )),
+          ))),
         );
+        // A Malediction has no range statistics of its own: its penalty comes
+        // from how far away the victim is, and DR does nothing to it (p. 106).
+        const malediction = Math.max(0, Math.min(3, Number(mode.malediction ?? 0) || 0));
         // What it is loaded with changes the wound, the divisor, the range
         // and, for APDS, the damage (Characters pp. 276, 279).
         const round = isRuleOn("ammunitionTypes")
@@ -1748,6 +1870,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           readiesAfterAttack: false,
           projectiles: Math.max(1, Number(mode.projectiles ?? 1)),
           halfDamageRange: Number(range.halfDamage ?? 0) || 0,
+          maxRange: Number(range.max ?? 0) || 0,
+          guidance: String(mode.guidance ?? ""),
+          areaAttack: Boolean(mode.areaAttack),
+          coneMaxWidth: Number(mode.coneMaxWidth ?? 0) || 0,
           damage: loadedDamage(rangedDamage),
           damageType: mode.damageSpecial ? "" : (round?.damageType ?? mode.damageType),
           armorDivisor: round?.armorDivisor ?? materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
@@ -1774,6 +1900,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           accuracy: (mode.accuracy ?? 0) + qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown)),
           scopeBonus: mode.scopeBonus ?? 0,
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
+          malediction,
+          ignoresDr: malediction > 0,
+          holy: Boolean((sys as any).holy),
           rateOfFire: mode.rateOfFire ?? 1,
           recoil: mode.recoil ?? 0,
           bulk: mode.bulk ?? 0,
@@ -1788,6 +1917,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           unarmed: false,
           thrown: Boolean(mode.thrown),
           stBased: mode.damageBase === "thr" || mode.damageBase === "sw",
+          damageBase: String(mode.damageBase ?? ""),
+          damageModifier: Number(mode.damageModifier ?? 0) || 0,
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),
@@ -1826,6 +1957,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         itemId: "",
         modeIndex: 0,
         name: game.i18n.localize(`GWORLD.Natural.${attack.key}`),
+        naturalKey: attack.key,
         mode: attack.skillName,
         skillName: attack.skillName,
         skillLevel: attack.skillLevel + legs,
@@ -2146,10 +2278,23 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       senses: senseScores(secondary.per, traits),
       // What the social traits do to a reaction roll, and Charisma's bonus
       // to the Influence roll itself (pp. 21-29, 41).
-      // The psi powers a character holds, the abilities under each and what
-      // its Talent is worth to a roll using them (Characters pp. 254-255).
-      psionics: psionicsOf(heldTraits),
-      reactions: reactionSources(heldTraits),
+      // The powers a character holds, the abilities under each and what its
+      // Talent is worth to a roll using them (Characters pp. 254-255): the
+      // Basic Set's six, and any a book's entries name (Monster Hunters 1 p. 40).
+      powers: powersOf(heldTraits),
+      // "In a few cases, skill 20+ gives an automatic +2 to reactions.
+      // Diplomacy and Fast-Talk work this way if you are allowed to talk -- as
+      // does Merchant skill, during commercial transactions" (p. 494). Offered
+      // as conditional sources, since only the table knows who is talking.
+      reactions: [
+        ...reactionSources(heldTraits),
+        ...(["Diplomacy", "Fast-Talk"] as const)
+          .filter((skill) => automaticSkillBonus(this.skillLevelByName(skill) ?? 0))
+          .map((skill) => ({ label: skill, value: 2, condition: "talking" as const })),
+        ...(automaticSkillBonus(this.skillLevelByName("Merchant") ?? 0)
+          ? [{ label: "Merchant", value: 2, condition: "commercial" as const }]
+          : []),
+      ],
       charismaInfluence: charismaInfluenceBonus(heldTraits),
       // Fit's bonus to every HT roll, for the rolls made outside this block.
       healthRollBonus: traits.htRolls,

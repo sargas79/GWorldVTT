@@ -67,6 +67,45 @@ export declare function displayWeight(text: string | undefined): number;
 /** The page reference for one book: "Martial Arts p. 52". */
 export declare function reference(page: string | undefined, prefix: string, book: string): string;
 
+/** A page prefix as the book prints it, without GCA's colon: "MH1:" is "MH1". */
+export declare function bookPrefix(prefix: string): string;
+
+/** Throws, naming the citation forms the file uses, when no record cites this prefix. */
+export declare function assertCitesBook(recs: ReadonlyArray<{ section: string; text: string }>, prefix: string): void;
+
+/** The name a record is filed under, given the other names in its section. */
+export declare function entryName(
+  raw: string,
+  siblings: ReadonlySet<string>,
+  options?: { supplement?: boolean; blankSpecialty?: boolean },
+): string;
+
+/** The skills a Talent record gives its level to, from the file's group of its name. */
+export declare function talentSkillsOf(
+  name: string,
+  f: Map<string, string>,
+  groups: ReadonlyMap<string, readonly string[]>,
+): string[];
+
+/** The power a record belongs to by its category, and whether it is the power's Talent. */
+export declare function powerOfRecord(
+  f: Map<string, string>,
+  pattern: RegExp | null,
+): { power: string; powerTalent: boolean };
+
+/** The attack an advantage is, as a ranged mode, or a note saying why there is none. */
+export declare function traitAttackModes(f: Map<string, string>): {
+  rangedModes: Array<Record<string, unknown>>;
+  meleeModes: Array<Record<string, unknown>>;
+  note?: string;
+};
+
+/** The file's `[GROUPS]`, by group name. */
+export declare function groupsOf(text: string): Map<string, string[]>;
+
+/** The base item a "(Good)" or "(Fine)" record restates, or null. */
+export declare function qualityVariantOf(name: string, siblings: ReadonlySet<string>): string | null;
+
 /** Where a record belongs, for the pack being built. */
 export declare function classifyCitation(
   page: string | undefined,

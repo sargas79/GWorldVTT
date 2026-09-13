@@ -1,0 +1,23 @@
+{{!-- A drug taken, or a day of withdrawal (Campaigns pp. 440-441). --}}
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{title}}</span>
+    {{#if rolled}}<span class="gc-target">{{localize "GWORLD.Chat.Target"}} {{target}}</span>{{/if}}
+  </div>
+  {{#if rolled}}
+    <div class="gc-dice">
+      {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+      <span class="gc-total">{{total}}</span>
+    </div>
+    <div class="gc-result {{#if outcome.success}}success{{else}}failure{{/if}}">
+      {{#if outcome.success}}{{localize "GWORLD.Drug.Resisted"}}{{else}}{{localize "GWORLD.Drug.Failed"}}{{/if}}
+    </div>
+  {{/if}}
+  {{#if lines.length}}
+    <div class="gc-mods">
+      {{#each lines as |line|}}
+        <span class="{{#if line.grave}}gc-warn{{else}}gc-mod{{/if}}">{{localize (concat "GWORLD.Drug.Line." line.key) fp=line.data.fp hours=line.data.hours damage=line.data.damage minutes=line.data.minutes cycles=line.data.cycles hp=line.data.hp days=line.data.days needed=line.data.needed}}</span>
+      {{/each}}
+    </div>
+  {{/if}}
+</div>

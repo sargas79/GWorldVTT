@@ -14,6 +14,7 @@
  * with the DR that stops a sword.
  */
 
+import { parseVulnerability, vulnerabilityMultiplier, type Vulnerability } from "../rules/vulnerability.js";
 import { type ArmorPiece } from "../rules/armor.js";
 import { armorLayers, bluntTraumaInjury } from "../rules/layered-armor.js";
 import type { Arc } from "../rules/tactical.js";
@@ -85,6 +86,14 @@ export interface IncomingDamage {
    * victim loses is a token point a yard.
    */
   cinematicBlast?: boolean;
+  /** What the weapon is made of, for a Vulnerability to silver (Characters p. 161). */
+  material?: string;
+  /**
+   * True when "the target's DR has no effect" (Characters p. 106): a
+   * Malediction. Worn armour, the target's own DR and a location's all count
+   * for nothing.
+   */
+  ignoresDr?: boolean;
   /**
    * The arc the blow came from, where the table is playing with facing.
    * Armour marked "F" protects against the front alone (Characters p. 282);
@@ -189,6 +198,23 @@ export function wornArmor(actor: any): ArmorPiece[] {
  * changing the sheet, and so the arithmetic can be checked without a Foundry
  * document to write to.
  */
+/**
+ * The Vulnerabilities an actor has, read off their traits (Characters p. 161).
+ * The name carries the form and the multiplier -- "Vulnerability (Silver x4)"
+ * -- and so do any notes on it, for a trait whose name was left plain.
+ */
+export function vulnerabilitiesOf(actor: any): Vulnerability[] {
+  const found: Vulnerability[] = [];
+  for (const item of actor?.items ?? []) {
+    if (item?.type !== "trait") continue;
+    const name = String(item.name ?? "");
+    if (!/vulnerab/i.test(name)) continue;
+    const read = parseVulnerability(name) ?? parseVulnerability(String(item.system?.notes ?? ""));
+    if (read) found.push(read);
+  }
+  return found;
+}
+
 export function resolveDamageAgainst(actor: any, damage: IncomingDamage): AppliedDamage {
   const hp = actor?.system?.hp ?? { value: 0, max: 0 };
   const fp = actor?.system?.fp ?? { value: 0, max: 0 };
@@ -211,7 +237,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   // figure rather than inside the pipeline because natural DR is not armour
   // with gaps in it -- "joints or weak points in a suit of armor".
   const drMultiplier = Math.max(1, Math.floor(Number(damage.drMultiplier ?? 1)));
-  const armour = (damage.chink ? chinkDr(wornDr) : wornDr) * drMultiplier;
+  const armour = damage.ignoresDr ? 0 : (damage.chink ? chinkDr(wornDr) : wornDr) * drMultiplier;
 
   // A critical can double or triple the blow, or replace the roll with the
   // most the dice could have given. All of that happens to basic damage, before
@@ -236,8 +262,17 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     // Halving or ignoring DR is the critical's doing and belongs inside the
     // pipeline, because the tables halve what is left after the armour divisor.
     ...(critical ? { critical } : {}),
+    // A Malediction ignores the location's own DR as well as the armour's,
+    // which is the one place the pipeline already knows how to drop it all.
+    ...(damage.ignoresDr ? { critical: { ...(critical ?? {}), ignoreDr: true } } : {}),
     // A body that is not flesh is hurt as its substance allows.
     ...(hasInjuryTolerance(traits.injuryTolerance) ? { tolerance: traits.injuryTolerance } : {}),
+    // And a body with a Vulnerability is hurt worse by the thing it fears.
+    vulnerability: vulnerabilityMultiplier({
+      vulnerabilities: vulnerabilitiesOf(actor),
+      ...(damage.material ? { material: damage.material } : {}),
+      damageType: damage.type,
+    }),
   });
 
   // Fatigue comes off FP, and the consequences that follow -- shock, major

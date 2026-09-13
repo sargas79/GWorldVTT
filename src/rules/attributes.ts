@@ -23,16 +23,6 @@ export function attributePointCost(attribute: Attribute, score: number): number 
   return (score - ATTRIBUTE_BASELINE) * ATTRIBUTE_COST_PER_LEVEL[attribute];
 }
 
-/** Total character points spent across all four basic attributes. */
-export function attributesPointCost(attributes: Attributes): number {
-  return (
-    attributePointCost("ST", attributes.ST) +
-    attributePointCost("DX", attributes.DX) +
-    attributePointCost("IQ", attributes.IQ) +
-    attributePointCost("HT", attributes.HT)
-  );
-}
-
 /**
  * Point cost per level of each secondary characteristic
  * (GURPS Basic Set: Characters pp. 14-17).

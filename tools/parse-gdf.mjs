@@ -23,7 +23,7 @@
  * Usage:
  *   node tools/parse-gdf.mjs <file.gdf> [--write]
  *        [--out <packs-src dir>] [--prefix B] [--book "Basic Set: Characters"]
- *        [--overlap <file>]
+ *        [--overlap <file>] [--power-category <pattern>]
  *
  * With no options it reads the Basic Set (page prefix "B") into this
  * repository's packs-src. Pointed at another book's GDF with that book's
@@ -39,8 +39,11 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import {
+  assertCitesBook,
+  bookPrefix,
   citesBook,
   fields,
+  groupsOf,
   isExpression,
   modes,
   nameOf,
@@ -75,10 +78,197 @@ const DIFFICULTIES = new Set(["E", "A", "H", "VH", "W"]);
  */
 const PLACEHOLDER = /[%[\]]/;
 
+/** A parenthesis holding nothing but a blank: "(%WeaponList%)", "([skill])". */
+const BLANK_SPECIALTY = /^(.*\S)\s+\((?:%[^%()]*%|\[[^\][()]*\])\)$/;
+
+/**
+ * The names a section of the file gives its records, without GCA's leading
+ * underscore and without any name that is itself a placeholder.
+ */
+function namesIn(recs, section) {
+  const names = new Set();
+  for (const r of recs) {
+    if (r.section !== section) continue;
+    const name = nameOf(r).replace(/^_/, "");
+    if (!PLACEHOLDER.test(name)) names.add(name);
+  }
+  return names;
+}
+
+/**
+ * The name a record is filed under.
+ *
+ * GCA hides a record from its own lists with a leading underscore
+ * (`_Basic Gear`); the compendium has no such lists, so the underscore comes
+ * off. And a trait the player specialises is sometimes written with nothing
+ * but a blank for the specialty -- `Weapon Bond (%WeaponList%)` -- which is
+ * the trait itself, and is kept under its bare name, provided the file has
+ * no specialised records of it already (`Riding (Horse)` would make
+ * `Riding (%beast%)` a menu over those, not a trait of its own) and nothing
+ * else by that name. That second rule is for traits and gear only: a skill or
+ * technique written with a blank -- `Feint (%Melee Combat Skill%)` -- is
+ * nothing without the skill it is bought for, and its defaults name the blank
+ * too, so it stays rejected.
+ *
+ * Neither rule is applied to the Basic Set. Its packs are published and
+ * characters hold their ids, and both rules would change them: six GCA
+ * bookkeeping records (`_Unused Quirk 1`) would be renamed where they should
+ * be dropped, and five blank-specialty traits (Incompetence, Racial Skill
+ * Bonus) would appear. That wants a review of each record, not a side effect of
+ * reading another book, so a supplement gets the rules and the Basic Set
+ * keeps its names until then.
+ */
+export function entryName(raw, siblings, { supplement = true, blankSpecialty = true } = {}) {
+  if (!supplement) return raw;
+  const name = raw.replace(/^_/, "");
+  const blank = blankSpecialty ? BLANK_SPECIALTY.exec(name) : null;
+  if (!blank || PLACEHOLDER.test(blank[1])) return name;
+  const base = blank[1];
+  const specialised = [...siblings].some((n) => n.startsWith(`${base} (`));
+  return specialised || siblings.has(base) ? name : base;
+}
+
+/**
+ * The base item a quality variant repeats: "Camera, Digital (Good)" is the
+ * camera at good quality. Quality is a field on the item, whose price follows
+ * from it, so a record that only restates the base at another grade is not
+ * an item of its own. Null for anything else, including a variant whose base
+ * the file does not carry.
+ */
+export function qualityVariantOf(name, siblings) {
+  const m = /^(.*\S)\s+\((?:Cheap|Good|Fine|Very Fine)\)$/.exec(name);
+  return m && siblings.has(m[1]) ? m[1] : null;
+}
+
+/**
+ * The skills a Talent gives its level to, from the file's group of that name.
+ *
+ * GCA wires a Talent to its skills with `gives(+1 To GR:Healer)` and lists
+ * the group under `[GROUPS]`. It uses groups for other things as well --
+ * Voice, Absolute Direction, Flexibility -- so only a record filed as a Talent
+ * and giving to a group of its own name counts. Members other than skills
+ * (`ST:`, another group) are left out; so is any member GCA fills in from the
+ * sheet. Empty for everything else.
+ */
+export function talentSkillsOf(name, f, groups) {
+  if (!/\bTalents\b/.test(f.get("cat") ?? "")) return [];
+  const own = name.trim().toLowerCase();
+  const gives = [...(f.get("gives") ?? "").matchAll(/GR:\s*"?([^,")]+)"?/gi)].map((m) => m[1].trim().toLowerCase());
+  if (!gives.includes(own)) return [];
+  const group = [...groups.entries()].find(([group]) => group.trim().toLowerCase() === own)?.[1] ?? [];
+  return group
+    .map((member) => /^SK:\s*"?(.+?)"?$/.exec(member)?.[1]?.trim())
+    .filter((skill) => skill && !PLACEHOLDER.test(skill));
+}
+
+/**
+ * The power a trait belongs to, and whether it is the power's Talent.
+ *
+ * GCA files a power's abilities and its Talent under a category of their own,
+ * and each book names those categories its own way: Monster Hunters 1 writes
+ * "_MH Bioenhancement" and "_MH Psionics - ESP". So the book says how, with a
+ * pattern whose first group is the power's name -- "^_MH (?:Psionics - )?(.+)$"
+ * -- and a Talent is the record GCA also files under "Talents - Powers". With
+ * no pattern, or no category matching it, the trait belongs to no power by its
+ * entry, and the Basic Set's psionics are still found the way the sheet finds
+ * them, by their power modifier.
+ */
+export function powerOfRecord(f, pattern) {
+  const categories = (f.get("cat") ?? "").split(",").map((c) => c.trim());
+  const named = pattern ? categories.map((c) => pattern.exec(c)?.[1]?.trim()).find(Boolean) : null;
+  if (!named) return { power: "", powerTalent: false };
+  return { power: named, powerTalent: categories.some((c) => /^Talents - Powers$/i.test(c)) };
+}
+
+/**
+ * The attack an advantage is, as a ranged mode (Characters pp. 61, 106).
+ *
+ * GCA writes an Innate Attack's damage per level -- `damage($solver(%level)d)`,
+ * or `$solver(%level)d-$solver(%level)` for Monster Hunters 1's "1d-1 per level"
+ * Cryokinesis -- with the weapon columns beside it. A range of "Speed/Range"
+ * is a Malediction taking the Size and Speed/Range Table, which is Malediction
+ * 2 (p. 106), and it has no range statistics of its own. Where the skill is a
+ * blank the player picks (`%examplealiaslist%`), Innate Attack (Projectile) is
+ * the one written, and the sheet changes it.
+ *
+ * What is worked out on the sheet -- an Affliction's HT penalty per level, a
+ * Vampiric Bite's HP a second, a type the player chooses -- is not guessed at:
+ * no mode, and a note saying why.
+ */
+export function traitAttackModes(f) {
+  const none = { rangedModes: [], meleeModes: [] };
+  const rawDamage = (f.get("damage") ?? "").trim();
+  const rawType = (f.get("damtype") ?? "").trim();
+  if (!rawDamage && !rawType) return none;
+  if (PLACEHOLDER.test(rawType) || isExpression(rawType)) {
+    return { ...none, note: `damage type chosen on the sheet: "${rawType}"` };
+  }
+
+  let damage = null;
+  let perLevel = false;
+  const levelled = /^\$solver\(%level\)d(?:\s*([+-])\s*\$solver\(%level\))?$/i.exec(rawDamage);
+  if (levelled) {
+    damage = parseDamage(levelled[1] ? `1d${levelled[1]}1` : "1d", rawType);
+    perLevel = true;
+  } else if (/^(stun|aff)$/i.test(rawType)) {
+    // Mental Blow: damage(Will) damtype(stun), resisted with Will.
+    damage = parseDamage(rawDamage, "aff");
+  } else if (!isExpression(rawDamage)) {
+    damage = parseDamage(rawDamage, rawType);
+  }
+  if (!damage) return { ...none, note: `attack damage "${rawDamage}" ${rawType} is worked out on the sheet` };
+
+  const malediction = /^speed\/range$/i.test((f.get("rangemax") ?? "").trim()) ? 2 : 0;
+  const rawSkill = (f.get("skillused") ?? "").trim();
+  const attribute = /^"?(?:ST:)?(Will|Per|Perception|IQ|HT|DX|ST)"?$/i.exec(rawSkill)?.[1].toLowerCase();
+  const ATTRIBUTE_NAMES = { will: "Will", per: "Per", perception: "Per", iq: "IQ", ht: "HT", dx: "DX", st: "ST" };
+  const skill = attribute
+    ? ATTRIBUTE_NAMES[attribute]
+    : parseSkillUsed(rawSkill) || "Innate Attack (Projectile)";
+  const half = malediction ? null : parseRange(f.get("rangehalfdam"));
+  const max = malediction ? null : parseRange(f.get("rangemax"));
+  // Spines state damage and no range: they hurt whoever grapples or slams you
+  // (Characters p. 88), which is not an attack anyone makes.
+  if (!malediction && !max?.distance) {
+    return { ...none, note: "damage with no range, so not an attack the trait makes" };
+  }
+
+  return {
+    ...none,
+    rangedModes: [{
+      name: "",
+      skill,
+      ...damage.fields,
+      armorDivisor: 1,
+      accuracy: malediction ? 0 : Math.max(0, number(f.get("acc"), 0)),
+      scopeBonus: 0,
+      halfDamageRange: half?.distance ?? 0,
+      maxRange: max?.distance ?? 0,
+      rangeIsStMultiple: false,
+      rateOfFire: malediction ? 1 : Math.max(1, number(f.get("rof"), 1)),
+      projectiles: 1,
+      shots: "",
+      loaded: 0,
+      reloadWeight: 0,
+      ammunition: "",
+      minSt: null,
+      twoHanded: false,
+      weaponSt: null,
+      thrown: false,
+      mount: "",
+      bulk: 0,
+      recoil: malediction ? 0 : Math.max(0, number(f.get("rcl"), 0)),
+      malfunction: null,
+      perLevel,
+      malediction,
+    }],
+  };
+}
+
 /** The book everything else is a supplement to. */
 const BASIC_SET = { prefix: "B", book: "Basic Set: Characters" };
 
-export { reference };
+export { assertCitesBook, bookPrefix, groupsOf, reference };
 
 /**
  * Where a record belongs, for the pack being built.
@@ -91,8 +281,13 @@ export { reference };
  */
 export function classifyCitation(page, prefix, base = BASIC_SET.prefix) {
   if (!citesBook(page, prefix)) return "elsewhere";
-  if (prefix !== base && citesBook(page, base)) return "overlap";
+  if (bookPrefix(prefix) !== bookPrefix(base) && citesBook(page, base)) return "overlap";
   return "own";
+}
+
+/** Whether the book being read is a supplement rather than the Basic Set. */
+function isSupplement(source) {
+  return bookPrefix(source.prefix) !== BASIC_SET.prefix;
 }
 
 /**
@@ -220,6 +415,7 @@ function parseTraits(recs, reject, note, source) {
   const ids = existingIds(source.outDir, "advantages", "disadvantages");
   const out = [];
   const taken = new Map();
+  const siblings = new Map([...TRAIT_SECTIONS.keys()].map((s) => [s, namesIn(recs, s)]));
 
   for (const r of recs) {
     const category = TRAIT_SECTIONS.get(r.section);
@@ -230,7 +426,8 @@ function parseTraits(recs, reject, note, source) {
 
     // GCA asks which core skill Ritual Magery boosts and writes the answer
     // into the name; the trait the book prices is Ritual Magery (p. 242).
-    const bare = nameOf(r).replace(/^Ritual Magery \(\[skill\]\)$/, "Ritual Magery");
+    const bare = entryName(nameOf(r), siblings.get(r.section), { supplement: isSupplement(source) })
+      .replace(/^Ritual Magery \(\[skill\]\)$/, "Ritual Magery");
     if (PLACEHOLDER.test(bare)) { reject(bare, "name is a GCA placeholder"); continue; }
 
     const cost = parseCost(splitTop(r.text)[1], f);
@@ -264,6 +461,10 @@ function parseTraits(recs, reject, note, source) {
 
     const levelNames = parseLevelNames(f.get("levelnames"));
 
+    // An advantage that is an attack carries its attack, as a weapon does.
+    const attack = traitAttackModes(f);
+    if (attack.note) note(`${name}: ${attack.note}`);
+
     out.push({
       _id: ids.get(name) ?? id("trait", name),
       name,
@@ -278,6 +479,10 @@ function parseTraits(recs, reject, note, source) {
         levelNames: maxLevels > 0 ? levelNames.slice(0, maxLevels) : levelNames,
         maxLevels,
         reactionModifier: 0,
+        talentSkills: talentSkillsOf(bare, f, source.groups ?? new Map()),
+        ...powerOfRecord(f, source.powerCategory ?? null),
+        meleeModes: [],
+        rangedModes: attack.rangedModes,
         description: "",
         reference: reference(f.get("page"), source.prefix, source.book),
       },
@@ -327,13 +532,15 @@ function parseSkills(recs, reject, source) {
   const techniques = [];
   const taken = new Set();
 
+  const siblings = namesIn(recs, "SKILLS");
+
   for (const r of recs) {
     if (r.section !== "SKILLS") continue;
 
     const f = fields(r.text);
     if (!keeps(r, f, source)) continue;
 
-    const bare = nameOf(r);
+    const bare = entryName(nameOf(r), siblings, { supplement: isSupplement(source), blankSpecialty: false });
     if (PLACEHOLDER.test(bare)) { reject(bare, "name is a GCA placeholder"); continue; }
     // The pair usually sits in the second field, but a few records state it as
     // type(IQ/VH) instead.
@@ -1107,6 +1314,7 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
   // one to keep. The parser writes only its own three files.
   const handMade = handWrittenIds(source.outDir, "equipment", ["armor.json", "gear.json", "shields.json"]);
   const taken = new Set(handMade.keys());
+  const siblings = namesIn(recs, "EQUIPMENT");
 
   for (const r of recs) {
     if (r.section !== "EQUIPMENT") continue;
@@ -1118,11 +1326,19 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
     // player to pick: "Longbow (ST%choice%)". The compendium carries the
     // weapon, and the ST it was built to is edited on the item, so the
     // placeholder comes off the name rather than the record being skipped.
-    const name = nameOf(r).replace(/\s*\(ST%choice%\)$/, "");
+    const hidden = nameOf(r).startsWith("_");
+    const name = entryName(nameOf(r), siblings, { supplement: isSupplement(source) }).replace(/\s*\(ST%choice%\)$/, "");
     // A GCA directive body -- "#ReplaceTags in ... with { basecost(60), ... }"
     // -- parses as a record whose first field is a field rather than a name.
     if (/^[a-z]+\(/.test(name)) continue;
     if (PLACEHOLDER.test(name)) { reject(name, "name is a GCA placeholder"); continue; }
+    // A hidden record that spells out another one's contents --
+    // "_Basic Gear: Bandages, Cigarette Lighter, ..." beside "_Basic Gear" --
+    // is GCA's longer label for the character sheet, not a second item.
+    const spelledOut = hidden && /^([^:]+):\s/.exec(name);
+    if (spelledOut && siblings.has(spelledOut[1])) { reject(name, `longer label for ${spelledOut[1]}`); continue; }
+    const variantOf = qualityVariantOf(name, siblings);
+    if (variantOf) { reject(name, `quality variant of ${variantOf}, whose quality is a field`); continue; }
     if (/Vehicles/.test(f.get("cat") ?? "")) continue;
     if (taken.has(name)) { reject(name, "duplicate name"); continue; }
 
@@ -1350,15 +1566,16 @@ function main() {
   const file = process.argv[2];
   if (!file || file.startsWith("--")) {
     console.error(
-      "Usage: node tools/parse-gdf.mjs <file.gdf> [--write] [--out <dir>] [--prefix B] [--book <name>] [--overlap <file>]",
+      "Usage: node tools/parse-gdf.mjs <file.gdf> [--write] [--out <dir>] [--prefix B] [--book <name>] [--overlap <file>] [--power-category <pattern>]",
     );
     process.exit(1);
   }
   const write = process.argv.includes("--write");
   const outDir = resolve(option("--out", join(projectRoot, "packs-src")));
-  const prefix = option("--prefix", BASIC_SET.prefix);
+  const prefix = bookPrefix(option("--prefix", BASIC_SET.prefix));
   const book = option("--book", BASIC_SET.book);
   const overlapFile = option("--overlap", null);
+  const powerCategory = option("--power-category", null);
   const basic = prefix === BASIC_SET.prefix;
 
   // What was left to the Basic Set pack: section, name and the citation
@@ -1371,7 +1588,18 @@ function main() {
     overlap: (section, name, page) => overlaps.push({ section, name, page }),
   };
 
-  const recs = records(readFileSync(file, "utf8"));
+  const text = readFileSync(file, "utf8");
+  const recs = records(text);
+  // A Talent's skills are listed apart from the Talent, in the file's groups.
+  source.groups = groupsOf(text);
+  // Which category names a power, which each book's file does its own way.
+  source.powerCategory = powerCategory ? new RegExp(powerCategory) : null;
+  try {
+    assertCitesBook(recs, prefix);
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
 
   const notes = [];
   const traitRejects = [];

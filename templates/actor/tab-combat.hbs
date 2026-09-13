@@ -13,6 +13,23 @@
           </select>
         </div>
       </div>
+      {{#if grappledCannotMove}}
+        <p class="ihint warn">{{localize "GWORLD.Grapple.CannotMove"}}</p>
+      {{/if}}
+      {{#if isAllOutAttack}}
+        {{!-- "You must specify one of these options before you attack" (p. 365). --}}
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Maneuver.Option"}}</span>
+          <div class="fi">
+            <select name="system.allOutAttackOption" {{#unless editable}}disabled{{/unless}}
+                    data-tooltip="{{localize 'GWORLD.Maneuver.AllOutAttackOption.Hint'}}">
+              {{#each aoaOptions as |o|}}
+                <option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{localize o.label}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+      {{/if}}
       {{#if isAllOutDefense}}
         <div class="fld">
           <span class="fl">{{localize "GWORLD.Maneuver.Option"}}</span>
@@ -255,10 +272,12 @@
                 <td class="dmg{{#if atk.damageRollable}} rollable{{/if}}"
                     {{#if atk.damageRollable}}data-action="rollDamage"
                     data-damage-formula="{{atk.damage}}" data-damage-type="{{atk.damageType}}"
-                    data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}"
+                    data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}" data-material="{{atk.material}}" data-holy="{{#if atk.holy}}1{{/if}}"
                     data-explosive="{{#if atk.explosive}}1{{/if}}"
                     data-reach="{{atk.reach}}"
                     data-st-based="{{#if atk.stBased}}1{{/if}}" data-melee="1"
+                    data-damage-base="{{atk.damageBase}}" data-damage-modifier="{{atk.damageModifier}}"
+                    data-natural-key="{{atk.naturalKey}}" data-min-st="{{atk.minSt}}"
                     data-fragmentation="{{atk.fragmentation}}"{{/if}}>{{atk.damage}}
                   <span class="dt">{{atk.damageType}}</span>
                 </td>
@@ -281,7 +300,7 @@
                           data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
                           data-damage-type="{{atk.damageType}}"
                           data-unready-after="{{#if atk.readiesAfterAttack}}1{{/if}}"
-                          data-weapon-weight="{{atk.weight}}" data-material="{{atk.material}}"
+                          data-weapon-weight="{{atk.weight}}" data-material="{{atk.material}}" data-holy="{{#if atk.holy}}1{{/if}}"
                           data-swung="{{#if atk.swung}}1{{/if}}"
                           data-resists-breakage="{{#if atk.resistsBreakage}}1{{/if}}"
                           data-unarmed="{{#if atk.unarmed}}1{{/if}}">
@@ -336,6 +355,7 @@
                 <td class="dmg rollable" data-action="affliction"
                     data-resist="{{atk.afflictionAttribute}}"
                     data-resist-modifier="{{atk.afflictionModifier}}"
+                    data-half-damage-range="{{atk.halfDamageRange}}"
                     data-affliction-label="{{atk.name}} {{atk.mode}}">
                   {{atk.afflictionAttribute}}{{atk.afflictionModifier}}
                   <span class="dt">{{localize "GWORLD.Affliction.Short"}}</span>
@@ -344,15 +364,22 @@
                 <td class="dmg{{#if atk.damageRollable}} rollable{{/if}}"
                     {{#if atk.damageRollable}}data-action="rollDamage"
                     data-damage-formula="{{atk.damage}}" data-damage-type="{{atk.damageType}}"
-                    data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}"
+                    data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}" data-material="{{atk.material}}" data-holy="{{#if atk.holy}}1{{/if}}"
                     data-explosive="{{#if atk.explosive}}1{{/if}}"
+                    data-ignores-dr="{{#if atk.ignoresDr}}1{{/if}}"
                     data-st-based="{{#if atk.stBased}}1{{/if}}"
                     data-fragmentation="{{atk.fragmentation}}"{{/if}}>{{atk.damage}}
                   <span class="dt">{{atk.damageType}}</span>
+                  {{#if atk.ignoresDr}}<span class="tag" data-tooltip="{{localize 'GWORLD.Malediction.IgnoresDrHint'}}">{{localize "GWORLD.Malediction.IgnoresDr"}}</span>{{/if}}
                 </td>
               {{/if}}
-              <td class="c">{{atk.accuracy}}</td>
-              <td class="c">{{atk.range}}</td>
+              {{#if atk.malediction}}
+                <td class="c">&mdash;</td>
+                <td class="c" data-tooltip="{{localize 'GWORLD.Malediction.RangeHint'}}">{{localize "GWORLD.Malediction.Short" level=atk.malediction}}</td>
+              {{else}}
+                <td class="c">{{atk.accuracy}}</td>
+                <td class="c">{{atk.range}}</td>
+              {{/if}}
               <td class="c">{{atk.rateOfFire}}{{#if (gt atk.projectiles 1)}}&times;{{atk.projectiles}}{{/if}}</td>
               <td class="c">
                 {{#if atk.shotsCapacity}}
@@ -380,11 +407,15 @@
                         data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
                         data-damage-type="{{atk.damageType}}"
                         data-ranged="1" data-thrown="{{#if atk.thrown}}1{{/if}}"
+                        data-malediction="{{atk.malediction}}"
+                        data-resist-with="{{#if atk.affliction}}{{atk.afflictionAttribute}}{{/if}}"
                         data-accuracy="{{atk.accuracy}}"
                         data-scope-bonus="{{atk.scopeBonus}}"
                         data-rate-of-fire="{{atk.rateOfFire}}" data-recoil="{{atk.recoil}}"
                         data-projectiles="{{atk.projectiles}}" data-half-damage-range="{{atk.halfDamageRange}}"
-                        data-weapon-weight="{{atk.weight}}" data-material="{{atk.material}}"
+                        data-max-range="{{atk.maxRange}}" data-guidance="{{atk.guidance}}"
+                        data-area-attack="{{#if atk.areaAttack}}1{{/if}}" data-cone-max-width="{{atk.coneMaxWidth}}"
+                        data-weapon-weight="{{atk.weight}}" data-material="{{atk.material}}" data-holy="{{#if atk.holy}}1{{/if}}"
                         data-resists-breakage="{{#if atk.resistsBreakage}}1{{/if}}"
                         data-bulk="{{atk.bulk}}" data-malfunction="{{atk.malfunction}}">
                     {{> "gworld.die"}}
@@ -486,6 +517,7 @@
         {{/if}}
       {{/if}}
       {{#if rules.highSpeed}}
+        <button type="button" class="ibtn" data-action="flying">{{localize "GWORLD.Mounted.Flying"}}</button>
         <button type="button" class="ibtn" data-action="pushEnvelope"
                 data-tooltip="{{localize "GWORLD.Mounted.EnvelopeHint"}}">
           {{localize "GWORLD.Mounted.EnvelopeAction"}}
@@ -505,6 +537,10 @@
           {{localize "GWORLD.Reaction.InfluenceAction"}}
         </button>
       {{/if}}
+      <button type="button" class="ibtn" data-action="hearTheShot"
+              data-tooltip="{{localize "GWORLD.Hearing.Hint"}}">
+        {{localize "GWORLD.Hearing.Title"}}
+      </button>
       {{#if rules.overpenetration}}
         <button type="button" class="ibtn" data-action="overpenetration"
                 data-tooltip="{{localize "GWORLD.Overpenetration.Hint"}}">
@@ -584,6 +620,9 @@
           <span>{{localize "GWORLD.Tactical.Forward"}} {{tactical.forward}}</span>
           <span>{{localize "GWORLD.Tactical.Sideways"}} {{tactical.sideways}}</span>
           <span>{{localize "GWORLD.Tactical.Backward"}} {{tactical.backward}}</span>
+        </div>
+        <div class="gc-mods">
+          <span class="gc-mod">{{localize "GWORLD.Tactical.TurnCosts" sixty=(lookup tactical.turnCosts 0) oneTwenty=(lookup tactical.turnCosts 1) about=(lookup tactical.turnCosts 2)}}</span>
         </div>
         <p class="ihint">{{localize "GWORLD.Tactical.MovementHint"}}</p>
       {{/if}}

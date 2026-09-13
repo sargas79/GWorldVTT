@@ -112,16 +112,3 @@ export function maxRoll(formula: DiceAdds): number {
 export function averageRoll(formula: DiceAdds): number {
   return (formula.dice * 3.5 + formula.adds) * factor(formula);
 }
-
-export interface DiceAddsRoll {
-  dice: number[];
-  adds: number;
-  total: number;
-}
-
-/** Rolls a dice+adds expression. The raw total is returned without any flooring. */
-export function rollDiceAdds(formula: DiceAdds, rng: Rng = Math.random): DiceAddsRoll {
-  const dice = rollDice(formula.dice, rng);
-  const total = (dice.reduce((sum, d) => sum + d, 0) + formula.adds) * factor(formula);
-  return { dice, adds: formula.adds, total };
-}

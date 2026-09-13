@@ -767,6 +767,12 @@
   color: var(--color-neutral-700);
 }
 .gworld .tdfold[open] > summary::before { transform: rotate(45deg); }
+
+/* The NPC sheet's description fold: the section label, then the first line of
+   the description beside it while closed. */
+.gworld .npcdesc > summary { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.gworld .npcdesc > summary .tdfirst { flex: 1; min-width: 0; }
+.gworld .npcdesc[open] > summary .tdfirst { display: none; }
 .gworld .tdfold > summary:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
 .gworld .tdfold > summary .tdfirst {
   flex: 1 1 auto;

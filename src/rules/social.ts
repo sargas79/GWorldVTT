@@ -34,7 +34,11 @@ export interface ReactionSource {
     | "impressed"
     | "ownKind"
     | "faithful"
-    | "adult";
+    | "adult"
+    /** Diplomacy or Fast-Talk at 20+, "if you are allowed to talk" (p. 494). */
+    | "talking"
+    /** Merchant at 20+, "during commercial transactions" (p. 494). */
+    | "commercial";
 }
 
 /** A trait as the sheet holds it, for reading the modifiers off. */

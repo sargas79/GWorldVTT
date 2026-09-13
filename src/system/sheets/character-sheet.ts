@@ -16,30 +16,76 @@ import {
   evadeModifier,
   opportunityFirePenalty,
   slamDamage,
+  slamOutcome,
 } from "../../rules/attack-options.js";
 import { attackArc } from "../../rules/tactical.js";
-import { CLIMBS, climb, climbingModifier, swimmingModifier } from "../../rules/physical.js";
+import {
+  CLIMBS,
+  climb,
+  climbingModifier,
+  swimmingModifier,
+  liftingSkillCapacity,
+  maximumDrag,
+} from "../../rules/physical.js";
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding, stopBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
 import { catchBreath, rollSuffocation } from "../suffocation.js";
-import { applyDeprivation, rollExposure } from "../environment.js";
-import { activePoisons, advancePoison, clearPoison, dosePoison, treatPoison } from "../poison.js";
+import {
+  applyDeprivation,
+  rollExposure,
+  restFromHunger,
+} from "../environment.js";
+import { activePoisons, advancePoison, clearPoison, dosePoison, treatPoison, treatIllness } from "../poison.js";
 import { drinkForAnHour, drinkingState, hangoverRoll, soberUpRoll } from "../intoxication.js";
 import { checkInfection, exposeToDisease } from "../disease.js";
-import { checkOverpenetration, rollScatter, splashInTheFace } from "../gunplay.js";
+import {
+  checkOverpenetration,
+  rollScatter,
+  splashInTheFace,
+  hearTheShot,
+} from "../gunplay.js";
 import { rollInfluence, rollReaction } from "../reactions.js";
 import { payCostOfLiving, rollAging, studySkill, workAMonth } from "../life.js";
 import { trample } from "../trampling.js";
 import { fightOffSwarm } from "../swarms.js";
 import {
-  accelerate, breatheBadAir, buildingCollapse, burn, catchFire, controlVehicle, crushingPressure,
-  decompress, hike,
-  irradiate, jumpOutOfVehicle, motionSickness, shock, shootAtVehicle, sleepFor, splashAcid,
+  accelerate,
+  breatheBadAir,
+  buildingCollapse,
+  damageBuilding,
+  burn,
+  catchFire,
+  controlVehicle,
+  crushingPressure,
+  decompress,
+  hike,
+  irradiate,
+  jumpOutOfVehicle,
+  motionSickness,
+  shock,
+  shootAtVehicle,
+  sleepFor,
+  splashAcid,
+  setAlight,
 } from "../hazards.js";
-import { tryToEscape, type Entanglement } from "../entangling.js";
+import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
+import { useTechnique, type Victim } from "../unarmed-techniques.js";
+import { canParryLiquid } from "../../rules/dirty-tricks.js";
+import { resolveSuccess as rollOutcome } from "../../rules/success.js";
+import { pressureAtDepth } from "../../rules/pressure.js";
+import { isStepPostureChange, postureMove, reachablePostures } from "../../rules/posture.js";
+import { affectsSecondary } from "../../rules/attribute-penalties.js";
+import { canMoveWhileGrappled } from "../../rules/grappling.js";
+import { formatDiceAdds } from "../../rules/dice.js";
+import { rollInvention, type InventionPlan } from "../invention.js";
+import { describePowers, unpoweredAbilities } from "../psionics.js";
+import { stimulantWearsOff, takeDepressant, takeStimulant, withdrawalRoll } from "../drugs.js";
+import type { DrugKind } from "../../rules/intoxication.js";
+import type { InventionGrade } from "../../rules/invention.js";
+import type { UnarmedTechnique } from "../../rules/unarmed-techniques.js";
 import { attendPatient, operate, resuscitate } from "../recovery.js";
 import type { ResuscitationCause } from "../../rules/medicine.js";
 import type { Limbs } from "../../rules/entangling.js";
@@ -51,7 +97,7 @@ import type { CollisionAngle } from "../../rules/collisions.js";
 import type { DamageType } from "../../rules/types.js";
 import { culturePenalty, languagePenalty, type Comprehension } from "../../rules/languages.js";
 import type { StudyMethod } from "../../rules/study.js";
-import { rollPushingTheEnvelope, rollStayOn } from "../mounted.js";
+import { flyingTurn, rollPushingTheEnvelope, rollStayOn } from "../mounted.js";
 import { rollThrow } from "../throwing.js";
 import { summariseDescription } from "../description-summary.js";
 import {
@@ -101,7 +147,7 @@ import { rollFrightCheck } from "../fright.js";
 import { traitsOf } from "../damage.js";
 import { feintDefenseScore, recordFeint } from "../feint.js";
 import { attackDirection, facingOf } from "../hex.js";
-import { facingChangeAtEndOfMove, hexMovementCost } from "../../rules/tactical.js";
+import { facingChangeAtEndOfMove, facingChangeCost, hexMovementCost } from "../../rules/tactical.js";
 import { CompendiumPicker } from "../apps/compendium-picker.js";
 import { SYSTEM_ID } from "../constants.js";
 import { SKILL_ORDER } from "../settings.js";
@@ -150,12 +196,17 @@ import {
 import { nextTraitLevel, previousTraitLevel } from "../../rules/traits.js";
 import { awardsNewestFirst, type PointAward } from "../../rules/character-points.js";
 import { isReadTrait } from "../../rules/trait-effects.js";
+import { weaknessOf } from "../../rules/weakness.js";
+import { exposeToWeakness } from "../weakness.js";
+import { applyHolyContact } from "../holy.js";
 import { unconditionalReaction, type ReactionSource } from "../../rules/social.js";
 import { SENSES } from "../../rules/senses.js";
 import {
   handleDamageAction,
   handleRollAction,
   promptForNumber,
+  beyondHalfDamage,
+  yardsBetween,
   rollDamage,
   rollSuccess,
 } from "../roll.js";
@@ -211,6 +262,9 @@ function tacticalPanel(system: any, derived: any) {
       movementPointsSpent: 0,
       movementPointsAvailable: points,
     }),
+    // "Each hex-side of facing change costs one movement point" mid-move
+    // (p. 387): a 60-degree turn, a 120, and turning right round.
+    turnCosts: [1, 2, 3].map((sides) => facingChangeCost(0, sides as 0 | 1 | 2 | 3 | 4 | 5)),
     handedness: system.handedness ?? "right",
   };
 }
@@ -242,7 +296,9 @@ function withLevels(trait: any, openDescriptions: ReadonlySet<string> = new Set(
     // exact that this system applies on its own. Which is which is worth a
     // badge -- a player who buys Combat Reflexes should be able to see that
     // the +1 is already in their Dodge.
-    applied: isReadTrait(String(trait.name ?? "")),
+    applied: isReadTrait(String(trait.name ?? ""), system.talentSkills ?? []),
+    // A Weakness offers exposure to its source from its own row (p. 161).
+    weakness: weaknessOf({ name: String(trait.name ?? "") }) !== null,
   };
 }
 
@@ -615,10 +671,18 @@ async function promptForPoison(): Promise<{ poison: Poison; doublings: number } 
 }
 
 /** Asks which treatment was tried against a dose (Campaigns p. 439). */
-async function promptForTreatment(): Promise<{
+async function promptForTreatment(treater: any): Promise<{
   treatment: Treatment;
   antidoteBonus: number;
+  skillLevel: number | null;
 } | null> {
+  // The treater's best of First Aid and Physician, to start the field at; the
+  // victim treating themselves is the ordinary case, and a friend's figure can
+  // be typed over it.
+  const firstAid = treater?.system?.skillLevelByName?.("First Aid") ?? null;
+  const physician = treater?.system?.skillLevelByName?.("Physician") ?? null;
+  const best = [firstAid, physician].filter((v): v is number => typeof v === "number");
+  const skillStart = best.length ? Math.max(...best) : "";
   const L = (key: string) => game.i18n.localize(`GWORLD.Poison.${key}`);
 
   const result = await foundry.applications.api.DialogV2.prompt({
@@ -637,6 +701,11 @@ async function promptForTreatment(): Promise<{
         <span>${L("AntidoteBonus")}</span>
         <input type="number" name="antidote" value="0" min="0" step="1" style="width:90px">
       </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px"
+             title="${L("TreaterSkillHint")}">
+        <span>${L("TreaterSkill")}</span>
+        <input type="number" name="skill" value="${skillStart}" step="1" style="width:90px">
+      </label>
     </div>`,
     ok: {
       label: L("Treat"),
@@ -647,6 +716,11 @@ async function promptForTreatment(): Promise<{
             "medical") as Treatment,
           antidoteBonus:
             Number(form?.querySelector<HTMLInputElement>('input[name="antidote"]')?.value ?? 0) || 0,
+          // Blank is nobody with the skill, which is a failed treatment, not a zero.
+          skillLevel: (() => {
+            const raw = form?.querySelector<HTMLInputElement>('input[name="skill"]')?.value ?? "";
+            return raw.trim() === "" ? null : Number(raw) || 0;
+          })(),
         };
       },
     },
@@ -927,6 +1001,8 @@ async function promptForOverpenetration(): Promise<{
   coverKind: CoverKind;
   armorDivisor: number;
   behindDr: number;
+  damageType: string;
+  tightBeam: boolean;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Overpenetration.${key}`);
 
@@ -936,6 +1012,15 @@ async function promptForOverpenetration(): Promise<{
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("BasicDamage")}</span>
         <input type="number" name="damage" value="0" min="0" step="1" autofocus style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("DamageType")}</span>
+        <select name="damageType" style="width:120px">
+          ${["pi-", "pi", "pi+", "pi++", "imp", "burn", "cr", "cut"].map((t) => `<option value="${t}">${t}</option>`).join("")}
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="tightBeam"><span>${L("TightBeam")}</span>
       </label>
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Kind")}</span>
@@ -977,6 +1062,8 @@ async function promptForOverpenetration(): Promise<{
             "flesh") as CoverKind,
           armorDivisor: Math.max(1, num("divisor")),
           behindDr: num("behindDr"),
+          damageType: form?.querySelector<HTMLSelectElement>('select[name="damageType"]')?.value ?? "pi",
+          tightBeam: form?.querySelector<HTMLInputElement>('input[name="tightBeam"]')?.checked ?? false,
         };
       },
     },
@@ -986,11 +1073,57 @@ async function promptForOverpenetration(): Promise<{
   return result && typeof result === "object" ? (result as never) : null;
 }
 
+/** Who is listening for a shot, and what they are listening through (Campaigns p. 411). */
+async function promptForHearing(): Promise<{
+  silencer: "none" | "typical" | "best";
+  loudness: number;
+  upClose: boolean;
+  inPlainSight: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Hearing.${key}`);
+  const silencers: Array<[string, string]> = (["none", "typical", "best"] as const).map((k) => [k, L(`Silencer.${k}`)]);
+  return hazardPrompt(
+    L("Title"),
+    hazardSelect("silencer", L("SilencerLabel"), silencers) +
+      hazardField("loudness", L("Loudness"), 0, 'min="-4" max="4"') +
+      hazardCheck("upClose", L("UpClose")) +
+      hazardCheck("inPlainSight", L("InPlainSight")),
+    (form) => ({
+      silencer: (str(form, "silencer") || "none") as "none" | "typical" | "best",
+      loudness: Math.max(-4, Math.min(4, num(form, "loudness"))),
+      upClose: ticked(form, "upClose"),
+      inPlainSight: ticked(form, "inPlainSight"),
+    }),
+  );
+}
+
+/** A flame against a material (Campaigns p. 433). */
+async function promptForAlight(): Promise<{
+  material: "superFlammable" | "highlyFlammable" | "flammable" | "resistant" | "highlyResistant" | "nonflammable";
+  flameDamagePerSecond: number;
+  seconds: number;
+} | null> {
+  const kinds = ["superFlammable", "highlyFlammable", "flammable", "resistant", "highlyResistant", "nonflammable"] as const;
+  const materials: Array<[string, string]> = kinds.map((k) => [k, HZ(`Flammability.${k}`)]);
+  return hazardPrompt(
+    HZ("SetAlight"),
+    hazardSelect("material", HZ("MaterialLabel"), materials) +
+      hazardField("damage", HZ("FlameDamage"), 1, 'min="0"') +
+      hazardField("seconds", HZ("ContactSeconds"), 10, 'min="0"'),
+    (form) => ({
+      material: (str(form, "material") || "flammable") as (typeof kinds)[number],
+      flameDamagePerSecond: num(form, "damage"),
+      seconds: num(form, "seconds"),
+    }),
+  );
+}
+
 /** Asks how the splash landed (Campaigns p. 405). */
 async function promptForSplash(): Promise<{
   hit: boolean;
   criticalHit: boolean;
   defended: boolean;
+  parried: boolean;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Splash.${key}`);
 
@@ -1010,9 +1143,14 @@ async function promptForSplash(): Promise<{
         <input type="checkbox" name="critical">
         <span>${L("Critical")}</span>
       </label>
-      <label style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" name="defended">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Defended")}</span>
+        <select name="defense" style="width:150px">
+          <option value="none">${L("DefenseNone")}</option>
+          <option value="dodge">${L("DefenseDodge")}</option>
+          <option value="block">${L("DefenseBlock")}</option>
+          <option value="parry">${L("DefenseParry")}</option>
+        </select>
       </label>
     </div>`,
     ok: {
@@ -1021,10 +1159,14 @@ async function promptForSplash(): Promise<{
         const form = button.closest<HTMLElement>(".application");
         const ticked = (name: string) =>
           form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+        // "It is impossible to parry a liquid" (p. 405): a parry was tried and
+        // did nothing, which is the same as not defending at all.
+        const defense = form?.querySelector<HTMLSelectElement>('select[name="defense"]')?.value ?? "none";
         return {
           hit: ticked("hit"),
           criticalHit: ticked("critical"),
-          defended: ticked("defended"),
+          defended: defense !== "none" && (defense !== "parry" || canParryLiquid()),
+          parried: defense === "parry",
         };
       },
     },
@@ -1298,31 +1440,228 @@ async function promptForResuscitation(): Promise<{
 }
 
 /** What is holding them, and what they have to get out with (pp. 410-411). */
-async function promptForEscape(current: Entanglement): Promise<{
+async function promptForEscape(current: Entanglement, currentWhere: string, wasRunning: boolean): Promise<{
   entanglement: Entanglement;
   limbs: Limbs;
   oneHanded: boolean;
+  where: string;
+  running: boolean;
 } | null> {
   const kinds: Array<[string, string]> = (["net", "smallNet", "bolas", "lariat"] as const)
     .map((k) => [k, game.i18n.localize(`GWORLD.Entangled.What.${k}`)]);
   const limbs: Array<[string, string]> = (["hands", "paws", "hooves"] as const)
     .map((k) => [k, game.i18n.localize(`GWORLD.Entangled.Limbs.${k}`)]);
+  const wheres: Array<[string, string]> = (["torso", "arm", "hand", "weapon", "leg", "foot", "neck"] as const)
+    .map((k) => [k, game.i18n.localize(`GWORLD.Entangled.WhereOptions.${k}`)]);
   return hazardPrompt(
     game.i18n.localize("GWORLD.Entangled.Escape"),
     hazardSelect("kind", game.i18n.localize("GWORLD.Entangled.Caught"), kinds)
       .replace(`value="${current}"`, `value="${current}" selected`) +
       hazardSelect("limbs", game.i18n.localize("GWORLD.Entangled.LimbsLabel"), limbs) +
+      // Where it caught them decides what it is doing to them (p. 410).
+      hazardSelect("where", game.i18n.localize("GWORLD.Entangled.Where"), wheres)
+        .replace(`value="${currentWhere || "torso"}"`, `value="${currentWhere || "torso"}" selected`) +
+      hazardCheck("running", game.i18n.localize("GWORLD.Entangled.Running"))
+        .replace('name="running"', `name="running"${wasRunning ? " checked" : ""}`) +
       hazardCheck("oneHanded", game.i18n.localize("GWORLD.Entangled.OneHanded")) +
       `<p class="ihint" style="margin:0">${game.i18n.localize("GWORLD.Entangled.EscapeHint")}</p>`,
     (form) => ({
       entanglement: str(form, "kind") as Entanglement,
       limbs: str(form, "limbs") as Limbs,
       oneHanded: ticked(form, "oneHanded"),
+      where: str(form, "where"),
+      running: ticked(form, "running"),
+    }),
+  );
+}
+
+/**
+ * Which unarmed technique, and what the victim brings to it (pp. 403-404).
+ *
+ * A hold is resisted by the higher of the victim's ST and HT, and gets through
+ * their rigid armour and hide but not their flexible armour -- none of which
+ * the attacker's sheet can know -- so it is asked, pre-filled from the one
+ * targeted token where there is one.
+ */
+async function promptForTechnique(target: any): Promise<{
+  technique: UnarmedTechnique;
+  victim: Victim;
+  location: string;
+  crippled: boolean;
+  clumsiness: number;
+} | null> {
+  const T = (key: string) => game.i18n.localize(`GWORLD.Technique.${key}`);
+  const techniques: Array<[string, string]> = (
+    ["armLock", "chokeHold", "elbowStrike", "neckSnap", "piercingStrike"] as const
+  ).map((k) => [k, T(`Name.${k}`)]);
+  const locations: Array<[string, string]> = (["neck", "arm", "leg"] as const)
+    .map((k) => [k, T(`Locations.${k}`)]);
+  const st = Number(target?.system?.attributes?.ST ?? 10) || 10;
+  const ht = Number(target?.system?.attributes?.HT ?? 10) || 10;
+
+  return hazardPrompt(
+    T("Title"),
+    hazardSelect("technique", T("Which"), techniques) +
+      hazardField("victimSt", T("VictimSt"), st) +
+      hazardField("victimHt", T("VictimHt"), ht) +
+      hazardField("naturalDr", T("NaturalDr"), 0, 'min="0"') +
+      hazardCheck("toughSkin", T("ToughSkin")) +
+      hazardField("rigidDr", T("RigidDr"), 0, 'min="0"') +
+      hazardField("flexibleDr", T("FlexibleDr"), 0, 'min="0"') +
+      hazardSelect("location", T("Location"), locations) +
+      hazardCheck("crippled", T("Crippled")) +
+      hazardField("clumsiness", T("Clumsiness"), 0, 'min="0" max="3"'),
+    (form) => ({
+      technique: str(form, "technique") as UnarmedTechnique,
+      victim: {
+        st: num(form, "victimSt"),
+        ht: num(form, "victimHt"),
+        naturalDr: num(form, "naturalDr"),
+        toughSkin: ticked(form, "toughSkin"),
+        rigidDr: num(form, "rigidDr"),
+        flexibleDr: num(form, "flexibleDr"),
+      },
+      location: str(form, "location"),
+      crippled: ticked(form, "crippled"),
+      clumsiness: num(form, "clumsiness"),
+    }),
+  );
+}
+
+/** What is being invented, and which of the two rolls to make (pp. 472-474). */
+async function promptForInvention(tl: number): Promise<{
+  stage: "concept" | "prototype";
+  plan: InventionPlan;
+} | null> {
+  const I = (key: string) => game.i18n.localize(`GWORLD.Invention.${key}`);
+  const opts = (group: string, keys: readonly string[]): Array<[string, string]> =>
+    keys.map((k) => [k, I(`${group}.${k}`)]);
+
+  return hazardPrompt(
+    I("Title"),
+    hazardSelect("stage", I("Stage"), opts("Stages", ["concept", "prototype"])) +
+      hazardField("skill", I("Skill"), 12) +
+      hazardSelect("basis", I("Basis"), opts("Bases", ["price", "software", "grade"])) +
+      hazardField("retail", I("Retail"), 100, 'min="0"') +
+      hazardField("complexity", I("Complexity"), 0, 'min="0"') +
+      hazardSelect("grade", I("GradeLabel"), opts("Grade", ["simple", "average", "complex", "amazing"])) +
+      hazardField("inventorTl", I("InventorTl"), tl) +
+      hazardField("inventionTl", I("InventionTl"), tl) +
+      hazardCheck("workingModel", I("WorkingModel")) +
+      hazardCheck("knownToExist", I("KnownToExist")) +
+      hazardField("variant", I("Variant"), 0, 'min="0" max="5"') +
+      hazardCheck("newTechnology", I("NewTechnology")) +
+      hazardField("wellDescribed", I("WellDescribed"), 0, 'min="0" max="2"') +
+      hazardField("assistants", I("Assistants"), 0, 'min="0"') +
+      hazardField("poorTools", I("PoorTools"), 0, 'min="0" max="10"') +
+      hazardField("people", I("People"), 1, 'min="1"') +
+      hazardCheck("reusingFacilities", I("ReusingFacilities")) +
+      hazardField("computer", I("Computer"), 0, 'min="0"'),
+    (form) => ({
+      stage: str(form, "stage") as "concept" | "prototype",
+      plan: {
+        basis: str(form, "basis") as InventionPlan["basis"],
+        retail: num(form, "retail"),
+        complexity: num(form, "complexity"),
+        grade: str(form, "grade") as InventionGrade,
+        inventorTl: num(form, "inventorTl"),
+        inventionTl: num(form, "inventionTl"),
+        workingModel: ticked(form, "workingModel"),
+        knownToExist: ticked(form, "knownToExist"),
+        variant: num(form, "variant"),
+        newTechnology: ticked(form, "newTechnology"),
+        wellDescribed: num(form, "wellDescribed"),
+        skill: num(form, "skill"),
+        assistants: num(form, "assistants"),
+        poorTools: num(form, "poorTools"),
+        people: Math.max(1, num(form, "people")),
+        reusingFacilities: ticked(form, "reusingFacilities"),
+        computer: num(form, "computer"),
+      },
+    }),
+  );
+}
+
+/** Which depressant, how much of it, and whether there was drink too (p. 441). */
+async function promptForDepressant(): Promise<{ drug: DrugKind; doses: number; anyAlcohol: boolean } | null> {
+  const D = (key: string) => game.i18n.localize(`GWORLD.Drug.${key}`);
+  const kinds: Array<[string, string]> = (["sedative", "painkiller", "heroin"] as const)
+    .map((k) => [k, D(`Kind.${k}`)]);
+  return hazardPrompt(
+    D("Depressant"),
+    hazardSelect("drug", D("Which"), kinds) +
+      hazardField("doses", D("Doses"), 1, 'min="1"') +
+      hazardCheck("anyAlcohol", D("AnyAlcohol")),
+    (form) => ({
+      drug: str(form, "drug") as DrugKind,
+      doses: Math.max(1, num(form, "doses")),
+      anyAlcohol: ticked(form, "anyAlcohol"),
+    }),
+  );
+}
+
+/** Which kind of dependency, and whether the drug is to hand (p. 440). */
+async function promptForWithdrawal(): Promise<{ psychological: boolean; drugAvailable: boolean } | null> {
+  const D = (key: string) => game.i18n.localize(`GWORLD.Drug.${key}`);
+  return hazardPrompt(
+    D("Withdrawal"),
+    hazardCheck("psychological", D("Psychological")) + hazardCheck("drugAvailable", D("DrugAvailable")),
+    (form) => ({ psychological: ticked(form, "psychological"), drugAvailable: ticked(form, "drugAvailable") }),
+  );
+}
+
+/** How a thrown Molotov cocktail met its target (Campaigns p. 411). */
+async function promptForMolotov(): Promise<{
+  defense: "dodge" | "block" | "none";
+  targetDr: number;
+  malfunctioned: boolean;
+  sealed: boolean;
+} | null> {
+  const defenses: Array<[string, string]> = (["none", "dodge", "block"] as const)
+    .map((k) => [k, game.i18n.localize(`GWORLD.Molotov.DefenseOptions.${k}`)]);
+  return hazardPrompt(
+    game.i18n.localize("GWORLD.Molotov.Throw"),
+    hazardSelect("defense", game.i18n.localize("GWORLD.Molotov.Defense"), defenses) +
+      hazardField("targetDr", game.i18n.localize("GWORLD.Molotov.TargetDr"), 0, 'min="0"') +
+      hazardCheck("malfunctioned", game.i18n.localize("GWORLD.Molotov.Malfunctioned")) +
+      hazardCheck("sealed", game.i18n.localize("GWORLD.Molotov.Sealed")),
+    (form) => ({
+      defense: str(form, "defense") as "dodge" | "block" | "none",
+      targetDr: num(form, "targetDr"),
+      malfunctioned: ticked(form, "malfunctioned"),
+      sealed: ticked(form, "sealed"),
     }),
   );
 }
 
 /** How much is overhead, and what the walls are made of (Campaigns p. 484). */
+/** A building and what has been done to it (Campaigns pp. 484, 558). */
+async function promptForBuilding(): Promise<{
+  squareFeet: number;
+  frame: "wood" | "brick" | "stone";
+  construction: "shoddy" | "sound" | "quakeResistant";
+  damageTaken: number;
+  failedDisabling: boolean;
+} | null> {
+  const frames: Array<[string, string]> = (["wood", "brick", "stone"] as const).map((k) => [k, HZ(`Frame.${k}`)]);
+  const builds: Array<[string, string]> = (["sound", "shoddy", "quakeResistant"] as const).map((k) => [k, HZ(`Construction.${k}`)]);
+  return hazardPrompt(
+    HZ("Building"),
+    hazardField("squareFeet", HZ("SquareFeet"), 1000, 'min="0"') +
+      hazardSelect("frame", HZ("FrameLabel"), frames) +
+      hazardSelect("construction", HZ("ConstructionLabel"), builds) +
+      hazardField("damageTaken", HZ("DamageTaken"), 0, 'min="0"') +
+      hazardCheck("failedDisabling", HZ("FailedDisabling")),
+    (form) => ({
+      squareFeet: num(form, "squareFeet"),
+      frame: (str(form, "frame") || "wood") as "wood" | "brick" | "stone",
+      construction: (str(form, "construction") || "sound") as "shoddy" | "sound" | "quakeResistant",
+      damageTaken: num(form, "damageTaken"),
+      failedDisabling: ticked(form, "failedDisabling"),
+    }),
+  );
+}
+
 async function promptForCollapse(): Promise<{
   storiesOverhead: number;
   wallDr: number;
@@ -1365,7 +1704,11 @@ async function promptForAir(): Promise<{
   atmospheres: number;
   hazard: AtmosphereHazard | "none";
   strength: HazardStrength;
+  hpLostToAir: number;
+  exertion: "none" | "mild" | "heavy";
 } | null> {
+  const exertions: Array<[string, string]> = (["mild", "none", "heavy"] as const)
+    .map((k) => [k, HZ(`Exertion.${k}`)]);
   const hazards: Array<[string, string]> = (["none", "corrosive", "toxic", "suffocating"] as const)
     .map((k) => [k, HZ(`AirHazard.${k}`)]);
   const strengths: Array<[string, string]> = (["trace", "lethal", "mostly"] as const)
@@ -1378,11 +1721,15 @@ async function promptForAir(): Promise<{
       </label>` +
       hazardSelect("hazard", HZ("AirHazardLabel"), hazards) +
       hazardSelect("strength", HZ("AirStrengthLabel"), strengths) +
+      hazardField("hpLostToAir", HZ("HpLostToAir"), 0, 'min="0"') +
+      hazardSelect("exertion", HZ("ExertionLabel"), exertions) +
       `<p class="ihint" style="margin:0">${HZ("BadAirHint")}</p>`,
     (form) => ({
       atmospheres: num(form, "atm"),
       hazard: str(form, "hazard") as AtmosphereHazard | "none",
       strength: str(form, "strength") as HazardStrength,
+      hpLostToAir: num(form, "hpLostToAir"),
+      exertion: (str(form, "exertion") || "mild") as "none" | "mild" | "heavy",
     }),
   );
 }
@@ -1393,6 +1740,7 @@ async function promptForPressure(): Promise<{
   support: PressureSupport;
   ascending: boolean;
   explosive: boolean;
+  minutes: number;
 } | null> {
   const supports: Array<[string, string]> = (["0", "1", "2", "3"] as const)
     .map((k) => [k, HZ(`PressureSupport.${k}`)]);
@@ -1402,15 +1750,20 @@ async function promptForPressure(): Promise<{
         <span>${HZ("Atmospheres")}</span>
         <input type="number" name="atm" value="1" step="0.5" min="0" style="width:90px">
       </label>` +
+      hazardField("depth", HZ("DepthFeet"), 0, 'min="0"') +
+      hazardField("minutes", HZ("MinutesAtDepth"), 0, 'min="0"') +
       hazardSelect("support", HZ("PressureSupportLabel"), supports) +
       hazardCheck("ascending", HZ("Ascending")) +
       hazardCheck("explosive", HZ("Explosive")) +
       `<p class="ihint" style="margin:0">${HZ("PressureHint")}</p>`,
     (form) => ({
-      atmospheres: num(form, "atm"),
+      // A depth of water, where given, is what the pressure is read off: "about
+      // 33' underwater" is 2 atm, counting the air above it.
+      atmospheres: num(form, "depth") > 0 ? pressureAtDepth(num(form, "depth")) : num(form, "atm"),
       support: Number(str(form, "support") || 0) as PressureSupport,
       ascending: ticked(form, "ascending"),
       explosive: ticked(form, "explosive"),
+      minutes: num(form, "minutes"),
     }),
   );
 }
@@ -1616,16 +1969,32 @@ async function promptForFightingOffSwarm(): Promise<{ weaponDamage: number; shie
 }
 
 /** Asks how much got through the vehicle, and how many are aboard (pp. 554-555). */
-async function promptForVehicleHit(): Promise<{ penetrating: number; occupants: number } | null> {
+async function promptForVehicleHit(): Promise<{
+  penetrating: number;
+  occupants: number;
+  damageType: DamageType;
+  tightBeam: boolean;
+} | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Vehicle.${key}`);
+  const types: Array<[string, string]> = VEHICLE_DAMAGE_TYPES.map((t) => [t, t]);
   return hazardPrompt(
     L("ShotAt"),
     hazardField("damage", L("Penetrating"), 0, 'min="0"') +
+      hazardSelect("damageType", L("DamageType"), types) +
+      hazardCheck("tightBeam", L("TightBeam")) +
       hazardField("occupants", L("Aboard"), 1, 'min="0"') +
       `<p class="ihint" style="margin:0">${L("ShotAtHint")}</p>`,
-    (form) => ({ penetrating: num(form, "damage"), occupants: num(form, "occupants") }),
+    (form) => ({
+      penetrating: num(form, "damage"),
+      occupants: num(form, "occupants"),
+      damageType: (str(form, "damageType") || "cr") as DamageType,
+      tightBeam: ticked(form, "tightBeam"),
+    }),
   );
 }
+
+/** The damage types a hit on a vehicle can be, in the order the table lists them. */
+const VEHICLE_DAMAGE_TYPES: readonly DamageType[] = ["cr", "cut", "imp", "pi-", "pi", "pi+", "pi++", "burn", "cor", "tox", "fat"];
 
 /** The languages and manners a social roll is made in (Characters pp. 23-24). */
 interface SocialBackground {
@@ -1770,6 +2139,29 @@ async function promptForStayOn(): Promise<{
   });
 
   return result && typeof result === "object" ? (result as never) : null;
+}
+
+/** A turn in the air: how far across and up, and what the flyer can do (Campaigns p. 397). */
+async function promptForFlying(): Promise<{
+  horizontal: number;
+  vertical: number;
+  topAirspeed: number;
+  canHover: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Mounted.${key}`);
+  return hazardPrompt(
+    L("Flying"),
+    hazardField("horizontal", L("Horizontal"), 0, 'min="0"') +
+      hazardField("vertical", L("Vertical"), 0, 'min="0"') +
+      hazardField("topAirspeed", L("TopAirspeed"), 10, 'min="0"') +
+      hazardCheck("hover", L("CanHover")),
+    (form) => ({
+      horizontal: num(form, "horizontal"),
+      vertical: num(form, "vertical"),
+      topAirspeed: num(form, "topAirspeed"),
+      canHover: ticked(form, "hover"),
+    }),
+  );
 }
 
 /** Asks what is being attempted at speed (Campaigns p. 395). */
@@ -2395,6 +2787,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       deleteAward: GWorldCharacterSheet.#onDeleteAward,
       slam: GWorldCharacterSheet.#onSlam,
       affliction: GWorldCharacterSheet.#onAffliction,
+      weaknessExposure: GWorldCharacterSheet.#onWeaknessExposure,
       evade: GWorldCharacterSheet.#onEvade,
       feint: GWorldCharacterSheet.#onFeint,
       contest: GWorldCharacterSheet.#onContest,
@@ -2415,6 +2808,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       catchBreath: GWorldCharacterSheet.#onCatchBreath,
       exposure: GWorldCharacterSheet.#onExposure,
       rations: GWorldCharacterSheet.#onRations,
+      restFromHunger: GWorldCharacterSheet.#onRestFromHunger,
+      setAlight: GWorldCharacterSheet.#onSetAlight,
+      liftingRoll: GWorldCharacterSheet.#onLiftingRoll,
       poison: GWorldCharacterSheet.#onPoison,
       poisonCycle: GWorldCharacterSheet.#onPoisonCycle,
       poisonTreat: GWorldCharacterSheet.#onPoisonTreat,
@@ -2426,12 +2822,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       infection: GWorldCharacterSheet.#onInfection,
       scatter: GWorldCharacterSheet.#onScatter,
       overpenetration: GWorldCharacterSheet.#onOverpenetration,
+      hearTheShot: GWorldCharacterSheet.#onHearTheShot,
       splash: GWorldCharacterSheet.#onSplash,
       reaction: GWorldCharacterSheet.#onReaction,
       influence: GWorldCharacterSheet.#onInfluence,
       toggleMounted: GWorldCharacterSheet.#onToggleMounted,
       stayOn: GWorldCharacterSheet.#onStayOn,
       pushEnvelope: GWorldCharacterSheet.#onPushEnvelope,
+      flying: GWorldCharacterSheet.#onFlying,
       attributePenalties: GWorldCharacterSheet.#onAttributePenalties,
       applyTemplate: GWorldCharacterSheet.#onApplyTemplate,
       removeTemplate: GWorldCharacterSheet.#onRemoveTemplate,
@@ -2470,13 +2868,23 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       operate: GWorldCharacterSheet.#onOperate,
       resuscitate: GWorldCharacterSheet.#onResuscitate,
       tryToEscape: GWorldCharacterSheet.#onEscapeEntanglement,
+      throwMolotov: GWorldCharacterSheet.#onThrowMolotov,
+      unarmedTechnique: GWorldCharacterSheet.#onUnarmedTechnique,
+      invent: GWorldCharacterSheet.#onInvent,
+      stimulant: GWorldCharacterSheet.#onStimulant,
+      stimulantWearsOff: GWorldCharacterSheet.#onStimulantWearsOff,
+      depressant: GWorldCharacterSheet.#onDepressant,
+      withdrawal: GWorldCharacterSheet.#onWithdrawal,
+      checkBottles: GWorldCharacterSheet.#onCheckBottles,
       buildingCollapse: GWorldCharacterSheet.#onCollapse,
+      damageBuilding: GWorldCharacterSheet.#onDamageBuilding,
       splashAcid: GWorldCharacterSheet.#onAcid,
       breatheBadAir: GWorldCharacterSheet.#onBadAir,
       crushingPressure: GWorldCharacterSheet.#onPressure,
       accelerate: GWorldCharacterSheet.#onAcceleration,
       motionSickness: GWorldCharacterSheet.#onMotionSickness,
       controlVehicle: GWorldCharacterSheet.#onControlVehicle,
+      holyContact: GWorldCharacterSheet.#onHolyContact,
       jumpOutOfVehicle: GWorldCharacterSheet.#onJumpOutOfVehicle,
       shotAtVehicle: GWorldCharacterSheet.#onShotAtVehicle,
       trample: GWorldCharacterSheet.#onTrample,
@@ -2618,11 +3026,37 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         cost: (system.attributes[key] - 10) * (key === "DX" || key === "IQ" ? 20 : 10),
       })),
 
-      postures: POSTURES.map((key) => ({
-        key,
-        label: game.i18n.localize(`GWORLD.Posture.${key}`),
-        selected: system.posture === key,
-      })),
+      // Getting from one posture to another is not always one maneuver
+      // (Campaigns p. 364): from lying down a character must "rise to a
+      // crawling, kneeling, or sitting posture first"; kneeling and standing
+      // trade for the step of any maneuver; and "crouching does not require a
+      // Change Posture maneuver". Each option says which it is from here.
+      postures: POSTURES.map((key) => {
+        const from = (system.posture ?? "standing") as Posture;
+        const note = key === from
+          ? ""
+          : key === "crouching" && from === "standing"
+            ? game.i18n.localize("GWORLD.Posture.Free")
+            : isStepPostureChange(from, key)
+              ? game.i18n.localize("GWORLD.Posture.AStep")
+              : reachablePostures(from).includes(key)
+                ? ""
+                : game.i18n.localize("GWORLD.Posture.TwoManeuvers");
+        return {
+          key,
+          label: note
+            ? `${game.i18n.localize(`GWORLD.Posture.${key}`)} (${note})`
+            : game.i18n.localize(`GWORLD.Posture.${key}`),
+          selected: system.posture === key,
+        };
+      }),
+      // What the posture leaves of Move, dropping fractions: two-thirds
+      // crouching, a third kneeling or crawling, none sitting, a yard lying down.
+      postureMove: postureMove(Number(derived.encumbrance?.move ?? 0) || 0, (system.posture ?? "standing") as Posture),
+      postureMoveShown: (system.posture ?? "standing") !== "standing",
+      // "Final effective weight pulled, after all modifiers, cannot exceed
+      // 15xBL" (Campaigns p. 353).
+      maxDrag: maximumDrag(Number(derived.basicLift) || 0),
 
       hands: (["right", "left"] as const).map((key) => ({
         key,
@@ -2654,15 +3088,39 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         label: game.i18n.localize(`GWORLD.Cinematic.DressState.${key}`),
         selected: (system.dress?.state ?? "clothed") === key,
       })),
-      // The psi powers, ready to read: the book's name for each, what its
-      // Talent is worth, and whether this is a latent (pp. 254-255).
-      psionics: (system.derived?.psionics ?? []).map(
-        (held: { power: string; abilities: string[]; talent: number; latent: boolean }) => ({
+      // The powers, ready to read: the book's name for each, what its Talent
+      // is worth, whether this is a latent, and what a roll to use it is
+      // against (Characters pp. 254-255; Monster Hunters 1 p. 40).
+      psionics: describePowers(system.derived?.powers ?? [], {
+        IQ: Number(derived.attributes?.IQ ?? system.attributes?.IQ ?? 10),
+        will: Number(derived.will ?? 10),
+        per: Number(derived.per ?? 10),
+      }).map((held) => {
+        const label = held.psi ? game.i18n.localize(`GWORLD.Psi.Power.${held.psi}`) : held.name;
+        return {
           ...held,
-          label: game.i18n.localize(`GWORLD.Psi.Power.${held.power}`),
+          label,
           signed: held.talent > 0 ? `+${held.talent}` : String(held.talent),
-        }),
-      ),
+          couldManifestText: held.couldManifest.join(", "),
+          rollButtons: (["IQ", "Will", "Per"] as const).map((key) => ({
+            key,
+            target: held.rolls[key],
+            label: game.i18n.format("GWORLD.Psi.UseRoll", { power: label, attribute: key }),
+          })),
+        };
+      }),
+      // A psi ability's name with no power modifier on it: not psionic, and
+      // almost never what the player meant (Characters p. 254).
+      unpoweredPsi: unpoweredAbilities(
+        this.actor.items
+          .filter((item: any) => item.type === "trait")
+          .map((item: any) => ({
+            name: String(item.name ?? ""),
+            levels: Number(item.system?.levels ?? 0),
+            modifiers: ((item.system?.modifiers ?? []) as Array<{ name?: string }>).map((m) => String(m.name ?? "")),
+            power: String(item.system?.power ?? ""),
+          })),
+      ).map((u) => ({ ...u, powerLabel: game.i18n.localize(`GWORLD.Psi.Power.${u.power}`) })),
       // Caught in something, and how far through getting out they are.
       entangled: {
         caught: this.actor.statuses?.has?.("entangled") === true,
@@ -2682,6 +3140,24 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         ? OPPORTUNITY_LINE_PENALTY
         : opportunityFirePenalty(Number(system.wait?.hexesWatched ?? 1)),
       isAllOutDefense: system.maneuver === "allOutDefense" || system.conditions.allOutDefense,
+      isAllOutAttack: system.maneuver === "allOutAttack",
+      // "If you have been grappled, you cannot take a Move maneuver unless you
+      // have at least twice your foe's ST" (p. 371).
+      grappledCannotMove: (() => {
+        const grapple = grappleOf(this.actor);
+        if (!grapple || grapple.holding) return false;
+        const foe: any = fromUuidSync(grapple.foe);
+        if (!foe) return false;
+        return !canMoveWhileGrappled(
+          Number(system.attributes?.ST ?? 10) || 10,
+          Number(foe.system?.attributes?.ST ?? 10) || 10,
+        );
+      })(),
+      aoaOptions: (["determined", "double", "feint", "strong", "suppression"] as const).map((key) => ({
+        key,
+        label: `GWORLD.Maneuver.AllOutAttackOption.${key}`,
+        selected: (system.allOutAttackOption ?? "determined") === key,
+      })),
       aodIncreased: system.allOutDefenseOption === "increased",
       aodTargets: (["dodge", "parry", "block"] as const).map((key) => ({
         key,
@@ -3154,6 +3630,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const p = system.purchased;
     const b = system.bonuses;
 
+    // "IQ penalties apply equally to Will and Per. However, there are no other
+    // effects on secondary characteristics" (p. 421). So Will and Per say what
+    // a lowered IQ is taking off them, and nothing else does.
+    const iqPenalty = Number(derived.attributePenalties?.intelligence ?? 0) || 0;
     const cell = (
       key: "hp" | "will" | "per" | "fp" | "basicMove",
       label: string,
@@ -3169,6 +3649,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       step: 1,
       editable: true,
       cost: secondaryPointCost(key, p[key]),
+      lowered: affectsSecondary(key) ? iqPenalty : 0,
     });
 
     return [
@@ -3187,8 +3668,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       },
       cell("basicMove", L("BasicMove"), derived.basicMove, "= ⌊Speed⌋"),
       {
-        key: "dodge", label: L("Dodge"), value: derived.defenses.dodge.total,
-        derivation: "= Move + 3", editable: false, cost: 0, granted: 0, purchased: 0, step: 1,
+        // No Dodge at all on a turn that forfeited every defense -- All-Out
+        // Attack -- where the derived figure is null rather than a number.
+        // Reading .total off it took the whole sheet down with it.
+        key: "dodge", label: L("Dodge"), value: derived.defenses?.dodge?.total ?? "—",
+        derivation: derived.defenses?.dodge ? "= Move + 3" : game.i18n.localize("GWORLD.Secondary.NoDefense"),
+        editable: false, cost: 0, granted: 0, purchased: 0, step: 1,
       },
     ];
   }
@@ -3266,6 +3751,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       equippable: equippable || Boolean(item.system.meleeModes?.length || item.system.rangedModes?.length),
       notes: item.system.category === "vehicle" ? vehicleNotes(item) : notes,
       vehicle: item.system.category === "vehicle" && isRuleOn("vehicles"),
+      // Holy water and a significant symbol touch a demon without a blow
+      // (Monster Hunters 1 pp. 51, 57).
+      holy: Boolean(item.system.holy) && isRuleOn("holyAttacks"),
       // Its Legality Class, and what carrying it here takes under the
       // campaign's Control Rating (Characters p. 267, Campaigns p. 507).
       legality: legalityNote(item.system.lc ?? null),
@@ -3399,7 +3887,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // a standard mage, a point at a time for a ritual one (p. 242).
     const difficulty = item.system?.difficulty;
     const next = item.type === "technique"
-      ? (down ? previousTechniquePoints(current) : nextTechniquePoints(current))
+      ? (down
+          ? previousTechniquePoints(current, difficulty === "H" ? "H" : "A")
+          : nextTechniquePoints(current, difficulty === "H" ? "H" : "A"))
       : item.type === "spell"
         ? (down
             ? previousSpellPoints(current, difficulty, item.system?.derived?.style ?? "standard")
@@ -4045,7 +4535,29 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const id = target.dataset.poison;
     if (!id) return;
 
-    const asked = await promptForTreatment();
+    // An illness is treated with antibiotics and a physician's care, not by
+    // sucking a wound or inducing vomiting (p. 443).
+    const dose = activePoisons(this.actor).find((d) => d.id === id);
+    if (dose?.illness) {
+      const I = (key: string) => game.i18n.localize(`GWORLD.Illness.${key}`);
+      const asked = await hazardPrompt(
+        I("Treat"),
+        hazardCheck("antibiotics", I("Antibiotics")) +
+          hazardCheck("resistant", I("DrugResistant")) +
+          hazardField("physician", I("PhysicianBonus"), 0, 'min="0"'),
+        (form) => ({
+          antibiotics: ticked(form, "antibiotics"),
+          drugResistant: ticked(form, "resistant"),
+          physicianBonus: num(form, "physician"),
+        }),
+      );
+      if (!asked) return;
+      await treatIllness({ actor: this.actor, id, ...asked });
+      this.render();
+      return;
+    }
+
+    const asked = await promptForTreatment(this.actor);
     if (!asked) return;
 
     await treatPoison({ actor: this.actor, id, ...asked });
@@ -4152,6 +4664,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   }
 
   /** Whether the shot came out the other side (Campaigns p. 408). */
+  /**
+   * Whether the targeted token hears this character's shot (Campaigns p. 411),
+   * or this character hears one when nobody is targeted.
+   */
+  static async #onHearTheShot(this: GWorldCharacterSheet) {
+    const asked = await promptForHearing();
+    if (!asked) return;
+    const listener = targetedTokens()[0]?.actor ?? this.actor;
+    await hearTheShot({ actor: this.actor, listener, ...asked });
+  }
+
   static async #onOverpenetration(this: GWorldCharacterSheet) {
     if (!isRuleOn("overpenetration")) return;
 
@@ -4231,6 +4754,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!asked) return;
 
     await rollStayOn({ actor: this.actor, ...asked });
+  }
+
+  /** A turn in the air (Campaigns p. 397). */
+  static async #onFlying(this: GWorldCharacterSheet) {
+    if (!isRuleOn("highSpeed")) return;
+    const asked = await promptForFlying();
+    if (!asked) return;
+    await flyingTurn({ actor: this.actor, ...asked });
   }
 
   /** A stop or a turn sharper than the rules allow (Campaigns p. 395). */
@@ -4375,6 +4906,56 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     await applyDeprivation({ actor: this.actor, ...asked });
   }
 
+  /** A flame held against something, and whether it catches (p. 433). */
+  static async #onSetAlight(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+    const asked = await promptForAlight();
+    if (!asked) return;
+    await setAlight({ actor: this.actor, ...asked });
+  }
+
+  /**
+   * A Lifting roll for one heavy lift (Campaigns p. 353): success "increases
+   * your Basic Lift by 5% times your margin of success for the purpose of
+   * picking up heavy objects".
+   */
+  static async #onLiftingRoll(this: GWorldCharacterSheet) {
+    const skill = this.actor.system?.derived?.feats?.lifting?.skill;
+    const basicLift = Number(this.actor.system?.derived?.basicLift) || 0;
+    if (typeof skill !== "number") {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Feats.NoLifting"));
+      return;
+    }
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    const dice = (roll.dice[0]?.results ?? []).map((r: { result: number }) => r.result);
+    const outcome = rollOutcome(roll.total, skill, dice);
+    const lift = outcome.success ? liftingSkillCapacity(basicLift, outcome.margin) : basicLift;
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor: this.actor }),
+      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+      content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${game.i18n.localize("GWORLD.Feats.LiftingRoll")}</span>
+        <span class="gc-target">${game.i18n.localize("GWORLD.Chat.Target")} ${skill}</span></div>
+        <div class="gc-dice">${dice.map((d: number) => `<span class="gc-die">${d}</span>`).join("")}<span class="gc-total">${roll.total}</span></div>
+        <div class="gc-result ${outcome.success ? "success" : "failure"}">${game.i18n.format("GWORLD.Feats.LiftedAs", {
+          lift: Math.round(lift * 10) / 10, base: basicLift,
+        })}</div></div>`,
+      rolls: [roll],
+    });
+  }
+
+  /** Days of rest and full meals, which is the only cure for going hungry (p. 426). */
+  static async #onRestFromHunger(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+    const days = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Weather.RestTitle"),
+      label: game.i18n.localize("GWORLD.Weather.RestDays"),
+      initial: 1,
+    });
+    if (days === null) return;
+    await restFromHunger({ actor: this.actor, days });
+  }
+
   /**
    * The half-hourly roll a mortally wounded character makes (Campaigns p. 423).
    *
@@ -4438,12 +5019,43 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * the weapon's own notes, which the compendium does not carry, so this rolls
    * the resistance and leaves the effect to the GM.
    */
+  /** Holy contact with whoever is targeted, from a holy item's row (Monster Hunters 1 p. 51). */
+  static async #onHolyContact(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    const targets = currentTargets();
+    if (!item || targets.length === 0) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Holy.NoTarget"));
+      return;
+    }
+    const seen = new Set<string>();
+    let touched = 0;
+    for (const token of targets) {
+      const victim = token?.actor;
+      const key = String(victim?.uuid ?? "");
+      if (!victim || seen.has(key)) continue;
+      seen.add(key);
+      if (await applyHolyContact(victim, String(item.name))) touched++;
+    }
+    if (touched === 0) ui.notifications?.info(game.i18n.localize("GWORLD.Holy.NoEffect"));
+  }
+
+  /** Exposure to a Weakness, from the trait's own row (Characters p. 161). */
+  static async #onWeaknessExposure(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (item) await exposeToWeakness(this.actor, item);
+  }
+
   static async #onAffliction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     if (!isRuleOn("afflictions")) return;
     const attribute = target.dataset.resist ?? "";
     if (!attribute) return;
     const modifier = Number(target.dataset.resistModifier) || 0;
     const label = target.dataset.afflictionLabel ?? "";
+    // A ranged affliction past its 1/2D is resisted at +3 (Characters p. 270).
+    const halfDamageRange = Number(target.dataset.halfDamageRange) || 0;
+    const shooter = this.actor.getActiveTokens?.()?.[0];
 
     const targets = currentTargets();
     if (targets.length === 0) {
@@ -4469,9 +5081,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           resist: `${attribute}${modifier || ""}`,
         }),
         kind: "attribute",
-        modifiers: modifier === 0
-          ? []
-          : [{ label: game.i18n.localize("GWORLD.Affliction.Short"), value: modifier }],
+        modifiers: [
+          ...(modifier === 0 ? [] : [{ label: game.i18n.localize("GWORLD.Affliction.Short"), value: modifier }]),
+          // "Those that require a HT roll to resist are resisted at +3" past 1/2D.
+          ...(beyondHalfDamage({ rangeYards: yardsBetween(shooter, token) ?? 0, halfDamageRange })
+            ? [{ label: game.i18n.localize("GWORLD.Affliction.PastHalfDamage"), value: 3 }]
+            : []),
+        ],
         // A roll that fails is a condition somebody now has, and the card is
         // where it is handed out (Campaigns pp. 428-429).
         affliction: {
@@ -4500,12 +5116,39 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (velocity === null) return;
 
-    const { dice, modifier } = slamDamage(hp, velocity);
-    await rollDamage({
+    // "You and your foe each inflict dice of crushing damage on the other
+    // equal to (HP x velocity)/100" (p. 371) -- both of them, and who falls
+    // down is decided by comparing the two. With a target on the map both are
+    // rolled; with none, only the slammer's, as before.
+    const mine = slamDamage(hp, velocity);
+    const dealt = await rollDamage({
       actor: this.actor,
       label: game.i18n.format("GWORLD.Slam.Label", { yards: velocity }),
-      formula: modifier === 0 ? `${dice}d` : `${dice}d${modifier}`,
+      formula: formatDiceAdds({ dice: mine.dice, adds: mine.modifier }),
       damageType: "cr",
+    });
+
+    const foe = targetedTokens()[0]?.actor ?? null;
+    if (!foe) return;
+    const theirs = slamDamage(Number(foe.system?.hp?.max ?? 0), velocity);
+    const taken = await rollDamage({
+      actor: foe,
+      label: game.i18n.format("GWORLD.Slam.Back", { name: String(foe.name ?? ""), yards: velocity }),
+      formula: formatDiceAdds({ dice: theirs.dice, adds: theirs.modifier }),
+      damageType: "cr",
+    });
+
+    const outcome = slamOutcome(dealt, taken);
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor: this.actor }),
+      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+      content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${game.i18n.localize("GWORLD.Slam.Title")}</span></div>
+        <div class="gc-result">${game.i18n.format(`GWORLD.Slam.Outcome.${outcome}`, {
+          slammer: String(this.actor.name ?? ""),
+          foe: String(foe.name ?? ""),
+          dealt,
+          taken,
+        })}</div></div>`,
     });
   }
 
@@ -4850,14 +5493,97 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * things the roll turns on and the two the sheet cannot know.
    */
   static async #onEscapeEntanglement(this: GWorldCharacterSheet) {
+    const held = this.actor.system.entangled ?? {};
     const asked = await promptForEscape(
-      (this.actor.system.entangled?.kind || "net") as Entanglement,
+      (held.kind || "net") as Entanglement,
+      String(held.where ?? ""),
+      Boolean(held.running),
     );
     if (!asked) return;
     await tryToEscape({ actor: this.actor, ...asked });
   }
 
+  /** An arm lock, a choke, an elbow, a neck snap or a Karate point strike (pp. 403-404). */
+  static async #onUnarmedTechnique(this: GWorldCharacterSheet) {
+    const target = targetedTokens()[0]?.actor ?? null;
+    const asked = await promptForTechnique(target);
+    if (!asked) return;
+    await useTechnique({ actor: this.actor, ...asked });
+  }
+
+  /** A Concept or Prototype roll for something being invented (pp. 472-474). */
+  static async #onInvent(this: GWorldCharacterSheet) {
+    const asked = await promptForInvention(Number(this.actor.system?.tl) || 3);
+    if (!asked) return;
+    await rollInvention({ actor: this.actor, ...asked });
+  }
+
+  /** A dose of a stimulant, and the HT roll a second one in a day calls for (p. 440). */
+  static async #onStimulant(this: GWorldCharacterSheet) {
+    if (!isRuleOn("intoxication")) return;
+    const doses = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Drug.Stimulant"),
+      label: game.i18n.localize("GWORLD.Drug.DosesToday"),
+      initial: 1,
+    });
+    if (doses === null) return;
+    await takeStimulant({ actor: this.actor, dosesToday: doses });
+  }
+
+  /** The stimulant wearing off: twice the FP it restored, taken back (p. 440). */
+  static async #onStimulantWearsOff(this: GWorldCharacterSheet) {
+    if (!isRuleOn("intoxication")) return;
+    const fp = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Drug.StimulantWearsOff"),
+      label: game.i18n.localize("GWORLD.Drug.FpRestored"),
+      initial: 0,
+    });
+    if (fp === null) return;
+    await stimulantWearsOff(this.actor, fp);
+  }
+
+  /** A depressant, and the overdose that comes of more than one (p. 441). */
+  static async #onDepressant(this: GWorldCharacterSheet) {
+    if (!isRuleOn("intoxication")) return;
+    const asked = await promptForDepressant();
+    if (!asked) return;
+    await takeDepressant({ actor: this.actor, ...asked });
+  }
+
+  /** One day of trying to give a drug up (p. 440). */
+  static async #onWithdrawal(this: GWorldCharacterSheet) {
+    if (!isRuleOn("intoxication")) return;
+    const asked = await promptForWithdrawal();
+    if (!asked) return;
+    await withdrawalRoll({ actor: this.actor, ...asked });
+  }
+
+  /** A Molotov cocktail thrown at somebody (Campaigns p. 411). */
+  static async #onThrowMolotov(this: GWorldCharacterSheet) {
+    const asked = await promptForMolotov();
+    if (!asked) return;
+    await throwMolotov({ actor: this.actor, ...asked });
+  }
+
+  /** A fall with bottles on the belt, each of which may break (p. 411). */
+  static async #onCheckBottles(this: GWorldCharacterSheet) {
+    const bottles = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Molotov.CheckBottles"),
+      label: game.i18n.localize("GWORLD.Molotov.Bottles"),
+      initial: 1,
+    });
+    if (bottles === null) return;
+    await checkBottles(this.actor, bottles);
+  }
+
   /** A building coming down on them (Campaigns p. 484). */
+  static async #onDamageBuilding(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+    const asked = await promptForBuilding();
+    if (!asked) return;
+    await damageBuilding({ actor: this.actor, ...asked });
+  }
+
   static async #onCollapse(this: GWorldCharacterSheet) {
     if (!isRuleOn("exposure")) return;
     const asked = await promptForCollapse();
@@ -4896,6 +5622,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         actor: this.actor,
         atmospheres: asked.atmospheres,
         explosive: asked.explosive,
+        // Both were asked and then dropped: a diver with Pressure Support 1
+        // rolled for the bends coming up from 3 atm, which that support removes.
+        support: asked.support,
+        minutes: asked.minutes,
       });
       return;
     }

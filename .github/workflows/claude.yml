@@ -1,4 +1,5 @@
 name: Claude Code Action
+
 on:
   issues:
     types: [opened, edited, assigned]
@@ -11,12 +12,29 @@ on:
 
 jobs:
   claude:
-    # Ensures it only runs if @claude is explicitly typed/mentioned
-    if: contains(github.event.issue.body, '@claude') || contains(github.event.comment.body, '@claude') || contains(github.event.pull_request.body, '@claude')
+    # Only when @claude is actually asked for. On a pull_request event
+    # github.event.issue is null, and contains(null, ...) is false, so each
+    # clause only fires for the event that carries that field.
+    if: >-
+      contains(github.event.issue.body, '@claude') ||
+      contains(github.event.comment.body, '@claude') ||
+      contains(github.event.pull_request.body, '@claude')
     runs-on: ubuntu-latest
+
+    # This repository's default workflow token is read-only, so without these
+    # the action runs and then cannot post what it worked out.
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Run Claude Code Action
         uses: anthropics/claude-code-action@v1

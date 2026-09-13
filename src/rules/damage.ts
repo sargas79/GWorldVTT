@@ -185,6 +185,12 @@ export function halveDamage(basicDamage: number, type: DamageType): number {
 
 export interface InjuryInput {
   /**
+   * A Vulnerability multiplier (Characters p. 161), applied to "damage that
+   * penetrates your DR" before the ordinary wounding modifier, which "further
+   * multiplies the damage". One for a target with none that applies.
+   */
+  vulnerability?: number;
+  /**
    * How the target's body takes injury, where it is not flesh (Characters
    * pp. 60-61): where a blow to a part it lacks actually lands, what piercing
    * and impaling are worth against it, and the cap on a Diffuse body.
@@ -252,6 +258,7 @@ export function computeInjury({
   qualifiers = {},
   critical,
   tolerance,
+  vulnerability = 1,
 }: InjuryInput): InjuryResult {
   const divisor = armorDivisor > 0 ? armorDivisor : 1;
 
@@ -292,7 +299,7 @@ export function computeInjury({
   const cap = tolerance ? diffuseInjuryCap(type, tolerance) : null;
   const raw = Math.min(
     cap ?? Number.POSITIVE_INFINITY,
-    Math.max(1, Math.floor(penetrating * woundingModifier)),
+    Math.max(1, Math.floor(penetrating * Math.max(1, vulnerability) * woundingModifier)),
   );
 
   // Injury past what cripples a limb is lost rather than carried to the body.

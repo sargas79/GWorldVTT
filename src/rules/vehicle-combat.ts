@@ -11,6 +11,9 @@
  */
 
 import type { Locomotion } from "./vehicles.js";
+import type { DamageType } from "./types.js";
+import { woundingModifierAt } from "./hit-locations.js";
+import { noInjuryTolerance, toleratedWoundingModifier } from "./injury-tolerance.js";
 
 // ── losing control (p. 469) ─────────────────────────────────────────────
 
@@ -291,11 +294,63 @@ export function hitsAPerson(location: VehicleLocation): boolean {
   return location === "exposedRider" || location === "openCabin";
 }
 
-/** The wounding modifier a vehicle's vital area takes (p. 555). */
-export function vitalAreaModifier(damageType: string): number {
-  if (damageType === "burn") return 2;
+/**
+ * The wounding modifier a vehicle's vital area gives, where it gives one (p. 555).
+ *
+ * "The wounding modifier for a tight-beam burning attack is x2; that for an
+ * impaling or any piercing attack is x3!" A tight beam, not every burn: a
+ * flamethrower on the fuel tank is a burn like any other, which is the same
+ * line the character's own vitals draw (p. 399). Null for every other attack,
+ * which takes the ordinary modifier there.
+ */
+export function vitalAreaModifier(damageType: string, tightBeam = false): number | null {
+  if (damageType === "burn") return tightBeam ? 2 : null;
   if (damageType === "imp" || damageType.startsWith("pi")) return 3;
-  return 1;
+  return null;
+}
+
+/**
+ * The wounding modifier a hit on a vehicle takes (pp. 380, 555).
+ *
+ * "Most powered vehicles are Unliving; most unpowered vehicles are
+ * Homogenous" -- which is what cuts a bullet down to a third against a car's
+ * body and a fifth against a wagon's. A vital area overrides that for the
+ * attacks it names; everything else takes the ordinary torso figure.
+ */
+export function vehicleWoundingModifier(options: {
+  damageType: DamageType;
+  tightBeam?: boolean;
+  location: VehicleLocation;
+  /** True for a powered vehicle, which is Unliving; false for one that is Homogenous. */
+  powered: boolean;
+}): number {
+  if (options.location === "vitalArea") {
+    const vital = vitalAreaModifier(options.damageType, options.tightBeam === true);
+    if (vital !== null) return vital;
+  }
+  const tolerance = { ...noInjuryTolerance(), unliving: options.powered, homogenous: !options.powered };
+  return (
+    toleratedWoundingModifier(options.damageType, tolerance) ??
+    woundingModifierAt(options.damageType, "torso", { tightBeam: options.tightBeam === true })
+  );
+}
+
+/**
+ * What a hit does to a vehicle's hit points (pp. 380, 555).
+ *
+ * The same arithmetic as injury to anybody: the modifier rounds down, "but any
+ * attack that penetrates DR at all inflicts a minimum of 1 point of injury".
+ */
+export function vehicleInjury(options: {
+  penetrating: number;
+  damageType: DamageType;
+  tightBeam?: boolean;
+  location: VehicleLocation;
+  powered: boolean;
+}): number {
+  const penetrating = Math.max(0, Math.floor(options.penetrating));
+  if (penetrating === 0) return 0;
+  return Math.max(1, Math.floor(penetrating * vehicleWoundingModifier(options)));
 }
 
 /** "A closed window gives half the vehicle's DR (round up)" (p. 555). */

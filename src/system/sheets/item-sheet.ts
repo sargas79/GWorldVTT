@@ -10,6 +10,9 @@
  * quantity, weight and cost. The body template switches on the type.
  */
 
+import { HIRED_RATE_PER_HOUR, hiredTechnicianSkill } from "../../rules/repairs.js";
+import { isLegalityClass, licenseCost } from "../../rules/legality.js";
+import { objectState, rollsToKeepWorking } from "../../rules/objects.js";
 import { parseCostTable, parseLevelNames } from "../../rules/traits.js";
 import { SPELL_CLASSES } from "../../rules/magic.js";
 import { SYSTEM_ID } from "../constants.js";
@@ -31,8 +34,17 @@ import {
   qualityCostMultiplier,
   shieldComposition,
 } from "../../rules/weapon-quality.js";
-import { AMMUNITION_TYPES, ammunitionCost } from "../../rules/ammunition.js";
-import { EQUIPMENT_QUALITIES } from "../../rules/wealth.js";
+import {
+  AMMUNITION_TYPES,
+  ammunitionCost,
+  availableAmmunition,
+  calibreOf,
+} from "../../rules/ammunition.js";
+import {
+  EQUIPMENT_QUALITIES,
+  equipmentQualityCost,
+  type EquipmentQuality,
+} from "../../rules/wealth.js";
 
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -42,8 +54,11 @@ const TEMPLATE_ROOT = `systems/${SYSTEM_ID}/templates/item`;
 /** Types that live in an inventory and so carry quantity, weight and cost. */
 const PHYSICAL_TYPES = new Set(["equipment", "armor", "shield"]);
 
-/** Types that can carry attack modes. */
-const ARMED_TYPES = new Set(["equipment"]);
+/**
+ * Types that can carry attack modes: a weapon, and an advantage that is an
+ * attack (Characters p. 61).
+ */
+const ARMED_TYPES = new Set(["equipment", "trait"]);
 
 /** Every enhancement and limitation the chosen compendia hold, by name. */
 async function modifierEntries(): Promise<Array<{ name: string; value: number; costTable: number[]; levelNames: string[]; maxLevels: number; group: string; kind: string }>> {
@@ -179,6 +194,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     context.type = item.type;
     context.isPhysical = PHYSICAL_TYPES.has(item.type);
     context.isArmed = ARMED_TYPES.has(item.type);
+    // A holy item is only a thing to mark where Monster Hunters 1 is in play.
+    context.holyAttacks = isRuleOn("holyAttacks");
 
     // What the weapon is as an object and what its grade costs (Characters
     // p. 274, Campaigns p. 483), for the sheet to show beside the fields.
@@ -202,6 +219,10 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         qualities: Object.fromEntries(grades.map((q) => [q, `GWORLD.Quality.${q}`])),
         multiplier: qualityCostMultiplier(facts.weaponClass, facts.quality, tl),
         conditionLabel: `GWORLD.Breakage.Condition.${facts.condition}`,
+        // "Roll vs. the artifact's HT each second while it is under stress"
+        // once it is at zero or below (Campaigns p. 484).
+        mustRollInUse: facts.hp > 0
+          && rollsToKeepWorking(objectState(facts.hp - (Number((item.system as any).hpLost) || 0), facts.hp)),
         showQuality: item.type === "equipment" && isRuleOn("weaponQuality"),
         showObject: isRuleOn("weaponBreakage") && facts.hp > 0,
       };
@@ -220,6 +241,14 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // several at once (Characters p. 239).
     // A vehicle is equipment with a stat line, and the sheet shows the line
     // only when the category says so.
+    // What a license to carry it costs, where it needs one (Campaigns p. 507):
+    // "1d x 10% of the price of the item itself" -- so from a tenth to
+    // six-tenths of the price, and the die is the GM's to roll.
+    const price = Number((item.system as any)?.cost) || 0;
+    context.license = price > 0 && isLegalityClass((item.system as any)?.lc)
+      ? { low: licenseCost(price, 1), high: licenseCost(price, 6) }
+      : null;
+
     context.isVehicle = item.type === "equipment" && item.system?.category === "vehicle";
 
     // What a computer can run at once (Campaigns p. 472). Only shown for
@@ -259,6 +288,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     if (item.type === "trait") {
       context.costTableText = item.system.costTable.join("/");
       context.levelNamesText = item.system.levelNames.join("\n");
+      context.talentSkillsText = (item.system.talentSkills ?? []).join("\n");
       context.isTabled = item.system.costTable.length > 0;
       context.levelName = item.system.levelName;
       context.netModifier = item.system.netModifier;
@@ -347,6 +377,12 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         "": "GWORLD.Mount.none",
         ...keyed("Mount", ["rest", "bipod", "mounted"]),
       },
+      // How a projectile steers, or nothing at all (Campaigns p. 412).
+      guidance: {
+        "": "GWORLD.Item.GuidanceNone",
+        guided: "GWORLD.Item.GuidanceGuided",
+        homing: "GWORLD.Item.GuidanceHoming",
+      },
       equipmentQualities: keyed("EquipmentQuality", [...EQUIPMENT_QUALITIES]),
       ammunition: {
         "": "GWORLD.Ammunition.none",
@@ -389,6 +425,26 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       },
     };
 
+    // Only the loads a weapon can actually take (Characters pp. 276, 279): no
+    // hollow-points in a bow, no silver bullets before TL4. The one it is
+    // loaded with stays on the list even so, so a stale choice is visible
+    // rather than silently replaced.
+    const itemTl = Number((item.system as any)?.tl) || 0;
+    const weaponClass = String((item.system as any)?.weaponClass ?? "");
+    context.ammunitionFor = ((item.system as any)?.rangedModes ?? []).map((mode: any) => {
+      const fits = availableAmmunition({
+        damageType: mode.damageType,
+        armorDivisor: Number(mode.armorDivisor) || 1,
+        calibreMm: calibreOf(String(item.name ?? "")),
+        tl: itemTl,
+        bow: weaponClass === "bow",
+      });
+      const keep = new Set<string>([...fits, String(mode.ammunition ?? "")]);
+      return Object.fromEntries(
+        Object.entries((context.choices as any)?.ammunition ?? {}).filter(([key]) => key === "" || keep.has(key)),
+      );
+    });
+
     return context;
   }
 
@@ -429,6 +485,26 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       }
     }
 
+    // Equipment grade reprices a tool from its basic price (Campaigns p. 345):
+    // "good" is five times basic and "fine" twenty. The basic price is the
+    // list price where one is kept, and otherwise worked back out of what the
+    // item costs at the grade it is at now, so changing grade twice does not
+    // compound. "Best" is not sold, so it leaves the price alone.
+    if (this.item.type === "equipment" && data.system?.equipmentQuality !== undefined) {
+      const current = this.item.system as any;
+      const was = String(current.equipmentQuality ?? "basic") as EquipmentQuality;
+      const now = String(data.system.equipmentQuality) as EquipmentQuality;
+      const toMultiple = equipmentQualityCost(now);
+      if (now !== was && toMultiple !== null) {
+        const fromMultiple = equipmentQualityCost(was) ?? 1;
+        const basic = Number(current.listCost) || Math.round((Number(current.cost) || 0) / fromMultiple);
+        if (basic > 0) {
+          data.system.listCost = basic;
+          data.system.cost = Math.round(basic * toMultiple);
+        }
+      }
+    }
+
     // A shield is priced the same way off what it is made of (p. 287).
     if (this.item.type === "shield" && data.system) {
       const current = this.item.system as any;
@@ -466,6 +542,11 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       }
       if (typeof data.system.levelNames === "string") {
         data.system.levelNames = parseLevelNames(data.system.levelNames);
+      }
+      // A skill a line, like the level names, with no blank lines kept: a list
+      // of skills has no position to hold the way a level does.
+      if (typeof data.system.talentSkills === "string") {
+        data.system.talentSkills = parseLevelNames(data.system.talentSkills).filter(Boolean);
       }
       // The select submits "" for none, which the number field cannot hold.
       if (data.system.selfControl === "" || data.system.selfControl === undefined) {
@@ -567,7 +648,31 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   static async #onRepairWeapon(this: GWorldItemSheet) {
     if (!isRuleOn("repairs")) return;
     const actor = (this.item as { actor?: any }).actor ?? null;
-    const own = actor ? repairSkillOf(actor) : null;
+    let own = actor ? repairSkillOf(actor) : null;
+
+    // Nobody to mend it: hire someone. "A typical rate is $20/hour", at a
+    // "typical skill level of 9 + 1d" (p. 484), so the technician's skill is
+    // rolled rather than assumed, and the card says what they cost.
+    if (!own) {
+      const hire = await foundry.applications.api.DialogV2.confirm({
+        window: { title: game.i18n.localize("GWORLD.Repair.Action") },
+        content: `<p>${game.i18n.format("GWORLD.Repair.HireOffer", { rate: HIRED_RATE_PER_HOUR })}</p>`,
+        rejectClose: false,
+      });
+      if (hire) {
+        const die = new Roll("1d6");
+        await die.evaluate();
+        own = { name: game.i18n.localize("GWORLD.Repair.Hired"), level: hiredTechnicianSkill(die.total) };
+        await ChatMessage.implementation.create({
+          speaker: ChatMessage.implementation.getSpeaker({ actor }),
+          style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+          content: `<div class="gworld gworld-chat"><div class="gc-result">${game.i18n.format("GWORLD.Repair.HiredSkill", {
+            skill: own.level, rate: HIRED_RATE_PER_HOUR,
+          })}</div></div>`,
+          rolls: [die],
+        });
+      }
+    }
     const skill = await promptForNumber({
       title: game.i18n.localize("GWORLD.Repair.Action"),
       label: game.i18n.format("GWORLD.Repair.SkillLabel", {

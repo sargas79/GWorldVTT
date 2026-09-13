@@ -12,28 +12,6 @@
  * the same amount."
  */
 
-/** What "3x9" means. */
-export interface RateOfFire {
-  shots: number;
-  projectiles: number;
-}
-
-/**
- * Reads a Rate of Fire as the table prints it: "3", "3x9", or "2×9".
- *
- * Anything unreadable is one shot of one projectile, which is what every
- * weapon that is not a shotgun has.
- */
-export function parseRateOfFire(text: string | number | null | undefined): RateOfFire {
-  const raw = String(text ?? "").trim().toLowerCase().replace("×", "x");
-  const m = /^(\d+)(?:x(\d+))?/.exec(raw);
-  if (!m) return { shots: 1, projectiles: 1 };
-  return {
-    shots: Math.max(1, Number(m[1])),
-    projectiles: Math.max(1, Number(m[2] ?? 1)),
-  };
-}
-
 /** The fraction of 1/2D range inside which the pellets have not spread. */
 export const CONE_RANGE_FRACTION = 0.1;
 

@@ -77,6 +77,38 @@ export function suffocationSecond(options: {
   };
 }
 
+/** How hard somebody is working while they hold their breath (p. 351). */
+export type Exertion = "none" | "mild" | "heavy";
+
+/**
+ * How long somebody can hold their breath, in seconds (p. 351).
+ *
+ * "No Exertion (e.g., sitting quietly or meditating): HT x 10 seconds. Mild
+ * Exertion (e.g., operating a vehicle, treading water, or walking): HT x 4
+ * seconds. Heavy Exertion (e.g., climbing, combat, or running): HT seconds."
+ * Then the multipliers: x1.5 for hyperventilating first, x2.5 for doing it on
+ * pure oxygen, a further x1.5 for a successful Breath Control roll, half for
+ * being surprised with no deep breath at all -- and "each level of the
+ * Breath-Holding advantage doubles the time".
+ */
+export function holdBreathSeconds(options: {
+  health: number;
+  exertion: Exertion;
+  hyperventilated?: "no" | "air" | "oxygen";
+  breathControl?: boolean;
+  surprised?: boolean;
+  breathHoldingLevels?: number;
+}): number {
+  const base = options.exertion === "none" ? 10 : options.exertion === "mild" ? 4 : 1;
+  let seconds = Math.max(0, options.health) * base;
+  if (options.hyperventilated === "air") seconds *= 1.5;
+  if (options.hyperventilated === "oxygen") seconds *= 2.5;
+  if (options.breathControl) seconds *= 1.5;
+  if (options.surprised) seconds /= 2;
+  seconds *= 2 ** Math.max(0, Math.floor(options.breathHoldingLevels ?? 0));
+  return Math.floor(seconds);
+}
+
 /** Whether this second calls for a drowning Swimming roll (p. 436). */
 export function drowningRollDue(seconds: number): boolean {
   const elapsed = Math.max(0, Math.floor(seconds));

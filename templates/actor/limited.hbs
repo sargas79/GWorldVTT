@@ -16,6 +16,12 @@
     <div class="box prose" style="text-align: left">{{{biographyHTML}}}</div>
   {{/if}}
 
+  {{!-- An NPC's description is what a player is allowed to know about what
+       they are looking at. A character has none, and sets no descriptionHTML. --}}
+  {{#if descriptionHTML}}
+    <div class="box prose" style="text-align: left">{{{descriptionHTML}}}</div>
+  {{/if}}
+
   <div style="display: flex; align-items: center; gap: 7px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--color-neutral-700)">
     {{> "gworld.lock"}}
     <span>{{localize "GWORLD.Hint.LimitedSheet"}}</span>

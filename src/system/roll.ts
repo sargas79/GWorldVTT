@@ -19,11 +19,15 @@ import {
   type CalledShot,
 } from "./called-shot.js";
 import { consumeTurnedBlade, recordTurnedBlade } from "./turned-blade.js";
+import { consumePulledBlow, pulledFormula, recordPulledBlow } from "./pulled-blow.js";
 import { isRuleOn } from "./optional-rules.js";
 import { targetedTokens } from "./targets.js";
 import { aimTurnsOf, loseAim } from "./aim.js";
 import { aimBonus } from "../rules/aim.js";
-import { scopeBonus } from "../rules/accessories.js";
+import {
+  scopeBonus,
+  laserSight,
+} from "../rules/accessories.js";
 import { multipleProjectiles } from "../rules/shotguns.js";
 import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import {
@@ -31,7 +35,11 @@ import {
   criticalMissTableFor,
   type CriticalTable,
 } from "../rules/criticals.js";
-import { applyDamageFloor, computeInjury } from "../rules/damage.js";
+import {
+  applyDamageFloor,
+  computeInjury,
+  halveDamage,
+} from "../rules/damage.js";
 import { formatDiceAdds, maxRoll, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import { blastRadius, fragmentationRadius } from "../rules/explosions.js";
 import { canMalfunction, type Delivery } from "../rules/cinematic.js";
@@ -52,7 +60,12 @@ import {
   dualWeaponAttack,
 } from "../rules/attack-options.js";
 import { penaltyForRoll } from "../rules/attribute-penalties.js";
-import { CHARGE_VELOCITY, mountedAttack, mountedShooting } from "../rules/mounted.js";
+import {
+  CHARGE_VELOCITY,
+  mountedAttack,
+  mountedShooting,
+  lanceDamage,
+} from "../rules/mounted.js";
 import { consumeCharge, recordCharge } from "./mounted.js";
 import type { SkillAttribute } from "../rules/types.js";
 import {
@@ -74,10 +87,29 @@ import { impairedAttacks } from "../rules/trait-effects.js";
 import { levelDifference } from "../rules/melee-situations.js";
 import { effectiveLevelDifference } from "../rules/unarmed-techniques.js";
 import { turnedBlade } from "../rules/subduing.js";
-import { coverShot, type CoverApproach } from "../rules/cover.js";
+import { coverShot, struckCover, type CoverApproach } from "../rules/cover.js";
 import { breakWeapon } from "./weapon-damage.js";
 import { spendShots } from "./ammunition.js";
 import type { DamageType } from "../rules/types.js";
+
+import { cappedAimBonus, targetingSystemBonus, unexpectedDodgePenalty } from "../rules/vehicle-combat.js";
+import {
+  accuracyApplies,
+  areaDamageFallsOff,
+  coneMayStillCatch,
+  coneWidth,
+  defendsAgainstArea,
+  flightPlan,
+  guidanceModifiers,
+  halvesDamage,
+  projectileSpeed,
+  steeringDuty,
+  type Guidance,
+} from "../rules/guided.js";
+import { allOutAttackBonus, strongAttackDamageBonus, type AllOutAttackOption } from "../rules/maneuvers.js";
+import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
+import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
+import { rollMalediction } from "./malediction.js";
 
 const CHAT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/success-roll.hbs`;
 const DAMAGE_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-roll.hbs`;
@@ -88,6 +120,93 @@ export type RollKind = "skill" | "attribute" | "attack" | "defense";
 export interface RollModifier {
   label: string;
   value: number;
+}
+
+/**
+ * What the card says about a steered or area attack (Campaigns pp. 412-413).
+ *
+ * Assembled where the range is known, because every line of it depends on how
+ * far away the target is.
+ */
+export interface GuidanceReport {
+  /** "guided", "homing", or blank for an ordinary shot. */
+  guidance: Guidance;
+  /** Seconds until the projectile arrives, counting the turn it was fired. */
+  seconds: number;
+  /** True where it reaches the target on the turn it is launched. */
+  hitsThisTurn: boolean;
+  /** True where it runs out of reach first and crashes. */
+  falls: boolean;
+  /** True where 1/2D is the projectile's speed rather than a damage threshold. */
+  speedNotDamage: boolean;
+  /** True where the firer's own state and senses do not count. */
+  ignoresFirer: boolean;
+  /** True for an attack that covers ground, which no active defense stops. */
+  area: boolean;
+  /** How wide the cone is at this range, in yards; null where it is not a cone. */
+  coneYards: number | null;
+  /** True where a cone that missed may still catch the target. */
+  coneMayCatch: boolean;
+  /** True where the firer must Concentrate each turn and keep the target in sight. */
+  mustSteer: boolean;
+  /** True where damage holds up across the area instead of falling off. */
+  damageHoldsUp: boolean;
+}
+
+/**
+ * Works out what a steered or area attack does at this range (pp. 412-413).
+ *
+ * Returns null for an ordinary shot, which is most of them -- the card then
+ * carries nothing extra, as it always has.
+ */
+export function guidanceReport(options: {
+  guidance: string;
+  rangeYards: number;
+  halfDamageRange: number;
+  maxRange: number;
+  areaAttack: boolean;
+  coneMaxWidth: number;
+}): GuidanceReport | null {
+  const guidance = (options.guidance || "none") as Guidance;
+  const area = options.areaAttack === true;
+  if (guidance === "none" && !area) return null;
+
+  // "If a guided or homing attack has a 1/2D statistic, do not halve damage.
+  // Instead, read this as the attack's speed in yards/second."
+  const speed = projectileSpeed(options.halfDamageRange);
+  const plan = flightPlan({
+    rangeYards: options.rangeYards,
+    speed,
+    maxRange: options.maxRange,
+  });
+  const modifiers = guidanceModifiers(guidance);
+
+  return {
+    guidance,
+    seconds: plan.seconds,
+    hitsThisTurn: plan.hitsThisTurn,
+    falls: plan.falls,
+    speedNotDamage: !halvesDamage(guidance),
+    ignoresFirer: !modifiers.firersCondition,
+    area,
+    coneYards:
+      area && options.coneMaxWidth >= 0 && options.maxRange > 0
+        ? coneWidth({
+            rangeYards: options.rangeYards,
+            maxRange: options.maxRange,
+            maxWidth: options.coneMaxWidth > 0 ? options.coneMaxWidth : null,
+          })
+        : null,
+    coneMayCatch: area && coneMayStillCatch(),
+    // "Take a Concentrate maneuver each turn to steer the weapon. Should you
+    // lose sight of the target while the attack is en route, your attack
+    // misses automatically!" -- which only bites on a journey of more than the
+    // turn it was fired on.
+    mustSteer: steeringDuty(guidance).concentrates && !plan.hitsThisTurn && !plan.falls,
+    // "Damage does not usually decline with distance" -- which is what tells
+    // an area attack apart from an explosion, where it very much does.
+    damageHoldsUp: area && !areaDamageFallsOff(),
+  };
 }
 
 export interface SuccessRollOptions {
@@ -130,6 +249,15 @@ export interface SuccessRollOptions {
    * whether it rolls again on "your weapon breaks".
    */
   weapon?: { weight: number; material: string; swung: boolean; resistsBreakage: boolean };
+  /** A bonus the target's Dodge alone gets, from a laser dot they saw (p. 411). */
+  dodgeBonus?: number;
+  /**
+   * What a steered or area attack has to say for itself (Campaigns pp. 412-413):
+   * how long the projectile is in the air, whether it will get there at all,
+   * how wide the cone is here, and whether an active defense is any use. Shown
+   * on the card, and the area part decides what the defense card offers.
+   */
+  guidance?: GuidanceReport | null;
   /** How an attack reached its target, for TV Action Violence (p. 417). */
   delivery?: Delivery;
   /** What the attack does, blank where it does nothing (a grapple). */
@@ -231,6 +359,9 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
         : null,
     shotsFired: rapidFire?.shotsFired ?? null,
     jam,
+    // A steered or area attack, which the ordinary ranged line cannot describe
+    // (Campaigns pp. 412-413).
+    guidance: options.guidance ?? null,
   });
 
   await ChatMessage.implementation.create({
@@ -261,6 +392,10 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
           flags: attackFlags(
             actor, label, defensePenalty, criticalHit, noParry, options.weapon,
             options.delivery, options.damageType,
+            // "Active defenses don't protect against an area attack, but
+            // victims may dive for cover or retreat out of the area" (p. 413).
+            options.guidance?.area === true && !defendsAgainstArea(),
+            options.dodgeBonus ?? 0,
           ),
         }
       : {}),
@@ -397,6 +532,10 @@ function attackFlags(
   weapon?: { weight: number; material: string; swung: boolean },
   delivery?: Delivery,
   damageType?: string,
+  /** True for an area attack, which no active defense stops (p. 413). */
+  areaAttack = false,
+  /** +1 to Dodge for a target who saw a laser dot (Campaigns p. 411). */
+  dodgeBonus = 0,
 ): object {
   const defenders = targetedTokens()
     .filter((token: any) => token?.actor?.uuid)
@@ -419,8 +558,11 @@ function attackFlags(
         attackerToken: attackerToken ? String(attackerToken) : "",
         defensePenalty,
         // "In all cases, the target gets no active defense against the attack"
-        // (p. 556) -- so the defense card offers none.
-        noDefense: criticalHit,
+        // (p. 556) -- so the defense card offers none. An area attack is the
+        // other case: "active defenses don't protect against an area attack,
+        // but victims may dive for cover or retreat out of the area" (p. 413).
+        noDefense: criticalHit || areaAttack,
+        ...(areaAttack ? { areaAttack: true } : {}),
         // A thrown Missile spell cannot be parried (Characters p. 241).
         ...(noParry ? { noParry: true } : {}),
         // What the defender's parry has to weigh (Campaigns p. 376).
@@ -430,6 +572,7 @@ function attackFlags(
         // be ducked this way; a bullet can.
         ...(delivery ? { delivery } : {}),
         ...(damageType ? { damageType } : {}),
+        ...(dodgeBonus ? { dodgeBonus } : {}),
       },
     },
   };
@@ -459,6 +602,14 @@ export interface DamageRollOptions {
    * The card applies it to the item instead of to a token.
    */
   weaponTarget?: { actorUuid: string; itemId: string; name: string };
+  /** A target at or past 1/2D, which halves the basic damage (Characters p. 270). */
+  halfDamage?: boolean;
+  /** What the weapon is made of, carried to the apply for a Vulnerability to silver. */
+  material?: string;
+  /** True when DR has no effect on the blow, as for a Malediction (Characters p. 106). */
+  ignoresDr?: boolean;
+  /** A holy weapon's blow (Monster Hunters 1 p. 51). */
+  holy?: boolean;
 }
 
 /**
@@ -499,7 +650,9 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
 
   // The floor lives in the rules engine; duplicating it here would let chat
   // damage drift from the rules if it ever changes.
-  const basicDamage = applyDamageFloor(roll.total * mass, damageType);
+  const full = applyDamageFloor(roll.total * mass, damageType);
+  // "Damaging attacks on targets at or beyond 1/2D inflict half damage."
+  const basicDamage = options.halfDamage ? halveDamage(full, damageType) : full;
 
   // Shown against DR 0 so the card states raw injury; the GM subtracts real DR.
   const undefended = computeInjury({ basicDamage, dr: 0, type: damageType });
@@ -516,6 +669,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     hasArmorDivisor: armorDivisor !== 1,
     modifiers: modifiers.filter((m) => m.value !== 0),
     basicDamage,
+    halvedFrom: options.halfDamage ? full : null,
     massMultiplier: mass > 1 ? mass : null,
     woundingModifier: undefended.woundingModifier,
     injuryIfUnarmored: undefended.injury,
@@ -561,6 +715,9 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           // that replace the roll with maximum damage.
           maxDamage: applyDamageFloor(maxRoll(rolled) * mass, damageType),
           ...(mass > 1 ? { drMultiplier: mass } : {}),
+          ...(options.material ? { material: options.material } : {}),
+          ...(options.ignoresDr ? { ignoresDr: true } : {}),
+          ...(options.holy ? { holy: true } : {}),
           ...(options.weaponTarget ? { weaponTarget: options.weaponTarget } : {}),
           explosive,
           // The dice, not the rolled total: the blast radius is set by how
@@ -620,6 +777,14 @@ export async function handleRollAction(
   const base = Number(rollTarget);
   if (!Number.isFinite(base)) return null;
 
+  // A Malediction is not a ranged attack at all: no Acc, no range bands, no
+  // defense -- a roll against Will at its own range penalty, and a Quick
+  // Contest for whoever it targets (Characters p. 106).
+  if (rollType === "attack" && Number(target.dataset.malediction) > 0) {
+    await rollMalediction(actor, event, target);
+    return null;
+  }
+
   // A ranged attack needs its range, which is not optional the way a
   // situational modifier is: defaulting it to zero would quietly roll every
   // shot as though it were point blank. So a plain click takes the range off
@@ -638,6 +803,12 @@ export async function handleRollAction(
     // A shotgun's pellets, and the range inside which they strike as one.
     projectiles: Math.max(1, Number(target.dataset.projectiles) || 1),
     halfDamageRange: Number(target.dataset.halfDamageRange) || 0,
+    // How the projectile steers and how far it can fly (Campaigns p. 412),
+    // and whether it covers ground rather than striking a point (p. 413).
+    guidance: String(target.dataset.guidance ?? ""),
+    maxRange: Number(target.dataset.maxRange) || 0,
+    areaAttack: target.dataset.areaAttack === "1",
+    coneMaxWidth: Number(target.dataset.coneMaxWidth) || 0,
     // The turns spent on an Aim maneuver, which is what buys the Accuracy.
     aim: {
       turns: aimTurnsOf(actor),
@@ -656,11 +827,20 @@ export async function handleRollAction(
           }
         : null,
   };
+  // A shot from a vehicle always asks, since whether the car swerved and
+  // whether it is the car's own gun are things no map can say (p. 469). The
+  // range is still measured, so the field starts at the right figure.
+  const aboard = ranged ? vehicleAboard(actor) : null;
   const measured = ranged && !(event as MouseEvent).shiftKey ? measuredShot(actor) : null;
   const shot = ranged
-    ? measured
+    ? measured && !aboard
       ? quickShot(measured, weapon)
-      : await promptForRangedAttack(weapon)
+      : await promptForRangedAttack({
+          ...weapon,
+          aboard,
+          mayFireMounted: mayFireMountedWeapon(actor, aboard),
+          initialRange: measured?.rangeYards ?? 0,
+        })
     : null;
   if (ranged && shot === null) return null;
 
@@ -729,6 +909,17 @@ export async function handleRollAction(
         })
       : [];
     for (const penalty of impaired) modifiers.push({ label: penalty.trait, value: penalty.value });
+
+    // All-Out Attack (Determined): "Make a single attack at +4 to hit!" in
+    // melee, "+1 to hit" at range (p. 365). The other options buy something
+    // other than accuracy, so they add nothing here.
+    if (actor?.system?.maneuver === "allOutAttack") {
+      const option = String(actor.system.allOutAttackOption ?? "determined") as AllOutAttackOption;
+      const bonus = allOutAttackBonus(option, Boolean(ranged));
+      if (bonus !== 0) {
+        modifiers.push({ label: game.i18n.localize(`GWORLD.Maneuver.AllOutAttackOption.${option}`), value: bonus });
+      }
+    }
     if (!melee && !shot && eyesOf(actor).blindness) {
       const blind = sightModifier("clear", false, eyesOf(actor));
       if (blind) modifiers.push(blind);
@@ -749,10 +940,22 @@ export async function handleRollAction(
   if (rollType === "attack") {
     await recordCalledShot(actor, melee?.calledShot ?? shot?.calledShot ?? null);
     await recordTurnedBlade(actor, melee?.turned === true);
+    await recordPulledBlow(actor, melee?.pulledSt ?? null);
     if (melee?.charging) await recordCharge(actor);
+    await recordLance(actor, melee?.lance ?? null);
     // Pellets striking as one mass are a fact about this shot that the damage
     // roll, a separate click, has to be told.
     await recordMassShot(actor, shot?.coneMultiplier ?? null);
+    // So does being past 1/2D, which halves whatever the damage roll comes to.
+    await recordHalfDamage(
+      actor,
+      shot !== null &&
+        beyondHalfDamage({
+          rangeYards: shot.rangeYards,
+          halfDamageRange: Number(target.dataset.halfDamageRange) || 0,
+          guidance: target.dataset.guidance ?? "",
+        }),
+    );
   }
 
   // A Feint made last turn is spent by this attack, whether or not it is aimed
@@ -826,7 +1029,40 @@ export async function handleRollAction(
     ...(shot && shot.shotsFired > 1
       ? { rapidFire: { shotsFired: shot.shotsFired, recoil: shot.recoil } }
       : {}),
+    ...(shot?.dodgeBonus ? { dodgeBonus: shot.dodgeBonus } : {}),
+    // A steered or area attack says what it is doing, which needs the range
+    // it was actually fired at (Campaigns pp. 412-413).
+    ...(rollType === "attack" && ranged && shot
+      ? {
+          guidance: guidanceReport({
+            guidance: weapon.guidance,
+            rangeYards: shot.rangeYards,
+            halfDamageRange: weapon.halfDamageRange,
+            maxRange: weapon.maxRange,
+            areaAttack: weapon.areaAttack,
+            coneMaxWidth: weapon.coneMaxWidth,
+          }),
+        }
+      : {}),
   });
+
+  // A shot at a random location behind cover (p. 407): "For shots that hit a
+  // location that is only half exposed, roll 1d: on a roll of 4-6, the shot
+  // strikes cover, not the target." Whether the location it found is half
+  // exposed is the GM's to see, so the die is rolled and both readings given.
+  if (rollType === "attack" && shot?.cover === "randomLocation" && outcome?.success) {
+    const die = new Roll("1d6");
+    await die.evaluate();
+    const strikes = struckCover(die.total, coverShot({ approach: "randomLocation" }));
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor }),
+      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+      content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${game.i18n.localize("GWORLD.Cover.randomLocation")}</span></div>
+        <div class="gc-dice"><span class="gc-total">${die.total}</span></div>
+        <div class="gc-result">${game.i18n.localize(strikes ? "GWORLD.Cover.StrikesCover" : "GWORLD.Cover.HitsTarget")}</div></div>`,
+      rolls: [die],
+    });
+  }
 
   // The shells fired come off the weapon's count (Campaigns p. 373).
   if (rollType === "attack" && ranged && shot && isRuleOn("reloading")) {
@@ -856,6 +1092,39 @@ export async function handleRollAction(
   }
 
   return outcome;
+}
+
+/** Where a couched lance's charge waits for the damage roll (p. 396). */
+const LANCE_FLAG = "lance";
+
+async function recordLance(
+  actor: any,
+  lance: { mountSt: number; yards: number; jousting: boolean } | null,
+): Promise<void> {
+  if (!actor?.isOwner) return;
+  if (lance) await actor.setFlag(SYSTEM_ID, LANCE_FLAG, lance);
+  else if (actor.getFlag?.(SYSTEM_ID, LANCE_FLAG)) await actor.unsetFlag(SYSTEM_ID, LANCE_FLAG);
+}
+
+async function consumeLance(actor: any): Promise<{ mountSt: number; yards: number; jousting: boolean } | null> {
+  const lance = actor?.getFlag?.(SYSTEM_ID, LANCE_FLAG) ?? null;
+  if (lance && actor.isOwner) await actor.unsetFlag(SYSTEM_ID, LANCE_FLAG);
+  return lance && lance.mountSt > 0 ? lance : null;
+}
+
+/** Where a shot past 1/2D is remembered for the damage roll. */
+const HALF_DAMAGE_FLAG = "halfDamage";
+
+async function recordHalfDamage(actor: any, halved: boolean): Promise<void> {
+  if (!actor?.isOwner) return;
+  if (halved) await actor.setFlag(SYSTEM_ID, HALF_DAMAGE_FLAG, true);
+  else if (actor.getFlag?.(SYSTEM_ID, HALF_DAMAGE_FLAG)) await actor.unsetFlag(SYSTEM_ID, HALF_DAMAGE_FLAG);
+}
+
+async function consumeHalfDamage(actor: any): Promise<boolean> {
+  const halved = actor?.getFlag?.(SYSTEM_ID, HALF_DAMAGE_FLAG) === true;
+  if (halved && actor.isOwner) await actor.unsetFlag(SYSTEM_ID, HALF_DAMAGE_FLAG);
+  return halved;
 }
 
 /** Where a shot's pellets striking as one mass are kept for the damage roll. */
@@ -891,17 +1160,30 @@ interface MeasuredShot {
  * guess about a unit nobody uses for GURPS is not worth refusing the shot.
  */
 export function measuredShot(actor: any): MeasuredShot | null {
-  const stage: any = (globalThis as any).canvas;
-  const scene = stage?.scene;
-  if (!scene || !stage.grid?.measurePath) return null;
-
   const targets = targetedTokens();
   if (targets.length !== 1) return null;
   const target: any = targets[0];
   const shooter: any = actor?.getActiveTokens?.()?.[0];
-  if (!shooter?.center || !target?.center) return null;
+  const yards = yardsBetween(shooter, target);
+  if (yards === null) return null;
 
-  const distance = Number(stage.grid.measurePath([shooter.center, target.center])?.distance);
+  return {
+    rangeYards: yards,
+    targetSizeModifier: Number(target.actor?.system?.sm) || 0,
+  };
+}
+
+/**
+ * How far apart two tokens are, in whole yards, or null where the map cannot
+ * say: no scene, or either token missing.
+ */
+export function yardsBetween(from: any, to: any): number | null {
+  const stage: any = (globalThis as any).canvas;
+  const scene = stage?.scene;
+  if (!scene || !stage.grid?.measurePath) return null;
+  if (!from?.center || !to?.center) return null;
+
+  const distance = Number(stage.grid.measurePath([from.center, to.center])?.distance);
   if (!Number.isFinite(distance)) return null;
 
   const units = String(scene.grid?.units ?? "").trim().toLowerCase();
@@ -910,11 +1192,25 @@ export function measuredShot(actor: any): MeasuredShot | null {
     : units === "m" || units === "meters" || units === "metres"
       ? distance * 1.0936
       : distance;
+  return Math.max(0, Math.round(yards));
+}
 
-  return {
-    rangeYards: Math.max(0, Math.round(yards)),
-    targetSizeModifier: Number(target.actor?.system?.sm) || 0,
-  };
+/**
+ * Whether a target is far enough away to take half damage (Characters p. 270).
+ *
+ * "Damaging attacks on targets at or beyond 1/2D inflict half damage, and
+ * those that require a HT roll to resist are resisted at +3." A weapon with no
+ * 1/2D listed never reaches it; a guided or homing one reads its 1/2D as its
+ * speed rather than a threshold (Campaigns p. 412), so never halves at all.
+ */
+export function beyondHalfDamage(options: {
+  rangeYards: number;
+  halfDamageRange: number;
+  guidance?: string;
+}): boolean {
+  if (!(options.halfDamageRange > 0)) return false;
+  if (!halvesDamage(((options.guidance || "none") as Guidance))) return false;
+  return options.rangeYards >= options.halfDamageRange;
 }
 
 /**
@@ -954,6 +1250,7 @@ function quickShot(
     recoil: pellets.recoil,
     coneMultiplier: pellets.coneMultiplier,
     calledShot: null,
+    rangeYards: measured.rangeYards,
   };
 }
 
@@ -969,6 +1266,12 @@ interface RangedShot {
   /** Pellets striking as one mass, or null when they spread. */
   coneMultiplier: number | null;
   calledShot: CalledShot | null;
+  /** How far the shot had to travel, which a steered weapon's flight needs. */
+  rangeYards: number;
+  /** What was done about cover, which a random location may still strike. */
+  cover?: CoverApproach | "none";
+  /** +1 to the target's Dodge where they have seen a laser dot within its range. */
+  dodgeBonus?: number;
 }
 
 /**
@@ -1007,6 +1310,11 @@ export async function promptForRangedAttack(options: {
   eyes?: Eyes;
   /** Shots in the weapon, which caps a burst; null where no count is kept. */
   loaded?: number | null;
+  /** The vehicle the shooter is aboard, if any, and whether they may fire its weapons. */
+  aboard?: Aboard | null;
+  mayFireMounted?: boolean;
+  /** A range already measured off the map, to start the field at. */
+  initialRange?: number;
 }): Promise<RangedShot | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   // What aiming is worth: Accuracy after a turn, more for the second and
@@ -1045,10 +1353,36 @@ export async function promptForRangedAttack(options: {
   const shotsField =
     rateOfFire > 1 ? field("shots", `${L("Shots")} (1-${rateOfFire})`, "1") : "";
 
+  // Aboard a vehicle, the shot asks what only the table knows: whether it is
+  // the vehicle's own weapon, whether the car swerved, and what its sights are.
+  const aboard = options.aboard ?? null;
+  const vehicleFields = aboard
+    ? `<fieldset style="border:1px solid var(--color-border-light-2,#999);padding:4px 8px">
+        <legend>${game.i18n.format("GWORLD.Ranged.FromVehicle", { vehicle: aboard.name })}</legend>
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>${L("VehicleWeapon")}</span>
+          <select name="vehicleKind" style="width:150px">
+            <option value="handheld">${L("Handheld")}</option>
+            <option value="mounted">${L("Mounted")}</option>
+          </select>
+        </label>
+        ${options.mayFireMounted ? "" : `<p class="ihint warn" style="margin:0">${L("MountedNeedsAttack")}</p>`}
+        <label style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" name="vehicleDodged"><span>${L("VehicleDodgedBox")}</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" name="stabilized"><span>${L("Stabilized")}</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" name="targetingSystem"><span>${L("HasTargeting")}</span>
+        </label>
+      </fieldset>`
+    : "";
+
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Title") },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
-      ${field("range", L("Range"), "0")}
+      ${field("range", L("Range"), String(options.initialRange ?? 0))}
       ${field("elevation", L("Elevation"), "0")}
       ${field("speed", L("TargetSpeed"), "0")}
       ${field("size", L("TargetSize"), "0")}
@@ -1077,6 +1411,13 @@ export async function promptForRangedAttack(options: {
         <input type="checkbox" name="aimed" ${aiming.total > 0 ? "checked" : ""}>
         <span>${accuracyLabel}</span>
       </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="laser"><span>${L("LaserSight")}</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="laserSeen"><span>${L("LaserSeen")}</span>
+      </label>
+      ${vehicleFields}
     </div>`,
     ok: {
       label: game.i18n.localize("GWORLD.Chat.Roll"),
@@ -1107,6 +1448,25 @@ export async function promptForRangedAttack(options: {
           cover: cover as CoverApproach | "none",
           calledShot,
           aimed,
+          laser: {
+            on: form?.querySelector<HTMLInputElement>('input[name="laser"]')?.checked ?? false,
+            targetSees: form?.querySelector<HTMLInputElement>('input[name="laserSeen"]')?.checked ?? false,
+          },
+          vehicle: aboard
+            ? {
+                kind: (form?.querySelector<HTMLSelectElement>('select[name="vehicleKind"]')?.value ??
+                  "handheld") as VehicleAttackKind,
+                operator: aboard.operator,
+                dodged: form?.querySelector<HTMLInputElement>('input[name="vehicleDodged"]')?.checked ?? false,
+                flying: aboard.flying,
+                moving: aboard.moving,
+                stabilityRating: aboard.stabilityRating,
+                stabilized: form?.querySelector<HTMLInputElement>('input[name="stabilized"]')?.checked ?? false,
+                targetingTl: form?.querySelector<HTMLInputElement>('input[name="targetingSystem"]')?.checked
+                  ? aboard.techLevel
+                  : 0,
+              }
+            : null,
         };
       },
     },
@@ -1139,6 +1499,16 @@ export async function promptForRangedAttack(options: {
     recoil: pellets.recoil,
     coneMultiplier: pellets.coneMultiplier,
     calledShot: aimed.shot,
+    rangeYards: input.range,
+    cover: input.cover ?? "none",
+    // "But if the target can see it, he gets +1 to Dodge!"
+    dodgeBonus: input.laser?.on
+      ? laserSight({
+          rangeYards: input.range,
+          halfDamageRange: options.halfDamageRange ?? 0,
+          targetSeesDot: input.laser.targetSees,
+        }).targetDodge
+      : 0,
   };
 }
 
@@ -1164,6 +1534,26 @@ interface RangedInput {
   /** What they decided to do about anything in the way. */
   cover?: CoverApproach | "none";
   aimed: boolean;
+  /** Set when the shooter is aboard a vehicle (Campaigns pp. 467-469). */
+  vehicle?: VehicleShot | null;
+  /** A laser sight in use, and whether the target has seen its dot (p. 411). */
+  laser?: { on: boolean; targetSees: boolean } | null;
+}
+
+/** What firing from a vehicle adds to a shot. */
+export interface VehicleShot {
+  /** A weapon held in the hand, or one built into the vehicle. */
+  kind: VehicleAttackKind;
+  operator: boolean;
+  /** True where the vehicle dodged this turn, which throws a passenger's aim. */
+  dodged: boolean;
+  flying: boolean;
+  moving: boolean;
+  stabilityRating: number;
+  /** True for stabilized sights or a stabilized mount, which the SR cap spares. */
+  stabilized: boolean;
+  /** The vehicle's TL where it has a targeting system, or 0. */
+  targetingTl: number;
 }
 
 /**
@@ -1186,6 +1576,12 @@ export function rangedModifiers(
     aim?: { turns: number; braced: boolean } | null;
     /** The shooter's eyes, which decide what the dark costs. */
     eyes?: Eyes;
+    /** How the projectile steers, blank for one that does not (p. 412). */
+    guidance?: string;
+    /** The 1/2D figure, which for a steered weapon is its speed in yards/second. */
+    halfDamageRange?: number;
+    /** How far it can fly before it crashes. */
+    maxRange?: number;
   },
 ): RollModifier[] {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
@@ -1209,6 +1605,19 @@ export function rangedModifiers(
 
   const situation = input.situation ?? "normal";
 
+  // What a steered weapon still takes (p. 412). "Treat a guided weapon as any
+  // other firearm when assessing modifiers, but ignore range modifiers!" -- and
+  // a homing one ignores the firer's senses as well, because the seeker is
+  // what is looking.
+  const guidance = ((weapon.guidance || "none") as Guidance);
+  const steering = guidanceModifiers(guidance);
+  // How long it is in the air, which is what makes the shot count as aimed.
+  const flight = flightPlan({
+    rangeYards: effectiveRange,
+    speed: projectileSpeed(weapon.halfDamageRange ?? 0),
+    maxRange: weapon.maxRange ?? 0,
+  });
+
   // Opportunity fire: the wider the ground being covered, the worse the shot
   // (p. 390). Watching a single line is a flat -2 whatever its length.
   const watching = isRuleOn("opportunityFire") ? weapon.watching : null;
@@ -1222,7 +1631,7 @@ export function rangedModifiers(
   }
   // In close combat the speed/range penalty is dropped and Bulk stands in its
   // place: the target is right there, and the weapon is in the way.
-  if (speedRange !== 0 && situation !== "closeCombat") {
+  if (speedRange !== 0 && situation !== "closeCombat" && steering.range) {
     modifiers.push({
       label:
         seenRange === input.range
@@ -1233,10 +1642,15 @@ export function rangedModifiers(
   }
   if (size !== 0) modifiers.push({ label: L("TargetSize"), value: size });
 
-  const unseen = sightModifier(input.sight ?? "clear", false, weapon.eyes);
-  if (unseen) modifiers.push(unseen);
-  const dark = darknessModifier(input.darkness ?? 0, weapon.eyes);
-  if (dark) modifiers.push(dark);
+  // "Base visibility modifiers on the projectile's homing sense, not on your
+  // senses" -- so the firer's dark and the firer's smoke stop counting, and
+  // what the seeker can make out is the GM's to say.
+  if (steering.firersSenses) {
+    const unseen = sightModifier(input.sight ?? "clear", false, weapon.eyes);
+    if (unseen) modifiers.push(unseen);
+    const dark = darknessModifier(input.darkness ?? 0, weapon.eyes);
+    if (dark) modifiers.push(dark);
+  }
 
   // Cover is a choice between three ways of dealing with it, not one modifier
   // (p. 407), so what it costs depends on which one was taken.
@@ -1254,6 +1668,24 @@ export function rangedModifiers(
     modifiers.push({ label: L("Bulk"), value: bulkPenalty(weapon.bulk, situation) });
   }
 
+  // From a vehicle (p. 469). "If the operator fires a handheld weapon ... -2 to
+  // hit or a penalty equal to his weapon's Bulk, whichever is worse"; and "if
+  // the vehicle dodged and you aren't the operator, you have an extra -2 to
+  // hit, or -4 if flying."
+  const vehicle = input.vehicle ?? null;
+  if (vehicle) {
+    if (vehicle.operator) {
+      const divided = drivingAttackPenalty({ kind: vehicle.kind, bulk: weapon.bulk });
+      if (divided !== 0) modifiers.push({ label: L("Driving"), value: divided });
+    }
+    const thrown = unexpectedDodgePenalty({
+      dodged: vehicle.dodged,
+      operator: vehicle.operator,
+      flying: vehicle.flying,
+    });
+    if (thrown !== 0) modifiers.push({ label: L("VehicleDodged"), value: thrown });
+  }
+
   // A Move and Attack loses the benefit of having aimed, whatever was ticked,
   // and so does anyone covering more than a single hex: "you cannot claim any
   // of the bonuses listed for the Aim maneuver ... Exception: if you watch a
@@ -1261,20 +1693,58 @@ export function rangedModifiers(
   const mayAim =
     situation !== "moveAndAttack" &&
     (!watching || (!watching.coveringLine && canAimWhileWatching(watching.hexesWatched)));
-  if (input.aimed && mayAim) {
+  // "If you Aim a guided weapon before you Attack, you receive its Acc bonus -
+  // but you don't have to aim. If the projectile takes multiple seconds to
+  // reach its target, the attack is automatically aimed and gets its Acc
+  // bonus." So a steered shot with a journey ahead of it is aimed whether the
+  // firer took the maneuver or not -- but only the maneuver buys the extra
+  // turns and the bracing, which is why those stay behind the checkbox.
+  const deliberatelyAimed = input.aimed && mayAim;
+  if (accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds })) {
     // Aimed on the sheet: Accuracy, the second and third turns, the bracing.
     // Aimed by the checkbox alone: Accuracy, as one turn's aim is worth.
-    const aimedFor = Math.max(1, weapon.aim?.turns ?? 0);
+    const aimedFor = deliberatelyAimed ? Math.max(1, weapon.aim?.turns ?? 0) : 1;
     const aiming = aimBonus({
       turnsAimed: aimedFor,
       accuracy:
         weapon.accuracy + scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: aimedFor }),
-      braced: weapon.aim?.braced ?? false,
+      braced: deliberatelyAimed ? (weapon.aim?.braced ?? false) : false,
     });
     if (aiming.accuracy !== 0) modifiers.push({ label: L("Accuracy"), value: aiming.accuracy });
     if (aiming.extraTurns !== 0) modifiers.push({ label: L("AimedLonger"), value: aiming.extraTurns });
     if (aiming.braced !== 0) modifiers.push({ label: L("Braced"), value: aiming.braced });
+
+    // A targeting system is one more aiming bonus, and a moving vehicle caps
+    // the lot: "the combined bonuses from aiming (Accuracy, extra turns of Aim,
+    // targeting systems, and bracing) cannot exceed the SR of a moving vehicle
+    // unless the sights or mount are stabilized" (p. 469). Shown as a cut off
+    // the total, so the card still says what each part was worth.
+    if (vehicle) {
+      const targeting = vehicle.targetingTl > 0 ? targetingSystemBonus(vehicle.targetingTl) : 0;
+      if (targeting !== 0) modifiers.push({ label: L("TargetingSystem"), value: targeting });
+      const total = aiming.accuracy + aiming.extraTurns + aiming.braced + targeting;
+      const capped = cappedAimBonus({
+        bonus: total,
+        stabilityRating: vehicle.stabilityRating,
+        stabilized: vehicle.stabilized,
+        moving: vehicle.moving,
+      });
+      if (capped < total) {
+        modifiers.push({
+          label: game.i18n.format("GWORLD.Ranged.StabilityCap", { sr: vehicle.stabilityRating }),
+          value: capped - total,
+        });
+      }
+    }
   }
+  // A laser sight: "If you can see your own aiming dot, you get +1 to hit",
+  // aimed or not, out to its range -- the weapon's 1/2D where none is given
+  // (p. 411). Beyond that the dot is too dispersed to see.
+  if (input.laser?.on) {
+    const dot = laserSight({ rangeYards: effectiveRange, halfDamageRange: weapon.halfDamageRange ?? 0 });
+    if (dot.toHit !== 0) modifiers.push({ label: L("LaserSight"), value: dot.toHit });
+  }
+
   const rapidFire = rapidFireBonus(input.shots ?? 1);
   if (rapidFire !== 0) modifiers.push({ label: L("RapidFire"), value: rapidFire });
   if (input.modifier !== 0) {
@@ -1471,6 +1941,10 @@ export async function promptForMeleeAttack(options: {
   turned: boolean;
   /** True when it was struck from a mount moving at 7+ relative to the foe. */
   charging: boolean;
+  /** The ST a blow is pulled to, or null for full strength (Campaigns p. 401). */
+  pulledSt: number | null;
+  /** A couched lance: the mount's ST and the yards it covered, or null (p. 396). */
+  lance: { mountSt: number; yards: number; jousting: boolean } | null;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Melee.${key}`);
 
@@ -1518,6 +1992,19 @@ export async function promptForMeleeAttack(options: {
         ? `<label style="display:flex;align-items:center;gap:8px">
              <input type="checkbox" name="charging">
              <span>${game.i18n.localize("GWORLD.Mounted.Charging")}</span>
+           </label>
+           <label style="display:flex;align-items:center;justify-content:space-between;gap:8px"
+                  title="${game.i18n.localize("GWORLD.Mounted.LanceHint")}">
+             <span>${game.i18n.localize("GWORLD.Mounted.LanceMountSt")}</span>
+             <input type="number" name="lanceSt" value="0" min="0" step="1" style="width:90px">
+           </label>
+           <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+             <span>${game.i18n.localize("GWORLD.Mounted.LanceYards")}</span>
+             <input type="number" name="lanceYards" value="0" min="0" step="1" style="width:90px">
+           </label>
+           <label style="display:flex;align-items:center;gap:8px">
+             <input type="checkbox" name="jousting">
+             <span>${game.i18n.localize("GWORLD.Mounted.Jousting")}</span>
            </label>`
         : ""}
       ${dualAllowed
@@ -1543,6 +2030,11 @@ export async function promptForMeleeAttack(options: {
              <span>${game.i18n.localize("GWORLD.Subdue.Turned")}</span>
            </label>`
         : ""}
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px"
+             title="${game.i18n.localize("GWORLD.Subdue.PullHint")}">
+        <span>${game.i18n.localize("GWORLD.Subdue.Pull")}</span>
+        <input type="number" name="pullSt" value="0" min="0" step="1" style="width:90px">
+      </label>
       ${sightField()}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Ground.Label")}</span>
@@ -1582,6 +2074,10 @@ export async function promptForMeleeAttack(options: {
             Number(form?.querySelector<HTMLSelectElement>('select[name="ground"]')?.value ?? 0) || 0,
           dual: form?.querySelector<HTMLSelectElement>('select[name="dual"]')?.value ?? "no",
           charging: ticked("charging"),
+          pullSt: num("pullSt"),
+          lanceSt: num("lanceSt"),
+          lanceYards: num("lanceYards"),
+          jousting: ticked("jousting"),
         };
       },
     },
@@ -1591,7 +2087,7 @@ export async function promptForMeleeAttack(options: {
   if (!result || typeof result !== "object") return null;
   const {
     deceptive, modifier, rapid, flurry, mighty, sight, darkness, calledShot, turned, ground, dual,
-    charging,
+    charging, pullSt, lanceSt, lanceYards, jousting,
   } = result as {
     deceptive: number;
     modifier: number;
@@ -1605,6 +2101,10 @@ export async function promptForMeleeAttack(options: {
     ground: number;
     dual: string;
     charging: boolean;
+    pullSt: number;
+    lanceSt: number;
+    lanceYards: number;
+    jousting: boolean;
   };
 
   // "You may not reduce your final effective skill below 10", so the ceiling is
@@ -1687,6 +2187,10 @@ export async function promptForMeleeAttack(options: {
     calledShot: aimed.shot,
     turned: turned === true,
     charging: charging === true,
+    pulledSt: pullSt > 0 ? Math.floor(pullSt) : null,
+    lance: lanceSt > 0 && lanceYards > 0
+      ? { mountSt: Math.floor(lanceSt), yards: Math.floor(lanceYards), jousting: jousting === true }
+      : null,
   };
 }
 
@@ -1722,10 +2226,44 @@ export async function handleDamageAction(
   const aimed = await consumeCalledShot(actor);
   // Pellets that struck as one mass, recorded by the attack roll.
   const mass = await consumeMassShot(actor);
+  // A target past 1/2D, recorded by the attack roll too.
+  const halved = await consumeHalfDamage(actor);
 
   // A blow struck with the flat of a blade crushes rather than cuts, and one
   // struck with the butt of a spear crushes for a point less.
   const flat = await consumeTurnedBlade(actor);
+
+  // A blow pulled to a lower ST re-reads its damage at that ST (p. 401), and
+  // everything after this -- a turned blade included -- works on that figure.
+  const pulledSt = await consumePulledBlow(actor);
+  const pulled = pulledSt && target.dataset.melee === "1"
+    ? pulledFormula({
+        strength: Number(actor?.system?.derived?.strikingSt) || Number(actor?.system?.attributes?.ST) || 10,
+        chosen: pulledSt,
+        stBased: target.dataset.stBased === "1",
+        damageBase: target.dataset.damageBase ?? "",
+        damageModifier: Number(target.dataset.damageModifier) || 0,
+        minSt: target.dataset.minSt ? Number(target.dataset.minSt) || null : null,
+        naturalKey: target.dataset.naturalKey ?? "",
+        dx: Number(actor?.system?.derived?.attributes?.DX) || 10,
+        skills: {
+          ...(actor?.system?.skillLevelByName?.("Brawling") != null ? { Brawling: actor.system.skillLevelByName("Brawling") } : {}),
+          ...(actor?.system?.skillLevelByName?.("Boxing") != null ? { Boxing: actor.system.skillLevelByName("Boxing") } : {}),
+          ...(actor?.system?.skillLevelByName?.("Karate") != null ? { Karate: actor.system.skillLevelByName("Karate") } : {}),
+        },
+      })
+    : null;
+  // A couched lance does the collision's damage, not the wielder's (p. 396):
+  // "(mount's ST) x (distance moved last turn)/100 dice of damage, rounded
+  // down -- and add the lance's thrust/impaling bonus of +3." A blunted
+  // tournament lance crushes, and snaps past 15.
+  const lance = await consumeLance(actor);
+  const couched = lance
+    ? lanceDamage({ mountStrength: lance.mountSt, yardsMoved: lance.yards, jousting: lance.jousting })
+    : null;
+  const baseFormula = couched
+    ? formatDiceAdds({ dice: Math.max(1, couched.dice), adds: couched.adds })
+    : (pulled ?? damageFormula);
 
   // A Mighty Blows bought before the attack is collected here, where the dice
   // are known -- the bonus is "+2 to damage, or +1 per die if that is better".
@@ -1745,6 +2283,21 @@ export async function handleDamageAction(
     }
   }
 
+  // All-Out Attack (Strong): "+2 to damage - or +1 damage per die, if that
+  // would be better. This only applies to melee attacks doing ST-based thrust
+  // or swing damage" (p. 365).
+  if (
+    actor?.system?.maneuver === "allOutAttack" &&
+    actor.system.allOutAttackOption === "strong" &&
+    target.dataset.melee === "1" &&
+    target.dataset.stBased === "1"
+  ) {
+    modifiers.push({
+      label: game.i18n.localize("GWORLD.Maneuver.AllOutAttackOption.strong"),
+      value: strongAttackDamageBonus(parseDiceAdds(damageFormula)?.dice ?? 0),
+    });
+  }
+
   // The other half of a mounted charge: "-1 to hit but +1 damage" (p. 396).
   if (await consumeCharge(actor)) {
     modifiers.push({
@@ -1756,7 +2309,7 @@ export async function handleDamageAction(
   // A weapon whose damage cannot be parsed is not turned: substituting dice
   // for it would quietly change what the weapon does, which is worse than
   // simply hitting them with the sharp end.
-  const parsed = flat ? parseDiceAdds(damageFormula) : null;
+  const parsed = flat ? parseDiceAdds(baseFormula) : null;
   const struck = parsed
     ? turnedBlade({
         type: damageType as DamageType,
@@ -1767,14 +2320,25 @@ export async function handleDamageAction(
 
   await rollDamage({
     actor,
-    label: struck
-      ? `${damageLabel ?? "Damage"} (${game.i18n.localize("GWORLD.Subdue.Turned")})`
-      : damageLabel ?? "Damage",
-    formula: struck ? formatDiceAdds(struck.damage) : damageFormula,
-    damageType: struck ? struck.type : (damageType as DamageType),
+    label: [
+      damageLabel ?? "Damage",
+      ...(pulled ? [game.i18n.format("GWORLD.Subdue.PulledTo", { st: pulledSt })] : []),
+      ...(couched
+        ? [game.i18n.format(couched.maxDamage ? "GWORLD.Mounted.JoustingLabel" : "GWORLD.Mounted.LanceLabel", {
+            st: lance?.mountSt, yards: lance?.yards, max: couched.maxDamage,
+          })]
+        : []),
+      ...(struck ? [game.i18n.localize("GWORLD.Subdue.Turned")] : []),
+    ].join(" \u2014 "),
+    formula: struck ? formatDiceAdds(struck.damage) : baseFormula,
+    damageType: struck ? struck.type : couched ? couched.type : (damageType as DamageType),
     armorDivisor: Number(armorDivisor) || 1,
     ...(aimed ? { calledShot: aimed } : {}),
     ...(mass > 1 ? { massMultiplier: mass } : {}),
+    ...(halved ? { halfDamage: true } : {}),
+    ...(target.dataset.material ? { material: target.dataset.material } : {}),
+    ...(target.dataset.ignoresDr === "1" ? { ignoresDr: true } : {}),
+    ...(target.dataset.holy === "1" ? { holy: true } : {}),
     explosive: target.dataset.explosive === "1",
     fragmentation: target.dataset.fragmentation ?? "",
     modifiers,

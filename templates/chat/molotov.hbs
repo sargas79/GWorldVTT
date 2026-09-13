@@ -1,0 +1,24 @@
+{{!-- A Molotov cocktail, and where it burst (Campaigns p. 411). --}}
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{localize "GWORLD.Molotov.Title" name=name}}</span>
+  </div>
+  <div class="gc-result {{#if (eq landing "unbroken")}}failure{{else}}success{{/if}}">
+    {{localize (concat "GWORLD.Molotov.Landing." landing)}}
+  </div>
+  {{#unless (eq landing "unbroken")}}
+    <div class="gc-mods">
+      {{#if initial}}
+        <span class="gc-mod">{{localize "GWORLD.Molotov.Initial" dice=initial}}</span>
+      {{/if}}
+      <span class="gc-mod">{{localize "GWORLD.Molotov.PerSecond" dice=perSecond}}</span>
+      {{#if radiusYards}}
+        <span class="gc-mod">{{localize "GWORLD.Molotov.Radius" yards=radiusYards}}</span>
+      {{/if}}
+      {{#if fifthDr}}
+        <span class="gc-mod">{{localize "GWORLD.Molotov.FifthDr"}}</span>
+      {{/if}}
+      <span class="gc-mod">{{localize "GWORLD.Molotov.BurnsFor" dice=burnsFor}}</span>
+    </div>
+  {{/unless}}
+</div>

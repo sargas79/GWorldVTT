@@ -4,7 +4,6 @@ import {
   BASIC_SPEED_STEP,
   SECONDARY_COST_PER_LEVEL,
   attributePointCost,
-  attributesPointCost,
   basicLift,
   basicMove,
   basicSpeed,
@@ -44,10 +43,6 @@ describe("attribute costs (GURPS Lite p. 4)", () => {
   it("refunds points for attributes below 10", () => {
     expect(attributePointCost("ST", 9)).toBe(-10);
     expect(attributePointCost("IQ", 8)).toBe(-40);
-  });
-
-  it("costs nothing for a wholly average character", () => {
-    expect(attributesPointCost({ ST: 10, DX: 10, IQ: 10, HT: 10 })).toBe(0);
   });
 });
 

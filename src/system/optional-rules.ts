@@ -46,6 +46,7 @@ export const RULE_GROUPS = [
   { id: "magic", label: "GWORLD.Rules.Group.Magic" },
   { id: "equipment", label: "GWORLD.Rules.Group.Equipment" },
   { id: "cinematic", label: "GWORLD.Rules.Group.Cinematic" },
+  { id: "monsterHunters", label: "GWORLD.Rules.Group.MonsterHunters" },
 ] as const;
 
 export type RuleGroup = (typeof RULE_GROUPS)[number]["id"];
@@ -181,6 +182,16 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "infiniteAmmunition", reference: "Campaigns p. 417", default: false },
     // A hero fought one at a time, and never from behind.
     { key: "meleeEtiquette", reference: "Campaigns p. 417", default: false },
+  ],
+  // The rules GURPS Monster Hunters 1: Champions adds or changes. The book is
+  // not the Basic Set, and a table that does not own it has no use for its
+  // rules, so every one starts switched off: the book's text arrives with the
+  // private content module, and these are what make its entries do something.
+  monsterHunters: [
+    // A Talent does not reach a wildcard skill.
+    { key: "talentsSkipWildcards", reference: "Monster Hunters 1 p. 24", default: false },
+    // Holy water and holy things burn demons and vampires, once a minute.
+    { key: "holyAttacks", reference: "Monster Hunters 1 p. 51", default: false },
   ],
 };
 

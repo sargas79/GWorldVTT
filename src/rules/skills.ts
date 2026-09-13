@@ -243,12 +243,6 @@ export function sameSkill(a: string, b: string): boolean {
 }
 
 /**
- * The most points anyone will sensibly put into one skill, used only to stop
- * the steppers below looping for ever on a nonsense input.
- */
-const SKILL_POINT_CEILING = 1000;
-
-/**
  * The next point total that actually buys something (GURPS Lite p. 12).
  *
  * Skill points come in steps -- 1, 2, 4, 8, then four at a time -- and the
@@ -259,14 +253,19 @@ const SKILL_POINT_CEILING = 1000;
  * A total that is off the table steps up to the next one on it, which is how a
  * skill imported at an odd figure comes back into line.
  */
-export function nextSkillPoints(points: number, difficulty?: Difficulty): number {
+export function nextSkillPoints(points: number, given?: Difficulty): number {
   const from = Math.max(0, Math.floor(points));
-  const multiplier = costMultiplier(difficulty);
-  for (let step = 0; ; step++) {
-    const cost = skillStepCost(step) * multiplier;
-    if (cost > from) return cost;
-    if (cost >= SKILL_POINT_CEILING) return from;
-  }
+  // The table's steps are the same at every difficulty but a wildcard's, so a
+  // skill with no difficulty set still steps rather than stalling.
+  const difficulty: Difficulty = given && given in DIFFICULTY_OFFSET ? given : "E";
+  // The level the points reach, and the price of the one above it. A total
+  // that reaches nothing steps to the cheapest level there is.
+  const reached = relativeLevelForPoints(from, difficulty);
+  const next = pointsForRelativeLevel(
+    reached === null ? DIFFICULTY_OFFSET[difficulty] : reached + 1,
+    difficulty,
+  ) ?? from;
+  return next;
 }
 
 /**
@@ -275,32 +274,39 @@ export function nextSkillPoints(points: number, difficulty?: Difficulty): number
  * Zero is a real answer: it is the skill unlearned, rolled at default if it has
  * one. A total off the table steps down to the highest one below it.
  */
-export function previousSkillPoints(points: number, difficulty?: Difficulty): number {
+export function previousSkillPoints(points: number, given?: Difficulty): number {
   const from = Math.max(0, Math.floor(points));
-  const multiplier = costMultiplier(difficulty);
-  let below = 0;
-  for (let step = 0; ; step++) {
-    const cost = skillStepCost(step) * multiplier;
-    if (cost >= from) return below;
-    below = cost;
-    if (cost >= SKILL_POINT_CEILING) return below;
-  }
+  // The table's steps are the same at every difficulty but a wildcard's, so a
+  // skill with no difficulty set still steps rather than stalling.
+  const difficulty: Difficulty = given && given in DIFFICULTY_OFFSET ? given : "E";
+  const reached = relativeLevelForPoints(from, difficulty);
+  if (reached === null) return 0;
+  // Off the table, back to the level the points actually reach; on it, to the
+  // price of the level below, or nothing where that was the cheapest.
+  const atReached = pointsForRelativeLevel(reached, difficulty) ?? 0;
+  if (atReached < from) return atReached;
+  return pointsForRelativeLevel(reached - 1, difficulty) ?? 0;
 }
 
 /**
  * The next point total for a technique (GURPS Basic Set: Characters p. 230).
  *
  * Techniques are not skills and do not use the Skill Cost Table: an Average
- * one costs a point per level, and a Hard one wastes the first point and then
- * costs a point per level. Either way every further point buys a level, so
- * they step one at a time -- stepping them along the skill table would jump
- * from 2 to 4 and skip a level that can be bought.
+ * one costs a point per level, and a Hard one "2 points" for Default+1 and a
+ * point a level after that. So they step a point at a time -- stepping them
+ * along the skill table would jump from 2 to 4 and skip a level that can be
+ * bought -- except the first step of a Hard one, which is two, since a single
+ * point buys nothing.
  */
-export function nextTechniquePoints(points: number): number {
-  return Math.max(0, Math.floor(points)) + 1;
+export function nextTechniquePoints(points: number, difficulty: TechniqueDifficulty = "A"): number {
+  const from = Math.max(0, Math.floor(points));
+  return techniquePointCost(techniqueLevelsForPoints(from, difficulty) + 1, difficulty);
 }
 
 /** The previous point total for a technique, floored at none. */
-export function previousTechniquePoints(points: number): number {
-  return Math.max(0, Math.floor(points) - 1);
+export function previousTechniquePoints(points: number, difficulty: TechniqueDifficulty = "A"): number {
+  const from = Math.max(0, Math.floor(points));
+  const levels = techniqueLevelsForPoints(from, difficulty);
+  const atLevels = techniquePointCost(levels, difficulty);
+  return atLevels < from ? atLevels : techniquePointCost(levels - 1, difficulty);
 }

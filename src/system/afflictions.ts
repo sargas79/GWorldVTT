@@ -16,9 +16,21 @@ import { SYSTEM_ID } from "./constants.js";
 import { setCondition } from "./conditions.js";
 import {
   AFFLICTIONS,
+  PAIN_GRADES,
   afflictionEffect,
+  agonyCost,
+  canHaveHeartAttack,
+  hallucinationOutcome,
+  heartAttackMinutes,
+  heartAttackSurvival,
+  nauseaTarget,
+  painAffliction,
+  painPenalty,
+  vomitingSeconds,
   type Affliction,
   type AfflictionEffect,
+  type PainGrade,
+  type PainThreshold,
 } from "../rules/afflictions.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/affliction.hbs`;
@@ -45,8 +57,68 @@ export function activeAfflictions(actor: any): Affliction[] {
   return AFFLICTIONS.filter((key) => statuses.has(conditionFor(key)));
 }
 
+/**
+ * Where a character's pain threshold sits, read off the traits (p. 428).
+ *
+ * The trait effects already know both: High Pain Threshold is the one that
+ * feels no shock, and Low Pain Threshold the one whose shock is doubled.
+ */
+export function painThresholdOf(
+  traits: { noShock?: boolean; shockMultiplier?: number } | null | undefined,
+): PainThreshold {
+  if (traits?.noShock) return "high";
+  if ((traits?.shockMultiplier ?? 1) > 1) return "low";
+  return "normal";
+}
+
+/** The grade of pain an affliction is, or null where it is not pain. */
+function painGradeOf(affliction: Affliction): PainGrade | null {
+  return PAIN_GRADES.find((grade) => painAffliction(grade) === affliction) ?? null;
+}
+
+/**
+ * What one affliction costs this particular character (pp. 428-429).
+ *
+ * The table's figures are for somebody with an ordinary pain threshold, and
+ * the book adjusts two conditions for anybody else. Pain: "High Pain Threshold
+ * halves these penalties; Low Pain Threshold doubles them." Agony: "High Pain
+ * Threshold lets you overcome the agony enough to function, but at -3 to DX
+ * and IQ" -- so for them it stops being incapacitating at all.
+ */
+export function afflictionEffectFor(
+  affliction: Affliction,
+  threshold: PainThreshold = "normal",
+): AfflictionEffect {
+  const effect = afflictionEffect(affliction);
+
+  const grade = painGradeOf(affliction);
+  if (grade) {
+    const penalty = painPenalty(grade, threshold);
+    return { ...effect, dx: penalty, iq: penalty, selfControl: penalty };
+  }
+
+  if (affliction === "agony") {
+    const functionsAt = agonyCost({ minutes: 0, threshold }).functionsAt;
+    if (functionsAt !== null) {
+      return {
+        ...effect,
+        severity: "irritating",
+        helpless: false,
+        fallsDown: false,
+        dx: functionsAt,
+        iq: functionsAt,
+      };
+    }
+  }
+
+  return effect;
+}
+
 /** What a set of afflictions comes to, added up. */
-export function totalAfflictionEffect(afflictions: readonly Affliction[]): AfflictionEffect {
+export function totalAfflictionEffect(
+  afflictions: readonly Affliction[],
+  threshold: PainThreshold = "normal",
+): AfflictionEffect {
   const total: AfflictionEffect = {
     severity: "irritating",
     dx: 0, iq: 0, selfControl: 0, defense: 0,
@@ -55,7 +127,7 @@ export function totalAfflictionEffect(afflictions: readonly Affliction[]): Affli
   const forbids = new Set<string>();
 
   for (const key of afflictions) {
-    const effect = afflictionEffect(key);
+    const effect = afflictionEffectFor(key, threshold);
     // Penalties from separate afflictions stack: the book gives no rule for
     // taking the worst, and two different poisons are two different problems.
     total.dx += effect.dx;
@@ -76,12 +148,104 @@ export function totalAfflictionEffect(afflictions: readonly Affliction[]): Affli
 }
 
 /** What the afflictions an actor has come to. */
-export function afflictionsOn(actor: any): {
+export function afflictionsOn(actor: any, threshold: PainThreshold = "normal"): {
   active: Affliction[];
   effect: AfflictionEffect;
 } {
   const active = activeAfflictions(actor);
-  return { active, effect: totalAfflictionEffect(active) };
+  return { active, effect: totalAfflictionEffect(active, threshold) };
+}
+
+/** One further line of what an affliction means, for the card. */
+export interface AfflictionNote {
+  key: string;
+  data?: Record<string, unknown>;
+  grave?: boolean;
+}
+
+/**
+ * What an affliction asks of the table beyond its penalties (pp. 428-429).
+ *
+ * Several conditions are not a number on a roll but a clock or a roll of their
+ * own: agony drains fatigue by the minute, nausea is a HT roll whenever the
+ * stomach is tested, a hallucination is a Will roll before acting, and a heart
+ * attack is a countdown. The card says so, with this character's own figures.
+ */
+export function afflictionNotes(options: {
+  affliction: Affliction;
+  health: number;
+  hitPoints: number;
+  threshold: PainThreshold;
+}): AfflictionNote[] {
+  const { affliction, health, threshold } = options;
+  const notes: AfflictionNote[] = [];
+
+  if (affliction === "agony" || affliction === "ecstasy") {
+    const ecstasy = affliction === "ecstasy";
+    const cost = agonyCost({ minutes: 1, threshold, ecstasy });
+    notes.push({ key: "AgonyDrain", data: { fatigue: cost.fatigue } });
+    notes.push({ key: ecstasy ? "EcstasyInfluence" : "TortureBonus", data: { bonus: cost.torture } });
+    if (cost.functionsAt !== null) {
+      notes.push({ key: "AgonyFunctions", data: { penalty: cost.functionsAt } });
+    }
+  }
+
+  if (affliction === "nauseated") {
+    notes.push({ key: "NauseaRoll", data: { target: nauseaTarget({ health }) } });
+    notes.push({ key: "Vomits", data: { seconds: vomitingSeconds(health) } });
+  }
+
+  if (affliction === "hallucinating") {
+    // Every outcome of the Will roll, so the table need not look them up.
+    const success = hallucinationOutcome({ success: true, criticalFailure: false });
+    const failure = hallucinationOutcome({ success: false, criticalFailure: false });
+    const freakOut = hallucinationOutcome({ success: false, criticalFailure: true });
+    notes.push({
+      key: "HallucinationRoll",
+      data: {
+        success: success.penalty,
+        successFor: success.duration,
+        failure: failure.penalty,
+        failureFor: failure.duration,
+        freakOutFor: freakOut.duration,
+      },
+    });
+  }
+
+  if (affliction === "heartAttack") {
+    notes.push({
+      key: "HeartAttackClock",
+      data: { minutes: Math.round(heartAttackMinutes(health) * 10) / 10 },
+      grave: true,
+    });
+    notes.push({ key: "HeartAttackSurvives", data: { hp: heartAttackSurvival(options.hitPoints) } });
+  }
+
+  return notes;
+}
+
+/**
+ * The three kinds of Injury Tolerance that spare a body a heart attack, read
+ * off its traits (p. 429). Injury Tolerance keeps its kind in its modifiers.
+ */
+export function injuryToleranceOf(actor: any): {
+  diffuse: boolean;
+  homogenous: boolean;
+  noVitals: boolean;
+} {
+  const kinds = new Set<string>();
+  for (const item of actor?.items ?? []) {
+    if (item?.type !== "trait") continue;
+    if (String(item.name ?? "").trim().toLowerCase() !== "injury tolerance") continue;
+    for (const modifier of item.system?.modifiers ?? []) {
+      kinds.add(String(modifier?.name ?? "").trim().toLowerCase());
+    }
+  }
+  return {
+    diffuse: kinds.has("diffuse"),
+    homogenous: kinds.has("homogenous") || kinds.has("homogeneous"),
+    noVitals: kinds.has("no vitals"),
+  };
 }
 
 /**
@@ -92,7 +256,16 @@ export function afflictionsOn(actor: any): {
  */
 export async function inflict(actor: any, affliction: Affliction): Promise<boolean> {
   if (!actor?.isOwner) return false;
-  const effect = afflictionEffect(affliction);
+
+  // "Injury Tolerance (Diffuse, Homogenous, or No Vitals) grants immunity to
+  // this affliction." A body with no heart to stop is not given a heart attack.
+  if (affliction === "heartAttack" && !canHaveHeartAttack(injuryToleranceOf(actor))) {
+    ui.notifications?.info(L("ImmuneToHeartAttack", { name: String(actor.name ?? "") }));
+    return false;
+  }
+
+  const threshold = painThresholdOf(actor.system?.derived?.traitEffects);
+  const effect = afflictionEffectFor(affliction, threshold);
 
   await setCondition(actor, conditionFor(affliction), true);
   if (effect.fallsDown && actor.system?.posture !== "lying") {
@@ -111,6 +284,12 @@ export async function inflict(actor: any, affliction: Affliction): Promise<boole
       helpless: effect.helpless,
       fallsDown: effect.fallsDown,
       modifiers: describe(effect),
+      notes: afflictionNotes({
+        affliction,
+        health: Number(actor.system?.attributes?.HT ?? 10) || 10,
+        hitPoints: Number(actor.system?.hp?.value ?? 0) || 0,
+        threshold,
+      }),
     }),
   });
   return true;

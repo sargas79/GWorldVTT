@@ -50,6 +50,10 @@
             {{#if trait.system.selfControl}}
               <span class="tag">CR {{trait.system.selfControl}}</span>
             {{/if}}
+            {{#if trait.weakness}}
+              <button type="button" class="tag rollable" data-action="weaknessExposure"
+                      data-tooltip="{{localize "GWORLD.Weakness.ExposedHint"}}">{{localize "GWORLD.Weakness.Exposed"}}</button>
+            {{/if}}
             {{#each trait.system.modifiers as |m|}}
               <span class="tag">{{signed m.value}}%{{#if m.name}} {{m.name}}{{/if}}</span>
             {{/each}}
@@ -158,9 +162,19 @@
     </div>
   </div>
 
+  {{#if unpoweredPsi.length}}
+    {{!-- A psi ability bought without its power modifier is not psionic (p. 254). --}}
+    <div class="isec">
+      {{#each unpoweredPsi as |u|}}
+        <p class="ihint warn">{{localize "GWORLD.Psi.Unpowered" trait=u.trait power=u.powerLabel}}</p>
+      {{/each}}
+    </div>
+  {{/if}}
+
   {{#if psionics.length}}
-    {{!-- The psi powers this character holds, and what each Talent is worth to
-         a roll using it (Characters pp. 254-255). --}}
+    {{!-- The powers this character holds, what each Talent is worth, and a
+         roll to use each: IQ, Will or Perception with the Talent on top
+         (Characters pp. 254-255; Monster Hunters 1 p. 40). --}}
     <div class="isec">
       <div class="ish">{{localize "GWORLD.Psi.Powers"}}</div>
       {{#each psionics as |power|}}
@@ -172,18 +186,35 @@
               <span class="tag" data-tooltip="{{localize 'GWORLD.Psi.TalentHint'}}">
                 {{localize "GWORLD.Psi.Talent" bonus=power.signed}}
               </span>
+              {{#if power.talentNeedsPermission}}
+                <span class="tag warn" data-tooltip="{{localize 'GWORLD.Psi.OverCapHint' cap=power.talentCap}}">
+                  {{localize "GWORLD.Psi.OverCap" cap=power.talentCap}}
+                </span>
+              {{/if}}
+            {{else if power.talentName}}
+              <span class="tag" data-tooltip="{{localize 'GWORLD.Psi.TalentHint'}}">
+                {{localize "GWORLD.Psi.HelpedBy" talent=power.talentName}}
+              </span>
             {{/if}}
             {{#if power.latent}}
               <span class="tag" data-tooltip="{{localize 'GWORLD.Psi.LatentHint'}}">
                 {{localize "GWORLD.Psi.Latent"}}
               </span>
             {{/if}}
+            {{#each power.rollButtons as |roll|}}
+              <span class="tag rollable" data-action="roll" data-roll-type="attribute"
+                    data-roll-label="{{roll.label}}" data-roll-target="{{roll.target}}"
+                    data-tooltip="{{localize 'GWORLD.Psi.UseRollHint'}}">{{roll.key}} {{roll.target}}</span>
+            {{/each}}
           </span>
           <span class="td">
             {{#if power.abilities.length}}
               {{#each power.abilities as |name|}}{{name}}{{#unless @last}}, {{/unless}}{{/each}}
             {{else}}
               {{localize "GWORLD.Psi.NoAbilities"}}
+              {{#if power.couldManifestText}}
+                <span class="ihint">{{localize "GWORLD.Psi.CouldManifest" abilities=power.couldManifestText}}</span>
+              {{/if}}
             {{/if}}
           </span>
         </div>

@@ -11,7 +11,14 @@
     {{#if knockback}}
       <span class="gc-mod">{{localize "GWORLD.Mounted.Knockback" yards=knockback}}</span>
     {{/if}}
+    {{#if flying}}
+      <span>{{localize "GWORLD.Mounted.FlightCost" horizontal=horizontal vertical=vertical cost=cost}}</span>
+      {{#if stall}}<span class="gc-warn">{{localize "GWORLD.Mounted.Stall" speed=stall}}</span>{{/if}}
+      <span class="gc-mod">{{localize "GWORLD.Mounted.Dive" speed=diveTop}}</span>
+    {{/if}}
     {{#if envelope}}
+      {{#if highSpeed}}<span class="gc-mod">{{localize "GWORLD.Mounted.HighSpeed" velocity=velocity basicMove=basicMove}}</span>{{/if}}
+      <span class="gc-mod">{{localize "GWORLD.Mounted.SprintTop" speed=sprintTop}}</span>
       {{#if turning}}
         <span>{{localize "GWORLD.Mounted.Turning" velocity=velocity radius=radius}}</span>
       {{else}}

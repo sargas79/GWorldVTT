@@ -13,7 +13,7 @@ import { TONS_PER_PERSON, cargoCapacity, curbWeight, endurance, leaveSeat } from
 import {
   cappedAimBonus, crippleThreshold, locationsOf, lossOfControl, mediumOf, occupantDamage,
   occupantHitTarget, targetingSystemBonus, unexpectedDodgePenalty, vehicleHitLocation,
-  vitalAreaModifier, windowDr,
+  vehicleInjury, vitalAreaModifier, windowDr,
 } from "../vehicle-combat.js";
 
 describe("swarms", () => {
@@ -162,9 +162,40 @@ describe("the vehicle hit location table", () => {
   it("multiplies a vital area's wound and halves a window's DR", () => {
     expect(vitalAreaModifier("imp")).toBe(3);
     expect(vitalAreaModifier("pi+")).toBe(3);
-    expect(vitalAreaModifier("burn")).toBe(2);
-    expect(vitalAreaModifier("cr")).toBe(1);
+    // "The wounding modifier for a tight-beam burning attack is x2" -- a tight
+    // beam. This used to double every burn, flamethrowers included; the vital
+    // area names no modifier for an ordinary burn, or for anything crushing.
+    expect(vitalAreaModifier("burn", true)).toBe(2);
+    expect(vitalAreaModifier("burn")).toBe(null);
+    expect(vitalAreaModifier("cr")).toBe(null);
     expect(windowDr(5)).toBe(3);
+  });
+
+  it("cuts a bullet down to a third against a powered vehicle's body", () => {
+    // "Most powered vehicles are Unliving" (p. 555), and Unliving takes
+    // piercing at x1/3 (p. 380).
+    expect(vehicleInjury({ penetrating: 9, damageType: "pi", location: "body", powered: true })).toBe(3);
+    // Unpowered is Homogenous, which is harder still: x1/5.
+    expect(vehicleInjury({ penetrating: 10, damageType: "pi", location: "body", powered: false })).toBe(2);
+  });
+
+  it("triples a bullet in the vital area, whatever the body would have done", () => {
+    expect(vehicleInjury({ penetrating: 9, damageType: "pi", location: "vitalArea", powered: true })).toBe(27);
+  });
+
+  it("doubles a laser in the vital area and leaves a torch at its ordinary figure", () => {
+    expect(vehicleInjury({ penetrating: 6, damageType: "burn", tightBeam: true, location: "vitalArea", powered: true })).toBe(12);
+    expect(vehicleInjury({ penetrating: 6, damageType: "burn", location: "vitalArea", powered: true })).toBe(6);
+  });
+
+  it("leaves crushing and cutting at their ordinary torso figures", () => {
+    expect(vehicleInjury({ penetrating: 10, damageType: "cr", location: "body", powered: true })).toBe(10);
+    expect(vehicleInjury({ penetrating: 10, damageType: "cut", location: "body", powered: true })).toBe(15);
+  });
+
+  it("does at least a point once anything gets through, and nothing when nothing does", () => {
+    expect(vehicleInjury({ penetrating: 1, damageType: "pi-", location: "body", powered: false })).toBe(1);
+    expect(vehicleInjury({ penetrating: 0, damageType: "pi", location: "vitalArea", powered: true })).toBe(0);
   });
 });
 

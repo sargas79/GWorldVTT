@@ -4,7 +4,11 @@
 
 import { relativeLevelForPoints } from "../../rules/skills.js";
 import { SPELL_CLASSES, spellRelativeLevel, type MagicStyle, type SpellClass, type SpellDifficulty } from "../../rules/magic.js";
-import { netModifier, traitPoints } from "../../rules/traits.js";
+import {
+  netModifier,
+  traitPoints,
+  traitLevelName,
+} from "../../rules/traits.js";
 import type { Enchantment } from "../../rules/enchanting.js";
 import { AMMUNITION_TYPES } from "../../rules/ammunition.js";
 import { EQUIPMENT_QUALITIES, type EquipmentQuality } from "../../rules/wealth.js";
@@ -188,6 +192,11 @@ export class TraitData extends foundry.abstract.TypeDataModel {
   declare reactionModifier: number;
   declare modifiers: Array<{ name: string; value: number }>;
   declare selfControl: number | null;
+  declare talentSkills: string[];
+  declare power: string;
+  declare powerTalent: boolean;
+  declare meleeModes: unknown[];
+  declare rangedModes: unknown[];
 
   static override defineSchema() {
     return {
@@ -272,6 +281,33 @@ export class TraitData extends foundry.abstract.TypeDataModel {
         integer: true,
         initial: 0,
       }),
+      /**
+       * The skills a Talent adds its level to (Characters pp. 89-91), one name
+       * each; a specialty matches its base skill. Empty for every other
+       * trait. A Talent from another book is only known this way; one of the
+       * Basic Set's that predates the field is still read by name.
+       */
+      talentSkills: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: false }),
+        { required: true, initial: [] },
+      ),
+      /**
+       * The power this trait belongs to, by the name its book gives it --
+       * Bioenhancement, Mysticism, ESP (Characters pp. 254-257; Monster Hunters
+       * 1 pp. 40-48). Blank for a trait of no power, and for a Basic Set psi
+       * ability, which its power modifier already files.
+       */
+      power: new fields.StringField({ required: true, blank: true, initial: "" }),
+      /** True for the power's Talent rather than one of its abilities. */
+      powerTalent: new fields.BooleanField({ required: true, initial: false }),
+      /**
+       * The attacks this trait is, in the shape a weapon's are: Innate Attack
+       * and its kin (Characters pp. 61-62), and a power's attacks (Monster
+       * Hunters 1 pp. 44-47). They join the character's attack list beside
+       * what is carried. Empty for every trait that is not an attack.
+       */
+      meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: [] }),
+      rangedModes: new fields.ArrayField(rangedModeField(), { required: true, initial: [] }),
     };
   }
 
@@ -294,7 +330,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
 
   /** The book's name for the level bought, where it names one. */
   get levelName(): string | null {
-    return this.levelNames[this.levels - 1] || null;
+    return traitLevelName(this.levelNames, this.levels);
   }
 }
 
@@ -504,6 +540,12 @@ function meleeModeField() {
     }),
     /** The weapon becomes unready after each attack unless ST is high enough. */
     unreadyAfterAttack: new fields.BooleanField({ initial: false }),
+    /**
+     * Damage per level of the trait carrying this mode (Characters p. 61):
+     * "1d" per level, rolled as many dice as levels held. Only a trait has
+     * levels to read, so a weapon leaves this off.
+     */
+    perLevel: new fields.BooleanField({ initial: false }),
   });
 }
 
@@ -654,6 +696,41 @@ function rangedModeField() {
       choices: ["", "rest", "bipod", "mounted"],
     }),
     /**
+     * How the projectile finds its way (GURPS Basic Set: Campaigns p. 412).
+     * "guided" is flown by the firer, who must Concentrate each turn and keep
+     * the target in sight; "homing" steers itself and asks nothing of him once
+     * launched. Both ignore range modifiers, and for both the 1/2D figure is
+     * the projectile's speed in yards a second rather than the range past
+     * which damage halves. Blank for an ordinary shell or bullet.
+     */
+    guidance: new fields.StringField({
+      required: true,
+      nullable: false,
+      blank: true,
+      initial: "",
+      choices: ["", "guided", "homing"],
+    }),
+    /**
+     * An attack that covers ground rather than striking a point (p. 413), like
+     * a flamethrower or a gas cloud. "Active defenses don't protect against an
+     * area attack, but victims may dive for cover or retreat out of the area",
+     * and its damage does not fall off with distance the way an explosion's
+     * does.
+     */
+    areaAttack: new fields.BooleanField({ initial: false }),
+    /**
+     * How wide a cone attack is at its widest, in yards (p. 413). The spread
+     * is that width over the weapon's Max range; zero means the table does not
+     * say, and the cone then spreads a yard per yard. Only read when
+     * `areaAttack` is set.
+     */
+    coneMaxWidth: new fields.NumberField({
+      required: true,
+      nullable: false,
+      initial: 0,
+      min: 0,
+    }),
+    /**
      * How unwieldy the weapon is, as a penalty: it applies when firing from a
      * vehicle or in close combat, and to attempts to keep the weapon hidden
      * (GURPS Basic Set: Characters p. 270). Zero or negative, never positive.
@@ -717,6 +794,22 @@ function rangedModeField() {
       integer: true,
       initial: 0,
       max: 0,
+    }),
+    /** Damage per level of the trait carrying this mode (Characters p. 61). */
+    perLevel: new fields.BooleanField({ initial: false }),
+    /**
+     * A Malediction (Characters p. 106), and which: 1 takes -1 a yard, 2 the
+     * Size and Speed/Range Table, 3 the Long-Distance Modifiers. It rolls
+     * against Will, the victim may resist in a Quick Contest, and DR does
+     * nothing against it. Zero for every ordinary ranged attack.
+     */
+    malediction: new fields.NumberField({
+      required: true,
+      nullable: false,
+      integer: true,
+      initial: 0,
+      min: 0,
+      max: 3,
     }),
   });
 }
@@ -792,6 +885,13 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
         initial: "basic",
         choices: [...EQUIPMENT_QUALITIES],
       }),
+      /**
+       * A holy thing: a Holy weapon, holy water, a symbol with significance
+       * (Monster Hunters 1 pp. 51, 57, 59). Contact burns a creature with a
+       * Weakness to holy things for 1d, ignoring DR, where that book's rules
+       * are in play.
+       */
+      holy: new fields.BooleanField({ required: true, initial: false }),
       /**
        * The skills this equipment is the tools of, by name. A skill on this
        * list is rolled at the grade's modifier while the item is carried.

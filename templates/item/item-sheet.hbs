@@ -290,6 +290,24 @@
         </label>
       </div>
       <p class="ihint">{{localize "GWORLD.Trait.CostTableHint"}}</p>
+      <div class="ifields">
+        <label class="wide">{{localize "GWORLD.Trait.TalentSkills"}}
+          <textarea name="system.talentSkills" rows="3"
+                    {{#unless editable}}disabled{{/unless}}>{{talentSkillsText}}</textarea>
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Trait.TalentSkillsHint"}}</p>
+      <div class="ifields">
+        <label class="wide">{{localize "GWORLD.Trait.Power"}}
+          <input type="text" name="system.power" value="{{system.power}}"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Trait.PowerTalent"}}
+          <input type="checkbox" name="system.powerTalent" {{checked system.powerTalent}}
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Trait.PowerHint"}}</p>
 
       {{!-- Enhancements and limitations, and the self-control number: what
            changes a trait's cost from the figure the book prints. --}}
@@ -466,6 +484,9 @@
             <input type="text" value="{{localize weapon.conditionLabel}}" disabled />
           </label>
         </div>
+        {{#if weapon.mustRollInUse}}
+          <p class="ihint warn">{{localize "GWORLD.Item.MustRollInUse"}}</p>
+        {{/if}}
       </div>
     {{/if}}
 
@@ -687,6 +708,9 @@
             <input type="number" name="system.costOfLivingPercent" value="{{system.costOfLivingPercent}}" step="1" min="0"
                    {{#unless editable}}disabled{{/unless}} />
           </label>
+          {{#if license}}
+            <p class="ihint ifull">{{localize "GWORLD.Item.LicenseCost" low=license.low high=license.high}}</p>
+          {{/if}}
           <label data-tooltip="{{localize 'GWORLD.Item.EquipmentQualityHint'}}">{{localize "GWORLD.Item.EquipmentQuality"}}
             <select name="system.equipmentQuality" {{#unless editable}}disabled{{/unless}}>
               {{selectOptions choices.equipmentQualities selected=system.equipmentQuality localize=true}}
@@ -696,6 +720,12 @@
             <input type="text" name="system.forSkills" value="{{join system.forSkills ", "}}" placeholder="Surgery, First Aid"
                    {{#unless editable}}disabled{{/unless}} />
           </label>
+          {{#if holyAttacks}}
+            <label class="icheck" data-tooltip="{{localize 'GWORLD.Holy.ContactHint'}}">
+              <input type="checkbox" name="system.holy" {{#if system.holy}}checked{{/if}}
+                     {{#unless editable}}disabled{{/unless}} />
+              {{localize "GWORLD.Item.Holy"}}</label>
+          {{/if}}
         </div>
         {{#if weapon.showQuality}}
           <div class="ifields">
@@ -954,7 +984,7 @@
         {{/each}}
       </div>
 
-      {{#if isEquipment}}
+      {{#if isArmed}}
       <div class="isub" data-mode-path="rangedModes">
         <div class="isub-head">
           {{localize "GWORLD.Item.RangedModes"}}
@@ -1022,12 +1052,24 @@
               </select>
             </div>
             <div class="irow">
+              <select name="system.rangedModes.{{i}}.guidance" aria-label="{{localize 'GWORLD.Item.Guidance'}}" data-tooltip="{{localize 'GWORLD.Item.GuidanceHint'}}" {{#unless @root.editable}}disabled{{/unless}}>
+                {{selectOptions @root.choices.guidance selected=m.guidance localize=true}}
+              </select>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.AreaAttackHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.areaAttack"
+                     {{#if m.areaAttack}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.AreaAttack"}}</label>
+              {{#if m.areaAttack}}
+                <input type="number" name="system.rangedModes.{{i}}.coneMaxWidth" value="{{m.coneMaxWidth}}" aria-label="{{localize 'GWORLD.Item.ConeMaxWidth'}}" step="1" min="0"
+                       data-tooltip="{{localize 'GWORLD.Item.ConeMaxWidthHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              {{/if}}
+            </div>
+            <div class="irow">
               <input type="number" name="system.rangedModes.{{i}}.loaded" value="{{m.loaded}}" aria-label="{{localize 'GWORLD.Item.Loaded'}}" step="1" min="0"
                      data-tooltip="{{localize 'GWORLD.Item.LoadedHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <input type="number" name="system.rangedModes.{{i}}.reloadWeight" value="{{m.reloadWeight}}" aria-label="{{localize 'GWORLD.Item.ReloadWeight'}}" step="0.01" min="0"
                      data-tooltip="{{localize 'GWORLD.Item.ReloadWeightHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <select name="system.rangedModes.{{i}}.ammunition" aria-label="{{localize 'GWORLD.Item.Ammunition'}}" data-tooltip="{{localize 'GWORLD.Item.AmmunitionHint'}}" {{#unless @root.editable}}disabled{{/unless}}>
-                {{selectOptions @root.choices.ammunition selected=m.ammunition localize=true}}
+                {{selectOptions (lookup @root.ammunitionFor i) selected=m.ammunition localize=true}}
               </select>
               {{#with (lookup @root.weapon.reloads i)}}
                 <span class="wmode" data-tooltip="{{localize 'GWORLD.Item.ReloadCostHint'}}">{{localize "GWORLD.Item.ReloadCost" cost=this}}</span>
@@ -1049,6 +1091,14 @@
               <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.SurgeHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.surge"
                      {{#if m.surge}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.Surge"}}</label>
+              {{#if @root.isTrait}}
+                <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.PerLevelHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.perLevel"
+                       {{#if m.perLevel}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                  {{localize "GWORLD.Item.PerLevel"}}</label>
+                <label class="icheck" data-tooltip="{{localize 'GWORLD.Malediction.RangeHint'}}">{{localize "GWORLD.Item.Malediction"}}
+                  <input type="number" name="system.rangedModes.{{i}}.malediction" value="{{m.malediction}}" step="1" min="0" max="3"
+                         aria-label="{{localize 'GWORLD.Item.Malediction'}}" {{#unless @root.editable}}disabled{{/unless}} /></label>
+              {{/if}}
             </div>
           </div>
         {{else}}

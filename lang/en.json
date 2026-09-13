@@ -67,7 +67,10 @@
       "MoveAbbr": "Move",
       "DRAbbr": "DR",
       "AdjustHint": "Levels bought with character points",
-      "Granted": "granted"
+      "Granted": "granted",
+      "LoweredByIq": "from IQ",
+      "LoweredByIqHint": "A temporary IQ penalty lowers Will and Perception with it, and no other secondary characteristic (Campaigns p. 421).",
+      "NoDefense": "none this turn"
     },
     "Section": {
       "Movement": "Movement",
@@ -285,13 +288,33 @@
         "unconsciousness": "Knocked out, as surely as by a wound.",
         "coma": "Collapsed. One HT roll to wake after twelve hours, and a roll every twelve hours after that, any failure of which is death.",
         "heartAttack": "Cardiac arrest. Straight to -1×FP, and dead in HT/3 minutes without resuscitation."
-      }
+      },
+      "ImmuneToHeartAttack": "{name} has no vitals to stop, and cannot have a heart attack",
+      "Note": {
+        "AgonyDrain": "Loses {fatigue} FP a minute while it lasts",
+        "TortureBonus": "Anyone who can threaten more of it gets +{bonus} to Interrogation and Intimidation",
+        "EcstasyInfluence": "Anyone offering more of it gets +{bonus} to Influence rolls",
+        "AgonyFunctions": "High Pain Threshold: able to act, at {penalty} to DX and IQ",
+        "NauseaRoll": "Roll HT {target} after eating, a foul smell, a failed Fright Check or being stunned",
+        "Vomits": "On a failure, vomits for {seconds} seconds — treat as Retching",
+        "HallucinationRoll": "Roll Will before each success roll: success {success} for {successFor}; failure {failure} for {failureFor}; critical failure freaks out for {freakOutFor}",
+        "HeartAttackClock": "Drops to -FP, and dies in {minutes} minutes unless resuscitated",
+        "HeartAttackSurvives": "If survived: {hp} HP"
+      },
+      "PastHalfDamage": "Past 1/2D"
     },
     "Slam": {
       "Action": "Slam",
       "Title": "Slam",
       "Velocity": "Yards moved",
-      "Label": "Slam at {yards} yards"
+      "Label": "Slam at {yards} yards",
+      "Back": "{name} hits back ({yards} yards)",
+      "Outcome": {
+        "nothing": "{slammer} {dealt} against {foe} {taken}: nobody goes down",
+        "defenderRollsToStay": "{slammer} {dealt} against {foe} {taken}: {foe} rolls DX or falls",
+        "attackerKnocksDown": "{slammer} {dealt} against {foe} {taken}: twice as hard, {foe} is knocked down",
+        "attackerFellInstead": "{slammer} {dealt} against {foe} {taken}: {foe} hit back twice as hard, and {slammer} falls instead"
+      }
     },
     "Melee": {
       "Title": "Melee attack",
@@ -309,7 +332,18 @@
       "NoBlock": "No shield to block with",
       "MissileSpell": "A Missile spell can be dodged or blocked, not parried",
       "Maneuver": "This turn's maneuver allows no defense",
-      "Arc": "Not from that side"
+      "Arc": "Not from that side",
+      "StrappedIn": "Strapped in: no defense against a shot at the vehicle's occupants",
+      "Occupant": "Aboard a vehicle: only a dodge",
+      "Unseen": {
+        "Sees": "Sees it coming",
+        "Heard": "Unseen, but heard (Hearing-2)",
+        "Unheard": "Unseen, not heard",
+        "Unaware": "Completely unaware",
+        "Label": "Can't see the attacker",
+        "NoDefense": "Completely unaware of the attacker: no defense at all",
+        "OnlyDodge": "Against an unseen attacker, only a dodge -- unless a Hearing-2 roll placed them"
+      }
     },
     "Tactical": {
       "front": "from the front",
@@ -328,7 +362,8 @@
       "Immobile": "This posture cannot move hex by hex: sitting cannot move at all, and lying down spends every movement point to shift one hex.",
       "Handedness": "Weapon hand",
       "right": "Right",
-      "left": "Left"
+      "left": "Left",
+      "TurnCosts": "Turning mid-move: {sixty} point for 60°, {oneTwenty} for 120°, {about} to turn about; free at the end of the move"
     },
     "Rules": {
       "Title": "GURPS rules in play",
@@ -349,7 +384,8 @@
         "Activities": "Outside combat",
         "Magic": "Magic",
         "Equipment": "Equipment",
-        "Cinematic": "Cinematic combat"
+        "Cinematic": "Cinematic combat",
+        "MonsterHunters": "Monster Hunters 1: Champions"
       },
       "Rule": {
         "magic": {
@@ -655,6 +691,14 @@
         "meleeEtiquette": {
           "Name": "Melee etiquette",
           "Hint": "A hero fighting hand to hand is faced one at a time. The rest wait their turn (Campaigns p. 417)."
+        },
+        "holyAttacks": {
+          "Name": "Holy attacks",
+          "Hint": "Contact with holy water or a holy weapon burns a creature with a Weakness to holy things for 1d, ignoring DR, then fizzes for a minute in which no holy source hurts it again (Monster Hunters 1 p. 51)."
+        },
+        "talentsSkipWildcards": {
+          "Name": "Talents skip wildcard skills",
+          "Hint": "A Talent adds nothing to a wildcard skill, even one covering the skills on its list (Monster Hunters 1 p. 24)."
         }
       }
     },
@@ -778,7 +822,12 @@
       "kneeling": "Kneeling",
       "crawling": "Crawling",
       "sitting": "Sitting",
-      "lying": "Lying Down"
+      "lying": "Lying Down",
+      "AStep": "a step",
+      "TwoManeuvers": "two maneuvers",
+      "Move": "Move {move}",
+      "MoveHint": "Move in this posture: two-thirds crouching, a third kneeling or crawling, none sitting, a yard lying down.",
+      "Free": "a free action"
     },
     "Encumbrance": {
       "none": "None",
@@ -1102,6 +1151,11 @@
       "OneLess": "One level fewer",
       "CostTable": "Cost table",
       "LevelNames": "Level names, one per line",
+      "TalentSkills": "Skills this Talent adds its level to, one per line",
+      "Power": "Power this belongs to",
+      "PowerHint": "The power an ability belongs to, as its book names it (Bioenhancement, Mysticism, ESP). The Basic Set's psi abilities are recognised by their power modifier and can leave this blank. Tick the box on the power's Talent; its maximum level is where the GM's permission starts.",
+      "PowerTalent": "This is the power's Talent",
+      "TalentSkillsHint": "Fill this in for a Talent and each skill named gets +1 per level; a specialty counts as its skill. The Basic Set's Talents are read by name when this is empty.",
       "CostTableHint": "A few traits are priced from a table rather than at a flat rate per level: Wealth runs 10/20/30/50/75. Fill this in and it replaces the points and per-level figures. Leave it empty for the great majority, which are priced evenly.",
       "TabledNote": "priced from the table",
       "TotalHint": "Total cost:",
@@ -1223,6 +1277,10 @@
       "DefaultModifier": "Modifier",
       "EditImage": "Change item image",
       "UnreadyAfterAttack": "Unready after attack",
+      "Holy": "Holy",
+      "PerLevel": "Per level",
+      "PerLevelHint": "Damage per level of the trait: 1d at three levels rolls 3d (Characters p. 61).",
+      "Malediction": "Malediction",
       "RangedModes": "Ranged attacks",
       "NoRangedModesYet": "No ranged attacks. Add one for a bow, a gun or something thrown.",
       "ExtraDice": "Extra dice",
@@ -1277,7 +1335,18 @@
       "ForSkills": "Tools for",
       "ForSkillsHint": "The skills these are the tools of, separated by commas. While they are carried, those skills are rolled at the grade’s modifier.",
       "MissedMaintenance": "Missed checks",
-      "MissedMaintenanceHint": "Maintenance checks missed, each costing a point of HT that the exposure roll is made against (Campaigns p. 485)."
+      "MissedMaintenanceHint": "Maintenance checks missed, each costing a point of HT that the exposure roll is made against (Campaigns p. 485).",
+      "MustRollInUse": "At zero HP or below: it rolls HT every second it is used under stress, or stops working",
+      "LicenseCost": "A license to carry it costs 1d x 10% of the price: ${low} to ${high}",
+      "Guidance": "Guidance",
+      "GuidanceHint": "How the projectile finds its way (Campaigns p. 412). Guided is flown by the firer, who must Concentrate each turn and keep the target in sight; homing steers itself. Both ignore range modifiers, and for both the 1/2D figure is the speed in yards a second.",
+      "GuidanceNone": "Not steered",
+      "GuidanceGuided": "Guided",
+      "GuidanceHoming": "Homing",
+      "AreaAttack": "Area attack",
+      "AreaAttackHint": "Covers ground rather than striking a point (p. 413) — a flamethrower, a gas cloud. No active defense protects against it, though victims may dive for cover, and its damage does not fall off with distance the way an explosion's does.",
+      "ConeMaxWidth": "Cone width",
+      "ConeMaxWidthHint": "How wide the cone is at its widest, in yards. It spreads by that width over the weapon's Max range; leave at zero where the table does not say, and it spreads a yard per yard."
     },
     "Gear": {
       "Carried": "Carried",
@@ -1317,7 +1386,9 @@
       "SwarmDamageType": "Type",
       "SwarmFlying": "Flies",
       "SwarmAbout": "What it is",
-      "SwarmAboutPlaceholder": "About a dozen carnivorous bats"
+      "SwarmAboutPlaceholder": "About a dozen carnivorous bats",
+      "Description": "Description",
+      "DescriptionHint": "What this creature is. Click to show or hide the rest."
     },
     "Action": {
       "BrowseSkills": "Browse",
@@ -1401,7 +1472,21 @@
       "Measured": "range measured: {yards} yd",
       "AimedLonger": "aimed longer",
       "Braced": "braced",
-      "AimTurns": "{turns} turns aimed"
+      "AimTurns": "{turns} turns aimed",
+      "Driving": "Driving and shooting",
+      "VehicleDodged": "The vehicle dodged",
+      "TargetingSystem": "Targeting system",
+      "StabilityCap": "Aim capped at SR {sr}",
+      "FromVehicle": "From {vehicle}",
+      "VehicleWeapon": "Weapon",
+      "Handheld": "Held in the hand",
+      "Mounted": "The vehicle's own weapon",
+      "MountedNeedsAttack": "Firing the vehicle's own weapons takes an Attack or All-Out Attack maneuver",
+      "VehicleDodgedBox": "The vehicle dodged this turn",
+      "Stabilized": "Stabilized sights or mount",
+      "HasTargeting": "Using the vehicle's targeting system",
+      "LaserSight": "Laser sight",
+      "LaserSeen": "The target sees the laser dot"
     },
     "Malfunction": {
       "Jammed": "The weapon malfunctions",
@@ -1446,7 +1531,10 @@
       "Basic": "{damage} basic damage",
       "CoverDr": "cover DR {dr}",
       "Through": "{damage} reaches whoever was behind",
-      "Stopped": "It stops in the cover"
+      "Stopped": "It stops in the cover",
+      "DamageType": "Damage type",
+      "TightBeam": "Tight-beam burn",
+      "CannotOverpenetrate": "{type} does not overpenetrate: only piercing, impaling and tight-beam burning damage goes through"
     },
     "Splash": {
       "Action": "Splash in the face",
@@ -1454,13 +1542,18 @@
       "Title": "In the face",
       "Hit": "It hit",
       "Critical": "Critical hit",
-      "Defended": "They defended",
+      "Defended": "Their defense",
       "Thrown": "thrown weapon: Acc {acc}, {max} yards, {face} for the face",
       "Blinded": "Blinded for {seconds} seconds",
       "Dodged": "Dodged it — and a liquid cannot be parried",
       "Flinched": "Flinched: {penalty} to further defenses, and to DX and Sense next turn",
       "Unmoved": "Did not so much as blink",
-      "OneTarget": "Target exactly one token to splash"
+      "OneTarget": "Target exactly one token to splash",
+      "DefenseNone": "None, or it failed",
+      "DefenseDodge": "A dodge that worked",
+      "DefenseBlock": "A block that worked",
+      "DefenseParry": "A parry",
+      "ParryUseless": "A parry is no use against a liquid"
     },
     "Reaction": {
       "Action": "Reaction",
@@ -1474,7 +1567,9 @@
         "impressed": "from those who notice the talent and would be impressed",
         "ownKind": "from anyone but your own kind",
         "faithful": "from followers of the faith",
-        "adult": "when dealing with others as an adult"
+        "adult": "when dealing with others as an adult",
+        "talking": "when they are allowed to talk",
+        "commercial": "in a commercial transaction"
       },
       "Hint": "What an NPC makes of this character: 3d, modifiers on the dice, high is good",
       "Title": "Reaction",
@@ -1530,7 +1625,23 @@
       "HeldIt": "Held it",
       "LostControl": "Lost control — falls or spins out",
       "Riding": "Riding",
-      "Charging": "Charging (mount at velocity 7+)"
+      "Charging": "Charging (mount at velocity 7+)",
+      "HighSpeed": "{velocity} yards a second is high-speed movement, past Basic Move {basicMove}",
+      "SprintTop": "The fastest a run can build to next turn: {speed}",
+      "Flying": "Flying",
+      "Horizontal": "Yards across",
+      "Vertical": "Yards up or down",
+      "TopAirspeed": "Top airspeed",
+      "CanHover": "Can hover",
+      "FlightCost": "{horizontal} across and {vertical} up costs {cost} yards of Move",
+      "Stall": "Below {speed} yards a second it stalls and starts to fall",
+      "Dive": "Diving and doing nothing else doubles top airspeed to {speed}",
+      "LanceMountSt": "Couched lance: mount's ST (0 if not)",
+      "LanceYards": "Yards the mount moved last turn",
+      "Jousting": "A blunted jousting lance",
+      "LanceHint": "A couched lance does (mount's ST x yards moved)/100 dice, +3 impaling (Campaigns p. 396).",
+      "LanceLabel": "couched lance, ST {st} at {yards} yards",
+      "JoustingLabel": "jousting lance, ST {st} at {yards} yards, snaps past {max}"
     },
     "Penalties": {
       "Label": "Attribute penalty",
@@ -1575,7 +1686,8 @@
       "SubtractDR": "Subtract the target's DR from basic damage, then apply the wounding modifier.",
       "SubtractDRDivisor": "Divide the target's DR by {divisor} (rounding down), subtract it from basic damage, then apply the wounding modifier.",
       "Cancel": "Cancel",
-      "MassShot": "pellets as one mass: damage and DR ×{times}"
+      "MassShot": "pellets as one mass: damage and DR ×{times}",
+      "HalfDamage": "Past 1/2D: halved from {full}"
     },
     "HitLocation": {
       "torso": "Torso",
@@ -1610,13 +1722,64 @@
       "Increased": "Increased Defense",
       "Double": "Double Defense",
       "Option": "AOD Option",
-      "Target": "Raise"
+      "Target": "Raise",
+      "AllOutAttackOption": {
+        "determined": "Determined",
+        "double": "Double",
+        "feint": "Feint",
+        "strong": "Strong",
+        "suppression": "Suppression Fire",
+        "Hint": "Determined: +4 to hit in melee, +1 at range. Strong: +2 damage or +1 a die, for ST-based melee. Double and Feint are a second action; Suppression Fire needs RoF 5+ (Campaigns p. 365)."
+      }
     },
     "Technique": {
       "Prerequisite": "Prerequisite skill",
       "DefaultModifier": "Default modifier",
       "MaxRelative": "Level cap",
-      "MaxRelativeHint": "Relative to the prerequisite skill. Zero lets the technique reach that skill but not exceed it."
+      "MaxRelativeHint": "Relative to the prerequisite skill. Zero lets the technique reach that skill but not exceed it.",
+      "Button": "Unarmed technique",
+      "Title": "Unarmed technique",
+      "Which": "Technique",
+      "Uses": "{name}: {technique}",
+      "Name": {
+        "armLock": "Arm lock",
+        "chokeHold": "Choke hold",
+        "elbowStrike": "Elbow strike",
+        "neckSnap": "Neck snap",
+        "piercingStrike": "Piercing strike"
+      },
+      "Resists": "higher of ST and HT",
+      "VictimSt": "Victim's ST",
+      "VictimHt": "Victim's HT",
+      "NaturalDr": "Victim's natural DR",
+      "ToughSkin": "That DR is Tough Skin",
+      "RigidDr": "Rigid armour DR",
+      "FlexibleDr": "Flexible armour DR",
+      "Location": "Wrenching",
+      "Locations": {
+        "neck": "Neck",
+        "arm": "Arm",
+        "leg": "Leg"
+      },
+      "Crippled": "The arm is already crippled",
+      "Clumsiness": "Improvised weapon clumsiness (0-3)",
+      "TechniquePenalty": "Technique",
+      "Improvised": "Improvised",
+      "NoSkill": "This technique needs one of: {skills}",
+      "Hits": "Hits",
+      "Misses": "Misses",
+      "Note": {
+        "LockDamage": "Crushing damage equal to the margin, less DR {dr}: {damage}",
+        "ShockOnly": "The arm is crippled: no more damage, but shock and stunning as if hurt",
+        "WrenchDamage": "Swing crushing {damage}, x{wounding} wounding, through DR {dr}",
+        "HoldFails": "The hold does nothing this turn",
+        "LockHolds": "Keeping it is +{bonus} in the Contest; the victim defends at {penalty}",
+        "FlexibleIgnored": "Flexible armour (DR {dr}) is no use against a hold",
+        "Piercing": "Piercing, {damage} damage; Hurting Yourself applies against DR {dr}+",
+        "Choking": "Loses {fp} FP a turn; keeping it is +{bonus} in the Contest",
+        "ChokedFights": "The victim can still strike back, at {penalty}"
+      },
+      "Victim": "The victim"
     },
     "Armor": {
       "DR": "Damage Resistance",
@@ -1849,7 +2012,11 @@
         "ropeUp": "Rope, going up",
         "ropeDown": "Rope, going down",
         "ropeDownRigged": "Rope, going down with equipment"
-      }
+      },
+      "MaxDrag": "drag at most {value} lb",
+      "LiftingRoll": "Lifting roll",
+      "NoLifting": "No Lifting skill to roll",
+      "LiftedAs": "Lifts as though Basic Lift were {lift} lb (from {base})"
     },
     "Fall": {
       "Action": "Fall",
@@ -1942,7 +2109,8 @@
         "drowning": "Drowning",
         "asphyxiation": "Asphyxiation",
         "heartAttack": "Heart attack"
-      }
+      },
+      "ResuscitateNeedsTl": "Resuscitation needs Physician or First Aid of TL7 or later; this healer's is TL{tl}"
     },
     "Knockdown": {
       "Title": "Knockdown and stunning",
@@ -2000,7 +2168,8 @@
       "Release": "Let go",
       "StateHolding": "Holding on with {hands} — Aim, Feint, Concentrate, Wait and ranged attacks are out",
       "StateHeld": "Held with {hands} — no Move, no Aim, no ranged attacks, and nothing longer than a dagger",
-      "StatePinned": "Pinned and helpless — no maneuver that needs physical movement"
+      "StatePinned": "Pinned and helpless — no maneuver that needs physical movement",
+      "CannotMove": "Grappled: no Move maneuver without twice the foe's ST"
     },
     "Sight": {
       "Label": "What you can see",
@@ -2016,7 +2185,9 @@
       "none": "None",
       "exposedLocation": "Aim at an exposed part",
       "randomLocation": "Roll the location, and risk the cover",
-      "shootThrough": "Shoot through it (-2, and its DR)"
+      "shootThrough": "Shoot through it (-2, and its DR)",
+      "StrikesCover": "If the location it hit is only half exposed, the shot strikes the cover",
+      "HitsTarget": "If the location it hit is only half exposed, the shot still hits the target"
     },
     "Dying": {
       "DeathCheck": "Roll against death",
@@ -2092,7 +2263,10 @@
       "Hunger": "{fp} FP to hunger",
       "Thirst": "{fp} FP to thirst",
       "Parched": "Under a quart all day",
-      "PastEmpty": "Past empty — fatigue coming out of hit points"
+      "PastEmpty": "Past empty — fatigue coming out of hit points",
+      "RestTitle": "Rest and eat",
+      "RestDays": "Days of rest and full meals",
+      "RestDetail": "{days} days of rest make up for {meals} missed meals"
     },
     "Poison": {
       "Action": "Poison",
@@ -2137,7 +2311,13 @@
       "Cycles": "Cycles",
       "DelayField": "Delay in seconds",
       "Resistible": "Allows a roll to resist",
-      "OfCycles": "cycles left of {cycles}"
+      "OfCycles": "cycles left of {cycles}",
+      "TreaterSkill": "Treater's First Aid or Physician",
+      "TreaterSkillHint": "Sucking the wound is First Aid or Physician at -2; inducing vomiting is either unmodified; medical procedures need Physician. Leave blank if nobody has it. An antidote needs no roll.",
+      "TreatmentFailed": "the roll failed, and it does no good",
+      "NoSkill": "nobody with the skill to do it",
+      "Symptom": "Past {share} of HP lost to it: its worse symptoms now show",
+      "EffectLasts": "Its effect lasts {minutes} minutes, the margin of failure"
     },
     "Drink": {
       "Action": "Drink",
@@ -2206,7 +2386,7 @@
       "Dirt_dung": "Dung or other infected matter — −2",
       "Dirt_specialInfection": "The locale harbours something special — −3",
       "Antibiotic": "Treated with antibiotics",
-      "Antibiotics": "Antibiotics at TL{tl}: no infection",
+      "Antibiotics": "Antibiotics (TL6+, bacterial)",
       "Clean": "The wound stays clean",
       "WentBad": "The wound is infected",
       "Virulence": "HT modifier (virulence)",
@@ -2217,7 +2397,12 @@
       "Name": "Name",
       "Cycle": "Illness",
       "ShakenOff": "Over it",
-      "RanOut": "It has run its course"
+      "RanOut": "It has run its course",
+      "Treat": "Treat the illness",
+      "Treated": "Illness treated",
+      "Care": "A physician's care",
+      "DrugResistant": "A drug-resistant strain",
+      "PhysicianBonus": "Physician's medical-care bonus"
     },
     "CalledShot": {
       "Label": "Aimed at",
@@ -2243,7 +2428,10 @@
       "HeldFast": "{foe} holds on to it."
     },
     "Subdue": {
-      "Turned": "Strike with the flat or the butt (crushing)"
+      "Turned": "Strike with the flat or the butt (crushing)",
+      "Pull": "Pull the blow to ST (0 for full)",
+      "PullHint": "Strike at any ST lower than your own with bare hands or a muscle-powered weapon (Campaigns p. 401).",
+      "PulledTo": "pulled to ST {st}"
     },
     "Ground": {
       "Label": "Ground",
@@ -2568,7 +2756,64 @@
         "crushed": "Caught in the open as it came down.",
         "sheltered": "Behind a structural member: the wall's DR stands between them and it.",
         "unharmed": "Totally unharmed."
-      }
+      },
+      "DepthFeet": "Depth of water in feet (0 to use atmospheres)",
+      "MinutesAtDepth": "Minutes spent at that pressure",
+      "BendsNoRisk": "{minutes} minutes at {atm} atm is within the safe time: no risk of the bends",
+      "HpLostToAir": "HP already lost to this atmosphere",
+      "ExertionLabel": "Exertion",
+      "Exertion": {
+        "none": "None (sitting quietly)",
+        "mild": "Mild (walking, treading water)",
+        "heavy": "Heavy (climbing, combat, running)"
+      },
+      "VacuumClock": "Exhaling with the mouth open buys {seconds} seconds on the blood's oxygen, half of {held}; holding the breath ruptures the lungs for {formula}",
+      "CorrosiveCoughing": "Past a third of HP lost to it: coughing",
+      "CorrosiveBlinded": "Past two-thirds of HP lost to it: blinded, as well as coughing",
+      "Building": "Damage a building",
+      "SquareFeet": "Floor area (square feet)",
+      "FrameLabel": "Built of",
+      "Frame": {
+        "wood": "Wood frame or mud brick",
+        "brick": "Steel frame or brick",
+        "stone": "Stone"
+      },
+      "ConstructionLabel": "Construction",
+      "Construction": {
+        "sound": "Sound (HT 12)",
+        "shoddy": "Shoddy (HT 10)",
+        "quakeResistant": "Quake-resistant (HT 13)"
+      },
+      "DamageTaken": "Damage it has taken",
+      "FailedDisabling": "Already failed its roll at 0 HP",
+      "BuildingFigures": "{hp} HP and HT {ht}; now at {now} HP",
+      "BuildingState": {
+        "standing": "Standing",
+        "breached": "Breached: one or more large breaches, and the power is out",
+        "failing": "At -1xHP or worse: it rolls HT to stay up",
+        "collapsed": "At -5xHP: it has collapsed"
+      },
+      "BuildingRoll": "Rolled {roll} against HT {ht}",
+      "BuildingStands": "It stays up, for now",
+      "BuildingFalls": "It comes down",
+      "BuildingHolds": "It holds together at zero",
+      "SetAlight": "Set something alight",
+      "MaterialLabel": "Material",
+      "Flammability": {
+        "superFlammable": "Superflammable",
+        "highlyFlammable": "Highly flammable",
+        "flammable": "Flammable",
+        "resistant": "Resistant",
+        "highlyResistant": "Highly resistant",
+        "nonflammable": "Nonflammable"
+      },
+      "FlameDamage": "The flame's burning damage a second",
+      "ContactSeconds": "Seconds of contact",
+      "AlightAtOnce": "The flame is strong enough: it catches at once",
+      "NeverAlight": "Too weak to light it however long it is held there",
+      "ProlongedContact": "A 3d roll of {target} or less for each of {spells} ten-second spells",
+      "CaughtAfter": "It catches after {seconds} seconds",
+      "DidNotCatch": "It has not caught"
     },
     "Vehicle": {
       "Statistics": "Vehicle statistics",
@@ -2679,7 +2924,22 @@
       "LocationsShort": "Locations",
       "SkillShort": "Skill",
       "Dodge": "Dodge",
-      "DecadeScale": "At decade scale, to save rolling a hundred dice: DR {dr}, HP {hp}. Divide damage dice by ten too, and multiply what is left back afterwards."
+      "DecadeScale": "At decade scale, to save rolling a hundred dice: DR {dr}, HP {hp}. Divide damage dice by ten too, and multiply what is left back afterwards.",
+      "DamageType": "Damage type",
+      "TightBeam": "Tight-beam burn (a laser, not a torch)",
+      "Wound": "{penetrating} through, wounding x{modifier}: {injury} injury",
+      "VitalArea": "A vital area: impaling and piercing wound at ×3, a tight-beam burn at ×2",
+      "StrappedIn": "Strapped in",
+      "Loose": "Loose",
+      "StrappedInHint": "An occupant who is free to move may dodge a shot aimed at them; one strapped in may not (p. 469).",
+      "ScaleTitle": "Damage scale",
+      "ScaleWhich": "Scale",
+      "ScaleDecade": "A tenth (decade)",
+      "ScaleCentury": "A hundredth (century)",
+      "ScaleDamage": "Weapon damage",
+      "ScaleRemaining": "HP left at this scale (0 to skip)",
+      "ScaledDamage": "{damage} is {scaled} at this scale",
+      "ScaledBack": "{remaining} HP left is {full} HP at full scale"
     },
     "GearCategory": {
       "weapon": "Weapon",
@@ -3065,7 +3325,10 @@
         "needsMinorRepair": "It breaks down, jams or otherwise fails: nothing until it is mended.",
         "needsMajorRepair": "It fails badly: major repairs, spare parts and all."
       },
-      "CareLabel": "How it has been treated: +1 cleaned daily, 0 ordinary, -1 or -2 abused"
+      "CareLabel": "How it has been treated: +1 cleaned daily, 0 ordinary, -1 or -2 abused",
+      "HireOffer": "Nobody here has a repair skill. Hire a technician at ${rate} an hour?",
+      "Hired": "A hired technician",
+      "HiredSkill": "A hired technician, skill {skill}, at ${rate} an hour"
     },
     "Cinematic": {
       "BlastNoDamage": "The blast does no direct damage — a token point a yard of knockback",
@@ -3100,8 +3363,46 @@
       "CannonFodderDefense": "Cannon fodder: automatically fails",
       "Collapses": "{name} goes down."
     },
+    "Holy": {
+      "Title": "Holy attack",
+      "Burns": "{name} is burned by {source}: {injury} injury, ignoring DR ({from} → {to} HP). It fizzes for a minute.",
+      "Fizzing": "{name} is still fizzing from the last burn: {source} does nothing for another {seconds} s.",
+      "Rule": "1d ignoring DR, then a minute in which no holy source does more (Monster Hunters 1 p. 51).",
+      "Contact": "Holy contact",
+      "ContactHint": "Touch whoever is targeted with this: a creature with a Weakness to holy things takes 1d, ignoring DR, unless it is still fizzing (Monster Hunters 1 p. 51).",
+      "NoTarget": "Target who is being touched with it first.",
+      "NoEffect": "Nobody targeted is hurt by holy things, or all of them are still fizzing."
+    },
+    "Weakness": {
+      "Exposed": "Exposed",
+      "ExposedHint": "Apply exposure to what this Weakness is to. One 1d per interval, straight off HP (or FP for Fatigue Only), regardless of DR (Characters p. 161).",
+      "Title": "Weakness: {source}",
+      "MinutesPrompt": "Minutes exposed",
+      "IntensityPrompt": "Exposure",
+      "Intensity": {
+        "normal": "Ordinary",
+        "shielded": "Behind its barrier (half rate)",
+        "intense": "Intense source (double rate)"
+      },
+      "Apply": "Apply",
+      "Exposure": "{minutes} min. exposed",
+      "Dice": "{dice}d",
+      "LostHp": "{points} HP lost",
+      "LostFp": "{points} FP lost",
+      "NoDr": "Weakness ignores DR and defensive advantages.",
+      "NotYet": "Not yet a full interval ({interval} min.): no injury."
+    },
+    "Malediction": {
+      "Label": "{name} (Malediction {level})",
+      "Range": "Range, {yards} yd. (Malediction {level})",
+      "DistancePrompt": "How far away is the victim, in yards?",
+      "Short": "Malediction {level}",
+      "RangeHint": "A Malediction rolls against Will at a range penalty its level sets: -1 a yard at level 1, the Size and Speed/Range Table at level 2, the Long-Distance Modifiers at level 3. The victim may resist in a Quick Contest (Characters p. 106).",
+      "IgnoresDr": "ignores DR",
+      "IgnoresDrHint": "The target's DR has no effect on this attack's damage (Characters p. 106)."
+    },
     "Psi": {
-      "Powers": "Psi powers",
+      "Powers": "Powers",
       "Talent": "Talent {bonus}",
       "TalentHint": "A Talent gives a bonus to any roll to activate or otherwise use this power, most often an IQ, Will or Perception roll (Characters p. 255).",
       "Latent": "Latent",
@@ -3114,7 +3415,14 @@
         "psychokinesis": "Psychokinesis",
         "telepathy": "Telepathy",
         "teleportation": "Teleportation"
-      }
+      },
+      "OverCap": "Past level {cap}",
+      "OverCapHint": "More than {cap} levels of this Talent needs the GM’s permission: four in the Basic Set (Characters p. 255), more where a book allows it.",
+      "UseRoll": "{power}: {attribute} + Talent",
+      "UseRollHint": "A roll to use this power, with its Talent added. Most abilities say whether it is IQ, Will or Perception.",
+      "HelpedBy": "Helped by {talent}",
+      "CouldManifest": "Could manifest as: {abilities}",
+      "Unpowered": "{trait} is a {power} ability, but has no power modifier — so it is not psionic. Add the modifier if it is meant to be."
     },
     "Entangled": {
       "Escape": "Get loose",
@@ -3136,7 +3444,186 @@
         "hands": "Hands",
         "paws": "Paws",
         "hooves": "Hooves"
+      },
+      "Where": "Where it caught",
+      "Running": "Running when it caught",
+      "WhereOptions": {
+        "torso": "Torso",
+        "arm": "Arm",
+        "hand": "Hand",
+        "weapon": "Weapon",
+        "leg": "Leg",
+        "foot": "Foot",
+        "neck": "Neck"
+      },
+      "Doing": {
+        "Disarms": "Round the arm: roll Bolas vs. ST, and on a loss they drop what they carry",
+        "TripsRunning": "Round the legs while running: DX roll or fall for {damage}",
+        "TiesTheLegs": "Round the legs: both are tied together",
+        "Suffocates": "Round the neck: no breathing until free (see Suffocation)",
+        "CutByCutting": "A parry with a cutting weapon would have cut the cords",
+        "Contest": "A Quick Contest of ST every turn to keep it",
+        "ContestAt": "A Quick Contest of ST every turn, the victim at {modifier}",
+        "RollsToStand": "Round the foot: DX roll to stay standing, or fall for {damage}",
+        "LariatReady": "A missed lariat takes {turns} turns to gather up"
       }
+    },
+    "Molotov": {
+      "Title": "{name} throws a Molotov cocktail",
+      "Throw": "Throw a Molotov",
+      "Defense": "What the target did",
+      "DefenseOptions": {
+        "none": "Nothing",
+        "dodge": "Dodged",
+        "block": "Blocked"
+      },
+      "TargetDr": "DR where it struck",
+      "Malfunctioned": "Attack roll of 12 or more",
+      "Sealed": "Sealed armour",
+      "Landing": {
+        "target": "It bursts on the target",
+        "shield": "It bursts on the shield, which takes the damage instead",
+        "ground": "It bursts on the ground at their feet",
+        "unbroken": "The fuse fails, the bottle holds, or the fuel will not light"
+      },
+      "Initial": "{dice} burning at once",
+      "PerSecond": "then {dice} burning a second",
+      "Radius": "sets fire to a {yards}-yard radius",
+      "FifthDr": "DR protects at a fifth",
+      "BurnsFor": "burns for {dice} seconds",
+      "CheckBottles": "Fell with bottles",
+      "Bottles": "Bottles on the belt",
+      "BottlesTitle": "{name} falls with {bottles} bottles",
+      "Broken": "{broken} broke — and are burning",
+      "Intact": "None broke"
+    },
+    "Invention": {
+      "Button": "Invent",
+      "Title": "Inventing something",
+      "Stage": "Roll",
+      "Stages": {
+        "concept": "Concept (GM, secret)",
+        "prototype": "Prototype"
+      },
+      "Basis": "How hard it is",
+      "Bases": {
+        "price": "By its retail price",
+        "software": "A program, by its Complexity",
+        "grade": "Set by hand"
+      },
+      "Retail": "Retail price ($)",
+      "Complexity": "Program Complexity",
+      "GradeLabel": "Grade",
+      "Grade": {
+        "simple": "Simple",
+        "average": "Average",
+        "complex": "Complex",
+        "amazing": "Amazing"
+      },
+      "InventorTl": "Inventor's TL",
+      "InventionTl": "The invention's TL",
+      "Skill": "Invention skill level",
+      "WorkingModel": "Has a working model to copy (+5)",
+      "KnownToExist": "Knows it exists, without a model (+2)",
+      "Variant": "Variant on something existing (+0 to +5)",
+      "NewTechnology": "Basic technology new to the campaign (-5)",
+      "WellDescribed": "Clear or clever description (+0 to +2)",
+      "Assistants": "Assistants with skill 20+",
+      "PoorTools": "Short of the best tools (0 to 10)",
+      "People": "Skilled people working",
+      "ReusingFacilities": "Facilities left over from a like project",
+      "Computer": "Complexity of the computer it is for (0 if none)",
+      "ConceptTitle": "{name}: Concept roll",
+      "PrototypeTitle": "{name}: Prototype roll",
+      "TooHard": "Needs skill {required} to have any chance; {skill} is not enough",
+      "Against": "Skill {skill} {modifier} = {target}",
+      "Success": "Success",
+      "Failure": "Failure",
+      "Unit": {
+        "days": "days",
+        "months": "months"
+      },
+      "Line": {
+        "Facilities": "Facilities cost ${cost}",
+        "Time": "Takes {dice} {unit}, divided among {people} (at least {minimum} day)",
+        "Flawless": "No bugs at all",
+        "MajorBugs": "{count} major bugs",
+        "MinorBugs": "{count} minor bugs",
+        "Explodes": "An explosion or accident: {damage} damage to the inventor and each assistant, and the facilities are destroyed",
+        "FlawedTheory": "A flawed theory: it looks good, and will never work",
+        "WontRun": "It will not run on a Complexity {computer} computer"
+      }
+    },
+    "Drug": {
+      "Stimulant": "Stimulant",
+      "StimulantWearsOff": "Stimulant wears off",
+      "Depressant": "Depressant",
+      "Withdrawal": "Withdrawal",
+      "DosesToday": "Doses in the last 24 hours, this one included",
+      "Doses": "Doses taken together",
+      "AnyAlcohol": "Any alcohol as well",
+      "Which": "Drug",
+      "FpRestored": "FP the stimulant restored",
+      "Psychological": "Psychological dependency (Will, not HT)",
+      "DrugAvailable": "The drug is to hand",
+      "Kind": {
+        "sedative": "Sedative",
+        "painkiller": "Painkiller",
+        "heroin": "Heroin",
+        "stimulant": "Stimulant",
+        "hallucinogen": "Hallucinogen"
+      },
+      "StimulantTitle": "{name} takes a stimulant (dose {doses})",
+      "DepressantTitle": "{name} takes {drug} ({doses})",
+      "WithdrawalTitle": "{name}: a day of withdrawal",
+      "Resisted": "Resisted",
+      "Failed": "Failed",
+      "Line": {
+        "Restores": "Restores {fp} FP",
+        "Lasts": "Doesn't Sleep and Overconfidence (12) for {hours} hours",
+        "Crash": "Then loses {fp} FP, with Bad Temper (12) and Chronic Depression (9) for {hours} hours",
+        "HeartStops": "A critical failure on a second dose: a heart attack",
+        "Affected": "The drug takes effect",
+        "RiskedOverdose": "More than one dose: this roll was the overdose risk",
+        "Overdose": "Overdose: unconscious for {hours} hours",
+        "OverdosePoison": "And poisoned: {damage} toxic every {minutes} minutes for {cycles} cycles",
+        "GaveIn": "Gave in and took a dose — the attempt starts again",
+        "HurtByWithdrawal": "Loses {hp} HP, which will not heal until this is over",
+        "Quirk": "Gains a drug-related quirk, chosen by the GM",
+        "Progress": "{days} of {needed} days clear",
+        "Withdrawn": "The habit is beaten — buy off the Addiction",
+        "FinalWillKept": "The final Will roll succeeds: the quirks go too",
+        "FinalWillFailed": "The final Will roll fails: the quirks and disadvantages stay"
+      }
+    },
+    "Hearing": {
+      "Title": "Hear a shot",
+      "Hint": "Whether the targeted token (or this character) hears a shot, and can place it (Campaigns p. 411).",
+      "SilencerLabel": "Silencer",
+      "Silencer": {
+        "none": "None",
+        "typical": "Typical (-4)",
+        "best": "Best commercial (-6)"
+      },
+      "Loudness": "Gun and room, +4 loud to -4 quiet",
+      "UpClose": "In front of the gun and close enough to be shot",
+      "InPlainSight": "The shooter is in plain sight",
+      "Heard": "Hears the shot",
+      "NotHeard": "Does not hear it",
+      "HeardAndPlaced": "Hears it, and knows where it came from",
+      "HeardNotPlaced": "Hears it, but the silencer hides where from: an IQ roll to place it"
+    },
+    "Guided": {
+      "Arrives": "In the air — reaches the target in {seconds} seconds",
+      "ArrivesNow": "Reaches the target this turn",
+      "Falls": "Out of reach before it arrives — it crashes",
+      "SpeedNotDamage": "1/2D is its speed, not a damage threshold",
+      "IgnoresFirer": "Ignores the firer's injury, movement, posture and senses",
+      "NoDefense": "No active defense — dive for cover or retreat out of the area",
+      "ConeWidth": "The cone is {yards} yards wide here",
+      "MayStillCatch": "A miss may still catch the target in the area",
+      "MustSteer": "Concentrate each turn to steer it — lose sight of the target and it misses; Attack on the turn it arrives",
+      "DamageHoldsUp": "Damage does not fall off with distance"
     }
   }
 }

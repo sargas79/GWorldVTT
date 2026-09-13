@@ -6,7 +6,7 @@
  * how many of them are in the scene, and how they behave.
  */
 
-import { CharacterData } from "./character.js";
+import { CharacterData, detailsFields } from "./character.js";
 import { cannonFodderMayUse } from "../../rules/cinematic.js";
 import { isCannonFodder } from "../cinematic.js";
 
@@ -29,6 +29,20 @@ export class NpcData extends CharacterData {
   static override defineSchema() {
     return {
       ...super.defineSchema(),
+
+      /**
+       * What a creature is, in words, beside the statistics that say what it
+       * does. A character keeps its own story in `biography`; an NPC out of a
+       * bestiary has a description instead, and `notes` already carries its
+       * category and page ("Apes. Basic Set: Campaigns p. 456") for the GM.
+       * Kept apart from both so a description can be filled in -- by hand, or
+       * by a content module carrying the book's text -- without touching the
+       * line the statistics came with.
+       */
+      details: new fields.SchemaField({
+        ...detailsFields(),
+        description: new fields.HTMLField({ required: true, blank: true, initial: "" }),
+      }),
 
       /**
        * A swarm rather than a creature (Campaigns p. 461): "treat a group of

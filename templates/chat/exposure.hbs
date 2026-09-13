@@ -16,7 +16,12 @@
     </div>
   {{/if}}
 
-  {{#if lost}}
+  {{#if regained}}
+    <div class="gc-result success">
+      <strong>+{{regained}}</strong> FP
+      <span class="gc-mod">{{fp.previous}} &rarr; {{fp.now}} / {{fp.max}}</span>
+    </div>
+  {{else if lost}}
     <div class="gc-result {{#if heatStroke}}crit-failure{{else}}failure{{/if}}">
       {{#if heatStroke}}{{localize "GWORLD.Weather.HeatStroke"}} &mdash; {{/if}}
       <strong>-{{lost}}</strong> FP
