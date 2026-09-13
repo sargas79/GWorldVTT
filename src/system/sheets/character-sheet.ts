@@ -42,6 +42,7 @@ import {
 import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
 import { useTechnique, type Victim } from "../unarmed-techniques.js";
 import { rollInvention, type InventionPlan } from "../invention.js";
+import { describePowers, unpoweredAbilities } from "../psionics.js";
 import { stimulantWearsOff, takeDepressant, takeStimulant, withdrawalRoll } from "../drugs.js";
 import type { DrugKind } from "../../rules/intoxication.js";
 import type { InventionGrade } from "../../rules/invention.js";
@@ -2839,13 +2840,23 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       })),
       // The psi powers, ready to read: the book's name for each, what its
       // Talent is worth, and whether this is a latent (pp. 254-255).
-      psionics: (system.derived?.psionics ?? []).map(
-        (held: { power: string; abilities: string[]; talent: number; latent: boolean }) => ({
-          ...held,
-          label: game.i18n.localize(`GWORLD.Psi.Power.${held.power}`),
-          signed: held.talent > 0 ? `+${held.talent}` : String(held.talent),
-        }),
-      ),
+      psionics: describePowers(system.derived?.psionics ?? []).map((held) => ({
+        ...held,
+        label: game.i18n.localize(`GWORLD.Psi.Power.${held.power}`),
+        signed: held.talent > 0 ? `+${held.talent}` : String(held.talent),
+        couldManifestText: held.couldManifest.join(", "),
+      })),
+      // A psi ability's name with no power modifier on it: not psionic, and
+      // almost never what the player meant (Characters p. 254).
+      unpoweredPsi: unpoweredAbilities(
+        this.actor.items
+          .filter((item: any) => item.type === "trait")
+          .map((item: any) => ({
+            name: String(item.name ?? ""),
+            levels: Number(item.system?.levels ?? 0),
+            modifiers: ((item.system?.modifiers ?? []) as Array<{ name?: string }>).map((m) => String(m.name ?? "")),
+          })),
+      ).map((u) => ({ ...u, powerLabel: game.i18n.localize(`GWORLD.Psi.Power.${u.power}`) })),
       // Caught in something, and how far through getting out they are.
       entangled: {
         caught: this.actor.statuses?.has?.("entangled") === true,

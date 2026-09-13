@@ -158,6 +158,15 @@
     </div>
   </div>
 
+  {{#if unpoweredPsi.length}}
+    {{!-- A psi ability bought without its power modifier is not psionic (p. 254). --}}
+    <div class="isec">
+      {{#each unpoweredPsi as |u|}}
+        <p class="ihint warn">{{localize "GWORLD.Psi.Unpowered" trait=u.trait power=u.powerLabel}}</p>
+      {{/each}}
+    </div>
+  {{/if}}
+
   {{#if psionics.length}}
     {{!-- The psi powers this character holds, and what each Talent is worth to
          a roll using it (Characters pp. 254-255). --}}
@@ -172,6 +181,15 @@
               <span class="tag" data-tooltip="{{localize 'GWORLD.Psi.TalentHint'}}">
                 {{localize "GWORLD.Psi.Talent" bonus=power.signed}}
               </span>
+              {{#if power.talentNeedsPermission}}
+                <span class="tag warn" data-tooltip="{{localize 'GWORLD.Psi.OverCapHint'}}">
+                  {{localize "GWORLD.Psi.OverCap"}}
+                </span>
+              {{/if}}
+            {{else if power.talentName}}
+              <span class="tag" data-tooltip="{{localize 'GWORLD.Psi.TalentHint'}}">
+                {{localize "GWORLD.Psi.HelpedBy" talent=power.talentName}}
+              </span>
             {{/if}}
             {{#if power.latent}}
               <span class="tag" data-tooltip="{{localize 'GWORLD.Psi.LatentHint'}}">
@@ -184,6 +202,9 @@
               {{#each power.abilities as |name|}}{{name}}{{#unless @last}}, {{/unless}}{{/each}}
             {{else}}
               {{localize "GWORLD.Psi.NoAbilities"}}
+              {{#if power.couldManifestText}}
+                <span class="ihint">{{localize "GWORLD.Psi.CouldManifest" abilities=power.couldManifestText}}</span>
+              {{/if}}
             {{/if}}
           </span>
         </div>

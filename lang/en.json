@@ -3148,7 +3148,12 @@
         "psychokinesis": "Psychokinesis",
         "telepathy": "Telepathy",
         "teleportation": "Teleportation"
-      }
+      },
+      "OverCap": "Past level 4",
+      "OverCapHint": "More than four levels of a Talent needs the GM’s permission (Characters p. 255).",
+      "HelpedBy": "Helped by {talent}",
+      "CouldManifest": "Could manifest as: {abilities}",
+      "Unpowered": "{trait} is a {power} ability, but has no power modifier — so it is not psionic. Add the modifier if it is meant to be."
     },
     "Entangled": {
       "Escape": "Get loose",
