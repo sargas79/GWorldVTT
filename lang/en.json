@@ -1649,7 +1649,8 @@
         "Piercing": "Piercing, {damage} damage; Hurting Yourself applies against DR {dr}+",
         "Choking": "Loses {fp} FP a turn; keeping it is +{bonus} in the Contest",
         "ChokedFights": "The victim can still strike back, at {penalty}"
-      }
+      },
+      "Victim": "The victim"
     },
     "Armor": {
       "DR": "Damage Resistance",
@@ -3211,11 +3212,11 @@
         "ground": "It bursts on the ground at their feet",
         "unbroken": "The fuse fails, the bottle holds, or the fuel will not light"
       },
-      "Initial": "{dice}d burning at once",
-      "PerSecond": "then {dice}d{adds} burning a second",
+      "Initial": "{dice} burning at once",
+      "PerSecond": "then {dice} burning a second",
       "Radius": "sets fire to a {yards}-yard radius",
       "FifthDr": "DR protects at a fifth",
-      "BurnsFor": "burns for {dice}d seconds",
+      "BurnsFor": "burns for {dice} seconds",
       "CheckBottles": "Fell with bottles",
       "Bottles": "Bottles on the belt",
       "BottlesTitle": "{name} falls with {bottles} bottles",

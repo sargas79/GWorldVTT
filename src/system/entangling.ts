@@ -15,6 +15,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { setCondition } from "./conditions.js";
 import { resolveSuccess } from "../rules/success.js";
+import { formatDiceAdds } from "../rules/dice.js";
 import { attributeOf } from "./attributes.js";
 import {
   BOLAS_ESCAPE_ROLLS,
@@ -190,7 +191,7 @@ export function entanglementEffect(options: {
     if (hit === "trips") {
       notes.push({
         key: bolasTrips(options.running) ? "TripsRunning" : "TiesTheLegs",
-        data: { damage: `${BOLAS_FALL_DAMAGE.dice}d${BOLAS_FALL_DAMAGE.adds}` },
+        data: { damage: formatDiceAdds(BOLAS_FALL_DAMAGE) },
       });
     }
     // "If you hit the neck, the bolas cuts off the target's breathing (see
@@ -213,7 +214,7 @@ export function entanglementEffect(options: {
     if (hold.rollsToStand) {
       notes.push({
         key: "RollsToStand",
-        data: { damage: hold.fallDamage ? `${hold.fallDamage.dice}d${hold.fallDamage.adds}` : "" },
+        data: { damage: hold.fallDamage ? formatDiceAdds(hold.fallDamage) : "" },
       });
     }
     notes.push({ key: "LariatReady", data: { turns: lariatReadyTurns(LARIAT_LENGTH_YARDS) } });
@@ -256,10 +257,13 @@ export async function throwMolotov(options: {
     content: await foundry.applications.handlebars.renderTemplate(MOLOTOV_TEMPLATE, {
       name: String(actor.name ?? ""),
       landing,
-      effect,
+      // Formatted here, so a figure with no adds reads "1d" and not "1d0".
+      initial: effect.initial ? formatDiceAdds(effect.initial) : "",
+      perSecond: formatDiceAdds(effect.perSecond),
+      radiusYards: effect.radiusYards,
       // "Most DR protects at only 1/5 value; sealed armor protects completely."
       fifthDr: effect.drFraction < 1,
-      burnsFor: MOLOTOV_BURNS_FOR,
+      burnsFor: formatDiceAdds(MOLOTOV_BURNS_FOR),
     }),
   });
 }

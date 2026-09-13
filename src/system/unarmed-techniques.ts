@@ -132,7 +132,8 @@ export async function useTechnique(options: {
       label: L(`Name.${technique}`),
       first: { actor, base: attack, note: technique === "neckSnap" ? "ST-4" : "" },
       second: {
-        actor: null,
+        // The victim may be nobody on the map, but the card still names who won.
+        actor: { name: L("Victim") },
         base: lockResistance({ strength: victim.st, health: victim.ht }),
         note: L("Resists"),
       },

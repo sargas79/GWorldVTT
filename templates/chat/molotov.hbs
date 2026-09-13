@@ -8,17 +8,17 @@
   </div>
   {{#unless (eq landing "unbroken")}}
     <div class="gc-mods">
-      {{#if effect.initial}}
-        <span class="gc-mod">{{localize "GWORLD.Molotov.Initial" dice=effect.initial.dice}}</span>
+      {{#if initial}}
+        <span class="gc-mod">{{localize "GWORLD.Molotov.Initial" dice=initial}}</span>
       {{/if}}
-      <span class="gc-mod">{{localize "GWORLD.Molotov.PerSecond" dice=effect.perSecond.dice adds=effect.perSecond.adds}}</span>
-      {{#if effect.radiusYards}}
-        <span class="gc-mod">{{localize "GWORLD.Molotov.Radius" yards=effect.radiusYards}}</span>
+      <span class="gc-mod">{{localize "GWORLD.Molotov.PerSecond" dice=perSecond}}</span>
+      {{#if radiusYards}}
+        <span class="gc-mod">{{localize "GWORLD.Molotov.Radius" yards=radiusYards}}</span>
       {{/if}}
       {{#if fifthDr}}
         <span class="gc-mod">{{localize "GWORLD.Molotov.FifthDr"}}</span>
       {{/if}}
-      <span class="gc-mod">{{localize "GWORLD.Molotov.BurnsFor" dice=burnsFor.dice}}</span>
+      <span class="gc-mod">{{localize "GWORLD.Molotov.BurnsFor" dice=burnsFor}}</span>
     </div>
   {{/unless}}
 </div>
