@@ -35,7 +35,8 @@ import { payCostOfLiving, rollAging, studySkill, workAMonth } from "../life.js";
 import { trample } from "../trampling.js";
 import { fightOffSwarm } from "../swarms.js";
 import {
-  accelerate, breatheBadAir, burn, catchFire, controlVehicle, crushingPressure, decompress, hike,
+  accelerate, breatheBadAir, buildingCollapse, burn, catchFire, controlVehicle, crushingPressure,
+  decompress, hike,
   irradiate, jumpOutOfVehicle, motionSickness, shock, shootAtVehicle, sleepFor, splashAcid,
 } from "../hazards.js";
 import { tryToEscape, type Entanglement } from "../entangling.js";
@@ -1321,6 +1322,26 @@ async function promptForEscape(current: Entanglement): Promise<{
   );
 }
 
+/** How much is overhead, and what the walls are made of (Campaigns p. 484). */
+async function promptForCollapse(): Promise<{
+  storiesOverhead: number;
+  wallDr: number;
+  diving: boolean;
+} | null> {
+  return hazardPrompt(
+    HZ("Collapse"),
+    hazardField("stories", HZ("StoriesOverhead"), 1, 'min="0"') +
+      hazardField("wallDr", HZ("WallDr"), 2, 'min="0"') +
+      hazardCheck("diving", HZ("DiveForCover")) +
+      `<p class="ihint" style="margin:0">${HZ("CollapseHint")}</p>`,
+    (form) => ({
+      storiesOverhead: num(form, "stories"),
+      wallDr: num(form, "wallDr"),
+      diving: ticked(form, "diving"),
+    }),
+  );
+}
+
 /** How the acid was met, and where it landed (Campaigns p. 428). */
 async function promptForAcid(): Promise<{ contact: AcidContact; landing: AcidLanding } | null> {
   const contacts: Array<[string, string]> = (["splashed", "immersed", "swallowed"] as const)
@@ -2448,6 +2469,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       operate: GWorldCharacterSheet.#onOperate,
       resuscitate: GWorldCharacterSheet.#onResuscitate,
       tryToEscape: GWorldCharacterSheet.#onEscapeEntanglement,
+      buildingCollapse: GWorldCharacterSheet.#onCollapse,
       splashAcid: GWorldCharacterSheet.#onAcid,
       breatheBadAir: GWorldCharacterSheet.#onBadAir,
       crushingPressure: GWorldCharacterSheet.#onPressure,
@@ -4808,6 +4830,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     );
     if (!asked) return;
     await tryToEscape({ actor: this.actor, ...asked });
+  }
+
+  /** A building coming down on them (Campaigns p. 484). */
+  static async #onCollapse(this: GWorldCharacterSheet) {
+    if (!isRuleOn("exposure")) return;
+    const asked = await promptForCollapse();
+    if (!asked) return;
+    await buildingCollapse({ actor: this.actor, ...asked });
   }
 
   /** A splash, a bath or a mouthful of acid (Campaigns p. 428). */

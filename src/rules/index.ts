@@ -39,6 +39,7 @@ export * from "./dirty-tricks.js";
 export * from "./encumbrance.js";
 export * from "./extra-effort.js";
 export * from "./success.js";
+export * from "./structures.js";
 export * from "./subduing.js";
 export * from "./suffocation.js";
 export * from "./defenses.js";
