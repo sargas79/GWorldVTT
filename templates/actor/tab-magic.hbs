@@ -46,6 +46,68 @@
         </div>
       {{/if}}
     </div>
+
+    {{!-- Rituals written down (pp. 33-35, 39): what each costs, and the Path
+         every roll for it is against. --}}
+    <div class="isec" style="gap: 0">
+      <div class="grph">
+        {{localize "GWORLD.Ritual.Title"}}
+        <span class="sub">{{localize "GWORLD.Ritual.Hint"}}</span>
+      </div>
+      <table class="gt">
+        <thead>
+          <tr>
+            <th>{{localize "GWORLD.Ritual.Title"}}</th>
+            <th>{{localize "GWORLD.Ritual.Effects"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Energy"}}</th>
+            <th>{{localize "GWORLD.Column.Skill"}}</th>
+            <th class="n">{{localize "GWORLD.Column.Level"}}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each magic.rituals as |r|}}
+            <tr data-item-id="{{r.id}}">
+              <td>
+                <span class="wname" data-action="editItem">{{r.name}}</span>
+                {{#if r.durationConflict}}
+                  <span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.Ritual.DurationConflictHint'}}">{{localize "GWORLD.Ritual.DurationConflict"}}</span>
+                {{/if}}
+              </td>
+              <td class="wmode">{{r.effects}}</td>
+              <td class="n">{{r.energy}}</td>
+              <td class="wmode">
+                {{r.skill}}
+                {{#if r.penalty}}<span class="tag" data-tooltip="{{localize 'GWORLD.Ritual.PathPenaltyHint'}}">{{signed r.penalty}}</span>{{/if}}
+              </td>
+              <td class="n">
+                {{#if r.castable}}
+                  <span class="lvl">{{r.level}}</span>
+                {{else if r.skill}}
+                  <span class="tag tag-danger">{{localize "GWORLD.Ritual.Uncastable"}}</span>
+                {{else}}&mdash;{{/if}}
+              </td>
+              <td class="c">
+                {{#if @root.editable}}
+                  <button type="button" class="rollable iconbtn" data-action="deleteItem" title="{{localize 'GWORLD.Action.Delete'}}">
+                    {{> "gworld.trash"}}
+                  </button>
+                {{/if}}
+              </td>
+            </tr>
+          {{else}}
+            <tr><td colspan="6" class="ihint">{{localize "GWORLD.Ritual.NoneYet"}}</td></tr>
+          {{/each}}
+        </tbody>
+      </table>
+      {{#if editable}}
+        <div class="toolbar">
+          <button type="button" class="ibtn" data-action="createItem" data-item-type="ritual">
+            {{> "gworld.plus"}} {{localize "GWORLD.Ritual.Add"}}
+          </button>
+        </div>
+      {{/if}}
+    </div>
   {{/if}}
 
   {{!-- What the character's magic rests on: the Magery the traits give, and

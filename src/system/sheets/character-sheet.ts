@@ -3498,6 +3498,24 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       })),
       styleHint: L(style === "ritual" ? "RitualHint" : "StandardHint"),
       groups: rows,
+      // Rituals of Ritual Path Magic, by name: their cost as written down, and
+      // the Path the character rolls for each (Monster Hunters 1 pp. 33-35).
+      rituals: (this.actor.items.filter((i: any) => i.type === "ritual") as any[])
+        .sort((a, b) => String(a.name).localeCompare(String(b.name)))
+        .map((item) => {
+          const d = item.system?.derived ?? {};
+          return {
+            id: item.id,
+            name: item.name,
+            effects: d.effects || "—",
+            energy: d.cost?.total ?? 0,
+            durationConflict: Boolean(d.cost?.durationConflict),
+            skill: d.skill?.name ?? "",
+            penalty: Number(d.skill?.penalty ?? 0),
+            level: d.skill?.level ?? null,
+            castable: d.skill?.level !== null && d.skill?.level !== undefined,
+          };
+        }),
       count: groups.reduce((n, g) => n + g.rows.filter((r) => r.known).length, 0),
       // Where the casting happens, and what is already running (pp. 235, 238).
       mana: describeMana(),

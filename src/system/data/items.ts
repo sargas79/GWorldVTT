@@ -24,6 +24,17 @@ import {
 } from "../../rules/weapon-quality.js";
 import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from "../gear-groups.js";
 import { templateCost } from "../../rules/templates.js";
+import { PATHS } from "../../rules/ritual-path.js";
+import {
+  RITUAL_DURATIONS,
+  RITUAL_EFFECTS,
+  describeEffects,
+  modifiersOfRitual,
+  ritualCost,
+  type RitualCost,
+  type RitualEffectEntry,
+  type RitualRecord,
+} from "../../rules/ritual-cost.js";
 import type {
   ChoiceGroup,
   Template,
@@ -1653,5 +1664,103 @@ export class SpellData extends foundry.abstract.TypeDataModel {
   /** The college the spell is filed under. */
   get college(): string {
     return this.colleges[0] ?? "";
+  }
+}
+
+/**
+ * A ritual of Ritual Path Magic, defined once and cast from the sheet
+ * (Monster Hunters 1 pp. 33-35, 39).
+ *
+ * The fields are split the way p. 39 splits a definition. `definition` is
+ * what makes it this ritual -- change it and Ritual Mastery or a grimoire no
+ * longer applies. `casting` holds the figures that "can be varied freely":
+ * how far, how long, how much damage.
+ */
+export class RitualData extends foundry.abstract.TypeDataModel {
+  declare effects: RitualEffectEntry[];
+  declare definition: RitualRecord["definition"] & { affliction: string; traits: string; bonusRolls: string; damageType: string };
+  declare casting: RitualRecord["casting"];
+  declare derived: { cost: RitualCost; effects: string };
+
+  static override defineSchema() {
+    const count = (options: { min?: number; integer?: boolean } = {}) =>
+      new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0, integer: true, ...options });
+    return {
+      ...descriptionFields(),
+      /** "Multiple effects, whether from the same or different paths, can be combined" (p. 33). */
+      effects: new fields.ArrayField(
+        new fields.SchemaField({
+          path: new fields.StringField({ required: true, blank: false, initial: "Magic", choices: [...PATHS] }),
+          effect: new fields.StringField({
+            required: true, blank: false, initial: "sense", choices: Object.keys(RITUAL_EFFECTS),
+          }),
+          greater: new fields.BooleanField({ initial: false }),
+        }),
+        { required: true, initial: [] },
+      ),
+      definition: new fields.SchemaField({
+        /** The affliction, in words, and its worth as an enhancement: "Nauseated", 30. */
+        affliction: new fields.StringField({ required: true, blank: true, initial: "" }),
+        afflictionPercent: count({ integer: false }),
+        /** The traits it gives or takes; their levels may vary. */
+        traits: new fields.StringField({ required: true, blank: true, initial: "" }),
+        area: new fields.BooleanField({ initial: false }),
+        healing: new fields.BooleanField({ initial: false }),
+        metaMagic: new fields.BooleanField({ initial: false }),
+        speed: new fields.BooleanField({ initial: false }),
+        /** Blank for a ritual that bestows no bonus or penalty. */
+        bonusScope: new fields.StringField({
+          required: true, blank: true, initial: "", choices: ["", "broad", "moderate", "single"],
+        }),
+        bonusRolls: new fields.StringField({ required: true, blank: true, initial: "" }),
+        damage: new fields.BooleanField({ initial: false }),
+        damageType: new fields.StringField({
+          required: true, blank: true, initial: "",
+          choices: ["", "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
+        }),
+        damageKind: new fields.StringField({
+          required: true, blank: false, initial: "standard", choices: ["standard", "small", "large", "heavy"],
+        }),
+        damageDelivery: new fields.StringField({
+          required: true, blank: false, initial: "malediction", choices: ["malediction", "external", "externalExplosive"],
+        }),
+      }),
+      casting: new fields.SchemaField({
+        areaRadius: count({ integer: false }),
+        excludedSubjects: count(),
+        traitsAdded: count(),
+        traitsRemoved: count(),
+        /** Negative for a penalty. */
+        bonusAmount: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+        damageDice: new fields.StringField({ required: true, blank: true, initial: "" }),
+        healingDice: new fields.StringField({ required: true, blank: true, initial: "" }),
+        /** The cost of the spell being dispelled or altered. */
+        metaMagic: count(),
+        speedYards: count({ integer: false }),
+        /** A line of the Ritual Effect Table's durations, from momentary. */
+        durationStep: count({ max: RITUAL_DURATIONS.length - 1 } as any),
+        extraMonths: count(),
+        years: count(),
+        extraEnergy: count(),
+        rangeYards: count({ integer: false }),
+        rangeKind: new fields.StringField({
+          required: true, blank: false, initial: "yards", choices: ["yards", "information", "crossTime"],
+        }),
+        dimensions: count(),
+        subjectWeight: count({ integer: false }),
+        /** The GM's discount for traditional trappings, up to 25%. */
+        trappingsPercent: new fields.NumberField({
+          required: true, nullable: false, integer: true, initial: 0, min: 0, max: 25,
+        }),
+      }),
+    };
+  }
+
+  override prepareDerivedData(): void {
+    super.prepareDerivedData();
+    this.derived = {
+      cost: ritualCost({ effects: this.effects, modifiers: modifiersOfRitual(this) }),
+      effects: describeEffects(this.effects),
+    };
   }
 }

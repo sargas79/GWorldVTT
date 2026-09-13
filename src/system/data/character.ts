@@ -33,6 +33,7 @@ import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
 import {
   PATHS, isRitualAdept, manaReserveMax, pathCeiling, pathLevel, pathOfSkill, pathSkillName,
 } from "../../rules/ritual-path.js";
+import { governingPath } from "../../rules/ritual-cost.js";
 import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
@@ -1520,6 +1521,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         return { path, name, owned: Boolean(owned), ...level };
       }),
     };
+    // Every roll for a ritual is against one Path: the lowest it uses, at -1
+    // for each past the second (p. 35).
+    const pathLevels = Object.fromEntries(ritualPath.paths.map((p) => [p.path, p.level]));
+    for (const item of this.itemsOfType("ritual")) {
+      const sys = item.system as any;
+      const skill = governingPath(sys.effects ?? [], ritualPathInPlay ? pathLevels : {});
+      sys.derived = { ...sys.derived, skill: { ...skill, name: skill.path ? pathSkillName(skill.path) : "" } };
+    }
 
     // ── techniques ──────────────────────────────────────────────────────
     for (const item of this.itemsOfType("technique")) {

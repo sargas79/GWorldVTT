@@ -28,6 +28,7 @@ import {
   ShieldData,
   SkillData,
   ModifierData,
+  RitualData,
   SpellData,
   TechniqueData,
   TemplateData,
@@ -61,6 +62,7 @@ Hooks.once("init", () => {
   CONFIG.Item.dataModels.language = LanguageData;
   CONFIG.Item.dataModels.template = TemplateData;
   CONFIG.Item.dataModels.spell = SpellData;
+  CONFIG.Item.dataModels.ritual = RitualData;
   CONFIG.Item.dataModels.modifier = ModifierData;
 
   // Initiative is Basic Speed, fixed for the whole fight (GURPS Lite p. 25):
@@ -134,7 +136,7 @@ Hooks.once("init", () => {
   DocumentSheetConfig.registerSheet(Item, SYSTEM_ID, GWorldItemSheet, {
     types: [
       "trait", "skill", "technique", "equipment", "armor", "shield", "language", "template", "spell",
-      "modifier",
+      "modifier", "ritual",
     ],
     makeDefault: true,
     label: "GWORLD.Sheet.Item",

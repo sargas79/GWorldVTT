@@ -43,6 +43,7 @@ const TYPE_ICONS = {
   language: "icons/svg/sound.svg",
   template: "icons/svg/levels.svg",
   spell: "icons/svg/aura.svg",
+  ritual: "icons/svg/circle.svg",
   modifier: "icons/svg/lever.svg",
 };
 

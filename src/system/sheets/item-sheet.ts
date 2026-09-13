@@ -15,6 +15,8 @@ import { isLegalityClass, licenseCost } from "../../rules/legality.js";
 import { objectState, rollsToKeepWorking } from "../../rules/objects.js";
 import { parseCostTable, parseLevelNames } from "../../rules/traits.js";
 import { SPELL_CLASSES } from "../../rules/magic.js";
+import { RITUAL_DURATIONS, RITUAL_EFFECTS } from "../../rules/ritual-cost.js";
+import { PATHS } from "../../rules/ritual-path.js";
 import { SYSTEM_ID } from "../constants.js";
 import { sourceCollections } from "../compendium-sources.js";
 import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
@@ -231,7 +233,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // One flag per type, so the template can branch without a comparison helper.
     for (const t of [
       "skill", "technique", "trait", "equipment", "armor", "shield", "language", "template", "spell",
-      "modifier",
+      "modifier", "ritual",
     ]) {
       context[`is${t.charAt(0).toUpperCase()}${t.slice(1)}`] = item.type === t;
     }
@@ -278,6 +280,30 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     if (item.type === "spell") {
       context.collegesText = (item.system.colleges ?? []).join(", ");
       context.isAttackSpell = (item.system.classes ?? []).some((c: string) => c === "missile" || c === "melee");
+    }
+
+    // A ritual shows what its definition costs as it is built (Monster
+    // Hunters 1 pp. 33-35), and, on a character, the Path every roll for it
+    // will be against (p. 35).
+    if (item.type === "ritual") {
+      const derived = (item.system as any).derived ?? {};
+      const skill = derived.skill ?? null;
+      context.ritual = {
+        cost: derived.cost,
+        effects: derived.effects,
+        trappings: Number((item.system as any).casting?.trappingsPercent) > 0,
+        lastDuration: Number((item.system as any).casting?.durationStep) === RITUAL_DURATIONS.length - 1,
+        // The select's values are strings, as every select's are.
+        durationStep: String((item.system as any).casting?.durationStep ?? 0),
+        skill: skill?.path
+          ? {
+              name: skill.name,
+              level: skill.level,
+              penalty: skill.penalty,
+              uncastable: skill.level === null && isRuleOn("ritualPathMagic"),
+            }
+          : null,
+      };
     }
 
     // A trait's cost table and level names are arrays, which a form cannot
@@ -371,6 +397,19 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         "": "GWORLD.Spell.SpecialDamage",
         ...keyed("DamageType", ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"]),
       },
+      // A Path is named the same in every locale's rules text, so it is its own label.
+      ritualPaths: Object.fromEntries(PATHS.map((path) => [path, path])),
+      ritualEffects: keyed("Ritual.Effect", Object.keys(RITUAL_EFFECTS)),
+      // The modifiers whose use makes a ritual what it is, though not their size (p. 39).
+      ritualUses: ["area", "healing", "metaMagic", "speed", "damage"],
+      ritualDurations: Object.fromEntries(RITUAL_DURATIONS.map((d, i) => [String(i), `GWORLD.Ritual.Duration.${d}`])),
+      ritualBonusScopes: {
+        "": "GWORLD.Ritual.BonusScope.none",
+        ...keyed("Ritual.BonusScope", ["broad", "moderate", "single"]),
+      },
+      ritualDamageKinds: keyed("Ritual.DamageKind", ["standard", "small", "large", "heavy"]),
+      ritualDeliveries: keyed("Ritual.Delivery", ["malediction", "external", "externalExplosive"]),
+      ritualRangeKinds: keyed("Ritual.RangeKind", ["yards", "information", "crossTime"]),
       equipmentCategories: keyed("GearCategory", [...EQUIPMENT_CATEGORIES]),
       // The mark after a firearm's ST: none, a rest, a bipod, a mount (p. 270).
       mounts: {
