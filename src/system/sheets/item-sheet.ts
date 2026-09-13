@@ -347,6 +347,12 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         "": "GWORLD.Mount.none",
         ...keyed("Mount", ["rest", "bipod", "mounted"]),
       },
+      // How a projectile steers, or nothing at all (Campaigns p. 412).
+      guidance: {
+        "": "GWORLD.Item.GuidanceNone",
+        guided: "GWORLD.Item.GuidanceGuided",
+        homing: "GWORLD.Item.GuidanceHoming",
+      },
       equipmentQualities: keyed("EquipmentQuality", [...EQUIPMENT_QUALITIES]),
       ammunition: {
         "": "GWORLD.Ammunition.none",
