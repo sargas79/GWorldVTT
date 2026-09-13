@@ -38,6 +38,7 @@ import { grimoireBonus, masteredRitual, ritualMasteryBonus } from "../../rules/r
 import { conditionalLimit } from "../../rules/ritual-lasting.js";
 import { SCENT_MASKING_PENALTY, holdoutBonus, signatureGearPointCost } from "../../rules/gadgets.js";
 import { improvisedPenalty, weaponImprovementEffects, type ImprovedWeapon } from "../../rules/weapon-improvements.js";
+import { isShotgun, specialAmmunitionEffect, type PayloadOption, type PowderOption } from "../../rules/special-ammunition.js";
 
 /** A ritual still in effect, or hanging until its condition is met (Monster Hunters 1 pp. 37-39). */
 export interface RitualInEffect {
@@ -228,6 +229,12 @@ export function detailsFields() {
 
 /** A resolved attack mode, ready for the Combat tab to render. */
 export interface DerivedAttack {
+  /** Special ammunition's follow-up attack (Monster Hunters 1 p. 63). */
+  followUp?: { damage: string; damageType: DamageType; explosive: boolean } | null;
+  /** Special ammunition's effects that need the GM, as tags for the card. */
+  ammoNotes?: Array<{ label: string; hint: string }>;
+  /** Seconds before the gun can fire again: Dragon's Breath's three. */
+  refireSeconds?: number;
   itemId: string;
   modeIndex: number;
   name: string;
@@ -2045,9 +2052,25 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // A Malediction has no range statistics of its own: its penalty comes
         // from how far away the victim is, and DR does nothing to it (p. 106).
         const malediction = Math.max(0, Math.min(3, Number(mode.malediction ?? 0) || 0));
+        // Special ammunition (Monster Hunters 1 p. 63), which takes the place
+        // of the Basic Set's kinds of round where a load is chosen.
+        const special = mhGear && firearm && (mode.powder || mode.payload)
+          ? specialAmmunitionEffect(
+              { powder: String(mode.powder ?? "") as PowderOption, payload: String(mode.payload ?? "") as PayloadOption },
+              {
+                damage: rangedDamage,
+                damageType: mode.damageType,
+                armorDivisor: materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
+                accuracy: Number(mode.accuracy ?? 0) || 0,
+                st: mode.minSt ?? null,
+                shotgun: isShotgun({ skill: String(mode.skill ?? ""), name: String(item.name ?? ""), projectiles: Number(mode.projectiles ?? 1) || 1 }),
+                projectiles: Number(mode.projectiles ?? 1) || 1,
+              },
+            )
+          : null;
         // What it is loaded with changes the wound, the divisor, the range
         // and, for APDS, the damage (Characters pp. 276, 279).
-        const round = isRuleOn("ammunitionTypes")
+        const round = !special && isRuleOn("ammunitionTypes")
           ? ammunitionEffect((mode.ammunition ?? "") as AmmunitionType, {
               damageType: mode.damageType,
               armorDivisor: materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
@@ -2061,14 +2084,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           const parsed = parseDiceAdds(damage);
           return parsed ? formatDiceAdds(addModifier(parsed, round.perDieBonus * parsed.dice)) : damage;
         };
-        const stretch = (effects ? effects.rangeMultiplier : qualityRangeMultiplier(weaponClass, quality)) * (round?.rangeMultiplier ?? 1);
+        const stretch = (effects ? effects.rangeMultiplier : qualityRangeMultiplier(weaponClass, quality)) * (round?.rangeMultiplier ?? 1) * (special?.rangeMultiplier ?? 1);
         const baseRange = mode.rangeIsStMultiple
           ? musclePoweredRange((mode.weaponSt ?? attrs.ST) + (effects?.st ?? 0), mode.halfDamageRange, mode.maxRange)
           : { halfDamage: mode.halfDamageRange, max: mode.maxRange };
-        const range = {
-          halfDamage: Math.round((Number(baseRange.halfDamage) || 0) * stretch),
-          max: Math.round((Number(baseRange.max) || 0) * stretch),
-        };
+        const range = special?.fixedRange
+          ? { halfDamage: 0, max: special.fixedRange }
+          : {
+              halfDamage: Math.round((Number(baseRange.halfDamage) || 0) * stretch),
+              max: Math.round((Number(baseRange.max) || 0) * stretch),
+            };
         // The count of shots (Campaigns p. 373): what the column holds, and
         // what is in the weapon now. A thrown weapon keeps no count.
         const shotsEntry = parseShots(String(mode.shots ?? ""));
@@ -2089,42 +2114,53 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           natural: false,
           unready: false,
           readiesAfterAttack: false,
-          projectiles: Math.max(1, Number(mode.projectiles ?? 1)),
+          projectiles: special?.projectiles ?? Math.max(1, Number(mode.projectiles ?? 1)),
           halfDamageRange: Number(range.halfDamage ?? 0) || 0,
           maxRange: Number(range.max ?? 0) || 0,
           guidance: String(mode.guidance ?? ""),
           areaAttack: Boolean(mode.areaAttack),
           coneMaxWidth: Number(mode.coneMaxWidth ?? 0) || 0,
-          damage: loadedDamage(rangedDamage),
-          damageType: mode.damageSpecial ? "" : (round?.damageType ?? mode.damageType),
-          armorDivisor: round?.armorDivisor ?? materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
+          damage: special ? (special.noDamage ? "—" : special.damage) : loadedDamage(rangedDamage),
+          damageType: mode.damageSpecial ? "" : (special?.damageType ?? round?.damageType ?? mode.damageType),
+          armorDivisor: special?.armorDivisor ?? round?.armorDivisor ?? materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
+          ...(special
+            ? {
+                followUp: special.followUp,
+                ammoNotes: special.notes.map((key) => ({
+                  label: game.i18n?.localize?.(`GWORLD.SpecialAmmo.Note.${key}`) ?? key,
+                  hint: game.i18n?.localize?.(`GWORLD.SpecialAmmo.NoteHint.${key}`) ?? "",
+                })),
+                refireSeconds: special.refireSeconds,
+              }
+            : {}),
           shotsLoaded,
           shotsCapacity,
           reloadSeconds: shotsCapacity > 0 ? reloadTime(shotsEntry, shotsCapacity) : null,
           reloadable: shotsCapacity > 0 && shotsLoaded < shotsCapacity,
           empty: shotsCapacity > 0 && shotsLoaded === 0,
           ammunition: (mode.ammunition ?? "") as AmmunitionType,
-          damageRollable: !mode.affliction && !mode.damageSpecial && parseDiceAdds(rangedDamage) !== null,
+          damageRollable: !mode.affliction && !mode.damageSpecial && !special?.noDamage && parseDiceAdds(rangedDamage) !== null,
           reach: "",
           parry: null,
           parryModifier: 0,
-          minSt: mode.minSt ?? null,
+          minSt: special?.st ?? mode.minSt ?? null,
           weight,
           quality,
-          material,
+          // Silver rounds wound what silver wounds (p. 63, Characters p. 161).
+          material: special?.material || material,
           resistsBreakage: resists,
           minStPenalty: lacking(mode.minSt ?? null, String(mode.mount ?? "")),
           condition,
           twoHanded: Boolean(mode.twoHanded),
           swung: mode.damageBase === "sw",
           // "+1 to Acc" for a fine firearm, "-1 Acc" for a cheap thrown weapon.
-          accuracy: (mode.accuracy ?? 0) + (effects ? effects.accuracy : qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown))),
+          accuracy: (mode.accuracy ?? 0) + (effects ? effects.accuracy : qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown))) + (special?.accuracy ?? 0),
           scopeBonus: mode.scopeBonus ?? 0,
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
           malediction,
           ignoresDr: malediction > 0,
-          holy: Boolean((sys as any).holy),
-          rateOfFire: mode.rateOfFire ?? 1,
+          holy: Boolean((sys as any).holy) || Boolean(special?.holy),
+          rateOfFire: special?.rateOfFire ?? mode.rateOfFire ?? 1,
           recoil: mode.recoil ?? 0,
           bulk: mode.bulk ?? 0,
           // "+1 to Malf." for a fine firearm, -1 for a cheap one (Campaigns p. 407).

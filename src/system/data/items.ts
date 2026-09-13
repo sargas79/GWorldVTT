@@ -11,6 +11,7 @@ import {
 } from "../../rules/traits.js";
 import type { Enchantment } from "../../rules/enchanting.js";
 import { AMMUNITION_TYPES } from "../../rules/ammunition.js";
+import { PAYLOAD_OPTIONS, POWDER_OPTIONS } from "../../rules/special-ammunition.js";
 import { EQUIPMENT_QUALITIES, type EquipmentQuality } from "../../rules/wealth.js";
 import {
   WEAPON_CLASSES,
@@ -698,6 +699,18 @@ function rangedModeField() {
       initial: "",
       choices: [...AMMUNITION_TYPES],
     }),
+    /**
+     * Special ammunition (Monster Hunters 1 p. 63): one powder option and
+     * one payload option, where that book's gear rules are in play. The
+     * adjustments are what a hand-loading roll did to an option's CF: -2 for
+     * a good batch, +2 for wastage.
+     */
+    powder: new fields.StringField({ required: true, nullable: false, blank: true, initial: "", choices: [...POWDER_OPTIONS] }),
+    payload: new fields.StringField({ required: true, nullable: false, blank: true, initial: "", choices: [...PAYLOAD_OPTIONS] }),
+    powderAdjust: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: -2, max: 2 }),
+    payloadAdjust: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: -2, max: 2 }),
+    /** An empty magazine or speedloader's price, which special ammunition's CF does not touch (p. 63). */
+    magazineCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
     minSt: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null }),
     twoHanded: new fields.BooleanField({ initial: false }),
     /** Bows and crossbows have their own ST, used instead of the wielder's. */

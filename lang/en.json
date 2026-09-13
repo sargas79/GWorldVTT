@@ -3387,6 +3387,72 @@
       "Capped": "capped",
       "Default": "default"
     },
+    "SpecialAmmo": {
+      "PowderLabel": "Powder",
+      "PowderHint": "One powder option per load (Monster Hunters 1 p. 63).",
+      "PayloadLabel": "Payload",
+      "PayloadHint": "One payload option per load. Shotgun payloads fire as slugs, except silver (Monster Hunters 1 p. 63).",
+      "Powder": {
+        "none": "Standard powder",
+        "extraPowerful": "Extra-powerful (+1 CF)",
+        "handMatched": "Hand-matched (+9 CF)*",
+        "matchGrade": "Match-grade (+1 CF)",
+        "silent": "Silent (+9 CF)"
+      },
+      "Payload": {
+        "none": "Standard bullet",
+        "armorPiercing": "Armor-piercing (+1 CF)",
+        "chemicalSmoke": "Chemical, smoke (+2 CF)",
+        "chemicalTearGas": "Chemical, tear gas (+4 CF)",
+        "dragonsBreath": "Dragon's Breath (+2 CF)",
+        "explosive": "Explosive (+19 CF)",
+        "flare": "Flare (+4 CF)",
+        "hollowPoint": "Hollow-point (+0 CF)",
+        "holyWater": "Holy-water (+2 CF)*",
+        "rockSalt": "Rock salt (+0 CF)",
+        "silver": "Silver (+49 CF)*",
+        "thermate": "Thermate (+3 CF)*",
+        "wooden": "Wooden (+2 CF)*"
+      },
+      "Magazine": "Magazine $",
+      "MagazineHint": "An empty magazine or speedloader's price. Special ammunition's CF multiplies the rounds, not this (Monster Hunters 1 p. 63).",
+      "HandLoad": "Hand-load",
+      "HandLoadHint": "An Armoury (Small Arms) roll per asterisked option, with a reloading press: success -2 CF, failure +2 CF (Monster Hunters 1 p. 63).",
+      "ArmourySkill": "Armoury (Small Arms) skill",
+      "HandLoadGood": "{option}: rolled {roll} vs {level}, a good batch (-2 CF)",
+      "HandLoadWaste": "{option}: rolled {roll} vs {level}, wastage (+2 CF)",
+      "FollowUp": "(follow-up)",
+      "FollowUpHint": "The load's follow-up attack; roll it after the bullet (Monster Hunters 1 p. 63).",
+      "Problem": {
+        "shotgunOnly": "That payload is for shotguns only (Monster Hunters 1 p. 63).",
+        "notShotgun": "That payload is for pistols, rifles and SMGs, not shotguns (Monster Hunters 1 p. 63).",
+        "dragonsBreathPowder": "Dragon's Breath cannot be combined with any powder option (Monster Hunters 1 p. 63)."
+      },
+      "Note": {
+        "silent": "Silent",
+        "smoke": "Smoke",
+        "tearGas": "Tear gas",
+        "dragonsBreath": "Cone",
+        "explosive": "Explosive",
+        "flare": "Flare",
+        "holyWater": "Holy",
+        "rockSalt": "Rock salt",
+        "silver": "Silver",
+        "wooden": "Wooden"
+      },
+      "NoteHint": {
+        "silent": "Greatly reduces the odds of being heard: -5 to Hearing Shots (Monster Hunters 1 pp. 61, 63).",
+        "smoke": "Releases smoke in a 4-yard radius for 20 seconds on impact (Monster Hunters 1 p. 63; Campaigns p. 439).",
+        "tearGas": "Releases tear gas in a 4-yard radius for 20 seconds on impact (Monster Hunters 1 p. 63; Campaigns p. 439).",
+        "dragonsBreath": "A cone 75 yards long and 10 yards wide at the end. The gun cannot fire again for three seconds (Monster Hunters 1 p. 63).",
+        "explosive": "If the slug penetrates DR, the follow-up damage is tripled and ignores DR. +1 to Hearing Shots (Monster Hunters 1 p. 63).",
+        "flare": "Shot into the air, it lights a 50-yard radius for 20 seconds; darkness there is no worse than -3 (Monster Hunters 1 p. 63).",
+        "holyWater": "A holy attack (Monster Hunters 1 pp. 51, 63).",
+        "rockSalt": "No damage. Living things and zombies roll HT+DR or suffer moderate pain for minutes equal to the margin of failure; salt ignores zombies' High Pain Threshold. A failed roll after a shot to the face destroys a zombie (Monster Hunters 1 p. 63).",
+        "silver": "Solid silver: wounds what silver wounds (Monster Hunters 1 p. 63).",
+        "wooden": "A shot to the heart counts as a stake for vampires (Monster Hunters 1 p. 63)."
+      }
+    },
     "WeaponImprovement": {
       "Balanced": "Balanced",
       "BalancedHint": "+1 to skill with the weapon. +4 CF; not for sticks (Monster Hunters 1 p. 59).",
