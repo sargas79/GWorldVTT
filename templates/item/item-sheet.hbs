@@ -144,6 +144,26 @@
             <span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.Ritual.DurationConflictHint'}}">{{localize "GWORLD.Ritual.DurationConflict"}}</span>
           {{/if}}
         </div>
+        {{!-- Bonuses for this ritual as defined (pp. 25, 39). --}}
+        <div class="npcline" style="gap: 10px; align-items: center; flex-wrap: wrap">
+          {{#if ritual.mastery.held}}
+            {{#if ritual.mastery.bonus}}
+              <span class="tag tag-accent" data-tooltip="{{localize 'GWORLD.Ritual.MasteryHint'}}">{{localize "GWORLD.Ritual.Mastery"}} +{{ritual.mastery.bonus}}</span>
+            {{else if ritual.mastery.changed}}
+              <span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.Ritual.MasteryChangedHint'}}">{{localize "GWORLD.Ritual.MasteryChanged"}}</span>
+            {{/if}}
+            {{#if editable}}{{#unless ritual.mastery.bonus}}
+              <button type="button" class="ibtn" data-action="recordMastery" data-tooltip="{{localize 'GWORLD.Ritual.RecordMasteryHint'}}">{{localize "GWORLD.Ritual.RecordMastery"}}</button>
+            {{/unless}}{{/if}}
+          {{/if}}
+          {{#if ritual.grimoire}}
+            <span class="tag tag-accent">{{ritual.grimoire.name}} +{{ritual.grimoire.bonus}}</span>
+          {{/if}}
+          <label class="icheck" data-tooltip="{{localize 'GWORLD.Ritual.BlockingHint'}}">
+            <input type="checkbox" name="system.blocking" {{#if system.blocking}}checked{{/if}} {{#unless editable}}disabled{{/unless}} />
+            {{localize "GWORLD.Ritual.Blocking"}}
+          </label>
+        </div>
       </div>
 
       <div class="isub" data-mode-path="effects">
@@ -1070,6 +1090,72 @@
         <label>{{localize "GWORLD.Modifier.LevelNames"}}
           <input type="text" name="system.levelNames" value="{{join system.levelNames "; "}}" placeholder="x3; x10; x30"
                  {{#unless editable}}disabled{{/unless}} /></label>
+      </div>
+    {{/if}}
+
+    {{#if grimoire}}
+      {{!-- A grimoire (Monster Hunters 1 pp. 39, 56-57): the rituals it
+           teaches, each with its bonus, and what it takes to read. On a
+           character, a ritual is chosen from theirs and remembered as it is
+           defined now. --}}
+      <div class="isub" data-mode-path="grimoire.rituals">
+        <div class="isub-head">
+          {{localize "GWORLD.Grimoire.Title"}}
+          {{#if editable}}
+            <button type="button" class="ibtn" data-action="addMode">
+              {{> "gworld.plus"}} {{localize "GWORLD.Action.Add"}}
+            </button>
+          {{/if}}
+        </div>
+        {{#each grimoire.entries as |g|}}
+          <div class="irow" data-index="{{g.index}}">
+            {{#if @root.grimoire.rituals}}
+              <select name="system.grimoire.rituals.{{g.index}}.ritual" aria-label="{{localize 'TYPES.Item.ritual'}}" {{#unless @root.editable}}disabled{{/unless}}>
+                <option value="" {{#unless g.ritual}}selected{{/unless}}>—</option>
+                {{#each @root.grimoire.rituals as |name|}}<option value="{{name}}" {{#if (eq name g.ritual)}}selected{{/if}}>{{name}}</option>{{/each}}
+                {{#if g.missing}}<option value="{{g.ritual}}" selected>{{g.ritual}}</option>{{/if}}
+              </select>
+            {{else}}
+              <input type="text" name="system.grimoire.rituals.{{g.index}}.ritual" value="{{g.ritual}}"
+                     placeholder="{{localize 'TYPES.Item.ritual'}}" {{#unless @root.editable}}disabled{{/unless}} />
+            {{/if}}
+            <input type="number" name="system.grimoire.rituals.{{g.index}}.bonus" value="{{g.bonus}}" min="0" max="10" step="1"
+                   aria-label="{{localize 'GWORLD.Column.Bonus'}}" style="width: 56px" {{#unless @root.editable}}disabled{{/unless}} />
+            {{#if g.changed}}<span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.Grimoire.ChangedHint'}}">{{localize "GWORLD.Grimoire.Changed"}}</span>{{/if}}
+            {{#if @root.editable}}
+              <button type="button" class="rollable iconbtn" data-action="deleteMode"
+                      title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
+            {{/if}}
+          </div>
+        {{/each}}
+        {{#if grimoire.entries.length}}
+          <div class="ifields">
+            <label data-tooltip="{{localize 'GWORLD.Grimoire.DeadLanguageHint'}}">{{localize "GWORLD.Grimoire.DeadLanguage"}}
+              <input type="text" name="system.grimoire.deadLanguage" value="{{system.grimoire.deadLanguage}}" placeholder="—"
+                     {{#unless editable}}disabled{{/unless}} />
+            </label>
+            {{#if system.grimoire.deadLanguage}}
+              <label>{{localize "GWORLD.Grimoire.Translation"}}
+                <select name="system.grimoire.translation" {{#unless editable}}disabled{{/unless}}>
+                  {{selectOptions choices.comprehension selected=system.grimoire.translation localize=true}}
+                </select>
+              </label>
+            {{/if}}
+          </div>
+          <div class="ichecks">
+            <label class="icheck"><input type="checkbox" name="system.grimoire.encrypted" {{#if system.grimoire.encrypted}}checked{{/if}}
+                   {{#unless editable}}disabled{{/unless}} /> {{localize "GWORLD.Grimoire.Encrypted"}}</label>
+            {{#if system.grimoire.encrypted}}
+              <label class="icheck"><input type="checkbox" name="system.grimoire.decoded" {{#if system.grimoire.decoded}}checked{{/if}}
+                     {{#unless editable}}disabled{{/unless}} /> {{localize "GWORLD.Grimoire.Decoded"}}</label>
+            {{/if}}
+          </div>
+          {{#if grimoire.price}}
+            <p class="ihint">{{localize "GWORLD.Grimoire.Price" cost=grimoire.price.cost weight=grimoire.price.weight}}</p>
+          {{/if}}
+        {{else}}
+          <p class="ihint">{{localize "GWORLD.Grimoire.Hint"}}</p>
+        {{/if}}
       </div>
     {{/if}}
 

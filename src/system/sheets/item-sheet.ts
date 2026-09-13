@@ -17,6 +17,7 @@ import { parseCostTable, parseLevelNames } from "../../rules/traits.js";
 import { SPELL_CLASSES } from "../../rules/magic.js";
 import { RITUAL_DURATIONS, RITUAL_EFFECTS } from "../../rules/ritual-cost.js";
 import { PATHS } from "../../rules/ritual-path.js";
+import { collectionWeight, grimoirePrice } from "../../rules/ritual-tricks.js";
 import { SYSTEM_ID } from "../constants.js";
 import { sourceCollections } from "../compendium-sources.js";
 import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
@@ -165,6 +166,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
       addMode: GWorldItemSheet.#onAddMode,
+      recordMastery: GWorldItemSheet.#onRecordMastery,
       repairWeapon: GWorldItemSheet.#onRepairWeapon,
       exposureCheck: GWorldItemSheet.#onExposureCheck,
       putOnTheRoad: GWorldItemSheet.#onPutOnTheRoad,
@@ -295,6 +297,12 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         lastDuration: Number((item.system as any).casting?.durationStep) === RITUAL_DURATIONS.length - 1,
         // The select's values are strings, as every select's are.
         durationStep: String((item.system as any).casting?.durationStep ?? 0),
+        mastery: {
+          held: Boolean(derived.masteryHeld),
+          bonus: Number(derived.mastery ?? 0),
+          changed: Boolean((item.system as any).masteredAs) && (item.system as any).masteredAs !== derived.identity,
+        },
+        grimoire: derived.grimoire ?? null,
         skill: skill?.path
           ? {
               name: skill.name,
@@ -302,6 +310,32 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
               penalty: skill.penalty,
               uncastable: skill.level === null && isRuleOn("ritualPathMagic"),
             }
+          : null,
+      };
+    }
+
+    // A grimoire's rituals (Monster Hunters 1 pp. 39, 56-57), and what the book
+    // would cost: the table's price for each, and a collection's weight.
+    if (item.type === "equipment" && isRuleOn("ritualPathMagic")) {
+      const g = (item.system as any).grimoire ?? { rituals: [] };
+      const owner = (item as { actor?: any }).actor ?? null;
+      const owned = owner ? (owner.items.filter((i: any) => i.type === "ritual") as any[]) : [];
+      const names = owned.map((r) => String(r.name));
+      const entries = (g.rituals ?? []).map((entry: any, index: number) => {
+        const ritual = owned.find((r) => String(r.name) === entry.ritual);
+        return {
+          ...entry,
+          index,
+          missing: Boolean(owner && entry.ritual && !ritual),
+          changed: Boolean(ritual && entry.identity && ritual.system?.derived?.identity !== entry.identity),
+        };
+      });
+      const prices = entries.map((e: any) => grimoirePrice({ bonus: e.bonus, deadLanguage: Boolean(g.deadLanguage), encrypted: Boolean(g.encrypted) }));
+      context.grimoire = {
+        entries,
+        rituals: owner ? names : null,
+        price: prices.length && prices.every(Boolean)
+          ? { cost: prices.reduce((sum: number, p: any) => sum + p.cost, 0), weight: collectionWeight(entries.map((e: any) => e.bonus)) }
           : null,
       };
     }
@@ -617,6 +651,25 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       }
     }
 
+    // A grimoire remembers the ritual it teaches as that ritual is defined when
+    // it is chosen, so a ritual changed afterwards is no longer the book's.
+    // The form carries each entry's ritual and bonus, not what it remembers,
+    // and arrives keyed by index rather than as a list.
+    const submittedRituals = data.system?.grimoire?.rituals;
+    if (this.item.type === "equipment" && submittedRituals && typeof submittedRituals === "object") {
+      const owner = (this.item as { actor?: any }).actor ?? null;
+      const before = ((this.item.system as any).grimoire?.rituals ?? []) as Array<{ ritual: string; identity: string }>;
+      const list = Array.isArray(submittedRituals)
+        ? submittedRituals
+        : Object.keys(submittedRituals).sort((a, b) => Number(a) - Number(b)).map((key) => submittedRituals[key]);
+      data.system.grimoire.rituals = list.map((entry: any, index: number) => {
+        const previous = before[index];
+        if (previous && previous.ritual === entry.ritual) return { ...entry, identity: previous.identity };
+        const ritual = owner?.items.find((i: any) => i.type === "ritual" && String(i.name) === entry.ritual);
+        return { ...entry, identity: String(ritual?.system?.derived?.identity ?? "") };
+      });
+    }
+
     if (this.item.type === "spell" && data.system && typeof data.system.colleges === "string") {
       data.system.colleges = data.system.colleges
         .split(",")
@@ -777,6 +830,16 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     });
     if (care === null) return;
     await exposureCheck({ actor, item: this.item, care });
+  }
+
+  /**
+   * Records this ritual's definition as the one Ritual Mastery was taken for
+   * (Monster Hunters 1 pp. 25, 39): a later change to the definition makes it
+   * a different ritual.
+   */
+  static async #onRecordMastery(this: GWorldItemSheet) {
+    if (this.item.type !== "ritual") return;
+    await this.item.update({ "system.masteredAs": String((this.item.system as any).derived?.identity ?? "") });
   }
 
   static async #onAddMode(this: GWorldItemSheet, _event: Event, target: HTMLElement) {
