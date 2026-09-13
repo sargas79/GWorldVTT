@@ -17,6 +17,9 @@
       "db": 1,
       "dr": 1,
       "hp": 3,
+      "composition": "wood",
+      "listCost": 20,
+      "listWeight": 2,
       "skill": "Cloak",
       "meleeModes": []
     }
@@ -39,6 +42,9 @@
       "db": 2,
       "dr": 1,
       "hp": 5,
+      "composition": "wood",
+      "listCost": 50,
+      "listWeight": 5,
       "skill": "Cloak",
       "meleeModes": []
     }
@@ -61,6 +67,9 @@
       "db": 1,
       "dr": 5,
       "hp": 20,
+      "composition": "wood",
+      "listCost": 25,
+      "listWeight": 2,
       "skill": "Shield (Shield)",
       "meleeModes": [
         {
@@ -110,6 +119,9 @@
       "db": 1,
       "dr": 6,
       "hp": 30,
+      "composition": "wood",
+      "listCost": 40,
+      "listWeight": 8,
       "skill": "Shield (Shield)",
       "meleeModes": [
         {
@@ -159,6 +171,9 @@
       "db": 2,
       "dr": 7,
       "hp": 40,
+      "composition": "wood",
+      "listCost": 60,
+      "listWeight": 15,
       "skill": "Shield (Shield)",
       "meleeModes": [
         {
@@ -208,6 +223,9 @@
       "db": 3,
       "dr": 9,
       "hp": 60,
+      "composition": "wood",
+      "listCost": 90,
+      "listWeight": 25,
       "skill": "Shield (Shield)",
       "meleeModes": [
         {
@@ -257,6 +275,9 @@
       "db": 1,
       "dr": 5,
       "hp": 20,
+      "composition": "wood",
+      "listCost": 25,
+      "listWeight": 2,
       "skill": "Shield (Buckler)",
       "meleeModes": [
         {
@@ -306,6 +327,9 @@
       "db": 1,
       "dr": 6,
       "hp": 30,
+      "composition": "wood",
+      "listCost": 40,
+      "listWeight": 8,
       "skill": "Shield (Buckler)",
       "meleeModes": [
         {
@@ -355,6 +379,9 @@
       "db": 2,
       "dr": 7,
       "hp": 40,
+      "composition": "wood",
+      "listCost": 60,
+      "listWeight": 15,
       "skill": "Shield (Buckler)",
       "meleeModes": [
         {
@@ -404,6 +431,9 @@
       "db": 1,
       "dr": 5,
       "hp": 20,
+      "composition": "wood",
+      "listCost": 25,
+      "listWeight": 1,
       "skill": "Shield (Shield)",
       "meleeModes": [
         {
@@ -453,6 +483,9 @@
       "db": 1,
       "dr": 6,
       "hp": 30,
+      "composition": "wood",
+      "listCost": 40,
+      "listWeight": 4,
       "skill": "Shield (Shield)",
       "meleeModes": [
         {
@@ -502,6 +535,9 @@
       "db": 2,
       "dr": 7,
       "hp": 40,
+      "composition": "wood",
+      "listCost": 60,
+      "listWeight": 7.5,
       "skill": "Shield (Shield)",
       "meleeModes": [
         {
@@ -551,6 +587,9 @@
       "db": 3,
       "dr": 9,
       "hp": 60,
+      "composition": "wood",
+      "listCost": 90,
+      "listWeight": 12.5,
       "skill": "Shield (Shield)",
       "meleeModes": [
         {
@@ -600,6 +639,9 @@
       "db": 1,
       "dr": 5,
       "hp": 20,
+      "composition": "wood",
+      "listCost": 25,
+      "listWeight": 1,
       "skill": "Shield (Buckler)",
       "meleeModes": [
         {
@@ -649,6 +691,9 @@
       "db": 1,
       "dr": 6,
       "hp": 30,
+      "composition": "wood",
+      "listCost": 40,
+      "listWeight": 4,
       "skill": "Shield (Buckler)",
       "meleeModes": [
         {
@@ -698,6 +743,9 @@
       "db": 2,
       "dr": 7,
       "hp": 40,
+      "composition": "wood",
+      "listCost": 60,
+      "listWeight": 7.5,
       "skill": "Shield (Buckler)",
       "meleeModes": [
         {
@@ -747,6 +795,9 @@
       "db": 3,
       "dr": 100,
       "hp": null,
+      "composition": "wood",
+      "listCost": 1500,
+      "listWeight": 0.5,
       "skill": "Shield (Force)",
       "meleeModes": [
         {
@@ -796,6 +847,9 @@
       "db": 3,
       "dr": 100,
       "hp": null,
+      "composition": "wood",
+      "listCost": 1500,
+      "listWeight": 0.5,
       "skill": "Shield (Force)",
       "meleeModes": [
         {

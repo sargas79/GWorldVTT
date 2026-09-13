@@ -336,6 +336,10 @@ function validateItem(entry, file) {
 
   if (entry.type === "shield") {
     check(Number.isInteger(sys.db) && sys.db >= 0, file, name, `bad DB "${sys.db}"`);
+    check(
+      sys.composition === undefined || ["wood", "iron", "plastic"].includes(sys.composition),
+      file, name, `bad shield composition "${sys.composition}"`,
+    );
     // DR and HP for Damage to Shields (Characters p. 287); a force shield
     // has DR and no HP, so null is allowed there and nowhere below zero.
     check(Number.isInteger(sys.dr) && sys.dr >= 0, file, name, `bad shield DR "${sys.dr}"`);

@@ -1103,6 +1103,11 @@ export function parseEquipment(recs, reject, note) {
           ...common,
           db: number(f.get("db"), 1),
           ...parseShieldStats(f.get("dr"), f.get("hp")),
+          // The table's shield is the wooden one; iron and plastic are
+          // worked out from it (Characters p. 287, note 4).
+          composition: "wood",
+          listCost: common.cost,
+          listWeight: common.weight,
           skill,
           meleeModes: bashes,
         },

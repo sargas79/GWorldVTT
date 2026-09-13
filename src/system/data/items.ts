@@ -12,6 +12,8 @@ import {
   WEAPON_CLASSES,
   WEAPON_MATERIALS,
   WEAPON_QUALITIES,
+  SHIELD_COMPOSITIONS,
+  type ShieldComposition,
   type WeaponClass,
   type WeaponMaterial,
   type WeaponQuality,
@@ -959,6 +961,9 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
   declare dr: number;
   declare hp: number | null;
   declare hpLost: number;
+  declare composition: ShieldComposition;
+  declare listCost: number;
+  declare listWeight: number;
   declare skill: string;
   declare meleeModes: unknown[];
   declare quantity: number;
@@ -988,6 +993,21 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
       hp: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
       /** Damage the shield has taken under Damage to Shields (Campaigns p. 484). */
       hpLost: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+      /**
+       * What the shield is made of (GURPS Basic Set: Characters p. 287,
+       * note 4): iron at TL3+ costs five times as much, weighs twice as
+       * much and is +3 DR with twice the HP; a TL7+ plastic riot shield
+       * weighs half. "Shield composition never affects DB."
+       */
+      composition: new fields.StringField({
+        required: true,
+        nullable: false,
+        initial: "wood",
+        choices: [...SHIELD_COMPOSITIONS],
+      }),
+      /** The table's price and weight, before what it is made of. */
+      listCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+      listWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       skill: new fields.StringField({ required: true, blank: true, initial: "Shield" }),
       /**
        * Bashing someone with the shield (GURPS Basic Set: Characters p. 273).

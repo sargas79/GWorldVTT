@@ -4,6 +4,12 @@ import {
   availableQualities,
   breakageModifier,
   breakageQuality,
+  gradeAfterMaterial,
+  materialCostMultiplier,
+  materialWeightMultiplier,
+  maxQualityFor,
+  obsidianDamageBonus,
+  shieldComposition,
   materialArmorDivisor,
   minStPenalty,
   outranks,
@@ -116,6 +122,51 @@ describe("blade composition (p. 275)", () => {
     expect(silverCostMultiplier("silver")).toBe(20);
     expect(silverCostMultiplier("silver", true)).toBe(50);
     expect(silverCostMultiplier("silverCoated")).toBe(3);
+  });
+});
+
+describe("obsidian, plastic and what a shield is made of (pp. 275, 287)", () => {
+  it("gives an obsidian blade the stone divisor, a fine blade's bonus and a cheap blade's breakage", () => {
+    expect(materialArmorDivisor("obsidian", "cut")).toBe(0.5);
+    expect(materialArmorDivisor("obsidian", "cr")).toBeNull();
+    // "+1 to cutting and impaling damage (as if fine)", whatever it was bought as.
+    expect(qualityDamageBonus("good", "cut", "obsidian")).toBe(1);
+    expect(qualityDamageBonus("cheap", "imp", "obsidian")).toBe(1);
+    expect(qualityDamageBonus("veryFine", "cut", "obsidian")).toBe(1);
+    expect(qualityDamageBonus("good", "cr", "obsidian")).toBe(0);
+    // "It loses its damage bonus if used to parry any weapon... or to strike DR 2+."
+    expect(obsidianDamageBonus("cut", true)).toBe(0);
+    // "+2 to breakage (as if cheap)", against anything.
+    expect(breakageQuality("fine", "obsidian", false)).toBe("cheap");
+  });
+
+  it("halves a plastic blade's weight, doubles its price and caps it at good", () => {
+    expect(materialWeightMultiplier("plastic")).toBe(0.5);
+    expect(materialCostMultiplier("plastic")).toBe(2);
+    expect(maxQualityFor("plastic")).toBe("good");
+    expect(maxQualityFor("steel")).toBeNull();
+    // The ceiling holds a grade down and never pushes one up.
+    expect(gradeAfterMaterial("veryFine", "plastic")).toBe("good");
+    expect(gradeAfterMaterial("fine", "plastic")).toBe("good");
+    expect(gradeAfterMaterial("cheap", "plastic")).toBe("cheap");
+    expect(gradeAfterMaterial("veryFine", "steel")).toBe("veryFine");
+    // "Treat them as equivalent to steel for breakage."
+    expect(outranks("steel", "plastic")).toBe(false);
+    expect(outranks("plastic", "bronze")).toBe(true);
+    expect(breakageQuality("good", "plastic", true)).toBe("good");
+  });
+
+  it("prices silver through the same door as every other material", () => {
+    expect(materialCostMultiplier("silver")).toBe(20);
+    expect(materialCostMultiplier("silverCoated")).toBe(3);
+    expect(materialCostMultiplier("steel")).toBe(1);
+    expect(materialWeightMultiplier("steel")).toBe(1);
+  });
+
+  it("makes an iron shield dearer, heavier and tougher, and a riot shield lighter (p. 287)", () => {
+    expect(shieldComposition("iron")).toEqual({ costFactor: 5, weightFactor: 2, drBonus: 3, hpFactor: 2, minTl: 3 });
+    expect(shieldComposition("plastic")).toEqual({ costFactor: 1, weightFactor: 0.5, drBonus: 0, hpFactor: 1, minTl: 7 });
+    expect(shieldComposition("wood")).toEqual({ costFactor: 1, weightFactor: 1, drBonus: 0, hpFactor: 1, minTl: 0 });
   });
 });
 

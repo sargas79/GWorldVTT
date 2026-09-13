@@ -22,7 +22,7 @@ export type WeaponQuality = (typeof WEAPON_QUALITIES)[number];
  * -- "stone at TL0, bronze at TL1, iron at TL2, and steel at TL3+".
  */
 export const WEAPON_MATERIALS = [
-  "", "stone", "bronze", "iron", "steel", "wood", "plastic", "silver", "silverCoated",
+  "", "stone", "obsidian", "bronze", "iron", "steel", "wood", "plastic", "silver", "silverCoated",
 ] as const;
 export type WeaponMaterial = (typeof WEAPON_MATERIALS)[number];
 
@@ -111,6 +111,24 @@ export function availableQualities(cls: WeaponClass, tl: number): WeaponQuality[
 const NO_FINE_BONUS = new Set<WeaponMaterial>(["stone", "bronze", "iron"]);
 
 /**
+ * "Obsidian (TL1): A blade made of volcanic glass is very sharp, but easily
+ * broken or blunted. Treat as a good-quality stone blade, but with +1 to
+ * cutting and impaling damage (as if fine) and +2 to breakage (as if
+ * cheap)." The bonus is the glass's own, not the grade's, so it stands
+ * whatever grade the blade was bought in.
+ *
+ * "It loses its damage bonus if used to parry any weapon (but not an
+ * unarmed attack) or to strike DR 2+" -- a thing that happens in the fight
+ * rather than a fact about the blade. Nothing on a sheet or a card decides
+ * it yet: the caller says whether the edge has been blunted, and today no
+ * caller passes anything but the default.
+ */
+export function obsidianDamageBonus(type: DamageType, blunted = false): number {
+  if (blunted) return 0;
+  return type === "cut" || type === "imp" ? 1 : 0;
+}
+
+/**
  * The damage a fine or very fine blade adds (p. 274): "+1 to cutting and
  * impaling damage" for fine, +2 for very fine, and nothing to a crushing
  * blow. A stone, bronze or iron blade "receives no damage bonus for being of
@@ -122,10 +140,47 @@ export function qualityDamageBonus(
   material: WeaponMaterial = "",
 ): number {
   if (type !== "cut" && type !== "imp") return 0;
+  // Obsidian cuts a point deeper whatever it was bought as, and takes
+  // nothing further from the grade: it is "a good-quality stone blade".
+  if (material === "obsidian") return obsidianDamageBonus(type);
   if (NO_FINE_BONUS.has(material)) return 0;
   if (quality === "fine") return 1;
   if (quality === "veryFine") return 2;
   return 0;
+}
+
+/**
+ * The best grade a blade of this material can be made in (p. 275): plastic
+ * "cannot exceed good quality (and are often cheap)". Null where the book
+ * sets no ceiling.
+ */
+export function maxQualityFor(material: WeaponMaterial): WeaponQuality | null {
+  return material === "plastic" ? "good" : null;
+}
+
+/**
+ * The grade a blade of this material actually comes out at: what was asked
+ * for, or the material's ceiling where that is lower. A cheap plastic blade
+ * stays cheap; a fine one is good, which is as fine as plastic gets.
+ */
+export function gradeAfterMaterial(quality: WeaponQuality, material: WeaponMaterial): WeaponQuality {
+  const ceiling = maxQualityFor(material);
+  if (ceiling === null) return quality;
+  return WEAPON_QUALITIES.indexOf(quality) > WEAPON_QUALITIES.indexOf(ceiling) ? ceiling : quality;
+}
+
+/**
+ * What the material does to the price (p. 275): plastic is "double cost",
+ * solid silver twenty times list and coated or edged three times.
+ */
+export function materialCostMultiplier(material: WeaponMaterial): number {
+  if (material === "plastic") return 2;
+  return silverCostMultiplier(material);
+}
+
+/** What it does to the weight: plastic is "halve weight" (p. 275). */
+export function materialWeightMultiplier(material: WeaponMaterial): number {
+  return material === "plastic" ? 0.5 : 1;
 }
 
 /**
@@ -178,14 +233,19 @@ export function breakageQuality(
   material: WeaponMaterial,
   parryingSuperiorSwing: boolean,
 ): WeaponQuality {
-  if (material === "silver") return "cheap";
+  // Solid silver breaks as cheap whatever it meets; obsidian is "+2 to
+  // breakage (as if cheap)" for the same reason, being glass.
+  if (material === "silver" || material === "obsidian") return "cheap";
   if (NO_FINE_BONUS.has(material) && parryingSuperiorSwing) return "cheap";
   return quality;
 }
 
 /** The rank of a blade's material, so "superior" can be compared (p. 275). */
 const MATERIAL_RANK: Readonly<Record<WeaponMaterial, number>> = {
-  "": 3, stone: 0, bronze: 1, iron: 2, steel: 3, wood: 0, plastic: 0, silver: 1, silverCoated: 3,
+  // Plastic is "equivalent to steel for breakage", so it ranks with steel
+  // even though it weighs half as much (p. 275).
+  "": 3, stone: 0, obsidian: 0, bronze: 1, iron: 2, steel: 3, wood: 0, plastic: 3,
+  silver: 1, silverCoated: 3,
 };
 
 /** Whether one blade's material outranks another's. */
@@ -195,7 +255,40 @@ export function outranks(material: WeaponMaterial, other: WeaponMaterial): boole
 
 /** "A stone blade has an armor divisor of (0.5) on its cutting and impaling damage" (p. 275). */
 export function materialArmorDivisor(material: WeaponMaterial, type: DamageType): number | null {
-  return material === "stone" && (type === "cut" || type === "imp") ? 0.5 : null;
+  // Obsidian is "a good-quality stone blade", divisor included.
+  const glassy = material === "stone" || material === "obsidian";
+  return glassy && (type === "cut" || type === "imp") ? 0.5 : null;
+}
+
+// ── what a shield is made of (Characters p. 287, note [4]) ─────────────────
+
+/**
+ * "At TL3+, iron shields are available but uncommon: x5 cost, x2 weight,
+ * +3 DR, and x2 HP. At TL7+, plastic riot shields (made of Lexan, etc.)
+ * have x1/2 weight but otherwise identical statistics. Shield composition
+ * never affects DB."
+ */
+export const SHIELD_COMPOSITIONS = ["wood", "iron", "plastic"] as const;
+export type ShieldComposition = (typeof SHIELD_COMPOSITIONS)[number];
+
+export interface ShieldCompositionEffect {
+  costFactor: number;
+  weightFactor: number;
+  drBonus: number;
+  hpFactor: number;
+  /** The earliest tech level the book sells it at. */
+  minTl: number;
+}
+
+export function shieldComposition(composition: ShieldComposition): ShieldCompositionEffect {
+  switch (composition) {
+    case "iron":
+      return { costFactor: 5, weightFactor: 2, drBonus: 3, hpFactor: 2, minTl: 3 };
+    case "plastic":
+      return { costFactor: 1, weightFactor: 0.5, drBonus: 0, hpFactor: 1, minTl: 7 };
+    default:
+      return { costFactor: 1, weightFactor: 1, drBonus: 0, hpFactor: 1, minTl: 0 };
+  }
 }
 
 /**
