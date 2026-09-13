@@ -88,11 +88,36 @@ function validateActor(entry, file) {
   for (const item of entry.items ?? []) validateItem(item, `${file} (${name})`);
 }
 
+/**
+ * The Basic Set is two books with one run of page numbers: Characters is
+ * pages 1-336 and Campaigns carries on at 337. So the volume a citation names
+ * is not a matter of taste -- the page number decides it, and a reference that
+ * disagrees with its own number sends the reader to a book that has no such
+ * page. Twenty-two of them shipped that way before this check existed.
+ */
+const CHARACTERS_LAST_PAGE = 336;
+
+function validateReference(reference, file, name) {
+  const match = /^Basic Set: (Characters|Campaigns) p\. (\d+)$/.exec(String(reference ?? ""));
+  if (!match) return;
+  const [, book, page] = match;
+  const number = Number(page);
+  const shouldBe = number <= CHARACTERS_LAST_PAGE ? "Characters" : "Campaigns";
+  check(
+    book === shouldBe,
+    file,
+    name,
+    `p. ${number} is in ${shouldBe}, but the reference says ${book}`,
+  );
+}
+
 function validateItem(entry, file) {
   const name = entry.name ?? "(unnamed)";
   check(Boolean(entry._id), file, name, "missing _id");
   check(Boolean(entry.name), file, name, "missing name");
   check(ITEM_TYPES.has(entry.type), file, name, `unknown type "${entry.type}"`);
+
+  if (entry.system?.reference) validateReference(entry.system.reference, file, name);
 
   if (entry._id) {
     if (ids.has(entry._id)) {
