@@ -40,6 +40,11 @@ interface ResistFlag {
   resistedBy: string;
   area: boolean;
   subjects: Array<{ uuid: string; name: string }>;
+  /**
+   * False for a resistance that is not to magic -- a Malediction's Quick
+   * Contest (Characters p. 106) -- which Magic Resistance does nothing to.
+   */
+  magical?: boolean;
 }
 
 /** Posts the caster's half of a Resisted spell, with a roll for each subject. */
@@ -51,6 +56,8 @@ export async function postResistCard(options: {
   resistedBy: string;
   area: boolean;
   subjects: any[];
+  /** False where Magic Resistance does not apply. Spells leave it out. */
+  magical?: boolean;
 }): Promise<void> {
   const flag: ResistFlag = {
     spell: options.spell,
@@ -63,6 +70,7 @@ export async function postResistCard(options: {
       uuid: String(subject.uuid),
       name: String(subject.name ?? ""),
     })),
+    ...(options.magical === false ? { magical: false } : {}),
   };
 
   const content = await foundry.applications.handlebars.renderTemplate(RESIST_TEMPLATE, {
@@ -112,7 +120,7 @@ export async function addResistControls(message: any, html: HTMLElement): Promis
 
     const attribute = resistanceAttribute(flag.resistedBy);
     const score = attribute === null ? null : attributeOf(subject, attribute);
-    const resistance = Number(subject.system?.derived?.magic?.magicResistance ?? 0) || 0;
+    const resistance = flag.magical === false ? 0 : Number(subject.system?.derived?.magic?.magicResistance ?? 0) || 0;
 
     const button = document.createElement("button");
     button.type = "button";
@@ -155,7 +163,7 @@ async function rollResistance(subject: any, flag: ResistFlag): Promise<void> {
     if (score === null) return;
   }
 
-  const magicResistance = Number(subject.system?.derived?.magic?.magicResistance ?? 0) || 0;
+  const magicResistance = flag.magical === false ? 0 : Number(subject.system?.derived?.magic?.magicResistance ?? 0) || 0;
   const bonus = (flag.area ? 2 : 1) * magicResistance;
   const target = resistanceScore({ score, magicResistance, area: flag.area });
 

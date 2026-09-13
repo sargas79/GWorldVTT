@@ -109,6 +109,7 @@ import {
 import { allOutAttackBonus, strongAttackDamageBonus, type AllOutAttackOption } from "../rules/maneuvers.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
+import { rollMalediction } from "./malediction.js";
 
 const CHAT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/success-roll.hbs`;
 const DAMAGE_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-roll.hbs`;
@@ -605,6 +606,8 @@ export interface DamageRollOptions {
   halfDamage?: boolean;
   /** What the weapon is made of, carried to the apply for a Vulnerability to silver. */
   material?: string;
+  /** True when DR has no effect on the blow, as for a Malediction (Characters p. 106). */
+  ignoresDr?: boolean;
 }
 
 /**
@@ -711,6 +714,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           maxDamage: applyDamageFloor(maxRoll(rolled) * mass, damageType),
           ...(mass > 1 ? { drMultiplier: mass } : {}),
           ...(options.material ? { material: options.material } : {}),
+          ...(options.ignoresDr ? { ignoresDr: true } : {}),
           ...(options.weaponTarget ? { weaponTarget: options.weaponTarget } : {}),
           explosive,
           // The dice, not the rolled total: the blast radius is set by how
@@ -769,6 +773,14 @@ export async function handleRollAction(
   const { rollType, rollLabel, rollTarget, ranged } = target.dataset;
   const base = Number(rollTarget);
   if (!Number.isFinite(base)) return null;
+
+  // A Malediction is not a ranged attack at all: no Acc, no range bands, no
+  // defense -- a roll against Will at its own range penalty, and a Quick
+  // Contest for whoever it targets (Characters p. 106).
+  if (rollType === "attack" && Number(target.dataset.malediction) > 0) {
+    await rollMalediction(actor, event, target);
+    return null;
+  }
 
   // A ranged attack needs its range, which is not optional the way a
   // situational modifier is: defaulting it to zero would quietly roll every
@@ -2322,6 +2334,7 @@ export async function handleDamageAction(
     ...(mass > 1 ? { massMultiplier: mass } : {}),
     ...(halved ? { halfDamage: true } : {}),
     ...(target.dataset.material ? { material: target.dataset.material } : {}),
+    ...(target.dataset.ignoresDr === "1" ? { ignoresDr: true } : {}),
     explosive: target.dataset.explosive === "1",
     fragmentation: target.dataset.fragmentation ?? "",
     modifiers,

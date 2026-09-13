@@ -54,8 +54,11 @@ const TEMPLATE_ROOT = `systems/${SYSTEM_ID}/templates/item`;
 /** Types that live in an inventory and so carry quantity, weight and cost. */
 const PHYSICAL_TYPES = new Set(["equipment", "armor", "shield"]);
 
-/** Types that can carry attack modes. */
-const ARMED_TYPES = new Set(["equipment"]);
+/**
+ * Types that can carry attack modes: a weapon, and an advantage that is an
+ * attack (Characters p. 61).
+ */
+const ARMED_TYPES = new Set(["equipment", "trait"]);
 
 /** Every enhancement and limitation the chosen compendia hold, by name. */
 async function modifierEntries(): Promise<Array<{ name: string; value: number; costTable: number[]; levelNames: string[]; maxLevels: number; group: string; kind: string }>> {

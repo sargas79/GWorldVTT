@@ -29,6 +29,7 @@ import {
   traitEffects,
   type TraitEffects,
 } from "../../rules/trait-effects.js";
+import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
 import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
@@ -309,6 +310,10 @@ export interface DerivedAttack {
   /** A built-in scope's bonus, which the table lists separately as in "7+2". */
   scopeBonus?: number;
   range?: string;
+  /** Which Malediction the attack is (Characters p. 106), or 0 for an ordinary one. */
+  malediction?: number;
+  /** True when DR does nothing against it, as for a Malediction. */
+  ignoresDr?: boolean;
   rateOfFire?: number;
   /** Recoil, which decides how many of a burst's shots hit. */
   recoil?: number;
@@ -1595,6 +1600,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const armed = [
       ...this.itemsOfType("equipment"),
       ...this.itemsOfType("shield").filter((i) => i.system?.equipped),
+      // An advantage that is an attack -- Burning Attack, a power's
+      // Pyrokinesis -- is always to hand (Characters p. 61).
+      ...this.itemsOfType("trait").filter(
+        (i) => (i.system?.meleeModes ?? []).length > 0 || (i.system?.rangedModes ?? []).length > 0,
+      ),
     ];
 
     // "-3 to use any skill that requires the use of your legs, including all
@@ -1608,6 +1618,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
      * of somebody who never learned Guns is still a pistol, at DX-4.
      */
     const weaponSkill = (name: string, melee = false): { level: number | null; atDefault: boolean } => {
+      // "Roll against your Will" (Characters p. 106): a mode may name an
+      // attribute where a weapon names its skill.
+      const attribute = attackAttribute(name);
+      if (attribute) {
+        const score = attribute === "Will" ? secondary.will : attribute === "Per" ? secondary.per : attrs[attribute];
+        return { level: Number(score) || 10, atDefault: false };
+      }
       const own = this.skillLevelByName(name);
       if (own !== null) return { level: own + (melee ? legs : 0), atDefault: false };
       const listed = catalogSkill(name);
@@ -1703,12 +1720,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // its modes was used.
       const unready = Boolean((sys as any).unready);
 
+      // A trait's attack bought in levels does its dice per level (p. 61).
+      const levels = item.type === "trait" ? Number((sys as any).levels ?? 0) || 0 : 0;
+      const perLevel = (mode: any, damage: string): string =>
+        item.type === "trait" && mode.perLevel ? levelledDamage(damage, levels) : damage;
+
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
         const { level: skillLevel, atDefault } = short(enchantedSkill(weaponSkill(mode.skill, true)), mode.minSt ?? null);
-        const meleeDamage = mode.damageSpecial ? SPECIAL : withQuality(withPuissance(resolveDamage(
+        const meleeDamage = mode.damageSpecial ? SPECIAL : withQuality(withPuissance(perLevel(mode, resolveDamage(
           strikingSt, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
           Number(mode.damageExtraDice ?? 0) || 0,
-        )), mode.damageType);
+        ))), mode.damageType);
         melee.push({
           itemId: item.id,
           modeIndex: index,
@@ -1780,11 +1802,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // Weapon Quality" (Characters p. 276): the cutting and impaling bonus
         // is theirs; a firearm's fine grade is in its Acc and Malf. instead.
         const rangedDamage = mode.damageSpecial ? SPECIAL : (firearm ? (d: string) => d : (d: string) => withQuality(d, mode.damageType))(
-          withPuissance(resolveDamage(
+          withPuissance(perLevel(mode, resolveDamage(
             st, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
             Number(mode.damageExtraDice ?? 0) || 0,
-          )),
+          ))),
         );
+        // A Malediction has no range statistics of its own: its penalty comes
+        // from how far away the victim is, and DR does nothing to it (p. 106).
+        const malediction = Math.max(0, Math.min(3, Number(mode.malediction ?? 0) || 0));
         // What it is loaded with changes the wound, the divisor, the range
         // and, for APDS, the damage (Characters pp. 276, 279).
         const round = isRuleOn("ammunitionTypes")
@@ -1859,6 +1884,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           accuracy: (mode.accuracy ?? 0) + qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown)),
           scopeBonus: mode.scopeBonus ?? 0,
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
+          malediction,
+          ignoresDr: malediction > 0,
           rateOfFire: mode.rateOfFire ?? 1,
           recoil: mode.recoil ?? 0,
           bulk: mode.bulk ?? 0,

@@ -180,6 +180,91 @@ export function powerOfRecord(f, pattern) {
   return { power: named, powerTalent: categories.some((c) => /^Talents - Powers$/i.test(c)) };
 }
 
+/**
+ * The attack an advantage is, as a ranged mode (Characters pp. 61, 106).
+ *
+ * GCA writes an Innate Attack's damage per level -- `damage($solver(%level)d)`,
+ * or `$solver(%level)d-$solver(%level)` for Monster Hunters 1's "1d-1 per level"
+ * Cryokinesis -- with the weapon columns beside it. A range of "Speed/Range"
+ * is a Malediction taking the Size and Speed/Range Table, which is Malediction
+ * 2 (p. 106), and it has no range statistics of its own. Where the skill is a
+ * blank the player picks (`%examplealiaslist%`), Innate Attack (Projectile) is
+ * the one written, and the sheet changes it.
+ *
+ * What is worked out on the sheet -- an Affliction's HT penalty per level, a
+ * Vampiric Bite's HP a second, a type the player chooses -- is not guessed at:
+ * no mode, and a note saying why.
+ */
+export function traitAttackModes(f) {
+  const none = { rangedModes: [], meleeModes: [] };
+  const rawDamage = (f.get("damage") ?? "").trim();
+  const rawType = (f.get("damtype") ?? "").trim();
+  if (!rawDamage && !rawType) return none;
+  if (PLACEHOLDER.test(rawType) || isExpression(rawType)) {
+    return { ...none, note: `damage type chosen on the sheet: "${rawType}"` };
+  }
+
+  let damage = null;
+  let perLevel = false;
+  const levelled = /^\$solver\(%level\)d(?:\s*([+-])\s*\$solver\(%level\))?$/i.exec(rawDamage);
+  if (levelled) {
+    damage = parseDamage(levelled[1] ? `1d${levelled[1]}1` : "1d", rawType);
+    perLevel = true;
+  } else if (/^(stun|aff)$/i.test(rawType)) {
+    // Mental Blow: damage(Will) damtype(stun), resisted with Will.
+    damage = parseDamage(rawDamage, "aff");
+  } else if (!isExpression(rawDamage)) {
+    damage = parseDamage(rawDamage, rawType);
+  }
+  if (!damage) return { ...none, note: `attack damage "${rawDamage}" ${rawType} is worked out on the sheet` };
+
+  const malediction = /^speed\/range$/i.test((f.get("rangemax") ?? "").trim()) ? 2 : 0;
+  const rawSkill = (f.get("skillused") ?? "").trim();
+  const attribute = /^"?(?:ST:)?(Will|Per|Perception|IQ|HT|DX|ST)"?$/i.exec(rawSkill)?.[1].toLowerCase();
+  const ATTRIBUTE_NAMES = { will: "Will", per: "Per", perception: "Per", iq: "IQ", ht: "HT", dx: "DX", st: "ST" };
+  const skill = attribute
+    ? ATTRIBUTE_NAMES[attribute]
+    : parseSkillUsed(rawSkill) || "Innate Attack (Projectile)";
+  const half = malediction ? null : parseRange(f.get("rangehalfdam"));
+  const max = malediction ? null : parseRange(f.get("rangemax"));
+  // Spines state damage and no range: they hurt whoever grapples or slams you
+  // (Characters p. 88), which is not an attack anyone makes.
+  if (!malediction && !max?.distance) {
+    return { ...none, note: "damage with no range, so not an attack the trait makes" };
+  }
+
+  return {
+    ...none,
+    rangedModes: [{
+      name: "",
+      skill,
+      ...damage.fields,
+      armorDivisor: 1,
+      accuracy: malediction ? 0 : Math.max(0, number(f.get("acc"), 0)),
+      scopeBonus: 0,
+      halfDamageRange: half?.distance ?? 0,
+      maxRange: max?.distance ?? 0,
+      rangeIsStMultiple: false,
+      rateOfFire: malediction ? 1 : Math.max(1, number(f.get("rof"), 1)),
+      projectiles: 1,
+      shots: "",
+      loaded: 0,
+      reloadWeight: 0,
+      ammunition: "",
+      minSt: null,
+      twoHanded: false,
+      weaponSt: null,
+      thrown: false,
+      mount: "",
+      bulk: 0,
+      recoil: malediction ? 0 : Math.max(0, number(f.get("rcl"), 0)),
+      malfunction: null,
+      perLevel,
+      malediction,
+    }],
+  };
+}
+
 /** The book everything else is a supplement to. */
 const BASIC_SET = { prefix: "B", book: "Basic Set: Characters" };
 
@@ -376,6 +461,10 @@ function parseTraits(recs, reject, note, source) {
 
     const levelNames = parseLevelNames(f.get("levelnames"));
 
+    // An advantage that is an attack carries its attack, as a weapon does.
+    const attack = traitAttackModes(f);
+    if (attack.note) note(`${name}: ${attack.note}`);
+
     out.push({
       _id: ids.get(name) ?? id("trait", name),
       name,
@@ -392,6 +481,8 @@ function parseTraits(recs, reject, note, source) {
         reactionModifier: 0,
         talentSkills: talentSkillsOf(bare, f, source.groups ?? new Map()),
         ...powerOfRecord(f, source.powerCategory ?? null),
+        meleeModes: [],
+        rangedModes: attack.rangedModes,
         description: "",
         reference: reference(f.get("page"), source.prefix, source.book),
       },

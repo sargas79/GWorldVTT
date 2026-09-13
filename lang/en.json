@@ -1272,6 +1272,9 @@
       "DefaultModifier": "Modifier",
       "EditImage": "Change item image",
       "UnreadyAfterAttack": "Unready after attack",
+      "PerLevel": "Per level",
+      "PerLevelHint": "Damage per level of the trait: 1d at three levels rolls 3d (Characters p. 61).",
+      "Malediction": "Malediction",
       "RangedModes": "Ranged attacks",
       "NoRangedModesYet": "No ranged attacks. Add one for a bow, a gun or something thrown.",
       "ExtraDice": "Extra dice",
@@ -3335,6 +3338,15 @@
       "CannonFodderHint": "A mook: fails every defense roll, never takes All-Out Attack, and collapses the moment any damage gets through their DR. Nobody keeps track of their HP (Campaigns p. 417).",
       "CannonFodderDefense": "Cannon fodder: automatically fails",
       "Collapses": "{name} goes down."
+    },
+    "Malediction": {
+      "Label": "{name} (Malediction {level})",
+      "Range": "Range, {yards} yd. (Malediction {level})",
+      "DistancePrompt": "How far away is the victim, in yards?",
+      "Short": "Malediction {level}",
+      "RangeHint": "A Malediction rolls against Will at a range penalty its level sets: -1 a yard at level 1, the Size and Speed/Range Table at level 2, the Long-Distance Modifiers at level 3. The victim may resist in a Quick Contest (Characters p. 106).",
+      "IgnoresDr": "ignores DR",
+      "IgnoresDrHint": "The target's DR has no effect on this attack's damage (Characters p. 106)."
     },
     "Psi": {
       "Powers": "Powers",

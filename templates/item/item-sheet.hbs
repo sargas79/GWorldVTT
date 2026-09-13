@@ -978,7 +978,7 @@
         {{/each}}
       </div>
 
-      {{#if isEquipment}}
+      {{#if isArmed}}
       <div class="isub" data-mode-path="rangedModes">
         <div class="isub-head">
           {{localize "GWORLD.Item.RangedModes"}}
@@ -1085,6 +1085,14 @@
               <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.SurgeHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.surge"
                      {{#if m.surge}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.Surge"}}</label>
+              {{#if @root.isTrait}}
+                <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.PerLevelHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.perLevel"
+                       {{#if m.perLevel}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                  {{localize "GWORLD.Item.PerLevel"}}</label>
+                <label class="icheck" data-tooltip="{{localize 'GWORLD.Malediction.RangeHint'}}">{{localize "GWORLD.Item.Malediction"}}
+                  <input type="number" name="system.rangedModes.{{i}}.malediction" value="{{m.malediction}}" step="1" min="0" max="3"
+                         aria-label="{{localize 'GWORLD.Item.Malediction'}}" {{#unless @root.editable}}disabled{{/unless}} /></label>
+              {{/if}}
             </div>
           </div>
         {{else}}

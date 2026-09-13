@@ -31,6 +31,7 @@ export * from "./casting.js";
 export * from "./spell-attacks.js";
 export * from "./enchanting.js";
 export * from "./trait-effects.js";
+export * from "./trait-attacks.js";
 export * from "./templates.js";
 export * from "./traits.js";
 export * from "./visibility.js";

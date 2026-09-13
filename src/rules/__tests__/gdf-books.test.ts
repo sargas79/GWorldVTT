@@ -14,6 +14,7 @@ import {
   qualityVariantOf,
   reference,
   talentSkillsOf,
+  traitAttackModes,
 } from "../../../tools/parse-gdf.mjs";
 
 describe("reference", () => {
@@ -172,6 +173,53 @@ describe("the power a record belongs to", () => {
   it("gives no power without a pattern, or where no category matches", () => {
     expect(powerOfRecord(new Map([["cat", "_MH Mysticism"]]), null)).toEqual({ power: "", powerTalent: false });
     expect(powerOfRecord(new Map([["cat", "Mundane, Mental, Talents"]]), pattern)).toEqual({ power: "", powerTalent: false });
+  });
+});
+
+describe("the attack an advantage is", () => {
+  it("reads an Innate Attack as dice per level with its weapon columns (Characters p. 61)", () => {
+    const burning = new Map([
+      ["damage", "$solver(%level)d"], ["damtype", "burn"], ["acc", "3"],
+      ["rangehalfdam", "10"], ["rangemax", "100"], ["rof", "1"], ["rcl", "1"],
+      ["skillused", "%examplealiaslist%"],
+    ]);
+    const { rangedModes, note } = traitAttackModes(burning);
+    expect(note).toBeUndefined();
+    expect(rangedModes).toHaveLength(1);
+    expect(rangedModes[0]).toMatchObject({
+      damageFormula: "1d", damageType: "burn", perLevel: true, malediction: 0,
+      accuracy: 3, halfDamageRange: 10, maxRange: 100, skill: "Innate Attack (Projectile)",
+    });
+  });
+
+  it("reads Speed/Range as the second Malediction, rolled against the attribute named", () => {
+    // Monster Hunters 1's Cryokinesis: "1d-1 fatigue damage per level".
+    const cryokinesis = new Map([
+      ["damage", "$solver(%level)d-$solver(%level)"], ["damtype", "fat"],
+      ["rangemax", "Speed/Range"], ["skillused", "Will"],
+    ]);
+    expect(traitAttackModes(cryokinesis).rangedModes[0]).toMatchObject({
+      damageFormula: "1d-1", damageType: "fat", perLevel: true, malediction: 2,
+      accuracy: 0, maxRange: 0, skill: "Will",
+    });
+  });
+
+  it("reads a stun as an affliction resisted by the attribute its damage names", () => {
+    const mentalBlow = new Map([["damage", "Will"], ["damtype", "stun"], ["rangemax", "Speed/Range"], ["skillused", "Will"]]);
+    expect(traitAttackModes(mentalBlow).rangedModes[0]).toMatchObject({
+      affliction: true, afflictionAttribute: "Will", malediction: 2,
+    });
+  });
+
+  it("makes no attack of what the sheet works out, and says why", () => {
+    const affliction = new Map([["damage", "HT-$solver(me::level - 1)"], ["damtype", "aff"], ["rangemax", "100"]]);
+    expect(traitAttackModes(affliction)).toMatchObject({ rangedModes: [], note: expect.stringContaining("worked out") });
+    const innate = new Map([["damage", "$solver(%level)d"], ["damtype", "%Typealt2list%"], ["rangemax", "100"]]);
+    expect(traitAttackModes(innate)).toMatchObject({ rangedModes: [], note: expect.stringContaining("chosen") });
+    // Spines hurt whoever grapples you; there is no range to attack at.
+    const spines = new Map([["damage", "1d-2"], ["damtype", "imp"], ["reach", "C"]]);
+    expect(traitAttackModes(spines).rangedModes).toEqual([]);
+    expect(traitAttackModes(new Map())).toEqual({ rangedModes: [], meleeModes: [] });
   });
 });
 

@@ -70,6 +70,8 @@ interface DamageFlag {
   weaponTarget?: { actorUuid: string; itemId: string; name: string };
   /** What the weapon is made of, for a Vulnerability to silver (Characters p. 161). */
   material?: string;
+  /** True when DR has no effect on the blow, as for a Malediction (Characters p. 106). */
+  ignoresDr?: boolean;
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -257,6 +259,7 @@ async function applyFromCard(options: {
     ...(flag.chink ? { chink: true } : {}),
     ...(flag.drMultiplier && flag.drMultiplier > 1 ? { drMultiplier: flag.drMultiplier } : {}),
     ...(flag.material ? { material: flag.material } : {}),
+    ...(flag.ignoresDr ? { ignoresDr: true } : {}),
     // The maximum belongs to the dice as rolled, so it is only the maximum for
     // someone the blast struck directly: collateral damage has already been
     // scaled down by distance, and pairing it with the undiminished maximum
