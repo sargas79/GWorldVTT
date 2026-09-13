@@ -303,7 +303,14 @@
       "Action": "Slam",
       "Title": "Slam",
       "Velocity": "Yards moved",
-      "Label": "Slam at {yards} yards"
+      "Label": "Slam at {yards} yards",
+      "Back": "{name} hits back ({yards} yards)",
+      "Outcome": {
+        "nothing": "{slammer} {dealt} against {foe} {taken}: nobody goes down",
+        "defenderRollsToStay": "{slammer} {dealt} against {foe} {taken}: {foe} rolls DX or falls",
+        "attackerKnocksDown": "{slammer} {dealt} against {foe} {taken}: twice as hard, {foe} is knocked down",
+        "attackerFellInstead": "{slammer} {dealt} against {foe} {taken}: {foe} hit back twice as hard, and {slammer} falls instead"
+      }
     },
     "Melee": {
       "Title": "Melee attack",
@@ -342,7 +349,8 @@
       "Immobile": "This posture cannot move hex by hex: sitting cannot move at all, and lying down spends every movement point to shift one hex.",
       "Handedness": "Weapon hand",
       "right": "Right",
-      "left": "Left"
+      "left": "Left",
+      "TurnCosts": "Turning mid-move: {sixty} point for 60°, {oneTwenty} for 120°, {about} to turn about; free at the end of the move"
     },
     "Rules": {
       "Title": "GURPS rules in play",
@@ -2066,7 +2074,8 @@
       "Release": "Let go",
       "StateHolding": "Holding on with {hands} — Aim, Feint, Concentrate, Wait and ranged attacks are out",
       "StateHeld": "Held with {hands} — no Move, no Aim, no ranged attacks, and nothing longer than a dagger",
-      "StatePinned": "Pinned and helpless — no maneuver that needs physical movement"
+      "StatePinned": "Pinned and helpless — no maneuver that needs physical movement",
+      "CannotMove": "Grappled: no Move maneuver without twice the foe's ST"
     },
     "Sight": {
       "Label": "What you can see",
@@ -2082,7 +2091,9 @@
       "none": "None",
       "exposedLocation": "Aim at an exposed part",
       "randomLocation": "Roll the location, and risk the cover",
-      "shootThrough": "Shoot through it (-2, and its DR)"
+      "shootThrough": "Shoot through it (-2, and its DR)",
+      "StrikesCover": "If the location it hit is only half exposed, the shot strikes the cover",
+      "HitsTarget": "If the location it hit is only half exposed, the shot still hits the target"
     },
     "Dying": {
       "DeathCheck": "Roll against death",

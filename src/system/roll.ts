@@ -78,7 +78,7 @@ import { impairedAttacks } from "../rules/trait-effects.js";
 import { levelDifference } from "../rules/melee-situations.js";
 import { effectiveLevelDifference } from "../rules/unarmed-techniques.js";
 import { turnedBlade } from "../rules/subduing.js";
-import { coverShot, type CoverApproach } from "../rules/cover.js";
+import { coverShot, struckCover, type CoverApproach } from "../rules/cover.js";
 import { breakWeapon } from "./weapon-damage.js";
 import { spendShots } from "./ammunition.js";
 import type { DamageType } from "../rules/types.js";
@@ -873,6 +873,24 @@ export async function handleRollAction(
       : {}),
   });
 
+  // A shot at a random location behind cover (p. 407): "For shots that hit a
+  // location that is only half exposed, roll 1d: on a roll of 4-6, the shot
+  // strikes cover, not the target." Whether the location it found is half
+  // exposed is the GM's to see, so the die is rolled and both readings given.
+  if (rollType === "attack" && shot?.cover === "randomLocation" && outcome?.success) {
+    const die = new Roll("1d6");
+    await die.evaluate();
+    const strikes = struckCover(die.total, coverShot({ approach: "randomLocation" }));
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor }),
+      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+      content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${game.i18n.localize("GWORLD.Cover.randomLocation")}</span></div>
+        <div class="gc-dice"><span class="gc-total">${die.total}</span></div>
+        <div class="gc-result">${game.i18n.localize(strikes ? "GWORLD.Cover.StrikesCover" : "GWORLD.Cover.HitsTarget")}</div></div>`,
+      rolls: [die],
+    });
+  }
+
   // The shells fired come off the weapon's count (Campaigns p. 373).
   if (rollType === "attack" && ranged && shot && isRuleOn("reloading")) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
@@ -1059,6 +1077,8 @@ interface RangedShot {
   calledShot: CalledShot | null;
   /** How far the shot had to travel, which a steered weapon's flight needs. */
   rangeYards: number;
+  /** What was done about cover, which a random location may still strike. */
+  cover?: CoverApproach | "none";
 }
 
 /**
@@ -1277,6 +1297,7 @@ export async function promptForRangedAttack(options: {
     coneMultiplier: pellets.coneMultiplier,
     calledShot: aimed.shot,
     rangeYards: input.range,
+    cover: input.cover ?? "none",
   };
 }
 

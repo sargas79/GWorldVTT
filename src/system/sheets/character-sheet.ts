@@ -16,6 +16,7 @@ import {
   evadeModifier,
   opportunityFirePenalty,
   slamDamage,
+  slamOutcome,
 } from "../../rules/attack-options.js";
 import { attackArc } from "../../rules/tactical.js";
 import { CLIMBS, climb, climbingModifier, swimmingModifier } from "../../rules/physical.js";
@@ -42,6 +43,8 @@ import {
 import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
 import { useTechnique, type Victim } from "../unarmed-techniques.js";
 import { canParryLiquid } from "../../rules/dirty-tricks.js";
+import { canMoveWhileGrappled } from "../../rules/grappling.js";
+import { formatDiceAdds } from "../../rules/dice.js";
 import { rollInvention, type InventionPlan } from "../invention.js";
 import { describePowers, unpoweredAbilities } from "../psionics.js";
 import { stimulantWearsOff, takeDepressant, takeStimulant, withdrawalRoll } from "../drugs.js";
@@ -109,7 +112,7 @@ import { rollFrightCheck } from "../fright.js";
 import { traitsOf } from "../damage.js";
 import { feintDefenseScore, recordFeint } from "../feint.js";
 import { attackDirection, facingOf } from "../hex.js";
-import { facingChangeAtEndOfMove, hexMovementCost } from "../../rules/tactical.js";
+import { facingChangeAtEndOfMove, facingChangeCost, hexMovementCost } from "../../rules/tactical.js";
 import { CompendiumPicker } from "../apps/compendium-picker.js";
 import { SYSTEM_ID } from "../constants.js";
 import { SKILL_ORDER } from "../settings.js";
@@ -221,6 +224,9 @@ function tacticalPanel(system: any, derived: any) {
       movementPointsSpent: 0,
       movementPointsAvailable: points,
     }),
+    // "Each hex-side of facing change costs one movement point" mid-move
+    // (p. 387): a 60-degree turn, a 120, and turning right round.
+    turnCosts: [1, 2, 3].map((sides) => facingChangeCost(0, sides as 0 | 1 | 2 | 3 | 4 | 5)),
     handedness: system.handedness ?? "right",
   };
 }
@@ -2919,6 +2925,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         : opportunityFirePenalty(Number(system.wait?.hexesWatched ?? 1)),
       isAllOutDefense: system.maneuver === "allOutDefense" || system.conditions.allOutDefense,
       isAllOutAttack: system.maneuver === "allOutAttack",
+      // "If you have been grappled, you cannot take a Move maneuver unless you
+      // have at least twice your foe's ST" (p. 371).
+      grappledCannotMove: (() => {
+        const grapple = grappleOf(this.actor);
+        if (!grapple || grapple.holding) return false;
+        const foe: any = fromUuidSync(grapple.foe);
+        if (!foe) return false;
+        return !canMoveWhileGrappled(
+          Number(system.attributes?.ST ?? 10) || 10,
+          Number(foe.system?.attributes?.ST ?? 10) || 10,
+        );
+      })(),
       aoaOptions: (["determined", "double", "feint", "strong", "suppression"] as const).map((key) => ({
         key,
         label: `GWORLD.Maneuver.AllOutAttackOption.${key}`,
@@ -4733,12 +4751,39 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (velocity === null) return;
 
-    const { dice, modifier } = slamDamage(hp, velocity);
-    await rollDamage({
+    // "You and your foe each inflict dice of crushing damage on the other
+    // equal to (HP x velocity)/100" (p. 371) -- both of them, and who falls
+    // down is decided by comparing the two. With a target on the map both are
+    // rolled; with none, only the slammer's, as before.
+    const mine = slamDamage(hp, velocity);
+    const dealt = await rollDamage({
       actor: this.actor,
       label: game.i18n.format("GWORLD.Slam.Label", { yards: velocity }),
-      formula: modifier === 0 ? `${dice}d` : `${dice}d${modifier}`,
+      formula: formatDiceAdds({ dice: mine.dice, adds: mine.modifier }),
       damageType: "cr",
+    });
+
+    const foe = targetedTokens()[0]?.actor ?? null;
+    if (!foe) return;
+    const theirs = slamDamage(Number(foe.system?.hp?.max ?? 0), velocity);
+    const taken = await rollDamage({
+      actor: foe,
+      label: game.i18n.format("GWORLD.Slam.Back", { name: String(foe.name ?? ""), yards: velocity }),
+      formula: formatDiceAdds({ dice: theirs.dice, adds: theirs.modifier }),
+      damageType: "cr",
+    });
+
+    const outcome = slamOutcome(dealt, taken);
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor: this.actor }),
+      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+      content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${game.i18n.localize("GWORLD.Slam.Title")}</span></div>
+        <div class="gc-result">${game.i18n.format(`GWORLD.Slam.Outcome.${outcome}`, {
+          slammer: String(this.actor.name ?? ""),
+          foe: String(foe.name ?? ""),
+          dealt,
+          taken,
+        })}</div></div>`,
     });
   }
 

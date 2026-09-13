@@ -13,6 +13,9 @@
           </select>
         </div>
       </div>
+      {{#if grappledCannotMove}}
+        <p class="ihint warn">{{localize "GWORLD.Grapple.CannotMove"}}</p>
+      {{/if}}
       {{#if isAllOutAttack}}
         {{!-- "You must specify one of these options before you attack" (p. 365). --}}
         <div class="fld">
@@ -599,6 +602,9 @@
           <span>{{localize "GWORLD.Tactical.Forward"}} {{tactical.forward}}</span>
           <span>{{localize "GWORLD.Tactical.Sideways"}} {{tactical.sideways}}</span>
           <span>{{localize "GWORLD.Tactical.Backward"}} {{tactical.backward}}</span>
+        </div>
+        <div class="gc-mods">
+          <span class="gc-mod">{{localize "GWORLD.Tactical.TurnCosts" sixty=(lookup tactical.turnCosts 0) oneTwenty=(lookup tactical.turnCosts 1) about=(lookup tactical.turnCosts 2)}}</span>
         </div>
         <p class="ihint">{{localize "GWORLD.Tactical.MovementHint"}}</p>
       {{/if}}
