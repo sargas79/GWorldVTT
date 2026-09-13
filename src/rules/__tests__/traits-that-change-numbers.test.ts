@@ -197,6 +197,39 @@ describe("talents", () => {
     expect(isTalent("Charisma")).toBe(true);
     expect(isTalent("Combat Reflexes")).toBe(false);
   });
+
+  // Monster Hunters 1 p. 24: a Talent from another book is known by the list
+  // its compendium entry carries, since no list here names it.
+  it("read a trait's own list of skills, whatever the trait is called", () => {
+    const craftiness = {
+      name: "Craftiness",
+      levels: 2,
+      talentSkills: ["Acting", "Camouflage", "Disguise", "Holdout", "Shadowing", "Stealth"],
+    };
+    const bonuses = talentBonuses([craftiness]);
+    expect(talentBonusFor("Stealth", bonuses)).toBe(2);
+    expect(talentBonusFor("Acting", bonuses)).toBe(2);
+    expect(talentBonusFor("Fast-Talk", bonuses)).toBe(0);
+    expect(isTalent("Craftiness", craftiness.talentSkills)).toBe(true);
+    expect(isReadTrait("Craftiness", craftiness.talentSkills)).toBe(true);
+    expect(isTalent("Craftiness")).toBe(false);
+  });
+
+  it("prefer the trait's own list to the Basic Set's list of the same name", () => {
+    // A Basic Set Talent already on a character carries no list and is read by
+    // name; one from the compendium carries the same list, and says so itself.
+    const bonuses = talentBonuses([{ name: "Healer", levels: 1, talentSkills: ["First Aid"] }]);
+    expect(talentBonusFor("First Aid", bonuses)).toBe(1);
+    expect(talentBonusFor("Surgery", bonuses)).toBe(0);
+    expect(talentBonusFor("Surgery", talentBonuses([{ name: "Healer", levels: 1, talentSkills: [] }]))).toBe(1);
+  });
+
+  it("never reach a wildcard skill where Monster Hunters 1's rule is in play", () => {
+    const bonuses = talentBonuses([{ name: "Talker!", levels: 1, talentSkills: ["Talker!"] }]);
+    expect(talentBonusFor("Talker!", bonuses, { difficulty: "W", wildcardsExcluded: true })).toBe(0);
+    expect(talentBonusFor("Talker!", bonuses, { difficulty: "W", wildcardsExcluded: false })).toBe(1);
+    expect(talentBonusFor("Talker!", bonuses, { difficulty: "VH", wildcardsExcluded: true })).toBe(1);
+  });
 });
 
 describe("reaction modifiers from the sheet", () => {

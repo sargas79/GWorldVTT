@@ -290,6 +290,13 @@
         </label>
       </div>
       <p class="ihint">{{localize "GWORLD.Trait.CostTableHint"}}</p>
+      <div class="ifields">
+        <label class="wide">{{localize "GWORLD.Trait.TalentSkills"}}
+          <textarea name="system.talentSkills" rows="3"
+                    {{#unless editable}}disabled{{/unless}}>{{talentSkillsText}}</textarea>
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Trait.TalentSkillsHint"}}</p>
 
       {{!-- Enhancements and limitations, and the self-control number: what
            changes a trait's cost from the figure the book prints. --}}

@@ -283,6 +283,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     if (item.type === "trait") {
       context.costTableText = item.system.costTable.join("/");
       context.levelNamesText = item.system.levelNames.join("\n");
+      context.talentSkillsText = (item.system.talentSkills ?? []).join("\n");
       context.isTabled = item.system.costTable.length > 0;
       context.levelName = item.system.levelName;
       context.netModifier = item.system.netModifier;
@@ -536,6 +537,11 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       }
       if (typeof data.system.levelNames === "string") {
         data.system.levelNames = parseLevelNames(data.system.levelNames);
+      }
+      // A skill a line, like the level names, with no blank lines kept: a list
+      // of skills has no position to hold the way a level does.
+      if (typeof data.system.talentSkills === "string") {
+        data.system.talentSkills = parseLevelNames(data.system.talentSkills).filter(Boolean);
       }
       // The select submits "" for none, which the number field cannot hold.
       if (data.system.selfControl === "" || data.system.selfControl === undefined) {

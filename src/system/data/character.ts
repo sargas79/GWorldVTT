@@ -1263,6 +1263,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ),
       // A reaction modifier typed onto the trait by the GM.
       reactionModifier: Number(item.system?.reactionModifier ?? 0) || 0,
+      // A Talent's own list of skills, which is all a Talent from another book has.
+      talentSkills: ((item.system?.talentSkills ?? []) as unknown[]).map((s) => String(s)),
     }));
     const traits = traitEffects(heldTraits);
     // What the afflictions on this character come to (pp. 428-429). Read once,
@@ -1394,7 +1396,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // to a skill by name rather than through an attribute.
       // What the talents add to this skill by name, on top of anything typed
       // into the skill's own bonus field.
-      const talentBonus = talentBonusFor(String(item.name ?? ""), talents);
+      const talentBonus = talentBonusFor(String(item.name ?? ""), talents, {
+        difficulty: sys.difficulty,
+        wildcardsExcluded: isRuleOn("talentsSkipWildcards"),
+      });
       // The tools of this trade, if any are carried (Campaigns p. 345).
       const toolBonus = toolBonuses[String(item.name ?? "").trim()] ?? 0;
       const resolved = effectiveSkillLevel({

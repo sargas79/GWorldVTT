@@ -293,7 +293,7 @@ function withLevels(trait: any, openDescriptions: ReadonlySet<string> = new Set(
     // exact that this system applies on its own. Which is which is worth a
     // badge -- a player who buys Combat Reflexes should be able to see that
     // the +1 is already in their Dodge.
-    applied: isReadTrait(String(trait.name ?? "")),
+    applied: isReadTrait(String(trait.name ?? ""), system.talentSkills ?? []),
   };
 }
 
