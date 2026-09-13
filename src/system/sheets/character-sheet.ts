@@ -106,6 +106,7 @@ import {
   templateFromItem,
 } from "../character-templates.js";
 import {
+  choiceMetElsewhere,
   choiceSatisfied,
   entriesInGroup,
   requiredEntries,
@@ -2290,8 +2291,11 @@ export async function chooseTemplateOptions(
         )
         .join("");
 
-      const asks =
-        group.kind === "count"
+      // A group with nothing to tick is met apart from this dialog: a lens or a
+      // racial template taken as well, or points raising something on the sheet.
+      const asks = choiceMetElsewhere(template, group)
+        ? game.i18n.format("GWORLD.Template.ChosenElsewhere", { points: group.required })
+        : group.kind === "count"
           ? game.i18n.format("GWORLD.Template.PickCount", { count: group.required })
           : game.i18n.format("GWORLD.Template.PickPoints", { points: group.required });
 
@@ -2333,30 +2337,34 @@ export async function chooseTemplateOptions(
       callback: (_event: Event, button: HTMLElement) => {
         const form = button.closest<HTMLElement>(".application");
         const picks: TemplateEntry[] = [];
+        const byGroup: TemplateEntry[][] = template.choices.map(() => []);
 
         for (const box of form?.querySelectorAll<HTMLInputElement>('input[name="pick"]') ?? []) {
           if (!box.checked) continue;
-          const group = template.choices[Number(box.dataset.group)];
+          const groupIndex = Number(box.dataset.group);
+          const group = template.choices[groupIndex];
           const entry = entriesInGroup(template, group?.id ?? "")[Number(box.dataset.entry)];
-          if (entry) picks.push(entry);
+          if (!entry) continue;
+          picks.push(entry);
+          byGroup[groupIndex]?.push(entry);
         }
 
-        return { picks };
+        return { picks, byGroup };
       },
     },
     rejectClose: false,
   });
 
   if (!result || typeof result !== "object") return null;
-  const { picks } = result as { picks: TemplateEntry[] };
+  const { picks, byGroup } = result as { picks: TemplateEntry[]; byGroup: TemplateEntry[][] };
 
   // A group short of its requirement is worth saying out loud, but not worth
   // refusing: "character templates are not rules", and a GM may have said so.
-  for (const group of template.choices) {
-    const chosen = picks.filter((pick) =>
-      entriesInGroup(template, group.id).some((entry) => entry.name === pick.name),
-    );
-    if (!choiceSatisfied({ group, picks: chosen })) {
+  // Each pick counts toward the group it was ticked in, since the same option
+  // can be offered in two.
+  for (const [index, group] of template.choices.entries()) {
+    if (choiceMetElsewhere(template, group)) continue;
+    if (!choiceSatisfied({ group, picks: byGroup[index] ?? [] })) {
       ui.notifications?.warn(
         game.i18n.format("GWORLD.Template.Short", { group: group.label }),
       );

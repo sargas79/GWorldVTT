@@ -1248,6 +1248,7 @@
       "Granted": "{count} items granted",
       "PickCount": "Pick {count}.",
       "PickPoints": "Take {points} points' worth.",
+      "ChosenElsewhere": "{points} points, chosen apart from this template.",
       "Short": "{group} is short of what the template asks for.",
       "metaTrait": "Meta-trait"
     },

@@ -3,10 +3,13 @@ import { describe, expect, it } from "vitest";
 import {
   HUMAN_RACIAL_COST,
   applyTemplate,
+  choiceMetElsewhere,
   choiceSatisfied,
   combineTemplates,
   emptyTemplate,
   entriesInGroup,
+  entryItemFields,
+  entryItemName,
   requiredEntries,
   stackTemplate,
   templateCost,
@@ -317,5 +320,95 @@ describe("stackTemplate (Characters p. 259)", () => {
     expect(plan.raise).toMatchObject([{ name: "Status", levels: 3 }]);
     // HP +3 is the requirement; +2 was already bought, so one more.
     expect(plan.secondary).toEqual({ hp: 1 });
+  });
+});
+
+describe("an entry that copies a compendium document", () => {
+  const entry = (points: number, levels?: number): TemplateEntry => ({
+    name: "Trait",
+    itemType: "trait",
+    points,
+    ...(levels ? { levels } : {}),
+  });
+  /** The sheet's own sum: a table's step, or points plus levels at their price. */
+  const billed = (
+    document: { points?: number; pointsPerLevel?: number; costTable?: number[] },
+    fields: { points?: number; levels?: number },
+    documentLevels = 1,
+  ) => {
+    const levels = fields.levels ?? documentLevels;
+    const table = document.costTable ?? [];
+    if (table.length) return table[Math.min(Math.max(levels, 1), table.length) - 1];
+    return (fields.points ?? document.points ?? 0) + levels * (document.pointsPerLevel ?? 0);
+  };
+
+  it("bills a trait priced by the level at the template's total, not the total plus its levels", () => {
+    // 2 levels at 5 a level, stated as 10: nothing left over for points.
+    const document = { name: "Trait", points: 0, pointsPerLevel: 5 };
+    const fields = entryItemFields(entry(10, 2), document);
+    expect(fields).toEqual({ name: "Trait", levels: 2, points: 0 });
+    expect(billed(document, fields)).toBe(10);
+  });
+
+  it("keeps a base cost a trait adds to its levels", () => {
+    // 5 for the trait, 10 a level: three levels are 35.
+    const document = { name: "Trait", points: 5, pointsPerLevel: 10 };
+    expect(billed(document, entryItemFields(entry(35, 3), document))).toBe(35);
+  });
+
+  it("reads the levels an entry's points buy when it states none", () => {
+    const document = { name: "Trait", points: 0, pointsPerLevel: 5 };
+    const fields = entryItemFields(entry(15), document);
+    expect(fields.levels).toBe(3);
+    expect(billed(document, fields)).toBe(15);
+  });
+
+  it("keeps an uneven price as points, with no levels", () => {
+    const document = { name: "Trait", points: 0, pointsPerLevel: 5 };
+    const fields = entryItemFields(entry(3), document);
+    expect(fields).toEqual({ name: "Trait", points: 3, levels: 0 });
+    expect(billed(document, fields)).toBe(3);
+  });
+
+  it("finds a tabled trait's level by its total", () => {
+    const document = { name: "Trait", points: 0, costTable: [10, 20, 30, 50, 75] };
+    const fields = entryItemFields(entry(20), document);
+    expect(fields).toEqual({ name: "Trait", levels: 2 });
+    expect(billed(document, fields)).toBe(20);
+  });
+
+  it("gives a disadvantage priced by the level its levels too", () => {
+    const document = { name: "Trait", points: 0, pointsPerLevel: -5 };
+    expect(billed(document, entryItemFields(entry(-5), document))).toBe(-5);
+  });
+
+  it("writes a skill's or a flat trait's points as they are", () => {
+    expect(entryItemFields(entry(12), { name: "Trait" })).toEqual({ name: "Trait", points: 12 });
+    expect(entryItemFields(entry(15), { name: "Trait", points: 15 })).toEqual({ name: "Trait", points: 15 });
+  });
+
+  it("leaves the document's cost alone for an entry that states none", () => {
+    expect(entryItemFields(entry(0), { name: "Trait", points: 0, pointsPerLevel: 5 })).toEqual({ name: "Trait" });
+  });
+
+  it("keeps an entry's qualifier on a generic document", () => {
+    expect(entryItemName("Sense of Duty (Teammates)", "Sense of Duty")).toBe("Sense of Duty (Teammates)");
+    expect(entryItemName("Physics (Paraphysics)", "Physics/TL")).toBe("Physics/TL (Paraphysics)");
+  });
+
+  it("keeps the document's name where it is already exact or the entry doesn't qualify it", () => {
+    expect(entryItemName("Guns (Pistol)", "Guns/TL (Pistol)")).toBe("Guns/TL (Pistol)");
+    expect(entryItemName("Patrons", "Patron")).toBe("Patron");
+    expect(entryItemName("Luck", "Luck")).toBe("Luck");
+  });
+});
+
+describe("a choice group with nothing to tick", () => {
+  it("is met elsewhere, and a group with options is not", () => {
+    const template = {
+      entries: [{ name: "Brawling", itemType: "skill" as const, points: 2, group: "melee" }],
+    };
+    expect(choiceMetElsewhere(template, { id: "lens" })).toBe(true);
+    expect(choiceMetElsewhere(template, { id: "melee" })).toBe(false);
   });
 });
