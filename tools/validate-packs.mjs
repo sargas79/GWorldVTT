@@ -28,7 +28,7 @@ const SOURCE =
 
 const ITEM_TYPES = new Set([
   "trait", "skill", "technique", "equipment", "armor", "shield", "language", "template", "spell",
-  "modifier",
+  "modifier", "ritual",
 ]);
 const ACTOR_TYPES = new Set(["character", "npc"]);
 const MODIFIER_KINDS = new Set(["enhancement", "limitation", "special"]);

@@ -15,7 +15,8 @@
       "technique": "Technique",
       "template": "Template",
       "spell": "Spell",
-      "modifier": "Enhancement or Limitation"
+      "modifier": "Enhancement or Limitation",
+      "ritual": "Ritual"
     }
   },
   "GWORLD": {
@@ -3381,6 +3382,115 @@
       "TopOff": "Top off",
       "Capped": "capped",
       "Default": "default"
+    },
+    "Ritual": {
+      "Title": "Rituals",
+      "Hint": "Written down once, with what each costs and the Path it is rolled against (Monster Hunters 1 pp. 33-35).",
+      "NoneYet": "No rituals written down yet.",
+      "Add": "Add Ritual",
+      "Cost": "Energy cost",
+      "CostHint": "(Spell effects + modifiers) x Greater effects multiplier, less any traditional trappings (Monster Hunters 1 pp. 33-34).",
+      "Energy": "energy",
+      "Skill": "Rolled against",
+      "PathPenaltyHint": "-1 to every roll for each Path past the second (Monster Hunters 1 p. 35).",
+      "Uncastable": "Path out of reach",
+      "DurationConflict": "Damage or healing cannot last",
+      "DurationConflictHint": "Damage and healing cannot be combined with a duration (Monster Hunters 1 p. 34).",
+      "Effects": "Spell effects",
+      "NoEffects": "No effects yet: a ritual needs at least one.",
+      "Greater": "Greater",
+      "EffectLabel": "Effect",
+      "Path": "Path",
+      "Effect": {
+        "sense": "Sense (2)",
+        "strengthen": "Strengthen (3)",
+        "restore": "Restore (4)",
+        "control": "Control (5)",
+        "destroy": "Destroy (5)",
+        "create": "Create (6)",
+        "transform": "Transform (8)"
+      },
+      "Definition": "Definition",
+      "DefinitionHint": "What makes this ritual this one: change any of it and Ritual Mastery or a grimoire no longer applies (Monster Hunters 1 p. 39).",
+      "Uses": {
+        "area": "Area of effect",
+        "healing": "Healing",
+        "metaMagic": "Meta-magic",
+        "speed": "Speed",
+        "damage": "Damage"
+      },
+      "Affliction": "Affliction",
+      "AfflictionPercent": "Affliction worth (%)",
+      "AfflictionPercentHint": "+1 energy for every +5% the affliction is worth as an enhancement to Affliction; stunning costs nothing (Monster Hunters 1 p. 34).",
+      "Traits": "Traits altered",
+      "BonusScope": {
+        "label": "Bonus or penalty to",
+        "none": "Nothing",
+        "broad": "A broad range of rolls",
+        "moderate": "A moderate range of rolls",
+        "single": "A single skill"
+      },
+      "BonusRolls": "Rolls affected",
+      "DamageKind": {
+        "label": "Damage priced as",
+        "standard": "Most damage (x1)",
+        "small": "Small piercing (x0.5)",
+        "large": "Cutting or large piercing (x1.5)",
+        "heavy": "Corrosion, fatigue, huge piercing or impaling (x2)"
+      },
+      "Delivery": {
+        "label": "Delivered as",
+        "malediction": "Malediction, ignoring DR",
+        "external": "External attack (triple damage)",
+        "externalExplosive": "External explosion (double damage)"
+      },
+      "Casting": "As cast",
+      "AreaRadius": "Radius (yards)",
+      "Excluded": "Subjects excluded",
+      "TraitsAdded": "Points given",
+      "TraitsAddedHint": "+1 energy per character point of advantages or attributes added, or disadvantages reduced (Monster Hunters 1 p. 34).",
+      "TraitsRemoved": "Points taken",
+      "TraitsRemovedHint": "+1 energy per 5 character points of disadvantages added, or attributes or advantages reduced (Monster Hunters 1 p. 34).",
+      "BonusAmount": "Modifier",
+      "DamageDice": "Damage",
+      "HealingDice": "Healing",
+      "MetaMagic": "Spell's cost",
+      "MetaMagicHint": "Dispelling or altering magic costs the energy of the original spell (Monster Hunters 1 p. 34).",
+      "SpeedYards": "Speed (yards/second)",
+      "Duration": {
+        "momentary": "Momentary",
+        "10min": "10 minutes",
+        "30min": "30 minutes",
+        "1hr": "1 hour",
+        "3hr": "3 hours",
+        "6hr": "6 hours",
+        "12hr": "12 hours",
+        "1day": "1 day",
+        "3days": "3 days",
+        "1week": "1 week",
+        "2weeks": "2 weeks",
+        "1month": "1 month"
+      },
+      "ExtraMonths": "Further months",
+      "Years": "Years",
+      "YearsHint": "For durations over a year, the added energy is the number of years + 21 (Monster Hunters 1 p. 35).",
+      "RangeKind": {
+        "label": "Range",
+        "yards": "Distance",
+        "information": "Information",
+        "crossTime": "Across time"
+      },
+      "RangeUnit": {
+        "yards": "Range (yards)",
+        "information": "Range (yards)",
+        "crossTime": "Days away"
+      },
+      "Dimensions": "Dimensions crossed",
+      "SubjectWeight": "Heaviest subject (lbs.)",
+      "SubjectWeightHint": "For a physical change, the weight of the largest single subject, not of them all (Monster Hunters 1 p. 34).",
+      "ExtraEnergy": "Extra energy",
+      "Trappings": "Trappings discount (%)",
+      "TrappingsHint": "The GM's discount of up to 25% for cool, flavourful embellishments (Monster Hunters 1 p. 34)."
     },
     "Holy": {
       "Title": "Holy attack",
