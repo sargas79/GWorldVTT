@@ -151,3 +151,48 @@ describe("resolveDamageAgainst", () => {
     expect(result.previous).toBe(0);
   });
 });
+
+/**
+ * Cinematic Explosions (Campaigns p. 417). The rule is off by default, so
+ * nothing here runs against the ordinary pipeline; what it checks is that a
+ * blast marked cinematic costs a point a yard and leaves nothing else behind.
+ */
+describe("a cinematic blast", () => {
+  const blast = (basicDamage: number, type = "cr", hitLocation = "torso") =>
+    ({ basicDamage, type, hitLocation, armorDivisor: 1, cinematicBlast: true }) as never;
+
+  it("costs a token point a yard rather than what the dice said", () => {
+    // ST 10 shoves a yard per 8 points, so 20 is two yards and two points.
+    const result = resolveDamageAgainst(actor({ hp: 12, maxHp: 12 }), blast(20));
+    expect(result.knockback.yards).toBe(2);
+    expect(result.injury).toBe(2);
+    expect(result.current).toBe(10);
+    expect(result.cinematicBlast).toBe(true);
+  });
+
+  it("hurts nobody it did not move", () => {
+    const result = resolveDamageAgainst(actor({ hp: 12, maxHp: 12 }), blast(4));
+    expect(result.knockback.yards).toBe(0);
+    expect(result.injury).toBe(0);
+    expect(result.current).toBe(12);
+  });
+
+  it("cripples no limb it did not wound", () => {
+    // 30 crushing to an arm would cripple it and throw away everything over
+    // the threshold, if the rolled figure were ever treated as a wound. It
+    // is not: three yards of knockback cost three token points.
+    const result = resolveDamageAgainst(actor({ hp: 12, maxHp: 12 }), blast(30, "cr", "arm"));
+    expect(result.injury).toBe(3);
+    expect(result.crippled).toBe(false);
+    expect(result.excessLost).toBe(0);
+  });
+
+  it("never bleeds, whatever the blast was made of", () => {
+    // A cutting blast turned by heavy armour still shoves, and the points it
+    // costs are for being thrown about rather than for an open wound.
+    const armoured = actor({ hp: 12, maxHp: 12, armor: [{ dr: 40, locations: ["torso"] }] });
+    const result = resolveDamageAgainst(armoured, blast(30, "cut"));
+    expect(result.injury).toBeGreaterThan(0);
+    expect(result.bleeds).toBe(false);
+  });
+});

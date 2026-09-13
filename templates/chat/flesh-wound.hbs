@@ -1,0 +1,18 @@
+{{!-- "Just a flesh wound" (Campaigns p. 417). --}}
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{localize "GWORLD.Cinematic.FleshWoundTitle" name=name}}</span>
+    <span class="gc-target">{{localize "GWORLD.Cinematic.FleshWound"}}</span>
+  </div>
+  <div class="gc-result success">
+    {{localize "GWORLD.Cinematic.Shrugged" ignored=ignored taken=taken pool=pool}}
+    <span class="gc-mod">{{current}} / {{max}}</span>
+  </div>
+  <div class="gc-mods">
+    {{#if inDebt}}
+      <span class="gc-warn">{{localize "GWORLD.Cinematic.InDebt" points=unspent}}</span>
+    {{else}}
+      <span class="gc-mod">{{localize "GWORLD.Cinematic.PointsLeft" points=unspent}}</span>
+    {{/if}}
+  </div>
+</div>

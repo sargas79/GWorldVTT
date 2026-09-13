@@ -217,6 +217,12 @@ export interface DerivedAttack {
   /** True for a punch, kick, bite or grapple, which fumbles on its own table. */
   unarmed: boolean;
   /**
+   * True for a weapon thrown by hand rather than shot. Ranged only, and only
+   * read by the rules that treat a hurled rock as the arm that hurled it
+   * (Campaigns p. 417).
+   */
+  thrown?: boolean;
+  /**
    * True when the damage comes off the Damage Table -- thrust or swing scaled
    * by ST. The bonuses that only apply to muscle-powered blows read this; a
    * force sword's flat 8d is not one of them.
@@ -1702,6 +1708,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           // A ranged attack never reads the unarmed miss table: a thrown rock
           // fumbles as a weapon does, whatever threw it.
           unarmed: false,
+          thrown: Boolean(mode.thrown),
           stBased: mode.damageBase === "thr" || mode.damageBase === "sw",
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",

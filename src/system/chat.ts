@@ -35,6 +35,8 @@ import { defenseChoices, type DefenseChoice, type DefenseKey } from "./defense-c
 import { loseAim } from "./aim.js";
 import { blockingSpellsOf, castBlockingSpell } from "./casting.js";
 import { addResistControls } from "./spell-resistance.js";
+import { buyDefenseBack, declareFleshWound, type FleshWoundEntry, type TvActionEntry } from "./cinematic.js";
+import { canAvertWithFatigue, worthDeclaring, type Delivery } from "../rules/cinematic.js";
 import type { DamageType } from "../rules/types.js";
 
 const APPLIED_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-applied.hbs`;
@@ -228,6 +230,12 @@ async function applyFromCard(options: {
   // something the attacker did, not something each victim rolls separately.
   const critical = options.critical ? await rollCriticalHit(struck) : null;
 
+  // "In cinematic combat, explosions do no direct damage... All a blast does
+  // is disarray clothing, blacken faces, and (most importantly) cause
+  // knockback" (p. 417). The rolled figure still travels: it is what sets how
+  // far the victim flies, and a token point a yard is what that costs them.
+  const cinematicBlast = Boolean(flag.explosive) && isRuleOn("cinematicExplosions");
+
   const damage: IncomingDamage = {
     basicDamage: blast ? blast.damage : flag.basicDamage,
     type: flag.damageType,
@@ -247,6 +255,7 @@ async function applyFromCard(options: {
       : {}),
     ...(critical ? { critical: critical.hit } : {}),
     ...(options.arc ? { arc: options.arc } : {}),
+    ...(cinematicBlast ? { cinematicBlast: true } : {}),
   };
 
   const applied: AppliedDamage[] = [];
@@ -347,6 +356,10 @@ async function applyFromCard(options: {
       // hit that armour stopped still shoves, which is most of the point of
       // the rule (p. 378).
       knockback: isRuleOn("knockback") && result.knockback.yards > 0 ? result.knockback : null,
+      // The IQ roll for being thrown about, which only Cinematic Knockback
+      // asks for, and only where the blow actually shoved them (p. 417).
+      knockbackStun: isRuleOn("knockback") ? result.knockbackStun : null,
+      cinematicBlast: result.cinematicBlast,
       // A critical may have changed what the dice said, which is worth showing
       // beside the injury rather than leaving to be inferred.
       criticalDamage:
@@ -377,6 +390,20 @@ async function applyFromCard(options: {
             uuid: String(entry.actor.uuid ?? ""),
             name: String(entry.actor.name ?? ""),
           })),
+        // "Immediately after you suffer damage, you may declare that the
+        // attack that damaged you ... was just a flesh wound" (p. 417). The
+        // offer stands on the card that did the damage, which is the only
+        // place "immediately after" can mean anything.
+        fleshWound: isRuleOn("fleshWounds")
+          ? knockdowns
+              .filter((entry) => worthDeclaring(entry.result.injury))
+              .map((entry) => ({
+                uuid: String(entry.actor.uuid ?? ""),
+                name: String(entry.actor.name ?? ""),
+                injury: entry.result.injury,
+                fatigue: entry.result.costsFatigue,
+              }))
+          : [],
       },
     },
   });
@@ -406,6 +433,10 @@ interface DefenseFlag {
   attackerToken?: string;
   /** A penalty the attack imposes on every defense, from a Deceptive Attack. */
   defensePenalty?: number;
+  /** How the blow arrived, for TV Action Violence (p. 417). */
+  delivery?: Delivery;
+  /** What it does, blank for a grapple and anything else that does nothing. */
+  damageType?: string;
   /** True for a critical hit, which no active defense may be rolled against. */
   noDefense?: boolean;
   /** True for a thrown Missile spell, which may be dodged or blocked but not parried. */
@@ -572,6 +603,8 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
           skill: choice.skillName,
           isFencing: choice.isFencing,
           ...(flag.weapon ? { attackWeapon: flag.weapon } : {}),
+          ...(flag.delivery ? { delivery: flag.delivery } : {}),
+          ...(flag.damageType ? { damageType: flag.damageType } : {}),
         });
       });
       row.append(button);
@@ -659,6 +692,9 @@ async function rollDefense(options: {
   isFencing: boolean;
   /** The attacking weapon, which a parry has to weigh (Campaigns p. 376). */
   attackWeapon?: { weight: number; material: string; swung: boolean };
+  /** How the blow arrived, and what it does (p. 417). */
+  delivery?: Delivery;
+  damageType?: string;
 }): Promise<void> {
   const {
     defender, key, total, attack, arcPenalty, deception, retreating, feverish, skill, isFencing,
@@ -712,12 +748,31 @@ async function rollDefense(options: {
     });
   }
 
+  // "If struck by a potentially lethal attack ... the hero can choose to
+  // convert his failed defense roll into a success" (p. 417) -- but not
+  // against a punch, a club or a thrown rock, unless it was aimed at his head.
+  const averted =
+    isRuleOn("tvActionViolence") &&
+    canAvertWithFatigue({
+      delivery: options.delivery ?? "ranged",
+      damageType: (options.damageType || null) as DamageType | null,
+    });
+
   const outcome = await rollSuccess({
     actor: defender,
     base: total,
     label: game.i18n.format("GWORLD.Chat.DefendingAgainst", { defense: name, attack }),
     kind: "defense",
     modifiers,
+    ...(averted
+      ? {
+          tvAction: {
+            uuid: String(defender.uuid ?? ""),
+            name: String(defender.name ?? ""),
+            attack,
+          },
+        }
+      : {}),
   });
 
   // "If your shield's DB makes the difference between success and failure on
@@ -873,6 +928,88 @@ async function addDeathCheckControls(message: any, html: HTMLElement): Promise<v
   }
 }
 
+/**
+ * Adds the "just a flesh wound" control to whoever the blow hurt (p. 417).
+ *
+ * It sits on the card that wrote the damage down, and costs a character point
+ * when pressed, so it is offered only to the owner and only once.
+ */
+async function addFleshWoundControls(message: any, html: HTMLElement): Promise<void> {
+  const entries = message?.getFlag?.(SYSTEM_ID, "fleshWound") as FleshWoundEntry[] | undefined;
+  if (!Array.isArray(entries) || entries.length === 0 || !isRuleOn("fleshWounds")) return;
+
+  const root = html.querySelector<HTMLElement>(".gworld-chat");
+  if (!root || root.querySelector("[data-gworld-flesh]")) return;
+
+  for (const entry of entries) {
+    const actor: any = await fromUuid(entry.uuid).catch(() => null);
+    if (!actor?.isOwner) continue;
+
+    const row = document.createElement("div");
+    row.className = "gc-apply";
+    row.dataset.gworldFlesh = entry.uuid;
+
+    const who = document.createElement("div");
+    who.className = "gc-who";
+    who.textContent = entry.name;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "gc-apply-button";
+    button.textContent = game.i18n.localize("GWORLD.Cinematic.FleshWound");
+    button.title = game.i18n.localize("GWORLD.Cinematic.FleshWoundHint");
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      // A refusal -- no ownership, the rule switched off between card and
+      // click -- puts the offer back rather than swallowing it.
+      if (!(await declareFleshWound(actor, entry))) button.disabled = false;
+    });
+
+    row.append(who, button);
+    root.append(row);
+  }
+}
+
+/**
+ * Adds the control that buys a failed defense back (p. 417).
+ *
+ * Only on a defense that failed, only where the attack was one FP can avert,
+ * and only for the defender: it is their fatigue and their next turn.
+ */
+async function addTvActionControls(message: any, html: HTMLElement): Promise<void> {
+  const entry = message?.getFlag?.(SYSTEM_ID, "tvAction") as TvActionEntry | undefined;
+  if (!entry?.uuid || !isRuleOn("tvActionViolence")) return;
+
+  const root = html.querySelector<HTMLElement>(".gworld-chat");
+  if (!root || root.querySelector("[data-gworld-tv]")) return;
+
+  const actor: any = await fromUuid(entry.uuid).catch(() => null);
+  if (!actor?.isOwner) return;
+
+  const row = document.createElement("div");
+  row.className = "gc-apply";
+  row.dataset.gworldTv = entry.uuid;
+
+  const who = document.createElement("div");
+  who.className = "gc-who";
+  who.textContent = entry.name;
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "gc-apply-button";
+  button.textContent = game.i18n.localize("GWORLD.Cinematic.TvAction");
+  button.title = game.i18n.localize("GWORLD.Cinematic.TvActionHint");
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    // Nobody pays for nothing: a defender who cannot find the fatigue keeps
+    // the offer.
+    if (!(await buyDefenseBack(actor, entry))) button.disabled = false;
+  });
+
+  row.append(who, button);
+  root.append(row);
+}
+
 /** Registers the chat hooks. Called once, at init. */
 export function registerChatHooks(): void {
   Hooks.on("renderChatMessageHTML", (message: any, html: HTMLElement) => {
@@ -881,5 +1018,7 @@ export function registerChatHooks(): void {
     void addKnockdownControls(message, html);
     void addDeathCheckControls(message, html);
     void addResistControls(message, html);
+    void addFleshWoundControls(message, html);
+    void addTvActionControls(message, html);
   });
 }
