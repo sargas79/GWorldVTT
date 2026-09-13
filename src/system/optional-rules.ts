@@ -194,6 +194,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "holyAttacks", reference: "Monster Hunters 1 p. 51", default: false },
     // Magic as nine Path skills and gathered energy, instead of spells.
     { key: "ritualPathMagic", reference: "Monster Hunters 1 pp. 32-39", default: false },
+    // Gadgets and clothing improved by cost factors, and Signature Gear at a point per $10,000.
+    { key: "monsterHuntersGear", reference: "Monster Hunters 1 pp. 53-54, 59", default: false },
   ],
 };
 

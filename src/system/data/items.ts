@@ -25,6 +25,7 @@ import {
 import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from "../gear-groups.js";
 import { templateCost } from "../../rules/templates.js";
 import type { Comprehension } from "../../rules/languages.js";
+import type { GadgetImprovements } from "../../rules/gadgets.js";
 import { PATHS } from "../../rules/ritual-path.js";
 import {
   RITUAL_DURATIONS,
@@ -109,6 +110,29 @@ function physicalFields() {
       }),
       { required: true, initial: [] },
     ),
+  };
+}
+
+/**
+ * Improvements that reprice a gadget or an article of clothing by cost
+ * factor (Monster Hunters 1 pp. 53-54, 59), and the Holdout the article gives
+ * of itself. Fields on the item, never items of their own: the price and
+ * weight are worked out from the list figures when they change.
+ */
+function gadgetFields() {
+  return {
+    improvements: new fields.SchemaField({
+      cuttingEdge: new fields.BooleanField({ initial: false }),
+      disguised: new fields.BooleanField({ initial: false }),
+      rugged: new fields.BooleanField({ initial: false }),
+      scentMasking: new fields.BooleanField({ initial: false }),
+      /** Undercover's Holdout bonus, +1 or +2; zero for none. */
+      undercover: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0, max: 2 }),
+    }),
+    /** The Holdout bonus the article gives of itself: a long coat's +4 (p. 59). */
+    holdout: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+    /** Bought with Signature Gear rather than cash (p. 53). */
+    signature: new fields.BooleanField({ initial: false }),
   };
 }
 
@@ -848,6 +872,10 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare material: WeaponMaterial;
   declare weaponClass: WeaponClass;
   declare listCost: number;
+  declare listWeight: number;
+  declare improvements: GadgetImprovements;
+  declare holdout: number;
+  declare signature: boolean;
   declare hpLost: number;
   declare missedMaintenance: number;
   declare complexity: number;
@@ -998,6 +1026,9 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
        * this one paid; the sheet works it out from this and the grade.
        */
       listCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+      /** The table's weight, before improvements that change it (Monster Hunters 1 p. 54). */
+      listWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+      ...gadgetFields(),
       /**
        * Damage the weapon has taken (Campaigns p. 483): struck at, or worn.
        * Against the HP its weight gives it, this says whether it still works.
@@ -1065,6 +1096,11 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   }
 
   declare enchantments: Enchantment[];
+  declare improvements: GadgetImprovements;
+  declare holdout: number;
+  declare signature: boolean;
+  declare listCost: number;
+  declare listWeight: number;
   declare dr: number;
   declare drSplit: number | null;
   declare drSplitAppliesTo: DamageType[];
@@ -1084,6 +1120,10 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
     return {
       ...descriptionFields(),
       ...physicalFields(),
+      ...gadgetFields(),
+      /** The table's price and weight, before improvements reprice them (Monster Hunters 1 pp. 54, 59). */
+      listCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+      listWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       dr: new fields.NumberField({
         required: true,
         nullable: false,
