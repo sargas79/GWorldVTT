@@ -1,0 +1,40 @@
+{{!-- A repair attempt, or a thing failing in the sand (Campaigns pp. 484-485). --}}
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">
+      {{#if exposure}}{{localize "GWORLD.Repair.ExposureTitle" name=name}}
+      {{else}}{{localize "GWORLD.Repair.Title" name=name}}{{/if}}
+    </span>
+    <span class="gc-target">{{localize "GWORLD.Chat.Target"}} {{target}}</span>
+  </div>
+
+  {{#unless exposure}}
+    <div class="gc-mods">
+      <span>{{kind}}</span>
+      <span class="gc-mod">{{skillName}}</span>
+      {{#if priceModifier}}<span class="gc-mod">{{signed priceModifier}} {{localize "GWORLD.Repair.ForPrice"}}</span>{{/if}}
+      <span class="gc-mod">{{localize "GWORLD.Repair.Hours" hours=hours}}</span>
+    </div>
+    {{#if parts}}
+      <div class="gc-mods">
+        <span>{{localize "GWORLD.Repair.Parts" die=parts.die cost=parts.cost}}</span>
+      </div>
+    {{/if}}
+  {{/unless}}
+
+  <div class="gc-dice">
+    {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+    <span class="gc-total">{{roll}}</span>
+  </div>
+
+  {{#if exposure}}
+    <div class="gc-result {{#if failed}}failure{{else}}success{{/if}}">{{result}}</div>
+  {{else if outcome.success}}
+    <div class="gc-result success">
+      {{localize "GWORLD.Repair.Restored" hp=restored}}
+      <span class="gc-mod">{{localize "GWORLD.Repair.Remaining" lost=hpLost hp=hp}}</span>
+    </div>
+  {{else}}
+    <div class="gc-result failure">{{localize "GWORLD.Repair.Failed"}}</div>
+  {{/if}}
+</div>

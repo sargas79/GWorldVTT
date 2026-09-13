@@ -155,6 +155,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "damageToShields", reference: "Campaigns p. 484", default: false },
     // What the tools of a trade are worth to the roll that uses them.
     { key: "equipmentModifiers", reference: "Campaigns p. 345", default: true },
+    // Mending what is broken, and the sand that breaks it.
+    { key: "repairs", reference: "Campaigns pp. 484-485", default: true },
   ],
 };
 

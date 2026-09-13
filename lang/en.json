@@ -558,6 +558,10 @@
         "vehicleManeuvers": {
           "Name": "Vehicle maneuvers",
           "Hint": "A vehicle moves on its operator’s turn: a Move or Move and Attack puts them in charge, and any other maneuver — or being stunned — leaves it plowing ahead on last turn’s course. Jumping out is a collision at the vehicle’s speed (Campaigns p. 467)."
+        },
+        "repairs": {
+          "Name": "Repairs and breakdowns",
+          "Hint": "Mending a damaged thing is half an hour and a skill roll against its price, and gives back as many hit points as the roll beat its target by; a thing at zero needs spare parts first. Gear left in the sand or the damp rolls to keep working at all (Campaigns pp. 484-485)."
         }
       }
     },
@@ -1163,7 +1167,7 @@
       "HpLostHint": "Damage the weapon has taken (Campaigns p. 483). At a third of its HP it may work worse; at zero it is disabled; at -5×HP it is destroyed.",
       "Condition": "Condition",
       "Repair": "Repair",
-      "RepairHint": "Puts it back to full HP. The repair rules (Campaigns p. 484) say what that takes.",
+      "RepairHint": "Half an hour and a skill roll against the thing’s price; the margin comes back as hit points (Campaigns p. 484).",
       "Loaded": "Loaded",
       "LoadedHint": "Shots in the weapon now. Firing takes them off; the Reload button on the Combat tab puts them back.",
       "ReloadWeight": "Reload lb",
@@ -1177,7 +1181,9 @@
       "EquipmentQuality": "Equipment grade",
       "EquipmentQualityHint": "What these tools are worth to the skill that uses them (Campaigns p. 345). Good costs five times basic, fine twenty times.",
       "ForSkills": "Tools for",
-      "ForSkillsHint": "The skills these are the tools of, separated by commas. While they are carried, those skills are rolled at the grade’s modifier."
+      "ForSkillsHint": "The skills these are the tools of, separated by commas. While they are carried, those skills are rolled at the grade’s modifier.",
+      "MissedMaintenance": "Missed checks",
+      "MissedMaintenanceHint": "Maintenance checks missed, each costing a point of HT that the exposure roll is made against (Campaigns p. 485)."
     },
     "Gear": {
       "Carried": "Carried",
@@ -2688,6 +2694,35 @@
       "wood": "Wood (as the table lists it)",
       "iron": "Iron (TL3+)",
       "plastic": "Plastic riot shield (TL7+)"
+    },
+    "Repair": {
+      "Action": "Repair",
+      "Title": "Repairing {name}",
+      "SkillLabel": "Rolling against {skill}",
+      "AnySkill": "the suitable skill",
+      "Hours": "{hours} hours an attempt",
+      "ForPrice": "for the price",
+      "Parts": "Spare parts first: 1d came up {die}, so ${cost}",
+      "Restored": "{hp} HP put back",
+      "Remaining": "{lost} of {hp} still lost",
+      "Failed": "No better than it was. Another half hour, and try again.",
+      "Sound": "{name} is not damaged.",
+      "Destroyed": "{name} is beyond repair: replace it at ${cost}.",
+      "Kind": {
+        "none": "Sound",
+        "minor": "Minor repair",
+        "major": "Major repair",
+        "beyondRepair": "Beyond repair"
+      },
+      "ExposureAction": "Exposure",
+      "ExposureTitle": "{name} in the weather",
+      "ExposureHint": "A thing carelessly exposed rolls HT+4 to keep working — dropped in a swamp, left in a sandstorm, or a day in the desert (Campaigns p. 485)",
+      "Exposure": {
+        "works": "It still works.",
+        "needsMinorRepair": "It breaks down, jams or otherwise fails: nothing until it is mended.",
+        "needsMajorRepair": "It fails badly: major repairs, spare parts and all."
+      },
+      "CareLabel": "How it has been treated: +1 cleaned daily, 0 ordinary, -1 or -2 abused"
     }
   }
 }

@@ -435,9 +435,14 @@
         <div class="isub-head">
           {{localize "GWORLD.Item.ObjectStats"}}
           {{#if editable}}
-            {{#if weapon.facts.hpLost}}
-              <button type="button" class="ibtn" data-action="repairWeapon" data-tooltip="{{localize 'GWORLD.Item.RepairHint'}}">
-                {{localize "GWORLD.Item.Repair"}}
+            {{#if weapon.repairs}}
+              {{#if weapon.facts.hpLost}}
+                <button type="button" class="ibtn" data-action="repairWeapon" data-tooltip="{{localize 'GWORLD.Item.RepairHint'}}">
+                  {{localize "GWORLD.Item.Repair"}} &middot; {{localize weapon.repairLabel}}
+                </button>
+              {{/if}}
+              <button type="button" class="ibtn" data-action="exposureCheck" data-tooltip="{{localize 'GWORLD.Repair.ExposureHint'}}">
+                {{localize "GWORLD.Repair.ExposureAction"}}
               </button>
             {{/if}}
           {{/if}}
@@ -451,6 +456,10 @@
           </label>
           <label data-tooltip="{{localize 'GWORLD.Item.HpLostHint'}}">{{localize "GWORLD.Item.HpLost"}}
             <input type="number" name="system.hpLost" value="{{system.hpLost}}" step="1" min="0"
+                   {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label data-tooltip="{{localize 'GWORLD.Item.MissedMaintenanceHint'}}">{{localize "GWORLD.Item.MissedMaintenance"}}
+            <input type="number" name="system.missedMaintenance" value="{{system.missedMaintenance}}" step="1" min="0"
                    {{#unless editable}}disabled{{/unless}} />
           </label>
           <label>{{localize "GWORLD.Item.Condition"}}
