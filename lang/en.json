@@ -296,7 +296,8 @@
         "HallucinationRoll": "Roll Will before each success roll: success {success} for {successFor}; failure {failure} for {failureFor}; critical failure freaks out for {freakOutFor}",
         "HeartAttackClock": "Drops to -FP, and dies in {minutes} minutes unless resuscitated",
         "HeartAttackSurvives": "If survived: {hp} HP"
-      }
+      },
+      "PastHalfDamage": "Past 1/2D"
     },
     "Slam": {
       "Action": "Slam",
@@ -1584,7 +1585,8 @@
       "SubtractDR": "Subtract the target's DR from basic damage, then apply the wounding modifier.",
       "SubtractDRDivisor": "Divide the target's DR by {divisor} (rounding down), subtract it from basic damage, then apply the wounding modifier.",
       "Cancel": "Cancel",
-      "MassShot": "pellets as one mass: damage and DR ×{times}"
+      "MassShot": "pellets as one mass: damage and DR ×{times}",
+      "HalfDamage": "Past 1/2D: halved from {full}"
     },
     "HitLocation": {
       "torso": "Torso",
@@ -1619,7 +1621,15 @@
       "Increased": "Increased Defense",
       "Double": "Double Defense",
       "Option": "AOD Option",
-      "Target": "Raise"
+      "Target": "Raise",
+      "AllOutAttackOption": {
+        "determined": "Determined",
+        "double": "Double",
+        "feint": "Feint",
+        "strong": "Strong",
+        "suppression": "Suppression Fire",
+        "Hint": "Determined: +4 to hit in melee, +1 at range. Strong: +2 damage or +1 a die, for ST-based melee. Double and Feint are a second action; Suppression Fire needs RoF 5+ (Campaigns p. 365)."
+      }
     },
     "Technique": {
       "Button": "Unarmed technique",

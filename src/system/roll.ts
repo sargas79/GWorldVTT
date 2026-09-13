@@ -31,7 +31,11 @@ import {
   criticalMissTableFor,
   type CriticalTable,
 } from "../rules/criticals.js";
-import { applyDamageFloor, computeInjury } from "../rules/damage.js";
+import {
+  applyDamageFloor,
+  computeInjury,
+  halveDamage,
+} from "../rules/damage.js";
 import { formatDiceAdds, maxRoll, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import { blastRadius, fragmentationRadius } from "../rules/explosions.js";
 import { canMalfunction, type Delivery } from "../rules/cinematic.js";
@@ -80,6 +84,8 @@ import { spendShots } from "./ammunition.js";
 import type { DamageType } from "../rules/types.js";
 
 import { cappedAimBonus, targetingSystemBonus, unexpectedDodgePenalty } from "../rules/vehicle-combat.js";
+import { halvesDamage, type Guidance } from "../rules/guided.js";
+import { allOutAttackBonus, strongAttackDamageBonus, type AllOutAttackOption } from "../rules/maneuvers.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
 
@@ -463,6 +469,8 @@ export interface DamageRollOptions {
    * The card applies it to the item instead of to a token.
    */
   weaponTarget?: { actorUuid: string; itemId: string; name: string };
+  /** A target at or past 1/2D, which halves the basic damage (Characters p. 270). */
+  halfDamage?: boolean;
 }
 
 /**
@@ -503,7 +511,9 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
 
   // The floor lives in the rules engine; duplicating it here would let chat
   // damage drift from the rules if it ever changes.
-  const basicDamage = applyDamageFloor(roll.total * mass, damageType);
+  const full = applyDamageFloor(roll.total * mass, damageType);
+  // "Damaging attacks on targets at or beyond 1/2D inflict half damage."
+  const basicDamage = options.halfDamage ? halveDamage(full, damageType) : full;
 
   // Shown against DR 0 so the card states raw injury; the GM subtracts real DR.
   const undefended = computeInjury({ basicDamage, dr: 0, type: damageType });
@@ -520,6 +530,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     hasArmorDivisor: armorDivisor !== 1,
     modifiers: modifiers.filter((m) => m.value !== 0),
     basicDamage,
+    halvedFrom: options.halfDamage ? full : null,
     massMultiplier: mass > 1 ? mass : null,
     woundingModifier: undefended.woundingModifier,
     injuryIfUnarmored: undefended.injury,
@@ -742,6 +753,17 @@ export async function handleRollAction(
         })
       : [];
     for (const penalty of impaired) modifiers.push({ label: penalty.trait, value: penalty.value });
+
+    // All-Out Attack (Determined): "Make a single attack at +4 to hit!" in
+    // melee, "+1 to hit" at range (p. 365). The other options buy something
+    // other than accuracy, so they add nothing here.
+    if (actor?.system?.maneuver === "allOutAttack") {
+      const option = String(actor.system.allOutAttackOption ?? "determined") as AllOutAttackOption;
+      const bonus = allOutAttackBonus(option, Boolean(ranged));
+      if (bonus !== 0) {
+        modifiers.push({ label: game.i18n.localize(`GWORLD.Maneuver.AllOutAttackOption.${option}`), value: bonus });
+      }
+    }
     if (!melee && !shot && eyesOf(actor).blindness) {
       const blind = sightModifier("clear", false, eyesOf(actor));
       if (blind) modifiers.push(blind);
@@ -766,6 +788,16 @@ export async function handleRollAction(
     // Pellets striking as one mass are a fact about this shot that the damage
     // roll, a separate click, has to be told.
     await recordMassShot(actor, shot?.coneMultiplier ?? null);
+    // So does being past 1/2D, which halves whatever the damage roll comes to.
+    await recordHalfDamage(
+      actor,
+      shot !== null &&
+        beyondHalfDamage({
+          rangeYards: shot.rangeYards,
+          halfDamageRange: Number(target.dataset.halfDamageRange) || 0,
+          guidance: target.dataset.guidance ?? "",
+        }),
+    );
   }
 
   // A Feint made last turn is spent by this attack, whether or not it is aimed
@@ -871,6 +903,21 @@ export async function handleRollAction(
   return outcome;
 }
 
+/** Where a shot past 1/2D is remembered for the damage roll. */
+const HALF_DAMAGE_FLAG = "halfDamage";
+
+async function recordHalfDamage(actor: any, halved: boolean): Promise<void> {
+  if (!actor?.isOwner) return;
+  if (halved) await actor.setFlag(SYSTEM_ID, HALF_DAMAGE_FLAG, true);
+  else if (actor.getFlag?.(SYSTEM_ID, HALF_DAMAGE_FLAG)) await actor.unsetFlag(SYSTEM_ID, HALF_DAMAGE_FLAG);
+}
+
+async function consumeHalfDamage(actor: any): Promise<boolean> {
+  const halved = actor?.getFlag?.(SYSTEM_ID, HALF_DAMAGE_FLAG) === true;
+  if (halved && actor.isOwner) await actor.unsetFlag(SYSTEM_ID, HALF_DAMAGE_FLAG);
+  return halved;
+}
+
 /** Where a shot's pellets striking as one mass are kept for the damage roll. */
 const MASS_SHOT_FLAG = "massShot";
 
@@ -904,17 +951,30 @@ interface MeasuredShot {
  * guess about a unit nobody uses for GURPS is not worth refusing the shot.
  */
 export function measuredShot(actor: any): MeasuredShot | null {
-  const stage: any = (globalThis as any).canvas;
-  const scene = stage?.scene;
-  if (!scene || !stage.grid?.measurePath) return null;
-
   const targets = targetedTokens();
   if (targets.length !== 1) return null;
   const target: any = targets[0];
   const shooter: any = actor?.getActiveTokens?.()?.[0];
-  if (!shooter?.center || !target?.center) return null;
+  const yards = yardsBetween(shooter, target);
+  if (yards === null) return null;
 
-  const distance = Number(stage.grid.measurePath([shooter.center, target.center])?.distance);
+  return {
+    rangeYards: yards,
+    targetSizeModifier: Number(target.actor?.system?.sm) || 0,
+  };
+}
+
+/**
+ * How far apart two tokens are, in whole yards, or null where the map cannot
+ * say: no scene, or either token missing.
+ */
+export function yardsBetween(from: any, to: any): number | null {
+  const stage: any = (globalThis as any).canvas;
+  const scene = stage?.scene;
+  if (!scene || !stage.grid?.measurePath) return null;
+  if (!from?.center || !to?.center) return null;
+
+  const distance = Number(stage.grid.measurePath([from.center, to.center])?.distance);
   if (!Number.isFinite(distance)) return null;
 
   const units = String(scene.grid?.units ?? "").trim().toLowerCase();
@@ -923,11 +983,25 @@ export function measuredShot(actor: any): MeasuredShot | null {
     : units === "m" || units === "meters" || units === "metres"
       ? distance * 1.0936
       : distance;
+  return Math.max(0, Math.round(yards));
+}
 
-  return {
-    rangeYards: Math.max(0, Math.round(yards)),
-    targetSizeModifier: Number(target.actor?.system?.sm) || 0,
-  };
+/**
+ * Whether a target is far enough away to take half damage (Characters p. 270).
+ *
+ * "Damaging attacks on targets at or beyond 1/2D inflict half damage, and
+ * those that require a HT roll to resist are resisted at +3." A weapon with no
+ * 1/2D listed never reaches it; a guided or homing one reads its 1/2D as its
+ * speed rather than a threshold (Campaigns p. 412), so never halves at all.
+ */
+export function beyondHalfDamage(options: {
+  rangeYards: number;
+  halfDamageRange: number;
+  guidance?: string;
+}): boolean {
+  if (!(options.halfDamageRange > 0)) return false;
+  if (!halvesDamage(((options.guidance || "none") as Guidance))) return false;
+  return options.rangeYards >= options.halfDamageRange;
 }
 
 /**
@@ -967,6 +1041,7 @@ function quickShot(
     recoil: pellets.recoil,
     coneMultiplier: pellets.coneMultiplier,
     calledShot: null,
+    rangeYards: measured.rangeYards,
   };
 }
 
@@ -982,6 +1057,8 @@ interface RangedShot {
   /** Pellets striking as one mass, or null when they spread. */
   coneMultiplier: number | null;
   calledShot: CalledShot | null;
+  /** How far the shot had to travel, which a steered weapon's flight needs. */
+  rangeYards: number;
 }
 
 /**
@@ -1199,6 +1276,7 @@ export async function promptForRangedAttack(options: {
     recoil: pellets.recoil,
     coneMultiplier: pellets.coneMultiplier,
     calledShot: aimed.shot,
+    rangeYards: input.range,
   };
 }
 
@@ -1841,6 +1919,8 @@ export async function handleDamageAction(
   const aimed = await consumeCalledShot(actor);
   // Pellets that struck as one mass, recorded by the attack roll.
   const mass = await consumeMassShot(actor);
+  // A target past 1/2D, recorded by the attack roll too.
+  const halved = await consumeHalfDamage(actor);
 
   // A blow struck with the flat of a blade crushes rather than cuts, and one
   // struck with the butt of a spear crushes for a point less.
@@ -1862,6 +1942,21 @@ export async function handleDamageAction(
     } else {
       ui.notifications?.info(game.i18n.localize("GWORLD.ExtraEffort.NotStBased"));
     }
+  }
+
+  // All-Out Attack (Strong): "+2 to damage - or +1 damage per die, if that
+  // would be better. This only applies to melee attacks doing ST-based thrust
+  // or swing damage" (p. 365).
+  if (
+    actor?.system?.maneuver === "allOutAttack" &&
+    actor.system.allOutAttackOption === "strong" &&
+    target.dataset.melee === "1" &&
+    target.dataset.stBased === "1"
+  ) {
+    modifiers.push({
+      label: game.i18n.localize("GWORLD.Maneuver.AllOutAttackOption.strong"),
+      value: strongAttackDamageBonus(parseDiceAdds(damageFormula)?.dice ?? 0),
+    });
   }
 
   // The other half of a mounted charge: "-1 to hit but +1 damage" (p. 396).
@@ -1894,6 +1989,7 @@ export async function handleDamageAction(
     armorDivisor: Number(armorDivisor) || 1,
     ...(aimed ? { calledShot: aimed } : {}),
     ...(mass > 1 ? { massMultiplier: mass } : {}),
+    ...(halved ? { halfDamage: true } : {}),
     explosive: target.dataset.explosive === "1",
     fragmentation: target.dataset.fragmentation ?? "",
     modifiers,

@@ -387,6 +387,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare maneuver: Maneuver;
   declare evaluateTurns: number;
   declare aim: { turns: number; braced: boolean };
+  declare allOutAttackOption: "determined" | "double" | "feint" | "strong" | "suppression";
   declare allOutDefenseOption: "increased" | "double";
   declare allOutDefenseTarget: "dodge" | "parry" | "block";
   declare posture: Posture;
@@ -570,6 +571,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           required: true, nullable: false, integer: true, initial: 0, min: 0,
         }),
         braced: new fields.BooleanField({ initial: false }),
+      }),
+
+      /**
+       * All-Out Attack option (GURPS Basic Set: Campaigns p. 365), which "you
+       * must specify ... before you attack". Determined is +4 to hit in melee
+       * and +1 at range; Strong is +2 damage, or +1 a die, for ST-based melee;
+       * Double and Feint are a second action the table takes; Suppression Fire
+       * is the ranged option for RoF 5+.
+       */
+      allOutAttackOption: new fields.StringField({
+        required: true, nullable: false, initial: "determined",
+        choices: ["determined", "double", "feint", "strong", "suppression"],
       }),
 
       /**

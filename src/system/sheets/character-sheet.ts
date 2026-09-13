@@ -163,6 +163,8 @@ import {
   handleDamageAction,
   handleRollAction,
   promptForNumber,
+  beyondHalfDamage,
+  yardsBetween,
   rollDamage,
   rollSuccess,
 } from "../roll.js";
@@ -2892,6 +2894,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         ? OPPORTUNITY_LINE_PENALTY
         : opportunityFirePenalty(Number(system.wait?.hexesWatched ?? 1)),
       isAllOutDefense: system.maneuver === "allOutDefense" || system.conditions.allOutDefense,
+      isAllOutAttack: system.maneuver === "allOutAttack",
+      aoaOptions: (["determined", "double", "feint", "strong", "suppression"] as const).map((key) => ({
+        key,
+        label: `GWORLD.Maneuver.AllOutAttackOption.${key}`,
+        selected: (system.allOutAttackOption ?? "determined") === key,
+      })),
       aodIncreased: system.allOutDefenseOption === "increased",
       aodTargets: (["dodge", "parry", "block"] as const).map((key) => ({
         key,
@@ -4638,6 +4646,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!attribute) return;
     const modifier = Number(target.dataset.resistModifier) || 0;
     const label = target.dataset.afflictionLabel ?? "";
+    // A ranged affliction past its 1/2D is resisted at +3 (Characters p. 270).
+    const halfDamageRange = Number(target.dataset.halfDamageRange) || 0;
+    const shooter = this.actor.getActiveTokens?.()?.[0];
 
     const targets = currentTargets();
     if (targets.length === 0) {
@@ -4663,9 +4674,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           resist: `${attribute}${modifier || ""}`,
         }),
         kind: "attribute",
-        modifiers: modifier === 0
-          ? []
-          : [{ label: game.i18n.localize("GWORLD.Affliction.Short"), value: modifier }],
+        modifiers: [
+          ...(modifier === 0 ? [] : [{ label: game.i18n.localize("GWORLD.Affliction.Short"), value: modifier }]),
+          // "Those that require a HT roll to resist are resisted at +3" past 1/2D.
+          ...(beyondHalfDamage({ rangeYards: yardsBetween(shooter, token) ?? 0, halfDamageRange })
+            ? [{ label: game.i18n.localize("GWORLD.Affliction.PastHalfDamage"), value: 3 }]
+            : []),
+        ],
         // A roll that fails is a condition somebody now has, and the card is
         // where it is handed out (Campaigns pp. 428-429).
         affliction: {
