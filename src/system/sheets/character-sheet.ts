@@ -40,6 +40,8 @@ import {
   irradiate, jumpOutOfVehicle, motionSickness, shock, shootAtVehicle, sleepFor, splashAcid,
 } from "../hazards.js";
 import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
+import { useTechnique, type Victim } from "../unarmed-techniques.js";
+import type { UnarmedTechnique } from "../../rules/unarmed-techniques.js";
 import { attendPatient, operate, resuscitate } from "../recovery.js";
 import type { ResuscitationCause } from "../../rules/medicine.js";
 import type { Limbs } from "../../rules/entangling.js";
@@ -1333,6 +1335,59 @@ async function promptForEscape(current: Entanglement, currentWhere: string, wasR
   );
 }
 
+/**
+ * Which unarmed technique, and what the victim brings to it (pp. 403-404).
+ *
+ * A hold is resisted by the higher of the victim's ST and HT, and gets through
+ * their rigid armour and hide but not their flexible armour -- none of which
+ * the attacker's sheet can know -- so it is asked, pre-filled from the one
+ * targeted token where there is one.
+ */
+async function promptForTechnique(target: any): Promise<{
+  technique: UnarmedTechnique;
+  victim: Victim;
+  location: string;
+  crippled: boolean;
+  clumsiness: number;
+} | null> {
+  const T = (key: string) => game.i18n.localize(`GWORLD.Technique.${key}`);
+  const techniques: Array<[string, string]> = (
+    ["armLock", "chokeHold", "elbowStrike", "neckSnap", "piercingStrike"] as const
+  ).map((k) => [k, T(`Name.${k}`)]);
+  const locations: Array<[string, string]> = (["neck", "arm", "leg"] as const)
+    .map((k) => [k, T(`Locations.${k}`)]);
+  const st = Number(target?.system?.attributes?.ST ?? 10) || 10;
+  const ht = Number(target?.system?.attributes?.HT ?? 10) || 10;
+
+  return hazardPrompt(
+    T("Title"),
+    hazardSelect("technique", T("Which"), techniques) +
+      hazardField("victimSt", T("VictimSt"), st) +
+      hazardField("victimHt", T("VictimHt"), ht) +
+      hazardField("naturalDr", T("NaturalDr"), 0, 'min="0"') +
+      hazardCheck("toughSkin", T("ToughSkin")) +
+      hazardField("rigidDr", T("RigidDr"), 0, 'min="0"') +
+      hazardField("flexibleDr", T("FlexibleDr"), 0, 'min="0"') +
+      hazardSelect("location", T("Location"), locations) +
+      hazardCheck("crippled", T("Crippled")) +
+      hazardField("clumsiness", T("Clumsiness"), 0, 'min="0" max="3"'),
+    (form) => ({
+      technique: str(form, "technique") as UnarmedTechnique,
+      victim: {
+        st: num(form, "victimSt"),
+        ht: num(form, "victimHt"),
+        naturalDr: num(form, "naturalDr"),
+        toughSkin: ticked(form, "toughSkin"),
+        rigidDr: num(form, "rigidDr"),
+        flexibleDr: num(form, "flexibleDr"),
+      },
+      location: str(form, "location"),
+      crippled: ticked(form, "crippled"),
+      clumsiness: num(form, "clumsiness"),
+    }),
+  );
+}
+
 /** How a thrown Molotov cocktail met its target (Campaigns p. 411). */
 async function promptForMolotov(): Promise<{
   defense: "dodge" | "block" | "none";
@@ -2505,6 +2560,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       resuscitate: GWorldCharacterSheet.#onResuscitate,
       tryToEscape: GWorldCharacterSheet.#onEscapeEntanglement,
       throwMolotov: GWorldCharacterSheet.#onThrowMolotov,
+      unarmedTechnique: GWorldCharacterSheet.#onUnarmedTechnique,
       checkBottles: GWorldCharacterSheet.#onCheckBottles,
       buildingCollapse: GWorldCharacterSheet.#onCollapse,
       splashAcid: GWorldCharacterSheet.#onAcid,
@@ -4870,6 +4926,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     );
     if (!asked) return;
     await tryToEscape({ actor: this.actor, ...asked });
+  }
+
+  /** An arm lock, a choke, an elbow, a neck snap or a Karate point strike (pp. 403-404). */
+  static async #onUnarmedTechnique(this: GWorldCharacterSheet) {
+    const target = targetedTokens()[0]?.actor ?? null;
+    const asked = await promptForTechnique(target);
+    if (!asked) return;
+    await useTechnique({ actor: this.actor, ...asked });
   }
 
   /** A Molotov cocktail thrown at somebody (Campaigns p. 411). */

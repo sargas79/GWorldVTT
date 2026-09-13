@@ -1608,10 +1608,48 @@
       "Target": "Raise"
     },
     "Technique": {
-      "Prerequisite": "Prerequisite skill",
-      "DefaultModifier": "Default modifier",
-      "MaxRelative": "Level cap",
-      "MaxRelativeHint": "Relative to the prerequisite skill. Zero lets the technique reach that skill but not exceed it."
+      "Button": "Unarmed technique",
+      "Title": "Unarmed technique",
+      "Which": "Technique",
+      "Uses": "{name}: {technique}",
+      "Name": {
+        "armLock": "Arm lock",
+        "chokeHold": "Choke hold",
+        "elbowStrike": "Elbow strike",
+        "neckSnap": "Neck snap",
+        "piercingStrike": "Piercing strike"
+      },
+      "Resists": "higher of ST and HT",
+      "VictimSt": "Victim's ST",
+      "VictimHt": "Victim's HT",
+      "NaturalDr": "Victim's natural DR",
+      "ToughSkin": "That DR is Tough Skin",
+      "RigidDr": "Rigid armour DR",
+      "FlexibleDr": "Flexible armour DR",
+      "Location": "Wrenching",
+      "Locations": {
+        "neck": "Neck",
+        "arm": "Arm",
+        "leg": "Leg"
+      },
+      "Crippled": "The arm is already crippled",
+      "Clumsiness": "Improvised weapon clumsiness (0-3)",
+      "TechniquePenalty": "Technique",
+      "Improvised": "Improvised",
+      "NoSkill": "This technique needs one of: {skills}",
+      "Hits": "Hits",
+      "Misses": "Misses",
+      "Note": {
+        "LockDamage": "Crushing damage equal to the margin, less DR {dr}: {damage}",
+        "ShockOnly": "The arm is crippled: no more damage, but shock and stunning as if hurt",
+        "WrenchDamage": "Swing crushing {damage}, x{wounding} wounding, through DR {dr}",
+        "HoldFails": "The hold does nothing this turn",
+        "LockHolds": "Keeping it is +{bonus} in the Contest; the victim defends at {penalty}",
+        "FlexibleIgnored": "Flexible armour (DR {dr}) is no use against a hold",
+        "Piercing": "Piercing, {damage} damage; Hurting Yourself applies against DR {dr}+",
+        "Choking": "Loses {fp} FP a turn; keeping it is +{bonus} in the Contest",
+        "ChokedFights": "The victim can still strike back, at {penalty}"
+      }
     },
     "Armor": {
       "DR": "Damage Resistance",
