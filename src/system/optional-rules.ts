@@ -44,6 +44,7 @@ export const RULE_GROUPS = [
   { id: "rolls", label: "GWORLD.Rules.Group.Rolls" },
   { id: "activities", label: "GWORLD.Rules.Group.Activities" },
   { id: "magic", label: "GWORLD.Rules.Group.Magic" },
+  { id: "equipment", label: "GWORLD.Rules.Group.Equipment" },
 ] as const;
 
 export type RuleGroup = (typeof RULE_GROUPS)[number]["id"];
@@ -127,6 +128,11 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "spellDistraction", reference: "Characters p. 236", default: true },
     { key: "ruleOf16", reference: "Campaigns p. 349", default: true },
     { key: "magicItems", reference: "Campaigns pp. 480-482", default: true },
+  ],
+  equipment: [
+    // "An item has a LC only if it is likely to be controlled", and what the
+    // class means depends on the campaign's Control Rating.
+    { key: "legalityClass", reference: "Characters p. 267", default: true },
   ],
 };
 

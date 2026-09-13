@@ -10,6 +10,7 @@
 import { CharacterBuilder } from "../apps/character-builder.js";
 import { combatStyle, tacticalOnScene } from "../settings.js";
 import { activeRules, isRuleOn } from "../optional-rules.js";
+import { legalityNote } from "../legality.js";
 import {
   OPPORTUNITY_LINE_PENALTY,
   evadeModifier,
@@ -2908,6 +2909,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       equippable: equippable || Boolean(item.system.meleeModes?.length || item.system.rangedModes?.length),
       notes: item.system.category === "vehicle" ? vehicleNotes(item) : notes,
       vehicle: item.system.category === "vehicle" && isRuleOn("vehicles"),
+      // Its Legality Class, and what carrying it here takes under the
+      // campaign's Control Rating (Characters p. 267, Campaigns p. 507).
+      legality: legalityNote(item.system.lc ?? null),
     })).sort((a, b) => a.name.localeCompare(b.name));
 
     return GEAR_GROUPS.map((key) => ({

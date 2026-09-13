@@ -35,6 +35,19 @@ function physicalFields() {
     equipped: new fields.BooleanField({ initial: false }),
     tl: new fields.StringField({ required: true, blank: true, initial: "" }),
     /**
+     * Legality Class (GURPS Basic Set: Characters p. 267), 0 banned to 4
+     * open. Null for gear the book gives no class -- "ordinary clothing and
+     * tools normally do not require a LC" -- which is not the same as banned.
+     */
+    lc: new fields.NumberField({
+      required: true,
+      nullable: true,
+      integer: true,
+      initial: null,
+      min: 0,
+      max: 4,
+    }),
+    /**
      * The spells enchanted onto it (GURPS Basic Set: Campaigns pp. 480-482),
      * each with a Power of its own. Six are effects on the item -- Accuracy,
      * Deflect, Fortify, Puissance, Power, Staff -- and the sheet reads them
@@ -303,6 +316,29 @@ function meleeModeField() {
     }),
     /** Used only when damageBase is "fixed", e.g. "2d+2". */
     damageFormula: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /**
+     * Whole dice added to a thrust or swing: a chainsaw is "sw+1d" (GURPS
+     * Basic Set: Characters p. 274). Zero for nearly everything.
+     */
+    damageExtraDice: new fields.NumberField({
+      required: true,
+      nullable: false,
+      integer: true,
+      initial: 0,
+      min: 0,
+    }),
+    /**
+     * The table prints "spec." instead of damage: a net entangles, a lasso
+     * catches, a garrote strangles (Characters pp. 272, 276). The mode rolls
+     * to hit and its own rules say what a hit does.
+     */
+    damageSpecial: new fields.BooleanField({ initial: false }),
+    /**
+     * Burning damage with the Surge modifier, marked "sur" (Characters
+     * p. 105): a blaster's shot, which does double damage to anything that
+     * runs on electricity.
+     */
+    surge: new fields.BooleanField({ initial: false }),
     damageType: new fields.StringField({
       required: true,
       nullable: false,
@@ -398,6 +434,29 @@ function rangedModeField() {
       initial: 0,
     }),
     damageFormula: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /**
+     * Whole dice added to a thrust or swing: a chainsaw is "sw+1d" (GURPS
+     * Basic Set: Characters p. 274). Zero for nearly everything.
+     */
+    damageExtraDice: new fields.NumberField({
+      required: true,
+      nullable: false,
+      integer: true,
+      initial: 0,
+      min: 0,
+    }),
+    /**
+     * The table prints "spec." instead of damage: a net entangles, a lasso
+     * catches, a garrote strangles (Characters pp. 272, 276). The mode rolls
+     * to hit and its own rules say what a hit does.
+     */
+    damageSpecial: new fields.BooleanField({ initial: false }),
+    /**
+     * Burning damage with the Surge modifier, marked "sur" (Characters
+     * p. 105): a blaster's shot, which does double damage to anything that
+     * runs on electricity.
+     */
+    surge: new fields.BooleanField({ initial: false }),
     damageType: new fields.StringField({
       required: true,
       nullable: false,
@@ -464,6 +523,20 @@ function rangedModeField() {
       integer: true,
       initial: 1,
       min: 1,
+    }),
+    /**
+     * The mark after a firearm's ST (GURPS Basic Set: Characters p. 270).
+     * "R" is a musket rest, which braces an aimed shot fired standing still;
+     * "B" an attached bipod, which braces a prone shot and cuts the ST needed
+     * to two-thirds; "M" a weapon usually fired from a mount, whose ST and
+     * Bulk are ignored on it. Blank for a weapon carried and fired as it is.
+     */
+    mount: new fields.StringField({
+      required: true,
+      nullable: false,
+      blank: true,
+      initial: "",
+      choices: ["", "rest", "bipod", "mounted"],
     }),
     /**
      * How unwieldy the weapon is, as a penalty: it applies when firing from a
@@ -657,6 +730,10 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare drSplit: number | null;
   declare drSplitAppliesTo: DamageType[];
   declare locations: string[];
+  declare flexible: boolean;
+  declare frontOnly: boolean;
+  declare concealable: boolean;
+  declare soleDr: number | null;
   declare quantity: number;
   declare weight: number;
   declare cost: number;
@@ -718,6 +795,35 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
         }),
         { required: true, initial: [] },
       ),
+      /**
+       * The "*" on the armour tables (GURPS Basic Set: Characters p. 282):
+       * "Flexible armor is easier to conceal or wear under other armor, and
+       * quicker to don or remove, but it is more vulnerable to blunt trauma
+       * damage." Mail, leather and a ballistic vest; not a breastplate.
+       */
+      flexible: new fields.BooleanField({ initial: false }),
+      /**
+       * The "F" on the tables: "the DR only protects against attacks from
+       * the front" (p. 282). A breastplate, partial barding.
+       */
+      frontOnly: new fields.BooleanField({ initial: false }),
+      /**
+       * "Concealable as or under clothing", the tables' footnote on light
+       * armour (pp. 283, 285): what layering under other armour requires.
+       */
+      concealable: new fields.BooleanField({ initial: false }),
+      /**
+       * Footwear with a separate DR on the underside -- "sandals give DR 1 to
+       * the underside of the foot" (p. 283), boots DR 2 with 5 on the sole.
+       * Null for anything but footwear with a stated sole.
+       */
+      soleDr: new fields.NumberField({
+        required: true,
+        nullable: true,
+        integer: true,
+        initial: null,
+        min: 0,
+      }),
     };
   }
 }
@@ -726,6 +832,8 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
 export class ShieldData extends foundry.abstract.TypeDataModel {
   declare enchantments: Enchantment[];
   declare db: number;
+  declare dr: number;
+  declare hp: number | null;
   declare skill: string;
   declare meleeModes: unknown[];
   declare quantity: number;
@@ -745,6 +853,14 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
         initial: 1,
         min: 0,
       }),
+      /**
+       * "The shield's DR and HP if using the optional Damage to Shields
+       * rule. This DR protects the shield, not the wielder." (GURPS Basic
+       * Set: Characters p. 287.) A force shield has DR but no HP to lose,
+       * which is what null means.
+       */
+      dr: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+      hp: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
       skill: new fields.StringField({ required: true, blank: true, initial: "Shield" }),
       /**
        * Bashing someone with the shield (GURPS Basic Set: Characters p. 273).

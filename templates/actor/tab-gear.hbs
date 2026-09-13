@@ -94,7 +94,15 @@
                 <td class="n">{{row.quantity}}</td>
                 <td class="n">{{decimal row.weight 1}} lb</td>
                 <td class="n">${{row.cost}}</td>
-                <td class="wmode">{{row.notes}}</td>
+                <td class="wmode">
+                  {{row.notes}}
+                  {{#if row.legality.label}}
+                    <span class="tag{{#if row.legality.restricted}} tag-danger{{/if}}"
+                          {{#if row.legality.status}}data-tooltip="{{localize (concat 'GWORLD.Legality.Status.' row.legality.status)}}"{{/if}}>
+                      {{row.legality.label}}{{#if row.legality.status}} &middot; {{localize (concat 'GWORLD.Legality.Short.' row.legality.status)}}{{/if}}
+                    </span>
+                  {{/if}}
+                </td>
                 <td class="c">
                   {{#if @root.editable}}
                     <button type="button" class="rollable iconbtn" data-action="deleteItem" title="{{localize 'GWORLD.Action.Delete'}}">

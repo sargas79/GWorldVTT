@@ -10,6 +10,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 2,
@@ -17,7 +18,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -31,6 +36,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 4,
@@ -40,7 +46,11 @@
       ],
       "locations": [
         "face"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -54,6 +64,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 4,
@@ -61,7 +72,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -75,6 +90,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 5,
@@ -82,7 +98,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -96,6 +116,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 2,
@@ -104,7 +125,11 @@
       "locations": [
         "neck",
         "skull"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -118,6 +143,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 4,
@@ -128,7 +154,11 @@
       "locations": [
         "neck",
         "skull"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -142,6 +172,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 4,
@@ -150,7 +181,11 @@
       "locations": [
         "neck",
         "skull"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -164,6 +199,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 5,
@@ -172,7 +208,11 @@
       "locations": [
         "neck",
         "skull"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -186,6 +226,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 2,
@@ -194,7 +235,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": true,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -208,6 +253,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 4,
@@ -218,7 +264,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": true,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -232,6 +282,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 4,
@@ -240,7 +291,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": true,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -254,6 +309,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 2,
@@ -263,7 +319,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -277,6 +337,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 4,
@@ -288,7 +349,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -302,6 +367,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 5,
@@ -311,7 +377,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -325,6 +395,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 286",
       "dr": 5,
@@ -332,7 +403,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "leg"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -346,6 +421,7 @@
       "carried": true,
       "equipped": false,
       "tl": "0",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 1,
@@ -353,7 +429,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "groin"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -367,6 +447,7 @@
       "carried": true,
       "equipped": false,
       "tl": "0",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 1,
@@ -375,7 +456,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -389,6 +474,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 4,
@@ -397,7 +483,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": true,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -411,6 +501,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 5,
@@ -420,7 +511,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -434,6 +529,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 1,
@@ -443,7 +539,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -457,6 +557,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 2,
@@ -466,7 +567,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -480,6 +585,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 1,
@@ -489,7 +595,11 @@
         "arm",
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -503,6 +613,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 3,
@@ -511,7 +622,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -525,6 +640,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 5,
@@ -533,7 +649,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -547,6 +667,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 4,
@@ -558,7 +679,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -572,6 +697,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 4,
@@ -582,7 +708,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -596,6 +726,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 4,
@@ -605,7 +736,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -619,6 +754,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 5,
@@ -630,7 +766,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -644,6 +784,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 7,
@@ -653,7 +794,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -667,6 +812,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 5,
@@ -675,7 +821,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": true,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -689,6 +839,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 6,
@@ -698,7 +849,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -712,6 +867,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 5,
@@ -721,7 +877,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -735,6 +895,7 @@
       "carried": true,
       "equipped": false,
       "tl": "4",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 2,
@@ -746,7 +907,11 @@
         "groin",
         "arm",
         "leg"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -760,6 +925,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 3,
@@ -767,7 +933,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "arm"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -781,6 +951,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 3,
@@ -788,7 +959,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "leg"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -802,6 +977,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 1,
@@ -809,7 +985,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "arm"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -823,6 +1003,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 2,
@@ -830,7 +1011,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "leg"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -844,6 +1029,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 2,
@@ -851,7 +1037,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "arm"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -865,6 +1055,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 1,
@@ -872,7 +1063,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "leg"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -886,6 +1081,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 1,
@@ -894,7 +1090,11 @@
       "locations": [
         "groin",
         "leg"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -908,6 +1108,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 3,
@@ -918,7 +1119,11 @@
       "locations": [
         "groin",
         "leg"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -932,6 +1137,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 4,
@@ -941,7 +1147,11 @@
       ],
       "locations": [
         "leg"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -955,6 +1165,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 4,
@@ -964,7 +1175,11 @@
       ],
       "locations": [
         "arm"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -978,6 +1193,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 4,
@@ -985,7 +1201,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "leg"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -999,6 +1219,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 4,
@@ -1006,7 +1227,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "arm"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1020,6 +1245,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 7,
@@ -1027,7 +1253,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "arm"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1041,6 +1271,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 7,
@@ -1048,7 +1279,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "leg"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1062,6 +1297,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 6,
@@ -1069,7 +1305,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "arm"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1083,6 +1323,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 283",
       "dr": 6,
@@ -1090,7 +1331,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "leg"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1104,6 +1349,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 3,
@@ -1112,7 +1358,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1126,6 +1376,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 3,
@@ -1133,7 +1384,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1147,6 +1402,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 1,
@@ -1154,7 +1410,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -1168,6 +1428,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 1,
@@ -1175,7 +1436,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1189,6 +1454,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 2,
@@ -1197,7 +1463,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1211,6 +1481,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 4,
@@ -1219,7 +1490,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1233,6 +1508,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 4,
@@ -1243,7 +1519,11 @@
       "locations": [
         "skull",
         "neck"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1257,6 +1537,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 6,
@@ -1265,7 +1546,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1279,6 +1564,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 4,
@@ -1286,7 +1572,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1300,6 +1590,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 7,
@@ -1309,7 +1600,11 @@
         "skull",
         "face",
         "neck"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1323,6 +1618,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 4,
@@ -1330,7 +1626,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1344,6 +1644,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 1,
@@ -1351,7 +1652,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "hand"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -1365,6 +1670,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 2,
@@ -1372,7 +1678,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "hand"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1386,6 +1696,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 4,
@@ -1393,7 +1704,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "hand"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1407,6 +1722,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 5,
@@ -1414,7 +1730,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "hand"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1428,6 +1748,7 @@
       "carried": true,
       "equipped": false,
       "tl": "0",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 0,
@@ -1435,7 +1756,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "foot"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": 1
     }
   },
   {
@@ -1449,6 +1774,7 @@
       "carried": true,
       "equipped": false,
       "tl": "1",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 1,
@@ -1456,7 +1782,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "foot"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -1470,6 +1800,7 @@
       "carried": true,
       "equipped": false,
       "tl": "2",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 2,
@@ -1477,7 +1808,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "foot"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -1491,6 +1826,7 @@
       "carried": true,
       "equipped": false,
       "tl": "3",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 4,
@@ -1498,7 +1834,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "foot"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1512,6 +1852,7 @@
       "carried": true,
       "equipped": false,
       "tl": "6",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 7,
@@ -1520,7 +1861,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1534,6 +1879,7 @@
       "carried": true,
       "equipped": false,
       "tl": "7",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 5,
@@ -1550,7 +1896,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1564,6 +1914,7 @@
       "carried": true,
       "equipped": false,
       "tl": "7",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 20,
@@ -1572,7 +1923,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1586,6 +1941,7 @@
       "carried": true,
       "equipped": false,
       "tl": "8",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 8,
@@ -1601,7 +1957,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -1615,6 +1975,7 @@
       "carried": true,
       "equipped": false,
       "tl": "8",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 12,
@@ -1631,7 +1992,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1645,6 +2010,7 @@
       "carried": true,
       "equipped": false,
       "tl": "8",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 23,
@@ -1653,7 +2019,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1667,6 +2037,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 18,
@@ -1683,7 +2054,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1697,6 +2072,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 24,
@@ -1713,7 +2089,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1727,6 +2107,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 36,
@@ -1743,7 +2124,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1757,6 +2142,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 48,
@@ -1773,7 +2159,11 @@
         "torso",
         "vitals",
         "groin"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -1787,6 +2177,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 12,
@@ -1802,7 +2193,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -1816,6 +2211,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 16,
@@ -1831,7 +2227,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -1845,6 +2245,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 24,
@@ -1860,7 +2261,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -1874,6 +2279,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 32,
@@ -1889,7 +2295,11 @@
       "locations": [
         "torso",
         "vitals"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -1903,6 +2313,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 12,
@@ -1921,7 +2332,11 @@
         "groin",
         "arm",
         "leg"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -1935,6 +2350,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 18,
@@ -1953,7 +2369,11 @@
         "groin",
         "arm",
         "leg"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -1967,6 +2387,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 24,
@@ -1985,7 +2406,11 @@
         "groin",
         "arm",
         "leg"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -1999,6 +2424,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 36,
@@ -2017,7 +2443,11 @@
         "groin",
         "arm",
         "leg"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -2031,6 +2461,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 20,
@@ -2043,7 +2474,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2057,6 +2492,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 30,
@@ -2069,7 +2505,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2083,6 +2523,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 40,
@@ -2095,7 +2536,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2109,6 +2554,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 60,
@@ -2121,7 +2567,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2135,6 +2585,7 @@
       "carried": true,
       "equipped": false,
       "tl": "7",
+      "lc": null,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 2,
@@ -2142,7 +2593,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "foot"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": 5
     }
   },
   {
@@ -2156,6 +2611,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 12,
@@ -2170,7 +2626,11 @@
       ],
       "locations": [
         "foot"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2184,6 +2644,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 9,
@@ -2191,7 +2652,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "foot"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": 18
     }
   },
   {
@@ -2205,6 +2670,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 12,
@@ -2212,7 +2678,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "foot"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": 24
     }
   },
   {
@@ -2226,6 +2696,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 18,
@@ -2233,7 +2704,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "foot"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": 36
     }
   },
   {
@@ -2247,6 +2722,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 8,
@@ -2261,7 +2737,11 @@
       ],
       "locations": [
         "hand"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -2275,6 +2755,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 12,
@@ -2289,7 +2770,11 @@
       ],
       "locations": [
         "hand"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -2303,6 +2788,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 16,
@@ -2317,7 +2803,11 @@
       ],
       "locations": [
         "hand"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -2331,6 +2821,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 284",
       "dr": 24,
@@ -2345,7 +2836,11 @@
       ],
       "locations": [
         "hand"
-      ]
+      ],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": true,
+      "soleDr": null
     }
   },
   {
@@ -2359,6 +2854,7 @@
       "carried": true,
       "equipped": false,
       "tl": "6",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 2,
@@ -2367,7 +2863,11 @@
       "locations": [
         "eye",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2381,6 +2881,7 @@
       "carried": true,
       "equipped": false,
       "tl": "6",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 4,
@@ -2388,7 +2889,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2402,6 +2907,7 @@
       "carried": true,
       "equipped": false,
       "tl": "7",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 5,
@@ -2409,7 +2915,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2423,6 +2933,7 @@
       "carried": true,
       "equipped": false,
       "tl": "7",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 1,
@@ -2431,7 +2942,11 @@
       "locations": [
         "eye",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2445,6 +2960,7 @@
       "carried": true,
       "equipped": false,
       "tl": "8",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 12,
@@ -2452,7 +2968,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2466,6 +2986,7 @@
       "carried": true,
       "equipped": false,
       "tl": "8",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 10,
@@ -2474,7 +2995,11 @@
       "locations": [
         "eye",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2488,6 +3013,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 18,
@@ -2495,7 +3021,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2509,6 +3039,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 15,
@@ -2517,7 +3048,11 @@
       "locations": [
         "eye",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2531,6 +3066,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 24,
@@ -2538,7 +3074,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2552,6 +3092,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 20,
@@ -2560,7 +3101,11 @@
       "locations": [
         "eye",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2574,6 +3119,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 36,
@@ -2581,7 +3127,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2595,6 +3145,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 30,
@@ -2603,7 +3154,11 @@
       "locations": [
         "eye",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2617,6 +3172,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 48,
@@ -2624,7 +3180,11 @@
       "drSplitAppliesTo": [],
       "locations": [
         "skull"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2638,6 +3198,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 3,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 40,
@@ -2646,7 +3207,11 @@
       "locations": [
         "eye",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2660,12 +3225,17 @@
       "carried": true,
       "equipped": false,
       "tl": "7",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 1,
       "drSplit": null,
       "drSplitAppliesTo": [],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2679,12 +3249,17 @@
       "carried": true,
       "equipped": false,
       "tl": "7",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 2,
       "drSplit": null,
       "drSplitAppliesTo": [],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2698,6 +3273,7 @@
       "carried": true,
       "equipped": false,
       "tl": "7",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 3,
@@ -2706,7 +3282,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2720,6 +3300,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 1,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 70,
@@ -2732,7 +3313,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2746,6 +3331,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 1,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 70,
@@ -2761,7 +3347,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2775,6 +3365,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 1,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 105,
@@ -2787,7 +3378,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2801,6 +3396,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 1,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 105,
@@ -2816,7 +3412,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2830,6 +3430,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 1,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 140,
@@ -2842,7 +3443,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2856,6 +3461,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 1,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 140,
@@ -2871,7 +3477,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2885,6 +3495,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 1,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 210,
@@ -2897,7 +3508,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2911,6 +3526,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 1,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 210,
@@ -2926,7 +3542,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2940,6 +3560,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 50,
@@ -2952,7 +3573,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2966,6 +3591,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 18,
@@ -2981,7 +3607,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -2995,6 +3625,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 75,
@@ -3007,7 +3638,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3021,6 +3656,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 27,
@@ -3036,7 +3672,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3050,6 +3690,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 100,
@@ -3062,7 +3703,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3076,6 +3721,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 36,
@@ -3091,7 +3737,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3105,6 +3755,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 150,
@@ -3117,7 +3768,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3131,6 +3786,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 54,
@@ -3146,7 +3802,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3160,6 +3820,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 50,
@@ -3172,7 +3833,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3186,6 +3851,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 40,
@@ -3201,7 +3867,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3215,6 +3885,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 75,
@@ -3227,7 +3898,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3241,6 +3916,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 60,
@@ -3256,7 +3932,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3270,6 +3950,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 100,
@@ -3282,7 +3963,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3296,6 +3981,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 80,
@@ -3311,7 +3997,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3325,6 +4015,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 150,
@@ -3337,7 +4028,11 @@
         "cor",
         "fat"
       ],
-      "locations": []
+      "locations": [],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3351,6 +4046,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 2,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 120,
@@ -3366,7 +4062,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3380,12 +4080,17 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 6,
       "drSplit": null,
       "drSplitAppliesTo": [],
-      "locations": []
+      "locations": [],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3399,6 +4104,7 @@
       "carried": true,
       "equipped": false,
       "tl": "9",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 6,
@@ -3407,7 +4113,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3421,12 +4131,17 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 9,
       "drSplit": null,
       "drSplitAppliesTo": [],
-      "locations": []
+      "locations": [],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3440,6 +4155,7 @@
       "carried": true,
       "equipped": false,
       "tl": "10",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 9,
@@ -3448,7 +4164,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3462,12 +4182,17 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 12,
       "drSplit": null,
       "drSplitAppliesTo": [],
-      "locations": []
+      "locations": [],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3481,6 +4206,7 @@
       "carried": true,
       "equipped": false,
       "tl": "11",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 12,
@@ -3489,7 +4215,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3503,12 +4233,17 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 18,
       "drSplit": null,
       "drSplitAppliesTo": [],
-      "locations": []
+      "locations": [],
+      "flexible": true,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   },
   {
@@ -3522,6 +4257,7 @@
       "carried": true,
       "equipped": false,
       "tl": "12",
+      "lc": 4,
       "description": "",
       "reference": "Basic Set: Characters p. 285",
       "dr": 18,
@@ -3530,7 +4266,11 @@
       "locations": [
         "skull",
         "face"
-      ]
+      ],
+      "flexible": false,
+      "frontOnly": false,
+      "concealable": false,
+      "soleDr": null
     }
   }
 ]

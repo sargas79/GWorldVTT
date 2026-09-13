@@ -78,12 +78,12 @@ const id = (kind, name) =>
  * changed would break every such reference, so a name that already exists keeps
  * the id it already had.
  */
-function existingIds(...packs) {
+function existingIds(pack, except = []) {
   const byName = new Map();
-  for (const pack of packs) {
+  {
     const dir = join(projectRoot, "packs-src", pack);
-    if (!existsSync(dir)) continue;
-    for (const file of readdirSync(dir).filter((f) => f.endsWith(".json"))) {
+    if (!existsSync(dir)) return byName;
+    for (const file of readdirSync(dir).filter((f) => f.endsWith(".json") && !except.includes(f))) {
       for (const doc of JSON.parse(readFileSync(join(dir, file), "utf8"))) {
         byName.set(doc.name, doc._id);
       }
@@ -442,11 +442,40 @@ const number = (value, fallback = 0) => {
 /** Attributes an affliction can be resisted with. */
 const RESISTANCE = ["ST", "DX", "IQ", "HT", "Will", "Per"];
 
-function parseDamage(damage, damtype) {
+/** The three facts a damage column can carry beside the damage itself. */
+const DAMAGE_EXTRAS = { damageExtraDice: 0, damageSpecial: false, surge: false };
+
+export function parseDamage(damage, damtype) {
+  // A range note after the type -- "aff (10 yd.)" on a stun grenade -- is a
+  // note, not part of the type.
+  const rawType = (damtype ?? "").replace(/\([^)]*\)/g, "").trim();
+
+  // "spec." on the table: a net entangles, a lasso catches, a garrote
+  // strangles (Characters pp. 272, 276). The mode rolls to hit; what a hit
+  // does is the weapon's own rules, which no damage formula can carry.
+  if (/^spcl\.?$/i.test((damage ?? "").trim()) || /^spcl\.?$/i.test(rawType)) {
+    return {
+      fields: {
+        damageBase: "fixed",
+        damageModifier: 0,
+        damageFormula: "",
+        damageType: "cr",
+        explosive: false,
+        fragmentation: "",
+        affliction: false,
+        afflictionAttribute: "",
+        afflictionModifier: 0,
+        ...DAMAGE_EXTRAS,
+        damageSpecial: true,
+      },
+      usesWeaponSt: false,
+    };
+  }
+
   // An affliction is not damage: the target resists with an attribute roll at
   // a penalty, written damage(HT-4) damtype(aff), and what failing does is in
   // the weapon's notes rather than in any number here.
-  if ((damtype ?? "").trim().toLowerCase() === "aff") {
+  if (rawType.toLowerCase() === "aff") {
     const resist = /^(ST|DX|IQ|HT|Will|Per)\s*(?:([+-])\s*(\d+))?$/i.exec((damage ?? "").trim());
     if (!resist) return null;
     const attribute = RESISTANCE.find((a) => a.toLowerCase() === resist[1].toLowerCase());
@@ -465,30 +494,47 @@ function parseDamage(damage, damtype) {
         affliction: true,
         afflictionAttribute: attribute,
         afflictionModifier: modifier,
+        ...DAMAGE_EXTRAS,
       },
       usesWeaponSt: false,
     };
   }
 
+  // "burn sur" is burning damage with the Surge modifier (Characters
+  // p. 105): the blasters' shot, doubled against anything electrical.
+  const surged = /^(.*?)\s+sur$/i.exec(rawType);
+  const typeText = surged ? surged[1].trim() : rawType;
+  const surge = Boolean(surged);
+
   // "cr ex [2d]" is a crushing explosion throwing 2d of fragmentation
   // (GURPS Basic Set: Campaigns p. 414). The type, the blast and the
   // fragments are three facts written in one column.
-  const blast = /^([a-z+-]+)\s+ex\s*(?:\[\s*(\d+d(?:[+-]\d+)?)\s*\])?$/i.exec(
-    (damtype ?? "").trim(),
-  );
-  const type = blast ? blast[1].trim() : (damtype ?? "").trim();
+  const blast = /^([a-z+-]+)\s+ex\s*(?:\[\s*(\d+d(?:[+-]\d+)?)\s*\])?$/i.exec(typeText);
+  const type = blast ? blast[1].trim() : typeText;
   const explosive = Boolean(blast);
   const fragmentation = blast?.[2] ?? "";
 
   if (!DAMAGE_TYPES.has(type)) return null;
 
   const text = (damage ?? "").trim();
-  const scaled = /^(sw|thr)\s*(?:([+-])\s*(\d+))?$/i.exec(text);
+  // "sw+4", "sw-2+1d": a base, then any number of point and whole-die terms.
+  // A chainsaw adds a die to the swing (Characters p. 274), and the die and
+  // the points are two separate facts.
+  const scaled = /^(sw|thr)((?:\s*[+-]\s*\d+d?)*)$/i.exec(text);
   if (scaled) {
+    let modifier = 0;
+    let extraDice = 0;
+    for (const term of scaled[2].matchAll(/([+-])\s*(\d+)(d?)/gi)) {
+      const value = Number(`${term[1]}${term[2]}`);
+      if (term[3]) extraDice += value;
+      else modifier += value;
+    }
+    // A weapon that takes dice off the swing is not on any table.
+    if (extraDice < 0) return null;
     return {
       fields: {
         damageBase: scaled[1].toLowerCase(),
-        damageModifier: scaled[3] ? Number(`${scaled[2]}${scaled[3]}`) : 0,
+        damageModifier: modifier,
         damageFormula: "",
         damageType: type,
         explosive,
@@ -496,6 +542,9 @@ function parseDamage(damage, damtype) {
         affliction: false,
         afflictionAttribute: "",
         afflictionModifier: 0,
+        ...DAMAGE_EXTRAS,
+        damageExtraDice: extraDice,
+        surge,
       },
       usesWeaponSt: false,
     };
@@ -515,6 +564,8 @@ function parseDamage(damage, damtype) {
         affliction: false,
         afflictionAttribute: "",
         afflictionModifier: 0,
+        ...DAMAGE_EXTRAS,
+        surge,
       },
       usesWeaponSt: true,
     };
@@ -533,6 +584,8 @@ function parseDamage(damage, damtype) {
         affliction: false,
         afflictionAttribute: "",
         afflictionModifier: 0,
+        ...DAMAGE_EXTRAS,
+        surge,
       },
       usesWeaponSt: false,
     };
@@ -561,13 +614,24 @@ function parseSkillUsed(value) {
 }
 
 /**
- * A minimum ST. The table marks a two-handed weapon with a dagger after the
- * figure, which is the same column saying two things at once.
+ * A minimum ST, and everything else the ST column says (Characters p. 270).
+ *
+ * "†" is a weapon that needs two hands; "‡" one that needs two hands and
+ * becomes unready after each attack unless the wielder has 1.5 times the
+ * listed ST. Before the dagger a firearm may carry "R" for a musket rest,
+ * "B" for a bipod or "M" for a weapon usually fired from a mount.
  */
-function parseMinSt(value) {
-  const m = /^(\d+)\s*(†)?/.exec((value ?? "").trim());
-  if (!m) return { minSt: null, twoHanded: false };
-  return { minSt: Number(m[1]), twoHanded: Boolean(m[2]) };
+const MOUNTS = { R: "rest", B: "bipod", M: "mounted" };
+
+export function parseMinSt(value) {
+  const m = /^(\d+)\s*([RBM])?\s*(†|‡)?/.exec((value ?? "").trim());
+  if (!m) return { minSt: null, twoHanded: false, unreadyAfterAttack: false, mount: "" };
+  return {
+    minSt: Number(m[1]),
+    twoHanded: Boolean(m[3]),
+    unreadyAfterAttack: m[3] === "‡",
+    mount: MOUNTS[m[2] ?? ""] ?? "",
+  };
 }
 
 /**
@@ -632,7 +696,7 @@ function meleeMode(name, f) {
   const parry = parseParry(f.get("parry"));
   if (!parry) return { error: `parry "${f.get("parry") ?? ""}"` };
 
-  const { minSt, twoHanded } = parseMinSt(f.get("minst"));
+  const { minSt, twoHanded, unreadyAfterAttack } = parseMinSt(f.get("minst"));
   const divisor = f.get("armordivisor");
   if (divisor !== undefined && !/^\d+(\.\d+)?$/.test(divisor.trim())) {
     return { error: `armour divisor "${divisor}"` };
@@ -651,7 +715,8 @@ function meleeMode(name, f) {
       isFlail: false,
       minSt,
       twoHanded,
-      unreadyAfterAttack: false,
+      // "‡": two hands, and unready after the swing (Characters p. 270).
+      unreadyAfterAttack,
     },
   };
 }
@@ -688,7 +753,7 @@ function rangedMode(name, f, thrown) {
     return { error: `armour divisor "${divisor}"` };
   }
 
-  const { minSt, twoHanded } = parseMinSt(f.get("minst"));
+  const { minSt, twoHanded, mount } = parseMinSt(f.get("minst"));
 
   // GCA omits skillused() on one grenade where its four siblings in the same
   // table all state Throwing. Losing the weapon over a field the source simply
@@ -727,6 +792,8 @@ function rangedMode(name, f, thrown) {
       // minimum needed to use it.
       weaponSt: max?.ofWeapon || damage.usesWeaponSt ? minSt : null,
       thrown,
+      // "R", "B" or "M" after the ST: a rest, a bipod, a mount (p. 270).
+      mount,
       bulk: Math.min(0, number(f.get("bulk"), 0)),
       recoil: Math.max(0, number(f.get("rcl"), 0)),
       // Malf.: the roll at or above which the weapon jams (Campaigns p. 407).
@@ -753,7 +820,7 @@ function rangedMode(name, f, thrown) {
  * `dr(5/20)` on a shield is its DR and its HP run together, which is why
  * shields are read before this is reached.
  */
-function parseDr(value) {
+export function parseDr(value) {
   const text = (value ?? "").trim();
   const plain = /^(\d+)([*F ]*)$/.exec(text);
   if (plain) {
@@ -794,7 +861,97 @@ function physical(f) {
     carried: true,
     equipped: false,
     tl: techLevel(f.get("techlvl")),
+    lc: legalityClass(f.get("lc")),
   };
+}
+
+/**
+ * A Legality Class, 0 to 4 (Characters p. 267). GCA leaves the field blank
+ * where the book prints "-", and both mean the item has no class rather than
+ * a class of nothing.
+ */
+export function legalityClass(value) {
+  const text = (value ?? "").trim();
+  return /^[0-4]$/.test(text) ? Number(text) : null;
+}
+
+/**
+ * A shield's DR and HP (Characters p. 287), which GCA writes as one token --
+ * dr(5/20) -- on the shields and as two fields on the cloaks; a force shield
+ * has DR 100 and no HP to lose, written hp(--).
+ */
+export function parseShieldStats(dr, hp) {
+  const both = /^(\d+)\/(\d+|-+)$/.exec((dr ?? "").trim());
+  if (both) {
+    return { dr: Number(both[1]), hp: /^\d+$/.test(both[2]) ? Number(both[2]) : null };
+  }
+  const plain = /^(\d+)$/.exec((dr ?? "").trim());
+  const points = /^(\d+)$/.exec((hp ?? "").trim());
+  return { dr: plain ? Number(plain[1]) : 0, hp: points ? Number(points[1]) : null };
+}
+
+/**
+ * Splits on "|" at paren depth zero. A skill list carries its own commas --
+ * "SK:Gun!, SK:Guns (Rifle) | SK:Gun!, SK:Guns (Rifle)" -- so the comma
+ * splitter cannot stand in for this.
+ */
+function splitPipes(text) {
+  const out = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === "(" || c === "[" || c === "{") depth++;
+    else if (c === ")" || c === "]" || c === "}") depth--;
+    else if (c === "|" && depth === 0) {
+      out.push(text.slice(start, i).trim());
+      start = i + 1;
+    }
+  }
+  out.push(text.slice(start).trim());
+  return out;
+}
+
+/**
+ * GCA writes a weapon with two readings of a column as alternatives split by
+ * "|" -- a sniper rifle's acc(6+3 | 7+3) with mode(w/o Bipod | w/ Bipod), or
+ * an omni-blaster's damage(3d | HT-3) with mode(blaster | stun) -- one
+ * record standing for as many modes as there are alternatives.
+ *
+ * Two kinds are told apart by what the alternatives are. A second setting of
+ * the same shot -- with the bipod down -- is the bipod rule applied (p. 270),
+ * which the sheet applies itself from the mount mark, so only the first
+ * reading is kept. Anything else is a different attack, and each becomes a
+ * mode of its own named as GCA names it.
+ */
+export function alternatives(name, f) {
+  const split = new Map();
+  let count = 1;
+  for (const [key, value] of f) {
+    if (!value.includes("|")) continue;
+    const parts = splitPipes(value);
+    if (parts.length < 2) continue;
+    split.set(key, parts);
+    count = Math.max(count, parts.length);
+  }
+  if (count === 1) return [{ name, f }];
+
+  const names = split.get("mode") ?? [];
+  if (names.some((n) => /bipod/i.test(n))) {
+    const first = new Map(f);
+    for (const [key, parts] of split) first.set(key, parts[0]);
+    first.delete("mode");
+    return [{ name, f: first }];
+  }
+
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const alt = new Map(f);
+    for (const [key, parts] of split) alt.set(key, parts[Math.min(i, parts.length - 1)]);
+    alt.delete("mode");
+    out.push({ name: names[i] ?? name, f: alt });
+  }
+  return out;
 }
 
 /**
@@ -818,12 +975,16 @@ function categoryOf(name, armed) {
   return "misc";
 }
 
-function parseEquipment(recs, reject, note) {
+export function parseEquipment(recs, reject, note) {
   const ids = existingIds("equipment");
   const armor = [];
   const gear = [];
   const shields = [];
-  const taken = new Set();
+  // The hand-written files carry what the tables give and GCA does not --
+  // an atlatl's darts as modes of the atlatl -- and an entry there is the
+  // one to keep. The parser writes only its own three files.
+  const handMade = existingIds("equipment", ["armor.json", "gear.json", "shields.json"]);
+  const taken = new Set(handMade.keys());
 
   for (const r of recs) {
     if (r.section !== "EQUIPMENT") continue;
@@ -882,12 +1043,20 @@ function parseEquipment(recs, reject, note) {
         _id: ids.get(name) ?? id("shield", name),
         name,
         type: "shield",
-        system: { ...common, db: number(f.get("db"), 1), skill, meleeModes: bashes },
+        system: {
+          ...common,
+          db: number(f.get("db"), 1),
+          ...parseShieldStats(f.get("dr"), f.get("hp")),
+          skill,
+          meleeModes: bashes,
+        },
       });
       continue;
     }
 
-    if (f.has("dr")) {
+    // A melee net carries db(0) and dr(0): a weapon written with a shield's
+    // columns, both of them nothing. Only a piece with DR to give is armour.
+    if (f.has("dr") && !(f.has("db") && number(f.get("dr"), 0) === 0)) {
       const dr = parseDr(f.get("dr"));
       if (!dr) { reject(name, `DR "${f.get("dr")}" not a plain figure or a split`); continue; }
 
@@ -908,8 +1077,6 @@ function parseEquipment(recs, reject, note) {
       if (parts.length === 0) { reject(name, "no location"); continue; }
 
       taken.add(name);
-      if (dr.flags) note(`${name}: marked "${dr.flags}", which the model does not record`);
-      if (dr.sole !== undefined) note(`${name}: DR ${dr.sole} on the sole, a location the model has no home for`);
 
       armor.push({
         _id: ids.get(name) ?? id("armor", name),
@@ -921,6 +1088,14 @@ function parseEquipment(recs, reject, note) {
           drSplit: dr.drSplit,
           drSplitAppliesTo: dr.drSplitAppliesTo,
           locations: [...new Set(parts.flatMap((p) => LOCATIONS.get(p)))],
+          // The marks on the tables (Characters p. 282): "*" flexible, "F"
+          // front only, and a boot's sole.
+          flexible: dr.flags.includes("*"),
+          frontOnly: dr.flags.includes("F"),
+          // The footnote is prose the reader drops; only whether the piece
+          // carries it comes through, as one fact about the piece.
+          concealable: /concealable as or under clothing/i.test(r.text),
+          soleDr: dr.sole ?? null,
         },
       });
       continue;
@@ -931,10 +1106,10 @@ function parseEquipment(recs, reject, note) {
     // has one way and states it on the record itself, naming it in mode() where
     // the book gives it a name -- a longbow's "Barbed-head".
     const declared = modes(r.text);
-    const single = f.get("mode") ?? "";
+    const single = (f.get("mode") ?? "").includes("|") ? "" : (f.get("mode") ?? "").trim();
     const scopes = declared.length > 0
-      ? declared.map((m) => ({ name: splitTop(m)[0].trim(), f: fields(m) }))
-      : [{ name: single.includes("|") ? "" : single.trim(), f }];
+      ? declared.flatMap((m) => alternatives(splitTop(m)[0].trim(), fields(m)))
+      : alternatives(single, f);
 
     const meleeModes = [];
     const rangedModes = [];
@@ -944,6 +1119,13 @@ function parseEquipment(recs, reject, note) {
       const isMelee = scope.f.has("reach") || scope.f.has("parry");
       const isRanged = scope.f.has("acc") || scope.f.has("rof") || scope.f.has("rangemax");
       if (!isMelee && !isRanged) continue;
+
+      // A goat's foot is filed with the crossbows and given every column of
+      // one, all of them blank: it is a tool for cocking a bow, not a way of
+      // attacking, and it is kept as gear rather than lost as a weapon that
+      // does no damage.
+      const blank = (key) => !(scope.f.get(key) ?? "").trim();
+      if (blank("damage") && blank("damtype")) { usable = true; continue; }
 
       // A thrown weapon is one you let go of: the table gives it a range in
       // multiples of ST and a shots entry of "T".

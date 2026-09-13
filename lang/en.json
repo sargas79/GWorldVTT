@@ -138,7 +138,8 @@
       "Class": "Class",
       "Energy": "Cost",
       "Time": "Time",
-      "Duration": "Duration"
+      "Duration": "Duration",
+      "LC": "LC"
     },
     "Field": {
       "ThrustSwing": "Thrust / Swing",
@@ -286,7 +287,8 @@
         "Injury": "Damage and injury",
         "Rolls": "Rolls and contests",
         "Activities": "Outside combat",
-        "Magic": "Magic"
+        "Magic": "Magic",
+        "Equipment": "Equipment"
       },
       "Rule": {
         "magic": {
@@ -508,6 +510,10 @@
         "swarms": {
           "Name": "Swarms",
           "Hint": "A cloud of bats, bees or rats as one attacker: it hits automatically, and is fought off by the hit point."
+        },
+        "legalityClass": {
+          "Name": "Legality Class",
+          "Hint": "Every controlled item carries a class from 0 (banned) to 4 (open). With a Control Rating set for the campaign, the Gear tab says what carrying each piece here would take: registration, a license, or a uniform."
         }
       }
     },
@@ -1066,7 +1072,31 @@
       "ArmorDivisor": "Armour divisor",
       "DefaultModifier": "Modifier",
       "EditImage": "Change item image",
-      "UnreadyAfterAttack": "Unready after attack"
+      "UnreadyAfterAttack": "Unready after attack",
+      "RangedModes": "Ranged attacks",
+      "NoRangedModesYet": "No ranged attacks. Add one for a bow, a gun or something thrown.",
+      "ExtraDice": "Extra dice",
+      "ExtraDiceHint": "Whole dice added to the thrust or swing: a chainsaw is sw+1d (Characters p. 274).",
+      "SpecialDamage": "Special",
+      "SpecialDamageShort": "spec.",
+      "SpecialDamageHint": "The table prints “spec.”: a net entangles, a lasso catches. The attack rolls to hit and its own rules say what a hit does.",
+      "Surge": "Surge",
+      "SurgeHint": "Burning damage with the Surge modifier (Characters p. 105), doubled against anything electrical.",
+      "ScopeBonus": "Scope",
+      "HalfDamageRange": "½D range",
+      "MaxRange": "Max range",
+      "WeaponSt": "Weapon ST",
+      "WeaponStHint": "A bow or crossbow has a ST of its own, used in place of the archer’s for damage and range (Characters p. 270).",
+      "Bulk": "Bulk",
+      "Recoil": "Rcl",
+      "Malfunction": "Malf.",
+      "MalfunctionHint": "The attack roll at or above which the weapon jams (Campaigns p. 407). Leave blank for a weapon that never does.",
+      "Mount": "Mount",
+      "MountHint": "The mark after the ST: a musket rest braces an aimed standing shot, a bipod braces a prone one at two-thirds the ST, a mounted weapon ignores ST and Bulk on its mount (Characters p. 270).",
+      "Thrown": "Thrown",
+      "ThrownHint": "A weapon you let go of, whose range comes off your ST.",
+      "StMultiple": "Range × ST",
+      "StMultipleHint": "The ranges are multiples of ST rather than yards, as ×10/×15 on the muscle-powered table."
     },
     "Gear": {
       "Carried": "Carried",
@@ -1395,10 +1425,21 @@
       "SplitDR": "Split DR",
       "SplitValue": "Second DR",
       "Versus": "vs",
-      "DRAbbr": "DR"
+      "DRAbbr": "DR",
+      "Flexible": "Flexible",
+      "FlexibleHint": "The “*” on the armour tables: easier to conceal or layer and quicker to don, but open to blunt trauma (Characters p. 282).",
+      "FrontOnly": "Front only",
+      "FrontOnlyHint": "The “F” on the tables: the DR only protects against attacks from the front (p. 282).",
+      "Concealable": "Concealable",
+      "ConcealableHint": "Concealable as or under clothing, which is what wearing it under other armour requires (p. 286).",
+      "SoleDR": "Sole DR",
+      "SoleHint": "Footwear with its own DR on the underside — boots DR 2, with 5 on the sole (p. 283). Leave blank otherwise."
     },
     "Shield": {
-      "DB": "Defense Bonus"
+      "DB": "Defense Bonus",
+      "DR": "DR",
+      "HP": "HP",
+      "DRHint": "For the optional Damage to Shields rule (Characters p. 287): this DR protects the shield, not the wielder. A force shield has no HP."
     },
     "TraitCategory": {
       "advantage": "Advantage",
@@ -2375,6 +2416,39 @@
       "LargeArea": "large area",
       "LargeAreaHint": "Three sizes larger: a large-area injury, whatever the hit location.",
       "OnlyBecauseProne": "Possible only because they are on the ground."
+    },
+    "Legality": {
+      "Setting": "Control Rating",
+      "SettingHint": "How tightly the campaign’s government controls its people (Campaigns p. 506). With an item’s Legality Class it decides who may carry the item. Leave blank to ignore legality.",
+      "NoRating": "Not used",
+      "CR0": "CR0 — Anarchy",
+      "CR1": "CR1 — Very free",
+      "CR2": "CR2 — Free",
+      "CR3": "CR3 — Moderate",
+      "CR4": "CR4 — Controlled",
+      "CR5": "CR5 — Repressive",
+      "CR6": "CR6 — Total control",
+      "Hint": "Legality Class, 0 banned to 4 open (Characters p. 267). Leave blank for gear the book gives no class.",
+      "Status": {
+        "open": "Any citizen may carry it here.",
+        "registered": "Anyone but a convicted criminal may carry it; registration may be required, with no fee.",
+        "licensed": "A license is required to own or carry it, at 1d × 10% of its price.",
+        "prohibited": "Prohibited here except to police tactical units, the military and intelligence services.",
+        "military": "Only the military or the secret police may have it here."
+      },
+      "Short": {
+        "open": "open",
+        "registered": "registered",
+        "licensed": "license",
+        "prohibited": "prohibited",
+        "military": "military only"
+      }
+    },
+    "Mount": {
+      "none": "Carried",
+      "rest": "Musket rest",
+      "bipod": "Bipod",
+      "mounted": "Mounted"
     }
   }
 }

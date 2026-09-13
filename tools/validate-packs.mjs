@@ -331,6 +331,34 @@ function validateItem(entry, file) {
 
   if (entry.type === "shield") {
     check(Number.isInteger(sys.db) && sys.db >= 0, file, name, `bad DB "${sys.db}"`);
+    // DR and HP for Damage to Shields (Characters p. 287); a force shield
+    // has DR and no HP, so null is allowed there and nowhere below zero.
+    check(Number.isInteger(sys.dr) && sys.dr >= 0, file, name, `bad shield DR "${sys.dr}"`);
+    check(
+      sys.hp === null || (Number.isInteger(sys.hp) && sys.hp >= 0),
+      file, name, `bad shield HP "${sys.hp}"`,
+    );
+  }
+
+  if (["equipment", "armor", "shield"].includes(entry.type)) {
+    // Legality Class is 0 to 4 or absent (Characters p. 267).
+    check(
+      sys.lc === null || sys.lc === undefined || (Number.isInteger(sys.lc) && sys.lc >= 0 && sys.lc <= 4),
+      file, name, `bad Legality Class "${sys.lc}"`,
+    );
+  }
+
+  if (entry.type === "armor") {
+    for (const flag of ["flexible", "frontOnly", "concealable"]) {
+      check(
+        sys[flag] === undefined || typeof sys[flag] === "boolean",
+        file, name, `${flag} must be true or false`,
+      );
+    }
+    check(
+      sys.soleDr === null || sys.soleDr === undefined || (Number.isInteger(sys.soleDr) && sys.soleDr >= 0),
+      file, name, `bad sole DR "${sys.soleDr}"`,
+    );
   }
 
   if (entry.type === "modifier") {
@@ -357,7 +385,25 @@ function validateItem(entry, file) {
     }
   }
 
+  for (const mode of sys.rangedModes ?? []) {
+    check(
+      mode.mount === undefined || ["", "rest", "bipod", "mounted"].includes(mode.mount),
+      file, name, `bad mount "${mode.mount}"`,
+    );
+  }
+
   for (const mode of [...(sys.meleeModes ?? []), ...(sys.rangedModes ?? [])]) {
+    check(
+      mode.damageExtraDice === undefined || (Number.isInteger(mode.damageExtraDice) && mode.damageExtraDice >= 0),
+      file, name, `extra damage dice ${mode.damageExtraDice} must be a whole number of at least 0`,
+    );
+    // "spec." on the table: the mode rolls to hit and its own rules say what
+    // a hit does, so there is no damage to check -- only a skill to roll.
+    if (mode.damageSpecial) {
+      check(Boolean(mode.skill), file, name, "attack mode names no skill");
+      continue;
+    }
+
     // An affliction does no damage at all: the target rolls an attribute at a
     // penalty and something happens to them. Its damage fields are inert, so
     // checking them would demand a formula that is meant to be absent.

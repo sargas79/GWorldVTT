@@ -368,6 +368,29 @@
                  {{#unless editable}}disabled{{/unless}} />
         </label>
       </div>
+      <div class="irow iflags">
+        <label class="icheck" data-tooltip="{{localize 'GWORLD.Armor.FlexibleHint'}}">
+          <input type="checkbox" name="system.flexible" {{#if system.flexible}}checked{{/if}}
+                 {{#unless editable}}disabled{{/unless}} />
+          {{localize "GWORLD.Armor.Flexible"}}
+        </label>
+        <label class="icheck" data-tooltip="{{localize 'GWORLD.Armor.FrontOnlyHint'}}">
+          <input type="checkbox" name="system.frontOnly" {{#if system.frontOnly}}checked{{/if}}
+                 {{#unless editable}}disabled{{/unless}} />
+          {{localize "GWORLD.Armor.FrontOnly"}}
+        </label>
+        <label class="icheck" data-tooltip="{{localize 'GWORLD.Armor.ConcealableHint'}}">
+          <input type="checkbox" name="system.concealable" {{#if system.concealable}}checked{{/if}}
+                 {{#unless editable}}disabled{{/unless}} />
+          {{localize "GWORLD.Armor.Concealable"}}
+        </label>
+      </div>
+      <div class="ifields">
+        <label data-tooltip="{{localize 'GWORLD.Armor.SoleHint'}}">{{localize "GWORLD.Armor.SoleDR"}}
+          <input type="number" name="system.soleDr" value="{{system.soleDr}}" step="1" min="0" placeholder="—"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
       <p class="ihint">{{localize "GWORLD.Armor.LocationsHint"}}</p>
       <div class="ichecks">
         {{#each choices.hitLocations as |loc|}}
@@ -410,6 +433,14 @@
         </label>
         <label>{{localize "GWORLD.Column.Skill"}}
           <input type="text" name="system.skill" value="{{system.skill}}"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label data-tooltip="{{localize 'GWORLD.Shield.DRHint'}}">{{localize "GWORLD.Shield.DR"}}
+          <input type="number" name="system.dr" value="{{system.dr}}" step="1" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label data-tooltip="{{localize 'GWORLD.Shield.DRHint'}}">{{localize "GWORLD.Shield.HP"}}
+          <input type="number" name="system.hp" value="{{system.hp}}" step="1" min="0" placeholder="—"
                  {{#unless editable}}disabled{{/unless}} />
         </label>
       </div>
@@ -577,6 +608,10 @@
         </label>
         <label>{{localize "GWORLD.Column.TechLevel"}}
           <input type="text" name="system.tl" value="{{system.tl}}" placeholder="—"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label data-tooltip="{{localize 'GWORLD.Legality.Hint'}}">{{localize "GWORLD.Column.LC"}}
+          <input type="number" name="system.lc" value="{{system.lc}}" step="1" min="0" max="4" placeholder="—"
                  {{#unless editable}}disabled{{/unless}} />
         </label>
         <label class="icheck">
@@ -766,8 +801,10 @@
                      {{#unless @root.editable}}disabled{{/unless}} />
               <input type="number" name="system.meleeModes.{{i}}.minSt" value="{{m.minSt}}" aria-label="{{localize 'GWORLD.Item.MinSt'}}" step="1"
                      placeholder="ST" {{#unless @root.editable}}disabled{{/unless}} />
-              <input type="number" name="system.meleeModes.{{i}}.armorDivisor" value="{{m.armorDivisor}}" aria-label="{{localize 'GWORLD.Item.ArmorDivisor'}}" step="0.5" min="1"
+              <input type="number" name="system.meleeModes.{{i}}.armorDivisor" value="{{m.armorDivisor}}" aria-label="{{localize 'GWORLD.Item.ArmorDivisor'}}" step="0.5" min="0.1"
                      {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.meleeModes.{{i}}.damageExtraDice" value="{{m.damageExtraDice}}" aria-label="{{localize 'GWORLD.Item.ExtraDice'}}" step="1" min="0"
+                     data-tooltip="{{localize 'GWORLD.Item.ExtraDiceHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
             </div>
             <div class="irow iflags">
               <label class="icheck"><input type="checkbox" name="system.meleeModes.{{i}}.canParry"
@@ -788,12 +825,109 @@
               <label class="icheck"><input type="checkbox" name="system.meleeModes.{{i}}.unreadyAfterAttack"
                      {{#if m.unreadyAfterAttack}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.UnreadyAfterAttack"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.SpecialDamageHint'}}"><input type="checkbox" name="system.meleeModes.{{i}}.damageSpecial"
+                     {{#if m.damageSpecial}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.SpecialDamage"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.SurgeHint'}}"><input type="checkbox" name="system.meleeModes.{{i}}.surge"
+                     {{#if m.surge}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.Surge"}}</label>
             </div>
           </div>
         {{else}}
           <p class="ihint">{{localize "GWORLD.Item.NoModesYet"}}</p>
         {{/each}}
       </div>
+
+      {{#if isEquipment}}
+      <div class="isub" data-mode-path="rangedModes">
+        <div class="isub-head">
+          {{localize "GWORLD.Item.RangedModes"}}
+          {{#if editable}}
+            <button type="button" class="ibtn" data-action="addMode">
+              {{> "gworld.plus"}} {{localize "GWORLD.Action.Add"}}
+            </button>
+          {{/if}}
+        </div>
+        {{#each system.rangedModes as |m i|}}
+          <div class="imode" data-index="{{i}}">
+            <div class="irow">
+              <input type="text" name="system.rangedModes.{{i}}.name" value="{{m.name}}" aria-label="{{localize 'GWORLD.Item.ModeName'}}"
+                     placeholder="{{localize 'GWORLD.Item.ModeName'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="text" name="system.rangedModes.{{i}}.skill" value="{{m.skill}}" aria-label="{{localize 'GWORLD.Column.Skill'}}"
+                     placeholder="{{localize 'GWORLD.Column.Skill'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              {{#if @root.editable}}
+                <button type="button" class="rollable iconbtn" data-action="deleteMode"
+                      title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
+              {{/if}}
+            </div>
+            <div class="irow">
+              <select name="system.rangedModes.{{i}}.damageBase" aria-label="{{localize 'GWORLD.Item.DamageBase'}}" {{#unless @root.editable}}disabled{{/unless}}>
+                {{selectOptions @root.choices.damageBases selected=m.damageBase localize=true}}
+              </select>
+              <input type="number" name="system.rangedModes.{{i}}.damageModifier" value="{{m.damageModifier}}" aria-label="{{localize 'GWORLD.Item.DamageModifier'}}" step="1"
+                     data-tooltip="{{localize 'GWORLD.Item.DamageModifier'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="text" name="system.rangedModes.{{i}}.damageFormula" value="{{m.damageFormula}}" aria-label="{{localize 'GWORLD.Item.DamageFormula'}}"
+                     placeholder="2d+1" {{#unless @root.editable}}disabled{{/unless}} />
+              <select name="system.rangedModes.{{i}}.damageType" aria-label="{{localize 'GWORLD.Item.DamageType'}}" {{#unless @root.editable}}disabled{{/unless}}>
+                {{selectOptions @root.choices.damageTypes selected=m.damageType localize=true}}
+              </select>
+              <input type="number" name="system.rangedModes.{{i}}.armorDivisor" value="{{m.armorDivisor}}" aria-label="{{localize 'GWORLD.Item.ArmorDivisor'}}" step="0.5" min="0.1"
+                     data-tooltip="{{localize 'GWORLD.Item.ArmorDivisor'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.rangedModes.{{i}}.damageExtraDice" value="{{m.damageExtraDice}}" aria-label="{{localize 'GWORLD.Item.ExtraDice'}}" step="1" min="0"
+                     data-tooltip="{{localize 'GWORLD.Item.ExtraDiceHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
+            </div>
+            <div class="irow">
+              <input type="number" name="system.rangedModes.{{i}}.accuracy" value="{{m.accuracy}}" aria-label="{{localize 'GWORLD.Column.Acc'}}" step="1"
+                     data-tooltip="{{localize 'GWORLD.Column.Acc'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.rangedModes.{{i}}.scopeBonus" value="{{m.scopeBonus}}" aria-label="{{localize 'GWORLD.Item.ScopeBonus'}}" step="1" min="0"
+                     data-tooltip="{{localize 'GWORLD.Item.ScopeBonus'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.rangedModes.{{i}}.halfDamageRange" value="{{m.halfDamageRange}}" aria-label="{{localize 'GWORLD.Item.HalfDamageRange'}}" step="1" min="0"
+                     data-tooltip="{{localize 'GWORLD.Item.HalfDamageRange'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.rangedModes.{{i}}.maxRange" value="{{m.maxRange}}" aria-label="{{localize 'GWORLD.Item.MaxRange'}}" step="1" min="0"
+                     data-tooltip="{{localize 'GWORLD.Item.MaxRange'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.rangedModes.{{i}}.rateOfFire" value="{{m.rateOfFire}}" aria-label="{{localize 'GWORLD.Column.RoF'}}" step="1" min="1"
+                     data-tooltip="{{localize 'GWORLD.Column.RoF'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="text" name="system.rangedModes.{{i}}.shots" value="{{m.shots}}" aria-label="{{localize 'GWORLD.Column.Shots'}}"
+                     placeholder="{{localize 'GWORLD.Column.Shots'}}" data-tooltip="{{localize 'GWORLD.Column.Shots'}}" {{#unless @root.editable}}disabled{{/unless}} />
+            </div>
+            <div class="irow">
+              <input type="number" name="system.rangedModes.{{i}}.minSt" value="{{m.minSt}}" aria-label="{{localize 'GWORLD.Item.MinSt'}}" step="1" placeholder="ST"
+                     data-tooltip="{{localize 'GWORLD.Item.MinSt'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.rangedModes.{{i}}.weaponSt" value="{{m.weaponSt}}" aria-label="{{localize 'GWORLD.Item.WeaponSt'}}" step="1" placeholder="—"
+                     data-tooltip="{{localize 'GWORLD.Item.WeaponStHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.rangedModes.{{i}}.bulk" value="{{m.bulk}}" aria-label="{{localize 'GWORLD.Item.Bulk'}}" step="1" max="0"
+                     data-tooltip="{{localize 'GWORLD.Item.Bulk'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.rangedModes.{{i}}.recoil" value="{{m.recoil}}" aria-label="{{localize 'GWORLD.Item.Recoil'}}" step="1" min="0"
+                     data-tooltip="{{localize 'GWORLD.Item.Recoil'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.rangedModes.{{i}}.malfunction" value="{{m.malfunction}}" aria-label="{{localize 'GWORLD.Item.Malfunction'}}" step="1" min="3" max="18" placeholder="—"
+                     data-tooltip="{{localize 'GWORLD.Item.MalfunctionHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <select name="system.rangedModes.{{i}}.mount" aria-label="{{localize 'GWORLD.Item.Mount'}}" data-tooltip="{{localize 'GWORLD.Item.MountHint'}}" {{#unless @root.editable}}disabled{{/unless}}>
+                {{selectOptions @root.choices.mounts selected=m.mount localize=true}}
+              </select>
+            </div>
+            <div class="irow iflags">
+              <label class="icheck"><input type="checkbox" name="system.rangedModes.{{i}}.twoHanded"
+                     {{#if m.twoHanded}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.TwoHanded"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.ThrownHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.thrown"
+                     {{#if m.thrown}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.Thrown"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.StMultipleHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.rangeIsStMultiple"
+                     {{#if m.rangeIsStMultiple}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.StMultiple"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.SpecialDamageHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.damageSpecial"
+                     {{#if m.damageSpecial}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.SpecialDamage"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.SurgeHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.surge"
+                     {{#if m.surge}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.Surge"}}</label>
+            </div>
+          </div>
+        {{else}}
+          <p class="ihint">{{localize "GWORLD.Item.NoRangedModesYet"}}</p>
+        {{/each}}
+      </div>
+      {{/if}}
     {{/if}}
 
     <div class="isub">

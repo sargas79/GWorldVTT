@@ -13,7 +13,9 @@ import { SYSTEM_ID } from "./constants.js";
 import { COMPENDIUM_SOURCES_KEY } from "./compendium-sources.js";
 import { OPTIONAL_RULES_KEY, defaultRuleState } from "./optional-rules.js";
 import { MANA_LEVEL_KEY } from "./casting.js";
+import { CONTROL_RATING_KEY } from "./legality.js";
 import { MANA_LEVELS } from "../rules/casting.js";
+import { CONTROL_RATINGS } from "../rules/legality.js";
 
 /** Redraws every token's facing arrow; the facing module listens for it. */
 function refreshAllFacing(): void {
@@ -52,6 +54,28 @@ export function registerSettings(): void {
     type: String,
     choices: Object.fromEntries(MANA_LEVELS.map((level) => [level, `GWORLD.Mana.${level}`])),
     default: "normal",
+  });
+
+  // "Control Rating (CR) is a general measure of the control exercised by a
+  // government" (Campaigns p. 506), and with an item's Legality Class it
+  // decides who may carry the item (p. 507). Blank means the table is not
+  // using it, which is not the same as anarchy.
+  game.settings.register(SYSTEM_ID, CONTROL_RATING_KEY, {
+    name: "GWORLD.Legality.Setting",
+    hint: "GWORLD.Legality.SettingHint",
+    scope: "world",
+    config: true,
+    type: String,
+    choices: {
+      "": "GWORLD.Legality.NoRating",
+      ...Object.fromEntries(CONTROL_RATINGS.map((cr) => [String(cr), `GWORLD.Legality.CR${cr}`])),
+    },
+    default: "",
+    onChange: () => {
+      for (const app of ((foundry.applications as any).instances as Map<number, unknown>).values()) {
+        if ((app as any).document?.documentName === "Actor") (app as any).render();
+      }
+    },
   });
 
   game.settings.registerMenu(SYSTEM_ID, "rules", {
