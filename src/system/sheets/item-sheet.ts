@@ -579,13 +579,13 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   static async #onExposureCheck(this: GWorldItemSheet) {
     if (!isRuleOn("repairs")) return;
     const actor = (this.item as { actor?: any }).actor ?? null;
-    const brutal = await promptForNumber({
+    const care = await promptForNumber({
       title: game.i18n.localize("GWORLD.Repair.ExposureAction"),
-      label: game.i18n.localize("GWORLD.Repair.BrutalLabel"),
+      label: game.i18n.localize("GWORLD.Repair.CareLabel"),
       initial: 0,
     });
-    if (brutal === null) return;
-    await exposureCheck({ actor, item: this.item, cleaned: false, brutal });
+    if (care === null) return;
+    await exposureCheck({ actor, item: this.item, care });
   }
 
   static async #onAddMode(this: GWorldItemSheet, _event: Event, target: HTMLElement) {

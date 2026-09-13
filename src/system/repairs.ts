@@ -23,6 +23,8 @@ import {
   type RepairKind,
 } from "../rules/repairs.js";
 import { weaponFacts } from "./weapon-damage.js";
+import { objectHealth } from "../rules/objects.js";
+import { weaponObjectKind } from "../rules/breakage.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/repair.hbs`;
 
@@ -88,10 +90,11 @@ export async function repairItem(options: {
   // "An artifact reduced to zero or negative HP requires spare parts that
   // cost 1d x 10% of its original price."
   let parts: { die: number; cost: number } | null = null;
+  let partsRoll: any = null;
   if (state.kind === "major") {
-    const die = new Roll("1d6");
-    await die.evaluate();
-    parts = { die: die.total, cost: sparePartsCost(state.cost, die.total) };
+    partsRoll = new Roll("1d6");
+    await partsRoll.evaluate();
+    parts = { die: partsRoll.total, cost: sparePartsCost(state.cost, partsRoll.total) };
   }
 
   const target = repairTarget({
@@ -126,7 +129,7 @@ export async function repairItem(options: {
     speaker: ChatMessage.implementation.getSpeaker({ actor }),
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
-    rolls: [roll, ...(parts ? [] : [])],
+    rolls: partsRoll ? [roll, partsRoll] : [roll],
   });
 }
 
@@ -137,18 +140,23 @@ export async function repairItem(options: {
 export async function exposureCheck(options: {
   actor: any;
   item: any;
-  cleaned: boolean;
-  brutal: number;
+  /**
+   * How the gear has been treated, as one number: +1 for the daily clean
+   * the book rewards, 0 for ordinary use, -1 or -2 for abuse.
+   */
+  care: number;
 }): Promise<void> {
   const { actor, item } = options;
   if (!item?.isOwner || !isRuleOn("repairs")) return;
   const facts = weaponFacts(item);
-  const health = facts.firearm || facts.weaponClass === "firearm" ? 10 : 12;
+  // "Most machines and similar artifacts in good repair are HT 10. Swords,
+  // tables, shields, and other solid, Homogenous objects are HT 12."
+  const health = objectHealth(weaponObjectKind(facts.firearm));
   const target = equipmentFailureTarget({
     health,
     missedChecks: Number(item.system?.missedMaintenance ?? 0) || 0,
-    cleaned: options.cleaned,
-    brutal: options.brutal,
+    cleaned: options.care > 0,
+    brutal: options.care < 0 ? options.care : 0,
   });
   const roll = new Roll("3d6");
   await roll.evaluate();

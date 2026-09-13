@@ -2717,12 +2717,12 @@
       "ExposureAction": "Exposure",
       "ExposureTitle": "{name} in the weather",
       "ExposureHint": "A thing carelessly exposed rolls HT+4 to keep working — dropped in a swamp, left in a sandstorm, or a day in the desert (Campaigns p. 485)",
-      "BrutalLabel": "Penalty for unusually brutal use (0 to 2)",
       "Exposure": {
         "works": "It still works.",
         "needsMinorRepair": "It breaks down, jams or otherwise fails: nothing until it is mended.",
         "needsMajorRepair": "It fails badly: major repairs, spare parts and all."
-      }
+      },
+      "CareLabel": "How it has been treated: +1 cleaned daily, 0 ordinary, -1 or -2 abused"
     }
   }
 }
