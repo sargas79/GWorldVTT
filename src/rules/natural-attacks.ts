@@ -133,6 +133,13 @@ export interface BeastTraits {
   claws?: "blunt" | "sharp" | "hooves" | "talons" | null;
   /** Strikers -- horns, tusks, antlers -- each with its damage type. */
   strikers?: Array<{ name: string; type: DamageType }>;
+  /**
+   * A horizontal build, which the Quadruped meta-trait includes: it "does
+   * not let you put your full weight behind a kick" (Characters p. 139).
+   */
+  horizontal?: boolean;
+  /** Nothing to kick with: a snake, a fish, a bird on the wing. */
+  legless?: boolean;
 }
 
 /** An animal attack, beside the punch and the kick. */
@@ -147,10 +154,15 @@ export interface BeastAttack extends NaturalAttack {
  * Weak Bite ... gives an extra -2 per die. A bite is crushing unless the
  * creature has Sharp Teeth (cutting) or Fangs (impaling). A claw does
  * thrust-1, like a punch. Blunt Claws give +1 per die, and damage is
- * crushing. Sharp Claws give no bonus, but inflict cutting damage. ... Most
- * other attacks (horns, tusks, etc.) are Strikers. These inflict thrust
- * damage, at +1 per die. ... Brawling at DX+2 level or better ... adds +1
- * per die to basic thrust damage for any of these attacks!"
+ * crushing. Sharp Claws give no bonus, but inflict cutting damage. A kick
+ * does thrust. Blunt Claws or Hooves give +1 per die, and inflict crushing
+ * damage; Sharp Claws give no bonus, but cause cutting damage. The
+ * Quadruped meta-trait includes Horizontal (p. 139), which gives -1 per die
+ * to kicking damage to creatures without Claws. For large herbivores, this
+ * cancels out the +1 per die for Hooves. ... Most other attacks (horns,
+ * tusks, etc.) are Strikers. These inflict thrust damage, at +1 per die.
+ * ... Brawling at DX+2 level or better ... adds +1 per die to basic thrust
+ * damage for any of these attacks!"
  *
  * A creature without teeth traits, claws or strikers has none of these: an
  * ordinary set of blunt teeth is a bite the book does not bother to list.
@@ -189,6 +201,26 @@ export function beastAttacks(input: NaturalAttackInput & { beast: BeastTraits })
     });
   }
 
+  // "A kick does thrust." Only a beast with something to kick with is given
+  // one: the hooves and claws the rule names are what make a kick worth
+  // listing, and a snake has neither the trait nor the legs.
+  if (!beast.legless && (beast.claws === "hooves" || beast.claws === "blunt" || beast.claws === "sharp")) {
+    const shod = beast.claws === "hooves" || beast.claws === "blunt";
+    // "The Quadruped meta-trait includes Horizontal, which gives -1 per die
+    // to kicking damage to creatures without Claws" -- and Characters p. 139
+    // is explicit that "the penalty does apply if you have Hooves".
+    const flat = beast.horizontal && beast.claws === "hooves" ? -thrust.dice : 0;
+    out.push({
+      key: "kick",
+      skillName: skill.name,
+      skillLevel: skill.level + KICK_PENALTY,
+      damage: addModifier(thrust, trained + (shod ? thrust.dice : 0) + flat),
+      damageType: shod ? "cr" : "cut",
+      reach: "C, 1",
+      canParry: false,
+    });
+  }
+
   for (const striker of beast.strikers ?? []) {
     out.push({
       key: "striker",
@@ -206,7 +238,9 @@ export function beastAttacks(input: NaturalAttackInput & { beast: BeastTraits })
 
 /** The natural weapons a beast has, read off the names of its traits. */
 export function beastTraitsFrom(names: readonly string[]): BeastTraits {
-  const beast: BeastTraits = { teeth: null, weakBite: false, claws: null, strikers: [] };
+  const beast: BeastTraits = {
+    teeth: null, weakBite: false, claws: null, strikers: [], horizontal: false, legless: false,
+  };
   for (const raw of names) {
     const name = raw.trim().toLowerCase();
     if (name === "teeth (sharp teeth)" || name === "sharp teeth") beast.teeth = "sharp";
@@ -218,6 +252,10 @@ export function beastTraitsFrom(names: readonly string[]): BeastTraits {
     else if (name === "claws (blunt claws)" || name === "blunt claws") beast.claws = "blunt";
     else if (name === "claws (talons)" || name === "claws (long talons)") beast.claws = "talons";
     else if (name === "claws (hooves)" || name === "hooves") beast.claws = beast.claws ?? "hooves";
+    // Quadruped brings Horizontal with it, and either costs a kick a point
+    // per die where the creature has no Claws proper (Characters p. 139).
+    else if (name === "quadruped" || name === "horizontal") beast.horizontal = true;
+    else if (name === "no legs" || name.startsWith("no legs (") || name === "vermiform") beast.legless = true;
     else {
       const striker = /^striker \((crushing|cutting|impaling|piercing|large piercing)(?:; )?([^)]*)\)(?:: (.*))?$/.exec(name);
       if (striker) {

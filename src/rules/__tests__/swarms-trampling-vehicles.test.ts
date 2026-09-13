@@ -4,6 +4,9 @@ import {
   dispersed, SWARMS, swarmDamageTaken, swarmProtection,
 } from "../swarms.js";
 import { canTrample, trampleDamage, trampleSkill } from "../trampling.js";
+import { beastAttacks, beastTraitsFrom } from "../natural-attacks.js";
+import { thrustDamage } from "../damage.js";
+import { formatDiceAdds } from "../dice.js";
 import {
   cappedAimBonus, crippleThreshold, locationsOf, lossOfControl, mediumOf, occupantDamage,
   occupantHitTarget, targetingSystemBonus, unexpectedDodgePenalty, vehicleHitLocation,
@@ -178,5 +181,53 @@ describe("the occupant hit table", () => {
     expect(occupantDamage(4)).toEqual({ dice: 0, adds: 0 });
     expect(occupantDamage(5)).toEqual({ dice: 1, adds: 0 });
     expect(occupantDamage(37)).toEqual({ dice: 7, adds: 0 });
+  });
+});
+
+describe("a beast's kick (Campaigns p. 460)", () => {
+  const horse = (over: Partial<Parameters<typeof beastAttacks>[0]["beast"]> = {}) =>
+    beastAttacks({
+      st: 20, dx: 9, skills: {},
+      beast: { claws: "hooves", horizontal: true, strikers: [], ...over },
+    }).find((a) => a.key === "kick");
+
+  it("cancels the hooves bonus against the horizontal penalty for a large herbivore", () => {
+    // "For large herbivores, this cancels out the +1 per die for Hooves."
+    // A ST 20 beast thrusts 2d-1, and that is what its kick comes to.
+    expect(formatDiceAdds(horse()!.damage)).toBe(formatDiceAdds(thrustDamage(20)));
+    expect(horse()!.damageType).toBe("cr");
+  });
+
+  it("keeps the hooves bonus for a beast that stands upright", () => {
+    // Without Horizontal the +1 per die stands: 2d-1 becomes 2d+1.
+    expect(formatDiceAdds(horse({ horizontal: false })!.damage)).toBe("2d+1");
+  });
+
+  it("gives blunt claws the bonus and sharp claws a cutting kick, penalty and all", () => {
+    // "Sharp Claws give no bonus, but cause cutting damage", and the
+    // horizontal penalty is only "to creatures without Claws".
+    const sharp = horse({ claws: "sharp" })!;
+    expect(formatDiceAdds(sharp.damage)).toBe(formatDiceAdds(thrustDamage(20)));
+    expect(sharp.damageType).toBe("cut");
+    const blunt = horse({ claws: "blunt" })!;
+    expect(formatDiceAdds(blunt.damage)).toBe("2d+1");
+    expect(blunt.damageType).toBe("cr");
+  });
+
+  it("gives no kick to a beast with nothing to kick with", () => {
+    expect(horse({ claws: null })).toBeUndefined();
+    expect(horse({ legless: true })).toBeUndefined();
+  });
+
+  it("kicks at the same -2 a person does, and reaches a hex further", () => {
+    expect(horse()!.skillLevel).toBe(9 - 2);
+    expect(horse()!.reach).toBe("C, 1");
+  });
+
+  it("reads Quadruped, No Legs and Vermiform off a creature's traits", () => {
+    expect(beastTraitsFrom(["Quadruped", "Hooves"])).toMatchObject({ horizontal: true, claws: "hooves" });
+    expect(beastTraitsFrom(["Vermiform"])).toMatchObject({ legless: true });
+    expect(beastTraitsFrom(["No Legs (Aquatic)"])).toMatchObject({ legless: true });
+    expect(beastTraitsFrom(["Sharp Teeth"])).toMatchObject({ horizontal: false, legless: false });
   });
 });

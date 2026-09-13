@@ -42,6 +42,12 @@ export interface TraitEffects {
   consciousness: number;
   /** Natural DR, which protects everywhere and under any armour. */
   damageResistance: number;
+  /**
+   * DR on the feet alone. Hooves "give your feet (only) +1 DR" (Characters
+   * p. 42), which is the one piece of natural armour the book puts on a
+   * single location rather than on the whole body.
+   */
+  footDr: number;
   /** Levels of Super Jump, each of which doubles jumping distance. */
   superJump: number;
   /** The Enhanced Move (Ground) multiplier, or 1 for someone without it. */
@@ -167,6 +173,7 @@ export function noTraitEffects(): TraitEffects {
     survival: 0,
     consciousness: 0,
     damageResistance: 0,
+    footDr: 0,
     superJump: 0,
     enhancedMove: 1,
     aquatic: false,
@@ -260,6 +267,9 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
 
   // "Each point of DR stops one point of basic damage" (p. 46).
   "damage resistance": (levels) => ({ damageResistance: levels }),
+  // "Add +1 per die to the damage you inflict with a kick, and give your
+  // feet (only) +1 DR." The kick is the beast's, in natural-attacks.ts.
+  hooves: () => ({ footDr: 1 }),
 
   // "Those who have Super Jump double the final jumping distance for each level
   // of that advantage" (Campaigns p. 352).
@@ -481,6 +491,7 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
     total.survival += applied.survival ?? 0;
     total.consciousness += applied.consciousness ?? 0;
     total.damageResistance += applied.damageResistance ?? 0;
+    total.footDr += applied.footDr ?? 0;
     total.superJump += applied.superJump ?? 0;
     total.strikingSt += applied.strikingSt ?? 0;
     total.liftingSt += applied.liftingSt ?? 0;
