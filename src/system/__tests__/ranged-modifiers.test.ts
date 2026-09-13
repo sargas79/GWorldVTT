@@ -7,7 +7,7 @@ const globals = globalThis as Record<string, unknown>;
 beforeEach(() => {
   // The labels are localized; the arithmetic is what is under test, so the key
   // is echoed back rather than translated.
-  globals.game = { i18n: { localize: (key: string) => key } };
+  globals.game = { i18n: { localize: (key: string) => key, format: (key: string) => key } };
 });
 
 afterEach(() => {
@@ -165,5 +165,60 @@ describe("opportunity fire (p. 390)", () => {
     expect(
       valueOf(rangedModifiers(shot({ aimed: true }), watching(1, true)), "Accuracy"),
     ).toBeUndefined();
+  });
+});
+
+/** Firing from a vehicle (GURPS Basic Set: Campaigns p. 469). */
+describe("from a vehicle", () => {
+  const carbine = { accuracy: 4, scopeBonus: 0, bulk: -4 };
+  const aboard = (over = {}) => ({
+    kind: "handheld" as const,
+    operator: false,
+    dodged: false,
+    flying: false,
+    moving: true,
+    stabilityRating: 3,
+    stabilized: false,
+    targetingTl: 0,
+    ...over,
+  });
+
+  it("costs the driver -2 or the Bulk, whichever is worse, to fire a handheld weapon", () => {
+    const light = rangedModifiers(shot({ vehicle: aboard({ operator: true }) }), { ...carbine, bulk: -1 });
+    expect(valueOf(light, "Driving")).toBe(-2);
+    const heavy = rangedModifiers(shot({ vehicle: aboard({ operator: true }) }), { ...carbine, bulk: -5 });
+    expect(valueOf(heavy, "Driving")).toBe(-5);
+  });
+
+  it("costs the driver nothing extra for the vehicle's own gun", () => {
+    const mods = rangedModifiers(shot({ vehicle: aboard({ operator: true, kind: "mounted" }) }), carbine);
+    expect(valueOf(mods, "Driving")).toBeUndefined();
+  });
+
+  it("costs a passenger -2 when the vehicle dodged, and -4 in the air", () => {
+    expect(valueOf(rangedModifiers(shot({ vehicle: aboard({ dodged: true }) }), carbine), "VehicleDodged")).toBe(-2);
+    expect(valueOf(rangedModifiers(shot({ vehicle: aboard({ dodged: true, flying: true }) }), carbine), "VehicleDodged")).toBe(-4);
+    // The operator is the one who swerved, and saw it coming.
+    expect(valueOf(rangedModifiers(shot({ vehicle: aboard({ dodged: true, operator: true, kind: "mounted" }) }), carbine), "VehicleDodged")).toBeUndefined();
+  });
+
+  it("caps everything aiming buys at the SR of a moving vehicle", () => {
+    // Acc 4 plus a TL7 targeting system's +3 is 7, capped at SR 3: a cut of 4.
+    const mods = rangedModifiers(shot({ aimed: true, vehicle: aboard({ targetingTl: 7 }) }), carbine);
+    expect(valueOf(mods, "Accuracy")).toBe(4);
+    expect(valueOf(mods, "TargetingSystem")).toBe(3);
+    const cap = mods.find((m) => m.label.includes("StabilityCap"));
+    expect(cap?.value).toBe(-4);
+  });
+
+  it("lifts the cap for stabilized sights, and for a vehicle standing still", () => {
+    const stable = rangedModifiers(shot({ aimed: true, vehicle: aboard({ stabilized: true }) }), carbine);
+    expect(stable.some((m) => m.label.includes("StabilityCap"))).toBe(false);
+    const parked = rangedModifiers(shot({ aimed: true, vehicle: aboard({ moving: false }) }), carbine);
+    expect(parked.some((m) => m.label.includes("StabilityCap"))).toBe(false);
+  });
+
+  it("adds nothing when the shooter is not aboard anything", () => {
+    expect(rangedModifiers(shot({ vehicle: null }), carbine)).toEqual([]);
   });
 });

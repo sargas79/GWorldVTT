@@ -320,7 +320,9 @@
       "NoBlock": "No shield to block with",
       "MissileSpell": "A Missile spell can be dodged or blocked, not parried",
       "Maneuver": "This turn's maneuver allows no defense",
-      "Arc": "Not from that side"
+      "Arc": "Not from that side",
+      "StrappedIn": "Strapped in: no defense against a shot at the vehicle's occupants",
+      "Occupant": "Aboard a vehicle: only a dodge"
     },
     "Tactical": {
       "front": "from the front",
@@ -1396,7 +1398,19 @@
       "Measured": "range measured: {yards} yd",
       "AimedLonger": "aimed longer",
       "Braced": "braced",
-      "AimTurns": "{turns} turns aimed"
+      "AimTurns": "{turns} turns aimed",
+      "Driving": "Driving and shooting",
+      "VehicleDodged": "The vehicle dodged",
+      "TargetingSystem": "Targeting system",
+      "StabilityCap": "Aim capped at SR {sr}",
+      "FromVehicle": "From {vehicle}",
+      "VehicleWeapon": "Weapon",
+      "Handheld": "Held in the hand",
+      "Mounted": "The vehicle's own weapon",
+      "MountedNeedsAttack": "Firing the vehicle's own weapons takes an Attack or All-Out Attack maneuver",
+      "VehicleDodgedBox": "The vehicle dodged this turn",
+      "Stabilized": "Stabilized sights or mount",
+      "HasTargeting": "Using the vehicle's targeting system"
     },
     "Malfunction": {
       "Jammed": "The weapon malfunctions",
@@ -2717,7 +2731,18 @@
       "DamageType": "Damage type",
       "TightBeam": "Tight-beam burn (a laser, not a torch)",
       "Wound": "{penetrating} through, wounding x{modifier}: {injury} injury",
-      "VitalArea": "A vital area: impaling and piercing wound at ×3, a tight-beam burn at ×2"
+      "VitalArea": "A vital area: impaling and piercing wound at ×3, a tight-beam burn at ×2",
+      "StrappedIn": "Strapped in",
+      "Loose": "Loose",
+      "StrappedInHint": "An occupant who is free to move may dodge a shot aimed at them; one strapped in may not (p. 469).",
+      "ScaleTitle": "Damage scale",
+      "ScaleWhich": "Scale",
+      "ScaleDecade": "A tenth (decade)",
+      "ScaleCentury": "A hundredth (century)",
+      "ScaleDamage": "Weapon damage",
+      "ScaleRemaining": "HP left at this scale (0 to skip)",
+      "ScaledDamage": "{damage} is {scaled} at this scale",
+      "ScaledBack": "{remaining} HP left is {full} HP at full scale"
     },
     "GearCategory": {
       "weapon": "Weapon",

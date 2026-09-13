@@ -27,10 +27,11 @@ import { normalizeSkillName } from "../../rules/skills.js";
 
 const fields = foundry.data.fields;
 
-/** Somebody aboard: the actor, and whether they are the one driving. */
+/** Somebody aboard: the actor, whether they are driving, and whether they are strapped in. */
 export interface Occupant {
   uuid: string;
   operator: boolean;
+  strappedIn: boolean;
 }
 
 /**
@@ -113,6 +114,12 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
         new fields.SchemaField({
           uuid: new fields.StringField({ required: true, blank: false }),
           operator: new fields.BooleanField({ initial: false }),
+          /**
+           * "Occupants who are free to move (not strapped in, etc.) may dodge
+           * attacks specifically targeted on them" (p. 469) -- so a seatbelt
+           * is a defense given up.
+           */
+          strappedIn: new fields.BooleanField({ initial: false }),
         }),
         { required: true, initial: [] },
       ),

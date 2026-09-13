@@ -48,6 +48,10 @@ export type DefenseRefusal =
   | "noBlock"
   /** A thrown Missile spell, which "may block or dodge, but not parry" (Characters p. 241). */
   | "missile"
+  /** Strapped into a vehicle, which takes every defense away (Campaigns p. 469). */
+  | "strappedIn"
+  /** Loose in a vehicle, which leaves a dodge and nothing else (Campaigns p. 469). */
+  | "occupant"
   /** A mook, who "automatically fails all defense rolls" (Campaigns p. 417). */
   | "cannonFodder";
 

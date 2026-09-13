@@ -79,6 +79,10 @@ import { breakWeapon } from "./weapon-damage.js";
 import { spendShots } from "./ammunition.js";
 import type { DamageType } from "../rules/types.js";
 
+import { cappedAimBonus, targetingSystemBonus, unexpectedDodgePenalty } from "../rules/vehicle-combat.js";
+import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
+import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
+
 const CHAT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/success-roll.hbs`;
 const DAMAGE_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-roll.hbs`;
 
@@ -656,11 +660,20 @@ export async function handleRollAction(
           }
         : null,
   };
+  // A shot from a vehicle always asks, since whether the car swerved and
+  // whether it is the car's own gun are things no map can say (p. 469). The
+  // range is still measured, so the field starts at the right figure.
+  const aboard = ranged ? vehicleAboard(actor) : null;
   const measured = ranged && !(event as MouseEvent).shiftKey ? measuredShot(actor) : null;
   const shot = ranged
-    ? measured
+    ? measured && !aboard
       ? quickShot(measured, weapon)
-      : await promptForRangedAttack(weapon)
+      : await promptForRangedAttack({
+          ...weapon,
+          aboard,
+          mayFireMounted: mayFireMountedWeapon(actor, aboard),
+          initialRange: measured?.rangeYards ?? 0,
+        })
     : null;
   if (ranged && shot === null) return null;
 
@@ -1007,6 +1020,11 @@ export async function promptForRangedAttack(options: {
   eyes?: Eyes;
   /** Shots in the weapon, which caps a burst; null where no count is kept. */
   loaded?: number | null;
+  /** The vehicle the shooter is aboard, if any, and whether they may fire its weapons. */
+  aboard?: Aboard | null;
+  mayFireMounted?: boolean;
+  /** A range already measured off the map, to start the field at. */
+  initialRange?: number;
 }): Promise<RangedShot | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   // What aiming is worth: Accuracy after a turn, more for the second and
@@ -1045,10 +1063,36 @@ export async function promptForRangedAttack(options: {
   const shotsField =
     rateOfFire > 1 ? field("shots", `${L("Shots")} (1-${rateOfFire})`, "1") : "";
 
+  // Aboard a vehicle, the shot asks what only the table knows: whether it is
+  // the vehicle's own weapon, whether the car swerved, and what its sights are.
+  const aboard = options.aboard ?? null;
+  const vehicleFields = aboard
+    ? `<fieldset style="border:1px solid var(--color-border-light-2,#999);padding:4px 8px">
+        <legend>${game.i18n.format("GWORLD.Ranged.FromVehicle", { vehicle: aboard.name })}</legend>
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>${L("VehicleWeapon")}</span>
+          <select name="vehicleKind" style="width:150px">
+            <option value="handheld">${L("Handheld")}</option>
+            <option value="mounted">${L("Mounted")}</option>
+          </select>
+        </label>
+        ${options.mayFireMounted ? "" : `<p class="ihint warn" style="margin:0">${L("MountedNeedsAttack")}</p>`}
+        <label style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" name="vehicleDodged"><span>${L("VehicleDodgedBox")}</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" name="stabilized"><span>${L("Stabilized")}</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" name="targetingSystem"><span>${L("HasTargeting")}</span>
+        </label>
+      </fieldset>`
+    : "";
+
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Title") },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
-      ${field("range", L("Range"), "0")}
+      ${field("range", L("Range"), String(options.initialRange ?? 0))}
       ${field("elevation", L("Elevation"), "0")}
       ${field("speed", L("TargetSpeed"), "0")}
       ${field("size", L("TargetSize"), "0")}
@@ -1077,6 +1121,7 @@ export async function promptForRangedAttack(options: {
         <input type="checkbox" name="aimed" ${aiming.total > 0 ? "checked" : ""}>
         <span>${accuracyLabel}</span>
       </label>
+      ${vehicleFields}
     </div>`,
     ok: {
       label: game.i18n.localize("GWORLD.Chat.Roll"),
@@ -1107,6 +1152,21 @@ export async function promptForRangedAttack(options: {
           cover: cover as CoverApproach | "none",
           calledShot,
           aimed,
+          vehicle: aboard
+            ? {
+                kind: (form?.querySelector<HTMLSelectElement>('select[name="vehicleKind"]')?.value ??
+                  "handheld") as VehicleAttackKind,
+                operator: aboard.operator,
+                dodged: form?.querySelector<HTMLInputElement>('input[name="vehicleDodged"]')?.checked ?? false,
+                flying: aboard.flying,
+                moving: aboard.moving,
+                stabilityRating: aboard.stabilityRating,
+                stabilized: form?.querySelector<HTMLInputElement>('input[name="stabilized"]')?.checked ?? false,
+                targetingTl: form?.querySelector<HTMLInputElement>('input[name="targetingSystem"]')?.checked
+                  ? aboard.techLevel
+                  : 0,
+              }
+            : null,
         };
       },
     },
@@ -1164,6 +1224,24 @@ interface RangedInput {
   /** What they decided to do about anything in the way. */
   cover?: CoverApproach | "none";
   aimed: boolean;
+  /** Set when the shooter is aboard a vehicle (Campaigns pp. 467-469). */
+  vehicle?: VehicleShot | null;
+}
+
+/** What firing from a vehicle adds to a shot. */
+export interface VehicleShot {
+  /** A weapon held in the hand, or one built into the vehicle. */
+  kind: VehicleAttackKind;
+  operator: boolean;
+  /** True where the vehicle dodged this turn, which throws a passenger's aim. */
+  dodged: boolean;
+  flying: boolean;
+  moving: boolean;
+  stabilityRating: number;
+  /** True for stabilized sights or a stabilized mount, which the SR cap spares. */
+  stabilized: boolean;
+  /** The vehicle's TL where it has a targeting system, or 0. */
+  targetingTl: number;
 }
 
 /**
@@ -1254,6 +1332,24 @@ export function rangedModifiers(
     modifiers.push({ label: L("Bulk"), value: bulkPenalty(weapon.bulk, situation) });
   }
 
+  // From a vehicle (p. 469). "If the operator fires a handheld weapon ... -2 to
+  // hit or a penalty equal to his weapon's Bulk, whichever is worse"; and "if
+  // the vehicle dodged and you aren't the operator, you have an extra -2 to
+  // hit, or -4 if flying."
+  const vehicle = input.vehicle ?? null;
+  if (vehicle) {
+    if (vehicle.operator) {
+      const divided = drivingAttackPenalty({ kind: vehicle.kind, bulk: weapon.bulk });
+      if (divided !== 0) modifiers.push({ label: L("Driving"), value: divided });
+    }
+    const thrown = unexpectedDodgePenalty({
+      dodged: vehicle.dodged,
+      operator: vehicle.operator,
+      flying: vehicle.flying,
+    });
+    if (thrown !== 0) modifiers.push({ label: L("VehicleDodged"), value: thrown });
+  }
+
   // A Move and Attack loses the benefit of having aimed, whatever was ticked,
   // and so does anyone covering more than a single hex: "you cannot claim any
   // of the bonuses listed for the Aim maneuver ... Exception: if you watch a
@@ -1274,6 +1370,29 @@ export function rangedModifiers(
     if (aiming.accuracy !== 0) modifiers.push({ label: L("Accuracy"), value: aiming.accuracy });
     if (aiming.extraTurns !== 0) modifiers.push({ label: L("AimedLonger"), value: aiming.extraTurns });
     if (aiming.braced !== 0) modifiers.push({ label: L("Braced"), value: aiming.braced });
+
+    // A targeting system is one more aiming bonus, and a moving vehicle caps
+    // the lot: "the combined bonuses from aiming (Accuracy, extra turns of Aim,
+    // targeting systems, and bracing) cannot exceed the SR of a moving vehicle
+    // unless the sights or mount are stabilized" (p. 469). Shown as a cut off
+    // the total, so the card still says what each part was worth.
+    if (vehicle) {
+      const targeting = vehicle.targetingTl > 0 ? targetingSystemBonus(vehicle.targetingTl) : 0;
+      if (targeting !== 0) modifiers.push({ label: L("TargetingSystem"), value: targeting });
+      const total = aiming.accuracy + aiming.extraTurns + aiming.braced + targeting;
+      const capped = cappedAimBonus({
+        bonus: total,
+        stabilityRating: vehicle.stabilityRating,
+        stabilized: vehicle.stabilized,
+        moving: vehicle.moving,
+      });
+      if (capped < total) {
+        modifiers.push({
+          label: game.i18n.format("GWORLD.Ranged.StabilityCap", { sr: vehicle.stabilityRating }),
+          value: capped - total,
+        });
+      }
+    }
   }
   const rapidFire = rapidFireBonus(input.shots ?? 1);
   if (rapidFire !== 0) modifiers.push({ label: L("RapidFire"), value: rapidFire });

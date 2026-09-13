@@ -41,6 +41,8 @@ import {
 } from "../rules/cinematic.js";
 import { isCannonFodder } from "./cinematic.js";
 import { inflict } from "./afflictions.js";
+import { vehicleAboard } from "./vehicle-aboard.js";
+import { occupantMayDodge } from "../rules/scale.js";
 import { afflictionsOf, type Affliction } from "../rules/afflictions.js";
 import type { DamageType } from "../rules/types.js";
 
@@ -479,6 +481,8 @@ const REFUSAL_LABELS: Record<NonNullable<DefenseChoice["reason"]>, string> = {
   noParry: "GWORLD.Defense.NoParry",
   noBlock: "GWORLD.Defense.NoBlock",
   missile: "GWORLD.Defense.MissileSpell",
+  strappedIn: "GWORLD.Defense.StrappedIn",
+  occupant: "GWORLD.Defense.Occupant",
   cannonFodder: "GWORLD.Cinematic.CannonFodderDefense",
 };
 
@@ -564,6 +568,22 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       maneuver: defender.system?.derived?.maneuver ?? null,
       cannonFodder: isCannonFodder(defender),
     });
+    // Aboard a vehicle (Campaigns p. 469): "Occupants who are free to move (not
+    // strapped in, etc.) may dodge attacks specifically targeted on them" --
+    // and that is all. Anybody on this card was targeted, so the question is
+    // only whether they are strapped in.
+    const seat = vehicleAboard(defender);
+    if (seat) {
+      const strappedIn = (seat.vehicle.system?.crew ?? [])
+        .find((s: { uuid: string }) => s.uuid === defender.uuid)?.strappedIn === true;
+      const mayDodge = occupantMayDodge({ strappedIn, targeted: true });
+      for (const choice of choices) {
+        if (!choice.available) continue;
+        if (!mayDodge) Object.assign(choice, { available: false, shown: null, reason: "strappedIn" });
+        else if (choice.key !== "dodge") Object.assign(choice, { available: false, shown: null, reason: "occupant" });
+      }
+    }
+
     // "Your target may block or dodge, but not parry" a Missile spell
     // (Characters p. 241): the parry stays on the card, refused, with why.
     if (flag.noParry) {
