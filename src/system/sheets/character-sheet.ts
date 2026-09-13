@@ -2884,6 +2884,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       accelerate: GWorldCharacterSheet.#onAcceleration,
       motionSickness: GWorldCharacterSheet.#onMotionSickness,
       controlVehicle: GWorldCharacterSheet.#onControlVehicle,
+      topOffReserve: GWorldCharacterSheet.#onTopOffReserve,
       holyContact: GWorldCharacterSheet.#onHolyContact,
       jumpOutOfVehicle: GWorldCharacterSheet.#onJumpOutOfVehicle,
       shotAtVehicle: GWorldCharacterSheet.#onShotAtVehicle,
@@ -2962,7 +2963,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
   override _prepareTabs(group: string): Record<string, any> {
     const tabs = super._prepareTabs(group) as Record<string, any>;
-    if (group === "primary" && !isRuleOn("magic")) delete tabs.magic;
+    // The tab is magic of either kind: the Basic Set's spells, or Ritual Path
+    // Magic's Paths (Monster Hunters 1 pp. 32-39).
+    if (group === "primary" && !isRuleOn("magic") && !isRuleOn("ritualPathMagic")) delete tabs.magic;
     return tabs;
   }
 
@@ -5019,6 +5022,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * the weapon's own notes, which the compendium does not carry, so this rolls
    * the resistance and leaves the effect to the GM.
    */
+  /** "The GM should assume that mages 'top themselves off' during any downtime" (Monster Hunters 1 p. 36). */
+  static async #onTopOffReserve(this: GWorldCharacterSheet) {
+    const max = Number(this.actor.system?.derived?.ritualPath?.reserve?.max ?? 0) || 0;
+    await this.actor.update({ "system.ritualPath.manaReserve": max });
+  }
+
   /** Holy contact with whoever is targeted, from a holy item's row (Monster Hunters 1 p. 51). */
   static async #onHolyContact(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;

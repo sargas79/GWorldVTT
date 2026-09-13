@@ -30,6 +30,9 @@ import {
   type TraitEffects,
 } from "../../rules/trait-effects.js";
 import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
+import {
+  PATHS, isRitualAdept, manaReserveMax, pathCeiling, pathLevel, pathOfSkill, pathSkillName,
+} from "../../rules/ritual-path.js";
 import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
@@ -413,6 +416,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     itemIds: string[];
   }>;
   declare magic: { style: MagicStylePreference };
+  declare ritualPath: { manaReserve: number };
   declare activeSpells: ActiveSpell[];
   declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
   declare dress: { state: Dress; topless: boolean };
@@ -759,6 +763,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           initial: "auto",
           choices: ["auto", "standard", "ritual"],
         }),
+      }),
+
+      /**
+       * Ritual Path Magic's store of energy (Monster Hunters 1 p. 36): what
+       * is in the mana reserve now. Its size, Magery x 3, is worked out; this
+       * is only how full it is.
+       */
+      ritualPath: new fields.SchemaField({
+        manaReserve: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
       }),
 
       /**
@@ -1402,6 +1415,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     // What the character's Magery is, before the skills it adds to are read.
     const talent: MagicTalent = { magery: traits.magery, ritualMagery: traits.ritualMagery };
+    const ritualPathInPlay = isRuleOn("ritualPathMagic");
 
     // Pass one: levels that depend only on attributes.
     for (const item of skillItems) {
@@ -1431,7 +1445,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         attributeScore: attributeScore(sys.attribute),
         difficulty: sys.difficulty,
         points: sys.points,
-        bonus: sys.bonus + magicSkillBonus(String(item.name ?? ""), talent) + talentBonus + toolBonus,
+        // Under Ritual Path Magic, Magery "does not add to spell use or
+        // Thaumatology" (Monster Hunters 1 p. 24): it caps the Paths instead.
+        bonus: sys.bonus + magicSkillBonus(String(item.name ?? ""), ritualPathInPlay ? { ...talent, magery: null } : talent) + talentBonus + toolBonus,
         defaults: attributeDefaults,
       });
       sys.derived = {
@@ -1465,6 +1481,45 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         sys.derived.hasDefault = true;
       }
     }
+
+    // ── Ritual Path Magic ───────────────────────────────────────────────
+    // A Path is held to the lower of Thaumatology and 12 + Magery, and
+    // defaults to Thaumatology-6 no higher than 12 (Monster Hunters 1
+    // pp. 32-33). Every Path is known at default by anybody with
+    // Thaumatology, whether or not it is written on the sheet.
+    const thaumatology = this.skillLevelByName("Thaumatology");
+    if (ritualPathInPlay) {
+      for (const item of skillItems) {
+        if (!pathOfSkill(String(item.name ?? ""))) continue;
+        const sys = item.system as any;
+        const held = pathLevel({
+          trained: Number(sys.points) > 0 ? (sys.derived?.level ?? null) : null,
+          thaumatology,
+          magery: traits.magery,
+        });
+        sys.derived = { ...sys.derived, level: held.level, fromDefault: held.atDefault, capped: held.capped };
+      }
+    }
+    const reserveMax = manaReserveMax(traits.magery);
+    const ritualPath = {
+      inPlay: ritualPathInPlay,
+      thaumatology,
+      magery: traits.magery,
+      ceiling: pathCeiling({ thaumatology, magery: traits.magery }),
+      adept: heldTraits.some((t) => isRitualAdept(t.name)),
+      reserve: {
+        value: Math.min(reserveMax, Math.max(0, Number(this.ritualPath?.manaReserve ?? 0) || 0)),
+        max: reserveMax,
+      },
+      paths: PATHS.map((path) => {
+        const name = pathSkillName(path);
+        const owned = skillItems.find((i) => pathOfSkill(String(i.name ?? "")) === path);
+        const level = owned
+          ? { level: (owned.system as any)?.derived?.level ?? null, atDefault: Boolean((owned.system as any)?.derived?.fromDefault), capped: Boolean((owned.system as any)?.derived?.capped) }
+          : pathLevel({ trained: null, thaumatology, magery: traits.magery });
+        return { path, name, owned: Boolean(owned), ...level };
+      }),
+    };
 
     // ── techniques ──────────────────────────────────────────────────────
     for (const item of this.itemsOfType("technique")) {
@@ -2405,6 +2460,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       },
       traitEffects: traits,
       magic: { ...magic, mana, items: magicItems },
+      ritualPath,
       // Unkillable is not dead at -5xHP; only destruction at -10xHP is the end.
       status: healthStatus(this.hp.value, this.hp.max, { unkillable: traits.unkillable }),
       reeling,

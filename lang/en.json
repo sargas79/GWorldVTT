@@ -692,6 +692,10 @@
           "Name": "Melee etiquette",
           "Hint": "A hero fighting hand to hand is faced one at a time. The rest wait their turn (Campaigns p. 417)."
         },
+        "ritualPathMagic": {
+          "Name": "Ritual Path Magic",
+          "Hint": "Magic as nine IQ/Very Hard Path skills, each held to the lower of Thaumatology and 12 + Magery and defaulting to Thaumatology-6 (no higher than 12), with a mana reserve of Magery x 3. Magery no longer adds to Thaumatology (Monster Hunters 1 pp. 24, 32-39)."
+        },
         "holyAttacks": {
           "Name": "Holy attacks",
           "Hint": "Contact with holy water or a holy weapon burns a creature with a Weakness to holy things for 1d, ignoring DR, then fizzes for a minute in which no holy source hurts it again (Monster Hunters 1 p. 51)."
@@ -3362,6 +3366,21 @@
       "CannonFodderHint": "A mook: fails every defense roll, never takes All-Out Attack, and collapses the moment any damage gets through their DR. Nobody keeps track of their HP (Campaigns p. 417).",
       "CannonFodderDefense": "Cannon fodder: automatically fails",
       "Collapses": "{name} goes down."
+    },
+    "RitualPath": {
+      "Title": "Ritual Path Magic",
+      "Ceiling": "Paths up to",
+      "CeilingHint": "No Path skill may exceed the lower of Thaumatology and 12 + Magery (Monster Hunters 1 p. 32).",
+      "NoThaumatology": "No Thaumatology: not a caster.",
+      "Adept": "Ritual Adept",
+      "AdeptHint": "Gathers in seconds rather than minutes, with none of the non-adept penalties (Monster Hunters 1 pp. 25, 36).",
+      "NonAdept": "Not an adept",
+      "NonAdeptHint": "Gathering takes minutes, and connection, consecrated space and lacking Magery each cost -5 (Monster Hunters 1 p. 36).",
+      "Reserve": "Mana reserve",
+      "ReserveHint": "Magery x 3 points of energy, drawn on in a second; refilled with Path of Magic, and assumed full after downtime (Monster Hunters 1 p. 36).",
+      "TopOff": "Top off",
+      "Capped": "capped",
+      "Default": "default"
     },
     "Holy": {
       "Title": "Holy attack",
