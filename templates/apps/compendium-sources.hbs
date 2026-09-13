@@ -9,16 +9,42 @@
     {{#each groups as |group|}}
       <section class="gr-group">
         <h3>{{localize group.label}}</h3>
-        {{#each group.packs as |pack|}}
-          <label class="gr-rule">
-            <input type="checkbox" data-pack="{{pack.collection}}" {{#if pack.enabled}}checked{{/if}} />
-            <span class="gr-text">
-              <span class="gr-name">
-                {{pack.label}}
-                <span class="gr-ref">{{pack.collection}}</span>
-              </span>
-            </span>
-          </label>
+        {{#each group.books as |book|}}
+          {{#if book.headed}}
+            <div class="gr-book">
+              <label class="gr-rule">
+                <input type="checkbox" data-book-packs="{{book.packIds}}" data-some="{{book.some}}"
+                       {{#if book.all}}checked{{/if}}
+                       aria-label="{{localize "GWORLD.Sources.BookAll" book=book.title}}" />
+                <span class="gr-text"><span class="gr-name">{{book.title}}</span></span>
+              </label>
+              <div class="gr-packs">
+                {{#each book.packs as |pack|}}
+                  <label class="gr-rule">
+                    <input type="checkbox" data-pack="{{pack.collection}}" {{#if pack.enabled}}checked{{/if}} />
+                    <span class="gr-text">
+                      <span class="gr-name">
+                        {{pack.label}}
+                        <span class="gr-ref">{{pack.collection}}</span>
+                      </span>
+                    </span>
+                  </label>
+                {{/each}}
+              </div>
+            </div>
+          {{else}}
+            {{#each book.packs as |pack|}}
+              <label class="gr-rule">
+                <input type="checkbox" data-pack="{{pack.collection}}" {{#if pack.enabled}}checked{{/if}} />
+                <span class="gr-text">
+                  <span class="gr-name">
+                    {{pack.label}}
+                    <span class="gr-ref">{{pack.collection}}</span>
+                  </span>
+                </span>
+              </label>
+            {{/each}}
+          {{/if}}
         {{/each}}
       </section>
     {{else}}

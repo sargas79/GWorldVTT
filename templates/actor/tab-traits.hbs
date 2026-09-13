@@ -60,7 +60,20 @@
                   title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
           {{/if}}
           {{#if trait.system.description}}
-            <span class="td">{{{trait.system.description}}}</span>
+            {{#if trait.description.more}}
+              {{!-- Folded to its first line. A native disclosure: the summary
+                    takes focus, toggles on Enter or Space, and is announced
+                    as expanded or collapsed without any script. --}}
+              <details class="td tdfold" data-description-for="{{trait.id}}" {{#if trait.description.open}}open{{/if}}>
+                <summary title="{{localize "GWORLD.Trait.DescriptionHint"}}">
+                  <span class="tdfirst">{{trait.description.first}}</span>
+                  <span class="tdless">{{localize "GWORLD.Trait.ShowLess"}}</span>
+                </summary>
+                <div class="tdfull">{{{trait.system.description}}}</div>
+              </details>
+            {{else}}
+              <span class="td">{{{trait.system.description}}}</span>
+            {{/if}}
           {{/if}}
         </div>
       {{/each}}

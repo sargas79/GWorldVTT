@@ -26,7 +26,12 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { fields, nameOf, records, splitTop } from "./gdf.mjs";
+import { citesBook, fields, nameOf, records, reference, splitTop } from "./gdf.mjs";
+
+// The citation readers live with the record reader, since every parser
+// needs them; they are re-exported here for the tests that read them off
+// this module.
+export { reference };
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -68,21 +73,6 @@ export function existingIds(dir) {
     }
   }
   return byName;
-}
-
-/**
- * The page citation for one book. GCA cites every book a spell appears in --
- * `page(M74, B247)` -- and each pack names the one it was built from.
- */
-export function reference(page, prefix, book) {
-  const re = new RegExp(`\\b${prefix}(\\d+)\\b`, "g");
-  const pages = [...(page ?? "").matchAll(re)].map((m) => m[1]);
-  return pages.length ? `${book} p. ${pages.join(", ")}` : book;
-}
-
-/** Whether a record cites a page in the book being read. */
-function citesBook(f, prefix) {
-  return new RegExp(`\\b${prefix}\\d`).test(f.get("page") ?? "");
 }
 
 /**
@@ -350,7 +340,7 @@ export function parseNeeds(raw, lookup) {
  * skipped: the same record serves both styles in this system.
  */
 export function parseSpells(recs, options) {
-  const { reject, ids, prefix, book } = options;
+  const { reject, ids, prefix, book, overlap } = options;
   const spellNames = new Set();
   const skillNames = new Set();
   const traitNames = new Set();
@@ -379,7 +369,7 @@ export function parseSpells(recs, options) {
   for (const r of recs) {
     if (r.section !== "SPELLS") continue;
     const f = fields(r.text);
-    if (!citesBook(f, prefix)) continue;
+    if (!citesBook(f.get("page"), prefix)) continue;
 
     const bare = nameOf(r);
     const second = (splitTop(r.text)[1] ?? "").trim();
@@ -388,6 +378,12 @@ export function parseSpells(recs, options) {
     // A "Tech/H" record is the ritual technique GCA makes of a spell; the
     // spell itself is the IQ record beside it.
     if (attr !== "IQ") continue;
+    // A supplement's record that also cites the Basic Set is one the Basic
+    // Set pack already carries, and is left to it when the caller asks.
+    if (overlap && prefix !== "B" && citesBook(f.get("page"), "B")) {
+      overlap(r.section, spellName(bare), f.get("page") ?? "");
+      continue;
+    }
     if (diff !== "H" && diff !== "VH") { reject(bare, `difficulty not H or VH: "${pair}"`); continue; }
 
     const name = spellName(bare);

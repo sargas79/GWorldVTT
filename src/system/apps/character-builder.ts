@@ -18,7 +18,11 @@
 
 import { SYSTEM_ID } from "../constants.js";
 import { CompendiumPicker } from "./compendium-picker.js";
-import { applyTemplateToActor, templateFromItem } from "../character-templates.js";
+import {
+  applyTemplateToActor,
+  confirmAndRemoveTemplate,
+  templateFromItem,
+} from "../character-templates.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -96,6 +100,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       deleteItem: CharacterBuilder.#onDeleteItem,
       finish: CharacterBuilder.#onFinish,
       applyTemplate: CharacterBuilder.#onApplyTemplate,
+      removeTemplate: CharacterBuilder.#onRemoveTemplate,
     },
   };
 
@@ -235,9 +240,11 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       // What this character has already been built from, so the step shows
       // progress rather than offering the same button twice.
       templates: (this.#actor.system?.derived?.templates ?? []).map(
-        (applied: { name: string; kind: string; attributeCost: number }) => ({
+        (applied: { name: string; kind: string; attributeCost: number; itemIds?: string[] }, index: number) => ({
           ...applied,
+          index,
           kindLabel: `GWORLD.Template.${applied.kind}`,
+          granted: (applied.itemIds ?? []).length,
         }),
       ),
 
@@ -327,6 +334,17 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
   /** Takes a template, which is what this step is for (Characters p. 258). */
   static async #onApplyTemplate(this: CharacterBuilder) {
     if (await chooseAndApply(this.#actor)) this.render();
+  }
+
+  /**
+   * Takes one off again, with what it added. The actor hooks redraw this
+   * window as the removal lands; the render here is for the case where
+   * nothing on the actor changed but the list should still say so.
+   */
+  static async #onRemoveTemplate(this: CharacterBuilder, _event: Event, target: HTMLElement) {
+    const index = Number(target.dataset.index);
+    if (!Number.isInteger(index)) return;
+    if (await confirmAndRemoveTemplate(this.#actor, index)) this.render();
   }
 
   static async #onFinish(this: CharacterBuilder): Promise<void> {

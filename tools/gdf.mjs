@@ -150,6 +150,32 @@ export function modes(text) {
   return out;
 }
 
+/** A page prefix as a regular expression can hold it: "B", "MA", "LT". */
+function prefixPattern(prefix) {
+  return String(prefix).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Whether a citation names a page of the book with this prefix. GCA cites
+ * every book a record appears in -- `page(MA52, B203)` -- and each pack is
+ * built from one of them.
+ */
+export function citesBook(page, prefix) {
+  return new RegExp(`\\b${prefixPattern(prefix)}\\d`).test(page ?? "");
+}
+
+/**
+ * The page reference for one book, as the compendium prints it: "Martial
+ * Arts p. 52", or "Basic Set: Characters p. 271, 276" where a record spans
+ * two pages. A record that cites the book without a page number gets the
+ * book alone.
+ */
+export function reference(page, prefix, book) {
+  const re = new RegExp(`\\b${prefixPattern(prefix)}(\\d+)\\b`, "g");
+  const pages = [...(page ?? "").matchAll(re)].map((m) => m[1]);
+  return pages.length ? `${book} p. ${pages.join(", ")}` : book;
+}
+
 /**
  * Whether a value is a GCA expression rather than a constant. GCA computes
  * unarmed damage from the character sheet -- `@if("SK:Brawling::level" > ...)`

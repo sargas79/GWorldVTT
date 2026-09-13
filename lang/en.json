@@ -1015,7 +1015,9 @@
       "SelfControl6": "6 (almost never resisted, ×2)",
       "SelfControl9": "9 (rarely, ×1.5)",
       "SelfControl12": "12 (fairly often, ×1)",
-      "SelfControl15": "15 (almost always, ×0.5)"
+      "SelfControl15": "15 (almost always, ×0.5)",
+      "DescriptionHint": "Show the full description",
+      "ShowLess": "Show less"
     },
     "Template": {
       "Title": "Templates",
@@ -1062,6 +1064,12 @@
       "Removed": "{name} removed",
       "Remove": "Remove",
       "RemoveAsk": "Remove {name}? It added {count} items to this sheet.",
+      "RemoveNamed": "Remove {name}",
+      "RemoveMissing": "{count} of the items it added have already been deleted.",
+      "RemoveReview": "Some of what it added has been changed since. Check what will go and what will stay:",
+      "RemoveEdited": "Edited after the template was applied. They go with it if the items are removed:",
+      "RemoveKept": "Changed by hand since, so they stay as they are now rather than going back:",
+      "RemovedKept": "{name} removed; {count} values changed by hand were left as they were.",
       "RemoveItems": "Remove them too",
       "KeepItems": "Keep them",
       "NoneApplied": "Built from nothing in particular.",
@@ -2092,6 +2100,7 @@
       "Saved": "Compendium sources updated.",
       "NoPacks": "No Item compendia are available in this world.",
       "NoneHint": "Nothing is ticked, so the picker will offer the system's own packs.",
+      "BookAll": "Every pack of {book}",
       "Group": {
         "system": "This system",
         "world": "This world",

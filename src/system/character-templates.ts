@@ -21,6 +21,12 @@ import {
   type Template,
   type TemplateEntry,
 } from "../rules/templates.js";
+import {
+  needsReview,
+  planTemplateRemoval,
+  type RemovalItem,
+  type RemovalPlan,
+} from "./template-removal.js";
 
 /** What a character has been built from. */
 export interface AppliedTemplate {
@@ -39,6 +45,10 @@ export interface AppliedTemplate {
    * overwrote is kept so that taking it off means taking it off.
    */
   previous: Record<string, number>;
+  /** What it wrote there, so a value changed since can be told apart. */
+  written?: Record<string, number>;
+  /** When it was applied; null on records made before this was kept. */
+  at?: number | null;
   itemIds: string[];
 }
 
@@ -124,12 +134,14 @@ export async function applyTemplateToActor(options: {
   const changes: Record<string, unknown> = {};
   const granted: Record<string, number> = {};
   const previous: Record<string, number> = {};
+  const written: Record<string, number> = {};
 
   // A character template states scores to buy; a racial one states modifiers
   // to whatever was bought, which are granted rather than billed.
   for (const [key, value] of Object.entries(applied.attributes)) {
     previous[`attributes.${key}`] = Number(actor.system?.attributes?.[key]) || 10;
     changes[`system.attributes.${key}`] = value;
+    written[`attributes.${key}`] = value;
   }
   for (const [key, value] of Object.entries(applied.racial)) {
     const current = Number(actor.system?.racial?.[key]) || 0;
@@ -143,6 +155,7 @@ export async function applyTemplateToActor(options: {
     const current = Number(actor.system?.purchased?.[key]) || 0;
     previous[`purchased.${key}`] = current;
     changes[`system.purchased.${key}`] = current + value;
+    written[`purchased.${key}`] = current + value;
   }
   for (const [key, value] of Object.entries(applied.bonuses)) {
     const current = Number(actor.system?.bonuses?.[key]) || 0;
@@ -165,6 +178,9 @@ export async function applyTemplateToActor(options: {
     attributeCost: applied.attributeCost,
     granted,
     previous,
+    written,
+    // After the items were made, so nothing it created counts as edited.
+    at: Date.now(),
     itemIds: created.map((item: { id: string }) => item.id),
   };
 
@@ -181,30 +197,69 @@ export async function applyTemplateToActor(options: {
   return record;
 }
 
+/** A number on the actor by the path a template record keys it under. */
+function valueAt(actor: any, path: string): number | undefined {
+  const value = foundry.utils.getProperty(actor.system ?? {}, path);
+  return typeof value === "number" ? value : undefined;
+}
+
+/**
+ * A record's path-keyed numbers as flat paths.
+ *
+ * They are written as "attributes.ST", but an update expands a dotted key
+ * into nesting on the way to the database, so what comes back off the actor
+ * is `{attributes: {ST: 12}}`. Flattening reads either form.
+ */
+function flatPaths(value: unknown): Record<string, number> {
+  const flat = foundry.utils.flattenObject((value ?? {}) as object) as Record<string, unknown>;
+  const out: Record<string, number> = {};
+  for (const [path, n] of Object.entries(flat)) if (typeof n === "number") out[path] = n;
+  return out;
+}
+
+/** What removing this template would do, read off the actor as it is now. */
+export function removalPlanFor(actor: any, record: AppliedTemplate): RemovalPlan {
+  const items = new Map<string, RemovalItem>();
+  for (const id of record.itemIds) {
+    const item = actor.items?.get(id);
+    if (!item) continue;
+    items.set(id, {
+      id,
+      name: String(item.name ?? ""),
+      modifiedTime: typeof item._stats?.modifiedTime === "number" ? item._stats.modifiedTime : null,
+    });
+  }
+  const flat: AppliedTemplate = { ...record, previous: flatPaths(record.previous) };
+  if (record.written) flat.written = flatPaths(record.written);
+  return planTemplateRemoval(flat, items, (path) => valueAt(actor, path));
+}
+
 /**
  * Takes a template back off (p. 258).
  *
  * "You are free to alter anything that came with it" cuts both ways: a player
  * who has since deleted one of the template's traits should not have the
  * removal fail, so items that are already gone are passed over rather than
- * complained about.
+ * complained about; and a number they have raised by hand since is theirs,
+ * so it is left where they put it rather than wound back.
  */
 export async function removeTemplateFromActor(options: {
   actor: any;
   index: number;
   /** Leave the items where they are and only give the modifiers back. */
   keepItems?: boolean;
-}): Promise<void> {
+}): Promise<RemovalPlan | null> {
   const { actor } = options;
-  if (!actor?.isOwner) return;
+  if (!actor?.isOwner) return null;
 
   const templates = appliedTemplates(actor);
   const record = templates[options.index];
-  if (!record) return;
+  if (!record) return null;
 
-  if (!options.keepItems) {
-    const present = record.itemIds.filter((id) => actor.items?.get(id));
-    if (present.length) await actor.deleteEmbeddedDocuments("Item", present);
+  const plan = removalPlanFor(actor, record);
+
+  if (!options.keepItems && plan.present.length) {
+    await actor.deleteEmbeddedDocuments("Item", plan.present.map((item) => item.id));
   }
 
   const changes: Record<string, unknown> = {};
@@ -218,8 +273,9 @@ export async function removeTemplateFromActor(options: {
     changes[`system.${where}.${key}`] = current - value;
   }
 
-  // What a character template overwrote goes back exactly as it was.
-  for (const [path, value] of Object.entries(record.previous ?? {})) {
+  // What a character template overwrote goes back exactly as it was, where
+  // it still reads what the template wrote.
+  for (const [path, value] of Object.entries(plan.restore)) {
     changes[`system.${path}`] = value;
   }
 
@@ -227,8 +283,90 @@ export async function removeTemplateFromActor(options: {
   await actor.update(changes);
 
   ui.notifications?.info(
-    game.i18n.format("GWORLD.Template.Removed", { name: record.name }),
+    plan.kept.length
+      ? game.i18n.format("GWORLD.Template.RemovedKept", { name: record.name, count: plan.kept.length })
+      : game.i18n.format("GWORLD.Template.Removed", { name: record.name }),
   );
+  return plan;
+}
+
+/** A path a template record keys a number under, as the sheet labels it. */
+function pathLabel(path: string): string {
+  const [where, key = ""] = path.split(".");
+  if (where === "attributes") return game.i18n.localize(`GWORLD.Attribute.${key}`);
+  if (where === "purchased") {
+    const known: Record<string, string> = {
+      hp: "HP", will: "Will", per: "Per", fp: "FP", basicSpeed: "BasicSpeed", basicMove: "BasicMove",
+    };
+    const label = known[key];
+    if (label) return game.i18n.localize(`GWORLD.Secondary.${label}`);
+  }
+  return path;
+}
+
+/**
+ * Asks before taking a template off, and then does it.
+ *
+ * What to do with the items is a real question rather than a confirmation:
+ * a character who has played a few sessions has made those traits their
+ * own, and deleting them is not always what "remove the template" means.
+ * Where anything has been changed since -- an item edited, a number raised
+ * by hand -- the dialog says so, so what will go and what will stay is
+ * agreed to rather than discovered.
+ *
+ * Shared by the sheet and the guided build, which offer the same removal.
+ */
+export async function confirmAndRemoveTemplate(actor: any, index: number): Promise<boolean> {
+  const record = appliedTemplates(actor)[index];
+  if (!record || !actor?.isOwner) return false;
+
+  const plan = removalPlanFor(actor, record);
+  const escape = (text: string) => foundry.utils.escapeHTML(text);
+  const list = (lines: string[]) => `<ul>${lines.map((line) => `<li>${line}</li>`).join("")}</ul>`;
+
+  const parts = [
+    `<p>${game.i18n.format("GWORLD.Template.RemoveAsk", {
+      name: escape(record.name),
+      count: plan.present.length,
+    })}</p>`,
+  ];
+  if (plan.missing > 0) {
+    parts.push(`<p>${game.i18n.format("GWORLD.Template.RemoveMissing", { count: plan.missing })}</p>`);
+  }
+  if (needsReview(plan)) {
+    parts.push(`<p class="gworld-warning">${game.i18n.localize("GWORLD.Template.RemoveReview")}</p>`);
+    if (plan.edited.length) {
+      parts.push(
+        `<p>${game.i18n.localize("GWORLD.Template.RemoveEdited")}</p>`,
+        list(plan.edited.map((item) => escape(item.name))),
+      );
+    }
+    if (plan.kept.length) {
+      parts.push(
+        `<p>${game.i18n.localize("GWORLD.Template.RemoveKept")}</p>`,
+        list(plan.kept.map((k) => `${escape(pathLabel(k.path))} ${k.value}`)),
+      );
+    }
+  }
+
+  const buttons = [
+    ...(plan.present.length
+      ? [{ action: "items", label: game.i18n.localize("GWORLD.Template.RemoveItems") }]
+      : []),
+    { action: "keep", label: game.i18n.localize(plan.present.length ? "GWORLD.Template.KeepItems" : "GWORLD.Template.Remove") },
+    { action: "cancel", label: game.i18n.localize("GWORLD.Chat.Cancel") },
+  ];
+
+  const answer = await foundry.applications.api.DialogV2.wait({
+    window: { title: game.i18n.localize("GWORLD.Template.Remove") },
+    content: parts.join(""),
+    buttons,
+    rejectClose: false,
+  });
+  if (answer === "cancel" || answer === null) return false;
+
+  await removeTemplateFromActor({ actor, index, keepItems: answer === "keep" });
+  return true;
 }
 
 /**

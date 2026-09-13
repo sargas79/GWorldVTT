@@ -11,8 +11,10 @@ import { SYSTEM_ID } from "../constants.js";
 import {
   COMPENDIUM_SOURCES_KEY,
   availablePacks,
+  bookState,
   chosenSources,
   defaultSources,
+  groupByBook,
   type PackSummary,
 } from "../compendium-sources.js";
 import { loadSkillCatalog } from "../skill-catalog.js";
@@ -64,17 +66,29 @@ export class CompendiumSourcesSettings extends HandlebarsApplicationMixin(Applic
     const packs = this.#packs();
 
     return {
+      // One row per book, each pack listed under it with a box of its own,
+      // and one box for the book that ticks them all. A lone pack that names
+      // no book is shown as it always was, with no row above it.
       groups: GROUPS.map((group) => ({
         label: group.label,
-        packs: packs
-          .filter((pack) => pack.packageType === group.type)
-          .map((pack) => ({
-            collection: pack.collection,
-            label: pack.label,
-            packageName: pack.packageName,
-            enabled: chosen.has(pack.collection),
-          })),
-      })).filter((group) => group.packs.length > 0),
+        books: groupByBook(packs.filter((pack) => pack.packageType === group.type)).map((row) => {
+          const state = bookState(row, chosen);
+          return {
+            key: row.key,
+            title: row.title,
+            headed: row.flagged || row.packs.length > 1,
+            all: state === "all",
+            some: state === "some",
+            packIds: row.packs.map((pack) => pack.collection).join(","),
+            packs: row.packs.map((pack) => ({
+              collection: pack.collection,
+              label: pack.label,
+              packageName: pack.packageName,
+              enabled: chosen.has(pack.collection),
+            })),
+          };
+        }),
+      })).filter((group) => group.books.length > 0),
       dirty: this.#pending !== null,
       // Nothing ticked means the system's packs, and the page should say so
       // rather than let a GM think they have switched the picker off.
@@ -92,6 +106,23 @@ export class CompendiumSourcesSettings extends HandlebarsApplicationMixin(Applic
         const next = new Set(this.#state());
         if (box.checked) next.add(collection);
         else next.delete(collection);
+        this.#pending = next;
+        void this.render();
+      });
+    }
+
+    // The book's box ticks or clears every pack of the book. A book with only
+    // some of its packs ticked shows the half-state, which no attribute can
+    // set: it has to be written on the element.
+    for (const box of this.element.querySelectorAll<HTMLInputElement>("input[data-book-packs]")) {
+      box.indeterminate = box.dataset.some === "true";
+      box.addEventListener("change", () => {
+        const collections = (box.dataset.bookPacks ?? "").split(",").filter(Boolean);
+        const next = new Set(this.#state());
+        for (const collection of collections) {
+          if (box.checked) next.add(collection);
+          else next.delete(collection);
+        }
         this.#pending = next;
         void this.render();
       });

@@ -46,7 +46,13 @@
             <span class="gb-detail">
               {{localize applied.kindLabel}}
               {{#if applied.attributeCost}} &middot; {{applied.attributeCost}} pts{{/if}}
+              &middot; {{localize "GWORLD.Template.Granted" count=applied.granted}}
             </span>
+            <button type="button" class="gb-remove" data-action="removeTemplate" data-index="{{applied.index}}"
+                    aria-label="{{localize "GWORLD.Template.RemoveNamed" name=applied.name}}"
+                    data-tooltip="{{localize "GWORLD.Template.Remove"}}">
+              {{> "gworld.trash"}}
+            </button>
           </li>
         {{else}}
           <li class="gb-row"><span class="gb-detail">{{localize "GWORLD.Template.NoneApplied"}}</span></li>

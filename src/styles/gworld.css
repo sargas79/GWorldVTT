@@ -743,6 +743,51 @@
 }
 .gworld .td { grid-column: 1 / -1; font-size: 11.5px; color: var(--color-neutral-800); }
 
+/* A description folded to its first line; the rest opens under it. */
+.gworld .tdfold { min-width: 0; }
+.gworld .tdfold > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  cursor: pointer;
+  list-style: none;
+  min-width: 0;
+}
+.gworld .tdfold > summary::-webkit-details-marker { display: none; }
+.gworld .tdfold > summary::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 120ms ease;
+  margin-right: 2px;
+  color: var(--color-neutral-700);
+}
+.gworld .tdfold[open] > summary::before { transform: rotate(45deg); }
+.gworld .tdfold > summary:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
+.gworld .tdfold > summary .tdfirst {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gworld .tdfold > summary .tdless {
+  display: none;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .tdfold[open] > summary .tdfirst { display: none; }
+.gworld .tdfold[open] > summary .tdless { display: inline; }
+.gworld .tdfold > .tdfull { margin-top: 4px; }
+.gworld .tdfold > .tdfull > :first-child { margin-top: 0; }
+.gworld .tdfold > .tdfull > :last-child { margin-bottom: 0; }
+
 .gworld .tag {
   display: inline-block;
   padding: 1px 6px;
@@ -1574,6 +1619,10 @@
 }
 .gworld-rules .gr-rule:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
 .gworld-rules .gr-rule input { flex: 0 0 auto; margin-top: 2px; }
+/* One row per book, its packs indented under it. */
+.gworld-rules .gr-book > .gr-rule { font-weight: 600; }
+.gworld-rules .gr-book .gr-packs { margin-left: 22px; border-left: 1px solid var(--color-divider); }
+.gworld-rules .gr-book .gr-packs .gr-name { font-weight: 400; }
 .gworld-rules .gr-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .gworld-rules .gr-name { font-weight: 500; }
 /* The page it comes from, so a ruling can be checked rather than argued. */

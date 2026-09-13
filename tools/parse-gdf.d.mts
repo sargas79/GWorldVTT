@@ -1,10 +1,11 @@
 /**
- * The one export the GCA parser shares with the rules engine.
+ * What the GCA parser shares with the tests.
  *
  * The parser itself is plain JavaScript, run by node rather than compiled, so it
- * carries no types of its own. This declares only what the consistency test
- * imports: the mapping of which damage a split DR applies to, which must match
- * SPLIT_AGAINST in `src/rules/armor.ts`.
+ * carries no types of its own. This declares only what the tests import: the
+ * mapping of which damage a split DR applies to, which must match
+ * SPLIT_AGAINST in `src/rules/armor.ts`, and the two readers that decide which
+ * book a record is filed under.
  */
 import type { DamageType } from "../src/rules/types.js";
 
@@ -63,3 +64,12 @@ export declare function weaponClassOf(mods: string | undefined): "" | "sword" | 
 export declare function fullLoad(shots: string | undefined): number;
 export declare function costOfLivingPercent(text: string | undefined): number;
 export declare function displayWeight(text: string | undefined): number;
+/** The page reference for one book: "Martial Arts p. 52". */
+export declare function reference(page: string | undefined, prefix: string, book: string): string;
+
+/** Where a record belongs, for the pack being built. */
+export declare function classifyCitation(
+  page: string | undefined,
+  prefix: string,
+  base?: string,
+): "own" | "overlap" | "elsewhere";

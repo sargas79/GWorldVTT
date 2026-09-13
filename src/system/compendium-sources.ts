@@ -25,6 +25,61 @@ export interface PackSummary {
   packageType: string;
   packageName: string;
   documentName: string;
+  /**
+   * The book the pack is one part of, from the pack's manifest entry
+   * (`flags.gworld.book`), and the title to show it under. A module carrying
+   * a book ships one pack per item type, and a GM wants one switch per book
+   * rather than one per pack. Absent on packs that carry no such flag.
+   */
+  book?: string;
+  bookTitle?: string;
+}
+
+/** One row of the settings page: a book, or a package's packs grouped as one. */
+export interface BookRow {
+  key: string;
+  title: string;
+  /** Whether the row comes from a book flag, or is only packs of one package. */
+  flagged: boolean;
+  packs: PackSummary[];
+}
+
+/** How much of a book is ticked. */
+export type BookState = "all" | "some" | "none";
+
+/**
+ * Packs grouped one row per book, in the order they were first seen.
+ *
+ * A pack that names its book goes under that book's title; one that does not
+ * goes under its package, which for a module of one pack is the same row it
+ * was always on. The system's own packs all name the Basic Set, so they come
+ * up as one row too.
+ */
+export function groupByBook(packs: readonly PackSummary[]): BookRow[] {
+  const rows = new Map<string, BookRow>();
+  for (const pack of packs) {
+    const flagged = Boolean(pack.book);
+    const key = flagged ? `book:${pack.packageName}:${pack.book}` : `package:${pack.packageName}`;
+    let row = rows.get(key);
+    if (!row) {
+      row = {
+        key,
+        title: flagged ? pack.bookTitle || String(pack.book) : pack.packageName,
+        flagged,
+        packs: [],
+      };
+      rows.set(key, row);
+    }
+    row.packs.push(pack);
+  }
+  return [...rows.values()];
+}
+
+/** Whether every pack of a row is chosen, some are, or none is. */
+export function bookState(row: BookRow, chosen: ReadonlySet<string>): BookState {
+  const ticked = row.packs.filter((pack) => chosen.has(pack.collection)).length;
+  if (ticked === 0) return "none";
+  return ticked === row.packs.length ? "all" : "some";
 }
 
 /** The packs this system ships: every Item pack the system package itself provides. */
@@ -57,13 +112,21 @@ export function chosenSources(
 
 /** A pack as Foundry describes it, reduced to what the setting cares about. */
 export function summarisePack(pack: any): PackSummary {
-  return {
+  const summary: PackSummary = {
     collection: String(pack?.collection ?? ""),
     label: String(pack?.title ?? pack?.metadata?.label ?? pack?.collection ?? ""),
     packageType: String(pack?.metadata?.packageType ?? ""),
     packageName: String(pack?.metadata?.packageName ?? ""),
     documentName: String(pack?.documentName ?? pack?.metadata?.type ?? ""),
   };
+  const flags = pack?.metadata?.flags?.[SYSTEM_ID];
+  const book = String(flags?.book ?? "").trim();
+  if (book) {
+    summary.book = book;
+    const title = String(flags?.bookTitle ?? "").trim();
+    if (title) summary.bookTitle = title;
+  }
+  return summary;
 }
 
 /** Every Item pack the world can see, as summaries. */

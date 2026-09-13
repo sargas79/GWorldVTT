@@ -350,6 +350,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     attributeCost: number;
     granted: Record<string, number>;
     previous: Record<string, number>;
+    written: Record<string, number>;
+    at: number | null;
     itemIds: string[];
   }>;
   declare magic: { style: MagicStylePreference };
@@ -588,6 +590,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
            * paths a template writes depends on the template.
            */
           previous: new fields.ObjectField({ required: true, initial: {} }),
+          /**
+           * What the template wrote to each of those paths. Removal puts a
+           * value back only while it still reads this: one the player has
+           * changed since is theirs, and is left alone.
+           */
+          written: new fields.ObjectField({ required: true, initial: {} }),
+          /**
+           * When it was applied, so an item edited since can be told from
+           * one left as granted. Null on records made before this was kept.
+           */
+          at: new fields.NumberField({ required: true, nullable: true, initial: null }),
           /** The items it added, so removing it removes exactly those. */
           itemIds: new fields.ArrayField(
             new fields.StringField({ required: true, blank: true, initial: "" }),
