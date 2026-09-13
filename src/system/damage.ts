@@ -177,10 +177,12 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   // A breastplate marked "F" counts against a blow from the front alone
   // (Characters p. 282), so the arc it came from is read here; the layers
   // are kept apart because blunt trauma only counts what got past the rigid.
+  // Hooves armour the feet and nothing else (Characters p. 42).
+  const naturalDr = traits.damageResistance + (damage.hitLocation === "foot" ? traits.footDr : 0);
   const worn = wornArmor(actor);
   const arc = isRuleOn("frontArmor") ? (damage.arc ?? null) : null;
   const layers = armorLayers(worn, damage.hitLocation, damage.type, arc);
-  const wornDr = layers.totalDr + traits.damageResistance;
+  const wornDr = layers.totalDr + naturalDr;
 
   // A blow that found a chink meets half the armour. It is applied to the worn
   // figure rather than inside the pipeline because natural DR is not armour
@@ -223,7 +225,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   const trauma =
     isRuleOn("bluntTrauma") && result.penetrating <= 0
       ? bluntTraumaInjury({
-          reachingFlexible: Math.max(0, basicDamage - layers.rigidDr - traits.damageResistance),
+          reachingFlexible: Math.max(0, basicDamage - layers.rigidDr - naturalDr),
           flexibleDr: layers.flexibleDr,
           type: damage.type,
         })
@@ -282,7 +284,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     basicDamage,
     critical: damage.critical ?? null,
     knockback: shoved,
-    naturalDr: traits.damageResistance,
+    naturalDr,
     // Fit's "+1 to all HT rolls" goes on each of the three (Characters p. 55).
     htModifiers: {
       knockdown: traits.knockdown + traits.htRolls,

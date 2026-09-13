@@ -17,13 +17,16 @@ describe("beast attacks", () => {
     expect(camel[0]).toMatchObject({ key: "bite", damage: { dice: 2, adds: -5 }, damageType: "cr" });
   });
 
-  it("claws at thrust-1, +1 a die blunt and cutting sharp; hooves are for kicks", () => {
-    // ST 14 thrusts 1d.
+  it("claws at thrust-1, +1 a die blunt and cutting sharp", () => {
+    // ST 14 thrusts 1d. A clawed beast kicks as well, which is its own test.
     const bear = beastAttacks({ st: 14, dx: 11, skills: {}, beast: { claws: "blunt" } });
-    expect(bear).toEqual([expect.objectContaining({ key: "claw", damage: { dice: 1, adds: 0 }, damageType: "cr" })]);
+    expect(bear.find((a) => a.key === "claw"))
+      .toMatchObject({ damage: { dice: 1, adds: 0 }, damageType: "cr" });
     const cat = beastAttacks({ st: 4, dx: 14, skills: {}, beast: { claws: "sharp" } });
     expect(cat[0]).toMatchObject({ key: "claw", damageType: "cut" });
-    expect(beastAttacks({ st: 22, dx: 9, skills: {}, beast: { claws: "hooves" } })).toEqual([]);
+    // Hooves are not claws: they are for kicking with, and nothing else.
+    expect(beastAttacks({ st: 22, dx: 9, skills: {}, beast: { claws: "hooves" } }).map((a) => a.key))
+      .toEqual(["kick"]);
   });
 
   it("strikers at thrust +1 a die, of their own type", () => {
@@ -39,14 +42,27 @@ describe("beast attacks", () => {
     const tiger = beastAttacks({
       st: 17, dx: 13, skills: { Brawling: 15 }, beast: { teeth: "sharp", claws: "sharp" },
     });
-    expect(tiger.map((a) => a.damage)).toEqual([{ dice: 1, adds: 2 }, { dice: 1, adds: 2 }]);
+    // Bite and claw at thrust-1, +1 a die for the training. This tiger is
+    // not flagged Quadruped, so it is not given the four-footed kick.
+    expect(tiger.map((a) => [a.key, a.damage])).toEqual([
+      ["bite", { dice: 1, adds: 2 }],
+      ["claw", { dice: 1, adds: 2 }],
+    ]);
     expect(tiger[0]?.skillLevel).toBe(15);
   });
 
   it("reads the traits by their compendium names and the pages' short ones", () => {
     expect(beastTraitsFrom(["Teeth (Sharp Teeth)", "Claws (Hooves)", "Weak Bite", "Striker (Impaling): Antlers"]))
-      .toEqual({ teeth: "sharp", weakBite: true, claws: "hooves", strikers: [{ name: "Antlers", type: "imp" }] });
+      .toEqual({
+        teeth: "sharp", weakBite: true, claws: "hooves",
+        horizontal: false, legless: false, handless: false,
+        strikers: [{ name: "Antlers", type: "imp" }],
+      });
     expect(beastTraitsFrom(["Fangs", "Sharp Claws"])).toMatchObject({ teeth: "fangs", claws: "sharp" });
-    expect(beastTraitsFrom(["Combat Reflexes"])).toEqual({ teeth: null, weakBite: false, claws: null, strikers: [] });
+    expect(beastTraitsFrom(["Combat Reflexes"]))
+      .toEqual({
+        teeth: null, weakBite: false, claws: null, strikers: [],
+        horizontal: false, legless: false, handless: false,
+      });
   });
 });

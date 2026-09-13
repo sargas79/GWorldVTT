@@ -1716,7 +1716,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // A punch and a kick, which everybody has (Characters p. 271). They sit
     // in the melee list like any weapon, so a character with nothing in hand
     // still has an attack to roll -- and the kick's -2 is already in its level.
-    for (const attack of naturalAttacks({
+    //
+    // Everybody upright with hands, that is. A horse has no fist to throw,
+    // and its kick is the one "Damage for Animals" gives it (Campaigns
+    // p. 460); a snake has neither; a falcon's talons are its claws and not
+    // a boot. So a creature built along the ground, or without the hands to
+    // make a fist, takes its unarmed attacks from its traits alone. A
+    // gorilla keeps both: it stands up and it has hands.
+    const beast = beastTraitsFrom(heldTraits.map((t) => t.name));
+    const unarmedIsItsOwn =
+      beast.horizontal === true || beast.legless === true || beast.handless === true;
+    for (const attack of unarmedIsItsOwn ? [] : naturalAttacks({
       st: strikingSt,
       // A punch and a kick are DX-based like any weapon skill, so an extra
       // layer of armour costs them the same -1 (Characters p. 286).
@@ -1779,7 +1789,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       st: strikingSt,
       dx: attrs.DX,
       skills: brawling !== null ? { Brawling: brawling } : {},
-      beast: beastTraitsFrom(heldTraits.map((t) => t.name)),
+      beast,
     })) {
       melee.push({
         itemId: "",
