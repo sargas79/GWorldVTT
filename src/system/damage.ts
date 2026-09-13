@@ -295,9 +295,13 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     penetrating: result.penetrating,
     woundingModifier: result.woundingModifier,
     injury,
+    // A cinematic blast threw the pipeline's figure away, and everything that
+    // followed from it goes with it: a limb is not crippled, and nothing is
+    // lost over the crippling threshold, by a wound the rule says never
+    // happened.
     bluntTrauma: blast ? 0 : trauma,
-    excessLost: result.excessLost,
-    crippled: result.crippled,
+    excessLost: blast ? 0 : result.excessLost,
+    crippled: blast ? false : result.crippled,
     costsFatigue: result.costsFatigue,
     previous,
     current: applied.currentHp,
@@ -331,8 +335,12 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
           }),
         }
       : null,
-    // Nothing bleeds that has no blood.
+    // Nothing bleeds that has no blood, and nothing bleeds from a cinematic
+    // blast: what it cost was a token point a yard for being thrown about,
+    // not an open wound. "All a blast does is disarray clothing, blacken
+    // faces, and ... cause knockback" (p. 417).
     bleeds:
+      !blast &&
       result.injury > 0 &&
       !traits.injuryTolerance.noBlood &&
       woundBleeds(damage.type, consequences.majorWound),
