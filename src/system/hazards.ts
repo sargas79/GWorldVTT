@@ -35,7 +35,7 @@ import { controlRoll, type Locomotion } from "../rules/vehicles.js";
 import {
   crippleThreshold, hitsAPerson, locationsOf, lossOfControl, mediumOf, occupantDamage,
   occupantHitTarget, OCCUPANT_RISK_DAMAGE, vehicleHitLocation, windowDr,
-  vehicleMovement,
+  vehicleInjury, vehicleMovement, vehicleWoundingModifier,
 } from "../rules/vehicle-combat.js";
 import { jumpFromVehicle } from "../rules/collisions.js";
 import { isRuleOn } from "./optional-rules.js";
@@ -657,6 +657,10 @@ export async function shootAtVehicle(options: {
   vehicle: any;
   penetrating: number;
   occupants: number;
+  /** What got through: a bullet and a flamethrower do very different things to a car. */
+  damageType: DamageType;
+  /** True for a tight-beam burn, which a vital area doubles and a torch does not. */
+  tightBeam: boolean;
 }): Promise<void> {
   const { actor } = options;
   const item = options.vehicle;
@@ -666,6 +670,10 @@ export async function shootAtVehicle(options: {
   const hitPoints = Number(vehicle.stHp) || 0;
   const sm = Number(vehicle.sm) || 0;
   const rolls: any[] = [];
+  // "A powered vehicle (anything with a ST attribute) has vital areas", and is
+  // Unliving where an unpowered one is Homogenous (p. 555). The same test the
+  // vehicle's own sheet uses, so the two cannot disagree about one car.
+  const powered = hitPoints > 0 && Number(vehicle.acceleration) > 0;
 
   const locationRoll = new Roll("3d6");
   await locationRoll.evaluate();
@@ -673,8 +681,7 @@ export async function shootAtVehicle(options: {
   const hit = vehicleHitLocation({
     roll: locationRoll.total,
     has: locationsOf(String(vehicle.locations ?? "")),
-    // "A powered vehicle (anything with a ST attribute) has vital areas."
-    powered: hitPoints > 0 && Number(vehicle.topSpeed) > 0,
+    powered,
   });
 
   const lines: string[] = [];
@@ -694,16 +701,32 @@ export async function shootAtVehicle(options: {
   }
 
   const penetrating = Math.max(0, options.penetrating);
+  // The wound, not the raw damage, is what comes off: a bullet into a car's
+  // body is a third of itself, and into its fuel tank three times (pp. 380, 555).
+  const wound = {
+    damageType: options.damageType,
+    tightBeam: options.tightBeam,
+    location: hit.location,
+    powered,
+  };
+  const injury = vehicleInjury({ penetrating, ...wound });
   const threshold = crippleThreshold(hit.location, hitPoints, {
     wheels: countOf(String(vehicle.locations ?? ""), "W"),
     masts: countOf(String(vehicle.locations ?? ""), "M"),
   });
   if (threshold !== null) {
     lines.push(
-      penetrating > threshold
+      injury > threshold
         ? F("Crippled", { location: name, threshold: Math.floor(threshold) })
         : F("NotCrippled", { location: name, threshold: Math.floor(threshold) }),
     );
+  }
+  if (penetrating > 0) {
+    lines.push(F("Wound", {
+      penetrating,
+      modifier: Math.round(vehicleWoundingModifier(wound) * 100) / 100,
+      injury,
+    }));
   }
   if (hit.location === "vitalArea") lines.push(H("VitalArea"));
   if (hit.location === "largeWindow" || hit.location === "smallWindow") {
@@ -729,10 +752,10 @@ export async function shootAtVehicle(options: {
   // A vehicle on the map keeps hit points, and this is what takes them off.
   // A catalogue entry on somebody's Gear tab has none to take: the card says
   // what the shot did, and the GM decides what became of the car.
-  if (item.documentName === "Actor" && item.isOwner && penetrating > 0) {
+  if (item.documentName === "Actor" && item.isOwner && injury > 0) {
     const before = Number(item.system?.hp?.value) || 0;
-    await item.update({ "system.hp.value": before - penetrating });
-    lines.push(F("VehicleHp", { previous: before, now: before - penetrating, max: hitPoints }));
+    await item.update({ "system.hp.value": before - injury });
+    lines.push(F("VehicleHp", { previous: before, now: before - injury, max: hitPoints }));
   }
 
   await post(actor, {

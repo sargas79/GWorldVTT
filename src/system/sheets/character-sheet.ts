@@ -1793,16 +1793,32 @@ async function promptForFightingOffSwarm(): Promise<{ weaponDamage: number; shie
 }
 
 /** Asks how much got through the vehicle, and how many are aboard (pp. 554-555). */
-async function promptForVehicleHit(): Promise<{ penetrating: number; occupants: number } | null> {
+async function promptForVehicleHit(): Promise<{
+  penetrating: number;
+  occupants: number;
+  damageType: DamageType;
+  tightBeam: boolean;
+} | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Vehicle.${key}`);
+  const types: Array<[string, string]> = VEHICLE_DAMAGE_TYPES.map((t) => [t, t]);
   return hazardPrompt(
     L("ShotAt"),
     hazardField("damage", L("Penetrating"), 0, 'min="0"') +
+      hazardSelect("damageType", L("DamageType"), types) +
+      hazardCheck("tightBeam", L("TightBeam")) +
       hazardField("occupants", L("Aboard"), 1, 'min="0"') +
       `<p class="ihint" style="margin:0">${L("ShotAtHint")}</p>`,
-    (form) => ({ penetrating: num(form, "damage"), occupants: num(form, "occupants") }),
+    (form) => ({
+      penetrating: num(form, "damage"),
+      occupants: num(form, "occupants"),
+      damageType: (str(form, "damageType") || "cr") as DamageType,
+      tightBeam: ticked(form, "tightBeam"),
+    }),
   );
 }
+
+/** The damage types a hit on a vehicle can be, in the order the table lists them. */
+const VEHICLE_DAMAGE_TYPES: readonly DamageType[] = ["cr", "cut", "imp", "pi-", "pi", "pi+", "pi++", "burn", "cor", "tox", "fat"];
 
 /** The languages and manners a social roll is made in (Characters pp. 23-24). */
 interface SocialBackground {

@@ -2713,7 +2713,11 @@
       "LocationsShort": "Locations",
       "SkillShort": "Skill",
       "Dodge": "Dodge",
-      "DecadeScale": "At decade scale, to save rolling a hundred dice: DR {dr}, HP {hp}. Divide damage dice by ten too, and multiply what is left back afterwards."
+      "DecadeScale": "At decade scale, to save rolling a hundred dice: DR {dr}, HP {hp}. Divide damage dice by ten too, and multiply what is left back afterwards.",
+      "DamageType": "Damage type",
+      "TightBeam": "Tight-beam burn (a laser, not a torch)",
+      "Wound": "{penetrating} through, wounding x{modifier}: {injury} injury",
+      "VitalArea": "A vital area: impaling and piercing wound at ×3, a tight-beam burn at ×2"
     },
     "GearCategory": {
       "weapon": "Weapon",

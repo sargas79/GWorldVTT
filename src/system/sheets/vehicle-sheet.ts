@@ -17,6 +17,7 @@ import { isRuleOn } from "../optional-rules.js";
 import { controlVehicle, jumpOutOfVehicle, shootAtVehicle } from "../hazards.js";
 import { promptForNumber } from "../roll.js";
 import { LOCOMOTIONS, leaveSeat } from "../../rules/vehicles.js";
+import type { DamageType } from "../../rules/types.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -30,13 +31,25 @@ const L = (key: string, data?: Record<string, unknown>) =>
 const NOTHING = "—";
 
 /** How much damage got through, and how many people are inside to catch it. */
-async function promptForHit(aboard: number): Promise<{ penetrating: number; occupants: number } | null> {
+async function promptForHit(aboard: number): Promise<{
+  penetrating: number;
+  occupants: number;
+  damageType: DamageType;
+  tightBeam: boolean;
+} | null> {
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("ShotAt") },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Penetrating")}</span>
         <input type="number" name="damage" value="0" min="0" step="1" style="width:90px">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("DamageType")}</span>
+        <select name="damageType" style="width:120px"><option value="cr">cr</option><option value="cut">cut</option><option value="imp">imp</option><option value="pi-">pi-</option><option value="pi">pi</option><option value="pi+">pi+</option><option value="pi++">pi++</option><option value="burn">burn</option><option value="cor">cor</option><option value="tox">tox</option><option value="fat">fat</option></select>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="tightBeam"><span>${L("TightBeam")}</span>
       </label>
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Aboard")}</span>
@@ -50,7 +63,12 @@ async function promptForHit(aboard: number): Promise<{ penetrating: number; occu
         const form = button.closest<HTMLElement>(".application");
         const num = (name: string) =>
           Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
-        return { penetrating: num("damage"), occupants: num("occupants") };
+        return {
+          penetrating: num("damage"),
+          occupants: num("occupants"),
+          damageType: (form?.querySelector<HTMLSelectElement>('select[name="damageType"]')?.value || "cr") as DamageType,
+          tightBeam: form?.querySelector<HTMLInputElement>('input[name="tightBeam"]')?.checked ?? false,
+        };
       },
     },
     rejectClose: false,
