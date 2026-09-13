@@ -57,7 +57,12 @@ import {
   dualWeaponAttack,
 } from "../rules/attack-options.js";
 import { penaltyForRoll } from "../rules/attribute-penalties.js";
-import { CHARGE_VELOCITY, mountedAttack, mountedShooting } from "../rules/mounted.js";
+import {
+  CHARGE_VELOCITY,
+  mountedAttack,
+  mountedShooting,
+  lanceDamage,
+} from "../rules/mounted.js";
 import { consumeCharge, recordCharge } from "./mounted.js";
 import type { SkillAttribute } from "../rules/types.js";
 import {
@@ -787,6 +792,7 @@ export async function handleRollAction(
     await recordTurnedBlade(actor, melee?.turned === true);
     await recordPulledBlow(actor, melee?.pulledSt ?? null);
     if (melee?.charging) await recordCharge(actor);
+    await recordLance(actor, melee?.lance ?? null);
     // Pellets striking as one mass are a fact about this shot that the damage
     // roll, a separate click, has to be told.
     await recordMassShot(actor, shot?.coneMultiplier ?? null);
@@ -921,6 +927,24 @@ export async function handleRollAction(
   }
 
   return outcome;
+}
+
+/** Where a couched lance's charge waits for the damage roll (p. 396). */
+const LANCE_FLAG = "lance";
+
+async function recordLance(
+  actor: any,
+  lance: { mountSt: number; yards: number; jousting: boolean } | null,
+): Promise<void> {
+  if (!actor?.isOwner) return;
+  if (lance) await actor.setFlag(SYSTEM_ID, LANCE_FLAG, lance);
+  else if (actor.getFlag?.(SYSTEM_ID, LANCE_FLAG)) await actor.unsetFlag(SYSTEM_ID, LANCE_FLAG);
+}
+
+async function consumeLance(actor: any): Promise<{ mountSt: number; yards: number; jousting: boolean } | null> {
+  const lance = actor?.getFlag?.(SYSTEM_ID, LANCE_FLAG) ?? null;
+  if (lance && actor.isOwner) await actor.unsetFlag(SYSTEM_ID, LANCE_FLAG);
+  return lance && lance.mountSt > 0 ? lance : null;
 }
 
 /** Where a shot past 1/2D is remembered for the damage roll. */
@@ -1693,6 +1717,8 @@ export async function promptForMeleeAttack(options: {
   charging: boolean;
   /** The ST a blow is pulled to, or null for full strength (Campaigns p. 401). */
   pulledSt: number | null;
+  /** A couched lance: the mount's ST and the yards it covered, or null (p. 396). */
+  lance: { mountSt: number; yards: number; jousting: boolean } | null;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Melee.${key}`);
 
@@ -1740,6 +1766,19 @@ export async function promptForMeleeAttack(options: {
         ? `<label style="display:flex;align-items:center;gap:8px">
              <input type="checkbox" name="charging">
              <span>${game.i18n.localize("GWORLD.Mounted.Charging")}</span>
+           </label>
+           <label style="display:flex;align-items:center;justify-content:space-between;gap:8px"
+                  title="${game.i18n.localize("GWORLD.Mounted.LanceHint")}">
+             <span>${game.i18n.localize("GWORLD.Mounted.LanceMountSt")}</span>
+             <input type="number" name="lanceSt" value="0" min="0" step="1" style="width:90px">
+           </label>
+           <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+             <span>${game.i18n.localize("GWORLD.Mounted.LanceYards")}</span>
+             <input type="number" name="lanceYards" value="0" min="0" step="1" style="width:90px">
+           </label>
+           <label style="display:flex;align-items:center;gap:8px">
+             <input type="checkbox" name="jousting">
+             <span>${game.i18n.localize("GWORLD.Mounted.Jousting")}</span>
            </label>`
         : ""}
       ${dualAllowed
@@ -1810,6 +1849,9 @@ export async function promptForMeleeAttack(options: {
           dual: form?.querySelector<HTMLSelectElement>('select[name="dual"]')?.value ?? "no",
           charging: ticked("charging"),
           pullSt: num("pullSt"),
+          lanceSt: num("lanceSt"),
+          lanceYards: num("lanceYards"),
+          jousting: ticked("jousting"),
         };
       },
     },
@@ -1819,7 +1861,7 @@ export async function promptForMeleeAttack(options: {
   if (!result || typeof result !== "object") return null;
   const {
     deceptive, modifier, rapid, flurry, mighty, sight, darkness, calledShot, turned, ground, dual,
-    charging, pullSt,
+    charging, pullSt, lanceSt, lanceYards, jousting,
   } = result as {
     deceptive: number;
     modifier: number;
@@ -1834,6 +1876,9 @@ export async function promptForMeleeAttack(options: {
     dual: string;
     charging: boolean;
     pullSt: number;
+    lanceSt: number;
+    lanceYards: number;
+    jousting: boolean;
   };
 
   // "You may not reduce your final effective skill below 10", so the ceiling is
@@ -1917,6 +1962,9 @@ export async function promptForMeleeAttack(options: {
     turned: turned === true,
     charging: charging === true,
     pulledSt: pullSt > 0 ? Math.floor(pullSt) : null,
+    lance: lanceSt > 0 && lanceYards > 0
+      ? { mountSt: Math.floor(lanceSt), yards: Math.floor(lanceYards), jousting: jousting === true }
+      : null,
   };
 }
 
@@ -1979,7 +2027,17 @@ export async function handleDamageAction(
         },
       })
     : null;
-  const baseFormula = pulled ?? damageFormula;
+  // A couched lance does the collision's damage, not the wielder's (p. 396):
+  // "(mount's ST) x (distance moved last turn)/100 dice of damage, rounded
+  // down -- and add the lance's thrust/impaling bonus of +3." A blunted
+  // tournament lance crushes, and snaps past 15.
+  const lance = await consumeLance(actor);
+  const couched = lance
+    ? lanceDamage({ mountStrength: lance.mountSt, yardsMoved: lance.yards, jousting: lance.jousting })
+    : null;
+  const baseFormula = couched
+    ? formatDiceAdds({ dice: Math.max(1, couched.dice), adds: couched.adds })
+    : (pulled ?? damageFormula);
 
   // A Mighty Blows bought before the attack is collected here, where the dice
   // are known -- the bonus is "+2 to damage, or +1 per die if that is better".
@@ -2039,10 +2097,15 @@ export async function handleDamageAction(
     label: [
       damageLabel ?? "Damage",
       ...(pulled ? [game.i18n.format("GWORLD.Subdue.PulledTo", { st: pulledSt })] : []),
+      ...(couched
+        ? [game.i18n.format(couched.maxDamage ? "GWORLD.Mounted.JoustingLabel" : "GWORLD.Mounted.LanceLabel", {
+            st: lance?.mountSt, yards: lance?.yards, max: couched.maxDamage,
+          })]
+        : []),
       ...(struck ? [game.i18n.localize("GWORLD.Subdue.Turned")] : []),
     ].join(" \u2014 "),
     formula: struck ? formatDiceAdds(struck.damage) : baseFormula,
-    damageType: struck ? struck.type : (damageType as DamageType),
+    damageType: struck ? struck.type : couched ? couched.type : (damageType as DamageType),
     armorDivisor: Number(armorDivisor) || 1,
     ...(aimed ? { calledShot: aimed } : {}),
     ...(mass > 1 ? { massMultiplier: mass } : {}),

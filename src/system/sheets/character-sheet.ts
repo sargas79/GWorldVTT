@@ -65,7 +65,7 @@ import type { CollisionAngle } from "../../rules/collisions.js";
 import type { DamageType } from "../../rules/types.js";
 import { culturePenalty, languagePenalty, type Comprehension } from "../../rules/languages.js";
 import type { StudyMethod } from "../../rules/study.js";
-import { rollPushingTheEnvelope, rollStayOn } from "../mounted.js";
+import { flyingTurn, rollPushingTheEnvelope, rollStayOn } from "../mounted.js";
 import { rollThrow } from "../throwing.js";
 import { summariseDescription } from "../description-summary.js";
 import {
@@ -2032,6 +2032,29 @@ async function promptForStayOn(): Promise<{
   return result && typeof result === "object" ? (result as never) : null;
 }
 
+/** A turn in the air: how far across and up, and what the flyer can do (Campaigns p. 397). */
+async function promptForFlying(): Promise<{
+  horizontal: number;
+  vertical: number;
+  topAirspeed: number;
+  canHover: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Mounted.${key}`);
+  return hazardPrompt(
+    L("Flying"),
+    hazardField("horizontal", L("Horizontal"), 0, 'min="0"') +
+      hazardField("vertical", L("Vertical"), 0, 'min="0"') +
+      hazardField("topAirspeed", L("TopAirspeed"), 10, 'min="0"') +
+      hazardCheck("hover", L("CanHover")),
+    (form) => ({
+      horizontal: num(form, "horizontal"),
+      vertical: num(form, "vertical"),
+      topAirspeed: num(form, "topAirspeed"),
+      canHover: ticked(form, "hover"),
+    }),
+  );
+}
+
 /** Asks what is being attempted at speed (Campaigns p. 395). */
 async function promptForEnvelope(): Promise<{
   velocity: number;
@@ -2692,6 +2715,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       toggleMounted: GWorldCharacterSheet.#onToggleMounted,
       stayOn: GWorldCharacterSheet.#onStayOn,
       pushEnvelope: GWorldCharacterSheet.#onPushEnvelope,
+      flying: GWorldCharacterSheet.#onFlying,
       attributePenalties: GWorldCharacterSheet.#onAttributePenalties,
       applyTemplate: GWorldCharacterSheet.#onApplyTemplate,
       removeTemplate: GWorldCharacterSheet.#onRemoveTemplate,
@@ -4564,6 +4588,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!asked) return;
 
     await rollStayOn({ actor: this.actor, ...asked });
+  }
+
+  /** A turn in the air (Campaigns p. 397). */
+  static async #onFlying(this: GWorldCharacterSheet) {
+    if (!isRuleOn("highSpeed")) return;
+    const asked = await promptForFlying();
+    if (!asked) return;
+    await flyingTurn({ actor: this.actor, ...asked });
   }
 
   /** A stop or a turn sharper than the rules allow (Campaigns p. 395). */
