@@ -365,7 +365,9 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   if (isCannonFodder(actor) && cannonFodderCollapses(result.penetrating)) {
     return {
       ...record,
-      injury: previous,
+      // What they lost is whatever they had. A mook already at or below zero
+      // loses nothing further: they were down before this landed.
+      injury: Math.max(0, previous),
       current: 0,
       consequences: {
         ...consequences,

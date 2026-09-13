@@ -79,3 +79,30 @@ describe("defenseChoices", () => {
     expect(withRapier?.isFencing).toBe(true);
   });
 });
+
+describe("cannon fodder (Campaigns p. 417)", () => {
+  it("is offered no defense at all, however well armed", () => {
+    const choices = defenseChoices({
+      defenses: { dodge: { total: 9 }, parry: { total: 11 }, block: { total: 10 } },
+      cannonFodder: true,
+    });
+    expect(choices.every((c) => !c.available)).toBe(true);
+    expect(choices.map((c) => c.reason)).toEqual(["cannonFodder", "cannonFodder", "cannonFodder"]);
+  });
+
+  it("says so ahead of anything else that would have refused them", () => {
+    // Struck from behind and holding nothing: the answer is still that a mook
+    // never defends, not that they were flanked.
+    const choices = defenseChoices({
+      defenses: { dodge: { total: 9 } },
+      arc: { helpless: true, canDodge: false, canParry: false, canBlock: false, modifier: 0, parryModifier: 0 },
+      cannonFodder: true,
+    });
+    expect(choices.map((c) => c.reason)).toEqual(["cannonFodder", "cannonFodder", "cannonFodder"]);
+  });
+
+  it("changes nothing for anybody else", () => {
+    const choices = defenseChoices({ defenses: { dodge: { total: 9 } }, cannonFodder: false });
+    expect(choices.find((c) => c.key === "dodge")!.available).toBe(true);
+  });
+});

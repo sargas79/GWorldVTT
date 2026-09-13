@@ -531,7 +531,13 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     // Unless the table is playing Melee Etiquette, under which "his opponents
     // always face him one-on-one, one at a time" (p. 417): nobody gets at a
     // player character's flank or back while they are fighting hand to hand,
-    // whatever the tokens on the map are doing. Gunfire is untouched.
+    // whatever the tokens on the map are doing.
+    //
+    // The book hangs the rule on what the PC chose to fight with; this hangs
+    // it on how the blow arrived, because every character has fists and so
+    // "is he fighting unarmed" has no honest answer to read off a sheet. The
+    // two agree in a melee, which is the case the rule is written for, and a
+    // shot is left alone either way.
     const squarely =
       isRuleOn("meleeEtiquette") &&
       defender?.type === "character" &&
