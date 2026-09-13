@@ -37,6 +37,7 @@ import { governingPath } from "../../rules/ritual-cost.js";
 import { grimoireBonus, masteredRitual, ritualMasteryBonus } from "../../rules/ritual-tricks.js";
 import { conditionalLimit } from "../../rules/ritual-lasting.js";
 import { SCENT_MASKING_PENALTY, holdoutBonus, signatureGearPointCost } from "../../rules/gadgets.js";
+import { improvisedPenalty, weaponImprovementEffects, type ImprovedWeapon } from "../../rules/weapon-improvements.js";
 
 /** A ritual still in effect, or hanging until its condition is met (Monster Hunters 1 pp. 37-39). */
 export interface RitualInEffect {
@@ -321,6 +322,8 @@ export interface DerivedAttack {
   quality: WeaponQuality;
   /** What the blade is made of, where the record says (p. 275). */
   material: WeaponMaterial;
+  /** Odds of breakage that replace the grade's, under Monster Hunters 1 (pp. 59-60). */
+  breakage?: number;
   /** True for a weapon that rolls again on a "weapon breaks" fumble (Campaigns p. 556). */
   resistsBreakage: boolean;
   /** The skill penalty for a weapon needing more ST than the wielder has (p. 270). Zero or negative. */
@@ -391,6 +394,7 @@ interface DefenseView {
     weight: number;
     quality: WeaponQuality;
     material: WeaponMaterial;
+    breakage?: number;
     twoHanded: boolean;
     natural: boolean;
   };
@@ -1859,7 +1863,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const modesOf = [...(sys.meleeModes ?? []), ...(sys.rangedModes ?? [])];
       const skillsOf = modesOf.map((m: any) => String(m.skill ?? ""));
       const typesOf = modesOf.map((m: any) => String(m.damageType ?? "") as DamageType);
-      const quality = (isRuleOn("weaponQuality") ? String((sys as any).quality ?? "good") : "good") as WeaponQuality;
+      // Monster Hunters 1 prices and grades weapons its own way (pp. 59-61).
+      const mhGear = isRuleOn("monsterHuntersGear") && item.type === "equipment";
+      const quality = (isRuleOn("weaponQuality") || mhGear ? String((sys as any).quality ?? "good") : "good") as WeaponQuality;
       const material = String((sys as any).material ?? "") as WeaponMaterial;
       const weaponClass = (String((sys as any).weaponClass ?? "") ||
         weaponClassOf({
@@ -1869,6 +1875,22 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           isFencing: (sys.meleeModes ?? []).some((m: any) => m.isFencing),
         })) as WeaponClass;
       const firearm = weaponClass === "firearm";
+      const improved: ImprovedWeapon | null = mhGear
+        ? {
+            weaponClass,
+            quality,
+            material,
+            improvements: { ...((sys as any).weaponImprovements ?? {}), holy: Boolean((sys as any).holy) },
+            twoHandedAxeOrMace: skillsOf.some((s: string) => /two-handed axe\/mace/i.test(s)),
+          }
+        : null;
+      const improvementsFor = (mode: any, ranged: boolean) => improved
+        ? weaponImprovementEffects(improved, { damageType: mode.damageType ?? "", baseAccuracy: Number(mode.accuracy ?? 0) || 0, thrown: Boolean(mode.thrown), ranged })
+        : null;
+      // "Take Improvised Weapons (p. 25) to remove such penalties entirely for that skill" (p. 60).
+      const improvised = (skill: string) => mhGear
+        ? improvisedPenalty({ penalty: Number((sys as any).improvisedPenalty ?? 0), skill, traitNames })
+        : 0;
       const weight = Number((sys as any).weight ?? 0) || 0;
       const objectHp = item.type === "shield" ? Number((sys as any).hp ?? 0) || 0 : weaponHitPoints(weight, firearm);
       const hpLost = Number((sys as any).hpLost ?? 0) || 0;
@@ -1892,7 +1914,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         wheelLockOrGuidedOrBeam: skillsOf.some((s) => /Beam Weapons|Guided Missile/i.test(s)),
       });
       const withQuality = (damage: string, type: DamageType): string => {
-        const bonus = qualityDamageBonus(quality, type, material);
+        const bonus = improved
+          ? weaponImprovementEffects(improved, { damageType: type }).damage
+          : qualityDamageBonus(quality, type, material);
         if (!bonus) return damage;
         const parsed = parseDiceAdds(damage);
         return parsed ? formatDiceAdds(addModifier(parsed, bonus)) : damage;
@@ -1929,7 +1953,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         item.type === "trait" && mode.perLevel ? levelledDamage(damage, levels) : damage;
 
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
-        const { level: skillLevel, atDefault } = short(enchantedSkill(weaponSkill(mode.skill, true)), mode.minSt ?? null);
+        const found = short(enchantedSkill(weaponSkill(mode.skill, true)), mode.minSt ?? null);
+        const effects = improvementsFor(mode, false);
+        const skillLevel = found.level === null ? null : found.level + (effects?.skill ?? 0) + improvised(String(mode.skill ?? ""));
+        const atDefault = found.atDefault;
         const meleeDamage = mode.damageSpecial ? SPECIAL : withQuality(withPuissance(perLevel(mode, resolveDamage(
           strikingSt, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
           Number(mode.damageExtraDice ?? 0) || 0,
@@ -1960,6 +1987,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           weight,
           quality,
           material,
+          // Monster Hunters 1's odds of breakage, where they replace the grade's.
+          ...(effects ? { breakage: effects.breakage } : {}),
           resistsBreakage: resists,
           minStPenalty: lacking(mode.minSt ?? null),
           condition,
@@ -2001,7 +2030,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       (sys.rangedModes ?? []).forEach((mode: any, index: number) => {
         // Bows and crossbows use their own ST for damage and range; a thrown
         // weapon uses the thrower's, Striking ST included.
-        const st = mode.weaponSt ?? strikingSt;
+        // A compound bow is "ST+2 for damage and range purposes" (Monster Hunters 1 p. 60).
+        const effects = improvementsFor(mode, true);
+        const st = (mode.weaponSt ?? strikingSt) + (effects?.st ?? 0);
         // "Thrown weapons, and arrows and bolts, use the rules under Melee
         // Weapon Quality" (Characters p. 276): the cutting and impaling bonus
         // is theirs; a firearm's fine grade is in its Acc and Malf. instead.
@@ -2030,9 +2061,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           const parsed = parseDiceAdds(damage);
           return parsed ? formatDiceAdds(addModifier(parsed, round.perDieBonus * parsed.dice)) : damage;
         };
-        const stretch = qualityRangeMultiplier(weaponClass, quality) * (round?.rangeMultiplier ?? 1);
+        const stretch = (effects ? effects.rangeMultiplier : qualityRangeMultiplier(weaponClass, quality)) * (round?.rangeMultiplier ?? 1);
         const baseRange = mode.rangeIsStMultiple
-          ? musclePoweredRange(mode.weaponSt ?? attrs.ST, mode.halfDamageRange, mode.maxRange)
+          ? musclePoweredRange((mode.weaponSt ?? attrs.ST) + (effects?.st ?? 0), mode.halfDamageRange, mode.maxRange)
           : { halfDamage: mode.halfDamageRange, max: mode.maxRange };
         const range = {
           halfDamage: Math.round((Number(baseRange.halfDamage) || 0) * stretch),
@@ -2043,7 +2074,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         const shotsEntry = parseShots(String(mode.shots ?? ""));
         const shotsCapacity = isRuleOn("reloading") && !shotsEntry.thrown ? fullLoad(shotsEntry) : 0;
         const shotsLoaded = shotsCapacity > 0 ? Math.min(shotsCapacity, Math.max(0, Number(mode.loaded ?? 0) || 0)) : 0;
-        const { level: skillLevel, atDefault } = short(enchantedSkill(weaponSkill(mode.skill)), mode.minSt ?? null);
+        const foundRanged = short(enchantedSkill(weaponSkill(mode.skill)), mode.minSt ?? null);
+        const skillLevel = foundRanged.level === null ? null : foundRanged.level + (effects?.skill ?? 0) + improvised(String(mode.skill ?? ""));
+        const atDefault = foundRanged.atDefault;
 
         ranged.push({
           itemId: item.id,
@@ -2085,7 +2118,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           twoHanded: Boolean(mode.twoHanded),
           swung: mode.damageBase === "sw",
           // "+1 to Acc" for a fine firearm, "-1 Acc" for a cheap thrown weapon.
-          accuracy: (mode.accuracy ?? 0) + qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown)),
+          accuracy: (mode.accuracy ?? 0) + (effects ? effects.accuracy : qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown))),
           scopeBonus: mode.scopeBonus ?? 0,
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
           malediction,
@@ -2340,6 +2373,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
                 weight: bestParry.weight,
                 quality: bestParry.quality,
                 material: bestParry.material,
+                ...(bestParry.breakage !== undefined ? { breakage: bestParry.breakage } : {}),
                 twoHanded: bestParry.twoHanded,
                 natural: bestParry.natural,
               },

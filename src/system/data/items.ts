@@ -26,6 +26,7 @@ import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from "../gear-groups.js"
 import { templateCost } from "../../rules/templates.js";
 import type { Comprehension } from "../../rules/languages.js";
 import type { GadgetImprovements } from "../../rules/gadgets.js";
+import type { WeaponImprovements } from "../../rules/weapon-improvements.js";
 import { PATHS } from "../../rules/ritual-path.js";
 import {
   RITUAL_DURATIONS,
@@ -876,6 +877,8 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare improvements: GadgetImprovements;
   declare holdout: number;
   declare signature: boolean;
+  declare weaponImprovements: WeaponImprovements;
+  declare improvisedPenalty: number;
   declare hpLost: number;
   declare missedMaintenance: number;
   declare complexity: number;
@@ -1029,6 +1032,23 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
       /** The table's weight, before improvements that change it (Monster Hunters 1 p. 54). */
       listWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       ...gadgetFields(),
+      /**
+       * A weapon's own cost-factor options (Monster Hunters 1 pp. 59-61);
+       * its grade, material and holiness are the fields above. Priced and
+       * applied only where that book's gear rules are in play.
+       */
+      weaponImprovements: new fields.SchemaField({
+        balanced: new fields.BooleanField({ initial: false }),
+        disguised: new fields.BooleanField({ initial: false }),
+        titanium: new fields.BooleanField({ initial: false }),
+        weighted: new fields.BooleanField({ initial: false }),
+        compound: new fields.BooleanField({ initial: false }),
+      }),
+      /**
+       * An improvised weapon's skill penalty: a pool cue is Broadsword-1
+       * (p. 60). Removed by Improvised Weapons for that skill (p. 25).
+       */
+      improvisedPenalty: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, max: 0 }),
       /**
        * Damage the weapon has taken (Campaigns p. 483): struck at, or worn.
        * Against the HP its weight gives it, this says whether it still works.

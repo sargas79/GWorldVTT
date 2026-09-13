@@ -1015,7 +1015,31 @@
                      {{#unless editable}}disabled{{/unless}} />
             </label>
           </div>
-          {{#if weapon.multiplier}}
+          {{#if weapon.improvements}}
+            {{!-- Monster Hunters 1's weapon options (pp. 59-61): each a cost
+                 factor, priced from the list figures. --}}
+            <div class="ichecks">
+              {{#unless weapon.improvements.bow}}{{#if weapon.improvements.melee}}
+                <label class="icheck" data-tooltip="{{localize 'GWORLD.WeaponImprovement.BalancedHint'}}"><input type="checkbox" name="system.weaponImprovements.balanced" {{#if system.weaponImprovements.balanced}}checked{{/if}} {{#unless editable}}disabled{{/unless}} /> {{localize "GWORLD.WeaponImprovement.Balanced"}}</label>
+                <label class="icheck" data-tooltip="{{localize 'GWORLD.WeaponImprovement.TitaniumHint'}}"><input type="checkbox" name="system.weaponImprovements.titanium" {{#if system.weaponImprovements.titanium}}checked{{/if}} {{#unless editable}}disabled{{/unless}} /> {{localize "GWORLD.WeaponImprovement.Titanium"}}</label>
+                {{#if weapon.improvements.twoHandedAxe}}
+                  <label class="icheck" data-tooltip="{{localize 'GWORLD.WeaponImprovement.WeightedHint'}}"><input type="checkbox" name="system.weaponImprovements.weighted" {{#if system.weaponImprovements.weighted}}checked{{/if}} {{#unless editable}}disabled{{/unless}} /> {{localize "GWORLD.WeaponImprovement.Weighted"}}</label>
+                {{/if}}
+              {{/if}}{{/unless}}
+              {{#if weapon.improvements.bow}}
+                <label class="icheck" data-tooltip="{{localize 'GWORLD.WeaponImprovement.BalancedBowHint'}}"><input type="checkbox" name="system.weaponImprovements.balanced" {{#if system.weaponImprovements.balanced}}checked{{/if}} {{#unless editable}}disabled{{/unless}} /> {{localize "GWORLD.WeaponImprovement.Balanced"}}</label>
+                <label class="icheck" data-tooltip="{{localize 'GWORLD.WeaponImprovement.CompoundHint'}}"><input type="checkbox" name="system.weaponImprovements.compound" {{#if system.weaponImprovements.compound}}checked{{/if}} {{#unless editable}}disabled{{/unless}} /> {{localize "GWORLD.WeaponImprovement.Compound"}}</label>
+              {{/if}}
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Gadget.DisguisedHint'}}"><input type="checkbox" name="system.weaponImprovements.disguised" {{#if system.weaponImprovements.disguised}}checked{{/if}} {{#unless editable}}disabled{{/unless}} /> {{localize "GWORLD.Gadget.Disguised"}}</label>
+            </div>
+            <div class="ifields">
+              <label data-tooltip="{{localize 'GWORLD.WeaponImprovement.ImprovisedHint'}}">{{localize "GWORLD.WeaponImprovement.Improvised"}}
+                <input type="number" name="system.improvisedPenalty" value="{{system.improvisedPenalty}}" step="1" max="0" {{#unless editable}}disabled{{/unless}} />
+              </label>
+            </div>
+            <p class="ihint">{{localize "GWORLD.WeaponImprovement.Priced" cf=weapon.improvements.costFactor cost=weapon.improvements.listCost weight=weapon.improvements.listWeight}}</p>
+            {{#each weapon.improvements.problems as |p|}}<p class="ihint bad">{{localize p}}</p>{{/each}}
+          {{else if weapon.multiplier}}
             <p class="ihint">{{localize "GWORLD.Item.QualityPrice" multiplier=weapon.multiplier}}</p>
           {{/if}}
         {{/if}}

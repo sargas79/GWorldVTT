@@ -20,6 +20,7 @@ import { PATHS } from "../../rules/ritual-path.js";
 import { collectionWeight, grimoirePrice } from "../../rules/ritual-tricks.js";
 import { breakCharm } from "../ritual-casting.js";
 import { gadgetCostFactor, gadgetWeightFactor, improvedGadget } from "../../rules/gadgets.js";
+import { allowedWeapon, improvedWeaponPrice, weaponImprovementProblems, type ImprovedWeapon } from "../../rules/weapon-improvements.js";
 import { SYSTEM_ID } from "../constants.js";
 import { sourceCollections } from "../compendium-sources.js";
 import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
@@ -160,6 +161,22 @@ async function promptForModifier(): Promise<{ name: string; value: number } | nu
   return result && typeof result === "object" ? (result as { name: string; value: number }) : null;
 }
 
+/** The skills a weapon's modes are used with. */
+function modeSkillsOf(system: any): string[] {
+  return [...(system?.meleeModes ?? []), ...(system?.rangedModes ?? [])].map((m: any) => String(m?.skill ?? ""));
+}
+
+/** A weapon as Monster Hunters 1's improvement rules read it (pp. 59-61). */
+function improvedWeaponOf(system: any, weaponClass: ImprovedWeapon["weaponClass"], skills: string[]): ImprovedWeapon {
+  return {
+    weaponClass,
+    quality: String(system?.quality ?? "good") as ImprovedWeapon["quality"],
+    material: String(system?.material ?? "") as ImprovedWeapon["material"],
+    improvements: { ...(system?.weaponImprovements ?? {}), holy: Boolean(system?.holy) },
+    twoHandedAxeOrMace: skills.some((s) => /two-handed axe\/mace/i.test(s)),
+  };
+}
+
 export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   static override DEFAULT_OPTIONS = {
     classes: ["gworld", "sheet", "item"],
@@ -230,7 +247,23 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         // once it is at zero or below (Campaigns p. 484).
         mustRollInUse: facts.hp > 0
           && rollsToKeepWorking(objectState(facts.hp - (Number((item.system as any).hpLost) || 0), facts.hp)),
-        showQuality: item.type === "equipment" && isRuleOn("weaponQuality"),
+        showQuality: item.type === "equipment" && (isRuleOn("weaponQuality") || isRuleOn("monsterHuntersGear")),
+        // Monster Hunters 1's weapon options (pp. 59-61), and what they come to.
+        improvements: item.type === "equipment" && isRuleOn("monsterHuntersGear") && facts.skill !== ""
+          ? (() => {
+              const weapon = improvedWeaponOf(item.system, facts.weaponClass as any, modeSkillsOf(item.system));
+              const priced = improvedWeaponPrice(weapon, { cost: Number((item.system as any).listCost) || 0, weight: Number((item.system as any).listWeight) || 0 });
+              return {
+                melee: facts.weaponClass !== "bow" && facts.weaponClass !== "firearm",
+                bow: facts.weaponClass === "bow",
+                twoHandedAxe: Boolean(weapon.twoHandedAxeOrMace),
+                costFactor: priced.costFactor,
+                listCost: Number((item.system as any).listCost) || 0,
+                listWeight: Number((item.system as any).listWeight) || 0,
+                problems: weaponImprovementProblems(weapon).map((p) => `GWORLD.WeaponImprovement.Problem.${p}`),
+              };
+            })()
+          : null,
         showObject: isRuleOn("weaponBreakage") && facts.hp > 0,
       };
     }
@@ -565,7 +598,47 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // A change of grade or material reprices the weapon from its list price
     // (Characters pp. 274-275): what it costs is a fact about the grade, not a
     // second thing to type. A weapon with no list price is left alone.
-    if (this.item.type === "equipment" && data.system) {
+    if (this.item.type === "equipment" && data.system && isRuleOn("monsterHuntersGear") && weaponFacts(this.item).skill !== "") {
+      const current = this.item.system as any;
+      const merged = {
+        quality: data.system.quality ?? current.quality,
+        material: data.system.material ?? current.material,
+        holy: data.system.holy ?? current.holy,
+        weaponImprovements: { ...(current.weaponImprovements ?? {}), ...(data.system.weaponImprovements ?? {}) },
+        meleeModes: current.meleeModes,
+        rangedModes: current.rangedModes,
+      };
+      const weaponClass = weaponFacts(this.item).weaponClass as any;
+      const asked = improvedWeaponOf(merged, weaponClass, modeSkillsOf(current));
+      // The book's forbidden combinations are refused: "Silver cannot be combined
+      // with fine, silver-coated, titanium, or very fine" (p. 59), and so on.
+      const allowed = allowedWeapon(asked);
+      if (weaponImprovementProblems(asked).length) {
+        ui.notifications?.warn(game.i18n.localize(`GWORLD.WeaponImprovement.Problem.${weaponImprovementProblems(asked)[0]}`));
+      }
+      data.system.quality = allowed.quality;
+      data.system.weaponImprovements = {
+        balanced: Boolean(allowed.improvements.balanced),
+        disguised: Boolean(allowed.improvements.disguised),
+        titanium: Boolean(allowed.improvements.titanium),
+        weighted: Boolean(allowed.improvements.weighted),
+        compound: Boolean(allowed.improvements.compound),
+      };
+      const before = improvedWeaponOf(current, weaponClass, modeSkillsOf(current));
+      const was = improvedWeaponPrice(before, { cost: 1, weight: 1 });
+      const now = improvedWeaponPrice(allowed, { cost: 1, weight: 1 });
+      if (was.costFactor !== now.costFactor || was.weight !== now.weight || Boolean(before.improvements.holy) !== Boolean(allowed.improvements.holy)) {
+        const listCost = Number(data.system.listCost ?? current.listCost) || (Number(current.cost) || 0) / (1 + was.costFactor);
+        const listWeight = Number(current.listWeight) || (Number(current.weight) || 0) / was.weight;
+        const priced = improvedWeaponPrice(allowed, { cost: listCost, weight: listWeight });
+        Object.assign(data.system, {
+          listCost: Math.round(listCost * 100) / 100,
+          listWeight: Math.round(listWeight * 100) / 100,
+          cost: priced.cost,
+          weight: priced.weight,
+        });
+      }
+    } else if (this.item.type === "equipment" && data.system) {
       const current = this.item.system as any;
       const quality = data.system.quality ?? current.quality;
       const material = data.system.material ?? current.material;
