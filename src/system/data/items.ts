@@ -816,6 +816,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare flexible: boolean;
   declare frontOnly: boolean;
   declare concealable: boolean;
+  declare blocksPeripheralVision: boolean;
   declare soleDr: number | null;
   declare quantity: number;
   declare weight: number;
@@ -895,6 +896,11 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
        * armour (pp. 283, 285): what layering under other armour requires.
        */
       concealable: new fields.BooleanField({ initial: false }),
+      /**
+       * "Helmet gives wearer the No Peripheral Vision disadvantage (p. 151)
+       * while worn" -- the footnote on the great helms (Characters p. 283).
+       */
+      blocksPeripheralVision: new fields.BooleanField({ initial: false }),
       /**
        * Footwear with a separate DR on the underside -- "sandals give DR 1 to
        * the underside of the foot" (p. 283), boots DR 2 with 5 on the sole.

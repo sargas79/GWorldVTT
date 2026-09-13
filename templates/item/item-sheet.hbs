@@ -384,6 +384,11 @@
                  {{#unless editable}}disabled{{/unless}} />
           {{localize "GWORLD.Armor.Concealable"}}
         </label>
+        <label class="icheck" data-tooltip="{{localize 'GWORLD.Armor.NoPeripheralHint'}}">
+          <input type="checkbox" name="system.blocksPeripheralVision" {{#if system.blocksPeripheralVision}}checked{{/if}}
+                 {{#unless editable}}disabled{{/unless}} />
+          {{localize "GWORLD.Armor.NoPeripheral"}}
+        </label>
       </div>
       <div class="ifields">
         <label data-tooltip="{{localize 'GWORLD.Armor.SoleHint'}}">{{localize "GWORLD.Armor.SoleDR"}}

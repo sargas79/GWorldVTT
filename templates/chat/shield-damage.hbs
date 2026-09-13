@@ -1,0 +1,32 @@
+{{!-- A blow into a shield (GURPS Basic Set: Campaigns p. 484). --}}
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{label}}</span>
+    <span class="gc-target">{{localize "GWORLD.Shield.Cover" dr=effectiveDr cover=coverDr}}</span>
+  </div>
+
+  {{#if outcome.fullKnockback}}
+    <div class="gc-result success">{{localize "GWORLD.Shield.Turned"}}</div>
+  {{else}}
+    <div class="gc-mods">
+      <span>{{localize "GWORLD.Chat.DrSubtracted"}} {{effectiveDr}}</span>
+      <span>{{localize "GWORLD.Shield.Marked"}} {{outcome.shieldInjury}}</span>
+    </div>
+    <div class="gc-result failure">
+      {{localize "GWORLD.Shield.Lost" lost=outcome.hpLost hp=outcome.hp}}
+    </div>
+  {{/if}}
+
+  {{#if outcome.through}}
+    <div class="gc-result crit-failure">
+      {{localize "GWORLD.Shield.Through" damage=outcome.overpenetration}}
+      <span class="gc-mod">{{localize "GWORLD.Shield.ThroughWhere" die=outcome.through.die location=locationLabel}}</span>
+    </div>
+  {{/if}}
+
+  {{#if outcome.fellOff}}
+    <div class="gc-result crit-failure">{{localize "GWORLD.Shield.FellOff"}}</div>
+  {{else if outcome.disabled}}
+    <div class="gc-result crit-failure">{{localize "GWORLD.Shield.Disabled"}}</div>
+  {{/if}}
+</div>

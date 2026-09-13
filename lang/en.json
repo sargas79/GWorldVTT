@@ -534,6 +534,22 @@
         "ammunitionTypes": {
           "Name": "Ammunition",
           "Hint": "Hollow-point, armour-piercing hard core and APDS rounds, bodkin points and silver change what a shot does, and what it costs (Characters pp. 276, 279)."
+        },
+        "bluntTrauma": {
+          "Name": "Blunt trauma",
+          "Hint": "Flexible armour that stops a blow still bruises: 1 HP per 5 points of crushing or 10 of cutting, impaling or piercing, and none at all if a single point got through (Campaigns p. 379)."
+        },
+        "frontArmor": {
+          "Name": "Partial armour",
+          "Hint": "A breastplate marked “F” protects against attacks from the front alone, and a great helm costs its wearer the corner of their eye (Characters pp. 282-283)."
+        },
+        "layeredArmor": {
+          "Name": "Layered armour",
+          "Hint": "Armour over armour adds both DR, but only over something flexible and concealable, and costs -1 to DX and DX-based skills anywhere but the head (Characters p. 286)."
+        },
+        "damageToShields": {
+          "Name": "Damage to shields",
+          "Hint": "A shield that turned a blow by the width of its own Defense Bonus took that blow squarely, and may break. The book calls this bookkeeping in the name of realism, so it is off unless you want it (Campaigns p. 484)."
         }
       }
     },
@@ -1471,18 +1487,40 @@
       "DRAbbr": "DR",
       "Flexible": "Flexible",
       "FlexibleHint": "The “*” on the armour tables: easier to conceal or layer and quicker to don, but open to blunt trauma (Characters p. 282).",
-      "FrontOnly": "Front only",
+      "FrontOnly": "front only",
       "FrontOnlyHint": "The “F” on the tables: the DR only protects against attacks from the front (p. 282).",
       "Concealable": "Concealable",
       "ConcealableHint": "Concealable as or under clothing, which is what wearing it under other armour requires (p. 286).",
       "SoleDR": "Sole DR",
-      "SoleHint": "Footwear with its own DR on the underside — boots DR 2, with 5 on the sole (p. 283). Leave blank otherwise."
+      "SoleHint": "Footwear with its own DR on the underside — boots DR 2, with 5 on the sole (p. 283). Leave blank otherwise.",
+      "Layering": "layered {penalty}",
+      "LayeringHint": "An extra layer of armour off the head: -1 to DX and DX-based skills (Characters p. 286).",
+      "IllegalLayer": "cannot be layered",
+      "IllegalLayerHint": "Armour is layered over something that is not both flexible and concealable, which the book does not allow (Characters p. 286).",
+      "NoPeripheral": "no peripheral vision",
+      "NoPeripheralHint": "A great helm gives the wearer No Peripheral Vision while worn (Characters p. 283).",
+      "BluntTrauma": "blunt trauma",
+      "StruckFrom": "Struck from"
     },
     "Shield": {
       "DB": "Defense Bonus",
       "DR": "DR",
       "HP": "HP",
-      "DRHint": "For the optional Damage to Shields rule (Characters p. 287): this DR protects the shield, not the wielder. A force shield has no HP."
+      "DRHint": "For the optional Damage to Shields rule (Characters p. 287): this DR protects the shield, not the wielder. A force shield has no HP.",
+      "Broken": "shield broken",
+      "BrokenHint": "A disabled shield gives no Defense Bonus, but still encumbers you until dropped (Campaigns p. 484).",
+      "Struck": "{name} took the blow",
+      "TookIt": "The Defense Bonus made the difference: the blow struck the shield squarely.",
+      "Apply": "Apply to the shield",
+      "Card": "{name} is struck",
+      "Cover": "DR {dr}, cover DR {cover}",
+      "Turned": "The shield turned it: no damage, and full knockback.",
+      "Marked": "marked off",
+      "Lost": "{lost} of {hp} HP lost.",
+      "Through": "{damage} punched through the shield.",
+      "ThroughWhere": "1d: {die} — {location}",
+      "Disabled": "The shield is disabled: no Defense Bonus until it is repaired.",
+      "FellOff": "The shield is destroyed and falls off the arm."
     },
     "TraitCategory": {
       "advantage": "Advantage",

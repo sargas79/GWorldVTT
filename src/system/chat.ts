@@ -14,6 +14,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { applyDamageToActor, type AppliedDamage, type IncomingDamage } from "./damage.js";
 import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy } from "./weapon-damage.js";
+import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shields.js";
 import { rollSuccess } from "./roll.js";
 import { currentTargets } from "./targets.js";
 import { blastAt } from "../rules/explosions.js";
@@ -24,6 +25,7 @@ import { setCondition, syncHealthConditions } from "./conditions.js";
 import { EXTRA_EFFORT_FP, FEVERISH_DEFENSE_BONUS } from "../rules/extra-effort.js";
 import { spendFatigue } from "./extra-effort.js";
 import { isRuleOn } from "./optional-rules.js";
+import { combatStyle } from "./settings.js";
 import { arcDefense, attackArc, retreatBonus, type Arc } from "../rules/tactical.js";
 import { attackDirection, facingOf } from "./hex.js";
 import { tacticalOnScene } from "./settings.js";
@@ -120,6 +122,23 @@ function addApplyControls(message: any, html: HTMLElement): void {
     distance.title = game.i18n.localize("GWORLD.Chat.Distance");
   }
 
+  // Armour marked "F" protects against the front alone (Characters p. 282),
+  // and only a table playing with facing has arcs to tell apart: in basic
+  // combat every blow meets the breastplate.
+  let arcSelect: HTMLSelectElement | null = null;
+  if (isRuleOn("frontArmor") && combatStyle() === "tactical") {
+    arcSelect = document.createElement("select");
+    arcSelect.className = "gc-location";
+    arcSelect.setAttribute("aria-label", game.i18n.localize("GWORLD.Armor.StruckFrom"));
+    for (const arc of ["front", "side", "back"]) {
+      const option = document.createElement("option");
+      option.value = arc;
+      option.textContent = game.i18n.localize(`GWORLD.Tactical.${arc}`);
+      arcSelect.append(option);
+    }
+    row.append(arcSelect);
+  }
+
   // Whether the blow was a critical is known by whoever rolled the attack, not
   // by this card: the attack was a separate roll, possibly minutes ago. So it
   // is asked rather than assumed, and the table is rolled at the moment of
@@ -147,6 +166,7 @@ function addApplyControls(message: any, html: HTMLElement): void {
     void applyFromCard({
       flag,
       hitLocation: select.value as HitLocation,
+      arc: (arcSelect?.value ?? null) as Arc | null,
       distanceYards: distance ? Math.max(0, Number(distance.value) || 0) : 0,
       critical: critical?.checked ?? false,
     });
@@ -176,6 +196,7 @@ async function applyFromCard(options: {
   hitLocation: HitLocation;
   distanceYards: number;
   critical: boolean;
+  arc?: Arc | null;
 }): Promise<void> {
   const { flag, hitLocation, distanceYards } = options;
   const targets = currentTargets();
@@ -225,6 +246,7 @@ async function applyFromCard(options: {
       ? { maxDamage: flag.maxDamage }
       : {}),
     ...(critical ? { critical: critical.hit } : {}),
+    ...(options.arc ? { arc: options.arc } : {}),
   };
 
   const applied: AppliedDamage[] = [];
@@ -243,7 +265,31 @@ async function applyFromCard(options: {
     if (key && seen.has(key)) continue;
     if (key) seen.add(key);
 
-    const result = await applyDamageToActor(actor, damage);
+    // A shield that turned this blow by the width of its own Defense Bonus
+    // took it squarely, and takes it now (Campaigns p. 484). What punches
+    // through the shield is what reaches its owner.
+    const shield = await consumeShieldNote(actor);
+    let incoming = damage;
+    if (shield) {
+      const shielded = await applyDamageToShield(actor, shield, {
+        basicDamage: damage.basicDamage,
+        damageType: damage.type,
+        armorDivisor: damage.armorDivisor,
+        hitLocation: damage.hitLocation,
+      });
+      if (shielded) {
+        if (shielded.overpenetration <= 0) continue;
+        incoming = {
+          ...damage,
+          basicDamage: shielded.overpenetration,
+          hitLocation: shielded.through?.location ?? damage.hitLocation,
+          // The shield already stood in for armour; what came through it
+          // meets the wearer's own DR normally.
+        };
+      }
+    }
+
+    const result = await applyDamageToActor(actor, incoming);
     // A null result is a permission refusal, which is worth naming: silently
     // skipping a target looks identical to a blow that did nothing.
     if (result) {
@@ -673,6 +719,17 @@ async function rollDefense(options: {
     kind: "defense",
     modifiers,
   });
+
+  // "If your shield's DB makes the difference between success and failure on
+  // any active defense (not just a block), the blow struck the shield
+  // squarely" (p. 484) -- so the next blow applied to them goes into it.
+  if (outcome) {
+    const took = await noteShieldTookIt(defender, {
+      succeeded: outcome.success,
+      margin: outcome.margin,
+    });
+    if (took) ui.notifications?.info(game.i18n.localize("GWORLD.Shield.TookIt"));
+  }
 
   // "Your weapon may break if it parries anything three or more times its
   // own weight" (p. 376) -- whether or not the parry succeeded.

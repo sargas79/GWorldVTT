@@ -14,7 +14,10 @@
  * with the DR that stops a sword.
  */
 
-import { wornDrAt, type ArmorPiece } from "../rules/armor.js";
+import { type ArmorPiece } from "../rules/armor.js";
+import { armorLayers, bluntTraumaInjury } from "../rules/layered-armor.js";
+import type { Arc } from "../rules/tactical.js";
+import { isRuleOn } from "./optional-rules.js";
 import {
   criticalBasicDamage,
   criticalShock,
@@ -72,6 +75,12 @@ export interface IncomingDamage {
    * well as the damage (Campaigns p. 409). One for every other blow.
    */
   drMultiplier?: number;
+  /**
+   * The arc the blow came from, where the table is playing with facing.
+   * Armour marked "F" protects against the front alone (Characters p. 282);
+   * null means no facing is in play, and every blow meets it.
+   */
+  arc?: Arc | null;
 }
 
 /** What applying a blow did. */
@@ -85,6 +94,12 @@ export interface AppliedDamage {
   penetrating: number;
   woundingModifier: number;
   injury: number;
+  /**
+   * Injury from blunt trauma through flexible armour (Campaigns p. 379),
+   * which is included in `injury` and stated apart because it is not a
+   * wound: no wounding modifier was applied to it.
+   */
+  bluntTrauma: number;
   /** Injury discarded because it exceeded a limb's crippling threshold. */
   excessLost: number;
   crippled: boolean;
@@ -138,6 +153,9 @@ export function wornArmor(actor: any): ArmorPiece[] {
       drSplit: item.system?.drSplit ?? null,
       drSplitAppliesTo: item.system?.drSplitAppliesTo ?? [],
       locations: item.system?.locations ?? [],
+      flexible: item.system?.flexible === true,
+      frontOnly: item.system?.frontOnly === true,
+      concealable: item.system?.concealable === true,
     }));
 }
 
@@ -156,8 +174,13 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
 
   // Damage Resistance is the target's own, under whatever they are wearing:
   // "each point of DR stops one point of basic damage", the same as armour.
-  const wornDr = wornDrAt(wornArmor(actor), damage.hitLocation, damage.type)
-    + traits.damageResistance;
+  // A breastplate marked "F" counts against a blow from the front alone
+  // (Characters p. 282), so the arc it came from is read here; the layers
+  // are kept apart because blunt trauma only counts what got past the rigid.
+  const worn = wornArmor(actor);
+  const arc = isRuleOn("frontArmor") ? (damage.arc ?? null) : null;
+  const layers = armorLayers(worn, damage.hitLocation, damage.type, arc);
+  const wornDr = layers.totalDr + traits.damageResistance;
 
   // A blow that found a chink meets half the armour. It is applied to the worn
   // figure rather than inside the pipeline because natural DR is not armour
@@ -194,10 +217,24 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
 
   // Fatigue comes off FP, and the consequences that follow -- shock, major
   // wounds, death checks -- are read against the pool it actually cost.
+  // "An attack that does crushing, cutting, impaling, or piercing damage may
+  // inflict 'blunt trauma' if it fails to penetrate flexible DR" (Campaigns
+  // p. 379), and only what got past anything rigid over it counts.
+  const trauma =
+    isRuleOn("bluntTrauma") && result.penetrating <= 0
+      ? bluntTraumaInjury({
+          reachingFlexible: Math.max(0, basicDamage - layers.rigidDr - traits.damageResistance),
+          flexibleDr: layers.flexibleDr,
+          type: damage.type,
+        })
+      : 0;
+
   const pool = result.costsFatigue ? fp : hp;
   const previous = Number(pool.value) || 0;
   const max = Number(pool.max) || 0;
-  const applied = applyInjury(result.injury, previous, max, { unkillable: traits.unkillable });
+  // Blunt trauma "is actual injury, not basic damage. There is no wounding
+  // multiplier", so it is added after the pipeline rather than inside it.
+  const applied = applyInjury(result.injury + trauma, previous, max, { unkillable: traits.unkillable });
 
   // Knockback is worked out from damage before DR, and a crushing blow causes
   // it whether or not it got through (p. 378).
@@ -233,7 +270,8 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     effectiveDr: result.effectiveDr,
     penetrating: result.penetrating,
     woundingModifier: result.woundingModifier,
-    injury: result.injury,
+    injury: result.injury + trauma,
+    bluntTrauma: trauma,
     excessLost: result.excessLost,
     crippled: result.crippled,
     costsFatigue: result.costsFatigue,
