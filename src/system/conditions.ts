@@ -46,6 +46,29 @@ export const CONDITIONS: readonly ConditionDefinition[] = [
     img: "icons/svg/hazard.svg",
   },
   { id: "dead", label: "GWORLD.Condition.Dead", img: "icons/svg/skull.svg" },
+
+  // The affliction table (pp. 428-429). A poison, a gas, a spell or a blow
+  // leaves somebody in one of these, and until now the card said which and
+  // left it to be remembered.
+  { id: "coughing", label: "GWORLD.Affliction.Name.coughing", img: "icons/svg/silenced.svg" },
+  { id: "drowsy", label: "GWORLD.Affliction.Name.drowsy", img: "icons/svg/sleep.svg" },
+  { id: "tipsy", label: "GWORLD.Affliction.Name.tipsy", img: "icons/svg/tankard.svg" },
+  { id: "drunk", label: "GWORLD.Affliction.Name.drunk", img: "icons/svg/stoned.svg" },
+  { id: "euphoria", label: "GWORLD.Affliction.Name.euphoria", img: "icons/svg/aura.svg" },
+  { id: "nauseated", label: "GWORLD.Affliction.Name.nauseated", img: "icons/svg/poison.svg" },
+  { id: "moderatePain", label: "GWORLD.Affliction.Name.moderatePain", img: "icons/svg/degen.svg" },
+  { id: "severePain", label: "GWORLD.Affliction.Name.severePain", img: "icons/svg/degen.svg" },
+  { id: "terriblePain", label: "GWORLD.Affliction.Name.terriblePain", img: "icons/svg/degen.svg" },
+  { id: "agony", label: "GWORLD.Affliction.Name.agony", img: "icons/svg/terror.svg" },
+  { id: "choking", label: "GWORLD.Affliction.Name.choking", img: "icons/svg/silenced.svg" },
+  { id: "daze", label: "GWORLD.Affliction.Name.daze", img: "icons/svg/daze.svg" },
+  { id: "ecstasy", label: "GWORLD.Affliction.Name.ecstasy", img: "icons/svg/angel.svg" },
+  { id: "hallucinating", label: "GWORLD.Affliction.Name.hallucinating", img: "icons/svg/stoned.svg" },
+  { id: "paralysis", label: "GWORLD.Affliction.Name.paralysis", img: "icons/svg/paralysis.svg" },
+  { id: "retching", label: "GWORLD.Affliction.Name.retching", img: "icons/svg/acid.svg" },
+  { id: "seizure", label: "GWORLD.Affliction.Name.seizure", img: "icons/svg/lightning.svg" },
+  { id: "coma", label: "GWORLD.Affliction.Name.coma", img: "icons/svg/unconscious.svg" },
+  { id: "heartAttack", label: "GWORLD.Affliction.Name.heartAttack", img: "icons/svg/blood.svg" },
 ];
 
 const CONDITION_IDS = new Set(CONDITIONS.map((c) => c.id));

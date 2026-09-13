@@ -10,6 +10,7 @@ export * from "./types.js";
 export * from "./dice.js";
 export * from "./attributes.js";
 export * from "./attribute-penalties.js";
+export * from "./afflictions.js";
 export * from "./bleeding.js";
 export * from "./character-points.js";
 export * from "./cinematic.js";

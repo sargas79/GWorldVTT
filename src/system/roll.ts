@@ -134,6 +134,11 @@ export interface SuccessRollOptions {
   damageType?: string;
   /** Where TV Action Violence could buy a failed defense back (p. 417). */
   tvAction?: { uuid: string; name: string; attack: string };
+  /**
+   * Whose roll this was, so a failed resistance can be turned into one of the
+   * book's conditions (Campaigns pp. 428-429).
+   */
+  affliction?: { uuid: string; name: string; label: string };
 }
 
 /** A critical miss, with what the table said and whether the weapon resisted. */
@@ -236,6 +241,11 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
       ...(criticalMiss?.again ? [criticalMiss.again.roll] : []),
       ...(jam ? [jam.roll] : []),
     ],
+    // An affliction that was not resisted is an affliction somebody now has,
+    // and the card that failed is where it is handed out (pp. 428-429).
+    ...(!outcome.success && options.affliction
+      ? { flags: { [SYSTEM_ID]: { affliction: options.affliction } } }
+      : {}),
     // "The hero can choose to convert his failed defense roll into a success"
     // (p. 417) -- which is an offer made on the card that failed.
     ...(kind === "defense" && !outcome.success && options.tvAction
