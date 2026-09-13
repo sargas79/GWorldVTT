@@ -39,6 +39,8 @@ import {
   irradiate, jumpOutOfVehicle, motionSickness, shock, shootAtVehicle, sleepFor, splashAcid,
 } from "../hazards.js";
 import { tryToEscape, type Entanglement } from "../entangling.js";
+import { attendPatient, operate, resuscitate } from "../recovery.js";
+import type { ResuscitationCause } from "../../rules/medicine.js";
 import type { Limbs } from "../../rules/entangling.js";
 import {
   stayAwake,
@@ -1232,6 +1234,68 @@ const str = (form: HTMLElement | null, name: string) =>
 const ticked = (form: HTMLElement | null, name: string) =>
   form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
 
+/**
+ * Whoever is being treated: the one token that is targeted.
+ *
+ * A doctor treats one patient at a time, and a roll made against two people at
+ * once would be a roll nobody could act on.
+ */
+function onePatient(): any {
+  const targets = currentTargets();
+  if (targets.length !== 1) {
+    ui.notifications?.warn(game.i18n.localize("GWORLD.Recovery.OnePatient"));
+    return null;
+  }
+  return targets[0]?.actor ?? null;
+}
+
+/** What the operation is, and what it is being done with (Campaigns p. 424). */
+async function promptForSurgery(): Promise<{
+  anesthetic: boolean;
+  repairingCrippled: boolean;
+  equipmentQuality: number;
+  modifier: number;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Recovery.${key}`);
+  return hazardPrompt(
+    L("Surgery"),
+    hazardCheck("anesthetic", L("Anesthetic")) +
+      hazardCheck("crippled", L("RepairCrippled")) +
+      hazardField("tools", L("ToolQuality"), 0) +
+      hazardField("modifier", game.i18n.localize("GWORLD.Chat.Modifier"), 0) +
+      `<p class="ihint" style="margin:0">${L("SurgeryHint")}</p>`,
+    (form) => ({
+      anesthetic: ticked(form, "anesthetic"),
+      repairingCrippled: ticked(form, "crippled"),
+      equipmentQuality: num(form, "tools"),
+      modifier: num(form, "modifier"),
+    }),
+  );
+}
+
+/** Why they need reviving, and whether CPR is known (Campaigns p. 425). */
+async function promptForResuscitation(): Promise<{
+  cause: ResuscitationCause;
+  cpr: boolean;
+  modifier: number;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Recovery.${key}`);
+  const causes: Array<[string, string]> = (["drowning", "asphyxiation", "heartAttack"] as const)
+    .map((k) => [k, L(`Cause.${k}`)]);
+  return hazardPrompt(
+    L("Resuscitate"),
+    hazardSelect("cause", L("CauseLabel"), causes) +
+      hazardCheck("cpr", L("Cpr")) +
+      hazardField("modifier", game.i18n.localize("GWORLD.Chat.Modifier"), 0) +
+      `<p class="ihint" style="margin:0">${L("ResuscitateHint")}</p>`,
+    (form) => ({
+      cause: str(form, "cause") as ResuscitationCause,
+      cpr: ticked(form, "cpr"),
+      modifier: num(form, "modifier"),
+    }),
+  );
+}
+
 /** What is holding them, and what they have to get out with (pp. 410-411). */
 async function promptForEscape(current: Entanglement): Promise<{
   entanglement: Entanglement;
@@ -2380,6 +2444,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       burn: GWorldCharacterSheet.#onBurn,
       catchFire: GWorldCharacterSheet.#onCatchFire,
       irradiate: GWorldCharacterSheet.#onIrradiate,
+      attendPatient: GWorldCharacterSheet.#onAttendPatient,
+      operate: GWorldCharacterSheet.#onOperate,
+      resuscitate: GWorldCharacterSheet.#onResuscitate,
       tryToEscape: GWorldCharacterSheet.#onEscapeEntanglement,
       splashAcid: GWorldCharacterSheet.#onAcid,
       breatheBadAir: GWorldCharacterSheet.#onBadAir,
@@ -4691,6 +4758,42 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const asked = await promptForFightingOffSwarm();
     if (!asked) return;
     await fightOffSwarm({ actor: this.actor, ...asked });
+  }
+
+  /**
+   * A physician's rounds (Campaigns p. 424).
+   *
+   * The healer is whoever's sheet this is; the patient is who they are
+   * looking at, which is what targeting a token means everywhere else here.
+   */
+  static async #onAttendPatient(this: GWorldCharacterSheet) {
+    const patient = onePatient();
+    if (!patient) return;
+    const modifier = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Recovery.Attend"),
+      label: game.i18n.localize("GWORLD.Chat.Modifier"),
+      initial: 0,
+    });
+    if (modifier === null) return;
+    await attendPatient({ healer: this.actor, patient, modifier });
+  }
+
+  /** An operation (Campaigns p. 424). */
+  static async #onOperate(this: GWorldCharacterSheet) {
+    const patient = onePatient();
+    if (!patient) return;
+    const asked = await promptForSurgery();
+    if (!asked) return;
+    await operate({ surgeon: this.actor, patient, ...asked });
+  }
+
+  /** A minute on a drowned man's chest (Campaigns p. 425). */
+  static async #onResuscitate(this: GWorldCharacterSheet) {
+    const patient = onePatient();
+    if (!patient) return;
+    const asked = await promptForResuscitation();
+    if (!asked) return;
+    await resuscitate({ healer: this.actor, patient, ...asked });
   }
 
   /**

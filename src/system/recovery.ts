@@ -11,7 +11,6 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
-import { syncHealthConditions } from "./conditions.js";
 import {
   fatigueRecovered,
   firstAidAt,
@@ -22,7 +21,13 @@ import {
   wakingFrom,
 } from "../rules/recovery.js";
 import { resolveSuccess } from "../rules/success.js";
-import { healthRollScore } from "./attributes.js";
+import { attributeOf, healthRollScore } from "./attributes.js";
+import { setCondition, syncHealthConditions } from "./conditions.js";
+import {
+  ANESTHESIA_TL, RESUSCITATION_MINUTES, careBonus, competentCare, cureHitPoints, cureResult,
+  resuscitationModifier, risksInfection, surgeryEquipment, surgeryModifier,
+  type ResuscitationCause,
+} from "../rules/medicine.js";
 
 const RECOVERY_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/recovery.hbs`;
 
@@ -54,6 +59,22 @@ function mayChange(actor: any): boolean {
 /** The individual d6 faces from an evaluated Roll. */
 function dieResults(roll: any): number[] {
   return (roll.dice?.[0]?.results ?? []).map((r: { result: number }) => r.result);
+}
+
+const R = (key: string) => game.i18n.localize(`GWORLD.Recovery.${key}`);
+const F = (key: string, data: Record<string, unknown>) =>
+  game.i18n.format(`GWORLD.Recovery.${key}`, data);
+
+/** The level of a skill by name, or null where the healer lacks it. */
+function skillLevelOf(actor: any, name: string): number | null {
+  const wanted = name.trim().toLowerCase();
+  for (const item of actor?.items ?? []) {
+    if (item.type !== "skill") continue;
+    if (String(item.name ?? "").trim().toLowerCase() !== wanted) continue;
+    const level = Number(item.system?.derived?.level);
+    return Number.isFinite(level) ? level : null;
+  }
+  return null;
 }
 
 /** Posts one recovery card. */
@@ -315,4 +336,170 @@ export async function tryToWake(options: { actor: any }): Promise<boolean> {
   });
 
   return outcome?.success ?? true;
+}
+
+/**
+ * A physician's rounds (Campaigns p. 424).
+ *
+ * "The healer may also make a Physician roll to cure the patient... On a
+ * success, the patient recovers 1 HP; on a critical success, he recovers 2 HP.
+ * This is in addition to natural healing. However, a critical failure costs
+ * the patient 1 HP!"
+ */
+export async function attendPatient(options: {
+  healer: any;
+  patient: any;
+  modifier: number;
+}): Promise<void> {
+  const { healer, patient } = options;
+  if (!mayChange(patient)) return;
+
+  const skill = skillLevelOf(healer, "Physician") ?? attributeOf(healer, "IQ") - 5;
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  const outcome = resolveSuccess(roll.total, skill + options.modifier, dieResults(roll));
+  const result = cureResult(outcome);
+  const moved = cureHitPoints(result);
+
+  const hp = patient.system?.hp ?? { value: 0, max: 0 };
+  const previous = Number(hp.value) || 0;
+  const max = Number(hp.max) || 0;
+  const now = Math.min(max, previous + moved);
+  if (moved !== 0) await patient.update({ "system.hp.value": now });
+
+  await post(patient, {
+    kind: R("Attend"),
+    detail: F("AttendBy", { healer: String(healer?.name ?? ""), skill }),
+    target: skill + options.modifier,
+    dice: dieResults(roll),
+    roll: roll.total,
+    lines: [
+      R(`Cure.${result}`),
+      ...(moved !== 0 ? [F("CureHp", { hp: Math.abs(moved), previous, now })] : []),
+      // "Anyone under the care of a competent physician gets +1 on all rolls
+      // for natural recovery" -- which is true whatever this roll did.
+      ...(competentCare(skill) ? [F("CareBonus", { bonus: careBonus(skill) })] : []),
+    ],
+    good: moved > 0,
+    bad: moved < 0,
+    rolls: [roll],
+  });
+}
+
+/**
+ * An operation (Campaigns p. 424).
+ *
+ * "Surgery can physically repair damage to the body, but it's risky at low TLs
+ * - especially prior to the invention of anesthesia and blood typing." What
+ * the roll comes to is mostly the tools and the century.
+ */
+export async function operate(options: {
+  surgeon: any;
+  patient: any;
+  anesthetic: boolean;
+  repairingCrippled: boolean;
+  equipmentQuality: number;
+  modifier: number;
+}): Promise<void> {
+  const { surgeon, patient } = options;
+  if (!mayChange(patient)) return;
+
+  const skill = skillLevelOf(surgeon, "Surgery") ?? attributeOf(surgeon, "IQ") - 5;
+  const techLevel = Number(surgeon?.system?.tl) || 3;
+  const situation = surgeryModifier({
+    techLevel,
+    equipmentQuality: options.equipmentQuality,
+    anesthetic: options.anesthetic,
+    repairingCrippled: options.repairingCrippled,
+  });
+
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  const target = skill + situation + options.modifier;
+  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+
+  const lines = [
+    F("SurgeryTools", { tl: techLevel, modifier: surgeryEquipment(techLevel) }),
+    ...(options.anesthetic || techLevel < ANESTHESIA_TL ? [] : [R("NoAnesthetic")]),
+    ...(options.repairingCrippled ? [R("RepairingCrippled")] : []),
+    R(outcome.success ? "SurgeryWorked" : "SurgeryFailed"),
+    // "On a failure, the patient needs 1d months to recover before another
+    // attempt is possible."
+    ...(!outcome.success && options.repairingCrippled ? [R("SurgeryWait")] : []),
+    // "Before TL5... antiseptic practice is poor. Check for infection after
+    // any surgery."
+    ...(risksInfection(techLevel) ? [R("SurgeryInfection")] : []),
+  ];
+
+  await post(patient, {
+    kind: R("Surgery"),
+    detail: F("SurgeryBy", { surgeon: String(surgeon?.name ?? "") }),
+    target,
+    dice: dieResults(roll),
+    roll: roll.total,
+    lines,
+    good: outcome.success,
+    bad: !outcome.success,
+    rolls: [roll],
+  });
+}
+
+/**
+ * A minute on a drowned man's chest (Campaigns p. 425).
+ *
+ * "Reviving a drowning, asphyxiation, or heart attack victim requires
+ * resuscitation... Each attempt takes one minute. Repeated attempts are
+ * possible, but there is almost always a time limit."
+ */
+export async function resuscitate(options: {
+  healer: any;
+  patient: any;
+  cause: ResuscitationCause;
+  cpr: boolean;
+  modifier: number;
+}): Promise<void> {
+  const { healer, patient } = options;
+  if (!mayChange(patient)) return;
+
+  const physician = skillLevelOf(healer, "Physician");
+  const firstAid = skillLevelOf(healer, "First Aid");
+  const usingPhysician = physician !== null && (firstAid === null || physician >= firstAid);
+  const skill = usingPhysician
+    ? (physician ?? 0)
+    : (firstAid ?? attributeOf(healer, "IQ") - 4);
+
+  const situation = resuscitationModifier({
+    skill: usingPhysician ? "physician" : "firstAid",
+    cause: options.cause,
+    cpr: options.cpr,
+    byDefault: !usingPhysician && firstAid === null,
+  });
+
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  const target = skill + situation + options.modifier;
+  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+
+  if (outcome.success) {
+    await setCondition(patient, "unconscious", false);
+    await setCondition(patient, "heartAttack", false);
+  }
+
+  await post(patient, {
+    kind: R("Resuscitate"),
+    detail: F("ResuscitateBy", {
+      healer: String(healer?.name ?? ""),
+      cause: R(`Cause.${options.cause}`),
+    }),
+    target,
+    dice: dieResults(roll),
+    roll: roll.total,
+    lines: [
+      R(outcome.success ? "Revived" : "StillGone"),
+      F("ResuscitateAgain", { minutes: RESUSCITATION_MINUTES }),
+    ],
+    good: outcome.success,
+    bad: !outcome.success,
+    rolls: [roll],
+  });
 }

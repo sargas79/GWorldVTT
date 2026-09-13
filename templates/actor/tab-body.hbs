@@ -156,6 +156,19 @@
               data-tooltip="{{localize "GWORLD.Recovery.WakingHint"}}">
         {{localize "GWORLD.Recovery.Waking"}}
       </button>
+      {{!-- The three that need a doctor rather than a bandage (pp. 424-425). --}}
+      <button type="button" class="ibtn" data-action="attendPatient"
+              data-tooltip="{{localize "GWORLD.Recovery.AttendHint"}}">
+        {{localize "GWORLD.Recovery.Attend"}}
+      </button>
+      <button type="button" class="ibtn" data-action="operate"
+              data-tooltip="{{localize "GWORLD.Recovery.SurgeryHint"}}">
+        {{localize "GWORLD.Recovery.Surgery"}}
+      </button>
+      <button type="button" class="ibtn" data-action="resuscitate"
+              data-tooltip="{{localize "GWORLD.Recovery.ResuscitateHint"}}">
+        {{localize "GWORLD.Recovery.Resuscitate"}}
+      </button>
       {{#if derived.regeneration}}
         <button type="button" class="ibtn" data-action="regenerate"
                 data-tooltip="{{localize "GWORLD.Recovery.RegenerationHint"}}">
