@@ -18,6 +18,7 @@ import { SPELL_CLASSES } from "../../rules/magic.js";
 import { RITUAL_DURATIONS, RITUAL_EFFECTS } from "../../rules/ritual-cost.js";
 import { PATHS } from "../../rules/ritual-path.js";
 import { collectionWeight, grimoirePrice } from "../../rules/ritual-tricks.js";
+import { breakCharm } from "../ritual-casting.js";
 import { SYSTEM_ID } from "../constants.js";
 import { sourceCollections } from "../compendium-sources.js";
 import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
@@ -167,6 +168,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     actions: {
       addMode: GWorldItemSheet.#onAddMode,
       recordMastery: GWorldItemSheet.#onRecordMastery,
+      breakCharm: GWorldItemSheet.#onBreakCharm,
       repairWeapon: GWorldItemSheet.#onRepairWeapon,
       exposureCheck: GWorldItemSheet.#onExposureCheck,
       putOnTheRoad: GWorldItemSheet.#onPutOnTheRoad,
@@ -316,6 +318,11 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
 
     // A grimoire's rituals (Monster Hunters 1 pp. 39, 56-57), and what the book
     // would cost: the table's price for each, and a collection's weight.
+    // A charm travels with its object, and whoever holds it can break it (p. 38).
+    context.charm = item.type === "equipment" && (item.system as any).charm?.ritual
+      ? { mayBreak: item.isOwner }
+      : null;
+
     if (item.type === "equipment" && isRuleOn("ritualPathMagic")) {
       const g = (item.system as any).grimoire ?? { rituals: [] };
       const owner = (item as { actor?: any }).actor ?? null;
@@ -840,6 +847,18 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   static async #onRecordMastery(this: GWorldItemSheet) {
     if (this.item.type !== "ritual") return;
     await this.item.update({ "system.masteredAs": String((this.item.system as any).derived?.identity ?? "") });
+  }
+
+  /** Breaks a charm, setting off its ritual (Monster Hunters 1 p. 38). */
+  static async #onBreakCharm(this: GWorldItemSheet) {
+    const confirmed = await foundry.applications.api.DialogV2.confirm({
+      window: { title: game.i18n.localize("GWORLD.RitualCast.Break") },
+      content: `<p>${game.i18n.format("GWORLD.RitualCast.BreakConfirm", { item: String(this.item.name) })}</p>`,
+      rejectClose: false,
+    });
+    if (!confirmed) return;
+    await this.close();
+    await breakCharm(this.item);
   }
 
   static async #onAddMode(this: GWorldItemSheet, _event: Event, target: HTMLElement) {

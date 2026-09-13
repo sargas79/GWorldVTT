@@ -198,7 +198,7 @@ import { awardsNewestFirst, type PointAward } from "../../rules/character-points
 import { isReadTrait } from "../../rules/trait-effects.js";
 import { weaknessOf } from "../../rules/weakness.js";
 import { exposeToWeakness } from "../weakness.js";
-import { startRitualCasting } from "../ritual-casting.js";
+import { cancelRitual, describeRitualInEffect, extendRitual, startRitualCasting, triggerRitual } from "../ritual-casting.js";
 import { applyHolyContact } from "../holy.js";
 import { unconditionalReaction, type ReactionSource } from "../../rules/social.js";
 import { SENSES } from "../../rules/senses.js";
@@ -2893,6 +2893,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       fightOffSwarm: GWorldCharacterSheet.#onFightOffSwarm,
       castSpell: GWorldCharacterSheet.#onCastSpell,
       castRitual: GWorldCharacterSheet.#onCastRitual,
+      extendRitual: GWorldCharacterSheet.#onExtendRitual,
+      triggerRitual: GWorldCharacterSheet.#onTriggerRitual,
+      cancelRitual: GWorldCharacterSheet.#onCancelRitual,
       maintainSpell: GWorldCharacterSheet.#onMaintainSpell,
       dropSpell: GWorldCharacterSheet.#onDropSpell,
       toggleConcentrating: GWorldCharacterSheet.#onToggleConcentrating,
@@ -3502,6 +3505,15 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       groups: rows,
       // Rituals of Ritual Path Magic, by name: their cost as written down, and
       // the Path the character rolls for each (Monster Hunters 1 pp. 33-35).
+      ritualsInEffect: ((this.actor.system?.ritualPath?.active ?? []) as any[]).map((entry) => {
+        const described = describeRitualInEffect(entry);
+        return {
+          ...entry,
+          ...described,
+          extendable: !entry.conditional && !described.expired && entry.originalSeconds > 0 && Boolean(this.actor.items.get(entry.itemId)),
+          cancelLabel: entry.conditional ? "GWORLD.RitualCast.Remove" : described.expired ? "GWORLD.RitualCast.Clear" : "",
+        };
+      }),
       rituals: (this.actor.items.filter((i: any) => i.type === "ritual") as any[])
         .sort((a, b) => String(a.name).localeCompare(String(b.name)))
         .map((item) => {
@@ -3563,6 +3575,26 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onCastRitual(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const item = this.#itemFrom(target);
     if (item) await startRitualCasting(this.actor, item);
+  }
+
+  /** The ritual in effect a row stands for. */
+  #activeRitualId(target: HTMLElement): string {
+    return target.closest<HTMLElement>("[data-active-id]")?.dataset.activeId ?? "";
+  }
+
+  /** Extends a ritual in effect by casting again for the added duration (p. 37). */
+  static async #onExtendRitual(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    await extendRitual(this.actor, this.#activeRitualId(target));
+  }
+
+  /** A conditional ritual's condition is met (p. 38). */
+  static async #onTriggerRitual(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    await triggerRitual(this.actor, this.#activeRitualId(target), game.i18n.localize("GWORLD.RitualCast.ConditionMet"));
+  }
+
+  /** Cancels a ritual in effect, or has the GM remove a hanging one (p. 37). */
+  static async #onCancelRitual(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    await cancelRitual(this.actor, this.#activeRitualId(target));
   }
 
   #activeSpellId(target: HTMLElement): string | null {

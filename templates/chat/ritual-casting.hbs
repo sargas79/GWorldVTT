@@ -77,6 +77,31 @@
           {{#each sites as |s|}}<option value="{{s.value}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}
         </select>
       </label>
+      {{!-- Held back until a condition is met, and perhaps bound to a charm (pp. 38-39). --}}
+      {{#if mayBeConditional}}
+        <label style="display: flex; gap: 6px; align-items: center">
+          <input type="checkbox" data-ritual-setting="conditional" {{#if conditional}}checked{{/if}}>
+          {{localize "GWORLD.RitualCast.Conditional"}}
+        </label>
+        {{#if conditional}}
+          <input type="text" data-ritual-setting="condition" value="{{condition}}" placeholder="{{localize 'GWORLD.RitualCast.ConditionPlaceholder'}}">
+          <label style="display: flex; gap: 6px; align-items: center; justify-content: space-between">
+            <span style="white-space: nowrap">{{localize "GWORLD.RitualCast.CharmLabel"}}</span>
+            <select data-ritual-setting="charm">
+              <option value="" {{#unless charmItemId}}selected{{/unless}}>—</option>
+              {{#each charms as |c|}}<option value="{{c.id}}" {{#if c.selected}}selected{{/if}}>{{c.name}}</option>{{/each}}
+            </select>
+          </label>
+          {{#if charmItemId}}
+            <label style="display: flex; gap: 6px; align-items: center; justify-content: space-between">
+              <span style="white-space: nowrap">{{localize "GWORLD.RitualCast.WorkspaceLabel"}}</span>
+              <select data-ritual-setting="workspace">
+                {{#each workspaces as |w|}}<option value="{{w.value}}" {{#if w.selected}}selected{{/if}}>{{w.label}}</option>{{/each}}
+              </select>
+            </label>
+          {{/if}}
+        {{/if}}
+      {{/if}}
       {{#if anyQuick}}
         <label style="display: flex; gap: 6px; align-items: center; justify-content: space-between">
           <span style="white-space: nowrap">{{localize "GWORLD.RitualCast.HurriedLabel"}}</span>

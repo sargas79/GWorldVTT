@@ -116,6 +116,52 @@
         </div>
       {{/if}}
     </div>
+
+    {{!-- Rituals cast and still in effect, and conditional ones hanging until
+         their condition is met (pp. 37-39). --}}
+    {{#if magic.ritualsInEffect.length}}
+      <div class="isec" style="gap: 0">
+        <div class="grph">
+          {{localize "GWORLD.RitualCast.InEffect"}}
+          <span class="sub">{{localize "GWORLD.RitualCast.HangingCount" count=derived.ritualPath.conditional.hanging limit=derived.ritualPath.conditional.limit}}</span>
+        </div>
+        <table class="gt">
+          <thead>
+            <tr>
+              <th>{{localize "GWORLD.Ritual.Title"}}</th>
+              <th>{{localize "GWORLD.RitualCast.Status"}}</th>
+              <th class="n">{{localize "GWORLD.Column.Energy"}}</th>
+              <th class="n">{{localize "GWORLD.RitualCast.Margin"}}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each magic.ritualsInEffect as |r|}}
+              <tr data-active-id="{{r.id}}" {{#if r.expired}}class="dim"{{/if}}>
+                <td>{{r.name}}{{#if r.conditional}} <span class="tag">{{localize "GWORLD.RitualCast.ConditionalTag"}}</span>{{/if}}</td>
+                <td class="wmode">{{r.status}}</td>
+                <td class="n">{{r.energy}}</td>
+                <td class="n">{{r.margin}}</td>
+                <td class="c" style="white-space: nowrap">
+                  {{#if @root.editable}}
+                    {{#if r.conditional}}
+                      {{#unless r.charm}}
+                        <button type="button" class="ibtn" data-action="triggerRitual">{{localize "GWORLD.RitualCast.Trigger"}}</button>
+                      {{/unless}}
+                    {{else}}
+                      {{#if r.extendable}}
+                        <button type="button" class="ibtn" data-action="extendRitual">{{localize "GWORLD.RitualCast.Extend"}}</button>
+                      {{/if}}
+                    {{/if}}
+                    <button type="button" class="ibtn" data-action="cancelRitual">{{localize (either r.cancelLabel "GWORLD.RitualCast.Cancel")}}</button>
+                  {{/if}}
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    {{/if}}
   {{/if}}
 
   {{!-- What the character's magic rests on: the Magery the traits give, and

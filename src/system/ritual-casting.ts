@@ -46,6 +46,19 @@ import {
   finalCaster,
   workingTogetherPenalty,
 } from "../rules/ritual-tricks.js";
+import {
+  CHARM_PREPARATION_SECONDS,
+  CHARM_WORKSPACES,
+  conditionalLimit,
+  extensionEnergy,
+  hangConditional,
+  mayBeConditional,
+  ritualDurationSeconds,
+  sharedEffects,
+  stackingSurvivor,
+  type CharmWorkspace,
+} from "../rules/ritual-lasting.js";
+import { RITUAL_DURATIONS } from "../rules/ritual-cost.js";
 import { resolveSuccess } from "../rules/success.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/ritual-casting.hbs`;
@@ -104,6 +117,17 @@ interface CastingFlag {
   donors: string[];
   log: LogEntry[];
   state: "gathering" | "cast" | "backfired" | "abandoned";
+  /** How long the ritual lasts once in effect, from its item. */
+  durationSeconds: number;
+  /** Whether it has the Lesser Control Magic a conditional casting needs (p. 38). */
+  mayBeConditional: boolean;
+  conditional: boolean;
+  condition: string;
+  /** The lead caster's object it is being bound to as a charm, and where the charm is made (pp. 38-39). */
+  charmItemId: string;
+  workspace: CharmWorkspace;
+  /** An extension of a ritual already in effect: which, and by how long (p. 37). */
+  extend: { activeId: string; seconds: number } | null;
 }
 
 type Modifier = { label: string; value: number };
@@ -136,6 +160,8 @@ function generalModifiers(flag: CastingFlag, caster: Caster): Modifier[] {
   const out: Modifier[] = nonAdeptPenalties(conditionsOf(flag, caster)).map((p) => ({ label: L(`Penalty.${p.key}`), value: p.value }));
   const together = workingTogetherPenalty(flag.casters.length);
   if (together) out.push({ label: L("Together"), value: together });
+  // "the normal equipment modifiers for nontechnological skills" for making a charm (p. 39).
+  if (flag.charmItemId && CHARM_WORKSPACES[flag.workspace]) out.push({ label: L(`Workspace.${flag.workspace}`), value: CHARM_WORKSPACES[flag.workspace] });
   return [...out, ...bonusModifiers(caster)];
 }
 
@@ -206,6 +232,14 @@ async function render(flag: CastingFlag): Promise<string> {
       { value: "-1", label: L("SiteDesecrated"), selected: flag.siteYears < 0 },
       ...years.map((y) => ({ value: String(y), label: y ? F("SiteYears", { years: y }) : L("SiteOrdinary"), selected: flag.siteYears === y })),
     ],
+    charms: flag.conditional
+      ? (((await fromUuid(flag.casters[0]!.uuid).catch(() => null)) as any)?.items?.contents ?? [])
+        .filter((i: any) => i.type === "equipment" && !i.system?.charm?.ritual)
+        .map((i: any) => ({ id: i.id, name: i.name, selected: i.id === flag.charmItemId }))
+      : [],
+    workspaces: (Object.keys(CHARM_WORKSPACES) as CharmWorkspace[]).map((w) => ({
+      value: w, label: `${L(`Workspace.${w}`)} (${CHARM_WORKSPACES[w] >= 0 ? "+" : ""}${CHARM_WORKSPACES[w]})`, selected: flag.workspace === w,
+    })),
     consecrations: (["consecrated", "hasty", "none"] as Consecration[]).map((c) => ({
       value: c, label: L(`Consecration.${c}`), selected: flag.consecration === c,
     })),
@@ -257,7 +291,7 @@ function casterFor(actor: any, effects: RitualEffectEntry[], identity: string): 
 }
 
 /** Starts working a ritual from its item: the card, with nothing gathered yet. */
-export async function startRitualCasting(actor: any, item: any): Promise<void> {
+export async function startRitualCasting(actor: any, item: any, options: { extend?: { activeId: string; step: number } } = {}): Promise<void> {
   if (!isRuleOn("ritualPathMagic") || item?.type !== "ritual") return;
   const effects = (item.system?.effects ?? []) as RitualEffectEntry[];
   if (!effects.length) {
@@ -270,12 +304,29 @@ export async function startRitualCasting(actor: any, item: any): Promise<void> {
     ui.notifications?.warn(F("Uncastable", { path: String(item.system?.derived?.skill?.name ?? "") }));
     return;
   }
+  const casting = item.system?.casting ?? {};
+  // An extension costs "that required for the additional duration", using the same Path (p. 37).
+  const running = options.extend
+    ? ((actor.system?.ritualPath?.active ?? []) as any[]).find((r) => r.id === options.extend!.activeId)
+    : null;
+  const extensionCost = running ? extensionEnergy({ originalSeconds: running.originalSeconds, addedStep: options.extend!.step }) : null;
+  if (options.extend && extensionCost === null) {
+    ui.notifications?.warn(L("ExtendTooLong"));
+    return;
+  }
   const flag: CastingFlag = {
     itemId: String(item.id),
-    name: String(item.name),
+    name: running ? F("ExtensionName", { name: String(item.name) }) : String(item.name),
     identity,
     effects: effects.map((e) => ({ path: e.path, effect: e.effect, greater: Boolean(e.greater) })),
-    cost: Number(item.system?.derived?.cost?.total ?? 0),
+    cost: extensionCost ?? Number(item.system?.derived?.cost?.total ?? 0),
+    durationSeconds: ritualDurationSeconds({ step: Number(casting.durationStep) || 0, extraMonths: Number(casting.extraMonths) || 0, years: Number(casting.years) || 0 }),
+    mayBeConditional: !running && mayBeConditional(effects),
+    conditional: false,
+    condition: "",
+    charmItemId: "",
+    workspace: "basic",
+    extend: running ? { activeId: running.id, seconds: ritualDurationSeconds({ step: options.extend!.step }) } : null,
     information: item.system?.casting?.rangeKind === "information",
     casters: [caster],
     acting: 0,
@@ -344,6 +395,18 @@ async function changeSetting(message: any, key: string, input: HTMLInputElement 
     case "siteYears": flag.siteYears = Number(input.value) || 0; break;
     case "hurriedTo": flag.hurriedTo = Math.max(1, Math.min(5, Math.floor(Number(input.value) || 5))); break;
     case "acting": flag.acting = Math.max(0, Math.min(flag.casters.length - 1, Number(input.value) || 0)); break;
+    case "conditional": flag.conditional = checked && flag.mayBeConditional; if (!flag.conditional) flag.charmItemId = ""; break;
+    case "condition": flag.condition = input.value.slice(0, 200); break;
+    case "workspace": flag.workspace = (input.value in CHARM_WORKSPACES ? input.value : "basic") as CharmWorkspace; break;
+    case "charm": {
+      // "The actual creation requires 30 minutes to prepare the object" (p. 39).
+      const had = Boolean(flag.charmItemId);
+      flag.charmItemId = flag.conditional ? input.value : "";
+      const lead = flag.casters[0]!;
+      if (!had && flag.charmItemId) lead.seconds += CHARM_PREPARATION_SECONDS;
+      if (had && !flag.charmItemId) lead.seconds = Math.max(0, lead.seconds - CHARM_PREPARATION_SECONDS);
+      break;
+    }
     case "grimoire": {
       const caster = flag.casters[Number(index)];
       if (caster?.grimoire) caster.useGrimoire = checked;
@@ -552,8 +615,189 @@ async function castRitual(message: any, flag: CastingFlag): Promise<void> {
   flag.state = "cast";
   flag.log.push({ text: `${rolled}: ${F("Cast", { margin: result.margin })}`, kind: "gain" });
   if (outcome.refillReserve) await refillReserve(actor, flag);
+  await recordRitual(flag, result.margin);
   await save(message, flag);
   await offerResistance(actor, flag.name, result.total, target, flag.casters.map((c) => c.uuid));
+}
+
+/**
+ * Puts a cast ritual on its caster's sheet (pp. 37-39): an extension adds to
+ * the one it extends; a conditional ritual hangs, defusing the oldest past
+ * the limit, and is bound to its charm if it has one; anything else lasts its
+ * duration. A ritual sharing an effect with one already in effect is noted,
+ * with which would remain on the same subject.
+ */
+async function recordRitual(flag: CastingFlag, margin: number): Promise<void> {
+  const lead: any = await fromUuid(flag.casters[0]!.uuid).catch(() => null);
+  if (!lead?.isOwner) return;
+  const now = Number((game as any).time?.worldTime ?? 0) || 0;
+  const active = [...((lead.system?.ritualPath?.active ?? []) as any[])].map((r) => ({ ...r }));
+
+  if (flag.extend) {
+    const running = active.find((r) => r.id === flag.extend!.activeId);
+    if (!running) return;
+    running.expiresAt = Math.max(Number(running.expiresAt ?? now), now) + flag.extend.seconds;
+    running.durationSeconds += flag.extend.seconds;
+    await lead.update({ "system.ritualPath.active": active });
+    flag.log.push({ text: F("Extended", { name: running.name, time: duration(flag.extend.seconds) }), kind: "note" });
+    return;
+  }
+
+  for (const other of active) {
+    const shared = sharedEffects(flag.effects, other.effects ?? []);
+    if (!shared.length || other.conditional !== flag.conditional) continue;
+    const survivor = stackingSurvivor(Number(other.energy) || 0, flag.cost) === "new" ? flag.name : other.name;
+    flag.log.push({ text: F("Stacking", { other: other.name, effects: shared.join(", "), survivor }), kind: "note" });
+  }
+
+  const id = foundry.utils.randomID();
+  const charm = flag.conditional && flag.charmItemId ? lead.items.get(flag.charmItemId) : null;
+  const entry = {
+    id,
+    itemId: flag.itemId,
+    name: flag.name,
+    energy: flag.cost,
+    margin,
+    effects: flag.effects,
+    durationSeconds: flag.durationSeconds,
+    originalSeconds: flag.durationSeconds,
+    startedAt: now,
+    expiresAt: flag.conditional ? null : now + flag.durationSeconds,
+    conditional: flag.conditional,
+    condition: flag.condition,
+    charm: charm ? String(charm.name) : "",
+  };
+
+  if (flag.conditional) {
+    const rp = lead.system?.derived?.ritualPath ?? {};
+    const limit = conditionalLimit({ thaumatology: rp.thaumatology ?? null, magery: rp.magery ?? null });
+    const hanging = active.filter((r) => r.conditional);
+    const result = hangConditional(hanging, entry, limit);
+    const defusedIds = new Set(result.defused.map((r) => r.id));
+    const kept = [...active.filter((r) => !r.conditional), ...result.hanging];
+    await lead.update({ "system.ritualPath.active": kept });
+    for (const gone of result.defused) {
+      flag.log.push({ text: F("Defused", { name: gone.name, limit }), kind: "bad" });
+    }
+    // A defused ritual's charm is an ordinary object again.
+    for (const item of lead.items.contents ?? []) {
+      if (item.type === "equipment" && defusedIds.has(item.system?.charm?.activeId)) {
+        await item.update({ "system.charm.ritual": "", "system.charm.activeId": "" });
+      }
+    }
+    if (charm) {
+      await charm.update({
+        "system.charm": { ritual: flag.name, margin, casterUuid: String(lead.uuid), activeId: id, condition: flag.condition },
+      });
+      flag.log.push({ text: F("Charmed", { item: String(charm.name) }), kind: "note" });
+    } else {
+      flag.log.push({ text: F("Hanging", { count: result.hanging.length, limit }), kind: "note" });
+    }
+    return;
+  }
+
+  // A momentary ritual is over as soon as it works.
+  if (flag.durationSeconds <= 0) return;
+  active.push(entry);
+  await lead.update({ "system.ritualPath.active": active });
+}
+
+/**
+ * Sets off a conditional ritual (p. 38): "once triggered, it will last for
+ * its normal duration", with the margin it was cast with. From its charm
+ * when the charm is broken, or from the caster's sheet when the condition
+ * is met.
+ */
+export async function triggerRitual(caster: any, activeId: string, source: string): Promise<void> {
+  const active = [...((caster?.system?.ritualPath?.active ?? []) as any[])].map((r) => ({ ...r }));
+  const index = active.findIndex((r) => r.id === activeId && r.conditional);
+  if (index < 0) return;
+  const entry = active[index];
+  const now = Number((game as any).time?.worldTime ?? 0) || 0;
+  if (entry.durationSeconds > 0) {
+    Object.assign(entry, { conditional: false, charm: "", startedAt: now, expiresAt: now + entry.durationSeconds });
+  } else {
+    active.splice(index, 1);
+  }
+  if (caster.isOwner) await caster.update({ "system.ritualPath.active": active });
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor: caster }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${foundry.utils.escapeHTML(entry.name)}</span></div>`
+      + `<div class="gc-result success">${foundry.utils.escapeHTML(F("Triggered", { source, margin: entry.margin }))}</div>`
+      + (entry.durationSeconds > 0 ? `<div class="gc-note">${foundry.utils.escapeHTML(F("LastsFor", { time: duration(entry.durationSeconds) }))}</div>` : "")
+      + `</div>`,
+  });
+}
+
+/**
+ * Breaks a charm (p. 38): "The ritual can be triggered by the subject
+ * breaking the charm. This takes a Ready maneuver". The object is gone, and
+ * the spell "goes off automatically, using its original margin of success".
+ */
+export async function breakCharm(item: any): Promise<void> {
+  const charm = item?.system?.charm;
+  if (item?.type !== "equipment" || !charm?.ritual) return;
+  const caster: any = charm.casterUuid ? await fromUuid(charm.casterUuid).catch(() => null) : null;
+  const holder = item.actor;
+  const source = F("CharmBroken", { item: String(item.name), name: String(holder?.name ?? "") });
+  if (caster && (caster.system?.ritualPath?.active ?? []).some((r: any) => r.id === charm.activeId)) {
+    await triggerRitual(caster, charm.activeId, source);
+  } else {
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor: holder }),
+      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+      content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${foundry.utils.escapeHTML(charm.ritual)}</span></div>`
+        + `<div class="gc-result success">${foundry.utils.escapeHTML(F("Triggered", { source, margin: charm.margin }))}</div></div>`,
+    });
+  }
+  const quantity = Number(item.system?.quantity ?? 1) || 1;
+  if (quantity > 1) await item.update({ "system.quantity": quantity - 1, "system.charm.ritual": "", "system.charm.activeId": "" });
+  else await item.delete();
+}
+
+/** "A caster may cancel all the effects of his own ritual before they expire" (p. 37); a conditional one he may not. */
+export async function cancelRitual(caster: any, activeId: string): Promise<void> {
+  const active = ((caster?.system?.ritualPath?.active ?? []) as any[]);
+  const entry = active.find((r) => r.id === activeId);
+  if (!entry || !caster.isOwner) return;
+  if (entry.conditional && !game.user?.isGM) {
+    ui.notifications?.warn(L("CannotCancelConditional"));
+    return;
+  }
+  await caster.update({ "system.ritualPath.active": active.filter((r) => r.id !== activeId) });
+}
+
+/** Asks how long to extend a ritual by, no longer than it first lasted, and opens its casting card (p. 37). */
+export async function extendRitual(caster: any, activeId: string): Promise<void> {
+  const entry = ((caster?.system?.ritualPath?.active ?? []) as any[]).find((r) => r.id === activeId);
+  const item = entry ? caster.items.get(entry.itemId) : null;
+  if (!entry || entry.conditional || !item) return;
+  const steps = RITUAL_DURATIONS.map((d, step) => ({ d, step })).filter(({ step }) => step > 0 && extensionEnergy({ originalSeconds: entry.originalSeconds, addedStep: step }) !== null);
+  if (!steps.length) return;
+  const answer = await foundry.applications.api.DialogV2.prompt({
+    window: { title: F("ExtensionName", { name: String(entry.name) }) },
+    content: `<div class="gworld"><label style="display:flex;gap:8px;justify-content:space-between;align-items:center"><span>${L("ExtendBy")}</span><select name="step">${steps
+      .map(({ d, step }) => `<option value="${step}" ${step === steps.at(-1)!.step ? "selected" : ""}>${game.i18n.localize(`GWORLD.Ritual.Duration.${d}`)} (${step})</option>`)
+      .join("")}</select></label></div>`,
+    ok: {
+      label: L("Apply"),
+      callback: (_event: Event, button: HTMLElement) => Number(button.closest<HTMLElement>(".application")?.querySelector<HTMLSelectElement>('select[name="step"]')?.value ?? 0),
+    },
+    rejectClose: false,
+  });
+  if (!answer) return;
+  await startRitualCasting(caster, item, { extend: { activeId, step: Number(answer) } });
+}
+
+/** What the magic tab shows of a ritual in effect: how long is left, or what it waits for. */
+export function describeRitualInEffect(entry: any): { status: string; expired: boolean } {
+  if (entry.conditional) {
+    return { status: entry.charm ? F("OnCharm", { item: entry.charm }) : F("WaitingFor", { condition: entry.condition || "—" }), expired: false };
+  }
+  const now = Number((game as any).time?.worldTime ?? 0) || 0;
+  const left = Number(entry.expiresAt ?? now) - now;
+  return left > 0 ? { status: F("Remaining", { time: duration(left) }), expired: false } : { status: L("Expired"), expired: true };
 }
 
 /** A critical success "instantly refills the caster's mana reserve" (p. 37). */
