@@ -222,3 +222,23 @@ describe("from a vehicle", () => {
     expect(rangedModifiers(shot({ vehicle: null }), carbine)).toEqual([]);
   });
 });
+
+/** A laser sight (GURPS Basic Set: Campaigns p. 411). */
+describe("laser sight", () => {
+  const pistol = { accuracy: 2, scopeBonus: 0, bulk: -2, halfDamageRange: 150 };
+
+  it("is +1 to hit, aimed or not, while the dot is within the weapon's 1/2D", () => {
+    const mods = rangedModifiers(shot({ range: 20, laser: { on: true, targetSees: false } }), pistol);
+    expect(valueOf(mods, "LaserSight")).toBe(1);
+  });
+
+  it("is nothing past that, where the dot is too spread to see", () => {
+    const mods = rangedModifiers(shot({ range: 200, laser: { on: true, targetSees: false } }), pistol);
+    expect(valueOf(mods, "LaserSight")).toBeUndefined();
+  });
+
+  it("is nothing when switched off", () => {
+    const mods = rangedModifiers(shot({ range: 20, laser: { on: false, targetSees: false } }), pistol);
+    expect(valueOf(mods, "LaserSight")).toBeUndefined();
+  });
+});

@@ -24,7 +24,10 @@ import { isRuleOn } from "./optional-rules.js";
 import { targetedTokens } from "./targets.js";
 import { aimTurnsOf, loseAim } from "./aim.js";
 import { aimBonus } from "../rules/aim.js";
-import { scopeBonus } from "../rules/accessories.js";
+import {
+  scopeBonus,
+  laserSight,
+} from "../rules/accessories.js";
 import { multipleProjectiles } from "../rules/shotguns.js";
 import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import {
@@ -146,6 +149,8 @@ export interface SuccessRollOptions {
    * whether it rolls again on "your weapon breaks".
    */
   weapon?: { weight: number; material: string; swung: boolean; resistsBreakage: boolean };
+  /** A bonus the target's Dodge alone gets, from a laser dot they saw (p. 411). */
+  dodgeBonus?: number;
   /** How an attack reached its target, for TV Action Violence (p. 417). */
   delivery?: Delivery;
   /** What the attack does, blank where it does nothing (a grapple). */
@@ -276,7 +281,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
       ? {
           flags: attackFlags(
             actor, label, defensePenalty, criticalHit, noParry, options.weapon,
-            options.delivery, options.damageType,
+            options.delivery, options.damageType, options.dodgeBonus ?? 0,
           ),
         }
       : {}),
@@ -413,6 +418,8 @@ function attackFlags(
   weapon?: { weight: number; material: string; swung: boolean },
   delivery?: Delivery,
   damageType?: string,
+  /** +1 to Dodge for a target who saw a laser dot (Campaigns p. 411). */
+  dodgeBonus = 0,
 ): object {
   const defenders = targetedTokens()
     .filter((token: any) => token?.actor?.uuid)
@@ -446,6 +453,7 @@ function attackFlags(
         // be ducked this way; a bullet can.
         ...(delivery ? { delivery } : {}),
         ...(damageType ? { damageType } : {}),
+        ...(dodgeBonus ? { dodgeBonus } : {}),
       },
     },
   };
@@ -879,6 +887,7 @@ export async function handleRollAction(
     ...(shot && shot.shotsFired > 1
       ? { rapidFire: { shotsFired: shot.shotsFired, recoil: shot.recoil } }
       : {}),
+    ...(shot?.dodgeBonus ? { dodgeBonus: shot.dodgeBonus } : {}),
   });
 
   // A shot at a random location behind cover (p. 407): "For shots that hit a
@@ -1105,6 +1114,8 @@ interface RangedShot {
   rangeYards: number;
   /** What was done about cover, which a random location may still strike. */
   cover?: CoverApproach | "none";
+  /** +1 to the target's Dodge where they have seen a laser dot within its range. */
+  dodgeBonus?: number;
 }
 
 /**
@@ -1244,6 +1255,12 @@ export async function promptForRangedAttack(options: {
         <input type="checkbox" name="aimed" ${aiming.total > 0 ? "checked" : ""}>
         <span>${accuracyLabel}</span>
       </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="laser"><span>${L("LaserSight")}</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="laserSeen"><span>${L("LaserSeen")}</span>
+      </label>
       ${vehicleFields}
     </div>`,
     ok: {
@@ -1275,6 +1292,10 @@ export async function promptForRangedAttack(options: {
           cover: cover as CoverApproach | "none",
           calledShot,
           aimed,
+          laser: {
+            on: form?.querySelector<HTMLInputElement>('input[name="laser"]')?.checked ?? false,
+            targetSees: form?.querySelector<HTMLInputElement>('input[name="laserSeen"]')?.checked ?? false,
+          },
           vehicle: aboard
             ? {
                 kind: (form?.querySelector<HTMLSelectElement>('select[name="vehicleKind"]')?.value ??
@@ -1324,6 +1345,14 @@ export async function promptForRangedAttack(options: {
     calledShot: aimed.shot,
     rangeYards: input.range,
     cover: input.cover ?? "none",
+    // "But if the target can see it, he gets +1 to Dodge!"
+    dodgeBonus: input.laser?.on
+      ? laserSight({
+          rangeYards: input.range,
+          halfDamageRange: options.halfDamageRange ?? 0,
+          targetSeesDot: input.laser.targetSees,
+        }).targetDodge
+      : 0,
   };
 }
 
@@ -1351,6 +1380,8 @@ interface RangedInput {
   aimed: boolean;
   /** Set when the shooter is aboard a vehicle (Campaigns pp. 467-469). */
   vehicle?: VehicleShot | null;
+  /** A laser sight in use, and whether the target has seen its dot (p. 411). */
+  laser?: { on: boolean; targetSees: boolean } | null;
 }
 
 /** What firing from a vehicle adds to a shot. */
@@ -1389,6 +1420,8 @@ export function rangedModifiers(
     aim?: { turns: number; braced: boolean } | null;
     /** The shooter's eyes, which decide what the dark costs. */
     eyes?: Eyes;
+    /** The 1/2D figure, which a laser sight's reach defaults to (p. 411). */
+    halfDamageRange?: number;
   },
 ): RollModifier[] {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
@@ -1519,6 +1552,14 @@ export function rangedModifiers(
       }
     }
   }
+  // A laser sight: "If you can see your own aiming dot, you get +1 to hit",
+  // aimed or not, out to its range -- the weapon's 1/2D where none is given
+  // (p. 411). Beyond that the dot is too dispersed to see.
+  if (input.laser?.on) {
+    const dot = laserSight({ rangeYards: effectiveRange, halfDamageRange: weapon.halfDamageRange ?? 0 });
+    if (dot.toHit !== 0) modifiers.push({ label: L("LaserSight"), value: dot.toHit });
+  }
+
   const rapidFire = rapidFireBonus(input.shots ?? 1);
   if (rapidFire !== 0) modifiers.push({ label: L("RapidFire"), value: rapidFire });
   if (input.modifier !== 0) {

@@ -8,6 +8,7 @@
  * are buttons rather than attacks.
  */
 
+import { hearingTarget, heardUpClose, type Silencer } from "../rules/accessories.js";
 import { SYSTEM_ID } from "./constants.js";
 import {
   DIRECTIONS,
@@ -146,6 +147,52 @@ export async function checkOverpenetration(options: {
   });
 
   return through;
+}
+
+/**
+ * Whether somebody hears a shot, and can tell where it came from (p. 411).
+ *
+ * Somebody in front of the gun and close enough to be shot at "automatically
+ * hears the shot - even with a silencer", but a silencer leaves them an IQ roll
+ * rather than a sight of the shooter to place it. Anybody further off rolls
+ * Hearing+5, less the silencer, give or take four for the gun and the room.
+ */
+export async function hearTheShot(options: {
+  actor: any;
+  listener: any;
+  silencer: Silencer;
+  loudness: number;
+  upClose: boolean;
+  inPlainSight: boolean;
+}): Promise<void> {
+  const name = String(options.listener?.name ?? "");
+
+  if (options.upClose) {
+    const close = heardUpClose({ silencer: options.silencer, inPlainSight: options.inPlainSight });
+    await post(options.actor, {
+      hearing: true,
+      victim: name,
+      line: game.i18n.localize(close.locates ? "GWORLD.Hearing.HeardAndPlaced" : "GWORLD.Hearing.HeardNotPlaced"),
+    });
+    return;
+  }
+
+  const senses = options.listener?.system?.derived?.senses ?? [];
+  const hearing = Number(senses.find((s: any) => s.sense === "hearing")?.score)
+    || Number(options.listener?.system?.derived?.per) || 10;
+  const target = hearingTarget({ hearing, silencer: options.silencer, loudness: options.loudness });
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  const heard = resolveSuccess(roll.total, target, dieResults(roll)).success;
+  await post(options.actor, {
+    hearing: true,
+    victim: name,
+    target,
+    dice: dieResults(roll),
+    roll: roll.total,
+    line: game.i18n.localize(heard ? "GWORLD.Hearing.Heard" : "GWORLD.Hearing.NotHeard"),
+    rolls: [roll],
+  });
 }
 
 /**

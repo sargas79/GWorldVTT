@@ -30,7 +30,12 @@ import { applyDeprivation, rollExposure } from "../environment.js";
 import { activePoisons, advancePoison, clearPoison, dosePoison, treatPoison, treatIllness } from "../poison.js";
 import { drinkForAnHour, drinkingState, hangoverRoll, soberUpRoll } from "../intoxication.js";
 import { checkInfection, exposeToDisease } from "../disease.js";
-import { checkOverpenetration, rollScatter, splashInTheFace } from "../gunplay.js";
+import {
+  checkOverpenetration,
+  rollScatter,
+  splashInTheFace,
+  hearTheShot,
+} from "../gunplay.js";
 import { rollInfluence, rollReaction } from "../reactions.js";
 import { payCostOfLiving, rollAging, studySkill, workAMonth } from "../life.js";
 import { trample } from "../trampling.js";
@@ -1034,6 +1039,30 @@ async function promptForOverpenetration(): Promise<{
   });
 
   return result && typeof result === "object" ? (result as never) : null;
+}
+
+/** Who is listening for a shot, and what they are listening through (Campaigns p. 411). */
+async function promptForHearing(): Promise<{
+  silencer: "none" | "typical" | "best";
+  loudness: number;
+  upClose: boolean;
+  inPlainSight: boolean;
+} | null> {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Hearing.${key}`);
+  const silencers: Array<[string, string]> = (["none", "typical", "best"] as const).map((k) => [k, L(`Silencer.${k}`)]);
+  return hazardPrompt(
+    L("Title"),
+    hazardSelect("silencer", L("SilencerLabel"), silencers) +
+      hazardField("loudness", L("Loudness"), 0, 'min="-4" max="4"') +
+      hazardCheck("upClose", L("UpClose")) +
+      hazardCheck("inPlainSight", L("InPlainSight")),
+    (form) => ({
+      silencer: (str(form, "silencer") || "none") as "none" | "typical" | "best",
+      loudness: Math.max(-4, Math.min(4, num(form, "loudness"))),
+      upClose: ticked(form, "upClose"),
+      inPlainSight: ticked(form, "inPlainSight"),
+    }),
+  );
 }
 
 /** Asks how the splash landed (Campaigns p. 405). */
@@ -2709,6 +2738,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       infection: GWorldCharacterSheet.#onInfection,
       scatter: GWorldCharacterSheet.#onScatter,
       overpenetration: GWorldCharacterSheet.#onOverpenetration,
+      hearTheShot: GWorldCharacterSheet.#onHearTheShot,
       splash: GWorldCharacterSheet.#onSplash,
       reaction: GWorldCharacterSheet.#onReaction,
       influence: GWorldCharacterSheet.#onInfluence,
@@ -4509,6 +4539,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   }
 
   /** Whether the shot came out the other side (Campaigns p. 408). */
+  /**
+   * Whether the targeted token hears this character's shot (Campaigns p. 411),
+   * or this character hears one when nobody is targeted.
+   */
+  static async #onHearTheShot(this: GWorldCharacterSheet) {
+    const asked = await promptForHearing();
+    if (!asked) return;
+    const listener = targetedTokens()[0]?.actor ?? this.actor;
+    await hearTheShot({ actor: this.actor, listener, ...asked });
+  }
+
   static async #onOverpenetration(this: GWorldCharacterSheet) {
     if (!isRuleOn("overpenetration")) return;
 

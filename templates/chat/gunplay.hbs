@@ -4,6 +4,7 @@
     <span class="gc-target">
       {{#if scatter}}{{localize "GWORLD.Scatter.Title"}}
       {{else if overpenetration}}{{localize "GWORLD.Overpenetration.Title"}}
+      {{else if hearing}}{{localize "GWORLD.Hearing.Title"}}
       {{else}}{{localize "GWORLD.Splash.Title"}}{{/if}}
     </span>
   </div>
@@ -47,6 +48,14 @@
     {{else}}
       <div class="gc-result success">{{localize "GWORLD.Overpenetration.Stopped"}}</div>
     {{/if}}
+  {{/if}}
+
+  {{#if hearing}}
+    <div class="gc-mods">
+      <span>{{victim}}</span>
+      {{#if target}}<span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{target}}</span>{{/if}}
+    </div>
+    <div class="gc-result">{{line}}</div>
   {{/if}}
 
   {{#if splash}}

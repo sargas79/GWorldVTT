@@ -459,6 +459,8 @@ interface DefenseFlag {
   noParry?: boolean;
   /** The attacking weapon, for the parry to weigh (Campaigns p. 376). */
   weapon?: { weight: number; material: string; swung: boolean };
+  /** +1 to Dodge alone, for a target who saw the laser dot (Campaigns p. 411). */
+  dodgeBonus?: number;
 }
 
 function defenseFlag(message: any): DefenseFlag | null {
@@ -674,6 +676,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
           defender,
           key: choice.key,
           unseenPenalty: blind?.modifier ?? 0,
+          laserDodge: choice.key === "dodge" ? (flag.dodgeBonus ?? 0) : 0,
           total: choice.total,
           attack: flag.attack,
           arcPenalty: choice.arcPenalty,
@@ -777,6 +780,8 @@ async function rollDefense(options: {
   damageType?: string;
   /** -4 for an attacker the defender cannot see (Campaigns p. 394), or 0. */
   unseenPenalty?: number;
+  /** +1 to a Dodge against a shot whose laser dot the defender saw (p. 411). */
+  laserDodge?: number;
 }): Promise<void> {
   const {
     defender, key, total, attack, arcPenalty, deception, retreating, feverish, skill, isFencing,
@@ -809,6 +814,9 @@ async function rollDefense(options: {
   }
 
   const modifiers = [];
+  if (options.laserDodge) {
+    modifiers.push({ label: game.i18n.localize("GWORLD.Ranged.LaserSeen"), value: options.laserDodge });
+  }
   if (options.unseenPenalty) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Defense.Unseen.Label"), value: options.unseenPenalty });
   }

@@ -1436,7 +1436,9 @@
       "MountedNeedsAttack": "Firing the vehicle's own weapons takes an Attack or All-Out Attack maneuver",
       "VehicleDodgedBox": "The vehicle dodged this turn",
       "Stabilized": "Stabilized sights or mount",
-      "HasTargeting": "Using the vehicle's targeting system"
+      "HasTargeting": "Using the vehicle's targeting system",
+      "LaserSight": "Laser sight",
+      "LaserSeen": "The target sees the laser dot"
     },
     "Malfunction": {
       "Jammed": "The weapon malfunctions",
@@ -3445,6 +3447,23 @@
         "FinalWillKept": "The final Will roll succeeds: the quirks go too",
         "FinalWillFailed": "The final Will roll fails: the quirks and disadvantages stay"
       }
+    },
+    "Hearing": {
+      "Title": "Hear a shot",
+      "Hint": "Whether the targeted token (or this character) hears a shot, and can place it (Campaigns p. 411).",
+      "SilencerLabel": "Silencer",
+      "Silencer": {
+        "none": "None",
+        "typical": "Typical (-4)",
+        "best": "Best commercial (-6)"
+      },
+      "Loudness": "Gun and room, +4 loud to -4 quiet",
+      "UpClose": "In front of the gun and close enough to be shot",
+      "InPlainSight": "The shooter is in plain sight",
+      "Heard": "Hears the shot",
+      "NotHeard": "Does not hear it",
+      "HeardAndPlaced": "Hears it, and knows where it came from",
+      "HeardNotPlaced": "Hears it, but the silencer hides where from: an IQ roll to place it"
     }
   }
 }
