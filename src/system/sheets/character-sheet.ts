@@ -2534,6 +2534,15 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         label: game.i18n.localize(`GWORLD.Cinematic.DressState.${key}`),
         selected: (system.dress?.state ?? "clothed") === key,
       })),
+      // The psi powers, ready to read: the book's name for each, what its
+      // Talent is worth, and whether this is a latent (pp. 254-255).
+      psionics: (system.derived?.psionics ?? []).map(
+        (held: { power: string; abilities: string[]; talent: number; latent: boolean }) => ({
+          ...held,
+          label: game.i18n.localize(`GWORLD.Psi.Power.${held.power}`),
+          signed: held.talent > 0 ? `+${held.talent}` : String(held.talent),
+        }),
+      ),
       isEvaluating: system.maneuver === "evaluate",
       isAiming: system.maneuver === "aim",
       isWaiting: system.maneuver === "wait",

@@ -55,6 +55,7 @@ export * from "./melee-situations.js";
 export * from "./modifiers.js";
 export * from "./motion.js";
 export * from "./pressure.js";
+export * from "./psionics.js";
 export * from "./natural-attacks.js";
 export * from "./aim.js";
 export * from "./readiness.js";

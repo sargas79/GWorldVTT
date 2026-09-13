@@ -97,6 +97,7 @@ import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
 import { mountedDefensePenalty } from "../../rules/mounted.js";
 import { penaltyEffects } from "../../rules/attribute-penalties.js";
 import { afflictionsOn } from "../afflictions.js";
+import { psionicsOf } from "../../rules/psionics.js";
 import {
   effectiveSkillLevel,
   namedDefaultLevel,
@@ -2108,6 +2109,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       senses: senseScores(secondary.per, traits),
       // What the social traits do to a reaction roll, and Charisma's bonus
       // to the Influence roll itself (pp. 21-29, 41).
+      // The psi powers a character holds, the abilities under each and what
+      // its Talent is worth to a roll using them (Characters pp. 254-255).
+      psionics: psionicsOf(heldTraits),
       reactions: reactionSources(heldTraits),
       charismaInfluence: charismaInfluenceBonus(heldTraits),
       // Fit's bonus to every HT roll, for the rolls made outside this block.

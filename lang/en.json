@@ -3024,6 +3024,22 @@
       "CannonFodderHint": "A mook: fails every defense roll, never takes All-Out Attack, and collapses the moment any damage gets through their DR. Nobody keeps track of their HP (Campaigns p. 417).",
       "CannonFodderDefense": "Cannon fodder: automatically fails",
       "Collapses": "{name} goes down."
+    },
+    "Psi": {
+      "Powers": "Psi powers",
+      "Talent": "Talent {bonus}",
+      "TalentHint": "A Talent gives a bonus to any roll to activate or otherwise use this power, most often an IQ, Will or Perception roll (Characters p. 255).",
+      "Latent": "Latent",
+      "LatentHint": "Talent with no abilities under it: potential, but no actual power (Characters p. 254).",
+      "NoAbilities": "No abilities yet.",
+      "Power": {
+        "antipsi": "Antipsi",
+        "esp": "ESP",
+        "psychicHealing": "Psychic Healing",
+        "psychokinesis": "Psychokinesis",
+        "telepathy": "Telepathy",
+        "teleportation": "Teleportation"
+      }
     }
   }
 }
