@@ -485,6 +485,8 @@ export interface DamageRollOptions {
   weaponTarget?: { actorUuid: string; itemId: string; name: string };
   /** A target at or past 1/2D, which halves the basic damage (Characters p. 270). */
   halfDamage?: boolean;
+  /** What the weapon is made of, carried to the apply for a Vulnerability to silver. */
+  material?: string;
 }
 
 /**
@@ -590,6 +592,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           // that replace the roll with maximum damage.
           maxDamage: applyDamageFloor(maxRoll(rolled) * mass, damageType),
           ...(mass > 1 ? { drMultiplier: mass } : {}),
+          ...(options.material ? { material: options.material } : {}),
           ...(options.weaponTarget ? { weaponTarget: options.weaponTarget } : {}),
           explosive,
           // The dice, not the rolled total: the blast radius is set by how
@@ -2151,6 +2154,7 @@ export async function handleDamageAction(
     ...(aimed ? { calledShot: aimed } : {}),
     ...(mass > 1 ? { massMultiplier: mass } : {}),
     ...(halved ? { halfDamage: true } : {}),
+    ...(target.dataset.material ? { material: target.dataset.material } : {}),
     explosive: target.dataset.explosive === "1",
     fragmentation: target.dataset.fragmentation ?? "",
     modifiers,

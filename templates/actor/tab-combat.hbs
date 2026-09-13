@@ -272,7 +272,7 @@
                 <td class="dmg{{#if atk.damageRollable}} rollable{{/if}}"
                     {{#if atk.damageRollable}}data-action="rollDamage"
                     data-damage-formula="{{atk.damage}}" data-damage-type="{{atk.damageType}}"
-                    data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}"
+                    data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}" data-material="{{atk.material}}"
                     data-explosive="{{#if atk.explosive}}1{{/if}}"
                     data-reach="{{atk.reach}}"
                     data-st-based="{{#if atk.stBased}}1{{/if}}" data-melee="1"
@@ -364,7 +364,7 @@
                 <td class="dmg{{#if atk.damageRollable}} rollable{{/if}}"
                     {{#if atk.damageRollable}}data-action="rollDamage"
                     data-damage-formula="{{atk.damage}}" data-damage-type="{{atk.damageType}}"
-                    data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}"
+                    data-damage-label="{{atk.name}} {{atk.mode}}" data-armor-divisor="{{atk.armorDivisor}}" data-material="{{atk.material}}"
                     data-explosive="{{#if atk.explosive}}1{{/if}}"
                     data-st-based="{{#if atk.stBased}}1{{/if}}"
                     data-fragmentation="{{atk.fragmentation}}"{{/if}}>{{atk.damage}}

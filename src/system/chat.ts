@@ -68,6 +68,8 @@ interface DamageFlag {
   drMultiplier?: number;
   /** A blow aimed at a weapon rather than at its wielder (Campaigns p. 401). */
   weaponTarget?: { actorUuid: string; itemId: string; name: string };
+  /** What the weapon is made of, for a Vulnerability to silver (Characters p. 161). */
+  material?: string;
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -254,6 +256,7 @@ async function applyFromCard(options: {
     // instead of it.
     ...(flag.chink ? { chink: true } : {}),
     ...(flag.drMultiplier && flag.drMultiplier > 1 ? { drMultiplier: flag.drMultiplier } : {}),
+    ...(flag.material ? { material: flag.material } : {}),
     // The maximum belongs to the dice as rolled, so it is only the maximum for
     // someone the blast struck directly: collateral damage has already been
     // scaled down by distance, and pairing it with the undiminished maximum
