@@ -3080,14 +3080,27 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         label: game.i18n.localize(`GWORLD.Cinematic.DressState.${key}`),
         selected: (system.dress?.state ?? "clothed") === key,
       })),
-      // The psi powers, ready to read: the book's name for each, what its
-      // Talent is worth, and whether this is a latent (pp. 254-255).
-      psionics: describePowers(system.derived?.psionics ?? []).map((held) => ({
-        ...held,
-        label: game.i18n.localize(`GWORLD.Psi.Power.${held.power}`),
-        signed: held.talent > 0 ? `+${held.talent}` : String(held.talent),
-        couldManifestText: held.couldManifest.join(", "),
-      })),
+      // The powers, ready to read: the book's name for each, what its Talent
+      // is worth, whether this is a latent, and what a roll to use it is
+      // against (Characters pp. 254-255; Monster Hunters 1 p. 40).
+      psionics: describePowers(system.derived?.powers ?? [], {
+        IQ: Number(derived.attributes?.IQ ?? system.attributes?.IQ ?? 10),
+        will: Number(derived.will ?? 10),
+        per: Number(derived.per ?? 10),
+      }).map((held) => {
+        const label = held.psi ? game.i18n.localize(`GWORLD.Psi.Power.${held.psi}`) : held.name;
+        return {
+          ...held,
+          label,
+          signed: held.talent > 0 ? `+${held.talent}` : String(held.talent),
+          couldManifestText: held.couldManifest.join(", "),
+          rollButtons: (["IQ", "Will", "Per"] as const).map((key) => ({
+            key,
+            target: held.rolls[key],
+            label: game.i18n.format("GWORLD.Psi.UseRoll", { power: label, attribute: key }),
+          })),
+        };
+      }),
       // A psi ability's name with no power modifier on it: not psionic, and
       // almost never what the player meant (Characters p. 254).
       unpoweredPsi: unpoweredAbilities(
@@ -3097,6 +3110,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
             name: String(item.name ?? ""),
             levels: Number(item.system?.levels ?? 0),
             modifiers: ((item.system?.modifiers ?? []) as Array<{ name?: string }>).map((m) => String(m.name ?? "")),
+            power: String(item.system?.power ?? ""),
           })),
       ).map((u) => ({ ...u, powerLabel: game.i18n.localize(`GWORLD.Psi.Power.${u.power}`) })),
       // Caught in something, and how far through getting out they are.

@@ -10,6 +10,7 @@ import {
   classifyCitation,
   entryName,
   groupsOf,
+  powerOfRecord,
   qualityVariantOf,
   reference,
   talentSkillsOf,
@@ -148,6 +149,29 @@ describe("a Talent's skills", () => {
     // A power Talent names no group; its skills are a blank GCA fills in.
     const power = new Map([["gives", "+1 to SK:Skill Name Here"], ["cat", "Paranormal, Talents - Powers"]]);
     expect(talentSkillsOf("Mysticism Talent", power, groups)).toEqual([]);
+  });
+});
+
+describe("the power a record belongs to", () => {
+  // Monster Hunters 1 files its powers as "_MH <power>", and its psionics as
+  // "_MH Psionics - <power>"; the book's pattern says so.
+  const pattern = /^_MH (?:Psionics - )?(.+)$/;
+
+  it("reads the power from the category the book's pattern names", () => {
+    const ability = new Map([["cat", "_MH Psionics - ESP"]]);
+    expect(powerOfRecord(ability, pattern)).toEqual({ power: "ESP", powerTalent: false });
+    const bio = new Map([["cat", "_MH Bioenhancement"]]);
+    expect(powerOfRecord(bio, pattern)).toEqual({ power: "Bioenhancement", powerTalent: false });
+  });
+
+  it("knows the Talent by GCA's Talents - Powers category", () => {
+    const talent = new Map([["cat", "_MH ESP, Paranormal, Mental, Talents - Powers"]]);
+    expect(powerOfRecord(talent, pattern)).toEqual({ power: "ESP", powerTalent: true });
+  });
+
+  it("gives no power without a pattern, or where no category matches", () => {
+    expect(powerOfRecord(new Map([["cat", "_MH Mysticism"]]), null)).toEqual({ power: "", powerTalent: false });
+    expect(powerOfRecord(new Map([["cat", "Mundane, Mental, Talents"]]), pattern)).toEqual({ power: "", powerTalent: false });
   });
 });
 

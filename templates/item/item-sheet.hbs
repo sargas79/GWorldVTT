@@ -297,6 +297,17 @@
         </label>
       </div>
       <p class="ihint">{{localize "GWORLD.Trait.TalentSkillsHint"}}</p>
+      <div class="ifields">
+        <label class="wide">{{localize "GWORLD.Trait.Power"}}
+          <input type="text" name="system.power" value="{{system.power}}"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Trait.PowerTalent"}}
+          <input type="checkbox" name="system.powerTalent" {{checked system.powerTalent}}
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Trait.PowerHint"}}</p>
 
       {{!-- Enhancements and limitations, and the self-control number: what
            changes a trait's cost from the figure the book prints. --}}

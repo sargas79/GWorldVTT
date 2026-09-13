@@ -101,7 +101,7 @@ import { mountedDefensePenalty } from "../../rules/mounted.js";
 import { supportEffect } from "../../rules/accessories.js";
 import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalties.js";
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
-import { psionicsOf } from "../../rules/psionics.js";
+import { powersOf } from "../../rules/powers.js";
 import {
   effectiveSkillLevel,
   namedDefaultLevel,
@@ -1265,6 +1265,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       reactionModifier: Number(item.system?.reactionModifier ?? 0) || 0,
       // A Talent's own list of skills, which is all a Talent from another book has.
       talentSkills: ((item.system?.talentSkills ?? []) as unknown[]).map((s) => String(s)),
+      // The power the trait belongs to, and whether it is that power's Talent,
+      // as a book's entry states them; a Talent's cap is its maximum level.
+      power: String(item.system?.power ?? ""),
+      powerTalent: item.system?.powerTalent === true,
+      maxLevels: Number(item.system?.maxLevels ?? 0) || 0,
     }));
     const traits = traitEffects(heldTraits);
     // What the afflictions on this character come to (pp. 428-429). Read once,
@@ -2229,9 +2234,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       senses: senseScores(secondary.per, traits),
       // What the social traits do to a reaction roll, and Charisma's bonus
       // to the Influence roll itself (pp. 21-29, 41).
-      // The psi powers a character holds, the abilities under each and what
-      // its Talent is worth to a roll using them (Characters pp. 254-255).
-      psionics: psionicsOf(heldTraits),
+      // The powers a character holds, the abilities under each and what its
+      // Talent is worth to a roll using them (Characters pp. 254-255): the
+      // Basic Set's six, and any a book's entries name (Monster Hunters 1 p. 40).
+      powers: powersOf(heldTraits),
       // "In a few cases, skill 20+ gives an automatic +2 to reactions.
       // Diplomacy and Fast-Talk work this way if you are allowed to talk -- as
       // does Merchant skill, during commercial transactions" (p. 494). Offered

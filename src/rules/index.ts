@@ -59,6 +59,7 @@ export * from "./modifiers.js";
 export * from "./motion.js";
 export * from "./pressure.js";
 export * from "./psionics.js";
+export * from "./powers.js";
 export * from "./scale.js";
 export * from "./natural-attacks.js";
 export * from "./aim.js";
