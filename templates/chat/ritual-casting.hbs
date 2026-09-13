@@ -1,7 +1,7 @@
 <div class="gworld gworld-chat gworld-ritual">
   <div class="gc-head">
     <span class="gc-label">{{name}}</span>
-    <span class="gc-target">{{skillName}}-{{skill}}</span>
+    <span class="gc-target">{{localize "GWORLD.RitualCast.Cost" cost=cost}}</span>
   </div>
 
   {{!-- Energy against cost, and how long it has taken (Monster Hunters 1 p. 35). --}}
@@ -10,11 +10,38 @@
     <span class="gc-mod">{{elapsed}}</span>
     {{#if attempts}}<span class="gc-mod">{{localize "GWORLD.RitualCast.Attempts" count=attempts}}</span>{{/if}}
     {{#if quirks}}<span class="gc-mod">{{localize "GWORLD.RitualCast.Quirks" count=quirks}}</span>{{/if}}
-    {{#if adept}}<span class="gc-mod">{{localize "GWORLD.RitualPath.Adept"}}</span>{{else}}<span class="gc-mod">{{localize "GWORLD.RitualPath.NonAdept"}}</span>{{/if}}
     {{#if information}}<span class="gc-mod">{{localize "GWORLD.RitualCast.Information"}}</span>{{/if}}
   </div>
   <div class="gc-meter" style="align-self: stretch; width: 100%; height: 6px; background: rgba(0,0,0,0.15); border-radius: 3px; overflow: hidden">
     <div style="width: {{percent}}%; height: 100%; background: var(--color-level-success, #4a8)"></div>
+  </div>
+
+  {{!-- Who is working it (p. 39): each with the Path they roll, adept or
+       not, and what Ritual Mastery and a grimoire give them. --}}
+  <div class="gc-casters" style="display: flex; flex-direction: column; gap: 2px">
+    {{#each casters as |c|}}
+      <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap">
+        {{#if (and @root.open @root.together)}}
+          <input type="radio" name="ritual-acting-{{@root.itemId}}" value="{{c.index}}" data-ritual-setting="acting" {{#if c.acting}}checked{{/if}}
+                 aria-label="{{localize 'GWORLD.RitualCast.Acting'}}">
+        {{/if}}
+        <strong>{{c.name}}</strong>
+        <span class="gc-mod">{{c.skillName}}-{{c.skill}}</span>
+        {{#if c.adept}}<span class="gc-mod">{{localize "GWORLD.RitualPath.Adept"}}</span>{{else}}<span class="gc-mod">{{localize "GWORLD.RitualPath.NonAdept"}}</span>{{/if}}
+        {{#if c.mastery}}<span class="gc-mod">{{localize "GWORLD.Ritual.Mastery"}} +{{c.mastery}}</span>{{/if}}
+        {{#if c.grimoire}}
+          {{#if @root.open}}
+            <label style="display: inline-flex; gap: 4px; align-items: center" data-tooltip="{{localize 'GWORLD.RitualCast.UseGrimoireHint'}}">
+              <input type="checkbox" data-ritual-setting="grimoire:{{c.index}}" {{#if c.useGrimoire}}checked{{/if}}>
+              {{c.grimoire.name}} +{{c.grimoire.bonus}}
+            </label>
+          {{else if c.useGrimoire}}
+            <span class="gc-mod">{{c.grimoire.name}} +{{c.grimoire.bonus}}</span>
+          {{/if}}
+        {{/if}}
+        {{#if (and @root.together c.last)}}<span class="gc-mod">{{localize "GWORLD.RitualCast.FinalBy"}}</span>{{/if}}
+      </div>
+    {{/each}}
   </div>
 
   {{#if log.length}}
@@ -28,29 +55,29 @@
   {{#if open}}
     {{!-- What the GM says about where and how it is worked (p. 36). --}}
     <div class="gc-settings" data-ritual-settings style="display: flex; flex-direction: column; gap: 3px">
-      {{#unless adept}}
+      {{#if anyNonAdept}}
         <label style="display: flex; gap: 6px; align-items: center">
-          <input type="checkbox" data-ritual-setting="connected" {{#if conditions.connected}}checked{{/if}}>
+          <input type="checkbox" data-ritual-setting="connected" data-ritual-gm {{#if connected}}checked{{/if}}>
           {{localize "GWORLD.RitualCast.Connected"}}
         </label>
         <label style="display: flex; gap: 6px; align-items: center; justify-content: space-between">
           <span style="white-space: nowrap">{{localize "GWORLD.RitualCast.ConsecrationLabel"}}</span>
-          <select data-ritual-setting="consecration">
+          <select data-ritual-setting="consecration" data-ritual-gm>
             {{#each consecrations as |c|}}<option value="{{c.value}}" {{#if c.selected}}selected{{/if}}>{{c.label}}</option>{{/each}}
           </select>
         </label>
         <label style="display: flex; gap: 6px; align-items: center">
-          <input type="checkbox" data-ritual-setting="adeptTimes" {{#if conditions.adeptTimes}}checked{{/if}}>
+          <input type="checkbox" data-ritual-setting="adeptTimes" {{#if adeptTimes}}checked{{/if}}>
           {{localize "GWORLD.RitualCast.AdeptTimes"}}
         </label>
-      {{/unless}}
+      {{/if}}
       <label style="display: flex; gap: 6px; align-items: center; justify-content: space-between">
         <span style="white-space: nowrap">{{localize "GWORLD.RitualCast.SiteLabel"}}</span>
-        <select data-ritual-setting="siteYears">
+        <select data-ritual-setting="siteYears" data-ritual-gm>
           {{#each sites as |s|}}<option value="{{s.value}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}
         </select>
       </label>
-      {{#if (or adept conditions.adeptTimes)}}
+      {{#if anyQuick}}
         <label style="display: flex; gap: 6px; align-items: center; justify-content: space-between">
           <span style="white-space: nowrap">{{localize "GWORLD.RitualCast.HurriedLabel"}}</span>
           <input type="number" data-ritual-setting="hurriedTo" value="{{hurriedTo}}" min="1" max="5" step="1" style="width: 48px">
@@ -61,7 +88,7 @@
     <div class="gc-actions" data-ritual-controls style="display: flex; flex-direction: column; gap: 4px">
       {{#if enough}}
         <button type="button" class="gc-apply-button" data-ritual-action="cast">
-          {{localize "GWORLD.RitualCast.CastAction" target=final.target}}
+          {{localize "GWORLD.RitualCast.CastAction" target=final.target}}{{#if together}} ({{final.name}}){{/if}}
         </button>
         {{#if final.modifiers.length}}
           <div class="gc-note">{{#each final.modifiers as |m|}}{{m.label}} {{signed m.value}}{{#unless @last}}, {{/unless}}{{/each}}</div>
@@ -84,6 +111,9 @@
         {{/if}}
         <button type="button" class="gc-apply-button" data-ritual-action="sacrifice">
           {{localize "GWORLD.RitualCast.SacrificeAction" time=tap.time}}{{#if tap.roll}} ({{localize "GWORLD.RitualCast.TapRoll" target=tap.target}}){{/if}}
+        </button>
+        <button type="button" class="gc-apply-button" data-ritual-action="join" data-tooltip="{{localize 'GWORLD.RitualCast.JoinHint'}}">
+          {{localize "GWORLD.RitualCast.JoinAction"}}
         </button>
       {{/if}}
       <button type="button" class="gc-apply-button" data-ritual-action="abandon">{{localize "GWORLD.RitualCast.AbandonAction"}}</button>

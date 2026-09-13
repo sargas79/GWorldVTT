@@ -34,6 +34,7 @@ import {
   PATHS, isRitualAdept, manaReserveMax, pathCeiling, pathLevel, pathOfSkill, pathSkillName,
 } from "../../rules/ritual-path.js";
 import { governingPath } from "../../rules/ritual-cost.js";
+import { grimoireBonus, masteredRitual, ritualMasteryBonus } from "../../rules/ritual-tricks.js";
 import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
@@ -1524,10 +1525,46 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // Every roll for a ritual is against one Path: the lowest it uses, at -1
     // for each past the second (p. 35).
     const pathLevels = Object.fromEntries(ritualPath.paths.map((p) => [p.path, p.level]));
+    // Ritual Mastery and grimoires add to one ritual as it was defined (pp. 25,
+    // 39). A grimoire counts while carried; a dead-language one by how well
+    // the character reads and speaks the tongue, or by its translation.
+    const traitNames = heldTraits.map((t) => String(t.name ?? ""));
+    const ranks: Comprehension[] = ["none", "broken", "accented", "native"];
+    const comprehensionOf = (language: string, translation: Comprehension): Comprehension => {
+      const known = this.itemsOfType("language").find((l) => String(l.name ?? "").trim().toLowerCase() === language.trim().toLowerCase());
+      const own = known
+        ? ranks[Math.min(ranks.indexOf((known.system as any).spoken), ranks.indexOf((known.system as any).written))] ?? "none"
+        : "none";
+      return ranks[Math.max(ranks.indexOf(own), ranks.indexOf(translation))] ?? "none";
+    };
+    const grimoires = this.itemsOfType("equipment").filter((e) => (e.system as any).carried && ((e.system as any).grimoire?.rituals ?? []).length);
     for (const item of this.itemsOfType("ritual")) {
       const sys = item.system as any;
       const skill = governingPath(sys.effects ?? [], ritualPathInPlay ? pathLevels : {});
-      sys.derived = { ...sys.derived, skill: { ...skill, name: skill.path ? pathSkillName(skill.path) : "" } };
+      const identity = String(sys.derived?.identity ?? "");
+      const mastery = ritualMasteryBonus({ traitNames, ritualName: String(item.name ?? ""), masteredAs: String(sys.masteredAs ?? ""), identity });
+      let grimoire: { name: string; itemId: string; bonus: number } | null = null;
+      for (const book of grimoires) {
+        const g = (book.system as any).grimoire;
+        for (const entry of g.rituals) {
+          if (!entry.identity || entry.identity !== identity) continue;
+          const bonus = grimoireBonus({
+            bonus: entry.bonus,
+            deadLanguage: Boolean(g.deadLanguage),
+            comprehension: g.deadLanguage ? comprehensionOf(g.deadLanguage, g.translation) : "native",
+            encrypted: Boolean(g.encrypted),
+            decoded: Boolean(g.decoded),
+          });
+          if (!grimoire || bonus > grimoire.bonus) grimoire = { name: String(book.name ?? ""), itemId: String(book.id ?? ""), bonus };
+        }
+      }
+      sys.derived = {
+        ...sys.derived,
+        skill: { ...skill, name: skill.path ? pathSkillName(skill.path) : "" },
+        mastery,
+        masteryHeld: traitNames.some((t) => masteredRitual(t)?.toLowerCase() === String(item.name ?? "").trim().toLowerCase()),
+        grimoire,
+      };
     }
 
     // ── techniques ──────────────────────────────────────────────────────

@@ -24,6 +24,7 @@ import {
 } from "../../rules/weapon-quality.js";
 import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from "../gear-groups.js";
 import { templateCost } from "../../rules/templates.js";
+import type { Comprehension } from "../../rules/languages.js";
 import { PATHS } from "../../rules/ritual-path.js";
 import {
   RITUAL_DURATIONS,
@@ -35,6 +36,7 @@ import {
   type RitualEffectEntry,
   type RitualRecord,
 } from "../../rules/ritual-cost.js";
+import { ritualIdentity } from "../../rules/ritual-tricks.js";
 import type {
   ChoiceGroup,
   Template,
@@ -853,6 +855,13 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare forSkills: string[];
   declare meleeModes: unknown[];
   declare rangedModes: unknown[];
+  declare grimoire: {
+    rituals: Array<{ ritual: string; identity: string; bonus: number }>;
+    deadLanguage: string;
+    translation: Comprehension;
+    encrypted: boolean;
+    decoded: boolean;
+  };
   declare vehicle: {
     stHp: number; handling: number; stability: number; ht: number;
     acceleration: number; topSpeed: number; loadedWeight: number; load: number;
@@ -865,6 +874,30 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
     return {
       ...descriptionFields(),
       ...physicalFields(),
+      /**
+       * A grimoire (Monster Hunters 1 pp. 39, 56-57): a recipe for one ritual,
+       * or a collection of several, each with its own bonus. A ritual is named
+       * and remembered by its definition, so a changed ritual is not the one
+       * the book teaches.
+       */
+      grimoire: new fields.SchemaField({
+        rituals: new fields.ArrayField(
+          new fields.SchemaField({
+            ritual: new fields.StringField({ required: true, blank: true, initial: "" }),
+            identity: new fields.StringField({ required: true, blank: true, initial: "" }),
+            bonus: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 2, min: 0, max: 10 }),
+          }),
+          { required: true, initial: [] },
+        ),
+        /** The ancient tongue it is written in; blank for a book in a living language. */
+        deadLanguage: new fields.StringField({ required: true, blank: true, initial: "" }),
+        /** A translation's comprehension, for a reader who does not know the language. */
+        translation: new fields.StringField({
+          required: true, blank: false, initial: "none", choices: ["none", "broken", "accented", "native"],
+        }),
+        encrypted: new fields.BooleanField({ initial: false }),
+        decoded: new fields.BooleanField({ initial: false }),
+      }),
       /**
        * Swung and not yet brought back up (Characters p. 270, the "‡"). Set
        * by an attack with a weapon that becomes unready, cleared by a Ready
@@ -1680,7 +1713,9 @@ export class RitualData extends foundry.abstract.TypeDataModel {
   declare effects: RitualEffectEntry[];
   declare definition: RitualRecord["definition"] & { affliction: string; traits: string; bonusRolls: string; damageType: string };
   declare casting: RitualRecord["casting"];
-  declare derived: { cost: RitualCost; effects: string };
+  declare masteredAs: string;
+  declare blocking: boolean;
+  declare derived: { cost: RitualCost; effects: string; identity: string };
 
   static override defineSchema() {
     const count = (options: { min?: number; integer?: boolean } = {}) =>
@@ -1753,6 +1788,14 @@ export class RitualData extends foundry.abstract.TypeDataModel {
           required: true, nullable: false, integer: true, initial: 0, min: 0, max: 25,
         }),
       }),
+      /**
+       * The definition Ritual Mastery was taken for (p. 25), as
+       * `ritualIdentity` writes it. Blank until recorded; a definition
+       * changed since is "a different ritual" and loses the bonus (p. 39).
+       */
+      masteredAs: new fields.StringField({ required: true, blank: true, initial: "" }),
+      /** The GM agrees it "makes sense as an out-of-turn response": castable as a blocking spell (p. 37). */
+      blocking: new fields.BooleanField({ initial: false }),
     };
   }
 
@@ -1761,6 +1804,7 @@ export class RitualData extends foundry.abstract.TypeDataModel {
     this.derived = {
       cost: ritualCost({ effects: this.effects, modifiers: modifiersOfRitual(this) }),
       effects: describeEffects(this.effects),
+      identity: ritualIdentity(this),
     };
   }
 }
