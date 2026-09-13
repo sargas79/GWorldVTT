@@ -72,6 +72,7 @@ import { levelDifference } from "../rules/melee-situations.js";
 import { turnedBlade } from "../rules/subduing.js";
 import { coverShot, type CoverApproach } from "../rules/cover.js";
 import { breakWeapon } from "./weapon-damage.js";
+import { spendShots } from "./ammunition.js";
 import type { DamageType } from "../rules/types.js";
 
 const CHAT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/success-roll.hbs`;
@@ -596,6 +597,8 @@ export async function handleRollAction(
       braced: Boolean(actor?.system?.aim?.braced),
     },
     eyes: eyesOf(actor),
+    // What is left in the weapon caps the burst (Campaigns p. 373).
+    loaded: target.dataset.loaded === undefined || target.dataset.loaded === "" ? null : Number(target.dataset.loaded) || 0,
     // A shooter on a Wait is covering ground, and the area they declared
     // is what the penalty comes off.
     watching:
@@ -763,6 +766,14 @@ export async function handleRollAction(
       : {}),
   });
 
+  // The shells fired come off the weapon's count (Campaigns p. 373).
+  if (rollType === "attack" && ranged && shot && isRuleOn("reloading")) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? actor?.items?.get(id) : null;
+    const modeIndex = Number(target.dataset.modeIndex);
+    if (item?.isOwner && Number.isInteger(modeIndex)) await spendShots(item, modeIndex, shot.shellsFired);
+  }
+
   // A fumble that broke the weapon (Campaigns p. 556) is applied to it.
   if (rollType === "attack" && (outcome as any)?.criticalMissEffect === "weaponBreaks" && isRuleOn("weaponBreakage")) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
@@ -877,6 +888,7 @@ function quickShot(
   return {
     modifiers,
     shotsFired: pellets.effectiveShots,
+    shellsFired: 1,
     recoil: pellets.recoil,
     coneMultiplier: pellets.coneMultiplier,
     calledShot: null,
@@ -888,6 +900,8 @@ interface RangedShot {
   modifiers: RollModifier[];
   /** Shots for the rapid-fire arithmetic: shells times pellets. */
   shotsFired: number;
+  /** Shells actually fired, which is what comes off the weapon's count. */
+  shellsFired: number;
   /** Recoil to count hits with; 1 for a spread of pellets. */
   recoil: number;
   /** Pellets striking as one mass, or null when they spread. */
@@ -929,6 +943,8 @@ export async function promptForRangedAttack(options: {
   aim?: { turns: number; braced: boolean } | null;
   /** The shooter's eyes, for the dark. */
   eyes?: Eyes;
+  /** Shots in the weapon, which caps a burst; null where no count is kept. */
+  loaded?: number | null;
 }): Promise<RangedShot | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   // What aiming is worth: Accuracy after a turn, more for the second and
@@ -952,8 +968,13 @@ export async function promptForRangedAttack(options: {
       </label>`;
 
   // How many shots to fire is decided before the attack roll, and only a
-  // weapon that can fire more than one is asked (p. 373).
-  const rateOfFire = isRuleOn("rapidFire") ? Math.max(1, Math.floor(options.rateOfFire)) : 1;
+  // weapon that can fire more than one is asked (p. 373) -- and no more than
+  // it has left in it.
+  const loaded = options.loaded ?? null;
+  const rateOfFire = Math.max(1, Math.min(
+    isRuleOn("rapidFire") ? Math.max(1, Math.floor(options.rateOfFire)) : 1,
+    loaded === null ? Infinity : loaded,
+  ));
   const shotsField =
     rateOfFire > 1 ? field("shots", `${L("Shots")} (1-${rateOfFire})`, "1") : "";
 
@@ -1047,6 +1068,7 @@ export async function promptForRangedAttack(options: {
   return {
     modifiers,
     shotsFired: pellets.effectiveShots,
+    shellsFired,
     recoil: pellets.recoil,
     coneMultiplier: pellets.coneMultiplier,
     calledShot: aimed.shot,

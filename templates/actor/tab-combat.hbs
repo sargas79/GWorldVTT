@@ -320,11 +320,29 @@
               <td class="c">{{atk.accuracy}}</td>
               <td class="c">{{atk.range}}</td>
               <td class="c">{{atk.rateOfFire}}{{#if (gt atk.projectiles 1)}}&times;{{atk.projectiles}}{{/if}}</td>
-              <td class="c">{{atk.shots}}</td>
               <td class="c">
-                {{#if atk.skillLevel}}
+                {{#if atk.shotsCapacity}}
+                  <span data-tooltip="{{atk.shots}}">{{atk.shotsLoaded}}/{{atk.shotsCapacity}}</span>
+                  {{#if atk.reloadable}}
+                    {{#if @root.editable}}
+                      <button type="button" class="ibtn tiny" data-action="reloadWeapon" data-mode-index="{{atk.modeIndex}}"
+                              data-tooltip="{{#if atk.reloadSeconds}}{{localize 'GWORLD.Reload.Hint' seconds=atk.reloadSeconds}}{{else}}{{localize 'GWORLD.Reload.HintNoTime'}}{{/if}}">
+                        {{localize "GWORLD.Reload.Action"}}
+                      </button>
+                    {{/if}}
+                  {{/if}}
+                {{else}}
+                  {{atk.shots}}
+                {{/if}}
+              </td>
+              <td class="c">
+                {{#if atk.empty}}
+                  <span class="bad" data-tooltip="{{localize 'GWORLD.Reload.EmptyHint'}}">{{localize "GWORLD.Reload.EmptyShort"}}</span>
+                {{else if atk.skillLevel}}
                   <span class="rollable" data-action="roll" data-roll-type="attack"
                         data-tooltip="{{localize 'GWORLD.Ranged.QuickShotHint'}}"
+                        data-mode-index="{{atk.modeIndex}}"
+                        data-loaded="{{#if atk.shotsCapacity}}{{atk.shotsLoaded}}{{/if}}"
                         data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
                         data-damage-type="{{atk.damageType}}"
                         data-ranged="1" data-accuracy="{{atk.accuracy}}"

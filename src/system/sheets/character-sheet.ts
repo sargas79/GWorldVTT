@@ -73,6 +73,7 @@ import {
 import { POISON_EXAMPLES, poisonNamed, type Poison, type Treatment } from "../../rules/poison.js";
 import { rollDisarm } from "../disarm.js";
 import { rollStrikeToBreak, weaponsInHand } from "../weapon-damage.js";
+import { reloadWeapon } from "../ammunition.js";
 import {
   beginGrapple,
   endGrapple,
@@ -2198,6 +2199,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       toggleEquipped: GWorldCharacterSheet.#onToggleEquipped,
       toggleSkillOrder: GWorldCharacterSheet.#onToggleSkillOrder,
       readyWeapon: GWorldCharacterSheet.#onReadyWeapon,
+      reloadWeapon: GWorldCharacterSheet.#onReloadWeapon,
       regenerate: GWorldCharacterSheet.#onRegenerate,
       study: GWorldCharacterSheet.#onStudy,
       workMonth: GWorldCharacterSheet.#onWorkMonth,
@@ -4319,6 +4321,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!item) return;
     await item.update({ "system.unready": false });
     await this.actor.update({ "system.maneuver": "ready" });
+  }
+
+  /** Reloads a ranged weapon, for the Ready maneuvers its column lists (Campaigns p. 373). */
+  static async #onReloadWeapon(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.#itemFrom(target);
+    if (!item) return;
+    await reloadWeapon(this.actor, item, Number(target.dataset.modeIndex) || 0);
   }
 
   /**

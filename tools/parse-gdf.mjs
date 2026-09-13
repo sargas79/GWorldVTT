@@ -785,6 +785,10 @@ function rangedMode(name, f, thrown) {
       rateOfFire: Math.max(1, number(f.get("rof"), 1)),
       projectiles: Math.max(1, number((/x(\d+)/i.exec(f.get("rof") ?? "") ?? [])[1], 1)),
       shots: (f.get("shots") ?? "").trim(),
+      // Full when it arrives: the magazine and the chambered round.
+      loaded: fullLoad((f.get("shots") ?? "").trim()),
+      reloadWeight: 0,
+      ammunition: "",
       minSt,
       twoHanded,
       // A bow's damage and range come off the bow's own ST rather than the
@@ -863,6 +867,19 @@ function physical(f) {
     tl: techLevel(f.get("techlvl")),
     lc: legalityClass(f.get("lc")),
   };
+}
+
+/**
+ * What a Shots column holds when full (Characters p. 270): "30+1(3)" is a
+ * magazine of thirty and one in the chamber; "T(1)" is a thrown weapon, one
+ * shot; a blank column holds nothing to count. The rules engine reads the
+ * same column in full; this is only what a fresh weapon starts with.
+ */
+export function fullLoad(shots) {
+  const m = /^(T|\d+)(\+1)?/i.exec((shots ?? "").trim());
+  if (!m) return 0;
+  if (m[1].toUpperCase() === "T") return 1;
+  return Number(m[1]) + (m[2] ? 1 : 0);
 }
 
 /**

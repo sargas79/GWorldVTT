@@ -1,0 +1,19 @@
+{{!-- A weapon reloaded (GURPS Basic Set: Campaigns p. 373). --}}
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{localize "GWORLD.Reload.Card" name=name}}</span>
+    <span class="gc-target">{{loaded}} / {{capacity}}</span>
+  </div>
+  <div class="gc-result">
+    {{#if seconds}}
+      {{#if perShot}}
+        {{localize "GWORLD.Reload.PerShot" shots=loading seconds=seconds}}
+      {{else}}
+        {{localize "GWORLD.Reload.Seconds" seconds=seconds}}
+      {{/if}}
+    {{else}}
+      {{localize "GWORLD.Reload.NoTime"}}
+    {{/if}}
+    {{#if goatsFoot}}<span class="gc-mod">{{localize "GWORLD.Reload.WithGoatsFoot"}}</span>{{/if}}
+  </div>
+</div>

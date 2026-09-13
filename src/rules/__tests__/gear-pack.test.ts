@@ -237,6 +237,14 @@ describe("the equipment compendium", () => {
     expect(sword.listCost).toBe(sword.cost);
   });
 
+  it("ships every ranged weapon loaded, magazine and chamber (p. 270)", () => {
+    expect(byName(gear, "Assault Rifle, 5.56mm").system.rangedModes?.[0]).toMatchObject({ shots: "30+1(3)", loaded: 31, ammunition: "" });
+    expect(byName(gear, "Pump Shotgun, 12G").system.rangedModes?.[0]).toMatchObject({ shots: "5(3i)", loaded: 5 });
+    expect(byName(gear, "Longbow").system.rangedModes?.[0]).toMatchObject({ loaded: 1 });
+    // A thrown weapon is one shot: "to 'reload,' pick it up".
+    expect(byName(gear, "Throwing Axe").system.rangedModes?.[0]).toMatchObject({ shots: "T(1)", loaded: 1 });
+  });
+
   it("marks the ‡ weapons as unready after a swing (p. 270)", () => {
     for (const name of ["Halberd", "Great Axe", "Maul"]) {
       expect(byName(gear, name).system.meleeModes?.some((m) => m.unreadyAfterAttack)).toBe(true);

@@ -54,6 +54,14 @@ import {
   type WeaponQuality,
 } from "../../rules/weapon-quality.js";
 import {
+  ammunitionEffect,
+  calibreOf,
+  fullLoad,
+  parseShots,
+  reloadTime,
+  type AmmunitionType,
+} from "../../rules/ammunition.js";
+import {
   brokenWeaponKindFor,
   isSolidCrushing,
   resistsBreakage,
@@ -243,6 +251,20 @@ export interface DerivedAttack {
   twoHanded: boolean;
   /** True for a swing, which is what blade composition compares (p. 275). */
   swung: boolean;
+  /**
+   * Shots in the weapon and shots it holds (Campaigns p. 373), for a
+   * ranged mode whose column counts them. Both zero where it does not.
+   */
+  shotsLoaded?: number;
+  shotsCapacity?: number;
+  /** Seconds a full reload takes, or null where the column gives none. */
+  reloadSeconds?: number | null;
+  /** True when the weapon can be reloaded from the sheet at all. */
+  reloadable?: boolean;
+  /** True when the count is kept and has reached zero. */
+  empty?: boolean;
+  /** What it is loaded with, where that changes the shot (pp. 276, 279). */
+  ammunition?: AmmunitionType;
   /** Ranged only. */
   accuracy?: number;
   /**
@@ -1494,7 +1516,23 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             Number(mode.damageExtraDice ?? 0) || 0,
           )),
         );
-        const stretch = qualityRangeMultiplier(weaponClass, quality);
+        // What it is loaded with changes the wound, the divisor, the range
+        // and, for APDS, the damage (Characters pp. 276, 279).
+        const round = isRuleOn("ammunitionTypes")
+          ? ammunitionEffect((mode.ammunition ?? "") as AmmunitionType, {
+              damageType: mode.damageType,
+              armorDivisor: materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
+              calibreMm: calibreOf(String(item.name ?? "")),
+              tl: Number((sys as any).tl) || 0,
+              bow: weaponClass === "bow",
+            })
+          : null;
+        const loadedDamage = (damage: string): string => {
+          if (!round?.perDieBonus) return damage;
+          const parsed = parseDiceAdds(damage);
+          return parsed ? formatDiceAdds(addModifier(parsed, round.perDieBonus * parsed.dice)) : damage;
+        };
+        const stretch = qualityRangeMultiplier(weaponClass, quality) * (round?.rangeMultiplier ?? 1);
         const baseRange = mode.rangeIsStMultiple
           ? musclePoweredRange(mode.weaponSt ?? attrs.ST, mode.halfDamageRange, mode.maxRange)
           : { halfDamage: mode.halfDamageRange, max: mode.maxRange };
@@ -1502,6 +1540,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           halfDamage: Math.round((Number(baseRange.halfDamage) || 0) * stretch),
           max: Math.round((Number(baseRange.max) || 0) * stretch),
         };
+        // The count of shots (Campaigns p. 373): what the column holds, and
+        // what is in the weapon now. A thrown weapon keeps no count.
+        const shotsEntry = parseShots(String(mode.shots ?? ""));
+        const shotsCapacity = isRuleOn("reloading") && !shotsEntry.thrown ? fullLoad(shotsEntry) : 0;
+        const shotsLoaded = shotsCapacity > 0 ? Math.min(shotsCapacity, Math.max(0, Number(mode.loaded ?? 0) || 0)) : 0;
         const { level: skillLevel, atDefault } = short(enchantedSkill(weaponSkill(mode.skill)), mode.minSt ?? null);
 
         ranged.push({
@@ -1517,9 +1560,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           readiesAfterAttack: false,
           projectiles: Math.max(1, Number(mode.projectiles ?? 1)),
           halfDamageRange: Number(range.halfDamage ?? 0) || 0,
-          damage: rangedDamage,
-          damageType: mode.damageSpecial ? "" : mode.damageType,
-          armorDivisor: materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
+          damage: loadedDamage(rangedDamage),
+          damageType: mode.damageSpecial ? "" : (round?.damageType ?? mode.damageType),
+          armorDivisor: round?.armorDivisor ?? materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
+          shotsLoaded,
+          shotsCapacity,
+          reloadSeconds: shotsCapacity > 0 ? reloadTime(shotsEntry, shotsCapacity) : null,
+          reloadable: shotsCapacity > 0 && shotsLoaded < shotsCapacity,
+          empty: shotsCapacity > 0 && shotsLoaded === 0,
+          ammunition: (mode.ammunition ?? "") as AmmunitionType,
           damageRollable: !mode.affliction && !mode.damageSpecial && parseDiceAdds(rangedDamage) !== null,
           reach: "",
           parry: null,
