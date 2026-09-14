@@ -31,7 +31,11 @@ class FakeSchemaField {
 /** Foundry's ObjectField, as far as the extensions field builds on it. */
 class FakeObjectField {
   parent: unknown = null;
-  constructor(public options: object) {}
+  constructor(public options: { initial?: unknown }) {}
+  getInitialValue() {
+    const { initial } = this.options;
+    return typeof initial === "function" ? initial() : initial;
+  }
   _cleanType(data: unknown) {
     return data;
   }
@@ -70,6 +74,28 @@ describe("module fields on system documents", () => {
     expect(partial["test-addon"]).toEqual({ wildcard: [{ skill: "Sneak!", value: 1 }] });
     const created = field._cleanType({}, {}, {});
     expect(created["test-addon"]).toEqual({ destiny: null, wildcard: [] });
+  });
+
+  it("gives each new document its own extensions object, and never writes into the one it cleans (#266)", async () => {
+    const api = await load();
+    api.registerDataExtension({ module: "test-addon", documentName: "Item", types: ["equipment"], schema: { holy: { initial: false } } });
+    const field = api.extensionsField("Item");
+    Object.defineProperty(field, "gworldType", { get: () => "equipment" });
+    const first = field.getInitialValue();
+    const second = field.getInitialValue();
+    expect(first).not.toBe(second);
+
+    const one = field._cleanType(first, {}, {});
+    const two = field._cleanType(second, {}, {});
+    one["test-addon"].holy = true;
+    expect(first).toEqual({});
+    expect(two["test-addon"]).toEqual({ holy: false });
+    expect(field.getInitialValue()).toEqual({});
+
+    const stored = { "test-addon": { holy: true } };
+    const cleaned = field._cleanType(stored, {}, {});
+    expect(cleaned).not.toBe(stored);
+    expect(cleaned["test-addon"]).not.toBe(stored["test-addon"]);
   });
 
   it("reads a module's data over its fields' initial values", async () => {

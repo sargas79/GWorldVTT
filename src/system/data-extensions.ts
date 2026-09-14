@@ -150,11 +150,13 @@ export function extensionsField(documentName: ExtendedDocument): any {
       }
 
       _cleanType(data: any, options: any = {}, state: any = {}): any {
-        const cleaned = super._cleanType(data, options, state);
+        // A copy, at both levels: what came in may be an object other documents
+        // hold too, and writing a module's data into it would give it to them.
+        const cleaned = { ...super._cleanType(data, options, state) };
         for (const extension of extensionsFor(this.gworldDocument, this.gworldType)) {
           const current = cleaned[extension.module];
           if (current === undefined && options.partial) continue;
-          const value = current && typeof current === "object" ? current : {};
+          const value = current && typeof current === "object" ? { ...current } : {};
           // The stored data goes down with it, as a SchemaField hands each of
           // its own fields: without a source, Foundry fills in every field a
           // partial change leaves out, resetting what the update never touched.
@@ -177,7 +179,10 @@ export function extensionsField(documentName: ExtendedDocument): any {
       }
     };
   }
-  const field = new ExtensionsFieldClass({ required: true, nullable: false, initial: {} });
+  // A new object for each document. A literal here would be one object shared by
+  // every document created without extension data, so a change to one would
+  // show on all of them.
+  const field = new ExtensionsFieldClass({ required: true, nullable: false, initial: () => ({}) });
   field.gworldDocument = documentName;
   return field;
 }
