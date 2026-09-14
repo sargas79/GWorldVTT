@@ -1813,7 +1813,26 @@
         "Will": "Will",
         "Per": "Per"
       },
-      "DefenseHint": "A technique that stands in for this defense: the defense at the technique's level"
+      "DefenseHint": "A technique that stands in for this defense: the defense at the technique's level",
+      "Family": {
+        "any": "Any skill",
+        "unarmed": "Unarmed combat",
+        "melee": "Melee Weapon",
+        "oneHandedMelee": "One-handed Melee Weapon",
+        "shield": "Shield",
+        "ranged": "Ranged weapon"
+      },
+      "Open": {
+        "Title": "{name}: which skill?",
+        "Which": "The skill this technique is for",
+        "Take": "Take it",
+        "NoSkill": "{actor} has no skill {name} can be bought for",
+        "Choose": "Choose skill",
+        "ChooseHint": "This technique is written for a kind of skill: pick which of this character's skills it is for",
+        "Kinds": "For any skill of these kinds",
+        "Choices": "Or for these skills",
+        "Hint": "Leave the prerequisite blank for a technique taken for any skill of a kind, such as Disarming. A character taking it is asked which of their skills it is for."
+      }
     },
     "Armor": {
       "DR": "Damage Resistance",

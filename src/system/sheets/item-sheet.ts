@@ -508,7 +508,12 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       attributes: keyed("Attribute", ["ST", "DX", "IQ", "HT", "Will", "Per"]),
       difficulties: keyed("Difficulty", ["E", "A", "H", "VH", "W"]),
       techniqueDifficulties: keyed("Difficulty", ["A", "H"]),
+      // Which kinds an open technique is ticked for, by kind.
+      ...(item.type === "technique"
+        ? { familiesTicked: Object.fromEntries(((item.system as any).skillFamilies ?? []).map((kind: string) => [kind, true])) }
+        : {}),
       techniqueDefaultFrom: keyed("Technique.From", ["skill", "parry", "block", "dodge", "ST", "DX", "IQ", "HT", "Will", "Per"]),
+      skillFamilies: keyed("Technique.Family", ["any", "unarmed", "melee", "oneHandedMelee", "shield", "ranged"]),
       categories: keyed("TraitCategory", ["advantage", "disadvantage", "perk", "quirk"]),
       damageBases: keyed("DamageBase", ["thr", "sw", "fixed"]),
       damageTypes: keyed("DamageType", [
@@ -825,6 +830,19 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         if (Object.hasOwn(data.system, "selfControl")) data.system.selfControl = null;
       } else {
         data.system.selfControl = Number(data.system.selfControl);
+      }
+    }
+
+    // An open technique's kinds of skill are ticked, and the skills it names
+    // outright typed as one line.
+    if (this.item.type === "technique" && data.system) {
+      if (data.system.skillFamilies && typeof data.system.skillFamilies === "object" && !Array.isArray(data.system.skillFamilies)) {
+        data.system.skillFamilies = Object.entries(data.system.skillFamilies)
+          .filter(([, on]) => Boolean(on))
+          .map(([kind]) => kind);
+      }
+      if (typeof data.system.skillChoices === "string") {
+        data.system.skillChoices = String(data.system.skillChoices).split(",").map((part: string) => part.trim()).filter(Boolean);
       }
     }
 

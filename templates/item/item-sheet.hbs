@@ -118,6 +118,21 @@
         </label>
       </div>
       <p class="ihint">{{localize "GWORLD.Technique.MaxRelativeHint"}}</p>
+      {{!-- A technique written for a kind of skill, whose skill is chosen when a
+           character takes it (Characters p. 230). --}}
+      <div class="ish">{{localize "GWORLD.Technique.Open.Kinds"}}</div>
+      <div class="irow iflags">
+        {{#each choices.skillFamilies as |label kind|}}
+          <label class="icheck"><input type="checkbox" name="system.skillFamilies.{{kind}}"
+                 {{#if (lookup @root.choices.familiesTicked kind)}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+            {{localize label}}</label>
+        {{/each}}
+      </div>
+      <label class="ifull">{{localize "GWORLD.Technique.Open.Choices"}}
+        <input type="text" name="system.skillChoices" value="{{join system.skillChoices ", "}}" placeholder="Brawling, Karate"
+               {{#unless editable}}disabled{{/unless}} />
+      </label>
+      <p class="ihint">{{localize "GWORLD.Technique.Open.Hint"}}</p>
       {{!-- Further defaults, the best of which is used (Martial Arts p. 73). --}}
       <div class="ish">{{localize "GWORLD.Technique.AlternateDefaults"}}
         {{#if editable}}

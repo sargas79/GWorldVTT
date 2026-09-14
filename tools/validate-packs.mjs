@@ -267,8 +267,15 @@ function validateItem(entry, file) {
     const FROM = ["skill", "parry", "block", "dodge", "ST", "DX", "IQ", "HT", "Will", "Per"];
     const from = sys.defaultFrom ?? "skill";
     check(FROM.includes(from), file, name, `technique default from "${from}" is not in the model`);
+    // An open technique names the kinds of skill it is for instead, and the
+    // skill is chosen when a character takes it (Characters p. 230).
+    const FAMILIES = ["any", "unarmed", "melee", "oneHandedMelee", "shield", "ranged"];
+    const open = (sys.skillFamilies ?? []).length > 0 || (sys.skillChoices ?? []).length > 0;
+    for (const kind of sys.skillFamilies ?? []) {
+      check(FAMILIES.includes(kind), file, name, `technique skill kind "${kind}" is not in the model`);
+    }
     check(
-      !["skill", "parry", "block"].includes(from) || Boolean(sys.prerequisite),
+      !["skill", "parry", "block"].includes(from) || Boolean(sys.prerequisite) || open,
       file, name, "technique names no prerequisite skill",
     );
     check((sys.defaultModifier ?? 0) <= 0, file, name, "technique default modifier must be <= 0");

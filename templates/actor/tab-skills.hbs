@@ -201,6 +201,13 @@
               <td class="n">
                 {{#if entry.resolved}}
                   <span class="lvl">{{entry.item.system.derived.level}}</span>
+                {{else if entry.open}}
+                  {{#if @root.editable}}
+                    <button type="button" class="ibtn tiny" data-action="chooseTechniqueSkill"
+                            data-tooltip="{{localize 'GWORLD.Technique.Open.ChooseHint'}}">{{localize "GWORLD.Technique.Open.Choose"}}</button>
+                  {{else}}
+                    <span class="tag tag-danger">{{localize "GWORLD.Skill.NoPrerequisite"}}</span>
+                  {{/if}}
                 {{else}}
                   <span class="tag tag-danger">{{localize "GWORLD.Skill.NoPrerequisite"}}</span>
                 {{/if}}

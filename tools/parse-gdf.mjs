@@ -598,6 +598,26 @@ function parseSkills(recs, reject, source) {
     if (m) blanksOf.set(m[1], (blanksOf.get(m[1]) ?? 0) + 1);
   }
 
+  // Open techniques are named for the technique alone -- "Disarming" -- unless
+  // two of them in one book share that name for different kinds of skill, when
+  // each keeps its kind: "Retain Weapon (Melee Weapon Skill)".
+  const openTaken = new Set();
+  const openNames = new Map();
+  {
+    const byBase = new Map();
+    for (const r of recs) {
+      if (r.section !== "SKILLS") continue;
+      const m = OPEN_TECHNIQUE_NAME.exec(nameOf(r));
+      if (!m || !openTechnique(r, fields(r.text), recs, source)) continue;
+      const key = nameOf(r);
+      byBase.set(m[1], [...(byBase.get(m[1]) ?? []), { key, label: (m[2] ?? m[3]).trim() }]);
+    }
+    for (const [base, list] of byBase) {
+      const labels = new Set(list.map((x) => x.label));
+      for (const { key, label } of list) openNames.set(key, labels.size > 1 ? `${base} (${label})` : base);
+    }
+  }
+
   for (const r of recs) {
     if (r.section !== "SKILLS") continue;
 
@@ -620,6 +640,27 @@ function parseSkills(recs, reject, source) {
     // Skill ([DX-based]) and ([IQ-based]) are the DX and IQ hobbies (p. 200).
     const blankText = skillBlank ? /\((?:%([^%()]*)%|\[([^\][()]*)\])\)$/.exec(nameOf(r)) : null;
     if (blankText && bare !== nameOf(r) && (blanksOf.get(bare) ?? 0) > 1) bare = `${bare} (${blankText[1] ?? blankText[2]})`;
+    // A technique for any skill of a kind -- Disarming (%Melee Combat Skill%),
+    // Jam ([Skill]) -- is one open record, its skill chosen when it is taken.
+    if (parts[0]?.trim() === "Tech" && PLACEHOLDER.test(bare)) {
+      const open = openTechnique(r, f, recs, source);
+      if (open) {
+        const name = openNames.get(open.key) ?? open.base;
+        const technique = parseTechnique(name, parts[1]?.trim(), open.f, ids, reject, source);
+        if (technique) {
+          technique.system.prerequisite = "";
+          const at = Object.keys(technique.system).indexOf("prerequisite") + 1;
+          const entries = Object.entries(technique.system);
+          entries.splice(at, 0,
+            ...(open.families.length ? [["skillFamilies", open.families]] : []),
+            ...(open.choices.length ? [["skillChoices", open.choices]] : []));
+          technique.system = Object.fromEntries(entries);
+          if (!openTaken.has(name)) { openTaken.add(name); techniques.push(technique); }
+          else reject(name, "duplicate open technique");
+        }
+        continue;
+      }
+    }
     if (PLACEHOLDER.test(bare)) { reject(bare, "name is a GCA placeholder"); continue; }
     if (parts.length !== 2) { reject(bare, `no attribute/difficulty pair: "${pair}"`); continue; }
 
@@ -694,6 +735,98 @@ export function techniqueDefault(raw) {
 }
 
 const TECHNIQUE_ATTRIBUTES = new Set(["ST", "DX", "IQ", "HT", "Will", "Per"]);
+
+/** A technique named for a blank skill: "Disarming (%Melee Combat Skill%)", "Jam ([Skill])". */
+const OPEN_TECHNIQUE_NAME = /^(.*\S)\s+\((?:%([^%()]+)%|\[([^\][()]+)\])\)$/;
+
+/**
+ * GCA's skill groups, as the kinds of skill the system knows (Characters
+ * pp. 182-209): the unarmed combat skills, the Melee Weapon skills and the
+ * one-handed ones, the Shield skills, the ranged weapon skills.
+ */
+const SKILL_GROUP_FAMILIES = {
+  "Unarmed Combat Skill": "unarmed",
+  "Melee Weapon Skill": "melee",
+  "One-Handed Melee Weapon Skill": "oneHandedMelee",
+  "ShieldSkill": "shield",
+  "Ranged Weapon Skill": "ranged",
+};
+
+/** A bracketed blank that names its kind outright: "[Melee Weapon]". */
+const BLANK_FAMILIES = { "melee weapon": "melee", "ranged weapon": "ranged" };
+
+/** A record's lines as the file writes them, directives included. */
+function rawRecordText(r, source) {
+  const lines = source.lines ?? [];
+  const out = [];
+  for (let i = r.line - 1; i >= 0 && i < lines.length; i++) {
+    const line = lines[i];
+    out.push(line);
+    if (!/[_,]\s*$/.test(line) && !line.trim().startsWith("#")) break;
+  }
+  return out.join("\n");
+}
+
+/**
+ * A technique GCA writes for any skill of a kind, as one open record
+ * (sargas79/GWorldVTT#194), or null for a blank that is not a skill.
+ *
+ * - `Disarming (%Melee Combat Skill%)` carries a choice list of GCA's groups,
+ *   which become the kinds of skill it may be bought for; a group the system
+ *   has no kind for is listed out by its members.
+ * - `Jam ([Skill])` is free text in GCA. Where the file also writes the
+ *   technique for named skills -- Jam (Brawling), Jam (Karate) -- those are
+ *   the ones it may be bought for, which is what the book's prerequisite says;
+ *   a blank that names its kind ("[Melee Weapon]") is that kind; otherwise it
+ *   is open to any skill.
+ *
+ * Only a blank the default is taken off is a skill: Wrench [Limb] (ST) is not
+ * open, and neither is a record whose default does not name the blank.
+ */
+function openTechnique(r, f, recs, source) {
+  const m = OPEN_TECHNIQUE_NAME.exec(nameOf(r));
+  if (!m) return null;
+  const base = m[1];
+  const blank = m[2] !== undefined ? `%${m[2]}%` : `[${m[3]}]`;
+  const def = f.get("default") ?? "";
+  const listForm = m[2] !== undefined ? `SK:%${m[2]}List%` : null;
+  const named = listForm && def.includes(listForm) ? listForm : def.includes(`SK:${blank}`) ? `SK:${blank}` : null;
+  if (!named) return null;
+
+  const families = new Set();
+  const choices = new Set();
+  // The choice list's groups sit on "#grouplist" lines, which the record
+  // reader skips as directives, so they are read off the file's own lines.
+  const raw = rawRecordText(r, source);
+  const groups = [...raw.matchAll(/#grouplist\(\s*GR:([^,)]+)/gi)].map((g) => g[1].trim());
+  for (const group of groups) {
+    const kind = SKILL_GROUP_FAMILIES[group];
+    if (kind) families.add(kind);
+    else for (const member of source.groups?.get(group) ?? []) choices.add(member.replace(/^SK:/, "").trim());
+  }
+  // A list of the skills themselves, one quoted a line: No-Landing
+  // Extraction's Piloting specialties (Characters p. 233).
+  for (const listed of raw.matchAll(/^\s*"([^"]+)"\s*,?\s*_?\s*$/gm)) choices.add(listed[1].trim());
+  if (groups.length === 0 && choices.size === 0) {
+    const prefix = `${base} (`;
+    for (const other of recs) {
+      if (other.section !== "SKILLS" || other === r) continue;
+      const name = nameOf(other);
+      if (!name.startsWith(prefix) || PLACEHOLDER.test(name)) continue;
+      const skill = name.slice(prefix.length, -1).trim();
+      if (!TECHNIQUE_ATTRIBUTES.has(skill)) choices.add(skill);
+    }
+    if (choices.size === 0) families.add(BLANK_FAMILIES[String(m[3] ?? "").toLowerCase()] ?? "any");
+  }
+
+  // The blank reads as a skill the parser can resolve, and is cleared after.
+  const opened = new Map(f);
+  const token = "SK:__OPEN__";
+  for (const key of ["default", "upto", "needs"]) {
+    if (opened.has(key)) opened.set(key, opened.get(key).split(named).join(token).split(`"${named}::`).join(`"${token}::`));
+  }
+  return { key: nameOf(r), base, families: [...families], choices: [...choices], f: opened };
+}
 
 /**
  * Every default a technique lists, in the forms GCA writes them (Martial Arts
@@ -1845,6 +1978,8 @@ function main() {
   const recs = records(text);
   // A Talent's skills are listed apart from the Talent, in the file's groups.
   source.groups = groupsOf(text);
+  // The file's own lines, for what the record reader leaves out.
+  source.lines = text.split(/\r?\n/);
   // Which category names a power, which each book's file does its own way.
   source.powerCategory = powerCategory ? new RegExp(powerCategory) : null;
   try {

@@ -70,6 +70,25 @@
     }
   },
   {
+    "_id": "4054fb00638fdfd4",
+    "name": "Disarming",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "skillFamilies": [
+        "melee",
+        "shield",
+        "unarmed"
+      ],
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 5,
+      "description": "",
+      "reference": "Basic Set: Characters p. 230"
+    }
+  },
+  {
     "_id": "e3153aa8385e92d8",
     "name": "Dual-Weapon Attack (Beam Weapons (Pistol))",
     "type": "technique",
@@ -112,6 +131,25 @@
     }
   },
   {
+    "_id": "a0ddc641c2597c4c",
+    "name": "Dual-Weapon Attack",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "skillFamilies": [
+        "unarmed",
+        "oneHandedMelee",
+        "shield"
+      ],
+      "defaultModifier": -4,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 230"
+    }
+  },
+  {
     "_id": "0d5ae0ee56947a24",
     "name": "Elbow Strike (Brawling)",
     "type": "technique",
@@ -140,6 +178,25 @@
     }
   },
   {
+    "_id": "ef4753c40bc946fc",
+    "name": "Feint",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "skillFamilies": [
+        "melee",
+        "shield",
+        "unarmed"
+      ],
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 4,
+      "description": "",
+      "reference": "Basic Set: Characters p. 231"
+    }
+  },
+  {
     "_id": "9720daa1d5504dce",
     "name": "Finger Lock (Judo)",
     "type": "technique",
@@ -161,6 +218,25 @@
       "difficulty": "H",
       "prerequisite": "Arm Lock (Wrestling)",
       "defaultModifier": -3,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 231"
+    }
+  },
+  {
+    "_id": "0cfcf0aa76b29fa6",
+    "name": "Ground Fighting",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "skillFamilies": [
+        "melee",
+        "shield",
+        "unarmed"
+      ],
+      "defaultModifier": -4,
       "points": 0,
       "maxRelativeToPrerequisite": 0,
       "description": "",
@@ -262,6 +338,42 @@
       "defaultModifier": -4,
       "points": 0,
       "maxRelativeToPrerequisite": 3,
+      "description": "",
+      "reference": "Basic Set: Characters p. 232"
+    }
+  },
+  {
+    "_id": "4ea725f533d5761c",
+    "name": "Off-Hand Weapon Training",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "skillFamilies": [
+        "melee",
+        "shield"
+      ],
+      "defaultModifier": -4,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 230"
+    }
+  },
+  {
+    "_id": "62425579c5b8e371",
+    "name": "Retain Weapon",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "skillFamilies": [
+        "melee",
+        "shield"
+      ],
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 5,
       "description": "",
       "reference": "Basic Set: Characters p. 232"
     }
@@ -428,6 +540,38 @@
       "difficulty": "A",
       "prerequisite": "Photography",
       "defaultModifier": -3,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 233"
+    }
+  },
+  {
+    "_id": "99c6309521c2f701",
+    "name": "No-Landing Extraction",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "skillChoices": [
+        "Piloting (Aerospace)",
+        "Piloting (Autogyro)",
+        "Piloting (Contragravity)",
+        "Piloting (Flight Pack)",
+        "Piloting (Glider)",
+        "Piloting (Heavy Airplane)",
+        "Piloting (Helicopter)",
+        "Piloting (High-Performance Airplane)",
+        "Piloting (High-Performance Spacecraft)",
+        "Piloting (Light Airplane)",
+        "Piloting (Lighter-Than-Air)",
+        "Piloting (Lightsail)",
+        "Piloting (Low-G Wings)",
+        "Piloting (Low-Performance Spacecraft)",
+        "Piloting (Ultralight)",
+        "Piloting (Vertol)"
+      ],
+      "defaultModifier": -4,
       "points": 0,
       "maxRelativeToPrerequisite": 0,
       "description": "",

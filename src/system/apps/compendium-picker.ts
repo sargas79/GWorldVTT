@@ -15,6 +15,7 @@
  * the character already has raises what they have rather than adding a copy.
  */
 
+import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
 import { SYSTEM_ID } from "../constants.js";
 import { summarise } from "../item-summary.js";
 import { sourceCollections } from "../compendium-sources.js";
@@ -288,8 +289,16 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     // toObject() gives the source data rather than the live document, and the
     // id is dropped so the actor's copy gets its own -- keeping the compendium
     // entry's id would collide the moment the same skill is added twice.
-    const data = source.toObject();
+    let data = source.toObject();
     delete data._id;
+
+    // A technique for a kind of skill asks which skill before anything is
+    // made, since the name it is merged under depends on the answer.
+    if (isOpenTechniqueData(data)) {
+      const chosen = await chooseTechniqueSkill(this.#actor, data);
+      if (!chosen) return;
+      data = chosen;
+    }
 
     const amount = this.#amounts.get(uuid) ?? 1;
     const plan = planAddition({
