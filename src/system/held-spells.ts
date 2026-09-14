@@ -13,10 +13,6 @@
  * table, the defense card and the damage card all read as they always have.
  */
 
-import { applyInjury } from "../rules/injury.js";
-import { randomHitLocation } from "../rules/hit-locations.js";
-import { syncHealthConditions } from "./conditions.js";
-import { resolveDamageAgainst, type IncomingDamage } from "./damage.js";
 import { SYSTEM_ID } from "./constants.js";
 import { applyFatigue } from "./fatigue.js";
 import { isRuleOn } from "./optional-rules.js";
@@ -24,17 +20,9 @@ import { handleRollAction, promptForNumber, rollDamage, rollSuccess } from "./ro
 import { catalogSkill, defaultLevelFrom } from "./skill-catalog.js";
 import { targetedTokens } from "./targets.js";
 import { postResistCard } from "./spell-resistance.js";
-import {
-  formatDiceAdds,
-  parseDiceAdds,
-  toRollFormula,
-} from "../rules/dice.js";
+import { formatDiceAdds, parseDiceAdds } from "../rules/dice.js";
 import { normalizeSkillName } from "../rules/skills.js";
-import {
-  canEnlargeMissile,
-  spellDamage,
-  rainDamage,
-} from "../rules/spell-attacks.js";
+import { canEnlargeMissile, spellDamage } from "../rules/spell-attacks.js";
 import type { DamageType, SkillAttribute } from "../rules/types.js";
 
 export const HELD_SPELL_FLAG = "heldSpell";
@@ -277,139 +265,6 @@ export async function strikeWithMelee(actor: any, event: Event): Promise<void> {
       subjects,
     });
   }
-}
-
-/** What a spell that attacks directly brings to the attack: a jet, a breath, a rain. */
-export interface SpellAttack {
-  name: string;
-  /** Damage per point of energy for a jet; per second, as written, for a rain. */
-  damage: string;
-  damageType: string;
-  explosive: boolean;
-  /** The Innate Attack specialty it is aimed with. */
-  skill: string;
-  energy: number;
-}
-
-/** A spell item's attack, as the casting and the running-spell row read it. */
-export function spellAttackOf(item: any, energy: number): SpellAttack {
-  const attack = item?.system?.attack ?? {};
-  return {
-    name: String(item?.name ?? ""),
-    damage: String(attack.damage ?? ""),
-    damageType: String(attack.damageType ?? ""),
-    explosive: Boolean(attack.explosive),
-    skill: String(attack.skill ?? ""),
-    energy: Math.max(1, Math.floor(Number(energy) || 1)),
-  };
-}
-
-/**
- * A jet, breath or stare striking (Magic pp. 73-76, 187-198): "Each turn, the
- * caster rolls versus DX-4 or Innate Attack skill to hit, and rolls for damage
- * if he hits. This attack may be dodged or blocked, but not parried." It is no
- * Missile, so nothing is held and nothing thrown: the attack is rolled as the
- * spell takes effect, and again each turn it is kept up. Damage is the spell's
- * dice for each point of energy in it.
- */
-export async function strikeWithSpell(actor: any, attack: SpellAttack, event: Event = new MouseEvent("click")): Promise<void> {
-  if (!actor?.isOwner) return;
-  const control = syntheticControl({
-    rollType: "attack",
-    rollLabel: `${attack.name} (${jetDamage(attack) || attack.energy})`,
-    rollTarget: String(innateAttackLevel(actor, attack.skill || "Innate Attack (Beam)")),
-    basedOn: "DX",
-    damageType: attack.damageType || "cr",
-    noParry: "1",
-  });
-  const outcome = await handleRollAction(actor, event, control);
-  if (!outcome?.success) return;
-  const formula = jetDamage(attack);
-  if (!formula) {
-    ui.notifications?.info(game.i18n.format("GWORLD.Held.AsDescribed", { spell: attack.name }));
-    return;
-  }
-  await rollDamage({
-    actor,
-    label: attack.name,
-    formula,
-    damageType: (attack.damageType || "cr") as DamageType,
-    explosive: attack.explosive && isRuleOn("explosions"),
-  });
-}
-
-/** A jet's damage for the energy in it: Flame Jet at 3 points is 3d. */
-export function jetDamage(attack: SpellAttack): string {
-  const per = parseDiceAdds(attack.damage);
-  return per ? formatDiceAdds(spellDamage(per, attack.energy)) : "";
-}
-
-/**
- * A second of an Area spell's rain (Magic pp. 53, 74, 188, 192): its damage
- * "per second to all within it", on each creature in the area -- whoever is
- * targeted -- rolled for each, with "armor protects in the usual fashion".
- * No attack roll and no defense. Half, rounded down, for one who spent less
- * than the whole second there.
- */
-export async function rainOnTargets(actor: any, attack: SpellAttack, options: { formula: string; wholeSecond: boolean }): Promise<void> {
-  const dice = parseDiceAdds(options.formula);
-  if (!dice) {
-    ui.notifications?.warn(game.i18n.format("GWORLD.Rain.BadFormula", { formula: options.formula }));
-    return;
-  }
-  const victims = targetedTokens().map((token: any) => token?.actor).filter(Boolean);
-  if (victims.length === 0) {
-    ui.notifications?.warn(game.i18n.localize("GWORLD.Rain.NoTargets"));
-    return;
-  }
-  const rolls: any[] = [];
-  const lines: string[] = [];
-  for (const victim of victims) {
-    if (!victim.isOwner) {
-      lines.push(game.i18n.format("GWORLD.Rain.CannotApply", { name: String(victim.name ?? "") }));
-      continue;
-    }
-    const roll = new Roll(toRollFormula(dice));
-    await roll.evaluate();
-    rolls.push(roll);
-    const basic = rainDamage(roll.total, options.wholeSecond);
-    const damage: IncomingDamage = {
-      basicDamage: basic,
-      type: (attack.damageType || "cr") as DamageType,
-      armorDivisor: 1,
-      hitLocation: randomHitLocation(10).location,
-    };
-    const injury = resolveDamageAgainst(victim, damage).injury;
-    const hp = victim.system?.hp ?? { value: 0, max: 0 };
-    const previous = Number(hp.value) || 0;
-    const applied = applyInjury(injury, previous, Number(hp.max) || 0);
-    if (injury > 0) {
-      await victim.update({ "system.hp.value": applied.currentHp });
-      await syncHealthConditions(victim);
-    }
-    lines.push(game.i18n.format("GWORLD.Rain.Struck", {
-      name: String(victim.name ?? ""),
-      rolled: `${options.formula} = ${roll.total}${options.wholeSecond ? "" : ` (${game.i18n.localize("GWORLD.Rain.Halved")} ${basic})`}`,
-      location: game.i18n.localize(`GWORLD.HitLocation.${damage.hitLocation}`),
-      injury,
-      previous,
-      now: applied.currentHp,
-    }));
-  }
-  // The card every no-roll, no-defense harm posts: the swarm's and the rest.
-  const content = await foundry.applications.handlebars.renderTemplate(`systems/${SYSTEM_ID}/templates/chat/life.hbs`, {
-    name: attack.name,
-    kind: game.i18n.localize("GWORLD.Rain.Kind"),
-    detail: game.i18n.format("GWORLD.Rain.Detail", { formula: options.formula }),
-    lines,
-    bad: true,
-  });
-  await ChatMessage.implementation.create({
-    speaker: ChatMessage.implementation.getSpeaker({ actor }),
-    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
-    content,
-    rolls,
-  });
 }
 
 /** The damage a held spell does, rolled and posted like a weapon's. */

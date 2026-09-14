@@ -713,10 +713,6 @@
         "talentsSkipWildcards": {
           "Name": "Talents skip wildcard skills",
           "Hint": "A Talent adds nothing to a wildcard skill, even one covering the skills on its list (Monster Hunters 1 p. 24)."
-        },
-        "powerstones": {
-          "Name": "Powerstones",
-          "Hint": "Stones recharge by the mana where they are, and a carried stone can pay for a spell in place of fatigue: a One-College stone for its college, a dedicated or exclusive one for its item's spells."
         }
       }
     },
@@ -4116,49 +4112,6 @@
       "MayStillCatch": "A miss may still catch the target in the area",
       "MustSteer": "Concentrate each turn to steer it — lose sight of the target and it misses; Attack on the turn it arrives",
       "DamageHoldsUp": "Damage does not fall off with distance"
-    },
-    "Rain": {
-      "Title": "{spell}: a second of it",
-      "Damage": "Damage to each",
-      "Partial": "Less than a whole second in the area (half)",
-      "Hint": "Rolls the spell's damage for each targeted creature in the area, with armor protecting as usual. No attack roll and no defense.",
-      "Apply": "Apply to targets",
-      "Strike": "Attack",
-      "StrikeHint": "The jet's attack for this turn: rolled against Innate Attack, dodged or blocked but not parried",
-      "NoTargets": "Target the creatures in the area first",
-      "BadFormula": "\"{formula}\" is not a damage roll",
-      "CannotApply": "{name}: not yours to damage",
-      "Halved": "halved:",
-      "Struck": "{name}: {rolled}, {location}, {injury} injury (HP {previous} → {now})",
-      "Kind": "A second of rain",
-      "Detail": "{formula} to each in the area; armor protects"
-    },
-    "Powerstone": {
-      "IsStone": "Powerstone",
-      "IsStoneHint": "An object holding mana a wizard can spend in place of his own energy",
-      "Section": "Powerstone",
-      "KindLabel": "Kind",
-      "Kind": {
-        "normal": "Powerstone",
-        "oneCollege": "One-College",
-        "dedicated": "Dedicated",
-        "exclusive": "Exclusive",
-        "manastone": "Manastone"
-      },
-      "Capacity": "Capacity",
-      "Charge": "Charge",
-      "College": "College",
-      "DedicatedTo": "Set into",
-      "Priced": "Priced by capacity",
-      "PricedHint": "An ordinary stone's price follows its capacity, by the table in Magic",
-      "Recharge": "Recharge",
-      "RechargeHint": "Adds the mana's rate for the world time passed since the last recharge. Stones carried together recharge only the largest.",
-      "Fill": "Fill to capacity",
-      "Recharged": "Powerstones recharged: {points} points",
-      "NotCarried": "Only a character's stones recharge",
-      "DrawFrom": "Draw energy from",
-      "OwnEnergy": "Own energy",
-      "FromStone": "{energy} from {stone}"
     }
   }
 }

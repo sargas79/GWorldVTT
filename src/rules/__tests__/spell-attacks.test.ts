@@ -10,9 +10,6 @@ import {
   spellAffects,
   spellDamage,
   subjectIsLiving,
-  rainDamage,
-  readSpellDamage,
-  spellAttackKind,
 } from "../spell-attacks.js";
 
 describe("Missile spells (Characters pp. 240-241)", () => {
@@ -64,45 +61,5 @@ describe("Resisted spells (Characters pp. 241-242; Campaigns p. 349)", () => {
     expect(spellAffects({ caster: { success: true, margin: 1 }, subject: { success: true, margin: 3 } })).toBe(false);
     expect(spellAffects({ caster: { success: true, margin: 0 }, subject: { success: false, margin: 5 } })).toBe(true);
     expect(spellAffects({ caster: { success: false, margin: 1 }, subject: { success: false, margin: 5 } })).toBe(false);
-  });
-});
-
-/** Spells that do damage without being Missile or Melee (sargas79/GWorldVTT#192). */
-describe("which attack a damaging spell makes", () => {
-  it("throws a Missile, strikes with a Melee spell, aims a Regular one, rains an Area one", () => {
-    expect(spellAttackKind(["missile"])).toBe("missile");
-    expect(spellAttackKind(["melee"])).toBe("melee");
-    expect(spellAttackKind(["regular"])).toBe("jet");
-    expect(spellAttackKind(["area"])).toBe("rain");
-  });
-
-  it("gives nothing to hit with to an Information, Enchantment or Blocking spell", () => {
-    expect(spellAttackKind(["information"])).toBeNull();
-    expect(spellAttackKind(["regular", "information"])).toBeNull();
-    expect(spellAttackKind(["enchantment"])).toBeNull();
-    expect(spellAttackKind(["blocking"])).toBeNull();
-  });
-});
-
-describe("readSpellDamage", () => {
-  it("reads dice, and the first of a choice", () => {
-    expect(readSpellDamage("~1d-1")).toBe("1d-1");
-    expect(readSpellDamage("1d/1d+1")).toBe("1d");
-    expect(readSpellDamage("1d+1/2d+1")).toBe("1d+1");
-  });
-
-  it("leaves what the spell's own text explains", () => {
-    expect(readSpellDamage("Spec.")).toBe("");
-    expect(readSpellDamage("HT")).toBe("");
-    expect(readSpellDamage("1d|HT")).toBe("");
-    expect(readSpellDamage("+2")).toBe("");
-  });
-});
-
-describe("rainDamage", () => {
-  it("is the whole roll for a whole second, and half, rounded down, for less (Magic p. 74)", () => {
-    expect(rainDamage(5, true)).toBe(5);
-    expect(rainDamage(5, false)).toBe(2);
-    expect(rainDamage(-1, true)).toBe(0);
   });
 });
