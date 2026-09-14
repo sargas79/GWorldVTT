@@ -378,6 +378,7 @@
       "AllOff": "All off",
       "Restore": "Restore defaults",
       "NotYet": "not built yet",
+      "ReadRule": "Read this rule",
       "Group": {
         "Combat": "Combat options",
         "Injury": "Damage and injury",
