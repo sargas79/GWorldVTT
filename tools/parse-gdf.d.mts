@@ -83,6 +83,9 @@ export declare function entryName(
 /** Whether a record is GCA's own bookkeeping (a Basic Set record with a leading underscore). */
 export declare function isBookkeeping(raw: string, options?: { supplement?: boolean }): boolean;
 
+/** The names a book keeps by hand in its advantages and disadvantages packs, beside the parser's own files. */
+export declare function handKeptTraitNames(outDir: string, basic: boolean, book: string): Set<string>;
+
 /** The skill a weapon mode is used with, from GCA's skillused list, or "" for none. */
 export declare function parseSkillUsed(value: string | undefined): string;
 

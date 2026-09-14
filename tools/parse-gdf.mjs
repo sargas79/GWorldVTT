@@ -357,6 +357,23 @@ function handWrittenIds(outDir, pack, generated) {
   return byName;
 }
 
+/**
+ * The traits a book keeps by hand, by name.
+ *
+ * A record the data file gets wrong is corrected by keeping it in a file of
+ * its own beside the parser's -- anything in the advantages or disadvantages
+ * pack that is not `<stem>-advantages.json` or `<stem>-disadvantages.json`.
+ * The parser then leaves that name to the hand-kept record, as it does for
+ * equipment, rather than writing a second record under the same id.
+ */
+export function handKeptTraitNames(outDir, basic, book) {
+  const written = fileNames(basic, book);
+  return new Set([
+    ...handWrittenIds(outDir, "advantages", [written.advantages]).keys(),
+    ...handWrittenIds(outDir, "disadvantages", [written.disadvantages]).keys(),
+  ]);
+}
+
 /** What a run reads when nobody says otherwise: the Basic Set, in place. */
 const BASIC_SET_SOURCE = {
   ...BASIC_SET,
@@ -449,6 +466,7 @@ function parseTraits(recs, reject, note, source) {
   const out = [];
   const taken = new Map();
   const siblings = new Map([...TRAIT_SECTIONS.keys()].map((s) => [s, namesIn(recs, s)]));
+  const keptByHand = handKeptTraitNames(source.outDir, bookPrefix(source.prefix) === bookPrefix(BASIC_SET.prefix), source.book);
 
   for (const r of recs) {
     const category = TRAIT_SECTIONS.get(r.section);
@@ -464,6 +482,9 @@ function parseTraits(recs, reject, note, source) {
     const bare = entryName(nameOf(r), siblings.get(r.section), { supplement: isSupplement(source) })
       .replace(/^Ritual Magery \(\[skill\]\)$/, "Ritual Magery");
     if (PLACEHOLDER.test(bare)) { reject(bare, "name is a GCA placeholder"); continue; }
+    // Checked before the advantage/disadvantage clash below, which would
+    // otherwise keep the record under a qualified name.
+    if (keptByHand.has(bare)) { reject(bare, "kept by hand"); continue; }
 
     const cost = parseCost(splitTop(r.text)[1], f);
     if (!cost) { reject(bare, `cost not a number: "${splitTop(r.text)[1] ?? ""}"`); continue; }

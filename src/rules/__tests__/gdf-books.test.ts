@@ -1,3 +1,7 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 // The parser is plain JavaScript run by node, but which book a record is
@@ -10,6 +14,7 @@ import {
   classifyCitation,
   entryName,
   groupsOf,
+  handKeptTraitNames,
   isBookkeeping,
   parseSkillUsed,
   powerOfRecord,
@@ -308,5 +313,51 @@ describe("the skill a weapon is used with (#174)", () => {
   it("names no skill for an attribute or a blank the player fills in", () => {
     expect(parseSkillUsed("Will")).toBe("");
     expect(parseSkillUsed("%examplealiaslist%")).toBe("");
+  });
+});
+
+describe("handKeptTraitNames", () => {
+  const withPacks = (files: Record<string, Array<{ _id: string; name: string }>>) => {
+    const dir = mkdtempSync(join(tmpdir(), "gdf-hand-"));
+    for (const [path, docs] of Object.entries(files)) {
+      mkdirSync(join(dir, path, ".."), { recursive: true });
+      writeFileSync(join(dir, path), JSON.stringify(docs));
+    }
+    return dir;
+  };
+
+  it("reads the names in a supplement's hand-kept trait files, not in the parser's own", () => {
+    const dir = withPacks({
+      "advantages/a-book-advantages.json": [{ _id: "a", name: "Parsed Talent" }],
+      "advantages/a-book-by-hand.json": [{ _id: "b", name: "Corrected Talent" }],
+      "disadvantages/a-book-disadvantages.json": [{ _id: "c", name: "Parsed Flaw" }],
+      "disadvantages/a-book-by-hand.json": [{ _id: "d", name: "Corrected Flaw" }],
+    });
+    try {
+      expect([...handKeptTraitNames(dir, false, "A Book")].sort()).toEqual(["Corrected Flaw", "Corrected Talent"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("finds none for the Basic Set, whose only trait files are the parser's", () => {
+    const dir = withPacks({
+      "advantages/basic-set-advantages.json": [{ _id: "a", name: "Luck" }],
+      "disadvantages/basic-set-disadvantages.json": [{ _id: "b", name: "Greed" }],
+    });
+    try {
+      expect(handKeptTraitNames(dir, true, "Basic Set").size).toBe(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("finds none where a pack has no directory yet", () => {
+    const dir = mkdtempSync(join(tmpdir(), "gdf-hand-"));
+    try {
+      expect(handKeptTraitNames(dir, false, "A Book").size).toBe(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
