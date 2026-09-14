@@ -1,8 +1,12 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
   HUMAN_RACIAL_COST,
   applyTemplate,
+  boughtStatsCost,
   choiceMetElsewhere,
   choiceSatisfied,
   combineTemplates,
@@ -65,6 +69,63 @@ const felinoid: Template = {
 };
 
 describe("what a template costs (Characters p. 258)", () => {
+  /**
+   * The Mage (p. 259): "ST 9 [-10]; DX 11 [20]; IQ 13 [60]; HT 11 [10]" and
+   * "HP 10 [2] ... Per 10 [-15]; FP 13 [6]" -- 73 points of scores bought,
+   * which the template's cost includes (sargas79/GWorldVTT#200).
+   */
+  it("counts the attributes and secondary levels a character template buys", () => {
+    const mage: Template = {
+      ...emptyTemplate("character"),
+      attributes: { ST: 9, DX: 11, IQ: 13, HT: 11 },
+      secondary: { hp: 1, per: -3, fp: 2 },
+      entries: [{ name: "Magery 0", itemType: "trait", points: 5 }],
+    };
+    expect(boughtStatsCost(mage)).toBe(-10 + 20 + 60 + 10 + 2 - 15 + 6);
+    expect(templateCost(mage)).toBe(73 + 5);
+  });
+
+  it("prices Basic Speed and Basic Move at 5 a step", () => {
+    const quick: Template = { ...emptyTemplate("character"), secondary: { basicSpeed: 0.5, basicMove: 1 } };
+    expect(boughtStatsCost(quick)).toBe(10 + 5);
+  });
+
+  it("charges nothing extra for a racial template, whose attributeCost prices its modifiers", () => {
+    expect(boughtStatsCost(dwarf)).toBe(0);
+    expect(templateCost(dwarf)).toBe(dwarf.statedCost);
+  });
+
+  /**
+   * The pack validator adds each template up on its own; the sheet must come
+   * to the same figure, or a template that validates shows as not matching.
+   */
+  it("adds every template in the system's pack up to its stated cost", () => {
+    const dir = join(import.meta.dirname, "../../../packs-src/templates");
+    const files = readdirSync(dir).filter((file) => file.endsWith(".json"));
+    const nonZero = (values: Record<string, number>) =>
+      Object.fromEntries(Object.entries(values ?? {}).filter(([, value]) => value !== 0));
+    let checked = 0;
+    for (const file of files) {
+      for (const entry of JSON.parse(readFileSync(join(dir, file), "utf8"))) {
+        if (entry.type !== "template") continue;
+        const sys = entry.system;
+        const template: Template = {
+          ...emptyTemplate(sys.kind),
+          name: entry.name,
+          statedCost: sys.statedCost,
+          attributes: nonZero(sys.attributes),
+          secondary: nonZero(sys.secondary),
+          attributeCost: sys.attributeCost ?? 0,
+          entries: sys.entries ?? [],
+          choices: sys.choices ?? [],
+        };
+        expect({ name: entry.name, cost: templateCost(template) }).toEqual({ name: entry.name, cost: sys.statedCost });
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
   /** "It lists the point costs of those traits, and gives the sum as the
    * template's cost." */
   it("adds the Dwarf up to the 35 points the book states", () => {
