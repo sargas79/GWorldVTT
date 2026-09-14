@@ -229,7 +229,7 @@ export async function moveFields(options: {
 }
 
 /** Carries a stored switch over to a module's own namespaced key, where the module has none stored yet. */
-export async function moveRuleState(options: { module: string; step?: string; fromKey: string; toKey: string }): Promise<MigrationResult> {
+export async function moveRuleState(options: { module: string; step?: string; fromKey: string; toKey: string; turnOff?: boolean }): Promise<MigrationResult> {
   const step = options?.step ?? `rule:${options?.fromKey}`;
   const none = { skipped: false, changed: 0, failed: 0 };
   if (!validStep("moveRuleState", options?.module, step)) return none;
@@ -242,9 +242,14 @@ export async function moveRuleState(options: { module: string; step?: string; fr
   let changed = 0;
   if (options.fromKey in stored && !(options.toKey in stored)) {
     stored[options.toKey] = stored[options.fromKey]!;
-    await game.settings.set(SYSTEM_ID, OPTIONAL_RULES_KEY, stored);
     changed = 1;
   }
+  // The old switch off too, so the rule isn't in play twice (since 1.11.0).
+  if (options.turnOff && stored[options.fromKey] !== false) {
+    stored[options.fromKey] = false;
+    changed = 1;
+  }
+  if (changed) await game.settings.set(SYSTEM_ID, OPTIONAL_RULES_KEY, stored);
   await record(options.module, step);
   return { skipped: false, changed, failed: 0 };
 }
@@ -268,8 +273,30 @@ export interface DeprecatedData {
   rule?: string;
 }
 
-/** Nothing is deprecated yet. */
-export const DEPRECATED_DATA: readonly DeprecatedData[] = [];
+/** What the warning tells the GM to install for the data below. */
+const INSTALL_RULE_SET = "the add-on module that now provides these rules";
+
+/**
+ * The data of the rule group the next release removes (sargas79/GWorldVTT#243),
+ * flagged while the system still defines it. A module that takes a rule set
+ * over names these ids in its manifest's `flags.gworld.migrates`.
+ */
+export const DEPRECATED_DATA: readonly DeprecatedData[] = [
+  { id: "ritual-items", label: "ritual items", install: INSTALL_RULE_SET, itemType: "ritual" },
+  { id: "ritual-path", label: "mana reserves and rituals in effect", install: INSTALL_RULE_SET, field: { documentName: "Actor", types: ["character", "npc"], path: "ritualPath" } },
+  { id: "ritual-path", label: "charms", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment"], path: "charm" } },
+  { id: "ritual-path", label: "grimoires", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment"], path: "grimoire" } },
+  { id: "bonus-points", label: "destiny and wildcard point pools", install: INSTALL_RULE_SET, field: { documentName: "Actor", types: ["character", "npc"], path: "bonusPoints" } },
+  { id: "holy-items", label: "holy items", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment"], path: "holy" } },
+  { id: "gear-options", label: "gear improvements", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment", "armor"], path: "improvements" } },
+  { id: "gear-options", label: "Holdout bonuses on gear", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment", "armor"], path: "holdout" } },
+  { id: "gear-options", label: "gear marked as Signature Gear", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment", "armor"], path: "signature" } },
+  { id: "gear-options", label: "weapon improvements", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment"], path: "weaponImprovements" } },
+  { id: "gear-options", label: "improvised weapon penalties", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment"], path: "improvisedPenalty" } },
+  ...["talentsSkipWildcards", "holyAttacks", "ritualPathMagic", "monsterHuntersGear", "bonusPointSpending"].map((rule) => ({
+    id: "rule-switches", label: `the "${rule}" switch`, install: INSTALL_RULE_SET, rule,
+  })),
+];
 
 /** The list the coverage check reads, from `CONFIG.GWORLD.deprecatedData`. */
 function deprecatedData(): DeprecatedData[] {
@@ -338,8 +365,16 @@ export function warnUncoveredData(): void {
     },
     [...(((game as any).modules as Map<string, any> | undefined)?.values() ?? [])],
   );
+  // One warning for everything the same module takes over: a world with a whole
+  // rule set's data gets one notice, not one for each field.
+  const byInstall = new Map<string, string[]>();
   for (const entry of uncovered) {
-    ui.notifications?.warn(game.i18n.format("GWORLD.Migration.Uncovered", { label: entry.label, install: entry.install }), { permanent: true });
+    const labels = byInstall.get(entry.install) ?? [];
+    if (!labels.includes(entry.label)) labels.push(entry.label);
+    byInstall.set(entry.install, labels);
+  }
+  for (const [install, labels] of byInstall) {
+    ui.notifications?.warn(game.i18n.format("GWORLD.Migration.Uncovered", { label: labels.join(", "), install }), { permanent: true });
   }
 }
 

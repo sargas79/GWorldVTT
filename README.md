@@ -720,6 +720,19 @@ At `ready`, before any module's own ready work, a GM whose world holds
 deprecated data that no active module migrates gets a warning that stays until
 dismissed. Nothing is saved.
 
+Deprecated now, ahead of the rule group removed in 1.5.0, by the id a module
+names in `migrates`:
+
+- `ritual-items`: items of type `ritual`;
+- `ritual-path`: characters' and NPCs' `ritualPath`, and equipment's `charm` and `grimoire`;
+- `bonus-points`: characters' and NPCs' `bonusPoints`;
+- `holy-items`: equipment's `holy`;
+- `gear-options`: equipment's and armour's `improvements`, `holdout` and `signature`, and
+  equipment's `weaponImprovements` and `improvisedPenalty` (and its ranged modes'
+  `powder`, `payload`, `powderAdjust`, `payloadAdjust` and `magazineCost`);
+- `rule-switches`: the switches `talentsSkipWildcards`, `holyAttacks`,
+  `ritualPathMagic`, `monsterHuntersGear` and `bonusPointSpending`.
+
 `game.gworld.api.migration`, for the GM's client:
 
 - **`migrateItemType({ module, step?, fromType, toType, mapData })`.** Turns every
@@ -730,8 +743,10 @@ dismissed. Nothing is saved.
   `system.<from>` to `system.extensions.<module>.<to>` for each `from: to` in
   `fields`, on Actors or Items of those types (or `"*"`). `map(value, path,
   document)` may change a value on its way. The system's copy is left alone.
-- **`moveRuleState({ module, step?, fromKey, toKey })`.** Carries a stored switch
+- **`moveRuleState({ module, step?, fromKey, toKey, turnOff? })`.** Carries a stored switch
   to the module's own `<module>.<key>`, unless that key already has a state.
+  With `turnOff: true` (since 1.11.0) it also switches the old key off, so the
+  rule isn't in play twice.
 - **`hasMigrated(module, step)`** and **`resetMigration(module, step)`.**
 
 Each step is recorded in the world under the module once every document it

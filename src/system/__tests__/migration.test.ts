@@ -101,6 +101,26 @@ describe("moveFields and moveRuleState", () => {
     expect((await api.moveRuleState({ module: "test-addon", fromKey: "oldRule", toKey: "test-addon.rule" })).skipped).toBe(true);
     expect((await api.moveRuleState({ module: "test-addon", fromKey: "oldRule", toKey: "other.rule" })).changed).toBe(0);
   });
+
+  it("switches the old key off when asked, so the rule isn't in play twice", async () => {
+    const api = await load();
+    const w = world({ rules: { oldRule: true } });
+    expect((await api.moveRuleState({ module: "test-addon", fromKey: "oldRule", toKey: "test-addon.rule", turnOff: true })).changed).toBe(1);
+    expect(w.settings.get("gworld.optionalRules")).toEqual({ oldRule: false, "test-addon.rule": true });
+  });
+});
+
+describe("the data flagged ahead of removal", () => {
+  it("names each piece once, by an id a module can declare, and one kind of data per entry", async () => {
+    const api = await load();
+    const ids = new Set(api.DEPRECATED_DATA.map((e) => e.id));
+    expect([...ids].sort()).toEqual(["bonus-points", "gear-options", "holy-items", "ritual-items", "ritual-path", "rule-switches"]);
+    for (const entry of api.DEPRECATED_DATA) {
+      expect([entry.itemType, entry.field, entry.rule].filter(Boolean)).toHaveLength(1);
+      expect(entry.label).toBeTruthy();
+      expect(entry.install).toBeTruthy();
+    }
+  });
 });
 
 describe("coverage", () => {
@@ -126,7 +146,8 @@ describe("coverage", () => {
     globals.CONFIG = { GWORLD: { deprecatedData: entries } };
     api.warnUncoveredData();
     const warn = (globals.ui as any).notifications.warn;
-    expect(warn).toHaveBeenCalledTimes(2);
+    // Both come from the same module, so they share one notice.
+    expect(warn).toHaveBeenCalledTimes(1);
     expect(warn.mock.calls[0][1]).toEqual({ permanent: true });
     expect(w.looseUpdates).toEqual([]);
     expect((globals.game as any).settings.set).not.toHaveBeenCalled();

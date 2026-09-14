@@ -67,7 +67,7 @@ const MODULE_NAMES = [/gurps-compendium-content/];
  */
 const EXCEPTIONS = [
   {
-    // Monster Hunters 1 leaves the system in 2.0.0 (sargas79/GWorldVTT#243).
+    // Monster Hunters 1 leaves the system in 1.5.0 (sargas79/GWorldVTT#243).
     issue: 243,
     pattern: /Monster Hunters/,
     files: [
