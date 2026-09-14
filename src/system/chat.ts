@@ -36,7 +36,7 @@ import { defenseChoices, type DefenseChoice, type DefenseKey } from "./defense-c
 import { loseAim } from "./aim.js";
 import { blockingSpellsOf, castBlockingSpell } from "./casting.js";
 import { addResistControls } from "./spell-resistance.js";
-import { addRitualControls, blockingRitualsOf, castBlockingRitual } from "./ritual-casting.js";
+import { addRitualControls, addRitualTriggerControls, blockingRitualsOf, castBlockingRitual } from "./ritual-casting.js";
 import { addBuySuccessControls, addGuidanceControls } from "./bonus-points.js";
 import { buyDefenseBack, declareFleshWound, type FleshWoundEntry, type TvActionEntry } from "./cinematic.js";
 import {
@@ -1213,6 +1213,7 @@ export function registerChatHooks(): void {
     void addTvActionControls(message, html);
     void addAfflictionControls(message, html);
     void addRitualControls(message, html);
+    void addRitualTriggerControls(message, html);
     void addBuySuccessControls(message, html);
     void addGuidanceControls(message, html);
   });

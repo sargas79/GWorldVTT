@@ -181,11 +181,16 @@ async function buySuccess(message: any, actor: any, flag: SuccessRollFlag): Prom
   const text = F("Bought", { step: L(`Step.${step.step}`), cost: step.cost, source: picked.source.name });
   const content = String(message.content ?? "").replace(/<\/div>\s*$/, `<div class="gc-result success">${foundry.utils.escapeHTML(text)}</div></div>`);
   const hit = flag.onSuccess && (step.step === "success" || step.step === "criticalSuccess") && (flag.step === "failure" || flag.step === "criticalFailure");
-  await message.update({
-    content,
-    [`flags.${SYSTEM_ID}.successRoll.bought`]: step.step,
-    ...(hit ? { flags: foundry.utils.mergeObject(foundry.utils.deepClone(message.flags ?? {}), flag.onSuccess as object) } : {}),
-  });
+  // A whole flags object and a dotted flags key in one update do not mix: the
+  // object is expanded after the key and replaces it. So where a miss becomes
+  // a hit, what was bought goes inside the flags that carry the defense.
+  if (hit) {
+    const flags = foundry.utils.mergeObject(foundry.utils.deepClone(message.flags ?? {}), flag.onSuccess as object);
+    foundry.utils.setProperty(flags, `${SYSTEM_ID}.successRoll.bought`, step.step);
+    await message.update({ content, flags });
+  } else {
+    await message.update({ content, [`flags.${SYSTEM_ID}.successRoll.bought`]: step.step });
+  }
 }
 
 // ── flesh wounds ─────────────────────────────────────────────────────────────
