@@ -162,6 +162,12 @@
                 {{#if @root.editable}}{{#if spell.canMaintain}}
                   <button type="button" class="ibtn" data-action="maintainSpell">{{localize "GWORLD.Cast.MaintainAction"}}</button>
                 {{/if}}{{/if}}
+                {{#if @root.editable}}
+                  {{#each spell.addonActions as |action|}}
+                    <button type="button" class="ibtn" data-action="activeSpellAction" data-active-spell-action="{{action.id}}"
+                            {{#if action.hint}}data-tooltip="{{action.hint}}"{{/if}}>{{action.label}}</button>
+                  {{/each}}
+                {{/if}}
               </td>
               <td class="c">
                 {{#if @root.editable}}

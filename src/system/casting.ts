@@ -515,6 +515,7 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
       startedAt: now,
       concentrating: false,
       permanent: false,
+      energy: casting.invested,
     };
     await actor.update({ "system.activeSpells": [...(actor.system.activeSpells ?? []), entry] });
   }

@@ -19,6 +19,7 @@ import { isRuleOn } from "./optional-rules.js";
 import { handleRollAction, promptForNumber, rollDamage, rollSuccess } from "./roll.js";
 import { catalogSkill, defaultLevelFrom } from "./skill-catalog.js";
 import { targetedTokens } from "./targets.js";
+import { runActiveSpellAction } from "./roll-extensions.js";
 import { postResistCard } from "./spell-resistance.js";
 import { formatDiceAdds, parseDiceAdds } from "../rules/dice.js";
 import { normalizeSkillName } from "../rules/skills.js";
@@ -178,7 +179,7 @@ export async function rollSpellAttack(
 }
 
 /** Rolls the damage a cast spell's declared attack does, for an add-on's spell attack behavior. */
-export async function rollSpellDamage(actor: any, spell: any, energy: number, options: { label?: string; formula?: string } = {}): Promise<void> {
+export async function rollSpellDamage(actor: any, spell: any, energy: number, options: { label?: string; formula?: string; halfDamage?: boolean } = {}): Promise<void> {
   const attack = spell?.system?.attack ?? {};
   const formula = options.formula ?? spellAttackDamage(spell, energy);
   if (!formula) {
@@ -191,7 +192,27 @@ export async function rollSpellDamage(actor: any, spell: any, energy: number, op
     formula,
     damageType: (attack.damageType || "cr") as DamageType,
     explosive: Boolean(attack.explosive) && isRuleOn("explosions"),
+    ...(options.halfDamage ? { halfDamage: true } : {}),
     ...(spell ? { item: spell } : {}),
+  });
+}
+
+/**
+ * Runs an add-on's action on a running spell: the rolls work from the energy
+ * the casting put in, or its cost on an entry older than that record.
+ */
+export async function runSpellAction(actor: any, activeId: string, actionId: string): Promise<void> {
+  const active = (actor?.system?.activeSpells ?? []).find((s: any) => s.id === activeId);
+  if (!active) return;
+  const spell = actor.items?.get?.(active.itemId) ?? null;
+  const energy = Math.max(0, Math.floor(Number(active.energy ?? active.castCost) || 0));
+  await runActiveSpellAction(actionId, {
+    actor,
+    spell,
+    active,
+    energy,
+    rollAttack: (options) => rollSpellAttack(actor, spell, energy, options),
+    rollDamage: (options) => rollSpellDamage(actor, spell, energy, options),
   });
 }
 

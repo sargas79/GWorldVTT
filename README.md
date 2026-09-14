@@ -641,10 +641,23 @@ and a hint `p.ihint`.
     spell, outcome, energy, attack, the damage the energy buys, and the
     targeted actors. `context.rollAttack({ skill?, label?, ranged?, noParry? })`
     rolls an attack the target defends against, with the damage on a hit.
-    `context.rollDamage({ label?, formula? })` rolls damage straight away, for
-    an area.
+    `context.rollDamage({ label?, formula?, halfDamage? })` rolls damage straight away, for
+    an area; since 1.14.0, `halfDamage: true` halves the basic damage, as
+    for 1/2D.
   - The pack validator accepts a spell's damage or `area` when `attack.behavior`
-    names a behavior.
+    names a behavior. Since 1.14.0 it refuses a behavior, damage or `area` on
+    an Information, Enchantment or Blocking spell, which never delivers one.
+- **`magic.registerActiveSpellAction({ module, key, label, hint?, visible?, run })`** (since 1.14.0).
+  A button on the Magic tab's rows for spells still running, shown to a user
+  who owns the character: for what a spell goes on doing after the casting,
+  such as an area's damage each second or an attack each turn.
+  - `visible({ actor, spell, active })` decides which rows show it; `spell`
+    is the spell item, or null where it is gone, and `active` the running
+    entry.
+  - `run({ actor, spell, active, energy, rollAttack, rollDamage })` gets the
+    same two rolls a spell attack's `cast` gets, working from `energy`: the
+    energy the casting put in, which running entries record since 1.14.0 (an
+    older entry's cost stands in).
 
 ### Inside the system's own procedures
 
