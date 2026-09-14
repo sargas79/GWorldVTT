@@ -376,6 +376,8 @@ What's in it:
 | `data` | Data extension points (since 1.2.0); see below. |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0); see below. |
 | `points`, `magic` | Point pools, energy sources and spell attacks (since 1.4.0); see below. |
+
+Since 1.5.0, `combat`, `roll` and `actors` also carry the procedure extension points below.
 | `hooks` | The names of the hooks below. |
 
 Lifecycle, in order:
@@ -561,6 +563,64 @@ and a hint `p.ihint`.
     an area.
   - The pack validator accepts a spell's damage or `area` when `attack.behavior`
     names a behavior.
+
+### Inside the system's own procedures
+
+- **`combat.registerManeuverOption({ module, key, maneuver, label, input?, available?, refuse?, attack?, defense?, response? })`.**
+  A choice on one of the system's maneuvers (or a registered one), shown under
+  the maneuver on the Combat tab and saved as it is made.
+  - `refuse({ actor, maneuver, chosen })` disables it with the reason.
+  - While it is chosen, `attack(context, value)` returns an attack effect, as an
+    attack option's does, for every attack made on the maneuver, and
+    `defense({ actor, defense }, value)` returns lines on the actor's own
+    defense rolls.
+  - `response: { label, trigger(actor, value) }` puts a button beside it, which
+    is how a Wait holds a response ready.
+- **Refusals:** attack options, defense options and maneuver options each take
+  `refuse`, and the control shows why it is disabled.
+- **Success rolls:** `gworld.successRollModifiers` is called for every success
+  roll, the rolls a Fright Check, knockdown and bleeding make, and each side of
+  a contest, with `{ actor, label, kind, skill, base, tags, modifiers }`; push
+  lines to `modifiers`. `tags` holds the kind (`skill`, `attribute`,
+  `attack`, `defense`, `contest`) and more: `fastDraw` and `teaching` from the
+  skill's name, `fright`, `knockdown`, `bleeding`, and the defense
+  (`dodge`, `parry`, `block`). `gworld.afterSuccessRoll` follows with the
+  `outcome`.
+- **`roll.registerContestResolver({ module, key, label, applies, resolve })`.**
+  For the Quick Contests the system offers, the first resolver whose
+  `applies(context)` takes the contest returns the `{ base, note }` either side
+  rolls instead.
+- **Attack sequences:** `gworld.attackSequence` gets
+  `{ actor, maneuver, option, count, pickTargets }` when a maneuver's attacks
+  are worked out. Raise `count`, and the Combat tab shows how many of them have
+  been made this turn; set `pickTargets`, and each attack asks which of the
+  scene's tokens it is aimed at. `combat.attackSequence(actor)` reads it.
+- **`combat.registerDerivedAttackMode({ module, key, label, kind, applies, mode })`.**
+  An attack worked out when the sheet is drawn and never written to the item:
+  for each weapon `applies(item, actor)` takes, `mode(item, actor, { skillLevel })`
+  returns the row the melee or ranged table shows and rolls from.
+- **`combat.registerGrappleAction({ module, key, label, applies?, run })`.**
+  A button on the grapple panel. `applies(grapple, actor)` sees which end of it
+  the actor is (`grapple.holding`), and `run({ actor, foe, grapple })` acts.
+- **Conditions:** `actors.applyCondition(actor, { module?, key, label?, effects?, duration? })`
+  applies a module's condition, or one of the system's token conditions when
+  `module` is left out.
+  - `effects.modifiers` are `{ label, value, rolls? }`, where `rolls` limits a
+    line to kinds or tags of roll.
+  - `duration` is `{ turns }` of the actor's own, `{ rounds }` of the combat, or
+    `{ seconds }` of world time. The GM's client ends it when that runs out.
+  - It returns the condition's id. `actors.removeCondition(actor, id)` takes it
+    off, and `actors.conditions(actor)` lists them. The Combat tab shows them
+    too.
+- **Lifecycle:** `gworld.combatStart` `(combat)`, and `gworld.turnStart` and
+  `gworld.turnEnd` `(combat, combatant)`, on every client.
+- **Bleeding:** `gworld.bleedingSchedule` gets `{ actor, intervalSeconds, modifier }`
+  before a bleeding roll, and may change either.
+- **Technique defaults:** `gworld.techniqueDefaults` gets `{ actor, item, defaults }`;
+  push `{ from, skill, modifier }` to offer another default. The best one is
+  used.
+
+`combat.hooks` lists every hook's name.
 
 ### A module's own rules
 

@@ -112,6 +112,7 @@ import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
 import { evaluateBonus } from "../../rules/maneuvers.js";
 import { maneuverAllowsDefense, maneuverAllowsParry, maneuverInfo, maneuverKeys } from "../combat-extensions.js";
+import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
   DATA_HOOKS, afterPrepare, effectiveCost, effectiveWeight, extensionsField, registeredTechniqueKind, totalBonusLines, type BonusLine,
 } from "../data-extensions.js";
@@ -186,6 +187,23 @@ import type {
 } from "../../rules/types.js";
 
 const fields = foundry.data.fields;
+
+/** What a derived attack mode's row holds where the module gave nothing. */
+const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
+  mode: "", skillName: "", skillLevel: null, hitModifier: 0, atDefault: false, natural: false, unready: false,
+  readiesAfterAttack: false, damage: "", damageType: "cr", holy: false, armorDivisor: 1, damageRollable: false,
+  weight: 0, quality: "good", material: "", resistsBreakage: false, minStPenalty: 0, condition: "sound",
+  twoHanded: false, swung: false, reach: "C", parry: null, parryModifier: 0, minSt: null, usable: true,
+  unbalanced: false, isFencing: false, unarmed: false, stBased: false, damageBase: "", damageModifier: 0,
+  unarmedBonusSkill: "", explosive: false, fragmentation: "", affliction: false, afflictionAttribute: "",
+  afflictionModifier: 0,
+};
+const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
+  ...DERIVED_MELEE_DEFAULTS, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, rateOfFire: 1,
+  recoil: 1, bulk: 0, shots: "", projectiles: 1, guidance: "", areaAttack: false, coneMaxWidth: 0, scopeBonus: 0,
+  malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false,
+  ammunition: "", malediction: 0, ignoresDr: false,
+};
 
 function attributeField(label: string) {
   return new fields.NumberField({
@@ -1761,10 +1779,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     };
     for (const item of this.itemsOfType("technique")) {
       const sys = item.system as any;
-      const defaults = [
+      // The technique's own defaults, and any a module offers beside them.
+      const defaults = techniqueDefaultsWithHooks(this.parent, item, [
         { from: String(sys.defaultFrom ?? "skill"), skill: String(sys.prerequisite ?? ""), modifier: Number(sys.defaultModifier) || 0 },
         ...((sys.alternateDefaults ?? []) as Array<{ from: string; skill: string; modifier: number }>),
-      ];
+      ]);
       const standard = () => resolveTechniqueDefaults({
         defaults: defaults.map((d) => ({ base: techniqueBase(d.from, d.skill), modifier: Number(d.modifier) || 0 })),
         levels: techniqueLevelsForPoints(sys.points, sys.difficulty),
@@ -2448,6 +2467,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         afflictionModifier: 0,
       });
     }
+
+    // Attack modes a module works out now rather than storing on the weapon,
+    // listed after the weapons' own and never written back to them.
+    const skillLevel = (name: string) => this.skillLevelByName(name);
+    const weapons = this.items.filter((i) => i.type === "equipment" || i.type === "shield");
+    melee.push(...(derivedAttackRows("melee", weapons, this.parent, { skillLevel }, DERIVED_MELEE_DEFAULTS) as unknown as DerivedAttack[]));
+    ranged.push(...(derivedAttackRows("ranged", weapons, this.parent, { skillLevel }, DERIVED_RANGED_DEFAULTS) as unknown as DerivedAttack[]));
 
     // ── active defenses ─────────────────────────────────────────────────
     // All-Out Attack forfeits every defense; Move and Attack forbids parrying.

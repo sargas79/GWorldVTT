@@ -8,6 +8,7 @@
     <span>HT {{ht}}</span>
     {{#if modifier}}<span class="gc-mod">{{signed modifier}} {{localize "GWORLD.Bleeding.PerFive"}}</span>{{/if}}
     <span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{target}}</span>
+    {{#if interval}}<span class="gc-mod">{{localize "GWORLD.Bleeding.Interval" seconds=interval}}</span>{{/if}}
   </div>
 
   <div class="gc-dice">

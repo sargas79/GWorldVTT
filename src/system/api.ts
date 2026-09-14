@@ -33,6 +33,19 @@ import { combatApi } from "./combat-extensions.js";
 import { dataApi } from "./data-extensions.js";
 import { chatApi, sheetsApi } from "./sheet-extensions.js";
 import { magicApi, pointsApi } from "./roll-extensions.js";
+import { conditionLabel, setCondition } from "./conditions.js";
+import {
+  PROCEDURE_HOOKS,
+  activeConditions,
+  applyCondition,
+  attackSequenceFor,
+  registerContestResolver,
+  registerDerivedAttackMode,
+  registerGrappleAction,
+  registerManeuverOption,
+  removeCondition,
+  type ConditionApplication,
+} from "./procedure-extensions.js";
 import { rollQuickContest, rollRegularContest } from "./contest.js";
 import { activeRules, isRuleOn } from "./optional-rules.js";
 import { REGISTER_RULES_HOOK, isAddonRuleKey, namespacedRuleKey, registerRule, registerRuleGroup } from "./rule-registry.js";
@@ -42,7 +55,7 @@ import { rollDamage, rollSuccess } from "./roll.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.4.0";
+export const API_VERSION = "1.5.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -98,6 +111,25 @@ const actors = {
   encumbrance(actor: any): Record<string, any> | null {
     return actors.derived(actor)?.encumbrance ?? null;
   },
+
+  /**
+   * Applies a condition (since 1.5.0): a module's own, or one of the system's
+   * token conditions by its id, with modifiers on rolls and a duration.
+   * Returns its id, or null where it couldn't be applied.
+   */
+  applyCondition(actor: any, application: ConditionApplication): Promise<string | null> {
+    return applyCondition(actor, application, { setSystemCondition: setCondition, systemConditionLabel: conditionLabel });
+  },
+
+  /** Removes a condition by the id `applyCondition` returned (since 1.5.0). */
+  removeCondition(actor: any, id: string): Promise<void> {
+    return removeCondition(actor, id, { setSystemCondition: setCondition });
+  },
+
+  /** The timed conditions on an actor (since 1.5.0). */
+  conditions(actor: any) {
+    return activeConditions(actor);
+  },
 };
 
 /** Reads an item's worked-out values. */
@@ -124,12 +156,13 @@ export interface GWorldApi {
     /** Every rule's state, unimplemented ones forced off. */
     readonly activeRules: typeof activeRules;
   };
-  /** Rolls posted to chat through the system's own cards. */
+  /** Rolls posted to chat through the system's own cards, and resolvers for the contests it offers. */
   readonly roll: {
     readonly success: typeof rollSuccess;
     readonly damage: typeof rollDamage;
     readonly quickContest: typeof rollQuickContest;
     readonly regularContest: typeof rollRegularContest;
+    readonly registerContestResolver: typeof registerContestResolver;
   };
   readonly actors: typeof actors;
   readonly items: typeof items;
@@ -138,12 +171,36 @@ export interface GWorldApi {
    * options, extra effort, hit locations, per-combatant and per-weapon state,
    * and the names of the combat hooks.
    */
-  readonly combat: typeof combatApi;
+  readonly combat: typeof combat;
+  /** Data extension points (since 1.2.0): item types, extension fields, prices, technique kinds. */
+  readonly data: typeof dataApi;
+  /** Sheet extension points (since 1.3.0): sections, row actions, GM tools. */
+  readonly sheets: typeof sheetsApi;
+  /** Chat cards (since 1.3.0). */
+  readonly chat: typeof chatApi;
+  /** Point pools (since 1.4.0). */
+  readonly points: typeof pointsApi;
+  /** Energy sources and spell attacks (since 1.4.0). */
+  readonly magic: typeof magicApi;
   /** The hooks the API fires, by name. */
   readonly hooks: { readonly registerRules: string; readonly ready: string };
   /** Whether this API satisfies a semver range, as a module's manifest would declare it. */
   readonly satisfies: (range: string) => boolean;
 }
+
+/**
+ * The combat namespace: the extension points from 1.1.0, and from 1.5.0 the
+ * options on the system's maneuvers, attack sequences, derived attack modes,
+ * grapple actions, and the procedure hooks' names.
+ */
+const combat = Object.freeze({
+  ...combatApi,
+  registerManeuverOption,
+  registerDerivedAttackMode,
+  registerGrappleAction,
+  attackSequence: attackSequenceFor,
+  hooks: Object.freeze({ ...combatApi.hooks, ...PROCEDURE_HOOKS }),
+});
 
 /** Builds the frozen API object. */
 export function createApi(): GWorldApi {
@@ -151,10 +208,10 @@ export function createApi(): GWorldApi {
     version: API_VERSION,
     rules,
     registry: Object.freeze({ registerRuleGroup, registerRule, namespacedRuleKey, isAddonRuleKey, isRuleOn, activeRules }),
-    roll: Object.freeze({ success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest }),
+    roll: Object.freeze({ success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver }),
     actors: Object.freeze(actors),
     items: Object.freeze(items),
-    combat: combatApi,
+    combat,
     data: dataApi,
     sheets: sheetsApi,
     points: pointsApi,

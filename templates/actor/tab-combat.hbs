@@ -27,6 +27,42 @@
           </div>
         </div>
       {{/if}}
+      {{#if addonManeuverOptions.length}}
+        {{!-- Options modules offer on this maneuver, and the responses a Wait
+             holds ready. Not form fields: each choice is saved as it is made. --}}
+        <div class="fld wide addon-maneuver-options">
+          <span class="fl">{{localize "GWORLD.Maneuver.AddonOptions"}}</span>
+          <div class="fi" style="display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center">
+            {{#each addonManeuverOptions as |o|}}
+              {{{o.control}}}
+              {{#if o.response}}
+                <button type="button" class="ibtn tiny" data-action="maneuverResponse" data-option-id="{{o.id}}"
+                        {{#unless @root.editable}}disabled{{/unless}}>{{o.response}}</button>
+              {{/if}}
+              {{#if o.refused}}<span class="tag tag-danger">{{o.refused}}</span>{{/if}}
+            {{/each}}
+          </div>
+        </div>
+      {{/if}}
+      {{#if attackSequence.shown}}
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Attack.SequenceLabel"}}</span>
+          <div class="fi">{{attackSequence.made}} / {{attackSequence.count}}</div>
+        </div>
+      {{/if}}
+      {{#if timedConditions.length}}
+        <div class="fld wide">
+          <span class="fl">{{localize "GWORLD.Condition.Timed"}}</span>
+          <div class="fi" style="display: flex; flex-wrap: wrap; gap: 4px 8px">
+            {{#each timedConditions as |c|}}
+              <span class="tag tag-danger" data-tooltip="{{c.effects}}">{{c.label}}{{#if c.remaining}} &middot; {{c.remaining}}{{/if}}
+                {{#if @root.editable}}<button type="button" class="iconbtn" data-action="removeTimedCondition" data-condition-id="{{c.id}}"
+                        aria-label="{{localize 'GWORLD.Action.Delete'}}">&times;</button>{{/if}}
+              </span>
+            {{/each}}
+          </div>
+        </div>
+      {{/if}}
       {{#if grappledCannotMove}}
         <p class="ihint warn">{{localize "GWORLD.Grapple.CannotMove"}}</p>
       {{/if}}
@@ -604,6 +640,10 @@
             {{localize "GWORLD.Grapple.Takedown"}}
           </button>
         {{/if}}
+        {{!-- What modules add to a grapple, for whichever end of it this is. --}}
+        {{#each grappleActions as |a|}}
+          <button type="button" class="ibtn" data-action="grappleAction" data-grapple-action="{{a.id}}">{{a.label}}</button>
+        {{/each}}
       </div>
       <p class="ihint">
         {{#if grapple.pinned}}

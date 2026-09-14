@@ -15,6 +15,7 @@ import { SYSTEM_ID } from "./constants.js";
 import { regularContest } from "../rules/contests.js";
 import { resolveFeint, type FeintResult } from "../rules/maneuvers.js";
 import { quickContest, resolveSuccess } from "../rules/success.js";
+import { resolveContestScores, successRollModifiers } from "./procedure-extensions.js";
 
 const CONTEST_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/contest.hbs`;
 const REGULAR_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/regular-contest.hbs`;
@@ -44,8 +45,11 @@ export interface ContestSide {
 }
 
 /** Rolls one side of a contest against its own effective score. */
-async function rollSide(side: ContestSide) {
-  const modifiers = (side.modifiers ?? []).filter((m) => m.value !== 0);
+async function rollSide(side: ContestSide, label = "") {
+  const given = side.modifiers ?? [];
+  // What the side's conditions and the modules add to its roll.
+  const added = successRollModifiers({ actor: side.actor, label, kind: "contest", skill: side.note ?? "", base: side.base, tags: ["contest"], modifiers: [...given] });
+  const modifiers = [...given, ...added].filter((m) => m.value !== 0);
   const effective = side.base + modifiers.reduce((sum, m) => sum + m.value, 0);
 
   const roll = new Roll("3d6");
@@ -216,8 +220,10 @@ export async function rollQuickContest(options: {
   first: ContestSide;
   second: ContestSide;
 }): Promise<ReturnType<typeof quickContest>> {
-  const first = await rollSide(options.first);
-  const second = await rollSide(options.second);
+  // A module's resolver may propose what each side rolls against.
+  const scores = resolveContestScores({ label: options.label, first: options.first, second: options.second, tags: ["quickContest"] });
+  const first = await rollSide({ ...options.first, ...scores.first }, options.label);
+  const second = await rollSide({ ...options.second, ...scores.second }, options.label);
   const result = quickContest(first.outcome, second.outcome);
 
   const winner =

@@ -23,6 +23,7 @@ import {
 } from "../rules/fright.js";
 import { resolveSuccess } from "../rules/success.js";
 import { traitsOf } from "./damage.js";
+import { successRollModifiers } from "./procedure-extensions.js";
 
 const FRIGHT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/fright.hbs`;
 
@@ -65,9 +66,12 @@ export async function rollFrightCheck(options: {
     return null;
   }
 
+  // What the actor's conditions and the modules add to the check.
+  const will = Number(actor?.system?.derived?.will) || 10;
+  const added = successRollModifiers({ actor, label: "Fright Check", kind: "attribute", skill: "", base: will, tags: ["fright", "will"], modifiers: [] });
   const target = frightTarget(
-    Number(actor?.system?.derived?.will) || 10,
-    modifier,
+    will,
+    modifier + added.reduce((total, line) => total + line.value, 0),
     traits.frightCheck,
   );
 

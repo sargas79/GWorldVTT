@@ -140,6 +140,12 @@ export function registerPostureSync(): void {
   Hooks.on("deleteActiveEffect", fromEffect(false));
 }
 
+/** A condition's name, localized, or null for an id that isn't one of the system's. */
+export function conditionLabel(id: string): string | null {
+  const condition = CONDITIONS.find((c) => c.id === id);
+  return condition ? game.i18n.localize(condition.label) : null;
+}
+
 /** Whether an actor is currently in a given state. */
 export function hasCondition(actor: any, id: string): boolean {
   return actor?.statuses?.has?.(id) === true;

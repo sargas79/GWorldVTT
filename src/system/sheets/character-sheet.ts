@@ -187,7 +187,19 @@ import {
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
 import { registeredManeuvers } from "../combat-extensions.js";
+import { setCondition } from "../conditions.js";
 import { bindSectionListeners, decorateItemRows, renderSections, runRowAction } from "../sheet-extensions.js";
+import {
+  activeConditions,
+  attackSequenceFor,
+  chooseManeuverOption,
+  grappleActionsFor,
+  maneuverOptionControl,
+  maneuverOptionsFor,
+  removeCondition,
+  runGrappleAction,
+  triggerManeuverResponse,
+} from "../procedure-extensions.js";
 import { SHEET_TABS, effectiveCost, effectiveWeight, itemSectionsFor, registeredItemType, runItemTypeAction, tabHasAddonSections, type SheetTab } from "../data-extensions.js";
 import { DRESS_STATES } from "../../rules/cinematic.js";
 import type { AcidContact, AcidLanding } from "../../rules/acid.js";
@@ -2809,6 +2821,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       createItem: GWorldCharacterSheet.#onCreateItem,
       addonItemAction: GWorldCharacterSheet.#onAddonItemAction,
       addonRowAction: GWorldCharacterSheet.#onAddonRowAction,
+      maneuverResponse: GWorldCharacterSheet.#onManeuverResponse,
+      grappleAction: GWorldCharacterSheet.#onGrappleAction,
+      removeTimedCondition: GWorldCharacterSheet.#onRemoveTimedCondition,
       browseCompendium: GWorldCharacterSheet.#onBrowseCompendium,
       openBuilder: GWorldCharacterSheet.#onOpenBuilder,
       awardPoints: GWorldCharacterSheet.#onAwardPoints,
@@ -3171,6 +3186,26 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           .filter((m) => system.maneuver === m.key || safeAvailable(() => m.available(this.actor)))
           .map((m) => ({ key: m.key, label: game.i18n.localize(m.label), selected: system.maneuver === m.key })),
       ],
+      // Options modules offer on the system's maneuvers, drawn as their controls.
+      addonManeuverOptions: maneuverOptionsFor(actor).map((o) => ({ ...o, control: maneuverOptionControl(o, this.isEditable) })),
+      // How many attacks the maneuver yields this turn, where a module made it more than one.
+      attackSequence: (() => {
+        const sequence = attackSequenceFor(actor);
+        return { ...sequence, shown: sequence.count > 1 };
+      })(),
+      // Timed conditions, with what they do and how long is left.
+      timedConditions: activeConditions(actor).map((c) => ({
+        id: c.id,
+        label: c.label,
+        effects: c.modifiers.map((m) => `${m.value >= 0 ? "+" : ""}${m.value} ${m.label}`).join(", "),
+        remaining: c.turnsLeft !== null
+          ? game.i18n.format("GWORLD.Condition.TurnsLeft", { turns: c.turnsLeft })
+          : c.untilRound !== null
+            ? game.i18n.format("GWORLD.Condition.UntilRound", { round: c.untilRound })
+            : c.untilTime !== null
+              ? game.i18n.format("GWORLD.Condition.SecondsLeft", { seconds: Math.max(0, Math.round(c.untilTime - (Number((game as any).time?.worldTime) || 0))) })
+              : "",
+      })),
       // The choice a module's maneuver asks for, where it asks for one.
       maneuverOptions: (registeredManeuvers().find((m) => m.key === system.maneuver)?.options ?? []).map((o) => ({
         key: o.key,
@@ -3321,6 +3356,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
       // The grapple this character is in, if any: what it allows is entirely
       // different depending on which end of it they are.
+      grappleActions: grappleActionsFor(this.actor, grappleOf(this.actor)),
       grapple: (() => {
         const held = grappleOf(this.actor);
         if (!held) return null;
@@ -3426,6 +3462,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // their buttons on item rows, for whoever owns the character.
     bindSectionListeners(this.element, this.actor, this);
     decorateItemRows(this.element, this.actor);
+    // A module's maneuver option is saved as it is chosen, outside the form.
+    for (const control of this.element.querySelectorAll<HTMLInputElement | HTMLSelectElement>("[data-maneuver-option]")) {
+      control.addEventListener("change", () => {
+        const value = control instanceof HTMLInputElement && control.type === "checkbox"
+          ? control.checked
+          : control instanceof HTMLInputElement && control.type === "number"
+            ? Number(control.value) || 0
+            : control.value;
+        void chooseManeuverOption(this.actor, String(control.dataset.maneuverOption), value);
+      });
+    }
 
     // Points and levels are edited in place. They are the numbers a character
     // is actually built out of, and having to open each item's own sheet to
@@ -5459,6 +5506,24 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const itemId = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     const key = target.dataset.addonAction;
     if (itemId && key) await runItemTypeAction(this.actor, itemId, key);
+  }
+
+  /** A response a module's option on the Wait maneuver holds ready. */
+  static async #onManeuverResponse(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.dataset.optionId;
+    if (id) await triggerManeuverResponse(this.actor, id);
+  }
+
+  /** A module's button on the grapple panel. */
+  static async #onGrappleAction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.dataset.grappleAction;
+    if (id) await runGrappleAction(this.actor, id, grappleOf(this.actor));
+  }
+
+  /** Takes a timed condition off before it runs out. */
+  static async #onRemoveTimedCondition(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.dataset.conditionId;
+    if (id) await removeCondition(this.actor, id, { setSystemCondition: setCondition });
   }
 
   /** A button an add-on module put on the row of one of the system's items. */

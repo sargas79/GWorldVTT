@@ -823,6 +823,10 @@
       "Modifiers": "Enhancements and limitations"
     },
     "Condition": {
+      "Timed": "Conditions",
+      "TurnsLeft": "{turns} turns",
+      "UntilRound": "until round {round}",
+      "SecondsLeft": "{seconds} s",
       "AllOutDefense": "All-Out Defense",
       "Stunned": "Stunned",
       "BlindToAttacker": "Blind to attacker",
@@ -1735,6 +1739,7 @@
       "foot": "Foot"
     },
     "Maneuver": {
+      "AddonOptions": "Options",
       "AnyDefense": "Any",
       "NoParry": "Dodge or Block only",
       "NoDefense": "None",
@@ -2195,6 +2200,7 @@
     },
     "Bleeding": {
       "Action": "Bleeding check",
+      "Interval": "rolled every {seconds} seconds",
       "Hint": "A minute of bleeding: HT at -1 per 5 HP already lost",
       "Title": "Bleeding",
       "PerFive": "per 5 HP lost",
@@ -3118,6 +3124,10 @@
       "Missing": "no roll"
     },
     "Attack": {
+      "SequenceTarget": "Attack {index} of {count}: target",
+      "SequenceLabel": "Attacks this turn",
+      "SequencePlace": "attack {index} of {count}",
+      "Target": "Target",
       "ImpairedMelee": "Taken off every melee attack roll (Characters p. 123)",
       "Lame": "Lame {penalty}",
       "LameHint": "Taken off every Melee Weapon and unarmed combat skill, and so off the parry (Characters p. 141)",

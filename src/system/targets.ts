@@ -6,9 +6,27 @@
  * the chat code and the roll code having to import each other.
  */
 
+/** Tokens standing in for the user's targets while one attack of a sequence is rolled. */
+let override: any[] | null = null;
+
 /** The tokens this user has targeted, which is how you say who you are attacking. */
 export function targetedTokens(): any[] {
+  if (override) return [...override];
   return [...(game.user?.targets ?? [])];
+}
+
+/**
+ * Rolls with these tokens as the targets, for an attack in a sequence that
+ * picked its own. Each is `{ actor, document }`, as a token placeable reads.
+ */
+export async function withTargets<T>(tokens: any[], run: () => Promise<T>): Promise<T> {
+  const previous = override;
+  override = tokens;
+  try {
+    return await run();
+  } finally {
+    override = previous;
+  }
 }
 
 /**
