@@ -17,13 +17,20 @@
  * and the writing to the sheet.
  */
 
+import { spellAttackKind } from "../rules/spell-attacks.js";
 import { SYSTEM_ID } from "./constants.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { applyFatigue } from "./fatigue.js";
 import { isRuleOn } from "./optional-rules.js";
 import { rollSuccess } from "./roll.js";
 import { targetedTokens } from "./targets.js";
-import { heldSpell, holdSpell, type HeldSpell } from "./held-spells.js";
+import {
+  heldSpell,
+  holdSpell,
+  type HeldSpell,
+  spellAttackOf,
+  strikeWithSpell,
+} from "./held-spells.js";
 import { postResistCard } from "./spell-resistance.js";
 import { penaltyForRoll } from "../rules/attribute-penalties.js";
 import {
@@ -487,6 +494,8 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
       startedAt: now,
       concentrating: false,
       permanent: false,
+      // What was put into it, which a jet's damage scales with each turn.
+      energy: casting.invested,
     };
     await actor.update({ "system.activeSpells": [...(actor.system.activeSpells ?? []), entry] });
   }
@@ -572,6 +581,13 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
     content,
     rolls,
   });
+
+  // A jet or a breath strikes as it takes effect (Magic p. 73): the attack is
+  // rolled now, after the casting that made it. A rain falls each second on
+  // whoever is in it, from the running spell's row.
+  if (outcome.success && !held && item.system.attack?.damage && spellAttackKind(shape.classes) === "jet") {
+    await strikeWithSpell(actor, spellAttackOf(item, casting.invested));
+  }
 
   return outcome;
 }

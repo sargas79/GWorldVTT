@@ -341,10 +341,15 @@ function validateItem(entry, file) {
       file, name, `energy castMax ${energy.castMax} is below cast ${energy.cast}`,
     );
     const attack = sys.attack ?? {};
-    const delivered = (sys.classes ?? []).some((c) => c === "missile" || c === "melee");
+    // Damage is delivered by a Missile or Melee spell, a Regular spell that
+    // attacks (a jet or a breath), or an Area spell that rains it; an
+    // Information, Enchantment or Blocking spell has nothing to hit with.
+    const classes = sys.classes ?? [];
+    const delivered = classes.some((c) => ["missile", "melee", "regular", "area"].includes(c))
+      && !classes.some((c) => ["information", "enchantment", "blocking"].includes(c));
     if (attack.damage) {
       check(parsesAsDice(attack.damage), file, name, `spell damage "${attack.damage}" does not parse`);
-      check(delivered, file, name, "spell carries damage but is neither Missile nor Melee");
+      check(delivered, file, name, "spell carries damage but has no class that delivers it");
     }
     if (attack.damageType) {
       check(DAMAGE_TYPES.has(attack.damageType), file, name, `unknown damage type "${attack.damageType}"`);

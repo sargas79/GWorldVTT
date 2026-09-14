@@ -11,6 +11,51 @@
 import type { DiceAdds } from "./types.js";
 import type { SkillAttribute } from "./types.js";
 
+/**
+ * The classes a spell's damage can be delivered by (GURPS Magic pp. 73-76,
+ * 187-198).
+ *
+ * A Missile is thrown and a Melee spell struck with (Characters p. 240). A
+ * Regular spell can be an attack too: Flame Jet "rolls versus DX-4 or Innate
+ * Attack skill to hit ... This attack may be dodged or blocked, but not
+ * parried", and so do the breaths and Lightning Stare. An Area spell can rain
+ * damage: Rain of Fire does "1d-1 fire damage per second to all within it".
+ * An Information, Enchantment or Blocking spell has nothing to hit with.
+ */
+export type SpellAttackKind = "missile" | "melee" | "jet" | "rain";
+
+export function spellAttackKind(classes: readonly string[]): SpellAttackKind | null {
+  if (classes.some((c) => c === "information" || c === "enchantment" || c === "blocking")) return null;
+  if (classes.includes("missile")) return "missile";
+  if (classes.includes("melee")) return "melee";
+  if (classes.includes("area")) return "rain";
+  if (classes.includes("regular")) return "jet";
+  return null;
+}
+
+/**
+ * A spell's damage as the data file writes it, as dice or nothing.
+ *
+ * "1d/1d+1" offers a choice, of which the first is taken; "Spec.", "HT" and
+ * "1d|HT" are the spell's own business, and are left for its text to explain.
+ */
+export function readSpellDamage(text: string): string {
+  const formula = String(text ?? "").replace(/^~/, "").trim();
+  if (formula.includes("|")) return "";
+  const first = formula.split("/")[0]!.trim();
+  return /^\d+d(?:[+-]\d+)?$/i.test(first) ? first : "";
+}
+
+/**
+ * A rain's damage for a creature that spent only part of the second in it:
+ * "if less than an entire second is spent in the affected area, damage is
+ * halved (round down)" (Magic p. 74).
+ */
+export function rainDamage(rolled: number, wholeSecond: boolean): number {
+  const basic = Math.max(0, Math.floor(rolled));
+  return wholeSecond ? basic : Math.floor(basic / 2);
+}
+
 /** "You cannot spend more than three seconds building up a Missile spell." */
 export const MISSILE_MAX_SECONDS = 3;
 

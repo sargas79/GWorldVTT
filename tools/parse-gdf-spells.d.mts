@@ -37,6 +37,12 @@ export declare function parseTime(raw: string | undefined): ParsedSpan;
 export declare function parseDuration(raw: string | undefined): ParsedSpan;
 export declare function parseClass(raw: string | undefined): ParsedClass;
 export declare function parseSkillUsed(raw: string | undefined): string;
+
+/** A spell's damage per point of energy, as dice or blank, and its type. */
+export declare function parseDamage(
+  damage: string | undefined,
+  damtype: string | undefined,
+): { damage: string; damageType: string; explosive: boolean };
 export declare function parseNeeds(raw: string | undefined, lookup: NeedsLookup): string;
 export declare function reference(page: string | undefined, prefix: string, book: string): string;
 export declare function spellName(raw: string): string;
