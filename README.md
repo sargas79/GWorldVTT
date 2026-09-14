@@ -552,11 +552,12 @@ and a hint `p.ihint`.
 
 ### Point pools, energy sources and spell attacks
 
-- **`points.registerPointPool({ module, key, label, pools, canPay?, pay })`.**
+- **`points.registerPointPool({ module, key, label, available?, pools, canPay?, pay })`.**
   Pools a character can spend points from, listed beside unspent character
   points wherever points are spent on outcomes: buying a success roll up, a
-  flesh wound, and a request for guidance. Registering one puts buying a roll
-  up in play.
+  flesh wound, and a request for guidance. A pool whose `available()` says so
+  (typically its switch; since 1.7.0) puts buying a roll up in play; while no
+  pool is available, nothing is offered.
   - `pools(actor, use, roll)` returns `{ id, label, available, gmCheck? }` for
     each pool that may pay for `use` (`buySuccess`, `fleshWound` or
     `guidance`). `roll.skill` names the skill of a roll being bought up, for
