@@ -107,6 +107,37 @@ describe("module fields on system documents", () => {
   });
 });
 
+describe("skill levels once all are known (#268)", () => {
+  const skill = (name: string, level: number | null) => ({ name, system: { derived: { level, fromDefault: false, bonusLines: [] as unknown[] } } });
+
+  it("writes what a listener changed, with its note in the level's breakdown", async () => {
+    const api = await load();
+    const lore = skill("Lore", 15);
+    const craft = skill("Craft", 11);
+    const levels: Record<string, number> = { Theory: 12 };
+    globals.Hooks = {
+      callAll: (_hook: string, context: { skills: Array<{ name: string; level: number | null; fromDefault: boolean; note?: string; source?: string }>; levelOf: (n: string) => number | null }) => {
+        const ceiling = context.levelOf("Theory")!;
+        for (const entry of context.skills) {
+          if (entry.name === "Lore" && entry.level !== null && entry.level > ceiling) Object.assign(entry, { level: ceiling, note: "Held to Theory", source: "test-addon" });
+        }
+      },
+    };
+    api.adjustSkillLevels({}, [lore, craft], (name) => levels[name] ?? null);
+    expect(lore.system.derived.level).toBe(12);
+    expect(lore.system.derived.bonusLines).toEqual([{ label: "Held to Theory", value: -3, source: "test-addon" }]);
+    expect(craft.system.derived).toEqual({ level: 11, fromDefault: false, bonusLines: [] });
+  });
+
+  it("changes nothing when a listener throws", async () => {
+    const api = await load();
+    const lore = skill("Lore", 15);
+    globals.Hooks = { callAll: (_hook: string, context: { skills: Array<{ level: number | null }> }) => { context.skills[0]!.level = 1; throw new Error("boom"); } };
+    api.adjustSkillLevels({}, [lore], () => null);
+    expect(lore.system.derived.level).toBe(15);
+  });
+});
+
 describe("module item types", () => {
   const actor = (items: unknown[]) => ({ items, get: undefined });
 

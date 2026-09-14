@@ -18,6 +18,8 @@ class FakeElement {
   type = "";
   title = "";
   listeners: Array<(event: { preventDefault(): void }) => unknown> = [];
+  value = "";
+  checked = false;
   constructor(dataset: Record<string, string> = {}) { Object.assign(this.dataset, dataset); }
   setAttribute(name: string, value: string) { this.attributes.set(name, value); }
   hasAttribute(name: string) { return this.attributes.has(name); }
@@ -188,6 +190,59 @@ describe("chat cards", () => {
     const fake = el({}, text, el({ addonCardAction: "resist" }));
     await api.addAddonCardControls({ getFlag: () => ({ card: "gone.curse", data: {}, actorUuid: null }) }, fake as unknown as HTMLElement);
     expect(fake.children).toEqual([text]);
+  });
+
+  it("calls an input's handler on change for those who may use it, and disables it for the rest (#268)", async () => {
+    const api = await load();
+    const setting = vi.fn();
+    const ruling = vi.fn();
+    api.registerChatCard({
+      module: "test-addon", key: "working", template: "working.hbs",
+      actions: { setting, ruling: { permission: "gm", run: ruling } },
+    });
+    globals.fromUuid = async () => hero;
+    globals.game = { user: owner };
+    const message = { getFlag: () => ({ card: "test-addon.working", data: { step: 1 }, actorUuid: "Actor.hero" }) };
+    const box = el({ addonCardInput: "setting" });
+    box.checked = true;
+    box.value = "on";
+    const gmOnly = el({ addonCardInput: "ruling" });
+    const fake = el({}, box, gmOnly);
+    await api.addAddonCardControls(message, fake as unknown as HTMLElement);
+    expect(fake.children).toHaveLength(2);
+    expect(gmOnly.hasAttribute("disabled")).toBe(true);
+    expect(box.hasAttribute("disabled")).toBe(false);
+    box.click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(setting).toHaveBeenCalledWith(expect.objectContaining({ data: { step: 1 }, value: "on", checked: true }));
+    expect(ruling).not.toHaveBeenCalled();
+  });
+
+  it("redraws a card with new data for its owner or the GM, and for nobody else (#268)", async () => {
+    const api = await load();
+    api.registerChatCard({ module: "test-addon", key: "working", template: "working.hbs" });
+    globals.fromUuid = async () => hero;
+    const update = vi.fn(async () => undefined);
+    const message = {
+      getFlag: () => ({ card: "test-addon.working", data: { step: 1, gone: true }, actorUuid: "Actor.hero" }),
+      canUserModify: (user: { id: string }) => user.id !== "p3",
+      update,
+    };
+    globals.game = { user: stranger };
+    expect(await api.updateChatCard(message, { step: 2, label: "Two" })).toBe(false);
+    globals.game = { user: { id: "p3", isGM: false } };
+    expect(await api.updateChatCard({ ...message, getFlag: () => ({ card: "test-addon.working", data: {}, actorUuid: null }), author: { id: "p3" } }, {})).toBe(false);
+    expect(update).not.toHaveBeenCalled();
+
+    globals.game = { user: owner };
+    expect(await api.updateChatCard(message, { step: 2, label: "Two" })).toBe(true);
+    expect(update).toHaveBeenCalledWith({
+      content: '<div class="gworld gworld-chat addon-card" data-addon-card="test-addon.working"><p>working.hbs:Two:undefined</p></div>',
+      flags: { gworld: { addonCard: { card: "test-addon.working", data: { step: 2, label: "Two" }, actorUuid: "Actor.hero" } } },
+    });
+    globals.game = { user: gm };
+    expect(await api.updateChatCard(message, { step: 3 })).toBe(true);
+    expect(await api.updateChatCard({ getFlag: () => ({ card: "gone.card", data: {}, actorUuid: null }), update }, {})).toBe(false);
   });
 
   it("refuses an action with an unknown permission", async () => {

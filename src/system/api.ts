@@ -52,12 +52,13 @@ import { rollQuickContest, rollRegularContest } from "./contest.js";
 import { activeRules, isRuleOn } from "./optional-rules.js";
 import { REGISTER_RULES_HOOK, isAddonRuleKey, namespacedRuleKey, registerRule, registerRuleGroup } from "./rule-registry.js";
 import { rollDamage, rollSuccess } from "./roll.js";
+import { postResistance } from "./spell-resistance.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.8.0";
+export const API_VERSION = "1.9.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -192,8 +193,8 @@ export interface GWorldApi {
   readonly chat: typeof chatApi;
   /** Point pools (since 1.4.0). */
   readonly points: typeof pointsApi;
-  /** Energy sources and spell attacks (since 1.4.0). */
-  readonly magic: typeof magicApi;
+  /** Energy sources and spell attacks (since 1.4.0), and resistance cards (since 1.9.0). */
+  readonly magic: typeof magic;
   /** Moving world data from the system into a module (since 1.6.0). */
   readonly migration: typeof migrationApi;
   /** The hooks the API fires, by name. */
@@ -216,6 +217,9 @@ const combat = Object.freeze({
   hooks: Object.freeze({ ...combatApi.hooks, ...PROCEDURE_HOOKS }),
 });
 
+/** The magic namespace: energy sources and spell attacks, and from 1.9.0 resistance cards. */
+const magic = Object.freeze({ ...magicApi, postResistance });
+
 /** Builds the frozen API object. */
 export function createApi(): GWorldApi {
   return Object.freeze({
@@ -229,7 +233,7 @@ export function createApi(): GWorldApi {
     data: dataApi,
     sheets: sheetsApi,
     points: pointsApi,
-    magic: magicApi,
+    magic,
     migration: migrationApi,
     chat: chatApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK }),

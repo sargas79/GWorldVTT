@@ -10,7 +10,8 @@
  *   - **Attack options** and **extra-effort options**, shown in the attack
  *     dialog: each can change the roll, the defender's rolls, the damage, and
  *     what counts as a critical.
- *   - **Defense options**, shown on the defense card beside Retreat.
+ *   - **Defense options**, shown on the defense card beside Retreat, and
+ *     **defenses** of a module's own, which it resolves itself.
  *   - **Hit locations**, offered in the attack dialog and on the damage card,
  *     each built on one of the Basic Set's locations with what it changes.
  *   - **Hooks** on the attack, defense and damage rolls, on a blow about to
@@ -346,6 +347,72 @@ export function registerDefenseOption(registration: DefenseOptionRegistration): 
     fp: 0,
   });
   return key;
+}
+
+// ── a module's own defenses ────────────────────────────────────────────────
+
+/** One way to defend a module offers a defender: a button on the defense card. */
+export interface ModuleDefenseChoice {
+  id: string;
+  label: string;
+  hint?: string;
+}
+
+export interface DefenseRegistration {
+  module: string;
+  key: string;
+  label: string;
+  /** The ways this defender may defend with it against this attack (its label). None, and no button shows. */
+  choices: (defender: any, attack: string) => ModuleDefenseChoice[];
+  /** Resolves the defense and posts its result. */
+  run: (context: { defender: any; attack: string; choice: ModuleDefenseChoice; message: any }) => unknown;
+}
+
+const defenses = new Map<string, Required<DefenseRegistration> & { id: string }>();
+
+/** Registers a defense a module resolves itself. Returns its `<module>.<key>`, or null. */
+export function registerDefense(registration: DefenseRegistration): string | null {
+  const r = registration ?? ({} as DefenseRegistration);
+  const what = `defense ${r.module}.${r.key}`;
+  const bad = checkNames(what, r.module, r.key, r.label);
+  if (bad) return refuse(what, bad);
+  if (typeof r.choices !== "function") return refuse(what, "it has no choices function");
+  if (typeof r.run !== "function") return refuse(what, "it has no run function");
+  const id = `${r.module}.${r.key}`;
+  if (defenses.has(id)) return refuse(what, "that key is already registered");
+  defenses.set(id, { ...r, label: r.label.trim(), id });
+  return id;
+}
+
+/** The module defenses a defender is offered against an attack, each with how to run it. */
+export function moduleDefensesFor(defender: any, attack: string): Array<ModuleDefenseChoice & { defense: string; run: (message: any) => Promise<void> }> {
+  const out: Array<ModuleDefenseChoice & { defense: string; run: (message: any) => Promise<void> }> = [];
+  for (const defense of defenses.values()) {
+    let choices: ModuleDefenseChoice[] = [];
+    try {
+      const listed = defense.choices(defender, attack);
+      choices = Array.isArray(listed) ? listed : [];
+    } catch (error) {
+      console.warn(`gworld | defense ${defense.id} failed to list its choices`, error);
+    }
+    for (const choice of choices) {
+      if (typeof choice?.id !== "string" || typeof choice.label !== "string" || !choice.label.trim()) continue;
+      out.push({
+        id: choice.id,
+        label: choice.label,
+        ...(typeof choice.hint === "string" ? { hint: choice.hint } : {}),
+        defense: defense.id,
+        run: async (message: any) => {
+          try {
+            await defense.run({ defender, attack, choice, message });
+          } catch (error) {
+            console.warn(`gworld | defense ${defense.id} failed`, error);
+          }
+        },
+      });
+    }
+  }
+  return out;
 }
 
 /** Registers an extra-effort option: an attack or defense option that costs FP. Returns its key, or null. */
@@ -797,6 +864,7 @@ export const combatApi = Object.freeze({
   registerManeuver,
   registerAttackOption,
   registerDefenseOption,
+  registerDefense,
   registerExtraEffort,
   registerHitLocation,
   getCombatState,

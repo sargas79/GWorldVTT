@@ -51,6 +51,42 @@ interface ResistFlag {
    * plus any Magic Resistance" (Monster Hunters 1 p. 36).
    */
   ritual?: boolean;
+  /** The attributes whose best the subject resists with, for a module's effect. */
+  resistWith?: string[];
+  /** False where the Rule of 16 does not cap the caster. */
+  ruleOf16?: boolean;
+}
+
+/**
+ * A module's effect, resisted on the system's card (API 1.9.0): the subjects
+ * resist with the best of `resistWith` (Will when it is left out), plus Magic
+ * Resistance unless `magical` is false.
+ */
+export function postResistance(options: {
+  caster: any;
+  label: string;
+  casterRoll: number;
+  casterEffective: number;
+  subjects: any[];
+  resistWith?: string[];
+  magical?: boolean;
+  area?: boolean;
+  ruleOf16?: boolean;
+}): Promise<void> {
+  const resistWith = (options?.resistWith ?? ["Will"]).filter((name) => resistanceAttribute(String(name)) !== null);
+  const names = resistWith.length ? resistWith : ["Will"];
+  return postResistCard({
+    caster: options.caster,
+    spell: String(options.label ?? ""),
+    casterRoll: Number(options.casterRoll) || 0,
+    casterEffective: Number(options.casterEffective) || 0,
+    resistedBy: names.join(" / "),
+    area: Boolean(options.area),
+    subjects: options.subjects ?? [],
+    resistWith: names,
+    ...(options.magical === false ? { magical: false } : {}),
+    ...(options.ruleOf16 === false ? { ruleOf16: false } : {}),
+  });
 }
 
 /** Posts the caster's half of a Resisted spell, with a roll for each subject. */
@@ -66,6 +102,10 @@ export async function postResistCard(options: {
   magical?: boolean;
   /** A ritual, resisted with the better of HT or Will. */
   ritual?: boolean;
+  /** The attributes whose best the subject resists with. */
+  resistWith?: string[];
+  /** False where the Rule of 16 does not cap the caster. */
+  ruleOf16?: boolean;
 }): Promise<void> {
   const flag: ResistFlag = {
     spell: options.spell,
@@ -80,6 +120,8 @@ export async function postResistCard(options: {
     })),
     ...(options.magical === false ? { magical: false } : {}),
     ...(options.ritual ? { ritual: true } : {}),
+    ...(options.resistWith?.length ? { resistWith: [...options.resistWith] } : {}),
+    ...(options.ruleOf16 === false ? { ruleOf16: false } : {}),
   };
 
   const content = await foundry.applications.handlebars.renderTemplate(RESIST_TEMPLATE, {
@@ -127,11 +169,8 @@ export async function addResistControls(message: any, html: HTMLElement): Promis
     who.textContent = String(subject.name ?? entry.name);
     row.append(who);
 
-    const attribute = resistanceAttribute(flag.resistedBy);
     const resistance = flag.magical === false ? 0 : Number(subject.system?.derived?.magic?.magicResistance ?? 0) || 0;
-    const score = flag.ritual
-      ? ritualResistance({ ht: attributeOf(subject, "HT"), will: attributeOf(subject, "Will"), magicResistance: 0 })
-      : attribute === null ? null : attributeOf(subject, attribute);
+    const score = resistingScore(subject, flag);
 
     const button = document.createElement("button");
     button.type = "button";
@@ -146,6 +185,20 @@ export async function addResistControls(message: any, html: HTMLElement): Promis
     row.append(button);
     root.append(row);
   }
+}
+
+/**
+ * What a subject resists with, before Magic Resistance: the best of the
+ * attributes a module named, the better of HT and Will for a ritual, or the
+ * attribute the spell's record names. Null where the record names something
+ * else, and the subject is asked.
+ */
+function resistingScore(subject: any, flag: ResistFlag): number | null {
+  const named = (flag.resistWith ?? []).map((name) => resistanceAttribute(name)).filter((a): a is NonNullable<typeof a> => a !== null);
+  if (named.length) return Math.max(...named.map((attribute) => attributeOf(subject, attribute)));
+  if (flag.ritual) return ritualResistance({ ht: attributeOf(subject, "HT"), will: attributeOf(subject, "Will"), magicResistance: 0 });
+  const attribute = resistanceAttribute(flag.resistedBy);
+  return attribute === null ? null : attributeOf(subject, attribute);
 }
 
 /** A subject's score in an attribute, Will and Per included. */
@@ -163,10 +216,7 @@ function attributeOf(subject: any, attribute: string): number {
  * "Will or skill", a lock -- the subject is asked for the score.
  */
 async function rollResistance(subject: any, flag: ResistFlag): Promise<void> {
-  const attribute = resistanceAttribute(flag.resistedBy);
-  let score: number | null = flag.ritual
-    ? ritualResistance({ ht: attributeOf(subject, "HT"), will: attributeOf(subject, "Will"), magicResistance: 0 })
-    : attribute === null ? null : attributeOf(subject, attribute);
+  let score: number | null = resistingScore(subject, flag);
   if (score === null) {
     score = await promptForNumber({
       title: `${L("Resist")} ${flag.spell}`,
@@ -183,7 +233,7 @@ async function rollResistance(subject: any, flag: ResistFlag): Promise<void> {
   // The Rule of 16 (Campaigns p. 349), for a living or sapient subject; "There
   // is no such limit if the subject is a spell" (p. 241).
   const capped =
-    isRuleOn("ruleOf16") && subjectIsLiving(flag.resistedBy)
+    isRuleOn("ruleOf16") && flag.ruleOf16 !== false && (flag.resistWith?.length ? true : subjectIsLiving(flag.resistedBy))
       ? ruleOf16(flag.casterEffective, target)
       : flag.casterEffective;
   const caster = resolveSuccess(flag.casterRoll, capped);

@@ -198,6 +198,27 @@ describe("hit locations", () => {
   });
 });
 
+describe("a module's own defenses (#268)", () => {
+  it("offers each choice a module lists for this defender, and runs the one chosen", async () => {
+    const api = await load();
+    const run = vi.fn();
+    expect(api.registerDefense({
+      module: "test-addon", key: "ward", label: "Ward",
+      choices: (defender: { name: string }, attack: string) => (defender.name === "Mage" ? [{ id: "a", label: `Ward vs ${attack}` }, { id: "", label: "" } as never] : []),
+      run,
+    })).toBe("test-addon.ward");
+    expect(api.registerDefense({ module: "test-addon", key: "ward", label: "Again", choices: () => [], run })).toBeNull();
+    expect(api.registerDefense({ module: "test-addon", key: "bad", label: "Bad", run } as never)).toBeNull();
+    api.registerDefense({ module: "test-addon", key: "broken", label: "Broken", choices: () => { throw new Error("no"); }, run });
+
+    expect(api.moduleDefensesFor({ name: "Fighter" }, "Broadsword swing")).toEqual([]);
+    const offered = api.moduleDefensesFor({ name: "Mage" }, "Broadsword swing");
+    expect(offered.map((d) => [d.defense, d.id, d.label])).toEqual([["test-addon.ward", "a", "Ward vs Broadsword swing"]]);
+    await offered[0]!.run({ id: "message" });
+    expect(run).toHaveBeenCalledWith({ defender: { name: "Mage" }, attack: "Broadsword swing", choice: { id: "a", label: "Ward vs Broadsword swing" }, message: { id: "message" } });
+  });
+});
+
 describe("hooks and state", () => {
   it("survives a listener that throws", async () => {
     const api = await load();
