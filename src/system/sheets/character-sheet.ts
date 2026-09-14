@@ -187,6 +187,7 @@ import {
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
 import { registeredManeuvers } from "../combat-extensions.js";
+import { bindSectionListeners, decorateItemRows, renderSections, runRowAction } from "../sheet-extensions.js";
 import { SHEET_TABS, effectiveCost, effectiveWeight, itemSectionsFor, registeredItemType, runItemTypeAction, tabHasAddonSections, type SheetTab } from "../data-extensions.js";
 import { DRESS_STATES } from "../../rules/cinematic.js";
 import type { AcidContact, AcidLanding } from "../../rules/acid.js";
@@ -2806,6 +2807,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       toggleCondition: GWorldCharacterSheet.#onToggleCondition,
       createItem: GWorldCharacterSheet.#onCreateItem,
       addonItemAction: GWorldCharacterSheet.#onAddonItemAction,
+      addonRowAction: GWorldCharacterSheet.#onAddonRowAction,
       browseCompendium: GWorldCharacterSheet.#onBrowseCompendium,
       openBuilder: GWorldCharacterSheet.#onOpenBuilder,
       awardPoints: GWorldCharacterSheet.#onAwardPoints,
@@ -3414,6 +3416,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   override async _onRender(context: object, options: object): Promise<void> {
     await super._onRender(context, options);
 
+    // What add-on modules put on the sheet: their sections' listeners and
+    // their buttons on item rows, for whoever owns the character.
+    bindSectionListeners(this.element, this.actor, this);
+    decorateItemRows(this.element, this.actor);
+
     // Points and levels are edited in place. They are the numbers a character
     // is actually built out of, and having to open each item's own sheet to
     // change one made spending points a chore rather than the point.
@@ -3766,6 +3773,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (partContext.tabs && partId in partContext.tabs) partContext.tab = partContext.tabs[partId];
     // The lists of item types add-on modules registered for this tab.
     partContext.addonSections = (SHEET_TABS as readonly string[]).includes(partId) ? itemSectionsFor(this.actor, partId as SheetTab) : [];
+    // And the sections they registered for it, rendered from their templates.
+    partContext.addonSheetSections = (SHEET_TABS as readonly string[]).includes(partId)
+      ? await renderSections("character", partId, this.actor, this)
+      : { start: [], end: [] };
     return partContext;
   }
 
@@ -5442,6 +5453,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const itemId = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     const key = target.dataset.addonAction;
     if (itemId && key) await runItemTypeAction(this.actor, itemId, key);
+  }
+
+  /** A button an add-on module put on the row of one of the system's items. */
+  static async #onAddonRowAction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const itemId = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const id = target.dataset.addonRowAction;
+    if (itemId && id) await runRowAction(this.actor, itemId, id);
   }
 
   static async #onEditItem(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

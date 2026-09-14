@@ -22,6 +22,7 @@
   </header>
 
   <div class="isbody">
+    {{> "gworld.addonSheetSections" sections=addonSheetSections.start}}
     <div class="isub">
       {{#each fields as |row|}}
         {{{row}}}
@@ -38,5 +39,6 @@
                       {{#unless editable}}disabled{{/unless}}>{{{description}}}</prose-mirror>
       </div>
     {{/if}}
+    {{> "gworld.addonSheetSections" sections=addonSheetSections.end}}
   </div>
 </div>

@@ -9,6 +9,7 @@
  */
 
 import { SYSTEM_ID } from "../constants.js";
+import { bindSectionListeners, renderSections } from "../sheet-extensions.js";
 
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -64,7 +65,13 @@ export class GWorldGenericItemSheet extends HandlebarsApplicationMixin(ItemSheet
       ? await foundry.applications.ux.TextEditor.implementation.enrichHTML(description, { relativeTo: item, secrets: item.isOwner })
       : "";
     context.descriptionSource = typeof description === "string" ? description : "";
+    context.addonSheetSections = await renderSections("item", "body", item, this);
     return context;
+  }
+
+  override async _onRender(context: object, options: object): Promise<void> {
+    await super._onRender(context, options);
+    bindSectionListeners(this.element, this.item, this);
   }
 
   static async #onEditImage(this: GWorldGenericItemSheet) {

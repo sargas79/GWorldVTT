@@ -46,6 +46,7 @@ const ICONS: Record<string, string> = {
 const FILE_PARTIALS: Record<string, string> = {
   "gworld.templateEntry": `systems/${SYSTEM_ID}/templates/item/template-entry.hbs`,
   "gworld.addonSections": `systems/${SYSTEM_ID}/templates/actor/addon-sections.hbs`,
+  "gworld.addonSheetSections": `systems/${SYSTEM_ID}/templates/actor/addon-sheet-sections.hbs`,
 };
 
 /** Loads the partials that live in files. Awaited during init. */

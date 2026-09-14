@@ -34,6 +34,7 @@ import {
 import { resolveSuccess } from "../../rules/success.js";
 import { SYSTEM_ID } from "../constants.js";
 import { registeredTechniqueKinds } from "../data-extensions.js";
+import { bindSectionListeners, renderSections } from "../sheet-extensions.js";
 import { sourceCollections } from "../compendium-sources.js";
 import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
 import { isRuleOn } from "../optional-rules.js";
@@ -233,12 +234,19 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     body: { template: `${TEMPLATE_ROOT}/item-sheet.hbs`, scrollable: [""] },
   };
 
+  override async _onRender(context: object, options: object): Promise<void> {
+    await super._onRender(context, options);
+    bindSectionListeners(this.element, this.item, this);
+  }
+
   override async _prepareContext(options: object): Promise<Record<string, unknown>> {
     const context = (await super._prepareContext(options)) as Record<string, unknown>;
     const item = this.item;
 
     context.item = item;
     context.system = item.system;
+    // Sections add-on modules registered for the item sheet.
+    context.addonSheetSections = await renderSections("item", "body", item, this);
     context.editable = this.isEditable;
     context.type = item.type;
     context.isPhysical = PHYSICAL_TYPES.has(item.type);
