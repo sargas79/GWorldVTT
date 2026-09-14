@@ -1,0 +1,18 @@
+name: Book-neutral
+
+# The system is the Basic Set: nothing it ships cites another book's pages or
+# names an add-on module. See "What belongs in the system" in the README.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node tools/check-book-neutral.mjs

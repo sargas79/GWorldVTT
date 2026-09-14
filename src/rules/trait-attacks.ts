@@ -14,8 +14,8 @@
  *     Contest, and "the target's DR has no effect". Its price sets which range
  *     penalty it takes.
  *
- * Monster Hunters 1's powers use both -- Cryokinesis is "1d-1 per level" of
- * fatigue by Malediction 2 (p. 46) -- which is why this was needed.
+ * A power from a data file may use both: fatigue damage per level, by
+ * Malediction 2.
  */
 
 import { formatDiceAdds, parseDiceAdds } from "./dice.js";

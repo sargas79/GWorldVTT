@@ -30,7 +30,7 @@ import {
 
 describe("reference", () => {
   it("cites the book being read, and only that book", () => {
-    expect(reference("MA52, B203", "MA", "Martial Arts")).toBe("Martial Arts p. 52");
+    expect(reference("MA52, B203", "MA", "Test Book")).toBe("Test Book p. 52");
     expect(reference("B203, MA52", "B", "Basic Set: Characters")).toBe("Basic Set: Characters p. 203");
   });
 
@@ -54,33 +54,33 @@ describe("reference", () => {
   });
 
   it("leaves a supplement's pages under its own name, however high they run", () => {
-    expect(reference("MA400", "MA", "Martial Arts")).toBe("Martial Arts p. 400");
-    expect(reference("B400, MA52", "MA", "Martial Arts")).toBe("Martial Arts p. 52");
+    expect(reference("MA400", "MA", "Test Book")).toBe("Test Book p. 400");
+    expect(reference("B400, MA52", "MA", "Test Book")).toBe("Test Book p. 52");
   });
 
   it("names the book alone when the record cites no page of it", () => {
-    expect(reference("B203", "MA", "Martial Arts")).toBe("Martial Arts");
+    expect(reference("B203", "MA", "Test Book")).toBe("Test Book");
     expect(reference(undefined, "B", "Basic Set: Characters")).toBe("Basic Set: Characters");
   });
 
   it("does not mistake one prefix for the start of another", () => {
-    expect(reference("LTC12", "LT", "Low-Tech")).toBe("Low-Tech");
-    expect(reference("LT12", "LT", "Low-Tech")).toBe("Low-Tech p. 12");
+    expect(reference("LTC12", "LT", "Old Tools")).toBe("Old Tools");
+    expect(reference("LT12", "LT", "Old Tools")).toBe("Old Tools p. 12");
   });
 
   // GCA writes a numbered series as `MH1:23`, and the prefix is the same
   // whether or not whoever runs the parser types the colon.
   it("reads a citation written with a colon, given the prefix either way", () => {
-    expect(reference("MH1:23", "MH1", "Monster Hunters 1")).toBe("Monster Hunters 1 p. 23");
-    expect(reference("MH1:23", "MH1:", "Monster Hunters 1")).toBe("Monster Hunters 1 p. 23");
-    expect(reference("MH1:41, MH1:42", "MH1", "Monster Hunters 1")).toBe("Monster Hunters 1 p. 41, 42");
+    expect(reference("MH1:23", "MH1", "Test Series 1")).toBe("Test Series 1 p. 23");
+    expect(reference("MH1:23", "MH1:", "Test Series 1")).toBe("Test Series 1 p. 23");
+    expect(reference("MH1:41, MH1:42", "MH1", "Test Series 1")).toBe("Test Series 1 p. 41, 42");
     expect(reference("B:203", "B", "Basic Set: Characters")).toBe("Basic Set: Characters p. 203");
   });
 
   it("does not read one numbered book as another", () => {
-    // Dungeon Fantasy 11 is not page 15 of Dungeon Fantasy 1...
-    expect(reference("DF11:5", "DF1", "Dungeon Fantasy 1")).toBe("Dungeon Fantasy 1");
-    // ...and Monster Hunters 1 is not page 1 of a book called "MH".
+    // Test Series 11 is not page 15 of Test Series 1...
+    expect(reference("DF11:5", "DF1", "Test Series 1")).toBe("Test Series 1");
+    // ...and a numbered book is not page 1 of a book called "MH".
     expect(reference("MH1:23", "MH", "MH")).toBe("MH");
   });
 });
@@ -150,7 +150,7 @@ describe("entryName", () => {
 });
 
 describe("a Talent's skills", () => {
-  // As the Monster Hunters 1 file writes them, in two sections of the file.
+  // As a supplement's file writes them, in two sections of the file.
   const text = [
     "[ADVANTAGES]",
     '"Craftiness", 5/10, gives(+1 To GR:Craftiness), page(MH1:25), cat(Mundane, Mental, Talents)',
@@ -193,7 +193,7 @@ describe("a Talent's skills", () => {
 });
 
 describe("the power a record belongs to", () => {
-  // Monster Hunters 1 files its powers as "_MH <power>", and its psionics as
+  // A supplement may file its powers as "_MH <power>", and its psionics as
   // "_MH Psionics - <power>"; the book's pattern says so.
   const pattern = /^_MH (?:Psionics - )?(.+)$/;
 
@@ -232,7 +232,7 @@ describe("the attack an advantage is", () => {
   });
 
   it("reads Speed/Range as the second Malediction, rolled against the attribute named", () => {
-    // Monster Hunters 1's Cryokinesis: "1d-1 fatigue damage per level".
+    // An attack bought as "1d-1 fatigue damage per level".
     const cryokinesis = new Map([
       ["damage", "$solver(%level)d-$solver(%level)"], ["damtype", "fat"],
       ["rangemax", "Speed/Range"], ["skillused", "Will"],
@@ -309,7 +309,7 @@ describe("the skill a weapon is used with (#174)", () => {
     expect(parseSkillUsed("ST:DX-4, SK:Shield (Buckler)-2, SK:Shield (Shield)")).toBe("Shield (Shield)");
   });
 
-  it("reads a bare name, as Monster Hunters 1 writes them", () => {
+  it("reads a bare name, as some supplements write them", () => {
     expect(parseSkillUsed("Gun!, Guns (Submachine Gun), DX-4, Guns (Pistol)-2")).toBe("Guns (Submachine Gun)");
     expect(parseSkillUsed("Knife, DX-4, Force Sword-3")).toBe("Knife");
   });

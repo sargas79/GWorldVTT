@@ -186,7 +186,7 @@ export function resolveTechnique(options: {
 }
 
 /**
- * What a technique may default from (Martial Arts pp. 65-89; Characters p. 232).
+ * What a technique may default from (Characters p. 232).
  *
  * Most techniques come off a skill's level. Defensive ones come off the Parry
  * or Block that skill gives -- "Default: prerequisite skill Parry-1" -- or off
@@ -213,7 +213,7 @@ export interface TechniqueDefaultOption {
  * A technique with more than one default, at the best of them.
  *
  * "Defaults: Binding, DX-2, Judo-1, or Wrestling-2; cannot exceed Binding, DX,
- * Judo, or Wrestling" (Martial Arts p. 73): each default is bought up from
+ * Judo, or Wrestling": each default is bought up from
  * its own base and capped against that same base, and the character uses
  * whichever comes out highest -- as a skill with several defaults does. Null
  * when the character has none of the bases.

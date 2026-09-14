@@ -64,7 +64,7 @@ export declare function weaponClassOf(mods: string | undefined): "" | "sword" | 
 export declare function fullLoad(shots: string | undefined): number;
 export declare function costOfLivingPercent(text: string | undefined): number;
 export declare function displayWeight(text: string | undefined): number;
-/** The page reference for one book: "Martial Arts p. 52". */
+/** The page reference for one book: "My Book p. 52". */
 export declare function reference(page: string | undefined, prefix: string, book: string): string;
 
 /** A page prefix as the book prints it, without GCA's colon: "MH1:" is "MH1". */

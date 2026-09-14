@@ -115,7 +115,7 @@ describe("the spell parser's readings", () => {
     expect(parseEnergy("1 to 4/S")).toMatchObject({ cast: 1, castMax: 4, maintain: null });
   });
 
-  // GURPS Magic's enchantments cost a thousand or more, written with a
+  // A supplement's enchantments may cost a thousand or more, written with a
   // separator (sargas79/GWorldVTT#191).
   it("reads a cost written with a thousands separator as the whole number", () => {
     expect(parseEnergy("1,000")).toEqual({ cast: 1000, castMax: 1000, maintain: null, text: "1,000" });
@@ -152,7 +152,7 @@ describe("the spell parser's readings", () => {
 
   it("cites the page of the book being read", () => {
     expect(reference("M74, B247", "B", "Basic Set: Characters")).toBe("Basic Set: Characters p. 247");
-    expect(reference("M74, B247", "M", "Magic")).toBe("Magic p. 74");
+    expect(reference("M74, B247", "M", "Spellbook")).toBe("Spellbook p. 74");
     expect(reference("", "B", "Basic Set: Characters")).toBe("Basic Set: Characters");
   });
 

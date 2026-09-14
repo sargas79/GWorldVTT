@@ -13,7 +13,7 @@ import { describeEffects, modifiersOfRitual, ritualCost } from "../rules/ritual-
 
 /**
  * A technique's default as the book writes it: "Karate-2", "Judo Parry-1",
- * "Dodge-2", "ST-4" (Martial Arts pp. 65-89). Empty where it names nothing.
+ * "Dodge-2", "ST-4". Empty where it names nothing.
  */
 export function techniqueDefaultLabel(
   options: { from: string; skill: string; modifier: number },

@@ -36,7 +36,7 @@ describe("describePowers", () => {
     expect(five?.talentPoints).toBe(25);
   });
 
-  // Monster Hunters 1 p. 40: a book's own power, its Talent up to six levels,
+  // A book's own power, its Talent up to six levels as its entry allows,
   // and every roll to use it at the Talent's bonus.
   it("describes a book's own power, with the rolls to use it", () => {
     const [mysticism] = describePowers(

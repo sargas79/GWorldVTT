@@ -8,8 +8,7 @@
  * before this ever sees it, as with every other pack.
  *
  * Kept apart from `parse-gdf.mjs` so that a module carrying another book's
- * spells -- GURPS Magic, Thaumatology -- can build its pack with the same
- * tool: point it at the GDF, name the page prefix that book uses, and say
+ * spells can build its pack with the same tool: point it at the GDF, name the page prefix that book uses, and say
  * where the JSON should go.
  *
  * Usage:

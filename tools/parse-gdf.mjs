@@ -172,7 +172,7 @@ export function talentSkillsOf(name, f, groups) {
  * The power a trait belongs to, and whether it is the power's Talent.
  *
  * GCA files a power's abilities and its Talent under a category of their own,
- * and each book names those categories its own way: Monster Hunters 1 writes
+ * and each book names those categories its own way: a book may write
  * "_MH Bioenhancement" and "_MH Psionics - ESP". So the book says how, with a
  * pattern whose first group is the power's name -- "^_MH (?:Psionics - )?(.+)$"
  * -- and a Talent is the record GCA also files under "Talents - Powers". With
@@ -191,8 +191,8 @@ export function powerOfRecord(f, pattern) {
  * The attack an advantage is, as a ranged mode (Characters pp. 61, 106).
  *
  * GCA writes an Innate Attack's damage per level -- `damage($solver(%level)d)`,
- * or `$solver(%level)d-$solver(%level)` for Monster Hunters 1's "1d-1 per level"
- * Cryokinesis -- with the weapon columns beside it. A range of "Speed/Range"
+ * or `$solver(%level)d-$solver(%level)` for an attack of "1d-1 per level"
+ * -- with the weapon columns beside it. A range of "Speed/Range"
  * is a Malediction taking the Size and Speed/Range Table, which is Malediction
  * 2 (p. 106), and it has no range statistics of its own. Where the skill is a
  * blank the player picks (`%examplealiaslist%`), Innate Attack (Projectile) is
@@ -281,9 +281,9 @@ export { assertCitesBook, bookPrefix, groupsOf, reference };
  * Where a record belongs, for the pack being built.
  *
  * "own" is a record of this book; "elsewhere" one that does not cite it at
- * all. "overlap" is a supplement's record that also cites the Basic Set:
- * Martial Arts restates Karate with its own page beside B203, and the Basic
- * Set pack already has it. Nothing overlaps when the Basic Set itself is
+ * all. "overlap" is a supplement's record that also cites the Basic Set: a
+ * supplement restating Karate with its own page beside B203, which the Basic
+ * Set pack already has. Nothing overlaps when the Basic Set itself is
  * being read, whatever else a record cites.
  */
 export function classifyCitation(page, prefix, base = BASIC_SET.prefix) {
@@ -313,8 +313,8 @@ const id = (kind, name) =>
 
 /**
  * A new entry's id. A supplement often restates a Basic Set entry under the
- * same name with its own figures -- Monster Hunters 1's firearms table, its
- * gear list -- and a name-based id would then be the Basic Set entry's. Where
+ * same name with its own figures -- a firearms table, a gear list -- and a
+ * name-based id would then be the Basic Set entry's. Where
  * it would be, the book's prefix goes into the seed, so the two are distinct
  * and every other id is what it always was.
  */
@@ -829,8 +829,7 @@ function openTechnique(r, f, recs, source) {
 }
 
 /**
- * Every default a technique lists, in the forms GCA writes them (Martial Arts
- * pp. 65-89):
+ * Every default a technique lists, in the forms GCA writes them:
  *
  * - a skill's level, bare or quoted: `SK:Karate::level - 4`
  * - the Parry or Block that skill gives: `"SK:Judo::parrylevel" - 1`,
@@ -1176,7 +1175,7 @@ export function parseDamage(damage, damtype) {
  * the first real skill is the one the weapon is actually used with; the rest
  * are what you fall back to. A leading wildcard group is skipped.
  *
- * Not every file writes the `SK:` prefix. Monster Hunters 1's lists the bare
+ * Not every file writes the `SK:` prefix. Some list the bare
  * names -- `skillused(Gun!, Guns (Submachine Gun), DX-4, ...)` -- so a name
  * with no prefix counts as a skill too, unless it is an attribute or carries
  * another of GCA's prefixes (`ST:DX`).
@@ -1191,7 +1190,7 @@ export function parseSkillUsed(value) {
  * A weapon used at a penalty with its own skill has GCA write the penalty
  * into every entry of the list, the skill included --
  * `skillused(SK:Spear-2, ST:DX-5-2, SK:Polearm-4-2, SK:Staff-2-2)` for a
- * trident, "-2 to hit" in Martial Arts' table. Where every entry ends in the
+ * weapon a table lists at "-2 to hit". Where every entry ends in the
  * same modifier, that shared modifier is the mode's to-hit modifier and the
  * list is read again without it. Any other list reads as parseSkillUsed always
  * has, with no modifier: a shield's, where only the defaults carry one.
@@ -1919,7 +1918,7 @@ function option(flag, fallback) {
   return at !== -1 && process.argv[at + 1] ? process.argv[at + 1] : fallback;
 }
 
-/** A book's name as a file stem: "Martial Arts" becomes "martial-arts". */
+/** A book's name as a file stem: "My Book" becomes "my-book". */
 function slug(book) {
   return book.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
