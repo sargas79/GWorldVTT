@@ -15,6 +15,13 @@ describe("summarise", () => {
     expect(summarise("technique", { prerequisite: "Karate", defaultModifier: -4 })).toBe("Karate -4");
   });
 
+  // A technique bought off a defense or an attribute (sargas79/GWorldVTT#195).
+  it("names the defense or attribute a technique defaults from", () => {
+    expect(summarise("technique", { prerequisite: "Judo", defaultFrom: "parry", defaultModifier: -1 })).toBe("Judo Parry -1");
+    expect(summarise("technique", { prerequisite: "", defaultFrom: "dodge", defaultModifier: -2 })).toBe("Dodge -2");
+    expect(summarise("technique", { prerequisite: "", defaultFrom: "ST", defaultModifier: -4 })).toBe("ST -4");
+  });
+
   it("names a technique with no penalty by its prerequisite alone", () => {
     expect(summarise("technique", { prerequisite: "Judo", defaultModifier: 0 })).toBe("Judo");
   });

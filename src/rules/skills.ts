@@ -186,6 +186,58 @@ export function resolveTechnique(options: {
 }
 
 /**
+ * What a technique may default from (Martial Arts pp. 65-89; Characters p. 232).
+ *
+ * Most techniques come off a skill's level. Defensive ones come off the Parry
+ * or Block that skill gives -- "Default: prerequisite skill Parry-1" -- or off
+ * Dodge, "active defense-2". A few come off an attribute: Neck Snap is "ST-4;
+ * cannot exceed ST+3".
+ */
+export type TechniqueDefaultFrom =
+  | "skill" | "parry" | "block" | "dodge"
+  | "ST" | "DX" | "IQ" | "HT" | "Will" | "Per";
+
+export const TECHNIQUE_DEFAULT_FROM: readonly TechniqueDefaultFrom[] = [
+  "skill", "parry", "block", "dodge", "ST", "DX", "IQ", "HT", "Will", "Per",
+];
+
+/** One default a technique may be bought up from, already resolved to a number. */
+export interface TechniqueDefaultOption {
+  /** The level of what it defaults from, or null where the character lacks it. */
+  base: number | null;
+  /** The default's penalty. */
+  modifier: number;
+}
+
+/**
+ * A technique with more than one default, at the best of them.
+ *
+ * "Defaults: Binding, DX-2, Judo-1, or Wrestling-2; cannot exceed Binding, DX,
+ * Judo, or Wrestling" (Martial Arts p. 73): each default is bought up from
+ * its own base and capped against that same base, and the character uses
+ * whichever comes out highest -- as a skill with several defaults does. Null
+ * when the character has none of the bases.
+ */
+export function resolveTechniqueDefaults(options: {
+  defaults: readonly TechniqueDefaultOption[];
+  levels: number;
+  maxRelativeToPrerequisite?: number;
+}): (TechniqueResolution & { index: number; base: number }) | null {
+  let best: (TechniqueResolution & { index: number; base: number }) | null = null;
+  options.defaults.forEach((option, index) => {
+    if (option.base === null) return;
+    const resolved = resolveTechnique({
+      prerequisiteLevel: option.base,
+      defaultModifier: option.modifier,
+      levels: options.levels,
+      maxRelativeToPrerequisite: options.maxRelativeToPrerequisite ?? 0,
+    });
+    if (!best || resolved.level > best.level) best = { ...resolved, index, base: option.base };
+  });
+  return best;
+}
+
+/**
  * The level a character actually rolls against: their trained level if they have
  * one, otherwise the best available default. Returns `null` for skills with no
  * default that the character has not learned.

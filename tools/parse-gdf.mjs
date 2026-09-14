@@ -693,6 +693,46 @@ export function techniqueDefault(raw) {
   return { prerequisite: def[1].trim(), modifier: def[3] ? Number(`${def[2]}${def[3]}`) : 0 };
 }
 
+const TECHNIQUE_ATTRIBUTES = new Set(["ST", "DX", "IQ", "HT", "Will", "Per"]);
+
+/**
+ * Every default a technique lists, in the forms GCA writes them (Martial Arts
+ * pp. 65-89):
+ *
+ * - a skill's level, bare or quoted: `SK:Karate::level - 4`
+ * - the Parry or Block that skill gives: `"SK:Judo::parrylevel" - 1`,
+ *   `"SK:Shield (Buckler)::blocklevel" - 1`
+ * - Dodge: `"ST:Dodge::score" - 2`
+ * - an attribute: `"ST:ST::score" - 4`, or bare `ST:ST - 4` as the Basic Set
+ *   writes Neck Snap
+ *
+ * A wildcard skill's entry (`SK:Gun! - 4`) is passed over, as elsewhere. An
+ * entry of any other form makes the list unreadable: null.
+ */
+export function techniqueDefaults(raw) {
+  const out = [];
+  for (const entry of splitTop(raw ?? "")) {
+    const text = entry.trim();
+    if (!text) continue;
+    const penalty = /\s*([+-])\s*(\d+)\s*$/.exec(text);
+    const modifier = penalty ? Number(`${penalty[1]}${penalty[2]}`) : 0;
+    const body = (penalty ? text.slice(0, penalty.index) : text).replace(/"/g, "").trim();
+    const skill = /^SK:(.+?)(?:::(level|parrylevel|blocklevel))?$/i.exec(body);
+    if (skill) {
+      if (skill[1].trim().endsWith("!")) continue;
+      const kind = (skill[2] ?? "level").toLowerCase();
+      out.push({ from: kind === "parrylevel" ? "parry" : kind === "blocklevel" ? "block" : "skill", skill: skill[1].trim(), modifier });
+      continue;
+    }
+    const stat = /^ST:([A-Za-z]+)(?:::score)?$/i.exec(body);
+    if (stat && /^dodge$/i.test(stat[1])) { out.push({ from: "dodge", skill: "", modifier }); continue; }
+    const attribute = stat ? [...TECHNIQUE_ATTRIBUTES].find((a) => a.toLowerCase() === stat[1].toLowerCase()) : null;
+    if (attribute) { out.push({ from: attribute, skill: "", modifier }); continue; }
+    return null;
+  }
+  return out.length ? out : null;
+}
+
 /**
  * Ceilings the data file gets wrong, by technique name.
  *
@@ -721,18 +761,25 @@ function parseTechnique(name, difficulty, f, ids, reject, source) {
     return null;
   }
 
-  const def = techniqueDefault(f.get("default"));
-  if (!def) {
-    reject(name, `default does not come off a skill: "${f.get("default") ?? ""}"`);
+  const defaults = techniqueDefaults(f.get("default"));
+  if (!defaults) {
+    reject(name, `default is not a skill, defense or attribute: "${f.get("default") ?? ""}"`);
     return null;
   }
-  const { prerequisite, modifier: defaultModifier } = def;
-  if (defaultModifier > 0) { reject(name, "default is a bonus, not a penalty"); return null; }
+  const [first, ...alternates] = defaults;
+  const prerequisite = first.skill;
+  const defaultModifier = first.modifier;
+  if (defaults.some((d) => d.modifier > 0)) { reject(name, "default is a bonus, not a penalty"); return null; }
 
+  // The ceiling names what the default comes off -- `prereq`, the skill,
+  // `"SK:Judo::parrylevel"`, `ST:ST + 3`, `ST:DX::score + 5` -- and is read
+  // relative to it.
   const upto = f.get("upto") ?? "";
-  const relative = upto.replace(/"?SK:([^",]+)"?/g, (_, skill) =>
-    skill.trim() === prerequisite ? "prereq" : skill,
-  );
+  const relative = upto
+    .replace(/"?SK:([^",]+?)(?:::(?:level|parrylevel|blocklevel))?"?(?=\s*(?:[+-]|,|$))/gi, (whole, skill) =>
+      skill.trim() === prerequisite ? "prereq" : whole)
+    .replace(/"?ST:([A-Za-z]+)(?:::score)?"?/gi, (whole, stat) =>
+      (first.from === "dodge" && /^dodge$/i.test(stat)) || stat.toLowerCase() === first.from.toLowerCase() ? "prereq" : whole);
   if (!/prereq/i.test(relative)) {
     reject(name, `ceiling is not relative to the prerequisite: "${upto}"`);
     return null;
@@ -747,6 +794,10 @@ function parseTechnique(name, difficulty, f, ids, reject, source) {
     system: {
       difficulty,
       prerequisite,
+      // Only where it is not a skill's level, so every other technique reads
+      // as it always has.
+      ...(first.from !== "skill" ? { defaultFrom: first.from } : {}),
+      ...(alternates.length ? { alternateDefaults: alternates } : {}),
       defaultModifier,
       points: 0,
       maxRelativeToPrerequisite: ceiling,

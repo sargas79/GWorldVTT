@@ -1797,7 +1797,23 @@
         "Choking": "Loses {fp} FP a turn; keeping it is +{bonus} in the Contest",
         "ChokedFights": "The victim can still strike back, at {penalty}"
       },
-      "Victim": "The victim"
+      "Victim": "The victim",
+      "DefaultFrom": "Defaults from",
+      "AlternateDefaults": "Other defaults",
+      "AddDefault": "Add default",
+      "From": {
+        "skill": "Skill",
+        "parry": "Skill's Parry",
+        "block": "Skill's Block",
+        "dodge": "Dodge",
+        "ST": "ST",
+        "DX": "DX",
+        "IQ": "IQ",
+        "HT": "HT",
+        "Will": "Will",
+        "Per": "Per"
+      },
+      "DefenseHint": "A technique that stands in for this defense: the defense at the technique's level"
     },
     "Armor": {
       "DR": "Damage Resistance",

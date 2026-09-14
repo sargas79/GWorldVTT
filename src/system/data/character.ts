@@ -72,7 +72,7 @@ import { agingRollsPerYear, lifespanFrom } from "../../rules/aging.js";
 import { culturallyAdaptable, languagePenalty, type Comprehension } from "../../rules/languages.js";
 import { sleepPeriodFrom } from "../../rules/sleep.js";
 import { radiationRow, radiationToleranceFrom, remainingDose } from "../../rules/radiation.js";
-import { baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
+import { baseBlock, baseDodge, baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import {
   materialArmorDivisor,
   minStPenalty,
@@ -136,8 +136,8 @@ import {
   namedDefaultLevel,
   normalizeSkillName,
   relativeLevelForPoints,
-  resolveTechnique,
   techniqueLevelsForPoints,
+  resolveTechniqueDefaults,
 } from "../../rules/skills.js";
 import { musclePoweredRange } from "../../rules/ranged.js";
 import {
@@ -1709,19 +1709,54 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     }
 
     // ── techniques ──────────────────────────────────────────────────────
+    // A technique comes off a skill, the Parry or Block it gives, Dodge, or an
+    // attribute, and may list several defaults; it is bought up from the best
+    // (Martial Arts pp. 65-89, Characters p. 232).
+    const techniqueBase = (from: string, skill: string): number | null => {
+      switch (from) {
+        case "skill": return this.skillLevelByName(skill);
+        case "parry": {
+          const level = this.skillLevelByName(skill);
+          return level === null ? null : baseParry(level);
+        }
+        case "block": {
+          const level = this.skillLevelByName(skill);
+          return level === null ? null : baseBlock(level);
+        }
+        case "dodge": return baseDodge(secondary.basicSpeed);
+        case "Will": return secondary.will;
+        case "Per": return secondary.per;
+        case "ST": case "DX": case "IQ": case "HT": return attrs[from];
+        default: return null;
+      }
+    };
     for (const item of this.itemsOfType("technique")) {
       const sys = item.system as any;
-      const prerequisiteLevel = this.skillLevelByName(sys.prerequisite);
-      if (prerequisiteLevel === null) {
-        sys.derived = { level: null, levels: 0, cappedByPrerequisite: false };
-        continue;
-      }
-      sys.derived = resolveTechnique({
-        prerequisiteLevel,
-        defaultModifier: sys.defaultModifier,
+      const defaults = [
+        { from: String(sys.defaultFrom ?? "skill"), skill: String(sys.prerequisite ?? ""), modifier: Number(sys.defaultModifier) || 0 },
+        ...((sys.alternateDefaults ?? []) as Array<{ from: string; skill: string; modifier: number }>),
+      ];
+      const best = resolveTechniqueDefaults({
+        defaults: defaults.map((d) => ({ base: techniqueBase(d.from, d.skill), modifier: Number(d.modifier) || 0 })),
         levels: techniqueLevelsForPoints(sys.points, sys.difficulty),
         maxRelativeToPrerequisite: sys.maxRelativeToPrerequisite,
       });
+      if (!best) {
+        sys.derived = { level: null, levels: 0, cappedByPrerequisite: false };
+        continue;
+      }
+      const chosen = defaults[best.index]!;
+      sys.derived = {
+        level: best.level,
+        levels: best.levels,
+        cappedByPrerequisite: best.cappedByPrerequisite,
+        // Which default it came off, and that base's own figure, for the
+        // sheet's label and for a defensive technique's place on the card.
+        defaultFrom: chosen.from,
+        defaultSkill: chosen.skill,
+        defaultModifier: Number(chosen.modifier) || 0,
+        defaultBase: best.base,
+      };
     }
 
     // ── spells ──────────────────────────────────────────────────────────

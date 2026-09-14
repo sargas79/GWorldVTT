@@ -262,8 +262,21 @@ function validateItem(entry, file) {
 
   if (entry.type === "technique") {
     check(["A", "H"].includes(sys.difficulty), file, name, `technique difficulty must be A or H`);
-    check(Boolean(sys.prerequisite), file, name, "technique names no prerequisite skill");
+    // A default comes off a skill, the Parry or Block it gives, Dodge, or an
+    // attribute; only the first three need a skill named.
+    const FROM = ["skill", "parry", "block", "dodge", "ST", "DX", "IQ", "HT", "Will", "Per"];
+    const from = sys.defaultFrom ?? "skill";
+    check(FROM.includes(from), file, name, `technique default from "${from}" is not in the model`);
+    check(
+      !["skill", "parry", "block"].includes(from) || Boolean(sys.prerequisite),
+      file, name, "technique names no prerequisite skill",
+    );
     check((sys.defaultModifier ?? 0) <= 0, file, name, "technique default modifier must be <= 0");
+    for (const alt of sys.alternateDefaults ?? []) {
+      check(FROM.includes(alt.from), file, name, `technique default from "${alt.from}" is not in the model`);
+      check(!["skill", "parry", "block"].includes(alt.from) || Boolean(alt.skill), file, name, "a technique default names no skill");
+      check(Number.isInteger(alt.modifier) && alt.modifier <= 0, file, name, "technique default modifier must be a whole number <= 0");
+    }
     // The ceiling is relative to the prerequisite skill and may sit above it --
     // Arm Lock reaches the skill +4 -- but a technique that started below its
     // own default could never be bought up to where the book says it begins.

@@ -7,6 +7,7 @@
  * DOM at once and CSS controls visibility.
  */
 
+import { techniqueDefaultLabel } from "../item-summary.js";
 import { CharacterBuilder } from "../apps/character-builder.js";
 import { combatStyle, tacticalOnScene } from "../settings.js";
 import { activeRules, isRuleOn } from "../optional-rules.js";
@@ -3953,7 +3954,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         .sort((a: any, b: any) => a.name.localeCompare(b.name))
         // A resolved level of 0 or below is still a valid level, but Handlebars
         // reads it as false, so the template needs an explicit flag.
-        .map((t: any) => ({ item: t, resolved: t.system.derived?.level !== null })),
+        .map((t: any) => ({
+          item: t,
+          resolved: t.system.derived?.level !== null,
+          // The default it is bought off -- the best of several where it has
+          // them -- as the book writes it: "Judo Parry-1", "ST-4".
+          defaultLabel: techniqueDefaultLabel({
+            from: t.system.derived?.defaultFrom ?? t.system.defaultFrom ?? "skill",
+            skill: t.system.derived?.defaultSkill ?? t.system.prerequisite ?? "",
+            modifier: Number(t.system.derived?.defaultModifier ?? t.system.defaultModifier) || 0,
+          }),
+        })),
       carried: equipment.filter((i: any) => i.system.carried),
       stored: equipment.filter((i: any) => !i.system.carried),
     };

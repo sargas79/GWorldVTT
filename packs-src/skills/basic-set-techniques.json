@@ -252,6 +252,21 @@
     }
   },
   {
+    "_id": "e5083e88dfaba363",
+    "name": "Neck Snap (ST)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "defaultFrom": "ST",
+      "defaultModifier": -4,
+      "points": 0,
+      "maxRelativeToPrerequisite": 3,
+      "description": "",
+      "reference": "Basic Set: Characters p. 232"
+    }
+  },
+  {
     "_id": "19fb0c146865d56f",
     "name": "Sweep (Polearm)",
     "type": "technique",

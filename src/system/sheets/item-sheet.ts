@@ -215,6 +215,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       deleteMode: GWorldItemSheet.#onDeleteMode,
       addDefault: GWorldItemSheet.#onAddDefault,
       deleteDefault: GWorldItemSheet.#onDeleteDefault,
+      addTechniqueDefault: GWorldItemSheet.#onAddTechniqueDefault,
+      deleteTechniqueDefault: GWorldItemSheet.#onDeleteTechniqueDefault,
       editItemImage: GWorldItemSheet.#onEditImage,
       addModifier: GWorldItemSheet.#onAddModifier,
       browseModifiers: GWorldItemSheet.#onBrowseModifiers,
@@ -506,6 +508,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       attributes: keyed("Attribute", ["ST", "DX", "IQ", "HT", "Will", "Per"]),
       difficulties: keyed("Difficulty", ["E", "A", "H", "VH", "W"]),
       techniqueDifficulties: keyed("Difficulty", ["A", "H"]),
+      techniqueDefaultFrom: keyed("Technique.From", ["skill", "parry", "block", "dodge", "ST", "DX", "IQ", "HT", "Will", "Per"]),
       categories: keyed("TraitCategory", ["advantage", "disadvantage", "perk", "quirk"]),
       damageBases: keyed("DamageBase", ["thr", "sw", "fixed"]),
       damageTypes: keyed("DamageType", [
@@ -1223,6 +1226,22 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     await this.item.update({
       "system.defaults": [...defaults, { from: "attribute", attribute: "DX", skill: "", modifier: 0 }],
     });
+  }
+
+  /** Another default for a technique, the best of which is used (Martial Arts p. 73). */
+  static async #onAddTechniqueDefault(this: GWorldItemSheet) {
+    const defaults = [...(this.item.system.alternateDefaults ?? [])];
+    await this.item.update({
+      "system.alternateDefaults": [...defaults, { from: "skill", skill: "", modifier: 0 }],
+    });
+  }
+
+  static async #onDeleteTechniqueDefault(this: GWorldItemSheet, _event: Event, target: HTMLElement) {
+    const index = Number(target.closest<HTMLElement>("[data-index]")?.dataset.index);
+    if (!Number.isInteger(index)) return;
+    const defaults = [...(this.item.system.alternateDefaults ?? [])];
+    defaults.splice(index, 1);
+    await this.item.update({ "system.alternateDefaults": defaults });
   }
 
   static async #onDeleteDefault(this: GWorldItemSheet, _event: Event, target: HTMLElement) {

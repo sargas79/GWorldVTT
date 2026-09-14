@@ -678,6 +678,39 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       row.append(feverish);
     }
 
+    const defendWith = (choice: DefenseChoice, technique?: { name: string; delta: number }) => {
+      const sight = sightSelect.value;
+      const blind = sight === "sees"
+        ? null
+        : defendWithoutSight({ aware: sight !== "unaware", heardAttacker: sight === "heard" });
+      if (blind && !blind.anyDefense) {
+        ui.notifications?.warn(game.i18n.localize("GWORLD.Defense.Unseen.NoDefense"));
+        return;
+      }
+      if (blind && choice.key !== "dodge" && !blind.canParryOrBlock) {
+        ui.notifications?.warn(game.i18n.localize("GWORLD.Defense.Unseen.OnlyDodge"));
+        return;
+      }
+      void rollDefense({
+        defender,
+        key: choice.key,
+        unseenPenalty: blind?.modifier ?? 0,
+        laserDodge: choice.key === "dodge" ? (flag.dodgeBonus ?? 0) : 0,
+        total: choice.total,
+        attack: flag.attack,
+        arcPenalty: choice.arcPenalty,
+        deception,
+        retreating: retreatBox?.checked ?? false,
+        feverish: feverishBox?.checked ?? false,
+        skill: choice.skillName,
+        isFencing: choice.isFencing,
+        ...(flag.weapon ? { attackWeapon: flag.weapon } : {}),
+        ...(flag.delivery ? { delivery: flag.delivery } : {}),
+        ...(flag.damageType ? { damageType: flag.damageType } : {}),
+        ...(technique ? { technique } : {}),
+      });
+    };
+
     for (const choice of choices) {
       if (!choice.available) {
         row.append(refusedButton(choice));
@@ -687,37 +720,25 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       button.type = "button";
       button.className = "gc-apply-button";
       button.textContent = `${game.i18n.localize(DEFENSE_LABELS[choice.key])} ${choice.shown}`;
-      button.addEventListener("click", () => {
-        const sight = sightSelect.value;
-        const blind = sight === "sees"
-          ? null
-          : defendWithoutSight({ aware: sight !== "unaware", heardAttacker: sight === "heard" });
-        if (blind && !blind.anyDefense) {
-          ui.notifications?.warn(game.i18n.localize("GWORLD.Defense.Unseen.NoDefense"));
-          return;
-        }
-        if (blind && choice.key !== "dodge" && !blind.canParryOrBlock) {
-          ui.notifications?.warn(game.i18n.localize("GWORLD.Defense.Unseen.OnlyDodge"));
-          return;
-        }
-        void rollDefense({
-          defender,
-          key: choice.key,
-          unseenPenalty: blind?.modifier ?? 0,
-          laserDodge: choice.key === "dodge" ? (flag.dodgeBonus ?? 0) : 0,
-          total: choice.total,
-          attack: flag.attack,
-          arcPenalty: choice.arcPenalty,
-          deception,
-          retreating: retreatBox?.checked ?? false,
-          feverish: feverishBox?.checked ?? false,
-          skill: choice.skillName,
-          isFencing: choice.isFencing,
-          ...(flag.weapon ? { attackWeapon: flag.weapon } : {}),
-          ...(flag.delivery ? { delivery: flag.delivery } : {}),
-          ...(flag.damageType ? { damageType: flag.damageType } : {}),
-        });
-      });
+      button.addEventListener("click", () => defendWith(choice));
+      row.append(button);
+    }
+
+    // A defensive technique stands in for the defense it is bought off --
+    // Jam is a parry at "prerequisite skill Parry-1", Timed Defense a dodge at
+    // "active defense-2" (Martial Arts pp. 74, 89) -- so it is offered beside
+    // that defense, at the defense's figure moved by what the technique stands
+    // at against it. Which situation calls for it is the player's to judge.
+    for (const technique of defensiveTechniquesOf(defender)) {
+      const choice = choices.find((c) => c.available && c.key === technique.key
+        && (technique.key === "dodge" || c.skillName.trim().toLowerCase() === technique.skill.trim().toLowerCase()));
+      if (!choice || choice.shown === null) continue;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "gc-apply-button";
+      button.textContent = `${technique.name} ${choice.shown + technique.delta}`;
+      button.title = game.i18n.localize("GWORLD.Technique.DefenseHint");
+      button.addEventListener("click", () => defendWith(choice, { name: technique.name, delta: technique.delta }));
       row.append(button);
     }
 
@@ -747,6 +768,30 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
 
     root.append(row);
   }
+}
+
+/**
+ * The techniques a defender has that are bought off a defense (Martial Arts
+ * pp. 65-89): which defense, the skill it comes with, and the technique's level
+ * against that defense's own figure -- -1 for a Jam at default, 0 once bought
+ * up to the Parry it cannot exceed.
+ */
+function defensiveTechniquesOf(defender: any): Array<{ name: string; key: DefenseKey; skill: string; delta: number }> {
+  const out: Array<{ name: string; key: DefenseKey; skill: string; delta: number }> = [];
+  for (const item of defender?.items ?? []) {
+    if (item?.type !== "technique") continue;
+    const derived = item.system?.derived ?? {};
+    const key = derived.defaultFrom;
+    if (key !== "parry" && key !== "block" && key !== "dodge") continue;
+    if (typeof derived.level !== "number" || typeof derived.defaultBase !== "number") continue;
+    out.push({
+      name: String(item.name ?? ""),
+      key,
+      skill: String(derived.defaultSkill ?? ""),
+      delta: derived.level - derived.defaultBase,
+    });
+  }
+  return out;
 }
 
 /** A defense that cannot be rolled: named, greyed, and carrying its reason. */
@@ -822,6 +867,8 @@ async function rollDefense(options: {
   unseenPenalty?: number;
   /** +1 to a Dodge against a shot whose laser dot the defender saw (p. 411). */
   laserDodge?: number;
+  /** A defensive technique rolled in place of the defense, and what it stands at against it. */
+  technique?: { name: string; delta: number };
 }): Promise<void> {
   const {
     defender, key, total, attack, arcPenalty, deception, retreating, feverish, skill, isFencing,
@@ -854,6 +901,9 @@ async function rollDefense(options: {
   }
 
   const modifiers = [];
+  if (options.technique && options.technique.delta !== 0) {
+    modifiers.push({ label: options.technique.name, value: options.technique.delta });
+  }
   if (options.laserDodge) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Ranged.LaserSeen"), value: options.laserDodge });
   }

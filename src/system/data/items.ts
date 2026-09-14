@@ -2,6 +2,7 @@
  * Item data models: traits, skills, and equipment (GURPS Lite pp. 8-22).
  */
 
+import { TECHNIQUE_DEFAULT_FROM, type TechniqueDefaultFrom } from "../../rules/skills.js";
 import { relativeLevelForPoints } from "../../rules/skills.js";
 import { SPELL_CLASSES, spellRelativeLevel, type MagicStyle, type SpellClass, type SpellDifficulty } from "../../rules/magic.js";
 import {
@@ -1424,9 +1425,19 @@ export type { DamageType };
  *
  * Kicking, for instance, defaults to Karate-2, and points buy that -2 off.
  */
+/** A default a technique may be bought up from besides its first. */
+export interface TechniqueAlternateDefault {
+  from: TechniqueDefaultFrom;
+  /** The skill, for a default from a skill, its Parry or its Block. */
+  skill: string;
+  modifier: number;
+}
+
 export class TechniqueData extends foundry.abstract.TypeDataModel {
   declare difficulty: "A" | "H";
   declare prerequisite: string;
+  declare defaultFrom: TechniqueDefaultFrom;
+  declare alternateDefaults: TechniqueAlternateDefault[];
   declare defaultModifier: number;
   declare points: number;
   declare maxRelativeToPrerequisite: number;
@@ -1441,6 +1452,28 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
       }),
       /** The skill this technique defaults from, by name. */
       prerequisite: new fields.StringField({ required: true, blank: true, initial: "" }),
+      /**
+       * What the default comes off: the prerequisite skill's level, or the
+       * Parry or Block it gives, or Dodge, or an attribute (Martial Arts
+       * pp. 65-89; Neck Snap's "ST-4", Characters p. 232).
+       */
+      defaultFrom: new fields.StringField({
+        required: true, nullable: false, initial: "skill", choices: [...TECHNIQUE_DEFAULT_FROM],
+      }),
+      /**
+       * Further defaults, the best of which the character uses: "Defaults:
+       * Binding, DX-2, Judo-1, or Wrestling-2" (Martial Arts p. 73).
+       */
+      alternateDefaults: new fields.ArrayField(
+        new fields.SchemaField({
+          from: new fields.StringField({
+            required: true, nullable: false, initial: "skill", choices: [...TECHNIQUE_DEFAULT_FROM],
+          }),
+          skill: new fields.StringField({ required: true, blank: true, initial: "" }),
+          modifier: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, max: 0 }),
+        }),
+        { required: true, initial: [] },
+      ),
       /** The default penalty, e.g. -2 for Kicking off Karate. Negative. */
       defaultModifier: new fields.NumberField({
         required: true, nullable: false, integer: true, initial: 0, max: 0,
