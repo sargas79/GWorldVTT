@@ -76,7 +76,7 @@
     "system": {
       "difficulty": "H",
       "prerequisite": "Beam Weapons (Pistol)",
-      "defaultModifier": 0,
+      "defaultModifier": -4,
       "points": 0,
       "maxRelativeToPrerequisite": 0,
       "description": "",
@@ -90,7 +90,7 @@
     "system": {
       "difficulty": "H",
       "prerequisite": "Guns (Pistol)",
-      "defaultModifier": 0,
+      "defaultModifier": -4,
       "points": 0,
       "maxRelativeToPrerequisite": 0,
       "description": "",
@@ -104,7 +104,7 @@
     "system": {
       "difficulty": "H",
       "prerequisite": "Bow",
-      "defaultModifier": 0,
+      "defaultModifier": -4,
       "points": 0,
       "maxRelativeToPrerequisite": 0,
       "description": "",
@@ -146,7 +146,7 @@
     "system": {
       "difficulty": "H",
       "prerequisite": "Arm Lock (Judo)",
-      "defaultModifier": 0,
+      "defaultModifier": -3,
       "points": 0,
       "maxRelativeToPrerequisite": 0,
       "description": "",
@@ -160,7 +160,7 @@
     "system": {
       "difficulty": "H",
       "prerequisite": "Arm Lock (Wrestling)",
-      "defaultModifier": 0,
+      "defaultModifier": -3,
       "points": 0,
       "maxRelativeToPrerequisite": 0,
       "description": "",
@@ -370,9 +370,9 @@
     "system": {
       "difficulty": "H",
       "prerequisite": "Two-Handed Sword",
-      "defaultModifier": 0,
+      "defaultModifier": -5,
       "points": 0,
-      "maxRelativeToPrerequisite": 5,
+      "maxRelativeToPrerequisite": 0,
       "description": "",
       "reference": "Basic Set: Characters p. 232"
     }
@@ -384,7 +384,7 @@
     "system": {
       "difficulty": "A",
       "prerequisite": "Mimicry (Speech)",
-      "defaultModifier": 0,
+      "defaultModifier": -3,
       "points": 0,
       "maxRelativeToPrerequisite": 0,
       "description": "",
@@ -454,7 +454,7 @@
     "system": {
       "difficulty": "H",
       "prerequisite": "Explosives (Demolition)",
-      "defaultModifier": 0,
+      "defaultModifier": -2,
       "points": 0,
       "maxRelativeToPrerequisite": 0,
       "description": "",

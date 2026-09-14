@@ -679,6 +679,32 @@ function parseSkills(recs, reject, source) {
 }
 
 /**
+ * The skill a technique defaults from, and the penalty, from GCA's `default()`.
+ *
+ * GCA writes it two ways: bare, `SK:Karate::level - 4`, and quoted, with the
+ * quote closing after `::level` -- `"SK:Karate::level" - 4`. Reading only the
+ * first lost the penalty from every quoted default, so Dual-Weapon Attack came
+ * out at no penalty (sargas79/GWorldVTT#193). Null when the first default is
+ * not a skill's level.
+ */
+export function techniqueDefault(raw) {
+  const def = /"?SK:([^"]+?)::level"?\s*(?:([+-])\s*(\d+))?/.exec(raw ?? "");
+  if (!def) return null;
+  return { prerequisite: def[1].trim(), modifier: def[3] ? Number(`${def[2]}${def[3]}`) : 0 };
+}
+
+/**
+ * Ceilings the data file gets wrong, by technique name.
+ *
+ * Whirlwind Attack (Two-Handed Sword) is written `upto(Prereq + 5)`, the
+ * figure of Disarming above it on the page; the book caps every Whirlwind
+ * Attack at its prerequisite skill (Characters p. 232, sargas79/GWorldVTT#193).
+ */
+const TECHNIQUE_CEILINGS = {
+  "Whirlwind Attack (Two-Handed Sword)": 0,
+};
+
+/**
  * A technique. GCA writes its default as the prerequisite skill's own level
  * with a penalty -- `default(SK:Karate::level - 4)` -- and its ceiling relative
  * to that skill, as `upto(prereq)` or `upto(prereq + 4)`.
@@ -695,13 +721,12 @@ function parseTechnique(name, difficulty, f, ids, reject, source) {
     return null;
   }
 
-  const def = /"?SK:([^"]+?)"?::level\s*(?:([+-])\s*(\d+))?/.exec(f.get("default") ?? "");
+  const def = techniqueDefault(f.get("default"));
   if (!def) {
     reject(name, `default does not come off a skill: "${f.get("default") ?? ""}"`);
     return null;
   }
-  const prerequisite = def[1].trim();
-  const defaultModifier = def[3] ? Number(`${def[2]}${def[3]}`) : 0;
+  const { prerequisite, modifier: defaultModifier } = def;
   if (defaultModifier > 0) { reject(name, "default is a bonus, not a penalty"); return null; }
 
   const upto = f.get("upto") ?? "";
@@ -713,6 +738,7 @@ function parseTechnique(name, difficulty, f, ids, reject, source) {
     return null;
   }
   const cap = /prereq\s*(?:([+-])\s*(\d+))?/i.exec(relative);
+  const ceiling = TECHNIQUE_CEILINGS[name] ?? (cap[2] ? Number(`${cap[1]}${cap[2]}`) : 0);
 
   return {
     _id: ids.get(name) ?? newId("technique", name, source),
@@ -723,7 +749,7 @@ function parseTechnique(name, difficulty, f, ids, reject, source) {
       prerequisite,
       defaultModifier,
       points: 0,
-      maxRelativeToPrerequisite: cap[2] ? Number(`${cap[1]}${cap[2]}`) : 0,
+      maxRelativeToPrerequisite: ceiling,
       description: "",
       reference: reference(f.get("page"), source.prefix, source.book),
     },

@@ -21,6 +21,7 @@ import {
   qualityVariantOf,
   reference,
   talentSkillsOf,
+  techniqueDefault,
   traitAttackModes,
 } from "../../../tools/parse-gdf.mjs";
 
@@ -313,6 +314,26 @@ describe("the skill a weapon is used with (#174)", () => {
   it("names no skill for an attribute or a blank the player fills in", () => {
     expect(parseSkillUsed("Will")).toBe("");
     expect(parseSkillUsed("%examplealiaslist%")).toBe("");
+  });
+});
+
+describe("a technique's default (#193)", () => {
+  it("reads the bare form", () => {
+    expect(techniqueDefault("SK:Broadsword::level - 5")).toEqual({ prerequisite: "Broadsword", modifier: -5 });
+    expect(techniqueDefault("SK:Judo::level")).toEqual({ prerequisite: "Judo", modifier: 0 });
+  });
+
+  // The quote closes after ::level, and the penalty follows it.
+  it("keeps the penalty of a quoted default", () => {
+    expect(techniqueDefault('"SK:Bow::level" - 4')).toEqual({ prerequisite: "Bow", modifier: -4 });
+    expect(techniqueDefault('"SK:Beam Weapons (Pistol)::level" - 4')).toEqual({ prerequisite: "Beam Weapons (Pistol)", modifier: -4 });
+    expect(techniqueDefault('"SK:Guns (Pistol)::level" - 4, SK:Gun! - 4')).toEqual({ prerequisite: "Guns (Pistol)", modifier: -4 });
+    expect(techniqueDefault('"SK:Karate::level"')).toEqual({ prerequisite: "Karate", modifier: 0 });
+  });
+
+  it("is null when the default is not a skill's level", () => {
+    expect(techniqueDefault('"ST:DX::score" - 2')).toBeNull();
+    expect(techniqueDefault(undefined)).toBeNull();
   });
 });
 
