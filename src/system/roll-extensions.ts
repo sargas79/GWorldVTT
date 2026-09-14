@@ -168,16 +168,24 @@ export interface EnergySource {
   multiplier?: number;
 }
 
+/** How a spell is being cast, as energy sources are told. */
+export interface CastingContext {
+  /** The magic item the spell is cast through, or null for a spell the caster knows. */
+  castThrough: { itemId: string; itemName: string } | null;
+}
+
+const OWN_CASTING: CastingContext = Object.freeze({ castThrough: null });
+
 export interface EnergySourceRegistration {
   module: string;
   key: string;
   label: string;
-  /** The sources this caster could draw on for this spell. */
-  sources: (actor: any, spell: any) => EnergySource[];
+  /** The sources this caster could draw on for this spell, cast this way. */
+  sources: (actor: any, spell: any, casting: CastingContext) => EnergySource[];
   /** Whether a source may pay for this much energy: true, or the reason it can't. */
-  canPay?: (context: { actor: any; spell: any; source: EnergySource; energy: number }) => true | string;
+  canPay?: (context: { actor: any; spell: any; source: EnergySource; energy: number; castThrough: CastingContext["castThrough"] }) => true | string;
   /** Takes `points` of the source's own points. False when nothing was taken. */
-  pay: (context: { actor: any; spell: any; source: EnergySource; points: number; energy: number }) => boolean | Promise<boolean>;
+  pay: (context: { actor: any; spell: any; source: EnergySource; points: number; energy: number; castThrough: CastingContext["castThrough"] }) => boolean | Promise<boolean>;
 }
 
 interface EnergySourceEntry extends Required<Omit<EnergySourceRegistration, "canPay">> {
@@ -212,10 +220,10 @@ export interface EnergySourceOption {
   label: string;
 }
 
-/** The energy sources this caster could draw on for this spell. */
-export function energySourcesFor(actor: any, spell: any): EnergySourceOption[] {
+/** The energy sources this caster could draw on for this spell, cast this way. */
+export function energySourcesFor(actor: any, spell: any, casting: CastingContext = OWN_CASTING): EnergySourceOption[] {
   return energySources.flatMap((entry) =>
-    safely(`energy source ${entry.id}`, () => entry.sources(actor, spell), [] as EnergySource[])
+    safely(`energy source ${entry.id}`, () => entry.sources(actor, spell, casting), [] as EnergySource[])
       .filter((source) => source && typeof source.id === "string" && typeof source.label === "string")
       .map((source) => {
         const multiplier = Math.max(0.01, finite(source.multiplier, 1));
@@ -240,21 +248,24 @@ export function energyCovered(option: Pick<EnergySourceOption, "source">, owed: 
  * Draws a spell's energy from a source, as much of `owed` as it can cover.
  * Returns the energy covered; the caster pays the rest.
  */
-export async function drawEnergy(actor: any, spell: any, value: string, owed: number): Promise<{ energy: number; points: number; label: string }> {
+export async function drawEnergy(
+  actor: any, spell: any, value: string, owed: number, casting: CastingContext = OWN_CASTING,
+): Promise<{ energy: number; points: number; label: string }> {
   const none = { energy: 0, points: 0, label: "" };
-  const option = energySourcesFor(actor, spell).find((o) => o.value === value);
+  const { castThrough } = casting;
+  const option = energySourcesFor(actor, spell, casting).find((o) => o.value === value);
   const entry = option ? energySources.find((s) => s.id === option.registration) : undefined;
   if (!option || !entry || owed <= 0) return none;
   const covered = energyCovered(option, owed);
   if (covered.energy <= 0) return none;
   const verdict = entry.canPay
-    ? safely(`energy source ${entry.id}`, () => entry.canPay!({ actor, spell, source: option.source, energy: covered.energy }), "")
+    ? safely(`energy source ${entry.id}`, () => entry.canPay!({ actor, spell, source: option.source, energy: covered.energy, castThrough }), "")
     : true;
   if (verdict !== true) {
     if (verdict) ui.notifications?.warn(String(verdict));
     return none;
   }
-  const paid = await safelyAsync(`energy source ${entry.id}`, () => entry.pay({ actor, spell, source: option.source, points: covered.points, energy: covered.energy }), false);
+  const paid = await safelyAsync(`energy source ${entry.id}`, () => entry.pay({ actor, spell, source: option.source, points: covered.points, energy: covered.energy, castThrough }), false);
   return paid === true ? { ...covered, label: option.source.label } : none;
 }
 

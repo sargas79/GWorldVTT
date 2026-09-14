@@ -129,6 +129,23 @@ describe("energy sources", () => {
     expect(warn).toHaveBeenCalledWith("Too much for one crystal");
     expect(await api.drawEnergy(hero, spell, "gone|c1", 3)).toEqual({ energy: 0, points: 0, label: "" });
   });
+
+  it("tells a source whether the spell is cast through a magic item, so it can offer itself for one and not the other", async () => {
+    const api = await load();
+    const pay = vi.fn(() => true);
+    api.registerEnergySource({
+      module: "test-addon", key: "set", label: "Set stone",
+      sources: (_actor, _spell, casting) => (casting.castThrough?.itemId === "wand" ? [{ id: "s1", label: "Wand stone", available: 5 }] : []),
+      pay,
+    });
+    const wand = { castThrough: { itemId: "wand", itemName: "Wand of Fire" } };
+    expect(api.energySourcesFor(hero, spell)).toEqual([]);
+    expect(api.energySourcesFor(hero, spell, { castThrough: null })).toEqual([]);
+    expect(api.energySourcesFor(hero, spell, wand).map((o) => o.value)).toEqual(["test-addon.set|s1"]);
+    expect(await api.drawEnergy(hero, spell, "test-addon.set|s1", 2)).toEqual({ energy: 0, points: 0, label: "" });
+    expect(await api.drawEnergy(hero, spell, "test-addon.set|s1", 2, wand)).toEqual({ energy: 2, points: 2, label: "Wand stone" });
+    expect(pay).toHaveBeenCalledWith(expect.objectContaining({ castThrough: wand.castThrough }));
+  });
 });
 
 describe("spell attacks", () => {

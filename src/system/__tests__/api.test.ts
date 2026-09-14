@@ -9,6 +9,7 @@ const globals = globalThis as Record<string, unknown>;
 afterEach(() => {
   delete globals.game;
   delete globals.ui;
+  delete globals.canvas;
   vi.restoreAllMocks();
 });
 
@@ -53,6 +54,24 @@ describe("the add-on API", () => {
     expect(api.actors.skillLevel(actor, "Swimming")).toBeNull();
     expect(api.actors.basicLift(actor)).toBe(29);
     expect(api.actors.attribute({}, "ST")).toBeNull();
+  });
+
+  it("says the mana where spells are cast: the scene's over the world's, and normal with the rule off (sargas79/GWorldVTT#276)", () => {
+    const api = createApi();
+    const world = (rules: Record<string, boolean>, sceneLevel: string | null) => {
+      const settings: Record<string, unknown> = { "gworld.manaLevel": "low", "gworld.optionalRules": rules };
+      globals.canvas = undefined;
+      globals.game = {
+        settings: { get: (scope: string, key: string) => settings[`${scope}.${key}`] },
+        scenes: { active: { getFlag: () => sceneLevel } },
+      };
+    };
+    world({}, null);
+    expect(api.magic.manaLevel()).toEqual({ level: "low", inPlay: true });
+    world({}, "high");
+    expect(api.magic.manaLevel()).toEqual({ level: "high", inPlay: true });
+    world({ manaLevels: false }, "high");
+    expect(api.magic.manaLevel()).toEqual({ level: "normal", inPlay: false });
   });
 
   it("answers whether it satisfies a range", () => {

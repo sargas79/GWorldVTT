@@ -612,11 +612,18 @@ and a hint `p.ihint`.
 - **`magic.registerEnergySource({ module, key, label, sources, canPay?, pay })`.**
   Offered in the casting dialog as "Energy from", beside the caster's own FP
   and HP.
-  - `sources(actor, spell)` returns `{ id, label, available, multiplier? }`;
+  - `sources(actor, spell, casting)` returns `{ id, label, available, multiplier? }`;
     `multiplier` is the source's points spent per point of energy.
   - The source covers what it can of the energy owed, and the caster pays the
-    rest. `canPay({ actor, spell, source, energy })` may refuse with a reason,
-    and `pay({ actor, spell, source, points, energy })` takes the points.
+    rest. `canPay({ actor, spell, source, energy, castThrough })` may refuse with a reason,
+    and `pay({ actor, spell, source, points, energy, castThrough })` takes the points.
+  - Since 1.13.0, `casting.castThrough` (and `castThrough` in `canPay` and
+    `pay`) is `{ itemId, itemName }` for a spell cast through a magic item,
+    and `null` for one the caster knows.
+- **`magic.manaLevel()`** (since 1.13.0). The mana where spells are being cast
+  now, as `{ level, inPlay }`: the active scene's level, else the world's
+  (`none`, `low`, `normal`, `high` or `veryHigh`), and whether the mana
+  levels rule is on. `normal` while it is off.
 - **`magic.postResistance({ caster, label, casterRoll, casterEffective, subjects, resistWith?, magical?, area?, ruleOf16? })`** (since 1.9.0).
   Posts the system's resistance card for a module's effect, with a roll for
   each subject.
