@@ -110,14 +110,8 @@ import { isRuleOn } from "../optional-rules.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
-import {
-  MANEUVERS,
-  MANEUVER_ORDER,
-  canDefendWith,
-  canParryWith,
-  evaluateBonus,
-  type Maneuver,
-} from "../../rules/maneuvers.js";
+import { evaluateBonus } from "../../rules/maneuvers.js";
+import { maneuverAllowsDefense, maneuverAllowsParry, maneuverInfo, maneuverKeys } from "../combat-extensions.js";
 import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
 import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js";
@@ -479,7 +473,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   };
   declare tl: number;
   declare sm: number;
-  declare maneuver: Maneuver;
+  declare maneuver: string;
+  declare maneuverOption: string;
   declare evaluateTurns: number;
   declare aim: { turns: number; braced: boolean };
   declare allOutAttackOption: "determined" | "double" | "feint" | "strong" | "suppression";
@@ -647,8 +642,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         required: true,
         nullable: false,
         initial: "doNothing",
-        choices: [...MANEUVER_ORDER],
+        // The Basic Set's maneuvers, and any an add-on module registered.
+        choices: () => maneuverKeys(),
       }),
+
+      /** The choice made with a module's maneuver, where it offers one; blank otherwise. */
+      maneuverOption: new fields.StringField({ required: true, nullable: false, initial: "" }),
 
       /** Consecutive Evaluate maneuvers taken, which accumulate +1 each to +3. */
       evaluateTurns: new fields.NumberField({
@@ -2401,8 +2400,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     // ── active defenses ─────────────────────────────────────────────────
     // All-Out Attack forfeits every defense; Move and Attack forbids parrying.
-    const defenseAvailable = canDefendWith(this.maneuver);
-    const parryAvailable = defenseAvailable && canParryWith(this.maneuver);
+    const defenseAvailable = maneuverAllowsDefense(this.maneuver);
+    const parryAvailable = defenseAvailable && maneuverAllowsParry(this.maneuver);
 
     // Increased Defense raises one named defense by 2; it is not a blanket
     // bonus, so each defense asks whether it is the one chosen.
@@ -2585,11 +2584,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     return {
       maneuver: {
         key: this.maneuver,
-        label: MANEUVERS[this.maneuver].label,
-        labelKey: `GWORLD.Maneuver.${this.maneuver}`,
+        label: maneuverInfo(this.maneuver).label,
+        // A module's maneuver carries its own label, a localization key or text.
+        labelKey: this.maneuver.includes(".") ? maneuverInfo(this.maneuver).label : `GWORLD.Maneuver.${this.maneuver}`,
         defenseAvailable,
         parryAvailable,
-        movement: MANEUVERS[this.maneuver].movement,
+        movement: maneuverInfo(this.maneuver).movement,
+        option: this.maneuverOption,
       },
       evaluateBonus: this.maneuver === "evaluate" ? evaluateBonus(this.evaluateTurns) : 0,
       // The aim as it stands, and what it is worth against a weapon of Acc 0:

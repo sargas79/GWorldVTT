@@ -22,6 +22,7 @@ import {
 } from "../rules/hit-locations.js";
 import { canTargetChinks, chinkPenalty } from "../rules/melee-situations.js";
 import type { DamageType } from "../rules/types.js";
+import { ADDON_LOCATION_PREFIX, hitLocationsFor, readLocationValue } from "./combat-extensions.js";
 
 /** Where a declared called shot waits for its damage roll. */
 export const CALLED_SHOT_FLAG = "calledShot";
@@ -31,6 +32,8 @@ export interface CalledShot {
   hitLocation: HitLocation;
   /** True when it was aimed at a gap in the armour rather than at the armour. */
   chink: boolean;
+  /** A location a module registered, as `<module>.<key>`; `hitLocation` is its parent. */
+  addonLocation?: string;
 }
 
 /** One option the attack dialog offers. */
@@ -51,7 +54,7 @@ export const UNAIMED = "torso";
  * refused: you cannot put a swung axe through somebody's eye, and a list that
  * says so by omission is shorter than one that says so by erroring.
  */
-export function shotOptions(type: DamageType, tightBeam = false): ShotOption[] {
+export function shotOptions(type: DamageType, tightBeam = false, actor?: any): ShotOption[] {
   const options: ShotOption[] = [];
 
   for (const location of HIT_LOCATION_ORDER) {
@@ -81,12 +84,26 @@ export function shotOptions(type: DamageType, tightBeam = false): ShotOption[] {
     });
   }
 
+  // Locations a module registered, where it offers them for this attack.
+  for (const added of hitLocationsFor({ actor, damageType: type })) {
+    options.push({
+      value: `${ADDON_LOCATION_PREFIX}${added.key}`,
+      label: game.i18n.localize(added.label),
+      penalty: added.penalty,
+    });
+  }
+
   return options;
 }
 
 /** Reads a dialog value back into a called shot, or null for an unaimed blow. */
 export function parseShot(value: string): CalledShot | null {
   if (!value || value === UNAIMED) return null;
+
+  if (value.startsWith(ADDON_LOCATION_PREFIX)) {
+    const read = readLocationValue(value);
+    return read?.addonLocation ? { hitLocation: read.hitLocation, chink: false, addonLocation: read.addonLocation } : null;
+  }
 
   if (value.startsWith("chink:")) {
     const where = value.slice("chink:".length);

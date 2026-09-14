@@ -21,6 +21,7 @@ import { resolveDamageAgainst, type IncomingDamage } from "./damage.js";
 import { syncHealthConditions } from "./conditions.js";
 import { bluntTrauma, fallingDamage, type LandingSurface } from "../rules/falling.js";
 import { randomHitLocation, type HitLocation } from "../rules/hit-locations.js";
+import { randomLocationWithHooks } from "./combat-extensions.js";
 import { applyInjury } from "../rules/injury.js";
 
 const FALL_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/fall.hbs`;
@@ -68,13 +69,16 @@ export async function rollFall(options: FallOptions): Promise<number | null> {
   // fall." The location roll is 3d, like every other, and is shown.
   const locationRoll = new Roll("3d6");
   await locationRoll.evaluate();
-  const hitLocation: HitLocation = randomHitLocation(locationRoll.total).location;
+  // A module may refine where a random blow lands.
+  const landed = randomLocationWithHooks(locationRoll.total, randomHitLocation(locationRoll.total).location, actor);
+  const hitLocation: HitLocation = landed.hitLocation;
 
   const damage: IncomingDamage = {
     basicDamage: Math.max(0, roll.total),
     type: "cr",
     armorDivisor: 1,
     hitLocation,
+    ...(landed.addonLocation ? { addonLocation: landed.addonLocation } : {}),
   };
   const resolved = resolveDamageAgainst(actor, damage);
 

@@ -38,6 +38,18 @@ import { blockingSpellsOf, castBlockingSpell } from "./casting.js";
 import { addResistControls } from "./spell-resistance.js";
 import { addRitualControls, addRitualTriggerControls, blockingRitualsOf, castBlockingRitual } from "./ritual-casting.js";
 import { addBuySuccessControls, addGuidanceControls } from "./bonus-points.js";
+import {
+  ADDON_LOCATION_PREFIX,
+  COMBAT_HOOKS,
+  anyDefenseOptions,
+  applyDefenseOptions,
+  callCombatHook,
+  defenseModifiersFor,
+  defenseOptionsFor,
+  hitLocationsFor,
+  readLocationValue,
+  registeredHitLocation,
+} from "./combat-extensions.js";
 import { buyDefenseBack, declareFleshWound, type FleshWoundEntry, type TvActionEntry } from "./cinematic.js";
 import {
   canAvertWithFatigue, facesHimSquarely, worthDeclaring, type Delivery,
@@ -67,6 +79,8 @@ interface DamageFlag {
   hitLocation?: HitLocation;
   /** True when it went for a gap in the armour, which halves what it finds. */
   chink?: boolean;
+  /** A location a module registered that the attack was aimed at, as `<module>.<key>`. */
+  addonLocation?: string;
   /** Pellets striking as one: the figure the target's DR is multiplied by. */
   drMultiplier?: number;
   /** A blow aimed at a weapon rather than at its wielder (Campaigns p. 401). */
@@ -121,7 +135,19 @@ function addApplyControls(message: any, html: HTMLElement): void {
     option.textContent = game.i18n.localize(`GWORLD.HitLocation.${location}`);
     // The location the attack was aimed at, or the torso, which is what an
     // unaimed blow hits.
-    if (location === (flag.hitLocation ?? "torso")) option.selected = true;
+    if (!flag.addonLocation && location === (flag.hitLocation ?? "torso")) option.selected = true;
+    select.append(option);
+  }
+  // Locations a module registered, offered for this damage type -- and the one
+  // the attack was aimed at, even if it no longer would be.
+  const aimedAt = flag.addonLocation ? registeredHitLocation(flag.addonLocation) : undefined;
+  const added = hitLocationsFor({ damageType: flag.damageType });
+  if (aimedAt && !added.includes(aimedAt)) added.push(aimedAt);
+  for (const location of added) {
+    const option = document.createElement("option");
+    option.value = `${ADDON_LOCATION_PREFIX}${location.key}`;
+    option.textContent = game.i18n.localize(location.label);
+    if (location.key === flag.addonLocation) option.selected = true;
     select.append(option);
   }
 
@@ -182,9 +208,11 @@ function addApplyControls(message: any, html: HTMLElement): void {
   button.textContent = game.i18n.localize("GWORLD.Chat.ApplyDamage");
 
   button.addEventListener("click", () => {
+    const where = readLocationValue(select.value) ?? { hitLocation: "torso" as HitLocation, addonLocation: null };
     void applyFromCard({
       flag,
-      hitLocation: select.value as HitLocation,
+      hitLocation: where.hitLocation,
+      addonLocation: where.addonLocation,
       arc: (arcSelect?.value ?? null) as Arc | null,
       distanceYards: distance ? Math.max(0, Number(distance.value) || 0) : 0,
       critical: critical?.checked ?? false,
@@ -213,6 +241,8 @@ function signedOrBlank(value: number): string {
 async function applyFromCard(options: {
   flag: DamageFlag;
   hitLocation: HitLocation;
+  /** A module's location chosen on the card, as `<module>.<key>`; `hitLocation` is its parent. */
+  addonLocation?: string | null;
   distanceYards: number;
   critical: boolean;
   arc?: Arc | null;
@@ -258,6 +288,9 @@ async function applyFromCard(options: {
     type: flag.damageType,
     armorDivisor: blast ? blast.armorDivisor : flag.armorDivisor,
     hitLocation: struck,
+    // A blast meets the torso whatever was aimed at; a module's location only
+    // counts for a blow that landed where it was aimed.
+    ...(options.addonLocation && struck === hitLocation ? { addonLocation: options.addonLocation } : {}),
     // "If you hit, halve DR. This is cumulative with any armor divisors"
     // (p. 400), so it goes in beside the critical's halving rather than
     // instead of it.
@@ -370,7 +403,9 @@ async function applyFromCard(options: {
       unconsciousPenalty:
         result.consequences.consciousnessRollPenalty + result.htModifiers.consciousness,
       status: game.i18n.localize(`GWORLD.Health.${result.consequences.status}`),
-      location: game.i18n.localize(`GWORLD.HitLocation.${result.hitLocation}`),
+      location: result.addonLocation && registeredHitLocation(result.addonLocation)
+        ? game.i18n.localize(registeredHitLocation(result.addonLocation)!.label)
+        : game.i18n.localize(`GWORLD.HitLocation.${result.hitLocation}`),
       // Knockback is reported even where the blow did no injury: a crushing
       // hit that armour stopped still shoves, which is most of the point of
       // the rule (p. 378).
@@ -485,6 +520,8 @@ interface DefenseFlag {
   weapon?: { weight: number; material: string; swung: boolean };
   /** +1 to Dodge alone, for a target who saw the laser dot (Campaigns p. 411). */
   dodgeBonus?: number;
+  /** Lines a module's attack option put on the defender's rolls, each for the defenses it names. */
+  defenseModifiers?: Array<{ label: string; value: number; defenses?: DefenseKey[] }>;
 }
 
 function defenseFlag(message: any): DefenseFlag | null {
@@ -678,6 +715,27 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       row.append(feverish);
     }
 
+    // A module's defense options, beside Retreat. Which defense each applies
+    // to is settled when a defense button is pressed.
+    const addonBase = {
+      defender,
+      attack: flag.attack,
+      damageType: flag.damageType ?? "",
+      delivery: flag.delivery ?? "",
+      retreating: false,
+      chosen: {},
+    };
+    const addonBoxes = anyDefenseOptions(addonBase).map((option) => {
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.dataset.addonDefense = option.key;
+      const label = document.createElement("label");
+      label.className = "gc-retreat";
+      label.append(box, document.createTextNode(game.i18n.localize(option.label)));
+      row.append(label);
+      return box;
+    });
+
     const defendWith = (choice: DefenseChoice, technique?: { name: string; delta: number }) => {
       const sight = sightSelect.value;
       const blind = sight === "sees"
@@ -708,6 +766,8 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         ...(flag.delivery ? { delivery: flag.delivery } : {}),
         ...(flag.damageType ? { damageType: flag.damageType } : {}),
         ...(technique ? { technique } : {}),
+        addonOptions: addonBoxes.filter((box) => box.checked).map((box) => String(box.dataset.addonDefense)),
+        attackDefenseModifiers: flag.defenseModifiers ?? [],
       });
     };
 
@@ -869,11 +929,38 @@ async function rollDefense(options: {
   laserDodge?: number;
   /** A defensive technique rolled in place of the defense, and what it stands at against it. */
   technique?: { name: string; delta: number };
+  /** The modules' defense options ticked on the card, by `<module>.<key>`. */
+  addonOptions?: string[];
+  /** Lines a module's attack option put on the defender's rolls. */
+  attackDefenseModifiers?: Array<{ label: string; value: number; defenses?: DefenseKey[] }>;
 }): Promise<void> {
   const {
     defender, key, total, attack, arcPenalty, deception, retreating, feverish, skill, isFencing,
   } = options;
   const name = game.i18n.localize(DEFENSE_LABELS[key]);
+
+  // A module's options ticked for this defense: refused ones are named and
+  // the defense is not rolled, so the defender can untick and press again.
+  const addonContext = {
+    defender,
+    defense: key,
+    attack,
+    damageType: options.damageType ?? "",
+    delivery: options.delivery ?? "",
+    retreating,
+    chosen: Object.fromEntries((options.addonOptions ?? []).map((k) => [k, true])),
+  };
+  for (const option of defenseOptionsFor(addonContext)) {
+    if (!(options.addonOptions ?? []).includes(option.key)) continue;
+    const why = option.refuse(addonContext);
+    if (why) {
+      ui.notifications?.warn(game.i18n.format("GWORLD.Addon.Refused", {
+        option: game.i18n.localize(option.label), reason: game.i18n.localize(why),
+      }));
+      return;
+    }
+  }
+  const addon = applyDefenseOptions(addonContext, options.addonOptions ?? []);
 
   // "You cannot parry a weapon heavier than your Basic Lift -- or twice BL,
   // if using a two-handed weapon. Attempts to parry anything heavier fail
@@ -897,6 +984,11 @@ async function rollDefense(options: {
       EXTRA_EFFORT_FP,
       game.i18n.localize("GWORLD.ExtraEffort.Feverish"),
     );
+    if (!paid) return;
+  }
+  // And what the modules' options cost.
+  if (addon.fatigue > 0) {
+    const paid = await spendFatigue(defender, addon.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"));
     if (!paid) return;
   }
 
@@ -930,6 +1022,12 @@ async function rollDefense(options: {
       value: retreatBonus({ defense: key, skill, isFencing }),
     });
   }
+
+  // What a module's attack option put on this defense, what the defender's
+  // own options add, and whatever a module's hook adds on top.
+  modifiers.push(...defenseModifiersFor(options.attackDefenseModifiers, key));
+  modifiers.push(...addon.modifiers);
+  callCombatHook(COMBAT_HOOKS.defenseModifiers, { defender, defense: key, attack, modifiers });
 
   // "If struck by a potentially lethal attack ... the hero can choose to
   // convert his failed defense roll into a success" (p. 417) -- but not
@@ -982,6 +1080,15 @@ async function rollDefense(options: {
 
   // "... or forced to make an active defense, you lose your aim."
   await loseAim(defender, "defended");
+
+  // The modules' options that asked to hear how the defense went.
+  for (const option of addon.chosen) {
+    try {
+      await option.after(addonContext, outcome ? { success: outcome.success, margin: outcome.margin } : null);
+    } catch (error) {
+      console.warn(`gworld | defense option ${option.key} failed after the roll`, error);
+    }
+  }
 }
 
 /** The apply control for a blow aimed at a weapon (Campaigns p. 401). */

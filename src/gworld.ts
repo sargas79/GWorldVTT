@@ -40,6 +40,7 @@ import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
 import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
 import { READY_HOOK, createApi, warnIncompatibleModules } from "./system/api.js";
+import { registerCombatStateHooks } from "./system/combat-extensions.js";
 import { closeRuleRegistration, openRuleRegistration, registerRule, registerRuleGroup } from "./system/rule-registry.js";
 import { registerSettings } from "./system/settings.js";
 import { loadFilePartials, registerTemplateHelpers } from "./system/templates.js";
@@ -117,6 +118,9 @@ Hooks.once("init", () => {
   // ran on costs everyone in it a point of fatigue when the tracker closes.
   registerAimTracking();
   registerBattleFatigue();
+  // What a module keeps per combatant runs out at the turn, round or combat
+  // boundary it asked for.
+  registerCombatStateHooks();
 
   const { DocumentSheetConfig } = foundry.applications.apps;
   DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.applications.sheets.ActorSheetV2);

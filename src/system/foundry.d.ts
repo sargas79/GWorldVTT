@@ -64,7 +64,8 @@ declare global {
         interface StringFieldOptions extends DataFieldOptions {
           blank?: boolean;
           trim?: boolean;
-          choices?: readonly string[] | Record<string, string>;
+          /** A function is called each time a value is validated, so the list can grow after init. */
+          choices?: readonly string[] | Record<string, string> | (() => readonly string[] | Record<string, string>);
           textSearch?: boolean;
         }
 

@@ -26,6 +26,7 @@ import {
 } from "../rules/fire.js";
 import { dailyMiles, marchingFatiguePerHour, type Terrain, type TravelWeather } from "../rules/hiking.js";
 import { randomHitLocation, type HitLocation } from "../rules/hit-locations.js";
+import { randomLocationWithHooks } from "./combat-extensions.js";
 import { applyInjury } from "../rules/injury.js";
 import {
   protectedDose, radiationEffect, radiationRow, remainingDose,
@@ -136,7 +137,9 @@ async function takeDamage(
   await roll.evaluate();
   const locationRoll = new Roll("3d6");
   await locationRoll.evaluate();
-  const location = randomHitLocation(locationRoll.total).location;
+  // A module may refine where a random blow lands; this hazard reads only the
+  // Basic Set location its armour covers.
+  const location = randomLocationWithHooks(locationRoll.total, randomHitLocation(locationRoll.total).location, actor).hitLocation;
 
   const hp = actor.system?.hp ?? { value: 0, max: 0 };
   const previous = Number(hp.value) || 0;

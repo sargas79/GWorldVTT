@@ -372,6 +372,7 @@ What's in it:
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted through the system's chat cards. |
 | `actors` | `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`: read-only. |
 | `items` | `derived`: read-only. |
+| `combat` | Combat extension points (since 1.1.0); see below. |
 | `hooks` | The names of the hooks below. |
 
 Lifecycle, in order:
@@ -390,6 +391,48 @@ is warned when the running system doesn't provide one:
 
 `npm run build` writes the API's TypeScript declarations to
 `dist/gworld-api.d.ts`, for a module built against a checkout of the system.
+
+### Combat extension points
+
+`game.gworld.api.combat` lets a module add to combat without touching the
+system. Every registration names its module and a key, stored as
+`<module>.<key>`; each takes an `available` check (typically "is my switch on")
+and is simply not offered when that says no. Anything that throws is logged
+and skipped, and the roll goes on.
+
+- **`registerManeuver({ module, key, label, movement, defense, attacks, options?, available? })`.**
+  Offered in the maneuver picker with the given movement (`none`, `step`,
+  `half`, `full`) and defense allowance (`any`, `none`, `dodgeAndBlockOnly`).
+  A choice made with it is stored in `system.maneuverOption`.
+- **`registerAttackOption({ module, key, label, attack?, input?, available?, refuse?, apply })`.**
+  Shown in the attack dialog as a checkbox, number or select. `apply(context, value)`
+  returns an effect:
+  - `modifiers`: lines on the attack roll;
+  - `defenseModifiers`: lines on the defender's rolls, optionally limited to certain defenses;
+  - `damageModifiers`: lines on the damage roll that follows;
+  - `reachBonus`, `criticalSkill`, `fatigue`, `notes`.
+
+  `refuse(context)` returns a reason to disable the option. `context.chosen` lists
+  the other options chosen.
+- **`registerDefenseOption({ module, key, label, defenses?, available?, refuse?, apply, after? })`.**
+  A checkbox on the defense card. `apply` returns `modifiers` and `fatigue`, and
+  `after(context, outcome)` hears how the defense went.
+- **`registerExtraEffort({ module, key, label, kind, fp, available?, refuse?, apply })`.**
+  An offensive option in the attack dialog or a defensive one on the card,
+  paid in FP before the roll.
+- **`registerHitLocation({ module, key, label, parent, penalty, damageTypes?, wounding?, cripplingDivisor?, extraDr?, knockdown?, available? })`.**
+  Offered as a called shot and on the damage card. It takes its armour and
+  anything it doesn't override from its Basic Set `parent`.
+- **State:** `getCombatState(actor, module, key)` and
+  `setCombatState(actor, module, key, value, "turn" | "round" | "combat")`,
+  cleared at that boundary. `getWeaponState(item, module)` and
+  `setWeaponState(item, module, patch)` hold state on a weapon.
+- **Hooks**, each called with a mutable context:
+  - `gworld.attackModifiers`, `gworld.defenseModifiers`, `gworld.damageModifiers`: push lines to `modifiers`;
+  - `gworld.injury`: change `damage` before it is worked out;
+  - `gworld.afterDamage`: the blow and its result;
+  - `gworld.breakageOdds`: set `breakage`;
+  - `gworld.randomHitLocation`: set `location` or `addonLocation`.
 
 ### A module's own rules
 

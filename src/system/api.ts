@@ -29,6 +29,7 @@
 import * as rules from "../rules/index.js";
 import { normalizeSkillName } from "../rules/skills.js";
 import { incompatibleModules, satisfiesApiRange } from "./api-version.js";
+import { combatApi } from "./combat-extensions.js";
 import { rollQuickContest, rollRegularContest } from "./contest.js";
 import { activeRules, isRuleOn } from "./optional-rules.js";
 import { REGISTER_RULES_HOOK, isAddonRuleKey, namespacedRuleKey, registerRule, registerRuleGroup } from "./rule-registry.js";
@@ -38,7 +39,7 @@ import { rollDamage, rollSuccess } from "./roll.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.0.0";
+export const API_VERSION = "1.1.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -129,6 +130,12 @@ export interface GWorldApi {
   };
   readonly actors: typeof actors;
   readonly items: typeof items;
+  /**
+   * Combat extension points (since 1.1.0): maneuvers, attack and defense
+   * options, extra effort, hit locations, per-combatant and per-weapon state,
+   * and the names of the combat hooks.
+   */
+  readonly combat: typeof combatApi;
   /** The hooks the API fires, by name. */
   readonly hooks: { readonly registerRules: string; readonly ready: string };
   /** Whether this API satisfies a semver range, as a module's manifest would declare it. */
@@ -144,6 +151,7 @@ export function createApi(): GWorldApi {
     roll: Object.freeze({ success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest }),
     actors: Object.freeze(actors),
     items: Object.freeze(items),
+    combat: combatApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK }),
     satisfies: (range: string) => satisfiesApiRange(API_VERSION, range),
   });

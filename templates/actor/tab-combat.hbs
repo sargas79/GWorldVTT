@@ -13,6 +13,19 @@
           </select>
         </div>
       </div>
+      {{#if maneuverOptions.length}}
+        {{!-- A module's maneuver that asks for a choice made with it. --}}
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Maneuver.Option"}}</span>
+          <div class="fi">
+            <select name="system.maneuverOption" {{#unless editable}}disabled{{/unless}}>
+              {{#each maneuverOptions as |o|}}
+                <option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+      {{/if}}
       {{#if grappledCannotMove}}
         <p class="ihint warn">{{localize "GWORLD.Grapple.CannotMove"}}</p>
       {{/if}}

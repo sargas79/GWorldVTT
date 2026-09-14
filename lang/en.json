@@ -366,6 +366,10 @@
       "left": "Left",
       "TurnCosts": "Turning mid-move: {sixty} point for 60°, {oneTwenty} for 120°, {about} to turn about; free at the end of the move"
     },
+    "Addon": {
+      "Reach": "reach {yards}",
+      "Refused": "{option} can't be used with this defense: {reason}"
+    },
     "Api": {
       "Incompatible": "{module} needs GWorld API {range}, but this system provides {version}. Its rules may be missing or broken until the module or the system is updated."
     },

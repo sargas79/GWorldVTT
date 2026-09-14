@@ -218,6 +218,18 @@ export interface InjuryInput {
    * the caller adjusting the DR it passes in.
    */
   critical?: CriticalDamage;
+  /**
+   * A wounding modifier to use in place of the location's, for a location a
+   * module defines on top of one of the Basic Set's. A body whose Injury
+   * Tolerance sets the figure still has the last word.
+   */
+  woundingOverride?: number;
+  /**
+   * The injury above which the struck part is crippled, in place of the
+   * location's: a number, or null for a part that can't be crippled. Left
+   * out, the location decides.
+   */
+  cripplingThreshold?: number | null;
 }
 
 export interface InjuryResult {
@@ -259,6 +271,8 @@ export function computeInjury({
   critical,
   tolerance,
   vulnerability = 1,
+  woundingOverride,
+  cripplingThreshold,
 }: InjuryInput): InjuryResult {
   const divisor = armorDivisor > 0 ? armorDivisor : 1;
 
@@ -284,9 +298,11 @@ export function computeInjury({
   const woundingModifier =
     tolerated !== null
       ? tolerated
-      : location
-        ? woundingModifierAt(type, location, qualifiers)
-        : WOUNDING_MODIFIERS[type];
+      : !fatigue && typeof woundingOverride === "number" && Number.isFinite(woundingOverride)
+        ? woundingOverride
+        : location
+          ? woundingModifierAt(type, location, qualifiers)
+          : WOUNDING_MODIFIERS[type];
 
   const base = { effectiveDr, penetrating, woundingModifier, costsFatigue: fatigue };
 
@@ -301,6 +317,16 @@ export function computeInjury({
     cap ?? Number.POSITIVE_INFINITY,
     Math.max(1, Math.floor(penetrating * Math.max(1, vulnerability) * woundingModifier)),
   );
+
+  // A threshold given in place of the location's: none at all, or a figure
+  // past which the excess is lost as it is for a limb.
+  if (location && cripplingThreshold !== undefined) {
+    if (cripplingThreshold === null || raw <= cripplingThreshold) {
+      return { ...base, injury: raw, excessLost: 0, crippled: false };
+    }
+    const capped = Math.floor(cripplingThreshold);
+    return { ...base, injury: capped, excessLost: raw - capped, crippled: true };
+  }
 
   // Injury past what cripples a limb is lost rather than carried to the body.
   if (location && maxHp !== undefined) {

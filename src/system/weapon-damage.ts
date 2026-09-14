@@ -39,6 +39,7 @@ import {
 } from "../rules/weapon-quality.js";
 import { toleratedWoundingModifier, noInjuryTolerance } from "../rules/injury-tolerance.js";
 import type { DamageType } from "../rules/types.js";
+import { COMBAT_HOOKS, callCombatHook } from "./combat-extensions.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/weapon-damage.hbs`;
 
@@ -174,12 +175,20 @@ export async function heavyParryCheck(options: {
   const item = defender?.items?.get?.(parryWeapon.itemId);
   const superiorSwing = attackWeapon.swung && outranks(attackWeapon.material as WeaponMaterial, parryWeapon.material);
   const quality = breakageQuality(parryWeapon.quality, parryWeapon.material, superiorSwing);
+  // A module may set the odds a weapon breaks at, in place of its grade's.
+  const odds = callCombatHook(COMBAT_HOOKS.breakageOdds, {
+    defender,
+    item,
+    attackWeapon,
+    quality,
+    // Monster Hunters 1's odds replace the grade's, except against a superior swing.
+    breakage: parryWeapon.breakage !== undefined && quality === parryWeapon.quality ? parryWeapon.breakage : undefined as number | undefined,
+  });
   const chance = heavyParryBreakChance({
     parryingWeight: parryWeapon.weight,
     attackingWeight: attackWeapon.weight,
     quality,
-    // Monster Hunters 1's odds replace the grade's, except against a superior swing.
-    ...(parryWeapon.breakage !== undefined && quality === parryWeapon.quality ? { breakage: parryWeapon.breakage } : {}),
+    ...(typeof odds.breakage === "number" && Number.isFinite(odds.breakage) ? { breakage: odds.breakage } : {}),
   });
   if (chance <= 0) return;
 

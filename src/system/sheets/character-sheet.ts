@@ -186,6 +186,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
+import { registeredManeuvers } from "../combat-extensions.js";
 import { DRESS_STATES } from "../../rules/cinematic.js";
 import type { AcidContact, AcidLanding } from "../../rules/acid.js";
 import type { AtmosphereHazard, HazardStrength } from "../../rules/atmosphere.js";
@@ -375,6 +376,16 @@ async function promptForExtraEffort(): Promise<{
  * `|| fallback` will not do: a Climbing of 0 is a real score for someone with
  * DX 5, and would be silently replaced by it.
  */
+/** Runs a module's availability check, reading a check that throws as "not offered". */
+function safeAvailable(check: () => boolean): boolean {
+  try {
+    return check() === true;
+  } catch (error) {
+    console.warn("gworld | a module's availability check failed", error);
+    return false;
+  }
+}
+
 function numberOr(value: unknown, fallback: number): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -3135,10 +3146,24 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           missing: found ? found.score === null : false,
         };
       }),
-      maneuvers: MANEUVER_ORDER.map((key) => ({
-        key,
-        label: game.i18n.localize(`GWORLD.Maneuver.${key}`),
-        selected: system.maneuver === key,
+      maneuvers: [
+        ...MANEUVER_ORDER.map((key) => ({
+          key,
+          label: game.i18n.localize(`GWORLD.Maneuver.${key}`),
+          selected: system.maneuver === key,
+        })),
+        // A module's maneuvers, where it offers them to this character -- and
+        // the one they are on, even if it no longer would, so the select says
+        // what is actually stored.
+        ...registeredManeuvers()
+          .filter((m) => system.maneuver === m.key || safeAvailable(() => m.available(this.actor)))
+          .map((m) => ({ key: m.key, label: game.i18n.localize(m.label), selected: system.maneuver === m.key })),
+      ],
+      // The choice a module's maneuver asks for, where it asks for one.
+      maneuverOptions: (registeredManeuvers().find((m) => m.key === system.maneuver)?.options ?? []).map((o) => ({
+        key: o.key,
+        label: game.i18n.localize(o.label),
+        selected: system.maneuverOption === o.key,
       })),
       // How much they are wearing, for Bulletproof Nudity (Campaigns p. 417).
       dressStates: DRESS_STATES.map((key) => ({
