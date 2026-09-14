@@ -89,6 +89,11 @@ export declare function handKeptTraitNames(outDir: string, basic: boolean, book:
 /** The skill a weapon mode is used with, from GCA's skillused list, or "" for none. */
 export declare function parseSkillUsed(value: string | undefined): string;
 
+/** The skill a technique defaults from and its penalty, from GCA's default(), bare or quoted; null when not a skill. */
+export declare function techniqueDefault(
+  raw: string | undefined,
+): { prerequisite: string; modifier: number } | null;
+
 /** The skills a Talent record gives its level to, from the file's group of its name. */
 export declare function talentSkillsOf(
   name: string,
