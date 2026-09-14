@@ -707,6 +707,8 @@ export interface DamageRollOptions {
   ignoresDr?: boolean;
   /** A holy weapon's blow (Monster Hunters 1 p. 51). */
   holy?: boolean;
+  /** The item the blow comes from, for a module's hooks; its UUID travels on the card. */
+  item?: any;
 }
 
 /**
@@ -718,8 +720,9 @@ export interface DamageRollOptions {
 export async function rollDamage(options: DamageRollOptions): Promise<number> {
   const { actor, label, formula, damageType, armorDivisor = 1, fragmentation = "" } = options;
   // A module may add lines to a damage roll, with what they are for.
+  const item = options.item ?? null;
   const modifiers = callCombatHook(COMBAT_HOOKS.damageModifiers, {
-    actor, label, formula, damageType, modifiers: [...(options.modifiers ?? [])],
+    actor, item, label, formula, damageType, modifiers: [...(options.modifiers ?? [])],
   }).modifiers.filter((m) => typeof m?.value === "number" && Number.isFinite(m.value));
   const explosive = options.explosive === true && isRuleOn("explosions");
   const cinematicBlast = explosive && isRuleOn("cinematicExplosions");
@@ -817,6 +820,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(options.material ? { material: options.material } : {}),
           ...(options.ignoresDr ? { ignoresDr: true } : {}),
           ...(options.holy ? { holy: true } : {}),
+          ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
           ...(options.weaponTarget ? { weaponTarget: options.weaponTarget } : {}),
           explosive,
           // The dice, not the rolled total: the blast radius is set by how
@@ -2516,6 +2520,10 @@ export async function handleDamageAction(
 ): Promise<void> {
   const { damageFormula, damageType, damageLabel, armorDivisor } = target.dataset;
   if (!damageFormula || !damageType) return;
+  // The row the damage was rolled from names the weapon, which a module's
+  // hooks may want to know.
+  const itemId = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+  const item = itemId ? (actor?.items?.get?.(itemId) ?? null) : null;
 
   const modifiers = await maybePromptModifiers(event);
   if (modifiers === null) return;
@@ -2642,6 +2650,7 @@ export async function handleDamageAction(
     ...(target.dataset.material ? { material: target.dataset.material } : {}),
     ...(target.dataset.ignoresDr === "1" ? { ignoresDr: true } : {}),
     ...(target.dataset.holy === "1" ? { holy: true } : {}),
+    ...(item ? { item } : {}),
     explosive: target.dataset.explosive === "1",
     fragmentation: target.dataset.fragmentation ?? "",
     modifiers,

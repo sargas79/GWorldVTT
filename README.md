@@ -460,6 +460,9 @@ and skipped, and the roll goes on.
   - `gworld.attackModifiers`, `gworld.defenseModifiers`, `gworld.damageModifiers`: push lines to `modifiers`;
   - `gworld.injury`: change `damage` before it is worked out;
   - `gworld.afterDamage`: the blow and its result;
+  - `gworld.damageModifiers`, `gworld.injury` and `gworld.afterDamage` also get
+    `item` (since 1.8.0): the weapon or spell the damage was rolled from, or
+    null. The card keeps it as `itemUuid`, and so does `damage`;
   - `gworld.breakageOdds`: set `breakage`;
   - `gworld.randomHitLocation`: set `location` or `addonLocation`.
 
@@ -637,6 +640,11 @@ and a hint `p.ihint`.
   - It returns the condition's id. `actors.removeCondition(actor, id)` takes it
     off, and `actors.conditions(actor)` lists them. The Combat tab shows them
     too.
+- **Injury:** `actors.applyInjury(actor, { amount, fatigue?, label? })` (since
+  1.8.0) takes HP, or FP with `fatigue: true`, off an actor with no DR and no
+  card, for a module's own effects. Reeling and dead follow from the new total,
+  and an injury spoils an aim. It returns `{ pool, from, to, label }`, or null
+  where the user doesn't own the actor. A module never writes `system.hp` itself.
 - **Lifecycle:** `gworld.combatStart` `(combat)`, and `gworld.turnStart` and
   `gworld.turnEnd` `(combat, combatant)`, on every client.
 - **Bleeding:** `gworld.bleedingSchedule` gets `{ actor, intervalSeconds, modifier }`

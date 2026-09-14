@@ -191,6 +191,7 @@ export async function rollSpellDamage(actor: any, spell: any, energy: number, op
     formula,
     damageType: (attack.damageType || "cr") as DamageType,
     explosive: Boolean(attack.explosive) && isRuleOn("explosions"),
+    ...(spell ? { item: spell } : {}),
   });
 }
 

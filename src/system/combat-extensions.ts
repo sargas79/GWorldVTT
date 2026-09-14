@@ -50,11 +50,11 @@ export const COMBAT_HOOKS = Object.freeze({
   attackModifiers: "gworld.attackModifiers",
   /** Before a defense roll: `{ defender, defense, attack, modifiers }`, mutable. */
   defenseModifiers: "gworld.defenseModifiers",
-  /** Before a damage roll: `{ actor, formula, damageType, modifiers }`, mutable. */
+  /** Before a damage roll: `{ actor, item, label, formula, damageType, modifiers }`, mutable. */
   damageModifiers: "gworld.damageModifiers",
-  /** A blow about to be worked out against a target: `{ actor, damage }`, the damage mutable. */
+  /** A blow about to be worked out against a target: `{ actor, item, damage }`, the damage mutable. */
   injury: "gworld.injury",
-  /** A blow that has been applied: `{ actor, damage, result, label }`. */
+  /** A blow that has been applied: `{ actor, item, damage, result }`. */
   afterDamage: "gworld.afterDamage",
   /** Before a heavy-parry breakage roll: `{ defender, item, attackWeapon, breakage }`, `breakage` mutable. */
   breakageOdds: "gworld.breakageOdds",
