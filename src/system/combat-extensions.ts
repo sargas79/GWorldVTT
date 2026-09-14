@@ -1,0 +1,808 @@
+/**
+ * Where an add-on module plugs into combat.
+ *
+ * The Basic Set's maneuvers, attack options and defenses are written into the
+ * system. A module that plays another book's combat rules adds to them from
+ * here, and only from here:
+ *
+ *   - **Maneuvers**, with the same movement and defense allowances the
+ *     system's own carry, and an optional choice made with the maneuver.
+ *   - **Attack options** and **extra-effort options**, shown in the attack
+ *     dialog: each can change the roll, the defender's rolls, the damage, and
+ *     what counts as a critical.
+ *   - **Defense options**, shown on the defense card beside Retreat.
+ *   - **Hit locations**, offered in the attack dialog and on the damage card,
+ *     each built on one of the Basic Set's locations with what it changes.
+ *   - **Hooks** on the attack, defense and damage rolls, on a blow about to
+ *     land and one that has landed, on the odds of a parrying weapon breaking,
+ *     and on a random hit location.
+ *   - **State** a module keeps per combatant (cleared at a turn, round or
+ *     combat boundary) and per weapon.
+ *
+ * Every registration names its module, and every key is stored as
+ * `<module>.<key>`, as rule keys are. The system never asks which modules are
+ * there: whatever is registered is offered where its `available` check says,
+ * and nothing else changes.
+ */
+
+import { SYSTEM_ID } from "./constants.js";
+import {
+  MANEUVERS,
+  MANEUVER_ORDER,
+  type DefenseAllowance,
+  type Maneuver,
+  type MovementAllowance,
+} from "../rules/maneuvers.js";
+import { HIT_LOCATIONS, type HitLocation } from "../rules/hit-locations.js";
+import type { DamageType } from "../rules/types.js";
+
+/** A modifier line, as the roll cards show it. */
+export interface ModifierLine {
+  label: string;
+  value: number;
+}
+
+export type DefenseKey = "dodge" | "parry" | "block";
+
+/** The hooks this module fires, by name. */
+export const COMBAT_HOOKS = Object.freeze({
+  /** Before an attack roll: `{ actor, rollType, ranged, modifiers, defensePenalty, dataset }`, mutable. */
+  attackModifiers: "gworld.attackModifiers",
+  /** Before a defense roll: `{ defender, defense, attack, modifiers }`, mutable. */
+  defenseModifiers: "gworld.defenseModifiers",
+  /** Before a damage roll: `{ actor, formula, damageType, modifiers }`, mutable. */
+  damageModifiers: "gworld.damageModifiers",
+  /** A blow about to be worked out against a target: `{ actor, damage }`, the damage mutable. */
+  injury: "gworld.injury",
+  /** A blow that has been applied: `{ actor, damage, result, label }`. */
+  afterDamage: "gworld.afterDamage",
+  /** Before a heavy-parry breakage roll: `{ defender, item, attackWeapon, breakage }`, `breakage` mutable. */
+  breakageOdds: "gworld.breakageOdds",
+  /** A random hit location: `{ roll, location, addonLocation, actor }`, the locations mutable. */
+  randomHitLocation: "gworld.randomHitLocation",
+});
+
+const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
+
+function refuse(what: string, why: string): null {
+  console.warn(`gworld | ${what} not registered: ${why}`);
+  return null;
+}
+
+function checkNames(what: string, module: unknown, key: unknown, label: unknown): string | null {
+  if (typeof module !== "string" || !IDENTIFIER.test(module)) return "the module id is missing or malformed";
+  if (typeof key !== "string" || !IDENTIFIER.test(key)) return "the key is missing or malformed";
+  if (typeof label !== "string" || !label.trim()) return "it has no label";
+  void what;
+  return null;
+}
+
+// ── maneuvers ──────────────────────────────────────────────────────────────
+
+export interface ManeuverRegistration {
+  module: string;
+  key: string;
+  /** A localization key or plain text. */
+  label: string;
+  movement: MovementAllowance;
+  defense: DefenseAllowance;
+  /** True when the maneuver itself makes an attack. */
+  attacks: boolean;
+  /** Choices made with the maneuver, stored in `system.maneuverOption`. */
+  options?: Array<{ key: string; label: string }>;
+  /** Whether the maneuver is offered to this actor right now (e.g. "my switch is on"). Defaults to always. */
+  available?: (actor: any) => boolean;
+}
+
+export interface AddonManeuver {
+  /** `<module>.<key>`, as stored in `system.maneuver`. */
+  key: string;
+  module: string;
+  label: string;
+  movement: MovementAllowance;
+  defense: DefenseAllowance;
+  attacks: boolean;
+  options: Array<{ key: string; label: string }>;
+  available: (actor: any) => boolean;
+}
+
+const maneuvers = new Map<string, AddonManeuver>();
+
+const MOVEMENTS: readonly MovementAllowance[] = ["none", "step", "half", "full"];
+const DEFENSES: readonly DefenseAllowance[] = ["any", "none", "dodgeAndBlockOnly"];
+
+/** Registers a maneuver. Returns its `<module>.<key>`, or null. */
+export function registerManeuver(registration: ManeuverRegistration): string | null {
+  const r = registration ?? ({} as ManeuverRegistration);
+  const what = `maneuver ${r.module}.${r.key}`;
+  const bad = checkNames(what, r.module, r.key, r.label);
+  if (bad) return refuse(what, bad);
+  if (!MOVEMENTS.includes(r.movement)) return refuse(what, `movement must be one of ${MOVEMENTS.join(", ")}`);
+  if (!DEFENSES.includes(r.defense)) return refuse(what, `defense must be one of ${DEFENSES.join(", ")}`);
+  const key = `${r.module}.${r.key}`;
+  if (maneuvers.has(key)) return refuse(what, "that key is already registered");
+  maneuvers.set(key, {
+    key,
+    module: r.module,
+    label: r.label.trim(),
+    movement: r.movement,
+    defense: r.defense,
+    attacks: r.attacks === true,
+    options: (r.options ?? [])
+      .filter((o) => typeof o?.key === "string" && typeof o?.label === "string")
+      .map((o) => ({ key: o.key, label: o.label })),
+    available: typeof r.available === "function" ? r.available : () => true,
+  });
+  return key;
+}
+
+export function registeredManeuvers(): AddonManeuver[] {
+  return [...maneuvers.values()];
+}
+
+/** Every value `system.maneuver` may hold: the system's maneuvers and the registered ones. */
+export function maneuverKeys(): string[] {
+  return [...MANEUVER_ORDER, ...maneuvers.keys()];
+}
+
+/** What a maneuver allows, for the system's own and registered ones alike. Unknown keys read as Do Nothing. */
+export function maneuverInfo(key: string): { key: string; label: string; movement: MovementAllowance; defense: DefenseAllowance; attacks: boolean } {
+  const own = MANEUVERS[key as Maneuver];
+  if (own) return { key: own.key, label: own.label, movement: own.movement, defense: own.defense, attacks: own.attacks };
+  const added = maneuvers.get(key);
+  if (added) return { key, label: added.label, movement: added.movement, defense: added.defense, attacks: added.attacks };
+  return { ...MANEUVERS.doNothing, key: "doNothing" };
+}
+
+/** Whether a maneuver permits any active defense. */
+export function maneuverAllowsDefense(key: string): boolean {
+  return maneuverInfo(key).defense !== "none";
+}
+
+/** Whether a maneuver permits a parry. */
+export function maneuverAllowsParry(key: string): boolean {
+  return maneuverInfo(key).defense === "any";
+}
+
+// ── attack options and extra effort ────────────────────────────────────────
+
+/** What an attack option can see. */
+export interface AttackContext {
+  actor: any;
+  /** The weapon item, where the attack is made with one. */
+  item: any | null;
+  ranged: boolean;
+  damageType: string;
+  /** The reach column, e.g. "C, 1". Blank at range. */
+  reach: string;
+  /** Skill before the dialog's modifiers. */
+  effectiveSkill: number;
+  /** The attacker's maneuver key. */
+  maneuver: string;
+  /** Tokens the attacker has targeted. */
+  targets: any[];
+  /** The options already ticked or filled in this dialog, by `<module>.<key>`. */
+  chosen: Record<string, unknown>;
+}
+
+/** What an option does to the attack. Every part is optional. */
+export interface AttackEffect {
+  /** Lines on the attack roll. */
+  modifiers?: ModifierLine[];
+  /** Lines on the defender's rolls against this attack; `defenses` limits which ones. */
+  defenseModifiers?: Array<ModifierLine & { defenses?: DefenseKey[] }>;
+  /** Lines on the damage roll that follows. */
+  damageModifiers?: ModifierLine[];
+  /** Yards of reach added, shown on the card. */
+  reachBonus?: number;
+  /** The skill a critical is judged against, where it differs from the roll's. */
+  criticalSkill?: number;
+  /** FP spent before the roll. */
+  fatigue?: number;
+  /** Anything worth saying on the card. */
+  notes?: string[];
+}
+
+export type OptionInput =
+  | { type: "checkbox" }
+  | { type: "number"; min?: number; max?: number }
+  | { type: "select"; choices: Array<{ value: string; label: string }> };
+
+export interface AttackOptionRegistration {
+  module: string;
+  key: string;
+  label: string;
+  /** Which attacks it is offered on. Defaults to "any". */
+  attack?: "melee" | "ranged" | "any";
+  /** The control. Defaults to a checkbox. */
+  input?: OptionInput;
+  /** Whether it is offered at all. */
+  available?: (context: AttackContext) => boolean;
+  /** Why it can't be chosen right now, or null. Shown on the disabled control. */
+  refuse?: (context: AttackContext) => string | null;
+  /** What choosing it does. `value` is true, a number, or the selected value. */
+  apply: (context: AttackContext, value: unknown) => AttackEffect | null;
+}
+
+export interface ExtraEffortRegistration {
+  module: string;
+  key: string;
+  label: string;
+  /** Offensive options go in the attack dialog, defensive ones on the defense card. */
+  kind: "offense" | "defense";
+  /** FP it costs. */
+  fp: number;
+  available?: (context: any) => boolean;
+  refuse?: (context: any) => string | null;
+  apply: (context: any) => AttackEffect | DefenseEffect | null;
+}
+
+interface AddonAttackOption {
+  key: string;
+  module: string;
+  label: string;
+  attack: "melee" | "ranged" | "any";
+  input: OptionInput;
+  available: (context: AttackContext) => boolean;
+  refuse: (context: AttackContext) => string | null;
+  apply: (context: AttackContext, value: unknown) => AttackEffect | null;
+  /** FP, for an extra-effort option. */
+  fp: number;
+}
+
+const attackOptions = new Map<string, AddonAttackOption>();
+
+/** Registers an attack option. Returns its `<module>.<key>`, or null. */
+export function registerAttackOption(registration: AttackOptionRegistration): string | null {
+  const r = registration ?? ({} as AttackOptionRegistration);
+  const what = `attack option ${r.module}.${r.key}`;
+  const bad = checkNames(what, r.module, r.key, r.label);
+  if (bad) return refuse(what, bad);
+  if (typeof r.apply !== "function") return refuse(what, "it has no apply function");
+  const key = `${r.module}.${r.key}`;
+  if (attackOptions.has(key)) return refuse(what, "that key is already registered");
+  attackOptions.set(key, {
+    key,
+    module: r.module,
+    label: r.label.trim(),
+    attack: r.attack ?? "any",
+    input: r.input ?? { type: "checkbox" },
+    available: typeof r.available === "function" ? r.available : () => true,
+    refuse: typeof r.refuse === "function" ? r.refuse : () => null,
+    apply: r.apply,
+    fp: 0,
+  });
+  return key;
+}
+
+// ── defense options ────────────────────────────────────────────────────────
+
+/** What a defense option can see. */
+export interface DefenseContext {
+  defender: any;
+  defense: DefenseKey;
+  /** The attack's label. */
+  attack: string;
+  damageType: string;
+  delivery: string;
+  /** Whether the defender ticked Retreat. */
+  retreating: boolean;
+  /** The options already ticked on this row, by `<module>.<key>`. */
+  chosen: Record<string, unknown>;
+}
+
+export interface DefenseEffect {
+  modifiers?: ModifierLine[];
+  fatigue?: number;
+  notes?: string[];
+}
+
+export interface DefenseOptionRegistration {
+  module: string;
+  key: string;
+  label: string;
+  /** Which defenses it applies to. Defaults to all three. */
+  defenses?: DefenseKey[];
+  available?: (context: DefenseContext) => boolean;
+  refuse?: (context: DefenseContext) => string | null;
+  apply: (context: DefenseContext) => DefenseEffect | null;
+  /** Called after the defense is rolled, with its outcome. */
+  after?: (context: DefenseContext, outcome: { success: boolean; margin: number } | null) => void | Promise<void>;
+}
+
+interface AddonDefenseOption {
+  key: string;
+  module: string;
+  label: string;
+  defenses: DefenseKey[];
+  available: (context: DefenseContext) => boolean;
+  refuse: (context: DefenseContext) => string | null;
+  apply: (context: DefenseContext) => DefenseEffect | null;
+  after: (context: DefenseContext, outcome: { success: boolean; margin: number } | null) => void | Promise<void>;
+  fp: number;
+}
+
+const defenseOptions = new Map<string, AddonDefenseOption>();
+const ALL_DEFENSES: DefenseKey[] = ["dodge", "parry", "block"];
+
+/** Registers a defense option. Returns its `<module>.<key>`, or null. */
+export function registerDefenseOption(registration: DefenseOptionRegistration): string | null {
+  const r = registration ?? ({} as DefenseOptionRegistration);
+  const what = `defense option ${r.module}.${r.key}`;
+  const bad = checkNames(what, r.module, r.key, r.label);
+  if (bad) return refuse(what, bad);
+  if (typeof r.apply !== "function") return refuse(what, "it has no apply function");
+  const key = `${r.module}.${r.key}`;
+  if (defenseOptions.has(key)) return refuse(what, "that key is already registered");
+  defenseOptions.set(key, {
+    key,
+    module: r.module,
+    label: r.label.trim(),
+    defenses: (r.defenses ?? ALL_DEFENSES).filter((d) => ALL_DEFENSES.includes(d)),
+    available: typeof r.available === "function" ? r.available : () => true,
+    refuse: typeof r.refuse === "function" ? r.refuse : () => null,
+    apply: r.apply,
+    after: typeof r.after === "function" ? r.after : () => undefined,
+    fp: 0,
+  });
+  return key;
+}
+
+/** Registers an extra-effort option: an attack or defense option that costs FP. Returns its key, or null. */
+export function registerExtraEffort(registration: ExtraEffortRegistration): string | null {
+  const r = registration ?? ({} as ExtraEffortRegistration);
+  const what = `extra effort ${r.module}.${r.key}`;
+  const bad = checkNames(what, r.module, r.key, r.label);
+  if (bad) return refuse(what, bad);
+  if (r.kind !== "offense" && r.kind !== "defense") return refuse(what, "kind must be offense or defense");
+  if (!Number.isFinite(r.fp) || r.fp < 0) return refuse(what, "fp must be a number of 0 or more");
+  if (typeof r.apply !== "function") return refuse(what, "it has no apply function");
+  const key = `${r.module}.${r.key}`;
+  if (attackOptions.has(key) || defenseOptions.has(key)) return refuse(what, "that key is already registered");
+  const available = typeof r.available === "function" ? r.available : () => true;
+  const refusal = typeof r.refuse === "function" ? r.refuse : () => null;
+  const label = `${r.label.trim()} (${r.fp} FP)`;
+  if (r.kind === "offense") {
+    attackOptions.set(key, {
+      key, module: r.module, label, attack: "any", input: { type: "checkbox" },
+      available, refuse: refusal, fp: r.fp,
+      apply: (context) => {
+        const effect = (r.apply(context) ?? {}) as AttackEffect;
+        return { ...effect, fatigue: (effect.fatigue ?? 0) + r.fp };
+      },
+    });
+  } else {
+    defenseOptions.set(key, {
+      key, module: r.module, label, defenses: ALL_DEFENSES,
+      available, refuse: refusal, fp: r.fp, after: () => undefined,
+      apply: (context) => {
+        const effect = (r.apply(context) ?? {}) as DefenseEffect;
+        return { ...effect, fatigue: (effect.fatigue ?? 0) + r.fp };
+      },
+    });
+  }
+  return key;
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+}
+
+function localized(text: string): string {
+  const out = (globalThis as { game?: any }).game?.i18n?.localize?.(text);
+  return typeof out === "string" ? out : text;
+}
+
+/** The registered attack options offered on this attack. */
+export function attackOptionsFor(context: AttackContext): AddonAttackOption[] {
+  return [...attackOptions.values()].filter((option) => {
+    if (option.attack === "melee" && context.ranged) return false;
+    if (option.attack === "ranged" && !context.ranged) return false;
+    try {
+      return option.available(context) === true;
+    } catch (error) {
+      console.warn(`gworld | attack option ${option.key} failed its availability check`, error);
+      return false;
+    }
+  });
+}
+
+/** The dialog controls for the registered attack options. Names are `addon:<key>`. */
+export function attackOptionFields(context: AttackContext): string {
+  return attackOptionsFor(context)
+    .map((option) => {
+      const name = `addon:${option.key}`;
+      const label = escapeHtml(localized(option.label));
+      let why: string | null = null;
+      try {
+        why = option.refuse(context);
+      } catch (error) {
+        console.warn(`gworld | attack option ${option.key} failed its refusal check`, error);
+      }
+      const disabled = why ? ` disabled title="${escapeHtml(localized(why))}"` : "";
+      if (option.input.type === "number") {
+        const min = option.input.min !== undefined ? ` min="${option.input.min}"` : "";
+        const max = option.input.max !== undefined ? ` max="${option.input.max}"` : "";
+        return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px" data-addon-option="${option.key}">
+          <span>${label}</span><input type="number" name="${name}" value="0" step="1"${min}${max} style="width:90px"${disabled}></label>`;
+      }
+      if (option.input.type === "select") {
+        const choices = option.input.choices
+          .map((c) => `<option value="${escapeHtml(c.value)}">${escapeHtml(localized(c.label))}</option>`)
+          .join("");
+        return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px" data-addon-option="${option.key}">
+          <span>${label}</span><select name="${name}" style="width:150px"${disabled}>${choices}</select></label>`;
+      }
+      return `<label style="display:flex;align-items:center;gap:8px" data-addon-option="${option.key}">
+        <input type="checkbox" name="${name}"${disabled}><span>${label}</span></label>`;
+    })
+    .join("");
+}
+
+/** Reads the registered options' values out of a dialog. Unticked checkboxes and zeroes are left out. */
+export function readAttackOptionValues(form: ParentNode | null | undefined, context: AttackContext): Record<string, unknown> {
+  const values: Record<string, unknown> = {};
+  if (!form) return values;
+  for (const option of attackOptionsFor(context)) {
+    const control = form.querySelector<HTMLInputElement | HTMLSelectElement>(`[name="addon:${CSS.escape(option.key)}"]`);
+    if (!control || control.disabled) continue;
+    if (option.input.type === "checkbox") {
+      if ((control as HTMLInputElement).checked) values[option.key] = true;
+    } else if (option.input.type === "number") {
+      const n = Number(control.value) || 0;
+      if (n !== 0) values[option.key] = n;
+    } else if (control.value) {
+      values[option.key] = control.value;
+    }
+  }
+  return values;
+}
+
+/** Merges effects in order. */
+export function mergeAttackEffects(effects: AttackEffect[]): Required<Omit<AttackEffect, "criticalSkill">> & { criticalSkill: number | null } {
+  const out = {
+    modifiers: [] as ModifierLine[],
+    defenseModifiers: [] as Array<ModifierLine & { defenses?: DefenseKey[] }>,
+    damageModifiers: [] as ModifierLine[],
+    reachBonus: 0,
+    criticalSkill: null as number | null,
+    fatigue: 0,
+    notes: [] as string[],
+  };
+  for (const effect of effects) {
+    out.modifiers.push(...(effect.modifiers ?? []).filter(isLine));
+    out.defenseModifiers.push(...(effect.defenseModifiers ?? []).filter(isLine));
+    out.damageModifiers.push(...(effect.damageModifiers ?? []).filter(isLine));
+    out.reachBonus += Number(effect.reachBonus) || 0;
+    if (typeof effect.criticalSkill === "number" && Number.isFinite(effect.criticalSkill)) out.criticalSkill = effect.criticalSkill;
+    out.fatigue += Math.max(0, Number(effect.fatigue) || 0);
+    out.notes.push(...(effect.notes ?? []).filter((n) => typeof n === "string"));
+  }
+  return out;
+}
+
+function isLine(line: unknown): line is ModifierLine {
+  const l = line as ModifierLine;
+  return typeof l?.label === "string" && typeof l?.value === "number" && Number.isFinite(l.value);
+}
+
+/**
+ * Applies the chosen options. An option refused for this attack is skipped
+ * even if its control was somehow submitted.
+ */
+export function applyAttackOptions(context: AttackContext, values: Record<string, unknown>): ReturnType<typeof mergeAttackEffects> {
+  const effects: AttackEffect[] = [];
+  const withChoices = { ...context, chosen: { ...values } };
+  for (const option of attackOptionsFor(withChoices)) {
+    if (!(option.key in values)) continue;
+    if (option.refuse(withChoices)) continue;
+    try {
+      const effect = option.apply(withChoices, values[option.key]);
+      if (effect) effects.push(effect);
+    } catch (error) {
+      console.warn(`gworld | attack option ${option.key} failed`, error);
+    }
+  }
+  return mergeAttackEffects(effects);
+}
+
+/** The registered defense options offered for this defense. */
+export function defenseOptionsFor(context: DefenseContext): AddonDefenseOption[] {
+  return [...defenseOptions.values()].filter((option) => {
+    if (!option.defenses.includes(context.defense)) return false;
+    try {
+      return option.available(context) === true;
+    } catch (error) {
+      console.warn(`gworld | defense option ${option.key} failed its availability check`, error);
+      return false;
+    }
+  });
+}
+
+/** Every registered defense option offered for any of the three defenses. */
+export function anyDefenseOptions(context: Omit<DefenseContext, "defense">): AddonDefenseOption[] {
+  const seen = new Map<string, AddonDefenseOption>();
+  for (const defense of ALL_DEFENSES) {
+    for (const option of defenseOptionsFor({ ...context, defense })) seen.set(option.key, option);
+  }
+  return [...seen.values()];
+}
+
+/** Applies the ticked defense options to one defense. */
+export function applyDefenseOptions(context: DefenseContext, ticked: string[]): {
+  modifiers: ModifierLine[];
+  fatigue: number;
+  notes: string[];
+  chosen: AddonDefenseOption[];
+} {
+  const out = { modifiers: [] as ModifierLine[], fatigue: 0, notes: [] as string[], chosen: [] as AddonDefenseOption[] };
+  const withChoices = { ...context, chosen: Object.fromEntries(ticked.map((k) => [k, true])) };
+  for (const option of defenseOptionsFor(withChoices)) {
+    if (!ticked.includes(option.key)) continue;
+    if (option.refuse(withChoices)) continue;
+    try {
+      const effect = option.apply(withChoices);
+      if (!effect) continue;
+      out.modifiers.push(...(effect.modifiers ?? []).filter(isLine));
+      out.fatigue += Math.max(0, Number(effect.fatigue) || 0);
+      out.notes.push(...(effect.notes ?? []).filter((n) => typeof n === "string"));
+      out.chosen.push(option);
+    } catch (error) {
+      console.warn(`gworld | defense option ${option.key} failed`, error);
+    }
+  }
+  return out;
+}
+
+/** The lines an attack's registered options put on one of the defender's rolls. */
+export function defenseModifiersFor(
+  lines: Array<ModifierLine & { defenses?: DefenseKey[] }> | undefined,
+  defense: DefenseKey,
+): ModifierLine[] {
+  return (lines ?? [])
+    .filter((line) => isLine(line) && (!line.defenses || line.defenses.length === 0 || line.defenses.includes(defense)))
+    .map((line) => ({ label: line.label, value: line.value }));
+}
+
+/**
+ * The hook a mutable context goes through. Listeners may push to its arrays or
+ * change its numbers; one that throws is logged and the roll goes on.
+ */
+export function callCombatHook<T extends object>(hook: string, context: T): T {
+  const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
+  try {
+    hooks?.callAll?.(hook, context);
+  } catch (error) {
+    console.warn(`gworld | a ${hook} listener failed`, error);
+  }
+  return context;
+}
+
+// ── hit locations ──────────────────────────────────────────────────────────
+
+export interface HitLocationRegistration {
+  module: string;
+  key: string;
+  label: string;
+  /** The Basic Set location it is part of: its armour, critical table and anything not overridden come from there. */
+  parent: HitLocation;
+  /** The to-hit penalty for aiming at it. */
+  penalty: number;
+  /** Damage types that may aim at it. Empty or missing: any. */
+  damageTypes?: DamageType[];
+  /** The wounding modifier for a damage type, or null to use the parent's. */
+  wounding?: (type: DamageType) => number | null;
+  /**
+   * Crippled above max HP divided by this (2 for a limb, 3 for an extremity).
+   * Null: can't be crippled. Missing: as the parent.
+   */
+  cripplingDivisor?: number | null;
+  /** DR the location adds, on top of the parent's. */
+  extraDr?: number;
+  /** Added to the knockdown roll's modifier. */
+  knockdown?: number;
+  /** Whether it is offered right now (e.g. "my switch is on"). */
+  available?: (context: { actor?: any; damageType?: string }) => boolean;
+}
+
+export interface AddonHitLocation {
+  key: string;
+  module: string;
+  label: string;
+  parent: HitLocation;
+  penalty: number;
+  damageTypes: DamageType[];
+  wounding: (type: DamageType) => number | null;
+  cripplingDivisor: number | null | undefined;
+  extraDr: number;
+  knockdown: number;
+  available: (context: { actor?: any; damageType?: string }) => boolean;
+}
+
+const hitLocations = new Map<string, AddonHitLocation>();
+
+/** The value a dialog and the damage card use for a registered location. */
+export const ADDON_LOCATION_PREFIX = "addon:";
+
+/** Registers a hit location. Returns its `<module>.<key>`, or null. */
+export function registerHitLocation(registration: HitLocationRegistration): string | null {
+  const r = registration ?? ({} as HitLocationRegistration);
+  const what = `hit location ${r.module}.${r.key}`;
+  const bad = checkNames(what, r.module, r.key, r.label);
+  if (bad) return refuse(what, bad);
+  if (!HIT_LOCATIONS[r.parent]) return refuse(what, `parent must be one of the Basic Set's locations`);
+  if (!Number.isFinite(r.penalty)) return refuse(what, "its penalty is not a number");
+  if (r.cripplingDivisor !== undefined && r.cripplingDivisor !== null && !(r.cripplingDivisor > 0)) {
+    return refuse(what, "cripplingDivisor must be above 0, null or left out");
+  }
+  const key = `${r.module}.${r.key}`;
+  if (hitLocations.has(key)) return refuse(what, "that key is already registered");
+  hitLocations.set(key, {
+    key,
+    module: r.module,
+    label: r.label.trim(),
+    parent: r.parent,
+    penalty: r.penalty,
+    damageTypes: Array.isArray(r.damageTypes) ? [...r.damageTypes] : [],
+    wounding: typeof r.wounding === "function" ? r.wounding : () => null,
+    cripplingDivisor: r.cripplingDivisor,
+    extraDr: Number(r.extraDr) || 0,
+    knockdown: Number(r.knockdown) || 0,
+    available: typeof r.available === "function" ? r.available : () => true,
+  });
+  return key;
+}
+
+export function registeredHitLocation(key: string): AddonHitLocation | undefined {
+  return hitLocations.get(key);
+}
+
+/** The registered locations offered for this attack. */
+export function hitLocationsFor(context: { actor?: any; damageType?: string }): AddonHitLocation[] {
+  return [...hitLocations.values()].filter((location) => {
+    if (context.damageType && location.damageTypes.length > 0 && !location.damageTypes.includes(context.damageType as DamageType)) return false;
+    try {
+      return location.available(context) === true;
+    } catch (error) {
+      console.warn(`gworld | hit location ${location.key} failed its availability check`, error);
+      return false;
+    }
+  });
+}
+
+/** Reads a dialog or card value: a Basic Set location, or a registered one with its parent. */
+export function readLocationValue(value: string): { hitLocation: HitLocation; addonLocation: string | null } | null {
+  if (value.startsWith(ADDON_LOCATION_PREFIX)) {
+    const added = hitLocations.get(value.slice(ADDON_LOCATION_PREFIX.length));
+    return added ? { hitLocation: added.parent, addonLocation: added.key } : null;
+  }
+  return HIT_LOCATIONS[value as HitLocation] ? { hitLocation: value as HitLocation, addonLocation: null } : null;
+}
+
+/**
+ * What a registered location changes about a blow: a wounding modifier to use
+ * instead of the parent's, the crippling threshold, extra DR and knockdown.
+ */
+export function locationOverrides(addonLocation: string | null | undefined, type: DamageType, maxHp: number): {
+  woundingModifier: number | null;
+  cripplingThreshold: number | null | undefined;
+  extraDr: number;
+  knockdown: number;
+} | null {
+  const added = addonLocation ? hitLocations.get(addonLocation) : undefined;
+  if (!added) return null;
+  let wounding: number | null = null;
+  try {
+    const value = added.wounding(type);
+    wounding = typeof value === "number" && Number.isFinite(value) ? value : null;
+  } catch (error) {
+    console.warn(`gworld | hit location ${added.key} failed its wounding check`, error);
+  }
+  return {
+    woundingModifier: wounding,
+    cripplingThreshold: added.cripplingDivisor === undefined ? undefined : added.cripplingDivisor === null ? null : maxHp / added.cripplingDivisor,
+    extraDr: added.extraDr,
+    knockdown: added.knockdown,
+  };
+}
+
+/** Runs the random-hit-location hook over a location rolled on the Basic Set's table. */
+export function randomLocationWithHooks(roll: number, location: HitLocation, actor?: any): { hitLocation: HitLocation; addonLocation: string | null } {
+  const context = callCombatHook(COMBAT_HOOKS.randomHitLocation, { roll, location, addonLocation: null as string | null, actor });
+  const added = context.addonLocation ? hitLocations.get(context.addonLocation) : undefined;
+  if (added) return { hitLocation: added.parent, addonLocation: added.key };
+  return { hitLocation: HIT_LOCATIONS[context.location] ? context.location : location, addonLocation: null };
+}
+
+// ── state kept by modules ──────────────────────────────────────────────────
+
+export type StateLifetime = "turn" | "round" | "combat";
+
+const STATE_FLAG = "combatState";
+const WEAPON_STATE_FLAG = "weaponState";
+
+/** A module's per-combatant value, or undefined. Kept on the actor. */
+export function getCombatState(actor: any, module: string, key: string): unknown {
+  const entry = actor?.getFlag?.(SYSTEM_ID, `${STATE_FLAG}.${module}.${key}`);
+  return entry && typeof entry === "object" && "value" in entry ? entry.value : undefined;
+}
+
+/** Stores a module's per-combatant value, cleared at the end of the actor's turn, the round, or the combat. */
+export async function setCombatState(actor: any, module: string, key: string, value: unknown, lifetime: StateLifetime = "combat"): Promise<void> {
+  if (!actor?.isOwner || !IDENTIFIER.test(module) || !IDENTIFIER.test(key)) return;
+  await actor.setFlag(SYSTEM_ID, `${STATE_FLAG}.${module}.${key}`, { value, lifetime });
+}
+
+/** Removes a module's per-combatant value. */
+export async function clearCombatState(actor: any, module: string, key: string): Promise<void> {
+  if (!actor?.isOwner) return;
+  const current = actor.getFlag?.(SYSTEM_ID, STATE_FLAG)?.[module];
+  if (current && key in current) await actor.unsetFlag(SYSTEM_ID, `${STATE_FLAG}.${module}.${key}`);
+}
+
+/** The state entries of one actor that a boundary clears, as flag paths to unset. */
+export function expiringState(state: Record<string, Record<string, { lifetime?: string }>> | null | undefined, lifetimes: StateLifetime[]): string[] {
+  const paths: string[] = [];
+  for (const [module, entries] of Object.entries(state ?? {})) {
+    for (const [key, entry] of Object.entries(entries ?? {})) {
+      if (lifetimes.includes((entry?.lifetime ?? "combat") as StateLifetime)) paths.push(`${STATE_FLAG}.${module}.${key}`);
+    }
+  }
+  return paths;
+}
+
+async function expire(actor: any, lifetimes: StateLifetime[]): Promise<void> {
+  if (!actor?.isOwner) return;
+  for (const path of expiringState(actor.getFlag?.(SYSTEM_ID, STATE_FLAG), lifetimes)) {
+    await actor.unsetFlag(SYSTEM_ID, path);
+  }
+}
+
+/**
+ * Clears module state at combat boundaries. Only the GM clears, so the work is
+ * done once rather than by every client.
+ */
+export function registerCombatStateHooks(): void {
+  Hooks.on("updateCombat", (combat: any, changed: any) => {
+    if (!game.user?.isGM) return;
+    if ("round" in (changed ?? {})) {
+      for (const combatant of combat?.combatants ?? []) void expire(combatant.actor, ["round", "turn"]);
+      return;
+    }
+    if ("turn" in (changed ?? {})) {
+      // The turn that just began is the one whose earlier turn-long state is over.
+      void expire(combat?.combatant?.actor, ["turn"]);
+    }
+  });
+  Hooks.on("deleteCombat", (combat: any) => {
+    if (!game.user?.isGM) return;
+    for (const combatant of combat?.combatants ?? []) void expire(combatant.actor, ["turn", "round", "combat"]);
+  });
+}
+
+/** A module's state on a weapon, or an empty object. */
+export function getWeaponState(item: any, module: string): Record<string, unknown> {
+  const state = item?.getFlag?.(SYSTEM_ID, `${WEAPON_STATE_FLAG}.${module}`);
+  return state && typeof state === "object" ? { ...state } : {};
+}
+
+/** Merges into a module's state on a weapon. */
+export async function setWeaponState(item: any, module: string, patch: Record<string, unknown>): Promise<void> {
+  if (!item?.isOwner || !IDENTIFIER.test(module) || !patch || typeof patch !== "object") return;
+  await item.setFlag(SYSTEM_ID, `${WEAPON_STATE_FLAG}.${module}`, { ...getWeaponState(item, module), ...patch });
+}
+
+/** What the API exposes. */
+export const combatApi = Object.freeze({
+  registerManeuver,
+  registerAttackOption,
+  registerDefenseOption,
+  registerExtraEffort,
+  registerHitLocation,
+  getCombatState,
+  setCombatState,
+  clearCombatState,
+  getWeaponState,
+  setWeaponState,
+  hooks: COMBAT_HOOKS,
+});

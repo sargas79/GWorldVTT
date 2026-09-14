@@ -45,6 +45,7 @@ import {
   cannonFodderCollapses, cinematicExplosionInjury, knockbackStunPenalty,
 } from "../rules/cinematic.js";
 import { isCannonFodder } from "./cinematic.js";
+import { COMBAT_HOOKS, callCombatHook, locationOverrides } from "./combat-extensions.js";
 
 /** A critical hit, already rolled for on one of the tables. */
 export interface CriticalHit {
@@ -62,6 +63,11 @@ export interface IncomingDamage {
   /** Above 1 it divides the target's DR; below 1 it multiplies it. */
   armorDivisor: number;
   hitLocation: HitLocation;
+  /**
+   * A location a module registered, as `<module>.<key>`. `hitLocation` is
+   * then its parent, which supplies the armour and anything it doesn't change.
+   */
+  addonLocation?: string | null;
   /**
    * The most the damage dice could have come up, for the critical results that
    * substitute maximum damage for what was rolled.
@@ -106,6 +112,8 @@ export interface IncomingDamage {
 export interface AppliedDamage {
   actorName: string;
   hitLocation: HitLocation;
+  /** A module's location struck, as `<module>.<key>`, or null. */
+  addonLocation: string | null;
   /** DR from worn armour alone, before the location's own is added. */
   wornDr: number;
   /** DR actually subtracted, after the location's own and the divisor. */
@@ -249,12 +257,19 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     ...(critical ? { damage: critical } : {}),
   });
 
+  // A location a module registered changes what it says it changes -- the
+  // wounding modifier, the crippling threshold, DR of its own, the knockdown
+  // roll -- and takes everything else from the Basic Set location it is part of.
+  const overrides = locationOverrides(damage.addonLocation, damage.type, Number(hp.max) || 0);
+
   // computeInjury adds the location's own natural DR itself, so it is given the
   // worn figure alone. maxHp is what caps injury to a limb at the point the
   // limb is crippled.
   const result = computeInjury({
     basicDamage,
-    dr: armour,
+    dr: armour + (damage.ignoresDr ? 0 : (overrides?.extraDr ?? 0)),
+    ...(overrides && overrides.woundingModifier !== null ? { woundingOverride: overrides.woundingModifier } : {}),
+    ...(overrides && overrides.cripplingThreshold !== undefined ? { cripplingThreshold: overrides.cripplingThreshold } : {}),
     type: damage.type,
     armorDivisor: damage.armorDivisor,
     hitLocation: damage.hitLocation,
@@ -334,6 +349,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   const record: AppliedDamage = {
     actorName: String(actor?.name ?? ""),
     hitLocation: damage.hitLocation,
+    addonLocation: overrides ? (damage.addonLocation ?? null) : null,
     wornDr: armour,
     effectiveDr: result.effectiveDr,
     penetrating: result.penetrating,
@@ -376,7 +392,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
             hitLocation: damage.hitLocation,
             shock: consequences.shock,
             traitModifier: traits.knockdown + traits.htRolls,
-          }),
+          }) + (overrides?.knockdown ?? 0),
         }
       : null,
     // Nothing bleeds that has no blood, and nothing bleeds from a cinematic
@@ -433,12 +449,21 @@ export async function applyDamageToActor(
 ): Promise<AppliedDamage | null> {
   if (!actor?.isOwner) return null;
 
-  const resolved = resolveDamageAgainst(actor, damage);
-  if (resolved.injury === 0 && !resolved.collapsed) return resolved;
+  // A module may change the blow before it is worked out: where it lands,
+  // how hard, what it meets.
+  const incoming = callCombatHook(COMBAT_HOOKS.injury, { actor, damage: { ...damage } }).damage;
+
+  const resolved = resolveDamageAgainst(actor, incoming);
+  if (resolved.injury === 0 && !resolved.collapsed) {
+    callCombatHook(COMBAT_HOOKS.afterDamage, { actor, damage: incoming, result: resolved });
+    return resolved;
+  }
 
   const path = resolved.costsFatigue ? "system.fp.value" : "system.hp.value";
   await actor.update({ [path]: resolved.current });
   // "If you are injured while aiming ... you lose your aim."
   await loseAim(actor, "injured");
+  // And what it did, for a module with something that follows from it.
+  callCombatHook(COMBAT_HOOKS.afterDamage, { actor, damage: incoming, result: resolved });
   return resolved;
 }

@@ -31,7 +31,19 @@ import {
   laserSight,
 } from "../rules/accessories.js";
 import { multipleProjectiles } from "../rules/shotguns.js";
-import { canAttempt, resolveDefense, resolveSuccess, type SuccessRollResult } from "../rules/success.js";
+import {
+  canAttempt, isCriticalFailure, isCriticalSuccess, resolveDefense, resolveSuccess, type SuccessRollResult,
+} from "../rules/success.js";
+import {
+  COMBAT_HOOKS,
+  applyAttackOptions,
+  attackOptionFields,
+  callCombatHook,
+  readAttackOptionValues,
+  type AttackContext,
+  type DefenseKey as AddonDefenseKey,
+  type ModifierLine,
+} from "./combat-extensions.js";
 import {
   criticalEntry,
   criticalMissTableFor,
@@ -215,6 +227,17 @@ export interface SuccessRollOptions {
   actor: any;
   /** The unmodified target number, e.g. a skill level or defense score. */
   base: number;
+  /**
+   * The skill a critical success or failure is judged against, where an
+   * option says it differs from the roll's own: a bonus bought for accuracy
+   * need not make a critical easier.
+   */
+  criticalSkill?: number;
+  /**
+   * Lines a module's attack option puts on the defender's rolls, each limited
+   * to the defenses it names. Carried to the defense card.
+   */
+  defenseModifiers?: Array<ModifierLine & { defenses?: AddonDefenseKey[] }>;
   label: string;
   /** What kind of roll this is; defense rolls use the defense success rules. */
   kind?: RollKind;
@@ -314,10 +337,24 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   const roll = new Roll("3d6");
   await roll.evaluate();
 
-  const outcome =
+  const resolved =
     kind === "defense"
       ? resolveDefense(roll.total, effective, dieResults(roll))
       : resolveSuccess(roll.total, effective, dieResults(roll));
+  // Criticals judged against another skill, where an option asked for that.
+  // A 17 or 18 still fails and a critical success still succeeds.
+  const criticalSkill = kind !== "defense" && typeof options.criticalSkill === "number" && Number.isFinite(options.criticalSkill)
+    ? options.criticalSkill
+    : null;
+  const outcome = criticalSkill === null
+    ? resolved
+    : (() => {
+        const criticalSuccess = isCriticalSuccess(roll.total, criticalSkill);
+        const criticalFailure = !criticalSuccess && isCriticalFailure(roll.total, criticalSkill);
+        const success = criticalSuccess ? true : criticalFailure ? false : roll.total >= 17 ? false : roll.total <= effective;
+        const margin = success ? Math.max(0, effective - roll.total) : Math.max(0, roll.total - effective);
+        return { ...resolved, criticalSuccess, criticalFailure, success, margin };
+      })();
 
   // A critical hit or miss is read off a table rather than merely announced
   // (p. 381). The miss is rolled here, because its result lands on the attacker
@@ -384,6 +421,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
                   onSuccess: attackFlags(
                     actor, label, defensePenalty, false, noParry, options.weapon, options.delivery, options.damageType,
                     options.guidance?.area === true && !defendsAgainstArea(), options.dodgeBonus ?? 0,
+                    options.defenseModifiers ?? [],
                   ),
                 }
               : {}),
@@ -425,6 +463,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
             // victims may dive for cover or retreat out of the area" (p. 413).
             options.guidance?.area === true && !defendsAgainstArea(),
             options.dodgeBonus ?? 0,
+            options.defenseModifiers ?? [],
           )),
         }
       : {}),
@@ -565,6 +604,8 @@ function attackFlags(
   areaAttack = false,
   /** +1 to Dodge for a target who saw a laser dot (Campaigns p. 411). */
   dodgeBonus = 0,
+  /** Lines a module's attack option puts on the defender's rolls. */
+  defenseModifiers: Array<ModifierLine & { defenses?: AddonDefenseKey[] }> = [],
 ): object {
   const defenders = targetedTokens()
     .filter((token: any) => token?.actor?.uuid)
@@ -602,6 +643,7 @@ function attackFlags(
         ...(delivery ? { delivery } : {}),
         ...(damageType ? { damageType } : {}),
         ...(dodgeBonus ? { dodgeBonus } : {}),
+        ...(defenseModifiers.length > 0 ? { defenseModifiers } : {}),
       },
     },
   };
@@ -648,10 +690,11 @@ export interface DamageRollOptions {
  * numbers a GM needs rather than guessing at whom it hit.
  */
 export async function rollDamage(options: DamageRollOptions): Promise<number> {
-  const {
-    actor, label, formula, damageType, armorDivisor = 1, modifiers = [],
-    fragmentation = "",
-  } = options;
+  const { actor, label, formula, damageType, armorDivisor = 1, fragmentation = "" } = options;
+  // A module may add lines to a damage roll, with what they are for.
+  const modifiers = callCombatHook(COMBAT_HOOKS.damageModifiers, {
+    actor, label, formula, damageType, modifiers: [...(options.modifiers ?? [])],
+  }).modifiers.filter((m) => typeof m?.value === "number" && Number.isFinite(m.value));
   const explosive = options.explosive === true && isRuleOn("explosions");
   const cinematicBlast = explosive && isRuleOn("cinematicExplosions");
   const fragments = cinematicBlast ? "" : fragmentation;
@@ -738,6 +781,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
             ? {
                 hitLocation: options.calledShot.hitLocation,
                 chink: options.calledShot.chink,
+                ...(options.calledShot.addonLocation ? { addonLocation: options.calledShot.addonLocation } : {}),
               }
             : {}),
           // The most these dice could have come up, for the critical results
@@ -861,6 +905,9 @@ export async function handleRollAction(
   // range is still measured, so the field starts at the right figure.
   const aboard = ranged ? vehicleAboard(actor) : null;
   const measured = ranged && !(event as MouseEvent).shiftKey ? measuredShot(actor) : null;
+  // The weapon the button belongs to, for the modules' attack options.
+  const rolledItemId = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+  const rolledItem = rolledItemId ? actor?.items?.get?.(rolledItemId) ?? null : null;
   const shot = ranged
     ? measured && !aboard
       ? quickShot(measured, weapon)
@@ -869,6 +916,9 @@ export async function handleRollAction(
           aboard,
           mayFireMounted: mayFireMountedWeapon(actor, aboard),
           initialRange: measured?.rangeYards ?? 0,
+          actor,
+          item: rolledItem,
+          effectiveSkill: base,
         })
     : null;
   if (ranged && shot === null) return null;
@@ -889,6 +939,9 @@ export async function handleRollAction(
         eyes: eyesOf(actor),
         // "C, 1" and "1, 2" both reach as far as their last number does.
         reachYards: longestReach(target.dataset.reach ?? ""),
+        actor,
+        item: rolledItem,
+        reach: target.dataset.reach ?? "",
       })
     : null;
   if (asksAboutMelee && melee === null) return null;
@@ -971,6 +1024,15 @@ export async function handleRollAction(
     if (!paid) return null;
     if (melee.mightyBlows) await recordMightyBlows(actor);
   }
+  // A module's option chosen for a shot costs its FP the same way.
+  if (shot?.addon && shot.addon.fatigue > 0) {
+    const paid = await spendFatigue(actor, shot.addon.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"));
+    if (!paid) return null;
+  }
+  // What the modules' options chosen in the dialog did beyond the roll itself:
+  // lines for the damage roll that follows, and for the defender's rolls.
+  const addon = melee?.addon ?? shot?.addon ?? null;
+  if (rollType === "attack") await recordAddonDamage(actor, addon?.damageModifiers ?? []);
 
   // Where the blow was aimed travels to the damage roll, which is a separate
   // click: an attack that went for the skull should not have to be told twice.
@@ -999,13 +1061,35 @@ export async function handleRollAction(
   // at the foe who was feinted -- it was good for one second either way.
   const feint =
     rollType === "attack" && isRuleOn("feint") ? await consumeFeint(actor) : 0;
-  const defensePenalty = (melee?.defensePenalty ?? 0) + feint;
+
+  // A module may add to the attack roll and to what the defender faces, with
+  // what each line is for.
+  const hooked = rollType === "attack"
+    ? callCombatHook(COMBAT_HOOKS.attackModifiers, {
+        actor,
+        rollType,
+        ranged: Boolean(ranged),
+        modifiers,
+        defensePenalty: (melee?.defensePenalty ?? 0) + feint,
+        defenseModifiers: [...(addon?.defenseModifiers ?? [])],
+        dataset: { ...target.dataset },
+      })
+    : null;
+  const defensePenalty = Number(hooked?.defensePenalty ?? (melee?.defensePenalty ?? 0) + feint) || 0;
 
   // A shot taken at a measured range says so on the card, where the number
-  // came from being the one thing a player will want to check.
-  const label = measured
-    ? `${rollLabel ?? rollType ?? "Roll"} (${game.i18n.format("GWORLD.Ranged.Measured", { yards: measured.rangeYards })})`
-    : (rollLabel ?? rollType ?? "Roll");
+  // came from being the one thing a player will want to check -- and so does
+  // anything a module's option had to say about the attack.
+  const noted = [
+    ...(addon && addon.reachBonus !== 0 ? [game.i18n.format("GWORLD.Addon.Reach", { yards: addon.reachBonus > 0 ? `+${addon.reachBonus}` : addon.reachBonus })] : []),
+    ...(addon?.notes ?? []).map((note) => game.i18n.localize(note)),
+  ];
+  const label = [
+    measured
+      ? `${rollLabel ?? rollType ?? "Roll"} (${game.i18n.format("GWORLD.Ranged.Measured", { yards: measured.rangeYards })})`
+      : (rollLabel ?? rollType ?? "Roll"),
+    ...noted,
+  ].join(" — ");
 
   // What the weapon is, for the defender's parry to weigh and the fumble
   // table to read (Campaigns pp. 376, 556). A weapon that says nothing
@@ -1051,6 +1135,10 @@ export async function handleRollAction(
     // defender, and a Feint's is the same penalty bought a turn earlier, so
     // both travel with the attack to the defense card.
     ...(defensePenalty !== 0 ? { defensePenalty } : {}),
+    // A module's option may put lines on the defender's rolls, and judge
+    // criticals against another skill.
+    ...(hooked && hooked.defenseModifiers.length > 0 ? { defenseModifiers: hooked.defenseModifiers } : {}),
+    ...(addon && addon.criticalSkill !== null ? { criticalSkill: addon.criticalSkill } : {}),
     // A weapon that can jam says so on the button; one that cannot -- a bow, a
     // thrown rock -- carries nothing and is never asked.
     ...(malfunctionNumber
@@ -1131,6 +1219,23 @@ export async function handleRollAction(
   }
 
   return outcome;
+}
+
+/** Where the damage lines a module's attack option added wait for the damage roll. */
+const ADDON_DAMAGE_FLAG = "addonDamage";
+
+async function recordAddonDamage(actor: any, lines: ModifierLine[]): Promise<void> {
+  if (!actor?.isOwner) return;
+  if (lines.length > 0) await actor.setFlag(SYSTEM_ID, ADDON_DAMAGE_FLAG, lines);
+  else if (actor.getFlag?.(SYSTEM_ID, ADDON_DAMAGE_FLAG)) await actor.unsetFlag(SYSTEM_ID, ADDON_DAMAGE_FLAG);
+}
+
+async function consumeAddonDamage(actor: any): Promise<ModifierLine[]> {
+  const lines = actor?.getFlag?.(SYSTEM_ID, ADDON_DAMAGE_FLAG);
+  if (Array.isArray(lines) && lines.length > 0 && actor.isOwner) await actor.unsetFlag(SYSTEM_ID, ADDON_DAMAGE_FLAG);
+  return Array.isArray(lines)
+    ? lines.filter((l) => typeof l?.label === "string" && typeof l?.value === "number" && Number.isFinite(l.value))
+    : [];
 }
 
 /** Where a couched lance's charge waits for the damage roll (p. 396). */
@@ -1311,6 +1416,30 @@ interface RangedShot {
   cover?: CoverApproach | "none";
   /** +1 to the target's Dodge where they have seen a laser dot within its range. */
   dodgeBonus?: number;
+  /** What the modules' attack options chosen in the dialog add up to. */
+  addon?: ReturnType<typeof applyAttackOptions>;
+}
+
+/** The context a module's attack option is shown and applied with. */
+function attackContextFor(options: {
+  actor?: any;
+  item?: any;
+  ranged: boolean;
+  damageType: string;
+  reach?: string;
+  effectiveSkill: number;
+}): AttackContext {
+  return {
+    actor: options.actor ?? null,
+    item: options.item ?? null,
+    ranged: options.ranged,
+    damageType: options.damageType,
+    reach: options.reach ?? "",
+    effectiveSkill: options.effectiveSkill,
+    maneuver: String(options.actor?.system?.maneuver ?? ""),
+    targets: targetedTokens(),
+    chosen: {},
+  };
 }
 
 /**
@@ -1354,8 +1483,17 @@ export async function promptForRangedAttack(options: {
   mayFireMounted?: boolean;
   /** A range already measured off the map, to start the field at. */
   initialRange?: number;
+  /** The shooter and the weapon, for the modules' attack options. */
+  actor?: any;
+  item?: any;
+  /** The skill being rolled, for the modules' attack options. */
+  effectiveSkill?: number;
 }): Promise<RangedShot | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
+  const addonContext = attackContextFor({
+    actor: options.actor, item: options.item, ranged: true, damageType: options.damageType,
+    effectiveSkill: options.effectiveSkill ?? 0,
+  });
   // What aiming is worth: Accuracy after a turn, more for the second and
   // third, more again for bracing. The box is ticked for somebody aiming and
   // says what it buys; anyone else may tick it to say they aimed off-sheet.
@@ -1426,7 +1564,7 @@ export async function promptForRangedAttack(options: {
       ${field("speed", L("TargetSpeed"), "0")}
       ${field("size", L("TargetSize"), "0")}
       ${shotsField}
-      ${calledShotField(options.damageType, false)}
+      ${calledShotField(options.damageType, false, options.actor)}
       ${sightField()}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Cover.Label")}</span>
@@ -1457,6 +1595,7 @@ export async function promptForRangedAttack(options: {
         <input type="checkbox" name="laserSeen"><span>${L("LaserSeen")}</span>
       </label>
       ${vehicleFields}
+      ${attackOptionFields(addonContext)}
     </div>`,
     ok: {
       label: game.i18n.localize("GWORLD.Chat.Roll"),
@@ -1464,6 +1603,7 @@ export async function promptForRangedAttack(options: {
         const form = button.closest<HTMLElement>(".application");
         const num = (name: string) =>
           Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
+        const addonValues = readAttackOptionValues(form, addonContext);
         const aimed =
           form?.querySelector<HTMLInputElement>('input[name="aimed"]')?.checked ?? false;
         const situation =
@@ -1475,6 +1615,7 @@ export async function promptForRangedAttack(options: {
         const calledShot =
           form?.querySelector<HTMLSelectElement>('select[name="calledShot"]')?.value ?? UNAIMED;
         return {
+          addonValues,
           range: num("range"),
           elevation: num("elevation"),
           speed: num("speed"),
@@ -1514,7 +1655,7 @@ export async function promptForRangedAttack(options: {
 
   if (!result || typeof result !== "object") return null;
 
-  const input = result as RangedInput & { calledShot?: string };
+  const input = result as RangedInput & { calledShot?: string; addonValues?: Record<string, unknown> };
   // A weapon cannot fire more shots than its Rate of Fire, nor fewer than one.
   const shellsFired = Math.min(rateOfFire, Math.max(1, Math.floor(input.shots || 1)));
 
@@ -1527,11 +1668,14 @@ export async function promptForRangedAttack(options: {
     halfDamageRange: options.halfDamageRange ?? 0,
   });
 
-  const aimed = calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, false);
+  const aimed = calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, false, options.actor);
   const modifiers = rangedModifiers({ ...input, shots: pellets.effectiveShots }, options);
   if (aimed.modifier) modifiers.push(aimed.modifier);
+  const addon = applyAttackOptions(addonContext, input.addonValues ?? {});
+  modifiers.push(...addon.modifiers);
 
   return {
+    addon,
     modifiers,
     shotsFired: pellets.effectiveShots,
     shellsFired,
@@ -1835,8 +1979,8 @@ export async function promptForNumber(options: {
  * the skull is -7 and going for the eye is -9, and a system that let you pick
  * the location only after the dice had landed was giving those away.
  */
-function calledShotField(type: DamageType, tightBeam: boolean): string {
-  const options = shotOptions(type, tightBeam)
+function calledShotField(type: DamageType, tightBeam: boolean, actor?: any): string {
+  const options = shotOptions(type, tightBeam, actor)
     .map((option) => {
       const cost = option.penalty === 0 ? "" : ` (${option.penalty})`;
       return `<option value="${option.value}">${option.label}${cost}</option>`;
@@ -1850,14 +1994,14 @@ function calledShotField(type: DamageType, tightBeam: boolean): string {
 }
 
 /** What a chosen called shot costs, as a modifier line. */
-function calledShotModifier(value: string, type: DamageType, tightBeam: boolean): {
+function calledShotModifier(value: string, type: DamageType, tightBeam: boolean, actor?: any): {
   shot: CalledShot | null;
   modifier: RollModifier | null;
 } {
   const shot = parseShot(value);
   if (shot === null) return { shot: null, modifier: null };
 
-  const option = shotOptions(type, tightBeam).find((entry) => entry.value === value);
+  const option = shotOptions(type, tightBeam, actor).find((entry) => entry.value === value);
   if (!option || option.penalty === 0) return { shot, modifier: null };
 
   return { shot, modifier: { label: option.label, value: option.penalty } };
@@ -1967,7 +2111,13 @@ export async function promptForMeleeAttack(options: {
    * it for the other fellow (Campaigns p. 402).
    */
   reachYards?: number;
+  /** The attacker, the weapon and its reach column, for the modules' attack options. */
+  actor?: any;
+  item?: any;
+  reach?: string;
 }): Promise<{
+  /** What the modules' attack options chosen in the dialog add up to. */
+  addon: ReturnType<typeof applyAttackOptions>;
   modifiers: RollModifier[];
   defensePenalty: number;
   /** FP the chosen options cost, to be paid before the roll. */
@@ -1995,6 +2145,10 @@ export async function promptForMeleeAttack(options: {
   const rapidAllowed = isRuleOn("rapidStrike");
   const dualAllowed = isRuleOn("dualWeaponAttack");
   const effortAllowed = isRuleOn("extraEffort");
+  const addonContext = attackContextFor({
+    actor: options.actor, item: options.item, ranged: false, damageType: options.damageType,
+    reach: options.reach ?? "", effectiveSkill: options.effectiveSkill,
+  });
 
   // A fighter at skill 11 or less cannot buy any deception at all, so they are
   // not offered a field that can only be left at zero. The ceiling shown is
@@ -2062,7 +2216,7 @@ export async function promptForMeleeAttack(options: {
              <span>${E("MightyBlows")} (${EXTRA_EFFORT_FP} FP)</span>
            </label>`
         : ""}
-      ${calledShotField(options.damageType, false)}
+      ${calledShotField(options.damageType, false, options.actor)}
       ${turnable
         ? `<label style="display:flex;align-items:center;gap:8px">
              <input type="checkbox" name="turned">
@@ -2084,6 +2238,7 @@ export async function promptForMeleeAttack(options: {
           <option value="5">${game.i18n.localize("GWORLD.Ground.Higher5")}</option>
         </select>
       </label>
+      ${attackOptionFields(addonContext)}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" style="width:90px">
@@ -2098,6 +2253,7 @@ export async function promptForMeleeAttack(options: {
         const ticked = (name: string) =>
           form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
         return {
+          addonValues: readAttackOptionValues(form, addonContext),
           deceptive: num("deceptive"),
           modifier: num("modifier"),
           rapid: ticked("rapid"),
@@ -2126,8 +2282,9 @@ export async function promptForMeleeAttack(options: {
   if (!result || typeof result !== "object") return null;
   const {
     deceptive, modifier, rapid, flurry, mighty, sight, darkness, calledShot, turned, ground, dual,
-    charging, pullSt, lanceSt, lanceYards, jousting,
+    charging, pullSt, lanceSt, lanceYards, jousting, addonValues,
   } = result as {
+    addonValues: Record<string, unknown>;
     deceptive: number;
     modifier: number;
     rapid: boolean;
@@ -2190,8 +2347,13 @@ export async function promptForMeleeAttack(options: {
     });
   }
 
-  const aimed = calledShotModifier(calledShot, options.damageType, false);
+  const aimed = calledShotModifier(calledShot, options.damageType, false, options.actor);
   if (aimed.modifier) modifiers.push(aimed.modifier);
+
+  // What the modules' options chosen here do to the roll; the rest of what
+  // they do travels with the result.
+  const addon = applyAttackOptions(addonContext, addonValues ?? {});
+  modifiers.push(...addon.modifiers);
 
   const unseen = sightModifier(sight, false, options.eyes);
   if (unseen) modifiers.push(unseen);
@@ -2218,10 +2380,12 @@ export async function promptForMeleeAttack(options: {
 
   const mightyBlows = mighty && effortAllowed;
   return {
+    addon,
     modifiers,
     defensePenalty: deception.defensePenalty + groundPenalty,
-    // Both cost a flat point each, and both are paid before the roll.
-    fatigue: (flurried ? EXTRA_EFFORT_FP : 0) + (mightyBlows ? EXTRA_EFFORT_FP : 0),
+    // Both cost a flat point each, and both are paid before the roll -- as is
+    // whatever the modules' options cost.
+    fatigue: (flurried ? EXTRA_EFFORT_FP : 0) + (mightyBlows ? EXTRA_EFFORT_FP : 0) + addon.fatigue,
     mightyBlows,
     calledShot: aimed.shot,
     turned: turned === true,
@@ -2337,6 +2501,9 @@ export async function handleDamageAction(
       value: strongAttackDamageBonus(parseDiceAdds(damageFormula)?.dice ?? 0),
     });
   }
+
+  // Damage a module's option chosen at the attack added.
+  modifiers.push(...(await consumeAddonDamage(actor)));
 
   // The other half of a mounted charge: "-1 to hit but +1 damage" (p. 396).
   if (await consumeCharge(actor)) {
