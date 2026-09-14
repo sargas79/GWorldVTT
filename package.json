@@ -8,7 +8,7 @@
     "node": ">=24.13.1"
   },
   "scripts": {
-    "build": "vite build && npm run build:packs",
+    "build": "vite build && npm run build:api && npm run build:packs",
     "watch": "vite build --watch",
     "deploy": "node tools/deploy.mjs",
     "dev": "npm run build && npm run deploy",
@@ -19,7 +19,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "validate:packs": "node tools/validate-packs.mjs",
-    "build:packs": "node tools/validate-packs.mjs && node tools/build-packs.mjs"
+    "build:packs": "node tools/validate-packs.mjs && node tools/build-packs.mjs",
+    "build:api": "tsc -p tsconfig.api.json && node tools/build-api-types.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

@@ -345,6 +345,52 @@ follows the same shape. Where two packs hold a spell of one name, the picker
 says which pack each row is from, and adding one a character already has
 raises its points rather than adding a copy.
 
+### The add-on API
+
+A module reaches the system through `game.gworld.api` and the hooks below, and
+nothing else. That's the whole contract:
+
+- **Stable within a major version.** `game.gworld.api.version` is a semver
+  version of the API itself, independent of the system's. Additions raise the
+  minor part; a change or a removal raises the major part.
+- **The only supported surface.** The system's classes, sheets and data models
+  aren't part of it. Don't patch or subclass them, don't import the system's
+  source at runtime, and write only to your own Item and Actor types, your own
+  `system.extensions.<module>` data, your own flags and settings, and your own
+  registered rule keys. Anything else can change in any release.
+- **The system knows no module.** No module id, book name or book page appears
+  in the system. Whatever a module brings arrives through registration.
+
+What's in it:
+
+| | |
+|---|---|
+| `version` | The API's semver version. |
+| `satisfies(range)` | Whether this API meets a semver range. |
+| `rules` | The pure GURPS rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. |
+| `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
+| `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted through the system's chat cards. |
+| `actors` | `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`: read-only. |
+| `items` | `derived`: read-only. |
+| `hooks` | The names of the hooks below. |
+
+Lifecycle, in order:
+
+1. `gworld.registerRules`, during `init`: register rule groups and switches.
+2. `setup`: rule registration closes.
+3. `gworld.ready`, after the system's own `ready` work, with the API as its
+   argument: the world is loaded and all of the API may be used.
+
+Declare the API versions your module works with in its manifest, and the GM
+is warned when the running system doesn't provide one:
+
+```json
+"flags": { "gworld": { "apiVersion": "^1.0.0" } }
+```
+
+`npm run build` writes the API's TypeScript declarations to
+`dist/gworld-api.d.ts`, for a module built against a checkout of the system.
+
 ### A module's own rules
 
 The system plays the Basic Set. Rules from any other book belong to the module
@@ -374,10 +420,8 @@ Hooks.on("gworld.registerRules", (registry) => {
   module's own `init` through `globalThis.gworld.registry`. Anything later is
   refused with a console warning, as are duplicate keys, a rule in a group the
   module didn't register, and a missing name, reference or default.
-- **Reading a switch.** Until the public API is published, the stored state is
-  the system setting `gworld.optionalRules`, an object of key → boolean; a
-  missing key means the rule's default. A module key whose module isn't
-  running reads as off.
+- **Reading a switch.** `game.gworld.api.registry.isRuleOn("my-module.myRule")`.
+  A module key whose module isn't running reads as off.
 - **Turning a module off keeps its choices.** Saving the Rules page keeps the
   stored switches of modules that aren't active, so switching the module back
   on finds the table's choices as they were left.
