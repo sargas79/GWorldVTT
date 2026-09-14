@@ -513,6 +513,12 @@ async function tapRoll(message: any, flag: CastingFlag, caster: Caster): Promise
 
 /** Draws on the acting caster's mana reserve (p. 36). */
 async function tapReserve(message: any, actor: any, flag: CastingFlag, caster: Caster): Promise<void> {
+  // A caster who joined from another player's sheet draws on their own
+  // reserve only through someone who may change it.
+  if (!actor.isOwner) {
+    ui.notifications?.warn(F("NotYours", { name: caster.name }));
+    return;
+  }
   const reserve = Number(actor.system?.derived?.ritualPath?.reserve?.value ?? 0) || 0;
   const needed = Math.max(0, flag.cost - flag.energy);
   if (reserve <= 0 || needed <= 0) return;
@@ -709,9 +715,29 @@ async function recordRitual(flag: CastingFlag, margin: number): Promise<void> {
  * is met.
  */
 export async function triggerRitual(caster: any, activeId: string, source: string): Promise<void> {
+  const entry = ((caster?.system?.ritualPath?.active ?? []) as any[]).find((r) => r.id === activeId && r.conditional);
+  if (!entry) return;
+  // Only someone who may change the caster's sheet can start the ritual on
+  // it. Anyone else -- a friend breaking the charm they were given -- posts
+  // the card with a control for the caster's player or the GM to do so.
+  const started = caster.isOwner ? await startTriggered(caster, activeId) : false;
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor: caster }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${foundry.utils.escapeHTML(entry.name)}</span></div>`
+      + `<div class="gc-result success">${foundry.utils.escapeHTML(F("Triggered", { source, margin: entry.margin }))}</div>`
+      + (entry.durationSeconds > 0 ? `<div class="gc-note">${foundry.utils.escapeHTML(F("LastsFor", { time: duration(entry.durationSeconds) }))}</div>` : "")
+      + (started ? "" : `<div class="gc-note" data-ritual-pending>${foundry.utils.escapeHTML(F("TriggerWaiting", { name: String(caster.name ?? "") }))}</div>`)
+      + `</div>`,
+    ...(started ? {} : { flags: { [SYSTEM_ID]: { ritualTrigger: { casterUuid: String(caster.uuid), activeId } } } }),
+  });
+}
+
+/** Starts a triggered conditional ritual on its caster's sheet. False where it was no longer hanging. */
+async function startTriggered(caster: any, activeId: string): Promise<boolean> {
   const active = [...((caster?.system?.ritualPath?.active ?? []) as any[])].map((r) => ({ ...r }));
   const index = active.findIndex((r) => r.id === activeId && r.conditional);
-  if (index < 0) return;
+  if (index < 0) return false;
   const entry = active[index];
   const now = Number((game as any).time?.worldTime ?? 0) || 0;
   if (entry.durationSeconds > 0) {
@@ -719,15 +745,33 @@ export async function triggerRitual(caster: any, activeId: string, source: strin
   } else {
     active.splice(index, 1);
   }
-  if (caster.isOwner) await caster.update({ "system.ritualPath.active": active });
-  await ChatMessage.implementation.create({
-    speaker: ChatMessage.implementation.getSpeaker({ actor: caster }),
-    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
-    content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${foundry.utils.escapeHTML(entry.name)}</span></div>`
-      + `<div class="gc-result success">${foundry.utils.escapeHTML(F("Triggered", { source, margin: entry.margin }))}</div>`
-      + (entry.durationSeconds > 0 ? `<div class="gc-note">${foundry.utils.escapeHTML(F("LastsFor", { time: duration(entry.durationSeconds) }))}</div>` : "")
-      + `</div>`,
+  await caster.update({ "system.ritualPath.active": active });
+  return true;
+}
+
+/** The control on a triggered ritual's card, for the caster's player or the GM to start it. */
+export async function addRitualTriggerControls(message: any, html: HTMLElement): Promise<void> {
+  const flag = message?.getFlag?.(SYSTEM_ID, "ritualTrigger");
+  if (!flag || flag.done) return;
+  const root = html.querySelector<HTMLElement>(".gworld-chat");
+  if (!root || root.querySelector("[data-ritual-start]")) return;
+  const caster: any = await fromUuid(flag.casterUuid).catch(() => null);
+  if (!caster?.isOwner) return;
+  const row = document.createElement("div");
+  row.className = "gc-apply";
+  row.dataset.ritualStart = "1";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "gc-apply-button";
+  button.textContent = L("StartTriggered");
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    await startTriggered(caster, flag.activeId);
+    const content = String(message.content ?? "").replace(/<div class="gc-note" data-ritual-pending>[\s\S]*?<\/div>/, "");
+    await message.update({ content, [`flags.${SYSTEM_ID}.ritualTrigger.done`]: true });
   });
+  row.append(button);
+  root.append(row);
 }
 
 /**
@@ -804,6 +848,11 @@ export function describeRitualInEffect(entry: any): { status: string; expired: b
 async function refillReserve(actor: any, flag: { log: LogEntry[] }): Promise<void> {
   const max = Number(actor.system?.derived?.ritualPath?.reserve?.max ?? 0) || 0;
   if (max <= 0) return;
+  // The ritual still works; the refill is for whoever may change that sheet.
+  if (!actor.isOwner) {
+    flag.log.push({ text: F("RefillNotYours", { name: String(actor.name ?? ""), max }), kind: "note" });
+    return;
+  }
   await actor.update({ "system.ritualPath.manaReserve": max });
   flag.log.push({ text: F("ReserveRefilled", { max }), kind: "gain" });
 }
