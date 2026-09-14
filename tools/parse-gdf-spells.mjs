@@ -187,12 +187,33 @@ export function parseSkillUsed(raw) {
   return "";
 }
 
-/** Damage per point of energy, and its type. "spcl" is the spell's own business. */
+/** Dice as the rules engine reads them: `2d`, `1d-2`, `3d+1`, `6dx10`, or a flat number. */
+const DICE = /^(\d*)d([+-]\d+)?(x\d+)?$|^([+-]?\d+)$/;
+
+function isDice(text) {
+  return DICE.test(text.toLowerCase().replace(/\s+/g, ""));
+}
+
+/**
+ * Damage per point of energy, and its type. "spcl" is the spell's own business.
+ *
+ * Data files write damage in forms that aren't dice, too. A choice between
+ * two values -- `1d/1d+1` -- is read as its first, with the other in `note`.
+ * Anything else that isn't dice -- `Spec.`, an attribute such as `HT`, or
+ * `1d|HT` -- leaves the damage unset, with the text in `note` for whoever
+ * writes the spell's description.
+ */
 export function parseDamage(damage, damtype) {
   const formula = (damage ?? "").replace(/^~/, "").trim();
   const words = (damtype ?? "").trim().toLowerCase().split(/\s+/);
   const type = words.find((w) => DAMAGE_TYPES.has(w)) ?? "";
-  return { damage: formula, damageType: type, explosive: words.includes("ex") };
+  const explosive = words.includes("ex");
+  if (!formula || isDice(formula)) return { damage: formula, damageType: type, explosive };
+  const choice = formula.split("/").map((part) => part.trim());
+  if (choice.length === 2 && choice.every((part) => part && isDice(part))) {
+    return { damage: choice[0], damageType: type, explosive, note: `damage is a choice: ${choice[0]} or ${choice[1]}` };
+  }
+  return { damage: "", damageType: type, explosive, note: `damage as the data file writes it: "${formula}"` };
 }
 
 // ── prerequisites ────────────────────────────────────────────────────────────
@@ -341,9 +362,12 @@ export function parseNeeds(raw, lookup) {
  * apart: a spell, a skill or an advantage. Ritual variants -- the "(Ritual)"
  * techniques GCA generates for the p. 242 system -- are not spells and are
  * skipped: the same record serves both styles in this system.
+ *
+ * `note(spell, text)` hears what a record keeps that has no field of its own,
+ * such as damage written as text.
  */
 export function parseSpells(recs, options) {
-  const { reject, ids, prefix, book, overlap } = options;
+  const { reject, note, ids, prefix, book, overlap } = options;
   const spellNames = new Set();
   const skillNames = new Set();
   const traitNames = new Set();
@@ -405,6 +429,7 @@ export function parseSpells(recs, options) {
 
     const { classes, resistedBy } = parseClass(f.get("class"));
     const attack = parseDamage(f.get("damage"), f.get("damtype"));
+    if (attack.note) note?.(name, attack.note);
 
     out.push({
       _id: ids.get(name) ?? id(name),
@@ -470,8 +495,10 @@ function main() {
     process.exit(1);
   }
   const rejects = [];
+  const notes = [];
   const spells = parseSpells(recs, {
     reject: (what, why) => rejects.push({ what, why }),
+    note: (what, text) => notes.push({ what, text }),
     ids: existingIds(join(outDir, pack)),
     prefix,
     book,
@@ -479,6 +506,8 @@ function main() {
 
   console.log(`spells: ${spells.length}${rejects.length ? `, rejected ${rejects.length}` : ""}`);
   for (const r of rejects.slice(0, 10)) console.log(`    ${r.why}: ${r.what}`);
+  if (notes.length) console.log(`  notes: ${notes.length}`);
+  for (const n of notes.slice(0, 10)) console.log(`    ${n.what}: ${n.text}`);
   const byClass = new Map();
   for (const s of spells) for (const c of s.system.classes) byClass.set(c, (byClass.get(c) ?? 0) + 1);
   console.log(`  classes: ${[...byClass].map(([c, n]) => `${c} ${n}`).join(", ")}`);
@@ -492,6 +521,9 @@ function main() {
       rejects.map((r) => `${r.why}\t${r.what}`).join("\n"),
       "utf8",
     );
+    // What a record keeps that the data model has no field for, such as
+    // damage written as text: for whoever writes the spell's description.
+    writeFileSync(join(outDir, pack, ".notes-gdf.txt"), notes.map((n) => `${n.what}\t${n.text}`).join("\n"), "utf8");
     console.log(`\nwrote ${join(pack, file)}`);
   }
 }
