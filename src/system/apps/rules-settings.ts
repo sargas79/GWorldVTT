@@ -15,6 +15,7 @@ import {
   isImplemented,
   ruleState,
 } from "../optional-rules.js";
+import { ruleReferencePages } from "../rule-references.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -29,6 +30,7 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
       allOn: RulesSettings.#onAllOn,
       allOff: RulesSettings.#onAllOff,
       restore: RulesSettings.#onRestore,
+      openReference: RulesSettings.#onOpenReference,
     },
   };
 
@@ -51,6 +53,9 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
 
   override async _prepareContext(): Promise<Record<string, unknown>> {
     const state = this.#state();
+    // A content module's page for a rule, where one is installed (the book's
+    // own text, which the system cannot ship).
+    const references = await ruleReferencePages();
 
     return {
       groups: RULE_GROUPS.map((group) => ({
@@ -61,6 +66,7 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
           label: `GWORLD.Rules.Rule.${rule.key}.Name`,
           hint: `GWORLD.Rules.Rule.${rule.key}.Hint`,
           reference: rule.reference,
+          referenceUuid: references.get(rule.key) ?? null,
           // A rule nothing reads yet is shown greyed rather than hidden: the
           // page is a map of the ruleset, and a gap in it is worth seeing.
           pending: rule.implemented === false,
@@ -112,6 +118,14 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
       Object.keys(state).map((key) => [key, isImplemented(key) ? value : false]),
     );
     await this.render();
+  }
+
+  /** Opens a rule's reference page from the content module that provides it. */
+  static async #onOpenReference(this: RulesSettings, _event: Event, target: HTMLElement): Promise<void> {
+    const uuid = target.dataset.uuid;
+    if (!uuid) return;
+    const entry = await fromUuid(uuid);
+    entry?.sheet?.render(true);
   }
 
   static async #onRestore(this: RulesSettings): Promise<void> {

@@ -19,6 +19,14 @@
               <span class="gr-name">
                 {{localize rule.label}}
                 <span class="gr-ref">{{rule.reference}}</span>
+                {{#if rule.referenceUuid}}
+                  {{!-- A button inside the label is interactive content, so
+                       pressing it opens the page without ticking the box. --}}
+                  <button type="button" class="gr-refpage" data-action="openReference" data-uuid="{{rule.referenceUuid}}"
+                          data-tooltip="{{localize 'GWORLD.Rules.ReadRule'}}" aria-label="{{localize 'GWORLD.Rules.ReadRule'}}">
+                    <i class="fa-solid fa-book-open" inert></i>
+                  </button>
+                {{/if}}
                 {{#if rule.pending}}
                   <span class="gr-pending">{{localize "GWORLD.Rules.NotYet"}}</span>
                 {{/if}}
