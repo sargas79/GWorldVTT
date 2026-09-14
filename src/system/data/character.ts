@@ -145,6 +145,8 @@ export interface ActiveSpell {
   startedAt: number;
   concentrating: boolean;
   permanent: boolean;
+  /** Energy put into the casting, before skill; null on entries older than API 1.14.0. */
+  energy?: number | null;
 }
 import {
   broadJumpFeet,
@@ -823,6 +825,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           startedAt: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
           concentrating: new fields.BooleanField({ initial: false }),
           permanent: new fields.BooleanField({ initial: false }),
+          /** Energy put into the casting, before skill, which an attack's damage scales with. */
+          energy: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
         }),
         { required: true, initial: [] },
       ),

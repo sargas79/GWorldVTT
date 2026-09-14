@@ -378,6 +378,11 @@ function validateItem(entry, file) {
     // A spell of another class may attack too, where it names the add-on
     // behavior that delivers it.
     const behavior = typeof attack.behavior === "string" ? attack.behavior : "";
+    // An Information, Enchantment or Blocking spell never delivers an attack.
+    const inert = (sys.classes ?? []).find((c) => c === "information" || c === "enchantment" || c === "blocking");
+    if (inert) {
+      check(!behavior && !attack.damage && !attack.area, file, name, `a spell of the ${inert} class carries an attack, which it can never deliver`);
+    }
     if (behavior) {
       check(MODULE_TYPE.test(behavior), file, name, `spell attack behavior "${behavior}" is not a "<module>.<key>"`);
       check(!delivered, file, name, "a Missile or Melee spell is delivered by the system, not a spell attack behavior");

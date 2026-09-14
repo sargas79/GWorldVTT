@@ -148,6 +148,34 @@ describe("energy sources", () => {
   });
 });
 
+describe("running-spell actions (sargas79/GWorldVTT#278)", () => {
+  const rain = { id: "r1", system: { classes: ["area"] } };
+  const owner = { isOwner: true, items: { get: (id: string) => (id === "r1" ? rain : null) } };
+  const active = { id: "a1", itemId: "r1", energy: 3 };
+
+  it("shows a module's button on the rows it takes, to the character's owner only", async () => {
+    const api = await load();
+    expect(api.registerActiveSpellAction({ module: "test-addon", key: "fall", label: "Fall", hint: "A second of it", visible: ({ spell }) => spell?.system?.classes?.includes("area"), run: () => {} })).toBe("test-addon.fall");
+    expect(api.registerActiveSpellAction({ module: "test-addon", key: "fall", label: "Again", run: () => {} })).toBeNull();
+    expect(api.registerActiveSpellAction({ module: "test-addon", key: "norun", label: "No run" } as never)).toBeNull();
+    expect(api.activeSpellActionsFor(owner, active)).toEqual([{ id: "test-addon.fall", label: "Fall", hint: "A second of it" }]);
+    expect(api.activeSpellActionsFor(owner, { ...active, itemId: "gone" })).toEqual([]);
+    expect(api.activeSpellActionsFor({ ...owner, isOwner: false }, active)).toEqual([]);
+  });
+
+  it("runs the action with the context it is handed, and not for a row it doesn't take", async () => {
+    const api = await load();
+    const run = vi.fn();
+    api.registerActiveSpellAction({ module: "test-addon", key: "fall", label: "Fall", visible: ({ active: a }) => a.energy > 0, run });
+    const context = { actor: owner, spell: rain, active, energy: 3, rollAttack: vi.fn(), rollDamage: vi.fn() };
+    await api.runActiveSpellAction("test-addon.fall", context as never);
+    expect(run).toHaveBeenCalledWith(context);
+    await api.runActiveSpellAction("test-addon.fall", { ...context, active: { ...active, energy: 0 } } as never);
+    await api.runActiveSpellAction("test-addon.gone", context as never);
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("spell attacks", () => {
   const spell = (classes: string[], attack: Record<string, unknown>) => ({ name: "Test", system: { classes, attack } });
 

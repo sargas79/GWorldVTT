@@ -173,6 +173,7 @@ import {
   enlargeMissile,
   heldSpell,
   injuredWhileHolding,
+  runSpellAction,
   strikeWithMelee,
   throwMissile,
 } from "../held-spells.js";
@@ -217,7 +218,7 @@ import { isReadTrait } from "../../rules/trait-effects.js";
 import { weaknessOf } from "../../rules/weakness.js";
 import { exposeToWeakness } from "../weakness.js";
 import { requestGuidance } from "../bonus-points.js";
-import { anyPointPools, registeredPointPools } from "../roll-extensions.js";
+import { activeSpellActionsFor, anyPointPools, registeredPointPools } from "../roll-extensions.js";
 import { unconditionalReaction, type ReactionSource } from "../../rules/social.js";
 import { SENSES } from "../../rules/senses.js";
 import {
@@ -2819,6 +2820,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       createItem: GWorldCharacterSheet.#onCreateItem,
       addonItemAction: GWorldCharacterSheet.#onAddonItemAction,
       addonRowAction: GWorldCharacterSheet.#onAddonRowAction,
+      activeSpellAction: GWorldCharacterSheet.#onActiveSpellAction,
       maneuverResponse: GWorldCharacterSheet.#onManeuverResponse,
       grappleAction: GWorldCharacterSheet.#onGrappleAction,
       removeTimedCondition: GWorldCharacterSheet.#onRemoveTimedCondition,
@@ -3663,6 +3665,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         ...spell,
         ...describeActiveSpell(spell),
         canMaintain: spell.maintainCost !== null && spell.maintainCost !== undefined,
+        // What add-on modules offer for a spell still going.
+        addonActions: activeSpellActionsFor(this.actor, spell),
       })),
     };
   }
@@ -3685,6 +3689,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onMaintainSpell(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const id = this.#activeSpellId(target);
     if (id) await maintainSpell(this.actor, id);
+  }
+
+  /** A button an add-on module put on a running spell's row. */
+  static async #onActiveSpellAction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = this.#activeSpellId(target);
+    const action = target.dataset.activeSpellAction;
+    if (id && action) await runSpellAction(this.actor, id, action);
   }
 
   static async #onDropSpell(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

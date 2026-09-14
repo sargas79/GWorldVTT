@@ -8,6 +8,8 @@
  *     caster's FP and HP, offered in the casting dialog.
  *   - **Spell attacks:** how a spell that isn't a Missile or Melee spell, but
  *     whose record declares an attack, delivers it once it is cast.
+ *   - **Running-spell actions:** buttons on a spell being kept up, for what
+ *     it goes on doing after the casting.
  *
  * Every callback a module gives is guarded: one that throws is logged, and
  * the roll or the casting goes on as if the module had offered nothing.
@@ -289,8 +291,11 @@ export interface SpellAttackContext {
    * through the system's attack card, and rolls the damage on a hit.
    */
   rollAttack: (options?: { skill?: number; label?: string; ranged?: boolean; noParry?: boolean }) => Promise<SuccessRollResult | null>;
-  /** Rolls the spell's damage straight away, for an area the defender can't defend against. */
-  rollDamage: (options?: { label?: string; formula?: string }) => Promise<void>;
+  /**
+   * Rolls the spell's damage straight away, for an area the defender can't
+   * defend against. `halfDamage` halves the basic damage, as for 1/2D.
+   */
+  rollDamage: (options?: { label?: string; formula?: string; halfDamage?: boolean }) => Promise<void>;
 }
 
 export interface SpellAttackRegistration {
@@ -337,6 +342,66 @@ export async function deliverSpellAttack(behavior: { id: string; cast: SpellAtta
   await safelyAsync(`spell attack ${behavior.id}`, () => behavior.cast(context), undefined);
 }
 
+// ── running-spell actions ──────────────────────────────────────────────────
+
+/** What a running-spell action is handed. */
+export interface ActiveSpellActionContext {
+  actor: any;
+  /** The spell item, or null where it is gone from the character. */
+  spell: any;
+  /** The running-spell entry. */
+  active: Record<string, any>;
+  /** Energy put into the casting: the entry's, or its cost on an older entry. */
+  energy: number;
+  rollAttack: SpellAttackContext["rollAttack"];
+  rollDamage: SpellAttackContext["rollDamage"];
+}
+
+export interface ActiveSpellActionRegistration {
+  module: string;
+  key: string;
+  label: string;
+  hint?: string;
+  /** Whether the row of this running spell shows the button. */
+  visible?: (context: { actor: any; spell: any; active: Record<string, any> }) => boolean;
+  run: (context: ActiveSpellActionContext) => unknown;
+}
+
+const activeSpellActions: Array<{ id: string; label: string; hint: string; visible: ActiveSpellActionRegistration["visible"] | null; run: ActiveSpellActionRegistration["run"] }> = [];
+
+/** Registers a button on running spells' rows. Returns its `<module>.<key>`, or null. */
+export function registerActiveSpellAction(registration: ActiveSpellActionRegistration): string | null {
+  const r = registration ?? ({} as ActiveSpellActionRegistration);
+  const id = `${r.module}.${r.key}`;
+  const what = `running-spell action ${id}`;
+  if (!validKey(r.module, r.key)) return refuse(what, "the module id or key is missing or malformed");
+  if (typeof r.label !== "string" || !r.label.trim()) return refuse(what, "it has no label");
+  if (typeof r.run !== "function") return refuse(what, "it has no run function");
+  if (activeSpellActions.some((a) => a.id === id)) return refuse(what, "that key is already registered");
+  activeSpellActions.push({
+    id, label: r.label.trim(), hint: typeof r.hint === "string" ? r.hint : "",
+    visible: typeof r.visible === "function" ? r.visible : null, run: r.run,
+  });
+  return id;
+}
+
+/** The buttons a running spell's row shows, for a user who owns the character. */
+export function activeSpellActionsFor(actor: any, active: Record<string, any>): Array<{ id: string; label: string; hint: string }> {
+  if (!actor?.isOwner || !active) return [];
+  const spell = actor.items?.get?.(active.itemId) ?? null;
+  return activeSpellActions
+    .filter((a) => !a.visible || safely(`running-spell action ${a.id}`, () => a.visible!({ actor, spell, active }) === true, false))
+    .map(({ id, label, hint }) => ({ id, label, hint }));
+}
+
+/** Runs a running-spell action with the context the caller built. */
+export async function runActiveSpellAction(id: string, context: ActiveSpellActionContext): Promise<void> {
+  const action = activeSpellActions.find((a) => a.id === id);
+  if (!action || !context.actor?.isOwner) return;
+  if (action.visible && !safely(`running-spell action ${id}`, () => action.visible!({ actor: context.actor, spell: context.spell, active: context.active }) === true, false)) return;
+  await safelyAsync(`running-spell action ${id}`, () => action.run(context), undefined);
+}
+
 /** What the API exposes. */
 export const pointsApi = Object.freeze({ registerPointPool });
-export const magicApi = Object.freeze({ registerEnergySource, registerSpellAttack });
+export const magicApi = Object.freeze({ registerEnergySource, registerSpellAttack, registerActiveSpellAction });
