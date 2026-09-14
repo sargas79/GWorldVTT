@@ -223,13 +223,6 @@ describe("talents", () => {
     expect(talentBonusFor("Surgery", bonuses)).toBe(0);
     expect(talentBonusFor("Surgery", talentBonuses([{ name: "Healer", levels: 1, talentSkills: [] }]))).toBe(1);
   });
-
-  it("never reach a wildcard skill where Monster Hunters 1's rule is in play", () => {
-    const bonuses = talentBonuses([{ name: "Talker!", levels: 1, talentSkills: ["Talker!"] }]);
-    expect(talentBonusFor("Talker!", bonuses, { difficulty: "W", wildcardsExcluded: true })).toBe(0);
-    expect(talentBonusFor("Talker!", bonuses, { difficulty: "W", wildcardsExcluded: false })).toBe(1);
-    expect(talentBonusFor("Talker!", bonuses, { difficulty: "VH", wildcardsExcluded: true })).toBe(1);
-  });
 });
 
 describe("reaction modifiers from the sheet", () => {

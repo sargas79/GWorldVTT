@@ -18,7 +18,6 @@ import { SYSTEM_ID } from "./constants.js";
 import { isRuleOn } from "./optional-rules.js";
 import { promptForNumber } from "./roll.js";
 import { quickContest, resolveSuccess } from "../rules/success.js";
-import { ritualResistance } from "../rules/ritual-casting.js";
 import {
   resistanceAttribute,
   resistanceScore,
@@ -46,10 +45,7 @@ interface ResistFlag {
    * Contest (Characters p. 106) -- which Magic Resistance does nothing to.
    */
   magical?: boolean;
-  /**
-   * A Ritual Path Magic ritual, resisted with "the better of his HT or Will,
-   * plus any Magic Resistance" (Monster Hunters 1 p. 36).
-   */
+  /** Set on cards posted before 1.5.0 for an effect resisted with the better of HT or Will. */
   ritual?: boolean;
   /** The attributes whose best the subject resists with, for a module's effect. */
   resistWith?: string[];
@@ -100,8 +96,6 @@ export async function postResistCard(options: {
   subjects: any[];
   /** False where Magic Resistance does not apply. Spells leave it out. */
   magical?: boolean;
-  /** A ritual, resisted with the better of HT or Will. */
-  ritual?: boolean;
   /** The attributes whose best the subject resists with. */
   resistWith?: string[];
   /** False where the Rule of 16 does not cap the caster. */
@@ -119,7 +113,6 @@ export async function postResistCard(options: {
       name: String(subject.name ?? ""),
     })),
     ...(options.magical === false ? { magical: false } : {}),
-    ...(options.ritual ? { ritual: true } : {}),
     ...(options.resistWith?.length ? { resistWith: [...options.resistWith] } : {}),
     ...(options.ruleOf16 === false ? { ruleOf16: false } : {}),
   };
@@ -189,14 +182,14 @@ export async function addResistControls(message: any, html: HTMLElement): Promis
 
 /**
  * What a subject resists with, before Magic Resistance: the best of the
- * attributes a module named, the better of HT and Will for a ritual, or the
+ * attributes a module named (or HT and Will, on an older card), or the
  * attribute the spell's record names. Null where the record names something
  * else, and the subject is asked.
  */
 function resistingScore(subject: any, flag: ResistFlag): number | null {
   const named = (flag.resistWith ?? []).map((name) => resistanceAttribute(name)).filter((a): a is NonNullable<typeof a> => a !== null);
   if (named.length) return Math.max(...named.map((attribute) => attributeOf(subject, attribute)));
-  if (flag.ritual) return ritualResistance({ ht: attributeOf(subject, "HT"), will: attributeOf(subject, "Will"), magicResistance: 0 });
+  if (flag.ritual) return Math.max(attributeOf(subject, "HT"), attributeOf(subject, "Will"));
   const attribute = resistanceAttribute(flag.resistedBy);
   return attribute === null ? null : attributeOf(subject, attribute);
 }

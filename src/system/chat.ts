@@ -13,7 +13,6 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { applyDamageToActor, type AppliedDamage, type IncomingDamage } from "./damage.js";
-import { applyHolyContact } from "./holy.js";
 import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy } from "./weapon-damage.js";
 import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shields.js";
 import { rollSuccess } from "./roll.js";
@@ -36,8 +35,8 @@ import { defenseChoices, type DefenseChoice, type DefenseKey } from "./defense-c
 import { loseAim } from "./aim.js";
 import { blockingSpellsOf, castBlockingSpell } from "./casting.js";
 import { addResistControls } from "./spell-resistance.js";
-import { addRitualControls, addRitualTriggerControls, blockingRitualsOf, castBlockingRitual } from "./ritual-casting.js";
 import { addBuySuccessControls, addGuidanceControls } from "./bonus-points.js";
+import { anyPointPools } from "./roll-extensions.js";
 import {
   ADDON_LOCATION_PREFIX,
   COMBAT_HOOKS,
@@ -90,8 +89,6 @@ interface DamageFlag {
   material?: string;
   /** True when DR has no effect on the blow, as for a Malediction (Characters p. 106). */
   ignoresDr?: boolean;
-  /** A holy weapon's blow (Monster Hunters 1 p. 51). */
-  holy?: boolean;
   /** The item the damage was rolled from. */
   itemUuid?: string;
   /** Which of its modes. */
@@ -458,8 +455,8 @@ async function applyFromCard(options: {
         // place "immediately after" can mean anything.
         // A mook is not offered it: they have no unspent character points, and
         // the whole of Cannon Fodder is that they go down.
-        // Monster Hunters 1 offers it too, paid from any pool of points (p. 31).
-        fleshWound: isRuleOn("fleshWounds") || isRuleOn("bonusPointSpending")
+        // A module's point pools may pay for it too, where one is in play.
+        fleshWound: isRuleOn("fleshWounds") || anyPointPools()
           ? knockdowns
               .filter(
                 (entry) =>
@@ -477,12 +474,6 @@ async function applyFromCard(options: {
       },
     },
   });
-
-  // A holy weapon also burns what holy things hurt, once a minute -- said
-  // after the blow itself, which is the order it happens in.
-  if (flag.holy) {
-    for (const { actor } of knockdowns) await applyHolyContact(actor, String(flag.label ?? "").trim());
-  }
 }
 
 /**
@@ -669,12 +660,10 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     // physical attack or another spell" (Characters p. 241), so a defender
     // who knows one is offered it beside the three ordinary defenses.
     const blocking = isRuleOn("magic") ? blockingSpellsOf(defender) : [];
-    // And a ritual the GM has agreed can block (Monster Hunters 1 p. 37).
-    const blockingRituals = blockingRitualsOf(defender);
     // And the defenses a module resolves itself.
     const moduleDefenses = moduleDefensesFor(defender, flag.attack);
 
-    if (!choices.some((choice) => choice.available) && blocking.length === 0 && blockingRituals.length === 0 && moduleDefenses.length === 0) {
+    if (!choices.some((choice) => choice.available) && blocking.length === 0 && moduleDefenses.length === 0) {
       for (const choice of choices) row.append(refusedButton(choice));
       root.append(row);
       continue;
@@ -819,18 +808,6 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       button.title = game.i18n.localize("GWORLD.Cast.BlockingHint");
       button.addEventListener("click", () => {
         void castBlockingSpell(defender, spell.item, flag.attack);
-      });
-      row.append(button);
-    }
-
-    for (const ritual of blockingRituals) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "gc-apply-button";
-      button.textContent = `${ritual.name} ${ritual.level} (${ritual.cost})`;
-      button.title = game.i18n.localize("GWORLD.RitualCast.BlockingNote");
-      button.addEventListener("click", () => {
-        void castBlockingRitual(defender, ritual.item, flag.attack);
       });
       row.append(button);
     }
@@ -1249,7 +1226,7 @@ async function addDeathCheckControls(message: any, html: HTMLElement): Promise<v
  */
 async function addFleshWoundControls(message: any, html: HTMLElement): Promise<void> {
   const entries = message?.getFlag?.(SYSTEM_ID, "fleshWound") as FleshWoundEntry[] | undefined;
-  if (!Array.isArray(entries) || entries.length === 0 || !(isRuleOn("fleshWounds") || isRuleOn("bonusPointSpending"))) return;
+  if (!Array.isArray(entries) || entries.length === 0 || !(isRuleOn("fleshWounds") || anyPointPools())) return;
 
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-flesh]")) return;
@@ -1392,8 +1369,6 @@ export function registerChatHooks(): void {
     void addFleshWoundControls(message, html);
     void addTvActionControls(message, html);
     void addAfflictionControls(message, html);
-    void addRitualControls(message, html);
-    void addRitualTriggerControls(message, html);
     void addBuySuccessControls(message, html);
     void addGuidanceControls(message, html);
   });

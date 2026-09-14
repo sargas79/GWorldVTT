@@ -65,58 +65,7 @@ const MODULE_NAMES = [/gurps-compendium-content/];
  * listed, and nothing else. When the issue lands, the entry goes: an entry
  * that matches nothing fails the check, so it can't outlive its code.
  */
-const EXCEPTIONS = [
-  {
-    // Monster Hunters 1 leaves the system in 1.5.0 (sargas79/GWorldVTT#243).
-    issue: 243,
-    pattern: /Monster Hunters/,
-    files: [
-      "lang/en.json",
-      "src/gworld.ts",
-      "src/rules/__tests__/bonus-points.test.ts",
-      "src/rules/__tests__/gadgets.test.ts",
-      "src/rules/__tests__/holy.test.ts",
-      "src/rules/__tests__/ritual-casting.test.ts",
-      "src/rules/__tests__/ritual-cost.test.ts",
-      "src/rules/__tests__/ritual-lasting.test.ts",
-      "src/rules/__tests__/ritual-path.test.ts",
-      "src/rules/__tests__/ritual-tricks.test.ts",
-      "src/rules/__tests__/special-ammunition.test.ts",
-      "src/rules/__tests__/weapon-improvements.test.ts",
-      "src/rules/bonus-points.ts",
-      "src/rules/gadgets.ts",
-      "src/rules/holy.ts",
-      "src/rules/ritual-casting.ts",
-      "src/rules/ritual-cost.ts",
-      "src/rules/ritual-lasting.ts",
-      "src/rules/ritual-path.ts",
-      "src/rules/ritual-tricks.ts",
-      "src/rules/special-ammunition.ts",
-      "src/rules/talents.ts",
-      "src/rules/weapon-improvements.ts",
-      "src/system/__tests__/item-summary.test.ts",
-      "src/system/bonus-points.ts",
-      "src/system/chat.ts",
-      "src/system/data/character.ts",
-      "src/system/data/items.ts",
-      "src/system/holy.ts",
-      "src/system/item-summary.ts",
-      "src/system/optional-rules.ts",
-      "src/system/repairs.ts",
-      "src/system/ritual-casting.ts",
-      "src/system/roll.ts",
-      "src/system/sheets/character-sheet.ts",
-      "src/system/sheets/item-sheet.ts",
-      "src/system/spell-resistance.ts",
-      "templates/actor/tab-gear.hbs",
-      "templates/actor/tab-magic.hbs",
-      "templates/actor/tab-skills.hbs",
-      "templates/actor/tab-traits.hbs",
-      "templates/chat/ritual-casting.hbs",
-      "templates/item/item-sheet.hbs",
-    ],
-  },
-];
+const EXCEPTIONS = [];
 
 function* files(dir) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {

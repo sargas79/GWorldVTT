@@ -13,7 +13,7 @@ describe("reading a Weakness", () => {
   });
 
   it("drops a rate written into the name, since the level states it", () => {
-    // Monster Hunters 1's Demon: "Weakness (Contact with holy water and artifacts; 1d per minute)".
+    // A creature's entry may write the rate into the trait's name.
     expect(weaknessOf({ name: "Weakness (Contact with holy water and artifacts; 1d per minute)", levels: 3 })?.source)
       .toBe("Contact with holy water and artifacts");
   });

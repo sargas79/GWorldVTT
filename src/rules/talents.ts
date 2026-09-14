@@ -117,16 +117,7 @@ export function talentBonuses(traits: readonly BonusTrait[]): Map<string, number
  * The specialty is tried first and then the base: "Musical Instrument
  * (Flute)" is looked up whole, and then as "Musical Instrument".
  */
-export function talentBonusFor(
-  skillName: string,
-  bonuses: ReadonlyMap<string, number>,
-  options: { difficulty?: string; wildcardsExcluded?: boolean } = {},
-): number {
-  // "Talents never add to wildcard skills" (Monster Hunters 1 p. 24): a
-  // wildcard already stands for every skill it covers, so a Talent covering
-  // one of them does not reach it. The Basic Set says nothing either way, so
-  // this applies only where that book's rules are in play.
-  if (options.wildcardsExcluded && options.difficulty === "W") return 0;
+export function talentBonusFor(skillName: string, bonuses: ReadonlyMap<string, number>): number {
   const whole = normalizeSkillName(skillName);
   if (bonuses.has(whole)) return bonuses.get(whole)!;
   const base = whole.replace(/\s*\(.*\)\s*$/, "");

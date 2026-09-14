@@ -10,7 +10,6 @@ import "./styles/gworld.css";
 
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
-import { registerBonusPointHooks } from "./system/bonus-points.js";
 import { registerFacing } from "./system/facing.js";
 import { registerAimTracking } from "./system/aim.js";
 import { registerBattleFatigue } from "./system/battle-fatigue.js";
@@ -29,7 +28,6 @@ import {
   ShieldData,
   SkillData,
   ModifierData,
-  RitualData,
   SpellData,
   TechniqueData,
   TemplateData,
@@ -78,7 +76,6 @@ Hooks.once("init", () => {
   CONFIG.Item.dataModels.language = LanguageData;
   CONFIG.Item.dataModels.template = TemplateData;
   CONFIG.Item.dataModels.spell = SpellData;
-  CONFIG.Item.dataModels.ritual = RitualData;
   CONFIG.Item.dataModels.modifier = ModifierData;
 
   // Initiative is Basic Speed, fixed for the whole fight (GURPS Lite p. 25):
@@ -115,8 +112,6 @@ Hooks.once("init", () => {
   // grows an apply control when it renders.
   registerChatHooks();
   registerSheetExtensionHooks();
-  // The GM's start-of-session refresh of points to spend (Monster Hunters 1 pp. 23, 28).
-  registerBonusPointHooks();
 
   // Which way a token faces, drawn on it, and the keys that turn it a hex
   // side at a time.
@@ -164,7 +159,7 @@ Hooks.once("init", () => {
   DocumentSheetConfig.registerSheet(Item, SYSTEM_ID, GWorldItemSheet, {
     types: [
       "trait", "skill", "technique", "equipment", "armor", "shield", "language", "template", "spell",
-      "modifier", "ritual",
+      "modifier",
     ],
     makeDefault: true,
     label: "GWORLD.Sheet.Item",

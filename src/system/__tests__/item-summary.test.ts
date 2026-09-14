@@ -76,34 +76,3 @@ describe("summarise a spell", () => {
     expect(summarise("spell", { colleges: [], classes: [], energy: { text: "" } })).toBe("");
   });
 });
-
-describe("summarise a ritual", () => {
-  const casting = {
-    areaRadius: 7, excludedSubjects: 0, traitsAdded: 0, traitsRemoved: 0, bonusAmount: 0, damageDice: "",
-    healingDice: "", metaMagic: 0, speedYards: 0, durationStep: 9, extraMonths: 0, years: 0, extraEnergy: 0,
-    rangeYards: 0, rangeKind: "yards", dimensions: 0, subjectWeight: 0, trappingsPercent: 0,
-  };
-  const definition = {
-    afflictionPercent: 0, area: true, healing: false, metaMagic: false, speed: false, bonusScope: "",
-    damage: false, damageKind: "standard", damageDelivery: "malediction",
-  };
-
-  it("names its effects as the book does and says what it costs (Monster Hunters 1 p. 37)", () => {
-    const effects = [
-      { path: "Spirit", effect: "control", greater: false },
-      { path: "Undead", effect: "control", greater: false },
-    ];
-    expect(summarise("ritual", { effects, definition, casting }))
-      .toBe("Lesser Control Spirit, Lesser Control Undead · 25 energy");
-  });
-
-  it("prices only the modifiers its definition uses", () => {
-    const effects = [{ path: "Spirit", effect: "control", greater: false }];
-    expect(summarise("ritual", { effects, definition: { ...definition, area: false }, casting }))
-      .toBe("Lesser Control Spirit · 14 energy");
-  });
-
-  it("says nothing of a ritual with no effects", () => {
-    expect(summarise("ritual", { effects: [], definition, casting })).toBe("");
-  });
-});

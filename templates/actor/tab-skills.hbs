@@ -1,7 +1,7 @@
 <section class="tab ibody{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
   {{> "gworld.addonSheetSections" sections=addonSheetSections.start}}
 
-  {{!-- Points to spend on outcomes (Monster Hunters 1 pp. 23, 28, 31). --}}
+  {{!-- Points to spend on outcomes (Campaigns p. 347), while a module's pool is in play. --}}
   {{#if pointSpending.inPlay}}
     <div class="npcline" style="gap: 10px; align-items: center; flex-wrap: wrap">
       <span class="fl">{{localize "GWORLD.BonusPoints.Title"}}</span>
@@ -10,24 +10,8 @@
       {{#each pointSpending.pools as |pool|}}
         <span class="tag tag-accent">{{localize "GWORLD.BonusPoints.Pool" label=pool.label value=pool.available}}</span>
       {{/each}}
-      {{#if derived.bonusPoints.inPlay}}
-        {{#if derived.bonusPoints.destiny.max}}
-          <span class="tag tag-accent" data-tooltip="{{localize 'GWORLD.BonusPoints.DestinyHint'}}">{{localize "GWORLD.BonusPoints.Destiny" value=derived.bonusPoints.destiny.value max=derived.bonusPoints.destiny.max}}</span>
-        {{/if}}
-        {{#each derived.bonusPoints.wildcard as |pool|}}
-          {{#if pool.max}}
-            <span class="tag tag-accent" data-tooltip="{{localize 'GWORLD.BonusPoints.WildcardHint'}}">{{localize "GWORLD.BonusPoints.Wildcard" skill=pool.skill value=pool.value max=pool.max}}</span>
-          {{/if}}
-        {{/each}}
-        {{#if derived.bonusPoints.gmDestiny.max}}
-          <span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.BonusPoints.GmDestinyHint'}}">{{localize "GWORLD.BonusPoints.GmDestiny" value=derived.bonusPoints.gmDestiny.value}}</span>
-        {{/if}}
-      {{/if}}
       {{#if editable}}
         <button type="button" class="ibtn" data-action="requestGuidance" data-tooltip="{{localize 'GWORLD.BonusPoints.GuidanceHint'}}">{{localize "GWORLD.BonusPoints.Guidance"}}</button>
-      {{/if}}
-      {{#if (and isGM derived.bonusPoints.inPlay)}}
-        <button type="button" class="ibtn" data-action="newSession" data-tooltip="{{localize 'GWORLD.BonusPoints.NewSessionHint'}}">{{localize "GWORLD.BonusPoints.NewSession"}}</button>
       {{/if}}
     </div>
   {{/if}}
@@ -97,9 +81,6 @@
               <td>
                 <span class="wname" data-action="editItem">{{skill.name}}</span>
                 {{#if skill.system.techLevel}}<span class="wmode">TL{{skill.system.techLevel}}</span>{{/if}}
-                {{#if skill.system.derived.familiarityExempt}}
-                  <span class="tag" data-tooltip="{{localize 'GWORLD.BonusPoints.FamiliarityHint'}}">{{localize "GWORLD.BonusPoints.Familiarity"}}</span>
-                {{/if}}
                 {{#unless row.trained}}
                   <span class="tag" data-tooltip="{{localize 'GWORLD.Section.RolledAtDefault'}}">{{localize "GWORLD.Skill.Untrained"}}</span>
                 {{/unless}}
