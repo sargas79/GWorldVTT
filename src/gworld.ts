@@ -15,7 +15,7 @@ import { registerFacing } from "./system/facing.js";
 import { registerAimTracking } from "./system/aim.js";
 import { registerBattleFatigue } from "./system/battle-fatigue.js";
 import { loadSkillCatalog } from "./system/skill-catalog.js";
-import { registerConditions, registerPostureSync } from "./system/conditions.js";
+import { setCondition, registerConditions, registerPostureSync } from "./system/conditions.js";
 import { GWorldCombat } from "./system/combat.js";
 import { SYSTEM_ID } from "./system/constants.js";
 import { CharacterData } from "./system/data/character.js";
@@ -44,6 +44,7 @@ import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
 import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
 import { READY_HOOK, createApi, warnIncompatibleModules } from "./system/api.js";
 import { registerCombatStateHooks } from "./system/combat-extensions.js";
+import { registerProcedureHooks } from "./system/procedure-extensions.js";
 import { closeRuleRegistration, openRuleRegistration, registerRule, registerRuleGroup } from "./system/rule-registry.js";
 import { registerSettings } from "./system/settings.js";
 import { loadFilePartials, registerTemplateHelpers } from "./system/templates.js";
@@ -125,6 +126,7 @@ Hooks.once("init", () => {
   // What a module keeps per combatant runs out at the turn, round or combat
   // boundary it asked for.
   registerCombatStateHooks();
+  registerProcedureHooks(setCondition);
 
   const { DocumentSheetConfig } = foundry.applications.apps;
   DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.applications.sheets.ActorSheetV2);

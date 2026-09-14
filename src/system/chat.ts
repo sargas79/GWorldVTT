@@ -1044,6 +1044,7 @@ async function rollDefense(options: {
     base: total,
     label: game.i18n.format("GWORLD.Chat.DefendingAgainst", { defense: name, attack }),
     kind: "defense",
+    tags: [key],
     modifiers,
     ...(averted
       ? {

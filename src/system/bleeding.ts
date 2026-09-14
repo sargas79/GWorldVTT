@@ -15,6 +15,7 @@ import { healthRollScore } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { bleedingMinute, bleedingModifier } from "../rules/bleeding.js";
 import { resolveSuccess } from "../rules/success.js";
+import { bleedingSchedule, successRollModifiers } from "./procedure-extensions.js";
 
 const BLEEDING_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/bleeding.hbs`;
 
@@ -49,7 +50,11 @@ export async function rollBleeding(options: { actor: any }): Promise<number> {
 
   // "-1 per 5 HP lost", which is what is missing from the pool rather than what
   // is left in it.
-  const modifier = bleedingModifier(Math.max(0, max - current));
+  // A module may change how often the wound bleeds and at what modifier, and
+  // the actor's conditions and the modules may add to the roll.
+  const schedule = bleedingSchedule(actor, bleedingModifier(Math.max(0, max - current)));
+  const modifier = schedule.modifier + successRollModifiers({ actor, label: "Bleeding", kind: "attribute", skill: "", base: ht, tags: ["bleeding", "HT"], modifiers: [] })
+    .reduce((total, line) => total + line.value, 0);
 
   const roll = new Roll("3d6");
   await roll.evaluate();
@@ -89,6 +94,8 @@ export async function rollBleeding(options: { actor: any }): Promise<number> {
     stopped: result.stopped,
     // Only worth saying while it is counting towards something.
     quietMinutes: result.stopped ? 0 : result.quietMinutes,
+    // Only said where a module changed it from a roll a minute.
+    interval: schedule.intervalSeconds !== 60 ? schedule.intervalSeconds : null,
     criticalSuccess: outcome.criticalSuccess,
     criticalFailure: outcome.criticalFailure,
     previous: current,

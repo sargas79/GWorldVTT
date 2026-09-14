@@ -19,6 +19,7 @@ import {
 } from "../rules/knockdown.js";
 import { resolveSuccess } from "../rules/success.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
+import { successRollModifiers } from "./procedure-extensions.js";
 
 const KNOCKDOWN_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/knockdown.hbs`;
 
@@ -49,9 +50,12 @@ export async function rollKnockdown(options: {
   // Fit's bonus is in the modifier the damage card worked out; a knockdown
   // rolled from elsewhere reads it here so it is never left out.
   const ht = attributeOf(actor, "HT");
+  // What the actor's conditions and the modules add to the roll.
+  const added = successRollModifiers({ actor, label: "Knockdown", kind: "attribute", skill: "", base: ht, tags: ["knockdown", "HT"], modifiers: [] })
+    .reduce((total, line) => total + line.value, 0);
   const roll = new Roll("3d6");
   await roll.evaluate();
-  const outcome = resolveSuccess(roll.total, ht + modifier, dieResults(roll));
+  const outcome = resolveSuccess(roll.total, ht + modifier + added, dieResults(roll));
 
   const result = knockdownResult({
     success: outcome.success,
@@ -64,8 +68,8 @@ export async function rollKnockdown(options: {
   const content = await foundry.applications.handlebars.renderTemplate(KNOCKDOWN_TEMPLATE, {
     name: String(actor.name ?? ""),
     ht,
-    modifier,
-    target: ht + modifier,
+    modifier: modifier + added,
+    target: ht + modifier + added,
     dice: dieResults(roll),
     roll: roll.total,
     margin: outcome.margin,

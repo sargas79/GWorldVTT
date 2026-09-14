@@ -23,7 +23,16 @@ import {
 import { consumeTurnedBlade, recordTurnedBlade } from "./turned-blade.js";
 import { consumePulledBlow, pulledFormula, recordPulledBlow } from "./pulled-blow.js";
 import { isRuleOn } from "./optional-rules.js";
-import { targetedTokens } from "./targets.js";
+import { targetedTokens, withTargets } from "./targets.js";
+import {
+  afterSuccessRoll,
+  attackSequenceFor,
+  attackTargetCandidates,
+  maneuverOptionAttackEffect,
+  recordAttackMade,
+  successRollModifiers,
+  successRollTags,
+} from "./procedure-extensions.js";
 import { aimTurnsOf, loseAim } from "./aim.js";
 import { aimBonus } from "../rules/aim.js";
 import {
@@ -39,6 +48,7 @@ import {
   applyAttackOptions,
   attackOptionFields,
   callCombatHook,
+  mergeAttackEffects,
   readAttackOptionValues,
   type AttackContext,
   type DefenseKey as AddonDefenseKey,
@@ -296,6 +306,12 @@ export interface SuccessRollOptions {
   affliction?: { uuid: string; name: string; label: string };
   /** The skill rolled against, for wildcard bonus points (Monster Hunters 1 p. 31). */
   skill?: string;
+  /**
+   * What sort of roll this is beyond its kind, for modules' modifiers:
+   * `fright`, `knockdown`, `selfControl`, a defense's name... A Fast-Draw or
+   * Teaching skill is tagged from its name.
+   */
+  tags?: string[];
 }
 
 /** A critical miss, with what the table said and whether the weapon resisted. */
@@ -317,9 +333,17 @@ export interface CriticalMissResult {
  */
 export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessRollResult | null> {
   const {
-    actor, base, label, kind = "skill", modifiers = [], rapidFire, defensePenalty = 0,
+    actor, base, label, kind = "skill", rapidFire, defensePenalty = 0,
     unarmed = false, noParry = false,
   } = options;
+  // What the actor's timed conditions and the modules add, beside the lines
+  // the caller worked out.
+  const tags = successRollTags({ kind, skill: options.skill, tags: options.tags });
+  const given = options.modifiers ?? [];
+  const modifiers = [
+    ...given,
+    ...successRollModifiers({ actor, label, kind, skill: String(options.skill ?? ""), base, tags, modifiers: [...given] }),
+  ];
 
   const totalModifier = modifiers.reduce((sum, m) => sum + m.value, 0);
   const effective = base + totalModifier;
@@ -468,6 +492,8 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
         }
       : {}),
   });
+
+  afterSuccessRoll({ actor, label, kind, skill: String(options.skill ?? ""), tags, outcome });
 
   // What the fumble did to the weapon travels back to whoever rolled, who
   // knows which item it was and can break it.
@@ -846,6 +872,60 @@ export async function handleRollAction(
   event: Event,
   target: HTMLElement,
 ): Promise<SuccessRollResult | null> {
+  if (target.dataset.rollType !== "attack" || Number(target.dataset.malediction) > 0) return rollAction(actor, event, target, null);
+
+  // A maneuver's attacks this turn, as the modules may have changed them: an
+  // attack that picks its own target asks for it, and each one made is counted.
+  const sequence = attackSequenceFor(actor);
+  const place = { index: sequence.made + 1, count: sequence.count };
+  const inCombat = Boolean((game as any).combat?.started);
+  let picked: any[] | null = null;
+  if (sequence.pickTargets) {
+    const candidates = attackTargetCandidates(actor);
+    if (candidates.length > 0) {
+      const choice = await promptForAttackTarget(
+        game.i18n.format("GWORLD.Attack.SequenceTarget", place),
+        candidates.map((c) => c.name),
+      );
+      if (choice === null) return null;
+      const chosen = candidates[Number(choice)];
+      if (chosen) picked = [{ actor: chosen.actor, document: chosen.document }];
+    }
+  }
+  const roll = () => rollAction(actor, event, target, sequence.count > 1 ? place : null);
+  const outcome = picked ? await withTargets(picked, roll) : await roll();
+  if (outcome && inCombat) await recordAttackMade(actor);
+  return outcome;
+}
+
+/** Asks which of the scene's tokens one attack of a sequence is aimed at. Null when dismissed. */
+async function promptForAttackTarget(title: string, names: string[]): Promise<string | null> {
+  const esc = foundry.utils.escapeHTML;
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title },
+    content: `<div class="gworld">
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${esc(game.i18n.localize("GWORLD.Attack.Target"))}</span>
+        <select name="target" style="min-width:160px">${names.map((name, i) => `<option value="${i}">${esc(name)}</option>`).join("")}</select>
+      </label>
+    </div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) =>
+        button.closest<HTMLElement>(".application")?.querySelector<HTMLSelectElement>('select[name="target"]')?.value ?? "",
+    },
+    rejectClose: false,
+  });
+  return typeof result === "string" && result !== "" ? result : null;
+}
+
+async function rollAction(
+  actor: any,
+  event: Event,
+  target: HTMLElement,
+  /** Which attack of the turn's several this is, to say on the card. */
+  place: { index: number; count: number } | null,
+): Promise<SuccessRollResult | null> {
   const { rollType, rollLabel, rollTarget, ranged } = target.dataset;
   const base = Number(rollTarget);
   if (!Number.isFinite(base)) return null;
@@ -1031,7 +1111,22 @@ export async function handleRollAction(
   }
   // What the modules' options chosen in the dialog did beyond the roll itself:
   // lines for the damage roll that follows, and for the defender's rolls.
-  const addon = melee?.addon ?? shot?.addon ?? null;
+  const chosenAddon = melee?.addon ?? shot?.addon ?? null;
+  // What the options chosen on the attacker's maneuver do, which apply to
+  // every attack made on it rather than being asked each time.
+  const stance = rollType === "attack"
+    ? maneuverOptionAttackEffect(attackContextFor({
+        actor, item: rolledItem, ranged: Boolean(ranged), damageType: target.dataset.damageType ?? "",
+        reach: target.dataset.reach ?? "", effectiveSkill: base,
+      }))
+    : null;
+  if (stance && stance.fatigue > 0) {
+    const paid = await spendFatigue(actor, stance.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"));
+    if (!paid) return null;
+  }
+  if (stance) modifiers.push(...stance.modifiers);
+  const asEffect = ({ criticalSkill, ...rest }: NonNullable<typeof stance>) => ({ ...rest, ...(criticalSkill !== null ? { criticalSkill } : {}) });
+  const addon = stance && chosenAddon ? mergeAttackEffects([asEffect(chosenAddon), asEffect(stance)]) : (chosenAddon ?? stance);
   if (rollType === "attack") await recordAddonDamage(actor, addon?.damageModifiers ?? []);
 
   // Where the blow was aimed travels to the damage roll, which is a separate
@@ -1088,6 +1183,7 @@ export async function handleRollAction(
     measured
       ? `${rollLabel ?? rollType ?? "Roll"} (${game.i18n.format("GWORLD.Ranged.Measured", { yards: measured.rangeYards })})`
       : (rollLabel ?? rollType ?? "Roll"),
+    ...(place ? [game.i18n.format("GWORLD.Attack.SequencePlace", place)] : []),
     ...noted,
   ].join(" — ");
 
