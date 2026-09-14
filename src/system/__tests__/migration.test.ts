@@ -140,6 +140,17 @@ describe("coverage", () => {
     expect(api.uncoveredData(entries, { items: [], actors: [], storedRules: { oldRule: true } }, []).map((e) => e.id)).toEqual(["old-rule"]);
   });
 
+  it("counts items kept out of their collection as invalid, as those of a type no longer registered are", async () => {
+    const api = await load();
+    world();
+    const stored = { id: "i9", type: "base", _source: { type: "oldType", system: {} } };
+    const items = Object.assign([], { invalidDocumentIds: new Set(["i9"]), getInvalid: (id: string) => (id === "i9" ? stored : undefined) });
+    expect(api.withInvalid(items)).toEqual([stored]);
+    expect(api.uncoveredData(entries, { items: api.withInvalid(items), actors: [], storedRules: {} }, []).map((e) => e.id)).toEqual(["old-type"]);
+    const actor = { type: "character", items: Object.assign([], { invalidDocumentIds: new Set(["i9"]), getInvalid: () => stored }), _source: { system: {} } };
+    expect(api.uncoveredData(entries, { items: [], actors: [actor], storedRules: {} }, []).map((e) => e.id)).toEqual(["old-type"]);
+  });
+
   it("warns the GM permanently, and saves nothing", async () => {
     const api = await load();
     const w = world();

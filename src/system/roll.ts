@@ -304,7 +304,7 @@ export interface SuccessRollOptions {
    * book's conditions (Campaigns pp. 428-429).
    */
   affliction?: { uuid: string; name: string; label: string };
-  /** The skill rolled against, for wildcard bonus points (Monster Hunters 1 p. 31). */
+  /** The skill rolled against, for a module's point pools that pay only for some skills. */
   skill?: string;
   /**
    * What sort of roll this is beyond its kind, for modules' modifiers:
@@ -429,7 +429,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     guidance: options.guidance ?? null,
   });
 
-  // A roll that can be bought up with points (Monster Hunters 1 p. 31)
+  // A roll that can be bought up with points (Campaigns p. 347)
   // remembers what it was, and an attack that missed remembers the defense
   // card it would have posted on a hit.
   const successRoll = spendingInPlay() && actor?.uuid
@@ -705,8 +705,6 @@ export interface DamageRollOptions {
   material?: string;
   /** True when DR has no effect on the blow, as for a Malediction (Characters p. 106). */
   ignoresDr?: boolean;
-  /** A holy weapon's blow (Monster Hunters 1 p. 51). */
-  holy?: boolean;
   /** The item the blow comes from, for a module's hooks; its UUID travels on the card. */
   item?: any;
   /** Which of the item's modes it was rolled from. */
@@ -822,7 +820,6 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(mass > 1 ? { drMultiplier: mass } : {}),
           ...(options.material ? { material: options.material } : {}),
           ...(options.ignoresDr ? { ignoresDr: true } : {}),
-          ...(options.holy ? { holy: true } : {}),
           ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
           ...(mode ? { mode } : {}),
           ...(options.weaponTarget ? { weaponTarget: options.weaponTarget } : {}),
@@ -2658,7 +2655,6 @@ export async function handleDamageAction(
     ...(halved ? { halfDamage: true } : {}),
     ...(target.dataset.material ? { material: target.dataset.material } : {}),
     ...(target.dataset.ignoresDr === "1" ? { ignoresDr: true } : {}),
-    ...(target.dataset.holy === "1" ? { holy: true } : {}),
     ...(item ? { item } : {}),
     ...(mode ? { mode } : {}),
     explosive: target.dataset.explosive === "1",

@@ -1,25 +1,19 @@
 /**
- * Spending points on outcomes at the table (GURPS Monster Hunters 1:
- * Champions pp. 23, 28, 31).
+ * Spending points on outcomes at the table (Influencing Success Rolls,
+ * Campaigns p. 347).
  *
- * Three pools pay for the same things: unspent character points, destiny
- * points, and a wildcard skill's bonus points. The pools are on the
- * character; the GM refills them at the start of a session. A success roll's
- * card offers to buy the roll up, a damage card's flesh-wound offer draws on
- * the pools, and a player can ask the GM for a piece of guidance, which the
- * GM prices and approves.
+ * Unspent character points and the point pools add-on modules register pay
+ * for the same things. A success roll's card offers to buy the roll up, a
+ * damage card's flesh-wound offer draws on the pools, and a player can ask the
+ * GM for a piece of guidance, which the GM prices and approves. It is in play
+ * while a module's pool is.
  */
 
 import { SYSTEM_ID } from "./constants.js";
-import { isRuleOn } from "./optional-rules.js";
 import { anyPointPools, payFromPointPool, registeredPointPools } from "./roll-extensions.js";
 import {
-  destinyPoints,
   guidanceCost,
   purchasableSteps,
-  regainDestiny,
-  sourceMayPay,
-  wildcardBonusPoints,
   type GuidanceLevel,
   type OutcomeStep,
   type PointSource,
@@ -40,13 +34,11 @@ interface SourceOption {
   gmCheck: boolean;
 }
 
-/** The pools a character has for a use, with what each holds and whether the GM must agree (p. 31). */
+/** The pools a character has for a use, with what each holds and whether the GM must agree. */
 export function sourcesFor(actor: any, use: PointUse, roll: { skill?: string } = {}): SourceOption[] {
-  const bp = actor?.system?.derived?.bonusPoints;
-  // Pools add-on modules registered join unspent points, with or without
-  // this book's own pools in play.
+  // Pools add-on modules registered join unspent points.
   const pools = registeredPointPools(actor, use, roll);
-  if (!bp?.inPlay && pools.length === 0) return [];
+  if (pools.length === 0) return [];
   const out: SourceOption[] = [];
   const unspent = Number(actor.system?.derived?.points?.unspent ?? 0) || 0;
   out.push({ key: "unspent", name: L("UnspentName"), source: { kind: "unspent" }, label: F("Unspent", { value: unspent }), available: Math.max(0, unspent), gmCheck: false });
@@ -60,24 +52,13 @@ export function sourcesFor(actor: any, use: PointUse, roll: { skill?: string } =
       gmCheck: pool.gmCheck,
     });
   }
-  if (!bp?.inPlay) return out;
-  if (bp.destiny.max > 0) {
-    out.push({ key: "destiny", name: L("DestinyName"), source: { kind: "destiny" }, label: F("Destiny", { value: bp.destiny.value, max: bp.destiny.max }), available: bp.destiny.value, gmCheck: false });
-  }
-  for (const pool of bp.wildcard as Array<{ skill: string; value: number; max: number }>) {
-    if (pool.max <= 0) continue;
-    const source: PointSource = { kind: "wildcard", skill: pool.skill };
-    const may = sourceMayPay(source, use, roll);
-    if (!may.allowed) continue;
-    out.push({ key: `wildcard:${pool.skill}`, name: pool.skill, source, label: F("Wildcard", { skill: pool.skill, value: pool.value, max: pool.max }), available: pool.value, gmCheck: may.gmCheck });
-  }
   return out;
 }
 
 /**
  * Takes points from a pool. Unspent points go as a negative award on the
- * ledger, so a character in debt pays it back from the next award; destiny
- * and wildcard points come off their pools and cannot go below nothing.
+ * ledger, so a character in debt pays it back from the next award; a
+ * module's pool pays however the module says.
  */
 export async function spendPoints(
   actor: any,
@@ -89,22 +70,8 @@ export async function spendPoints(
 ): Promise<boolean> {
   if (!actor?.isOwner && !game.user?.isGM) return false;
   if (source.kind === "pool") return payFromPointPool(actor, source, amount, note, use, roll);
-  const bp = actor.system?.derived?.bonusPoints;
-  if (source.kind === "unspent") {
-    const awards = [...(actor.system?.points?.awards ?? []), { points: -amount, note, at: Date.now() }];
-    await actor.update({ "system.points.awards": awards });
-    return true;
-  }
-  if (source.kind === "destiny") {
-    if ((bp?.destiny?.value ?? 0) < amount) return false;
-    await actor.update({ "system.bonusPoints.destiny": bp.destiny.value - amount });
-    return true;
-  }
-  const pools = ((bp?.wildcard ?? []) as Array<{ skill: string; value: number }>).map((p) => ({ skill: p.skill, value: p.value }));
-  const pool = pools.find((p) => p.skill === source.skill);
-  if (!pool || pool.value < amount) return false;
-  pool.value -= amount;
-  await actor.update({ "system.bonusPoints.wildcard": pools });
+  const awards = [...(actor.system?.points?.awards ?? []), { points: -amount, note, at: Date.now() }];
+  await actor.update({ "system.points.awards": awards });
   return true;
 }
 
@@ -154,12 +121,12 @@ export interface SuccessRollFlag {
   bought?: string;
 }
 
-/** Whether points can be spent on outcomes at all: this book's rule, or a module's pool. */
+/** Whether points can be spent on outcomes at all: while a module's pool is in play. */
 export function spendingInPlay(): boolean {
-  return isRuleOn("bonusPointSpending") || anyPointPools();
+  return anyPointPools();
 }
 
-/** Whether a roll of this kind is a roll in combat, where a critical cannot be bought (p. 31). */
+/** Whether a roll of this kind is a roll in combat, where a critical cannot be bought. */
 export function isCombatRoll(actor: any, kind: string): boolean {
   if (kind === "attack" || kind === "defense") return true;
   const combat = (game as any).combat;
@@ -223,7 +190,7 @@ async function buySuccess(message: any, actor: any, flag: SuccessRollFlag): Prom
 
 // ── flesh wounds ─────────────────────────────────────────────────────────────
 
-/** Pays for a flesh wound from a pool the player picks (p. 31). False where nothing was paid. */
+/** Pays for a flesh wound from a pool the player picks. False where nothing was paid. */
 export async function payForFleshWound(actor: any, cost: number): Promise<boolean> {
   const picked = await choose(L("FleshWound"), sourcesFor(actor, "fleshWound"), null, L("FleshWoundHint"));
   if (!picked) return false;
@@ -236,7 +203,7 @@ export async function payForFleshWound(actor: any, cost: number): Promise<boolea
 
 // ── player guidance ──────────────────────────────────────────────────────────
 
-/** Asks the GM for a plausible addition to the scene, paid from a pool the player names (p. 31). */
+/** Asks the GM for a plausible addition to the scene, paid from a pool the player names. */
 export async function requestGuidance(actor: any): Promise<void> {
   if (!spendingInPlay() || !actor?.isOwner) return;
   const sources = sourcesFor(actor, "guidance");
@@ -320,82 +287,4 @@ async function settleGuidance(message: any, flag: any, level: GuidanceLevel | nu
   }
   const content = String(message.content ?? "").replace(/<\/div>\s*$/, `<div class="gc-result ${level ? "success" : "failure"}">${foundry.utils.escapeHTML(text)}</div></div>`);
   await message.update({ content, [`flags.${SYSTEM_ID}.guidance.settled`]: true });
-}
-
-// ── sessions ─────────────────────────────────────────────────────────────────
-
-/**
- * The start of a game session: wildcard bonus points are handed out afresh --
- * they "don't accumulate if unused" -- each destiny point pool regains one,
- * and the GM's points against a negative Destiny are set aside again.
- */
-export async function startNewSession(actors: any[]): Promise<void> {
-  if (!game.user?.isGM || !isRuleOn("bonusPointSpending")) return;
-  const lines: string[] = [];
-  for (const actor of actors) {
-    const bp = actor?.system?.derived?.bonusPoints;
-    if (!bp?.inPlay) continue;
-    const wildcard = (bp.wildcard as Array<{ skill: string; max: number }>).map((p) => ({ skill: p.skill, value: p.max }));
-    const destiny = regainDestiny(bp.destiny.value, bp.destiny.max);
-    await actor.update({
-      "system.bonusPoints.wildcard": wildcard,
-      "system.bonusPoints.destiny": destiny,
-      "system.bonusPoints.gmDestiny": bp.gmDestiny.max,
-    });
-    const parts = [
-      ...(bp.destiny.max ? [F("Destiny", { value: destiny, max: bp.destiny.max })] : []),
-      ...wildcard.filter((p) => p.value > 0).map((p) => F("Wildcard", { skill: p.skill, value: p.value, max: p.value })),
-      ...(bp.gmDestiny.max ? [F("GmDestiny", { value: bp.gmDestiny.max })] : []),
-    ];
-    if (parts.length) lines.push(`<li><strong>${foundry.utils.escapeHTML(String(actor.name))}</strong>: ${foundry.utils.escapeHTML(parts.join(", "))}</li>`);
-  }
-  await ChatMessage.implementation.create({
-    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
-    content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${foundry.utils.escapeHTML(L("NewSession"))}</span></div>`
-      + (lines.length ? `<ul class="gc-log" style="margin:4px 0;padding-left:18px">${lines.join("")}</ul>` : `<div class="gc-note">${foundry.utils.escapeHTML(L("NothingToRefresh"))}</div>`)
-      + `</div>`,
-  });
-}
-
-/** The pools a character has, from their traits and wildcard skills (pp. 23, 28). */
-export function bonusPointPools(options: {
-  destinyTraitPoints: number;
-  wildcardSkills: Array<{ name: string; points: number }>;
-  /** Null for a pool never spent from, which starts full. */
-  stored: { destiny?: number | null; gmDestiny?: number | null; wildcard?: Array<{ skill: string; value: number }> } | undefined;
-}) {
-  const destiny = destinyPoints(options.destinyTraitPoints);
-  const stored = options.stored ?? {};
-  return {
-    inPlay: isRuleOn("bonusPointSpending"),
-    destiny: { value: Math.min(destiny.own, Math.max(0, Number(stored.destiny ?? destiny.own) || 0)), max: destiny.own },
-    gmDestiny: { value: Math.min(destiny.gm, Math.max(0, Number(stored.gmDestiny ?? destiny.gm) || 0)), max: destiny.gm },
-    wildcard: options.wildcardSkills.map((skill) => {
-      const max = wildcardBonusPoints(skill.points);
-      const kept = (stored.wildcard ?? []).find((p) => p.skill === skill.name);
-      return { skill: skill.name, max, value: Math.min(max, Math.max(0, kept ? Number(kept.value) || 0 : max)) };
-    }),
-  };
-}
-
-/**
- * A "New session" button on the Actors directory, for the GM: every player
- * character's points refreshed at once (pp. 23, 28).
- */
-export function registerBonusPointHooks(): void {
-  Hooks.on("renderActorDirectory", (_app: any, html: HTMLElement) => {
-    if (!game.user?.isGM || !isRuleOn("bonusPointSpending")) return;
-    const root = html instanceof HTMLElement ? html : (html as any)?.[0];
-    const header = root?.querySelector?.(".header-actions, .directory-header");
-    if (!header || header.querySelector("[data-gworld-new-session]")) return;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.gworldNewSession = "1";
-    button.textContent = L("NewSession");
-    button.title = L("NewSessionHint");
-    button.addEventListener("click", () => {
-      void startNewSession(((game as any).actors?.contents ?? []).filter((a: any) => a.type === "character" && a.hasPlayerOwner));
-    });
-    header.append(button);
-  });
 }

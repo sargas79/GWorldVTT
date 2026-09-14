@@ -216,10 +216,8 @@ import { awardsNewestFirst, type PointAward } from "../../rules/character-points
 import { isReadTrait } from "../../rules/trait-effects.js";
 import { weaknessOf } from "../../rules/weakness.js";
 import { exposeToWeakness } from "../weakness.js";
-import { cancelRitual, describeRitualInEffect, extendRitual, startRitualCasting, triggerRitual } from "../ritual-casting.js";
-import { requestGuidance, startNewSession } from "../bonus-points.js";
+import { requestGuidance } from "../bonus-points.js";
 import { anyPointPools, registeredPointPools } from "../roll-extensions.js";
-import { applyHolyContact } from "../holy.js";
 import { unconditionalReaction, type ReactionSource } from "../../rules/social.js";
 import { SENSES } from "../../rules/senses.js";
 import {
@@ -2928,19 +2926,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       accelerate: GWorldCharacterSheet.#onAcceleration,
       motionSickness: GWorldCharacterSheet.#onMotionSickness,
       controlVehicle: GWorldCharacterSheet.#onControlVehicle,
-      topOffReserve: GWorldCharacterSheet.#onTopOffReserve,
-      holyContact: GWorldCharacterSheet.#onHolyContact,
       jumpOutOfVehicle: GWorldCharacterSheet.#onJumpOutOfVehicle,
       shotAtVehicle: GWorldCharacterSheet.#onShotAtVehicle,
       trample: GWorldCharacterSheet.#onTrample,
       fightOffSwarm: GWorldCharacterSheet.#onFightOffSwarm,
       castSpell: GWorldCharacterSheet.#onCastSpell,
-      castRitual: GWorldCharacterSheet.#onCastRitual,
       requestGuidance: GWorldCharacterSheet.#onRequestGuidance,
-      newSession: GWorldCharacterSheet.#onNewSession,
-      extendRitual: GWorldCharacterSheet.#onExtendRitual,
-      triggerRitual: GWorldCharacterSheet.#onTriggerRitual,
-      cancelRitual: GWorldCharacterSheet.#onCancelRitual,
       maintainSpell: GWorldCharacterSheet.#onMaintainSpell,
       dropSpell: GWorldCharacterSheet.#onDropSpell,
       toggleConcentrating: GWorldCharacterSheet.#onToggleConcentrating,
@@ -3047,9 +3038,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
   override _prepareTabs(group: string): Record<string, any> {
     const tabs = super._prepareTabs(group) as Record<string, any>;
-    // The tab is magic of either kind: the Basic Set's spells, or Ritual Path
-    // Magic's Paths (Monster Hunters 1 pp. 32-39).
-    if (group === "primary" && !isRuleOn("magic") && !isRuleOn("ritualPathMagic") && !tabHasAddonSections(this.actor, "magic")) delete tabs.magic;
+    // The tab is the Basic Set's spells, or what an add-on module shows there.
+    if (group === "primary" && !isRuleOn("magic") && !tabHasAddonSections(this.actor, "magic")) delete tabs.magic;
     return tabs;
   }
 
@@ -3092,7 +3082,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       isGM: game.user?.isGM === true,
       // Spending points on outcomes, and the pools add-on modules registered for it.
       pointSpending: {
-        inPlay: Boolean(derived.bonusPoints?.inPlay) || anyPointPools(),
+        inPlay: anyPointPools(),
         pools: registeredPointPools(actor, "buySuccess"),
       },
       // Controls edited in place carry ids built from this, so the redraw
@@ -3220,7 +3210,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       })),
       // The powers, ready to read: the book's name for each, what its Talent
       // is worth, whether this is a latent, and what a roll to use it is
-      // against (Characters pp. 254-255; Monster Hunters 1 p. 40).
+      // against (Characters pp. 254-255).
       psionics: describePowers(system.derived?.powers ?? [], {
         IQ: Number(derived.attributes?.IQ ?? system.attributes?.IQ ?? 10),
         will: Number(derived.will ?? 10),
@@ -3642,33 +3632,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       })),
       styleHint: L(style === "ritual" ? "RitualHint" : "StandardHint"),
       groups: rows,
-      // Rituals of Ritual Path Magic, by name: their cost as written down, and
-      // the Path the character rolls for each (Monster Hunters 1 pp. 33-35).
-      ritualsInEffect: ((this.actor.system?.ritualPath?.active ?? []) as any[]).map((entry) => {
-        const described = describeRitualInEffect(entry);
-        return {
-          ...entry,
-          ...described,
-          extendable: !entry.conditional && !described.expired && entry.originalSeconds > 0 && Boolean(this.actor.items.get(entry.itemId)),
-          cancelLabel: entry.conditional ? "GWORLD.RitualCast.Remove" : described.expired ? "GWORLD.RitualCast.Clear" : "",
-        };
-      }),
-      rituals: (this.actor.items.filter((i: any) => i.type === "ritual") as any[])
-        .sort((a, b) => String(a.name).localeCompare(String(b.name)))
-        .map((item) => {
-          const d = item.system?.derived ?? {};
-          return {
-            id: item.id,
-            name: item.name,
-            effects: d.effects || "—",
-            energy: d.cost?.total ?? 0,
-            durationConflict: Boolean(d.cost?.durationConflict),
-            skill: d.skill?.name ?? "",
-            penalty: Number(d.skill?.penalty ?? 0),
-            level: d.skill?.level ?? null,
-            castable: d.skill?.level !== null && d.skill?.level !== undefined,
-          };
-        }),
       count: groups.reduce((n, g) => n + g.rows.filter((r) => r.known).length, 0),
       // Where the casting happens, and what is already running (pp. 235, 238).
       mana: describeMana(),
@@ -3710,40 +3673,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (item) await castSpell(this.actor, item);
   }
 
-  /** Asks the GM for a piece of player guidance (Monster Hunters 1 p. 31). */
+  /** Asks the GM for a piece of player guidance (Campaigns p. 347). */
   static async #onRequestGuidance(this: GWorldCharacterSheet) {
     await requestGuidance(this.actor);
-  }
-
-  /** The GM starts a session for this character: points refreshed (pp. 23, 28). */
-  static async #onNewSession(this: GWorldCharacterSheet) {
-    await startNewSession([this.actor]);
-  }
-
-  /** Starts working a ritual: its casting card (Monster Hunters 1 pp. 35-37). */
-  static async #onCastRitual(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
-    const item = this.#itemFrom(target);
-    if (item) await startRitualCasting(this.actor, item);
-  }
-
-  /** The ritual in effect a row stands for. */
-  #activeRitualId(target: HTMLElement): string {
-    return target.closest<HTMLElement>("[data-active-id]")?.dataset.activeId ?? "";
-  }
-
-  /** Extends a ritual in effect by casting again for the added duration (p. 37). */
-  static async #onExtendRitual(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
-    await extendRitual(this.actor, this.#activeRitualId(target));
-  }
-
-  /** A conditional ritual's condition is met (p. 38). */
-  static async #onTriggerRitual(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
-    await triggerRitual(this.actor, this.#activeRitualId(target), game.i18n.localize("GWORLD.RitualCast.ConditionMet"));
-  }
-
-  /** Cancels a ritual in effect, or has the GM remove a hanging one (p. 37). */
-  static async #onCancelRitual(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
-    await cancelRitual(this.actor, this.#activeRitualId(target));
   }
 
   #activeSpellId(target: HTMLElement): string | null {
@@ -3967,9 +3899,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       equippable: equippable || Boolean(item.system.meleeModes?.length || item.system.rangedModes?.length),
       notes: item.system.category === "vehicle" ? vehicleNotes(item) : notes,
       vehicle: item.system.category === "vehicle" && isRuleOn("vehicles"),
-      // Holy water and a significant symbol touch a demon without a blow
-      // (Monster Hunters 1 pp. 51, 57).
-      holy: Boolean(item.system.holy) && isRuleOn("holyAttacks"),
       // Its Legality Class, and what carrying it here takes under the
       // campaign's Control Rating (Characters p. 267, Campaigns p. 507).
       legality: legalityNote(item.system.lc ?? null),
@@ -5258,33 +5187,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * the weapon's own notes, which the compendium does not carry, so this rolls
    * the resistance and leaves the effect to the GM.
    */
-  /** "The GM should assume that mages 'top themselves off' during any downtime" (Monster Hunters 1 p. 36). */
-  static async #onTopOffReserve(this: GWorldCharacterSheet) {
-    const max = Number(this.actor.system?.derived?.ritualPath?.reserve?.max ?? 0) || 0;
-    await this.actor.update({ "system.ritualPath.manaReserve": max });
-  }
-
-  /** Holy contact with whoever is targeted, from a holy item's row (Monster Hunters 1 p. 51). */
-  static async #onHolyContact(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
-    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
-    const item = id ? this.actor.items.get(id) : null;
-    const targets = currentTargets();
-    if (!item || targets.length === 0) {
-      ui.notifications?.warn(game.i18n.localize("GWORLD.Holy.NoTarget"));
-      return;
-    }
-    const seen = new Set<string>();
-    let touched = 0;
-    for (const token of targets) {
-      const victim = token?.actor;
-      const key = String(victim?.uuid ?? "");
-      if (!victim || seen.has(key)) continue;
-      seen.add(key);
-      if (await applyHolyContact(victim, String(item.name))) touched++;
-    }
-    if (touched === 0) ui.notifications?.info(game.i18n.localize("GWORLD.Holy.NoEffect"));
-  }
-
   /** Exposure to a Weakness, from the trait's own row (Characters p. 161). */
   static async #onWeaknessExposure(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;

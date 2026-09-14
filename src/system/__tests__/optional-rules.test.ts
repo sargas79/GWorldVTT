@@ -35,7 +35,7 @@ describe("the rule catalogue", () => {
   it("cites a book and page for every rule", () => {
     for (const group of Object.values(OPTIONAL_RULES)) {
       for (const rule of group) {
-        expect(rule.reference).toMatch(/^(Campaigns|Characters|GURPS Lite|Monster Hunters 1) pp?\. /);
+        expect(rule.reference).toMatch(/^(Campaigns|Characters|GURPS Lite) pp?\. /);
       }
     }
   });
@@ -55,8 +55,7 @@ describe("the rule catalogue", () => {
     const off = Object.entries(defaultRuleState())
       .filter(([, on]) => !on)
       .map(([key]) => key)
-      .filter((key) => !OPTIONAL_RULES.cinematic.some((rule) => rule.key === key))
-      .filter((key) => !OPTIONAL_RULES.monsterHunters.some((rule) => rule.key === key));
+      .filter((key) => !OPTIONAL_RULES.cinematic.some((rule) => rule.key === key));
     expect(off.sort()).toEqual(["bleeding", "damageToShields"]);
   });
 
@@ -71,18 +70,6 @@ describe("the rule catalogue", () => {
     for (const rule of OPTIONAL_RULES.cinematic) {
       expect(state[rule.key]).toBe(false);
       expect(rule.reference).toBe("Campaigns p. 417");
-    }
-  });
-
-  /**
-   * A supplement's rules are only wanted by a table that owns the supplement,
-   * so none of them is in play until the GM switches it on.
-   */
-  it("starts with every Monster Hunters rule switched off, each citing that book", () => {
-    const state = defaultRuleState();
-    for (const rule of OPTIONAL_RULES.monsterHunters) {
-      expect(state[rule.key]).toBe(false);
-      expect(rule.reference).toMatch(/^Monster Hunters 1 pp?\. /);
     }
   });
 });

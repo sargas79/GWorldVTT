@@ -9,7 +9,6 @@
  * which the application class needs at import time.
  */
 
-import { describeEffects, modifiersOfRitual, ritualCost } from "../rules/ritual-cost.js";
 
 /**
  * A technique's default as the book writes it: "Karate-2", "Judo Parry-1",
@@ -78,14 +77,6 @@ export function summarise(type: string, system: any): string {
       ]
         .filter(Boolean)
         .join(" · ");
-    }
-    case "ritual": {
-      // "Greater Sense Magic · 6 energy": what it does and what it costs to
-      // cast at the figures it was written down with (Monster Hunters 1 p. 33).
-      const effects = Array.isArray(system?.effects) ? system.effects : [];
-      if (!effects.length || !system?.definition || !system?.casting) return describeEffects(effects);
-      const cost = ritualCost({ effects, modifiers: modifiersOfRitual(system) });
-      return `${describeEffects(effects)} · ${cost.total} energy`;
     }
     default: {
       const weight = Number(system?.weight ?? 0);

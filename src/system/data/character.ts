@@ -30,34 +30,6 @@ import {
   type TraitEffects,
 } from "../../rules/trait-effects.js";
 import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
-import {
-  PATHS, isRitualAdept, manaReserveMax, pathCeiling, pathLevel, pathOfSkill, pathSkillName,
-} from "../../rules/ritual-path.js";
-import { governingPath } from "../../rules/ritual-cost.js";
-import { grimoireBonus, masteredRitual, ritualMasteryBonus } from "../../rules/ritual-tricks.js";
-import { conditionalLimit } from "../../rules/ritual-lasting.js";
-import { wildcardIgnoresFamiliarity } from "../../rules/bonus-points.js";
-import { bonusPointPools } from "../bonus-points.js";
-import { SCENT_MASKING_PENALTY, holdoutBonus, signatureGearPointCost } from "../../rules/gadgets.js";
-import { improvisedPenalty, weaponImprovementEffects, type ImprovedWeapon } from "../../rules/weapon-improvements.js";
-import { isShotgun, specialAmmunitionEffect, type PayloadOption, type PowderOption } from "../../rules/special-ammunition.js";
-
-/** A ritual still in effect, or hanging until its condition is met (Monster Hunters 1 pp. 37-39). */
-export interface RitualInEffect {
-  id: string;
-  itemId: string;
-  name: string;
-  energy: number;
-  margin: number;
-  effects: Array<{ path: string; effect: string; greater: boolean }>;
-  durationSeconds: number;
-  originalSeconds: number;
-  startedAt: number;
-  expiresAt: number | null;
-  conditional: boolean;
-  condition: string;
-  charm: string;
-}
 import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
@@ -193,7 +165,7 @@ const fields = foundry.data.fields;
 /** What a derived attack mode's row holds where the module gave nothing. */
 const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
   mode: "", skillName: "", skillLevel: null, hitModifier: 0, atDefault: false, natural: false, unready: false,
-  readiesAfterAttack: false, damage: "", damageType: "cr", holy: false, armorDivisor: 1, damageRollable: false,
+  readiesAfterAttack: false, damage: "", damageType: "cr", armorDivisor: 1, damageRollable: false,
   weight: 0, quality: "good", material: "", resistsBreakage: false, minStPenalty: 0, condition: "sound",
   twoHanded: false, swung: false, reach: "C", parry: null, parryModifier: 0, minSt: null, usable: true,
   unbalanced: false, isFencing: false, unarmed: false, stBased: false, damageBase: "", damageModifier: 0,
@@ -248,12 +220,10 @@ export function detailsFields() {
 
 /** A resolved attack mode, ready for the Combat tab to render. */
 export interface DerivedAttack {
-  /** A follow-up attack rolled after the first: special ammunition's (Monster Hunters 1 p. 63), or a module's. */
+  /** A follow-up attack rolled after the first, which a module adds. */
   followUp?: { damage: string; damageType: DamageType | string; explosive: boolean; label?: string } | null;
   /** Effects that need the GM, as tags on the row. */
   notes?: Array<{ label: string; hint: string }>;
-  /** Seconds before the gun can fire again: Dragon's Breath's three. */
-  refireSeconds?: number;
   itemId: string;
   modeIndex: number;
   name: string;
@@ -356,7 +326,7 @@ export interface DerivedAttack {
   quality: WeaponQuality;
   /** What the blade is made of, where the record says (p. 275). */
   material: WeaponMaterial;
-  /** Odds of breakage that replace the grade's, under Monster Hunters 1 (pp. 59-60). */
+  /** Odds of breakage that replace the grade's, where a module sets them. */
   breakage?: number;
   /** True for a weapon that rolls again on a "weapon breaks" fumble (Campaigns p. 556). */
   resistsBreakage: boolean;
@@ -396,8 +366,6 @@ export interface DerivedAttack {
   malediction?: number;
   /** True when DR does nothing against it, as for a Malediction. */
   ignoresDr?: boolean;
-  /** A holy weapon's blow, which also burns what holy things hurt (Monster Hunters 1 p. 51). */
-  holy?: boolean;
   rateOfFire?: number;
   /** Recoil, which decides how many of a burst's shots hit. */
   recoil?: number;
@@ -475,8 +443,6 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     itemIds: string[];
   }>;
   declare magic: { style: MagicStylePreference };
-  declare ritualPath: { manaReserve: number; active: RitualInEffect[] };
-  declare bonusPoints: { destiny: number | null; gmDestiny: number | null; wildcard: Array<{ skill: string; value: number }> };
   declare activeSpells: ActiveSpell[];
   declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
   declare dress: { state: Dress; topless: boolean };
@@ -832,65 +798,6 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         }),
       }),
 
-      /**
-       * Ritual Path Magic's store of energy (Monster Hunters 1 p. 36): what
-       * is in the mana reserve now. Its size, Magery x 3, is worked out; this
-       * is only how full it is.
-       */
-      /**
-       * What is left of this session's points to spend on outcomes (Monster
-       * Hunters 1 pp. 23, 28, 31): destiny points, the GM's destiny points
-       * against a negative Destiny, and each wildcard skill's bonus points.
-       * The most each can hold comes from the traits and skills.
-       */
-      bonusPoints: new fields.SchemaField({
-        destiny: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
-        gmDestiny: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
-        wildcard: new fields.ArrayField(
-          new fields.SchemaField({
-            skill: new fields.StringField({ required: true, blank: false }),
-            value: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
-          }),
-          { required: true, initial: [] },
-        ),
-      }),
-      ritualPath: new fields.SchemaField({
-        manaReserve: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
-        /**
-         * Rituals this character has cast that are still in effect, and those
-         * cast conditionally and hanging until their condition is met
-         * (Monster Hunters 1 pp. 37-39). Oldest first, which is the order the
-         * conditional limit defuses them in.
-         */
-        active: new fields.ArrayField(
-          new fields.SchemaField({
-            id: new fields.StringField({ required: true, blank: false }),
-            itemId: new fields.StringField({ required: true, blank: true, initial: "" }),
-            name: new fields.StringField({ required: true, blank: true, initial: "" }),
-            /** The energy it took, which decides which of two overlapping rituals remains (p. 37). */
-            energy: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
-            /** "using its original margin of success if it matters" when a charm goes off (p. 38). */
-            margin: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
-            effects: new fields.ArrayField(new fields.SchemaField({
-              path: new fields.StringField({ required: true, blank: false, initial: "Magic" }),
-              effect: new fields.StringField({ required: true, blank: false, initial: "sense" }),
-              greater: new fields.BooleanField({ initial: false }),
-            }), { required: true, initial: [] }),
-            /** How long it lasts once in effect; zero for a momentary ritual. */
-            durationSeconds: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
-            /** The longest one extension may add: the original duration (p. 37). */
-            originalSeconds: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
-            startedAt: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
-            /** World time it runs out; null while it hangs as a conditional ritual. */
-            expiresAt: new fields.NumberField({ required: true, nullable: true, initial: null }),
-            conditional: new fields.BooleanField({ initial: false }),
-            condition: new fields.StringField({ required: true, blank: true, initial: "" }),
-            /** The charm it is bound to, by name, for the sheet to say. */
-            charm: new fields.StringField({ required: true, blank: true, initial: "" }),
-          }),
-          { required: true, initial: [] },
-        ),
-      }),
 
       /**
        * The spells this character has running (Characters pp. 237-238). Each
@@ -1205,14 +1112,6 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       multimillionaire: standing.multimillionaire,
       startingWealth: starting,
       gearCost: gear,
-      // "1 point for every $10,000 or fraction thereof that the gear costs"
-      // (Monster Hunters 1 p. 53), for what is marked as Signature Gear.
-      signatureGearNeeded: isRuleOn("monsterHuntersGear")
-        ? this.items
-          .filter((i) => (i.system as any)?.signature)
-          .reduce((sum, i) => sum + signatureGearPointCost((Number((i.system as any).cost) || 0) * Math.max(1, Number((i.system as any).quantity ?? 1))), 0)
-        : null,
-      concealment: this.#concealment(),
       money: Number(this.money) || 0,
       status,
       costOfLiving: costOfLiving(status),
@@ -1243,25 +1142,6 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
    * p. 345), by skill name. The best grade carried wins: nobody operates
    * with the crash kit and the leaves at once.
    */
-  /**
-   * What the character wears to hide things and themselves (Monster Hunters 1
-   * p. 59): the best Holdout any article worn or carried gives, its own bonus
-   * and Undercover's together, and Scent-Masking's -4 to Smell rolls to find
-   * them. Nothing unless that book's gear rules are in play.
-   */
-  #concealment(): { holdout: number; smell: number; source: string } {
-    const out = { holdout: 0, smell: 0, source: "" };
-    if (!isRuleOn("monsterHuntersGear")) return out;
-    for (const item of [...this.itemsOfType("armor"), ...this.itemsOfType("equipment")]) {
-      const sys = item.system as any;
-      const worn = item.type === "armor" ? sys?.equipped : sys?.carried !== false;
-      if (!worn) continue;
-      const bonus = holdoutBonus({ own: Number(sys?.holdout) || 0, undercover: Number(sys?.improvements?.undercover) || 0 });
-      if (bonus > out.holdout) Object.assign(out, { holdout: bonus, source: String(item.name ?? "") });
-      if (sys?.improvements?.scentMasking && item.type === "armor") out.smell = SCENT_MASKING_PENALTY;
-    }
-    return out;
-  }
 
   #equipmentBonuses(tl: number): Record<string, number> {
     const best: Record<string, number> = {};
@@ -1569,7 +1449,6 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     // What the character's Magery is, before the skills it adds to are read.
     const talent: MagicTalent = { magery: traits.magery, ritualMagery: traits.ritualMagery };
-    const ritualPathInPlay = isRuleOn("ritualPathMagic");
 
     // Pass one: levels that depend only on attributes.
     for (const item of skillItems) {
@@ -1589,16 +1468,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // to a skill by name rather than through an attribute.
       // What the talents add to this skill by name, on top of anything typed
       // into the skill's own bonus field.
-      const talentBonus = talentBonusFor(String(item.name ?? ""), talents, {
-        difficulty: sys.difficulty,
-        wildcardsExcluded: isRuleOn("talentsSkipWildcards"),
-      });
+      const talentBonus = talentBonusFor(String(item.name ?? ""), talents);
       // The tools of this trade, if any are carried (Campaigns p. 345).
-      const toolBonus = (toolBonuses[String(item.name ?? "").trim()] ?? 0)
-        + (String(item.name ?? "").trim().toLowerCase() === "holdout" ? this.#concealment().holdout : 0);
-      // Under Ritual Path Magic, Magery "does not add to spell use or
-      // Thaumatology" (Monster Hunters 1 p. 24): it caps the Paths instead.
-      const magicBonus = magicSkillBonus(String(item.name ?? ""), ritualPathInPlay ? { ...talent, magery: null } : talent);
+      const toolBonus = toolBonuses[String(item.name ?? "").trim()] ?? 0;
+      const magicBonus = magicSkillBonus(String(item.name ?? ""), talent);
       // The bonuses as lines, which add-on modules may add to, or change with
       // a reason (a talent that doesn't reach a wildcard skill, say).
       const bonusLines = totalBonusLines(DATA_HOOKS.skillBonuses, {
@@ -1657,109 +1530,6 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // A module may change a level now that every skill's is known: hold one
     // to a ceiling another skill sets, or give it its level at default.
     adjustSkillLevels(this.parent, skillItems, (name) => this.skillLevelByName(name));
-
-    // ── Ritual Path Magic ───────────────────────────────────────────────
-    // A Path is held to the lower of Thaumatology and 12 + Magery, and
-    // defaults to Thaumatology-6 no higher than 12 (Monster Hunters 1
-    // pp. 32-33). Every Path is known at default by anybody with
-    // Thaumatology, whether or not it is written on the sheet.
-    const thaumatology = this.skillLevelByName("Thaumatology");
-    if (ritualPathInPlay) {
-      for (const item of skillItems) {
-        if (!pathOfSkill(String(item.name ?? ""))) continue;
-        const sys = item.system as any;
-        const held = pathLevel({
-          trained: Number(sys.points) > 0 ? (sys.derived?.level ?? null) : null,
-          thaumatology,
-          magery: traits.magery,
-        });
-        sys.derived = { ...sys.derived, level: held.level, fromDefault: held.atDefault, capped: held.capped };
-      }
-    }
-    const reserveMax = manaReserveMax(traits.magery);
-    const ritualPath = {
-      inPlay: ritualPathInPlay,
-      thaumatology,
-      magery: traits.magery,
-      ceiling: pathCeiling({ thaumatology, magery: traits.magery }),
-      adept: heldTraits.some((t) => isRitualAdept(t.name)),
-      reserve: {
-        value: Math.min(reserveMax, Math.max(0, Number(this.ritualPath?.manaReserve ?? 0) || 0)),
-        max: reserveMax,
-      },
-      // "(Thaumatology + Magery) conditional rituals 'hanging' at once" (p. 38).
-      conditional: {
-        hanging: (this.ritualPath?.active ?? []).filter((r) => r.conditional).length,
-        limit: conditionalLimit({ thaumatology, magery: traits.magery }),
-      },
-      paths: PATHS.map((path) => {
-        const name = pathSkillName(path);
-        const owned = skillItems.find((i) => pathOfSkill(String(i.name ?? "")) === path);
-        const level = owned
-          ? { level: (owned.system as any)?.derived?.level ?? null, atDefault: Boolean((owned.system as any)?.derived?.fromDefault), capped: Boolean((owned.system as any)?.derived?.capped) }
-          : pathLevel({ trained: null, thaumatology, magery: traits.magery });
-        return { path, name, owned: Boolean(owned), ...level };
-      }),
-    };
-    // Every roll for a ritual is against one Path: the lowest it uses, at -1
-    // for each past the second (p. 35).
-    const pathLevels = Object.fromEntries(ritualPath.paths.map((p) => [p.path, p.level]));
-    // Ritual Mastery and grimoires add to one ritual as it was defined (pp. 25,
-    // 39). A grimoire counts while carried; a dead-language one by how well
-    // the character reads and speaks the tongue, or by its translation.
-    const traitNames = heldTraits.map((t) => String(t.name ?? ""));
-    const ranks: Comprehension[] = ["none", "broken", "accented", "native"];
-    const comprehensionOf = (language: string, translation: Comprehension): Comprehension => {
-      const known = this.itemsOfType("language").find((l) => String(l.name ?? "").trim().toLowerCase() === language.trim().toLowerCase());
-      const own = known
-        ? ranks[Math.min(ranks.indexOf((known.system as any).spoken), ranks.indexOf((known.system as any).written))] ?? "none"
-        : "none";
-      return ranks[Math.max(ranks.indexOf(own), ranks.indexOf(translation))] ?? "none";
-    };
-    const grimoires = this.itemsOfType("equipment").filter((e) => (e.system as any).carried && ((e.system as any).grimoire?.rituals ?? []).length);
-    for (const item of this.itemsOfType("ritual")) {
-      const sys = item.system as any;
-      const skill = governingPath(sys.effects ?? [], ritualPathInPlay ? pathLevels : {});
-      const identity = String(sys.derived?.identity ?? "");
-      const mastery = ritualMasteryBonus({ traitNames, ritualName: String(item.name ?? ""), masteredAs: String(sys.masteredAs ?? ""), identity });
-      let grimoire: { name: string; itemId: string; bonus: number } | null = null;
-      for (const book of grimoires) {
-        const g = (book.system as any).grimoire;
-        for (const entry of g.rituals) {
-          if (!entry.identity || entry.identity !== identity) continue;
-          const bonus = grimoireBonus({
-            bonus: entry.bonus,
-            deadLanguage: Boolean(g.deadLanguage),
-            comprehension: g.deadLanguage ? comprehensionOf(g.deadLanguage, g.translation) : "native",
-            encrypted: Boolean(g.encrypted),
-            decoded: Boolean(g.decoded),
-          });
-          if (!grimoire || bonus > grimoire.bonus) grimoire = { name: String(book.name ?? ""), itemId: String(book.id ?? ""), bonus };
-        }
-      }
-      sys.derived = {
-        ...sys.derived,
-        skill: { ...skill, name: skill.path ? pathSkillName(skill.path) : "" },
-        mastery,
-        masteryHeld: traitNames.some((t) => masteredRitual(t)?.toLowerCase() === String(item.name ?? "").trim().toLowerCase()),
-        grimoire,
-      };
-    }
-
-    // ── bonus points (Monster Hunters 1 pp. 23, 28, 31) ─────────────────
-    const destinyTrait = this.itemsOfType("trait").find((t) => /^\s*destiny\b/i.test(String(t.name ?? "")));
-    const wildcardSkills = skillItems.filter((s) => (s.system as any)?.difficulty === "W");
-    const bonusPoints = bonusPointPools({
-      destinyTraitPoints: destinyTrait ? Number((destinyTrait.system as any)?.totalPoints ?? 0) || 0 : 0,
-      wildcardSkills: wildcardSkills.map((s) => ({ name: String(s.name ?? ""), points: Number((s.system as any)?.points ?? 0) || 0 })),
-      stored: this.bonusPoints ?? undefined,
-    });
-    // "Users with at least 12 points in a wildcard skill ignore penalties for
-    // familiarity, exotic equipment, or tech level differences" (p. 28).
-    for (const skill of wildcardSkills) {
-      const sys = skill.system as any;
-      sys.derived = { ...sys.derived, familiarityExempt: bonusPoints.inPlay && wildcardIgnoresFamiliarity(Number(sys.points) || 0) };
-    }
 
     // ── techniques ──────────────────────────────────────────────────────
     // A technique comes off a skill, the Parry or Block it gives, Dodge, or an
@@ -2025,9 +1795,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const modesOf = [...(sys.meleeModes ?? []), ...(sys.rangedModes ?? [])];
       const skillsOf = modesOf.map((m: any) => String(m.skill ?? ""));
       const typesOf = modesOf.map((m: any) => String(m.damageType ?? "") as DamageType);
-      // Monster Hunters 1 prices and grades weapons its own way (pp. 59-61).
-      const mhGear = isRuleOn("monsterHuntersGear") && item.type === "equipment";
-      const quality = (isRuleOn("weaponQuality") || mhGear ? String((sys as any).quality ?? "good") : "good") as WeaponQuality;
+      const quality = (isRuleOn("weaponQuality") ? String((sys as any).quality ?? "good") : "good") as WeaponQuality;
       const material = String((sys as any).material ?? "") as WeaponMaterial;
       const weaponClass = (String((sys as any).weaponClass ?? "") ||
         weaponClassOf({
@@ -2037,22 +1805,6 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           isFencing: (sys.meleeModes ?? []).some((m: any) => m.isFencing),
         })) as WeaponClass;
       const firearm = weaponClass === "firearm";
-      const improved: ImprovedWeapon | null = mhGear
-        ? {
-            weaponClass,
-            quality,
-            material,
-            improvements: { ...((sys as any).weaponImprovements ?? {}), holy: Boolean((sys as any).holy) },
-            twoHandedAxeOrMace: skillsOf.some((s: string) => /two-handed axe\/mace/i.test(s)),
-          }
-        : null;
-      const improvementsFor = (mode: any, ranged: boolean) => improved
-        ? weaponImprovementEffects(improved, { damageType: mode.damageType ?? "", baseAccuracy: Number(mode.accuracy ?? 0) || 0, thrown: Boolean(mode.thrown), ranged })
-        : null;
-      // "Take Improvised Weapons (p. 25) to remove such penalties entirely for that skill" (p. 60).
-      const improvised = (skill: string) => mhGear
-        ? improvisedPenalty({ penalty: Number((sys as any).improvisedPenalty ?? 0), skill, traitNames })
-        : 0;
       const weight = effectiveWeight(item);
       const objectHp = item.type === "shield" ? Number((sys as any).hp ?? 0) || 0 : weaponHitPoints(weight, firearm);
       const hpLost = Number((sys as any).hpLost ?? 0) || 0;
@@ -2076,9 +1828,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         wheelLockOrGuidedOrBeam: skillsOf.some((s) => /Beam Weapons|Guided Missile/i.test(s)),
       });
       const withQuality = (damage: string, type: DamageType): string => {
-        const bonus = improved
-          ? weaponImprovementEffects(improved, { damageType: type }).damage
-          : qualityDamageBonus(quality, type, material);
+        const bonus = qualityDamageBonus(quality, type, material);
         if (!bonus) return damage;
         const parsed = parseDiceAdds(damage);
         return parsed ? formatDiceAdds(addModifier(parsed, bonus)) : damage;
@@ -2116,8 +1866,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
         const found = short(enchantedSkill(weaponSkill(mode.skill, true)), mode.minSt ?? null);
-        const effects = improvementsFor(mode, false);
-        const skillLevel = found.level === null ? null : found.level + (effects?.skill ?? 0) + improvised(String(mode.skill ?? ""));
+        const skillLevel = found.level;
         const atDefault = found.atDefault;
         // A fist load or a hilt punch hits as hard as the unarmed skill it is
         // struck with makes a punch hit (Characters p. 271, note 3).
@@ -2154,15 +1903,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           }),
           damage: meleeDamage,
           damageType: mode.damageSpecial ? "" : mode.damageType,
-          holy: Boolean((sys as any).holy),
           // "A stone blade has an armor divisor of (0.5)" (Characters p. 275).
           armorDivisor: materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
           damageRollable: !mode.affliction && !mode.damageSpecial && parseDiceAdds(meleeDamage) !== null,
           weight,
           quality,
           material,
-          // Monster Hunters 1's odds of breakage, where they replace the grade's.
-          ...(effects ? { breakage: effects.breakage } : {}),
           resistsBreakage: resists,
           minStPenalty: lacking(mode.minSt ?? null),
           condition,
@@ -2223,9 +1969,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       (sys.rangedModes ?? []).forEach((mode: any, index: number) => {
         // Bows and crossbows use their own ST for damage and range; a thrown
         // weapon uses the thrower's, Striking ST included.
-        // A compound bow is "ST+2 for damage and range purposes" (Monster Hunters 1 p. 60).
-        const effects = improvementsFor(mode, true);
-        const st = (mode.weaponSt ?? strikingSt) + (effects?.st ?? 0);
+        const st = mode.weaponSt ?? strikingSt;
         // "Thrown weapons, and arrows and bolts, use the rules under Melee
         // Weapon Quality" (Characters p. 276): the cutting and impaling bonus
         // is theirs; a firearm's fine grade is in its Acc and Malf. instead.
@@ -2238,25 +1982,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // A Malediction has no range statistics of its own: its penalty comes
         // from how far away the victim is, and DR does nothing to it (p. 106).
         const malediction = Math.max(0, Math.min(3, Number(mode.malediction ?? 0) || 0));
-        // Special ammunition (Monster Hunters 1 p. 63), which takes the place
-        // of the Basic Set's kinds of round where a load is chosen.
-        const special = mhGear && firearm && (mode.powder || mode.payload)
-          ? specialAmmunitionEffect(
-              { powder: String(mode.powder ?? "") as PowderOption, payload: String(mode.payload ?? "") as PayloadOption },
-              {
-                damage: rangedDamage,
-                damageType: mode.damageType,
-                armorDivisor: materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
-                accuracy: Number(mode.accuracy ?? 0) || 0,
-                st: mode.minSt ?? null,
-                shotgun: isShotgun({ skill: String(mode.skill ?? ""), name: String(item.name ?? ""), projectiles: Number(mode.projectiles ?? 1) || 1 }),
-                projectiles: Number(mode.projectiles ?? 1) || 1,
-              },
-            )
-          : null;
         // What it is loaded with changes the wound, the divisor, the range
         // and, for APDS, the damage (Characters pp. 276, 279).
-        const round = !special && isRuleOn("ammunitionTypes")
+        const round = isRuleOn("ammunitionTypes")
           ? ammunitionEffect((mode.ammunition ?? "") as AmmunitionType, {
               damageType: mode.damageType,
               armorDivisor: materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
@@ -2270,23 +1998,21 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           const parsed = parseDiceAdds(damage);
           return parsed ? formatDiceAdds(addModifier(parsed, round.perDieBonus * parsed.dice)) : damage;
         };
-        const stretch = (effects ? effects.rangeMultiplier : qualityRangeMultiplier(weaponClass, quality)) * (round?.rangeMultiplier ?? 1) * (special?.rangeMultiplier ?? 1);
+        const stretch = qualityRangeMultiplier(weaponClass, quality) * (round?.rangeMultiplier ?? 1);
         const baseRange = mode.rangeIsStMultiple
-          ? musclePoweredRange((mode.weaponSt ?? attrs.ST) + (effects?.st ?? 0), mode.halfDamageRange, mode.maxRange)
+          ? musclePoweredRange(mode.weaponSt ?? attrs.ST, mode.halfDamageRange, mode.maxRange)
           : { halfDamage: mode.halfDamageRange, max: mode.maxRange };
-        const range = special?.fixedRange
-          ? { halfDamage: 0, max: special.fixedRange }
-          : {
-              halfDamage: Math.round((Number(baseRange.halfDamage) || 0) * stretch),
-              max: Math.round((Number(baseRange.max) || 0) * stretch),
-            };
+        const range = {
+          halfDamage: Math.round((Number(baseRange.halfDamage) || 0) * stretch),
+          max: Math.round((Number(baseRange.max) || 0) * stretch),
+        };
         // The count of shots (Campaigns p. 373): what the column holds, and
         // what is in the weapon now. A thrown weapon keeps no count.
         const shotsEntry = parseShots(String(mode.shots ?? ""));
         const shotsCapacity = isRuleOn("reloading") && !shotsEntry.thrown ? fullLoad(shotsEntry) : 0;
         const shotsLoaded = shotsCapacity > 0 ? Math.min(shotsCapacity, Math.max(0, Number(mode.loaded ?? 0) || 0)) : 0;
         const foundRanged = short(enchantedSkill(weaponSkill(mode.skill)), mode.minSt ?? null);
-        const skillLevel = foundRanged.level === null ? null : foundRanged.level + (effects?.skill ?? 0) + improvised(String(mode.skill ?? ""));
+        const skillLevel = foundRanged.level;
         const atDefault = foundRanged.atDefault;
 
         const rangedBasisSt = mode.weaponSt ?? strikingSt;
@@ -2304,53 +2030,41 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           natural: false,
           unready: false,
           readiesAfterAttack: false,
-          projectiles: special?.projectiles ?? Math.max(1, Number(mode.projectiles ?? 1)),
+          projectiles: Math.max(1, Number(mode.projectiles ?? 1)),
           halfDamageRange: Number(range.halfDamage ?? 0) || 0,
           maxRange: Number(range.max ?? 0) || 0,
           guidance: String(mode.guidance ?? ""),
           areaAttack: Boolean(mode.areaAttack),
           coneMaxWidth: Number(mode.coneMaxWidth ?? 0) || 0,
-          damage: special ? (special.noDamage ? "—" : special.damage) : loadedDamage(rangedDamage),
-          damageType: mode.damageSpecial ? "" : (special?.damageType ?? round?.damageType ?? mode.damageType),
-          armorDivisor: special?.armorDivisor ?? round?.armorDivisor ?? materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
-          ...(special
-            ? {
-                followUp: special.followUp,
-                notes: special.notes.map((key) => ({
-                  label: game.i18n?.localize?.(`GWORLD.SpecialAmmo.Note.${key}`) ?? key,
-                  hint: game.i18n?.localize?.(`GWORLD.SpecialAmmo.NoteHint.${key}`) ?? "",
-                })),
-                refireSeconds: special.refireSeconds,
-              }
-            : {}),
+          damage: loadedDamage(rangedDamage),
+          damageType: mode.damageSpecial ? "" : (round?.damageType ?? mode.damageType),
+          armorDivisor: round?.armorDivisor ?? materialArmorDivisor(material, mode.damageType) ?? mode.armorDivisor ?? 1,
           shotsLoaded,
           shotsCapacity,
           reloadSeconds: shotsCapacity > 0 ? reloadTime(shotsEntry, shotsCapacity) : null,
           reloadable: shotsCapacity > 0 && shotsLoaded < shotsCapacity,
           empty: shotsCapacity > 0 && shotsLoaded === 0,
           ammunition: (mode.ammunition ?? "") as AmmunitionType,
-          damageRollable: !mode.affliction && !mode.damageSpecial && !special?.noDamage && parseDiceAdds(rangedDamage) !== null,
+          damageRollable: !mode.affliction && !mode.damageSpecial && parseDiceAdds(rangedDamage) !== null,
           reach: "",
           parry: null,
           parryModifier: 0,
-          minSt: special?.st ?? mode.minSt ?? null,
+          minSt: mode.minSt ?? null,
           weight,
           quality,
-          // Silver rounds wound what silver wounds (p. 63, Characters p. 161).
-          material: special?.material || material,
+          material,
           resistsBreakage: resists,
           minStPenalty: lacking(mode.minSt ?? null, String(mode.mount ?? "")),
           condition,
           twoHanded: Boolean(mode.twoHanded),
           swung: mode.damageBase === "sw",
           // "+1 to Acc" for a fine firearm, "-1 Acc" for a cheap thrown weapon.
-          accuracy: (mode.accuracy ?? 0) + (effects ? effects.accuracy : qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown))) + (special?.accuracy ?? 0),
+          accuracy: (mode.accuracy ?? 0) + qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown)),
           scopeBonus: mode.scopeBonus ?? 0,
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
           malediction,
           ignoresDr: malediction > 0,
-          holy: Boolean((sys as any).holy) || Boolean(special?.holy),
-          rateOfFire: special?.rateOfFire ?? mode.rateOfFire ?? 1,
+          rateOfFire: mode.rateOfFire ?? 1,
           recoil: mode.recoil ?? 0,
           bulk: mode.bulk ?? 0,
           // "+1 to Malf." for a fine firearm, -1 for a cheap one (Campaigns p. 407).
@@ -2797,7 +2511,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // to the Influence roll itself (pp. 21-29, 41).
       // The powers a character holds, the abilities under each and what its
       // Talent is worth to a roll using them (Characters pp. 254-255): the
-      // Basic Set's six, and any a book's entries name (Monster Hunters 1 p. 40).
+      // Basic Set's six, and any a book's entries name.
       powers: powersOf(heldTraits),
       // "In a few cases, skill 20+ gives an automatic +2 to reactions.
       // Diplomacy and Fast-Talk work this way if you are allowed to talk -- as
@@ -2924,8 +2638,6 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       },
       traitEffects: traits,
       magic: { ...magic, mana, items: magicItems },
-      ritualPath,
-      bonusPoints,
       // Unkillable is not dead at -5xHP; only destruction at -10xHP is the end.
       status: healthStatus(this.hp.value, this.hp.max, { unkillable: traits.unkillable }),
       reeling,

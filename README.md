@@ -390,7 +390,7 @@ What's in it:
 |---|---|
 | `version` | The API's semver version. |
 | `satisfies(range)` | Whether this API meets a semver range. |
-| `rules` | The pure GURPS rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. |
+| `rules` | The pure GURPS rules of the Basic Set: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer carries the rules of the rule group system 1.5.0 removed, which were never meant to be part of it. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted through the system's chat cards. |
 | `actors` | `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`: read-only. `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), and `applyInjury` (since 1.8.0). |
@@ -481,7 +481,7 @@ and skipped, and the roll goes on.
       `halfDamageRange`, `maxRange`, `accuracy`, `malfunction`.
     - Change the row's `skillLevel`, `damage`, `damageType`, `armorDivisor`,
       `halfDamageRange`, `maxRange`, `accuracy`, `malfunction`, `projectiles`,
-      `rateOfFire`, `minSt`, `material` or `holy`.
+      `rateOfFire`, `minSt` or `material`.
     - Push `notes` (`{ label, hint }`), shown as tags, or set `followUp`
       (`{ damage, damageType, explosive, label? }`), which the Combat tab offers
       as a damage roll of its own.
@@ -718,10 +718,13 @@ time it saves. So the move happens in this order:
 
 At `ready`, before any module's own ready work, a GM whose world holds
 deprecated data that no active module migrates gets a warning that stays until
-dismissed. Nothing is saved.
+dismissed. Nothing is saved. An item whose type is no longer registered counts,
+though Foundry keeps it out of the world's collections as invalid.
 
-Deprecated now, ahead of the rule group removed in 1.5.0, by the id a module
-names in `migrates`:
+The data of the rule group system 1.4.0 marked and system 1.5.0 removed, by the
+id a module names in `migrates`. A world that still holds it should be loaded
+once under 1.4.0 with the module that migrates it; after 1.5.0 only the item
+type and the stored switches can still be found:
 
 - `ritual-items`: items of type `ritual`;
 - `ritual-path`: characters' and NPCs' `ritualPath`, and equipment's `charm` and `grimoire`;

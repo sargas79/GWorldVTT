@@ -277,9 +277,12 @@ export interface DeprecatedData {
 const INSTALL_RULE_SET = "the add-on module that now provides these rules";
 
 /**
- * The data of the rule group the next release removes (sargas79/GWorldVTT#243),
- * flagged while the system still defines it. A module that takes a rule set
- * over names these ids in its manifest's `flags.gworld.migrates`.
+ * The data of the rule group 1.5.0 removed (sargas79/GWorldVTT#243), flagged
+ * by 1.4.0 while the system still defined it. A module that takes a rule set
+ * over names these ids in its manifest's `flags.gworld.migrates`. Now that the
+ * data models no longer declare the fields, only the item type and the stored
+ * switches can still be found; the list stays so a world that skipped 1.4.0 is
+ * still told what to install.
  */
 export const DEPRECATED_DATA: readonly DeprecatedData[] = [
   { id: "ritual-items", label: "ritual items", install: INSTALL_RULE_SET, itemType: "ritual" },
@@ -320,8 +323,10 @@ function holdsData(value: unknown, initial: unknown): boolean {
 
 /** Whether the world holds any of this deprecated data. Reads only; saves nothing. */
 export function worldHolds(entry: DeprecatedData, world: { items: any[]; actors: any[]; storedRules: Record<string, unknown> }): boolean {
-  const allItems = [...world.items, ...world.actors.flatMap((a) => [...(a.items ?? [])])];
-  if (entry.itemType && allItems.some((item) => item?.type === entry.itemType)) return true;
+  const allItems = [...world.items, ...world.actors.flatMap((a) => withInvalid(a.items))];
+  // An item whose type the system no longer registers is kept out of its
+  // collection as invalid, so its type is read from what is stored.
+  if (entry.itemType && allItems.some((item) => (item?._source?.type ?? item?.type) === entry.itemType)) return true;
   if (entry.field) {
     const { documentName, types, path } = entry.field;
     const documents = documentName === "Item" ? allItems : world.actors;
@@ -335,6 +340,24 @@ export function worldHolds(entry: DeprecatedData, world: { items: any[]; actors:
   }
   if (entry.rule && entry.rule in world.storedRules && world.storedRules[entry.rule] === true) return true;
   return false;
+}
+
+/**
+ * A collection's documents, with those Foundry keeps out of it as invalid: an
+ * item of a type no longer registered is one.
+ */
+export function withInvalid(collection: any): any[] {
+  const valid = [...(collection ?? [])];
+  const ids = collection?.invalidDocumentIds;
+  if (!ids || typeof collection.getInvalid !== "function") return valid;
+  const invalid = [...ids].map((id) => {
+    try {
+      return collection.getInvalid(id, { strict: false });
+    } catch {
+      return null;
+    }
+  });
+  return [...valid, ...invalid.filter(Boolean)];
 }
 
 /** The deprecated data this world holds that no active module says it migrates. */
@@ -359,8 +382,8 @@ export function warnUncoveredData(): void {
   const uncovered = uncoveredData(
     entries,
     {
-      items: [...((game as any).items ?? [])],
-      actors: [...((game as any).actors ?? [])],
+      items: withInvalid((game as any).items),
+      actors: withInvalid((game as any).actors),
       storedRules: (safeSetting(OPTIONAL_RULES_KEY) ?? {}) as Record<string, unknown>,
     },
     [...(((game as any).modules as Map<string, any> | undefined)?.values() ?? [])],

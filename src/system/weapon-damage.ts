@@ -181,7 +181,7 @@ export async function heavyParryCheck(options: {
     item,
     attackWeapon,
     quality,
-    // Monster Hunters 1's odds replace the grade's, except against a superior swing.
+    // Odds a module set replace the grade's, except against a superior swing.
     breakage: parryWeapon.breakage !== undefined && quality === parryWeapon.quality ? parryWeapon.breakage : undefined as number | undefined,
   });
   const chance = heavyParryBreakChance({

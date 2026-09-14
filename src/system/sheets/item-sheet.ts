@@ -15,23 +15,6 @@ import { isLegalityClass, licenseCost } from "../../rules/legality.js";
 import { objectState, rollsToKeepWorking } from "../../rules/objects.js";
 import { parseCostTable, parseLevelNames } from "../../rules/traits.js";
 import { SPELL_CLASSES } from "../../rules/magic.js";
-import { RITUAL_DURATIONS, RITUAL_EFFECTS } from "../../rules/ritual-cost.js";
-import { PATHS } from "../../rules/ritual-path.js";
-import { collectionWeight, grimoirePrice } from "../../rules/ritual-tricks.js";
-import { breakCharm } from "../ritual-casting.js";
-import { gadgetCostFactor, gadgetWeightFactor, improvedGadget } from "../../rules/gadgets.js";
-import { allowedWeapon, improvedWeaponPrice, weaponImprovementProblems, type ImprovedWeapon } from "../../rules/weapon-improvements.js";
-import {
-  HAND_LOADED,
-  PAYLOAD_OPTIONS,
-  POWDER_OPTIONS,
-  ammunitionProblems,
-  isShotgun,
-  specialReloadCost,
-  type PayloadOption,
-  type PowderOption,
-} from "../../rules/special-ammunition.js";
-import { resolveSuccess } from "../../rules/success.js";
 import { SYSTEM_ID } from "../constants.js";
 import { registeredTechniqueKinds } from "../data-extensions.js";
 import { bindSectionListeners, renderSections } from "../sheet-extensions.js";
@@ -174,32 +157,6 @@ async function promptForModifier(): Promise<{ name: string; value: number } | nu
   return result && typeof result === "object" ? (result as { name: string; value: number }) : null;
 }
 
-/** A ranged mode's special ammunition load. */
-function loadOf(mode: any): { powder: PowderOption; payload: PayloadOption; powderAdjust: number; payloadAdjust: number } {
-  return {
-    powder: String(mode?.powder ?? "") as PowderOption,
-    payload: String(mode?.payload ?? "") as PayloadOption,
-    powderAdjust: Number(mode?.powderAdjust) || 0,
-    payloadAdjust: Number(mode?.payloadAdjust) || 0,
-  };
-}
-
-/** The skills a weapon's modes are used with. */
-function modeSkillsOf(system: any): string[] {
-  return [...(system?.meleeModes ?? []), ...(system?.rangedModes ?? [])].map((m: any) => String(m?.skill ?? ""));
-}
-
-/** A weapon as Monster Hunters 1's improvement rules read it (pp. 59-61). */
-function improvedWeaponOf(system: any, weaponClass: ImprovedWeapon["weaponClass"], skills: string[]): ImprovedWeapon {
-  return {
-    weaponClass,
-    quality: String(system?.quality ?? "good") as ImprovedWeapon["quality"],
-    material: String(system?.material ?? "") as ImprovedWeapon["material"],
-    improvements: { ...(system?.weaponImprovements ?? {}), holy: Boolean(system?.holy) },
-    twoHandedAxeOrMace: skills.some((s) => /two-handed axe\/mace/i.test(s)),
-  };
-}
-
 export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   static override DEFAULT_OPTIONS = {
     classes: ["gworld", "sheet", "item"],
@@ -208,9 +165,6 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
       addMode: GWorldItemSheet.#onAddMode,
-      recordMastery: GWorldItemSheet.#onRecordMastery,
-      handLoad: GWorldItemSheet.#onHandLoad,
-      breakCharm: GWorldItemSheet.#onBreakCharm,
       repairWeapon: GWorldItemSheet.#onRepairWeapon,
       exposureCheck: GWorldItemSheet.#onExposureCheck,
       putOnTheRoad: GWorldItemSheet.#onPutOnTheRoad,
@@ -251,8 +205,6 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     context.type = item.type;
     context.isPhysical = PHYSICAL_TYPES.has(item.type);
     context.isArmed = ARMED_TYPES.has(item.type);
-    // A holy item is only a thing to mark where Monster Hunters 1 is in play.
-    context.holyAttacks = isRuleOn("holyAttacks");
 
     // What the weapon is as an object and what its grade costs (Characters
     // p. 274, Campaigns p. 483), for the sheet to show beside the fields.
@@ -261,23 +213,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       const tl = Number(item.system?.tl) || 3;
       const grades = availableQualities(facts.weaponClass, tl);
       // "Assume that ammo cost is $20 times this weight" (Characters p. 278).
-      // Special ammunition multiplies the rounds by (1 + CF), not the
-      // magazine (Monster Hunters 1 p. 63).
-      const special = isRuleOn("monsterHuntersGear") && facts.weaponClass === "firearm";
-      const reloads = ((item.system as any).rangedModes ?? []).map((m: any) => {
-        if (!(Number(m.reloadWeight) > 0)) return null;
-        const rounds = ammunitionCost(Number(m.reloadWeight));
-        return special
-          ? specialReloadCost({ ammunition: rounds, magazine: Number(m.magazineCost) || 0, load: loadOf(m) })
-          : rounds;
-      });
-      context.specialAmmo = special
-        ? ((item.system as any).rangedModes ?? []).map((m: any) => ({
-            handLoaded: HAND_LOADED.has(String(m.powder ?? "")) || HAND_LOADED.has(String(m.payload ?? "")),
-            shotgun: isShotgun({ skill: String(m.skill ?? ""), name: String(item.name ?? ""), projectiles: Number(m.projectiles ?? 1) || 1 }),
-            adjust: [m.powderAdjust, m.payloadAdjust].map((a: number) => Number(a) || 0).filter(Boolean).map((a: number) => (a > 0 ? `+${a}` : String(a))).join(", "),
-          }))
-        : null;
+      const reloads = ((item.system as any).rangedModes ?? []).map((m: any) =>
+        Number(m.reloadWeight) > 0 ? ammunitionCost(Number(m.reloadWeight)) : null);
       const damage = damageState(item);
       context.weapon = {
         armed: facts.skill !== "" || item.type === "shield",
@@ -294,23 +231,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         // once it is at zero or below (Campaigns p. 484).
         mustRollInUse: facts.hp > 0
           && rollsToKeepWorking(objectState(facts.hp - (Number((item.system as any).hpLost) || 0), facts.hp)),
-        showQuality: item.type === "equipment" && (isRuleOn("weaponQuality") || isRuleOn("monsterHuntersGear")),
-        // Monster Hunters 1's weapon options (pp. 59-61), and what they come to.
-        improvements: item.type === "equipment" && isRuleOn("monsterHuntersGear") && facts.skill !== ""
-          ? (() => {
-              const weapon = improvedWeaponOf(item.system, facts.weaponClass as any, modeSkillsOf(item.system));
-              const priced = improvedWeaponPrice(weapon, { cost: Number((item.system as any).listCost) || 0, weight: Number((item.system as any).listWeight) || 0 });
-              return {
-                melee: facts.weaponClass !== "bow" && facts.weaponClass !== "firearm",
-                bow: facts.weaponClass === "bow",
-                twoHandedAxe: Boolean(weapon.twoHandedAxeOrMace),
-                costFactor: priced.costFactor,
-                listCost: Number((item.system as any).listCost) || 0,
-                listWeight: Number((item.system as any).listWeight) || 0,
-                problems: weaponImprovementProblems(weapon).map((p) => `GWORLD.WeaponImprovement.Problem.${p}`),
-              };
-            })()
-          : null,
+        showQuality: item.type === "equipment" && isRuleOn("weaponQuality"),
         showObject: isRuleOn("weaponBreakage") && facts.hp > 0,
       };
     }
@@ -318,7 +239,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // One flag per type, so the template can branch without a comparison helper.
     for (const t of [
       "skill", "technique", "trait", "equipment", "armor", "shield", "language", "template", "spell",
-      "modifier", "ritual",
+      "modifier",
     ]) {
       context[`is${t.charAt(0).toUpperCase()}${t.slice(1)}`] = item.type === t;
     }
@@ -365,87 +286,6 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     if (item.type === "spell") {
       context.collegesText = (item.system.colleges ?? []).join(", ");
       context.isAttackSpell = (item.system.classes ?? []).some((c: string) => c === "missile" || c === "melee");
-    }
-
-    // A ritual shows what its definition costs as it is built (Monster
-    // Hunters 1 pp. 33-35), and, on a character, the Path every roll for it
-    // will be against (p. 35).
-    if (item.type === "ritual") {
-      const derived = (item.system as any).derived ?? {};
-      const skill = derived.skill ?? null;
-      context.ritual = {
-        cost: derived.cost,
-        effects: derived.effects,
-        trappings: Number((item.system as any).casting?.trappingsPercent) > 0,
-        lastDuration: Number((item.system as any).casting?.durationStep) === RITUAL_DURATIONS.length - 1,
-        // The select's values are strings, as every select's are.
-        durationStep: String((item.system as any).casting?.durationStep ?? 0),
-        mastery: {
-          held: Boolean(derived.masteryHeld),
-          bonus: Number(derived.mastery ?? 0),
-          changed: Boolean((item.system as any).masteredAs) && (item.system as any).masteredAs !== derived.identity,
-        },
-        grimoire: derived.grimoire ?? null,
-        skill: skill?.path
-          ? {
-              name: skill.name,
-              level: skill.level,
-              penalty: skill.penalty,
-              uncastable: skill.level === null && isRuleOn("ritualPathMagic"),
-            }
-          : null,
-      };
-    }
-
-    // A grimoire's rituals (Monster Hunters 1 pp. 39, 56-57), and what the book
-    // would cost: the table's price for each, and a collection's weight.
-    // Improvements by cost factor (Monster Hunters 1 pp. 53-54, 59): for
-    // clothing and armour, and for gadgets that are not weapons, whose own
-    // modifiers are priced with the weapon.
-    const hasModes = ((item.system as any).meleeModes ?? []).length + ((item.system as any).rangedModes ?? []).length > 0;
-    context.gadget = isRuleOn("monsterHuntersGear") && (item.type === "armor" || (item.type === "equipment" && !hasModes))
-      ? (() => {
-          const sys = item.system as any;
-          const quality = item.type === "equipment" && sys.category !== "tool" ? sys.equipmentQuality : "basic";
-          return {
-            clothing: item.type === "armor",
-            costFactor: gadgetCostFactor(sys.improvements ?? {}, quality),
-            weightFactor: Math.round(gadgetWeightFactor(sys.improvements ?? {}) * 100) / 100,
-            listCost: Number(sys.listCost) || 0,
-            listWeight: Number(sys.listWeight) || 0,
-            undercover: { "0": "GWORLD.Gadget.UndercoverNone", "1": "GWORLD.Gadget.Undercover1", "2": "GWORLD.Gadget.Undercover2" },
-            undercoverValue: String(sys.improvements?.undercover ?? 0),
-          };
-        })()
-      : null;
-
-    // A charm travels with its object, and whoever holds it can break it (p. 38).
-    context.charm = item.type === "equipment" && (item.system as any).charm?.ritual
-      ? { mayBreak: item.isOwner }
-      : null;
-
-    if (item.type === "equipment" && isRuleOn("ritualPathMagic")) {
-      const g = (item.system as any).grimoire ?? { rituals: [] };
-      const owner = (item as { actor?: any }).actor ?? null;
-      const owned = owner ? (owner.items.filter((i: any) => i.type === "ritual") as any[]) : [];
-      const names = owned.map((r) => String(r.name));
-      const entries = (g.rituals ?? []).map((entry: any, index: number) => {
-        const ritual = owned.find((r) => String(r.name) === entry.ritual);
-        return {
-          ...entry,
-          index,
-          missing: Boolean(owner && entry.ritual && !ritual),
-          changed: Boolean(ritual && entry.identity && ritual.system?.derived?.identity !== entry.identity),
-        };
-      });
-      const prices = entries.map((e: any) => grimoirePrice({ bonus: e.bonus, deadLanguage: Boolean(g.deadLanguage), encrypted: Boolean(g.encrypted) }));
-      context.grimoire = {
-        entries,
-        rituals: owner ? names : null,
-        price: prices.length && prices.every(Boolean)
-          ? { cost: prices.reduce((sum: number, p: any) => sum + p.cost, 0), weight: collectionWeight(entries.map((e: any) => e.bonus)) }
-          : null,
-      };
     }
 
     // A trait's cost table and level names are arrays, which a form cannot
@@ -553,21 +393,6 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         "": "GWORLD.Spell.SpecialDamage",
         ...keyed("DamageType", ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"]),
       },
-      // A Path is named the same in every locale's rules text, so it is its own label.
-      ritualPaths: Object.fromEntries(PATHS.map((path) => [path, path])),
-      ritualEffects: keyed("Ritual.Effect", Object.keys(RITUAL_EFFECTS)),
-      // The modifiers whose use makes a ritual what it is, though not their size (p. 39).
-      ritualUses: ["area", "healing", "metaMagic", "speed", "damage"],
-      ritualDurations: Object.fromEntries(RITUAL_DURATIONS.map((d, i) => [String(i), `GWORLD.Ritual.Duration.${d}`])),
-      ritualBonusScopes: {
-        "": "GWORLD.Ritual.BonusScope.none",
-        ...keyed("Ritual.BonusScope", ["broad", "moderate", "single"]),
-      },
-      ritualDamageKinds: keyed("Ritual.DamageKind", ["standard", "small", "large", "heavy"]),
-      ritualDeliveries: keyed("Ritual.Delivery", ["malediction", "external", "externalExplosive"]),
-      ritualRangeKinds: keyed("Ritual.RangeKind", ["yards", "information", "crossTime"]),
-      powders: { "": "GWORLD.SpecialAmmo.Powder.none", ...keyed("SpecialAmmo.Powder", POWDER_OPTIONS.filter((p) => p !== "")) },
-      payloads: { "": "GWORLD.SpecialAmmo.Payload.none", ...keyed("SpecialAmmo.Payload", PAYLOAD_OPTIONS.filter((p) => p !== "")) },
       equipmentCategories: keyed("GearCategory", [...EQUIPMENT_CATEGORIES]),
       // The mark after a firearm's ST: none, a rest, a bipod, a mount (p. 270).
       mounts: {
@@ -681,47 +506,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // A change of grade or material reprices the weapon from its list price
     // (Characters pp. 274-275): what it costs is a fact about the grade, not a
     // second thing to type. A weapon with no list price is left alone.
-    if (this.item.type === "equipment" && data.system && isRuleOn("monsterHuntersGear") && weaponFacts(this.item).skill !== "") {
-      const current = this.item.system as any;
-      const merged = {
-        quality: data.system.quality ?? current.quality,
-        material: data.system.material ?? current.material,
-        holy: data.system.holy ?? current.holy,
-        weaponImprovements: { ...(current.weaponImprovements ?? {}), ...(data.system.weaponImprovements ?? {}) },
-        meleeModes: current.meleeModes,
-        rangedModes: current.rangedModes,
-      };
-      const weaponClass = weaponFacts(this.item).weaponClass as any;
-      const asked = improvedWeaponOf(merged, weaponClass, modeSkillsOf(current));
-      // The book's forbidden combinations are refused: "Silver cannot be combined
-      // with fine, silver-coated, titanium, or very fine" (p. 59), and so on.
-      const allowed = allowedWeapon(asked);
-      if (weaponImprovementProblems(asked).length) {
-        ui.notifications?.warn(game.i18n.localize(`GWORLD.WeaponImprovement.Problem.${weaponImprovementProblems(asked)[0]}`));
-      }
-      data.system.quality = allowed.quality;
-      data.system.weaponImprovements = {
-        balanced: Boolean(allowed.improvements.balanced),
-        disguised: Boolean(allowed.improvements.disguised),
-        titanium: Boolean(allowed.improvements.titanium),
-        weighted: Boolean(allowed.improvements.weighted),
-        compound: Boolean(allowed.improvements.compound),
-      };
-      const before = improvedWeaponOf(current, weaponClass, modeSkillsOf(current));
-      const was = improvedWeaponPrice(before, { cost: 1, weight: 1 });
-      const now = improvedWeaponPrice(allowed, { cost: 1, weight: 1 });
-      if (was.costFactor !== now.costFactor || was.weight !== now.weight || Boolean(before.improvements.holy) !== Boolean(allowed.improvements.holy)) {
-        const listCost = Number(data.system.listCost ?? current.listCost) || (Number(current.cost) || 0) / (1 + was.costFactor);
-        const listWeight = Number(current.listWeight) || (Number(current.weight) || 0) / was.weight;
-        const priced = improvedWeaponPrice(allowed, { cost: listCost, weight: listWeight });
-        Object.assign(data.system, {
-          listCost: Math.round(listCost * 100) / 100,
-          listWeight: Math.round(listWeight * 100) / 100,
-          cost: priced.cost,
-          weight: priced.weight,
-        });
-      }
-    } else if (this.item.type === "equipment" && data.system) {
+    if (this.item.type === "equipment" && data.system) {
       const current = this.item.system as any;
       const quality = data.system.quality ?? current.quality;
       const material = data.system.material ?? current.material;
@@ -747,11 +532,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // list price where one is kept, and otherwise worked back out of what the
     // item costs at the grade it is at now, so changing grade twice does not
     // compound. "Best" is not sold, so it leaves the price alone.
-    const byCostFactor = isRuleOn("monsterHuntersGear")
-      && (this.item.type === "armor" || (this.item.type === "equipment"
-        && ((this.item.system as any).meleeModes ?? []).length + ((this.item.system as any).rangedModes ?? []).length === 0));
-    if (this.item.type === "equipment" && data.system?.equipmentQuality !== undefined
-      && !(byCostFactor && (data.system.category ?? (this.item.system as any).category) !== "tool")) {
+    if (this.item.type === "equipment" && data.system?.equipmentQuality !== undefined) {
       const current = this.item.system as any;
       const was = String(current.equipmentQuality ?? "basic") as EquipmentQuality;
       const now = String(data.system.equipmentQuality) as EquipmentQuality;
@@ -763,39 +544,6 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
           data.system.listCost = basic;
           data.system.cost = Math.round(basic * toMultiple);
         }
-      }
-    }
-
-    // Improvements reprice a gadget or an article of clothing from its list
-    // figures: cost times (1 + total CF), weight times the weight effects
-    // (Monster Hunters 1 p. 54). The list figures are worked back out of the
-    // current ones where none are kept, so a second change does not compound.
-    if (byCostFactor && data.system) {
-      const current = this.item.system as any;
-      const pick = (key: string) => ({ ...(current.improvements ?? {}), ...(data.system.improvements ?? {}) })[key];
-      const improvements = {
-        cuttingEdge: Boolean(pick("cuttingEdge")),
-        disguised: Boolean(pick("disguised")),
-        rugged: Boolean(pick("rugged")),
-        scentMasking: Boolean(pick("scentMasking")),
-        undercover: Number(pick("undercover")) || 0,
-      };
-      if (data.system.improvements) data.system.improvements = improvements;
-      const tool = (data.system.category ?? current.category) === "tool";
-      const qualityOf = (sys: any) => (this.item.type === "equipment" && !tool ? String(sys.equipmentQuality ?? "basic") : "basic");
-      const quality = qualityOf({ equipmentQuality: data.system.equipmentQuality ?? current.equipmentQuality });
-      const was = improvedGadget({ listCost: 1, listWeight: 1, improvements: current.improvements ?? {}, quality: qualityOf(current) });
-      const now = improvedGadget({ listCost: 1, listWeight: 1, improvements, quality });
-      if (was.costFactor !== now.costFactor || was.weightFactor !== now.weightFactor) {
-        const listCost = Number(current.listCost) || (Number(current.cost) || 0) / (1 + was.costFactor);
-        const listWeight = Number(current.listWeight) || (Number(current.weight) || 0) / was.weightFactor;
-        const priced = improvedGadget({ listCost, listWeight, improvements, quality });
-        Object.assign(data.system, {
-          listCost: Math.round(listCost * 100) / 100,
-          listWeight: Math.round(listWeight * 100) / 100,
-          cost: priced.cost,
-          weight: priced.weight,
-        });
       }
     }
 
@@ -883,48 +631,6 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         data.system.levelNames = String(data.system.levelNames)
           .split(";").map((s: string) => s.trim()).filter(Boolean);
       }
-    }
-
-    // A load the book does not allow is refused (Monster Hunters 1 p. 63):
-    // shotgun payloads on a shotgun, bullets on a pistol, rifle or SMG, and
-    // no powder with Dragon's Breath. A changed option starts again unloaded
-    // by hand.
-    const submittedModes = data.system?.rangedModes;
-    if (this.item.type === "equipment" && submittedModes && typeof submittedModes === "object" && isRuleOn("monsterHuntersGear")) {
-      const before = ((this.item.system as any).rangedModes ?? []) as any[];
-      for (const [key, mode] of Object.entries(submittedModes as Record<string, any>)) {
-        const previous = before[Number(key)] ?? {};
-        const load = { powder: String(mode.powder ?? previous.powder ?? ""), payload: String(mode.payload ?? previous.payload ?? "") } as { powder: PowderOption; payload: PayloadOption };
-        const problems = ammunitionProblems(load, {
-          shotgun: isShotgun({ skill: String(mode.skill ?? previous.skill ?? ""), name: String(this.item.name ?? ""), projectiles: Number(mode.projectiles ?? previous.projectiles ?? 1) || 1 }),
-        });
-        if (problems.length) {
-          ui.notifications?.warn(game.i18n.localize(`GWORLD.SpecialAmmo.Problem.${problems[0]}`));
-          if (problems.includes("dragonsBreathPowder")) mode.powder = "";
-          else mode.payload = previous.payload && previous.payload !== mode.payload ? previous.payload : "";
-        }
-        if (mode.powder !== undefined && mode.powder !== previous.powder) mode.powderAdjust = 0;
-        if (mode.payload !== undefined && mode.payload !== previous.payload) mode.payloadAdjust = 0;
-      }
-    }
-
-    // A grimoire remembers the ritual it teaches as that ritual is defined when
-    // it is chosen, so a ritual changed afterwards is no longer the book's.
-    // The form carries each entry's ritual and bonus, not what it remembers,
-    // and arrives keyed by index rather than as a list.
-    const submittedRituals = data.system?.grimoire?.rituals;
-    if (this.item.type === "equipment" && submittedRituals && typeof submittedRituals === "object") {
-      const owner = (this.item as { actor?: any }).actor ?? null;
-      const before = ((this.item.system as any).grimoire?.rituals ?? []) as Array<{ ritual: string; identity: string }>;
-      const list = Array.isArray(submittedRituals)
-        ? submittedRituals
-        : Object.keys(submittedRituals).sort((a, b) => Number(a) - Number(b)).map((key) => submittedRituals[key]);
-      data.system.grimoire.rituals = list.map((entry: any, index: number) => {
-        const previous = before[index];
-        if (previous && previous.ritual === entry.ritual) return { ...entry, identity: previous.identity };
-        const ritual = owner?.items.find((i: any) => i.type === "ritual" && String(i.name) === entry.ritual);
-        return { ...entry, identity: String(ritual?.system?.derived?.identity ?? "") };
-      });
     }
 
     if (this.item.type === "spell" && data.system && typeof data.system.colleges === "string") {
@@ -1087,73 +793,6 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     });
     if (care === null) return;
     await exposureCheck({ actor, item: this.item, care });
-  }
-
-  /**
-   * Records this ritual's definition as the one Ritual Mastery was taken for
-   * (Monster Hunters 1 pp. 25, 39): a later change to the definition makes it
-   * a different ritual.
-   */
-  static async #onRecordMastery(this: GWorldItemSheet) {
-    if (this.item.type !== "ritual") return;
-    await this.item.update({ "system.masteredAs": String((this.item.system as any).derived?.identity ?? "") });
-  }
-
-  /**
-   * Hand-loads a batch of special ammunition (Monster Hunters 1 p. 63): an
-   * Armoury (Small Arms) roll for each asterisked option in the load, each
-   * moving that option's CF down 2 on a success or up 2 on a failure.
-   */
-  static async #onHandLoad(this: GWorldItemSheet, _event: Event, target: HTMLElement) {
-    const index = Number(target.closest<HTMLElement>("[data-index]")?.dataset.index);
-    const modes = [...(((this.item.system as any).rangedModes ?? []) as any[])].map((m) => ({ ...m }));
-    const mode = modes[index];
-    if (!mode) return;
-    const actor = (this.item as { actor?: any }).actor ?? null;
-    const skill = actor?.items?.find?.((i: any) => i.type === "skill" && /^armou?ry\s*\(small arms\)$/i.test(String(i.name)));
-    const level = skill?.system?.derived?.level ?? await promptForNumber({
-      title: game.i18n.localize("GWORLD.SpecialAmmo.HandLoad"),
-      label: game.i18n.localize("GWORLD.SpecialAmmo.ArmourySkill"),
-      initial: 10,
-    });
-    if (level === null || level === undefined) return;
-    const lines: string[] = [];
-    const rolls: any[] = [];
-    for (const [option, field] of [[mode.powder, "powderAdjust"], [mode.payload, "payloadAdjust"]] as const) {
-      if (!HAND_LOADED.has(String(option ?? ""))) continue;
-      const roll = new Roll("3d6");
-      await roll.evaluate();
-      rolls.push(roll);
-      const outcome = resolveSuccess(roll.total, Number(level));
-      mode[field] = outcome.success ? -2 : 2;
-      lines.push(game.i18n.format(outcome.success ? "GWORLD.SpecialAmmo.HandLoadGood" : "GWORLD.SpecialAmmo.HandLoadWaste", {
-        option: game.i18n.localize(`GWORLD.SpecialAmmo.${field === "powderAdjust" ? "Powder" : "Payload"}.${option}`),
-        roll: roll.total,
-        level,
-      }));
-    }
-    if (!lines.length) return;
-    await this.item.update({ "system.rangedModes": modes });
-    await ChatMessage.implementation.create({
-      speaker: ChatMessage.implementation.getSpeaker({ actor }),
-      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
-      rolls,
-      content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${foundry.utils.escapeHTML(String(this.item.name))}</span>`
-        + `<span class="gc-target">${foundry.utils.escapeHTML(game.i18n.localize("GWORLD.SpecialAmmo.HandLoad"))}</span></div>`
-        + lines.map((l) => `<div class="gc-result">${foundry.utils.escapeHTML(l)}</div>`).join("") + `</div>`,
-    });
-  }
-
-  /** Breaks a charm, setting off its ritual (Monster Hunters 1 p. 38). */
-  static async #onBreakCharm(this: GWorldItemSheet) {
-    const confirmed = await foundry.applications.api.DialogV2.confirm({
-      window: { title: game.i18n.localize("GWORLD.RitualCast.Break") },
-      content: `<p>${game.i18n.format("GWORLD.RitualCast.BreakConfirm", { item: String(this.item.name) })}</p>`,
-      rejectClose: false,
-    });
-    if (!confirmed) return;
-    await this.close();
-    await breakCharm(this.item);
   }
 
   static async #onAddMode(this: GWorldItemSheet, _event: Event, target: HTMLElement) {

@@ -13,7 +13,6 @@ import {
 } from "../../rules/traits.js";
 import type { Enchantment } from "../../rules/enchanting.js";
 import { AMMUNITION_TYPES } from "../../rules/ammunition.js";
-import { PAYLOAD_OPTIONS, POWDER_OPTIONS } from "../../rules/special-ammunition.js";
 import { EQUIPMENT_QUALITIES, type EquipmentQuality } from "../../rules/wealth.js";
 import {
   WEAPON_CLASSES,
@@ -27,21 +26,6 @@ import {
 } from "../../rules/weapon-quality.js";
 import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from "../gear-groups.js";
 import { templateCost } from "../../rules/templates.js";
-import type { Comprehension } from "../../rules/languages.js";
-import type { GadgetImprovements } from "../../rules/gadgets.js";
-import type { WeaponImprovements } from "../../rules/weapon-improvements.js";
-import { PATHS } from "../../rules/ritual-path.js";
-import {
-  RITUAL_DURATIONS,
-  RITUAL_EFFECTS,
-  describeEffects,
-  modifiersOfRitual,
-  ritualCost,
-  type RitualCost,
-  type RitualEffectEntry,
-  type RitualRecord,
-} from "../../rules/ritual-cost.js";
-import { ritualIdentity } from "../../rules/ritual-tricks.js";
 import type {
   ChoiceGroup,
   Template,
@@ -115,29 +99,6 @@ function physicalFields() {
       }),
       { required: true, initial: [] },
     ),
-  };
-}
-
-/**
- * Improvements that reprice a gadget or an article of clothing by cost
- * factor (Monster Hunters 1 pp. 53-54, 59), and the Holdout the article gives
- * of itself. Fields on the item, never items of their own: the price and
- * weight are worked out from the list figures when they change.
- */
-function gadgetFields() {
-  return {
-    improvements: new fields.SchemaField({
-      cuttingEdge: new fields.BooleanField({ initial: false }),
-      disguised: new fields.BooleanField({ initial: false }),
-      rugged: new fields.BooleanField({ initial: false }),
-      scentMasking: new fields.BooleanField({ initial: false }),
-      /** Undercover's Holdout bonus, +1 or +2; zero for none. */
-      undercover: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0, max: 2 }),
-    }),
-    /** The Holdout bonus the article gives of itself: a long coat's +4 (p. 59). */
-    holdout: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
-    /** Bought with Signature Gear rather than cash (p. 53). */
-    signature: new fields.BooleanField({ initial: false }),
   };
 }
 
@@ -337,17 +298,16 @@ export class TraitData extends foundry.abstract.TypeDataModel {
       ),
       /**
        * The power this trait belongs to, by the name its book gives it --
-       * Bioenhancement, Mysticism, ESP (Characters pp. 254-257; Monster Hunters
-       * 1 pp. 40-48). Blank for a trait of no power, and for a Basic Set psi
-       * ability, which its power modifier already files.
+       * ESP, Telepathy (Characters pp. 254-257). Blank for a trait of no power,
+       * and for a Basic Set psi ability, which its power modifier already files.
        */
       power: new fields.StringField({ required: true, blank: true, initial: "" }),
       /** True for the power's Talent rather than one of its abilities. */
       powerTalent: new fields.BooleanField({ required: true, initial: false }),
       /**
        * The attacks this trait is, in the shape a weapon's are: Innate Attack
-       * and its kin (Characters pp. 61-62), and a power's attacks (Monster
-       * Hunters 1 pp. 44-47). They join the character's attack list beside
+       * and its kin (Characters pp. 61-62), and a power's attacks. They join
+       * the character's attack list beside
        * what is carried. Empty for every trait that is not an attack.
        */
       meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: [] }),
@@ -717,18 +677,6 @@ function rangedModeField() {
       initial: "",
       choices: [...AMMUNITION_TYPES],
     }),
-    /**
-     * Special ammunition (Monster Hunters 1 p. 63): one powder option and
-     * one payload option, where that book's gear rules are in play. The
-     * adjustments are what a hand-loading roll did to an option's CF: -2 for
-     * a good batch, +2 for wastage.
-     */
-    powder: new fields.StringField({ required: true, nullable: false, blank: true, initial: "", choices: [...POWDER_OPTIONS] }),
-    payload: new fields.StringField({ required: true, nullable: false, blank: true, initial: "", choices: [...PAYLOAD_OPTIONS] }),
-    powderAdjust: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: -2, max: 2 }),
-    payloadAdjust: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: -2, max: 2 }),
-    /** An empty magazine or speedloader's price, which special ammunition's CF does not touch (p. 63). */
-    magazineCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
     minSt: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null }),
     twoHanded: new fields.BooleanField({ initial: false }),
     /** Bows and crossbows have their own ST, used instead of the wielder's. */
@@ -905,11 +853,6 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare weaponClass: WeaponClass;
   declare listCost: number;
   declare listWeight: number;
-  declare improvements: GadgetImprovements;
-  declare holdout: number;
-  declare signature: boolean;
-  declare weaponImprovements: WeaponImprovements;
-  declare improvisedPenalty: number;
   declare hpLost: number;
   declare missedMaintenance: number;
   declare complexity: number;
@@ -917,14 +860,6 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare forSkills: string[];
   declare meleeModes: unknown[];
   declare rangedModes: unknown[];
-  declare charm: { ritual: string; margin: number; casterUuid: string; activeId: string; condition: string };
-  declare grimoire: {
-    rituals: Array<{ ritual: string; identity: string; bonus: number }>;
-    deadLanguage: string;
-    translation: Comprehension;
-    encrypted: boolean;
-    decoded: boolean;
-  };
   declare vehicle: {
     stHp: number; handling: number; stability: number; ht: number;
     acceleration: number; topSpeed: number; loadedWeight: number; load: number;
@@ -937,43 +872,6 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
     return {
       ...descriptionFields(),
       ...physicalFields(),
-      /**
-       * A grimoire (Monster Hunters 1 pp. 39, 56-57): a recipe for one ritual,
-       * or a collection of several, each with its own bonus. A ritual is named
-       * and remembered by its definition, so a changed ritual is not the one
-       * the book teaches.
-       */
-      /**
-       * A charm (Monster Hunters 1 pp. 38-39): a conditional ritual bound to
-       * this fragile object. It travels with the object, and breaking it sets
-       * the ritual off "using its original margin of success". Blank ritual
-       * for an object that is not a charm.
-       */
-      charm: new fields.SchemaField({
-        ritual: new fields.StringField({ required: true, blank: true, initial: "" }),
-        margin: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
-        casterUuid: new fields.StringField({ required: true, blank: true, initial: "" }),
-        activeId: new fields.StringField({ required: true, blank: true, initial: "" }),
-        condition: new fields.StringField({ required: true, blank: true, initial: "" }),
-      }),
-      grimoire: new fields.SchemaField({
-        rituals: new fields.ArrayField(
-          new fields.SchemaField({
-            ritual: new fields.StringField({ required: true, blank: true, initial: "" }),
-            identity: new fields.StringField({ required: true, blank: true, initial: "" }),
-            bonus: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 2, min: 0, max: 10 }),
-          }),
-          { required: true, initial: [] },
-        ),
-        /** The ancient tongue it is written in; blank for a book in a living language. */
-        deadLanguage: new fields.StringField({ required: true, blank: true, initial: "" }),
-        /** A translation's comprehension, for a reader who does not know the language. */
-        translation: new fields.StringField({
-          required: true, blank: false, initial: "none", choices: ["none", "broken", "accented", "native"],
-        }),
-        encrypted: new fields.BooleanField({ initial: false }),
-        decoded: new fields.BooleanField({ initial: false }),
-      }),
       /**
        * Swung and not yet brought back up (Characters p. 270, the "‡"). Set
        * by an attack with a weapon that becomes unready, cleared by a Ready
@@ -1005,13 +903,6 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
         initial: "basic",
         choices: [...EQUIPMENT_QUALITIES],
       }),
-      /**
-       * A holy thing: a Holy weapon, holy water, a symbol with significance
-       * (Monster Hunters 1 pp. 51, 57, 59). Contact burns a creature with a
-       * Weakness to holy things for 1d, ignoring DR, where that book's rules
-       * are in play.
-       */
-      holy: new fields.BooleanField({ required: true, initial: false }),
       /**
        * The skills this equipment is the tools of, by name. A skill on this
        * list is rolled at the grade's modifier while the item is carried.
@@ -1060,26 +951,8 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
        * this one paid; the sheet works it out from this and the grade.
        */
       listCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
-      /** The table's weight, before improvements that change it (Monster Hunters 1 p. 54). */
+      /** The table's weight, before what it is made of. */
       listWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
-      ...gadgetFields(),
-      /**
-       * A weapon's own cost-factor options (Monster Hunters 1 pp. 59-61);
-       * its grade, material and holiness are the fields above. Priced and
-       * applied only where that book's gear rules are in play.
-       */
-      weaponImprovements: new fields.SchemaField({
-        balanced: new fields.BooleanField({ initial: false }),
-        disguised: new fields.BooleanField({ initial: false }),
-        titanium: new fields.BooleanField({ initial: false }),
-        weighted: new fields.BooleanField({ initial: false }),
-        compound: new fields.BooleanField({ initial: false }),
-      }),
-      /**
-       * An improvised weapon's skill penalty: a pool cue is Broadsword-1
-       * (p. 60). Removed by Improvised Weapons for that skill (p. 25).
-       */
-      improvisedPenalty: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, max: 0 }),
       /**
        * Damage the weapon has taken (Campaigns p. 483): struck at, or worn.
        * Against the HP its weight gives it, this says whether it still works.
@@ -1147,9 +1020,6 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   }
 
   declare enchantments: Enchantment[];
-  declare improvements: GadgetImprovements;
-  declare holdout: number;
-  declare signature: boolean;
   declare listCost: number;
   declare listWeight: number;
   declare dr: number;
@@ -1171,8 +1041,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
     return {
       ...descriptionFields(),
       ...physicalFields(),
-      ...gadgetFields(),
-      /** The table's price and weight, before improvements reprice them (Monster Hunters 1 pp. 54, 59). */
+      /** The table's price and weight, before what it is made of. */
       listCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       listWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       dr: new fields.NumberField({
@@ -1866,114 +1735,5 @@ export class SpellData extends foundry.abstract.TypeDataModel {
   /** The college the spell is filed under. */
   get college(): string {
     return this.colleges[0] ?? "";
-  }
-}
-
-/**
- * A ritual of Ritual Path Magic, defined once and cast from the sheet
- * (Monster Hunters 1 pp. 33-35, 39).
- *
- * The fields are split the way p. 39 splits a definition. `definition` is
- * what makes it this ritual -- change it and Ritual Mastery or a grimoire no
- * longer applies. `casting` holds the figures that "can be varied freely":
- * how far, how long, how much damage.
- */
-export class RitualData extends foundry.abstract.TypeDataModel {
-  declare effects: RitualEffectEntry[];
-  declare definition: RitualRecord["definition"] & { affliction: string; traits: string; bonusRolls: string; damageType: string };
-  declare casting: RitualRecord["casting"];
-  declare masteredAs: string;
-  declare blocking: boolean;
-  declare derived: { cost: RitualCost; effects: string; identity: string };
-
-  static override defineSchema() {
-    const count = (options: { min?: number; integer?: boolean } = {}) =>
-      new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0, integer: true, ...options });
-    return {
-      ...descriptionFields(),
-      /** "Multiple effects, whether from the same or different paths, can be combined" (p. 33). */
-      effects: new fields.ArrayField(
-        new fields.SchemaField({
-          path: new fields.StringField({ required: true, blank: false, initial: "Magic", choices: [...PATHS] }),
-          effect: new fields.StringField({
-            required: true, blank: false, initial: "sense", choices: Object.keys(RITUAL_EFFECTS),
-          }),
-          greater: new fields.BooleanField({ initial: false }),
-        }),
-        { required: true, initial: [] },
-      ),
-      definition: new fields.SchemaField({
-        /** The affliction, in words, and its worth as an enhancement: "Nauseated", 30. */
-        affliction: new fields.StringField({ required: true, blank: true, initial: "" }),
-        afflictionPercent: count({ integer: false }),
-        /** The traits it gives or takes; their levels may vary. */
-        traits: new fields.StringField({ required: true, blank: true, initial: "" }),
-        area: new fields.BooleanField({ initial: false }),
-        healing: new fields.BooleanField({ initial: false }),
-        metaMagic: new fields.BooleanField({ initial: false }),
-        speed: new fields.BooleanField({ initial: false }),
-        /** Blank for a ritual that bestows no bonus or penalty. */
-        bonusScope: new fields.StringField({
-          required: true, blank: true, initial: "", choices: ["", "broad", "moderate", "single"],
-        }),
-        bonusRolls: new fields.StringField({ required: true, blank: true, initial: "" }),
-        damage: new fields.BooleanField({ initial: false }),
-        damageType: new fields.StringField({
-          required: true, blank: true, initial: "",
-          choices: ["", "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
-        }),
-        damageKind: new fields.StringField({
-          required: true, blank: false, initial: "standard", choices: ["standard", "small", "large", "heavy"],
-        }),
-        damageDelivery: new fields.StringField({
-          required: true, blank: false, initial: "malediction", choices: ["malediction", "external", "externalExplosive"],
-        }),
-      }),
-      casting: new fields.SchemaField({
-        areaRadius: count({ integer: false }),
-        excludedSubjects: count(),
-        traitsAdded: count(),
-        traitsRemoved: count(),
-        /** Negative for a penalty. */
-        bonusAmount: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
-        damageDice: new fields.StringField({ required: true, blank: true, initial: "" }),
-        healingDice: new fields.StringField({ required: true, blank: true, initial: "" }),
-        /** The cost of the spell being dispelled or altered. */
-        metaMagic: count(),
-        speedYards: count({ integer: false }),
-        /** A line of the Ritual Effect Table's durations, from momentary. */
-        durationStep: count({ max: RITUAL_DURATIONS.length - 1 } as any),
-        extraMonths: count(),
-        years: count(),
-        extraEnergy: count(),
-        rangeYards: count({ integer: false }),
-        rangeKind: new fields.StringField({
-          required: true, blank: false, initial: "yards", choices: ["yards", "information", "crossTime"],
-        }),
-        dimensions: count(),
-        subjectWeight: count({ integer: false }),
-        /** The GM's discount for traditional trappings, up to 25%. */
-        trappingsPercent: new fields.NumberField({
-          required: true, nullable: false, integer: true, initial: 0, min: 0, max: 25,
-        }),
-      }),
-      /**
-       * The definition Ritual Mastery was taken for (p. 25), as
-       * `ritualIdentity` writes it. Blank until recorded; a definition
-       * changed since is "a different ritual" and loses the bonus (p. 39).
-       */
-      masteredAs: new fields.StringField({ required: true, blank: true, initial: "" }),
-      /** The GM agrees it "makes sense as an out-of-turn response": castable as a blocking spell (p. 37). */
-      blocking: new fields.BooleanField({ initial: false }),
-    };
-  }
-
-  override prepareDerivedData(): void {
-    super.prepareDerivedData();
-    this.derived = {
-      cost: ritualCost({ effects: this.effects, modifiers: modifiersOfRitual(this) }),
-      effects: describeEffects(this.effects),
-      identity: ritualIdentity(this),
-    };
   }
 }

@@ -85,10 +85,6 @@
                 </td>
                 <td>
                   <span class="wname" data-action="editItem">{{row.name}}</span>
-                  {{#if row.holy}}
-                    <button type="button" class="ibtn tiny" data-action="holyContact"
-                            data-tooltip="{{localize 'GWORLD.Holy.ContactHint'}}">{{localize "GWORLD.Holy.Contact"}}</button>
-                  {{/if}}
                   {{#if row.vehicle}}
                     <span class="rollable" data-action="controlVehicle"
                           data-tooltip="{{localize 'GWORLD.Hazard.ControlHint'}}">{{> "gworld.die"}}</span>
@@ -186,27 +182,11 @@
                {{#unless editable}}disabled{{/unless}}></span>
         <span class="cd" data-tooltip="{{localize 'GWORLD.Life.TradedHint'}}">{{localize "GWORLD.Life.TradedWorth" amount=derived.wealth.tradedForMoney}}</span>
       </div>
-      {{#if (eq derived.wealth.signatureGearNeeded null)}}
-        {{#if derived.wealth.signatureGearPoints}}
-          <div class="cell">
-            <span class="cl">{{localize "GWORLD.Life.SignatureGear"}}</span>
-            <span class="cv">${{derived.wealth.signatureGear}}</span>
-            <span class="cd" data-tooltip="{{localize 'GWORLD.Life.SignatureHint'}}">{{localize "GWORLD.Life.SignaturePoints" points=derived.wealth.signatureGearPoints}}</span>
-          </div>
-        {{/if}}
-      {{else if (or derived.wealth.signatureGearPoints derived.wealth.signatureGearNeeded)}}
-        {{!-- Monster Hunters 1 p. 53: a point per $10,000 of each marked item. --}}
+      {{#if derived.wealth.signatureGearPoints}}
         <div class="cell">
           <span class="cl">{{localize "GWORLD.Life.SignatureGear"}}</span>
-          <span class="cv">{{derived.wealth.signatureGearNeeded}} / {{derived.wealth.signatureGearPoints}}</span>
-          <span class="cd" data-tooltip="{{localize 'GWORLD.Gadget.SignatureHint'}}">{{localize "GWORLD.Gadget.SignatureNeeded"}}</span>
-        </div>
-      {{/if}}
-      {{#if (or derived.wealth.concealment.holdout derived.wealth.concealment.smell)}}
-        <div class="cell">
-          <span class="cl">{{localize "GWORLD.Gadget.Concealment"}}</span>
-          <span class="cv">{{#if derived.wealth.concealment.holdout}}{{localize "GWORLD.Gadget.Holdout"}} +{{derived.wealth.concealment.holdout}}{{/if}}</span>
-          <span class="cd">{{#if derived.wealth.concealment.source}}{{derived.wealth.concealment.source}}{{/if}}{{#if derived.wealth.concealment.smell}} {{localize "GWORLD.Gadget.SmellNote" penalty=derived.wealth.concealment.smell}}{{/if}}</span>
+          <span class="cv">${{derived.wealth.signatureGear}}</span>
+          <span class="cd" data-tooltip="{{localize 'GWORLD.Life.SignatureHint'}}">{{localize "GWORLD.Life.SignaturePoints" points=derived.wealth.signatureGearPoints}}</span>
         </div>
       {{/if}}
       <div class="cell">
