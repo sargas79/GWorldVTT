@@ -1276,6 +1276,8 @@
       "MeleeModes": "Melee attacks",
       "ModeName": "Attack name",
       "CanParry": "Can parry",
+      "UnarmedBonus": "Unarmed damage bonus",
+      "UnarmedBonusHint": "Adds the Brawling, Boxing or Karate damage bonus when the blow is struck with that skill, as for brass knuckles or a blackjack.",
       "Unbalanced": "Unbalanced",
       "Fencing": "Fencing",
       "TwoHanded": "Two-handed",

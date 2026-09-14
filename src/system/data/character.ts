@@ -13,7 +13,7 @@ import {
   secondaryCharacteristics,
   secondaryPointCost,
 } from "../../rules/attributes.js";
-import { beastAttacks, beastTraitsFrom, naturalAttacks } from "../../rules/natural-attacks.js";
+import { beastAttacks, beastTraitsFrom, naturalAttacks, weaponUnarmedBonus } from "../../rules/natural-attacks.js";
 import { becomesUnreadyAfterAttack } from "../../rules/readiness.js";
 import { aimBonus } from "../../rules/aim.js";
 import { regenerationRate } from "../../rules/recovery.js";
@@ -249,6 +249,8 @@ export interface DerivedAttack {
    * plus this; the parry is worked from skillLevel alone.
    */
   hitModifier?: number;
+  /** The unarmed skill a weapon's blow gets its damage bonus from, or "" (Characters p. 271). */
+  unarmedBonusSkill?: string;
   damage: string;
   damageType: DamageType;
   reach: string;
@@ -2005,8 +2007,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         const effects = improvementsFor(mode, false);
         const skillLevel = found.level === null ? null : found.level + (effects?.skill ?? 0) + improvised(String(mode.skill ?? ""));
         const atDefault = found.atDefault;
+        // A fist load or a hilt punch hits as hard as the unarmed skill it is
+        // struck with makes a punch hit (Characters p. 271, note 3).
+        const unarmedBonus = mode.unarmedBonus && mode.damageBase !== "fixed"
+          ? weaponUnarmedBonus({
+              skill: String(mode.skill ?? ""),
+              level: this.skillLevelByName(String(mode.skill ?? "")),
+              dx: attrs.DX + layering,
+              st: strikingSt,
+            })
+          : 0;
         const meleeDamage = mode.damageSpecial ? SPECIAL : withQuality(withPuissance(perLevel(mode, resolveDamage(
-          strikingSt, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
+          strikingSt, mode.damageBase, mode.damageModifier + unarmedBonus, mode.damageFormula, mode.minSt,
           Number(mode.damageExtraDice ?? 0) || 0,
         ))), mode.damageType);
         melee.push({
@@ -2068,6 +2080,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           stBased: mode.damageBase === "thr" || mode.damageBase === "sw",
           damageBase: String(mode.damageBase ?? ""),
           damageModifier: Number(mode.damageModifier ?? 0) || 0,
+          // The skill the bonus is read for, so a pulled blow can work it out
+          // again at the lower ST it is struck with.
+          unarmedBonusSkill: mode.unarmedBonus ? String(mode.skill ?? "") : "",
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),

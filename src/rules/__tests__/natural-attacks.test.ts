@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { KICK_PENALTY, naturalAttacks } from "../natural-attacks.js";
+import { KICK_PENALTY, naturalAttacks, weaponUnarmedBonus } from "../natural-attacks.js";
 
 describe("natural attacks", () => {
   /** ST 10 thrusts for 1d-2, so a punch is 1d-3 and a kick 1d-2. */
@@ -45,5 +45,29 @@ describe("natural attacks", () => {
     expect(kick?.canParry).toBe(false);
     expect(punch?.reach).toBe("C");
     expect(kick?.reach).toBe("C, 1");
+  });
+});
+
+/**
+ * A weapon's blow that the unarmed skills hit harder with (sargas79/GWorldVTT#196):
+ * "Brawling ... increases all unarmed damage; ... Karate ... improve[s] damage
+ * with punches and kicks" (Characters p. 271, note 3).
+ */
+describe("weaponUnarmedBonus", () => {
+  it("adds Karate's +2 per die at DX+1 on the dice of thrust", () => {
+    // ST 19 thrusts 2d-1: two dice, +4.
+    expect(weaponUnarmedBonus({ skill: "Karate", level: 13, dx: 12, st: 19 })).toBe(4);
+    // At DX itself, +1 per die.
+    expect(weaponUnarmedBonus({ skill: "Karate", level: 12, dx: 12, st: 19 })).toBe(2);
+  });
+
+  it("adds nothing for a blow struck with a weapon skill", () => {
+    expect(weaponUnarmedBonus({ skill: "Broadsword", level: 16, dx: 12, st: 19 })).toBe(0);
+  });
+
+  it("adds Brawling's +1 per die only at DX+2, and nothing for a skill not known", () => {
+    expect(weaponUnarmedBonus({ skill: "Brawling", level: 14, dx: 12, st: 10 })).toBe(1);
+    expect(weaponUnarmedBonus({ skill: "Brawling", level: 13, dx: 12, st: 10 })).toBe(0);
+    expect(weaponUnarmedBonus({ skill: "Brawling", level: null, dx: 12, st: 10 })).toBe(0);
   });
 });

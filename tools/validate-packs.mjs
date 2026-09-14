@@ -486,6 +486,12 @@ function validateItem(entry, file) {
       mode.skillModifier === undefined || Number.isInteger(mode.skillModifier),
       file, name, `to-hit modifier ${mode.skillModifier} must be a whole number`,
     );
+    // The bonus is per die of thrust, so a fixed formula has nothing to add it to.
+    check(
+      mode.unarmedBonus === undefined || (typeof mode.unarmedBonus === "boolean"
+        && !(mode.unarmedBonus && mode.damageBase === "fixed")),
+      file, name, "an unarmed damage bonus needs thr or sw damage",
+    );
   }
 
   for (const mode of [...(sys.meleeModes ?? []), ...(sys.rangedModes ?? [])]) {

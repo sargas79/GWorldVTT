@@ -17,6 +17,14 @@ const blow = (over: Partial<Parameters<typeof pulledFormula>[0]> = {}) => ({
 });
 
 describe("pulledFormula", () => {
+  it("keeps a fist load's unarmed bonus, worked out at the pulled ST", () => {
+    // Brass knuckles with Karate 13 against DX 12: +2 per die. ST 19 thrusts
+    // 2d-1, so 2d+3; pulled to ST 10 it thrusts 1d-2, so 1d.
+    const knuckles = blow({ strength: 20, damageBase: "thr", damageModifier: 0, skills: { Karate: 13 }, unarmedBonusSkill: "Karate" });
+    expect(pulledFormula({ ...knuckles, chosen: 19 })).toBe("2d+3");
+    expect(pulledFormula({ ...knuckles, chosen: 10 })).toBe("1d");
+  });
+
   it("re-reads a sword's swing at the chosen ST, keeping its own modifier", () => {
     // ST 8 swings 1d-2; a broadsword's +1 makes it 1d-1.
     expect(pulledFormula(blow())).toBe("1d-1");

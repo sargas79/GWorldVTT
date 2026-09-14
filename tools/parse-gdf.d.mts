@@ -91,6 +91,9 @@ export declare function parseSkillUsed(value: string | undefined): string;
 /** The skill, and a to-hit modifier every entry of the list shares (0 for none). */
 export declare function parseSkillUsedWithModifier(value: string | undefined): { skill: string; modifier: number };
 
+/** The unarmed skills (Brawling, Boxing, Karate) a skillused list names outright, in order. */
+export declare function unarmedSkillsIn(value: string | undefined): string[];
+
 /** The skill a technique defaults from and its penalty, from GCA's default(), bare or quoted; null when not a skill. */
 export declare function techniqueDefault(
   raw: string | undefined,
