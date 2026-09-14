@@ -110,7 +110,7 @@
       {{/if}}
     </div>
 
-    {{#each derived.templates as |applied i|}}
+    {{#each appliedTemplates as |applied i|}}
       <div class="cell">
         <span class="cl">{{localize (concat "GWORLD.Template." applied.kind)}}</span>
         <span class="cv" style="font-size: 16px">
@@ -126,6 +126,20 @@
           {{/if}}
           {{localize "GWORLD.Template.Granted" count=applied.itemIds.length}}
         </span>
+        {{!-- The template's own text, folded to its first line as a trait's is. --}}
+        {{#if applied.descriptionHtml}}
+          {{#if applied.description.more}}
+            <details class="td tdfold" data-description-for="{{applied.descriptionKey}}" {{#if applied.description.open}}open{{/if}}>
+              <summary title="{{localize "GWORLD.Trait.DescriptionHint"}}">
+                <span class="tdfirst">{{applied.description.first}}</span>
+                <span class="tdless">{{localize "GWORLD.Trait.ShowLess"}}</span>
+              </summary>
+              <div class="tdfull">{{{applied.descriptionHtml}}}</div>
+            </details>
+          {{else}}
+            <span class="td">{{{applied.descriptionHtml}}}</span>
+          {{/if}}
+        {{/if}}
         {{#if @root.editable}}
           <div class="toolbar">
             <button type="button" class="ibtn tiny" data-action="removeTemplate" data-index="{{i}}">
