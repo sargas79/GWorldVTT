@@ -39,6 +39,7 @@ import { GWorldCharacterSheet } from "./system/sheets/character-sheet.js";
 import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
 import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
+import { closeRuleRegistration, openRuleRegistration, registerRule, registerRuleGroup } from "./system/rule-registry.js";
 import { registerSettings } from "./system/settings.js";
 import { loadFilePartials, registerTemplateHelpers } from "./system/templates.js";
 
@@ -78,6 +79,9 @@ Hooks.once("init", () => {
   CONFIG.time.roundTime = 1;
   CONFIG.time.turnTime = 0;
 
+  // Add-on modules register their rule groups and switches here, before the
+  // settings that store them exist and before anything asks about a rule.
+  openRuleRegistration();
   registerSettings();
   registerTemplateHelpers();
   // Partials kept in files rather than in strings. Not awaited: init is
@@ -146,8 +150,14 @@ Hooks.once("init", () => {
   });
 
   // Exposed for macros and for poking at the rules engine from the console.
-  (globalThis as Record<string, unknown>).gworld = { rules };
+  // The registry is here too, for a module that registers its rules from its
+  // own `init` rather than from the `gworld.registerRules` hook.
+  (globalThis as Record<string, unknown>).gworld = { rules, registry: { registerRuleGroup, registerRule } };
 });
+
+// From here on settings are read and sheets drawn, so a rule turning up now
+// would be a switch nobody saw.
+Hooks.once("setup", () => closeRuleRegistration());
 
 Hooks.once("ready", () => {
   console.log(`${SYSTEM_ID} | Ready`);

@@ -10,7 +10,7 @@
   <div class="gr-body">
     {{#each groups as |group|}}
       <section class="gr-group">
-        <h3>{{localize group.label}}</h3>
+        <h3>{{localize group.label}}{{#if group.source}} <span class="gr-source">{{group.source}}</span>{{/if}}</h3>
         {{#each group.rules as |rule|}}
           <label class="gr-rule{{#if rule.pending}} pending{{/if}}">
             <input type="checkbox" data-rule="{{rule.key}}"

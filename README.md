@@ -345,6 +345,48 @@ follows the same shape. Where two packs hold a spell of one name, the picker
 says which pack each row is from, and adding one a character already has
 raises its points rather than adding a copy.
 
+### A module's own rules
+
+The system plays the Basic Set. Rules from any other book belong to the module
+that carries it, and switch on and off on the same **Rules** page as the
+system's own. A module registers a group and its switches while the system
+starts up, in the `gworld.registerRules` hook:
+
+```js
+Hooks.on("gworld.registerRules", (registry) => {
+  registry.registerRuleGroup({ module: "my-module", id: "my-book", label: "MYMOD.Rules.Group" });
+  registry.registerRule({
+    module: "my-module",
+    group: "my-book",
+    key: "myRule",
+    name: "MYMOD.Rules.MyRule.Name",
+    hint: "MYMOD.Rules.MyRule.Hint",
+    reference: "My Book p. 12",
+    default: false,
+  });
+});
+```
+
+- **Keys are the module's own.** The switch above is stored and asked about as
+  `my-module.myRule`. The system's keys never contain a dot, so a module can
+  never overwrite one.
+- **Registration closes at `setup`.** Register from the hook, or from your
+  module's own `init` through `globalThis.gworld.registry`. Anything later is
+  refused with a console warning, as are duplicate keys, a rule in a group the
+  module didn't register, and a missing name, reference or default.
+- **Reading a switch.** Until the public API is published, the stored state is
+  the system setting `gworld.optionalRules`, an object of key → boolean; a
+  missing key means the rule's default. A module key whose module isn't
+  running reads as off.
+- **Turning a module off keeps its choices.** Saving the Rules page keeps the
+  stored switches of modules that aren't active, so switching the module back
+  on finds the table's choices as they were left.
+- **Reference pages.** A journal entry flagged
+  `flags["my-module"].rule = "myRule"` (or the full `"my-module.myRule"`) is
+  linked from the switch, as for the system's own rules.
+- **Pending rules.** `implemented: false` lists a rule greyed out, unswitchable,
+  until the module reads it.
+
 ## Licensing note
 
 GURPS is a trademark of Steve Jackson Games Incorporated. This repository is an

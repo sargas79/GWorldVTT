@@ -1616,6 +1616,16 @@
   border-bottom: 1px solid var(--color-divider);
   padding-bottom: 3px;
 }
+/* A module's group says which module it comes from, so nobody takes an
+   add-on's rules for part of the system. */
+.gworld-rules .gr-group h3 .gr-source {
+  margin-left: 6px;
+  font-family: var(--font-body, inherit);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--color-accent-700);
+}
 .gworld-rules .gr-rule {
   display: flex;
   align-items: flex-start;

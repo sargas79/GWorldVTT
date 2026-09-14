@@ -15,15 +15,6 @@ export interface IndexedEntry {
   flags?: Record<string, unknown> | null;
 }
 
-/** The rule key an entry's flags name, under whichever module's scope holds one. */
-export function flaggedRule(flags: Record<string, unknown> | null | undefined): string | null {
-  for (const scoped of Object.values(flags ?? {})) {
-    const rule = (scoped as { rule?: unknown } | null)?.rule;
-    if (typeof rule === "string" && rule.trim()) return rule.trim();
-  }
-  return null;
-}
-
 /**
  * The reference page for each rule, by its key. The first entry to name a rule
  * keeps it: two modules flagging the same rule give one link, not two, and
@@ -32,10 +23,27 @@ export function flaggedRule(flags: Record<string, unknown> | null | undefined): 
 export function ruleReferenceMap(entries: Iterable<IndexedEntry>): Map<string, string> {
   const out = new Map<string, string>();
   for (const entry of entries) {
-    const rule = flaggedRule(entry.flags);
-    if (rule && !out.has(rule)) out.set(rule, entry.uuid);
+    for (const key of flaggedRuleKeys(entry.flags)) {
+      if (!out.has(key)) out.set(key, entry.uuid);
+    }
   }
   return out;
+}
+
+/**
+ * The keys a page can answer to. A module registers its own rules under its
+ * id (`<module>.<key>`) and may flag its pages with the short key, since the
+ * flag already sits in its own scope; the page links under both. A flag
+ * naming a full key, or a system key, links under that alone.
+ */
+export function flaggedRuleKeys(flags: Record<string, unknown> | null | undefined): string[] {
+  for (const [scope, scoped] of Object.entries(flags ?? {})) {
+    const rule = (scoped as { rule?: unknown } | null)?.rule;
+    if (typeof rule !== "string" || !rule.trim()) continue;
+    const key = rule.trim();
+    return key.includes(".") ? [key] : [key, `${scope}.${key}`];
+  }
+  return [];
 }
 
 /**
