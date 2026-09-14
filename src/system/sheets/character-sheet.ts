@@ -2932,6 +2932,40 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    */
   #openDescriptions = new Set<string>();
 
+  /**
+   * Applied templates' descriptions, by uuid.
+   *
+   * The record on the actor keeps a template's name and what it did, not its
+   * text, which lives on the compendium document. Reading that document is
+   * asynchronous and every edit redraws the sheet, so each is read once.
+   */
+  #templateDescriptions = new Map<string, string>();
+
+  /** What the traits tab shows for each applied template, its description included. */
+  async #appliedTemplateRows(applied: any[]): Promise<object[]> {
+    const rows = [];
+    for (const [index, record] of applied.entries()) {
+      const uuid = String(record?.uuid ?? "");
+      let html = "";
+      if (uuid) {
+        if (!this.#templateDescriptions.has(uuid)) {
+          const document = await fromUuid(uuid).catch(() => null);
+          this.#templateDescriptions.set(uuid, String((document as any)?.system?.description ?? ""));
+        }
+        html = this.#templateDescriptions.get(uuid) ?? "";
+      }
+      const key = `template:${index}:${uuid}`;
+      rows.push({
+        ...record,
+        index,
+        descriptionHtml: html,
+        descriptionKey: key,
+        description: { ...summariseDescription(html), open: this.#openDescriptions.has(key) },
+      });
+    }
+    return rows;
+  }
+
   static override PARTS = {
     header: { template: `${TEMPLATE_ROOT}/header.hbs` },
     nav: { template: `${TEMPLATE_ROOT}/nav.hbs` },
@@ -3008,6 +3042,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const stored: PointAward[] = derived.points.awards ?? [];
 
     const skillOrder = asSkillOrder(game.settings.get(SYSTEM_ID, SKILL_ORDER));
+    const appliedTemplates = await this.#appliedTemplateRows(derived.templates ?? []);
 
     return {
       ...context,
@@ -3015,6 +3050,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       system,
       derived,
       items,
+      appliedTemplates,
       torsoDr: torso ?? null,
       editable: this.isEditable,
       limited: actor.limited,
