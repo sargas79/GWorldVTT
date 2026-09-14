@@ -255,6 +255,7 @@
                 {{#if atk.unready}}<span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.Ready.UnreadyHint'}}">{{localize "GWORLD.Ready.Unready"}}</span>
                 {{else if atk.readiesAfterAttack}}<span class="tag" data-tooltip="{{localize 'GWORLD.Ready.AfterAttackHint'}}">&Dagger;</span>{{/if}}
                 {{#if atk.minStPenalty}}<span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.Breakage.MinStHint'}}">ST {{atk.minStPenalty}}</span>{{/if}}
+                {{#if atk.hitModifier}}<span class="tag" data-tooltip="{{localize 'GWORLD.Attack.HitModifierHint'}}">{{localize "GWORLD.Attack.HitModifier" modifier=(signed atk.hitModifier)}}</span>{{/if}}
                 {{#unless (eq atk.condition "sound")}}<span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.Breakage.ConditionHint'}}">{{localize (concat "GWORLD.Breakage.Condition." atk.condition)}}</span>{{/unless}}
               </td>
               <td class="n">
@@ -298,6 +299,7 @@
                   {{#if atk.usable}}
                     <span class="rollable" data-action="roll" data-roll-type="attack" data-roll-skill="{{atk.skillName}}"
                           data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
+                          data-hit-modifier="{{atk.hitModifier}}"
                           data-damage-type="{{atk.damageType}}"
                           data-unready-after="{{#if atk.readiesAfterAttack}}1{{/if}}"
                           data-weapon-weight="{{atk.weight}}" data-material="{{atk.material}}" data-holy="{{#if atk.holy}}1{{/if}}"

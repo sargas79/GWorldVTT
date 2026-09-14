@@ -1317,6 +1317,8 @@
                      placeholder="{{localize 'GWORLD.Column.Reach'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <input type="number" name="system.meleeModes.{{i}}.parryModifier" value="{{m.parryModifier}}" aria-label="{{localize 'GWORLD.Item.ParryModifier'}}" step="1"
                      {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.meleeModes.{{i}}.skillModifier" value="{{m.skillModifier}}" aria-label="{{localize 'GWORLD.Item.SkillModifier'}}" step="1"
+                     data-tooltip="{{localize 'GWORLD.Item.SkillModifierHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <input type="number" name="system.meleeModes.{{i}}.minSt" value="{{m.minSt}}" aria-label="{{localize 'GWORLD.Item.MinSt'}}" step="1"
                      placeholder="ST" {{#unless @root.editable}}disabled{{/unless}} />
               <input type="number" name="system.meleeModes.{{i}}.armorDivisor" value="{{m.armorDivisor}}" aria-label="{{localize 'GWORLD.Item.ArmorDivisor'}}" step="0.5" min="0.1"
