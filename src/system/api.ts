@@ -35,6 +35,7 @@ import { chatApi, sheetsApi } from "./sheet-extensions.js";
 import { magicApi, pointsApi } from "./roll-extensions.js";
 import { conditionLabel, setCondition } from "./conditions.js";
 import { migrationApi } from "./migration.js";
+import { takeInjury, type InjuryTaken } from "./damage.js";
 import {
   PROCEDURE_HOOKS,
   activeConditions,
@@ -56,7 +57,7 @@ import { rollDamage, rollSuccess } from "./roll.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.7.0";
+export const API_VERSION = "1.8.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -130,6 +131,16 @@ const actors = {
   /** The timed conditions on an actor (since 1.5.0). */
   conditions(actor: any) {
     return activeConditions(actor);
+  },
+
+  /**
+   * Takes injury, or fatigue with `fatigue: true`, off an actor outside a
+   * damage card (since 1.8.0). The health conditions follow, and nothing is
+   * posted. Returns the pool and what it went from and to, or null where this
+   * user can't change the actor.
+   */
+  applyInjury(actor: any, options: { amount: number; fatigue?: boolean; label?: string }): Promise<InjuryTaken | null> {
+    return takeInjury(actor, options);
   },
 };
 

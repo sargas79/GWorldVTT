@@ -40,6 +40,7 @@ import {
 import type { DamageType } from "../rules/types.js";
 import { attributeOf } from "./attributes.js";
 import { loseAim } from "./aim.js";
+import { syncHealthConditions } from "./conditions.js";
 import { hasInjuryTolerance } from "../rules/injury-tolerance.js";
 import {
   cannonFodderCollapses, cinematicExplosionInjury, knockbackStunPenalty,
@@ -100,6 +101,8 @@ export interface IncomingDamage {
    * for nothing.
    */
   ignoresDr?: boolean;
+  /** The item the blow was rolled from, where the card knows it. */
+  itemUuid?: string;
   /**
    * The arc the blow came from, where the table is playing with facing.
    * Armour marked "F" protects against the front alone (Characters p. 282);
@@ -451,11 +454,12 @@ export async function applyDamageToActor(
 
   // A module may change the blow before it is worked out: where it lands,
   // how hard, what it meets.
-  const incoming = callCombatHook(COMBAT_HOOKS.injury, { actor, damage: { ...damage } }).damage;
+  const item = damage.itemUuid ? (fromUuidSync(damage.itemUuid) ?? null) : null;
+  const incoming = callCombatHook(COMBAT_HOOKS.injury, { actor, item, damage: { ...damage } }).damage;
 
   const resolved = resolveDamageAgainst(actor, incoming);
   if (resolved.injury === 0 && !resolved.collapsed) {
-    callCombatHook(COMBAT_HOOKS.afterDamage, { actor, damage: incoming, result: resolved });
+    callCombatHook(COMBAT_HOOKS.afterDamage, { actor, item, damage: incoming, result: resolved });
     return resolved;
   }
 
@@ -464,6 +468,39 @@ export async function applyDamageToActor(
   // "If you are injured while aiming ... you lose your aim."
   await loseAim(actor, "injured");
   // And what it did, for a module with something that follows from it.
-  callCombatHook(COMBAT_HOOKS.afterDamage, { actor, damage: incoming, result: resolved });
+  callCombatHook(COMBAT_HOOKS.afterDamage, { actor, item, damage: incoming, result: resolved });
   return resolved;
+}
+
+/** Injury or fatigue taken off outside a damage card. */
+export interface InjuryTaken {
+  pool: "hp" | "fp";
+  from: number;
+  to: number;
+  label: string;
+}
+
+/**
+ * Takes a figure of injury, or of fatigue, straight off an actor: no DR, no
+ * wounding modifier, no card. What follows from the new total follows as it
+ * would from a blow -- the health conditions are brought into step, and an
+ * injury spoils an aim (p. 364).
+ *
+ * Returns null when this user may not change the actor, or the amount isn't a
+ * positive number.
+ */
+export async function takeInjury(
+  actor: any,
+  options: { amount: number; fatigue?: boolean; label?: string },
+): Promise<InjuryTaken | null> {
+  const amount = Math.floor(Number(options?.amount));
+  if (!actor?.isOwner || !(amount > 0)) return null;
+
+  const pool = options.fatigue ? "fp" : "hp";
+  const from = Number(actor.system?.[pool]?.value) || 0;
+  const to = from - amount;
+  await actor.update({ [`system.${pool}.value`]: to });
+  if (pool === "hp") await loseAim(actor, "injured");
+  await syncHealthConditions(actor);
+  return { pool, from, to, label: String(options.label ?? "") };
 }
