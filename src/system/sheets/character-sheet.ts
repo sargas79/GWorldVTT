@@ -187,6 +187,7 @@ import {
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
 import { registeredManeuvers } from "../combat-extensions.js";
+import { SHEET_TABS, effectiveCost, effectiveWeight, itemSectionsFor, registeredItemType, runItemTypeAction, tabHasAddonSections, type SheetTab } from "../data-extensions.js";
 import { DRESS_STATES } from "../../rules/cinematic.js";
 import type { AcidContact, AcidLanding } from "../../rules/acid.js";
 import type { AtmosphereHazard, HazardStrength } from "../../rules/atmosphere.js";
@@ -2804,6 +2805,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       rollDamage: GWorldCharacterSheet.#onRollDamage,
       toggleCondition: GWorldCharacterSheet.#onToggleCondition,
       createItem: GWorldCharacterSheet.#onCreateItem,
+      addonItemAction: GWorldCharacterSheet.#onAddonItemAction,
       browseCompendium: GWorldCharacterSheet.#onBrowseCompendium,
       openBuilder: GWorldCharacterSheet.#onOpenBuilder,
       awardPoints: GWorldCharacterSheet.#onAwardPoints,
@@ -3021,7 +3023,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // A campaign without magic has no Magic tab: the rule being off means
     // the chapter was never written, and a tab for it would be a tab for
     // nothing.
-    if (!isRuleOn("magic")) delete parts.magic;
+    if (!isRuleOn("magic") && !tabHasAddonSections(this.actor, "magic")) delete parts.magic;
     return parts;
   }
 
@@ -3029,7 +3031,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const tabs = super._prepareTabs(group) as Record<string, any>;
     // The tab is magic of either kind: the Basic Set's spells, or Ritual Path
     // Magic's Paths (Monster Hunters 1 pp. 32-39).
-    if (group === "primary" && !isRuleOn("magic") && !isRuleOn("ritualPathMagic")) delete tabs.magic;
+    if (group === "primary" && !isRuleOn("magic") && !isRuleOn("ritualPathMagic") && !tabHasAddonSections(this.actor, "magic")) delete tabs.magic;
     return tabs;
   }
 
@@ -3083,6 +3085,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         value: system.attributes[key],
         effective: derived.attributes?.[key] ?? system.attributes[key],
         bonus: derived.attributeBonuses?.[key] ?? 0,
+        // What add-on modules add, each with its label.
+        addonLines: (derived.extensionBonuses?.attributes ?? []).filter((line: { attribute: string }) => line.attribute === key),
         // The score is what the sheet shows and what points were paid for; the
         // roll target is what you actually roll against: the score with what
         // traits add, or half of it for the ST of somebody very tired
@@ -3760,6 +3764,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       any
     >;
     if (partContext.tabs && partId in partContext.tabs) partContext.tab = partContext.tabs[partId];
+    // The lists of item types add-on modules registered for this tab.
+    partContext.addonSections = (SHEET_TABS as readonly string[]).includes(partId) ? itemSectionsFor(this.actor, partId as SheetTab) : [];
     return partContext;
   }
 
@@ -3874,7 +3880,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const status = Number(this.actor.system?.derived?.wealth?.status ?? 0) || 0;
     const priceOf = (item: any): number => {
       const share = Number(item.system?.costOfLivingPercent ?? 0) || 0;
-      return share > 0 ? clothingCost(share, status) : Number(item.system?.cost ?? 0) || 0;
+      return share > 0 ? clothingCost(share, status) : effectiveCost(item);
     };
     const rows = [
       ...items.carried.map((i: any) => ({ item: i, notes: describeModes(i), equippable: false })),
@@ -3891,7 +3897,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       name: item.name,
       group: gearGroupOf(item),
       quantity: item.system.quantity ?? 1,
-      weight: (item.system.weight ?? 0) * (item.system.quantity ?? 1),
+      weight: effectiveWeight(item) * (item.system.quantity ?? 1),
       cost: priceOf(item) * (item.system.quantity ?? 1),
       equipped: Boolean(item.system.equipped),
       equippable: equippable || Boolean(item.system.meleeModes?.length || item.system.rangedModes?.length),
@@ -5407,7 +5413,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onCreateItem(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const type = target.dataset.itemType;
     if (!type) return;
-    const label = game.i18n.localize(`TYPES.Item.${type}`);
+    // A module's type is named by its manifest's localization when it has one,
+    // and by the heading it registered when it doesn't.
+    const typeKey = `TYPES.Item.${type}`;
+    const label = !game.i18n.has(typeKey) && registeredItemType(type) ? registeredItemType(type)!.label : game.i18n.localize(typeKey);
     // The button under Disadvantages makes a disadvantage: the category is
     // part of what was asked for, not something to set afterwards.
     const category = target.dataset.category;
@@ -5426,6 +5435,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const chosen = await chooseTechniqueSkill(this.actor, item.toObject());
     if (!chosen) return;
     await item.update({ name: chosen.name, "system.prerequisite": chosen.system.prerequisite });
+  }
+
+  /** A row button an add-on module gave its item type. */
+  static async #onAddonItemAction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const itemId = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const key = target.dataset.addonAction;
+    if (itemId && key) await runItemTypeAction(this.actor, itemId, key);
   }
 
   static async #onEditItem(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

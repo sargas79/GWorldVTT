@@ -37,6 +37,8 @@ import {
 } from "./system/data/items.js";
 import { GWorldCharacterSheet } from "./system/sheets/character-sheet.js";
 import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
+import { GWorldGenericItemSheet } from "./system/sheets/generic-item-sheet.js";
+import { setGenericSheetRegistrar } from "./system/data-extensions.js";
 import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
 import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
 import { READY_HOOK, createApi, warnIncompatibleModules } from "./system/api.js";
@@ -159,6 +161,15 @@ Hooks.once("init", () => {
     ],
     makeDefault: true,
     label: "GWORLD.Sheet.Item",
+  });
+  // An add-on module's item type opens on the generic sheet unless the module
+  // registers one of its own.
+  setGenericSheetRegistrar((type) => {
+    DocumentSheetConfig.registerSheet(Item, SYSTEM_ID, GWorldGenericItemSheet, {
+      types: [type],
+      makeDefault: true,
+      label: "GWORLD.Sheet.GenericItem",
+    });
   });
 
   // Exposed for macros and for poking at the rules engine from the console.

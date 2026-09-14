@@ -18,6 +18,7 @@
 import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
 import { SYSTEM_ID } from "../constants.js";
 import { summarise } from "../item-summary.js";
+import { addonItemSummary, pickerIndexFields } from "../data-extensions.js";
 import { sourceCollections } from "../compendium-sources.js";
 import {
   amountKind,
@@ -90,7 +91,7 @@ export async function collectEntries(
   for (const pack of (game as any).packs ?? []) {
     if (pack?.documentName !== "Item") continue;
     if (!sources.has(String(pack.collection))) continue;
-    const index = await pack.getIndex({ fields: INDEX_FIELDS });
+    const index = await pack.getIndex({ fields: [...INDEX_FIELDS, ...pickerIndexFields(types)] });
     for (const entry of index) {
       if (!wanted.has(entry.type)) continue;
       if (allowed && !allowed.has(entry.system?.category)) continue;
@@ -98,7 +99,7 @@ export async function collectEntries(
         uuid: `Compendium.${pack.collection}.Item.${entry._id}`,
         name: entry.name,
         type: entry.type,
-        summary: summarise(entry.type, entry.system),
+        summary: addonItemSummary(entry) ?? summarise(entry.type, entry.system),
         search: String(entry.name).toLowerCase(),
         system: entry.system ?? {},
         source: String(pack.title ?? pack.metadata?.label ?? pack.collection ?? ""),

@@ -112,6 +112,9 @@ import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
 import { evaluateBonus } from "../../rules/maneuvers.js";
 import { maneuverAllowsDefense, maneuverAllowsParry, maneuverInfo, maneuverKeys } from "../combat-extensions.js";
+import {
+  DATA_HOOKS, afterPrepare, effectiveCost, effectiveWeight, extensionsField, registeredTechniqueKind, totalBonusLines, type BonusLine,
+} from "../data-extensions.js";
 import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
 import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js";
@@ -502,6 +505,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
   static override defineSchema() {
     return {
+      /** Fields add-on modules keep on the character, one object per module. */
+      extensions: extensionsField("Actor"),
       attributes: new fields.SchemaField({
         ST: attributeField("GWORLD.Attribute.ST"),
         DX: attributeField("GWORLD.Attribute.DX"),
@@ -1210,7 +1215,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   #priceOf(item: any, status: number): number {
     const share = Number(item.system?.costOfLivingPercent ?? 0) || 0;
     if (share > 0) return clothingCost(share, status);
-    return Number(item.system?.cost ?? 0) || 0;
+    return effectiveCost(item);
   }
 
   /**
@@ -1282,6 +1287,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   override prepareDerivedData(): void {
     super.prepareDerivedData();
     this.derived = this.buildDerived();
+    afterPrepare(this.parent);
   }
 
   /**
@@ -1454,6 +1460,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       IQ: bought.IQ + traits.attributes.IQ + racial.IQ,
       HT: bought.HT + traits.attributes.HT + racial.HT,
     };
+    // What add-on modules add to the attributes, each line with its reason.
+    const attributeBonuses = totalBonusLines(DATA_HOOKS.attributeBonuses, {
+      actor: this.parent, attributes: { ...attrs }, lines: [] as Array<BonusLine & { attribute: string }>,
+    }).lines as Array<BonusLine & { attribute: string }>;
+    for (const line of attributeBonuses) {
+      if (line.attribute in attrs) attrs[line.attribute as keyof typeof attrs] += line.value;
+    }
     // Striking ST counts for damage alone and Lifting ST for what can be
     // carried, so each is its own figure rather than a change to ST.
     // Arm ST is both: strength "for the purpose of lifting or striking with
@@ -1563,13 +1576,29 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // The tools of this trade, if any are carried (Campaigns p. 345).
       const toolBonus = (toolBonuses[String(item.name ?? "").trim()] ?? 0)
         + (String(item.name ?? "").trim().toLowerCase() === "holdout" ? this.#concealment().holdout : 0);
+      // Under Ritual Path Magic, Magery "does not add to spell use or
+      // Thaumatology" (Monster Hunters 1 p. 24): it caps the Paths instead.
+      const magicBonus = magicSkillBonus(String(item.name ?? ""), ritualPathInPlay ? { ...talent, magery: null } : talent);
+      // The bonuses as lines, which add-on modules may add to, or change with
+      // a reason (a talent that doesn't reach a wildcard skill, say).
+      const bonusLines = totalBonusLines(DATA_HOOKS.skillBonuses, {
+        actor: this.parent,
+        item,
+        name: String(item.name ?? ""),
+        difficulty: sys.difficulty,
+        lines: [
+          { key: "bonus", label: "Bonus", value: Number(sys.bonus) || 0, source: "system" },
+          { key: "magic", label: "Magery", value: magicBonus, source: "system" },
+          { key: "talent", label: "Talent", value: talentBonus, source: "system" },
+          { key: "tools", label: "Equipment", value: toolBonus, source: "system" },
+        ] as BonusLine[],
+      });
+      const lineValue = (key: string) => bonusLines.lines.filter((l) => l.key === key).reduce((sum, l) => sum + l.value, 0);
       const resolved = effectiveSkillLevel({
         attributeScore: attributeScore(sys.attribute),
         difficulty: sys.difficulty,
         points: sys.points,
-        // Under Ritual Path Magic, Magery "does not add to spell use or
-        // Thaumatology" (Monster Hunters 1 p. 24): it caps the Paths instead.
-        bonus: sys.bonus + magicSkillBonus(String(item.name ?? ""), ritualPathInPlay ? { ...talent, magery: null } : talent) + talentBonus + toolBonus,
+        bonus: bonusLines.total,
         defaults: attributeDefaults,
       });
       sys.derived = {
@@ -1577,8 +1606,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         fromDefault: resolved?.fromDefault ?? true,
         relativeLevel: relativeLevelForPoints(sys.points, sys.difficulty),
         hasDefault: attributeDefaults.length > 0,
-        talentBonus,
-        toolBonus,
+        talentBonus: lineValue("talent"),
+        toolBonus: lineValue("tools"),
+        bonusLines: bonusLines.lines.filter((l) => l.value !== 0 || l.reason),
       };
     }
 
@@ -1735,11 +1765,32 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         { from: String(sys.defaultFrom ?? "skill"), skill: String(sys.prerequisite ?? ""), modifier: Number(sys.defaultModifier) || 0 },
         ...((sys.alternateDefaults ?? []) as Array<{ from: string; skill: string; modifier: number }>),
       ];
-      const best = resolveTechniqueDefaults({
+      const standard = () => resolveTechniqueDefaults({
         defaults: defaults.map((d) => ({ base: techniqueBase(d.from, d.skill), modifier: Number(d.modifier) || 0 })),
         levels: techniqueLevelsForPoints(sys.points, sys.difficulty),
         maxRelativeToPrerequisite: sys.maxRelativeToPrerequisite,
       });
+      // A kind an add-on module registered works its level out its own way.
+      // One whose module isn't running is left unresolved, not guessed at.
+      if (sys.kind) {
+        const kind = registeredTechniqueKind(String(sys.kind));
+        let result: ReturnType<NonNullable<typeof kind>["derive"]> = null;
+        try {
+          result = kind ? kind.derive(item, this.parent, { levelOf: (skill) => this.skillLevelByName(skill), standard }) : null;
+        } catch (error) {
+          console.warn(`gworld | technique kind ${sys.kind} failed`, error);
+        }
+        sys.derived = {
+          level: typeof result?.level === "number" && Number.isFinite(result.level) ? result.level : null,
+          levels: Number(result?.levels) || 0,
+          cappedByPrerequisite: result?.cappedByPrerequisite === true,
+          kind: String(sys.kind),
+          kindLabel: kind?.label ?? String(sys.kind),
+          notes: Array.isArray(result?.notes) ? result.notes.map(String) : [],
+        };
+        continue;
+      }
+      const best = standard();
       if (!best) {
         sys.derived = { level: null, levels: 0, cappedByPrerequisite: false };
         continue;
@@ -1847,7 +1898,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     for (const item of this.items) {
       const sys = item.system as { weight?: number; quantity?: number; carried?: boolean };
       if (sys?.carried === false || sys?.weight === undefined) continue;
-      const w = Number(sys.weight ?? 0);
+      const w = effectiveWeight(item);
       const q = Number(sys.quantity ?? 1);
       if (Number.isFinite(w) && Number.isFinite(q)) carriedWeight += w * q;
     }
@@ -1975,7 +2026,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const improvised = (skill: string) => mhGear
         ? improvisedPenalty({ penalty: Number((sys as any).improvisedPenalty ?? 0), skill, traitNames })
         : 0;
-      const weight = Number((sys as any).weight ?? 0) || 0;
+      const weight = effectiveWeight(item);
       const objectHp = item.type === "shield" ? Number((sys as any).hp ?? 0) || 0 : weaponHitPoints(weight, firearm);
       const hpLost = Number((sys as any).hpLost ?? 0) || 0;
       const condition: WeaponCondition =
@@ -2517,6 +2568,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             }
           : null,
     };
+    // What add-on modules add to the defenses, each line with its reason.
+    const defenseBonuses = totalBonusLines(DATA_HOOKS.defenseBonuses, {
+      actor: this.parent,
+      defenses: { dodge: defenses.dodge?.total ?? null, parry: defenses.parry?.total ?? null, block: defenses.block?.total ?? null },
+      lines: [] as Array<BonusLine & { defense: string }>,
+    }).lines as Array<BonusLine & { defense: string }>;
+    for (const line of defenseBonuses) {
+      const view = defenses[line.defense as keyof typeof defenses];
+      if (!view || line.value === 0) continue;
+      view.total = Math.max(1, view.total + line.value);
+      view.math += ` ${line.value >= 0 ? "+" : "−"}${Math.abs(line.value)} ${line.label}`;
+    }
 
     // ── points ledger ───────────────────────────────────────────────────
     const sumTraits = (category: string) =>
@@ -2535,10 +2598,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       (sum, i) => sum + Number(i.system?.points ?? 0),
       0,
     );
-    const techniquePoints = this.itemsOfType("technique").reduce(
-      (sum, i) => sum + Number(i.system?.points ?? 0),
-      0,
-    );
+    const techniquePoints = this.itemsOfType("technique").reduce((sum, i) => {
+      // A registered kind may say what it costs; otherwise its points field does.
+      const kind = registeredTechniqueKind(String(i.system?.kind ?? ""));
+      let cost: number | null = null;
+      try {
+        cost = kind ? kind.cost(i) : null;
+      } catch (error) {
+        console.warn(`gworld | technique kind ${i.system?.kind} failed to cost`, error);
+      }
+      return sum + (typeof cost === "number" && Number.isFinite(cost) ? cost : Number(i.system?.points ?? 0));
+    }, 0);
     const languagePoints = this.itemsOfType("language").reduce(
       (sum, i) => sum + Number(i.system?.totalPoints ?? 0),
       0,
@@ -2724,6 +2794,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       shieldName: shieldItem?.name ?? null,
       armorName: armorItems[0]?.name ?? null,
       defenses,
+      /** What add-on modules added to the attributes and defenses, line by line. */
+      extensionBonuses: { attributes: attributeBonuses, defenses: defenseBonuses },
       melee,
       ranged,
       encumbrance,

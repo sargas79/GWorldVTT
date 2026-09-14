@@ -24,6 +24,7 @@
       "Character": "GURPS Character Sheet",
       "Npc": "GURPS NPC Sheet",
       "NpcFull": "GURPS NPC Sheet (full)",
+      "GenericItem": "GURPS Add-on Item Sheet",
       "Item": "GURPS Item",
       "Vehicle": "Vehicle"
     },
@@ -368,7 +369,9 @@
     },
     "Addon": {
       "Reach": "reach {yards}",
-      "Refused": "{option} can't be used with this defense: {reason}"
+      "Refused": "{option} can't be used with this defense: {reason}",
+      "NoneYet": "None yet.",
+      "NoFields": "This item has nothing else to set."
     },
     "Api": {
       "Incompatible": "{module} needs GWorld API {range}, but this system provides {version}. Its rules may be missing or broken until the module or the system is updated."
@@ -1430,6 +1433,7 @@
       "AddLanguage": "Add Language",
       "FilterSkills": "Filter skills",
       "Delete": "Delete",
+      "New": "New",
       "AddTechnique": "Add Technique",
       "AddSpell": "Add Spell",
       "BrowseSpells": "Browse",
@@ -1807,6 +1811,8 @@
       },
       "Victim": "The victim",
       "DefaultFrom": "Defaults from",
+      "Kind": "Kind",
+      "KindStandard": "Standard",
       "AlternateDefaults": "Other defaults",
       "AddDefault": "Add default",
       "From": {

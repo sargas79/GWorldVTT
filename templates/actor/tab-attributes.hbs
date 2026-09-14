@@ -18,6 +18,8 @@
           <span class="ac">
             {{attr.cost}} pts
             {{#if attr.bonus}}&middot; {{signed attr.bonus}} {{localize "GWORLD.Attribute.FromTraits"}} = <strong>{{attr.effective}}</strong>{{/if}}
+            {{#each attr.addonLines as |line|}}&middot; <span data-tooltip="{{line.reason}}">{{signed line.value}} {{line.label}}</span>{{/each}}
+            {{#if attr.addonLines.length}}= <strong>{{attr.effective}}</strong>{{/if}}
           </span>
         </div>
       {{/each}}
@@ -213,4 +215,6 @@
       <span>{{pointsWarning.text}}</span>
     </div>
   </div>
+  {{> "gworld.addonSections"}}
+
 </section>

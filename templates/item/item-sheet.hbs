@@ -94,6 +94,16 @@
             {{selectOptions choices.techniqueDifficulties selected=system.difficulty localize=true}}
           </select>
         </label>
+        {{#if (or choices.techniqueKinds.length system.kind)}}
+          <label>{{localize "GWORLD.Technique.Kind"}}
+            <select name="system.kind" {{#unless editable}}disabled{{/unless}}>
+              <option value="">{{localize "GWORLD.Technique.KindStandard"}}</option>
+              {{#each choices.techniqueKinds as |kind|}}
+                <option value="{{kind.key}}" {{#if (eq kind.key @root.system.kind)}}selected{{/if}}>{{kind.label}}</option>
+              {{/each}}
+            </select>
+          </label>
+        {{/if}}
         <label>{{localize "GWORLD.Technique.DefaultFrom"}}
           <select name="system.defaultFrom" {{#unless editable}}disabled{{/unless}}>
             {{selectOptions choices.techniqueDefaultFrom selected=system.defaultFrom localize=true}}

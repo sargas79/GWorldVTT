@@ -122,7 +122,7 @@
               <td class="n wmode">{{relativeLabel skill}}</td>
               <td class="n">
                 {{#if row.rollable}}
-                  <span class="lvl">{{skill.system.derived.level}}</span>
+                  <span class="lvl"{{#if skill.system.derived.bonusLines.length}} data-tooltip="{{bonusLines skill.system.derived.bonusLines}}"{{/if}}>{{skill.system.derived.level}}</span>
                 {{else}}
                   <span class="tag tag-danger">{{localize "GWORLD.Skill.NoDefault"}}</span>
                 {{/if}}
@@ -197,7 +197,7 @@
                   </span>
                 {{else}}{{entry.item.system.points}}{{/if}}
               </td>
-              <td class="n wmode">{{entry.defaultLabel}}</td>
+              <td class="n wmode">{{#if entry.item.system.derived.kindLabel}}<span data-tooltip="{{join entry.item.system.derived.notes ' · '}}">{{entry.item.system.derived.kindLabel}}</span>{{else}}{{entry.defaultLabel}}{{/if}}</td>
               <td class="n">
                 {{#if entry.resolved}}
                   <span class="lvl">{{entry.item.system.derived.level}}</span>
@@ -238,5 +238,7 @@
     <span>{{skillSummary.count}} {{localize "GWORLD.Skill.Trained"}}</span>
     <span>{{derived.points.skills}} {{localize "GWORLD.Points.PointsLabel"}}</span>
   </div>
+
+  {{> "gworld.addonSections"}}
 
 </section>

@@ -119,6 +119,39 @@ function validateReference(reference, file, name) {
   }
 }
 
+/**
+ * A type an add-on module declares, `<module>.<type>`. The module's own data
+ * model says what it holds, so only what every document needs is checked.
+ */
+const MODULE_TYPE = /^[A-Za-z0-9][A-Za-z0-9_-]*.[A-Za-z0-9][A-Za-z0-9_-]*$/;
+
+function validateModuleDocument(entry, file) {
+  const name = entry.name ?? "(unnamed)";
+  check(Boolean(entry._id), file, name, "missing _id");
+  check(Boolean(entry.name), file, name, "missing name");
+  if (entry._id) {
+    if (ids.has(entry._id)) {
+      problems.push(`${file} — ${name}: duplicate _id, also used by ${ids.get(entry._id)}`);
+    }
+    ids.set(entry._id, name);
+    check(/^[A-Za-z0-9]{16}$/.test(entry._id), file, name, `_id must be 16 alphanumerics`);
+  }
+  validateExtensions(entry, file);
+}
+
+/** Module fields on a document: one object per module, under `system.extensions`. */
+function validateExtensions(entry, file) {
+  const extensions = entry.system?.extensions;
+  if (extensions === undefined) return;
+  const name = entry.name ?? "(unnamed)";
+  const isObject = (v) => Boolean(v) && typeof v === "object" && !Array.isArray(v);
+  check(isObject(extensions), file, name, "system.extensions must be an object");
+  if (!isObject(extensions)) return;
+  for (const [module, data] of Object.entries(extensions)) {
+    check(isObject(data), file, name, `system.extensions.${module} must be an object`);
+  }
+}
+
 function validateItem(entry, file) {
   const name = entry.name ?? "(unnamed)";
   check(Boolean(entry._id), file, name, "missing _id");
@@ -614,8 +647,12 @@ async function main() {
     for (const file of (await readdir(dir)).filter((f) => f.endsWith(".json"))) {
       const raw = JSON.parse(await readFile(join(dir, file), "utf8"));
       for (const entry of Array.isArray(raw) ? raw : [raw]) {
-        if (ACTOR_TYPES.has(entry.type)) validateActor(entry, `${pack}/${file}`);
-        else validateItem(entry, `${pack}/${file}`);
+        if (MODULE_TYPE.test(String(entry.type ?? ""))) validateModuleDocument(entry, `${pack}/${file}`);
+        else if (ACTOR_TYPES.has(entry.type)) validateActor(entry, `${pack}/${file}`);
+        else {
+          validateItem(entry, `${pack}/${file}`);
+          validateExtensions(entry, `${pack}/${file}`);
+        }
         count++;
       }
     }
