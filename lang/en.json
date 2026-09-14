@@ -373,6 +373,12 @@
       "NoneYet": "None yet.",
       "NoFields": "This item has nothing else to set."
     },
+    "Migration": {
+      "Progress": "{label}: {done} of {total}",
+      "ItemType": "Moving items from {from} to {to}",
+      "Fields": "Moving {document} fields",
+      "Uncovered": "This world holds {label}, which the GURPS system will stop defining in a coming release. Install and enable {install} before updating the system, or that data will be lost."
+    },
     "Api": {
       "Incompatible": "{module} needs GWorld API {range}, but this system provides {version}. Its rules may be missing or broken until the module or the system is updated."
     },

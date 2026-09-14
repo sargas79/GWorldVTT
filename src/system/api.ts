@@ -34,6 +34,7 @@ import { dataApi } from "./data-extensions.js";
 import { chatApi, sheetsApi } from "./sheet-extensions.js";
 import { magicApi, pointsApi } from "./roll-extensions.js";
 import { conditionLabel, setCondition } from "./conditions.js";
+import { migrationApi } from "./migration.js";
 import {
   PROCEDURE_HOOKS,
   activeConditions,
@@ -55,7 +56,7 @@ import { rollDamage, rollSuccess } from "./roll.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.5.0";
+export const API_VERSION = "1.6.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -182,6 +183,8 @@ export interface GWorldApi {
   readonly points: typeof pointsApi;
   /** Energy sources and spell attacks (since 1.4.0). */
   readonly magic: typeof magicApi;
+  /** Moving world data from the system into a module (since 1.6.0). */
+  readonly migration: typeof migrationApi;
   /** The hooks the API fires, by name. */
   readonly hooks: { readonly registerRules: string; readonly ready: string };
   /** Whether this API satisfies a semver range, as a module's manifest would declare it. */
@@ -216,6 +219,7 @@ export function createApi(): GWorldApi {
     sheets: sheetsApi,
     points: pointsApi,
     magic: magicApi,
+    migration: migrationApi,
     chat: chatApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK }),
     satisfies: (range: string) => satisfiesApiRange(API_VERSION, range),

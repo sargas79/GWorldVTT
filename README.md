@@ -376,6 +376,7 @@ What's in it:
 | `data` | Data extension points (since 1.2.0); see below. |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0); see below. |
 | `points`, `magic` | Point pools, energy sources and spell attacks (since 1.4.0); see below. |
+| `migration` | Moving world data from the system into a module (since 1.6.0); see below. |
 
 Since 1.5.0, `combat`, `roll` and `actors` also carry the procedure extension points below.
 | `hooks` | The names of the hooks below. |
@@ -621,6 +622,43 @@ and a hint `p.ihint`.
   used.
 
 `combat.hooks` lists every hook's name.
+
+### Taking over data the system is dropping
+
+When rules move out of the system into a module, worlds still hold their data
+in the system's storage. Foundry won't load a document whose type is no
+longer registered, and drops fields a data model no longer declares the next
+time it saves. So the move happens in this order:
+
+1. A system release marks the data it is about to drop, in
+   `CONFIG.GWORLD.deprecatedData`, while it still defines it.
+2. The module's release migrates that data from its `ready` hook, and says so in
+   its manifest with `"flags": { "gworld": { "migrates": ["<id>", ...] } }`.
+3. The GM installs and enables the module, and loads the world once.
+4. Only then does a system release stop defining the data.
+
+At `ready`, before any module's own ready work, a GM whose world holds
+deprecated data that no active module migrates gets a warning that stays until
+dismissed. Nothing is saved.
+
+`game.gworld.api.migration`, for the GM's client:
+
+- **`migrateItemType({ module, step?, fromType, toType, mapData })`.** Turns every
+  item of `fromType` into `toType`, keeping its id, name and picture: world
+  items, items on actors, and items in unlocked compendia.
+  `mapData(source, item)` returns the new `system` data from a copy of the old.
+- **`moveFields({ module, step?, documentName, types, fields, map? })`.** Copies
+  `system.<from>` to `system.extensions.<module>.<to>` for each `from: to` in
+  `fields`, on Actors or Items of those types (or `"*"`). `map(value, path,
+  document)` may change a value on its way. The system's copy is left alone.
+- **`moveRuleState({ module, step?, fromKey, toKey })`.** Carries a stored switch
+  to the module's own `<module>.<key>`, unless that key already has a state.
+- **`hasMigrated(module, step)`** and **`resetMigration(module, step)`.**
+
+Each step is recorded in the world under the module once every document it
+touched has saved, so it runs once. A step with a failure isn't recorded and
+runs again on the next load. Each helper returns
+`{ skipped, changed, failed }`, and a long step reports its progress.
 
 ### A module's own rules
 

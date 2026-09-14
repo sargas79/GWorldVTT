@@ -45,6 +45,7 @@ import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
 import { READY_HOOK, createApi, warnIncompatibleModules } from "./system/api.js";
 import { registerCombatStateHooks } from "./system/combat-extensions.js";
 import { registerProcedureHooks } from "./system/procedure-extensions.js";
+import { configureDeprecatedData, registerMigrationSettings, warnUncoveredData } from "./system/migration.js";
 import { closeRuleRegistration, openRuleRegistration, registerRule, registerRuleGroup } from "./system/rule-registry.js";
 import { registerSettings } from "./system/settings.js";
 import { loadFilePartials, registerTemplateHelpers } from "./system/templates.js";
@@ -96,6 +97,8 @@ Hooks.once("init", () => {
   // settings that store them exist and before anything asks about a rule.
   openRuleRegistration();
   registerSettings();
+  registerMigrationSettings();
+  configureDeprecatedData();
   registerTemplateHelpers();
   // Partials kept in files rather than in strings. Not awaited: init is
   // synchronous, and nothing renders before it has finished.
@@ -194,6 +197,9 @@ Hooks.once("ready", () => {
 
   // A module that needs an API this system doesn't provide is worth the GM
   // hearing about now, rather than finding its rules quietly absent.
+  // Before any module's ready work saves anything: data the world holds that
+  // the system is about to stop defining, and no active module takes over.
+  warnUncoveredData();
   warnIncompatibleModules();
   Hooks.callAll(READY_HOOK, api);
 });
