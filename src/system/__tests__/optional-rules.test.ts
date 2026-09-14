@@ -35,7 +35,7 @@ describe("the rule catalogue", () => {
   it("cites a book and page for every rule", () => {
     for (const group of Object.values(OPTIONAL_RULES)) {
       for (const rule of group) {
-        expect(rule.reference).toMatch(/^(Campaigns|Characters|GURPS Lite|Monster Hunters 1) pp?\. /);
+        expect(rule.reference).toMatch(/^(Campaigns|Characters|GURPS Lite|Monster Hunters 1|Magic) pp?\. /);
       }
     }
   });
@@ -56,7 +56,11 @@ describe("the rule catalogue", () => {
       .filter(([, on]) => !on)
       .map(([key]) => key)
       .filter((key) => !OPTIONAL_RULES.cinematic.some((rule) => rule.key === key))
-      .filter((key) => !OPTIONAL_RULES.monsterHunters.some((rule) => rule.key === key));
+      .filter((key) => !OPTIONAL_RULES.monsterHunters.some((rule) => rule.key === key))
+      // A supplement's rule filed with its chapter's group -- GURPS Magic's
+      // Powerstones, in Magic -- is the table's to take up, like a whole
+      // supplement group is.
+      .filter((key) => !Object.values(OPTIONAL_RULES).flat().some((rule) => rule.key === key && /^Magic /.test(rule.reference)));
     expect(off.sort()).toEqual(["bleeding", "damageToShields"]);
   });
 
@@ -180,5 +184,9 @@ describe("rules that are listed but not built", () => {
     // The catalogue's own checks cover every rule; this pins that a pending
     // one is not exempt from them.
     for (const rule of PENDING) expect(rule.reference, rule.key).toBeTruthy();
+  });
+
+  it("starts GURPS Magic's Powerstones switched off (sargas79/GWorldVTT#190)", () => {
+    expect(defaultRuleState().powerstones).toBe(false);
   });
 });

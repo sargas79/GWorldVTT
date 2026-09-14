@@ -1033,7 +1033,57 @@
                      {{#unless editable}}disabled{{/unless}} />
               {{localize "GWORLD.Item.Holy"}}</label>
           {{/if}}
+          <label class="icheck" data-tooltip="{{localize 'GWORLD.Powerstone.IsStoneHint'}}">
+            <input type="checkbox" name="system.powerstone.isStone" {{#if system.powerstone.isStone}}checked{{/if}}
+                   {{#unless editable}}disabled{{/unless}} />
+            {{localize "GWORLD.Powerstone.IsStone"}}</label>
         </div>
+        {{#if system.powerstone.isStone}}
+          {{!-- A Powerstone's energy store (Magic pp. 20, 69-70). --}}
+          <div class="ish">{{localize "GWORLD.Powerstone.Section"}}</div>
+          <div class="ifields">
+            <label>{{localize "GWORLD.Powerstone.KindLabel"}}
+              <select name="system.powerstone.kind" {{#unless editable}}disabled{{/unless}}>
+                {{selectOptions choices.powerstoneKinds selected=system.powerstone.kind localize=true}}
+              </select>
+            </label>
+            <label>{{localize "GWORLD.Powerstone.Capacity"}}
+              <input type="number" name="system.powerstone.capacity" value="{{system.powerstone.capacity}}" min="0" step="1"
+                     {{#unless editable}}disabled{{/unless}} />
+            </label>
+            <label>{{localize "GWORLD.Powerstone.Charge"}}
+              <input type="number" name="system.powerstone.charge" value="{{system.powerstone.charge}}" min="0" max="{{system.powerstone.capacity}}" step="1"
+                     {{#unless editable}}disabled{{/unless}} />
+            </label>
+            {{#if (eq system.powerstone.kind "oneCollege")}}
+              <label>{{localize "GWORLD.Powerstone.College"}}
+                <input type="text" name="system.powerstone.college" value="{{system.powerstone.college}}" placeholder="Fire"
+                       {{#unless editable}}disabled{{/unless}} />
+              </label>
+            {{/if}}
+            {{#if (or (eq system.powerstone.kind "dedicated") (eq system.powerstone.kind "exclusive"))}}
+              <label>{{localize "GWORLD.Powerstone.DedicatedTo"}}
+                <input type="text" name="system.powerstone.dedicatedTo" value="{{system.powerstone.dedicatedTo}}"
+                       {{#unless editable}}disabled{{/unless}} />
+              </label>
+            {{/if}}
+            <label class="icheck" data-tooltip="{{localize 'GWORLD.Powerstone.PricedHint'}}">
+              <input type="checkbox" name="system.powerstone.pricedByCapacity" {{#if system.powerstone.pricedByCapacity}}checked{{/if}}
+                     {{#unless editable}}disabled{{/unless}} />
+              {{localize "GWORLD.Powerstone.Priced"}}</label>
+          </div>
+          {{#if editable}}
+            <div class="irow">
+              {{#unless (eq system.powerstone.kind "manastone")}}
+                <button type="button" class="ibtn" data-action="rechargeStone"
+                        data-tooltip="{{localize 'GWORLD.Powerstone.RechargeHint'}}">{{localize "GWORLD.Powerstone.Recharge"}}</button>
+              {{/unless}}
+              {{#if @root.isGM}}
+                <button type="button" class="ibtn" data-action="fillStone">{{localize "GWORLD.Powerstone.Fill"}}</button>
+              {{/if}}
+            </div>
+          {{/if}}
+        {{/if}}
         {{#if weapon.showQuality}}
           <div class="ifields">
             <label data-tooltip="{{localize 'GWORLD.Item.QualityHint'}}">{{localize "GWORLD.Item.Quality"}}
