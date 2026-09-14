@@ -34,6 +34,8 @@
               <span class="gr-hint">{{localize rule.hint}}</span>
             </span>
           </label>
+        {{else}}
+          <p class="gr-hint gr-empty">{{localize "GWORLD.Rules.NoneYet"}}</p>
         {{/each}}
       </section>
     {{/each}}

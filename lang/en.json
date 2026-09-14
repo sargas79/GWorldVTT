@@ -393,6 +393,7 @@
       "AllOn": "All on",
       "AllOff": "All off",
       "Restore": "Restore defaults",
+      "NoneYet": "No rules are registered in this group yet.",
       "NotYet": "not built yet",
       "ReadRule": "Read this rule",
       "Group": {
