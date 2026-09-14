@@ -1739,6 +1739,8 @@ export class SpellData extends foundry.abstract.TypeDataModel {
     halfDamageRange: number;
     maxRange: number;
     explosive: boolean;
+    behavior: string;
+    area: boolean;
   };
   declare derived: SpellDerived;
 
@@ -1831,6 +1833,14 @@ export class SpellData extends foundry.abstract.TypeDataModel {
         halfDamageRange: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
         maxRange: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
         explosive: new fields.BooleanField({ initial: false }),
+        /**
+         * For a spell of another class that attacks: the add-on behavior
+         * (`<module>.<key>`) that delivers it once cast. Blank for a Missile
+         * or Melee spell, which the system delivers itself.
+         */
+        behavior: new fields.StringField({ required: true, blank: true, initial: "" }),
+        /** Damage to everyone in the spell's area, rather than an attack on one target. */
+        area: new fields.BooleanField({ initial: false }),
       }),
     };
   }

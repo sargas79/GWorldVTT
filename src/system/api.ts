@@ -32,6 +32,7 @@ import { incompatibleModules, satisfiesApiRange } from "./api-version.js";
 import { combatApi } from "./combat-extensions.js";
 import { dataApi } from "./data-extensions.js";
 import { chatApi, sheetsApi } from "./sheet-extensions.js";
+import { magicApi, pointsApi } from "./roll-extensions.js";
 import { rollQuickContest, rollRegularContest } from "./contest.js";
 import { activeRules, isRuleOn } from "./optional-rules.js";
 import { REGISTER_RULES_HOOK, isAddonRuleKey, namespacedRuleKey, registerRule, registerRuleGroup } from "./rule-registry.js";
@@ -41,7 +42,7 @@ import { rollDamage, rollSuccess } from "./roll.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.3.0";
+export const API_VERSION = "1.4.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -156,6 +157,8 @@ export function createApi(): GWorldApi {
     combat: combatApi,
     data: dataApi,
     sheets: sheetsApi,
+    points: pointsApi,
+    magic: magicApi,
     chat: chatApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK }),
     satisfies: (range: string) => satisfiesApiRange(API_VERSION, range),

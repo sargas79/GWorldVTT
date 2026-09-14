@@ -375,6 +375,7 @@ What's in it:
 | `combat` | Combat extension points (since 1.1.0); see below. |
 | `data` | Data extension points (since 1.2.0); see below. |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0); see below. |
+| `points`, `magic` | Point pools, energy sources and spell attacks (since 1.4.0); see below. |
 | `hooks` | The names of the hooks below. |
 
 Lifecycle, in order:
@@ -522,6 +523,44 @@ one when it is registered, and a module that uses partials loads them with
 Sheet markup follows the system's: a section is an `.isec`, a heading
 `.grph`, a list a `table.gt` with `tr[data-item-id]` rows, a button `.ibtn`,
 and a hint `p.ihint`.
+
+### Point pools, energy sources and spell attacks
+
+- **`points.registerPointPool({ module, key, label, pools, canPay?, pay })`.**
+  Pools a character can spend points from, listed beside unspent character
+  points wherever points are spent on outcomes: buying a success roll up, a
+  flesh wound, and a request for guidance. Registering one puts buying a roll
+  up in play.
+  - `pools(actor, use, roll)` returns `{ id, label, available, gmCheck? }` for
+    each pool that may pay for `use` (`buySuccess`, `fleshWound` or
+    `guidance`). `roll.skill` names the skill of a roll being bought up, for
+    a pool tied to one skill.
+  - `canPay({ actor, pool, use, roll, cost })` returns `true` or the reason it
+    can't, which is shown.
+  - `pay({ actor, pool, cost, note })` takes the points and returns whether it
+    did.
+- **`magic.registerEnergySource({ module, key, label, sources, canPay?, pay })`.**
+  Offered in the casting dialog as "Energy from", beside the caster's own FP
+  and HP.
+  - `sources(actor, spell)` returns `{ id, label, available, multiplier? }`;
+    `multiplier` is the source's points spent per point of energy.
+  - The source covers what it can of the energy owed, and the caster pays the
+    rest. `canPay({ actor, spell, source, energy })` may refuse with a reason,
+    and `pay({ actor, spell, source, points, energy })` takes the points.
+- **`magic.registerSpellAttack({ module, key, label, applies?, cast })`.**
+  For a spell that isn't a Missile or Melee spell but attacks.
+  - Its record declares the attack in `system.attack` (`skill`, `damage` per
+    point of energy, `damageType`, ranges, `area`), and names the behavior in
+    `attack.behavior` as `<module>.<key>`, or leaves that blank for one whose
+    `applies(spell)` takes it.
+  - Once the spell is cast successfully, `cast(context)` gets the actor,
+    spell, outcome, energy, attack, the damage the energy buys, and the
+    targeted actors. `context.rollAttack({ skill?, label?, ranged?, noParry? })`
+    rolls an attack the target defends against, with the damage on a hit.
+    `context.rollDamage({ label?, formula? })` rolls damage straight away, for
+    an area.
+  - The pack validator accepts a spell's damage or `area` when `attack.behavior`
+    names a behavior.
 
 ### A module's own rules
 

@@ -123,7 +123,7 @@ function validateReference(reference, file, name) {
  * A type an add-on module declares, `<module>.<type>`. The module's own data
  * model says what it holds, so only what every document needs is checked.
  */
-const MODULE_TYPE = /^[A-Za-z0-9][A-Za-z0-9_-]*.[A-Za-z0-9][A-Za-z0-9_-]*$/;
+const MODULE_TYPE = /^[A-Za-z0-9][A-Za-z0-9_-]*\.[A-Za-z0-9][A-Za-z0-9_-]*$/;
 
 function validateModuleDocument(entry, file) {
   const name = entry.name ?? "(unnamed)";
@@ -375,9 +375,19 @@ function validateItem(entry, file) {
     );
     const attack = sys.attack ?? {};
     const delivered = (sys.classes ?? []).some((c) => c === "missile" || c === "melee");
+    // A spell of another class may attack too, where it names the add-on
+    // behavior that delivers it.
+    const behavior = typeof attack.behavior === "string" ? attack.behavior : "";
+    if (behavior) {
+      check(MODULE_TYPE.test(behavior), file, name, `spell attack behavior "${behavior}" is not a "<module>.<key>"`);
+      check(!delivered, file, name, "a Missile or Melee spell is delivered by the system, not a spell attack behavior");
+    }
     if (attack.damage) {
       check(parsesAsDice(attack.damage), file, name, `spell damage "${attack.damage}" does not parse`);
-      check(delivered, file, name, "spell carries damage but is neither Missile nor Melee");
+      check(delivered || Boolean(behavior), file, name, "spell carries damage but is neither Missile nor Melee, and names no spell attack behavior");
+    }
+    if (attack.area) {
+      check(Boolean(behavior), file, name, "spell does area damage but names no spell attack behavior");
     }
     if (attack.damageType) {
       check(DAMAGE_TYPES.has(attack.damageType), file, name, `unknown damage type "${attack.damageType}"`);

@@ -15,6 +15,7 @@ import { syncHealthConditions } from "./conditions.js";
 import { FLESH_WOUND_COST, TV_ACTION_FP, fleshWound } from "../rules/cinematic.js";
 import { FLESH_WOUND_POINTS } from "../rules/bonus-points.js";
 import { payForFleshWound } from "./bonus-points.js";
+import { registeredPointPools } from "./roll-extensions.js";
 
 const L = (key: string, data?: Record<string, unknown>) =>
   data ? game.i18n.format(`GWORLD.Cinematic.${key}`, data) : game.i18n.localize(`GWORLD.Cinematic.${key}`);
@@ -63,7 +64,7 @@ export async function declareFleshWound(actor: any, entry: FleshWoundEntry): Pro
   const unspent = unspentPointsOf(actor);
   // With Monster Hunters 1's points in play, the point comes from whichever
   // pool the player picks (p. 31); otherwise from unspent points, as ever.
-  if (isRuleOn("bonusPointSpending")) {
+  if (isRuleOn("bonusPointSpending") || registeredPointPools(actor, "fleshWound").length > 0) {
     if (!(await payForFleshWound(actor, FLESH_WOUND_POINTS))) return false;
     await actor.update({ [`system.${entry.fatigue ? "fp" : "hp"}.value`]: restored });
   } else {

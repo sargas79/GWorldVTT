@@ -12,6 +12,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { isRuleOn } from "./optional-rules.js";
+import { anyPointPools, payFromPointPool, registeredPointPools } from "./roll-extensions.js";
 import {
   destinyPoints,
   guidanceCost,
@@ -42,10 +43,24 @@ interface SourceOption {
 /** The pools a character has for a use, with what each holds and whether the GM must agree (p. 31). */
 export function sourcesFor(actor: any, use: PointUse, roll: { skill?: string } = {}): SourceOption[] {
   const bp = actor?.system?.derived?.bonusPoints;
-  if (!bp?.inPlay) return [];
+  // Pools add-on modules registered join unspent points, with or without
+  // this book's own pools in play.
+  const pools = registeredPointPools(actor, use, roll);
+  if (!bp?.inPlay && pools.length === 0) return [];
   const out: SourceOption[] = [];
   const unspent = Number(actor.system?.derived?.points?.unspent ?? 0) || 0;
   out.push({ key: "unspent", name: L("UnspentName"), source: { kind: "unspent" }, label: F("Unspent", { value: unspent }), available: Math.max(0, unspent), gmCheck: false });
+  for (const pool of pools) {
+    out.push({
+      key: `pool:${pool.registration}:${pool.id}`,
+      name: pool.label,
+      source: { kind: "pool", pool: pool.registration, id: pool.id },
+      label: F("Pool", { label: pool.label, value: pool.available }),
+      available: pool.available,
+      gmCheck: pool.gmCheck,
+    });
+  }
+  if (!bp?.inPlay) return out;
   if (bp.destiny.max > 0) {
     out.push({ key: "destiny", name: L("DestinyName"), source: { kind: "destiny" }, label: F("Destiny", { value: bp.destiny.value, max: bp.destiny.max }), available: bp.destiny.value, gmCheck: false });
   }
@@ -64,8 +79,16 @@ export function sourcesFor(actor: any, use: PointUse, roll: { skill?: string } =
  * ledger, so a character in debt pays it back from the next award; destiny
  * and wildcard points come off their pools and cannot go below nothing.
  */
-export async function spendPoints(actor: any, source: PointSource, amount: number, note: string): Promise<boolean> {
+export async function spendPoints(
+  actor: any,
+  source: PointSource,
+  amount: number,
+  note: string,
+  use: PointUse = "buySuccess",
+  roll: { skill?: string } = {},
+): Promise<boolean> {
   if (!actor?.isOwner && !game.user?.isGM) return false;
+  if (source.kind === "pool") return payFromPointPool(actor, source, amount, note, use, roll);
   const bp = actor.system?.derived?.bonusPoints;
   if (source.kind === "unspent") {
     const awards = [...(actor.system?.points?.awards ?? []), { points: -amount, note, at: Date.now() }];
@@ -131,6 +154,11 @@ export interface SuccessRollFlag {
   bought?: string;
 }
 
+/** Whether points can be spent on outcomes at all: this book's rule, or a module's pool. */
+export function spendingInPlay(): boolean {
+  return isRuleOn("bonusPointSpending") || anyPointPools();
+}
+
 /** Whether a roll of this kind is a roll in combat, where a critical cannot be bought (p. 31). */
 export function isCombatRoll(actor: any, kind: string): boolean {
   if (kind === "attack" || kind === "defense") return true;
@@ -141,7 +169,7 @@ export function isCombatRoll(actor: any, kind: string): boolean {
 /** Offers to buy a success roll up, to whoever owns the character who rolled it. */
 export async function addBuySuccessControls(message: any, html: HTMLElement): Promise<void> {
   const flag = message?.getFlag?.(SYSTEM_ID, "successRoll") as SuccessRollFlag | undefined;
-  if (!flag || flag.bought || !isRuleOn("bonusPointSpending")) return;
+  if (!flag || flag.bought || !spendingInPlay()) return;
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-buy]")) return;
   const actor: any = await fromUuid(flag.actorUuid).catch(() => null);
@@ -177,7 +205,7 @@ async function buySuccess(message: any, actor: any, flag: SuccessRollFlag): Prom
     ui.notifications?.warn(L("NotEnough"));
     return;
   }
-  if (!(await spendPoints(actor, picked.source.source, step.cost, F("BoughtNote", { step: L(`Step.${step.step}`) })))) return;
+  if (!(await spendPoints(actor, picked.source.source, step.cost, F("BoughtNote", { step: L(`Step.${step.step}`) }), "buySuccess", { skill: flag.skill }))) return;
   const text = F("Bought", { step: L(`Step.${step.step}`), cost: step.cost, source: picked.source.name });
   const content = String(message.content ?? "").replace(/<\/div>\s*$/, `<div class="gc-result success">${foundry.utils.escapeHTML(text)}</div></div>`);
   const hit = flag.onSuccess && (step.step === "success" || step.step === "criticalSuccess") && (flag.step === "failure" || flag.step === "criticalFailure");
@@ -203,14 +231,14 @@ export async function payForFleshWound(actor: any, cost: number): Promise<boolea
     ui.notifications?.warn(L("NotEnough"));
     return false;
   }
-  return spendPoints(actor, picked.source.source, cost, L("FleshWound"));
+  return spendPoints(actor, picked.source.source, cost, L("FleshWound"), "fleshWound");
 }
 
 // ── player guidance ──────────────────────────────────────────────────────────
 
 /** Asks the GM for a plausible addition to the scene, paid from a pool the player names (p. 31). */
 export async function requestGuidance(actor: any): Promise<void> {
-  if (!isRuleOn("bonusPointSpending") || !actor?.isOwner) return;
+  if (!spendingInPlay() || !actor?.isOwner) return;
   const sources = sourcesFor(actor, "guidance");
   if (!sources.length) {
     ui.notifications?.warn(L("NoSources"));
@@ -287,7 +315,7 @@ async function settleGuidance(message: any, flag: any, level: GuidanceLevel | nu
       ui.notifications?.warn(L("NotEnough"));
       return;
     }
-    if (!(await spendPoints(actor, flag.source, cost, L("Guidance")))) return;
+    if (!(await spendPoints(actor, flag.source, cost, L("Guidance"), "guidance"))) return;
     text = F("Approved", { level: L(`Level.${level}`), cost });
   }
   const content = String(message.content ?? "").replace(/<\/div>\s*$/, `<div class="gc-result ${level ? "success" : "failure"}">${foundry.utils.escapeHTML(text)}</div></div>`);
