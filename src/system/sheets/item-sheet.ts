@@ -10,9 +10,6 @@
  * quantity, weight and cost. The body template switches on the type.
  */
 
-import { currentMana } from "../casting.js";
-import { rechargeStonesOf } from "../powerstones.js";
-import { powerstonePrice } from "../../rules/powerstones.js";
 import { HIRED_RATE_PER_HOUR, hiredTechnicianSkill } from "../../rules/repairs.js";
 import { isLegalityClass, licenseCost } from "../../rules/legality.js";
 import { objectState, rollsToKeepWorking } from "../../rules/objects.js";
@@ -219,8 +216,6 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       addDefault: GWorldItemSheet.#onAddDefault,
       deleteDefault: GWorldItemSheet.#onDeleteDefault,
       addTechniqueDefault: GWorldItemSheet.#onAddTechniqueDefault,
-      rechargeStone: GWorldItemSheet.#onRechargeStone,
-      fillStone: GWorldItemSheet.#onFillStone,
       deleteTechniqueDefault: GWorldItemSheet.#onDeleteTechniqueDefault,
       editItemImage: GWorldItemSheet.#onEditImage,
       addModifier: GWorldItemSheet.#onAddModifier,
@@ -332,7 +327,6 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       ? { low: licenseCost(price, 1), high: licenseCost(price, 6) }
       : null;
 
-    context.isGM = Boolean(game.user?.isGM);
     context.isVehicle = item.type === "equipment" && item.system?.category === "vehicle";
 
     // What a computer can run at once (Campaigns p. 472). Only shown for
@@ -514,7 +508,6 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       attributes: keyed("Attribute", ["ST", "DX", "IQ", "HT", "Will", "Per"]),
       difficulties: keyed("Difficulty", ["E", "A", "H", "VH", "W"]),
       techniqueDifficulties: keyed("Difficulty", ["A", "H"]),
-      powerstoneKinds: keyed("Powerstone.Kind", ["normal", "oneCollege", "dedicated", "exclusive", "manastone"]),
       // Which kinds an open technique is ticked for, by kind.
       ...(item.type === "technique"
         ? { familiesTicked: Object.fromEntries(((item.system as any).skillFamilies ?? []).map((kind: string) => [kind, true])) }
@@ -729,20 +722,6 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         data.system.cost = Math.round(listCost * grade * materialCostMultiplier(material));
         const listWeight = Number(current.listWeight ?? current.weight) || 0;
         if (listWeight > 0) data.system.weight = Math.round(listWeight * materialWeightMultiplier(material) * 100) / 100;
-      }
-    }
-
-    // A Powerstone's charge stays within its capacity, and a stone priced by
-    // capacity is priced from the table on Magic p. 20 whenever the capacity,
-    // the kind or the choice changes. The table is for an ordinary stone, so
-    // any other kind keeps whatever price it has.
-    if (this.item.type === "equipment" && data.system?.powerstone) {
-      const was = (this.item.system as any).powerstone ?? {};
-      const stone = { ...was, ...data.system.powerstone };
-      const capacity = Math.max(0, Math.floor(Number(stone.capacity) || 0));
-      if (Number(stone.charge) > capacity) data.system.powerstone.charge = capacity;
-      if (stone.isStone && stone.pricedByCapacity && stone.kind === "normal") {
-        data.system.cost = powerstonePrice(capacity);
       }
     }
 
@@ -1264,31 +1243,6 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     const defaults = [...(this.item.system.defaults ?? [])];
     await this.item.update({
       "system.defaults": [...defaults, { from: "attribute", attribute: "DX", skill: "", modifier: 0 }],
-    });
-  }
-
-  /**
-   * Recharges the stones of this stone's owner for the time passed (Magic
-   * p. 69): the stones a character carries are recharged together, since
-   * only the largest of them can.
-   */
-  static async #onRechargeStone(this: GWorldItemSheet) {
-    const actor = (this.item as { actor?: any }).actor ?? null;
-    if (!actor) {
-      ui.notifications?.warn(game.i18n.localize("GWORLD.Powerstone.NotCarried"));
-      return;
-    }
-    const gained = await rechargeStonesOf(actor, isRuleOn("manaLevels") ? currentMana() : "normal");
-    ui.notifications?.info(game.i18n.format("GWORLD.Powerstone.Recharged", { points: gained }));
-  }
-
-  /** The GM fills a stone to capacity, whatever the time or the mana. */
-  static async #onFillStone(this: GWorldItemSheet) {
-    if (!game.user?.isGM) return;
-    const stone = (this.item.system as any).powerstone ?? {};
-    await this.item.update({
-      "system.powerstone.charge": Number(stone.capacity) || 0,
-      "system.powerstone.lastRecharged": Number((game as any).time?.worldTime ?? 0) || 0,
     });
   }
 

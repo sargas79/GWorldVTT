@@ -713,10 +713,6 @@
         "talentsSkipWildcards": {
           "Name": "Talents skip wildcard skills",
           "Hint": "A Talent adds nothing to a wildcard skill, even one covering the skills on its list (Monster Hunters 1 p. 24)."
-        },
-        "powerstones": {
-          "Name": "Powerstones",
-          "Hint": "Stones recharge by the mana where they are, and a carried stone can pay for a spell in place of fatigue: a One-College stone for its college, a dedicated or exclusive one for its item's spells."
         }
       }
     },
@@ -4132,33 +4128,6 @@
       "Struck": "{name}: {rolled}, {location}, {injury} injury (HP {previous} → {now})",
       "Kind": "A second of rain",
       "Detail": "{formula} to each in the area; armor protects"
-    },
-    "Powerstone": {
-      "IsStone": "Powerstone",
-      "IsStoneHint": "An object holding mana a wizard can spend in place of his own energy",
-      "Section": "Powerstone",
-      "KindLabel": "Kind",
-      "Kind": {
-        "normal": "Powerstone",
-        "oneCollege": "One-College",
-        "dedicated": "Dedicated",
-        "exclusive": "Exclusive",
-        "manastone": "Manastone"
-      },
-      "Capacity": "Capacity",
-      "Charge": "Charge",
-      "College": "College",
-      "DedicatedTo": "Set into",
-      "Priced": "Priced by capacity",
-      "PricedHint": "An ordinary stone's price follows its capacity, by the table in Magic",
-      "Recharge": "Recharge",
-      "RechargeHint": "Adds the mana's rate for the world time passed since the last recharge. Stones carried together recharge only the largest.",
-      "Fill": "Fill to capacity",
-      "Recharged": "Powerstones recharged: {points} points",
-      "NotCarried": "Only a character's stones recharge",
-      "DrawFrom": "Draw energy from",
-      "OwnEnergy": "Own energy",
-      "FromStone": "{energy} from {stone}"
     }
   }
 }

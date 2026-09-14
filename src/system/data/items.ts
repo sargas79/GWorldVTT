@@ -2,7 +2,6 @@
  * Item data models: traits, skills, and equipment (GURPS Lite pp. 8-22).
  */
 
-import { POWERSTONE_KINDS } from "../../rules/powerstones.js";
 import { SKILL_FAMILIES, type SkillFamily } from "../../rules/technique-skills.js";
 import { TECHNIQUE_DEFAULT_FROM, type TechniqueDefaultFrom } from "../../rules/skills.js";
 import { relativeLevelForPoints } from "../../rules/skills.js";
@@ -1010,27 +1009,6 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
        * are in play.
        */
       holy: new fields.BooleanField({ required: true, initial: false }),
-      /**
-       * A Powerstone: an object holding mana a wizard can spend in place of
-       * his own energy (Magic pp. 69-70). Its capacity grows a point a
-       * casting; its charge comes back from the mana around it.
-       */
-      powerstone: new fields.SchemaField({
-        isStone: new fields.BooleanField({ required: true, initial: false }),
-        kind: new fields.StringField({
-          required: true, nullable: false, initial: "normal", choices: [...POWERSTONE_KINDS],
-        }),
-        capacity: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
-        charge: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
-        /** The college a One-College stone pays for. */
-        college: new fields.StringField({ required: true, blank: true, initial: "" }),
-        /** The magic item a dedicated or exclusive stone is set into. */
-        dedicatedTo: new fields.StringField({ required: true, blank: true, initial: "" }),
-        /** Whether the price follows the capacity by the table on p. 20. */
-        pricedByCapacity: new fields.BooleanField({ required: true, initial: true }),
-        /** World time of the last recharge, or null for a stone never recharged. */
-        lastRecharged: new fields.NumberField({ required: true, nullable: true, initial: null }),
-      }),
       /**
        * The skills this equipment is the tools of, by name. A skill on this
        * list is rolled at the grade's modifier while the item is carried.

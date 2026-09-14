@@ -17,8 +17,6 @@
  * and the writing to the sheet.
  */
 
-import { spendStone, stonesForSpell, type StoneOffer } from "./powerstones.js";
-import { drawFromStone } from "../rules/powerstones.js";
 import { spellAttackKind } from "../rules/spell-attacks.js";
 import { SYSTEM_ID } from "./constants.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
@@ -249,8 +247,6 @@ interface CastChoices {
   cannotSeeOrTouch: boolean;
   hpBurn: number;
   modifier: number;
-  /** The Powerstone drawn on first, by item id, or blank. */
-  stone?: string;
 }
 
 /**
@@ -269,8 +265,6 @@ async function promptForCast(options: {
   bounds: { min: number; max: number | null };
   running: { spellsOn: number; concentratingOn: number };
   resisted: { name: string; resistance: number } | null;
-  /** The carried Powerstones that can pay for this spell (Magic p. 69). */
-  stones?: StoneOffer[];
 }): Promise<CastChoices | null> {
   const { item, shape, bounds } = options;
   const energy = item.system.energy ?? {};
@@ -319,14 +313,6 @@ async function promptForCast(options: {
              <input type="checkbox" name="cannotSee"><span>${L("CannotSeeOrTouch")}</span>
            </label>`
         : ""}
-      ${options.stones?.length
-        ? row(
-            game.i18n.localize("GWORLD.Powerstone.DrawFrom"),
-            `<select name="stone"><option value="">${game.i18n.localize("GWORLD.Powerstone.OwnEnergy")}</option>${options.stones
-              .map((s) => `<option value="${s.id}">${foundry.utils.escapeHTML(s.name)} (${s.charge}/${s.capacity})</option>`)
-              .join("")}</select>`,
-          )
-        : ""}
       ${row(L("BurnHp"), num("hpBurn", 0, 0, null))}
       ${row(game.i18n.localize("GWORLD.Chat.Modifier"), num("modifier", 0, -99, 99))}
     </div>`,
@@ -346,7 +332,6 @@ async function promptForCast(options: {
           cannotSeeOrTouch: form?.querySelector<HTMLInputElement>('input[name="cannotSee"]')?.checked ?? false,
           hpBurn: read("hpBurn", 0),
           modifier: read("modifier", 0),
-          stone: form?.querySelector<HTMLSelectElement>('select[name="stone"]')?.value ?? "",
         };
       },
     },
@@ -357,31 +342,17 @@ async function promptForCast(options: {
 
 // ── paying and rolling ───────────────────────────────────────────────────────
 
-/**
- * Takes energy off the caster: from a Powerstone first where one is drawn on
- * (Magic p. 69), then HP where they chose to burn it, the rest as fatigue.
- */
-async function payEnergy(actor: any, total: number, hpBurn: number, stoneId = ""): Promise<{ fp: number; hp: number; stone: number; stoneName: string }> {
-  let owed = total;
-  let fromStone = 0;
-  let stoneName = "";
-  const stone = stoneId && isRuleOn("powerstones") ? actor.items?.get(stoneId) : null;
-  if (stone?.system?.powerstone?.isStone) {
-    const draw = drawFromStone({ charge: Number(stone.system.powerstone.charge) || 0, kind: stone.system.powerstone.kind, cost: owed });
-    await spendStone(actor, stone.id, draw.spent);
-    fromStone = draw.covered;
-    stoneName = String(stone.name ?? "");
-    owed = draw.remaining;
-  }
-  const hp = Math.max(0, Math.min(Math.floor(hpBurn), owed));
-  const fp = owed - hp;
+/** Takes energy off the caster: HP first where they chose to burn it, the rest as fatigue. */
+async function payEnergy(actor: any, total: number, hpBurn: number): Promise<{ fp: number; hp: number }> {
+  const hp = Math.max(0, Math.min(Math.floor(hpBurn), total));
+  const fp = total - hp;
   if (fp > 0) await applyFatigue(actor, fp, { exertion: false });
   if (hp > 0) {
     // "Treat HP lost this way just like any other injury" (p. 237).
     await actor.update({ "system.hp.value": (Number(actor.system?.hp?.value) || 0) - hp });
     await syncHealthConditions(actor);
   }
-  return { fp, hp, stone: fromStone, stoneName };
+  return { fp, hp };
 }
 
 function dieResults(roll: any): number[] {
@@ -398,8 +369,6 @@ export function describeSeconds(seconds: number): string {
 
 /** Everything a casting has decided before the dice are thrown. */
 interface Casting {
-  /** The Powerstone drawn on first, by item id (Magic p. 69). */
-  stone?: string;
   actor: any;
   item: any;
   shape: SpellShape;
@@ -449,7 +418,7 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
   if (manaInPlay) outcome = outcomeUnderMana(outcome, mana);
 
   const owed = energyOnOutcome({ cost, outcome, information: shape.information });
-  const paid = owed > 0 ? await payEnergy(actor, owed, hpBurn, casting.stone ?? "") : { fp: 0, hp: 0, stone: 0, stoneName: "" };
+  const paid = owed > 0 ? await payEnergy(actor, owed, hpBurn) : { fp: 0, hp: 0 };
 
   // ── a critical failure ───────────────────────────────────────────────
   const rolls: any[] = [roll];
@@ -557,11 +526,7 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
 
   // ── the card ─────────────────────────────────────────────────────────
   const paidText = owed > 0
-    ? [
-        paid.stone > 0 ? game.i18n.format("GWORLD.Powerstone.FromStone", { energy: paid.stone, stone: paid.stoneName }) : "",
-        paid.fp > 0 ? `${paid.fp} FP` : "",
-        paid.hp > 0 ? `${paid.hp} HP` : "",
-      ].filter(Boolean).join(" + ")
+    ? [paid.fp > 0 ? `${paid.fp} FP` : "", paid.hp > 0 ? `${paid.hp} HP` : ""].filter(Boolean).join(" + ")
     : "";
   if (outcome.criticalSuccess) notes.push(L("CriticalSuccessNote"));
 
@@ -703,9 +668,7 @@ export async function castSpell(actor: any, item: any, options: CastOptions = {}
   const resisted =
     item.system.resistedBy && !shape.area && !shape.missile ? targetResistance() : null;
 
-  // The stones to hand that can pay for it, where that rule is in play.
-  const stones = stonesForSpell(actor, item, fromItem ? fromItem.itemName : null);
-  const choices = await promptForCast({ item, shape, level, mana, ritual, bounds, running, resisted, stones });
+  const choices = await promptForCast({ item, shape, level, mana, ritual, bounds, running, resisted });
   if (!choices) return;
 
   // ── the cost, before and after skill ─────────────────────────────────
@@ -758,7 +721,6 @@ export async function castSpell(actor: any, item: any, options: CastOptions = {}
   await resolveCasting({
     actor, item, shape, level, mana, manaInPlay, ritual, invested, cost, maintain, time,
     modifiers, hpBurn, subject: subjectParts.join(", "), track: true,
-    ...(choices.stone ? { stone: choices.stone } : {}),
     ...(fromItem
       ? {
           label: `${item.name} (${fromItem.itemName})`,
