@@ -51,17 +51,115 @@ export const COMBAT_HOOKS = Object.freeze({
   attackModifiers: "gworld.attackModifiers",
   /** Before a defense roll: `{ defender, defense, attack, modifiers }`, mutable. */
   defenseModifiers: "gworld.defenseModifiers",
-  /** Before a damage roll: `{ actor, item, label, formula, damageType, modifiers }`, mutable. */
+  /** Before a damage roll: `{ actor, item, mode, label, formula, damageType, modifiers }`, mutable. */
   damageModifiers: "gworld.damageModifiers",
-  /** A blow about to be worked out against a target: `{ actor, item, damage }`, the damage mutable. */
+  /** A blow about to be worked out against a target: `{ actor, item, mode, damage }`, the damage mutable. */
   injury: "gworld.injury",
-  /** A blow that has been applied: `{ actor, item, damage, result }`. */
+  /** A blow that has been applied: `{ actor, item, mode, damage, result }`. */
   afterDamage: "gworld.afterDamage",
   /** Before a heavy-parry breakage roll: `{ defender, item, attackWeapon, breakage }`, `breakage` mutable. */
   breakageOdds: "gworld.breakageOdds",
   /** A random hit location: `{ roll, location, addonLocation, actor }`, the locations mutable. */
   randomHitLocation: "gworld.randomHitLocation",
+  /** An item's attack rows once worked out: `{ actor, item, rows, damageAt, rangeAt, addToDamage }`, the rows mutable. */
+  weaponAttacks: "gworld.weaponAttacks",
+  /** Before an equipment failure roll: `{ actor, item, target, modifiers }`; push lines to `modifiers`. */
+  equipmentFailure: "gworld.equipmentFailure",
 });
+
+// ── an item's attack rows ──────────────────────────────────────────────────
+
+/** What a row was worked out from, before grade, material and ammunition. */
+export interface WeaponRowBasis {
+  st: number;
+  damage: string;
+  damageType: string;
+  armorDivisor: number;
+  halfDamageRange: number;
+  maxRange: number;
+  accuracy: number;
+  malfunction: number | null;
+}
+
+/** One of an item's attack rows, as `gworld.weaponAttacks` hands it to a listener. */
+export interface WeaponRowEntry {
+  kind: "melee" | "ranged";
+  /** The stored mode, read-only. */
+  mode: any;
+  /** The derived row, which a listener may change. */
+  row: any;
+  basis: WeaponRowBasis;
+}
+
+/** The row fields a listener may change. */
+const WEAPON_ROW_FIELDS = [
+  "skillLevel", "damage", "damageType", "armorDivisor", "halfDamageRange", "maxRange", "accuracy", "malfunction",
+  "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp",
+] as const;
+
+/**
+ * Lets modules change an item's attack rows once they are worked out, then
+ * makes the rows whole again: the range text and whether the damage can be
+ * rolled follow the figures, and notes and a follow-up are kept only in the
+ * shape the Combat tab reads. Every row starts with a `notes` list to push to.
+ *
+ * Foundry logs a listener's error and goes on to the next; where the hooks are
+ * called without that guard, an error puts the rows back as they were.
+ */
+export function adjustWeaponAttacks(options: {
+  actor: any;
+  item: any;
+  rows: WeaponRowEntry[];
+  damageAt: (entry: WeaponRowEntry, st: number) => string;
+  rangeAt: (entry: WeaponRowEntry, st: number) => { halfDamageRange: number; maxRange: number };
+  addToDamage: (formula: string, bonus: number) => string;
+  isRollable: (entry: WeaponRowEntry) => boolean;
+}): void {
+  if (options.rows.length === 0) return;
+  for (const entry of options.rows) {
+    if (!Array.isArray(entry.row.notes)) entry.row.notes = [];
+    if (entry.row.followUp === undefined) entry.row.followUp = null;
+  }
+  const before = options.rows.map((entry) => Object.fromEntries(WEAPON_ROW_FIELDS.map((key) => [key, entry.row[key]])));
+  const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
+  try {
+    hooks?.callAll?.(COMBAT_HOOKS.weaponAttacks, {
+      actor: options.actor,
+      item: options.item,
+      rows: options.rows,
+      damageAt: options.damageAt,
+      rangeAt: options.rangeAt,
+      addToDamage: options.addToDamage,
+    });
+  } catch (error) {
+    console.warn(`gworld | a ${COMBAT_HOOKS.weaponAttacks} listener failed`, error);
+    options.rows.forEach((entry, index) => Object.assign(entry.row, before[index]));
+    return;
+  }
+  for (const entry of options.rows) {
+    const row = entry.row;
+    if (entry.kind === "ranged") {
+      const half = Math.max(0, Math.round(Number(row.halfDamageRange) || 0));
+      const max = Math.max(0, Math.round(Number(row.maxRange) || 0));
+      Object.assign(row, { halfDamageRange: half, maxRange: max, range: half ? `${half} / ${max}` : String(max) });
+    }
+    row.notes = (Array.isArray(row.notes) ? row.notes : [])
+      .filter((n: any) => typeof n?.label === "string" && n.label.trim())
+      .map((n: any) => ({ label: String(n.label), hint: String(n.hint ?? "") }));
+    const follow = row.followUp;
+    row.followUp = follow && typeof follow.damage === "string" && follow.damage.trim()
+      ? { damage: follow.damage, damageType: String(follow.damageType ?? "cr"), explosive: Boolean(follow.explosive), ...(follow.label ? { label: String(follow.label) } : {}) }
+      : null;
+    row.damageRollable = options.isRollable(entry);
+  }
+}
+
+/** Runs the equipment failure hook: the target, and the lines modules added to it. */
+export function equipmentFailureModifiers(actor: any, item: any, target: number): { target: number; modifiers: ModifierLine[] } {
+  const context = callCombatHook(COMBAT_HOOKS.equipmentFailure, { actor, item, target, modifiers: [] as ModifierLine[] });
+  const modifiers = (context.modifiers ?? []).filter((m) => typeof m?.label === "string" && typeof m.value === "number" && Number.isFinite(m.value));
+  return { target: target + modifiers.reduce((sum, m) => sum + m.value, 0), modifiers };
+}
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 

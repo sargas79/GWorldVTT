@@ -3145,7 +3145,9 @@
       "ExtraArms": "{count} extra arms",
       "WeaponToHit": "Weapon, to hit",
       "HitModifier": "{modifier} to hit",
-      "HitModifierHint": "This weapon is used at this modifier to hit with its skill. The parry is unchanged."
+      "HitModifierHint": "This weapon is used at this modifier to hit with its skill. The parry is unchanged.",
+      "FollowUp": "(follow-up)",
+      "FollowUpHint": "A follow-up attack: roll its damage after the first blow's."
     },
     "Keybinding": {
       "TurnLeft": "Turn selected tokens left",

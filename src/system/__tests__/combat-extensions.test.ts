@@ -219,6 +219,53 @@ describe("a module's own defenses (#268)", () => {
   });
 });
 
+describe("an item's attack rows (#270)", () => {
+  const basis = { st: 12, damage: "1d+1", damageType: "cut", armorDivisor: 1, halfDamageRange: 0, maxRange: 0, accuracy: 0, malfunction: null };
+  const entries = () => [
+    { kind: "melee" as const, mode: { damageBase: "sw" }, row: { skillLevel: 12, damage: "1d+1", damageRollable: true }, basis },
+    { kind: "ranged" as const, mode: { damageBase: "thr", rangeIsStMultiple: true }, row: { skillLevel: 11, damage: "1d", accuracy: 2, halfDamageRange: 15, maxRange: 20, range: "15 / 20", damageRollable: true }, basis: { ...basis, halfDamageRange: 15, maxRange: 20, accuracy: 2 } },
+  ];
+  const helpers = {
+    damageAt: (_entry: unknown, st: number) => (st > 12 ? "1d+2" : "1d+1"),
+    rangeAt: (_entry: unknown, st: number) => ({ halfDamageRange: st * 1.5, maxRange: st * 2 }),
+    addToDamage: (formula: string, bonus: number) => `${formula}+${bonus}`,
+    isRollable: (entry: { row: { damage: string } }) => entry.row.damage !== "—",
+  };
+
+  it("lets a listener change the rows, then works out the range text, notes, follow-up and rollability again", async () => {
+    const api = await load();
+    const rows = entries();
+    globals.Hooks = {
+      callAll: (_event: string, context: any) => {
+        const [sword, bow] = context.rows;
+        sword.row.skillLevel += 1;
+        sword.row.damage = context.addToDamage(sword.basis.damage, 2);
+        sword.row.notes = [{ label: "Balanced", hint: "+1 to skill" }, { label: "" }];
+        const range = context.rangeAt(bow, bow.basis.st + 2);
+        Object.assign(bow.row, { damage: context.damageAt(bow, 14), accuracy: 3, ...range, followUp: { damage: "1d-1", damageType: "cr", explosive: true } });
+      },
+    };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: rows as never, ...helpers } as never);
+    expect(rows[0]!.row).toMatchObject({ skillLevel: 13, damage: "1d+1+2", notes: [{ label: "Balanced", hint: "+1 to skill" }], followUp: null, damageRollable: true });
+    expect(rows[1]!.row).toMatchObject({ damage: "1d+2", accuracy: 3, halfDamageRange: 21, maxRange: 28, range: "21 / 28", notes: [], followUp: { damage: "1d-1", damageType: "cr", explosive: true } });
+  });
+
+  it("puts the rows back as they were when a listener throws", async () => {
+    const api = await load();
+    const rows = entries();
+    globals.Hooks = { callAll: (_event: string, context: any) => { context.rows[0].row.skillLevel = 99; context.rows[1].row.damage = "9d"; throw new Error("listener"); } };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: rows as never, ...helpers } as never);
+    expect(rows[0]!.row.skillLevel).toBe(12);
+    expect(rows[1]!.row.damage).toBe("1d");
+  });
+
+  it("adds a module's lines to an equipment failure roll's target", async () => {
+    const api = await load();
+    globals.Hooks = { callAll: (_event: string, context: any) => { context.modifiers.push({ label: "Rugged", value: 2 }, { label: "Bad", value: "3" }); } };
+    expect(api.equipmentFailureModifiers({}, {}, 12)).toEqual({ target: 14, modifiers: [{ label: "Rugged", value: 2 }] });
+  });
+});
+
 describe("hooks and state", () => {
   it("survives a listener that throws", async () => {
     const api = await load();

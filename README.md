@@ -469,9 +469,28 @@ and skipped, and the roll goes on.
   - `gworld.afterDamage`: the blow and its result;
   - `gworld.damageModifiers`, `gworld.injury` and `gworld.afterDamage` also get
     `item` (since 1.8.0): the weapon or spell the damage was rolled from, or
-    null. The card keeps it as `itemUuid`, and so does `damage`;
+    null. The card keeps it as `itemUuid`, and so does `damage`. Since 1.10.0
+    they also get `mode` (`{ index, ranged }`), the mode it was rolled from;
   - `gworld.breakageOdds`: set `breakage`;
-  - `gworld.randomHitLocation`: set `location` or `addonLocation`.
+  - `gworld.randomHitLocation`: set `location` or `addonLocation`;
+  - `gworld.weaponAttacks` (since 1.10.0): an item's attack rows once they are
+    worked out, as `{ actor, item, rows, damageAt, rangeAt, addToDamage }`.
+    - Each of `rows` is `{ kind, mode, row, basis }`. `mode` is the stored mode,
+      and `basis` is what the row came from before grade, material and
+      ammunition: `st`, `damage`, `damageType`, `armorDivisor`,
+      `halfDamageRange`, `maxRange`, `accuracy`, `malfunction`.
+    - Change the row's `skillLevel`, `damage`, `damageType`, `armorDivisor`,
+      `halfDamageRange`, `maxRange`, `accuracy`, `malfunction`, `projectiles`,
+      `rateOfFire`, `minSt`, `material` or `holy`.
+    - Push `notes` (`{ label, hint }`), shown as tags, or set `followUp`
+      (`{ damage, damageType, explosive, label? }`), which the Combat tab offers
+      as a damage roll of its own.
+    - `damageAt(entry, st)` and `rangeAt(entry, st)` work a mode out at another
+      ST, and `addToDamage(formula, bonus)` adds to a dice formula. The range
+      text and whether the damage can be rolled follow the figures;
+  - `gworld.equipmentFailure` (since 1.10.0): before a thing's equipment
+    failure roll (Campaigns p. 485), with `{ actor, item, target, modifiers }`.
+    Push lines to `modifiers`; the card shows them.
 
 ### Data extension points
 

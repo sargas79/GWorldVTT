@@ -60,6 +60,15 @@ describe("damage hooks name the item", () => {
     expect(seen).toEqual([["gworld.injury", sword], ["gworld.afterDamage", sword]]);
   });
 
+  it("gives them the mode the card was rolled from (#270)", async () => {
+    const rifle = { uuid: "Actor.a.Item.rifle" };
+    globals.fromUuidSync = () => rifle;
+    const seen: unknown[] = [];
+    globals.Hooks = { callAll: (_event: string, context: { mode: unknown }) => { seen.push(context.mode); } };
+    await applyDamageToActor(character(), { basicDamage: 3, type: "pi", armorDivisor: 1, hitLocation: "torso", itemUuid: rifle.uuid, mode: { index: 1, ranged: true } } as never);
+    expect(seen).toEqual([{ index: 1, ranged: true }, { index: 1, ranged: true }]);
+  });
+
   it("gives them null for a blow with no item", async () => {
     const seen: unknown[] = [];
     globals.Hooks = { callAll: (_event: string, context: { item: unknown }) => { seen.push(context.item); } };

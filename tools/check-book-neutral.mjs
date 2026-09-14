@@ -108,7 +108,6 @@ const EXCEPTIONS = [
       "src/system/sheets/character-sheet.ts",
       "src/system/sheets/item-sheet.ts",
       "src/system/spell-resistance.ts",
-      "templates/actor/tab-combat.hbs",
       "templates/actor/tab-gear.hbs",
       "templates/actor/tab-magic.hbs",
       "templates/actor/tab-skills.hbs",

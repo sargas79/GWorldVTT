@@ -25,6 +25,7 @@ import {
   needsMaintenance,
 } from "../rules/repairs.js";
 import { weaponFacts } from "./weapon-damage.js";
+import { equipmentFailureModifiers } from "./combat-extensions.js";
 import { objectHealth } from "../rules/objects.js";
 import { weaponObjectKind } from "../rules/breakage.js";
 
@@ -161,12 +162,13 @@ export async function exposureCheck(options: {
   // "Shockproof and waterproof, giving +2 on rolls to avoid breakage, water
   // damage, etc." (Monster Hunters 1 p. 54).
   const rugged = isRuleOn("monsterHuntersGear") && item.system?.improvements?.rugged ? RUGGED_BONUS : 0;
-  const target = equipmentFailureTarget({
+  const failure = equipmentFailureModifiers(actor, item, equipmentFailureTarget({
     health,
     missedChecks: maintained ? Number(item.system?.missedMaintenance ?? 0) || 0 : 0,
     cleaned: options.care > 0,
     brutal: options.care < 0 ? options.care : 0,
-  }) + rugged;
+  }) + rugged);
+  const target = failure.target;
   const roll = new Roll("3d6");
   await roll.evaluate();
   const outcome = resolveSuccess(roll.total, target, faces(roll));
@@ -186,6 +188,7 @@ export async function exposureCheck(options: {
     name: String(item.name),
     exposure: true,
     target,
+    failureModifiers: failure.modifiers.filter((m) => m.value !== 0),
     dice: faces(roll),
     roll: roll.total,
     outcome,
