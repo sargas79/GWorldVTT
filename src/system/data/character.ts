@@ -114,7 +114,7 @@ import { evaluateBonus } from "../../rules/maneuvers.js";
 import { maneuverAllowsDefense, maneuverAllowsParry, maneuverInfo, maneuverKeys } from "../combat-extensions.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
-  DATA_HOOKS, afterPrepare, effectiveCost, effectiveWeight, extensionsField, registeredTechniqueKind, totalBonusLines, type BonusLine,
+  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, registeredTechniqueKind, totalBonusLines, type BonusLine,
 } from "../data-extensions.js";
 import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
@@ -1651,6 +1651,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         sys.derived.hasDefault = true;
       }
     }
+
+    // A module may change a level now that every skill's is known: hold one
+    // to a ceiling another skill sets, or give it its level at default.
+    adjustSkillLevels(this.parent, skillItems, (name) => this.skillLevelByName(name));
 
     // ── Ritual Path Magic ───────────────────────────────────────────────
     // A Path is held to the lower of Thaumatology and 12 + Magery, and

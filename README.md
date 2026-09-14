@@ -393,12 +393,12 @@ What's in it:
 | `rules` | The pure GURPS rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted through the system's chat cards. |
-| `actors` | `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`: read-only. |
+| `actors` | `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`: read-only. `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), and `applyInjury` (since 1.8.0). |
 | `items` | `derived`: read-only. |
 | `combat` | Combat extension points (since 1.1.0); see below. |
 | `data` | Data extension points (since 1.2.0); see below. |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0); see below. |
-| `points`, `magic` | Point pools, energy sources and spell attacks (since 1.4.0); see below. |
+| `points`, `magic` | Point pools, energy sources and spell attacks (since 1.4.0), and resistance cards (since 1.9.0); see below. |
 | `migration` | Moving world data from the system into a module (since 1.6.0); see below. |
 
 Since 1.5.0, `combat`, `roll` and `actors` also carry the procedure extension points below.
@@ -446,6 +446,13 @@ and skipped, and the roll goes on.
 - **`registerDefenseOption({ module, key, label, defenses?, available?, refuse?, apply, after? })`.**
   A checkbox on the defense card. `apply` returns `modifiers` and `fatigue`, and
   `after(context, outcome)` hears how the defense went.
+- **`registerDefense({ module, key, label, choices, run })`** (since 1.9.0).
+  A defense the module resolves itself, offered beside dodge, parry and block.
+  - `choices(defender, attack)` returns `{ id, label, hint? }` for each way
+    this defender may defend with it against the attack, by its label. Each
+    gets a button, shown only to users who own the defender.
+  - `run({ defender, attack, choice, message })` resolves it and posts the
+    result.
 - **`registerExtraEffort({ module, key, label, kind, fp, available?, refuse?, apply })`.**
   An offensive option in the attack dialog or a defensive one on the card,
   paid in FP before the roll.
@@ -514,6 +521,13 @@ without editing the system's data models. Register from `init` or the
     `{ attribute, label, value, source }`. They show on the attribute's card.
   - `gworld.defenseBonuses`, with `{ actor, defenses, lines }`: push
     `{ defense, label, value, source }`. They show in the defense's breakdown.
+  - `gworld.skillLevels` (since 1.9.0), with `{ actor, skills, levelOf }`, once
+    every skill's level is known and before techniques are read off them.
+    Each of `skills` is `{ item, name, level, fromDefault }`. Set `level`
+    and `fromDefault` to hold a skill to a ceiling another skill sets, or to
+    give it its level at default, and `note` and `source` to say why: the
+    note shows in the level's breakdown. `levelOf(name)` reads any skill's
+    level.
 
 `tools/validate-packs.mjs --src <dir>` accepts documents of module types and
 `system.extensions` data.
@@ -546,6 +560,13 @@ one when it is registered, and a module that uses partials loads them with
   user who posted it may. With `"gm"`, only the GM may. The GM may press any
   button. Buttons a viewer may not press are removed, and so are all of them
   while the module isn't running.
+  - Since 1.9.0, an input or select carrying `data-addon-card-input="<name>"`
+    calls that action on `change`, with `value` and `checked` in the
+    context. It is disabled for a viewer who may not use it.
+  - **`chat.update(message, data)`** (since 1.9.0) redraws the card from its
+    template with new `data`, which replaces the old. The GM may, and so may
+    whoever owns the card's actor and may change the message (in Foundry, the
+    user who posted it). It returns whether it did.
 - **`sheets.registerGmTool({ module, key, label, icon?, open, visible? })`.**
   A button in the token controls, shown to the GM only.
 
@@ -553,7 +574,7 @@ Sheet markup follows the system's: a section is an `.isec`, a heading
 `.grph`, a list a `table.gt` with `tr[data-item-id]` rows, a button `.ibtn`,
 and a hint `p.ihint`.
 
-### Point pools, energy sources and spell attacks
+### Point pools, energy sources, spell attacks and resistance
 
 - **`points.registerPointPool({ module, key, label, available?, pools, canPay?, pay })`.**
   Pools a character can spend points from, listed beside unspent character
@@ -577,6 +598,13 @@ and a hint `p.ihint`.
   - The source covers what it can of the energy owed, and the caster pays the
     rest. `canPay({ actor, spell, source, energy })` may refuse with a reason,
     and `pay({ actor, spell, source, points, energy })` takes the points.
+- **`magic.postResistance({ caster, label, casterRoll, casterEffective, subjects, resistWith?, magical?, area?, ruleOf16? })`** (since 1.9.0).
+  Posts the system's resistance card for a module's effect, with a roll for
+  each subject.
+  - Subjects resist with the best of `resistWith` (attribute names, `Will`
+    and `Per` included), or Will when it is left out.
+  - Magic Resistance adds unless `magical` is false, twice with `area`.
+  - The Rule of 16 caps the caster unless `ruleOf16` is false.
 - **`magic.registerSpellAttack({ module, key, label, applies?, cast })`.**
   For a spell that isn't a Missile or Melee spell but attacks.
   - Its record declares the attack in `system.attack` (`skill`, `damage` per

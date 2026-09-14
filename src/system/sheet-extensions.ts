@@ -6,8 +6,9 @@
  *     bound for those who own the document.
  *   - **Row actions:** buttons on the rows of the system's own items on a
  *     character sheet, for those who own the character.
- *   - **Chat cards:** a card from the module's template, whose buttons call
- *     the module's handlers for those allowed to press them.
+ *   - **Chat cards:** a card from the module's template, whose buttons and
+ *     inputs call the module's handlers for those allowed to use them, and
+ *     which the module can redraw with new data.
  *   - **GM tools:** buttons in the token controls, for the GM.
  *
  * Every callback a module gives is guarded: one that throws is logged and the
@@ -254,13 +255,20 @@ export interface ChatCardAction {
   permission?: CardPermission;
   /** Whether the button is offered on this card to this user. Defaults to always. */
   visible?: (message: any, data: any, user: any) => boolean;
-  run: (context: { message: any; data: any; actor: any; button: HTMLElement; user: any }) => unknown;
+  /**
+   * Called with the card's data. For an input, `value` is its value and
+   * `checked` whether a checkbox is ticked.
+   */
+  run: (context: { message: any; data: any; actor: any; button: HTMLElement; user: any; value?: string; checked?: boolean }) => unknown;
 }
 
 export interface ChatCardRegistration {
   module: string;
   key: string;
-  /** A Handlebars template. Buttons carry `data-addon-card-action="<name>"`. */
+  /**
+   * A Handlebars template. Buttons carry `data-addon-card-action="<name>"`,
+   * and inputs and selects `data-addon-card-input="<name>"`, called on change.
+   */
   template: string;
   actions?: Record<string, ChatCardAction | ChatCardAction["run"]>;
 }
@@ -340,25 +348,76 @@ export function mayPress(permission: CardPermission, user: any, message: any, ac
 }
 
 /**
+ * Redraws a module's card with new data, from the template it was registered
+ * with, and keeps the data on the message for its controls. Returns whether it
+ * did: only a user who may change the message, and owns the card's actor (or
+ * wrote a card with none) or is the GM, may redraw it.
+ */
+export async function updateChatCard(message: any, data: Record<string, unknown> = {}): Promise<boolean> {
+  const flag = message?.getFlag?.(SYSTEM_ID, ADDON_CARD_FLAG) as AddonCardFlag | undefined;
+  if (!flag?.card) return false;
+  const card = cards.get(flag.card);
+  if (!card) {
+    console.warn(`gworld | chat card ${flag.card} is not registered`);
+    return false;
+  }
+  const user = game.user;
+  const actor: any = flag.actorUuid ? await fromUuid(flag.actorUuid).catch(() => null) : null;
+  if (!mayPress("owner", user, message, actor)) return false;
+  if (typeof message.canUserModify === "function" && !message.canUserModify(user, "update")) return false;
+  const next = data && typeof data === "object" ? data : {};
+  const content = await render(card.template, { ...next, actor });
+  // The data is replaced whole, so a key the module dropped is gone.
+  const replace = (globalThis as any).foundry?.data?.operators?.ForcedReplacement?.create ?? ((value: unknown) => value);
+  await message.update({
+    content: `<div class="gworld gworld-chat addon-card" data-addon-card="${card.id}">${content}</div>`,
+    flags: { [SYSTEM_ID]: { [ADDON_CARD_FLAG]: replace({ ...flag, data: next }) } },
+  });
+  return true;
+}
+
+/**
  * Wires a rendered module card: each button the viewer may press calls its
- * handler, and the rest are removed. A card whose module isn't running keeps
- * its text and loses its buttons.
+ * handler, and the rest are removed; each input the viewer may use calls its
+ * handler on change, and the rest are disabled, so they still show the
+ * card's state. A card whose module isn't running keeps its text and loses
+ * its controls.
  */
 export async function addAddonCardControls(message: any, html: HTMLElement): Promise<void> {
   const flag = message?.getFlag?.(SYSTEM_ID, ADDON_CARD_FLAG) as AddonCardFlag | undefined;
   if (!flag?.card) return;
   const buttons = [...html.querySelectorAll<HTMLElement>("[data-addon-card-action]")];
-  if (buttons.length === 0) return;
+  const inputs = [...html.querySelectorAll<HTMLInputElement>("[data-addon-card-input]")];
+  if (buttons.length === 0 && inputs.length === 0) return;
   const card = cards.get(flag.card);
   const actor: any = flag.actorUuid ? await fromUuid(flag.actorUuid).catch(() => null) : null;
   const user = game.user;
-  for (const button of buttons) {
-    const name = button.dataset.addonCardAction ?? "";
+  const allowedAction = (name: string) => {
     const action = card?.actions[name];
     const allowed = action
       && mayPress(action.permission, user, message, actor)
       && safely(`chat card ${flag.card} ${name}`, () => action.visible(message, flag.data, user) === true, false);
-    if (!allowed) {
+    return allowed ? action : null;
+  };
+  for (const input of inputs) {
+    const name = input.dataset.addonCardInput ?? "";
+    const action = allowedAction(name);
+    if (!action) {
+      input.setAttribute("disabled", "");
+      continue;
+    }
+    input.addEventListener("change", async () => {
+      try {
+        await action.run({ message, data: flag.data, actor, button: input, user, value: String(input.value ?? ""), checked: Boolean(input.checked) });
+      } catch (error) {
+        console.warn(`gworld | chat card ${flag.card} ${name} failed`, error);
+      }
+    });
+  }
+  for (const button of buttons) {
+    const name = button.dataset.addonCardAction ?? "";
+    const action = allowedAction(name);
+    if (!action) {
       button.remove();
       continue;
     }
@@ -446,4 +505,4 @@ export function registerSheetExtensionHooks(): void {
 
 /** What the API exposes. */
 export const sheetsApi = Object.freeze({ registerSheetSection, registerRowAction, registerGmTool });
-export const chatApi = Object.freeze({ registerChatCard, post: postChatCard });
+export const chatApi = Object.freeze({ registerChatCard, post: postChatCard, update: updateChatCard });

@@ -36,7 +36,60 @@ export const DATA_HOOKS = Object.freeze({
   attributeBonuses: "gworld.attributeBonuses",
   /** After the defenses are worked out: `{ actor, defenses, lines }`; push `{ defense, label, value }`. */
   defenseBonuses: "gworld.defenseBonuses",
+  /** Once every skill's level is known: `{ actor, skills, levelOf }`; set an entry's `level`, `fromDefault` and `note`. */
+  skillLevels: "gworld.skillLevels",
 });
+
+/** A skill as `gworld.skillLevels` hands it to a listener. */
+export interface SkillLevelEntry {
+  item: any;
+  name: string;
+  level: number | null;
+  fromDefault: boolean;
+  /** Why a listener changed the level, shown with it. */
+  note?: string;
+  /** The module that changed it. */
+  source?: string;
+}
+
+/**
+ * Lets modules change skill levels once all of them are known: hold one to a
+ * ceiling another skill sets, or give it the level it has at default. What a
+ * listener changed is written to the skill's derived data, with its note as a
+ * line in the level's breakdown. A listener that throws changes nothing.
+ */
+export function adjustSkillLevels(actor: any, items: any[], levelOf: (name: string) => number | null): void {
+  const skills: SkillLevelEntry[] = items.map((item) => ({
+    item,
+    name: String(item?.name ?? ""),
+    level: typeof item?.system?.derived?.level === "number" ? item.system.derived.level : null,
+    fromDefault: Boolean(item?.system?.derived?.fromDefault),
+  }));
+  const before = skills.map((s) => ({ level: s.level, fromDefault: s.fromDefault }));
+  const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
+  try {
+    hooks?.callAll?.(DATA_HOOKS.skillLevels, { actor, skills, levelOf });
+  } catch (error) {
+    console.warn(`gworld | a ${DATA_HOOKS.skillLevels} listener failed`, error);
+    return;
+  }
+  skills.forEach((entry, index) => {
+    const was = before[index]!;
+    const level = entry.level === null ? null : Number.isFinite(entry.level) ? Math.floor(entry.level) : was.level;
+    const fromDefault = Boolean(entry.fromDefault);
+    if (level === was.level && fromDefault === was.fromDefault) return;
+    const derived = entry.item?.system?.derived;
+    if (!derived) return;
+    derived.level = level;
+    derived.fromDefault = fromDefault;
+    if (typeof entry.note === "string" && entry.note.trim()) {
+      derived.bonusLines = [
+        ...(Array.isArray(derived.bonusLines) ? derived.bonusLines : []),
+        { label: entry.note.trim(), value: (level ?? 0) - (was.level ?? 0), source: String(entry.source ?? "module") },
+      ];
+    }
+  });
+}
 
 /** A bonus line: what it is, what it is worth, and why it was changed if it was. */
 export interface BonusLine {

@@ -47,6 +47,7 @@ import {
   defenseModifiersFor,
   defenseOptionsFor,
   hitLocationsFor,
+  moduleDefensesFor,
   readLocationValue,
   registeredHitLocation,
 } from "./combat-extensions.js";
@@ -667,8 +668,10 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     const blocking = isRuleOn("magic") ? blockingSpellsOf(defender) : [];
     // And a ritual the GM has agreed can block (Monster Hunters 1 p. 37).
     const blockingRituals = blockingRitualsOf(defender);
+    // And the defenses a module resolves itself.
+    const moduleDefenses = moduleDefensesFor(defender, flag.attack);
 
-    if (!choices.some((choice) => choice.available) && blocking.length === 0 && blockingRituals.length === 0) {
+    if (!choices.some((choice) => choice.available) && blocking.length === 0 && blockingRituals.length === 0 && moduleDefenses.length === 0) {
       for (const choice of choices) row.append(refusedButton(choice));
       root.append(row);
       continue;
@@ -825,6 +828,19 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       button.title = game.i18n.localize("GWORLD.RitualCast.BlockingNote");
       button.addEventListener("click", () => {
         void castBlockingRitual(defender, ritual.item, flag.attack);
+      });
+      row.append(button);
+    }
+
+    for (const defense of moduleDefenses) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "gc-apply-button";
+      button.dataset.moduleDefense = defense.defense;
+      button.textContent = defense.label;
+      if (defense.hint) button.title = defense.hint;
+      button.addEventListener("click", () => {
+        void defense.run(message);
       });
       row.append(button);
     }
