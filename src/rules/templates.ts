@@ -20,6 +20,11 @@
  * makes a template a template rather than a list.
  */
 
+import {
+  attributePointCost,
+  basicSpeedPointCost,
+  secondaryPointCost,
+} from "./attributes.js";
 import type { Attribute } from "./types.js";
 
 /** Which kind of template this is (pp. 258, 260). */
@@ -132,6 +137,38 @@ export function entriesInGroup(
  * taken.
  */
 export function templateCost(template: Template): number {
+  return template.attributeCost + boughtStatsCost(template) + entriesCost(template);
+}
+
+/**
+ * What a character template's attributes and secondary characteristics cost
+ * (pp. 258, 14-17).
+ *
+ * A character template's scores are bought: "do this instead of buying
+ * individual attributes, secondary characteristics, advantages, and skills",
+ * at the ordinary rate -- ST and HT 10 a level, DX and IQ 20, HP 2, Will and
+ * Per 5, FP 3, Basic Move 5, and 5 per 0.25 of Basic Speed. Its `attributeCost`
+ * is zero, so without this the template's own figures went uncounted.
+ *
+ * Any other kind of template grants modifiers rather than buying scores, and
+ * prices them in `attributeCost` instead, so it costs nothing here.
+ */
+export function boughtStatsCost(template: Template): number {
+  if (template.kind !== "character") return 0;
+  let total = 0;
+  for (const [key, score] of Object.entries(template.attributes) as Array<[Attribute, number]>) {
+    total += attributePointCost(key, score);
+  }
+  const { basicSpeed, ...levels } = template.secondary;
+  for (const [key, count] of Object.entries(levels)) {
+    total += secondaryPointCost(key as Parameters<typeof secondaryPointCost>[0], count ?? 0);
+  }
+  if (basicSpeed) total += basicSpeedPointCost(basicSpeed);
+  return total;
+}
+
+/** What a template's required entries and choice groups cost. */
+function entriesCost(template: Template): number {
   const required = requiredEntries(template).reduce((sum, entry) => sum + entry.points, 0);
 
   const chosen = template.choices.reduce((sum, group) => {
@@ -145,7 +182,7 @@ export function templateCost(template: Template): number {
     return sum + options.slice(0, Math.max(0, group.required)).reduce((a, b) => a + b, 0);
   }, 0);
 
-  return template.attributeCost + required + chosen;
+  return required + chosen;
 }
 
 /**
