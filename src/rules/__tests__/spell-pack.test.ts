@@ -115,6 +115,17 @@ describe("the spell parser's readings", () => {
     expect(parseEnergy("1 to 4/S")).toMatchObject({ cast: 1, castMax: 4, maintain: null });
   });
 
+  // GURPS Magic's enchantments cost a thousand or more, written with a
+  // separator (sargas79/GWorldVTT#191).
+  it("reads a cost written with a thousands separator as the whole number", () => {
+    expect(parseEnergy("1,000")).toEqual({ cast: 1000, castMax: 1000, maintain: null, text: "1,000" });
+    expect(parseEnergy("2,000")).toMatchObject({ cast: 2000, castMax: 2000 });
+    expect(parseEnergy("1,000/lb.#")).toMatchObject({ cast: 1000, text: "1,000/lb." });
+    expect(parseEnergy("250 to 1,000")).toMatchObject({ cast: 250, castMax: 1000 });
+    expect(parseEnergy("1,000 to 2,500/100")).toMatchObject({ cast: 1000, castMax: 2500, maintain: 100 });
+    expect(parseEnergy("2 to 1,000")).toMatchObject({ cast: 2, castMax: 1000 });
+  });
+
   it("reads casting times and durations into seconds where it can", () => {
     expect(parseTime("1 sec.")).toEqual({ seconds: 1, text: "1 sec." });
     expect(parseTime("1 to 3 sec.")).toEqual({ seconds: 1, text: "1 to 3 sec." });

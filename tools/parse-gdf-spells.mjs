@@ -94,7 +94,11 @@ export function parseEnergy(raw) {
   const out = { cast: null, castMax: null, maintain: null, text };
   if (!text || /^(varies|none|special)$/i.test(text)) return out;
 
-  const [castPart, maintainPart] = text.split("/").map((p) => p.trim());
+  // GCA writes a thousand or more with a separator -- `castingcost(1,000)`,
+  // `castingcost(2,000)` -- which the patterns below would read as 1 or 2.
+  // The digits lose it before matching; the text keeps it as written.
+  const digits = (part) => part?.replace(/(\d),(?=\d{3}\b)/g, "$1");
+  const [castPart, maintainPart] = text.split("/").map((p) => digits(p.trim()));
 
   const range = /^(\d+) to (\d+)$/i.exec(castPart);
   const open = /^(\d+) to /i.exec(castPart);
