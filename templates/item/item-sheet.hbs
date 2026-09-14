@@ -94,6 +94,11 @@
             {{selectOptions choices.techniqueDifficulties selected=system.difficulty localize=true}}
           </select>
         </label>
+        <label>{{localize "GWORLD.Technique.DefaultFrom"}}
+          <select name="system.defaultFrom" {{#unless editable}}disabled{{/unless}}>
+            {{selectOptions choices.techniqueDefaultFrom selected=system.defaultFrom localize=true}}
+          </select>
+        </label>
         <label>{{localize "GWORLD.Technique.Prerequisite"}}
           <input type="text" name="system.prerequisite" value="{{system.prerequisite}}"
                  {{#unless editable}}disabled{{/unless}} />
@@ -108,11 +113,32 @@
         </label>
         <label>{{localize "GWORLD.Technique.MaxRelative"}}
           <input type="number" name="system.maxRelativeToPrerequisite"
-                 value="{{system.maxRelativeToPrerequisite}}" step="1" max="0"
+                 value="{{system.maxRelativeToPrerequisite}}" step="1"
                  {{#unless editable}}disabled{{/unless}} />
         </label>
       </div>
       <p class="ihint">{{localize "GWORLD.Technique.MaxRelativeHint"}}</p>
+      {{!-- Further defaults, the best of which is used (Martial Arts p. 73). --}}
+      <div class="ish">{{localize "GWORLD.Technique.AlternateDefaults"}}
+        {{#if editable}}
+          <button type="button" class="ibtn tiny" data-action="addTechniqueDefault">{{localize "GWORLD.Technique.AddDefault"}}</button>
+        {{/if}}
+      </div>
+      {{#each system.alternateDefaults as |d i|}}
+        <div class="irow" data-index="{{i}}">
+          <select name="system.alternateDefaults.{{i}}.from" aria-label="{{localize 'GWORLD.Technique.DefaultFrom'}}" {{#unless @root.editable}}disabled{{/unless}}>
+            {{selectOptions @root.choices.techniqueDefaultFrom selected=d.from localize=true}}
+          </select>
+          <input type="text" name="system.alternateDefaults.{{i}}.skill" value="{{d.skill}}" aria-label="{{localize 'GWORLD.Column.Skill'}}"
+                 placeholder="{{localize 'GWORLD.Column.Skill'}}" {{#unless @root.editable}}disabled{{/unless}} />
+          <input type="number" name="system.alternateDefaults.{{i}}.modifier" value="{{d.modifier}}" step="1" max="0"
+                 aria-label="{{localize 'GWORLD.Technique.DefaultModifier'}}" {{#unless @root.editable}}disabled{{/unless}} />
+          {{#if @root.editable}}
+            <button type="button" class="rollable iconbtn" data-action="deleteTechniqueDefault" data-index="{{i}}"
+                    title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
+          {{/if}}
+        </div>
+      {{/each}}
     {{/if}}
 
     {{#if isRitual}}

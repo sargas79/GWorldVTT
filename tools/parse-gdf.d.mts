@@ -131,3 +131,8 @@ export declare function classifyCitation(
   prefix: string,
   base?: string,
 ): "own" | "overlap" | "elsewhere";
+
+/** Every default a technique lists: a skill's level, its Parry or Block, Dodge, or an attribute; null when one is unreadable. */
+export declare function techniqueDefaults(
+  raw: string | undefined,
+): Array<{ from: string; skill: string; modifier: number }> | null;

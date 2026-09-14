@@ -11,6 +11,25 @@
 
 import { describeEffects, modifiersOfRitual, ritualCost } from "../rules/ritual-cost.js";
 
+/**
+ * A technique's default as the book writes it: "Karate-2", "Judo Parry-1",
+ * "Dodge-2", "ST-4" (Martial Arts pp. 65-89). Empty where it names nothing.
+ */
+export function techniqueDefaultLabel(
+  options: { from: string; skill: string; modifier: number },
+  /** Between the base and the penalty: none, as the book writes it, or a space for a list. */
+  separator = "",
+): string {
+  const penalty = options.modifier ? `${separator}${options.modifier}` : "";
+  switch (options.from) {
+    case "skill": return options.skill ? `${options.skill}${penalty}` : "";
+    case "parry": return options.skill ? `${options.skill} Parry${penalty}` : "";
+    case "block": return options.skill ? `${options.skill} Block${penalty}` : "";
+    case "dodge": return `Dodge${penalty}`;
+    default: return `${options.from}${penalty}`;
+  }
+}
+
 export function summarise(type: string, system: any): string {
   const signed = (value: number) => (value > 0 ? `+${value}` : String(value));
 
@@ -18,9 +37,11 @@ export function summarise(type: string, system: any): string {
     case "skill":
       return `${system?.attribute ?? "?"}/${system?.difficulty ?? "?"}`;
     case "technique":
-      return system?.prerequisite
-        ? `${system.prerequisite}${system.defaultModifier ? ` ${system.defaultModifier}` : ""}`
-        : "";
+      return techniqueDefaultLabel({
+        from: system?.defaultFrom ?? "skill",
+        skill: system?.prerequisite ?? "",
+        modifier: Number(system?.defaultModifier) || 0,
+      }, " ");
     case "trait": {
       // The table wins where there is one, exactly as totalPoints reads it:
       // Wealth is 10/20/30/50/75 and no single figure says that.

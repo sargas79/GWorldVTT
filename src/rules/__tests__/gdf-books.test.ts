@@ -24,6 +24,7 @@ import {
   reference,
   talentSkillsOf,
   techniqueDefault,
+  techniqueDefaults,
   traitAttackModes,
 } from "../../../tools/parse-gdf.mjs";
 
@@ -364,6 +365,33 @@ describe("a technique's default (#193)", () => {
   it("is null when the default is not a skill's level", () => {
     expect(techniqueDefault('"ST:DX::score" - 2')).toBeNull();
     expect(techniqueDefault(undefined)).toBeNull();
+  });
+});
+
+describe("a technique's defaults beyond a skill (#195)", () => {
+  it("reads the Parry or Block a skill gives", () => {
+    expect(techniqueDefaults('"SK:Judo::parrylevel" - 1')).toEqual([{ from: "parry", skill: "Judo", modifier: -1 }]);
+    expect(techniqueDefaults('"SK:Shield (Buckler)::blocklevel" - 1')).toEqual([{ from: "block", skill: "Shield (Buckler)", modifier: -1 }]);
+  });
+
+  it("reads Dodge and the attributes, quoted or bare", () => {
+    expect(techniqueDefaults('"ST:Dodge::score" - 2')).toEqual([{ from: "dodge", skill: "", modifier: -2 }]);
+    expect(techniqueDefaults('"ST:ST::score" - 4')).toEqual([{ from: "ST", skill: "", modifier: -4 }]);
+    expect(techniqueDefaults("ST:ST - 4")).toEqual([{ from: "ST", skill: "", modifier: -4 }]);
+    expect(techniqueDefaults('"ST:DX::score"')).toEqual([{ from: "DX", skill: "", modifier: 0 }]);
+  });
+
+  it("reads every default of a list, skipping a wildcard", () => {
+    expect(techniqueDefaults('"SK:Guns (Pistol)::level" - 4, SK:Gun! - 4')).toEqual([{ from: "skill", skill: "Guns (Pistol)", modifier: -4 }]);
+    expect(techniqueDefaults('"ST:ST::score" - 4, "SK:Wrestling::level" - 2')).toEqual([
+      { from: "ST", skill: "", modifier: -4 },
+      { from: "skill", skill: "Wrestling", modifier: -2 },
+    ]);
+  });
+
+  it("is null for a form it cannot read", () => {
+    expect(techniqueDefaults("@if(foo)")).toBeNull();
+    expect(techniqueDefaults(undefined)).toBeNull();
   });
 });
 
