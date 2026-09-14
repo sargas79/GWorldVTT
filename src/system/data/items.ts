@@ -2,6 +2,7 @@
  * Item data models: traits, skills, and equipment (GURPS Lite pp. 8-22).
  */
 
+import { SKILL_FAMILIES, type SkillFamily } from "../../rules/technique-skills.js";
 import { TECHNIQUE_DEFAULT_FROM, type TechniqueDefaultFrom } from "../../rules/skills.js";
 import { relativeLevelForPoints } from "../../rules/skills.js";
 import { SPELL_CLASSES, spellRelativeLevel, type MagicStyle, type SpellClass, type SpellDifficulty } from "../../rules/magic.js";
@@ -1438,6 +1439,8 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
   declare prerequisite: string;
   declare defaultFrom: TechniqueDefaultFrom;
   declare alternateDefaults: TechniqueAlternateDefault[];
+  declare skillFamilies: SkillFamily[];
+  declare skillChoices: string[];
   declare defaultModifier: number;
   declare points: number;
   declare maxRelativeToPrerequisite: number;
@@ -1460,6 +1463,20 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
       defaultFrom: new fields.StringField({
         required: true, nullable: false, initial: "skill", choices: [...TECHNIQUE_DEFAULT_FROM],
       }),
+      /**
+       * The kinds of skill a technique written for "any Melee Weapon skill"
+       * may be bought for (Characters p. 230). Set on a technique with no
+       * prerequisite yet, which asks for one when a character takes it.
+       */
+      skillFamilies: new fields.ArrayField(
+        new fields.StringField({ required: true, nullable: false, initial: "melee", choices: [...SKILL_FAMILIES] }),
+        { required: true, initial: [] },
+      ),
+      /** Skills named outright that it may be bought for: Jam's Brawling or Karate. */
+      skillChoices: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: false }),
+        { required: true, initial: [] },
+      ),
       /**
        * Further defaults, the best of which the character uses: "Defaults:
        * Binding, DX-2, Judo-1, or Wrestling-2" (Martial Arts p. 73).

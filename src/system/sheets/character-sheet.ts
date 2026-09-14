@@ -7,6 +7,7 @@
  * DOM at once and CSS controls visibility.
  */
 
+import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
 import { techniqueDefaultLabel } from "../item-summary.js";
 import { CharacterBuilder } from "../apps/character-builder.js";
 import { combatStyle, tacticalOnScene } from "../settings.js";
@@ -2856,6 +2857,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       stepPoints: GWorldCharacterSheet.#onStepPoints,
       stepLevels: GWorldCharacterSheet.#onStepLevels,
       editItem: GWorldCharacterSheet.#onEditItem,
+      chooseTechniqueSkill: GWorldCharacterSheet.#onChooseTechniqueSkill,
       showSummary: GWorldCharacterSheet.#onShowSummary,
       deleteItem: GWorldCharacterSheet.#onDeleteItem,
       toggleEquipped: GWorldCharacterSheet.#onToggleEquipped,
@@ -3957,6 +3959,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         .map((t: any) => ({
           item: t,
           resolved: t.system.derived?.level !== null,
+          // Written for a kind of skill, and not yet given one.
+          open: isOpenTechniqueData(t),
           // The default it is bought off -- the best of several where it has
           // them -- as the book writes it: "Judo Parry-1", "ST-4".
           defaultLabel: techniqueDefaultLabel({
@@ -4927,6 +4931,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * else drops as it always did.
    */
   override async _onDropItem(event: DragEvent, item: any): Promise<unknown> {
+    // A technique for "any Melee Weapon skill" asks which skill it is for
+    // before it is made (Characters p. 230). One already on this actor is only
+    // being moved, and goes the ordinary way.
+    if (item?.type === "technique" && item.parent !== this.actor && isOpenTechniqueData(item)) {
+      if (!this.actor.isOwner) return null;
+      const data = item.toObject();
+      delete data._id;
+      const chosen = await chooseTechniqueSkill(this.actor, data);
+      if (!chosen) return null;
+      return this.actor.createEmbeddedDocuments("Item", [chosen]);
+    }
     if (item?.type !== "template") return super._onDropItem(event, item);
 
     const template = templateFromItem(item);
@@ -5374,6 +5389,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const data: Record<string, unknown> = { name: `New ${label}`, type };
     if (category) data.system = { category };
     await this.actor.createEmbeddedDocuments("Item", [data]);
+  }
+
+  /**
+   * Picks the skill for an open technique already on the sheet -- one made
+   * with the New button, or brought in some other way that did not ask.
+   */
+  static async #onChooseTechniqueSkill(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.#itemFrom(target);
+    if (!item || !isOpenTechniqueData(item)) return;
+    const chosen = await chooseTechniqueSkill(this.actor, item.toObject());
+    if (!chosen) return;
+    await item.update({ name: chosen.name, "system.prerequisite": chosen.system.prerequisite });
   }
 
   static async #onEditItem(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

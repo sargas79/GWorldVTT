@@ -14,6 +14,7 @@
  * than bought, and the cost it states for them is billed once.
  */
 
+import { templateTechnique } from "./open-techniques.js";
 import { SYSTEM_ID } from "./constants.js";
 import {
   applyTemplate,
@@ -84,6 +85,7 @@ async function itemDataFor(entry: TemplateEntry): Promise<object | null> {
       // or a skill at a number of points the compendium entry knows nothing of.
       // They are its total, so they are read against how the document prices
       // itself rather than written over its `points`.
+      const documentName = String(data.name ?? "");
       const { name, ...cost } = entryItemFields(entry, {
         name: String(data.name ?? ""),
         points: Number(data.system?.points) || 0,
@@ -92,7 +94,8 @@ async function itemDataFor(entry: TemplateEntry): Promise<object | null> {
       });
       data.name = name;
       data.system = { ...data.system, ...cost };
-      return data;
+      // "Disarming (Rapier)" names the skill an open technique is for.
+      return templateTechnique(data, entry.name, documentName);
     }
     // A uuid that resolves to nothing is a compendium that moved. Falling back
     // to the name is better than dropping the entry silently.
