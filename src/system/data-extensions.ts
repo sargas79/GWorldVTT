@@ -155,7 +155,14 @@ export function extensionsField(documentName: ExtendedDocument): any {
           const current = cleaned[extension.module];
           if (current === undefined && options.partial) continue;
           const value = current && typeof current === "object" ? current : {};
-          cleaned[extension.module] = extension.field.clean(value, { ...options, partial: Boolean(options.partial) && current !== undefined });
+          // The stored data goes down with it, as a SchemaField hands each of
+          // its own fields: without a source, Foundry fills in every field a
+          // partial change leaves out, resetting what the update never touched.
+          cleaned[extension.module] = extension.field.clean(
+            value,
+            { ...options, partial: Boolean(options.partial) && current !== undefined },
+            { ...state, source: state?.source?.[extension.module] },
+          );
         }
         return cleaned;
       }
