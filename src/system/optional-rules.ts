@@ -18,6 +18,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { isAddonRuleKey, registeredRule, registeredRules } from "./rule-registry.js";
 
 export const OPTIONAL_RULES_KEY = "optionalRules";
 
@@ -201,8 +202,9 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
   ],
 };
 
-/** Whether the system actually reads a rule yet. */
+/** Whether the system, or the module that registered it, actually reads a rule yet. */
 export function isImplemented(key: string): boolean {
+  if (isAddonRuleKey(key)) return registeredRule(key)?.implemented ?? true;
   for (const group of Object.values(OPTIONAL_RULES)) {
     const rule = group.find((r) => r.key === key);
     if (rule) return rule.implemented !== false;
@@ -210,9 +212,12 @@ export function isImplemented(key: string): boolean {
   return true;
 }
 
-/** Every rule key, flattened. */
+/** Every rule key, flattened: the system's, then the registered modules'. */
 export function allRuleKeys(): string[] {
-  return Object.values(OPTIONAL_RULES).flatMap((group) => group.map((rule) => rule.key));
+  return [
+    ...Object.values(OPTIONAL_RULES).flatMap((group) => group.map((rule) => rule.key)),
+    ...registeredRules().map((rule) => rule.key),
+  ];
 }
 
 /** The defaults, as the stored object shape. */
@@ -221,7 +226,27 @@ export function defaultRuleState(): Record<string, boolean> {
   for (const group of Object.values(OPTIONAL_RULES)) {
     for (const rule of group) state[rule.key] = rule.default;
   }
+  for (const rule of registeredRules()) state[rule.key] = rule.default;
   return state;
+}
+
+/**
+ * What to save, given what is stored and what the page now reads.
+ *
+ * The page only knows the rules of the modules active right now. A module the
+ * GM has switched off still has its choices in the stored object, and saving
+ * the page must not throw them away: turning the module back on should find
+ * the table's rules as they were left.
+ */
+export function mergeStoredRules(
+  stored: Record<string, unknown> | null | undefined,
+  state: Record<string, boolean>,
+): Record<string, boolean> {
+  const out: Record<string, boolean> = {};
+  for (const [key, value] of Object.entries(stored ?? {})) {
+    if (isAddonRuleKey(key) && typeof value === "boolean") out[key] = value;
+  }
+  return { ...out, ...state };
 }
 
 /**
@@ -266,11 +291,16 @@ export function activeRules(): Record<string, boolean> {
 /**
  * Whether one rule is in play.
  *
- * An unknown key reads as on. A rule asked about before it has been registered
- * here is a rule someone forgot to list, and quietly disabling it would be a
- * harder bug to find than the missing entry.
+ * An unknown system key reads as on. A rule asked about before it has been
+ * registered here is a rule someone forgot to list, and quietly disabling it
+ * would be a harder bug to find than the missing entry. A module's key
+ * (`<module>.<key>`) is the other way round; see below.
  */
 export function isRuleOn(key: string): boolean {
+  // A module's rule that is not registered belongs to a module that is not
+  // running, and a rule from somewhere that isn't there is not in play. Only
+  // the system's own forgotten keys get the benefit of the doubt.
+  if (isAddonRuleKey(key) && !registeredRule(key)) return false;
   // A rule nothing reads is off whatever the stored state says. Flipping
   // `implemented` is then the single switch that brings one into play, rather
   // than something to remember alongside wiring it up.

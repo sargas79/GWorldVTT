@@ -13,9 +13,11 @@ import {
   RULE_GROUPS,
   defaultRuleState,
   isImplemented,
+  mergeStoredRules,
   ruleState,
 } from "../optional-rules.js";
 import { ruleReferencePages } from "../rule-references.js";
+import { registeredRuleGroups, registeredRules } from "../rule-registry.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -57,22 +59,44 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
     // own text, which the system cannot ship).
     const references = await ruleReferencePages();
 
-    return {
-      groups: RULE_GROUPS.map((group) => ({
+    const systemGroups = RULE_GROUPS.map((group) => ({
+      id: group.id,
+      label: group.label,
+      source: null,
+      rules: OPTIONAL_RULES[group.id].map((rule) => ({
+        key: rule.key,
+        label: `GWORLD.Rules.Rule.${rule.key}.Name`,
+        hint: `GWORLD.Rules.Rule.${rule.key}.Hint`,
+        reference: rule.reference,
+        referenceUuid: references.get(rule.key) ?? null,
+        // A rule nothing reads yet is shown greyed rather than hidden: the
+        // page is a map of the ruleset, and a gap in it is worth seeing.
+        pending: rule.implemented === false,
+        enabled: rule.implemented !== false && (state[rule.key] ?? rule.default),
+      })),
+    }));
+
+    // Modules' groups come after the system's, each saying which module it
+    // is from, so nobody mistakes an add-on's rule for part of the Basic Set.
+    const moduleGroups = registeredRuleGroups()
+      .map((group) => ({
         id: group.id,
         label: group.label,
-        rules: OPTIONAL_RULES[group.id].map((rule) => ({
+        source: game.modules?.get(group.module)?.title ?? group.module,
+        rules: registeredRules(group.id).map((rule) => ({
           key: rule.key,
-          label: `GWORLD.Rules.Rule.${rule.key}.Name`,
-          hint: `GWORLD.Rules.Rule.${rule.key}.Hint`,
+          label: rule.name,
+          hint: rule.hint,
           reference: rule.reference,
           referenceUuid: references.get(rule.key) ?? null,
-          // A rule nothing reads yet is shown greyed rather than hidden: the
-          // page is a map of the ruleset, and a gap in it is worth seeing.
-          pending: rule.implemented === false,
-          enabled: rule.implemented !== false && (state[rule.key] ?? rule.default),
+          pending: !rule.implemented,
+          enabled: rule.implemented && (state[rule.key] ?? rule.default),
         })),
-      })),
+      }))
+      .filter((group) => group.rules.length > 0);
+
+    return {
+      groups: [...systemGroups, ...moduleGroups],
       // Unsaved changes are worth saying out loud on a page whose whole point
       // is that nothing happens until you press the button.
       dirty: this.#pending !== null,
@@ -93,7 +117,8 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   static async #onSave(this: RulesSettings): Promise<void> {
-    await game.settings.set(SYSTEM_ID, OPTIONAL_RULES_KEY, this.#state());
+    const stored = game.settings.get(SYSTEM_ID, OPTIONAL_RULES_KEY) as Record<string, unknown> | null;
+    await game.settings.set(SYSTEM_ID, OPTIONAL_RULES_KEY, mergeStoredRules(stored, this.#state()));
     this.#pending = null;
     ui.notifications?.info(game.i18n.localize("GWORLD.Rules.Saved"));
     await this.close();
