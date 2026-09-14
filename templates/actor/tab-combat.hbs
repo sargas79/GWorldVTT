@@ -298,7 +298,7 @@
         </thead>
         <tbody>
           {{#each derived.melee as |atk|}}
-            <tr data-item-id="{{atk.itemId}}" {{#if atk.atDefault}}class="dim"{{/if}}>
+            <tr data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}" {{#if atk.atDefault}}class="dim"{{/if}}>
               <td>
                 <span class="wname">{{atk.name}}</span> <span class="wmode">{{atk.mode}}</span>
                 {{#if atk.atDefault}}<span class="tag" data-tooltip="{{localize 'GWORLD.Attack.AtDefaultHint'}}">{{localize "GWORLD.Skill.Untrained"}}</span>{{/if}}
@@ -331,6 +331,7 @@
                     data-natural-key="{{atk.naturalKey}}" data-min-st="{{atk.minSt}}" data-unarmed-bonus-skill="{{atk.unarmedBonusSkill}}"
                     data-fragmentation="{{atk.fragmentation}}"{{/if}}>{{atk.damage}}
                   <span class="dt">{{atk.damageType}}</span>
+                  {{> "gworld.attackExtras" atk=atk}}
                 </td>
               {{/if}}
               <td class="c">{{atk.reach}}</td>
@@ -395,7 +396,7 @@
         </thead>
         <tbody>
           {{#each derived.ranged as |atk|}}
-            <tr data-item-id="{{atk.itemId}}" {{#if atk.atDefault}}class="dim"{{/if}}>
+            <tr data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}" data-ranged="1" {{#if atk.atDefault}}class="dim"{{/if}}>
               <td>
                 <span class="wname">{{atk.name}}</span> <span class="wmode">{{atk.mode}}</span>
                 {{#if atk.atDefault}}<span class="tag" data-tooltip="{{localize 'GWORLD.Attack.AtDefaultHint'}}">{{localize "GWORLD.Skill.Untrained"}}</span>{{/if}}
@@ -423,13 +424,7 @@
                     data-fragmentation="{{atk.fragmentation}}"{{/if}}>{{atk.damage}}
                   <span class="dt">{{atk.damageType}}</span>
                   {{#if atk.ignoresDr}}<span class="tag" data-tooltip="{{localize 'GWORLD.Malediction.IgnoresDrHint'}}">{{localize "GWORLD.Malediction.IgnoresDr"}}</span>{{/if}}
-                  {{!-- Special ammunition (Monster Hunters 1 p. 63): a follow-up to roll, and what needs the GM. --}}
-                  {{#if atk.followUp}}
-                    <span class="tag rollable" data-action="rollDamage" data-damage-formula="{{atk.followUp.damage}}" data-damage-type="{{atk.followUp.damageType}}"
-                          data-damage-label="{{atk.name}} {{localize 'GWORLD.SpecialAmmo.FollowUp'}}" data-armor-divisor="1"
-                          data-explosive="{{#if atk.followUp.explosive}}1{{/if}}" data-tooltip="{{localize 'GWORLD.SpecialAmmo.FollowUpHint'}}">+{{atk.followUp.damage}} {{atk.followUp.damageType}}</span>
-                  {{/if}}
-                  {{#each atk.ammoNotes as |n|}}<span class="tag" data-tooltip="{{n.hint}}">{{n.label}}</span>{{/each}}
+                  {{> "gworld.attackExtras" atk=atk}}
                 </td>
               {{/if}}
               {{#if atk.malediction}}

@@ -94,6 +94,8 @@ interface DamageFlag {
   holy?: boolean;
   /** The item the damage was rolled from. */
   itemUuid?: string;
+  /** Which of its modes. */
+  mode?: { index: number; ranged: boolean };
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -302,6 +304,7 @@ async function applyFromCard(options: {
     ...(flag.material ? { material: flag.material } : {}),
     ...(flag.ignoresDr ? { ignoresDr: true } : {}),
     ...(flag.itemUuid ? { itemUuid: flag.itemUuid } : {}),
+    ...(flag.mode ? { mode: flag.mode } : {}),
     // The maximum belongs to the dice as rolled, so it is only the maximum for
     // someone the blast struck directly: collateral damage has already been
     // scaled down by distance, and pairing it with the undiminished maximum

@@ -709,6 +709,8 @@ export interface DamageRollOptions {
   holy?: boolean;
   /** The item the blow comes from, for a module's hooks; its UUID travels on the card. */
   item?: any;
+  /** Which of the item's modes it was rolled from. */
+  mode?: { index: number; ranged: boolean } | null;
 }
 
 /**
@@ -721,8 +723,9 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
   const { actor, label, formula, damageType, armorDivisor = 1, fragmentation = "" } = options;
   // A module may add lines to a damage roll, with what they are for.
   const item = options.item ?? null;
+  const mode = options.mode ?? null;
   const modifiers = callCombatHook(COMBAT_HOOKS.damageModifiers, {
-    actor, item, label, formula, damageType, modifiers: [...(options.modifiers ?? [])],
+    actor, item, mode, label, formula, damageType, modifiers: [...(options.modifiers ?? [])],
   }).modifiers.filter((m) => typeof m?.value === "number" && Number.isFinite(m.value));
   const explosive = options.explosive === true && isRuleOn("explosions");
   const cinematicBlast = explosive && isRuleOn("cinematicExplosions");
@@ -821,6 +824,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(options.ignoresDr ? { ignoresDr: true } : {}),
           ...(options.holy ? { holy: true } : {}),
           ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
+          ...(mode ? { mode } : {}),
           ...(options.weaponTarget ? { weaponTarget: options.weaponTarget } : {}),
           explosive,
           // The dice, not the rolled total: the blast radius is set by how
@@ -2522,8 +2526,13 @@ export async function handleDamageAction(
   if (!damageFormula || !damageType) return;
   // The row the damage was rolled from names the weapon, which a module's
   // hooks may want to know.
-  const itemId = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+  const itemRow = target.closest<HTMLElement>("[data-item-id]");
+  const itemId = itemRow?.dataset.itemId;
   const item = itemId ? (actor?.items?.get?.(itemId) ?? null) : null;
+  const modeIndex = Number(itemRow?.dataset.modeIndex);
+  const mode = item && itemRow?.dataset.modeIndex !== undefined && Number.isInteger(modeIndex)
+    ? { index: modeIndex, ranged: itemRow.dataset.ranged === "1" }
+    : null;
 
   const modifiers = await maybePromptModifiers(event);
   if (modifiers === null) return;
@@ -2651,6 +2660,7 @@ export async function handleDamageAction(
     ...(target.dataset.ignoresDr === "1" ? { ignoresDr: true } : {}),
     ...(target.dataset.holy === "1" ? { holy: true } : {}),
     ...(item ? { item } : {}),
+    ...(mode ? { mode } : {}),
     explosive: target.dataset.explosive === "1",
     fragmentation: target.dataset.fragmentation ?? "",
     modifiers,

@@ -103,6 +103,8 @@ export interface IncomingDamage {
   ignoresDr?: boolean;
   /** The item the blow was rolled from, where the card knows it. */
   itemUuid?: string;
+  /** Which of the item's modes it was rolled from. */
+  mode?: { index: number; ranged: boolean };
   /**
    * The arc the blow came from, where the table is playing with facing.
    * Armour marked "F" protects against the front alone (Characters p. 282);
@@ -455,11 +457,12 @@ export async function applyDamageToActor(
   // A module may change the blow before it is worked out: where it lands,
   // how hard, what it meets.
   const item = damage.itemUuid ? (fromUuidSync(damage.itemUuid) ?? null) : null;
-  const incoming = callCombatHook(COMBAT_HOOKS.injury, { actor, item, damage: { ...damage } }).damage;
+  const mode = damage.mode ?? null;
+  const incoming = callCombatHook(COMBAT_HOOKS.injury, { actor, item, mode, damage: { ...damage } }).damage;
 
   const resolved = resolveDamageAgainst(actor, incoming);
   if (resolved.injury === 0 && !resolved.collapsed) {
-    callCombatHook(COMBAT_HOOKS.afterDamage, { actor, item, damage: incoming, result: resolved });
+    callCombatHook(COMBAT_HOOKS.afterDamage, { actor, item, mode, damage: incoming, result: resolved });
     return resolved;
   }
 
@@ -468,7 +471,7 @@ export async function applyDamageToActor(
   // "If you are injured while aiming ... you lose your aim."
   await loseAim(actor, "injured");
   // And what it did, for a module with something that follows from it.
-  callCombatHook(COMBAT_HOOKS.afterDamage, { actor, item, damage: incoming, result: resolved });
+  callCombatHook(COMBAT_HOOKS.afterDamage, { actor, item, mode, damage: incoming, result: resolved });
   return resolved;
 }
 

@@ -1,0 +1,8 @@
+{{!-- What an attack row carries beyond its damage: a follow-up attack to roll
+     after the first, and notes for effects the GM adjudicates. --}}
+{{#if atk.followUp}}
+  <span class="tag rollable" data-action="rollDamage" data-damage-formula="{{atk.followUp.damage}}" data-damage-type="{{atk.followUp.damageType}}"
+        data-damage-label="{{atk.name}} {{#if atk.followUp.label}}{{atk.followUp.label}}{{else}}{{localize 'GWORLD.Attack.FollowUp'}}{{/if}}" data-armor-divisor="1"
+        data-explosive="{{#if atk.followUp.explosive}}1{{/if}}" data-tooltip="{{localize 'GWORLD.Attack.FollowUpHint'}}">+{{atk.followUp.damage}} {{atk.followUp.damageType}}</span>
+{{/if}}
+{{#each atk.notes as |n|}}<span class="tag" data-tooltip="{{n.hint}}">{{n.label}}</span>{{/each}}

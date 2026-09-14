@@ -111,7 +111,9 @@ import { encumbranceState } from "../../rules/encumbrance.js";
 import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
 import { evaluateBonus } from "../../rules/maneuvers.js";
-import { maneuverAllowsDefense, maneuverAllowsParry, maneuverInfo, maneuverKeys } from "../combat-extensions.js";
+import {
+  adjustWeaponAttacks, maneuverAllowsDefense, maneuverAllowsParry, maneuverInfo, maneuverKeys, type WeaponRowEntry,
+} from "../combat-extensions.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
   DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, registeredTechniqueKind, totalBonusLines, type BonusLine,
@@ -246,10 +248,10 @@ export function detailsFields() {
 
 /** A resolved attack mode, ready for the Combat tab to render. */
 export interface DerivedAttack {
-  /** Special ammunition's follow-up attack (Monster Hunters 1 p. 63). */
-  followUp?: { damage: string; damageType: DamageType; explosive: boolean } | null;
-  /** Special ammunition's effects that need the GM, as tags for the card. */
-  ammoNotes?: Array<{ label: string; hint: string }>;
+  /** A follow-up attack rolled after the first: special ammunition's (Monster Hunters 1 p. 63), or a module's. */
+  followUp?: { damage: string; damageType: DamageType | string; explosive: boolean; label?: string } | null;
+  /** Effects that need the GM, as tags on the row. */
+  notes?: Array<{ label: string; hint: string }>;
   /** Seconds before the gun can fire again: Dragon's Breath's three. */
   refireSeconds?: number;
   itemId: string;
@@ -2006,6 +2008,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const sys = item.system as {
         meleeModes?: any[]; rangedModes?: any[]; equipped?: boolean;
       };
+      // This item's rows, with what each was worked out from, for modules to adjust.
+      const weaponRows: WeaponRowEntry[] = [];
       // Accuracy adds to the user's skill with the weapon and Puissance to
       // its basic damage (Campaigns pp. 480-481).
       const magic = magicOf(item);
@@ -2125,11 +2129,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
               st: strikingSt,
             })
           : 0;
-        const meleeDamage = mode.damageSpecial ? SPECIAL : withQuality(withPuissance(perLevel(mode, resolveDamage(
+        const meleeBasis = mode.damageSpecial ? SPECIAL : withPuissance(perLevel(mode, resolveDamage(
           strikingSt, mode.damageBase, mode.damageModifier + unarmedBonus, mode.damageFormula, mode.minSt,
           Number(mode.damageExtraDice ?? 0) || 0,
-        ))), mode.damageType);
-        melee.push({
+        )));
+        const meleeDamage = mode.damageSpecial ? SPECIAL : withQuality(meleeBasis, mode.damageType);
+        const meleeRow = {
           itemId: item.id,
           modeIndex: index,
           name: item.name,
@@ -2196,6 +2201,22 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           affliction: Boolean(mode.affliction),
           afflictionAttribute: mode.afflictionAttribute ?? "",
           afflictionModifier: Number(mode.afflictionModifier ?? 0),
+        } as DerivedAttack;
+        melee.push(meleeRow);
+        weaponRows.push({
+          kind: "melee",
+          mode,
+          row: meleeRow,
+          basis: {
+            st: strikingSt,
+            damage: meleeBasis,
+            damageType: String(mode.damageType ?? ""),
+            armorDivisor: Number(mode.armorDivisor ?? 1) || 1,
+            halfDamageRange: 0,
+            maxRange: 0,
+            accuracy: 0,
+            malfunction: null,
+          },
         });
       });
 
@@ -2268,7 +2289,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         const skillLevel = foundRanged.level === null ? null : foundRanged.level + (effects?.skill ?? 0) + improvised(String(mode.skill ?? ""));
         const atDefault = foundRanged.atDefault;
 
-        ranged.push({
+        const rangedBasisSt = mode.weaponSt ?? strikingSt;
+        const rangedBasisRange = mode.rangeIsStMultiple
+          ? musclePoweredRange(mode.weaponSt ?? attrs.ST, mode.halfDamageRange, mode.maxRange)
+          : { halfDamage: mode.halfDamageRange, max: mode.maxRange };
+        const rangedRow = {
           itemId: item.id,
           modeIndex: index,
           name: item.name,
@@ -2291,7 +2316,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           ...(special
             ? {
                 followUp: special.followUp,
-                ammoNotes: special.notes.map((key) => ({
+                notes: special.notes.map((key) => ({
                   label: game.i18n?.localize?.(`GWORLD.SpecialAmmo.Note.${key}`) ?? key,
                   hint: game.i18n?.localize?.(`GWORLD.SpecialAmmo.NoteHint.${key}`) ?? "",
                 })),
@@ -2346,7 +2371,48 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           affliction: Boolean(mode.affliction),
           afflictionAttribute: mode.afflictionAttribute ?? "",
           afflictionModifier: Number(mode.afflictionModifier ?? 0),
+        } as DerivedAttack;
+        ranged.push(rangedRow);
+        weaponRows.push({
+          kind: "ranged",
+          mode,
+          row: rangedRow,
+          basis: {
+            st: rangedBasisSt,
+            damage: mode.damageSpecial ? SPECIAL : withPuissance(perLevel(mode, resolveDamage(
+              rangedBasisSt, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
+              Number(mode.damageExtraDice ?? 0) || 0,
+            ))),
+            damageType: String(mode.damageType ?? ""),
+            armorDivisor: Number(mode.armorDivisor ?? 1) || 1,
+            halfDamageRange: Number(rangedBasisRange.halfDamage ?? 0) || 0,
+            maxRange: Number(rangedBasisRange.max ?? 0) || 0,
+            accuracy: Number(mode.accuracy ?? 0) || 0,
+            malfunction: typeof mode.malfunction === "number" ? mode.malfunction : null,
+          },
         });
+      });
+
+      // Modules may change what this item's rows came to (API 1.10.0).
+      adjustWeaponAttacks({
+        actor: this.parent,
+        item,
+        rows: weaponRows,
+        damageAt: (entry, st) => entry.mode.damageSpecial ? SPECIAL : withPuissance(perLevel(entry.mode, resolveDamage(
+          st, entry.mode.damageBase, entry.mode.damageModifier, entry.mode.damageFormula, entry.mode.minSt,
+          Number(entry.mode.damageExtraDice ?? 0) || 0,
+        ))),
+        rangeAt: (entry, st) => {
+          const r = entry.mode.rangeIsStMultiple
+            ? musclePoweredRange(st, entry.mode.halfDamageRange, entry.mode.maxRange)
+            : { halfDamage: entry.mode.halfDamageRange, max: entry.mode.maxRange };
+          return { halfDamageRange: Number(r.halfDamage ?? 0) || 0, maxRange: Number(r.max ?? 0) || 0 };
+        },
+        addToDamage: (formula, bonus) => {
+          const parsed = parseDiceAdds(formula);
+          return parsed && bonus ? formatDiceAdds(addModifier(parsed, bonus)) : formula;
+        },
+        isRollable: (entry) => !entry.mode.affliction && !entry.mode.damageSpecial && parseDiceAdds(String(entry.row.damage ?? "")) !== null,
       });
     }
 
