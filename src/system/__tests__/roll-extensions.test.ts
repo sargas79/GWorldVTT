@@ -69,6 +69,19 @@ describe("point pools", () => {
     expect(await api.payFromPointPool(hero, { pool: "test-addon.flaky", id: "a" }, 1, "", "buySuccess")).toBe(false);
   });
 
+  it("offers nothing, and puts nothing in play, while a pool isn't available (#260)", async () => {
+    const api = await load();
+    let on = false;
+    const pools = vi.fn(() => [{ id: "all", label: "Luck", available: 3 }]);
+    api.registerPointPool({ module: "test-addon", key: "luck", label: "Luck", available: () => on, pools, pay: () => true });
+    expect(api.anyPointPools()).toBe(false);
+    expect(api.registeredPointPools(hero, "buySuccess")).toEqual([]);
+    expect(pools).not.toHaveBeenCalled();
+    on = true;
+    expect(api.anyPointPools()).toBe(true);
+    expect(api.registeredPointPools(hero, "buySuccess").map((p) => p.id)).toEqual(["all"]);
+  });
+
   it("refuses a pool with no pay function, or a key used twice", async () => {
     const api = await load();
     expect(api.registerPointPool({ module: "test-addon", key: "a", label: "A", pools: () => [] } as never)).toBeNull();

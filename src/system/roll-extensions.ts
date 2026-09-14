@@ -68,6 +68,12 @@ export interface PointPoolRegistration {
   key: string;
   label: string;
   /**
+   * Whether the pool is in play at all -- typically "is my switch on". While
+   * no registered pool is available, points aren't spent on outcomes. Defaults
+   * to always.
+   */
+  available?: () => boolean;
+  /**
    * The pools this character has that may pay for `use`. `roll.skill` names
    * the skill of a roll being bought up. Return none that can't pay.
    */
@@ -78,9 +84,10 @@ export interface PointPoolRegistration {
   pay: (context: { actor: any; pool: PointPool; cost: number; note: string }) => boolean | Promise<boolean>;
 }
 
-interface PointPoolEntry extends Required<Omit<PointPoolRegistration, "canPay">> {
+interface PointPoolEntry extends Required<Omit<PointPoolRegistration, "canPay" | "available">> {
   id: string;
   canPay: NonNullable<PointPoolRegistration["canPay"]> | null;
+  available: () => boolean;
 }
 
 const pointPools: PointPoolEntry[] = [];
@@ -97,18 +104,24 @@ export function registerPointPool(registration: PointPoolRegistration): string |
   pointPools.push({
     id, module: r.module, key: r.key, label: r.label.trim(), pools: r.pools, pay: r.pay,
     canPay: typeof r.canPay === "function" ? r.canPay : null,
+    available: typeof r.available === "function" ? r.available : () => true,
   });
   return id;
 }
 
-/** Whether any module has registered a pool, which is what puts spending points on outcomes in play. */
+/** The registered pools that are in play. */
+function availablePools(): PointPoolEntry[] {
+  return pointPools.filter((entry) => safely(`point pool ${entry.id}`, () => entry.available() === true, false));
+}
+
+/** Whether any registered pool is in play, which is what puts spending points on outcomes in play. */
 export function anyPointPools(): boolean {
-  return pointPools.length > 0;
+  return availablePools().length > 0;
 }
 
 /** The registered pools this character may spend from for a use, each with the registration it belongs to. */
 export function registeredPointPools(actor: any, use: PointPoolUse, roll: { skill?: string } = {}): Array<PointPool & { registration: string; gmCheck: boolean }> {
-  return pointPools.flatMap((entry) =>
+  return availablePools().flatMap((entry) =>
     safely(`point pool ${entry.id}`, () => entry.pools(actor, use, roll), [] as PointPool[])
       .filter((pool) => pool && typeof pool.id === "string" && typeof pool.label === "string")
       .map((pool) => ({
