@@ -24,7 +24,7 @@ import { isRuleOn } from "./optional-rules.js";
 import { rollSuccess } from "./roll.js";
 import { targetedTokens } from "./targets.js";
 import { heldSpell, holdSpell, rollSpellAttack, rollSpellDamage, spellAttackDamage, type HeldSpell } from "./held-spells.js";
-import { deliverSpellAttack, drawEnergy, energySourcesFor, spellAttackFor, type EnergySourceOption } from "./roll-extensions.js";
+import { deliverSpellAttack, drawEnergy, energySourcesFor, spellAttackFor, type CastingContext, type EnergySourceOption } from "./roll-extensions.js";
 import { postResistCard } from "./spell-resistance.js";
 import { penaltyForRoll } from "../rules/attribute-penalties.js";
 import {
@@ -79,6 +79,16 @@ export function worldMana(): ManaLevel {
     // Asked before settings are registered: the default serves.
   }
   return isManaLevel(stored) ? stored : "normal";
+}
+
+/**
+ * The mana where spells are being cast now, for add-on modules: the active
+ * scene's, else the world's, and whether the mana levels rule is on. Normal
+ * while it is off.
+ */
+export function manaLevel(): { level: ManaLevel; inPlay: boolean } {
+  const inPlay = isRuleOn("manaLevels");
+  return { level: inPlay ? currentMana() : "normal", inPlay };
 }
 
 /** A scene's own mana level, or null when it inherits the world's. */
@@ -401,6 +411,8 @@ interface Casting {
   reducedBy?: string;
   /** An add-on module's energy source the caster chose to draw on first. */
   energySource?: string;
+  /** How the spell is cast, as energy sources are told. */
+  castingContext?: CastingContext;
 }
 
 /**
@@ -425,7 +437,7 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
   const owed = energyOnOutcome({ cost, outcome, information: shape.information });
   // A module's energy source pays what it can first, and the caster the rest.
   const drawn = owed > 0 && casting.energySource
-    ? await drawEnergy(actor, item, casting.energySource, owed)
+    ? await drawEnergy(actor, item, casting.energySource, owed, casting.castingContext)
     : { energy: 0, points: 0, label: "" };
   const paid = owed - drawn.energy > 0 ? await payEnergy(actor, owed - drawn.energy, hpBurn) : { fp: 0, hp: 0 };
 
@@ -618,6 +630,8 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
 /** How a casting differs when it comes from a magic item rather than the caster's own knowledge. */
 export interface CastOptions {
   fromItem?: {
+    /** The magic item's id on the caster, for a module's energy sources. */
+    itemId?: string;
     itemName: string;
     /** The item's Power where it is, which is the skill the spell is cast at. */
     power: number;
@@ -689,7 +703,11 @@ export async function castSpell(actor: any, item: any, options: CastOptions = {}
   const resisted =
     item.system.resistedBy && !shape.area && !shape.missile ? targetResistance() : null;
 
-  const choices = await promptForCast({ item, shape, level, mana, ritual, bounds, running, resisted, sources: energySourcesFor(actor, item) });
+  // Energy sources are told whether the spell comes through a magic item.
+  const castingContext: CastingContext = {
+    castThrough: fromItem ? { itemId: String(fromItem.itemId ?? ""), itemName: fromItem.itemName } : null,
+  };
+  const choices = await promptForCast({ item, shape, level, mana, ritual, bounds, running, resisted, sources: energySourcesFor(actor, item, castingContext) });
   if (!choices) return;
 
   // ── the cost, before and after skill ─────────────────────────────────
@@ -741,7 +759,7 @@ export async function castSpell(actor: any, item: any, options: CastOptions = {}
 
   await resolveCasting({
     actor, item, shape, level, mana, manaInPlay, ritual, invested, cost, maintain, time,
-    modifiers, hpBurn, subject: subjectParts.join(", "), track: true, energySource: choices.energySource,
+    modifiers, hpBurn, subject: subjectParts.join(", "), track: true, energySource: choices.energySource, castingContext,
     ...(fromItem
       ? {
           label: `${item.name} (${fromItem.itemName})`,

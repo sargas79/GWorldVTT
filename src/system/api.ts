@@ -53,12 +53,13 @@ import { activeRules, isRuleOn } from "./optional-rules.js";
 import { REGISTER_RULES_HOOK, isAddonRuleKey, namespacedRuleKey, registerRule, registerRuleGroup } from "./rule-registry.js";
 import { rollDamage, rollSuccess } from "./roll.js";
 import { postResistance } from "./spell-resistance.js";
+import { manaLevel } from "./casting.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.12.0";
+export const API_VERSION = "1.13.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -218,7 +219,7 @@ const combat = Object.freeze({
 });
 
 /** The magic namespace: energy sources and spell attacks, and from 1.9.0 resistance cards. */
-const magic = Object.freeze({ ...magicApi, postResistance });
+const magic = Object.freeze({ ...magicApi, postResistance, manaLevel });
 
 /** Builds the frozen API object. */
 export function createApi(): GWorldApi {

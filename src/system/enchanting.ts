@@ -83,6 +83,7 @@ export async function castFromItem(actor: any, gear: any, index: number): Promis
   }
   await castSpell(actor, record, {
     fromItem: {
+      itemId: String(gear.id ?? ""),
       itemName: String(gear.name),
       power: spell.powerHere,
       costReduction: Number(entry.magic.powerReduction ?? 0),
