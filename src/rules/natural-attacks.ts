@@ -60,6 +60,28 @@ export function unarmedDamageBonusPerDie(skill: string, level: number, dx: numbe
   }
 }
 
+/**
+ * What an unarmed skill adds to a weapon's blow, in points (Characters
+ * pp. 182, 203, and note 3 of the melee weapon table, p. 271).
+ *
+ * The bonus is not only for bare hands. "Brawling ... increases all unarmed
+ * damage", brass knuckles and a blackjack included, and Martial Arts gives it
+ * to blows struck with a fan or a hilt. It is the same per-die bonus a punch
+ * gets, on the dice of the striker's basic thrust, and only for a blow made
+ * with that skill: the same weapon swung with Broadsword gets nothing.
+ */
+export function weaponUnarmedBonus(options: {
+  /** The skill the blow is rolled with. */
+  skill: string;
+  /** Its level, or null for a skill the character does not have. */
+  level: number | null;
+  dx: number;
+  st: number;
+}): number {
+  if (options.level === null) return 0;
+  return unarmedDamageBonusPerDie(options.skill, options.level, options.dx) * thrustDamage(options.st).dice;
+}
+
 export interface NaturalAttack {
   key: "punch" | "kick" | "bite" | "claw" | "striker";
   /** The skill the level came from, or "DX" when none applies. */

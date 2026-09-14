@@ -18,6 +18,7 @@ import {
   isBookkeeping,
   parseSkillUsed,
   parseSkillUsedWithModifier,
+  unarmedSkillsIn,
   powerOfRecord,
   qualityVariantOf,
   reference,
@@ -325,6 +326,14 @@ describe("the skill a weapon is used with (#174)", () => {
       .toEqual({ skill: "Brawling", modifier: -2 });
     expect(parseSkillUsedWithModifier("SK:Sword!-2, SK:Knife-2, ST:DX-4-2, SK:Force Sword-3-2"))
       .toEqual({ skill: "Knife", modifier: -2 });
+  });
+
+  it("finds the unarmed skills a list names outright, for one mode apiece (#196)", () => {
+    expect(unarmedSkillsIn("SK:Brawling, SK:Karate, ST:DX")).toEqual(["Brawling", "Karate"]);
+    expect(unarmedSkillsIn("SK:Boxing, SK:Brawling, SK:Karate, ST:DX")).toEqual(["Boxing", "Brawling", "Karate"]);
+    // A default at a penalty is not a skill the blow is struck with.
+    expect(unarmedSkillsIn("SK:Brawling-2, SK:Karate-2, ST:DX-2")).toEqual([]);
+    expect(unarmedSkillsIn("SK:Broadsword, ST:DX-5")).toEqual([]);
   });
 
   it("reads any other list with no modifier, as before", () => {

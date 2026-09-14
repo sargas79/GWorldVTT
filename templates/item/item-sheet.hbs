@@ -1330,6 +1330,9 @@
               <label class="icheck"><input type="checkbox" name="system.meleeModes.{{i}}.canParry"
                      {{#if m.canParry}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.CanParry"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.UnarmedBonusHint'}}"><input type="checkbox" name="system.meleeModes.{{i}}.unarmedBonus"
+                     {{#if m.unarmedBonus}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.UnarmedBonus"}}</label>
               <label class="icheck"><input type="checkbox" name="system.meleeModes.{{i}}.unbalanced"
                      {{#if m.unbalanced}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.Unbalanced"}}</label>

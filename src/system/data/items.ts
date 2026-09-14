@@ -530,6 +530,12 @@ function meleeModeField() {
      * penalty to the skill, so the parry the skill gives is unchanged.
      */
     skillModifier: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+    /**
+     * A blow that gets the unarmed skills' damage bonus when struck with one
+     * of them: brass knuckles, a blackjack (Characters p. 271, note 3), a
+     * combat fan's crush or a hilt punch (Martial Arts p. 226).
+     */
+    unarmedBonus: new fields.BooleanField({ initial: false }),
     /** Weapon parry modifier: -1 for a knife, +2 for a quarterstaff. */
     parryModifier: new fields.NumberField({
       required: true,

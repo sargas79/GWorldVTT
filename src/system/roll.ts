@@ -2284,6 +2284,7 @@ export async function handleDamageAction(
         damageModifier: Number(target.dataset.damageModifier) || 0,
         minSt: target.dataset.minSt ? Number(target.dataset.minSt) || null : null,
         naturalKey: target.dataset.naturalKey ?? "",
+        unarmedBonusSkill: target.dataset.unarmedBonusSkill ?? "",
         dx: Number(actor?.system?.derived?.attributes?.DX) || 10,
         skills: {
           ...(actor?.system?.skillLevelByName?.("Brawling") != null ? { Brawling: actor.system.skillLevelByName("Brawling") } : {}),

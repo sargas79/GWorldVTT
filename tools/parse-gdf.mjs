@@ -819,6 +819,13 @@ const RESISTANCE = ["ST", "DX", "IQ", "HT", "Will", "Per"];
 /** The three facts a damage column can carry beside the damage itself. */
 const DAMAGE_EXTRAS = { damageExtraDice: 0, damageSpecial: false, surge: false };
 
+/**
+ * The weapons of the Basic Set's unarmed table whose damage the unarmed skills
+ * raise (Characters p. 271, note 3) but whose GCA record does not say so.
+ * Brass knuckles are kept by hand with the flag set.
+ */
+const UNARMED_TABLE_WEAPONS = new Set(["Blackjack", "Sap"]);
+
 export function parseDamage(damage, damtype) {
   // A range note after the type -- "aff (10 yd.)" on a stun grenade -- is a
   // note, not part of the type.
@@ -890,7 +897,17 @@ export function parseDamage(damage, damtype) {
 
   if (!DAMAGE_TYPES.has(type)) return null;
 
-  const text = (damage ?? "").trim();
+  let text = (damage ?? "").trim();
+  // The unarmed skills' damage bonus, which GCA works into the formula itself:
+  // `thr + @max(@if("SK:Brawling::level" > ST:DX+1 then @basethdice(ST:Punch)
+  // ELSE 0), ...)`. It is the same bonus a punch gets (Characters p. 271,
+  // note 3), which the sheet works out from the skill, so the base damage is
+  // kept and the mode is marked for it.
+  const bonusForm = /^((?:sw|thr)(?:\s*[+-]\s*\d+)*)\s*\+\s*@max\s*\((.*)\)\s*$/is.exec(text);
+  const unarmedBonus = Boolean(bonusForm)
+    && /SK:(?:Brawling|Boxing|Karate)::level/i.test(bonusForm[2])
+    && /@basethdice/i.test(bonusForm[2]);
+  if (unarmedBonus) text = bonusForm[1].trim();
   // "sw+4", "sw-2+1d": a base, then any number of point and whole-die terms.
   // A chainsaw adds a die to the swing (Characters p. 274), and the die and
   // the points are two separate facts.
@@ -919,6 +936,8 @@ export function parseDamage(damage, damtype) {
         ...DAMAGE_EXTRAS,
         damageExtraDice: extraDice,
         surge,
+        // Only where it applies, so every other mode reads as it always has.
+        ...(unarmedBonus ? { unarmedBonus: true } : {}),
       },
       usesWeaponSt: false,
     };
@@ -1132,6 +1151,35 @@ function meleeMode(name, f) {
       unreadyAfterAttack,
     },
   };
+}
+
+/** The unarmed skills a skillused() list names outright, in its order. */
+export function unarmedSkillsIn(value) {
+  const found = [];
+  for (const entry of splitTop(value ?? "")) {
+    const m = /^\s*"?(?:SK:)?(Brawling|Boxing|Karate)"?\s*$/i.exec(entry);
+    if (!m) continue;
+    const skill = m[1][0].toUpperCase() + m[1].slice(1).toLowerCase();
+    if (!found.includes(skill)) found.push(skill);
+  }
+  return found;
+}
+
+/**
+ * A blow with the unarmed bonus, once for each unarmed skill it may be struck
+ * with.
+ *
+ * A mode names one skill, and the bonus is the one for the skill the blow is
+ * rolled with (Characters p. 271, note 3) -- so a combat fan listed for
+ * "Brawling, Karate" as a single mode would give a Karate fighter neither the
+ * roll nor the bonus. The Basic Set's brass knuckles are kept by hand the same
+ * way, one mode a skill: "Crush (Brawling)", "Crush (Karate)".
+ */
+function byUnarmedSkill(mode, skillused) {
+  if (!mode.unarmedBonus) return [mode];
+  const skills = unarmedSkillsIn(skillused);
+  if (skills.length < 2) return [mode];
+  return skills.map((skill) => ({ ...mode, name: `${mode.name} (${skill})`, skill }));
 }
 
 /** A ranged mode, or null with a reason. */
@@ -1626,10 +1674,18 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
       if (result.warning) note(`${name}: ${result.warning}`);
       if (result.skillWarning) note(`${name}: ${result.skillWarning}`);
       usable = true;
-      (isMelee ? meleeModes : rangedModes).push(result.mode);
+      if (isMelee) meleeModes.push(...byUnarmedSkill(result.mode, scope.f.get("skillused")));
+      else rangedModes.push(result.mode);
     }
 
     if (!usable) continue;
+
+    // The Basic Set's blackjack and sap are on the unarmed table under note 3,
+    // "Brawling ... increases all unarmed damage" (Characters p. 271), but GCA
+    // gives them a plain thr with no bonus in the formula.
+    if (!isSupplement(source) && UNARMED_TABLE_WEAPONS.has(name)) {
+      for (const mode of meleeModes) mode.unarmedBonus = true;
+    }
 
     taken.add(name);
     const armed = meleeModes.length > 0 || rangedModes.length > 0;

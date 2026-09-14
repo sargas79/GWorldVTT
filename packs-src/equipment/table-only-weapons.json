@@ -101,7 +101,8 @@
           "twoHanded": false,
           "unbalanced": false,
           "isFencing": false,
-          "unreadyAfterAttack": false
+          "unreadyAfterAttack": false,
+          "unarmedBonus": true
         },
         {
           "name": "thrust (Brawling)",
@@ -119,7 +120,8 @@
           "twoHanded": false,
           "unbalanced": false,
           "isFencing": false,
-          "unreadyAfterAttack": false
+          "unreadyAfterAttack": false,
+          "unarmedBonus": true
         },
         {
           "name": "thrust (Karate)",
@@ -137,7 +139,8 @@
           "twoHanded": false,
           "unbalanced": false,
           "isFencing": false,
-          "unreadyAfterAttack": false
+          "unreadyAfterAttack": false,
+          "unarmedBonus": true
         }
       ],
       "rangedModes": []

@@ -9101,7 +9101,8 @@
           "isFlail": false,
           "minSt": 7,
           "twoHanded": false,
-          "unreadyAfterAttack": false
+          "unreadyAfterAttack": false,
+          "unarmedBonus": true
         }
       ],
       "rangedModes": []
@@ -9155,7 +9156,8 @@
           "isFlail": false,
           "minSt": 7,
           "twoHanded": false,
-          "unreadyAfterAttack": false
+          "unreadyAfterAttack": false,
+          "unarmedBonus": true
         }
       ],
       "rangedModes": []

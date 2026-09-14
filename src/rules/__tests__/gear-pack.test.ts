@@ -75,6 +75,20 @@ describe("reading the ST column (Characters p. 270)", () => {
 });
 
 describe("reading the damage column", () => {
+  // GCA works the unarmed skills' bonus into the formula; the base is kept and
+  // the mode marked for it (sargas79/GWorldVTT#196).
+  it("reads the unarmed-bonus formula as its base damage with the flag", () => {
+    const form = `thr + @max(@if("SK:Brawling::level" > ST:DX+1 then @basethdice(ST:Punch) ELSE 0),@if("SK:Boxing::level" = ST:DX+1 then @basethdice(ST:Punch) ELSE @if("SK:Boxing::level" > ST:DX+1 then 2 * @basethdice(ST:Punch) ELSE 0)),@if("SK:Karate::level" = ST:DX then @basethdice(ST:Punch) ELSE @if("SK:Karate::level" > ST:DX then 2 * @basethdice(ST:Punch) ELSE 0)))`;
+    expect(parseDamage(form, "cr")?.fields).toMatchObject({ damageBase: "thr", damageModifier: 0, unarmedBonus: true });
+    expect(parseDamage(form.replace(/^thr/, "thr-1"), "cut")?.fields).toMatchObject({
+      damageBase: "thr",
+      damageModifier: -1,
+      damageType: "cut",
+      unarmedBonus: true,
+    });
+    expect(parseDamage("thr", "cr")?.fields.unarmedBonus).toBeUndefined();
+  });
+
   it("keeps a chainsaw's extra die apart from its points", () => {
     expect(parseDamage("sw+1d", "cut")?.fields).toMatchObject({
       damageBase: "sw",
