@@ -37,6 +37,14 @@ export declare function parseTime(raw: string | undefined): ParsedSpan;
 export declare function parseDuration(raw: string | undefined): ParsedSpan;
 export declare function parseClass(raw: string | undefined): ParsedClass;
 export declare function parseSkillUsed(raw: string | undefined): string;
+export interface ParsedDamage {
+  damage: string;
+  damageType: string;
+  explosive: boolean;
+  /** What the damage text said that isn't plain dice, for the spell's description. */
+  note?: string;
+}
+export declare function parseDamage(damage: string | undefined, damtype: string | undefined): ParsedDamage;
 export declare function parseNeeds(raw: string | undefined, lookup: NeedsLookup): string;
 export declare function reference(page: string | undefined, prefix: string, book: string): string;
 export declare function spellName(raw: string): string;
@@ -45,6 +53,7 @@ export declare function parseSpells(
   recs: unknown[],
   options: {
     reject: (what: string, why: string) => void;
+    note?: (what: string, text: string) => void;
     ids: Map<string, string>;
     prefix: string;
     book: string;

@@ -9,11 +9,13 @@ import { parsePrerequisites, SPELL_CLASSES } from "../magic.js";
 // the pack says a spell costs, and a wrong reading there is a wrong number
 // on every sheet. Testing them here is what keeps the pack honest.
 import {
+  parseDamage,
   parseClass,
   parseDuration,
   parseEnergy,
   parseNeeds,
   parseSkillUsed,
+  parseSpells,
   parseTime,
   reference,
   spellName,
@@ -154,6 +156,34 @@ describe("the spell parser's readings", () => {
     expect(reference("M74, B247", "B", "Basic Set: Characters")).toBe("Basic Set: Characters p. 247");
     expect(reference("M74, B247", "M", "Spellbook")).toBe("Spellbook p. 74");
     expect(reference("", "B", "Basic Set: Characters")).toBe("Basic Set: Characters");
+  });
+
+  // Damage a data file writes as something other than dice (sargas79/GWorldVTT#246).
+  it("reads a choice of damage as its first option, noting the other", () => {
+    expect(parseDamage("1d/1d+1", "burn")).toEqual({ damage: "1d", damageType: "burn", explosive: false, note: "damage is a choice: 1d or 1d+1" });
+    expect(parseDamage("1d+1/2d+1", "cr ex")).toMatchObject({ damage: "1d+1", explosive: true, note: "damage is a choice: 1d+1 or 2d+1" });
+  });
+
+  it("leaves special, attribute and combined damage unset, with the text in a note", () => {
+    for (const text of ["Spec.", "HT", "1d|HT"]) {
+      expect(parseDamage(text, "spcl")).toEqual({ damage: "", damageType: "", explosive: false, note: `damage as the data file writes it: "${text}"` });
+    }
+  });
+
+  it("keeps plain dice as they are, with no note", () => {
+    expect(parseDamage("~1d-1", "burn")).toEqual({ damage: "1d-1", damageType: "burn", explosive: false });
+    expect(parseDamage(undefined, undefined)).toEqual({ damage: "", damageType: "", explosive: false });
+  });
+
+  it("tells the caller about each such spell, and writes no damage it can't read", () => {
+    const notes: string[] = [];
+    const recs = [
+      { section: "SPELLS", text: `"Sample Bolt", IQ/H, cat(Test College), class(Regular), castingcost(1 to 3), time(1 sec.), duration(Instant), damage(1d/1d+1), damtype(burn), page(TB10)` },
+      { section: "SPELLS", text: `"Sample Curse", IQ/H, cat(Test College), class(Regular), castingcost(3), time(1 sec.), duration(Instant), damage(1d|HT), damtype(spcl), page(TB11)` },
+    ];
+    const spells = parseSpells(recs as never, { reject: () => {}, note: (what, text) => notes.push(`${what}: ${text}`), ids: new Map(), prefix: "TB", book: "Test Book" }) as Array<{ name: string; system: { attack: { damage: string } } }>;
+    expect(spells.map((spell) => [spell.name, spell.system.attack.damage])).toEqual([["Sample Bolt", "1d"], ["Sample Curse", ""]]);
+    expect(notes).toEqual(["Sample Bolt: damage is a choice: 1d or 1d+1", 'Sample Curse: damage as the data file writes it: "1d|HT"']);
   });
 
   it("drops the blank GCA leaves in a name", () => {
