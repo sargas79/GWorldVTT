@@ -8,7 +8,7 @@
  */
 
 import { outcomeStep } from "../rules/bonus-points.js";
-import { isCombatRoll } from "./bonus-points.js";
+import { isCombatRoll, spendingInPlay } from "./bonus-points.js";
 import { SYSTEM_ID } from "./constants.js";
 import { consumeMightyBlows, recordMightyBlows, spendFatigue } from "./extra-effort.js";
 import { consumeFeint } from "./feint.js";
@@ -408,7 +408,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   // A roll that can be bought up with points (Monster Hunters 1 p. 31)
   // remembers what it was, and an attack that missed remembers the defense
   // card it would have posted on a hit.
-  const successRoll = isRuleOn("bonusPointSpending") && actor?.uuid
+  const successRoll = spendingInPlay() && actor?.uuid
     ? {
         [SYSTEM_ID]: {
           successRoll: {

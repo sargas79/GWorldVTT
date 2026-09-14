@@ -24,6 +24,7 @@ import { formatDiceAdds, parseDiceAdds } from "../rules/dice.js";
 import { normalizeSkillName } from "../rules/skills.js";
 import { canEnlargeMissile, spellDamage } from "../rules/spell-attacks.js";
 import type { DamageType, SkillAttribute } from "../rules/types.js";
+import type { SuccessRollResult } from "../rules/success.js";
 
 export const HELD_SPELL_FLAG = "heldSpell";
 
@@ -129,6 +130,68 @@ function innateAttackLevel(actor: any, skillName: string): number {
       })
     : null;
   return fromCatalog ?? attributeScore("DX") - 4;
+}
+
+/** The damage a spell's declared attack does for this much energy, as dice, or blank. */
+export function spellAttackDamage(spell: any, energy: number): string {
+  const per = parseDiceAdds(String(spell?.system?.attack?.damage ?? ""));
+  return per ? formatDiceAdds(spellDamage(per, energy)) : "";
+}
+
+/**
+ * Rolls an attack with a cast spell, for an add-on's spell attack behavior:
+ * the declared skill's level (or the one given), through the same attack card
+ * a thrown Missile uses, and the damage the energy bought on a hit.
+ */
+export async function rollSpellAttack(
+  actor: any,
+  spell: any,
+  energy: number,
+  options: { skill?: number; label?: string; ranged?: boolean; noParry?: boolean } = {},
+): Promise<SuccessRollResult | null> {
+  if (!actor?.isOwner) return null;
+  const attack = spell?.system?.attack ?? {};
+  const damage = spellAttackDamage(spell, energy);
+  const ranged = options.ranged ?? true;
+  const label = options.label ?? String(spell?.name ?? "");
+  const control = syntheticControl({
+    rollType: "attack",
+    rollLabel: damage ? `${label} (${damage})` : label,
+    rollTarget: String(options.skill ?? innateAttackLevel(actor, String(attack.skill ?? ""))),
+    basedOn: "DX",
+    damageType: String(attack.damageType || "cr"),
+    ...(ranged
+      ? {
+          ranged: "1",
+          accuracy: String(Number(attack.accuracy ?? 0) || 0),
+          halfDamageRange: String(Number(attack.halfDamageRange ?? 0) || 0),
+          rateOfFire: "1",
+          recoil: "0",
+          bulk: "0",
+        }
+      : {}),
+    ...((options.noParry ?? ranged) ? { noParry: "1" } : {}),
+  });
+  const outcome = await handleRollAction(actor, new MouseEvent("click"), control);
+  if (outcome?.success && damage) await rollSpellDamage(actor, spell, energy, { label });
+  return outcome;
+}
+
+/** Rolls the damage a cast spell's declared attack does, for an add-on's spell attack behavior. */
+export async function rollSpellDamage(actor: any, spell: any, energy: number, options: { label?: string; formula?: string } = {}): Promise<void> {
+  const attack = spell?.system?.attack ?? {};
+  const formula = options.formula ?? spellAttackDamage(spell, energy);
+  if (!formula) {
+    ui.notifications?.info(game.i18n.format("GWORLD.Held.AsDescribed", { spell: String(spell?.name ?? "") }));
+    return;
+  }
+  await rollDamage({
+    actor,
+    label: options.label ?? String(spell?.name ?? ""),
+    formula,
+    damageType: (attack.damageType || "cr") as DamageType,
+    explosive: Boolean(attack.explosive) && isRuleOn("explosions"),
+  });
 }
 
 /** The best unarmed attack the caster has, for striking with a charged hand. */

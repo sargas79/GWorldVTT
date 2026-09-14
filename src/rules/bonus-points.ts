@@ -90,7 +90,12 @@ export function regainDestiny(current: number, starting: number): number {
 }
 
 /** Where points come from. */
-export type PointSource = { kind: "unspent" } | { kind: "destiny" } | { kind: "wildcard"; skill: string };
+export type PointSource =
+  | { kind: "unspent" }
+  | { kind: "destiny" }
+  | { kind: "wildcard"; skill: string }
+  /** A pool an add-on module registered: the registration, and the pool's id within it. */
+  | { kind: "pool"; pool: string; id: string };
 
 /** What points are being spent on. */
 export type PointUse = "buySuccess" | "fleshWound" | "guidance";

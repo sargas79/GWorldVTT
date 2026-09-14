@@ -23,7 +23,8 @@ import { applyFatigue } from "./fatigue.js";
 import { isRuleOn } from "./optional-rules.js";
 import { rollSuccess } from "./roll.js";
 import { targetedTokens } from "./targets.js";
-import { heldSpell, holdSpell, type HeldSpell } from "./held-spells.js";
+import { heldSpell, holdSpell, rollSpellAttack, rollSpellDamage, spellAttackDamage, type HeldSpell } from "./held-spells.js";
+import { deliverSpellAttack, drawEnergy, energySourcesFor, spellAttackFor, type EnergySourceOption } from "./roll-extensions.js";
 import { postResistCard } from "./spell-resistance.js";
 import { penaltyForRoll } from "../rules/attribute-penalties.js";
 import {
@@ -240,6 +241,8 @@ interface CastChoices {
   cannotSeeOrTouch: boolean;
   hpBurn: number;
   modifier: number;
+  /** An add-on module's energy source to draw on first, or blank for the caster alone. */
+  energySource: string;
 }
 
 /**
@@ -258,6 +261,8 @@ async function promptForCast(options: {
   bounds: { min: number; max: number | null };
   running: { spellsOn: number; concentratingOn: number };
   resisted: { name: string; resistance: number } | null;
+  /** Energy sources add-on modules offer for this spell. */
+  sources: EnergySourceOption[];
 }): Promise<CastChoices | null> {
   const { item, shape, bounds } = options;
   const energy = item.system.energy ?? {};
@@ -306,6 +311,10 @@ async function promptForCast(options: {
              <input type="checkbox" name="cannotSee"><span>${L("CannotSeeOrTouch")}</span>
            </label>`
         : ""}
+      ${options.sources.length
+        ? row(L("EnergyFrom"), `<select name="energySource"><option value="">${L("EnergyFromCaster")}</option>${options.sources
+          .map((s) => `<option value="${foundry.utils.escapeHTML(s.value)}">${foundry.utils.escapeHTML(s.label)}</option>`).join("")}</select>`)
+        : ""}
       ${row(L("BurnHp"), num("hpBurn", 0, 0, null))}
       ${row(game.i18n.localize("GWORLD.Chat.Modifier"), num("modifier", 0, -99, 99))}
     </div>`,
@@ -325,6 +334,7 @@ async function promptForCast(options: {
           cannotSeeOrTouch: form?.querySelector<HTMLInputElement>('input[name="cannotSee"]')?.checked ?? false,
           hpBurn: read("hpBurn", 0),
           modifier: read("modifier", 0),
+          energySource: form?.querySelector<HTMLSelectElement>('select[name="energySource"]')?.value ?? "",
         };
       },
     },
@@ -389,6 +399,8 @@ interface Casting {
   ritualText?: string;
   /** The key the card says the reduction with, in place of "off for skill". */
   reducedBy?: string;
+  /** An add-on module's energy source the caster chose to draw on first. */
+  energySource?: string;
 }
 
 /**
@@ -411,7 +423,11 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
   if (manaInPlay) outcome = outcomeUnderMana(outcome, mana);
 
   const owed = energyOnOutcome({ cost, outcome, information: shape.information });
-  const paid = owed > 0 ? await payEnergy(actor, owed, hpBurn) : { fp: 0, hp: 0 };
+  // A module's energy source pays what it can first, and the caster the rest.
+  const drawn = owed > 0 && casting.energySource
+    ? await drawEnergy(actor, item, casting.energySource, owed)
+    : { energy: 0, points: 0, label: "" };
+  const paid = owed - drawn.energy > 0 ? await payEnergy(actor, owed - drawn.energy, hpBurn) : { fp: 0, hp: 0 };
 
   // ── a critical failure ───────────────────────────────────────────────
   const rolls: any[] = [roll];
@@ -517,7 +533,11 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
 
   // ── the card ─────────────────────────────────────────────────────────
   const paidText = owed > 0
-    ? [paid.fp > 0 ? `${paid.fp} FP` : "", paid.hp > 0 ? `${paid.hp} HP` : ""].filter(Boolean).join(" + ")
+    ? [
+        drawn.energy > 0 ? `${drawn.energy} (${drawn.label})` : "",
+        paid.fp > 0 ? `${paid.fp} FP` : "",
+        paid.hp > 0 ? `${paid.hp} HP` : "",
+      ].filter(Boolean).join(" + ")
     : "";
   if (outcome.criticalSuccess) notes.push(L("CriticalSuccessNote"));
 
@@ -572,6 +592,23 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
     content,
     rolls,
   });
+
+  // A spell of another class whose record declares an attack is delivered by
+  // the add-on behavior that takes it, once the casting card is down.
+  const behavior = outcome.success && !held && !shape.blocking ? spellAttackFor(item) : null;
+  if (behavior) {
+    await deliverSpellAttack(behavior, {
+      actor,
+      spell: item,
+      outcome,
+      energy: casting.invested,
+      attack: { ...(item.system.attack ?? {}) },
+      damage: spellAttackDamage(item, casting.invested),
+      targets: targetedTokens().map((token: any) => token?.actor).filter(Boolean),
+      rollAttack: (options) => rollSpellAttack(actor, item, casting.invested, options),
+      rollDamage: (options) => rollSpellDamage(actor, item, casting.invested, options),
+    });
+  }
 
   return outcome;
 }
@@ -652,7 +689,7 @@ export async function castSpell(actor: any, item: any, options: CastOptions = {}
   const resisted =
     item.system.resistedBy && !shape.area && !shape.missile ? targetResistance() : null;
 
-  const choices = await promptForCast({ item, shape, level, mana, ritual, bounds, running, resisted });
+  const choices = await promptForCast({ item, shape, level, mana, ritual, bounds, running, resisted, sources: energySourcesFor(actor, item) });
   if (!choices) return;
 
   // ── the cost, before and after skill ─────────────────────────────────
@@ -704,7 +741,7 @@ export async function castSpell(actor: any, item: any, options: CastOptions = {}
 
   await resolveCasting({
     actor, item, shape, level, mana, manaInPlay, ritual, invested, cost, maintain, time,
-    modifiers, hpBurn, subject: subjectParts.join(", "), track: true,
+    modifiers, hpBurn, subject: subjectParts.join(", "), track: true, energySource: choices.energySource,
     ...(fromItem
       ? {
           label: `${item.name} (${fromItem.itemName})`,

@@ -206,6 +206,7 @@ import { weaknessOf } from "../../rules/weakness.js";
 import { exposeToWeakness } from "../weakness.js";
 import { cancelRitual, describeRitualInEffect, extendRitual, startRitualCasting, triggerRitual } from "../ritual-casting.js";
 import { requestGuidance, startNewSession } from "../bonus-points.js";
+import { anyPointPools, registeredPointPools } from "../roll-extensions.js";
 import { applyHolyContact } from "../holy.js";
 import { unconditionalReaction, type ReactionSource } from "../../rules/social.js";
 import { SENSES } from "../../rules/senses.js";
@@ -3074,6 +3075,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       limited: actor.limited,
       isOwner: actor.isOwner,
       isGM: game.user?.isGM === true,
+      // Spending points on outcomes, and the pools add-on modules registered for it.
+      pointSpending: {
+        inPlay: Boolean(derived.bonusPoints?.inPlay) || anyPointPools(),
+        pools: registeredPointPools(actor, "buySuccess"),
+      },
       // Controls edited in place carry ids built from this, so the redraw
       // that follows every edit can put focus back where it was.
       sheetId: this.id,
