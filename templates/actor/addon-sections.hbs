@@ -1,6 +1,7 @@
 {{!-- The item types add-on modules registered for this tab: a list each, with
      the columns and row actions the module gave, and the sheet's own edit,
      delete and new buttons. --}}
+{{> "gworld.addonSheetSections" sections=addonSheetSections.end}}
 {{#each addonSections as |section|}}
   <div class="isec addon-section" style="gap: 0" data-addon-type="{{section.type}}">
     <div class="grph">

@@ -1,4 +1,5 @@
 <section class="tab ibody{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+  {{> "gworld.addonSheetSections" sections=addonSheetSections.start}}
 
   {{#if npc}}
     {{!-- What only an NPC has: the one-pane NPC sheet shows these, and this

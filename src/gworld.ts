@@ -39,6 +39,7 @@ import { GWorldCharacterSheet } from "./system/sheets/character-sheet.js";
 import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldGenericItemSheet } from "./system/sheets/generic-item-sheet.js";
 import { setGenericSheetRegistrar } from "./system/data-extensions.js";
+import { registerSheetExtensionHooks } from "./system/sheet-extensions.js";
 import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
 import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
 import { READY_HOOK, createApi, warnIncompatibleModules } from "./system/api.js";
@@ -109,6 +110,7 @@ Hooks.once("init", () => {
   // A damage card is posted before anyone has decided who it hits, so the card
   // grows an apply control when it renders.
   registerChatHooks();
+  registerSheetExtensionHooks();
   // The GM's start-of-session refresh of points to spend (Monster Hunters 1 pp. 23, 28).
   registerBonusPointHooks();
 

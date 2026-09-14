@@ -1,0 +1,5 @@
+{{!-- Sections add-on modules registered for this place on the sheet, each its
+     module's own template, already rendered. --}}
+{{#each sections as |section|}}
+  <div class="isec addon-sheet-section" data-addon-section="{{section.id}}">{{{section.html}}}</div>
+{{/each}}

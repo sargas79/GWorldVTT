@@ -27,6 +27,7 @@
   </header>
 
   <div class="isbody">
+    {{> "gworld.addonSheetSections" sections=addonSheetSections.start}}
 
     {{#if isSkill}}
       <div class="ifields">
@@ -1566,5 +1567,6 @@
       </label>
     </div>
 
+    {{> "gworld.addonSheetSections" sections=addonSheetSections.end}}
   </div>
 </div>

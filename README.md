@@ -374,6 +374,7 @@ What's in it:
 | `items` | `derived`: read-only. |
 | `combat` | Combat extension points (since 1.1.0); see below. |
 | `data` | Data extension points (since 1.2.0); see below. |
+| `sheets`, `chat` | Sheet and chat extension points (since 1.3.0); see below. |
 | `hooks` | The names of the hooks below. |
 
 Lifecycle, in order:
@@ -486,6 +487,41 @@ without editing the system's data models. Register from `init` or the
 
 `tools/validate-packs.mjs --src <dir>` accepts documents of module types and
 `system.extensions` data.
+
+### Sheet and chat extension points
+
+`game.gworld.api.sheets` and `game.gworld.api.chat` give a module places to
+show things and ask the table to do them. Templates are the module's own
+Handlebars files (`modules/<module>/templates/...`); the system preloads each
+one when it is registered, and a module that uses partials loads them with
+`foundry.applications.handlebars.loadTemplates`.
+
+- **`sheets.registerSheetSection({ module, key, sheet, tab?, position?, template, context?, listeners?, visible? })`.**
+  Renders `template` at the `start` or `end` (the default) of a character
+  sheet `tab`, or of the item sheet's body when `sheet` is `"item"`. The
+  template gets what `context(document, sheet)` returns, plus `document`,
+  `editable` and `owner`. `listeners(element, document, sheet)` binds the
+  section's own events, and only runs for a user who owns the document. Inputs
+  named `system.extensions.<module>.<field>` save with the sheet's form.
+- **`sheets.registerRowAction({ module, key, itemTypes, label, icon?, visible?, run })`.**
+  A button on the character sheet's rows for items of those types, before the
+  row's delete button. It is only there for a user who owns the character, and
+  `run(item, actor)` only runs for one.
+- **`chat.registerChatCard({ module, key, template, actions })`** and
+  **`chat.post("<module>.<key>", data, { actor?, whisper? })`.**
+  A button in the template carries `data-addon-card-action="<name>"`. Each of
+  `actions` is a handler `({ message, data, actor, button, user })`, or
+  `{ permission, visible?, run }`. With `permission: "owner"` (the default),
+  whoever owns the card's actor may press it; on a card with no actor, the
+  user who posted it may. With `"gm"`, only the GM may. The GM may press any
+  button. Buttons a viewer may not press are removed, and so are all of them
+  while the module isn't running.
+- **`sheets.registerGmTool({ module, key, label, icon?, open, visible? })`.**
+  A button in the token controls, shown to the GM only.
+
+Sheet markup follows the system's: a section is an `.isec`, a heading
+`.grph`, a list a `table.gt` with `tr[data-item-id]` rows, a button `.ibtn`,
+and a hint `p.ihint`.
 
 ### A module's own rules
 
