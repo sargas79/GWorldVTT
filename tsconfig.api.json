@@ -1,0 +1,14 @@
+// Emits the add-on API's type declarations into dist/types, for modules that
+// build against a checkout of the system (see src/system/api.ts).
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "dist/types",
+    "rootDir": ".",
+    "types": ["node"]
+  },
+  "include": ["src/system/api.ts", "src/system/foundry.d.ts"]
+}

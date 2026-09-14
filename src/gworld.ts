@@ -39,14 +39,22 @@ import { GWorldCharacterSheet } from "./system/sheets/character-sheet.js";
 import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
 import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
+import { READY_HOOK, createApi, warnIncompatibleModules } from "./system/api.js";
 import { closeRuleRegistration, openRuleRegistration, registerRule, registerRuleGroup } from "./system/rule-registry.js";
 import { registerSettings } from "./system/settings.js";
 import { loadFilePartials, registerTemplateHelpers } from "./system/templates.js";
 
 export { SYSTEM_ID };
 
+/** The add-on API, built once; `game.gworld.api` holds it from `init` on. */
+const api = createApi();
+
 Hooks.once("init", () => {
   console.log(`${SYSTEM_ID} | Initialising GURPS system`);
+
+  // The public API for add-on modules, in place before any of them is asked
+  // to register anything (see src/system/api.ts for the contract).
+  game.gworld = { api };
 
   CONFIG.Actor.dataModels.character = CharacterData;
   CONFIG.Actor.dataModels.npc = NpcData;
@@ -152,7 +160,7 @@ Hooks.once("init", () => {
   // Exposed for macros and for poking at the rules engine from the console.
   // The registry is here too, for a module that registers its rules from its
   // own `init` rather than from the `gworld.registerRules` hook.
-  (globalThis as Record<string, unknown>).gworld = { rules, registry: { registerRuleGroup, registerRule } };
+  (globalThis as Record<string, unknown>).gworld = { rules, api, registry: { registerRuleGroup, registerRule } };
 });
 
 // From here on settings are read and sheets drawn, so a rule turning up now
@@ -164,6 +172,11 @@ Hooks.once("ready", () => {
   // What the compendia know about skills nobody on the sheet has learned,
   // so a weapon whose skill is missing is rolled at the book's default.
   void loadSkillCatalog();
+
+  // A module that needs an API this system doesn't provide is worth the GM
+  // hearing about now, rather than finding its rules quietly absent.
+  warnIncompatibleModules();
+  Hooks.callAll(READY_HOOK, api);
 });
 
 export { rules };
