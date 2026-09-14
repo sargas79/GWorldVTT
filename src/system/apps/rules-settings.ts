@@ -78,6 +78,8 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Modules' groups come after the system's, each saying which module it
     // is from, so nobody mistakes an add-on's rule for part of the Basic Set.
+    // A group with no rules yet is shown too, saying so: the module is there,
+    // and its rules are still to come.
     const moduleGroups = registeredRuleGroups()
       .map((group) => ({
         id: group.id,
@@ -92,8 +94,7 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
           pending: !rule.implemented,
           enabled: rule.implemented && (state[rule.key] ?? rule.default),
         })),
-      }))
-      .filter((group) => group.rules.length > 0);
+      }));
 
     return {
       groups: [...systemGroups, ...moduleGroups],
