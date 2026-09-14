@@ -1,0 +1,40 @@
+{{!-- The item types add-on modules registered for this tab: a list each, with
+     the columns and row actions the module gave, and the sheet's own edit,
+     delete and new buttons. --}}
+{{#each addonSections as |section|}}
+  <div class="isec addon-section" style="gap: 0" data-addon-type="{{section.type}}">
+    <div class="grph">
+      {{section.label}}
+      {{#if @root.editable}}
+        <button type="button" class="ibtn" data-action="createItem" data-item-type="{{section.type}}"
+                data-item-label="{{section.label}}">{{localize "GWORLD.Action.New"}}</button>
+      {{/if}}
+    </div>
+    {{#if section.rows.length}}
+      <table class="gt">
+        <tbody>
+          {{#each section.rows as |row|}}
+            <tr data-item-id="{{row.id}}">
+              <td><span class="wname rollable" data-action="editItem">{{row.name}}</span></td>
+              {{#each row.columns as |column|}}
+                <td class="n" title="{{column.label}}">{{column.value}}</td>
+              {{/each}}
+              <td class="c">
+                {{#each row.actions as |action|}}
+                  <button type="button" class="iconbtn rollable" data-action="addonItemAction" data-addon-action="{{action.key}}"
+                          title="{{action.label}}" aria-label="{{action.label}}"><i class="{{action.icon}}"></i></button>
+                {{/each}}
+                {{#if @root.editable}}
+                  <button type="button" class="iconbtn rollable" data-action="deleteItem"
+                          title="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{else}}
+      <p class="ihint">{{localize "GWORLD.Addon.NoneYet"}}</p>
+    {{/if}}
+  </div>
+{{/each}}

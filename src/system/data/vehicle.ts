@@ -24,6 +24,7 @@ import {
 import { locationsOf, mediumOf } from "../../rules/vehicle-combat.js";
 import { scaleScore, vehicleDodge } from "../../rules/scale.js";
 import { normalizeSkillName } from "../../rules/skills.js";
+import { afterPrepare, extensionsField } from "../data-extensions.js";
 
 const fields = foundry.data.fields;
 
@@ -74,6 +75,8 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
 
   static override defineSchema() {
     return {
+      /** Fields add-on modules keep on the vehicle, one object per module. */
+      extensions: extensionsField("Actor"),
       description: new fields.HTMLField({ required: true, blank: true, initial: "" }),
       /** A line for the table: what it is doing here, who owns it, where it is kept. */
       notes: new fields.StringField({ required: true, blank: true, initial: "" }),
@@ -215,5 +218,6 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
       /** Below a third of its hit points, which is when things start failing. */
       battered: this.hp.value > 0 && this.hp.value < this.hp.max / 3,
     };
+    afterPrepare(this.parent);
   }
 }

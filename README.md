@@ -373,6 +373,7 @@ What's in it:
 | `actors` | `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`: read-only. |
 | `items` | `derived`: read-only. |
 | `combat` | Combat extension points (since 1.1.0); see below. |
+| `data` | Data extension points (since 1.2.0); see below. |
 | `hooks` | The names of the hooks below. |
 
 Lifecycle, in order:
@@ -433,6 +434,58 @@ and skipped, and the roll goes on.
   - `gworld.afterDamage`: the blow and its result;
   - `gworld.breakageOdds`: set `breakage`;
   - `gworld.randomHitLocation`: set `location` or `addonLocation`.
+
+### Data extension points
+
+`game.gworld.api.data` lets a module keep its own data on the system's
+documents, bring item types of its own, and change what the system works out,
+without editing the system's data models. Register from `init` or the
+`gworld.registerRules` hook, so the fields exist before documents are read.
+
+- **`registerItemType({ module, type, label, tab, columns?, actions?, builderStep?, indexFields?, available?, genericSheet? })`.**
+  For a type the module's manifest declares under `documentTypes`, named
+  `<module>.<type>`. The character sheet lists the type on `tab` (`attributes`,
+  `skills`, `magic`, `traits`, `combat`, `body`, `gear`, `description`) with
+  a New button, the `columns(item, actor)` it gives, and a button for each of
+  its `actions` (`{ key, label, icon?, visible?, run(item, actor) }`). A list
+  on the Magic tab keeps that tab when the campaign has no magic.
+  `builderStep` offers the type at that step of the guided build, and
+  `indexFields` names the `system.*` fields the compendium picker should read
+  for its columns. Unless `genericSheet` is `false`, the item opens on a
+  generic sheet: its name and picture, a field for each thing its data model
+  stores, and its description.
+- **`registerDataExtension({ module, documentName, types, schema })`.**
+  Fields under `system.extensions.<module>` on the system's Actor or Item types
+  (`types` is a list, or `"*"`). `schema` is what a `SchemaField` takes. The
+  data is validated and filled with initial values while the module runs, and
+  left exactly as it is while it doesn't. Read it with
+  `getExtension(document, module)` and write it with
+  `updateExtension(document, module, patch)`.
+- **`registerPriceModifier({ module, key, types?, apply })`.**
+  `apply(item, { cost, weight })` returns a new `cost`, `weight` and `label`,
+  or `null`. Modifiers run in registration order on the stored figures, never
+  on their own output; the result is `item.effectivePrice`, and the character's
+  wealth, encumbrance and gear lists use it. `effectivePrice(item)` works it out.
+- **`registerTechniqueKind({ module, key, label, derive, cost? })`.**
+  A technique whose `system.kind` is `<module>.<key>` gets its level from
+  `derive(technique, actor, { levelOf, standard })`, which returns
+  `{ level, levels?, cappedByPrerequisite?, notes? }`. `standard()` is what the
+  system would have worked out. `cost(technique)` replaces its points in the
+  character's total. The technique's sheet offers the registered kinds.
+- **Hooks:**
+  - `gworld.prepareDerivedData`, with the actor or item, after the system has
+    prepared it.
+  - `gworld.skillBonuses`, with `{ actor, item, name, difficulty, lines }`: the
+    system's lines are keyed `bonus`, `magic`, `talent` and `tools`. Push lines
+    (`{ label, value, source }`), or change a line's `value` and give its
+    `reason`. The skill's level tooltip shows the lines.
+  - `gworld.attributeBonuses`, with `{ actor, attributes, lines }`: push
+    `{ attribute, label, value, source }`. They show on the attribute's card.
+  - `gworld.defenseBonuses`, with `{ actor, defenses, lines }`: push
+    `{ defense, label, value, source }`. They show in the defense's breakdown.
+
+`tools/validate-packs.mjs --src <dir>` accepts documents of module types and
+`system.extensions` data.
 
 ### A module's own rules
 

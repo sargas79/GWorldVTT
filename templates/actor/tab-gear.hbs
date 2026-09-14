@@ -144,8 +144,8 @@
             <tr class="dim" data-item-id="{{item.id}}">
               <td><span class="wname" data-action="editItem">{{item.name}}</span></td>
               <td class="n">{{item.system.quantity}}</td>
-              <td class="n">{{decimal item.system.weight 1}} lb</td>
-              <td class="n">${{item.system.cost}}</td>
+              <td class="n">{{decimal item.effectivePrice.weight 1}} lb</td>
+              <td class="n">${{item.effectivePrice.cost}}</td>
               <td class="c">
                 {{#if @root.editable}}
                   <button type="button" class="rollable iconbtn" data-action="deleteItem"
@@ -269,5 +269,7 @@
       </div>
     {{/if}}
   </div>
+
+  {{> "gworld.addonSections"}}
 
 </section>

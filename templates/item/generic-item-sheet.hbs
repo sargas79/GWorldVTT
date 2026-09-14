@@ -1,0 +1,42 @@
+{{!-- The sheet for an add-on module's item type that brings none of its own.
+     DocumentSheetV2 supplies the <form>. --}}
+<div class="isheet">
+
+  <header class="ihead blueprint">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    {{#if editable}}
+      <button type="button" class="iimgbtn" data-action="editItemImage"
+              aria-label="{{localize 'GWORLD.Item.EditImage'}}"
+              title="{{localize 'GWORLD.Item.EditImage'}}">
+        <img class="iimg editable" src="{{item.img}}" alt="" />
+      </button>
+    {{else}}
+      <img class="iimg" src="{{item.img}}" alt="" />
+    {{/if}}
+    <div class="ihead-fields">
+      <input type="text" name="name" value="{{item.name}}" placeholder="{{localize 'GWORLD.Item.Name'}}"
+             aria-label="{{localize 'GWORLD.Item.Name'}}"
+             {{#unless editable}}disabled{{/unless}} />
+      <span class="itype">{{typeLabel}}</span>
+    </div>
+  </header>
+
+  <div class="isbody">
+    <div class="isub">
+      {{#each fields as |row|}}
+        {{{row}}}
+      {{else}}
+        <p class="ihint">{{localize "GWORLD.Addon.NoFields"}}</p>
+      {{/each}}
+    </div>
+
+    {{#if hasDescription}}
+      <div class="isub">
+        <div class="isub-head">{{localize "GWORLD.Column.Description"}}</div>
+        <prose-mirror class="box editor prose" name="system.description"
+                      value="{{descriptionSource}}" toggled
+                      {{#unless editable}}disabled{{/unless}}>{{{description}}}</prose-mirror>
+      </div>
+    {{/if}}
+  </div>
+</div>

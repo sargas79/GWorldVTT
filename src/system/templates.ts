@@ -45,6 +45,7 @@ const ICONS: Record<string, string> = {
  */
 const FILE_PARTIALS: Record<string, string> = {
   "gworld.templateEntry": `systems/${SYSTEM_ID}/templates/item/template-entry.hbs`,
+  "gworld.addonSections": `systems/${SYSTEM_ID}/templates/actor/addon-sections.hbs`,
 };
 
 /** Loads the partials that live in files. Awaited during init. */
@@ -78,6 +79,18 @@ export function registerTemplateHelpers(): void {
     if (!Number.isFinite(v) || v === 0) return "0";
     return v > 0 ? `+${v}` : String(v);
   });
+
+  /**
+   * Bonus lines as one line of text -- "Talent +2 · Equipment +1" -- with the
+   * reason beside any line a module changed. For a tooltip.
+   */
+  Handlebars.registerHelper("bonusLines", (lines: unknown) =>
+    (Array.isArray(lines) ? lines : [])
+      .map((l: { label?: string; value?: number; reason?: string }) => {
+        const v = Number(l?.value) || 0;
+        return `${l?.label ?? ""} ${v >= 0 ? "+" : ""}${v}${l?.reason ? ` (${l.reason})` : ""}`;
+      })
+      .join(" · "));
 
   /** Greater-than comparison, for conditionals the data cannot express directly. */
   Handlebars.registerHelper("gt", (a: number, b: number) => Number(a) > Number(b));

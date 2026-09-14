@@ -33,6 +33,7 @@ import {
 } from "../../rules/special-ammunition.js";
 import { resolveSuccess } from "../../rules/success.js";
 import { SYSTEM_ID } from "../constants.js";
+import { registeredTechniqueKinds } from "../data-extensions.js";
 import { sourceCollections } from "../compendium-sources.js";
 import { EQUIPMENT_CATEGORIES } from "../gear-groups.js";
 import { isRuleOn } from "../optional-rules.js";
@@ -512,6 +513,14 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       ...(item.type === "technique"
         ? { familiesTicked: Object.fromEntries(((item.system as any).skillFamilies ?? []).map((kind: string) => [kind, true])) }
         : {}),
+      // Technique kinds add-on modules registered, for a technique worked out
+      // their way. A kind whose module isn't running stays a choice, so saving
+      // the sheet doesn't quietly turn the technique into an ordinary one.
+      techniqueKinds: (() => {
+        const kinds = registeredTechniqueKinds();
+        const current = item.type === "technique" ? String((item.system as any).kind ?? "") : "";
+        return current && !kinds.some((k) => k.key === current) ? [...kinds, { key: current, label: current }] : kinds;
+      })(),
       techniqueDefaultFrom: keyed("Technique.From", ["skill", "parry", "block", "dodge", "ST", "DX", "IQ", "HT", "Will", "Per"]),
       skillFamilies: keyed("Technique.Family", ["any", "unarmed", "melee", "oneHandedMelee", "shield", "ranged"]),
       categories: keyed("TraitCategory", ["advantage", "disadvantage", "perk", "quirk"]),

@@ -294,7 +294,7 @@ declare global {
   };
 
   const game: {
-    i18n: { localize(key: string): string; format(key: string, data?: object): string };
+    i18n: { localize(key: string): string; format(key: string, data?: object): string; has(key: string): boolean };
     /**
      * Keyboard shortcuts. Registered at init, before the bindings are built;
      * `onDown` returns true when it handled the key.

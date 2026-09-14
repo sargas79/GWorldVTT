@@ -49,6 +49,7 @@ import type {
   TemplateKind,
 } from "../../rules/templates.js";
 import type { DamageType, Difficulty, SkillAttribute } from "../../rules/types.js";
+import { extensionsField } from "../data-extensions.js";
 
 const fields = foundry.data.fields;
 
@@ -213,6 +214,8 @@ function descriptionFields() {
     description: new fields.HTMLField({ required: true, blank: true, initial: "" }),
     /** Where this item is defined in GURPS Lite, e.g. "p. 14". */
     reference: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /** Fields add-on modules keep on the item, one object per module. */
+    extensions: extensionsField("Item"),
   };
 }
 
@@ -1441,6 +1444,7 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
   declare alternateDefaults: TechniqueAlternateDefault[];
   declare skillFamilies: SkillFamily[];
   declare skillChoices: string[];
+  declare kind: string;
   declare defaultModifier: number;
   declare points: number;
   declare maxRelativeToPrerequisite: number;
@@ -1472,6 +1476,11 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
         new fields.StringField({ required: true, nullable: false, initial: "melee", choices: [...SKILL_FAMILIES] }),
         { required: true, initial: [] },
       ),
+      /**
+       * A technique kind an add-on module registered (`<module>.<key>`), which
+       * works the level out its own way. Blank for an ordinary technique.
+       */
+      kind: new fields.StringField({ required: true, blank: true, initial: "" }),
       /** Skills named outright that it may be bought for: Jam's Brawling or Karate. */
       skillChoices: new fields.ArrayField(
         new fields.StringField({ required: true, blank: false }),

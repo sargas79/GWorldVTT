@@ -18,6 +18,7 @@
 
 import { SYSTEM_ID } from "../constants.js";
 import { CompendiumPicker } from "./compendium-picker.js";
+import { builderTypesFor } from "../data-extensions.js";
 import {
   applyTemplateToActor,
   confirmAndRemoveTemplate,
@@ -149,9 +150,12 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
   }> {
     if (!step.types) return [];
     const types = new Set(step.types);
+    // Item types add-on modules offer at this step, which have no category.
+    const addonTypes = new Set(builderTypesFor(step.id));
 
     return [...(this.#actor.items ?? [])]
       .filter((item: any) => {
+        if (addonTypes.has(item.type)) return true;
         if (!types.has(item.type)) return false;
         if (!step.categories) return true;
         return step.categories.includes(item.system?.category);
@@ -229,7 +233,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       isLast: this.#step === STEPS.length - 1,
       isReview: step.id === "review",
       hasBrowse: Boolean(step.types),
-      browseTypes: (step.types ?? []).join(","),
+      browseTypes: [...(step.types ?? []), ...(step.types ? builderTypesFor(step.id) : [])].join(","),
       items: this.#itemsForStep(step),
 
       attributes: ATTRIBUTES.map((key) => ({
