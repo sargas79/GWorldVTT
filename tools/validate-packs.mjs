@@ -481,6 +481,13 @@ function validateItem(entry, file) {
     );
   }
 
+  for (const mode of sys.meleeModes ?? []) {
+    check(
+      mode.skillModifier === undefined || Number.isInteger(mode.skillModifier),
+      file, name, `to-hit modifier ${mode.skillModifier} must be a whole number`,
+    );
+  }
+
   for (const mode of [...(sys.meleeModes ?? []), ...(sys.rangedModes ?? [])]) {
     check(
       mode.damageExtraDice === undefined || (Number.isInteger(mode.damageExtraDice) && mode.damageExtraDice >= 0),

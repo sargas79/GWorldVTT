@@ -979,7 +979,34 @@ export function parseDamage(damage, damtype) {
  * another of GCA's prefixes (`ST:DX`).
  */
 export function parseSkillUsed(value) {
-  for (const entry of splitTop(value ?? "")) {
+  return firstSkill(splitTop(value ?? ""));
+}
+
+/**
+ * The skill a mode is used with, and any penalty to hit it is used at.
+ *
+ * A weapon used at a penalty with its own skill has GCA write the penalty
+ * into every entry of the list, the skill included --
+ * `skillused(SK:Spear-2, ST:DX-5-2, SK:Polearm-4-2, SK:Staff-2-2)` for a
+ * trident, "-2 to hit" in Martial Arts' table. Where every entry ends in the
+ * same modifier, that shared modifier is the mode's to-hit modifier and the
+ * list is read again without it. Any other list reads as parseSkillUsed always
+ * has, with no modifier: a shield's, where only the defaults carry one.
+ */
+export function parseSkillUsedWithModifier(value) {
+  const entries = splitTop(value ?? "").map((entry) => entry.trim().replace(/^"|"$/g, "").trim()).filter(Boolean);
+  const trailing = entries.map((entry) => /([+-]\s*\d+)$/.exec(entry)?.[1]?.replace(/\s+/g, "") ?? null);
+  const shared = trailing.length > 0 && trailing.every((m) => m !== null && m === trailing[0]) ? trailing[0] : null;
+  if (shared !== null) {
+    const stripped = entries.map((entry) => entry.replace(/[+-]\s*\d+$/, "").trim());
+    const skill = firstSkill(stripped);
+    if (skill) return { skill, modifier: Number(shared) };
+  }
+  return { skill: firstSkill(entries), modifier: 0 };
+}
+
+function firstSkill(entries) {
+  for (const entry of entries) {
     const text = entry.trim().replace(/^"|"$/g, "").trim();
     // An entry carrying a modifier is a default -- what you fall back to if you
     // lack the real skill -- not the skill the weapon is used with. A shield's
@@ -1084,11 +1111,14 @@ function meleeMode(name, f) {
   if (divisor !== undefined && !/^\d+(\.\d+)?$/.test(divisor.trim())) {
     return { error: `armour divisor "${divisor}"` };
   }
+  const used = parseSkillUsedWithModifier(f.get("skillused"));
 
   return {
     mode: {
       name,
-      skill: parseSkillUsed(f.get("skillused")),
+      skill: used.skill,
+      // Only where there is one, so a weapon with none reads as it always has.
+      ...(used.modifier ? { skillModifier: used.modifier } : {}),
       ...damage.fields,
       armorDivisor: divisor === undefined ? 1 : Number(divisor),
       reach: (f.get("reach") ?? "C").trim(),

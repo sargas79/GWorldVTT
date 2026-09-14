@@ -17,6 +17,7 @@ import {
   handKeptTraitNames,
   isBookkeeping,
   parseSkillUsed,
+  parseSkillUsedWithModifier,
   powerOfRecord,
   qualityVariantOf,
   reference,
@@ -314,6 +315,26 @@ describe("the skill a weapon is used with (#174)", () => {
   it("names no skill for an attribute or a blank the player fills in", () => {
     expect(parseSkillUsed("Will")).toBe("");
     expect(parseSkillUsed("%examplealiaslist%")).toBe("");
+  });
+  // "Skill score includes -2 to Hit": GCA writes a weapon's to-hit penalty
+  // into every entry, the skill included (sargas79/GWorldVTT#199).
+  it("reads a penalty every entry shares as the mode's to-hit modifier", () => {
+    expect(parseSkillUsedWithModifier("SK:Spear-2, ST:DX-5-2, SK:Polearm-4-2, SK:Staff-2-2"))
+      .toEqual({ skill: "Spear", modifier: -2 });
+    expect(parseSkillUsedWithModifier("SK:Brawling-2, SK:Karate-2, ST:DX-2"))
+      .toEqual({ skill: "Brawling", modifier: -2 });
+    expect(parseSkillUsedWithModifier("SK:Sword!-2, SK:Knife-2, ST:DX-4-2, SK:Force Sword-3-2"))
+      .toEqual({ skill: "Knife", modifier: -2 });
+  });
+
+  it("reads any other list with no modifier, as before", () => {
+    expect(parseSkillUsedWithModifier("ST:DX-4, SK:Shield (Buckler)-2, SK:Shield (Shield)"))
+      .toEqual({ skill: "Shield (Shield)", modifier: 0 });
+    expect(parseSkillUsedWithModifier("SK:Sword!, SK:Broadsword, ST:DX-5, SK:Rapier-4"))
+      .toEqual({ skill: "Broadsword", modifier: 0 });
+    // Defaults at different penalties are defaults, not a shared penalty.
+    expect(parseSkillUsedWithModifier("ST:DX-5, SK:Polearm-4"))
+      .toEqual({ skill: "", modifier: 0 });
   });
 });
 

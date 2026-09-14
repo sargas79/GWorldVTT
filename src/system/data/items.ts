@@ -523,6 +523,13 @@ function meleeModeField() {
       min: 0.1,
     }),
     reach: new fields.StringField({ required: true, blank: true, initial: "C" }),
+    /**
+     * A modifier to the roll to hit, where the weapon is used at a penalty
+     * with its own skill: a trident's thrust is "-2 to hit" with Spear, a
+     * three-part staff "-1 to hit" (Martial Arts pp. 229, 230). It is not a
+     * penalty to the skill, so the parry the skill gives is unchanged.
+     */
+    skillModifier: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
     /** Weapon parry modifier: -1 for a knife, +2 for a quarterstaff. */
     parryModifier: new fields.NumberField({
       required: true,

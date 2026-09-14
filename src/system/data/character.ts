@@ -243,6 +243,12 @@ export interface DerivedAttack {
   mode: string;
   skillName: string;
   skillLevel: number | null;
+  /**
+   * What the weapon adds to the roll to hit, apart from the skill: a
+   * trident's -2 (Martial Arts p. 229). The attack rolls against skillLevel
+   * plus this; the parry is worked from skillLevel alone.
+   */
+  hitModifier?: number;
   damage: string;
   damageType: DamageType;
   reach: string;
@@ -2010,6 +2016,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           mode: mode.name ?? "",
           skillName: mode.skill ?? "",
           skillLevel,
+          hitModifier: Number(mode.skillModifier ?? 0) || 0,
           atDefault,
           natural: false,
           unready,

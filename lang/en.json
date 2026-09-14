@@ -1286,6 +1286,8 @@
       "DamageFormula": "Damage formula",
       "DamageType": "Damage type",
       "ParryModifier": "Parry modifier",
+      "SkillModifier": "To hit",
+      "SkillModifierHint": "A modifier to the roll to hit where the weapon is used at a penalty with its skill, such as a trident's -2 with Spear. It does not change the parry.",
       "MinSt": "Minimum ST",
       "ArmorDivisor": "Armour divisor",
       "DefaultModifier": "Modifier",
@@ -3070,7 +3072,10 @@
       "AtDefaultHint": "The skill is not on the sheet; this is the book's default for it.",
       "PerTurn": "{count} attacks a turn",
       "ExtraAttackHint": "Extra Attack: one more attack on each Attack maneuver.",
-      "ExtraArms": "{count} extra arms"
+      "ExtraArms": "{count} extra arms",
+      "WeaponToHit": "Weapon, to hit",
+      "HitModifier": "{modifier} to hit",
+      "HitModifierHint": "This weapon is used at this modifier to hit with its skill. The parry is unchanged."
     },
     "Keybinding": {
       "TurnLeft": "Turn selected tokens left",

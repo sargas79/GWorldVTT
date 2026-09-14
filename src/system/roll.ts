@@ -919,6 +919,14 @@ export async function handleRollAction(
   // every skill that attribute governs -- and off nothing else: a defense, a
   // resistance roll and a Fright Check are all exempt, which is why this reads
   // the kind of roll rather than applying itself everywhere.
+  // A weapon used at a penalty with its own skill -- a trident's "-2 to hit"
+  // (Martial Arts p. 229) -- takes its own line off the attack, so the card
+  // says where the number came from.
+  const hitModifier = rollType === "attack" ? Number(target.dataset.hitModifier) || 0 : 0;
+  if (hitModifier !== 0) {
+    modifiers.push({ label: game.i18n.localize("GWORLD.Attack.WeaponToHit"), value: hitModifier });
+  }
+
   const knockedDown = temporaryPenalty(actor, target.dataset.basedOn, rollKind(rollType));
   if (knockedDown !== 0) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Penalties.Label"), value: knockedDown });
