@@ -14,11 +14,32 @@ class FakeSchemaField {
   getInitialValue() {
     return Object.fromEntries(Object.entries(this.fields).map(([k, f]) => [k, f.initial]));
   }
+  /**
+   * Cleans the way Foundry's SchemaField does where it matters here: a field a
+   * partial change leaves out is filled in only when there is no source.
+   */
+  clean(value: Record<string, unknown>, options: { partial?: boolean }, state: { source?: unknown } = {}) {
+    const out = { ...value };
+    for (const [key, field] of Object.entries(this.fields)) {
+      if (key in out || (options.partial && state.source)) continue;
+      out[key] = field.initial;
+    }
+    return out;
+  }
+}
+
+/** Foundry's ObjectField, as far as the extensions field builds on it. */
+class FakeObjectField {
+  parent: unknown = null;
+  constructor(public options: object) {}
+  _cleanType(data: unknown) {
+    return data;
+  }
 }
 
 beforeEach(() => {
   vi.spyOn(console, "warn").mockImplementation(() => {});
-  globals.foundry = { data: { fields: { SchemaField: FakeSchemaField } } };
+  globals.foundry = { data: { fields: { SchemaField: FakeSchemaField, ObjectField: FakeObjectField } } };
 });
 
 afterEach(() => {
@@ -37,6 +58,18 @@ describe("module fields on system documents", () => {
     expect(api.extensionsFor("Actor", "equipment")).toEqual([]);
     expect(api.registerDataExtension({ module: "test-addon", documentName: "Item", types: "*", schema: {} })).toBeNull();
     expect(api.registerDataExtension({ module: "test-addon", documentName: "Scene" as never, types: "*", schema: {} })).toBeNull();
+  });
+
+  it("keeps the fields a partial update leaves out, and fills a new document's (#262)", async () => {
+    const api = await load();
+    api.registerDataExtension({ module: "test-addon", documentName: "Actor", types: "*", schema: { destiny: { initial: null }, wildcard: { initial: [] } } });
+    const field = api.extensionsField("Actor");
+    Object.defineProperty(field, "gworldType", { get: () => "character" });
+    const stored = { "test-addon": { destiny: 1, wildcard: [{ skill: "Sneak!", value: 2 }] } };
+    const partial = field._cleanType({ "test-addon": { wildcard: [{ skill: "Sneak!", value: 1 }] } }, { partial: true }, { source: stored });
+    expect(partial["test-addon"]).toEqual({ wildcard: [{ skill: "Sneak!", value: 1 }] });
+    const created = field._cleanType({}, {}, {});
+    expect(created["test-addon"]).toEqual({ destiny: null, wildcard: [] });
   });
 
   it("reads a module's data over its fields' initial values", async () => {
