@@ -1,6 +1,6 @@
 /**
  * Techniques bought for a skill chosen when they are learned (GURPS Basic Set:
- * Characters pp. 230-233; Martial Arts pp. 65-89).
+ * Characters pp. 230-233).
  *
  * Many techniques are not written for one skill. Disarming's prerequisite is
  * "any unarmed combat or Melee Weapon skill", Dual-Weapon Attack's "any

@@ -1,6 +1,6 @@
 /**
  * What the sheet says about powers (GURPS Basic Set: Characters pp. 254-255,
- * and the same framework in other books: Monster Hunters 1 pp. 40-48).
+ * and the same framework in other books' powers).
  *
  * The powers a character holds were already worked out. What was not said was
  * everything a player building one needs to be told: which Talent helps which

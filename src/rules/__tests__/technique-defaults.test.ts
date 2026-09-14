@@ -5,7 +5,7 @@ import { resolveTechniqueDefaults } from "../skills.js";
 /** Techniques bought off a defense or an attribute (sargas79/GWorldVTT#195). */
 describe("resolveTechniqueDefaults", () => {
   it("buys a Parry-1 technique up from the Parry it cannot exceed", () => {
-    // Judo 14 parries at 10; "Default: prerequisite skill Parry-1" (Martial Arts p. 74).
+    // Judo 14 parries at 10, and a technique defaults to that Parry-1.
     const at = (levels: number) => resolveTechniqueDefaults({ defaults: [{ base: 10, modifier: -1 }], levels });
     expect(at(0)).toMatchObject({ level: 9, levels: 0, cappedByPrerequisite: false, base: 10 });
     expect(at(1)).toMatchObject({ level: 10, levels: 1 });

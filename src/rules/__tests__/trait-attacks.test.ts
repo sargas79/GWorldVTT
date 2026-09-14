@@ -9,9 +9,9 @@ import {
 
 describe("damage per level", () => {
   it("multiplies the dice and the adds by the levels held", () => {
-    // Pyrokinesis, "1d burning damage per level" (Monster Hunters 1 p. 46).
+    // An attack bought as "1d burning damage per level".
     expect(levelledDamage("1d", 3)).toBe("3d");
-    // Cryokinesis, "1d-1 fatigue damage per level".
+    // And one bought as "1d-1 fatigue damage per level".
     expect(levelledDamage("1d-1", 3)).toBe("3d-3");
     expect(levelledDamage("2d+1", 2)).toBe("4d+2");
   });

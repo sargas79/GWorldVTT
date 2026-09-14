@@ -784,9 +784,9 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       row.append(button);
     }
 
-    // A defensive technique stands in for the defense it is bought off --
-    // Jam is a parry at "prerequisite skill Parry-1", Timed Defense a dodge at
-    // "active defense-2" (Martial Arts pp. 74, 89) -- so it is offered beside
+    // A defensive technique stands in for the defense it is bought off -- a
+    // parry at "prerequisite skill Parry-1", say, or a dodge at "active
+    // defense-2", as its own default says -- so it is offered beside
     // that defense, at the defense's figure moved by what the technique stands
     // at against it. Which situation calls for it is the player's to judge.
     for (const technique of defensiveTechniquesOf(defender)) {
@@ -831,10 +831,10 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
 }
 
 /**
- * The techniques a defender has that are bought off a defense (Martial Arts
- * pp. 65-89): which defense, the skill it comes with, and the technique's level
- * against that defense's own figure -- -1 for a Jam at default, 0 once bought
- * up to the Parry it cannot exceed.
+ * The techniques a defender has that are bought off a defense: which defense,
+ * the skill it comes with, and the technique's level against that defense's
+ * own figure -- -1 for one at a Parry-1 default, 0 once bought up to the Parry
+ * it cannot exceed.
  */
 function defensiveTechniquesOf(defender: any): Array<{ name: string; key: DefenseKey; skill: string; delta: number }> {
   const out: Array<{ name: string; key: DefenseKey; skill: string; delta: number }> = [];

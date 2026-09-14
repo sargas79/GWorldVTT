@@ -196,8 +196,8 @@ export function bookPrefix(prefix) {
  *
  * The colon is optional after a prefix ending in a letter, since `B203` and
  * `B:203` can only mean one thing. After a digit it is required: `DF11:5` is
- * Dungeon Fantasy 11, and without the colon a reading of Dungeon Fantasy 1
- * would take it for page 15.
+ * the eleventh book of a series, and without the colon a reading of the
+ * first would take it for page 15.
  *
  * The page number is captured, and may not run into a colon: in `MH1:23`
  * the "1" is part of the prefix, so the book "MH" has no page there.

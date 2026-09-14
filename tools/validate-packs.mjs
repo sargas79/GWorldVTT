@@ -423,8 +423,8 @@ function validateItem(entry, file) {
       );
       // Both of the Basic Set's tables agree that crushing takes the lower
       // figure, so a split there that omits it has been read from the wrong
-      // footnote. Other books need not agree: Monster Hunters 1's motorcycle
-      // helmet is at its best against crushing blows (p. 59).
+      // footnote. Other books need not agree: a helmet may be at its best
+      // against crushing blows.
       if (/^Basic Set\b/.test(String(sys.reference ?? "")) || !sys.reference) {
         check(against.includes("cr"), file, name, "split DR must apply to crushing");
       }

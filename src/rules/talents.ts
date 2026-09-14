@@ -66,10 +66,9 @@ export interface BonusTrait {
   levels?: number;
   /**
    * The skills this trait gives its level to, as its own compendium entry
-   * states them. A Talent from another book -- Monster Hunters 1's
-   * Craftiness is Acting, Camouflage, Disguise, Holdout, Shadowing and
-   * Stealth (p. 24) -- is known only this way. Empty for a trait that states
-   * none, which is read by name from the Basic Set's lists instead.
+   * states them. A Talent from a data file carries its own skill list, and is
+   * known only this way. Empty for a trait that states none, which is read by
+   * name from the Basic Set's lists instead.
    */
   talentSkills?: readonly string[];
 }

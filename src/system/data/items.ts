@@ -530,15 +530,15 @@ function meleeModeField() {
     reach: new fields.StringField({ required: true, blank: true, initial: "C" }),
     /**
      * A modifier to the roll to hit, where the weapon is used at a penalty
-     * with its own skill: a trident's thrust is "-2 to hit" with Spear, a
-     * three-part staff "-1 to hit" (Martial Arts pp. 229, 230). It is not a
-     * penalty to the skill, so the parry the skill gives is unchanged.
+     * with its own skill: a thrust a data file lists as "-2 to hit" with
+     * Spear, say. It is not a penalty to the skill, so the parry the skill
+     * gives is unchanged.
      */
     skillModifier: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
     /**
      * A blow that gets the unarmed skills' damage bonus when struck with one
-     * of them: brass knuckles, a blackjack (Characters p. 271, note 3), a
-     * combat fan's crush or a hilt punch (Martial Arts p. 226).
+     * of them: brass knuckles, a blackjack (Characters p. 271, note 3), or any
+     * blow a data file marks the same way.
      */
     unarmedBonus: new fields.BooleanField({ initial: false }),
     /** Weapon parry modifier: -1 for a knife, +2 for a quarterstaff. */
@@ -1461,8 +1461,8 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
       prerequisite: new fields.StringField({ required: true, blank: true, initial: "" }),
       /**
        * What the default comes off: the prerequisite skill's level, or the
-       * Parry or Block it gives, or Dodge, or an attribute (Martial Arts
-       * pp. 65-89; Neck Snap's "ST-4", Characters p. 232).
+       * Parry or Block it gives, or Dodge, or an attribute (Neck Snap's "ST-4",
+       * Characters p. 232).
        */
       defaultFrom: new fields.StringField({
         required: true, nullable: false, initial: "skill", choices: [...TECHNIQUE_DEFAULT_FROM],
@@ -1488,7 +1488,7 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
       ),
       /**
        * Further defaults, the best of which the character uses: "Defaults:
-       * Binding, DX-2, Judo-1, or Wrestling-2" (Martial Arts p. 73).
+       * Binding, DX-2, Judo-1, or Wrestling-2".
        */
       alternateDefaults: new fields.ArrayField(
         new fields.SchemaField({

@@ -286,24 +286,45 @@ Foundry **Data** directory, then `npm run dev` to build and link `dist/` into
 Other scripts: `npm run watch`, `npm run typecheck`, `npm run lint`,
 `npm run test:coverage`, `npm run validate:packs`.
 
+### What belongs in the system
+
+The system is the GURPS Basic Set, and the machinery a table needs around it:
+
+- **The Basic Set's rules**, citing its pages (`Characters p. 12`,
+  `Campaigns p. 347`).
+- **Generic capabilities** that any book's data can use: Talents that carry
+  their own skill lists, powers beyond the six psionic ones, attacks on
+  advantages, techniques that default from a Parry or an attribute, weapon
+  modes with to-hit modifiers, and the GCA parser.
+- **The add-on API** (`game.gworld.api`) and its hooks.
+
+Every other book's rules, records and prose belong in an add-on module, which
+registers them through the API. The system never names an add-on or cites
+another book's pages. `npm run lint` runs `tools/check-book-neutral.mjs`,
+which fails on either in `src`, `templates`, `lang` or `packs-src`. Code
+that is due to leave is listed there as an exception, with the open issue that
+removes it, and an exception that no longer matches anything fails too. A
+missing extension point is a book-neutral issue for the API, not a reason to
+build a book's rule into the system.
+
 ### Other books, as a module
 
 The system's own packs are built from the GURPS Character Assistant data file
-for the Basic Set. A module can carry another book — Martial Arts, Low-Tech,
-GURPS Magic — the same way, and the sheet, the picker and the guided build read
-its packs alongside the book's without any change to the system:
+for the Basic Set. A module can carry another book the same way, and the
+sheet, the picker and the guided build read its packs alongside the Basic
+Set's without any change to the system:
 
 1. Build the JSON from that book's GDF with the same tool, naming the page
    prefix the book uses, the name the references should carry, and where the
    files should go:
 
    ```bash
-   node tools/parse-gdf.mjs "GURPS Martial Arts 4e.gdf" --prefix MA --book "Martial Arts" --out my-module/packs-src --overlap my-module/overlap.txt --write
+   node tools/parse-gdf.mjs "My Book.gdf" --prefix XX --book "My Book" --out my-module/packs-src --overlap my-module/overlap.txt --write
    ```
 
    Only records citing that book's pages are written, one file per pack —
-   `advantages/martial-arts-advantages.json`, `skills/martial-arts-techniques.json`
-   and so on — and each reference reads "Martial Arts p. N". A supplement
+   `advantages/my-book-advantages.json`, `skills/my-book-techniques.json`
+   and so on — and each reference reads "My Book p. N". A supplement
    restates some of the Basic Set's entries with its own page beside the
    original; those the system's packs already carry, so they are skipped, and
    `--overlap` writes the list of them for checking. Running the tool again
@@ -317,7 +338,7 @@ its packs alongside the book's without any change to the system:
    same options:
 
    ```bash
-   node tools/parse-gdf-spells.mjs "GURPS Magic 4e.gdf" --prefix M --book "Magic" --out my-module/packs-src --pack spells --write
+   node tools/parse-gdf-spells.mjs "My Spells.gdf" --prefix YY --book "My Spells" --out my-module/packs-src --pack spells --write
    ```
 
 2. Check and compile it with the same two scripts, pointed at the module:
@@ -332,7 +353,7 @@ its packs alongside the book's without any change to the system:
 
 3. Declare each pack in the module's `module.json` as an `Item` pack with
    `"system": "gworld"`. Give every pack of one book the same
-   `"flags": {"gworld": {"book": "martial-arts", "bookTitle": "Martial Arts"}}`
+   `"flags": {"gworld": {"book": "my-book", "bookTitle": "My Book"}}`
    and **Configure Settings → Compendium sources** shows the book as one row
    with one switch for all its packs.
 
@@ -344,6 +365,8 @@ Fire`, `6 Air spells`, `spells from 10 colleges`, `IQ 13`, `Empathy
 follows the same shape. Where two packs hold a spell of one name, the picker
 says which pack each row is from, and adding one a character already has
 raises its points rather than adding a copy.
+
+A book's rules, as opposed to its records, go through the add-on API below.
 
 ### The add-on API
 

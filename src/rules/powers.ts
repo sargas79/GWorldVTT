@@ -4,17 +4,15 @@
  * The Basic Set's psionics (Characters pp. 254-257) is one framework applied
  * six times: a set of abilities, a power modifier that files an advantage
  * under the power, and a Talent that adds to every roll to use it. Other books
- * apply the same framework to powers of their own -- Monster Hunters 1 has
- * Bioenhancement and Mysticism beside its psionics (pp. 40-48) -- and those
- * cannot be recognised the way `psionics.ts` recognises the six, by a table of
- * names.
+ * apply the same framework to powers of their own, and those cannot be
+ * recognised the way `psionics.ts` recognises the six, by a table of names.
  *
  * So a trait may say which power it belongs to, and whether it is that
  * power's Talent. That is what a book's compendium entries carry. A trait that
  * says nothing is read the Basic Set's way, by its power modifier or its name,
  * which is how every psi ability already on a character works. A power a book
- * names the same as one of the six -- Monster Hunters 1's ESP -- is that
- * power, and the two ways of finding its abilities meet under one heading.
+ * names the same as one of the six -- its own ESP, say -- is that power, and
+ * the two ways of finding its abilities meet under one heading.
  */
 
 import {
@@ -100,8 +98,8 @@ export function powersOf(traits: readonly PowerTrait[]): PowerHeld[] {
     if (trait.powerTalent) {
       power.talent = Math.max(power.talent, Math.max(1, Math.floor(trait.levels ?? 0) || 1));
       power.talentName = trait.name;
-      // "Users may buy up to six levels of Talent for each power they possess"
-      // (Monster Hunters 1 p. 40), where the Basic Set allows four.
+      // A book may let a power's Talent go past the Basic Set's four levels;
+      // the Talent's own maximum says how far.
       if ((trait.maxLevels ?? 0) > 0) power.talentCap = trait.maxLevels!;
     } else {
       power.abilities.push(trait.name);
@@ -135,8 +133,7 @@ export function powerTalentCost(power: Pick<PowerHeld, "talent" | "talentCap">):
  * The targets for a roll to use a power: IQ, Will or Perception, each with the
  * Talent on top. "A Talent gives a bonus to any roll to activate or otherwise
  * use that particular psionic power" (Characters p. 255), and those three are
- * what the abilities of both books ask for -- "roll against your (Per + ESP
- * Talent)" (Monster Hunters 1 p. 46).
+ * what the abilities of any power ask for.
  */
 export function powerRollTargets(
   power: Pick<PowerHeld, "talent">,

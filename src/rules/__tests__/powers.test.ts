@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { powerRollTargets, powerTalentCost, powersOf, psiPowerNamed } from "../powers.js";
 
 /**
- * Powers beyond the Basic Set's six (Monster Hunters 1 pp. 40-48): a book's
+ * Powers beyond the Basic Set's six: a book's
  * compendium entry says which power a trait belongs to, and the framework of
  * Characters pp. 254-257 does the rest.
  */
@@ -40,7 +40,7 @@ describe("a power a book defines", () => {
     expect(psiPowerNamed("ESP")).toBe("esp");
     expect(psiPowerNamed("Anti-Psi")).toBe("antipsi");
     expect(psiPowerNamed("Mysticism")).toBe(null);
-    // Monster Hunters 1's ESP, named on its entries, meets an ESP ability found
+    // A book's ESP, named on its entries, meets an ESP ability found
     // the Basic Set's way, by its modifier.
     const powers = powersOf([
       { name: "ESP: Psychometry", power: "ESP" },
@@ -64,7 +64,7 @@ describe("what a power's Talent allows", () => {
     // Characters p. 255: four without the GM's say-so.
     const [basic] = powersOf([{ name: "Telepathy Talent", levels: 5 }]);
     expect(powerTalentCost(basic!)).toEqual({ points: 25, needsPermission: true });
-    // Monster Hunters 1 p. 40: "up to six levels of Talent for each power".
+    // A book that allows six levels of Talent says so on the entry.
     const [hunter] = powersOf([
       { name: "Mysticism Talent", levels: 5, power: "Mysticism", powerTalent: true, maxLevels: 6 },
     ]);

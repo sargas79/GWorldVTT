@@ -1263,7 +1263,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     });
   }
 
-  /** Another default for a technique, the best of which is used (Martial Arts p. 73). */
+  /** Another default for a technique, the best of which is used. */
   static async #onAddTechniqueDefault(this: GWorldItemSheet) {
     const defaults = [...(this.item.system.alternateDefaults ?? [])];
     await this.item.update({

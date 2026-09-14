@@ -198,8 +198,8 @@ describe("talents", () => {
     expect(isTalent("Combat Reflexes")).toBe(false);
   });
 
-  // Monster Hunters 1 p. 24: a Talent from another book is known by the list
-  // its compendium entry carries, since no list here names it.
+  // A Talent from a data file is known by the list its compendium entry
+  // carries, since no list here names it.
   it("read a trait's own list of skills, whatever the trait is called", () => {
     const craftiness = {
       name: "Craftiness",

@@ -259,9 +259,9 @@ export interface DerivedAttack {
   skillName: string;
   skillLevel: number | null;
   /**
-   * What the weapon adds to the roll to hit, apart from the skill: a
-   * trident's -2 (Martial Arts p. 229). The attack rolls against skillLevel
-   * plus this; the parry is worked from skillLevel alone.
+   * What the weapon adds to the roll to hit, apart from the skill: a weapon
+   * a data file lists at "-2 to hit" with its skill. The attack rolls against
+   * skillLevel plus this; the parry is worked from skillLevel alone.
    */
   hitModifier?: number;
   /** The unarmed skill a weapon's blow gets its damage bonus from, or "" (Characters p. 271). */
@@ -1758,7 +1758,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // ── techniques ──────────────────────────────────────────────────────
     // A technique comes off a skill, the Parry or Block it gives, Dodge, or an
     // attribute, and may list several defaults; it is bought up from the best
-    // (Martial Arts pp. 65-89, Characters p. 232).
+    // (Characters p. 232).
     const techniqueBase = (from: string, skill: string): number | null => {
       switch (from) {
         case "skill": return this.skillLevelByName(skill);
