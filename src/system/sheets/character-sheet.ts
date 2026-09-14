@@ -7,6 +7,7 @@
  * DOM at once and CSS controls visibility.
  */
 
+import { spellAttackKind } from "../../rules/spell-attacks.js";
 import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
 import { techniqueDefaultLabel } from "../item-summary.js";
 import { CharacterBuilder } from "../apps/character-builder.js";
@@ -175,6 +176,9 @@ import {
   injuredWhileHolding,
   strikeWithMelee,
   throwMissile,
+  rainOnTargets,
+  spellAttackOf,
+  strikeWithSpell,
 } from "../held-spells.js";
 import { castFromItem, enchantItem } from "../enchanting.js";
 import { nextSpellPoints, previousSpellPoints, type MagicStyle } from "../../rules/magic.js";
@@ -2911,6 +2915,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       triggerRitual: GWorldCharacterSheet.#onTriggerRitual,
       cancelRitual: GWorldCharacterSheet.#onCancelRitual,
       maintainSpell: GWorldCharacterSheet.#onMaintainSpell,
+      spellStrike: GWorldCharacterSheet.#onSpellStrike,
+      spellRain: GWorldCharacterSheet.#onSpellRain,
       dropSpell: GWorldCharacterSheet.#onDropSpell,
       toggleConcentrating: GWorldCharacterSheet.#onToggleConcentrating,
       keepConcentration: GWorldCharacterSheet.#onKeepConcentration,
@@ -3607,11 +3613,19 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         const level = enchant?.system?.derived?.level;
         return typeof level === "number" && level >= 15;
       })(),
-      active: activeSpells.map((spell: any) => ({
-        ...spell,
-        ...describeActiveSpell(spell),
-        canMaintain: spell.maintainCost !== null && spell.maintainCost !== undefined,
-      })),
+      active: activeSpells.map((spell: any) => {
+        const item = this.actor.items.get(spell.itemId);
+        const kind = item?.system?.attack?.damage ? spellAttackKind(item.system.classes ?? []) : null;
+        return {
+          ...spell,
+          ...describeActiveSpell(spell),
+          canMaintain: spell.maintainCost !== null && spell.maintainCost !== undefined,
+          // A jet kept up strikes again each turn; a rain falls each second
+          // (Magic pp. 73-74).
+          jet: kind === "jet",
+          rain: kind === "rain",
+        };
+      }),
     };
   }
 
@@ -3659,6 +3673,57 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
   #activeSpellId(target: HTMLElement): string | null {
     return target.closest<HTMLElement>("[data-spell-id]")?.dataset.spellId ?? null;
+  }
+
+  /** A running jet's attack for this turn (Magic p. 73). */
+  static async #onSpellStrike(this: GWorldCharacterSheet, event: Event, target: HTMLElement) {
+    const id = this.#activeSpellId(target);
+    const spell = (this.actor.system.activeSpells ?? []).find((s: any) => s.id === id);
+    const item = spell ? this.actor.items.get(spell.itemId) : null;
+    if (!spell || !item) return;
+    await strikeWithSpell(this.actor, spellAttackOf(item, spell.energy ?? spell.castCost ?? 1), event);
+  }
+
+  /**
+   * A second of a running rain on whoever is targeted (Magic p. 74). The
+   * damage is asked, starting at the spell's own, since the double-cost
+   * version of each rain is written differently; and so is whether the
+   * creatures spent the whole second in it.
+   */
+  static async #onSpellRain(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = this.#activeSpellId(target);
+    const spell = (this.actor.system.activeSpells ?? []).find((s: any) => s.id === id);
+    const item = spell ? this.actor.items.get(spell.itemId) : null;
+    if (!spell || !item) return;
+    const attack = spellAttackOf(item, spell.energy ?? 1);
+    const escape = (text: string) => foundry.utils.escapeHTML(text);
+    const answer = await foundry.applications.api.DialogV2.prompt({
+      window: { title: game.i18n.format("GWORLD.Rain.Title", { spell: attack.name }) },
+      content: `<div class="gworld">
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>${escape(game.i18n.localize("GWORLD.Rain.Damage"))}</span>
+          <input type="text" name="formula" value="${escape(attack.damage)}" style="width:90px">
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:6px">
+          <input type="checkbox" name="partial">
+          <span>${escape(game.i18n.localize("GWORLD.Rain.Partial"))}</span>
+        </label>
+        <p class="ihint">${escape(game.i18n.localize("GWORLD.Rain.Hint"))}</p>
+      </div>`,
+      ok: {
+        label: game.i18n.localize("GWORLD.Rain.Apply"),
+        callback: (_e: Event, button: HTMLElement) => {
+          const root = button.closest<HTMLElement>(".application");
+          return {
+            formula: root?.querySelector<HTMLInputElement>('input[name="formula"]')?.value ?? attack.damage,
+            partial: root?.querySelector<HTMLInputElement>('input[name="partial"]')?.checked ?? false,
+          };
+        },
+      },
+      rejectClose: false,
+    });
+    if (!answer || typeof answer !== "object") return;
+    await rainOnTargets(this.actor, attack, { formula: String((answer as any).formula).trim(), wholeSecond: !(answer as any).partial });
   }
 
   static async #onMaintainSpell(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

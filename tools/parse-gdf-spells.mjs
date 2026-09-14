@@ -182,7 +182,8 @@ export function parseClass(raw) {
  */
 export function parseSkillUsed(raw) {
   for (const entry of splitTop((raw ?? "").replace(/\|/g, ","))) {
-    const m = /^SK:(Innate Attack \([^)]*\))\s*$/.exec(entry.trim());
+    // With or without GCA's prefix: the breaths list "DX-4, Innate Attack (Breath)".
+    const m = /^(?:SK:)?\s*(Innate Attack \([^)]*\))\s*$/.exec(entry.trim());
     if (m) return m[1];
   }
   return "";
@@ -190,7 +191,11 @@ export function parseSkillUsed(raw) {
 
 /** Damage per point of energy, and its type. "spcl" is the spell's own business. */
 export function parseDamage(damage, damtype) {
-  const formula = (damage ?? "").replace(/^~/, "").trim();
+  // "1d/1d+1" is a choice, of which the first is taken; "Spec.", "HT" and
+  // "1d|HT" are left for the spell's text (sargas79/GWorldVTT#192).
+  const text = (damage ?? "").replace(/^~/, "").trim();
+  const first = text.includes("|") ? "" : text.split("/")[0].trim();
+  const formula = /^\d+d(?:[+-]\d+)?$/i.test(first) ? first : "";
   const words = (damtype ?? "").trim().toLowerCase().split(/\s+/);
   const type = words.find((w) => DAMAGE_TYPES.has(w)) ?? "";
   return { damage: formula, damageType: type, explosive: words.includes("ex") };

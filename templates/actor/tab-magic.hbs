@@ -325,6 +325,16 @@
                 {{#if @root.editable}}{{#if spell.canMaintain}}
                   <button type="button" class="ibtn" data-action="maintainSpell">{{localize "GWORLD.Cast.MaintainAction"}}</button>
                 {{/if}}{{/if}}
+                {{#if @root.editable}}
+                  {{#if spell.jet}}
+                    <button type="button" class="ibtn" data-action="spellStrike"
+                            data-tooltip="{{localize 'GWORLD.Rain.StrikeHint'}}">{{localize "GWORLD.Rain.Strike"}}</button>
+                  {{/if}}
+                  {{#if spell.rain}}
+                    <button type="button" class="ibtn" data-action="spellRain"
+                            data-tooltip="{{localize 'GWORLD.Rain.Hint'}}">{{localize "GWORLD.Rain.Apply"}}</button>
+                  {{/if}}
+                {{/if}}
               </td>
               <td class="c">
                 {{#if @root.editable}}

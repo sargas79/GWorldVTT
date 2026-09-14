@@ -4112,6 +4112,22 @@
       "MayStillCatch": "A miss may still catch the target in the area",
       "MustSteer": "Concentrate each turn to steer it — lose sight of the target and it misses; Attack on the turn it arrives",
       "DamageHoldsUp": "Damage does not fall off with distance"
+    },
+    "Rain": {
+      "Title": "{spell}: a second of it",
+      "Damage": "Damage to each",
+      "Partial": "Less than a whole second in the area (half)",
+      "Hint": "Rolls the spell's damage for each targeted creature in the area, with armor protecting as usual. No attack roll and no defense.",
+      "Apply": "Apply to targets",
+      "Strike": "Attack",
+      "StrikeHint": "The jet's attack for this turn: rolled against Innate Attack, dodged or blocked but not parried",
+      "NoTargets": "Target the creatures in the area first",
+      "BadFormula": "\"{formula}\" is not a damage roll",
+      "CannotApply": "{name}: not yours to damage",
+      "Halved": "halved:",
+      "Struck": "{name}: {rolled}, {location}, {injury} injury (HP {previous} → {now})",
+      "Kind": "A second of rain",
+      "Detail": "{formula} to each in the area; armor protects"
     }
   }
 }

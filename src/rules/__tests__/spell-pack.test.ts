@@ -13,6 +13,7 @@ import {
   parseDuration,
   parseEnergy,
   parseNeeds,
+  parseDamage,
   parseSkillUsed,
   parseTime,
   reference,
@@ -148,6 +149,11 @@ describe("the spell parser's readings", () => {
   it("picks the Innate Attack specialty a Missile spell is thrown with", () => {
     expect(parseSkillUsed("ST:DX-4, SK:Innate Attack (Beam)-2, SK:Innate Attack (Projectile)")).toBe("Innate Attack (Projectile)");
     expect(parseSkillUsed("ST:DX, SK:Brawling, SK:Karate | SK:Staff, ST:DX-5")).toBe("");
+    // The breaths list their skills without GCA's prefix (#192).
+    expect(parseSkillUsed("DX-4, Innate Attack (Breath), Innate Attack (Gaze)-2")).toBe("Innate Attack (Breath)");
+    expect(parseDamage("~1d/1d+1", "burn")).toMatchObject({ damage: "1d", damageType: "burn" });
+    expect(parseDamage("Spec.", "")).toMatchObject({ damage: "" });
+    expect(parseDamage("1d|HT", "tox")).toMatchObject({ damage: "", damageType: "tox" });
   });
 
   it("cites the page of the book being read", () => {
