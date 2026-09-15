@@ -143,6 +143,22 @@ describe("defense options", () => {
     expect(after).toHaveBeenCalledWith(defense(), { success: true, margin: 2 });
   });
 
+  it("gives an option with a number its value, in apply and in chosen (since 1.25.0)", async () => {
+    const api = await load();
+    let seen: unknown = null;
+    api.registerDefenseOption({
+      module: "test-addon", key: "riposte", label: "Riposte", defenses: ["parry"], input: { type: "number", min: 0, max: 6 },
+      apply: (context, value) => {
+        seen = { value, chosen: context.chosen, shot: context.calledShot };
+        return { modifiers: [{ label: "Riposte", value: -Number(value) }] };
+      },
+    });
+    const applied = api.applyDefenseOptions(defense({ calledShot: { hitLocation: "leg", addonLocation: null } }), { "test-addon.riposte": 3 });
+    expect(applied.modifiers).toEqual([{ label: "Riposte", value: -3 }]);
+    expect(seen).toEqual({ value: 3, chosen: { "test-addon.riposte": 3 }, shot: { hitLocation: "leg", addonLocation: null } });
+    expect(api.applyDefenseOptions(defense(), {}).modifiers).toEqual([]);
+  });
+
   it("puts an attack's lines on the defenses they name", async () => {
     const api = await load();
     const lines = [{ label: "All", value: 2 }, { label: "Dodge only", value: -1, defenses: ["dodge" as const] }];

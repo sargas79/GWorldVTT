@@ -448,9 +448,15 @@ and skipped, and the roll goes on.
 
   `refuse(context)` returns a reason to disable the option. `context.chosen` lists
   the other options chosen.
-- **`registerDefenseOption({ module, key, label, defenses?, available?, refuse?, apply, after? })`.**
+- **`registerDefenseOption({ module, key, label, defenses?, input?, available?, refuse?, apply, after? })`.**
   A checkbox on the defense card. `apply` returns `modifiers` and `fatigue`, and
-  `after(context, outcome)` hears how the defense went.
+  `after(context, outcome)` hears how the defense went. Since 1.25.0:
+  - `input` makes it a number or a choice, as an attack option's; the value
+    reaches `apply(context, value)` and `after(context, outcome, value)`, and
+    `context.chosen` holds each option's value;
+  - the context also has `attacker`, `attackWeapon`, `arc`, `parryWeapon`,
+    `calledShot` (where the blow was aimed, or where a miss by 1 landed) and
+    `defenseCounts`.
 - **`registerDefense({ module, key, label, choices, run })`** (since 1.9.0).
   A defense the module resolves itself, offered beside dodge, parry and block.
   - `choices(defender, attack)` returns `{ id, label, hint? }` for each way
@@ -547,7 +553,9 @@ and skipped, and the roll goes on.
     `item` (since 1.8.0): the weapon or spell the damage was rolled from, or
     null. The card keeps it as `itemUuid`, and so does `damage`. Since 1.10.0
     they also get `mode` (`{ index, ranged }`), the mode it was rolled from;
-  - `gworld.breakageOdds`: set `breakage`;
+  - `gworld.breakageOdds`: set `breakage`. Since 1.25.0 it also gets `weight`, the weight
+    the parry counts, which a listener may change, and a listener may set `item`
+    to the weapon that breaks;
   - `gworld.randomHitLocation`: set `location` or `addonLocation`. Since 1.22.0 it
     also gets `damageType` and `arc` where the caller knows them (null
     otherwise), and `d6()`, a die rolled as the system's dice are, for a

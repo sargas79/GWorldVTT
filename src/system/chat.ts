@@ -524,6 +524,8 @@ interface DefenseFlag {
   dodgeBonus?: number;
   /** Lines a module's attack option put on the defender's rolls, each for the defenses it names. */
   defenseModifiers?: Array<{ label: string; value: number; defenses?: DefenseKey[] }>;
+  /** Where the blow was aimed, or where a miss by 1 landed (since 1.25.0). */
+  calledShot?: { hitLocation: string; addonLocation: string | null };
 }
 
 function defenseFlag(message: any): DefenseFlag | null {
@@ -785,17 +787,51 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       delivery: flag.delivery ?? "",
       retreating: false,
       chosen: {},
+      attacker,
+      attackWeapon: (flag.weapon ?? null) as Record<string, unknown> | null,
+      arc: arc?.arc ?? null,
+      parryWeapon: parryWith,
+      calledShot: flag.calledShot ?? null,
+      defenseCounts: countsFor(defender, parryWith),
     };
-    const addonBoxes = anyDefenseOptions(addonBase).map((option) => {
-      const box = document.createElement("input");
-      box.type = "checkbox";
-      box.dataset.addonDefense = option.key;
+    // Each option's control: a checkbox, or a number or a choice (API 1.25.0).
+    const addonControls = anyDefenseOptions(addonBase).map((option) => {
       const label = document.createElement("label");
       label.className = "gc-retreat";
-      label.append(box, document.createTextNode(game.i18n.localize(option.label)));
+      let control: HTMLInputElement | HTMLSelectElement;
+      if (option.input.type === "select") {
+        const select = document.createElement("select");
+        select.append(new Option("", ""));
+        for (const choice of option.input.choices) select.append(new Option(game.i18n.localize(choice.label), choice.value));
+        control = select;
+        label.append(document.createTextNode(`${game.i18n.localize(option.label)} `), select);
+      } else if (option.input.type === "number") {
+        const input = document.createElement("input");
+        input.type = "number";
+        input.value = "0";
+        input.style.width = "3.5em";
+        if (option.input.min !== undefined) input.min = String(option.input.min);
+        if (option.input.max !== undefined) input.max = String(option.input.max);
+        control = input;
+        label.append(document.createTextNode(`${game.i18n.localize(option.label)} `), input);
+      } else {
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        control = box;
+        label.append(box, document.createTextNode(game.i18n.localize(option.label)));
+      }
+      control.dataset.addonDefense = option.key;
       row.append(label);
-      return box;
+      return { option, control };
     });
+    const addonValues = (): Record<string, unknown> => Object.fromEntries(addonControls.flatMap(({ option, control }): Array<[string, unknown]> => {
+      if (option.input.type === "checkbox") return (control as HTMLInputElement).checked ? [[option.key, true]] : [];
+      if (option.input.type === "number") {
+        const value = Number(control.value);
+        return Number.isFinite(value) && value !== 0 ? [[option.key, value]] : [];
+      }
+      return control.value ? [[option.key, control.value]] : [];
+    }));
 
     const defendWith = (choice: DefenseChoice, technique?: { name: string; delta: number }) => {
       const sight = sightSelect.value;
@@ -827,11 +863,12 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         ...(flag.delivery ? { delivery: flag.delivery } : {}),
         ...(flag.damageType ? { damageType: flag.damageType } : {}),
         ...(technique ? { technique } : {}),
-        addonOptions: addonBoxes.filter((box) => box.checked).map((box) => String(box.dataset.addonDefense)),
+        addonOptions: addonValues(),
         attackDefenseModifiers: flag.defenseModifiers ?? [],
         attacker,
         arc: arc?.arc ?? null,
         parryWeapon: choice.key === "parry" ? parryWith : null,
+        calledShot: flag.calledShot ?? null,
       });
     };
 
@@ -1118,8 +1155,8 @@ async function rollDefense(options: {
   laserDodge?: number;
   /** A defensive technique rolled in place of the defense, and what it stands at against it. */
   technique?: { name: string; delta: number };
-  /** The modules' defense options ticked on the card, by `<module>.<key>`. */
-  addonOptions?: string[];
+  /** The modules' defense options chosen on the card, by `<module>.<key>`, with their values. */
+  addonOptions?: Record<string, unknown>;
   /** Lines a module's attack option put on the defender's rolls. */
   attackDefenseModifiers?: Array<{ label: string; value: number; defenses?: DefenseKey[] }>;
   /** The attacking actor, for the modules' hooks. */
@@ -1128,6 +1165,8 @@ async function rollDefense(options: {
   arc?: Arc | null;
   /** The weapon the parry is made with, for the modules' hooks. */
   parryWeapon?: DefenseParryWeapon | null;
+  /** Where the blow was aimed, for the modules' options. */
+  calledShot?: { hitLocation: string; addonLocation: string | null } | null;
 }): Promise<void> {
   const {
     defender, key, total, attack, arcPenalty, deception, retreating, feverish, skill, isFencing,
@@ -1143,10 +1182,16 @@ async function rollDefense(options: {
     damageType: options.damageType ?? "",
     delivery: options.delivery ?? "",
     retreating,
-    chosen: Object.fromEntries((options.addonOptions ?? []).map((k) => [k, true])),
+    chosen: { ...(options.addonOptions ?? {}) },
+    attacker: options.attacker ?? null,
+    attackWeapon: (options.attackWeapon ?? null) as Record<string, unknown> | null,
+    arc: options.arc ?? null,
+    parryWeapon: options.parryWeapon ?? null,
+    calledShot: options.calledShot ?? null,
+    defenseCounts: countsFor(defender, key === "parry" ? options.parryWeapon : null),
   };
   for (const option of defenseOptionsFor(addonContext)) {
-    if (!(options.addonOptions ?? []).includes(option.key)) continue;
+    if (!(option.key in (options.addonOptions ?? {}))) continue;
     const why = option.refuse(addonContext);
     if (why) {
       ui.notifications?.warn(game.i18n.format("GWORLD.Addon.Refused", {
@@ -1155,7 +1200,7 @@ async function rollDefense(options: {
       return;
     }
   }
-  const addon = applyDefenseOptions(addonContext, options.addonOptions ?? []);
+  const addon = applyDefenseOptions(addonContext, options.addonOptions ?? {});
 
   // "You cannot parry a weapon heavier than your Basic Lift -- or twice BL,
   // if using a two-handed weapon. Attempts to parry anything heavier fail
@@ -1308,7 +1353,7 @@ async function rollDefense(options: {
   // The modules' options that asked to hear how the defense went.
   for (const option of addon.chosen) {
     try {
-      await option.after(addonContext, outcome ? { success: outcome.success, margin: outcome.margin } : null);
+      await option.after(addonContext, outcome ? { success: outcome.success, margin: outcome.margin } : null, (options.addonOptions ?? {})[option.key]);
     } catch (error) {
       console.warn(`gworld | defense option ${option.key} failed after the roll`, error);
     }

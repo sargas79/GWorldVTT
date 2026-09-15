@@ -59,7 +59,7 @@ import { manaLevel } from "./casting.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.24.0";
+export const API_VERSION = "1.25.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";

@@ -183,9 +183,13 @@ export async function heavyParryCheck(options: {
     quality,
     // Odds a module set replace the grade's, except against a superior swing.
     breakage: parryWeapon.breakage !== undefined && quality === parryWeapon.quality ? parryWeapon.breakage : undefined as number | undefined,
+    // Since 1.25.0: the weight the parry counts, which a module may change,
+    // and the weapon that breaks, which a module may name.
+    weight: parryWeapon.weight,
   });
+  const breaking = odds.item ?? item;
   const chance = heavyParryBreakChance({
-    parryingWeight: parryWeapon.weight,
+    parryingWeight: typeof odds.weight === "number" && Number.isFinite(odds.weight) && odds.weight > 0 ? odds.weight : parryWeapon.weight,
     attackingWeight: attackWeapon.weight,
     quality,
     ...(typeof odds.breakage === "number" && Number.isFinite(odds.breakage) ? { breakage: odds.breakage } : {}),
@@ -195,7 +199,7 @@ export async function heavyParryCheck(options: {
   const roll = new Roll("1d6");
   await roll.evaluate();
   const outcome = heavyParryOutcome(chance, roll.total);
-  const name = String(item?.name ?? "");
+  const name = String(breaking?.name ?? "");
 
   if (!outcome.breaks) {
     await postCard(defender, {
@@ -211,7 +215,7 @@ export async function heavyParryCheck(options: {
     label: L("HeavyParry", { name }),
     heavy: { chance, die: roll.total, held: false, parryCounts: outcome.parryCounts && options.parried },
   }, [roll]);
-  if (item) await breakWeapon(defender, item, "parry");
+  if (breaking) await breakWeapon(defender, breaking, "parry");
 }
 
 /**

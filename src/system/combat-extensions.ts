@@ -489,8 +489,20 @@ export interface DefenseContext {
   delivery: string;
   /** Whether the defender ticked Retreat. */
   retreating: boolean;
-  /** The options already ticked on this row, by `<module>.<key>`. */
+  /** The options already ticked on this row, by `<module>.<key>`, with their values. */
   chosen: Record<string, unknown>;
+  /** Since 1.25.0: the attacking actor, or null. */
+  attacker?: any;
+  /** Since 1.25.0: the attack's weapon, as the attack recorded it, or null. */
+  attackWeapon?: Record<string, unknown> | null;
+  /** Since 1.25.0: the arc the attack came from, or null outside tactical combat. */
+  arc?: string | null;
+  /** Since 1.25.0: the weapon a parry would be made with, or null. */
+  parryWeapon?: DefenseParryWeapon | null;
+  /** Since 1.25.0: where the attack was aimed (or where a miss by 1 landed), or null. */
+  calledShot?: { hitLocation: string; addonLocation: string | null } | null;
+  /** Since 1.25.0: this turn's defenses so far. */
+  defenseCounts?: { parries: number; blocks: number; dodges: number };
 }
 
 export interface DefenseEffect {
@@ -505,11 +517,14 @@ export interface DefenseOptionRegistration {
   label: string;
   /** Which defenses it applies to. Defaults to all three. */
   defenses?: DefenseKey[];
+  /** The control on the card (since 1.25.0). Defaults to a checkbox. */
+  input?: OptionInput;
   available?: (context: DefenseContext) => boolean;
   refuse?: (context: DefenseContext) => string | null;
-  apply: (context: DefenseContext) => DefenseEffect | null;
-  /** Called after the defense is rolled, with its outcome. */
-  after?: (context: DefenseContext, outcome: { success: boolean; margin: number } | null) => void | Promise<void>;
+  /** What choosing it does. `value` is true, a number, or the selected value. */
+  apply: (context: DefenseContext, value?: unknown) => DefenseEffect | null;
+  /** Called after the defense is rolled, with its outcome and the option's value. */
+  after?: (context: DefenseContext, outcome: { success: boolean; margin: number } | null, value?: unknown) => void | Promise<void>;
 }
 
 interface AddonDefenseOption {
@@ -517,10 +532,11 @@ interface AddonDefenseOption {
   module: string;
   label: string;
   defenses: DefenseKey[];
+  input: OptionInput;
   available: (context: DefenseContext) => boolean;
   refuse: (context: DefenseContext) => string | null;
-  apply: (context: DefenseContext) => DefenseEffect | null;
-  after: (context: DefenseContext, outcome: { success: boolean; margin: number } | null) => void | Promise<void>;
+  apply: (context: DefenseContext, value?: unknown) => DefenseEffect | null;
+  after: (context: DefenseContext, outcome: { success: boolean; margin: number } | null, value?: unknown) => void | Promise<void>;
   fp: number;
 }
 
@@ -541,6 +557,7 @@ export function registerDefenseOption(registration: DefenseOptionRegistration): 
     module: r.module,
     label: r.label.trim(),
     defenses: (r.defenses ?? ALL_DEFENSES).filter((d) => ALL_DEFENSES.includes(d)),
+    input: r.input ?? { type: "checkbox" },
     available: typeof r.available === "function" ? r.available : () => true,
     refuse: typeof r.refuse === "function" ? r.refuse : () => null,
     apply: r.apply,
@@ -641,7 +658,7 @@ export function registerExtraEffort(registration: ExtraEffortRegistration): stri
     });
   } else {
     defenseOptions.set(key, {
-      key, module: r.module, label, defenses: ALL_DEFENSES,
+      key, module: r.module, label, defenses: ALL_DEFENSES, input: { type: "checkbox" },
       available, refuse: refusal, fp: r.fp, after: () => undefined,
       apply: (context) => {
         const effect = (r.apply(context) ?? {}) as DefenseEffect;
@@ -796,20 +813,24 @@ export function anyDefenseOptions(context: Omit<DefenseContext, "defense">): Add
   return [...seen.values()];
 }
 
-/** Applies the ticked defense options to one defense. */
-export function applyDefenseOptions(context: DefenseContext, ticked: string[]): {
+/**
+ * Applies the chosen defense options to one defense: a list of ticked keys, or
+ * (since 1.25.0) each key with its value.
+ */
+export function applyDefenseOptions(context: DefenseContext, ticked: string[] | Record<string, unknown>): {
   modifiers: ModifierLine[];
   fatigue: number;
   notes: string[];
   chosen: AddonDefenseOption[];
 } {
   const out = { modifiers: [] as ModifierLine[], fatigue: 0, notes: [] as string[], chosen: [] as AddonDefenseOption[] };
-  const withChoices = { ...context, chosen: Object.fromEntries(ticked.map((k) => [k, true])) };
+  const values: Record<string, unknown> = Array.isArray(ticked) ? Object.fromEntries(ticked.map((k) => [k, true])) : { ...ticked };
+  const withChoices = { ...context, chosen: values };
   for (const option of defenseOptionsFor(withChoices)) {
-    if (!ticked.includes(option.key)) continue;
+    if (!(option.key in values)) continue;
     if (option.refuse(withChoices)) continue;
     try {
-      const effect = option.apply(withChoices);
+      const effect = option.apply(withChoices, values[option.key]);
       if (!effect) continue;
       out.modifiers.push(...(effect.modifiers ?? []).filter(isLine));
       out.fatigue += Math.max(0, Number(effect.fatigue) || 0);

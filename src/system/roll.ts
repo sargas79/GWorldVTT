@@ -315,6 +315,9 @@ export interface SuccessRollOptions {
    * card names it; null or absent for an attack a miss by 1 simply misses.
    */
   missFallback?: string | null;
+  /** Where the attack was aimed, and where a miss by 1 lands, for the defense card (since 1.25.0). */
+  calledShot?: { hitLocation: string; addonLocation: string | null } | null;
+  missFallbackShot?: { hitLocation: string; addonLocation: string | null } | null;
   /** A bonus the target's Dodge alone gets, from a laser dot they saw (p. 411). */
   dodgeBonus?: number;
   /**
@@ -524,6 +527,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
             options.guidance?.area === true && !defendsAgainstArea(),
             options.dodgeBonus ?? 0,
             options.defenseModifiers ?? [],
+            (hitsInstead ? options.missFallbackShot : options.calledShot) ?? null,
           )),
         }
       : {}),
@@ -668,6 +672,8 @@ function attackFlags(
   dodgeBonus = 0,
   /** Lines a module's attack option puts on the defender's rolls. */
   defenseModifiers: Array<ModifierLine & { defenses?: AddonDefenseKey[] }> = [],
+  /** Where the blow was aimed (since 1.25.0). */
+  calledShot: { hitLocation: string; addonLocation: string | null } | null = null,
 ): object {
   const defenders = targetedTokens()
     .filter((token: any) => token?.actor?.uuid)
@@ -721,6 +727,7 @@ function attackFlags(
         ...(damageType ? { damageType } : {}),
         ...(dodgeBonus ? { dodgeBonus } : {}),
         ...(defenseModifiers.length > 0 ? { defenseModifiers } : {}),
+        ...(calledShot ? { calledShot } : {}),
       },
     },
   };
@@ -1393,7 +1400,8 @@ async function rollAction(
       : {}),
     ...(shot?.dodgeBonus ? { dodgeBonus: shot.dodgeBonus } : {}),
     // Where an aimed blow that misses by 1 lands instead (p. 552).
-    ...(missedInto ? { missFallback: missedInto.label } : {}),
+    ...(missedInto ? { missFallback: missedInto.label, missFallbackShot: { hitLocation: missedInto.hitLocation, addonLocation: missedInto.addonLocation } } : {}),
+    ...(aimedShot ? { calledShot: { hitLocation: aimedShot.hitLocation, addonLocation: aimedShot.addonLocation ?? null } } : {}),
     // A steered or area attack says what it is doing, which needs the range
     // it was actually fired at (Campaigns pp. 412-413).
     ...(rollType === "attack" && ranged && shot
