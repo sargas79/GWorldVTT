@@ -582,7 +582,7 @@ function withTechLevel(name) {
   return specialty ? `${specialty[1]}/TL${specialty[2]}` : `${name}/TL`;
 }
 
-function parseSkills(recs, reject, source) {
+function parseSkills(recs, reject, note, source) {
   const ids = existingIds(source.outDir, "skills");
   const skills = [];
   const techniques = [];
@@ -603,18 +603,36 @@ function parseSkills(recs, reject, source) {
   // each keeps its kind: "Retain Weapon (Melee Weapon Skill)".
   const openTaken = new Set();
   const openNames = new Map();
+  // Which record each open technique is read from: the one that carries its own
+  // choice list, rather than one that only guesses (sargas79/GWorldVTT#368).
+  const openBest = new Map();
   {
     const byBase = new Map();
     for (const r of recs) {
       if (r.section !== "SKILLS") continue;
       const m = OPEN_TECHNIQUE_NAME.exec(nameOf(r));
-      if (!m || !openTechnique(r, fields(r.text), recs, source)) continue;
+      const open = m ? openTechnique(r, fields(r.text), recs, source) : null;
+      if (!open) continue;
       const key = nameOf(r);
-      byBase.set(m[1], [...(byBase.get(m[1]) ?? []), { key, label: (m[2] ?? m[3]).trim() }]);
+      const label = (m[2] ?? m[3]).trim();
+      // "[Melee Weapon]" and "%Melee Weapon Skill%" are the same technique
+      // written twice: the free-text blank and the one with the choice list.
+      byBase.set(m[1], [...(byBase.get(m[1]) ?? []), { key, label, kind: openKind(label), guessed: open.guessed }]);
     }
     for (const [base, list] of byBase) {
-      const labels = new Set(list.map((x) => x.label));
-      for (const { key, label } of list) openNames.set(key, labels.size > 1 ? `${base} (${label})` : base);
+      const kinds = new Set(list.map((x) => x.kind));
+      for (const entry of list) {
+        // The plainer of the two spellings names it, without GCA's "Skill".
+        const label = list.filter((x) => x.kind === entry.kind)
+          .map((x) => x.label.replace(/\s+Skill$/i, ""))
+          .sort((a, b) => a.length - b.length)[0];
+        openNames.set(entry.key, kinds.size > 1 ? `${base} (${label})` : base);
+      }
+      for (const entry of list) {
+        const name = openNames.get(entry.key);
+        const best = openBest.get(name);
+        if (!best || (best.guessed && !entry.guessed)) openBest.set(name, entry);
+      }
     }
   }
 
@@ -646,7 +664,7 @@ function parseSkills(recs, reject, source) {
       const open = openTechnique(r, f, recs, source);
       if (open) {
         const name = openNames.get(open.key) ?? open.base;
-        const technique = parseTechnique(name, parts[1]?.trim(), open.f, ids, reject, source);
+        const technique = parseTechnique(name, parts[1]?.trim(), open.f, ids, reject, note, source);
         if (technique) {
           technique.system.prerequisite = "";
           const at = Object.keys(technique.system).indexOf("prerequisite") + 1;
@@ -655,7 +673,7 @@ function parseSkills(recs, reject, source) {
             ...(open.families.length ? [["skillFamilies", open.families]] : []),
             ...(open.choices.length ? [["skillChoices", open.choices]] : []));
           technique.system = Object.fromEntries(entries);
-          if (!openTaken.has(name)) { openTaken.add(name); techniques.push(technique); }
+          if (!openTaken.has(name) && openBest.get(name)?.key === open.key) { openTaken.add(name); techniques.push(technique); }
           else reject(name, "duplicate open technique");
         }
         continue;
@@ -669,7 +687,7 @@ function parseSkills(recs, reject, source) {
     const [attr, diff] = parts.map((p) => p.trim()).map((p) => (p === "WC" ? "W" : p));
 
     if (attr === "Tech") {
-      const technique = parseTechnique(bare, diff, f, ids, reject, source);
+      const technique = parseTechnique(bare, diff, f, ids, reject, note, source);
       if (technique) techniques.push(technique);
       continue;
     }
@@ -752,6 +770,11 @@ const SKILL_GROUP_FAMILIES = {
   "Ranged Weapon Skill": "ranged",
 };
 
+/** The kind of skill an open technique's blank names, however it is spelled. */
+function openKind(label) {
+  return String(label ?? "").trim().replace(/\s+skill$/i, "").toLowerCase();
+}
+
 /** A bracketed blank that names its kind outright: "[Melee Weapon]". */
 const BLANK_FAMILIES = { "melee weapon": "melee", "ranged weapon": "ranged" };
 
@@ -782,6 +805,13 @@ function rawRecordText(r, source) {
  *
  * Only a blank the default is taken off is a skill: Wrench [Limb] (ST) is not
  * open, and neither is a record whose default does not name the blank.
+ *
+ * `guessed` is true where the record said nothing about its skills and the
+ * ones named in the file for the same technique had to stand in. GCA usually
+ * writes both forms of an open technique -- the free-text `[Skill]` one and the
+ * `%Skill%` one carrying the choice list -- and only the second knows its own
+ * skills, so where both are present the guess is thrown away
+ * (sargas79/GWorldVTT#368).
  */
 function openTechnique(r, f, recs, source) {
   const m = OPEN_TECHNIQUE_NAME.exec(nameOf(r));
@@ -807,7 +837,9 @@ function openTechnique(r, f, recs, source) {
   // A list of the skills themselves, one quoted a line: No-Landing
   // Extraction's Piloting specialties (Characters p. 233).
   for (const listed of raw.matchAll(/^\s*"([^"]+)"\s*,?\s*_?\s*$/gm)) choices.add(listed[1].trim());
+  let guessed = false;
   if (groups.length === 0 && choices.size === 0) {
+    guessed = true;
     const prefix = `${base} (`;
     for (const other of recs) {
       if (other.section !== "SKILLS" || other === r) continue;
@@ -825,7 +857,39 @@ function openTechnique(r, f, recs, source) {
   for (const key of ["default", "upto", "needs"]) {
     if (opened.has(key)) opened.set(key, opened.get(key).split(named).join(token).split(`"${named}::`).join(`"${token}::`));
   }
-  return { key: nameOf(r), base, families: [...families], choices: [...choices], f: opened };
+  return { key: nameOf(r), base, families: [...families], choices: [...choices], guessed, f: opened };
+}
+
+/**
+ * An attribute term a default adds after its first: `+ ST:ST`, `- ST:DX::score`.
+ */
+const REBASE_TERM = /\s*([+-])\s*ST:([A-Za-z]+)(?:::score)?\s*(?=[+-]|$)/gi;
+
+/**
+ * The attribute terms a skill's default adds to rebase the technique.
+ *
+ * GCA writes Snap Weapon as `"SK:Jitte/Sai::level" - 4 + ST:ST - ST:DX`, which
+ * is the book's "this technique is ST-based rather than DX-based" written as
+ * arithmetic. The data model has no rebasing, so the terms are read out here
+ * and reported; the default keeps the skill and its penalty.
+ *
+ * Returns the terms as "+ST-DX", or "" for a default that rebases nothing.
+ */
+export function techniqueRebasing(raw) {
+  const first = splitTop(raw ?? "")[0] ?? "";
+  return withoutRebasing(first.trim()).rebase;
+}
+
+/** A default's body without its rebasing terms, and the terms themselves. */
+function withoutRebasing(text) {
+  // Only a default off a skill rebases: "ST:ST - 4" is an attribute default.
+  if (!/^"?SK:/i.test(text)) return { body: text, rebase: "" };
+  const terms = [];
+  const body = text.replace(REBASE_TERM, (_whole, sign, attribute) => {
+    terms.push(`${sign}${attribute.toUpperCase()}`);
+    return "";
+  });
+  return { body: body.trim(), rebase: terms.join("") };
 }
 
 /**
@@ -846,10 +910,16 @@ export function techniqueDefaults(raw) {
   for (const entry of splitTop(raw ?? "")) {
     const text = entry.trim();
     if (!text) continue;
-    const penalty = /\s*([+-])\s*(\d+)\s*$/.exec(text);
+    // The arithmetic that rebases a technique on an attribute is read out
+    // first: the model has no such thing, and it isn't part of the skill's name.
+    const rebased = withoutRebasing(text).body;
+    const penalty = /\s*([+-])\s*(\d+)\s*$/.exec(rebased);
     const modifier = penalty ? Number(`${penalty[1]}${penalty[2]}`) : 0;
-    const body = (penalty ? text.slice(0, penalty.index) : text).replace(/"/g, "").trim();
-    const skill = /^SK:(.+?)(?:::(level|parrylevel|blocklevel))?$/i.exec(body);
+    const body = (penalty ? rebased.slice(0, penalty.index) : rebased).replace(/"/g, "").trim();
+    // A skill's name holds no colon, so anything left of an unread term -- more
+    // arithmetic, another record's reference -- fails here rather than becoming
+    // part of the prerequisite.
+    const skill = /^SK:([^:]+?)(?:::(level|parrylevel|blocklevel))?$/i.exec(body);
     if (skill) {
       if (skill[1].trim().endsWith("!")) continue;
       const kind = (skill[2] ?? "level").toLowerCase();
@@ -887,12 +957,14 @@ const TECHNIQUE_CEILINGS = {
  * means. Its ceiling is written `upto(SK:Bow)` rather than `upto(prereq)`,
  * naming the same skill the long way round.
  */
-function parseTechnique(name, difficulty, f, ids, reject, source) {
+function parseTechnique(name, difficulty, f, ids, reject, note, source) {
   if (difficulty !== "A" && difficulty !== "H") {
     reject(name, `technique difficulty not in the model: "${difficulty}"`);
     return null;
   }
 
+  const rebasing = techniqueRebasing(f.get("default"));
+  if (rebasing) note(`${name}: the default rebases it on ${rebasing.replace(/([+-])/g, " $1 ").trim()}, which the model has no field for; the skill and its penalty are kept`);
   const defaults = techniqueDefaults(f.get("default"));
   if (!defaults) {
     reject(name, `default is not a skill, defense or attribute: "${f.get("default") ?? ""}"`);
@@ -2001,6 +2073,7 @@ function main() {
   const { skills, techniques } = parseSkills(
     recs,
     (what, why) => skillRejects.push({ what, why }),
+    (n) => notes.push(n),
     source,
   );
 

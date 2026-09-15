@@ -25,6 +25,7 @@ import {
   talentSkillsOf,
   techniqueDefault,
   techniqueDefaults,
+  techniqueRebasing,
   traitAttackModes,
 } from "../../../tools/parse-gdf.mjs";
 
@@ -392,6 +393,25 @@ describe("a technique's defaults beyond a skill (#195)", () => {
   it("is null for a form it cannot read", () => {
     expect(techniqueDefaults("@if(foo)")).toBeNull();
     expect(techniqueDefaults(undefined)).toBeNull();
+  });
+
+  // GCA writes "this technique is ST-based rather than DX-based" as arithmetic
+  // on the default. The model has no field for it, so the skill and its penalty
+  // are kept and the rebasing is reported (#368).
+  it("keeps the skill and penalty of a default that rebases on an attribute", () => {
+    expect(techniqueDefaults('"SK:Jitte/Sai::level" - 4 + ST:ST - ST:DX')).toEqual([
+      { from: "skill", skill: "Jitte/Sai", modifier: -4 },
+    ]);
+    expect(techniqueRebasing('"SK:Jitte/Sai::level" - 4 + ST:ST - ST:DX')).toBe("+ST-DX");
+    expect(techniqueRebasing('"SK:Judo::level" - 4')).toBe("");
+    expect(techniqueRebasing("ST:ST - 4")).toBe("");
+    expect(techniqueRebasing(undefined)).toBe("");
+  });
+
+  // Anything left unread stays out of the prerequisite, rather than becoming
+  // part of the skill's name (#368).
+  it("is null when the default holds arithmetic it cannot read", () => {
+    expect(techniqueDefaults('"SK:Judo::level" - 4 + AD:Trained by a Master::level')).toBeNull();
   });
 });
 
