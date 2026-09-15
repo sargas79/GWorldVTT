@@ -10,7 +10,7 @@
 
 import { attackArc, type Arc } from "../rules/tactical.js";
 import { attackDirection, facingOf } from "./hex.js";
-import { tacticalOnScene } from "./settings.js";
+import { SYSTEM_ID } from "./constants.js";
 import { targetedTokens } from "./targets.js";
 
 /**
@@ -24,7 +24,16 @@ export function arcAgainstTarget(actor: any): Arc | null {
   const attacker = actor?.getActiveTokens?.()?.[0]?.document;
   if (!defender || !attacker) return null;
   const gridType = defender.parent?.grid?.type;
-  if (!tacticalOnScene(gridType)) return null;
+  // The tactical rules on a hex grid, as the settings module decides it; read
+  // here rather than imported, since that module needs Foundry to load.
+  const tactical = (() => {
+    try {
+      return game.settings.get(SYSTEM_ID, "combatStyle") === "tactical";
+    } catch {
+      return false;
+    }
+  })();
+  if (!tactical || typeof gridType !== "number" || gridType < 2 || gridType > 5) return null;
   const from = attackDirection(attacker, defender, gridType);
   if (from === null) return null;
   return attackArc(facingOf(defender, gridType), from).arc;
