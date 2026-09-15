@@ -1764,6 +1764,7 @@
       }
     },
     "Technique": {
+      "KindOff": "Its kind is switched off: worked out as an ordinary technique",
       "Prerequisite": "Prerequisite skill",
       "DefaultModifier": "Default modifier",
       "MaxRelative": "Level cap",
