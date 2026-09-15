@@ -6,6 +6,7 @@ import {
   defaultSources,
   groupByBook,
   summarisePack,
+  supersededPacks,
   type PackSummary,
 } from "../compendium-sources.js";
 
@@ -125,5 +126,44 @@ describe("bookState", () => {
     expect(bookState(row, new Set(["gworld.skills", "gworld.equipment"]))).toBe("all");
     expect(bookState(row, new Set(["gworld.skills"]))).toBe("some");
     expect(bookState(row, new Set(["world.house-rules"]))).toBe("none");
+  });
+});
+
+describe("a module's copy of a book", () => {
+  const book = { book: "basic-set", bookTitle: "Basic Set" };
+  const withCopy: PackSummary[] = [
+    { collection: "gworld.skills", label: "Skills", packageType: "system", packageName: "gworld", documentName: "Item", ...book },
+    { collection: "gworld.templates", label: "Templates", packageType: "system", packageName: "gworld", documentName: "Item", ...book },
+    { collection: "gworld.creatures", label: "Creatures", packageType: "system", packageName: "gworld", documentName: "Actor", ...book },
+    { collection: "gworld.powers", label: "Powers", packageType: "system", packageName: "gworld", documentName: "Item", book: "other", bookTitle: "Other" },
+    { collection: "books.basic-set-skills", label: "Skills", packageType: "module", packageName: "books", documentName: "Item", ...book },
+    { collection: "books.basic-set-templates", label: "Templates", packageType: "module", packageName: "books", documentName: "Item", ...book },
+    { collection: "world.house-rules", label: "House rules", packageType: "world", packageName: "w", documentName: "Item", ...book },
+  ];
+
+  it("supersedes the system's packs of that book and document type, and no others", () => {
+    const replaced = supersededPacks(withCopy, "gworld");
+    expect([...replaced.keys()]).toEqual(["gworld.skills", "gworld.templates"]);
+    expect(replaced.get("gworld.skills")).toEqual(["books.basic-set-skills", "books.basic-set-templates"]);
+  });
+
+  it("reads the module's copy by default, and keeps books it doesn't provide", () => {
+    expect(chosenSources(withCopy, [], "gworld")).toEqual(["books.basic-set-skills", "books.basic-set-templates", "gworld.powers"]);
+  });
+
+  it("reads the module's copy where the setting names the system's packs", () => {
+    expect(chosenSources(withCopy, ["gworld.skills", "world.house-rules"], "gworld")).toEqual([
+      "books.basic-set-skills",
+      "books.basic-set-templates",
+      "world.house-rules",
+    ]);
+    expect(chosenSources(withCopy, ["gworld.templates", "books.basic-set-templates"], "gworld")).toEqual([
+      "books.basic-set-skills",
+      "books.basic-set-templates",
+    ]);
+  });
+
+  it("changes nothing without a module copy", () => {
+    expect(supersededPacks(packs, "gworld").size).toBe(0);
   });
 });
