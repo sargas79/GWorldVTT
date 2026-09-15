@@ -579,6 +579,21 @@ and a hint `p.ihint`.
     single damage roll is halved for each foe, and a shove's basic roll pushes
     each rather than being doubled.
   - `notes` go on the card.
+- **Grapples** (since 1.34.0):
+  - `combat.grapple(actor)` is the grapple an actor is in, `{ foe, holding, hands,
+    pinned, hitLocation }`, or null.
+  - `combat.updateGrapple(actor, { hands?, pinned?, hitLocation? })` changes it on
+    both fighters; the pinned condition follows.
+  - `combat.beginGrapple({ grappler, victim, hands, hitLocation? })` starts one,
+    and `combat.endGrapple(actor)` ends it.
+  - `gworld.grappleContest` fires before a break free, takedown, pin or choke
+    contest, with `{ move, actor, foe, grapple, first, second, winner }`. `first` is
+    the side taking the action. Change a side's `base`, push to its `modifiers`,
+    or set `winner` (`"first"` or `"second"`) to decide it without rolling. The
+    quick contests' rolls are tagged `grapple` and the move.
+  - `gworld.afterGrappleContest` follows with `{ move, actor, foe, grapple, outcome,
+    marginOfVictory }` (`outcome` is `"first"`, `"second"` or `"tie"`), once the
+    system has applied the result.
 - **`combat.registerGrappleAction({ module, key, label, applies?, run })`.**
   A button on the grapple panel. `applies(grapple, actor)` sees which end of it
   the actor is (`grapple.holding`), and `run({ actor, foe, grapple })` acts.

@@ -2261,7 +2261,8 @@
       "StateHolding": "Holding on with {hands} — Aim, Feint, Concentrate, Wait and ranged attacks are out",
       "StateHeld": "Held with {hands} — no Move, no Aim, no ranged attacks, and nothing longer than a dagger",
       "StatePinned": "Pinned and helpless — no maneuver that needs physical movement",
-      "CannotMove": "Grappled: no Move maneuver without twice the foe's ST"
+      "CannotMove": "Grappled: no Move maneuver without twice the foe's ST",
+      "Decided": "Decided without a roll: {winner} wins"
     },
     "Sight": {
       "Label": "What you can see",

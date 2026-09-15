@@ -32,6 +32,7 @@ import { incompatibleModules, satisfiesApiRange } from "./api-version.js";
 import { combatApi } from "./combat-extensions.js";
 import { loadInstantly } from "./ammunition.js";
 import { registerSlam } from "./slam.js";
+import { beginGrapple, endGrapple, grappleOf, updateGrapple } from "./grappling.js";
 import { dataApi } from "./data-extensions.js";
 import { chatApi, sheetsApi } from "./sheet-extensions.js";
 import { magicApi, pointsApi } from "./roll-extensions.js";
@@ -61,7 +62,7 @@ import { manaLevel } from "./casting.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.33.0";
+export const API_VERSION = "1.34.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -237,6 +238,11 @@ const combat = Object.freeze({
   registerDerivedAttackMode,
   registerGrappleAction,
   registerSlam,
+  // The grapple an actor is in, and changing it on both sides (since 1.34.0).
+  grapple: grappleOf,
+  updateGrapple,
+  beginGrapple,
+  endGrapple,
   attackSequence: attackSequenceFor,
   hooks: Object.freeze({ ...combatApi.hooks, ...PROCEDURE_HOOKS }),
 });
