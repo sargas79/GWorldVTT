@@ -250,6 +250,21 @@ describe("an item's attack rows (#270)", () => {
     expect(rows[1]!.row).toMatchObject({ damage: "1d+2", accuracy: 3, halfDamageRange: 21, maxRange: 28, range: "21 / 28", notes: [], followUp: { damage: "1d-1", damageType: "cr", explosive: true } });
   });
 
+  it("lets a listener change a row's reach, Parry and hands (since 1.21.0), kept to their shapes", async () => {
+    const api = await load();
+    const rows = entries();
+    Object.assign(rows[0]!.row, { reach: "1", parry: 9, parryModifier: 0, twoHanded: false });
+    globals.Hooks = {
+      callAll: (_event: string, context: any) => {
+        Object.assign(context.rows[0].row, { reach: "C", parry: "7", twoHanded: true });
+        Object.assign(context.rows[1].row, { parry: "none" });
+      },
+    };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: rows as never, ...helpers } as never);
+    expect(rows[0]!.row).toMatchObject({ reach: "C", parry: 7, parryModifier: -2, twoHanded: true });
+    expect(rows[1]!.row).toMatchObject({ parry: null, twoHanded: false });
+  });
+
   it("puts the rows back as they were when a listener throws", async () => {
     const api = await load();
     const rows = entries();
@@ -320,6 +335,26 @@ describe("defense choices and parry weapons", () => {
     const refused = api.moduleDefenseRefusals({ defender: {}, attack: "Axe", delivery: "melee", damageType: "cut", choices: offered });
     expect(refused.choices.size).toBe(0);
     expect([refused.retreat, refused.feverish]).toEqual([null, null]);
+    expect(refused.parriesFlail).toBe(false);
+  });
+
+  it("gives a listener the arc and both weapons, and lets it say a parry may meet a flail (since 1.21.0)", async () => {
+    const api = await load();
+    let seen: any = null;
+    hooks({
+      "gworld.defenseChoices": (context) => {
+        seen = { arc: context.arc, attack: context.attackWeapon?.skill, parry: context.parryWeapon?.skill };
+        if (context.parryWeapon?.isFencing) context.parryWeapon.parriesFlail = true;
+      },
+    });
+    const parryWeapon = { itemId: "rapier", twoHanded: false, natural: false, skill: "Rapier", isFencing: true, parriesFlail: false };
+    const refused = api.moduleDefenseRefusals({
+      defender: {}, attack: "Morningstar", delivery: "melee", damageType: "cr", choices: offered,
+      arc: "side", attackWeapon: { skill: "Flail", flail: "flail" }, parryWeapon,
+    });
+    expect(seen).toEqual({ arc: "side", attack: "Flail", parry: "Rapier" });
+    expect(refused.parriesFlail).toBe(true);
+    expect(parryWeapon.parriesFlail).toBe(false);
   });
 
   const rows = [

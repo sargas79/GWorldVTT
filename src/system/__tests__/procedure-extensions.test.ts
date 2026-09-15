@@ -141,6 +141,30 @@ describe("derived attack modes", () => {
     expect(api.derivedAttackRows("ranged", [sword], {}, { skillLevel: () => 14 }, {})).toEqual([]);
     expect(sword.system).toEqual({ pommel: true });
   });
+
+  it("hands a mode the item's own rows and ST-based damage, where the sheet gives them (since 1.21.0)", async () => {
+    const api = await load();
+    api.registerDerivedAttackMode({
+      module: "test-addon",
+      key: "slash",
+      label: "Slash",
+      kind: "melee",
+      applies: () => true,
+      mode: (item, _actor, h) => {
+        const thrust = h.rows?.(item).melee.find((row) => row.damageType === "imp");
+        return thrust ? { skillName: thrust.skillName, skillLevel: thrust.skillLevel, damage: `${String(thrust.damage)}-2`, damageType: "cut", reach: h.damage?.("thr", -2) } : null;
+      },
+    });
+    const rapier = { id: "r", name: "Rapier", system: {} };
+    const helpers = {
+      skillLevel: () => 14,
+      rows: () => ({ melee: [{ skillName: "Rapier", skillLevel: 14, damage: "1d+1", damageType: "imp" }], ranged: [] }),
+      damage: (base: string, modifier: number) => `${base}${modifier}`,
+    };
+    expect(api.derivedAttackRows("melee", [rapier], {}, helpers, {})).toEqual([
+      expect.objectContaining({ mode: "Slash", skillLevel: 14, damage: "1d+1-2", damageType: "cut", reach: "thr-2", derivedMode: "test-addon.slash" }),
+    ]);
+  });
 });
 
 describe("grapple actions", () => {

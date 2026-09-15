@@ -104,7 +104,7 @@ export interface IncomingDamage {
   /** The item the blow was rolled from, where the card knows it. */
   itemUuid?: string;
   /** Which of the item's modes it was rolled from. */
-  mode?: { index: number; ranged: boolean };
+  mode?: { index: number; ranged: boolean; derived?: string };
   /**
    * The arc the blow came from, where the table is playing with facing.
    * Armour marked "F" protects against the front alone (Characters p. 282);

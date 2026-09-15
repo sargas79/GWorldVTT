@@ -491,6 +491,26 @@ and skipped, and the roll goes on.
     says why;
   - Since 1.19.0, a `gworld.attackModifiers` listener may set `refusal` (text): the
     attack isn't rolled, and the user is told why;
+  - Since 1.21.0, `gworld.attackModifiers` also gets:
+    - `options`: the attack options chosen in the dialog, by `<module>.<key>`;
+    - `deceptive`: the part of `defensePenalty` a Deceptive Attack bought;
+    - `feint`: the feint this attack spends, also in `defensePenalty`;
+    - `evaluate`: the Evaluate bonus already in `modifiers`;
+    - `calledShot.chink`: whether the blow is aimed at chinks in armor.
+
+    Its `mode`, and the `mode` on `gworld.damageModifiers`, `gworld.injury`
+    and `gworld.afterDamage`, carries `derived`, the derived attack mode's
+    `<module>.<key>`, for a row a derived mode made;
+  - Since 1.21.0, `gworld.defenseModifiers` and `gworld.defenseChoices` also get:
+    - `arc`: `front`, `side`, `back`, or null outside tactical combat;
+    - `attackWeapon`: the attack's weapon as the attack recorded it, or null. That is
+      `weight`, `material`, `swung`, `skill`, `thrust`, `flail` (`flail`,
+      `nunchaku` or absent), `itemUuid` and `mode`;
+    - `parryWeapon`: for a parry, `{ itemId, twoHanded, natural, skill, isFencing }`.
+
+    In `gworld.defenseChoices` it also has `parriesFlail`. Set it true to let
+    a weapon that couldn't parry a flail (a fencing weapon or a knife) parry
+    one;
   - Since 1.18.0, `gworld.attackModifiers` also gets `calledShot`, the location the
     blow is aimed at as `{ hitLocation, addonLocation }` or null, and `targets`,
     the actors of the targeted tokens;
@@ -522,6 +542,10 @@ and skipped, and the roll goes on.
     - Change the row's `skillLevel`, `damage`, `damageType`, `armorDivisor`,
       `halfDamageRange`, `maxRange`, `accuracy`, `malfunction`, `projectiles`,
       `rateOfFire`, `minSt` or `material`.
+    - Since 1.21.0, also its `reach` (text such as `"C, 1"`), `parry` (a whole
+      number, or null for none) and `twoHanded`. A Parry moved up or down
+      moves the weapon's parry modifier with it, so the character's Parry
+      follows. The Parry isn't worked out again from a changed `skillLevel`.
     - Push `notes` (`{ label, hint }`), shown as tags, or set `followUp`
       (`{ damage, damageType, explosive, label? }`), which the Combat tab offers
       as a damage roll of its own.
@@ -733,7 +757,13 @@ and a hint `p.ihint`.
 - **`combat.registerDerivedAttackMode({ module, key, label, kind, applies, mode })`.**
   An attack worked out when the sheet is drawn and never written to the item:
   for each weapon `applies(item, actor)` takes, `mode(item, actor, { skillLevel })`
-  returns the row the melee or ranged table shows and rolls from.
+  returns the row the melee or ranged table shows and rolls from. Since 1.21.0
+  the helpers also carry:
+  - `rows(item)`: `{ melee, ranged }`, copies of the item's own rows after the
+    `gworld.weaponAttacks` listeners, so a mode can start from a row's damage
+    with its quality in;
+  - `damage(base, modifier)`: thrust (`"thr"`) or swing (`"sw"`) damage at
+    the actor's striking ST.
 - **`combat.registerGrappleAction({ module, key, label, applies?, run })`.**
   A button on the grapple panel. `applies(grapple, actor)` sees which end of it
   the actor is (`grapple.holding`), and `run({ actor, foe, grapple })` acts.

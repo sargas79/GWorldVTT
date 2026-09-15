@@ -249,6 +249,9 @@ export interface AttackWeaponFlag {
   skill?: string;
   thrust?: boolean;
   flail?: FlailKind;
+  /** The weapon item and the mode attacked with, for the modules' defense hooks. */
+  itemUuid?: string;
+  mode?: { index: number; ranged: boolean; derived?: string } | null;
 }
 
 export interface SuccessRollOptions {
@@ -691,6 +694,8 @@ function attackFlags(
                 ...(weapon.skill ? { skill: weapon.skill } : {}),
                 ...(weapon.thrust ? { thrust: true } : {}),
                 ...(weapon.flail ? { flail: weapon.flail } : {}),
+                ...(weapon.itemUuid ? { itemUuid: weapon.itemUuid } : {}),
+                ...(weapon.mode ? { mode: weapon.mode } : {}),
               },
             }
           : {}),
@@ -739,7 +744,7 @@ export interface DamageRollOptions {
   /** The item the blow comes from, for a module's hooks; its UUID travels on the card. */
   item?: any;
   /** Which of the item's modes it was rolled from. */
-  mode?: { index: number; ranged: boolean } | null;
+  mode?: { index: number; ranged: boolean; derived?: string } | null;
 }
 
 /**
@@ -1227,13 +1232,14 @@ async function rollAction(
   // what each line is for.
   const attackRow = target.closest<HTMLElement>("[data-item-id]");
   const attackModeIndex = Number(attackRow?.dataset.modeIndex);
+  const attackMode = rolledItem && attackRow?.dataset.modeIndex !== undefined && Number.isInteger(attackModeIndex)
+    ? { index: attackModeIndex, ranged: attackRow.dataset.ranged === "1", ...(attackRow.dataset.derivedMode ? { derived: attackRow.dataset.derivedMode } : {}) }
+    : null;
   const hooked = rollType === "attack"
     ? callCombatHook(COMBAT_HOOKS.attackModifiers, {
         actor,
         item: rolledItem,
-        mode: rolledItem && attackRow?.dataset.modeIndex !== undefined && Number.isInteger(attackModeIndex)
-          ? { index: attackModeIndex, ranged: attackRow.dataset.ranged === "1" }
-          : null,
+        mode: attackMode,
         rollType,
         ranged: Boolean(ranged),
         modifiers,
@@ -1244,10 +1250,16 @@ async function rollAction(
         // Where the blow is aimed, and at whom.
         calledShot: (() => {
           const aimedAt = melee?.calledShot ?? shot?.calledShot ?? null;
-          return aimedAt ? { hitLocation: aimedAt.hitLocation, addonLocation: aimedAt.addonLocation ?? null } : null;
+          return aimedAt ? { hitLocation: aimedAt.hitLocation, addonLocation: aimedAt.addonLocation ?? null, chink: aimedAt.chink === true } : null;
         })(),
         targets: targetedTokens().map((token: any) => token?.actor).filter(Boolean),
         refusal: null as string | null,
+        // Since 1.21.0: the options chosen, and what went into the defense
+        // penalty and the roll from a Deceptive Attack, a feint and Evaluate.
+        options: { ...(melee?.options ?? shot?.options ?? {}) } as Record<string, unknown>,
+        deceptive: melee?.deceptive ?? 0,
+        feint,
+        evaluate: evaluated,
       })
     : null;
   // A module's rules may make this attack impossible here: it isn't rolled.
@@ -1285,6 +1297,8 @@ async function rollAction(
         skill: String(target.dataset.rollSkill ?? ""),
         thrust: target.dataset.ranged !== "1" && target.dataset.damageBase === "thr",
         flail: flailKind(target.dataset.rollSkill, String(rolledItem?.name ?? rollLabel ?? "")),
+        ...(rolledItem?.uuid ? { itemUuid: String(rolledItem.uuid) } : {}),
+        mode: attackMode,
       }
     : undefined;
 
@@ -1589,6 +1603,8 @@ function quickShot(
 /** What a ranged attack was resolved into, by the dialog or by the map. */
 interface RangedShot {
   modifiers: RollModifier[];
+  /** The attack options chosen, by id. */
+  options?: Record<string, unknown>;
   /** Shots for the rapid-fire arithmetic: shells times pellets. */
   shotsFired: number;
   /** Shells actually fired, which is what comes off the weapon's count. */
@@ -1864,6 +1880,7 @@ export async function promptForRangedAttack(options: {
 
   return {
     addon,
+    options: input.addonValues ?? {},
     modifiers,
     shotsFired: pellets.effectiveShots,
     shellsFired,
@@ -2306,6 +2323,10 @@ export async function promptForMeleeAttack(options: {
 }): Promise<{
   /** What the modules' attack options chosen in the dialog add up to. */
   addon: ReturnType<typeof applyAttackOptions>;
+  /** The attack options chosen, by id. */
+  options: Record<string, unknown>;
+  /** The Deceptive Attack's part of the defense penalty. */
+  deceptive: number;
   modifiers: RollModifier[];
   defensePenalty: number;
   /** FP the chosen options cost, to be paid before the roll. */
@@ -2582,6 +2603,8 @@ export async function promptForMeleeAttack(options: {
   const mightyBlows = mighty && effortAllowed;
   return {
     addon,
+    options: addonValues ?? {},
+    deceptive: deception.defensePenalty,
     modifiers,
     defensePenalty: deception.defensePenalty + groundPenalty,
     // Both cost a flat point each, and both are paid before the roll -- as is
@@ -2628,7 +2651,7 @@ export async function handleDamageAction(
   const item = itemId ? (actor?.items?.get?.(itemId) ?? null) : null;
   const modeIndex = Number(itemRow?.dataset.modeIndex);
   const mode = item && itemRow?.dataset.modeIndex !== undefined && Number.isInteger(modeIndex)
-    ? { index: modeIndex, ranged: itemRow.dataset.ranged === "1" }
+    ? { index: modeIndex, ranged: itemRow.dataset.ranged === "1", ...(itemRow.dataset.derivedMode ? { derived: itemRow.dataset.derivedMode } : {}) }
     : null;
 
   const modifiers = await maybePromptModifiers(event);

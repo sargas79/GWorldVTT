@@ -2264,8 +2264,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // listed after the weapons' own and never written back to them.
     const skillLevel = (name: string) => this.skillLevelByName(name);
     const weapons = this.items.filter((i) => i.type === "equipment" || i.type === "shield");
-    melee.push(...(derivedAttackRows("melee", weapons, this.parent, { skillLevel }, DERIVED_MELEE_DEFAULTS) as unknown as DerivedAttack[]));
-    ranged.push(...(derivedAttackRows("ranged", weapons, this.parent, { skillLevel }, DERIVED_RANGED_DEFAULTS) as unknown as DerivedAttack[]));
+    // The item's own rows, copied, and damage at the ST blows are struck with (API 1.21.0).
+    const ownRows = (list: DerivedAttack[], item: any) =>
+      list.filter((row) => row.itemId === item?.id && row.modeIndex >= 0).map((row) => foundry.utils.deepClone(row) as unknown as Record<string, unknown>);
+    const helpers = {
+      skillLevel,
+      rows: (item: any) => ({ melee: ownRows(melee, item), ranged: ownRows(ranged, item) }),
+      damage: (base: "thr" | "sw", modifier: number) => resolveDamage(strikingSt, base === "sw" ? "sw" : "thr", Number(modifier) || 0, "", null),
+    };
+    melee.push(...(derivedAttackRows("melee", weapons, this.parent, helpers, DERIVED_MELEE_DEFAULTS) as unknown as DerivedAttack[]));
+    ranged.push(...(derivedAttackRows("ranged", weapons, this.parent, helpers, DERIVED_RANGED_DEFAULTS) as unknown as DerivedAttack[]));
 
     // ── active defenses ─────────────────────────────────────────────────
     // All-Out Attack forfeits every defense; Move and Attack forbids parrying.
