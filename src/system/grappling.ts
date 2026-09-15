@@ -26,7 +26,7 @@ import {
   takedownScore,
 } from "../rules/grappling.js";
 import { attributeOf } from "./attributes.js";
-import { PROCEDURE_HOOKS, grappleMoveRefusal } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, grappleMoveRefusal, grappleMoveRules } from "./procedure-extensions.js";
 import { callCombatHook } from "./combat-extensions.js";
 import type { ContestSide } from "./contest.js";
 
@@ -389,11 +389,15 @@ export async function rollPin(options: { actor: any }): Promise<void> {
 
   const foe = await foeOf(grapple);
   if (!foe) return;
-  if (refusedMove(actor, foe, "pin")) return;
+  const rules = grappleMoveRules(actor, foe, "pin");
+  if (rules.refusal) {
+    ui.notifications?.warn(rules.refusal);
+    return;
+  }
 
   // "You may only attempt a pin if your foe is on the ground and you are
-  // grappling his torso."
-  if (String(foe.system?.posture ?? "standing") === "standing" || grapple.hitLocation !== "torso") {
+  // grappling his torso" -- unless a module's rules waive it (API 1.35.0).
+  if (!rules.waiveRequirements && (String(foe.system?.posture ?? "standing") === "standing" || grapple.hitLocation !== "torso")) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.Grapple.PinRequires"));
     return;
   }

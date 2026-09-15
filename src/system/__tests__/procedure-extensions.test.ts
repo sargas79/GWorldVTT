@@ -280,3 +280,29 @@ describe("a feint's result", () => {
     expect(scores.second).toEqual({ base: 12 });
   });
 });
+
+describe("self derived modes (since 1.35.0)", () => {
+  it("works a self mode out once per character, with no item", async () => {
+    const api = await load();
+    let calls = 0;
+    api.registerDerivedAttackMode({
+      module: "test-addon",
+      key: "nip",
+      label: "Nip",
+      kind: "melee",
+      self: true,
+      applies: (item: unknown) => item === null,
+      mode: () => { calls += 1; return { skillName: "DX", skillLevel: 10, damage: "1d-2", damageType: "cr", naturalKey: "bite" }; },
+    } as never);
+    const rows = api.derivedAttackRows("melee", [{ id: "s", name: "Sword", system: {} }, { id: "k", name: "Knife", system: {} }], {}, { skillLevel: () => 10 }, { reach: "C" });
+    expect(calls).toBe(1);
+    expect(rows).toEqual([expect.objectContaining({ itemId: "", name: "Nip", mode: "Nip", naturalKey: "bite", natural: true, derivedMode: "test-addon.nip" })]);
+  });
+
+  it("lets a grapple move listener waive the pin's requirements", async () => {
+    const api = await load();
+    globals.Hooks = { callAll: (_event: string, context: any) => { if (context.move === "pin") context.waiveRequirements = true; } };
+    expect(api.grappleMoveRules({}, {}, "pin")).toEqual({ refusal: null, waiveRequirements: true });
+    expect(api.grappleMoveRules({}, {}, "takedown")).toEqual({ refusal: null, waiveRequirements: false });
+  });
+});
