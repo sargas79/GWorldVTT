@@ -581,6 +581,10 @@ and skipped, and the roll goes on.
       follows. The Parry isn't worked out again from a changed `skillLevel`.
     - Since 1.28.0, also `feint`: whether the Combat tab offers a Feint from the
       row. Melee rows start true and ranged rows false, derived modes included;
+    - Since 1.30.0, also `skillName` and `readiesAfterAttack` (whether attacking
+      leaves the weapon unready). The context's `skillLevel(name)` reads the
+      actor's level in a skill as this preparation worked it out, or null; the
+      `actors` readers aren't ready yet while rows are worked out;
     - Push `notes` (`{ label, hint }`), shown as tags, or set `followUp`
       (`{ damage, damageType, explosive, label? }`), which the Combat tab offers
       as a damage roll of its own.
@@ -804,7 +808,8 @@ and a hint `p.ihint`.
     the actor's striking ST.
 
   Since 1.29.0 they also carry `basicLift`, the character's Basic Lift with
-  Lifting ST in. `actors.basicLift` and `actors.attribute` read the derived
+  Lifting ST in, and since 1.30.0 `attribute(key)` for `ST`, `DX`, `IQ`,
+  `HT`, `Will` and `Per`. `actors.basicLift` and `actors.attribute` read the derived
   values, which aren't there yet while a mode is worked out.
 - **`combat.registerGrappleAction({ module, key, label, applies?, run })`.**
   A button on the grapple panel. `applies(grapple, actor)` sees which end of it

@@ -105,7 +105,7 @@ export interface WeaponRowEntry {
 const WEAPON_ROW_FIELDS = [
   "skillLevel", "damage", "damageType", "armorDivisor", "halfDamageRange", "maxRange", "accuracy", "malfunction",
   "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp", "reach", "parry", "twoHanded",
-  "feint",
+  "feint", "skillName", "readiesAfterAttack",
 ] as const;
 
 /**
@@ -125,6 +125,8 @@ export function adjustWeaponAttacks(options: {
   rangeAt: (entry: WeaponRowEntry, st: number) => { halfDamageRange: number; maxRange: number };
   addToDamage: (formula: string, bonus: number) => string;
   isRollable: (entry: WeaponRowEntry) => boolean;
+  /** The actor's level in a skill as this preparation worked it out, or null (since 1.30.0). */
+  skillLevel?: (name: string) => number | null;
 }): void {
   if (options.rows.length === 0) return;
   for (const entry of options.rows) {
@@ -143,6 +145,7 @@ export function adjustWeaponAttacks(options: {
       damageAt: options.damageAt,
       rangeAt: options.rangeAt,
       addToDamage: options.addToDamage,
+      skillLevel: options.skillLevel ?? (() => null),
     });
   } catch (error) {
     console.warn(`gworld | a ${COMBAT_HOOKS.weaponAttacks} listener failed`, error);
@@ -167,6 +170,9 @@ export function adjustWeaponAttacks(options: {
     }
     row.twoHanded = row.twoHanded === true;
     row.feint = row.feint === true;
+    // The skill a row names, and whether attacking leaves it unready (since 1.30.0).
+    row.skillName = typeof row.skillName === "string" ? row.skillName : String(row.skillName ?? "");
+    row.readiesAfterAttack = row.readiesAfterAttack === true;
     row.notes = (Array.isArray(row.notes) ? row.notes : [])
       .filter((n: any) => typeof n?.label === "string" && n.label.trim())
       .map((n: any) => ({ label: String(n.label), hint: String(n.hint ?? "") }));

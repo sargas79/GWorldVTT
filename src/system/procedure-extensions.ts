@@ -463,6 +463,8 @@ export interface DerivedModeHelpers {
   damage?: (base: "thr" | "sw", modifier: number) => string;
   /** The character's Basic Lift, Lifting ST included (since 1.29.0). */
   basicLift?: number;
+  /** ST, DX, IQ, HT, Will or Per as this preparation worked them out, or null (since 1.30.0). */
+  attribute?: (key: string) => number | null;
 }
 
 const derivedModes: Array<{ id: string; label: string; kind: "melee" | "ranged"; applies: DerivedAttackModeRegistration["applies"]; mode: DerivedAttackModeRegistration["mode"] }> = [];
