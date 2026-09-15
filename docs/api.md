@@ -281,7 +281,9 @@ and the roll continues.
     one;
   - Since 1.24.0, `gworld.defenseModifiers` and `gworld.defenseChoices` also get
     `defenseCounts`, this turn's defenses so far: `parries` with the weapon
-    about to parry, `blocks` and `dodges`. In `gworld.defenseChoices`, set
+    about to parry, `blocks` and `dodges`. Since 1.33.0 `gworld.defenseModifiers`
+    also gets `calledShot` (`{ hitLocation, addonLocation }`, or null) and
+    `retreating`. In `gworld.defenseChoices`, set
     `blockAgain` true to allow a block after the one a turn allows;
   - Since 1.18.0, `gworld.attackModifiers` also gets `calledShot`, the location the
     blow is aimed at as `{ hitLocation, addonLocation }` or null, and `targets`,
