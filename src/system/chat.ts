@@ -46,6 +46,7 @@ import {
   defenseModifiersFor,
   defenseOptionsFor,
   hitLocationsFor,
+  moduleDefenseRefusals,
   moduleDefensesFor,
   readLocationValue,
   registeredHitLocation,
@@ -656,6 +657,20 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       }
     }
 
+    // What a module's rules take away from this defender: a defense, with the
+    // reason on the refused button, or Retreat or Feverish Defense.
+    const refused = moduleDefenseRefusals({
+      defender,
+      attack: flag.attack,
+      delivery: flag.delivery ?? "",
+      damageType: flag.damageType ?? "",
+      choices,
+    });
+    for (const choice of choices) {
+      const refusal = refused.choices.get(choice.key);
+      if (refusal !== undefined) Object.assign(choice, { available: false, shown: null, reason: "maneuver", refusal: refusal || null });
+    }
+
     // A Blocking spell "is cast instantly as a defense against either a
     // physical attack or another spell" (Characters p. 241), so a defender
     // who knows one is offered it beside the three ordinary defenses.
@@ -672,7 +687,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     // Retreating is an option on any defense against a melee attack, and it is
     // worth more to some defenses than others, so it is a choice made here
     // rather than a modifier typed in afterwards.
-    const retreatBox = isRuleOn("retreat") ? document.createElement("input") : null;
+    const retreatBox = isRuleOn("retreat") && refused.retreat === null ? document.createElement("input") : null;
     const retreat = document.createElement("label");
     retreat.className = "gc-retreat";
     if (retreatBox) {
@@ -702,7 +717,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     // A point of fatigue for +2 on this one defense (Campaigns p. 357). Ticked
     // before the button is pressed, because the FP is spent whatever the roll
     // then does.
-    const feverishBox = isRuleOn("extraEffort") ? document.createElement("input") : null;
+    const feverishBox = isRuleOn("extraEffort") && refused.feverish === null ? document.createElement("input") : null;
     if (feverishBox) {
       feverishBox.type = "checkbox";
       const feverish = document.createElement("label");
@@ -861,7 +876,7 @@ function refusedButton(choice: DefenseChoice): HTMLButtonElement {
   button.disabled = true;
   button.textContent = `${game.i18n.localize(DEFENSE_LABELS[choice.key])} \u2014`;
   if (choice.reason) {
-    const why = game.i18n.localize(REFUSAL_LABELS[choice.reason]);
+    const why = choice.refusal || game.i18n.localize(REFUSAL_LABELS[choice.reason]);
     button.title = why;
     button.setAttribute("aria-label", `${game.i18n.localize(DEFENSE_LABELS[choice.key])}: ${why}`);
   }

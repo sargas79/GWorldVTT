@@ -47,8 +47,12 @@ export type DefenseKey = "dodge" | "parry" | "block";
 
 /** The hooks this module fires, by name. */
 export const COMBAT_HOOKS = Object.freeze({
-  /** Before an attack roll: `{ actor, rollType, ranged, modifiers, defensePenalty, dataset }`, mutable. */
+  /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset }`, mutable. */
   attackModifiers: "gworld.attackModifiers",
+  /** The defense card's choices for a defender: `{ defender, attack, delivery, damageType, choices, retreat, feverish }`, mutable. */
+  defenseChoices: "gworld.defenseChoices",
+  /** The weapons a character's best parry is picked from: `{ actor, attackedThisTurn, candidates }`, mutable. */
+  parryWeapons: "gworld.parryWeapons",
   /** Before a defense roll: `{ defender, defense, attack, modifiers }`, mutable. */
   defenseModifiers: "gworld.defenseModifiers",
   /** Before a damage roll: `{ actor, item, mode, label, formula, damageType, modifiers }`, mutable. */
@@ -733,6 +737,89 @@ export function defenseModifiersFor(
  * The hook a mutable context goes through. Listeners may push to its arrays or
  * change its numbers; one that throws is logged and the roll goes on.
  */
+// ── which defenses and which weapons ─────────────────────────────────────
+
+/** One of the system's three defenses as `gworld.defenseChoices` sees it. */
+export interface HookedDefenseChoice {
+  key: DefenseKey;
+  available: boolean;
+  /** Why a listener refused it, shown on the refused button. */
+  refusal: string | null;
+}
+
+/** Retreat or Feverish Defense, as `gworld.defenseChoices` sees it. */
+export interface HookedDefenseToggle {
+  available: boolean;
+  refusal: string | null;
+}
+
+/**
+ * What modules refuse on a defender's card: any of the three defenses,
+ * Retreat and Feverish Defense, each with the text to show. Only refusals are
+ * taken; a listener can't offer what the system refused.
+ */
+export function moduleDefenseRefusals(context: {
+  defender: any;
+  attack: string;
+  delivery: string;
+  damageType: string;
+  choices: Array<{ key: DefenseKey; available: boolean }>;
+}): { choices: Map<DefenseKey, string>; retreat: string | null; feverish: string | null } {
+  const hooked = callCombatHook(COMBAT_HOOKS.defenseChoices, {
+    defender: context.defender,
+    attack: context.attack,
+    delivery: context.delivery,
+    damageType: context.damageType,
+    choices: context.choices.map((c): HookedDefenseChoice => ({ key: c.key, available: c.available, refusal: null })),
+    retreat: { available: true, refusal: null } as HookedDefenseToggle,
+    feverish: { available: true, refusal: null } as HookedDefenseToggle,
+  });
+  const text = (refusal: unknown) => (typeof refusal === "string" && refusal.trim() ? refusal.trim() : "");
+  const choices = new Map<DefenseKey, string>();
+  for (const choice of hooked.choices ?? []) {
+    const was = context.choices.find((c) => c.key === choice?.key);
+    if (was?.available && choice.available === false) choices.set(was.key, text(choice.refusal));
+  }
+  return {
+    choices,
+    retreat: hooked.retreat?.available === false ? text(hooked.retreat.refusal) : null,
+    feverish: hooked.feverish?.available === false ? text(hooked.feverish.refusal) : null,
+  };
+}
+
+/** A weapon a best parry may be picked from, as `gworld.parryWeapons` sees it. */
+export interface ParryCandidate {
+  itemId: string;
+  modeIndex: number;
+  name: string;
+  unbalanced: boolean;
+  /** Left out: an unbalanced weapon on a turn it attacked, or whatever a listener says. */
+  excluded: boolean;
+  reason: string;
+}
+
+/**
+ * The attack rows a best parry may be picked from. An unbalanced weapon is
+ * left out on a turn its wielder attacked, and a module may leave out others
+ * or let an unbalanced one back in.
+ */
+export function parryWeaponRows<T extends { itemId?: string; modeIndex?: number; name?: string; unbalanced?: boolean }>(
+  actor: any,
+  rows: readonly T[],
+  attackedThisTurn: boolean,
+): T[] {
+  const candidates: ParryCandidate[] = rows.map((row) => ({
+    itemId: String(row.itemId ?? ""),
+    modeIndex: Number(row.modeIndex ?? 0) || 0,
+    name: String(row.name ?? ""),
+    unbalanced: Boolean(row.unbalanced),
+    excluded: attackedThisTurn && Boolean(row.unbalanced),
+    reason: attackedThisTurn && row.unbalanced ? "unbalanced" : "",
+  }));
+  const hooked = callCombatHook(COMBAT_HOOKS.parryWeapons, { actor, attackedThisTurn, candidates });
+  return rows.filter((_row, index) => hooked.candidates?.[index]?.excluded !== true);
+}
+
 export function callCombatHook<T extends object>(hook: string, context: T): T {
   const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
   try {

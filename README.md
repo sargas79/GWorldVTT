@@ -464,7 +464,21 @@ and skipped, and the roll goes on.
   cleared at that boundary. `getWeaponState(item, module)` and
   `setWeaponState(item, module, patch)` hold state on a weapon.
 - **Hooks**, each called with a mutable context:
-  - `gworld.attackModifiers`, `gworld.defenseModifiers`, `gworld.damageModifiers`: push lines to `modifiers`;
+  - `gworld.attackModifiers`, `gworld.defenseModifiers`, `gworld.damageModifiers`: push lines to `modifiers`.
+    Since 1.15.0 `gworld.attackModifiers` also gets `item`, the weapon the
+    attack is made with or null, and `mode` (`{ index, ranged }`);
+  - `gworld.defenseChoices` (since 1.15.0): the defense card's choices for a
+    defender, as `{ defender, attack, delivery, damageType, choices, retreat, feverish }`.
+    Each of `choices` is `{ key, available, refusal }` for dodge, parry and
+    block; set `available: false` and `refusal` (text) to refuse one, and the
+    button shows it refused with that text. `retreat` and `feverish` are
+    `{ available, refusal }`; set `available: false` and the card leaves the
+    checkbox off. A listener can't offer what the system refused;
+  - `gworld.parryWeapons` (since 1.15.0): the weapons a character's best parry is
+    picked from, as `{ actor, attackedThisTurn, candidates }`. Each candidate is
+    `{ itemId, modeIndex, name, unbalanced, excluded, reason }`: set `excluded`
+    to leave a weapon out, or clear it on an unbalanced weapon left out for having
+    attacked this turn;
   - `gworld.injury`: change `damage` before it is worked out;
   - `gworld.afterDamage`: the blow and its result;
   - `gworld.damageModifiers`, `gworld.injury` and `gworld.afterDamage` also get
