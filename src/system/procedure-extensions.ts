@@ -461,6 +461,8 @@ export interface DerivedModeHelpers {
   skillLevel: (name: string) => number | null;
   rows?: (item: any) => { melee: Array<Record<string, unknown>>; ranged: Array<Record<string, unknown>> };
   damage?: (base: "thr" | "sw", modifier: number) => string;
+  /** The character's Basic Lift, Lifting ST included (since 1.29.0). */
+  basicLift?: number;
 }
 
 const derivedModes: Array<{ id: string; label: string; kind: "melee" | "ranged"; applies: DerivedAttackModeRegistration["applies"]; mode: DerivedAttackModeRegistration["mode"] }> = [];

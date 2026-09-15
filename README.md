@@ -802,6 +802,10 @@ and a hint `p.ihint`.
     with its quality in;
   - `damage(base, modifier)`: thrust (`"thr"`) or swing (`"sw"`) damage at
     the actor's striking ST.
+
+  Since 1.29.0 they also carry `basicLift`, the character's Basic Lift with
+  Lifting ST in. `actors.basicLift` and `actors.attribute` read the derived
+  values, which aren't there yet while a mode is worked out.
 - **`combat.registerGrappleAction({ module, key, label, applies?, run })`.**
   A button on the grapple panel. `applies(grapple, actor)` sees which end of it
   the actor is (`grapple.holding`), and `run({ actor, foe, grapple })` acts.

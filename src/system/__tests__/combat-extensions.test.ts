@@ -315,11 +315,11 @@ describe("an item's attack rows (#270)", () => {
     globals.Hooks = { callAll: () => undefined };
     const plain = entries();
     api.adjustWeaponAttacks({ actor: {}, item: {}, rows: plain as never, ...helpers } as never);
-    expect([plain[0]!.row.feint, plain[1]!.row.feint]).toEqual([true, false]);
+    expect([(plain[0]!.row as any).feint, (plain[1]!.row as any).feint]).toEqual([true, false]);
     const changed = entries();
     globals.Hooks = { callAll: (_event: string, context: any) => { context.rows[0].row.feint = "no"; context.rows[1].row.feint = true; } };
     api.adjustWeaponAttacks({ actor: {}, item: {}, rows: changed as never, ...helpers } as never);
-    expect([changed[0]!.row.feint, changed[1]!.row.feint]).toEqual([false, true]);
+    expect([(changed[0]!.row as any).feint, (changed[1]!.row as any).feint]).toEqual([false, true]);
   });
 
   it("gives a feint the lines modules add, and their refusal (since 1.28.0)", async () => {
