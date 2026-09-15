@@ -134,6 +134,8 @@ import {
 } from "../rules/guided.js";
 import { allOutAttackBonus, strongAttackDamageBonus, type AllOutAttackOption } from "../rules/maneuvers.js";
 import { flailKind, type FlailKind } from "../rules/defenses.js";
+import { canTargetFromArc, missByOneHitsTorso } from "../rules/hit-locations.js";
+import { arcAgainstTarget } from "./attack-arc.js";
 import { POSTURE_EFFECTS } from "../rules/posture.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
@@ -305,6 +307,11 @@ export interface SuccessRollOptions {
    * whether it rolls again on "your weapon breaks".
    */
   weapon?: AttackWeaponFlag & { resistsBreakage: boolean };
+  /**
+   * Where an attack that misses by 1 lands instead (Campaigns p. 552), as the
+   * card names it; null or absent for an attack a miss by 1 simply misses.
+   */
+  missFallback?: string | null;
   /** A bonus the target's Dodge alone gets, from a laser dot they saw (p. 411). */
   dodgeBonus?: number;
   /**
@@ -410,6 +417,9 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
       ? await rollCriticalMiss(criticalMissTableFor(unarmed), options.weapon?.resistsBreakage === true)
       : null;
   const criticalHit = kind === "attack" && outcome.criticalSuccess && isRuleOn("criticalTables");
+  // An aimed attack that misses by 1 hits the torso instead (p. 552): it
+  // connects, and the defender is asked to defend.
+  const hitsInstead = kind === "attack" && !outcome.success && !outcome.criticalFailure && outcome.margin === 1 && Boolean(options.missFallback);
 
   // A gun that jams does so on the attack roll itself, whether or not the shot
   // would otherwise have hit -- "on any attack roll of Malf. or more".
@@ -432,7 +442,9 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     totalModifier,
     effective,
     outcome,
-    resultLabel: describeOutcome(outcome, kind),
+    resultLabel: hitsInstead
+      ? `${describeOutcome(outcome, kind)} — ${game.i18n.format("GWORLD.CalledShot.MissByOne", { location: String(options.missFallback) })}`
+      : describeOutcome(outcome, kind),
     resultClass: outcomeClass(outcome),
     // A burst that missed scored nothing, so hits are reported only on a hit.
     hits:
@@ -461,7 +473,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
             skill: String(options.skill ?? ""),
             step: outcomeStep(outcome),
             combat: isCombatRoll(actor, kind),
-            ...(kind === "attack" && !outcome.success
+            ...(kind === "attack" && !outcome.success && !hitsInstead
               ? {
                   onSuccess: attackFlags(
                     actor, label, defensePenalty, false, noParry, options.weapon, options.delivery, options.damageType,
@@ -499,7 +511,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     // An attack that connects is the moment to record who it was aimed at: the
     // defender rolls afterwards, by which time the attacker may well have
     // changed their target. A miss needs no defense, so it carries nothing.
-    ...(kind === "attack" && outcome.success
+    ...(kind === "attack" && (outcome.success || hitsInstead)
       ? {
           flags: foundry.utils.mergeObject(foundry.utils.deepClone(successRoll ?? {}), attackFlags(
             actor, label, defensePenalty, criticalHit, noParry, options.weapon,
@@ -518,7 +530,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
 
   // What the fumble did to the weapon travels back to whoever rolled, who
   // knows which item it was and can break it.
-  return Object.assign(outcome, { criticalMissEffect: criticalMiss?.effectKey ?? null });
+  return Object.assign(outcome, { criticalMissEffect: criticalMiss?.effectKey ?? null, hitsInstead });
 }
 
 /**
@@ -1146,6 +1158,13 @@ async function rollAction(
   // "You must declare that you are using extra effort and spend the required FP
   // before you make your attack" -- and a fighter who cannot pay does not get
   // the option, so the roll is abandoned rather than made on a promise.
+  // The eye can be aimed at only from the front or sides (Campaigns p. 552).
+  const aimedShot = rollType === "attack" ? (melee?.calledShot ?? shot?.calledShot ?? null) : null;
+  if (aimedShot && !canTargetFromArc(aimedShot.hitLocation, arcAgainstTarget(actor))) {
+    ui.notifications?.warn(game.i18n.localize("GWORLD.CalledShot.NotFromBehind"));
+    return null;
+  }
+
   if (melee && melee.fatigue > 0) {
     const paid = await spendFatigue(actor, melee.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"));
     if (!paid) return null;
@@ -1359,6 +1378,8 @@ async function rollAction(
       ? { rapidFire: { shotsFired: shot.shotsFired, recoil: shot.recoil } }
       : {}),
     ...(shot?.dodgeBonus ? { dodgeBonus: shot.dodgeBonus } : {}),
+    // Where an aimed blow that misses by 1 lands instead (p. 552).
+    ...(aimedShot && missByOneHitsTorso(aimedShot.hitLocation) ? { missFallback: game.i18n.localize("GWORLD.HitLocation.torso").toLowerCase() } : {}),
     // A steered or area attack says what it is doing, which needs the range
     // it was actually fired at (Campaigns pp. 412-413).
     ...(rollType === "attack" && ranged && shot
@@ -1391,6 +1412,11 @@ async function rollAction(
         <div class="gc-result">${game.i18n.localize(strikes ? "GWORLD.Cover.StrikesCover" : "GWORLD.Cover.HitsTarget")}</div></div>`,
       rolls: [die],
     });
+  }
+
+  // A blow that missed its mark by 1 lands on the torso, and so does its damage (p. 552).
+  if (rollType === "attack" && aimedShot && (outcome as { hitsInstead?: boolean } | null)?.hitsInstead) {
+    await recordCalledShot(actor, { hitLocation: "torso", chink: false });
   }
 
   // The shells fired come off the weapon's count (Campaigns p. 373).
