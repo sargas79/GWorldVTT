@@ -752,6 +752,13 @@ and a hint `p.ihint`.
   card, for a module's own effects. Reeling and dead follow from the new total,
   and an injury spoils an aim. It returns `{ pool, from, to, label }`, or null
   where the user doesn't own the actor. A module never writes `system.hp` itself.
+- **Feints** (since 1.20.0): a feint's Quick Contest asks the contest resolvers,
+  with the tag `feint`, so a resolver can propose either side's score.
+  `gworld.feintResult` follows with `{ feinter, foe, result, record }`; set
+  `record: false` to take the result over, and the system records no feint
+  against the foe's next defenses. `gworld.defenseModifiers` also gets
+  `deception`, the attack's Deceptive Attack and Feint penalty (zero or
+  negative), and `attacker`, the attacking actor or null.
 - **Lifecycle:** `gworld.combatStart` `(combat)`, and `gworld.turnStart` and
   `gworld.turnEnd` `(combat, combatant)`, on every client.
 - **Bleeding:** `gworld.bleedingSchedule` gets `{ actor, intervalSeconds, modifier }`

@@ -194,6 +194,7 @@ import {
   activeConditions,
   attackSequenceFor,
   chooseManeuverOption,
+  feintResultRecorded,
   grappleActionsFor,
   maneuverOptionControl,
   maneuverOptionsFor,
@@ -4189,7 +4190,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       defender: { actor: foe, base: defense.score, note: defense.source },
     });
 
-    if (result.success) {
+    // A module may take the result over; otherwise it is the Basic Set's feint.
+    const record = feintResultRecorded({ feinter: this.actor, foe, result });
+    if (result.success && record) {
       await recordFeint(this.actor, String(foe.uuid), result.defensePenalty);
     }
   }
