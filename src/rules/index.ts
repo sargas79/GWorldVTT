@@ -103,3 +103,14 @@ export * from "./swarms.js";
 export * from "./trampling.js";
 export * from "./unarmed-techniques.js";
 export * from "./vehicle-combat.js";
+export * from "./attack-options.js";
+export * from "./bonus-points.js";
+export * from "./environment.js";
+// scatter.js already gives the same fragmentation radius.
+export { blastAt, blastRadius, collateralDamage, FRAGMENTATION_SKILL, type BlastEffect } from "./explosions.js";
+export * from "./layered-armor.js";
+export * from "./legality.js";
+export * from "./shield-damage.js";
+export * from "./tactical.js";
+export * from "./technique-skills.js";
+export * from "./vulnerability.js";

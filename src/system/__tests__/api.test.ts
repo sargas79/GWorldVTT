@@ -85,6 +85,13 @@ describe("the add-on API", () => {
     expect(update).toHaveBeenCalledTimes(1);
   });
 
+  it("carries every rules module, slam damage included (sargas79/GWorldVTT#284)", () => {
+    const api = createApi();
+    expect(api.rules.slamDamage(18, 12)).toEqual({ dice: 2, modifier: 0 });
+    expect(api.rules.fragmentationRadius(2)).toBe(10);
+    expect(typeof api.rules.blastRadius).toBe("function");
+  });
+
   it("answers whether it satisfies a range", () => {
     const api = createApi();
     expect(api.satisfies("^1.0.0")).toBe(true);
