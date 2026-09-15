@@ -55,7 +55,11 @@ export type DefenseRefusal =
   /** A mook, who "automatically fails all defense rolls" (Campaigns p. 417). */
   | "cannonFodder"
   /** A flail, which "fencing weapons and knives cannot parry" (Characters p. 208). */
-  | "flail";
+  | "flail"
+  /** A block already made this turn (Campaigns p. 375). */
+  | "blockedAlready"
+  /** A bullet or beam, which no block stops (Campaigns p. 375). */
+  | "unblockable";
 
 export interface DefenseChoice {
   key: DefenseKey;

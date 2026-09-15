@@ -77,3 +77,22 @@ describe("Evaluate (Campaigns p. 364)", () => {
     expect(takesEvaluateBonus("allOutDefense", false)).toBe(false);
   });
 });
+
+describe("how often a defense may be used (Campaigns pp. 375-376)", () => {
+  it("puts -4 on each parry after the first with the same weapon, -2 for fencing or master training, -1 for both", async () => {
+    const { multipleParryPenalty } = await import("../defenses.js");
+    expect(multipleParryPenalty(0, { fencing: false, trained: false })).toBe(0);
+    expect(multipleParryPenalty(1, { fencing: false, trained: false })).toBe(-4);
+    expect(multipleParryPenalty(2, { fencing: false, trained: false })).toBe(-8);
+    expect(multipleParryPenalty(1, { fencing: true, trained: false })).toBe(-2);
+    expect(multipleParryPenalty(2, { fencing: true, trained: true })).toBe(-2);
+  });
+
+  it("can't block bullets or beams", async () => {
+    const { blockableAttack } = await import("../defenses.js");
+    expect(blockableAttack("Guns (Pistol)")).toBe(false);
+    expect(blockableAttack("Beam Weapons (Rifle)")).toBe(false);
+    expect(blockableAttack("Bow")).toBe(true);
+    expect(blockableAttack(undefined)).toBe(true);
+  });
+});

@@ -284,3 +284,23 @@ export function parriedLimbStrikeModifier(attackSkill: string | undefined): numb
   const base = String(attackSkill ?? "").replace(/\s*\(.*$/, "").trim().toLowerCase();
   return base === "judo" || base === "karate" ? -4 : 0;
 }
+
+/**
+ * The penalty on a parry for the parries already made with the same weapon or
+ * bare hand this turn (Campaigns p. 376): a cumulative -4 each, -2 with a
+ * fencing weapon or with Trained By A Master or Weapon Master, and -1 with both.
+ */
+export function multipleParryPenalty(previous: number, options: { fencing: boolean; trained: boolean }): number {
+  const step = options.fencing && options.trained ? -1 : options.fencing || options.trained ? -2 : -4;
+  const count = Math.max(0, Math.floor(previous));
+  return count === 0 ? 0 : count * step;
+}
+
+/** Whether an attack can be blocked at all: "You cannot block bullets or beam weapons" (Campaigns p. 375). */
+export function blockableAttack(skill: string | undefined): boolean {
+  const base = String(skill ?? "").replace(/\s*\(.*$/, "").trim().toLowerCase();
+  return !["guns", "beam weapons", "gunner"].includes(base);
+}
+
+/** "You may attempt to block only one attack per turn" (Campaigns p. 375). */
+export const BLOCKS_PER_TURN = 1;
