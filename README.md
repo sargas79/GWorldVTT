@@ -522,6 +522,10 @@ and skipped, and the roll goes on.
     In `gworld.defenseChoices` it also has `parriesFlail`. Set it true to let
     a weapon that couldn't parry a flail (a fencing weapon or a knife) parry
     one;
+  - Since 1.24.0, `gworld.defenseModifiers` and `gworld.defenseChoices` also get
+    `defenseCounts`, this turn's defenses so far: `parries` with the weapon
+    about to parry, `blocks` and `dodges`. In `gworld.defenseChoices`, set
+    `blockAgain` true to allow a block after the one a turn allows;
   - Since 1.18.0, `gworld.attackModifiers` also gets `calledShot`, the location the
     blow is aimed at as `{ hitLocation, addonLocation }` or null, and `targets`,
     the actors of the targeted tokens; since 1.23.0 also `targetTokens`, their

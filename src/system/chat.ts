@@ -19,7 +19,8 @@ import { rollDamage, rollSuccess, type AttackWeaponFlag } from "./roll.js";
 import { currentTargets } from "./targets.js";
 import { blastAt } from "../rules/explosions.js";
 import { criticalEntry, criticalHitTableFor, isUnarmedSkill } from "../rules/criticals.js";
-import { bareHandedParryModifier, canParryFlail, flailDefenseModifier, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
+import { BLOCKS_PER_TURN, bareHandedParryModifier, blockableAttack, canParryFlail, flailDefenseModifier, multipleParryPenalty, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
+import { getCombatState, setCombatState } from "./combat-extensions.js";
 import { rollKnockdown } from "./knockdown.js";
 import { rollDeathCheck } from "./dying.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
@@ -549,6 +550,8 @@ const REFUSAL_LABELS: Record<NonNullable<DefenseChoice["reason"]>, string> = {
   strappedIn: "GWORLD.Defense.StrappedIn",
   occupant: "GWORLD.Defense.Occupant",
   flail: "GWORLD.Defense.Flail",
+  blockedAlready: "GWORLD.Defense.BlockedAlready",
+  unblockable: "GWORLD.Defense.Unblockable",
   cannonFodder: "GWORLD.Cinematic.CannonFodderDefense",
 };
 
@@ -687,6 +690,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       arc: arc?.arc ?? null,
       attackWeapon: (flag.weapon ?? null) as Record<string, unknown> | null,
       parryWeapon: parryWith,
+      defenseCounts: countsFor(defender, parryWith),
     });
     for (const choice of choices) {
       if (!choice.available) continue;
@@ -694,7 +698,20 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         Object.assign(choice, { available: false, shown: null, reason: "flail" });
         continue;
       }
-      const lines = weaponDefenseLines(flag.weapon, flag.delivery, choice.key, choice.skillName, parryNatural);
+      // "You cannot block bullets or beam weapons", and "you may attempt to
+      // block only one attack per turn" (p. 375).
+      if (choice.key === "block" && !blockableAttack(flag.weapon?.skill)) {
+        Object.assign(choice, { available: false, shown: null, reason: "unblockable" });
+        continue;
+      }
+      if (choice.key === "block" && defenseCountsOf(defender).blocks >= BLOCKS_PER_TURN && !refused.blockAgain) {
+        Object.assign(choice, { available: false, shown: null, reason: "blockedAlready" });
+        continue;
+      }
+      const lines = [
+        ...weaponDefenseLines(flag.weapon, flag.delivery, choice.key, choice.skillName, parryNatural),
+        ...(choice.key === "parry" ? multipleParryLines(defender, parryWith) : []),
+      ];
       if (choice.shown !== null) choice.shown += lines.reduce((sum, line) => sum + line.value, 0);
     }
     for (const choice of choices) {
@@ -900,6 +917,50 @@ function defensiveTechniquesOf(defender: any): Array<{ name: string; key: Defens
     });
   }
   return out;
+}
+
+/** This turn's defenses so far, as the system keeps them on the defender. */
+interface DefenseCounts {
+  /** Parries by the weapon's item id, or "bare" for bare hands. */
+  parries: Record<string, number>;
+  blocks: number;
+  dodges: number;
+}
+
+const DEFENSE_COUNTS = "defenses";
+
+function defenseCountsOf(defender: any): DefenseCounts {
+  const stored = getCombatState(defender, SYSTEM_ID, DEFENSE_COUNTS) as Partial<DefenseCounts> | undefined;
+  return { parries: { ...(stored?.parries ?? {}) }, blocks: Number(stored?.blocks) || 0, dodges: Number(stored?.dodges) || 0 };
+}
+
+const parryKey = (weapon: { itemId?: string; natural?: boolean } | null | undefined) => (weapon && !weapon.natural && weapon.itemId ? weapon.itemId : "bare");
+
+/** The counts the defense hooks see: the parries already made with this weapon, and the blocks and dodges. */
+function countsFor(defender: any, parryWeapon: { itemId?: string; natural?: boolean } | null | undefined): { parries: number; blocks: number; dodges: number } {
+  const counts = defenseCountsOf(defender);
+  return { parries: counts.parries[parryKey(parryWeapon)] ?? 0, blocks: counts.blocks, dodges: counts.dodges };
+}
+
+/** Counts one more defense of this kind for the rest of the defender's turn. */
+async function countDefense(defender: any, key: DefenseKey, parryWeapon: { itemId?: string; natural?: boolean } | null | undefined): Promise<void> {
+  if (!defender?.isOwner) return;
+  const counts = defenseCountsOf(defender);
+  if (key === "parry") counts.parries[parryKey(parryWeapon)] = (counts.parries[parryKey(parryWeapon)] ?? 0) + 1;
+  if (key === "block") counts.blocks += 1;
+  if (key === "dodge") counts.dodges += 1;
+  await setCombatState(defender, SYSTEM_ID, DEFENSE_COUNTS, counts, "turn");
+}
+
+/** Whether a defender has Trained By A Master or Weapon Master, which halves the multiple-parry penalty. */
+function masterTrained(defender: any): boolean {
+  return [...(defender?.items ?? [])].some((item: any) => item.type === "trait" && /^(trained by a master|weapon master)\b/i.test(String(item.name ?? "")));
+}
+
+/** The multiple-parry line for a parry with this weapon (Campaigns p. 376). */
+function multipleParryLines(defender: any, parryWeapon: DefenseParryWeapon | null): Array<{ label: string; value: number }> {
+  const value = multipleParryPenalty(countsFor(defender, parryWeapon).parries, { fencing: parryWeapon?.isFencing === true, trained: masterTrained(defender) });
+  return value ? [{ label: game.i18n.localize("GWORLD.Defense.MultipleParries"), value }] : [];
 }
 
 /** The weapon a parry would be made with, as the defense hooks see it; null where there is no parry. */
@@ -1144,6 +1205,7 @@ async function rollDefense(options: {
   }
   const bareHanded = key === "parry" && (parryWeapon?.natural === true || isUnarmedSkill(skill));
   modifiers.push(...weaponDefenseLines(options.attackWeapon, options.delivery, key, skill, bareHanded));
+  if (key === "parry") modifiers.push(...multipleParryLines(defender, options.parryWeapon ?? null));
   if (feverish) {
     modifiers.push({
       label: game.i18n.localize("GWORLD.ExtraEffort.Feverish"),
@@ -1169,6 +1231,8 @@ async function rollDefense(options: {
     arc: options.arc ?? null,
     attackWeapon: options.attackWeapon ? { ...options.attackWeapon } : null,
     parryWeapon: key === "parry" ? (options.parryWeapon ?? null) : null,
+    // Since 1.24.0: this turn's defenses so far.
+    defenseCounts: countsFor(defender, key === "parry" ? options.parryWeapon : null),
   });
 
   // "If struck by a potentially lethal attack ... the hero can choose to
@@ -1234,6 +1298,9 @@ async function rollDefense(options: {
   if (outcome?.success && key === "parry" && parryWeapon && !parryWeapon.natural && options.delivery === "unarmed") {
     await strikeParriedLimb(defender, parryWeapon.itemId, options.attackWeapon?.skill);
   }
+
+  // Counted for the rest of the turn, whether or not it worked (pp. 375-376).
+  if (outcome) await countDefense(defender, key, key === "parry" ? (options.parryWeapon ?? parryWeapon ?? null) : null);
 
   // "... or forced to make an active defense, you lose your aim."
   await loseAim(defender, "defended");

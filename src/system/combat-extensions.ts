@@ -869,7 +869,9 @@ export function moduleDefenseRefusals(context: {
   attackWeapon?: Record<string, unknown> | null;
   /** The weapon a parry would be made with (since 1.21.0). */
   parryWeapon?: DefenseParryWeapon | null;
-}): { choices: Map<DefenseKey, string>; retreat: string | null; feverish: string | null; parriesFlail: boolean } {
+  /** This turn's defenses so far (since 1.24.0). */
+  defenseCounts?: { parries: number; blocks: number; dodges: number };
+}): { choices: Map<DefenseKey, string>; retreat: string | null; feverish: string | null; parriesFlail: boolean; blockAgain: boolean } {
   const parryWeapon = context.parryWeapon ? { ...context.parryWeapon } : null;
   const hooked = callCombatHook(COMBAT_HOOKS.defenseChoices, {
     defender: context.defender,
@@ -882,6 +884,8 @@ export function moduleDefenseRefusals(context: {
     arc: context.arc ?? null,
     attackWeapon: context.attackWeapon ? { ...context.attackWeapon } : null,
     parryWeapon,
+    defenseCounts: { ...(context.defenseCounts ?? { parries: 0, blocks: 0, dodges: 0 }) },
+    blockAgain: false,
   });
   const text = (refusal: unknown) => (typeof refusal === "string" && refusal.trim() ? refusal.trim() : "");
   const choices = new Map<DefenseKey, string>();
@@ -894,6 +898,7 @@ export function moduleDefenseRefusals(context: {
     retreat: hooked.retreat?.available === false ? text(hooked.retreat.refusal) : null,
     feverish: hooked.feverish?.available === false ? text(hooked.feverish.refusal) : null,
     parriesFlail: parryWeapon?.parriesFlail === true,
+    blockAgain: hooked.blockAgain === true,
   };
 }
 
