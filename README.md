@@ -489,6 +489,9 @@ and skipped, and the roll goes on.
     `{ actor, item, maneuver, rapidStrike, deceptiveAttack }`. Set an option's
     `available: false` and `refusal` (text), and the dialog leaves it off and
     says why;
+  - Since 1.18.0, `gworld.attackModifiers` also gets `calledShot`, the location the
+    blow is aimed at as `{ hitLocation, addonLocation }` or null, and `targets`,
+    the actors of the targeted tokens;
   - Since 1.16.0, `gworld.attackModifiers` also gets `skillCap`: the most the
     attack's effective skill may be once every modifier is in, or null. It is 9
     for a melee attack on Move and Attack (Characters p. 365), which also takes

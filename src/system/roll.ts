@@ -1193,6 +1193,12 @@ async function rollAction(
         defenseModifiers: [...(addon?.defenseModifiers ?? [])],
         dataset: { ...target.dataset },
         skillCap: movingMelee ? 9 : (null as number | null),
+        // Where the blow is aimed, and at whom.
+        calledShot: (() => {
+          const aimedAt = melee?.calledShot ?? shot?.calledShot ?? null;
+          return aimedAt ? { hitLocation: aimedAt.hitLocation, addonLocation: aimedAt.addonLocation ?? null } : null;
+        })(),
+        targets: targetedTokens().map((token: any) => token?.actor).filter(Boolean),
       })
     : null;
   const defensePenalty = Number(hooked?.defensePenalty ?? (melee?.defensePenalty ?? 0) + feint) || 0;
