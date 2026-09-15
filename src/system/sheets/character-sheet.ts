@@ -17,9 +17,8 @@ import {
   OPPORTUNITY_LINE_PENALTY,
   evadeModifier,
   opportunityFirePenalty,
-  slamDamage,
-  slamOutcome,
 } from "../../rules/attack-options.js";
+import { slamOrShove } from "../slam.js";
 import { attackArc } from "../../rules/tactical.js";
 import {
   CLIMBS,
@@ -81,7 +80,6 @@ import { pressureAtDepth } from "../../rules/pressure.js";
 import { isStepPostureChange, postureMove, reachablePostures } from "../../rules/posture.js";
 import { affectsSecondary } from "../../rules/attribute-penalties.js";
 import { canMoveWhileGrappled } from "../../rules/grappling.js";
-import { formatDiceAdds } from "../../rules/dice.js";
 import { rollInvention, type InventionPlan } from "../invention.js";
 import { describePowers, unpoweredAbilities } from "../psionics.js";
 import { stimulantWearsOff, takeDepressant, takeStimulant, withdrawalRoll } from "../drugs.js";
@@ -130,7 +128,7 @@ import {
 } from "../../rules/disease.js";
 import { POISON_EXAMPLES, poisonNamed, type Poison, type Treatment } from "../../rules/poison.js";
 import { rollDisarm } from "../disarm.js";
-import { rollStrikeToBreak, weaponsInHand } from "../weapon-damage.js";
+import { rollStrikeToBreak, weaponTargetsFor } from "../weapon-damage.js";
 import { reloadWeapon } from "../ammunition.js";
 import { clothingCost } from "../../rules/wealth.js";
 import {
@@ -230,7 +228,6 @@ import {
   promptForNumber,
   beyondHalfDamage,
   yardsBetween,
-  rollDamage,
   rollSuccess,
 } from "../roll.js";
 import { currentTargets, targetedTokens } from "../targets.js";
@@ -2533,7 +2530,7 @@ async function promptForAward(): Promise<{ points: number; note: string } | null
  * whether it is a jitte or a whip, and whether the foe has both hands on
  * theirs are facts about this moment rather than about the characters.
  */
-async function promptForDisarm(foe: any): Promise<{
+async function promptForDisarm(actor: any, foe: any): Promise<{
   aim: "disarm" | "break";
   itemId: string;
   fencingWeapon: boolean;
@@ -2551,7 +2548,7 @@ async function promptForDisarm(foe: any): Promise<{
   // "State whether you are striking to disarm or to break the weapon"
   // (Campaigns p. 400) -- and which weapon, where the foe holds more than
   // one, since the penalty to hit is the weapon's size.
-  const weapons = weaponsInHand(foe);
+  const weapons = weaponTargetsFor(actor, foe);
   const breaking = isRuleOn("weaponBreakage");
   const weaponOptions = weapons
     .map((w) => `<option value="${w.id}">${foundry.utils.escapeHTML(w.name)} (${w.penalty})</option>`)
@@ -2843,6 +2840,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       awardPoints: GWorldCharacterSheet.#onAwardPoints,
       deleteAward: GWorldCharacterSheet.#onDeleteAward,
       slam: GWorldCharacterSheet.#onSlam,
+      shove: GWorldCharacterSheet.#onShove,
       affliction: GWorldCharacterSheet.#onAffliction,
       weaknessExposure: GWorldCharacterSheet.#onWeaknessExposure,
       evade: GWorldCharacterSheet.#onEvade,
@@ -4597,8 +4595,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const foe = targets[0]?.actor;
     if (!foe) return;
 
-    const asked = await promptForDisarm(foe);
+    const asked = await promptForDisarm(this.actor, foe);
     if (!asked) return;
+    const target = asked.itemId ? weaponTargetsFor(this.actor, foe).find((w) => w.id === asked.itemId) ?? null : null;
 
     // Striking to break (p. 401) is the attacker's own best blow at the
     // weapon; the sheet's melee list is where that blow is.
@@ -4630,8 +4629,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       return;
     }
 
+    if (target && !target.canDisarm) {
+      ui.notifications?.warn(game.i18n.format("GWORLD.Disarm.CannotDisarm", { weapon: target.name }));
+      return;
+    }
     const { fencingWeapon, jitteOrWhip, foeTwoHanded } = asked;
-    await rollDisarm({ actor: this.actor, foe, fencingWeapon, jitteOrWhip, foeTwoHanded });
+    await rollDisarm({ actor: this.actor, foe, fencingWeapon, jitteOrWhip, foeTwoHanded, target });
   }
 
   /** Tries to get loose (Campaigns p. 371). */
@@ -5294,56 +5297,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   }
 
   /**
-   * Slams into someone (GURPS Basic Set: Campaigns p. 371).
-   *
-   * Anyone can slam, so it is not an item on the sheet: it is a button, and
-   * what it does depends entirely on how fast you were going. Both parties take
-   * the damage, so the card is posted rather than applied.
+   * Slams into someone (GURPS Basic Set: Campaigns pp. 371-372): a slam,
+   * flying tackle, pounce or shield rush, or a module's own, rolled to hit
+   * before anyone's damage.
    */
   static async #onSlam(this: GWorldCharacterSheet) {
-    if (!isRuleOn("slams")) return;
-    const hp = Number(this.actor.system?.hp?.max ?? 0);
-    const velocity = await promptForNumber({
-      title: game.i18n.localize("GWORLD.Slam.Title"),
-      label: game.i18n.localize("GWORLD.Slam.Velocity"),
-      initial: Number(this.actor.system?.derived?.encumbrance?.move ?? 1),
-    });
-    if (velocity === null) return;
+    await slamOrShove(this.actor, "slam");
+  }
 
-    // "You and your foe each inflict dice of crushing damage on the other
-    // equal to (HP x velocity)/100" (p. 371) -- both of them, and who falls
-    // down is decided by comparing the two. With a target on the map both are
-    // rolled; with none, only the slammer's, as before.
-    const mine = slamDamage(hp, velocity);
-    const dealt = await rollDamage({
-      actor: this.actor,
-      label: game.i18n.format("GWORLD.Slam.Label", { yards: velocity }),
-      formula: formatDiceAdds({ dice: mine.dice, adds: mine.modifier }),
-      damageType: "cr",
-    });
-
-    const foe = targetedTokens()[0]?.actor ?? null;
-    if (!foe) return;
-    const theirs = slamDamage(Number(foe.system?.hp?.max ?? 0), velocity);
-    const taken = await rollDamage({
-      actor: foe,
-      label: game.i18n.format("GWORLD.Slam.Back", { name: String(foe.name ?? ""), yards: velocity }),
-      formula: formatDiceAdds({ dice: theirs.dice, adds: theirs.modifier }),
-      damageType: "cr",
-    });
-
-    const outcome = slamOutcome(dealt, taken);
-    await ChatMessage.implementation.create({
-      speaker: ChatMessage.implementation.getSpeaker({ actor: this.actor }),
-      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
-      content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${game.i18n.localize("GWORLD.Slam.Title")}</span></div>
-        <div class="gc-result">${game.i18n.format(`GWORLD.Slam.Outcome.${outcome}`, {
-          slammer: String(this.actor.name ?? ""),
-          foe: String(foe.name ?? ""),
-          dealt,
-          taken,
-        })}</div></div>`,
-    });
+  /** Shoves someone (Campaigns p. 372): knockback, and never injury. */
+  static async #onShove(this: GWorldCharacterSheet) {
+    await slamOrShove(this.actor, "shove");
   }
 
   /**

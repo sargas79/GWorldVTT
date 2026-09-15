@@ -241,3 +241,39 @@ export function dualWeaponAttack(options: {
     defensePenalty: options.sameTarget ? penalty(1) : 0,
   };
 }
+
+/** The ways of throwing your body at a foe (pp. 371-372). */
+export type SlamKind = "slam" | "flyingTackle" | "pounce" | "shieldRush" | "shove";
+
+/**
+ * What each kind of slam rolls to hit, the best of which is used (pp. 371-372):
+ * "DX, Brawling, or Sumo Wrestling" for a slam, with Jumping as well for a
+ * flying tackle or pounce, Shield skill for a shield rush, and "DX or Sumo
+ * Wrestling" for a shove.
+ */
+export function slamSkills(kind: SlamKind): readonly string[] {
+  switch (kind) {
+    case "flyingTackle":
+    case "pounce":
+      return ["DX", "Brawling", "Sumo Wrestling", "Jumping"];
+    case "shieldRush":
+      return ["Shield"];
+    case "shove":
+      return ["DX", "Sumo Wrestling"];
+    default:
+      return ["DX", "Brawling", "Sumo Wrestling"];
+  }
+}
+
+/** A flying tackle's or pounce's "+4 to hit" (p. 372). */
+export function slamToHit(kind: SlamKind): number {
+  return kind === "flyingTackle" || kind === "pounce" ? 4 : 0;
+}
+
+/**
+ * A shove's damage (p. 372): "thrust/crushing damage -- at -1 per die, if you
+ * used only one hand". It is doubled for knockback, and never injures.
+ */
+export function shoveDamage(thrust: { dice: number; adds: number }, oneHanded: boolean): { dice: number; adds: number } {
+  return oneHanded ? { dice: thrust.dice, adds: thrust.adds - thrust.dice } : { dice: thrust.dice, adds: thrust.adds };
+}

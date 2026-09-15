@@ -246,6 +246,13 @@ and the roll continues.
     `refusal` (text), and the dialog leaves it off and says why. Since 1.27.0,
     `gworld.attackModifiers` also gets `extraEffort` (`{ flurryOfBlows, mightyBlows }`),
     what the attack bought, and `gworld.defenseModifiers` gets `feverish`;
+  - `gworld.weaponTargets` (since 1.31.0): what may be struck at on a foe, as
+    `{ actor, foe, targets }`. Each target is `{ id, name, penalty, canDisarm,
+    noParry, noDefenseBonus, disarmPenaltyForAll }`: the foe's item, the penalty to
+    hit it, whether it can be knocked away, whether the foe may parry the blow,
+    whether their Defense Bonus counts, and whether the disarm's -2 applies even to
+    a fencing weapon. The system offers the weapons in hand; add any item the foe
+    carries, or change one. A blow at a shield is resolved by Damage to Shields;
   - `gworld.feintModifiers` (since 1.28.0): before a Feint is rolled, as
     `{ actor, foe, item, mode, ranged, modifiers, refusal }`. `item` and `mode`
     are the row the Feint was made from (null for a natural attack). Push lines
@@ -551,6 +558,19 @@ and a hint `p.ihint`.
   Lifting ST in, and since 1.30.0 `attribute(key)` for `ST`, `DX`, `IQ`,
   `HT`, `Will` and `Per`. `actors.basicLift` and `actors.attribute` read the derived
   values, which aren't there yet while a mode is worked out.
+- **`combat.registerSlam({ module, key, label, kind, available?, prepare })`** (since
+  1.31.0). Another way to slam (`kind: "slam"`) or shove (`"shove"`), offered in
+  the Slam or Shove dialog beside the system's own when `available(actor)` says so.
+  `prepare(actor)` returns `{ skill: { name, level }, toHit?, damageBonus?, oneHanded?,
+  foes?, bearer?, notes? }`, or null to refuse:
+  - `skill` is rolled to hit, with `toHit` added. The foe defends on the usual card.
+  - `damageBonus` goes on the slammer's damage roll, or on a shove's.
+  - `oneHanded` makes a shove -1 per die.
+  - `bearer` names what takes the slammer's damage.
+  - `foes: 2` needs two targeted tokens and rolls to hit against each. A slam's
+    single damage roll is halved for each foe, and a shove's basic roll pushes
+    each rather than being doubled.
+  - `notes` go on the card.
 - **`combat.registerGrappleAction({ module, key, label, applies?, run })`.**
   A button on the grapple panel. `applies(grapple, actor)` sees which end of it
   the actor is (`grapple.holding`), and `run({ actor, foe, grapple })` acts.
