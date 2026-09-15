@@ -20,7 +20,7 @@ import { rollDamage, rollSuccess, type AttackWeaponFlag } from "./roll.js";
 import { currentTargets } from "./targets.js";
 import { blastAt } from "../rules/explosions.js";
 import { criticalEntry, criticalHitTableFor, isUnarmedSkill } from "../rules/criticals.js";
-import { BLOCKS_PER_TURN, bareHandedParryModifier, blockableAttack, canParryFlail, flailDefenseModifier, multipleParryPenalty, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
+import { BLOCKS_PER_TURN, acrobaticDefenseModifier, bareHandedParryModifier, mayTryAcrobatic, blockableAttack, canParryFlail, flailDefenseModifier, multipleParryPenalty, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
 import { getCombatState, setCombatState } from "./combat-extensions.js";
 import { rollKnockdown } from "./knockdown.js";
 import { rollDeathCheck } from "./dying.js";
@@ -49,6 +49,7 @@ import {
   defenseModifiersFor,
   defenseOptionsFor,
   hitLocationsFor,
+  hookedAttackArc,
   moduleDefenseRefusals,
   type DefenseParryWeapon,
   moduleDefensesFor,
@@ -831,6 +832,23 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       row.append(feverish);
     }
 
+    // "If you have put at least one point into the Acrobatics skill, you can
+    // try a 'fancy' dodge once during your turn" (Campaigns p. 375); a module
+    // may widen it to other defenses, or more of them (API 1.38.0).
+    const acrobatics = acrobaticsOf(defender);
+    const acrobaticBox = refused.acrobatic.refusal === null && acrobatics && acrobatics.level !== null
+      && mayTryAcrobatic({ points: acrobatics.points, used: defenseCountsOf(defender).acrobatic, perTurn: refused.acrobatic.perTurn })
+      && refused.acrobatic.defenses.length > 0
+      ? document.createElement("input")
+      : null;
+    if (acrobaticBox) {
+      acrobaticBox.type = "checkbox";
+      const acrobatic = document.createElement("label");
+      acrobatic.className = "gc-retreat";
+      acrobatic.append(acrobaticBox, document.createTextNode(game.i18n.localize("GWORLD.Defense.Acrobatic.Label")));
+      row.append(acrobatic);
+    }
+
     // A module's defense options, beside Retreat. Which defense each applies
     // to is settled when a defense button is pressed.
     const addonBase = {
@@ -910,6 +928,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         deception,
         retreating: retreatBox?.checked ?? false,
         feverish: feverishBox?.checked ?? false,
+        acrobatic: acrobaticBox?.checked ? refused.acrobatic.defenses : null,
         skill: choice.skillName,
         isFencing: choice.isFencing,
         ...(flag.weapon ? { attackWeapon: flag.weapon } : {}),
@@ -1021,21 +1040,39 @@ interface DefenseCounts {
   parries: Record<string, number>;
   blocks: number;
   dodges: number;
+  /** Acrobatic defenses (Campaigns p. 375). */
+  acrobatic: number;
 }
 
 const DEFENSE_COUNTS = "defenses";
 
 function defenseCountsOf(defender: any): DefenseCounts {
   const stored = getCombatState(defender, SYSTEM_ID, DEFENSE_COUNTS) as Partial<DefenseCounts> | undefined;
-  return { parries: { ...(stored?.parries ?? {}) }, blocks: Number(stored?.blocks) || 0, dodges: Number(stored?.dodges) || 0 };
+  return { parries: { ...(stored?.parries ?? {}) }, blocks: Number(stored?.blocks) || 0, dodges: Number(stored?.dodges) || 0, acrobatic: Number(stored?.acrobatic) || 0 };
 }
 
 const parryKey = (weapon: { itemId?: string; natural?: boolean } | null | undefined) => (weapon && !weapon.natural && weapon.itemId ? weapon.itemId : "bare");
 
 /** The counts the defense hooks see: the parries already made with this weapon, and the blocks and dodges. */
-function countsFor(defender: any, parryWeapon: { itemId?: string; natural?: boolean } | null | undefined): { parries: number; blocks: number; dodges: number } {
+function countsFor(defender: any, parryWeapon: { itemId?: string; natural?: boolean } | null | undefined): { parries: number; blocks: number; dodges: number; acrobatic: number } {
   const counts = defenseCountsOf(defender);
-  return { parries: counts.parries[parryKey(parryWeapon)] ?? 0, blocks: counts.blocks, dodges: counts.dodges };
+  return { parries: counts.parries[parryKey(parryWeapon)] ?? 0, blocks: counts.blocks, dodges: counts.dodges, acrobatic: counts.acrobatic };
+}
+
+/** Counts an acrobatic defense for the rest of the defender's turn, whether or not it worked. */
+async function countAcrobatic(defender: any): Promise<void> {
+  if (!defender?.isOwner) return;
+  const counts = defenseCountsOf(defender);
+  counts.acrobatic += 1;
+  await setCombatState(defender, SYSTEM_ID, DEFENSE_COUNTS, counts, "turn");
+}
+
+/** The defender's Acrobatics skill: its points and level, or null without one. */
+function acrobaticsOf(defender: any): { points: number; level: number | null } | null {
+  const skill = [...(defender?.items ?? [])].find((item: any) => item?.type === "skill" && String(item.name ?? "").replace(/\s*\(.*$/, "").trim().toLowerCase() === "acrobatics");
+  if (!skill) return null;
+  const level = skill.system?.derived?.level;
+  return { points: Number(skill.system?.points) || 0, level: typeof level === "number" ? level : null };
 }
 
 /** Counts one more defense of this kind for the rest of the defender's turn. */
@@ -1176,7 +1213,8 @@ async function tacticalArc(
   const from = attackDirection(attackerToken, defenderToken, gridType);
   if (from === null) return null;
 
-  const { arc, side } = attackArc(facingOf(defenderToken, gridType), from);
+  // A module may say the attack counts as coming from another arc (since 1.38.0).
+  const { arc, side } = hookedAttackArc({ defender, attacker: attackerToken.actor ?? null, ...attackArc(facingOf(defenderToken, gridType), from) });
   // A shield is held in the off hand, so a two-handed weapon means no shield;
   // what matters for the parry is whether the weapon is held in one hand.
   return {
@@ -1201,6 +1239,8 @@ async function rollDefense(options: {
   deception: number;
   retreating: boolean;
   feverish: boolean;
+  /** An acrobatic defense was ticked: the defenses it may be (Campaigns p. 375, API 1.38.0), or null. */
+  acrobatic?: DefenseKey[] | null;
   skill: string;
   isFencing: boolean;
   /** The attacking weapon, which a parry has to weigh, and what it does to the defense (Campaigns p. 376). */
@@ -1291,6 +1331,27 @@ async function rollDefense(options: {
     if (!paid) return;
   }
 
+  // An acrobatic defense rolls Acrobatics first, and counts whether or not it worked (Campaigns p. 375).
+  let acrobaticLine: { label: string; value: number } | null = null;
+  if (options.acrobatic) {
+    if (!options.acrobatic.includes(key)) {
+      ui.notifications?.warn(game.i18n.format("GWORLD.Defense.Acrobatic.NotThis", { defense: name }));
+      return;
+    }
+    const level = acrobaticsOf(defender)?.level;
+    if (typeof level !== "number") return;
+    const acrobatic = await rollSuccess({
+      actor: defender,
+      base: level,
+      label: game.i18n.format("GWORLD.Defense.Acrobatic.Roll", { defense: name }),
+      skill: "Acrobatics",
+      tags: ["acrobaticDefense", key],
+    });
+    if (!acrobatic) return;
+    await countAcrobatic(defender);
+    acrobaticLine = { label: game.i18n.localize("GWORLD.Defense.Acrobatic.Label"), value: acrobaticDefenseModifier(acrobatic.success) };
+  }
+
   const modifiers = [];
   if (options.technique && options.technique.delta !== 0) {
     modifiers.push({ label: options.technique.name, value: options.technique.delta });
@@ -1324,6 +1385,7 @@ async function rollDefense(options: {
       value: retreatBonus({ defense: key, skill, isFencing }),
     });
   }
+  if (acrobaticLine) modifiers.push(acrobaticLine);
 
   // What a module's attack option put on this defense, what the defender's
   // own options add, and whatever a module's hook adds on top.

@@ -414,6 +414,31 @@ describe("defense choices and parry weapons", () => {
     expect(refused.choices.size).toBe(0);
     expect([refused.retreat, refused.feverish]).toEqual([null, null]);
     expect(refused.parriesFlail).toBe(false);
+    expect(refused.acrobatic).toEqual({ refusal: null, defenses: ["dodge"], perTurn: 1 });
+  });
+
+  it("lets a listener widen an acrobatic defense, and sees how many were made (since 1.38.0)", async () => {
+    const api = await load();
+    let counted = -1;
+    hooks({
+      "gworld.defenseChoices": (context) => {
+        counted = context.defenseCounts.acrobatic;
+        context.acrobatic.defenses.push("parry", "block", "sidestep");
+        context.acrobatic.perTurn = null;
+      },
+    });
+    const refused = api.moduleDefenseRefusals({ defender: {}, attack: "Axe", delivery: "melee", damageType: "cut", choices: offered, defenseCounts: { parries: 0, blocks: 0, dodges: 1, acrobatic: 2 } });
+    expect(counted).toBe(2);
+    expect(refused.acrobatic).toEqual({ refusal: null, defenses: ["dodge", "parry", "block"], perTurn: null });
+  });
+
+  it("lets a listener turn an attack from behind into one from the side, and ignores nonsense (since 1.38.0)", async () => {
+    const api = await load();
+    expect(api.hookedAttackArc({ defender: {}, attacker: {}, arc: "back", side: null })).toEqual({ arc: "back", side: null });
+    hooks({ "gworld.attackArc": (context) => { if (context.arc === "back") Object.assign(context, { arc: "side", side: "left" }); } });
+    expect(api.hookedAttackArc({ defender: {}, attacker: {}, arc: "back", side: null })).toEqual({ arc: "side", side: "left" });
+    hooks({ "gworld.attackArc": (context) => { Object.assign(context, { arc: "above", side: "middle" }); } });
+    expect(api.hookedAttackArc({ defender: {}, attacker: {}, arc: "front", side: null })).toEqual({ arc: "front", side: null });
   });
 
   it("gives a listener the arc and both weapons, and lets it say a parry may meet a flail (since 1.21.0)", async () => {
