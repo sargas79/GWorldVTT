@@ -386,6 +386,13 @@
         "Label": "Acrobatic",
         "Roll": "Acrobatics for an acrobatic {defense}",
         "NotThis": "An acrobatic defense can't be a {defense} here"
+      },
+      "BareHandedParry": "Parry (bare-handed)",
+      "Settled": {
+        "success": "Succeeds without a roll",
+        "failure": "Fails without a roll",
+        "criticalSuccess": "Critically succeeds without a roll",
+        "criticalFailure": "Critically fails without a roll"
       }
     },
     "Tactical": {
@@ -3781,6 +3788,14 @@
     "HurtingYourself": {
       "Title": "Hurting yourself",
       "Result": "{name} takes {damage} crushing to the {part} (DR {dr}): {injury} injury"
+    },
+    "Consciousness": {
+      "Label": "Staying conscious",
+      "Roll": "Stay conscious",
+      "BelowZero": "HP below zero",
+      "Traits": "Hard to Subdue, Fit",
+      "Out": "{name} falls unconscious",
+      "TurnStart": "{name} is at 0 HP or less: roll HT to stay conscious, unless this turn is Do Nothing with no defense rolls."
     }
   }
 }

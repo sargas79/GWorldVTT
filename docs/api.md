@@ -279,6 +279,18 @@ and the roll continues.
     In `gworld.defenseChoices` it also has `parriesFlail`. Set it true to let
     a weapon that couldn't parry a flail (a fencing weapon or a knife) parry
     one;
+  - Since 1.43.0:
+    - `gworld.breakageOdds` gets `attacker` and `delivery`;
+    - `roll.damage` takes `source` (text), which `gworld.injury` and `gworld.afterDamage` see
+      as `damage.source`; the strike after a bare-handed parry of an unarmed attack is
+      `"parriedLimb"`;
+    - `gworld.defenseModifiers` gets `settle` (null) and `settleLabel`: set `settle` to
+      `success`, `failure`, `criticalSuccess` or `criticalFailure` and the defense isn't
+      rolled, the card says so, and what follows a roll sees that outcome;
+    - `gworld.defenseChoices` gets `bareHandedParry: { available: false }`: set it true and,
+      where the parry is with a weapon, the card also offers the defender's best bare-handed
+      parry and its defensive techniques. That parry is the character's
+      `system.derived.bareHandedParry` (`{ total, source, math, skillName }`, or null);
   - Since 1.40.0, `gworld.attackModifiers` also gets `wildSwing`, true for a Wild Swing,
     which starts with `skillCap` 9;
   - Since 1.39.0, `gworld.defenseChoices` also gets `attacker`, the attacking actor or null;
@@ -663,6 +675,12 @@ and a hint `p.ihint`.
   `gworld.turnEnd` `(combat, combatant)`, on every client.
 - **Bleeding:** `gworld.bleedingSchedule` gets `{ actor, intervalSeconds, modifier }`
   before a bleeding roll, and may change either.
+- **Staying conscious** (since 1.43.0): `gworld.afterConsciousnessRoll` follows a roll to
+  stay conscious at 0 HP or less with `{ actor, outcome, previousPosture }`; a failure has left
+  the actor unconscious and lying down, which `actors.undoKnockdown` takes back.
+- **Random hit locations** (since 1.43.0): `roll.hitLocation({ actor?, damageType?, arc? })`
+  rolls 3d on the table through `gworld.randomHitLocation` and returns `{ hitLocation,
+  addonLocation, roll }`.
 - **Knockdown** (since 1.39.0): `gworld.afterKnockdown` follows a knockdown roll once
   its result is applied, with `{ actor, outcome, result, previousPosture }` (`result` is
   `{ outcome, stunned, prone, unconscious }`). `actors.undoKnockdown(actor, { posture })`

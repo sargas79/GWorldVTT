@@ -23,6 +23,8 @@ import { criticalEntry, criticalHitTableFor, isUnarmedSkill } from "../rules/cri
 import { BLOCKS_PER_TURN, acrobaticDefenseModifier, bareHandedParryModifier, mayTryAcrobatic, blockableAttack, canParryFlail, flailDefenseModifier, multipleParryPenalty, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
 import { getCombatState, setCombatState } from "./combat-extensions.js";
 import { rollKnockdown } from "./knockdown.js";
+import { afterSuccessRoll, successRollTags } from "./procedure-extensions.js";
+import { addConsciousnessControls, consciousnessEntries } from "./consciousness.js";
 import { rollDeathCheck } from "./dying.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { EXTRA_EFFORT_FP, FEVERISH_DEFENSE_BONUS } from "../rules/extra-effort.js";
@@ -97,6 +99,8 @@ interface DamageFlag {
   ignoresDr?: boolean;
   /** The item the damage was rolled from. */
   itemUuid?: string;
+  /** Where the blow came from (since 1.43.0). */
+  source?: string;
   /** Which of its modes. */
   mode?: { index: number; ranged: boolean; derived?: string };
   /** The body part an unarmed blow struck with, and who struck it (Campaigns p. 379). */
@@ -350,6 +354,7 @@ async function applyFromCard(options: {
     ...(flag.ignoresDr ? { ignoresDr: true } : {}),
     ...(flag.itemUuid ? { itemUuid: flag.itemUuid } : {}),
     ...(flag.mode ? { mode: flag.mode } : {}),
+    ...(flag.source ? { source: flag.source } : {}),
     // The maximum belongs to the dice as rolled, so it is only the maximum for
     // someone the blast struck directly: collateral damage has already been
     // scaled down by distance, and pairing it with the undiminished maximum
@@ -491,6 +496,13 @@ async function applyFromCard(options: {
             name: String(entry.actor.name ?? ""),
             modifier: entry.result.knockdown!.modifier,
           })),
+        // At 0 HP or less, a roll to stay conscious (Campaigns p. 419). In a
+        // combat the start of each turn offers it instead.
+        consciousness: game.combat?.started ? [] : consciousnessEntries(knockdowns.map((entry) => ({
+          actor: entry.actor,
+          required: entry.result.consequences.consciousnessRollRequired === true,
+          penalty: entry.result.consequences.consciousnessRollPenalty,
+        }))),
         // A blow that took somebody past a multiple of their HP owes a roll
         // against death, which is the other roll this card used only to name.
         deathCheck: knockdowns
@@ -776,6 +788,31 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       if (refusal !== undefined) Object.assign(choice, { available: false, shown: null, reason: "maneuver", refusal: refusal || null });
     }
 
+    // A module may offer a bare-handed parry beside a weapon parry it refused
+    // (API 1.43.0): the defender's best parry with a natural attack.
+    const bareView = defender.system?.derived?.bareHandedParry;
+    const bareRow = refused.bareHandedParry && parryWith && !parryWith.natural && typeof bareView?.total === "number"
+      ? { parry: Number(bareView.total), skillName: String(bareView.skillName ?? "") }
+      : null;
+    const bareChoice: DefenseChoice | null = bareRow
+      ? (() => {
+          const base = choices.find((c) => c.key === "parry");
+          const arcPenalty = base?.arcPenalty ?? 0;
+          const skill = String(bareRow.skillName ?? "");
+          const lines = [
+            ...weaponDefenseLines(flag.weapon, flag.delivery, "parry", skill, true),
+            ...multipleParryLines(defender, { itemId: "", twoHanded: false, natural: true, skill, isFencing: false }),
+          ];
+          return {
+            key: "parry" as DefenseKey, available: true, total: bareRow.parry, arcPenalty, reason: null, skillName: skill, isFencing: false,
+            shown: bareRow.parry + arcPenalty + deception + lines.reduce((sum, line) => sum + line.value, 0),
+          };
+        })()
+      : null;
+    const bareWeapon: DefenseParryWeapon | null = bareRow
+      ? { itemId: "", twoHanded: false, natural: true, skill: String(bareRow.skillName ?? ""), isFencing: false }
+      : null;
+
     // A Blocking spell "is cast instantly as a defense against either a
     // physical attack or another spell" (Characters p. 241), so a defender
     // who knows one is offered it beside the three ordinary defenses.
@@ -783,7 +820,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     // And the defenses a module resolves itself.
     const moduleDefenses = moduleDefensesFor(defender, flag.attack);
 
-    if (!choices.some((choice) => choice.available) && blocking.length === 0 && moduleDefenses.length === 0) {
+    if (!choices.some((choice) => choice.available) && !bareChoice && blocking.length === 0 && moduleDefenses.length === 0) {
       for (const choice of choices) row.append(refusedButton(choice));
       root.append(row);
       continue;
@@ -905,7 +942,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       return control.value ? [[option.key, control.value]] : [];
     }));
 
-    const defendWith = (choice: DefenseChoice, technique?: { name: string; delta: number }) => {
+    const defendWith = (choice: DefenseChoice, technique?: { name: string; delta: number }, parryOverride?: DefenseParryWeapon | null) => {
       const sight = sightSelect.value;
       const blind = sight === "sees"
         ? null
@@ -946,7 +983,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         ],
         attacker,
         arc: arc?.arc ?? null,
-        parryWeapon: choice.key === "parry" ? parryWith : null,
+        parryWeapon: choice.key === "parry" ? (parryOverride ?? parryWith) : null,
         calledShot: flag.calledShot ?? null,
       });
     };
@@ -962,6 +999,25 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       button.textContent = `${game.i18n.localize(DEFENSE_LABELS[choice.key])} ${choice.shown}`;
       button.addEventListener("click", () => defendWith(choice));
       row.append(button);
+    }
+
+    if (bareChoice && bareWeapon) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "gc-apply-button";
+      button.textContent = `${game.i18n.localize("GWORLD.Defense.BareHandedParry")} ${bareChoice.shown}`;
+      button.addEventListener("click", () => defendWith(bareChoice, undefined, bareWeapon));
+      row.append(button);
+      for (const technique of defensiveTechniquesOf(defender)) {
+        if (technique.key !== "parry" || technique.skill.trim().toLowerCase() !== bareChoice.skillName.trim().toLowerCase()) continue;
+        const techniqueButton = document.createElement("button");
+        techniqueButton.type = "button";
+        techniqueButton.className = "gc-apply-button";
+        techniqueButton.textContent = `${technique.name} ${(bareChoice.shown ?? 0) + technique.delta}`;
+        techniqueButton.title = game.i18n.localize("GWORLD.Technique.DefenseHint");
+        techniqueButton.addEventListener("click", () => defendWith(bareChoice, { name: technique.name, delta: technique.delta }, bareWeapon));
+        row.append(techniqueButton);
+      }
     }
 
     // A defensive technique stands in for the defense it is bought off -- a
@@ -1174,6 +1230,7 @@ async function strikeParriedLimb(defender: any, itemId: string, attackSkill: str
     armorDivisor: Number(row.armorDivisor) || 1,
     item: defender.items?.get?.(itemId) ?? null,
     mode: { index: Number(row.modeIndex) || 0, ranged: false },
+    source: "parriedLimb",
   });
 }
 
@@ -1228,6 +1285,29 @@ async function tacticalArc(
       oneHandedWeapon: true,
     }),
   };
+}
+
+type SettledDefense = "success" | "failure" | "criticalSuccess" | "criticalFailure";
+
+/** A listener's settled result, when it is one the card knows. */
+function settledDefense(value: unknown): SettledDefense | null {
+  return ["success", "failure", "criticalSuccess", "criticalFailure"].includes(String(value)) ? (value as SettledDefense) : null;
+}
+
+/**
+ * A defense a module settled without a roll (since 1.43.0): the card says so,
+ * and the listeners that follow a roll hear the outcome as if it were rolled.
+ */
+async function postSettledDefense(defender: any, key: DefenseKey, label: string, settled: SettledDefense, reason: unknown) {
+  const success = settled === "success" || settled === "criticalSuccess";
+  const outcome = { dice: [] as number[], roll: 0, effectiveSkill: 0, success, criticalSuccess: settled === "criticalSuccess", criticalFailure: settled === "criticalFailure", margin: 0 };
+  const why = typeof reason === "string" && reason.trim() ? ` (${foundry.utils.escapeHTML(reason.trim())})` : "";
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor: defender }),
+    content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${foundry.utils.escapeHTML(label)}</span></div><div class="gc-result ${success ? "success" : "failure"}">${game.i18n.localize(`GWORLD.Defense.Settled.${settled}`)}${why}</div></div>`,
+  });
+  afterSuccessRoll({ actor: defender, label, kind: "defense", skill: "", tags: successRollTags({ kind: "defense", tags: [key] }), outcome });
+  return outcome;
 }
 
 /** Rolls one active defense for one defender. */
@@ -1305,7 +1385,12 @@ async function rollDefense(options: {
   // "You cannot parry a weapon heavier than your Basic Lift -- or twice BL,
   // if using a two-handed weapon. Attempts to parry anything heavier fail
   // automatically" (p. 376).
-  const parryWeapon = key === "parry" ? defender.system?.derived?.defenses?.parry?.weapon : undefined;
+  // A bare-handed parry a module offered beside the weapon's (API 1.43.0)
+  // parries with the hands, not with the weapon.
+  const derivedParryWeapon = key === "parry" ? defender.system?.derived?.defenses?.parry?.weapon : undefined;
+  const parryWeapon = key === "parry" && options.parryWeapon?.natural === true && derivedParryWeapon && !derivedParryWeapon.natural
+    ? { itemId: "", weight: 0, quality: "good", material: "", twoHanded: false, natural: true }
+    : derivedParryWeapon;
   const heavy = key === "parry" && options.attackWeapon && isRuleOn("weaponBreakage");
   if (heavy && options.attackWeapon) {
     const basicLift = Number(defender.system?.derived?.basicLift ?? 0) || 0;
@@ -1392,8 +1477,11 @@ async function rollDefense(options: {
   // own options add, and whatever a module's hook adds on top.
   modifiers.push(...defenseModifiersFor(options.attackDefenseModifiers, key));
   modifiers.push(...addon.modifiers);
-  callCombatHook(COMBAT_HOOKS.defenseModifiers, {
+  const hookedDefense = callCombatHook(COMBAT_HOOKS.defenseModifiers, {
     defender, defense: key, attack, modifiers, deception, attacker: options.attacker ?? null,
+    // Since 1.43.0: a listener may settle the defense without a roll.
+    settle: null as string | null,
+    settleLabel: null as string | null,
     // Since 1.21.0: where the blow came from, and the weapons on either side of it.
     arc: options.arc ?? null,
     attackWeapon: options.attackWeapon ? { ...options.attackWeapon } : null,
@@ -1417,7 +1505,10 @@ async function rollDefense(options: {
       damageType: (options.damageType || null) as DamageType | null,
     });
 
-  const outcome = await rollSuccess({
+  const settled = settledDefense(hookedDefense?.settle);
+  const outcome = settled
+    ? await postSettledDefense(defender, key, game.i18n.format("GWORLD.Chat.DefendingAgainst", { defense: name, attack }), settled, hookedDefense?.settleLabel)
+    : await rollSuccess({
     actor: defender,
     base: total,
     label: game.i18n.format("GWORLD.Chat.DefendingAgainst", { defense: name, attack }),
@@ -1438,7 +1529,7 @@ async function rollDefense(options: {
   // "If your shield's DB makes the difference between success and failure on
   // any active defense (not just a block), the blow struck the shield
   // squarely" (p. 484) -- so the next blow applied to them goes into it.
-  if (outcome) {
+  if (outcome && !settled) {
     const took = await noteShieldTookIt(defender, {
       succeeded: outcome.success,
       margin: outcome.margin,
@@ -1454,6 +1545,8 @@ async function rollDefense(options: {
       parryWeapon,
       attackWeapon: options.attackWeapon,
       parried: outcome?.success === true,
+      attacker: options.attacker ?? null,
+      delivery: options.delivery ?? "",
     });
   }
 
@@ -1761,6 +1854,7 @@ export function registerChatHooks(): void {
     void addDefenseControls(message, html);
     void addKnockdownControls(message, html);
     void addDeathCheckControls(message, html);
+    void addConsciousnessControls(message, html);
     void addResistControls(message, html);
     void addFleshWoundControls(message, html);
     void addTvActionControls(message, html);

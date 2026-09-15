@@ -959,6 +959,7 @@ export function moduleDefenseRefusals(context: {
   parriesFlail: boolean;
   blockAgain: boolean;
   acrobatic: { refusal: string | null; defenses: DefenseKey[]; perTurn: number | null };
+  bareHandedParry: boolean;
 } {
   const parryWeapon = context.parryWeapon ? { ...context.parryWeapon } : null;
   const hooked = callCombatHook(COMBAT_HOOKS.defenseChoices, {
@@ -976,6 +977,8 @@ export function moduleDefenseRefusals(context: {
     defenseCounts: { acrobatic: 0, ...(context.defenseCounts ?? { parries: 0, blocks: 0, dodges: 0 }) },
     blockAgain: false,
     acrobatic: { available: true, refusal: null, defenses: ["dodge"], perTurn: ACROBATIC_DEFENSES_PER_TURN } as HookedAcrobatic,
+    // Since 1.43.0: a listener may offer a bare-handed parry beside the weapon's.
+    bareHandedParry: { available: false },
   });
   const text = (refusal: unknown) => (typeof refusal === "string" && refusal.trim() ? refusal.trim() : "");
   const choices = new Map<DefenseKey, string>();
@@ -994,6 +997,7 @@ export function moduleDefenseRefusals(context: {
       defenses: Array.isArray(hooked.acrobatic?.defenses) ? DEFENSE_KEYS.filter((key) => hooked.acrobatic.defenses.includes(key)) : ["dodge"],
       perTurn: hooked.acrobatic?.perTurn === null ? null : Number.isFinite(Number(hooked.acrobatic?.perTurn)) ? Math.max(0, Math.floor(Number(hooked.acrobatic.perTurn))) : ACROBATIC_DEFENSES_PER_TURN,
     },
+    bareHandedParry: hooked.bareHandedParry?.available === true,
   };
 }
 

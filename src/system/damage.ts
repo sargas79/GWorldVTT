@@ -103,6 +103,8 @@ export interface IncomingDamage {
   ignoresDr?: boolean;
   /** The item the blow was rolled from, where the card knows it. */
   itemUuid?: string;
+  /** Where the blow came from, where its roll said (since 1.43.0): "parriedLimb" for the strike after a bare-handed parry. */
+  source?: string;
   /** Which of the item's modes it was rolled from. */
   mode?: { index: number; ranged: boolean; derived?: string };
   /**

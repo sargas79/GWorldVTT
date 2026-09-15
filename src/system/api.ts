@@ -41,6 +41,7 @@ import { migrationApi } from "./migration.js";
 import { takeInjury, type InjuryTaken } from "./damage.js";
 import { stopBleeding } from "./bleeding.js";
 import { undoKnockdown } from "./knockdown.js";
+import { randomLocationWithHooks } from "./combat-extensions.js";
 import { rollFrightCheck } from "./fright.js";
 import { spendUnspentPoints } from "./bonus-points.js";
 import {
@@ -66,7 +67,7 @@ import { manaLevel } from "./casting.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.42.0";
+export const API_VERSION = "1.43.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -209,6 +210,8 @@ export interface GWorldApi {
   };
   /** Rolls posted to chat through the system's own cards, and resolvers for the contests it offers. */
   readonly roll: {
+    /** A random hit location, with the modules' locations (since 1.43.0). */
+    readonly hitLocation: typeof rollHitLocation;
     /** The system's Fright Check at a modifier (since 1.39.0). */
     readonly frightCheck: (actor: any, modifier?: number) => ReturnType<typeof rollFrightCheck>;
     readonly success: typeof rollSuccess;
@@ -263,6 +266,19 @@ const combat = Object.freeze({
   hooks: Object.freeze({ ...combatApi.hooks, ...PROCEDURE_HOOKS }),
 });
 
+/**
+ * Rolls a random hit location as the system does (since 1.43.0): 3d on the
+ * table, then the modules' `gworld.randomHitLocation` listeners.
+ */
+async function rollHitLocation(options: { actor?: any; damageType?: string | null; arc?: "front" | "side" | "back" | null } = {}): Promise<{ hitLocation: string; addonLocation: string | null; roll: number }> {
+  const dice = new Roll("3d6");
+  await dice.evaluate();
+  const total = Number(dice.total) || 10;
+  const base = rules.randomHitLocation(total).location;
+  const picked = randomLocationWithHooks(total, base, options.actor, { damageType: options.damageType ?? null, arc: options.arc ?? null });
+  return { hitLocation: picked.hitLocation, addonLocation: picked.addonLocation, roll: total };
+}
+
 /** The points namespace: point pools, and from 1.39.0 charging a character's unspent points. */
 const points = Object.freeze({ ...pointsApi, spendUnspent: spendUnspentPoints });
 
@@ -275,7 +291,7 @@ export function createApi(): GWorldApi {
     version: API_VERSION,
     rules,
     registry: Object.freeze({ registerRuleGroup, registerRule, namespacedRuleKey, isAddonRuleKey, isRuleOn, activeRules }),
-    roll: Object.freeze({ frightCheck: (actor: any, modifier = 0) => rollFrightCheck({ actor, modifier: Number(modifier) || 0 }), success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver }),
+    roll: Object.freeze({ hitLocation: rollHitLocation, frightCheck: (actor: any, modifier = 0) => rollFrightCheck({ actor, modifier: Number(modifier) || 0 }), success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver }),
     actors: Object.freeze(actors),
     items: Object.freeze(items),
     combat,

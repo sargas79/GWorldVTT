@@ -84,6 +84,8 @@ export const PROCEDURE_HOOKS = Object.freeze({
   afterQuickContest: "gworld.afterQuickContest",
   /** Once a knockdown roll is applied (since 1.39.0): `{ actor, outcome, result, previousPosture }`. */
   afterKnockdown: "gworld.afterKnockdown",
+  /** After a roll to stay conscious (since 1.43.0): `{ actor, outcome, previousPosture }`. */
+  afterConsciousnessRoll: "gworld.afterConsciousnessRoll",
   /** When a combat starts: `(combat)`. */
   combatStart: "gworld.combatStart",
   /** When a combatant's turn starts: `(combat, combatant)`. */

@@ -169,6 +169,9 @@ export async function heavyParryCheck(options: {
   parryWeapon: { itemId: string; weight: number; quality: WeaponQuality; material: WeaponMaterial; natural: boolean; breakage?: number } | undefined;
   attackWeapon: { weight: number; material: string; swung: boolean };
   parried: boolean;
+  /** Who attacked, and how, for the modules' hook (since 1.43.0). */
+  attacker?: any;
+  delivery?: string;
 }): Promise<void> {
   const { defender, parryWeapon, attackWeapon } = options;
   if (!parryWeapon || parryWeapon.natural || !isRuleOn("weaponBreakage")) return;
@@ -186,6 +189,9 @@ export async function heavyParryCheck(options: {
     // Since 1.25.0: the weight the parry counts, which a module may change,
     // and the weapon that breaks, which a module may name.
     weight: parryWeapon.weight,
+    // Since 1.43.0: who attacked, and how the blow arrived.
+    attacker: options.attacker ?? null,
+    delivery: options.delivery ?? "",
   });
   const breaking = odds.item ?? item;
   const chance = heavyParryBreakChance({
