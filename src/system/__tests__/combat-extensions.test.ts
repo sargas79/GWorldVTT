@@ -167,8 +167,37 @@ describe("hit locations", () => {
     expect(api.readLocationValue("addon:test-addon.artery")).toEqual({ hitLocation: "arm", addonLocation: "test-addon.artery" });
     expect(api.readLocationValue("skull")).toEqual({ hitLocation: "skull", addonLocation: null });
     expect(api.readLocationValue("addon:gone.x")).toBeNull();
-    expect(api.locationOverrides("test-addon.artery", "cut", 12)).toEqual({ woundingModifier: 2, cripplingThreshold: null, extraDr: 1, knockdown: -1 });
+    expect(api.locationOverrides("test-addon.artery", "cut", 12)).toEqual({ woundingModifier: 2, cripplingThreshold: null, extraDr: 1, knockdown: -1, shockKnockdown: false, majorWoundKnockdown: null });
     expect(api.locationOverrides("test-addon.artery", "imp", 12)?.woundingModifier).toBeNull();
+  });
+
+  it("takes a location's miss-by-1 fallback, arcs and knockdown rules (since 1.22.0)", async () => {
+    const api = await load();
+    api.registerHitLocation({ module: "test-addon", key: "joint", label: "Joint", parent: "arm", penalty: -5, missFallback: "arm" });
+    api.registerHitLocation({ module: "test-addon", key: "ear", label: "Ear", parent: "face", penalty: -7, missFallback: "test-addon.joint", majorWoundKnockdown: 0 });
+    api.registerHitLocation({ module: "test-addon", key: "spine", label: "Spine", parent: "torso", penalty: -8, arcs: ["back"], shockKnockdown: true, knockdownFor: (type) => (type === "cr" ? -1 : 0) });
+    api.registerHitLocation({ module: "test-addon", key: "vein", label: "Vein", parent: "neck", penalty: -8, missFallback: null });
+    const torsoRule = (location: string) => ["eye", "skull", "face", "groin", "neck", "vitals"].includes(location);
+    expect(api.missFallbackFor({ hitLocation: "arm", addonLocation: "test-addon.joint" }, torsoRule)).toEqual({ hitLocation: "arm", addonLocation: null });
+    expect(api.missFallbackFor({ hitLocation: "face", addonLocation: "test-addon.ear" }, torsoRule)).toEqual({ hitLocation: "arm", addonLocation: "test-addon.joint" });
+    expect(api.missFallbackFor({ hitLocation: "neck", addonLocation: "test-addon.vein" }, torsoRule)).toBeNull();
+    expect(api.missFallbackFor({ hitLocation: "torso", addonLocation: "test-addon.spine" }, torsoRule)).toBeNull();
+    expect(api.missFallbackFor({ hitLocation: "skull" }, torsoRule)).toEqual({ hitLocation: "torso", addonLocation: null });
+    expect(api.registeredLocationAllowsArc("test-addon.spine", "front")).toBe(false);
+    expect(api.registeredLocationAllowsArc("test-addon.spine", "back")).toBe(true);
+    expect(api.registeredLocationAllowsArc("test-addon.spine", null)).toBe(true);
+    expect(api.registeredLocationAllowsArc("test-addon.joint", "front")).toBe(true);
+    expect(api.locationOverrides("test-addon.spine", "cr", 12)).toMatchObject({ knockdown: -1, shockKnockdown: true, majorWoundKnockdown: null });
+    expect(api.locationOverrides("test-addon.ear", "cut", 12)).toMatchObject({ knockdown: 0, majorWoundKnockdown: 0 });
+  });
+
+  it("gives a random-location listener the damage type, the arc and a die (since 1.22.0)", async () => {
+    const api = await load();
+    let seen: any = null;
+    globals.Hooks = { callAll: (_event: string, context: any) => { seen = { type: context.damageType, arc: context.arc, die: context.d6() }; } };
+    globals.CONFIG = { Dice: { randomUniform: () => 0.01 } };
+    api.randomLocationWithHooks(10, "torso", {}, { damageType: "cr", arc: "back" });
+    expect(seen).toEqual({ type: "cr", arc: "back", die: 6 });
   });
 
   it("refuses a location whose parent isn't a Basic Set location", async () => {

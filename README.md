@@ -463,7 +463,18 @@ and skipped, and the roll goes on.
   paid in FP before the roll.
 - **`registerHitLocation({ module, key, label, parent, penalty, damageTypes?, wounding?, cripplingDivisor?, extraDr?, knockdown?, available? })`.**
   Offered as a called shot and on the damage card. It takes its armour and
-  anything it doesn't override from its Basic Set `parent`.
+  anything it doesn't override from its Basic Set `parent`. Since 1.22.0 it
+  also takes, all optional:
+  - `missFallback`: where an attack aimed at it that misses by 1 lands, as a
+    Basic Set location or a registered `<module>.<key>`, or null for nowhere.
+    It defaults to the parent's rule: the torso for the eye, skull, face,
+    groin, neck and vitals;
+  - `arcs`: the arcs it may be aimed from, checked against the one targeted
+    token on a tactical scene;
+  - `knockdownFor(type)`: added to the knockdown modifier for a damage type;
+  - `shockKnockdown`: any shock calls for a knockdown roll;
+  - `majorWoundKnockdown`: a major wound's knockdown penalty in place of the
+    parent's.
 - **State:** `getCombatState(actor, module, key)` and
   `setCombatState(actor, module, key, value, "turn" | "round" | "combat")`,
   cleared at that boundary. `getWeaponState(item, module)` and
@@ -532,7 +543,10 @@ and skipped, and the roll goes on.
     null. The card keeps it as `itemUuid`, and so does `damage`. Since 1.10.0
     they also get `mode` (`{ index, ranged }`), the mode it was rolled from;
   - `gworld.breakageOdds`: set `breakage`;
-  - `gworld.randomHitLocation`: set `location` or `addonLocation`;
+  - `gworld.randomHitLocation`: set `location` or `addonLocation`. Since 1.22.0 it
+    also gets `damageType` and `arc` where the caller knows them (null
+    otherwise), and `d6()`, a die rolled as the system's dice are, for a
+    sub-roll;
   - `gworld.weaponAttacks` (since 1.10.0): an item's attack rows once they are
     worked out, as `{ actor, item, rows, damageAt, rangeAt, addToDamage }`.
     - Each of `rows` is `{ kind, mode, row, basis }`. `mode` is the stored mode,

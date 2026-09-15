@@ -51,7 +51,10 @@ import {
   attackOptionFields,
   callCombatHook,
   mergeAttackEffects,
+  missFallbackFor,
   readAttackOptionValues,
+  registeredHitLocation,
+  registeredLocationAllowsArc,
   type AttackContext,
   type DefenseKey as AddonDefenseKey,
   type ModifierLine,
@@ -1160,7 +1163,8 @@ async function rollAction(
   // the option, so the roll is abandoned rather than made on a promise.
   // The eye can be aimed at only from the front or sides (Campaigns p. 552).
   const aimedShot = rollType === "attack" ? (melee?.calledShot ?? shot?.calledShot ?? null) : null;
-  if (aimedShot && !canTargetFromArc(aimedShot.hitLocation, arcAgainstTarget(actor))) {
+  const aimedArc = aimedShot ? arcAgainstTarget(actor) : null;
+  if (aimedShot && (!canTargetFromArc(aimedShot.hitLocation, aimedArc) || !registeredLocationAllowsArc(aimedShot.addonLocation, aimedArc))) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.CalledShot.NotFromBehind"));
     return null;
   }
@@ -1337,6 +1341,14 @@ async function rollAction(
   const capped = hooked ? skillCapLine(base, modifiers, hooked.skillCap === null || hooked.skillCap === undefined ? null : Number(hooked.skillCap), game.i18n.format("GWORLD.Attack.SkillCap", { cap: Number(hooked.skillCap) })) : null;
   if (capped) modifiers.push(capped);
 
+  // Where an aimed blow that misses by 1 lands (p. 552), a module's location saying for itself.
+  const missedInto = (() => {
+    const into = aimedShot ? missFallbackFor(aimedShot, missByOneHitsTorso) : null;
+    if (!into) return null;
+    const added = into.addonLocation ? registeredHitLocation(into.addonLocation) : undefined;
+    return { ...into, label: added ? added.label : game.i18n.localize(`GWORLD.HitLocation.${into.hitLocation}`).toLowerCase() };
+  })();
+
   const outcome = await rollSuccess({
     actor,
     base,
@@ -1379,7 +1391,7 @@ async function rollAction(
       : {}),
     ...(shot?.dodgeBonus ? { dodgeBonus: shot.dodgeBonus } : {}),
     // Where an aimed blow that misses by 1 lands instead (p. 552).
-    ...(aimedShot && missByOneHitsTorso(aimedShot.hitLocation) ? { missFallback: game.i18n.localize("GWORLD.HitLocation.torso").toLowerCase() } : {}),
+    ...(missedInto ? { missFallback: missedInto.label } : {}),
     // A steered or area attack says what it is doing, which needs the range
     // it was actually fired at (Campaigns pp. 412-413).
     ...(rollType === "attack" && ranged && shot
@@ -1416,7 +1428,9 @@ async function rollAction(
 
   // A blow that missed its mark by 1 lands on the torso, and so does its damage (p. 552).
   if (rollType === "attack" && aimedShot && (outcome as { hitsInstead?: boolean } | null)?.hitsInstead) {
-    await recordCalledShot(actor, { hitLocation: "torso", chink: false });
+    // Cleared first: a flag set over another merges into it, and would keep the old location.
+    await recordCalledShot(actor, null);
+    await recordCalledShot(actor, { hitLocation: missedInto?.hitLocation ?? "torso", chink: false, ...(missedInto?.addonLocation ? { addonLocation: missedInto.addonLocation } : {}) });
   }
 
   // The shells fired come off the weapon's count (Campaigns p. 373).
