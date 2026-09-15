@@ -116,6 +116,23 @@ const RANDOM_TABLE: ReadonlyArray<{ min: number; max: number; location: HitLocat
   { min: 17, max: 18, location: "neck" },
 ];
 
+/**
+ * "An attack that misses by 1 hits the torso instead" (Campaigns p. 552): the
+ * eye, skull, face, groin, neck and vitals.
+ */
+export function missByOneHitsTorso(location: HitLocation): boolean {
+  return ["eye", "skull", "face", "groin", "neck", "vitals"].includes(location);
+}
+
+/**
+ * Whether a location can be aimed at from the arc the attack comes from: the
+ * eye only "from the front or sides" (Campaigns p. 552). Every other location,
+ * and every attack whose arc is unknown, is fine.
+ */
+export function canTargetFromArc(location: HitLocation, arc: "front" | "side" | "back" | null): boolean {
+  return !(location === "eye" && arc === "back");
+}
+
 /** Resolves a 3d6 roll to a hit location. Rolls outside 3-18 clamp to the table. */
 export function randomHitLocation(
   roll: number,

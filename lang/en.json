@@ -2473,7 +2473,9 @@
     "CalledShot": {
       "Label": "Aimed at",
       "ChinkTorso": "Chink in torso armour",
-      "ChinkOther": "Chink elsewhere"
+      "ChinkOther": "Chink elsewhere",
+      "MissByOne": "missed by 1: hits the {location} instead",
+      "NotFromBehind": "The eye can only be aimed at from the front or sides"
     },
     "Disarm": {
       "Action": "Disarm",
