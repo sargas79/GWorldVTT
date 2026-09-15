@@ -1199,8 +1199,14 @@ async function rollAction(
           return aimedAt ? { hitLocation: aimedAt.hitLocation, addonLocation: aimedAt.addonLocation ?? null } : null;
         })(),
         targets: targetedTokens().map((token: any) => token?.actor).filter(Boolean),
+        refusal: null as string | null,
       })
     : null;
+  // A module's rules may make this attack impossible here: it isn't rolled.
+  if (hooked && typeof hooked.refusal === "string" && hooked.refusal.trim()) {
+    ui.notifications?.warn(hooked.refusal.trim());
+    return null;
+  }
   const defensePenalty = Number(hooked?.defensePenalty ?? (melee?.defensePenalty ?? 0) + feint) || 0;
 
   // A shot taken at a measured range says so on the card, where the number
