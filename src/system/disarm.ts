@@ -13,6 +13,7 @@ import { rollQuickContest } from "./contest.js";
 import { rollSuccess } from "./roll.js";
 import { disarmContestModifier, disarmPenalty, disarmResult } from "../rules/melee-situations.js";
 import { attributeOf } from "./attributes.js";
+import type { WeaponTarget } from "./weapon-damage.js";
 
 /** The best weapon skill this character has, which is what a disarm contests. */
 function weaponSkill(actor: any): { name: string; level: number } | null {
@@ -46,6 +47,8 @@ export async function rollDisarm(options: {
   jitteOrWhip: boolean;
   /** The foe's two-handed grip, worth +2 to them. */
   foeTwoHanded: boolean;
+  /** What is being knocked away, where the attacker said: its size's penalty, and what striking at it allows. */
+  target?: WeaponTarget | null;
 }): Promise<void> {
   const { actor, foe } = options;
 
@@ -56,16 +59,20 @@ export async function rollDisarm(options: {
     return;
   }
 
-  const penalty = disarmPenalty(options.fencingWeapon);
+  const target = options.target ?? null;
+  const penalty = disarmPenalty(options.fencingWeapon && !target?.disarmPenaltyForAll);
 
   const outcome = await rollSuccess({
     actor,
     base: mine.level,
     kind: "attack",
     label: game.i18n.format("GWORLD.Disarm.Label", { foe: String(foe?.name ?? "") }),
-    modifiers: penalty === 0
-      ? []
-      : [{ label: game.i18n.localize("GWORLD.Disarm.Strike"), value: penalty }],
+    modifiers: [
+      // The penalty for hitting the weapon itself, which the extra -2 is on top of (p. 401).
+      ...(target && target.penalty ? [{ label: game.i18n.localize("GWORLD.Breakage.StrikePenalty"), value: target.penalty }] : []),
+      ...(penalty === 0 ? [] : [{ label: game.i18n.localize("GWORLD.Disarm.Strike"), value: penalty }]),
+    ],
+    ...(target?.noParry || target?.noDefenseBonus ? { strikeLimits: { noParry: target.noParry, noDefenseBonus: target.noDefenseBonus } } : {}),
   });
 
   // "If you hit and your foe fails to defend, roll a Quick Contest" -- the

@@ -190,3 +190,20 @@ describe("opportunity fire (p. 390)", () => {
     expect(canAimWhileWatching(11)).toBe(false);
   });
 });
+
+describe("slams, tackles, pounces, shield rushes and shoves (pp. 371-372)", () => {
+  it("rolls the best of each kind's skills, with +4 for a flying tackle or pounce", async () => {
+    const { slamSkills, slamToHit } = await import("../attack-options.js");
+    expect(slamSkills("slam")).toEqual(["DX", "Brawling", "Sumo Wrestling"]);
+    expect(slamSkills("flyingTackle")).toContain("Jumping");
+    expect(slamSkills("shieldRush")).toEqual(["Shield"]);
+    expect(slamSkills("shove")).toEqual(["DX", "Sumo Wrestling"]);
+    expect([slamToHit("slam"), slamToHit("flyingTackle"), slamToHit("pounce")]).toEqual([0, 4, 4]);
+  });
+
+  it("shoves for thrust crushing damage, -1 per die with one hand", async () => {
+    const { shoveDamage } = await import("../attack-options.js");
+    expect(shoveDamage({ dice: 1, adds: -2 }, false)).toEqual({ dice: 1, adds: -2 });
+    expect(shoveDamage({ dice: 2, adds: 1 }, true)).toEqual({ dice: 2, adds: -1 });
+  });
+});

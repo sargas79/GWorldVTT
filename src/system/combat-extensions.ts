@@ -75,6 +75,8 @@ export const COMBAT_HOOKS = Object.freeze({
   meleeAttackOptions: "gworld.meleeAttackOptions",
   /** Before a feint is rolled (since 1.28.0): `{ actor, foe, item, mode, ranged, modifiers, refusal }`, mutable. */
   feintModifiers: "gworld.feintModifiers",
+  /** What may be struck at on a foe (since 1.31.0): `{ actor, foe, targets }`, the targets mutable. */
+  weaponTargets: "gworld.weaponTargets",
 });
 
 // ── an item's attack rows ──────────────────────────────────────────────────

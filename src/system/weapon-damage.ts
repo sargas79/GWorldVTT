@@ -256,6 +256,46 @@ export function weaponsInHand(foe: any): Array<{ id: string; name: string; penal
   return [...out.values()];
 }
 
+/** Something on a foe that can be struck at, and what striking at it allows (since 1.31.0). */
+export interface WeaponTarget {
+  id: string;
+  name: string;
+  /** The penalty to hit it. */
+  penalty: number;
+  /** Whether it can be knocked away as well as damaged. */
+  canDisarm: boolean;
+  /** The foe may not parry the blow. */
+  noParry: boolean;
+  /** The foe's Defense Bonus doesn't count against the blow. */
+  noDefenseBonus: boolean;
+  /** The disarm's extra -2 applies whatever the weapon striking. */
+  disarmPenaltyForAll: boolean;
+}
+
+/**
+ * The things a character may strike at on a foe: the weapons in hand, at the
+ * penalty for their size, and what a module's rules add or change.
+ */
+export function weaponTargetsFor(actor: any, foe: any): WeaponTarget[] {
+  const targets: WeaponTarget[] = weaponsInHand(foe).map((w) => ({ ...w, canDisarm: true, noParry: false, noDefenseBonus: false, disarmPenaltyForAll: false }));
+  const hooked = callCombatHook(COMBAT_HOOKS.weaponTargets, { actor, foe, targets });
+  const out = new Map<string, WeaponTarget>();
+  for (const t of Array.isArray(hooked.targets) ? hooked.targets : []) {
+    const id = String(t?.id ?? "");
+    if (!id || out.has(id) || !foe?.items?.get?.(id)) continue;
+    out.set(id, {
+      id,
+      name: String(t.name ?? foe.items.get(id)?.name ?? ""),
+      penalty: Math.round(Number(t.penalty) || 0),
+      canDisarm: t.canDisarm !== false,
+      noParry: t.noParry === true,
+      noDefenseBonus: t.noDefenseBonus === true,
+      disarmPenaltyForAll: t.disarmPenaltyForAll === true,
+    });
+  }
+  return [...out.values()];
+}
+
 /**
  * Strikes at a foe's weapon to break it (p. 401): an ordinary attack at
  * the penalty for the weapon's size, and "if you hit and your foe fails to
@@ -276,7 +316,7 @@ export async function rollStrikeToBreak(options: {
   const item = foe?.items?.get?.(itemId);
   if (!item) return;
   const facts = weaponFacts(item);
-  const target = weaponsInHand(foe).find((w) => w.id === itemId);
+  const target = weaponTargetsFor(actor, foe).find((w) => w.id === itemId);
   const penalty = target?.penalty ?? -4;
 
   const outcome = await rollSuccess({
@@ -285,6 +325,7 @@ export async function rollStrikeToBreak(options: {
     kind: "attack",
     label: L("StrikeLabel", { weapon: facts.name, foe: String(foe?.name ?? "") }),
     modifiers: [{ label: L("StrikePenalty"), value: penalty }],
+    ...(target?.noParry || target?.noDefenseBonus ? { strikeLimits: { noParry: target.noParry, noDefenseBonus: target.noDefenseBonus } } : {}),
   });
   if (!outcome?.success) return;
 
