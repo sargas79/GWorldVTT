@@ -12,7 +12,8 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
-import { applyDamageToActor, type AppliedDamage, type IncomingDamage } from "./damage.js";
+import { applyDamageToActor, takeInjury, type AppliedDamage, type IncomingDamage } from "./damage.js";
+import { HURTING_YOURSELF_DR, hurtingYourself } from "../rules/hurting-yourself.js";
 import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy } from "./weapon-damage.js";
 import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shields.js";
 import { rollDamage, rollSuccess, type AttackWeaponFlag } from "./roll.js";
@@ -97,6 +98,9 @@ interface DamageFlag {
   itemUuid?: string;
   /** Which of its modes. */
   mode?: { index: number; ranged: boolean; derived?: string };
+  /** The body part an unarmed blow struck with, and who struck it (Campaigns p. 379). */
+  strikingPart?: HitLocation;
+  strikerUuid?: string;
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -244,6 +248,45 @@ function signedOrBlank(value: number): string {
 }
 
 /** Resolves the blow against every target and reports what it did. */
+/**
+ * Hurting Yourself (Campaigns p. 379): an unarmed blow that met DR 3+ costs
+ * its striker a point of crushing damage per 5 of basic damage, up to that DR,
+ * on the part they struck with and less their own DR there. A module may
+ * change when it applies (API 1.32.0).
+ */
+async function hurtStriker(flag: DamageFlag, target: any, result: AppliedDamage, basicDamage: number): Promise<void> {
+  const striker: any = await fromUuid(String(flag.strikerUuid)).catch(() => null);
+  const part = flag.strikingPart;
+  if (!striker || !part) return;
+  const context = callCombatHook(COMBAT_HOOKS.hurtingYourself, {
+    attacker: striker,
+    target,
+    part,
+    hitLocation: result.hitLocation,
+    addonLocation: result.addonLocation,
+    dr: result.effectiveDr,
+    basicDamage,
+    minimumDr: HURTING_YOURSELF_DR,
+    applies: true,
+  });
+  if (context.applies === false) return;
+  const ownDr = Number(striker.system?.derived?.drByLocation?.[part]) || 0;
+  const hurt = hurtingYourself({ basicDamage, targetDr: Number(context.dr) || 0, ownDr, minimumDr: Number(context.minimumDr) });
+  if (hurt.damage <= 0) return;
+  const partLabel = game.i18n.localize(`GWORLD.HitLocation.${part}`).toLowerCase();
+  if (hurt.injury > 0 && striker.isOwner) {
+    await takeInjury(striker, { amount: hurt.injury, label: game.i18n.localize("GWORLD.HurtingYourself.Title") });
+  }
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor: striker }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${game.i18n.localize("GWORLD.HurtingYourself.Title")}</span></div>
+      <div class="gc-result">${foundry.utils.escapeHTML(game.i18n.format("GWORLD.HurtingYourself.Result", {
+        name: String(striker.name ?? ""), damage: hurt.damage, part: partLabel, dr: ownDr, injury: hurt.injury,
+      }))}</div></div>`,
+  });
+}
+
 async function applyFromCard(options: {
   flag: DamageFlag;
   hitLocation: HitLocation;
@@ -369,6 +412,8 @@ async function applyFromCard(options: {
       if (result.bleeds && isRuleOn("bleeding")) await setCondition(actor, "bleeding", true);
       // Remembered so the knockdown control on the card knows whose roll it is.
       knockdowns.push({ actor, result });
+      // A bare-handed blow into hard DR hurts the hand that struck it (p. 379).
+      if (flag.strikingPart && flag.strikerUuid) await hurtStriker(flag, actor, result, incoming.basicDamage);
     } else refused.push(String(actor.name ?? ""));
   }
 
