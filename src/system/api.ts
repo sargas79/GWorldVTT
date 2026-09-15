@@ -39,6 +39,7 @@ import { magicApi, pointsApi } from "./roll-extensions.js";
 import { conditionLabel, setCondition } from "./conditions.js";
 import { migrationApi } from "./migration.js";
 import { takeInjury, type InjuryTaken } from "./damage.js";
+import { stopBleeding } from "./bleeding.js";
 import {
   PROCEDURE_HOOKS,
   activeConditions,
@@ -62,7 +63,7 @@ import { manaLevel } from "./casting.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.35.0";
+export const API_VERSION = "1.36.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -146,6 +147,11 @@ const actors = {
    */
   applyInjury(actor: any, options: { amount: number; fatigue?: boolean; label?: string }): Promise<InjuryTaken | null> {
     return takeInjury(actor, options);
+  },
+
+  /** Ends an actor's bleeding and clears the condition (since 1.36.0), for a user who owns it. */
+  stopBleeding(actor: any): Promise<void> {
+    return stopBleeding(actor);
   },
 
   /**

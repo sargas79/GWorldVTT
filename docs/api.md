@@ -93,7 +93,7 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0) and `setPosture(actor, posture)` (since 1.16.0). |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0) and `stopBleeding(actor)` (since 1.36.0). |
 | `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
@@ -636,6 +636,11 @@ and a hint `p.ihint`.
   `gworld.turnEnd` `(combat, combatant)`, on every client.
 - **Bleeding:** `gworld.bleedingSchedule` gets `{ actor, intervalSeconds, modifier }`
   before a bleeding roll, and may change either.
+- **First Aid** (since 1.36.0): `gworld.firstAid` gets `{ healer, patient, refusal,
+  stopsBleeding }` before an attempt. Set `refusal` (text) to stop it, or
+  `stopsBleeding: false` so success doesn't stop the patient's bleeding. The roll
+  itself adds `gworld.successRollModifiers` lines, tagged `firstAid`, with the
+  patient as `opponent`. `actors.stopBleeding(actor)` ends an actor's bleeding.
 - **Technique defaults:** `gworld.techniqueDefaults` gets `{ actor, item, defaults }`;
   push `{ from, skill, modifier }` to offer another default. The best one is
   used.
