@@ -75,6 +75,7 @@ export const PROCEDURE_HOOKS = Object.freeze({
   afterSuccessRoll: "gworld.afterSuccessRoll",
   /** When a maneuver's attacks are worked out: `{ actor, maneuver, option, count, pickTargets }`, mutable. */
   attackSequence: "gworld.attackSequence",
+  grappleMove: "gworld.grappleMove",
   /** When a combat starts: `(combat)`. */
   combatStart: "gworld.combatStart",
   /** When a combatant's turn starts: `(combat, combatant)`. */
@@ -382,6 +383,15 @@ export function resolveContestScores(context: ContestResolverContext): { first: 
 }
 
 // ── attack sequences ───────────────────────────────────────────────────────
+
+/**
+ * Asks the modules whether one of the system's grapple moves may be made
+ * (since 1.23.0). Returns the refusal a listener gave, or null.
+ */
+export function grappleMoveRefusal(actor: any, foe: any, move: "breakFree" | "takedown" | "pin" | "choke"): string | null {
+  const context = callCombatHook(PROCEDURE_HOOKS.grappleMove, { actor, foe, move, refusal: null as string | null });
+  return typeof context.refusal === "string" && context.refusal.trim() ? context.refusal.trim() : null;
+}
 
 /** How a maneuver's attacks go this turn. */
 export interface AttackSequence {

@@ -524,7 +524,8 @@ and skipped, and the roll goes on.
     one;
   - Since 1.18.0, `gworld.attackModifiers` also gets `calledShot`, the location the
     blow is aimed at as `{ hitLocation, addonLocation }` or null, and `targets`,
-    the actors of the targeted tokens;
+    the actors of the targeted tokens; since 1.23.0 also `targetTokens`, their
+    token documents in the same order;
   - Since 1.16.0, `gworld.attackModifiers` also gets `skillCap`: the most the
     attack's effective skill may be once every modifier is in, or null. It is 9
     for a melee attack on Move and Attack (Characters p. 365), which also takes
@@ -803,6 +804,10 @@ and a hint `p.ihint`.
   against the foe's next defenses. `gworld.defenseModifiers` also gets
   `deception`, the attack's Deceptive Attack and Feint penalty (zero or
   negative), and `attacker`, the attacking actor or null.
+- **Grapple moves** (since 1.23.0): `gworld.grappleMove` is called before each of
+  the system's own grapple moves with `{ actor, foe, move, refusal }`, where
+  `move` is `breakFree`, `takedown`, `pin` or `choke`. Set `refusal` (text)
+  to stop the move; the user is told why.
 - **Lifecycle:** `gworld.combatStart` `(combat)`, and `gworld.turnStart` and
   `gworld.turnEnd` `(combat, combatant)`, on every client.
 - **Bleeding:** `gworld.bleedingSchedule` gets `{ actor, intervalSeconds, modifier }`
