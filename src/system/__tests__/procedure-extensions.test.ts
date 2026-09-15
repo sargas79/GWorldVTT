@@ -167,6 +167,16 @@ describe("derived attack modes", () => {
   });
 });
 
+describe("grapple moves (since 1.23.0)", () => {
+  it("takes a listener's refusal of a move, and nothing without one", async () => {
+    const api = await load();
+    expect(api.grappleMoveRefusal({}, {}, "takedown")).toBeNull();
+    globals.Hooks = { callAll: (_event: string, context: any) => { if (context.move === "takedown") context.refusal = "Not twice in a row"; } };
+    expect(api.grappleMoveRefusal({}, {}, "takedown")).toBe("Not twice in a row");
+    expect(api.grappleMoveRefusal({}, {}, "pin")).toBeNull();
+  });
+});
+
 describe("grapple actions", () => {
   it("offers an action to the end of the grapple it applies to, and runs it with the foe", async () => {
     const api = await load();

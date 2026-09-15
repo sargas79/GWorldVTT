@@ -1276,6 +1276,8 @@ async function rollAction(
           return aimedAt ? { hitLocation: aimedAt.hitLocation, addonLocation: aimedAt.addonLocation ?? null, chink: aimedAt.chink === true } : null;
         })(),
         targets: targetedTokens().map((token: any) => token?.actor).filter(Boolean),
+        // Since 1.23.0: the tokens themselves, for where the targets stand.
+        targetTokens: targetedTokens().filter((token: any) => token?.actor).map((token: any) => token?.document ?? token),
         refusal: null as string | null,
         // Since 1.21.0: the options chosen, and what went into the defense
         // penalty and the roll from a Deceptive Attack, a feint and Evaluate.

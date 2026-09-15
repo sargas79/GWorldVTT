@@ -26,6 +26,14 @@ import {
   takedownScore,
 } from "../rules/grappling.js";
 import { attributeOf } from "./attributes.js";
+import { grappleMoveRefusal } from "./procedure-extensions.js";
+
+/** Whether a module's rules refuse a grapple move, saying so when they do. */
+function refusedMove(actor: any, foe: any, move: "breakFree" | "takedown" | "pin" | "choke"): boolean {
+  const refusal = grappleMoveRefusal(actor, foe, move);
+  if (refusal) ui.notifications?.warn(refusal);
+  return refusal !== null;
+}
 
 /** Where a grapple is recorded on each side of it. */
 export const GRAPPLE_FLAG = "grapple";
@@ -170,6 +178,7 @@ export async function rollBreakFree(options: { actor: any }): Promise<boolean> {
 
   const foe = await foeOf(grapple);
   if (!foe) return false;
+  if (refusedMove(actor, foe, "breakFree")) return false;
 
   const grip = breakFree({
     hands: grapple.hands,
@@ -230,6 +239,7 @@ export async function rollTakedown(options: { actor: any }): Promise<void> {
 
   const foe = await foeOf(grapple);
   if (!foe) return;
+  if (refusedMove(actor, foe, "takedown")) return;
 
   const mine = scoresOf(actor);
   const theirs = scoresOf(foe);
@@ -281,6 +291,7 @@ export async function rollPin(options: { actor: any }): Promise<void> {
 
   const foe = await foeOf(grapple);
   if (!foe) return;
+  if (refusedMove(actor, foe, "pin")) return;
 
   // "You may only attempt a pin if your foe is on the ground and you are
   // grappling his torso."
@@ -333,6 +344,7 @@ export async function rollChoke(options: { actor: any }): Promise<void> {
 
   const foe = await foeOf(grapple);
   if (!foe) return;
+  if (refusedMove(actor, foe, "choke")) return;
 
   // Either a hold on the neck, or a bigger fighter squeezing the torso.
   const aroundTorso = grapple.hitLocation !== "neck";
