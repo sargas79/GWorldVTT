@@ -19,7 +19,8 @@ import {
 } from "../rules/knockdown.js";
 import { resolveSuccess } from "../rules/success.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
-import { successRollModifiers } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, successRollModifiers } from "./procedure-extensions.js";
+import { callCombatHook } from "./combat-extensions.js";
 
 const KNOCKDOWN_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/knockdown.hbs`;
 
@@ -63,7 +64,15 @@ export async function rollKnockdown(options: {
     criticalFailure: outcome.criticalFailure,
   });
 
+  const previousPosture = String(actor.system?.posture ?? "standing");
   await applyKnockdown(actor, result);
+  // The modules hear what it did, and may take it back (since 1.39.0).
+  callCombatHook(PROCEDURE_HOOKS.afterKnockdown, {
+    actor,
+    outcome,
+    result: { outcome: result.outcome, stunned: result.stunned, prone: result.prone, unconscious: result.unconscious },
+    previousPosture,
+  });
 
   const content = await foundry.applications.handlebars.renderTemplate(KNOCKDOWN_TEMPLATE, {
     name: String(actor.name ?? ""),
@@ -95,6 +104,23 @@ export async function rollKnockdown(options: {
  * and attacks at a penalty, and that comes from the posture field rather than
  * from an icon. The icon is so everyone can see it.
  */
+const POSTURES = ["standing", "crouching", "kneeling", "crawling", "sitting", "lying"];
+
+/**
+ * Takes a knockdown back (since 1.39.0), for a module's rule that lets a
+ * character shrug one off: no stun, not prone, not out, and back in the
+ * posture given. Returns whether it did.
+ */
+export async function undoKnockdown(actor: any, options: { posture?: string } = {}): Promise<boolean> {
+  if (!actor?.isOwner) return false;
+  const posture = POSTURES.includes(String(options.posture)) ? String(options.posture) : "standing";
+  await actor.update({ "system.posture": posture, "system.conditions.stunned": false });
+  await setCondition(actor, "stunned", false);
+  await setCondition(actor, "prone", false);
+  await setCondition(actor, "unconscious", false);
+  return true;
+}
+
 export async function applyKnockdown(actor: any, result: KnockdownResult): Promise<void> {
   if (!actor?.isOwner || result.outcome === "unaffected") return;
 

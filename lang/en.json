@@ -1225,7 +1225,11 @@
       "SelfControl12": "12 (fairly often, ×1)",
       "SelfControl15": "15 (almost always, ×0.5)",
       "DescriptionHint": "Show the full description",
-      "ShowLess": "Show less"
+      "ShowLess": "Show less",
+      "SelfControlRollHint": "Roll to resist: at or under the self-control number",
+      "SelfControlLabel": "Self-control: {trait}",
+      "Resisted": "{name} resists {trait}",
+      "GaveIn": "{name} gives in to {trait}"
     },
     "Template": {
       "Title": "Templates",

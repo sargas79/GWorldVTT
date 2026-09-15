@@ -49,7 +49,8 @@
               <span class="tag tag-accent">{{signed trait.system.reactionModifier}} {{localize "GWORLD.Trait.Reaction"}}</span>
             {{/if}}
             {{#if trait.system.selfControl}}
-              <span class="tag">CR {{trait.system.selfControl}}</span>
+              <button type="button" class="tag rollable" data-action="selfControlRoll"
+                      data-tooltip="{{localize "GWORLD.Trait.SelfControlRollHint"}}">CR {{trait.system.selfControl}}</button>
             {{/if}}
             {{#if trait.weakness}}
               <button type="button" class="tag rollable" data-action="weaknessExposure"
