@@ -74,6 +74,17 @@ describe("the add-on API", () => {
     expect(api.magic.manaLevel()).toEqual({ level: "normal", inPlay: false });
   });
 
+  it("puts an owned actor in one of the system's postures, and nothing else (sargas79/GWorldVTT#282)", async () => {
+    const api = createApi();
+    const update = vi.fn(async () => {});
+    const actor = { isOwner: true, system: { posture: "standing" }, update };
+    expect(await api.actors.setPosture(actor, "crouching")).toBe(true);
+    expect(update).toHaveBeenCalledWith({ "system.posture": "crouching" });
+    expect(await api.actors.setPosture(actor, "floating")).toBe(false);
+    expect(await api.actors.setPosture({ ...actor, isOwner: false }, "kneeling")).toBe(false);
+    expect(update).toHaveBeenCalledTimes(1);
+  });
+
   it("answers whether it satisfies a range", () => {
     const api = createApi();
     expect(api.satisfies("^1.0.0")).toBe(true);

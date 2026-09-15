@@ -84,7 +84,7 @@ import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
 import { evaluateBonus } from "../../rules/maneuvers.js";
 import {
-  adjustWeaponAttacks, maneuverAllowsDefense, maneuverAllowsParry, maneuverInfo, maneuverKeys, parryWeaponRows, type WeaponRowEntry,
+  MODULE_KEY, adjustWeaponAttacks, maneuverAllowancesFor, maneuverInfo, maneuverKeys, parryWeaponRows, type WeaponRowEntry,
 } from "../combat-extensions.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
@@ -468,7 +468,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare maneuverOption: string;
   declare evaluateTurns: number;
   declare aim: { turns: number; braced: boolean };
-  declare allOutAttackOption: "determined" | "double" | "feint" | "strong" | "suppression";
+  /** One of the Basic Set's options, or a module's `<module>.<key>`. */
+  declare allOutAttackOption: string;
   declare allOutDefenseOption: "increased" | "double";
   declare allOutDefenseTarget: "dodge" | "parry" | "block";
   declare posture: Posture;
@@ -667,9 +668,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
        * Double and Feint are a second action the table takes; Suppression Fire
        * is the ranged option for RoF 5+.
        */
+      // A module's registered option is stored as `<module>.<key>`; the check
+      // reads the shape, since the world's data is read before modules register.
       allOutAttackOption: new fields.StringField({
         required: true, nullable: false, initial: "determined",
-        choices: ["determined", "double", "feint", "strong", "suppression"],
+        validate: (value: unknown) =>
+          ["determined", "double", "feint", "strong", "suppression"].includes(String(value)) || MODULE_KEY.test(String(value)),
       }),
 
       /**
@@ -2265,8 +2269,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     // ── active defenses ─────────────────────────────────────────────────
     // All-Out Attack forfeits every defense; Move and Attack forbids parrying.
-    const defenseAvailable = maneuverAllowsDefense(this.maneuver);
-    const parryAvailable = defenseAvailable && maneuverAllowsParry(this.maneuver);
+    // What the maneuver allows, as a module's rules may change it for this
+    // fighter: a parry on a maneuver that gives none, say.
+    const allowances = maneuverAllowancesFor(
+      this.parent,
+      this.maneuver,
+      this.maneuver === "allOutAttack" ? String(this.allOutAttackOption ?? "") : String(this.maneuverOption ?? ""),
+    );
+    const defenseAvailable = allowances.defense !== "none";
+    const parryAvailable = allowances.defense === "any";
 
     // Increased Defense raises one named defense by 2; it is not a blanket
     // bonus, so each defense asks whether it is the one chosen.
@@ -2473,7 +2484,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         labelKey: this.maneuver.includes(".") ? maneuverInfo(this.maneuver).label : `GWORLD.Maneuver.${this.maneuver}`,
         defenseAvailable,
         parryAvailable,
-        movement: maneuverInfo(this.maneuver).movement,
+        movement: allowances.movement,
         option: this.maneuverOption,
       },
       evaluateBonus: this.maneuver === "evaluate" ? evaluateBonus(this.evaluateTurns) : 0,

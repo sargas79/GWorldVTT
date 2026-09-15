@@ -69,6 +69,10 @@ export const COMBAT_HOOKS = Object.freeze({
   weaponAttacks: "gworld.weaponAttacks",
   /** Before an equipment failure roll: `{ actor, item, target, modifiers }`; push lines to `modifiers`. */
   equipmentFailure: "gworld.equipmentFailure",
+  /** A character's maneuver allowances as their data is prepared: `{ actor, maneuver, option, movement, defense }`, the allowances mutable. */
+  maneuverAllowances: "gworld.maneuverAllowances",
+  /** Before the melee attack dialog: `{ actor, item, maneuver, rapidStrike, deceptiveAttack }`, each `{ available, refusal }`. */
+  meleeAttackOptions: "gworld.meleeAttackOptions",
 });
 
 // ── an item's attack rows ──────────────────────────────────────────────────
@@ -258,6 +262,19 @@ export function maneuverInfo(key: string): { key: string; label: string; movemen
 }
 
 /** Whether a maneuver permits any active defense. */
+/**
+ * A maneuver's movement and defenses for this actor, after the modules'
+ * listeners: the maneuver's own, changed by `gworld.maneuverAllowances`.
+ */
+export function maneuverAllowancesFor(actor: any, maneuver: string, option: string): { movement: MovementAllowance; defense: DefenseAllowance } {
+  const info = maneuverInfo(maneuver);
+  const hooked = callCombatHook(COMBAT_HOOKS.maneuverAllowances, { actor, maneuver, option, movement: info.movement, defense: info.defense });
+  return {
+    movement: MOVEMENTS.includes(hooked.movement) ? hooked.movement : info.movement,
+    defense: DEFENSES.includes(hooked.defense) ? hooked.defense : info.defense,
+  };
+}
+
 export function maneuverAllowsDefense(key: string): boolean {
   return maneuverInfo(key).defense !== "none";
 }
@@ -265,6 +282,78 @@ export function maneuverAllowsDefense(key: string): boolean {
 /** Whether a maneuver permits a parry. */
 export function maneuverAllowsParry(key: string): boolean {
   return maneuverInfo(key).defense === "any";
+}
+
+// ── All-Out Attack options ─────────────────────────────────────────────────
+
+/** A registered option's stored value: `<module>.<key>`. */
+export const MODULE_KEY = /^[A-Za-z0-9][A-Za-z0-9_-]*\.[A-Za-z0-9][A-Za-z0-9_-]*$/;
+
+export interface AllOutAttackOptionRegistration {
+  module: string;
+  key: string;
+  /** A localization key or plain text. */
+  label: string;
+  /** What the option does to an attack made on it. It carries no Basic Set bonus. */
+  attack?: (context: AttackContext) => AttackEffect | null;
+  /** Whether it is offered to this actor. Defaults to always. */
+  available?: (actor: any) => boolean;
+}
+
+const allOutAttackOptions = new Map<string, { key: string; label: string; attack: AllOutAttackOptionRegistration["attack"] | null; available: (actor: any) => boolean }>();
+
+/** Registers an option for All-Out Attack, beside Determined, Double, Feint and Strong. Returns its `<module>.<key>`, or null. */
+export function registerAllOutAttackOption(registration: AllOutAttackOptionRegistration): string | null {
+  const r = registration ?? ({} as AllOutAttackOptionRegistration);
+  const what = `All-Out Attack option ${r.module}.${r.key}`;
+  const bad = checkNames(what, r.module, r.key, r.label);
+  if (bad) return refuse(what, bad);
+  const key = `${r.module}.${r.key}`;
+  if (allOutAttackOptions.has(key)) return refuse(what, "that key is already registered");
+  allOutAttackOptions.set(key, {
+    key,
+    label: r.label.trim(),
+    attack: typeof r.attack === "function" ? r.attack : null,
+    available: typeof r.available === "function" ? r.available : () => true,
+  });
+  return key;
+}
+
+/** The registered All-Out Attack options offered to this actor. */
+export function allOutAttackOptionsFor(actor: any): Array<{ key: string; label: string }> {
+  return [...allOutAttackOptions.values()]
+    .filter((o) => {
+      try {
+        return o.available(actor) === true;
+      } catch (error) {
+        console.warn(`gworld | All-Out Attack option ${o.key} failed`, error);
+        return false;
+      }
+    })
+    .map(({ key, label }) => ({ key, label }));
+}
+
+/** What the attacker's registered All-Out Attack option does to this attack, or null. */
+export function allOutAttackOptionEffect(context: AttackContext): AttackEffect | null {
+  if (String(context.actor?.system?.maneuver ?? "") !== "allOutAttack") return null;
+  const option = allOutAttackOptions.get(String(context.actor?.system?.allOutAttackOption ?? ""));
+  if (!option?.attack || !allOutAttackOptionsFor(context.actor).some((o) => o.key === option.key)) return null;
+  try {
+    return option.attack(context);
+  } catch (error) {
+    console.warn(`gworld | All-Out Attack option ${option.key} failed`, error);
+    return null;
+  }
+}
+
+/**
+ * The line that holds an attack to a cap on effective skill, or null where it
+ * is already within it: Move and Attack's 9 in melee (Characters p. 365).
+ */
+export function skillCapLine(base: number, modifiers: ReadonlyArray<{ value: number }>, cap: number | null, label: string): ModifierLine | null {
+  if (cap === null || !Number.isFinite(cap)) return null;
+  const effective = base + modifiers.reduce((sum, m) => sum + (Number(m.value) || 0), 0);
+  return effective > cap ? { label, value: cap - effective } : null;
 }
 
 // ── attack options and extra effort ────────────────────────────────────────
@@ -1047,6 +1136,7 @@ export async function setWeaponState(item: any, module: string, patch: Record<st
 /** What the API exposes. */
 export const combatApi = Object.freeze({
   registerManeuver,
+  registerAllOutAttackOption,
   registerAttackOption,
   registerDefenseOption,
   registerDefense,

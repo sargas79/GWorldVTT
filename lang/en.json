@@ -3124,7 +3124,8 @@
       "HitModifier": "{modifier} to hit",
       "HitModifierHint": "This weapon is used at this modifier to hit with its skill. The parry is unchanged.",
       "FollowUp": "(follow-up)",
-      "FollowUpHint": "A follow-up attack: roll its damage after the first blow's."
+      "FollowUpHint": "A follow-up attack: roll its damage after the first blow's.",
+      "SkillCap": "Effective skill held to {cap}"
     },
     "Keybinding": {
       "TurnLeft": "Turn selected tokens left",
