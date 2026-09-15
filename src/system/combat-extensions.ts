@@ -102,7 +102,7 @@ export interface WeaponRowEntry {
 /** The row fields a listener may change. */
 const WEAPON_ROW_FIELDS = [
   "skillLevel", "damage", "damageType", "armorDivisor", "halfDamageRange", "maxRange", "accuracy", "malfunction",
-  "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp",
+  "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp", "reach", "parry", "twoHanded",
 ] as const;
 
 /**
@@ -151,6 +151,10 @@ export function adjustWeaponAttacks(options: {
       const max = Math.max(0, Math.round(Number(row.maxRange) || 0));
       Object.assign(row, { halfDamageRange: half, maxRange: max, range: half ? `${half} / ${max}` : String(max) });
     }
+    // Reach is text, Parry a whole number or none, and two-handed a flag (since 1.21.0).
+    row.reach = typeof row.reach === "string" ? row.reach : String(row.reach ?? "");
+    row.parry = row.parry === null || row.parry === undefined || !Number.isFinite(Number(row.parry)) ? null : Math.round(Number(row.parry));
+    row.twoHanded = row.twoHanded === true;
     row.notes = (Array.isArray(row.notes) ? row.notes : [])
       .filter((n: any) => typeof n?.label === "string" && n.label.trim())
       .map((n: any) => ({ label: String(n.label), hint: String(n.hint ?? "") }));
@@ -853,7 +857,14 @@ export function moduleDefenseRefusals(context: {
   delivery: string;
   damageType: string;
   choices: Array<{ key: DefenseKey; available: boolean }>;
-}): { choices: Map<DefenseKey, string>; retreat: string | null; feverish: string | null } {
+  /** The arc the attack came from, or null outside tactical combat (since 1.21.0). */
+  arc?: string | null;
+  /** The attacking weapon, as the attack recorded it (since 1.21.0). */
+  attackWeapon?: Record<string, unknown> | null;
+  /** The weapon a parry would be made with (since 1.21.0). */
+  parryWeapon?: DefenseParryWeapon | null;
+}): { choices: Map<DefenseKey, string>; retreat: string | null; feverish: string | null; parriesFlail: boolean } {
+  const parryWeapon = context.parryWeapon ? { ...context.parryWeapon } : null;
   const hooked = callCombatHook(COMBAT_HOOKS.defenseChoices, {
     defender: context.defender,
     attack: context.attack,
@@ -862,6 +873,9 @@ export function moduleDefenseRefusals(context: {
     choices: context.choices.map((c): HookedDefenseChoice => ({ key: c.key, available: c.available, refusal: null })),
     retreat: { available: true, refusal: null } as HookedDefenseToggle,
     feverish: { available: true, refusal: null } as HookedDefenseToggle,
+    arc: context.arc ?? null,
+    attackWeapon: context.attackWeapon ? { ...context.attackWeapon } : null,
+    parryWeapon,
   });
   const text = (refusal: unknown) => (typeof refusal === "string" && refusal.trim() ? refusal.trim() : "");
   const choices = new Map<DefenseKey, string>();
@@ -873,7 +887,19 @@ export function moduleDefenseRefusals(context: {
     choices,
     retreat: hooked.retreat?.available === false ? text(hooked.retreat.refusal) : null,
     feverish: hooked.feverish?.available === false ? text(hooked.feverish.refusal) : null,
+    parriesFlail: parryWeapon?.parriesFlail === true,
   };
+}
+
+/** The weapon a parry is made with, as the defense hooks see it (since 1.21.0). */
+export interface DefenseParryWeapon {
+  itemId: string;
+  twoHanded: boolean;
+  natural: boolean;
+  skill: string;
+  isFencing: boolean;
+  /** Whether it may parry a flail. A `gworld.defenseChoices` listener may set it. */
+  parriesFlail?: boolean;
 }
 
 /** A weapon a best parry may be picked from, as `gworld.parryWeapons` sees it. */

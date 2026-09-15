@@ -438,9 +438,19 @@ export interface DerivedAttackModeRegistration {
    * The mode, as the attack table reads a row: at least `mode`, `skillName`,
    * `skillLevel`, `damage` and `damageType`; ranged modes also `accuracy`,
    * `range`, `halfDamageRange` and `maxRange`. `helpers.skillLevel(name)`
-   * reads a skill's level as the system has worked it out.
+   * reads a skill's level as the system has worked it out. Since 1.21.0,
+   * `helpers.rows(item)` gives copies of the item's own rows, after the
+   * `gworld.weaponAttacks` listeners, and `helpers.damage(base, modifier)`
+   * thrust (`"thr"`) or swing (`"sw"`) damage at the actor's striking ST.
    */
-  mode: (item: any, actor: any, helpers: { skillLevel: (name: string) => number | null }) => Record<string, unknown> | null;
+  mode: (item: any, actor: any, helpers: DerivedModeHelpers) => Record<string, unknown> | null;
+}
+
+/** What a derived mode may read while it is worked out. */
+export interface DerivedModeHelpers {
+  skillLevel: (name: string) => number | null;
+  rows?: (item: any) => { melee: Array<Record<string, unknown>>; ranged: Array<Record<string, unknown>> };
+  damage?: (base: "thr" | "sw", modifier: number) => string;
 }
 
 const derivedModes: Array<{ id: string; label: string; kind: "melee" | "ranged"; applies: DerivedAttackModeRegistration["applies"]; mode: DerivedAttackModeRegistration["mode"] }> = [];
@@ -464,7 +474,7 @@ export function derivedAttackRows(
   kind: "melee" | "ranged",
   items: any[],
   actor: any,
-  helpers: { skillLevel: (name: string) => number | null },
+  helpers: DerivedModeHelpers,
   defaults: Record<string, unknown>,
 ): Array<Record<string, unknown>> {
   if (derivedModes.length === 0) return [];

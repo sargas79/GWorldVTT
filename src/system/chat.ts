@@ -48,6 +48,7 @@ import {
   defenseOptionsFor,
   hitLocationsFor,
   moduleDefenseRefusals,
+  type DefenseParryWeapon,
   moduleDefensesFor,
   readLocationValue,
   registeredHitLocation,
@@ -94,7 +95,7 @@ interface DamageFlag {
   /** The item the damage was rolled from. */
   itemUuid?: string;
   /** Which of its modes. */
-  mode?: { index: number; ranged: boolean };
+  mode?: { index: number; ranged: boolean; derived?: string };
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -672,25 +673,30 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     // thrown weapon, or a weapon met bare-handed puts a penalty on the defense,
     // which the button shows.
     const parryNatural = defender.system?.derived?.defenses?.parry?.weapon?.natural === true;
-    for (const choice of choices) {
-      if (!choice.available) continue;
-      if (choice.key === "parry" && flag.weapon?.flail && !canParryFlail({ skill: choice.skillName, isFencing: choice.isFencing })) {
-        Object.assign(choice, { available: false, shown: null, reason: "flail" });
-        continue;
-      }
-      const lines = weaponDefenseLines(flag.weapon, flag.delivery, choice.key, choice.skillName, parryNatural);
-      if (choice.shown !== null) choice.shown += lines.reduce((sum, line) => sum + line.value, 0);
-    }
+    const parryWith = parryWeaponOf(defender, choices.find((c) => c.key === "parry"));
 
     // What a module's rules take away from this defender: a defense, with the
-    // reason on the refused button, or Retreat or Feverish Defense.
+    // reason on the refused button, or Retreat or Feverish Defense -- and
+    // whether its rules let this parry meet a flail.
     const refused = moduleDefenseRefusals({
       defender,
       attack: flag.attack,
       delivery: flag.delivery ?? "",
       damageType: flag.damageType ?? "",
       choices,
+      arc: arc?.arc ?? null,
+      attackWeapon: (flag.weapon ?? null) as Record<string, unknown> | null,
+      parryWeapon: parryWith,
     });
+    for (const choice of choices) {
+      if (!choice.available) continue;
+      if (choice.key === "parry" && flag.weapon?.flail && !refused.parriesFlail) {
+        Object.assign(choice, { available: false, shown: null, reason: "flail" });
+        continue;
+      }
+      const lines = weaponDefenseLines(flag.weapon, flag.delivery, choice.key, choice.skillName, parryNatural);
+      if (choice.shown !== null) choice.shown += lines.reduce((sum, line) => sum + line.value, 0);
+    }
     for (const choice of choices) {
       const refusal = refused.choices.get(choice.key);
       if (refusal !== undefined) Object.assign(choice, { available: false, shown: null, reason: "maneuver", refusal: refusal || null });
@@ -807,6 +813,8 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         addonOptions: addonBoxes.filter((box) => box.checked).map((box) => String(box.dataset.addonDefense)),
         attackDefenseModifiers: flag.defenseModifiers ?? [],
         attacker,
+        arc: arc?.arc ?? null,
+        parryWeapon: choice.key === "parry" ? parryWith : null,
       });
     };
 
@@ -892,6 +900,21 @@ function defensiveTechniquesOf(defender: any): Array<{ name: string; key: Defens
     });
   }
   return out;
+}
+
+/** The weapon a parry would be made with, as the defense hooks see it; null where there is no parry. */
+function parryWeaponOf(defender: any, choice: DefenseChoice | undefined): DefenseParryWeapon | null {
+  const weapon = defender?.system?.derived?.defenses?.parry?.weapon;
+  if (!weapon || !choice) return null;
+  const skill = String(choice.skillName ?? "");
+  return {
+    itemId: String(weapon.itemId ?? ""),
+    twoHanded: weapon.twoHanded === true,
+    natural: weapon.natural === true,
+    skill,
+    isFencing: choice.isFencing === true,
+    parriesFlail: canParryFlail({ skill, isFencing: choice.isFencing === true }),
+  };
 }
 
 /**
@@ -1040,6 +1063,10 @@ async function rollDefense(options: {
   attackDefenseModifiers?: Array<{ label: string; value: number; defenses?: DefenseKey[] }>;
   /** The attacking actor, for the modules' hooks. */
   attacker?: any;
+  /** The arc the attack came from, for the modules' hooks. */
+  arc?: Arc | null;
+  /** The weapon the parry is made with, for the modules' hooks. */
+  parryWeapon?: DefenseParryWeapon | null;
 }): Promise<void> {
   const {
     defender, key, total, attack, arcPenalty, deception, retreating, feverish, skill, isFencing,
@@ -1136,7 +1163,13 @@ async function rollDefense(options: {
   // own options add, and whatever a module's hook adds on top.
   modifiers.push(...defenseModifiersFor(options.attackDefenseModifiers, key));
   modifiers.push(...addon.modifiers);
-  callCombatHook(COMBAT_HOOKS.defenseModifiers, { defender, defense: key, attack, modifiers, deception, attacker: options.attacker ?? null });
+  callCombatHook(COMBAT_HOOKS.defenseModifiers, {
+    defender, defense: key, attack, modifiers, deception, attacker: options.attacker ?? null,
+    // Since 1.21.0: where the blow came from, and the weapons on either side of it.
+    arc: options.arc ?? null,
+    attackWeapon: options.attackWeapon ? { ...options.attackWeapon } : null,
+    parryWeapon: key === "parry" ? (options.parryWeapon ?? null) : null,
+  });
 
   // "If struck by a potentially lethal attack ... the hero can choose to
   // convert his failed defense roll into a success" (p. 417) -- but not
