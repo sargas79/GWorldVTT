@@ -966,6 +966,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     basicLift: number,
     move: number,
     traits: TraitEffects,
+    /** DX as skills were worked out from, layered armour included. */
+    skillDx: number = attrs.DX ?? 10,
   ) {
     // "you may substitute half your skill level, rounded down, for Basic Move"
     // -- so the jump uses whichever of the two is better.
@@ -1024,7 +1026,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           this.skillLevelByName("Throwing") ?? (attrs.DX ?? 10) - 3,
           this.skillLevelByName(THROWING_ART) ?? -Infinity,
         ),
-        strength: (attrs.ST ?? 10) + throwingArtBonus(this.skillLevelByName(THROWING_ART), attrs.DX ?? 10),
+        strength: (attrs.ST ?? 10) + throwingArtBonus(this.skillLevelByName(THROWING_ART), skillDx),
         basicLift,
       },
       lifting: { skill: this.skillLevelByName("Lifting") },
@@ -2682,7 +2684,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       melee,
       ranged,
       encumbrance,
-      feats: this.#physicalFeats(attrs, secondary.basicLift, encumbrance.move, traits),
+      feats: this.#physicalFeats(attrs, secondary.basicLift, encumbrance.move, traits, attrs.DX + layering),
       // What each Influence skill is worth to this character (Campaigns
       // p. 359). An unbought one is not left out: it defaults, and the dialog
       // shows the default so the player can see what they are risking.
