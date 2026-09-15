@@ -406,6 +406,12 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     system's lines are keyed `bonus`, `magic`, `talent` and `tools`. Push lines
     (`{ label, value, source }`), or change a line's `value` and give its
     `reason`. The skill's level tooltip shows the lines.
+  - `gworld.moveModifiers` (since 1.42.0), with `{ actor, move, lines }`, once
+    encumbrance, reeling and very tired are applied: push `{ label, multiplier?, value? }`.
+    Move becomes the multipliers' product times Move, rounded down, plus the values, never
+    below 0; the derived data keeps the lines as `moveLines`.
+  - Since 1.42.0, a skill or attribute rolled from the sheet is tagged with the attribute
+    it's based on (`ST`, `DX`, `IQ`, `HT`, `Will`, `Per`), so a condition's `rolls` can name it.
   - `gworld.attributeBonuses`, with `{ actor, attributes, lines }`: push
     `{ attribute, label, value, source }`. They show on the attribute's card.
   - `gworld.defenseBonuses`, with `{ actor, defenses, lines }`: push
