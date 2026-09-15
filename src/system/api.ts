@@ -40,6 +40,9 @@ import { conditionLabel, setCondition } from "./conditions.js";
 import { migrationApi } from "./migration.js";
 import { takeInjury, type InjuryTaken } from "./damage.js";
 import { stopBleeding } from "./bleeding.js";
+import { undoKnockdown } from "./knockdown.js";
+import { rollFrightCheck } from "./fright.js";
+import { spendUnspentPoints } from "./bonus-points.js";
 import {
   PROCEDURE_HOOKS,
   activeConditions,
@@ -63,7 +66,7 @@ import { manaLevel } from "./casting.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.38.0";
+export const API_VERSION = "1.39.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -154,6 +157,11 @@ const actors = {
     return stopBleeding(actor);
   },
 
+  /** Takes back a knockdown's stun, fall and unconsciousness, and restores a posture (since 1.39.0). */
+  undoKnockdown(actor: any, options: { posture?: string } = {}): Promise<boolean> {
+    return undoKnockdown(actor, options);
+  },
+
   /**
    * Puts an actor in one of the system's postures (since 1.16.0), for a user
    * who owns it. Returns whether it did.
@@ -201,6 +209,8 @@ export interface GWorldApi {
   };
   /** Rolls posted to chat through the system's own cards, and resolvers for the contests it offers. */
   readonly roll: {
+    /** The system's Fright Check at a modifier (since 1.39.0). */
+    readonly frightCheck: (actor: any, modifier?: number) => ReturnType<typeof rollFrightCheck>;
     readonly success: typeof rollSuccess;
     readonly damage: typeof rollDamage;
     readonly quickContest: typeof rollQuickContest;
@@ -221,8 +231,8 @@ export interface GWorldApi {
   readonly sheets: typeof sheetsApi;
   /** Chat cards (since 1.3.0). */
   readonly chat: typeof chatApi;
-  /** Point pools (since 1.4.0). */
-  readonly points: typeof pointsApi;
+  /** Point pools (since 1.4.0), and charging unspent points (since 1.39.0). */
+  readonly points: typeof points;
   /** Energy sources and spell attacks (since 1.4.0), and resistance cards (since 1.9.0). */
   readonly magic: typeof magic;
   /** Moving world data from the system into a module (since 1.6.0). */
@@ -253,6 +263,9 @@ const combat = Object.freeze({
   hooks: Object.freeze({ ...combatApi.hooks, ...PROCEDURE_HOOKS }),
 });
 
+/** The points namespace: point pools, and from 1.39.0 charging a character's unspent points. */
+const points = Object.freeze({ ...pointsApi, spendUnspent: spendUnspentPoints });
+
 /** The magic namespace: energy sources and spell attacks, and from 1.9.0 resistance cards. */
 const magic = Object.freeze({ ...magicApi, postResistance, manaLevel });
 
@@ -262,13 +275,13 @@ export function createApi(): GWorldApi {
     version: API_VERSION,
     rules,
     registry: Object.freeze({ registerRuleGroup, registerRule, namespacedRuleKey, isAddonRuleKey, isRuleOn, activeRules }),
-    roll: Object.freeze({ success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver }),
+    roll: Object.freeze({ frightCheck: (actor: any, modifier = 0) => rollFrightCheck({ actor, modifier: Number(modifier) || 0 }), success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver }),
     actors: Object.freeze(actors),
     items: Object.freeze(items),
     combat,
     data: dataApi,
     sheets: sheetsApi,
-    points: pointsApi,
+    points,
     magic,
     migration: migrationApi,
     chat: chatApi,

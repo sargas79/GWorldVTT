@@ -75,6 +75,20 @@ export async function spendPoints(
   return true;
 }
 
+/**
+ * Charges a character's unspent points for a module's effect (since 1.39.0),
+ * for its owner or the GM. Nothing is spent where the character hasn't
+ * `amount` to spend.
+ */
+export async function spendUnspentPoints(actor: any, amount: number, note: string): Promise<boolean> {
+  const points = Math.floor(Number(amount));
+  if (!actor || !Number.isFinite(points) || points <= 0) return false;
+  if (!actor.isOwner && !game.user?.isGM) return false;
+  const unspent = Number(actor.system?.derived?.points?.unspent ?? 0) || 0;
+  if (unspent < points) return false;
+  return spendPoints(actor, { kind: "unspent" }, points, String(note ?? ""));
+}
+
 /** A dialog choosing a pool and, where there is a choice, what to buy. */
 async function choose(title: string, sources: SourceOption[], options: Array<{ value: string; label: string }> | null, hint: string): Promise<{ source: SourceOption; option: string } | null> {
   if (!sources.length) {

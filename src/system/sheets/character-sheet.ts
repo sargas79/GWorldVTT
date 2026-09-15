@@ -2844,6 +2844,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       shove: GWorldCharacterSheet.#onShove,
       affliction: GWorldCharacterSheet.#onAffliction,
       weaknessExposure: GWorldCharacterSheet.#onWeaknessExposure,
+      selfControlRoll: GWorldCharacterSheet.#onSelfControlRoll,
       evade: GWorldCharacterSheet.#onEvade,
       feint: GWorldCharacterSheet.#onFeint,
       contest: GWorldCharacterSheet.#onContest,
@@ -5257,6 +5258,29 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     const item = id ? this.actor.items.get(id) : null;
     if (item) await exposeToWeakness(this.actor, item);
+  }
+
+  /**
+   * A self-control roll (Characters pp. 120-121): "roll 3d. If you roll less
+   * than or equal to your self-control number, you resist your disadvantage."
+   * Tagged `selfControl`, so an affliction's penalty and the modules' lines
+   * apply, and the modules hear how it went.
+   */
+  static async #onSelfControlRoll(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    const number = Number(item?.system?.selfControl);
+    if (!item || !Number.isFinite(number) || number <= 0) return;
+    const outcome = await rollSuccess({
+      actor: this.actor,
+      base: number,
+      label: game.i18n.format("GWORLD.Trait.SelfControlLabel", { trait: String(item.name ?? "") }),
+      kind: "selfControl",
+      skill: String(item.name ?? ""),
+    });
+    if (outcome) {
+      ui.notifications?.info(game.i18n.format(outcome.success ? "GWORLD.Trait.Resisted" : "GWORLD.Trait.GaveIn", { name: String(this.actor.name ?? ""), trait: String(item.name ?? "") }));
+    }
   }
 
   static async #onAffliction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

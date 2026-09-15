@@ -82,6 +82,8 @@ export const PROCEDURE_HOOKS = Object.freeze({
   afterGrappleContest: "gworld.afterGrappleContest",
   /** After any Quick Contest is rolled (since 1.37.0): `{ label, tags, first, second, outcome, marginOfVictory }`. */
   afterQuickContest: "gworld.afterQuickContest",
+  /** Once a knockdown roll is applied (since 1.39.0): `{ actor, outcome, result, previousPosture }`. */
+  afterKnockdown: "gworld.afterKnockdown",
   /** When a combat starts: `(combat)`. */
   combatStart: "gworld.combatStart",
   /** When a combatant's turn starts: `(combat, combatant)`. */

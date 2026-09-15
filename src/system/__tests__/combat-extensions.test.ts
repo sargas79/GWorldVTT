@@ -429,6 +429,10 @@ describe("defense choices and parry weapons", () => {
     });
     const refused = api.moduleDefenseRefusals({ defender: {}, attack: "Axe", delivery: "melee", damageType: "cut", choices: offered, defenseCounts: { parries: 0, blocks: 0, dodges: 1, acrobatic: 2 } });
     expect(counted).toBe(2);
+    let attacker: unknown = "unset";
+    hooks({ "gworld.defenseChoices": (context) => { attacker = context.attacker; } });
+    api.moduleDefenseRefusals({ defender: {}, attacker: { name: "Foe" }, attack: "Axe", delivery: "melee", damageType: "cut", choices: offered });
+    expect(attacker).toEqual({ name: "Foe" });
     expect(refused.acrobatic).toEqual({ refusal: null, defenses: ["dodge", "parry", "block"], perTurn: null });
   });
 

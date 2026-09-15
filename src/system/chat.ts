@@ -739,6 +739,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     // whether its rules let this parry meet a flail.
     const refused = moduleDefenseRefusals({
       defender,
+      attacker,
       attack: flag.attack,
       delivery: flag.delivery ?? "",
       damageType: flag.damageType ?? "",

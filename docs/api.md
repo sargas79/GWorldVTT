@@ -279,6 +279,7 @@ and the roll continues.
     In `gworld.defenseChoices` it also has `parriesFlail`. Set it true to let
     a weapon that couldn't parry a flail (a fencing weapon or a knife) parry
     one;
+  - Since 1.39.0, `gworld.defenseChoices` also gets `attacker`, the attacking actor or null;
   - Since 1.38.0, `gworld.defenseChoices` also gets `acrobatic` (`{ available,
     refusal, defenses, perTurn }`), the Acrobatic Dodge the card offers a defender with a
     point in Acrobatics: set `available: false` and `refusal` to refuse it, add `parry`
@@ -651,6 +652,18 @@ and a hint `p.ihint`.
   `gworld.turnEnd` `(combat, combatant)`, on every client.
 - **Bleeding:** `gworld.bleedingSchedule` gets `{ actor, intervalSeconds, modifier }`
   before a bleeding roll, and may change either.
+- **Knockdown** (since 1.39.0): `gworld.afterKnockdown` follows a knockdown roll once
+  its result is applied, with `{ actor, outcome, result, previousPosture }` (`result` is
+  `{ outcome, stunned, prone, unconscious }`). `actors.undoKnockdown(actor, { posture })`
+  takes it back for a user who owns the actor: no stun, not prone, not unconscious, and
+  in `posture`.
+- **Fright Checks** (since 1.39.0): `roll.frightCheck(actor, modifier)` rolls the
+  system's Fright Check at that modifier.
+- **Unspent points** (since 1.39.0): `points.spendUnspent(actor, amount, note)` charges a
+  character's unspent points as a negative award, for its owner or the GM, and returns
+  false, spending nothing, where they have fewer than `amount`.
+- **Self-control rolls:** the Traits tab rolls a trait's self-control number, tagged
+  `selfControl`, with the trait's name as `skill`; `gworld.afterSuccessRoll` follows.
 - **First Aid** (since 1.36.0): `gworld.firstAid` gets `{ healer, patient, refusal,
   stopsBleeding }` before an attempt. Set `refusal` (text) to stop it, or
   `stopsBleeding: false` so success doesn't stop the patient's bleeding. The roll

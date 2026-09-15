@@ -149,7 +149,7 @@ const CHAT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/success-roll.hbs`;
 const DAMAGE_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-roll.hbs`;
 
 /** What rules a roll is judged by; only defenses skip the minimum-3 check. */
-export type RollKind = "skill" | "attribute" | "attack" | "defense";
+export type RollKind = "skill" | "attribute" | "attack" | "defense" | "selfControl";
 
 export interface RollModifier {
   label: string;

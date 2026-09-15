@@ -938,6 +938,8 @@ export function hookedAttackArc<A extends string, S extends string | null>(conte
  */
 export function moduleDefenseRefusals(context: {
   defender: any;
+  /** The attacking actor, or null (since 1.39.0). */
+  attacker?: any;
   attack: string;
   delivery: string;
   damageType: string;
@@ -961,6 +963,7 @@ export function moduleDefenseRefusals(context: {
   const parryWeapon = context.parryWeapon ? { ...context.parryWeapon } : null;
   const hooked = callCombatHook(COMBAT_HOOKS.defenseChoices, {
     defender: context.defender,
+    attacker: context.attacker ?? null,
     attack: context.attack,
     delivery: context.delivery,
     damageType: context.damageType,
