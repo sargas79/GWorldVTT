@@ -9,11 +9,11 @@
  * DX+1 or better.
  *
  * For a Weapon Master the damage bonus is "instead of the usual damage bonus"
- * for the weapon (p. 99), never on top of it. The system does not add Weapon
- * Master's damage bonus yet, so there is nothing for this one to replace.
+ * for the weapon (p. 99), never on top of it: see `thrownDamageBonusPerDie`
+ * in `weapon-master.ts`.
  */
 
-import { swingDamage, thrustDamage } from "./damage.js";
+import { perDieOfBasicDamage } from "./damage.js";
 import { normalizeSkillName } from "./skills.js";
 
 export const THROWING_ART = "Throwing Art";
@@ -45,11 +45,13 @@ export function throwingArtBonus(level: number | null, dx: number): number {
  * (p. 99). Damage that is not the thrower's -- a grenade's fixed dice --
  * gets nothing.
  */
-export function throwingArtDamage(bonus: number, damageBase: string, st: number): number {
-  if (!bonus) return 0;
-  if (damageBase === "thr") return bonus * thrustDamage(st).dice;
-  if (damageBase === "sw") return bonus * swingDamage(st).dice;
-  return 0;
+export function throwingArtDamage(
+  bonus: number,
+  damageBase: string,
+  st: number,
+  weaponMinSt: number | null = null,
+): number {
+  return perDieOfBasicDamage(bonus, damageBase, st, weaponMinSt);
 }
 
 /** What Throwing Art makes of an attack thrown with a skill it covers. */

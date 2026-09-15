@@ -198,6 +198,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
   declare modifiers: Array<{ name: string; value: number }>;
   declare selfControl: number | null;
   declare talentSkills: string[];
+  declare masteredWeapons: string[];
   declare power: string;
   declare powerTalent: boolean;
   declare meleeModes: unknown[];
@@ -293,6 +294,15 @@ export class TraitData extends foundry.abstract.TypeDataModel {
        * Basic Set's that predates the field is still read by name.
        */
       talentSkills: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: false }),
+        { required: true, initial: [] },
+      ),
+      /**
+       * The weapons a Weapon Master's class takes in (Characters p. 99), one
+       * each: a weapon skill or a weapon's own name. Empty for every other
+       * trait, and for a Weapon Master whose name says its weapon.
+       */
+      masteredWeapons: new fields.ArrayField(
         new fields.StringField({ required: true, blank: false }),
         { required: true, initial: [] },
       ),

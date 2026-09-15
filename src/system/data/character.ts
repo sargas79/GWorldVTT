@@ -90,7 +90,7 @@ import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-exte
 import {
   DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine,
 } from "../data-extensions.js";
-import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
+import { perDieOfBasicDamage, swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
 import { halveForReeling, healthStatus, isReeling } from "../../rules/injury.js";
 import { fatigueStatus, isVeryTired } from "../../rules/fatigue.js";
@@ -112,7 +112,10 @@ import {
   resolveTechniqueDefaults,
 } from "../../rules/skills.js";
 import { musclePoweredRange } from "../../rules/ranged.js";
-import { THROWING_ART, throwingArtAttack, throwingArtBonus, throwingArtDamage } from "../../rules/throwing-art.js";
+import { THROWING_ART, throwingArtAttack, throwingArtBonus } from "../../rules/throwing-art.js";
+import {
+  inWeaponMasterClass, thrownDamageBonusPerDie, weaponMasterBonusPerDie, weaponMasterDamage, weaponMasteryFrom,
+} from "../../rules/weapon-master.js";
 import {
   checkPrerequisites,
   collegeSkillNames,
@@ -172,7 +175,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
   weight: 0, quality: "good", material: "", resistsBreakage: false, minStPenalty: 0, condition: "sound",
   twoHanded: false, swung: false, reach: "C", parry: null, parryModifier: 0, minSt: null, usable: true,
   unbalanced: false, isFencing: false, unarmed: false, stBased: false, damageBase: "", damageModifier: 0,
-  unarmedBonusSkill: "", explosive: false, fragmentation: "", affliction: false, afflictionAttribute: "",
+  unarmedBonusSkill: "", weaponMasterPerDie: 0, explosive: false, fragmentation: "", affliction: false, afflictionAttribute: "",
   afflictionModifier: 0, feint: true,
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
@@ -243,6 +246,8 @@ export interface DerivedAttack {
   hitModifier?: number;
   /** The unarmed skill a weapon's blow gets its damage bonus from, or "" (Characters p. 271). */
   unarmedBonusSkill?: string;
+  /** Weapon Master's damage bonus per die on this blow, or 0 (Characters p. 99). */
+  weaponMasterPerDie?: number;
   damage: string;
   damageType: DamageType;
   reach: string;
@@ -1342,6 +1347,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       reactionModifier: Number(item.system?.reactionModifier ?? 0) || 0,
       // A Talent's own list of skills, which is all a Talent from another book has.
       talentSkills: ((item.system?.talentSkills ?? []) as unknown[]).map((s) => String(s)),
+      // The weapons a Weapon Master's class takes in, where the trait lists them.
+      masteredWeapons: ((item.system?.masteredWeapons ?? []) as unknown[]).map((s) => String(s)),
       // The power the trait belongs to, and whether it is that power's Talent,
       // as a book's entry states them; a Talent's cap is its maximum level.
       power: String(item.system?.power ?? ""),
@@ -1784,6 +1791,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // Asked of every thrown mode, so read once.
     const throwingArtLevel = this.skillLevelByName(THROWING_ART);
 
+    // The weapons a Weapon Master adds damage with (Characters p. 99), and the
+    // bonus per die a mode's skill earns: the character's own level in it,
+    // since "none of these benefits apply to default use".
+    const mastery = weaponMasteryFrom(heldTraits);
+    const masterPerDie = (mastered: boolean, skill: unknown): number =>
+      mastered ? weaponMasterBonusPerDie(this.skillLevelByName(String(skill ?? "")), attrs.DX + layering) : 0;
+
     /**
      * The level a weapon's skill is rolled at: the character's own if they
      * have the skill, else the book's default for it. A pistol in the hands
@@ -1829,6 +1843,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // still works and whether a parry can meet it.
       const modesOf = [...(sys.meleeModes ?? []), ...(sys.rangedModes ?? [])];
       const skillsOf = modesOf.map((m: any) => String(m.skill ?? ""));
+      // A weapon, not a trait's attack, in a Weapon Master's class -- matched
+      // for all its modes, so a mastered knife is mastered when thrown.
+      const mastered = item.type !== "trait" &&
+        inWeaponMasterClass(mastery, { name: String(item.name ?? ""), skills: skillsOf });
       const typesOf = modesOf.map((m: any) => String(m.damageType ?? "") as DamageType);
       const quality = (isRuleOn("weaponQuality") ? String((sys as any).quality ?? "good") : "good") as WeaponQuality;
       const material = String((sys as any).material ?? "") as WeaponMaterial;
@@ -1913,8 +1931,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
               st: strikingSt,
             })
           : 0;
+        const meleeMasterPerDie = masterPerDie(mastered, mode.skill);
+        const masterDamage = weaponMasterDamage(meleeMasterPerDie, String(mode.damageBase ?? ""), strikingSt, mode.minSt ?? null);
         const meleeBasis = mode.damageSpecial ? SPECIAL : withPuissance(perLevel(mode, resolveDamage(
-          strikingSt, mode.damageBase, mode.damageModifier + unarmedBonus, mode.damageFormula, mode.minSt,
+          strikingSt, mode.damageBase, mode.damageModifier + unarmedBonus + masterDamage, mode.damageFormula, mode.minSt,
           Number(mode.damageExtraDice ?? 0) || 0,
         )));
         const meleeDamage = mode.damageSpecial ? SPECIAL : withQuality(meleeBasis, mode.damageType);
@@ -1977,6 +1997,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           // The skill the bonus is read for, so a pulled blow can work it out
           // again at the lower ST it is struck with.
           unarmedBonusSkill: mode.unarmedBonus ? String(mode.skill ?? "") : "",
+          // Weapon Master's bonus per die, so a pulled blow can work it out
+          // again on the dice of the lower ST.
+          weaponMasterPerDie: masterDamage ? meleeMasterPerDie : 0,
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),
@@ -2015,13 +2038,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           throwingArt: throwingArtLevel,
           dx: attrs.DX + layering,
         });
-        const artDamage = throwingArtDamage(art.bonus, String(mode.damageBase ?? ""), st);
+        // A Weapon Master's weapon gets its bonus thrown or shot, unless
+        // Throwing Art gives one, which is used instead (p. 226).
+        const skilledDamage = perDieOfBasicDamage(
+          thrownDamageBonusPerDie({ throwingArt: art.bonus, weaponMaster: masterPerDie(mastered, mode.skill) }),
+          String(mode.damageBase ?? ""), st, mode.minSt ?? null,
+        );
         // "Thrown weapons, and arrows and bolts, use the rules under Melee
         // Weapon Quality" (Characters p. 276): the cutting and impaling bonus
         // is theirs; a firearm's fine grade is in its Acc and Malf. instead.
         const rangedDamage = mode.damageSpecial ? SPECIAL : (firearm ? (d: string) => d : (d: string) => withQuality(d, mode.damageType))(
           withPuissance(perLevel(mode, resolveDamage(
-            st, mode.damageBase, mode.damageModifier + artDamage, mode.damageFormula, mode.minSt,
+            st, mode.damageBase, mode.damageModifier + skilledDamage, mode.damageFormula, mode.minSt,
             Number(mode.damageExtraDice ?? 0) || 0,
           ))),
         );
@@ -2140,7 +2168,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           basis: {
             st: rangedBasisSt,
             damage: mode.damageSpecial ? SPECIAL : withPuissance(perLevel(mode, resolveDamage(
-              rangedBasisSt, mode.damageBase, mode.damageModifier + artDamage, mode.damageFormula, mode.minSt,
+              rangedBasisSt, mode.damageBase, mode.damageModifier + skilledDamage, mode.damageFormula, mode.minSt,
               Number(mode.damageExtraDice ?? 0) || 0,
             ))),
             damageType: String(mode.damageType ?? ""),

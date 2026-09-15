@@ -119,6 +119,23 @@ export function effectiveStrengthForWeapon(st: number, weaponMinSt: number | nul
 }
 
 /**
+ * The adds a bonus "per die" of basic thrust or swing damage comes to: the
+ * bonus times the dice of the weapon's thrust or swing at that ST, capped by
+ * its minimum ST as the damage is. Damage that is not thrust or swing -- a
+ * grenade's fixed dice -- gets nothing.
+ */
+export function perDieOfBasicDamage(
+  bonus: number,
+  base: string,
+  st: number,
+  weaponMinSt: number | null = null,
+): number {
+  if (!bonus || (base !== "thr" && base !== "sw")) return 0;
+  const effectiveSt = effectiveStrengthForWeapon(st, weaponMinSt);
+  return bonus * (base === "thr" ? thrustDamage(effectiveSt) : swingDamage(effectiveSt)).dice;
+}
+
+/**
  * Resolves a weapon's `thr`/`sw` based damage into concrete dice+adds.
  *
  * A few powered weapons add whole dice to the swing rather than points -- a

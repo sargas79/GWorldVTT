@@ -12,6 +12,7 @@ import { SYSTEM_ID } from "./constants.js";
 import { formatDiceAdds } from "../rules/dice.js";
 import { naturalAttacks, weaponUnarmedBonus } from "../rules/natural-attacks.js";
 import { canPullPunches, pulledDamage, pulledStrength } from "../rules/subduing.js";
+import { weaponMasterDamage } from "../rules/weapon-master.js";
 
 const PULLED_FLAG = "pulledBlow";
 
@@ -52,6 +53,8 @@ export function pulledFormula(options: {
   skills: { Brawling?: number; Boxing?: number; Karate?: number };
   /** A weapon's blow that gets this unarmed skill's damage bonus, or "" (p. 271). */
   unarmedBonusSkill?: string;
+  /** Weapon Master's bonus per die on the blow, or 0 (Characters p. 99). */
+  weaponMasterPerDie?: number;
 }): string | null {
   if (!canPullPunches(options.stBased ? "muscle" : "mechanical")) return null;
   // Never harder than full strength, never below 1.
@@ -75,12 +78,14 @@ export function pulledFormula(options: {
         st,
       })
     : 0;
+  // Weapon Master's is per die too, of the thrust or swing actually rolled.
+  const mastery = weaponMasterDamage(options.weaponMasterPerDie ?? 0, options.damageBase, st, options.minSt);
   return formatDiceAdds(
     pulledDamage({
       strength: options.strength,
       chosen: options.chosen,
       base: options.damageBase,
-      modifier: options.damageModifier + bonus,
+      modifier: options.damageModifier + bonus + mastery,
       weaponMinSt: options.minSt,
     }),
   );

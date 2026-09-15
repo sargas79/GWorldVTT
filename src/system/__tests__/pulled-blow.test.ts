@@ -25,6 +25,13 @@ describe("pulledFormula", () => {
     expect(pulledFormula({ ...knuckles, chosen: 10 })).toBe("1d");
   });
 
+  it("keeps Weapon Master's bonus, worked out on the dice of the pulled ST", () => {
+    // +2 per die. ST 14 swings 2d, so 2d+1+4; pulled to ST 8 it swings 1d-2, so 1d-2+1+2.
+    const mastered = blow({ weaponMasterPerDie: 2 });
+    expect(pulledFormula({ ...mastered, chosen: 14 })).toBe("2d+5");
+    expect(pulledFormula(mastered)).toBe("1d+1");
+  });
+
   it("re-reads a sword's swing at the chosen ST, keeping its own modifier", () => {
     // ST 8 swings 1d-2; a broadsword's +1 makes it 1d-1.
     expect(pulledFormula(blow())).toBe("1d-1");

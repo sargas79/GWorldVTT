@@ -14,6 +14,7 @@ import { HIRED_RATE_PER_HOUR, hiredTechnicianSkill } from "../../rules/repairs.j
 import { isLegalityClass, licenseCost } from "../../rules/legality.js";
 import { objectState, rollsToKeepWorking } from "../../rules/objects.js";
 import { parseCostTable, parseLevelNames } from "../../rules/traits.js";
+import { isWeaponMaster } from "../../rules/weapon-master.js";
 import { SPELL_CLASSES } from "../../rules/magic.js";
 import { SYSTEM_ID } from "../constants.js";
 import { registeredTechniqueKinds } from "../data-extensions.js";
@@ -297,6 +298,10 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       context.costTableText = item.system.costTable.join("/");
       context.levelNamesText = item.system.levelNames.join("\n");
       context.talentSkillsText = (item.system.talentSkills ?? []).join("\n");
+      context.masteredWeaponsText = (item.system.masteredWeapons ?? []).join("\n");
+      // Shown for a Weapon Master, and for any trait already given a list.
+      context.showsMasteredWeapons =
+        isWeaponMaster(String(item.name ?? "")) || (item.system.masteredWeapons ?? []).length > 0;
       context.isTabled = item.system.costTable.length > 0;
       context.levelName = item.system.levelName;
       context.netModifier = item.system.netModifier;
@@ -589,6 +594,9 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       // of skills has no position to hold the way a level does.
       if (typeof data.system.talentSkills === "string") {
         data.system.talentSkills = parseLevelNames(data.system.talentSkills).filter(Boolean);
+      }
+      if (typeof data.system.masteredWeapons === "string") {
+        data.system.masteredWeapons = parseLevelNames(data.system.masteredWeapons).filter(Boolean);
       }
       // The select submits "" for none, which the number field cannot hold.
       if (data.system.selfControl === "" || data.system.selfControl === undefined) {
