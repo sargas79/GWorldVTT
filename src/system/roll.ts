@@ -303,6 +303,8 @@ export interface SuccessRollOptions {
    * (Characters p. 241). Recorded on the message for the defense card.
    */
   noParry?: boolean;
+  /** What a strike at a weapon or shield allows the defender (since 1.31.0): no parry, and no Defense Bonus. */
+  strikeLimits?: { noParry?: boolean; noDefenseBonus?: boolean };
   /**
    * The weapon the attack is made with, for the defender's parry to weigh
    * (Campaigns p. 376) and for the Critical Miss Table's resistant weapons
@@ -484,7 +486,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
                   onSuccess: attackFlags(
                     actor, label, defensePenalty, false, noParry, options.weapon, options.delivery, options.damageType,
                     options.guidance?.area === true && !defendsAgainstArea(), options.dodgeBonus ?? 0,
-                    options.defenseModifiers ?? [],
+                    options.defenseModifiers ?? [], null, options.strikeLimits ?? null,
                   ),
                 }
               : {}),
@@ -528,6 +530,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
             options.dodgeBonus ?? 0,
             options.defenseModifiers ?? [],
             (hitsInstead ? options.missFallbackShot : options.calledShot) ?? null,
+            options.strikeLimits ?? null,
           )),
         }
       : {}),
@@ -674,6 +677,8 @@ function attackFlags(
   defenseModifiers: Array<ModifierLine & { defenses?: AddonDefenseKey[] }> = [],
   /** Where the blow was aimed (since 1.25.0). */
   calledShot: { hitLocation: string; addonLocation: string | null } | null = null,
+  /** What a strike at a weapon or shield allows the defender (since 1.31.0). */
+  strikeLimits: { noParry?: boolean; noDefenseBonus?: boolean } | null = null,
 ): object {
   const defenders = targetedTokens()
     .filter((token: any) => token?.actor?.uuid)
@@ -728,6 +733,7 @@ function attackFlags(
         ...(dodgeBonus ? { dodgeBonus } : {}),
         ...(defenseModifiers.length > 0 ? { defenseModifiers } : {}),
         ...(calledShot ? { calledShot } : {}),
+        ...(strikeLimits?.noParry || strikeLimits?.noDefenseBonus ? { strikeLimits: { noParry: strikeLimits.noParry === true, noDefenseBonus: strikeLimits.noDefenseBonus === true } } : {}),
       },
     },
   };

@@ -526,6 +526,8 @@ interface DefenseFlag {
   defenseModifiers?: Array<{ label: string; value: number; defenses?: DefenseKey[] }>;
   /** Where the blow was aimed, or where a miss by 1 landed (since 1.25.0). */
   calledShot?: { hitLocation: string; addonLocation: string | null };
+  /** A strike at a weapon or shield: no parry, or no Defense Bonus (since 1.31.0). */
+  strikeLimits?: { noParry: boolean; noDefenseBonus: boolean };
 }
 
 function defenseFlag(message: any): DefenseFlag | null {
@@ -670,6 +672,12 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     if (flag.noParry) {
       for (const choice of choices) {
         if (choice.key === "parry") Object.assign(choice, { available: false, shown: null, reason: "missile" });
+      }
+    }
+    // A strike a module's rules say can't be parried (API 1.31.0).
+    if (flag.strikeLimits?.noParry) {
+      for (const choice of choices) {
+        if (choice.key === "parry" && choice.available) Object.assign(choice, { available: false, shown: null, reason: "noParry" });
       }
     }
 
@@ -864,7 +872,13 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         ...(flag.damageType ? { damageType: flag.damageType } : {}),
         ...(technique ? { technique } : {}),
         addonOptions: addonValues(),
-        attackDefenseModifiers: flag.defenseModifiers ?? [],
+        attackDefenseModifiers: [
+          ...(flag.defenseModifiers ?? []),
+          // The Defense Bonus doesn't count against this strike (API 1.31.0).
+          ...(flag.strikeLimits?.noDefenseBonus && Number(defender.system?.derived?.shieldDb) > 0
+            ? [{ label: game.i18n.localize("GWORLD.Defense.NoDefenseBonus"), value: -Number(defender.system.derived.shieldDb) }]
+            : []),
+        ],
         attacker,
         arc: arc?.arc ?? null,
         parryWeapon: choice.key === "parry" ? parryWith : null,

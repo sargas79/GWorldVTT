@@ -315,7 +315,28 @@
         "defenderRollsToStay": "{slammer} {dealt} against {foe} {taken}: {foe} rolls DX or falls",
         "attackerKnocksDown": "{slammer} {dealt} against {foe} {taken}: twice as hard, {foe} is knocked down",
         "attackerFellInstead": "{slammer} {dealt} against {foe} {taken}: {foe} hit back twice as hard, and {slammer} falls instead"
-      }
+      },
+      "ShoveAction": "Shove",
+      "ShoveTitle": "Shove",
+      "Kind": "What",
+      "Kinds": {
+        "slam": "Slam",
+        "flyingTackle": "Flying tackle",
+        "pounce": "Pounce",
+        "shieldRush": "Shield rush",
+        "shove": "Shove"
+      },
+      "Hands": "Hands",
+      "BothHands": "Both hands",
+      "OneHand": "One hand (-1 per die)",
+      "HitLabel": "{kind} at {foe}",
+      "NoSkill": "Nothing to roll for this: no skill or attribute to use",
+      "TwoFoes": "Target exactly two foes for this",
+      "StayStanding": "Pounce: staying on your feet",
+      "Bearer": "{bearer} takes the {taken} in the slammer's place",
+      "ShoveRoll": "Rolled {formula}: {basic}, so {knock} for knockback",
+      "Pushed": "{foe} is pushed back {yards} yd: DX roll{penalty} or fall",
+      "NotPushed": "{foe} isn't moved"
     },
     "Melee": {
       "Title": "Melee attack",
@@ -354,7 +375,8 @@
         "Label": "Can't see the attacker",
         "NoDefense": "Completely unaware of the attacker: no defense at all",
         "OnlyDodge": "Against an unseen attacker, only a dodge -- unless a Hearing-2 roll placed them"
-      }
+      },
+      "NoDefenseBonus": "No Defense Bonus against this"
     },
     "Tactical": {
       "front": "from the front",
@@ -2497,7 +2519,8 @@
       "NoWeapon": "No weapon skill to strike with.",
       "Disarmed": "{foe} is disarmed — the weapon flies a yard.",
       "Unready": "{foe} keeps the weapon, but it is unready.",
-      "HeldFast": "{foe} holds on to it."
+      "HeldFast": "{foe} holds on to it.",
+      "CannotDisarm": "{weapon} can only be struck to damage it, not knocked away"
     },
     "Subdue": {
       "Turned": "Strike with the flat or the butt (crushing)",
