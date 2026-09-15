@@ -21,6 +21,7 @@ export * from "./contests.js";
 export * from "./cover.js";
 export * from "./criticals.js";
 export * from "./damage.js";
+export * from "./hurting-yourself.js";
 export * from "./grappling.js";
 export * from "./hit-locations.js";
 export * from "./armor.js";

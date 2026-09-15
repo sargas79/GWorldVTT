@@ -3761,6 +3761,10 @@
       "MayStillCatch": "A miss may still catch the target in the area",
       "MustSteer": "Concentrate each turn to steer it — lose sight of the target and it misses; Attack on the turn it arrives",
       "DamageHoldsUp": "Damage does not fall off with distance"
+    },
+    "HurtingYourself": {
+      "Title": "Hurting yourself",
+      "Result": "{name} takes {damage} crushing to the {part} (DR {dr}): {injury} injury"
     }
   }
 }

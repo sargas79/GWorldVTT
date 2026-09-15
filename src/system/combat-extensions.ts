@@ -77,6 +77,8 @@ export const COMBAT_HOOKS = Object.freeze({
   feintModifiers: "gworld.feintModifiers",
   /** What may be struck at on a foe (since 1.31.0): `{ actor, foe, targets }`, the targets mutable. */
   weaponTargets: "gworld.weaponTargets",
+  /** An unarmed blow applied to a target (since 1.32.0): `{ attacker, target, part, hitLocation, addonLocation, dr, basicDamage, minimumDr, applies }`, mutable. */
+  hurtingYourself: "gworld.hurtingYourself",
 });
 
 // ── an item's attack rows ──────────────────────────────────────────────────

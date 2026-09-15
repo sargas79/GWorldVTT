@@ -299,6 +299,12 @@ and the roll continues.
     to leave a weapon out, or clear it on an unbalanced weapon left out for having
     attacked this turn;
   - `gworld.injury`: change `damage` before it is worked out;
+  - `gworld.hurtingYourself` (since 1.32.0): an unarmed blow (a punch, kick,
+    bite or claw) applied to a target, as `{ attacker, target, part, hitLocation,
+    addonLocation, dr, basicDamage, minimumDr, applies }`. The striker takes a
+    point of crushing per 5 basic damage, up to `dr`, to `part` (less their own
+    DR there) when `dr` is at least `minimumDr` (3). Lower `minimumDr` for a spot
+    tougher than its DR, change `dr`, or set `applies: false`;
   - `gworld.afterDamage`: the blow and its result;
   - `gworld.damageModifiers`, `gworld.injury` and `gworld.afterDamage` also get
     `item` (since 1.8.0): the weapon or spell the damage was rolled from, or

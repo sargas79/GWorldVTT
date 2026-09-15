@@ -119,6 +119,7 @@ import { turnedBlade } from "../rules/subduing.js";
 import { coverShot, struckCover, type CoverApproach } from "../rules/cover.js";
 import { breakWeapon } from "./weapon-damage.js";
 import { spendShots } from "./ammunition.js";
+import { strikingPart } from "../rules/hurting-yourself.js";
 import type { DamageType } from "../rules/types.js";
 
 import { cappedAimBonus, targetingSystemBonus, unexpectedDodgePenalty } from "../rules/vehicle-combat.js";
@@ -773,6 +774,8 @@ export interface DamageRollOptions {
   item?: any;
   /** Which of the item's modes it was rolled from. */
   mode?: { index: number; ranged: boolean; derived?: string } | null;
+  /** The body part an unarmed blow strikes with, for Hurting Yourself (Campaigns p. 379). */
+  strikingPart?: string | null;
 }
 
 /**
@@ -893,6 +896,8 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
           ...(mode ? { mode } : {}),
           ...(options.weaponTarget ? { weaponTarget: options.weaponTarget } : {}),
+          // Who struck bare-handed, and with what, for Hurting Yourself (p. 379).
+          ...(options.strikingPart && typeof options.actor?.uuid === "string" ? { strikingPart: options.strikingPart, strikerUuid: options.actor.uuid } : {}),
           explosive,
           // The dice, not the rolled total: the blast radius is set by how
           // many dice the attack rolls, whatever they came up -- and a
@@ -2844,6 +2849,7 @@ export async function handleDamageAction(
     ...(target.dataset.ignoresDr === "1" ? { ignoresDr: true } : {}),
     ...(item ? { item } : {}),
     ...(mode ? { mode } : {}),
+    ...(strikingPart(target.dataset.naturalKey ?? "") ? { strikingPart: strikingPart(target.dataset.naturalKey ?? "") } : {}),
     explosive: target.dataset.explosive === "1",
     fragmentation: target.dataset.fragmentation ?? "",
     modifiers,
