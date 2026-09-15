@@ -7,10 +7,44 @@
  * several can be combined with it.
  */
 
+import { isUnarmedSkill } from "./criticals.js";
 import { penalty } from "./modifiers.js";
+import { inSkillFamily } from "./technique-skills.js";
 
 /** Rapid Strike: two attacks in the time of one, both at -6 (p. 370). */
 export const RAPID_STRIKE_PENALTY = -6;
+
+/**
+ * The Rapid Strike penalty, halved for a master (Characters pp. 93, 99).
+ *
+ * Trained By A Master and Weapon Master each give "half the usual penalty to
+ * make a Rapid Strike". Neither says the two halvings combine, so having both
+ * is still -3. Halving moves the penalty towards zero, rounding in the
+ * fighter's favour as Flurry of Blows does.
+ */
+export function rapidStrikePenalty(halved: boolean): number {
+  return halved ? Math.ceil(RAPID_STRIKE_PENALTY / 2) : RAPID_STRIKE_PENALTY;
+}
+
+/**
+ * Whether a master's Rapid Strike is at half the penalty with this attack.
+ *
+ * Trained By A Master's halving covers "all your unarmed combat skills ... and
+ * Melee Weapon skills" (p. 93), whatever the level. Weapon Master's covers a
+ * weapon in its class used with its skill, never at default (p. 99), which the
+ * caller has already decided.
+ */
+export function halvesRapidStrike(options: {
+  /** The skill the attack is rolled with. */
+  skill: string;
+  trainedByAMaster: boolean;
+  /** A weapon in a Weapon Master's class, used with the skill rather than a default. */
+  weaponMaster: boolean;
+}): boolean {
+  if (options.weaponMaster) return true;
+  if (!options.trainedByAMaster) return false;
+  return isUnarmedSkill(options.skill) || inSkillFamily(options.skill, "melee");
+}
 
 /** The floor a Deceptive Attack may not take your effective skill below. */
 export const DECEPTIVE_SKILL_FLOOR = 10;

@@ -86,6 +86,23 @@ export function weaponMasterBonusPerDie(level: number | null, dx: number): numbe
   return above >= 2 ? 2 : above >= 1 ? 1 : 0;
 }
 
+/** How far below DX a Weapon Master's weapon skill defaults, by difficulty. */
+const IMPROVED_DEFAULT_PENALTY: Readonly<Record<string, number>> = { E: -1, A: -2, H: -3 };
+
+/**
+ * The improved default a Weapon Master has in a weapon skill of the class
+ * (p. 99): DX-1 for an Easy skill, DX-2 for Average, DX-3 for Hard. Null for
+ * a skill not based on DX, or of another difficulty, which the page does not
+ * name. The skill is no easier to learn, and "may not be 'bought up' from the
+ * improved defaults", so this is a level to roll at and nothing more -- and
+ * using it is still default use.
+ */
+export function weaponMasterDefault(options: { attribute: string; difficulty: string; dx: number }): number | null {
+  if (options.attribute !== "DX") return null;
+  const below = IMPROVED_DEFAULT_PENALTY[options.difficulty];
+  return below === undefined ? null : options.dx + below;
+}
+
 /** The adds Weapon Master's bonus comes to on thrust or swing damage at a ST. */
 export function weaponMasterDamage(
   perDie: number,

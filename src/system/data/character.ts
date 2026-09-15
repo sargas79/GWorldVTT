@@ -112,9 +112,11 @@ import {
   resolveTechniqueDefaults,
 } from "../../rules/skills.js";
 import { musclePoweredRange } from "../../rules/ranged.js";
+import { halvesRapidStrike } from "../../rules/attack-options.js";
 import { THROWING_ART, throwingArtAttack, throwingArtBonus } from "../../rules/throwing-art.js";
 import {
-  inWeaponMasterClass, thrownDamageBonusPerDie, weaponMasterBonusPerDie, weaponMasterDamage, weaponMasteryFrom,
+  inWeaponMasterClass, thrownDamageBonusPerDie, weaponMasterBonusPerDie, weaponMasterDamage, weaponMasterDefault,
+  weaponMasteryFrom,
 } from "../../rules/weapon-master.js";
 import {
   checkPrerequisites,
@@ -248,6 +250,8 @@ export interface DerivedAttack {
   unarmedBonusSkill?: string;
   /** Weapon Master's damage bonus per die on this blow, or 0 (Characters p. 99). */
   weaponMasterPerDie?: number;
+  /** True when a master makes a Rapid Strike with it at half the penalty (Characters pp. 93, 99). */
+  rapidStrikeHalved?: boolean;
   damage: string;
   damageType: DamageType;
   reach: string;
@@ -1087,13 +1091,24 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // "/TL" marker in the skill's own name and leaves it off everywhere it
     // refers to that skill: a revolver is used with "Guns (Pistol)", and the
     // skill it means is "Guns/TL (Pistol)".
+    return this.skillItemByName(name)?.system?.derived?.level ?? null;
+  }
+
+  /** A skill item by name, compared as `skillLevelByName` compares it. */
+  private skillItemByName(name: string): Record<string, any> | null {
+    if (!name) return null;
     const wanted = normalizeSkillName(name);
-    for (const item of this.itemsOfType("skill")) {
-      if (normalizeSkillName(String(item.name)) === wanted) {
-        return item.system?.derived?.level ?? null;
-      }
-    }
-    return null;
+    return this.itemsOfType("skill").find((item) => normalizeSkillName(String(item.name)) === wanted) ?? null;
+  }
+
+  /**
+   * A skill's level where it was learned rather than used at a default, or
+   * null. Weapon Master's benefits need it: "None of these benefits apply to
+   * default use" (Characters p. 99).
+   */
+  private trainedSkillLevelByName(name: string): number | null {
+    const derived = this.skillItemByName(name)?.system?.derived;
+    return derived && !derived.fromDefault ? derived.level ?? null : null;
   }
 
   /**
@@ -1796,14 +1811,28 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // since "none of these benefits apply to default use".
     const mastery = weaponMasteryFrom(heldTraits);
     const masterPerDie = (mastered: boolean, skill: unknown): number =>
-      mastered ? weaponMasterBonusPerDie(this.skillLevelByName(String(skill ?? "")), attrs.DX + layering) : 0;
+      mastered ? weaponMasterBonusPerDie(this.trainedSkillLevelByName(String(skill ?? "")), attrs.DX + layering) : 0;
+    // Trained By A Master halves a Rapid Strike with unarmed and Melee Weapon
+    // skills (p. 93); Weapon Master with a weapon of its class, not at default.
+    const trainedByAMaster = heldTraits.some((t) => /^trained by a master\b/i.test(t.name));
+    const halvedRapidStrike = (mastered: boolean, skill: unknown): boolean =>
+      halvesRapidStrike({
+        skill: String(skill ?? ""),
+        trainedByAMaster,
+        weaponMaster: mastered && this.trainedSkillLevelByName(String(skill ?? "")) !== null,
+      });
 
     /**
      * The level a weapon's skill is rolled at: the character's own if they
      * have the skill, else the book's default for it. A pistol in the hands
      * of somebody who never learned Guns is still a pistol, at DX-4.
+     *
+     * A Weapon Master's weapon also has the improved default (p. 99), DX-1,
+     * DX-2 or DX-3 by the skill's difficulty, where it is better. It is a
+     * default all the same: nothing is bought up from it, and it earns none
+     * of Weapon Master's other benefits.
      */
-    const weaponSkill = (name: string, melee = false): { level: number | null; atDefault: boolean } => {
+    const weaponSkill = (name: string, melee = false, mastered = false): { level: number | null; atDefault: boolean } => {
       // "Roll against your Will" (Characters p. 106): a mode may name an
       // attribute where a weapon names its skill.
       const attribute = attackAttribute(name);
@@ -1811,16 +1840,27 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         const score = attribute === "Will" ? secondary.will : attribute === "Per" ? secondary.per : attrs[attribute];
         return { level: Number(score) || 10, atDefault: false };
       }
-      const own = this.skillLevelByName(name);
-      if (own !== null) return { level: own + (melee ? legs : 0), atDefault: false };
+      const penalty = melee ? legs : 0;
       const listed = catalogSkill(name);
-      if (!listed) return { level: null, atDefault: false };
-      const level = defaultLevelFrom(
-        listed.defaults,
-        attributeScore,
-        (other) => this.skillLevelByName(other),
-      );
-      return { level: level === null ? null : level + (melee ? legs : 0), atDefault: level !== null };
+      const shape = this.skillItemByName(name)?.system ?? listed;
+      const improved = mastered && shape
+        ? weaponMasterDefault({
+            attribute: String(shape.attribute ?? ""),
+            difficulty: String(shape.difficulty ?? ""),
+            dx: attributeScore("DX"),
+          })
+        : null;
+      const own = this.skillLevelByName(name);
+      if (own !== null) {
+        return improved !== null && improved > own
+          ? { level: improved + penalty, atDefault: true }
+          : { level: own + penalty, atDefault: false };
+      }
+      const level = listed
+        ? defaultLevelFrom(listed.defaults, attributeScore, (other) => this.skillLevelByName(other))
+        : null;
+      const best = improved === null ? level : Math.max(level ?? improved, improved);
+      return { level: best === null ? null : best + penalty, atDefault: best !== null };
     };
 
     for (const item of armed) {
@@ -1918,7 +1958,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         item.type === "trait" && mode.perLevel ? levelledDamage(damage, levels) : damage;
 
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
-        const found = short(enchantedSkill(weaponSkill(mode.skill, true)), mode.minSt ?? null);
+        const found = short(enchantedSkill(weaponSkill(mode.skill, true, mastered)), mode.minSt ?? null);
         const skillLevel = found.level;
         const atDefault = found.atDefault;
         // A fist load or a hilt punch hits as hard as the unarmed skill it is
@@ -2000,6 +2040,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           // Weapon Master's bonus per die, so a pulled blow can work it out
           // again on the dice of the lower ST.
           weaponMasterPerDie: masterDamage ? meleeMasterPerDie : 0,
+          // Half the Rapid Strike penalty for a master (pp. 93, 99).
+          rapidStrikeHalved: halvedRapidStrike(mastered, mode.skill),
           explosive: Boolean(mode.explosive),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),
@@ -2033,7 +2075,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // thrower's thrust or swing and to the ST the range is worked from
         // (Characters p. 226). A grenade's fixed damage is not the thrower's.
         const art = throwingArtAttack({
-          ...weaponSkill(mode.skill),
+          ...weaponSkill(mode.skill, false, mastered),
           skill: String(mode.skill ?? ""),
           throwingArt: throwingArtLevel,
           dx: attrs.DX + layering,
@@ -2348,6 +2390,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     };
     melee.push(...(derivedAttackRows("melee", weapons, this.parent, helpers, DERIVED_MELEE_DEFAULTS) as unknown as DerivedAttack[]));
     ranged.push(...(derivedAttackRows("ranged", weapons, this.parent, helpers, DERIVED_RANGED_DEFAULTS) as unknown as DerivedAttack[]));
+    // A punch, a bite or a module's row is no Weapon Master's weapon, but
+    // Trained By A Master halves its Rapid Strike by its skill (p. 93).
+    for (const row of melee) {
+      if (row.rapidStrikeHalved === undefined) row.rapidStrikeHalved = halvedRapidStrike(false, row.skillName);
+    }
 
     // ── active defenses ─────────────────────────────────────────────────
     // All-Out Attack forfeits every defense; Move and Attack forbids parrying.
