@@ -80,6 +80,8 @@ export const PROCEDURE_HOOKS = Object.freeze({
   grappleContest: "gworld.grappleContest",
   /** After one (since 1.34.0): `{ move, actor, foe, grapple, outcome, marginOfVictory }`. */
   afterGrappleContest: "gworld.afterGrappleContest",
+  /** After any Quick Contest is rolled (since 1.37.0): `{ label, tags, first, second, outcome, marginOfVictory }`. */
+  afterQuickContest: "gworld.afterQuickContest",
   /** When a combat starts: `(combat)`. */
   combatStart: "gworld.combatStart",
   /** When a combatant's turn starts: `(combat, combatant)`. */
@@ -338,6 +340,26 @@ export function successRollModifiers(context: SuccessRollContext): ModifierLine[
 /** Tells the listeners how a success roll went. */
 export function afterSuccessRoll(context: Omit<SuccessRollContext, "modifiers" | "base"> & { outcome: unknown }): void {
   callCombatHook(PROCEDURE_HOOKS.afterSuccessRoll, context);
+}
+
+/** One side of a Quick Contest as `gworld.afterQuickContest` sees it. */
+export interface QuickContestSideResult {
+  actor: any;
+  base: number;
+  effective: number;
+  outcome: unknown;
+}
+
+/** Tells the listeners who won a Quick Contest (since 1.37.0). */
+export function afterQuickContest(context: {
+  label: string;
+  tags: readonly string[];
+  first: QuickContestSideResult;
+  second: QuickContestSideResult;
+  outcome: string;
+  marginOfVictory: number;
+}): void {
+  callCombatHook(PROCEDURE_HOOKS.afterQuickContest, { ...context, tags: [...context.tags] });
 }
 
 /** What a contest resolver can see. */

@@ -542,6 +542,12 @@ and a hint `p.ihint`.
   actor on the other side, and its `tags` say what the contest is: `feint`, or
   `quickContest` with `disarm` for a disarm (tags a Quick Contest's caller
   passes reach the contest resolvers too).
+- **Quick Contest results** (since 1.37.0): `gworld.afterQuickContest` follows every
+  Quick Contest, once its card is posted, with `{ label, tags, first, second, outcome,
+  marginOfVictory }`. Each side is `{ actor, base, effective, outcome }`, where
+  `outcome` is its success roll's result; the contest's `outcome` is `"first"`,
+  `"second"` or `"tie"`. The Evade contest is tagged `evade`, with the mover
+  first and the foe second.
 - **`roll.registerContestResolver({ module, key, label, applies, resolve })`.**
   For the Quick Contests the system offers, the first resolver whose
   `applies(context)` takes the contest returns the `{ base, note }` either side
