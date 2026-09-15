@@ -134,23 +134,38 @@
 
 /* ── persistent header ─────────────────────────────────────────────────── */
 
+/*
+ * The portrait takes the height the name, pools and combat strip give the
+ * header, rather than a thumbnail in its corner. The header is the container,
+ * so the portrait steps down as the sheet window narrows, not as the browser
+ * does.
+ */
 .gworld .ihdr {
   display: grid;
-  grid-template-columns: 72px 1fr;
-  gap: 14px;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
   padding: 16px 16px 14px;
   border-bottom: 1px solid var(--color-divider);
   flex: none;
+  container-type: inline-size;
 }
 .gworld .iport {
+  width: 148px;
   aspect-ratio: 1;
+  align-self: start;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--color-divider);
   overflow: hidden;
 }
-.gworld .iport img { width: 100%; height: 100%; object-fit: cover; border: 0; }
+.gworld .iport img { width: 100%; height: 100%; object-fit: cover; object-position: center top; border: 0; }
+@container (max-width: 640px) {
+  .gworld .iport { width: 112px; }
+}
+@container (max-width: 460px) {
+  .gworld .iport { width: 80px; }
+}
 .gworld .ihm { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
 .gworld .inrow { display: flex; align-items: baseline; gap: 10px; }
 .gworld .iname {
@@ -171,6 +186,7 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-accent-700);
+  white-space: nowrap;
 }
 .gworld .ipts {
   margin-left: auto;
