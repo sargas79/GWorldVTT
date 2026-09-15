@@ -53,7 +53,9 @@ export type DefenseRefusal =
   /** Loose in a vehicle, which leaves a dodge and nothing else (Campaigns p. 469). */
   | "occupant"
   /** A mook, who "automatically fails all defense rolls" (Campaigns p. 417). */
-  | "cannonFodder";
+  | "cannonFodder"
+  /** A flail, which "fencing weapons and knives cannot parry" (Characters p. 208). */
+  | "flail";
 
 export interface DefenseChoice {
   key: DefenseKey;

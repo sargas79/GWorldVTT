@@ -223,3 +223,64 @@ export function bestParryOption<T extends ParryOption>(
   }
   return best;
 }
+
+// ── what the attacking weapon does to a parry or block ────────────────────
+
+/** A flail, a nunchaku (a flail whose penalties are halved), or neither. */
+export type FlailKind = "flail" | "nunchaku" | null;
+
+/**
+ * Whether an attack is made with a flail (Characters p. 208): anything used
+ * with Flail or Two-Handed Flail skill. A nunchaku is one, at half the
+ * penalties (Campaigns p. 548).
+ */
+export function flailKind(skill: string | undefined, name = ""): FlailKind {
+  const base = String(skill ?? "").replace(/\s*\(.*$/, "").trim().toLowerCase();
+  if (base !== "flail" && base !== "two-handed flail") return null;
+  return /nunchaku/i.test(name) ? "nunchaku" : "flail";
+}
+
+/**
+ * What a flail does to a defense (Characters p. 208, Campaigns pp. 405, 548):
+ * -4 to parry and -2 to block, or -2 and -1 against a nunchaku.
+ */
+export function flailDefenseModifier(kind: FlailKind, defense: "dodge" | "parry" | "block"): number {
+  if (!kind || defense === "dodge") return 0;
+  const full = defense === "parry" ? -4 : -2;
+  return kind === "nunchaku" ? full / 2 : full;
+}
+
+/** "Fencing weapons and knives cannot parry them at all!" (Characters p. 208). */
+export function canParryFlail(parry: { skill: string | undefined; isFencing: boolean }): boolean {
+  const base = String(parry.skill ?? "").replace(/\s*\(.*$/, "").trim().toLowerCase();
+  return !parry.isFencing && base !== "knife";
+}
+
+/**
+ * Parrying a thrown weapon (Campaigns p. 376): -1, or -2 for a small one that
+ * weighs 1 lb. or less.
+ */
+export function thrownParryModifier(weight: number): number {
+  return Number(weight) > 0 && Number(weight) <= 1 ? -2 : -1;
+}
+
+/**
+ * Parrying a weapon bare-handed (Campaigns p. 376): -3, "unless the attack is
+ * a thrust or you are using Judo or Karate". Zero for a parry made with a
+ * weapon, or against an unarmed attack.
+ */
+export function bareHandedParryModifier(options: { parrySkill: string | undefined; bareHanded: boolean; attackIsWeapon: boolean; attackIsThrust: boolean }): number {
+  if (!options.bareHanded || !options.attackIsWeapon || options.attackIsThrust) return 0;
+  const base = String(options.parrySkill ?? "").replace(/\s*\(.*$/, "").trim().toLowerCase();
+  return base === "judo" || base === "karate" ? 0 : -3;
+}
+
+/**
+ * The roll to strike an unarmed attacker's limb after parrying it with a
+ * weapon (Campaigns p. 376): against the weapon's skill, "at -4 if your
+ * attacker used Judo or Karate".
+ */
+export function parriedLimbStrikeModifier(attackSkill: string | undefined): number {
+  const base = String(attackSkill ?? "").replace(/\s*\(.*$/, "").trim().toLowerCase();
+  return base === "judo" || base === "karate" ? -4 : 0;
+}

@@ -12,6 +12,7 @@ import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
 import { registerFacing } from "./system/facing.js";
 import { registerAimTracking } from "./system/aim.js";
+import { registerEvaluateTracking } from "./system/evaluate.js";
 import { registerBattleFatigue } from "./system/battle-fatigue.js";
 import { loadSkillCatalog } from "./system/skill-catalog.js";
 import { setCondition, registerConditions, registerPostureSync } from "./system/conditions.js";
@@ -120,6 +121,7 @@ Hooks.once("init", () => {
   // An aim is lost by doing anything else with the turn, and a battle that
   // ran on costs everyone in it a point of fatigue when the tracker closes.
   registerAimTracking();
+  registerEvaluateTracking();
   registerBattleFatigue();
   // What a module keeps per combatant runs out at the turn, round or combat
   // boundary it asked for.

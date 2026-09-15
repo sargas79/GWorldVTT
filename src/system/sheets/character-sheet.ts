@@ -188,6 +188,7 @@ import {
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
 import { allOutAttackOptionsFor, registeredManeuvers } from "../combat-extensions.js";
+import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
 import { bindSectionListeners, decorateItemRows, renderSections, runRowAction } from "../sheet-extensions.js";
 import {
@@ -3252,7 +3253,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         needed: 3,
         mustBeCut: system.entangled?.mustBeCut === true,
       },
-      isEvaluating: system.maneuver === "evaluate",
+      // Shown while evaluating, and on the turn after, when the bonus is spent.
+      isEvaluating: system.maneuver === "evaluate" || Number(system.evaluateTurns ?? 0) > 0,
       isAiming: system.maneuver === "aim",
       isWaiting: system.maneuver === "wait",
       // The area covered only matters if opportunity fire is being played.
@@ -4184,7 +4186,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         weapon: target.dataset.rollLabel ?? "",
         foe: String(foe.name),
       }),
-      feinter: { actor: this.actor, base },
+      // A Feint takes what Evaluate maneuvers before it earned (Campaigns p. 364).
+      feinter: { actor: this.actor, base, modifiers: evaluateBonusFor(this.actor) ? [{ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluateBonusFor(this.actor) }] : [] },
       // Naming what they rolled against matters here: the rule lets them roll
       // their best of several things, and the card should say which it was.
       defender: { actor: foe, base: defense.score, note: defense.source },

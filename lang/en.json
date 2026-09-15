@@ -336,6 +336,13 @@
       "Arc": "Not from that side",
       "StrappedIn": "Strapped in: no defense against a shot at the vehicle's occupants",
       "Occupant": "Aboard a vehicle: only a dodge",
+      "Flail": "A fencing weapon or a knife can't parry a flail",
+      "FlailLine": "Flail",
+      "ThrownLine": "Thrown weapon",
+      "BareHandedLine": "Bare-handed against a weapon",
+      "ParriedArm": "Failed bare-handed parry against a weapon: the attacker may strike the parrying arm instead.",
+      "StrikeLimb": "{weapon}: striking the parried limb",
+      "StrikeLimbJudoKarate": "Against Judo or Karate",
       "Unseen": {
         "Sees": "Sees it coming",
         "Heard": "Unseen, but heard (Hearing-2)",
