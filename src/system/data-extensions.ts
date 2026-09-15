@@ -510,6 +510,8 @@ export interface TechniqueKindRegistration {
   ) => { level: number | null; levels?: number; cappedByPrerequisite?: boolean; notes?: string[] } | null;
   /** What it costs in character points, where that isn't its `points` field. */
   cost?: (technique: any) => number | null;
+  /** Whether it is in play right now (since 1.26.0), e.g. "my switch is on". */
+  available?: () => boolean;
 }
 
 interface TechniqueKind {
@@ -518,6 +520,7 @@ interface TechniqueKind {
   label: string;
   derive: TechniqueKindRegistration["derive"];
   cost: (technique: any) => number | null;
+  available: () => boolean;
 }
 
 const techniqueKinds = new Map<string, TechniqueKind>();
@@ -532,17 +535,42 @@ export function registerTechniqueKind(registration: TechniqueKindRegistration): 
   if (typeof r.derive !== "function") return refuse(what, "it has no derive function");
   const key = `${r.module}.${r.key}`;
   if (techniqueKinds.has(key)) return refuse(what, "that key is already registered");
-  techniqueKinds.set(key, { key, module: r.module, label: r.label.trim(), derive: r.derive, cost: typeof r.cost === "function" ? r.cost : () => null });
+  techniqueKinds.set(key, {
+    key,
+    module: r.module,
+    label: r.label.trim(),
+    derive: r.derive,
+    cost: typeof r.cost === "function" ? r.cost : () => null,
+    available: typeof r.available === "function" ? r.available : () => true,
+  });
   return key;
 }
 
-export function registeredTechniqueKind(key: string): TechniqueKind | undefined {
-  return key ? techniqueKinds.get(key) : undefined;
+/** Whether a registered kind is in play; a check that throws counts as not. */
+function kindAvailable(kind: TechniqueKind): boolean {
+  try {
+    return kind.available() !== false;
+  } catch (error) {
+    console.warn(`gworld | technique kind ${kind.key} failed its availability check`, error);
+    return false;
+  }
 }
 
-/** The registered technique kinds, for the technique sheet's choice. */
+/** A registered technique kind that is in play, or undefined. */
+export function registeredTechniqueKind(key: string): TechniqueKind | undefined {
+  const kind = key ? techniqueKinds.get(key) : undefined;
+  return kind && kindAvailable(kind) ? kind : undefined;
+}
+
+/** A registered technique kind whose check says it is out of play right now (since 1.26.0), or undefined. */
+export function unavailableTechniqueKind(key: string): TechniqueKind | undefined {
+  const kind = key ? techniqueKinds.get(key) : undefined;
+  return kind && !kindAvailable(kind) ? kind : undefined;
+}
+
+/** The technique kinds in play, for the technique sheet's choice. */
 export function registeredTechniqueKinds(): Array<{ key: string; label: string }> {
-  return [...techniqueKinds.values()].map((k) => ({ key: k.key, label: k.label }));
+  return [...techniqueKinds.values()].filter(kindAvailable).map((k) => ({ key: k.key, label: k.label }));
 }
 
 /** Fires the derived-data hook for a document. */

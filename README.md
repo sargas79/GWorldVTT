@@ -614,12 +614,15 @@ without editing the system's data models. Register from `init` or the
   or `null`. Modifiers run in registration order on the stored figures, never
   on their own output; the result is `item.effectivePrice`, and the character's
   wealth, encumbrance and gear lists use it. `effectivePrice(item)` works it out.
-- **`registerTechniqueKind({ module, key, label, derive, cost? })`.**
+- **`registerTechniqueKind({ module, key, label, derive, cost?, available? })`.**
   A technique whose `system.kind` is `<module>.<key>` gets its level from
   `derive(technique, actor, { levelOf, standard })`, which returns
   `{ level, levels?, cappedByPrerequisite?, notes? }`. `standard()` is what the
   system would have worked out. `cost(technique)` replaces its points in the
-  character's total. The technique's sheet offers the registered kinds.
+  character's total. The technique's sheet offers the registered kinds. Since
+  1.26.0, `available()` takes a kind out of play: the sheet doesn't offer it
+  for a new technique, and a technique already of that kind keeps it, with the
+  level (and cost) the system would work out and a note saying why.
 - **Hooks:**
   - `gworld.prepareDerivedData`, with the actor or item, after the system has
     prepared it.

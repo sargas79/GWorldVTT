@@ -88,7 +88,7 @@ import {
 } from "../combat-extensions.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
-  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, registeredTechniqueKind, totalBonusLines, type BonusLine,
+  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, type BonusLine,
 } from "../data-extensions.js";
 import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
@@ -1575,6 +1575,21 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       });
       // A kind an add-on module registered works its level out its own way.
       // One whose module isn't running is left unresolved, not guessed at.
+      // A kind whose module has it switched off is worked out as the system
+      // would, and says so; the technique keeps its kind for when it is back.
+      const idle = sys.kind ? unavailableTechniqueKind(String(sys.kind)) : undefined;
+      if (idle) {
+        const standardLevel = standard();
+        sys.derived = {
+          level: standardLevel?.level ?? null,
+          levels: standardLevel?.levels ?? 0,
+          cappedByPrerequisite: standardLevel?.cappedByPrerequisite === true,
+          kind: String(sys.kind),
+          kindLabel: idle.label,
+          notes: [game.i18n.localize("GWORLD.Technique.KindOff")],
+        };
+        continue;
+      }
       if (sys.kind) {
         const kind = registeredTechniqueKind(String(sys.kind));
         let result: ReturnType<NonNullable<typeof kind>["derive"]> = null;

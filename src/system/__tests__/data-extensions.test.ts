@@ -298,3 +298,17 @@ describe("bonus lines", () => {
     expect(api.totalBonusLines(api.DATA_HOOKS.skillBonuses, { lines: lines() }).total).toBe(3);
   });
 });
+
+describe("technique kinds in and out of play (since 1.26.0)", () => {
+  it("leaves a kind whose check says no out of the choice, and finds it as out of play", async () => {
+    const api = await load();
+    let on = false;
+    api.registerTechniqueKind({ module: "test-addon", key: "ta", label: "Targeted Attack", derive: () => ({ level: 9 }), available: () => on });
+    expect(api.registeredTechniqueKinds()).toEqual([]);
+    expect(api.registeredTechniqueKind("test-addon.ta")).toBeUndefined();
+    expect(api.unavailableTechniqueKind("test-addon.ta")?.label).toBe("Targeted Attack");
+    on = true;
+    expect(api.registeredTechniqueKinds()).toEqual([{ key: "test-addon.ta", label: "Targeted Attack" }]);
+    expect(api.unavailableTechniqueKind("test-addon.ta")).toBeUndefined();
+  });
+});
