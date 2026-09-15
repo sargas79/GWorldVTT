@@ -395,8 +395,16 @@ export function resolveContestScores(context: ContestResolverContext): { first: 
  * (since 1.23.0). Returns the refusal a listener gave, or null.
  */
 export function grappleMoveRefusal(actor: any, foe: any, move: "breakFree" | "takedown" | "pin" | "choke"): string | null {
-  const context = callCombatHook(PROCEDURE_HOOKS.grappleMove, { actor, foe, move, refusal: null as string | null });
-  return typeof context.refusal === "string" && context.refusal.trim() ? context.refusal.trim() : null;
+  return grappleMoveRules(actor, foe, move).refusal;
+}
+
+/** What the modules say about a grapple move: a refusal, and (since 1.35.0) whether its requirements are waived. */
+export function grappleMoveRules(actor: any, foe: any, move: "breakFree" | "takedown" | "pin" | "choke"): { refusal: string | null; waiveRequirements: boolean } {
+  const context = callCombatHook(PROCEDURE_HOOKS.grappleMove, { actor, foe, move, refusal: null as string | null, waiveRequirements: false });
+  return {
+    refusal: typeof context.refusal === "string" && context.refusal.trim() ? context.refusal.trim() : null,
+    waiveRequirements: context.waiveRequirements === true,
+  };
 }
 
 /** How a maneuver's attacks go this turn. */
@@ -448,6 +456,12 @@ export interface DerivedAttackModeRegistration {
   label: string;
   /** `melee` or `ranged`: the table it is listed in. */
   kind: "melee" | "ranged";
+  /**
+   * An attack the character has itself rather than one of their weapons (since
+   * 1.35.0): `applies` and `mode` are called once per character, with a null
+   * item, and the row has none.
+   */
+  self?: boolean;
   /** Whether this item has the mode for this actor. */
   applies: (item: any, actor: any) => boolean;
   /**
@@ -473,7 +487,7 @@ export interface DerivedModeHelpers {
   attribute?: (key: string) => number | null;
 }
 
-const derivedModes: Array<{ id: string; label: string; kind: "melee" | "ranged"; applies: DerivedAttackModeRegistration["applies"]; mode: DerivedAttackModeRegistration["mode"] }> = [];
+const derivedModes: Array<{ id: string; label: string; kind: "melee" | "ranged"; self: boolean; applies: DerivedAttackModeRegistration["applies"]; mode: DerivedAttackModeRegistration["mode"] }> = [];
 
 /** Registers an attack mode worked out when the sheet is drawn. Returns its `<module>.<key>`, or null. */
 export function registerDerivedAttackMode(registration: DerivedAttackModeRegistration): string | null {
@@ -485,7 +499,7 @@ export function registerDerivedAttackMode(registration: DerivedAttackModeRegistr
   if (r.kind !== "melee" && r.kind !== "ranged") return refuse(what, 'kind must be "melee" or "ranged"');
   if (typeof r.applies !== "function" || typeof r.mode !== "function") return refuse(what, "it needs applies and mode functions");
   if (derivedModes.some((m) => m.id === id)) return refuse(what, "that key is already registered");
-  derivedModes.push({ id, label: r.label.trim(), kind: r.kind, applies: r.applies, mode: r.mode });
+  derivedModes.push({ id, label: r.label.trim(), kind: r.kind, self: r.self === true, applies: r.applies, mode: r.mode });
   return id;
 }
 
@@ -500,18 +514,19 @@ export function derivedAttackRows(
   if (derivedModes.length === 0) return [];
   const rows: Array<Record<string, unknown>> = [];
   for (const entry of derivedModes.filter((m) => m.kind === kind)) {
-    for (const item of items) {
+    for (const item of entry.self ? [null] : items) {
       if (!safely(`derived attack mode ${entry.id}`, () => entry.applies(item, actor) === true, false)) continue;
       const mode = safely(`derived attack mode ${entry.id}`, () => entry.mode(item, actor, helpers), null);
       if (!mode || typeof mode !== "object") continue;
       rows.push({
         ...defaults,
-        itemId: String(item.id ?? ""),
+        itemId: String(item?.id ?? ""),
         modeIndex: -1,
-        name: String(item.name ?? ""),
+        name: item ? String(item.name ?? "") : entry.label,
         mode: entry.label,
         ...mode,
         derivedMode: entry.id,
+        ...(entry.self ? { natural: true } : {}),
       });
     }
   }

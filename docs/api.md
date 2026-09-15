@@ -566,6 +566,11 @@ and a hint `p.ihint`.
   Lifting ST in, and since 1.30.0 `attribute(key)` for `ST`, `DX`, `IQ`,
   `HT`, `Will` and `Per`. `actors.basicLift` and `actors.attribute` read the derived
   values, which aren't there yet while a mode is worked out.
+
+  Since 1.35.0 a mode registered with `self: true` belongs to the character rather
+  than a weapon: `applies(null, actor)` and `mode(null, actor, helpers)` are called once
+  per character, and the row has no item. Set `naturalKey` on the row (`punch`,
+  `kick`, `bite`, `claw`) for what strikes, which Hurting Yourself reads.
 - **`combat.registerSlam({ module, key, label, kind, available?, prepare })`** (since
   1.31.0). Another way to slam (`kind: "slam"`) or shove (`"shove"`), offered in
   the Slam or Shove dialog beside the system's own when `available(actor)` says so.
@@ -591,6 +596,9 @@ and a hint `p.ihint`.
     the side taking the action. Change a side's `base`, push to its `modifiers`,
     or set `winner` (`"first"` or `"second"`) to decide it without rolling. The
     quick contests' rolls are tagged `grapple` and the move.
+  - Since 1.35.0, `gworld.grappleMove` also gets `waiveRequirements`: set it true
+    to let a pin go ahead without the foe on the ground or the torso held. The
+    grapple roll itself carries the tags `grapple` and the grappled location;
   - `gworld.afterGrappleContest` follows with `{ move, actor, foe, grapple, outcome,
     marginOfVictory }` (`outcome` is `"first"`, `"second"` or `"tie"`), once the
     system has applied the result.

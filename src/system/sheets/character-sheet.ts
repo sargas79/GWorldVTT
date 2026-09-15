@@ -4563,6 +4563,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         foe: String(victim.name),
       }),
       modifiers,
+      // Tagged for the modules' modifiers (API 1.35.0).
+      tags: ["grapple", String(asked.hitLocation ?? "torso")],
     });
 
     // A grapple that missed is a missed attack and nothing more; the foe still
