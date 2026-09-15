@@ -349,6 +349,15 @@
         </label>
       </div>
       <p class="ihint">{{localize "GWORLD.Trait.TalentSkillsHint"}}</p>
+      {{#if showsMasteredWeapons}}
+      <div class="ifields">
+        <label class="wide">{{localize "GWORLD.Trait.MasteredWeapons"}}
+          <textarea name="system.masteredWeapons" rows="3"
+                    {{#unless editable}}disabled{{/unless}}>{{masteredWeaponsText}}</textarea>
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Trait.MasteredWeaponsHint"}}</p>
+      {{/if}}
       <div class="ifields">
         <label class="wide">{{localize "GWORLD.Trait.Power"}}
           <input type="text" name="system.power" value="{{system.power}}"

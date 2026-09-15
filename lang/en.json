@@ -1216,6 +1216,8 @@
       "CostTable": "Cost table",
       "LevelNames": "Level names, one per line",
       "TalentSkills": "Skills this Talent adds its level to, one per line",
+      "MasteredWeapons": "Weapons this Weapon Master covers, one per line",
+      "MasteredWeaponsHint": "Each line is a weapon skill (Broadsword, Thrown Weapon (Knife)) or a weapon's own name (Katana). A skill without a specialty covers all of them. Leave it empty and the name in parentheses is used, so Weapon Master (Rapier) works as it is; the \"All muscle powered weapons\" level covers every weapon. The damage bonus needs the weapon's skill at DX+1 or better, never a default.",
       "Power": "Power this belongs to",
       "PowerHint": "The power an ability belongs to, as its book names it (Bioenhancement, Mysticism, ESP). The Basic Set's psi abilities are recognised by their power modifier and can leave this blank. Tick the box on the power's Talent; its maximum level is where the GM's permission starts.",
       "PowerTalent": "This is the power's Talent",
