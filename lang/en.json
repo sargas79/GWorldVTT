@@ -347,7 +347,12 @@
       "DualWeapon": "Both hands at once",
       "DualNone": "One weapon",
       "DualPrimary": "Dual-Weapon Attack",
-      "DualOff": "Dual-Weapon Attack, off hand"
+      "DualOff": "Dual-Weapon Attack, off hand",
+      "WildSwing": "Wild Swing",
+      "WildSwingHint": "At a foe to your side or back, or one you can't see: -5 or the visibility penalty if worse, skill no higher than 9, and a random hit location",
+      "StopThrust": "Stop thrust: yards the foe moved",
+      "StopThrustHint": "Braced on a Wait: +1 thrust damage for every two full yards the foe moved toward you",
+      "StopThrustLine": "Stop thrust"
     },
     "Defense": {
       "NoParry": "Nothing to parry with",
