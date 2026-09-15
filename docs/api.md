@@ -279,6 +279,15 @@ and the roll continues.
     In `gworld.defenseChoices` it also has `parriesFlail`. Set it true to let
     a weapon that couldn't parry a flail (a fencing weapon or a knife) parry
     one;
+  - Since 1.38.0, `gworld.defenseChoices` also gets `acrobatic` (`{ available,
+    refusal, defenses, perTurn }`), the Acrobatic Dodge the card offers a defender with a
+    point in Acrobatics: set `available: false` and `refusal` to refuse it, add `parry`
+    or `block` to `defenses`, or raise `perTurn` (`null` for no limit). Its Acrobatics roll
+    is tagged `acrobaticDefense` and the defense, and `defenseCounts` counts it as
+    `acrobatic`. `gworld.attackArc` gets `{ defender, attacker, arc, side }` in tactical
+    combat before the card works out the defenses from the arc: set `arc` (`front`,
+    `side`, `back`) or `side` (`left`, `right`) to have the attack count as coming from
+    there;
   - Since 1.24.0, `gworld.defenseModifiers` and `gworld.defenseChoices` also get
     `defenseCounts`, this turn's defenses so far: `parries` with the weapon
     about to parry, `blocks` and `dodges`. Since 1.33.0 `gworld.defenseModifiers`

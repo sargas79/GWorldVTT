@@ -88,6 +88,15 @@ describe("how often a defense may be used (Campaigns pp. 375-376)", () => {
     expect(multipleParryPenalty(2, { fencing: true, trained: true })).toBe(-2);
   });
 
+  it("gives an Acrobatic Dodge +2 or -2, once a turn for a defender with a point in Acrobatics", async () => {
+    const { acrobaticDefenseModifier, mayTryAcrobatic, ACROBATIC_DEFENSES_PER_TURN } = await import("../defenses.js");
+    expect([acrobaticDefenseModifier(true), acrobaticDefenseModifier(false)]).toEqual([2, -2]);
+    expect(mayTryAcrobatic({ points: 1, used: 0, perTurn: ACROBATIC_DEFENSES_PER_TURN })).toBe(true);
+    expect(mayTryAcrobatic({ points: 1, used: 1, perTurn: ACROBATIC_DEFENSES_PER_TURN })).toBe(false);
+    expect(mayTryAcrobatic({ points: 0, used: 0, perTurn: ACROBATIC_DEFENSES_PER_TURN })).toBe(false);
+    expect(mayTryAcrobatic({ points: 2, used: 5, perTurn: null })).toBe(true);
+  });
+
   it("can't block bullets or beams", async () => {
     const { blockableAttack } = await import("../defenses.js");
     expect(blockableAttack("Guns (Pistol)")).toBe(false);

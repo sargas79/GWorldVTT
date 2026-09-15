@@ -376,7 +376,12 @@
         "NoDefense": "Completely unaware of the attacker: no defense at all",
         "OnlyDodge": "Against an unseen attacker, only a dodge -- unless a Hearing-2 roll placed them"
       },
-      "NoDefenseBonus": "No Defense Bonus against this"
+      "NoDefenseBonus": "No Defense Bonus against this",
+      "Acrobatic": {
+        "Label": "Acrobatic",
+        "Roll": "Acrobatics for an acrobatic {defense}",
+        "NotThis": "An acrobatic defense can't be a {defense} here"
+      }
     },
     "Tactical": {
       "front": "from the front",

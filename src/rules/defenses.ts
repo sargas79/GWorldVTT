@@ -304,3 +304,21 @@ export function blockableAttack(skill: string | undefined): boolean {
 
 /** "You may attempt to block only one attack per turn" (Campaigns p. 375). */
 export const BLOCKS_PER_TURN = 1;
+
+/**
+ * An Acrobatic Dodge (Campaigns p. 375): "Make an Acrobatics roll before you
+ * attempt your Dodge roll ... On a success, you get +2 to that Dodge roll. On a
+ * failure, you get -2."
+ */
+export function acrobaticDefenseModifier(success: boolean): number {
+  return success ? 2 : -2;
+}
+
+/** "If you have put at least one point into the Acrobatics skill, you can try a 'fancy' dodge once during your turn" (p. 375). */
+export const ACROBATIC_DEFENSES_PER_TURN = 1;
+
+/** Whether a defender may try an acrobatic defense: a point in Acrobatics, and turns left this turn (null for no limit). */
+export function mayTryAcrobatic(options: { points: number; used: number; perTurn: number | null }): boolean {
+  if (!(Number(options.points) >= 1)) return false;
+  return options.perTurn === null || Math.max(0, Math.floor(options.used)) < options.perTurn;
+}

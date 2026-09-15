@@ -34,6 +34,7 @@ import {
   type Maneuver,
   type MovementAllowance,
 } from "../rules/maneuvers.js";
+import { ACROBATIC_DEFENSES_PER_TURN } from "../rules/defenses.js";
 import { HIT_LOCATIONS, type HitLocation } from "../rules/hit-locations.js";
 import type { DamageType } from "../rules/types.js";
 
@@ -49,8 +50,10 @@ export type DefenseKey = "dodge" | "parry" | "block";
 export const COMBAT_HOOKS = Object.freeze({
   /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset, skillCap, calledShot, targets, refusal }`, mutable. */
   attackModifiers: "gworld.attackModifiers",
-  /** The defense card's choices for a defender: `{ defender, attack, delivery, damageType, choices, retreat, feverish }`, mutable. */
+  /** The defense card's choices for a defender: `{ defender, attack, delivery, damageType, choices, retreat, feverish, acrobatic }`, mutable. */
   defenseChoices: "gworld.defenseChoices",
+  /** The arc an attack arrives from, before the card works out the defenses (since 1.38.0): `{ defender, attacker, arc, side }`, mutable. */
+  attackArc: "gworld.attackArc",
   /** The weapons a character's best parry is picked from: `{ actor, attackedThisTurn, candidates }`, mutable. */
   parryWeapons: "gworld.parryWeapons",
   /** Before a defense roll: `{ defender, defense, attack, modifiers, deception, attacker }`, mutable. */
@@ -908,6 +911,26 @@ export interface HookedDefenseToggle {
   refusal: string | null;
 }
 
+/** An acrobatic defense (since 1.38.0): which defenses may be acrobatic, and how many a turn (null for no limit). */
+export interface HookedAcrobatic extends HookedDefenseToggle {
+  defenses: DefenseKey[];
+  perTurn: number | null;
+}
+
+const DEFENSE_KEYS: readonly DefenseKey[] = ["dodge", "parry", "block"];
+
+/**
+ * The arc an attack arrives from once a module has had its say (since 1.38.0):
+ * `front`, `side` or `back`, and `left` or `right` for a side attack.
+ * Anything else a listener sets is ignored.
+ */
+export function hookedAttackArc<A extends string, S extends string | null>(context: { defender: any; attacker: any; arc: A; side: S }): { arc: A; side: S } {
+  const hooked = callCombatHook(COMBAT_HOOKS.attackArc, { defender: context.defender, attacker: context.attacker, arc: context.arc as string, side: context.side as string | null });
+  const arc = ["front", "side", "back"].includes(String(hooked.arc)) ? (hooked.arc as A) : context.arc;
+  const side = hooked.side === null || ["left", "right"].includes(String(hooked.side)) ? (hooked.side as S) : context.side;
+  return { arc, side };
+}
+
 /**
  * What modules refuse on a defender's card: any of the three defenses,
  * Retreat and Feverish Defense, each with the text to show. Only refusals are
@@ -925,9 +948,16 @@ export function moduleDefenseRefusals(context: {
   attackWeapon?: Record<string, unknown> | null;
   /** The weapon a parry would be made with (since 1.21.0). */
   parryWeapon?: DefenseParryWeapon | null;
-  /** This turn's defenses so far (since 1.24.0). */
-  defenseCounts?: { parries: number; blocks: number; dodges: number };
-}): { choices: Map<DefenseKey, string>; retreat: string | null; feverish: string | null; parriesFlail: boolean; blockAgain: boolean } {
+  /** This turn's defenses so far (since 1.24.0), and acrobatic defenses (since 1.38.0). */
+  defenseCounts?: { parries: number; blocks: number; dodges: number; acrobatic?: number };
+}): {
+  choices: Map<DefenseKey, string>;
+  retreat: string | null;
+  feverish: string | null;
+  parriesFlail: boolean;
+  blockAgain: boolean;
+  acrobatic: { refusal: string | null; defenses: DefenseKey[]; perTurn: number | null };
+} {
   const parryWeapon = context.parryWeapon ? { ...context.parryWeapon } : null;
   const hooked = callCombatHook(COMBAT_HOOKS.defenseChoices, {
     defender: context.defender,
@@ -940,8 +970,9 @@ export function moduleDefenseRefusals(context: {
     arc: context.arc ?? null,
     attackWeapon: context.attackWeapon ? { ...context.attackWeapon } : null,
     parryWeapon,
-    defenseCounts: { ...(context.defenseCounts ?? { parries: 0, blocks: 0, dodges: 0 }) },
+    defenseCounts: { acrobatic: 0, ...(context.defenseCounts ?? { parries: 0, blocks: 0, dodges: 0 }) },
     blockAgain: false,
+    acrobatic: { available: true, refusal: null, defenses: ["dodge"], perTurn: ACROBATIC_DEFENSES_PER_TURN } as HookedAcrobatic,
   });
   const text = (refusal: unknown) => (typeof refusal === "string" && refusal.trim() ? refusal.trim() : "");
   const choices = new Map<DefenseKey, string>();
@@ -955,6 +986,11 @@ export function moduleDefenseRefusals(context: {
     feverish: hooked.feverish?.available === false ? text(hooked.feverish.refusal) : null,
     parriesFlail: parryWeapon?.parriesFlail === true,
     blockAgain: hooked.blockAgain === true,
+    acrobatic: {
+      refusal: hooked.acrobatic?.available === false ? text(hooked.acrobatic.refusal) : null,
+      defenses: Array.isArray(hooked.acrobatic?.defenses) ? DEFENSE_KEYS.filter((key) => hooked.acrobatic.defenses.includes(key)) : ["dodge"],
+      perTurn: hooked.acrobatic?.perTurn === null ? null : Number.isFinite(Number(hooked.acrobatic?.perTurn)) ? Math.max(0, Math.floor(Number(hooked.acrobatic.perTurn))) : ACROBATIC_DEFENSES_PER_TURN,
+    },
   };
 }
 
