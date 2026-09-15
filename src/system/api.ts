@@ -30,6 +30,7 @@ import * as rules from "../rules/index.js";
 import { normalizeSkillName } from "../rules/skills.js";
 import { incompatibleModules, satisfiesApiRange } from "./api-version.js";
 import { combatApi } from "./combat-extensions.js";
+import { loadInstantly } from "./ammunition.js";
 import { dataApi } from "./data-extensions.js";
 import { chatApi, sheetsApi } from "./sheet-extensions.js";
 import { magicApi, pointsApi } from "./roll-extensions.js";
@@ -59,7 +60,7 @@ import { manaLevel } from "./casting.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.27.0";
+export const API_VERSION = "1.28.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -162,6 +163,15 @@ const items = {
   /** Everything the system worked out for an item this preparation, or null. Read-only. */
   derived(item: any): Record<string, any> | null {
     return (item?.system?.derived as Record<string, any> | undefined) ?? null;
+  },
+
+  /**
+   * Loads up to `shots` into a ranged mode at once (since 1.28.0): no Ready
+   * maneuver, no card. Returns the new count, or null where the mode keeps no
+   * count or the user doesn't own the item.
+   */
+  load(item: any, modeIndex: number, shots: number): Promise<number | null> {
+    return loadInstantly(item, modeIndex, shots);
   },
 };
 

@@ -310,6 +310,26 @@ describe("an item's attack rows (#270)", () => {
     expect(rows[1]!.row).toMatchObject({ parry: null, twoHanded: false });
   });
 
+  it("offers a Feint from melee rows and not ranged ones until a listener says otherwise (since 1.28.0)", async () => {
+    const api = await load();
+    globals.Hooks = { callAll: () => undefined };
+    const plain = entries();
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: plain as never, ...helpers } as never);
+    expect([plain[0]!.row.feint, plain[1]!.row.feint]).toEqual([true, false]);
+    const changed = entries();
+    globals.Hooks = { callAll: (_event: string, context: any) => { context.rows[0].row.feint = "no"; context.rows[1].row.feint = true; } };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: changed as never, ...helpers } as never);
+    expect([changed[0]!.row.feint, changed[1]!.row.feint]).toEqual([false, true]);
+  });
+
+  it("gives a feint the lines modules add, and their refusal (since 1.28.0)", async () => {
+    const api = await load();
+    globals.Hooks = { callAll: (_event: string, context: any) => { context.modifiers.push({ label: "Range", value: -3 }, { label: "Bad", value: "1" }); } };
+    expect(api.feintModifiers({ actor: {}, foe: {}, item: null, mode: { index: 0, ranged: true }, ranged: true })).toEqual({ modifiers: [{ label: "Range", value: -3 }], refusal: null });
+    globals.Hooks = { callAll: (_event: string, context: any) => { context.refusal = " Out of range "; } };
+    expect(api.feintModifiers({ actor: {}, foe: {}, item: null, mode: null, ranged: false }).refusal).toBe("Out of range");
+  });
+
   it("puts the rows back as they were when a listener throws", async () => {
     const api = await load();
     const rows = entries();

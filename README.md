@@ -394,7 +394,7 @@ What's in it:
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted through the system's chat cards. |
 | `actors` | `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`: read-only. `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), and `setPosture(actor, posture)` (since 1.16.0). |
-| `items` | `derived`: read-only. |
+| `items` | `derived`: read-only. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode at once, with no Ready maneuver and no card, up to its capacity and across a shared magazine; it returns the new count, or null where the mode keeps no count or the user doesn't own the item. |
 | `combat` | Combat extension points (since 1.1.0); see below. |
 | `data` | Data extension points (since 1.2.0); see below. |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0); see below. |
@@ -508,6 +508,10 @@ and skipped, and the roll goes on.
     `refusal` (text), and the dialog leaves it off and says why. Since 1.27.0,
     `gworld.attackModifiers` also gets `extraEffort` (`{ flurryOfBlows, mightyBlows }`),
     what the attack bought, and `gworld.defenseModifiers` gets `feverish`;
+  - `gworld.feintModifiers` (since 1.28.0): before a Feint is rolled, as
+    `{ actor, foe, item, mode, ranged, modifiers, refusal }`. `item` and `mode`
+    are the row the Feint was made from (null for a natural attack). Push lines
+    to `modifiers` for the feinter's roll, or set `refusal` (text) to stop it;
   - Since 1.19.0, a `gworld.attackModifiers` listener may set `refusal` (text): the
     attack isn't rolled, and the user is told why;
   - Since 1.21.0, `gworld.attackModifiers` also gets:
@@ -575,6 +579,8 @@ and skipped, and the roll goes on.
       number, or null for none) and `twoHanded`. A Parry moved up or down
       moves the weapon's parry modifier with it, so the character's Parry
       follows. The Parry isn't worked out again from a changed `skillLevel`.
+    - Since 1.28.0, also `feint`: whether the Combat tab offers a Feint from the
+      row. Melee rows start true and ranged rows false, derived modes included;
     - Push `notes` (`{ label, hint }`), shown as tags, or set `followUp`
       (`{ damage, damageType, explosive, label? }`), which the Combat tab offers
       as a damage roll of its own.
