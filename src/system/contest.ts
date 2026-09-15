@@ -45,10 +45,11 @@ export interface ContestSide {
 }
 
 /** Rolls one side of a contest against its own effective score. */
-async function rollSide(side: ContestSide, label = "") {
+async function rollSide(side: ContestSide, label = "", opponent: any = null, tags: readonly string[] = []) {
   const given = side.modifiers ?? [];
-  // What the side's conditions and the modules add to its roll.
-  const added = successRollModifiers({ actor: side.actor, label, kind: "contest", skill: side.note ?? "", base: side.base, tags: ["contest"], modifiers: [...given] });
+  // What the side's conditions and the modules add to its roll: since 1.30.0
+  // they also see who is on the other side, and what sort of contest it is.
+  const added = successRollModifiers({ actor: side.actor, label, kind: "contest", skill: side.note ?? "", base: side.base, tags: ["contest", ...tags], modifiers: [...given], opponent });
   const modifiers = [...given, ...added].filter((m) => m.value !== 0);
   const effective = side.base + modifiers.reduce((sum, m) => sum + m.value, 0);
 
@@ -117,8 +118,8 @@ export async function rollFeint(options: {
 }): Promise<FeintResult> {
   // A module's resolver may propose what each side rolls against.
   const scores = resolveContestScores({ label: options.label, first: options.feinter, second: options.defender, tags: ["feint"] });
-  const feinter = await rollSide({ ...options.feinter, ...scores.first });
-  const defender = await rollSide({ ...options.defender, ...scores.second });
+  const feinter = await rollSide({ ...options.feinter, ...scores.first }, "", options.defender.actor ?? null, ["feint"]);
+  const defender = await rollSide({ ...options.defender, ...scores.second }, "", options.feinter.actor ?? null, ["feint"]);
   const result = resolveFeint(feinter.outcome, defender.outcome);
 
   await postContest({
@@ -221,11 +222,14 @@ export async function rollQuickContest(options: {
   label: string;
   first: ContestSide;
   second: ContestSide;
+  /** What the contest is for, e.g. `disarm` (since 1.30.0): passed to the resolvers and the sides' rolls. */
+  tags?: string[];
 }): Promise<ReturnType<typeof quickContest>> {
+  const tags = ["quickContest", ...(options.tags ?? [])];
   // A module's resolver may propose what each side rolls against.
-  const scores = resolveContestScores({ label: options.label, first: options.first, second: options.second, tags: ["quickContest"] });
-  const first = await rollSide({ ...options.first, ...scores.first }, options.label);
-  const second = await rollSide({ ...options.second, ...scores.second }, options.label);
+  const scores = resolveContestScores({ label: options.label, first: options.first, second: options.second, tags });
+  const first = await rollSide({ ...options.first, ...scores.first }, options.label, options.second.actor ?? null, tags);
+  const second = await rollSide({ ...options.second, ...scores.second }, options.label, options.first.actor ?? null, tags);
   const result = quickContest(first.outcome, second.outcome);
 
   const winner =

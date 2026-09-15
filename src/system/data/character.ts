@@ -2152,6 +2152,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           return parsed && bonus ? formatDiceAdds(addModifier(parsed, bonus)) : formula;
         },
         isRollable: (entry) => !entry.mode.affliction && !entry.mode.damageSpecial && parseDiceAdds(String(entry.row.damage ?? "")) !== null,
+        skillLevel: (name) => this.skillLevelByName(name),
       });
     }
 
@@ -2290,6 +2291,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       damage: (base: "thr" | "sw", modifier: number) => resolveDamage(strikingSt, base === "sw" ? "sw" : "thr", Number(modifier) || 0, "", null),
       // Basic Lift as worked out above, Lifting ST in (API 1.29.0): the actor's derived values aren't there yet.
       basicLift: secondary.basicLift,
+      // The attributes as worked out above (API 1.30.0).
+      attribute: (key: string) => {
+        const scores: Record<string, number> = { ...attrs, Will: secondary.will, Per: secondary.per };
+        return typeof scores[key] === "number" ? scores[key]! : null;
+      },
     };
     melee.push(...(derivedAttackRows("melee", weapons, this.parent, helpers, DERIVED_MELEE_DEFAULTS) as unknown as DerivedAttack[]));
     ranged.push(...(derivedAttackRows("ranged", weapons, this.parent, helpers, DERIVED_RANGED_DEFAULTS) as unknown as DerivedAttack[]));

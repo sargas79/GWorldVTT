@@ -330,6 +330,19 @@ describe("an item's attack rows (#270)", () => {
     expect(api.feintModifiers({ actor: {}, foe: {}, item: null, mode: null, ranged: false }).refusal).toBe("Out of range");
   });
 
+  it("lets a listener change a row's skill and readiness, with the actor's skill levels to hand (since 1.30.0)", async () => {
+    const api = await load();
+    const rows = entries();
+    globals.Hooks = {
+      callAll: (_event: string, context: any) => {
+        Object.assign(context.rows[0].row, { skillName: "Axe/Mace", skillLevel: context.skillLevel("Axe/Mace"), readiesAfterAttack: 1 });
+      },
+    };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: rows as never, ...helpers, skillLevel: (name: string) => (name === "Axe/Mace" ? 13 : null) } as never);
+    expect(rows[0]!.row).toMatchObject({ skillName: "Axe/Mace", skillLevel: 13, readiesAfterAttack: false });
+    expect((rows[1]!.row as any).readiesAfterAttack).toBe(false);
+  });
+
   it("puts the rows back as they were when a listener throws", async () => {
     const api = await load();
     const rows = entries();

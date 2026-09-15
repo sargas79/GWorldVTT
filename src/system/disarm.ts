@@ -80,6 +80,7 @@ export async function rollDisarm(options: {
   });
 
   const contest = await rollQuickContest({
+    tags: ["disarm"],
     label: game.i18n.format("GWORLD.Disarm.ContestLabel", {
       attacker: String(actor?.name ?? ""),
       foe: String(foe?.name ?? ""),
