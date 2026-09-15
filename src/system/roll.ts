@@ -488,7 +488,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
                   onSuccess: attackFlags(
                     actor, label, defensePenalty, false, noParry, options.weapon, options.delivery, options.damageType,
                     options.guidance?.area === true && !defendsAgainstArea(), options.dodgeBonus ?? 0,
-                    options.defenseModifiers ?? [], null, options.strikeLimits ?? null,
+                    options.defenseModifiers ?? [], null, options.strikeLimits ?? null, tags,
                   ),
                 }
               : {}),
@@ -533,6 +533,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
             options.defenseModifiers ?? [],
             (hitsInstead ? options.missFallbackShot : options.calledShot) ?? null,
             options.strikeLimits ?? null,
+            tags,
           )),
         }
       : {}),
@@ -681,6 +682,8 @@ function attackFlags(
   calledShot: { hitLocation: string; addonLocation: string | null } | null = null,
   /** What a strike at a weapon or shield allows the defender (since 1.31.0). */
   strikeLimits: { noParry?: boolean; noDefenseBonus?: boolean } | null = null,
+  /** The attack roll's tags, for the modules' defense hooks (since 1.44.0). */
+  tags: readonly string[] = [],
 ): object {
   const defenders = targetedTokens()
     .filter((token: any) => token?.actor?.uuid)
@@ -736,6 +739,7 @@ function attackFlags(
         ...(defenseModifiers.length > 0 ? { defenseModifiers } : {}),
         ...(calledShot ? { calledShot } : {}),
         ...(strikeLimits?.noParry || strikeLimits?.noDefenseBonus ? { strikeLimits: { noParry: strikeLimits.noParry === true, noDefenseBonus: strikeLimits.noDefenseBonus === true } } : {}),
+        ...(tags.length > 0 ? { tags: [...tags] } : {}),
       },
     },
   };
