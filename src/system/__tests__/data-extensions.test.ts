@@ -312,3 +312,13 @@ describe("technique kinds in and out of play (since 1.26.0)", () => {
     expect(api.unavailableTechniqueKind("test-addon.ta")).toBeUndefined();
   });
 });
+
+describe("Move changed by modules (since 1.42.0)", () => {
+  it("multiplies, rounds down, adds and never goes below 0", async () => {
+    const { applyMoveLines } = await import("../data-extensions.js");
+    expect(applyMoveLines(7, [{ label: "Half", multiplier: 0.5 }])).toBe(3);
+    expect(applyMoveLines(7, [{ label: "A yard short", value: -1 }])).toBe(6);
+    expect(applyMoveLines(7, [{ label: "Wound", multiplier: 0.8 }, { label: "Short", value: -1 }])).toBe(4);
+    expect(applyMoveLines(2, [{ label: "Crawl", value: -5 }])).toBe(0);
+  });
+});

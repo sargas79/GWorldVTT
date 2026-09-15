@@ -38,7 +38,37 @@ export const DATA_HOOKS = Object.freeze({
   defenseBonuses: "gworld.defenseBonuses",
   /** Once every skill's level is known: `{ actor, skills, levelOf }`; set an entry's `level`, `fromDefault` and `note`. */
   skillLevels: "gworld.skillLevels",
+  /** Once Move is worked out (since 1.42.0): `{ actor, move, lines }`; push `{ label, multiplier?, value? }`. */
+  moveModifiers: "gworld.moveModifiers",
 });
+
+/** A module's change to Move: a fraction of it, yards added or taken off, or both. */
+export interface MoveLine {
+  label: string;
+  multiplier?: number;
+  value?: number;
+}
+
+/** Move once the lines are applied: the multipliers' product times Move, rounded down, plus the values, never below 0. */
+export function applyMoveLines(move: number, lines: readonly MoveLine[]): number {
+  const factor = lines.reduce((product, line) => product * (Number.isFinite(line.multiplier) && Number(line.multiplier) >= 0 ? Number(line.multiplier) : 1), 1);
+  const added = lines.reduce((sum, line) => sum + (Number.isFinite(line.value) ? Number(line.value) : 0), 0);
+  return Math.max(0, Math.floor(Math.max(0, move) * factor + 1e-9) + added);
+}
+
+/** Asks the modules for their changes to a character's Move (since 1.42.0). A listener that throws changes nothing. */
+export function moduleMove(actor: any, move: number): { move: number; lines: MoveLine[] } {
+  const context = { actor, move, lines: [] as MoveLine[] };
+  const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
+  try {
+    hooks?.callAll?.(DATA_HOOKS.moveModifiers, context);
+  } catch (error) {
+    console.warn(`gworld | a ${DATA_HOOKS.moveModifiers} listener failed`, error);
+    return { move, lines: [] };
+  }
+  const lines = (Array.isArray(context.lines) ? context.lines : []).filter((l) => typeof l?.label === "string" && (Number.isFinite(l.multiplier) || Number.isFinite(l.value)));
+  return { move: lines.length ? applyMoveLines(move, lines) : move, lines };
+}
 
 /** A skill as `gworld.skillLevels` hands it to a listener. */
 export interface SkillLevelEntry {

@@ -1386,6 +1386,8 @@ async function rollAction(
     base,
     label,
     kind: rollKind(rollType),
+    // The attribute a skill or attribute roll is based on, as a tag a condition's rolls can name (API 1.42.0).
+    ...(target.dataset.basedOn ? { tags: [String(target.dataset.basedOn)] } : {}),
     // The skill rolled, for bonus points only that skill's may pay for.
     ...(target.dataset.rollSkill || rollType === "skill" ? { skill: String(target.dataset.rollSkill ?? rollLabel ?? "") } : {}),
     ...(rollType === "attack" ? { delivery, damageType: target.dataset.damageType ?? "" } : {}),

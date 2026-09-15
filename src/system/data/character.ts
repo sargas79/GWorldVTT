@@ -88,7 +88,7 @@ import {
 } from "../combat-extensions.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
-  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, type BonusLine,
+  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine,
 } from "../data-extensions.js";
 import { swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
@@ -2625,10 +2625,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       shieldBroken,
       basicSpeed: secondary.basicSpeed,
       basicMove: secondary.basicMove,
-      move: [reeling, veryTired].reduce(
-        (move, halve) => (halve ? halveForReeling(move) : move),
-        encumbrance.move,
-      ),
+      // And what the modules' rules take off it, or add (API 1.42.0).
+      ...(() => {
+        const moved = moduleMove(this.parent, [reeling, veryTired].reduce(
+          (move, halve) => (halve ? halveForReeling(move) : move),
+          encumbrance.move,
+        ));
+        return { move: moved.move, moveLines: moved.lines };
+      })(),
       thrust: formatDiceAdds(thrustDamage(strikingSt)),
       swing: formatDiceAdds(swingDamage(strikingSt)),
       dr,
