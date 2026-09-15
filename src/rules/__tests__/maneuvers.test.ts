@@ -141,3 +141,18 @@ describe("knockback (GURPS Basic Set: Campaigns p. 378)", () => {
     expect(through.yards).toBe(stopped.yards);
   });
 });
+
+describe("Wild Swings and stop thrusts (Campaigns pp. 366, 388)", () => {
+  it("takes the worse of -5 and the visibility penalty, capped at 9", async () => {
+    const { wildSwingPenalty, WILD_SWING_SKILL_CAP } = await import("../maneuvers.js");
+    expect(wildSwingPenalty(0)).toBe(-5);
+    expect(wildSwingPenalty(-4)).toBe(-1);
+    expect(wildSwingPenalty(-6)).toBe(0);
+    expect(WILD_SWING_SKILL_CAP).toBe(9);
+  });
+
+  it("adds +1 damage for every two full yards the foe moved", async () => {
+    const { stopThrustBonus } = await import("../maneuvers.js");
+    expect([stopThrustBonus(0), stopThrustBonus(1), stopThrustBonus(5), stopThrustBonus(6)]).toEqual([0, 0, 2, 3]);
+  });
+});

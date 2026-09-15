@@ -220,6 +220,24 @@ export function evaluateTurnsAfterTurn(turns: number, maneuver: string): number 
   return Math.min(MAX_EVALUATE_BONUS, Math.max(0, Math.floor(Number(turns) || 0)) + 1);
 }
 
+/**
+ * A Wild Swing (Campaigns p. 388): "-5 to hit or the current visibility
+ * penalty, whichever is worse". Returns the line to add beside the visibility
+ * lines already on the roll, so the two together come to the worse of them.
+ */
+export function wildSwingPenalty(visibility: number): number {
+  const seen = Math.min(0, Math.floor(Number(visibility) || 0));
+  return Math.min(-5, seen) - seen || 0;
+}
+
+/** "your effective skill cannot exceed 9 after all modifiers" (p. 388). */
+export const WILD_SWING_SKILL_CAP = 9;
+
+/** A stop thrust (p. 366): "+1 to thrust damage for every two full yards your attacker moved toward you." */
+export function stopThrustBonus(yards: number): number {
+  return Math.max(0, Math.floor((Number(yards) || 0) / 2));
+}
+
 /** Whether an attack on this maneuver takes a previous Evaluate's bonus: an Attack, Feint, All-Out Attack or Move and Attack (p. 364). */
 export function takesEvaluateBonus(maneuver: string, attacks: boolean): boolean {
   if (maneuver === "evaluate") return false;

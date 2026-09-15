@@ -279,6 +279,8 @@ and the roll continues.
     In `gworld.defenseChoices` it also has `parriesFlail`. Set it true to let
     a weapon that couldn't parry a flail (a fencing weapon or a knife) parry
     one;
+  - Since 1.40.0, `gworld.attackModifiers` also gets `wildSwing`, true for a Wild Swing,
+    which starts with `skillCap` 9;
   - Since 1.39.0, `gworld.defenseChoices` also gets `attacker`, the attacking actor or null;
   - Since 1.38.0, `gworld.defenseChoices` also gets `acrobatic` (`{ available,
     refusal, defenses, perTurn }`), the Acrobatic Dodge the card offers a defender with a

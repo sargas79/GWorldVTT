@@ -96,6 +96,7 @@ import {
   lanceDamage,
 } from "../rules/mounted.js";
 import { consumeCharge, recordCharge } from "./mounted.js";
+import { consumeStopThrust, recordStopThrust } from "./stop-thrust.js";
 import type { Posture, SkillAttribute } from "../rules/types.js";
 import {
   elevationRange,
@@ -136,7 +137,7 @@ import {
   steeringDuty,
   type Guidance,
 } from "../rules/guided.js";
-import { allOutAttackBonus, strongAttackDamageBonus, type AllOutAttackOption } from "../rules/maneuvers.js";
+import { WILD_SWING_SKILL_CAP, allOutAttackBonus, stopThrustBonus, strongAttackDamageBonus, wildSwingPenalty, type AllOutAttackOption } from "../rules/maneuvers.js";
 import { flailKind, type FlailKind } from "../rules/defenses.js";
 import { canTargetFromArc, missByOneHitsTorso } from "../rules/hit-locations.js";
 import { arcAgainstTarget } from "./attack-arc.js";
@@ -1102,6 +1103,8 @@ async function rollAction(
         actor,
         item: rolledItem,
         reach: target.dataset.reach ?? "",
+        // A thrusting weapon on a Wait may be braced for a stop thrust (p. 366).
+        stopThrust: actor?.system?.maneuver === "wait" && target.dataset.damageBase === "thr",
       })
     : null;
   if (asksAboutMelee && melee === null) return null;
@@ -1165,7 +1168,9 @@ async function rollAction(
     // other than accuracy, so they add nothing here.
     if (actor?.system?.maneuver === "allOutAttack") {
       const option = String(actor.system.allOutAttackOption ?? "determined") as AllOutAttackOption;
-      const bonus = allOutAttackBonus(option, Boolean(ranged));
+      // "you may not choose the 'Determined' option to get +4 to hit to offset
+      // the Wild Swing penalty" (p. 388).
+      const bonus = melee?.wildSwing ? 0 : allOutAttackBonus(option, Boolean(ranged));
       if (bonus !== 0) {
         modifiers.push({ label: game.i18n.localize(`GWORLD.Maneuver.AllOutAttackOption.${option}`), value: bonus });
       }
@@ -1224,6 +1229,7 @@ async function rollAction(
     await recordTurnedBlade(actor, melee?.turned === true);
     await recordPulledBlow(actor, melee?.pulledSt ?? null);
     if (melee?.charging) await recordCharge(actor);
+    await recordStopThrust(actor, melee?.stopThrustBonus ?? 0);
     await recordLance(actor, melee?.lance ?? null);
     // Pellets striking as one mass are a fact about this shot that the damage
     // roll, a separate click, has to be told.
@@ -1288,7 +1294,10 @@ async function rollAction(
         defensePenalty: (melee?.defensePenalty ?? 0) + feint,
         defenseModifiers: [...(addon?.defenseModifiers ?? [])],
         dataset: { ...target.dataset },
-        skillCap: movingMelee ? 9 : (null as number | null),
+        // Move and Attack and a Wild Swing both hold skill to 9.
+        skillCap: movingMelee || melee?.wildSwing ? WILD_SWING_SKILL_CAP : (null as number | null),
+        // Since 1.40.0: whether this is a Wild Swing.
+        wildSwing: melee?.wildSwing === true,
         // Where the blow is aimed, and at whom.
         calledShot: (() => {
           const aimedAt = melee?.calledShot ?? shot?.calledShot ?? null;
@@ -2384,7 +2393,13 @@ export async function promptForMeleeAttack(options: {
   actor?: any;
   item?: any;
   reach?: string;
+  /** Whether a stop thrust may be declared: a thrusting attack on a Wait (Campaigns p. 366). */
+  stopThrust?: boolean;
 }): Promise<{
+  /** A Wild Swing was declared (Campaigns p. 388). */
+  wildSwing: boolean;
+  /** The stop thrust's damage bonus, or 0. */
+  stopThrustBonus: number;
   /** What the modules' attack options chosen in the dialog add up to. */
   addon: ReturnType<typeof applyAttackOptions>;
   /** The attack options chosen, by id. */
@@ -2507,6 +2522,16 @@ export async function promptForMeleeAttack(options: {
              <span>${E("MightyBlows")} (${EXTRA_EFFORT_FP} FP)</span>
            </label>`
         : ""}
+      <label style="display:flex;align-items:center;gap:8px" title="${game.i18n.localize("GWORLD.Melee.WildSwingHint")}">
+        <input type="checkbox" name="wildSwing">
+        <span>${L("WildSwing")}</span>
+      </label>
+      ${options.stopThrust
+        ? `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px" title="${game.i18n.localize("GWORLD.Melee.StopThrustHint")}">
+             <span>${L("StopThrust")}</span>
+             <input type="number" name="stopThrustYards" value="0" min="0" step="1" style="width:90px">
+           </label>`
+        : ""}
       ${calledShotField(options.damageType, false, options.actor)}
       ${turnable
         ? `<label style="display:flex;align-items:center;gap:8px">
@@ -2564,6 +2589,8 @@ export async function promptForMeleeAttack(options: {
           lanceSt: num("lanceSt"),
           lanceYards: num("lanceYards"),
           jousting: ticked("jousting"),
+          wildSwing: ticked("wildSwing"),
+          stopThrustYards: num("stopThrustYards"),
         };
       },
     },
@@ -2573,8 +2600,10 @@ export async function promptForMeleeAttack(options: {
   if (!result || typeof result !== "object") return null;
   const {
     deceptive, modifier, rapid, flurry, mighty, sight, darkness, calledShot, turned, ground, dual,
-    charging, pullSt, lanceSt, lanceYards, jousting, addonValues,
+    charging, pullSt, lanceSt, lanceYards, jousting, addonValues, wildSwing, stopThrustYards,
   } = result as {
+    wildSwing: boolean;
+    stopThrustYards: number;
     addonValues: Record<string, unknown>;
     deceptive: number;
     modifier: number;
@@ -2638,7 +2667,9 @@ export async function promptForMeleeAttack(options: {
     });
   }
 
-  const aimed = calledShotModifier(calledShot, options.damageType, false, options.actor);
+  // "You cannot target a particular part of the foe's body" on a Wild Swing:
+  // the location is rolled (p. 388).
+  const aimed = calledShotModifier(wildSwing ? UNAIMED : calledShot, options.damageType, false, options.actor);
   if (aimed.modifier) modifiers.push(aimed.modifier);
 
   // What the modules' options chosen here do to the roll; the rest of what
@@ -2650,6 +2681,11 @@ export async function promptForMeleeAttack(options: {
   if (unseen) modifiers.push(unseen);
   const dark = darknessModifier(darkness, options.eyes);
   if (dark) modifiers.push(dark);
+  // A Wild Swing is at -5 or the visibility penalty, whichever is worse.
+  if (wildSwing) {
+    const swing = wildSwingPenalty((unseen?.value ?? 0) + (dark?.value ?? 0));
+    if (swing) modifiers.push({ label: L("WildSwing"), value: swing });
+  }
 
   if (modifier !== 0) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: modifier });
@@ -2671,6 +2707,8 @@ export async function promptForMeleeAttack(options: {
 
   const mightyBlows = mighty && effortAllowed;
   return {
+    wildSwing: wildSwing === true,
+    stopThrustBonus: options.stopThrust ? stopThrustBonus(stopThrustYards) : 0,
     addon,
     options: addonValues ?? {},
     deceptive: deception.defensePenalty,
@@ -2807,6 +2845,11 @@ export async function handleDamageAction(
 
   // Damage a module's option chosen at the attack added.
   modifiers.push(...(await consumeAddonDamage(actor)));
+
+  // A stop thrust: "+1 to thrust damage for every two full yards your
+  // attacker moved toward you" (p. 366).
+  const stopThrust = await consumeStopThrust(actor);
+  if (stopThrust) modifiers.push({ label: game.i18n.localize("GWORLD.Melee.StopThrustLine"), value: stopThrust });
 
   // The other half of a mounted charge: "-1 to hit but +1 damage" (p. 396).
   if (await consumeCharge(actor)) {
