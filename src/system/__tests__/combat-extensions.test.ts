@@ -342,3 +342,40 @@ describe("defense choices and parry weapons", () => {
     expect(api.parryWeaponRows({}, rows, true).map((r) => r.itemId)).toEqual(["axe"]);
   });
 });
+
+/** All-Out Attack options, maneuver allowances and a cap on skill (sargas79/GWorldVTT#282). */
+describe("maneuver extension points", () => {
+  function hooks(listeners: Record<string, (context: any) => void>) {
+    globals.Hooks = { callAll: (event: string, context: unknown) => listeners[event]?.(context) };
+  }
+
+  it("offers a module's All-Out Attack option and applies only its own effect", async () => {
+    const api = await load();
+    expect(api.registerAllOutAttackOption({ module: "test-addon", key: "long", label: "Long", available: (actor) => actor.on, attack: () => ({ reachBonus: 1 }) })).toBe("test-addon.long");
+    expect(api.registerAllOutAttackOption({ module: "test-addon", key: "long", label: "Again" })).toBeNull();
+    expect(api.MODULE_KEY.test("test-addon.long")).toBe(true);
+    expect(api.MODULE_KEY.test("determined")).toBe(false);
+    const actor = { on: true, system: { maneuver: "allOutAttack", allOutAttackOption: "test-addon.long" } };
+    expect(api.allOutAttackOptionsFor(actor)).toEqual([{ key: "test-addon.long", label: "Long" }]);
+    expect(api.allOutAttackOptionEffect(context({ actor }) as never)).toEqual({ reachBonus: 1 });
+    expect(api.allOutAttackOptionEffect(context({ actor: { ...actor, on: false } }) as never)).toBeNull();
+    expect(api.allOutAttackOptionEffect(context({ actor: { on: true, system: { maneuver: "attack", allOutAttackOption: "test-addon.long" } } }) as never)).toBeNull();
+  });
+
+  it("lets a listener change a maneuver's movement and defenses, keeping the maneuver's own for anything unknown", async () => {
+    const api = await load();
+    expect(api.maneuverAllowancesFor({}, "moveAndAttack", "")).toEqual({ movement: "full", defense: "dodgeAndBlockOnly" });
+    hooks({ "gworld.maneuverAllowances": (c) => { if (c.maneuver === "moveAndAttack") c.defense = "any"; if (c.option === "slam") c.movement = "full"; } });
+    expect(api.maneuverAllowancesFor({}, "moveAndAttack", "")).toEqual({ movement: "full", defense: "any" });
+    expect(api.maneuverAllowancesFor({}, "allOutAttack", "slam")).toEqual({ movement: "full", defense: "none" });
+    hooks({ "gworld.maneuverAllowances": (c) => { c.movement = "sideways"; } });
+    expect(api.maneuverAllowancesFor({}, "attack", "").movement).toBe("step");
+  });
+
+  it("holds effective skill to a cap once every modifier is in", async () => {
+    const api = await load();
+    expect(api.skillCapLine(15, [{ value: -4 }], 9, "cap")).toEqual({ label: "cap", value: -2 });
+    expect(api.skillCapLine(12, [{ value: -4 }], 9, "cap")).toBeNull();
+    expect(api.skillCapLine(15, [{ value: -4 }], null, "cap")).toBeNull();
+  });
+});

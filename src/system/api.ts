@@ -59,7 +59,7 @@ import { manaLevel } from "./casting.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.15.0";
+export const API_VERSION = "1.16.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -143,6 +143,17 @@ const actors = {
    */
   applyInjury(actor: any, options: { amount: number; fatigue?: boolean; label?: string }): Promise<InjuryTaken | null> {
     return takeInjury(actor, options);
+  },
+
+  /**
+   * Puts an actor in one of the system's postures (since 1.16.0), for a user
+   * who owns it. Returns whether it did.
+   */
+  async setPosture(actor: any, posture: string): Promise<boolean> {
+    const postures = ["standing", "crouching", "kneeling", "crawling", "sitting", "lying"];
+    if (!actor?.isOwner || !postures.includes(posture)) return false;
+    if (actor.system?.posture !== posture) await actor.update({ "system.posture": posture });
+    return true;
   },
 };
 

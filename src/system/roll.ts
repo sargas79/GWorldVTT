@@ -45,6 +45,7 @@ import {
 } from "../rules/success.js";
 import {
   COMBAT_HOOKS,
+  skillCapLine,
   applyAttackOptions,
   attackOptionFields,
   callCombatHook,
@@ -718,13 +719,19 @@ export interface DamageRollOptions {
  * numbers a GM needs rather than guessing at whom it hit.
  */
 export async function rollDamage(options: DamageRollOptions): Promise<number> {
-  const { actor, label, formula, damageType, armorDivisor = 1, fragmentation = "" } = options;
-  // A module may add lines to a damage roll, with what they are for.
+  const { actor, label, damageType, armorDivisor = 1, fragmentation = "" } = options;
+  // A module may add lines to a damage roll, with what they are for, and put
+  // another formula in its place.
   const item = options.item ?? null;
   const mode = options.mode ?? null;
-  const modifiers = callCombatHook(COMBAT_HOOKS.damageModifiers, {
-    actor, item, mode, label, formula, damageType, modifiers: [...(options.modifiers ?? [])],
-  }).modifiers.filter((m) => typeof m?.value === "number" && Number.isFinite(m.value));
+  const hookedDamage = callCombatHook(COMBAT_HOOKS.damageModifiers, {
+    actor, item, mode, label, formula: options.formula, damageType, modifiers: [...(options.modifiers ?? [])],
+  });
+  const replaced = typeof hookedDamage.formula === "string" && hookedDamage.formula !== options.formula && parseDiceAdds(hookedDamage.formula)
+    ? hookedDamage.formula
+    : null;
+  const formula = replaced ?? options.formula;
+  const modifiers = hookedDamage.modifiers.filter((m) => typeof m?.value === "number" && Number.isFinite(m.value));
   const explosive = options.explosive === true && isRuleOn("explosions");
   const cinematicBlast = explosive && isRuleOn("cinematicExplosions");
   const fragments = cinematicBlast ? "" : fragmentation;
@@ -1162,6 +1169,12 @@ async function rollAction(
   const feint =
     rollType === "attack" && isRuleOn("feint") ? await consumeFeint(actor) : 0;
 
+  // Move and Attack in melee: "roll against your skill at -4", and "your
+  // effective skill cannot exceed 9" (Characters p. 365). The cap is taken once
+  // every other modifier is in; a module may lift or change it.
+  const movingMelee = rollType === "attack" && !ranged && actor?.system?.maneuver === "moveAndAttack";
+  if (movingMelee) modifiers.push({ label: game.i18n.localize("GWORLD.Maneuver.moveAndAttack"), value: -4 });
+
   // A module may add to the attack roll and to what the defender faces, with
   // what each line is for.
   const attackRow = target.closest<HTMLElement>("[data-item-id]");
@@ -1179,6 +1192,7 @@ async function rollAction(
         defensePenalty: (melee?.defensePenalty ?? 0) + feint,
         defenseModifiers: [...(addon?.defenseModifiers ?? [])],
         dataset: { ...target.dataset },
+        skillCap: movingMelee ? 9 : (null as number | null),
       })
     : null;
   const defensePenalty = Number(hooked?.defensePenalty ?? (melee?.defensePenalty ?? 0) + feint) || 0;
@@ -1222,6 +1236,10 @@ async function rollAction(
         : target.dataset.thrown === "1"
           ? "thrown"
           : "ranged";
+
+  // Held to a cap on effective skill, once everything else is in.
+  const capped = hooked ? skillCapLine(base, modifiers, hooked.skillCap === null || hooked.skillCap === undefined ? null : Number(hooked.skillCap), game.i18n.format("GWORLD.Attack.SkillCap", { cap: Number(hooked.skillCap) })) : null;
+  if (capped) modifiers.push(capped);
 
   const outcome = await rollSuccess({
     actor,
@@ -2248,8 +2266,20 @@ export async function promptForMeleeAttack(options: {
   // option is offered only where there is something to turn.
   const turnable = turnedBlade({ type: options.damageType, damage: { dice: 1, adds: 0 } }) !== null;
   const E = (key: string) => game.i18n.localize(`GWORLD.ExtraEffort.${key}`);
-  const deceptionAllowed = isRuleOn("deceptiveAttack");
-  const rapidAllowed = isRuleOn("rapidStrike");
+  // A module's rules may take Rapid Strike or Deceptive Attack off this attack.
+  const offered = callCombatHook(COMBAT_HOOKS.meleeAttackOptions, {
+    actor: options.actor ?? null,
+    item: options.item ?? null,
+    maneuver: String(options.actor?.system?.maneuver ?? ""),
+    rapidStrike: { available: true, refusal: null as string | null },
+    deceptiveAttack: { available: true, refusal: null as string | null },
+  });
+  const refusedHere = [offered.rapidStrike, offered.deceptiveAttack]
+    .filter((o) => o?.available === false && typeof o.refusal === "string" && o.refusal.trim())
+    .map((o) => `<p style="margin:0;font-size:11px;opacity:0.8">${foundry.utils.escapeHTML(String(o.refusal))}</p>`)
+    .join("");
+  const deceptionAllowed = isRuleOn("deceptiveAttack") && offered.deceptiveAttack?.available !== false;
+  const rapidAllowed = isRuleOn("rapidStrike") && offered.rapidStrike?.available !== false;
   const dualAllowed = isRuleOn("dualWeaponAttack");
   const effortAllowed = isRuleOn("extraEffort");
   const addonContext = attackContextFor({
@@ -2275,6 +2305,7 @@ export async function promptForMeleeAttack(options: {
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Title") },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      ${refusedHere}
       ${deceptiveField}
       ${rapidAllowed
         ? `<label style="display:flex;align-items:center;gap:8px">

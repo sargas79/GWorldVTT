@@ -25,6 +25,7 @@ import { SYSTEM_ID } from "./constants.js";
 import {
   callCombatHook,
   getCombatState,
+  allOutAttackOptionEffect,
   maneuverInfo,
   mergeAttackEffects,
   setCombatState,
@@ -219,6 +220,9 @@ export async function chooseManeuverOption(actor: any, id: string, value: unknow
 /** What the chosen options on the attacker's maneuver do to an attack. */
 export function maneuverOptionAttackEffect(context: AttackContext): ReturnType<typeof mergeAttackEffects> {
   const effects: AttackEffect[] = [];
+  // A module's All-Out Attack option, where the attacker took one.
+  const allOut = allOutAttackOptionEffect(context);
+  if (allOut) effects.push(allOut);
   for (const { option, value } of optionsInForce(context.actor)) {
     if (!option.attack) continue;
     const effect = safely(`maneuver option ${option.id}`, () => option.attack!(context, value), null);

@@ -393,7 +393,7 @@ What's in it:
 | `rules` | The pure GURPS rules of the Basic Set: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer carries the rules of the rule group system 1.5.0 removed, which were never meant to be part of it. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted through the system's chat cards. |
-| `actors` | `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`: read-only. `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), and `applyInjury` (since 1.8.0). |
+| `actors` | `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`: read-only. `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), and `setPosture(actor, posture)` (since 1.16.0). |
 | `items` | `derived`: read-only. |
 | `combat` | Combat extension points (since 1.1.0); see below. |
 | `data` | Data extension points (since 1.2.0); see below. |
@@ -429,6 +429,11 @@ system. Every registration names its module and a key, stored as
 and is simply not offered when that says no. Anything that throws is logged
 and skipped, and the roll goes on.
 
+- **`registerAllOutAttackOption({ module, key, label, attack?, available? })`** (since 1.16.0).
+  An option beside Determined, Double, Feint, Strong and Suppression Fire in the
+  All-Out Attack select, stored as `<module>.<key>`. It carries no Basic Set
+  bonus: `attack(context)` returns its attack effect, as an attack option's
+  `apply` does.
 - **`registerManeuver({ module, key, label, movement, defense, attacks, options?, available? })`.**
   Offered in the maneuver picker with the given movement (`none`, `step`,
   `half`, `full`) and defense allowance (`any`, `none`, `dodgeAndBlockOnly`).
@@ -474,6 +479,22 @@ and skipped, and the roll goes on.
     button shows it refused with that text. `retreat` and `feverish` are
     `{ available, refusal }`; set `available: false` and the card leaves the
     checkbox off. A listener can't offer what the system refused;
+  - `gworld.maneuverAllowances` (since 1.16.0): a character's maneuver as their data
+    is prepared, as `{ actor, maneuver, option, movement, defense }`. Change
+    `movement` (`none`, `step`, `half`, `full`) or `defense` (`any`, `none`,
+    `dodgeAndBlockOnly`); the defenses are worked out from the result, and the
+    Combat tab shows the movement. `option` is the All-Out Attack option on that
+    maneuver, and the maneuver's own choice otherwise;
+  - `gworld.meleeAttackOptions` (since 1.16.0): before the melee attack dialog, as
+    `{ actor, item, maneuver, rapidStrike, deceptiveAttack }`. Set an option's
+    `available: false` and `refusal` (text), and the dialog leaves it off and
+    says why;
+  - Since 1.16.0, `gworld.attackModifiers` also gets `skillCap`: the most the
+    attack's effective skill may be once every modifier is in, or null. It is 9
+    for a melee attack on Move and Attack (Characters p. 365), which also takes
+    -4; set it to lift or change the cap. And a `gworld.damageModifiers`
+    listener may set `formula` to another dice formula, which is rolled in
+    place of the one given where it parses;
   - `gworld.parryWeapons` (since 1.15.0): the weapons a character's best parry is
     picked from, as `{ actor, attackedThisTurn, candidates }`. Each candidate is
     `{ itemId, modeIndex, name, unbalanced, excluded, reason }`: set `excluded`

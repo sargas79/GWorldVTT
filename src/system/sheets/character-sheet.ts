@@ -187,7 +187,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
-import { registeredManeuvers } from "../combat-extensions.js";
+import { allOutAttackOptionsFor, registeredManeuvers } from "../combat-extensions.js";
 import { setCondition } from "../conditions.js";
 import { bindSectionListeners, decorateItemRows, renderSections, runRowAction } from "../sheet-extensions.js";
 import {
@@ -3275,11 +3275,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           Number(foe.system?.attributes?.ST ?? 10) || 10,
         );
       })(),
-      aoaOptions: (["determined", "double", "feint", "strong", "suppression"] as const).map((key) => ({
-        key,
-        label: `GWORLD.Maneuver.AllOutAttackOption.${key}`,
-        selected: (system.allOutAttackOption ?? "determined") === key,
-      })),
+      aoaOptions: [
+        ...(["determined", "double", "feint", "strong", "suppression"] as const).map((key) => ({
+          key,
+          label: `GWORLD.Maneuver.AllOutAttackOption.${key}`,
+        })),
+        // And any a module offers this fighter.
+        ...allOutAttackOptionsFor(actor),
+      ].map((o) => ({ ...o, selected: (system.allOutAttackOption ?? "determined") === o.key })),
       aodIncreased: system.allOutDefenseOption === "increased",
       aodTargets: (["dodge", "parry", "block"] as const).map((key) => ({
         key,
