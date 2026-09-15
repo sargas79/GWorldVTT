@@ -92,7 +92,7 @@ import {
   lanceDamage,
 } from "../rules/mounted.js";
 import { consumeCharge, recordCharge } from "./mounted.js";
-import type { SkillAttribute } from "../rules/types.js";
+import type { Posture, SkillAttribute } from "../rules/types.js";
 import {
   elevationRange,
   rangedToHitModifier,
@@ -132,6 +132,7 @@ import {
   type Guidance,
 } from "../rules/guided.js";
 import { allOutAttackBonus, strongAttackDamageBonus, type AllOutAttackOption } from "../rules/maneuvers.js";
+import { POSTURE_EFFECTS } from "../rules/posture.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
 import { rollMalediction } from "./malediction.js";
@@ -1168,6 +1169,20 @@ async function rollAction(
   // at the foe who was feinted -- it was good for one second either way.
   const feint =
     rollType === "attack" && isRuleOn("feint") ? await consumeFeint(actor) : 0;
+
+  // The Posture Table (Characters p. 551): a melee attack from a low posture,
+  // and a shot at a low target.
+  if (rollType === "attack") {
+    const own = String(actor?.system?.posture ?? "standing") as Posture;
+    if (!ranged && own !== "standing" && POSTURE_EFFECTS[own]?.attack) {
+      modifiers.push({ label: game.i18n.format("GWORLD.Attack.PostureLine", { posture: game.i18n.localize(`GWORLD.Posture.${own}`) }), value: POSTURE_EFFECTS[own].attack });
+    }
+    const aimedAt = targetedTokens();
+    const theirs = aimedAt.length === 1 ? String(aimedAt[0]?.actor?.system?.posture ?? "standing") as Posture : "standing";
+    if (ranged && theirs !== "standing" && POSTURE_EFFECTS[theirs]?.target) {
+      modifiers.push({ label: game.i18n.format("GWORLD.Attack.TargetPostureLine", { posture: game.i18n.localize(`GWORLD.Posture.${theirs}`) }), value: POSTURE_EFFECTS[theirs].target });
+    }
+  }
 
   // Move and Attack in melee: "roll against your skill at -4", and "your
   // effective skill cannot exceed 9" (Characters p. 365). The cap is taken once
