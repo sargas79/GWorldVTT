@@ -76,6 +76,10 @@ export const PROCEDURE_HOOKS = Object.freeze({
   /** When a maneuver's attacks are worked out: `{ actor, maneuver, option, count, pickTargets }`, mutable. */
   attackSequence: "gworld.attackSequence",
   grappleMove: "gworld.grappleMove",
+  /** Before a break free, takedown, pin or choke contest (since 1.34.0): `{ move, actor, foe, grapple, first, second, winner }`, mutable. */
+  grappleContest: "gworld.grappleContest",
+  /** After one (since 1.34.0): `{ move, actor, foe, grapple, outcome, marginOfVictory }`. */
+  afterGrappleContest: "gworld.afterGrappleContest",
   /** When a combat starts: `(combat)`. */
   combatStart: "gworld.combatStart",
   /** When a combatant's turn starts: `(combat, combatant)`. */

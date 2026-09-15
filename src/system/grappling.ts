@@ -26,7 +26,94 @@ import {
   takedownScore,
 } from "../rules/grappling.js";
 import { attributeOf } from "./attributes.js";
-import { grappleMoveRefusal } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, grappleMoveRefusal } from "./procedure-extensions.js";
+import { callCombatHook } from "./combat-extensions.js";
+import type { ContestSide } from "./contest.js";
+
+type GrappleMove = "breakFree" | "takedown" | "pin" | "choke";
+type ContestResult = { outcome: "first" | "second" | "tie"; marginOfVictory: number };
+
+/**
+ * Rolls one of the grapple contests, after the modules have had their say
+ * (API 1.34.0): lines on either side, what either side rolls against, or the
+ * winner outright for a fighter who can't resist at all.
+ */
+async function grappleContest(options: {
+  move: GrappleMove;
+  actor: any;
+  foe: any;
+  grapple: Grapple;
+  label: string;
+  first: ContestSide;
+  second: ContestSide;
+  regular?: boolean;
+}): Promise<ContestResult> {
+  const { move, actor, foe, grapple, label } = options;
+  const lines = (list: unknown) => (Array.isArray(list) ? list : []).filter((m: any) => typeof m?.label === "string" && typeof m.value === "number" && Number.isFinite(m.value));
+  const hooked = callCombatHook(PROCEDURE_HOOKS.grappleContest, {
+    move,
+    actor,
+    foe,
+    grapple: { ...grapple },
+    first: { base: options.first.base, modifiers: [...(options.first.modifiers ?? [])] },
+    second: { base: options.second.base, modifiers: [...(options.second.modifiers ?? [])] },
+    winner: null as "first" | "second" | null,
+  });
+  const side = (given: ContestSide, changed: { base: unknown; modifiers: unknown }): ContestSide => {
+    const modifiers = lines(changed.modifiers);
+    return { ...given, base: Number.isFinite(Number(changed.base)) ? Number(changed.base) : given.base, ...(modifiers.length ? { modifiers } : { modifiers: [] }) };
+  };
+  const first = side(options.first, hooked.first);
+  const second = side(options.second, hooked.second);
+
+  let result: ContestResult;
+  if (hooked.winner === "first" || hooked.winner === "second") {
+    const winner = hooked.winner === "first" ? actor : foe;
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor }),
+      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+      content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${foundry.utils.escapeHTML(label)}</span></div>
+        <div class="gc-result">${foundry.utils.escapeHTML(game.i18n.format("GWORLD.Grapple.Decided", { winner: String(winner?.name ?? "") }))}</div></div>`,
+    });
+    result = { outcome: hooked.winner, marginOfVictory: 0 };
+  } else if (options.regular) {
+    const regular = await rollRegularContest({ label, first, second });
+    result = { outcome: regular.outcome ?? "tie", marginOfVictory: 0 };
+  } else {
+    const quick = await rollQuickContest({ label, first, second, tags: ["grapple", move] });
+    result = { outcome: quick.outcome, marginOfVictory: quick.marginOfVictory };
+  }
+  return result;
+}
+
+/** Tells the modules how a grapple contest went, once its result is applied (API 1.34.0). */
+function afterGrappleContest(move: GrappleMove, actor: any, foe: any, grapple: Grapple, result: ContestResult): void {
+  callCombatHook(PROCEDURE_HOOKS.afterGrappleContest, { move, actor, foe, grapple: { ...grapple }, outcome: result.outcome, marginOfVictory: result.marginOfVictory });
+}
+
+/**
+ * Changes a grapple on both fighters (API 1.34.0): the hands on it, whether it
+ * is a pin, and where it holds. The pinned condition follows.
+ */
+export async function updateGrapple(actor: any, patch: { hands?: number; pinned?: boolean; hitLocation?: string }): Promise<boolean> {
+  const mine = grappleOf(actor);
+  if (!mine) return false;
+  const foe = await foeOf(mine);
+  const theirs = grappleOf(foe);
+  const next = (g: Grapple): Grapple => ({
+    ...g,
+    ...(patch.hands !== undefined && Number.isFinite(Number(patch.hands)) ? { hands: Math.max(1, Math.floor(Number(patch.hands))) } : {}),
+    ...(typeof patch.pinned === "boolean" ? { pinned: patch.pinned } : {}),
+    ...(typeof patch.hitLocation === "string" && patch.hitLocation ? { hitLocation: patch.hitLocation } : {}),
+  });
+  if (actor?.isOwner) await actor.setFlag(SYSTEM_ID, GRAPPLE_FLAG, next(mine));
+  if (foe?.isOwner && theirs) await foe.setFlag(SYSTEM_ID, GRAPPLE_FLAG, next(theirs));
+  if (typeof patch.pinned === "boolean") {
+    const victim = mine.holding ? foe : actor;
+    if (victim?.isOwner) await setCondition(victim, "pinned", patch.pinned);
+  }
+  return true;
+}
 
 /** Whether a module's rules refuse a grapple move, saying so when they do. */
 function refusedMove(actor: any, foe: any, move: "breakFree" | "takedown" | "pin" | "choke"): boolean {
@@ -195,7 +282,11 @@ export async function rollBreakFree(options: { actor: any }): Promise<boolean> {
     return true;
   }
 
-  const result = await rollQuickContest({
+  const result = await grappleContest({
+    move: "breakFree",
+    actor,
+    foe,
+    grapple,
     label: game.i18n.format("GWORLD.Grapple.BreakFreeLabel", {
       victim: String(actor.name),
       foe: String(foe.name ?? ""),
@@ -214,12 +305,14 @@ export async function rollBreakFree(options: { actor: any }): Promise<boolean> {
     // "If you successfully break free, you may immediately move one yard in any
     // direction" -- the yard is the player's to take.
     ui.notifications?.info(game.i18n.localize("GWORLD.Grapple.Free"));
+    afterGrappleContest("breakFree", actor, foe, grapple, result);
     return true;
   }
 
   ui.notifications?.info(
     game.i18n.format("GWORLD.Grapple.StillHeld", { seconds: grip.secondsBetweenAttempts }),
   );
+  afterGrappleContest("breakFree", actor, foe, grapple, result);
   return false;
 }
 
@@ -246,7 +339,11 @@ export async function rollTakedown(options: { actor: any }): Promise<void> {
   const posture = String(actor.system?.posture ?? "standing") as never;
   const modifier = takedownModifier(posture);
 
-  const result = await rollQuickContest({
+  const result = await grappleContest({
+    move: "takedown",
+    actor,
+    foe,
+    grapple,
     label: game.i18n.format("GWORLD.Grapple.TakedownLabel", {
       attacker: String(actor.name),
       foe: String(foe.name ?? ""),
@@ -269,10 +366,11 @@ export async function rollTakedown(options: { actor: any }): Promise<void> {
   // "If you win, your victim falls down next to you... If you lose, you suffer
   // the same effects!" A tie does nothing at all.
   const loser = result.outcome === "first" ? foe : result.outcome === "second" ? actor : null;
-  if (!loser?.isOwner) return;
-
-  await loser.update({ "system.posture": "lying" });
-  await setCondition(loser, "prone", true);
+  if (loser?.isOwner) {
+    await loser.update({ "system.posture": "lying" });
+    await setCondition(loser, "prone", true);
+  }
+  afterGrappleContest("takedown", actor, foe, grapple, result);
 }
 
 /**
@@ -307,7 +405,12 @@ export async function rollPin(options: { actor: any }): Promise<void> {
     foeFreeHands: 2,
   });
 
-  const result = await rollRegularContest({
+  const result = await grappleContest({
+    move: "pin",
+    actor,
+    foe,
+    grapple,
+    regular: true,
     label: game.i18n.format("GWORLD.Grapple.PinLabel", {
       attacker: String(actor.name),
       foe: String(foe.name ?? ""),
@@ -322,10 +425,11 @@ export async function rollPin(options: { actor: any }): Promise<void> {
     second: { actor: foe, base: scoresOf(foe).strength },
   });
 
-  if (result.outcome !== "first") return;
-
-  await setPinned(actor, grapple, true);
-  ui.notifications?.info(game.i18n.format("GWORLD.Grapple.Pinned", { foe: String(foe.name ?? "") }));
+  if (result.outcome === "first") {
+    await setPinned(actor, grapple, true);
+    ui.notifications?.info(game.i18n.format("GWORLD.Grapple.Pinned", { foe: String(foe.name ?? "") }));
+  }
+  afterGrappleContest("pin", actor, foe, grapple, result);
 }
 
 /**
@@ -352,7 +456,11 @@ export async function rollChoke(options: { actor: any }): Promise<void> {
 
   const resist = Math.max(attributeOf(foe, "ST"), attributeOf(foe, "HT"));
 
-  const result = await rollQuickContest({
+  const result = await grappleContest({
+    move: "choke",
+    actor,
+    foe,
+    grapple,
     label: game.i18n.format("GWORLD.Grapple.ChokeLabel", {
       attacker: String(actor.name),
       foe: String(foe.name ?? ""),
@@ -368,19 +476,18 @@ export async function rollChoke(options: { actor: any }): Promise<void> {
     second: { actor: foe, base: resist, note: "ST/HT" },
   });
 
-  if (result.outcome !== "first") return;
-
-  const damage = chokeDamage(result.marginOfVictory);
-  if (damage <= 0) return;
-
-  await applyDamageToActor(foe, {
-    basicDamage: damage,
-    type: "cr",
-    armorDivisor: 1,
-    // The neck's own wounding multiplier is applied by the pipeline, as it is
-    // for any blow that lands there.
-    hitLocation: aroundTorso ? "torso" : "neck",
-  });
+  const damage = result.outcome === "first" ? chokeDamage(result.marginOfVictory) : 0;
+  if (damage > 0) {
+    await applyDamageToActor(foe, {
+      basicDamage: damage,
+      type: "cr",
+      armorDivisor: 1,
+      // The neck's own wounding multiplier is applied by the pipeline, as it is
+      // for any blow that lands there.
+      hitLocation: aroundTorso ? "torso" : "neck",
+    });
+  }
+  afterGrappleContest("choke", actor, foe, grapple, result);
 }
 
 /**
