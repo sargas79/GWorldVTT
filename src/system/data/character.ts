@@ -2288,6 +2288,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       skillLevel,
       rows: (item: any) => ({ melee: ownRows(melee, item), ranged: ownRows(ranged, item) }),
       damage: (base: "thr" | "sw", modifier: number) => resolveDamage(strikingSt, base === "sw" ? "sw" : "thr", Number(modifier) || 0, "", null),
+      // Basic Lift as worked out above, Lifting ST in (API 1.29.0): the actor's derived values aren't there yet.
+      basicLift: secondary.basicLift,
     };
     melee.push(...(derivedAttackRows("melee", weapons, this.parent, helpers, DERIVED_MELEE_DEFAULTS) as unknown as DerivedAttack[]));
     ranged.push(...(derivedAttackRows("ranged", weapons, this.parent, helpers, DERIVED_RANGED_DEFAULTS) as unknown as DerivedAttack[]));
