@@ -279,6 +279,10 @@ and the roll continues.
     In `gworld.defenseChoices` it also has `parriesFlail`. Set it true to let
     a weapon that couldn't parry a flail (a fencing weapon or a knife) parry
     one;
+  - Since 1.44.0:
+    - an attack's defense flag keeps the attack roll's `tags`;
+    - `gworld.breakageOdds` gets `attackTags` and `attackWeight`, the weight the attack
+      counts as, which a listener may change; an unarmed attack reaches it too, at weight 0;
   - Since 1.43.0:
     - `gworld.breakageOdds` gets `attacker` and `delivery`;
     - `roll.damage` takes `source` (text), which `gworld.injury` and `gworld.afterDamage` see

@@ -578,6 +578,8 @@ interface DefenseFlag {
   noParry?: boolean;
   /** The attacking weapon, for the parry to weigh and what it does to a defense (Characters p. 208, Campaigns p. 376). */
   weapon?: AttackWeaponFlag;
+  /** The attack roll's tags (since 1.44.0). */
+  tags?: string[];
   /** +1 to Dodge alone, for a target who saw the laser dot (Campaigns p. 411). */
   dodgeBonus?: number;
   /** Lines a module's attack option put on the defender's rolls, each for the defenses it names. */
@@ -970,6 +972,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         skill: choice.skillName,
         isFencing: choice.isFencing,
         ...(flag.weapon ? { attackWeapon: flag.weapon } : {}),
+        ...(flag.tags ? { attackTags: flag.tags } : {}),
         ...(flag.delivery ? { delivery: flag.delivery } : {}),
         ...(flag.damageType ? { damageType: flag.damageType } : {}),
         ...(technique ? { technique } : {}),
@@ -1326,6 +1329,8 @@ async function rollDefense(options: {
   isFencing: boolean;
   /** The attacking weapon, which a parry has to weigh, and what it does to the defense (Campaigns p. 376). */
   attackWeapon?: AttackWeaponFlag;
+  /** The attack roll's tags (since 1.44.0). */
+  attackTags?: string[];
   /** How the blow arrived, and what it does (p. 417). */
   delivery?: Delivery;
   damageType?: string;
@@ -1391,11 +1396,14 @@ async function rollDefense(options: {
   const parryWeapon = key === "parry" && options.parryWeapon?.natural === true && derivedParryWeapon && !derivedParryWeapon.natural
     ? { itemId: "", weight: 0, quality: "good", material: "", twoHanded: false, natural: true }
     : derivedParryWeapon;
-  const heavy = key === "parry" && options.attackWeapon && isRuleOn("weaponBreakage");
-  if (heavy && options.attackWeapon) {
+  // An unarmed attack carries no weapon, and weighs nothing -- unless a
+  // module's `gworld.breakageOdds` says what it weighs (since 1.44.0).
+  const attackWeapon = options.attackWeapon ?? (options.delivery === "unarmed" ? { weight: 0, material: "", swung: false } : undefined);
+  const heavy = key === "parry" && attackWeapon && isRuleOn("weaponBreakage");
+  if (heavy && attackWeapon) {
     const basicLift = Number(defender.system?.derived?.basicLift ?? 0) || 0;
-    if (parryTooHeavy({ basicLift, twoHanded: parryWeapon?.twoHanded === true, attackWeight: options.attackWeapon.weight })) {
-      await postParryTooHeavy(defender, options.attackWeapon.weight, basicLift);
+    if (parryTooHeavy({ basicLift, twoHanded: parryWeapon?.twoHanded === true, attackWeight: attackWeapon.weight })) {
+      await postParryTooHeavy(defender, attackWeapon.weight, basicLift);
       return;
     }
   }
@@ -1539,14 +1547,15 @@ async function rollDefense(options: {
 
   // "Your weapon may break if it parries anything three or more times its
   // own weight" (p. 376) -- whether or not the parry succeeded.
-  if (heavy && options.attackWeapon) {
+  if (heavy && attackWeapon) {
     await heavyParryCheck({
       defender,
       parryWeapon,
-      attackWeapon: options.attackWeapon,
+      attackWeapon,
       parried: outcome?.success === true,
       attacker: options.attacker ?? null,
       delivery: options.delivery ?? "",
+      attackTags: options.attackTags ?? [],
     });
   }
 

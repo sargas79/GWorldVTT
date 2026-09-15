@@ -172,6 +172,8 @@ export async function heavyParryCheck(options: {
   /** Who attacked, and how, for the modules' hook (since 1.43.0). */
   attacker?: any;
   delivery?: string;
+  /** The attack roll's tags (since 1.44.0). */
+  attackTags?: readonly string[];
 }): Promise<void> {
   const { defender, parryWeapon, attackWeapon } = options;
   if (!parryWeapon || parryWeapon.natural || !isRuleOn("weaponBreakage")) return;
@@ -192,11 +194,15 @@ export async function heavyParryCheck(options: {
     // Since 1.43.0: who attacked, and how the blow arrived.
     attacker: options.attacker ?? null,
     delivery: options.delivery ?? "",
+    // Since 1.44.0: the attack's tags, and the weight the attack counts as,
+    // which a module may change.
+    attackTags: [...(options.attackTags ?? [])],
+    attackWeight: attackWeapon.weight,
   });
   const breaking = odds.item ?? item;
   const chance = heavyParryBreakChance({
     parryingWeight: typeof odds.weight === "number" && Number.isFinite(odds.weight) && odds.weight > 0 ? odds.weight : parryWeapon.weight,
-    attackingWeight: attackWeapon.weight,
+    attackingWeight: typeof odds.attackWeight === "number" && Number.isFinite(odds.attackWeight) && odds.attackWeight >= 0 ? odds.attackWeight : attackWeapon.weight,
     quality,
     ...(typeof odds.breakage === "number" && Number.isFinite(odds.breakage) ? { breakage: odds.breakage } : {}),
   });
