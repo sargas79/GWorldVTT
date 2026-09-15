@@ -777,6 +777,8 @@ export interface DamageRollOptions {
   mode?: { index: number; ranged: boolean; derived?: string } | null;
   /** The body part an unarmed blow strikes with, for Hurting Yourself (Campaigns p. 379). */
   strikingPart?: string | null;
+  /** Where the blow came from, for the modules' damage hooks (since 1.43.0), e.g. "parriedLimb". */
+  source?: string;
 }
 
 /**
@@ -896,6 +898,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(options.ignoresDr ? { ignoresDr: true } : {}),
           ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
           ...(mode ? { mode } : {}),
+          ...(options.source ? { source: String(options.source) } : {}),
           ...(options.weaponTarget ? { weaponTarget: options.weaponTarget } : {}),
           // Who struck bare-handed, and with what, for Hurting Yourself (p. 379).
           ...(options.strikingPart && typeof options.actor?.uuid === "string" ? { strikingPart: options.strikingPart, strikerUuid: options.actor.uuid } : {}),

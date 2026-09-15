@@ -2385,6 +2385,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           })
         : null;
 
+    // The best bare-handed parry, worked out the same way, for a module that
+    // offers it beside a weapon's (API 1.43.0).
+    const bestBareParry = bestParryOption(
+      parryWeaponRows(this.parent, melee.filter((atk) => atk.usable && !atk.unready && atk.natural), Boolean(this.conditions.attackedThisTurn)),
+    );
+    const bareParryResult =
+      parryAvailable && bestBareParry && bestBareParry.skillLevel !== null
+        ? parry(bestBareParry.skillLevel, {
+            ...contextFor("parry"),
+            weaponParryModifier: bestBareParry.parryModifier + traits.enhancedParry.bareHands,
+          })
+        : null;
+
     const blockResult =
       defenseAvailable && shieldSkill !== null ? block(shieldSkill, contextFor("block")) : null;
 
@@ -2432,11 +2445,22 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       defenses: { dodge: defenses.dodge?.total ?? null, parry: defenses.parry?.total ?? null, block: defenses.block?.total ?? null },
       lines: [] as Array<BonusLine & { defense: string }>,
     }).lines as Array<BonusLine & { defense: string }>;
+    const bareHandedParry: DefenseView | null = bareParryResult && bestBareParry
+      ? {
+          total: bareParryResult.total,
+          source: `${bestBareParry.skillName} ${bestBareParry.skillLevel}`,
+          math: describe(bareParryResult.base, bareParryResult.modifiers),
+          skillName: bestBareParry.skillName,
+          isFencing: false,
+        }
+      : null;
     for (const line of defenseBonuses) {
-      const view = defenses[line.defense as keyof typeof defenses];
-      if (!view || line.value === 0) continue;
-      view.total = Math.max(1, view.total + line.value);
-      view.math += ` ${line.value >= 0 ? "+" : "−"}${Math.abs(line.value)} ${line.label}`;
+      const views = [defenses[line.defense as keyof typeof defenses], ...(line.defense === "parry" ? [bareHandedParry] : [])];
+      for (const view of views) {
+        if (!view || line.value === 0) continue;
+        view.total = Math.max(1, view.total + line.value);
+        view.math += ` ${line.value >= 0 ? "+" : "−"}${Math.abs(line.value)} ${line.label}`;
+      }
     }
 
     // ── points ledger ───────────────────────────────────────────────────
@@ -2658,6 +2682,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       shieldName: shieldItem?.name ?? null,
       armorName: armorItems[0]?.name ?? null,
       defenses,
+      /** The best bare-handed parry, whatever the best parry is (since API 1.43.0). */
+      bareHandedParry,
       /** What add-on modules added to the attributes and defenses, line by line. */
       extensionBonuses: { attributes: attributeBonuses, defenses: defenseBonuses },
       melee,

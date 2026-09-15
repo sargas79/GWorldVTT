@@ -6,6 +6,7 @@
  * binds it to Foundry documents, sheets, and the canvas.
  */
 
+import { registerConsciousnessTurns } from "./system/consciousness.js";
 import "./styles/gworld.css";
 
 import * as rules from "./rules/index.js";
@@ -129,6 +130,7 @@ Hooks.once("init", () => {
   // boundary it asked for.
   registerCombatStateHooks();
   registerProcedureHooks(setCondition);
+  registerConsciousnessTurns();
 
   const { DocumentSheetConfig } = foundry.applications.apps;
   DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.applications.sheets.ActorSheetV2);

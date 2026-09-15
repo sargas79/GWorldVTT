@@ -159,9 +159,25 @@ export function hasCondition(actor: any, id: string): boolean {
  */
 export async function setCondition(actor: any, id: string, active: boolean): Promise<void> {
   if (!CONDITION_IDS.has(id) || !actor?.isOwner) return;
-  if (hasCondition(actor, id) === active) return;
-  await actor.toggleStatusEffect?.(id, { active });
+  // One at a time for each actor and condition, each looking again once the
+  // last has landed: a posture change sets prone as well as whoever changed
+  // it, and two at once made two prone effects, or deleted one twice.
+  const key = `${String(actor.uuid ?? actor.id)}:${id}`;
+  const run = (pendingConditions.get(key) ?? Promise.resolve()).then(async () => {
+    if (hasCondition(actor, id) === active) return;
+    await actor.toggleStatusEffect?.(id, { active });
+  });
+  const settled = run.catch(() => undefined);
+  pendingConditions.set(key, settled);
+  try {
+    await run;
+  } finally {
+    if (pendingConditions.get(key) === settled) pendingConditions.delete(key);
+  }
 }
+
+/** The condition changes still landing, by actor and condition. */
+const pendingConditions = new Map<string, Promise<void>>();
 
 /**
  * Brings the conditions that follow from a character's hit points into line
