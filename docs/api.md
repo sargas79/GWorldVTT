@@ -456,6 +456,9 @@ one when it is registered, and a module that uses partials loads them with
     template with new `data`, which replaces the old. The GM may, and so may
     whoever owns the card's actor and may change the message (in Foundry, the
     user who posted it). It returns whether it did.
+- **The compendium picker** (since 1.41.0): Foundry's `renderCompendiumPicker` hook fires
+  on every render, including each search. Each row of the list is `[data-picker-row]` with
+  the entry's UUID in `data-uuid`, and the entry's name is `[data-picker-name]` inside it.
 - **`sheets.registerGmTool({ module, key, label, icon?, open, visible? })`.**
   A button in the token controls, shown to the GM only.
 
