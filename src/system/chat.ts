@@ -1278,6 +1278,8 @@ async function rollDefense(options: {
     parryWeapon: key === "parry" ? (options.parryWeapon ?? null) : null,
     // Since 1.24.0: this turn's defenses so far.
     defenseCounts: countsFor(defender, key === "parry" ? options.parryWeapon : null),
+    // Since 1.27.0: whether Feverish Defense was bought for this defense.
+    feverish,
   });
 
   // "If struck by a potentially lethal attack ... the hero can choose to
