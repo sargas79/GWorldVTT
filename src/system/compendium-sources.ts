@@ -91,11 +91,33 @@ export function defaultSources(packs: readonly PackSummary[], systemId: string):
 }
 
 /**
+ * The system's own packs that a module's stand in for, each with the packs
+ * that replace it.
+ *
+ * A module that ships its own copy of a book the system ships -- the same
+ * `flags.gworld.book`, and packs of the same document type -- is the copy
+ * the table means to use. Offering both lists every entry twice, so the
+ * system's packs of that book and type give way to the module's.
+ */
+export function supersededPacks(packs: readonly PackSummary[], systemId: string): Map<string, string[]> {
+  const replaced = new Map<string, string[]>();
+  for (const pack of packs) {
+    if (pack.packageType !== "system" || pack.packageName !== systemId || !pack.book) continue;
+    const by = packs
+      .filter((other) => other.packageType === "module" && other.book === pack.book && other.documentName === pack.documentName)
+      .map((other) => other.collection);
+    if (by.length > 0) replaced.set(pack.collection, by);
+  }
+  return replaced;
+}
+
+/**
  * The packs the setting names, kept to those that exist.
  *
  * An empty or unreadable setting means the system's own packs, and so does a
  * setting naming only packs that have since been removed: a picker with
- * nothing in it would be worse than one with the book in it.
+ * nothing in it would be worse than one with the book in it. A system pack a
+ * module's copy of its book supersedes is read as that copy, either way.
  */
 export function chosenSources(
   packs: readonly PackSummary[],
@@ -103,11 +125,13 @@ export function chosenSources(
   systemId: string,
 ): string[] {
   const named = Array.isArray(setting) ? setting.filter((s): s is string => typeof s === "string") : [];
+  const replaced = supersededPacks(packs, systemId);
+  const swap = (list: readonly string[]) => [...new Set(list.flatMap((collection) => replaced.get(collection) ?? [collection]))];
   const available = new Set(
-    packs.filter((pack) => pack.documentName === "Item").map((pack) => pack.collection),
+    packs.filter((pack) => pack.documentName === "Item" && !replaced.has(pack.collection)).map((pack) => pack.collection),
   );
-  const kept = named.filter((collection) => available.has(collection));
-  return kept.length > 0 ? kept : defaultSources(packs, systemId);
+  const kept = swap(named).filter((collection) => available.has(collection));
+  return kept.length > 0 ? kept : swap(defaultSources(packs, systemId)).filter((collection) => available.has(collection));
 }
 
 /** A pack as Foundry describes it, reduced to what the setting cares about. */
@@ -134,6 +158,27 @@ export function availablePacks(): PackSummary[] {
   return [...((game as any).packs ?? [])]
     .map(summarisePack)
     .filter((pack) => pack.documentName === "Item");
+}
+
+/** The system packs a module's copy of their book supersedes, of any document type. */
+export function supersededCollections(): Set<string> {
+  const packs = [...((game as any).packs ?? [])].map(summarisePack);
+  return new Set(supersededPacks(packs, SYSTEM_ID).keys());
+}
+
+/**
+ * Takes superseded packs out of the Compendium sidebar while the module that
+ * supersedes them is active. Only the rendered list is changed: the world's
+ * compendium configuration is left alone, so they are back once it is off.
+ */
+export function registerSupersededPackHiding(): void {
+  Hooks.on("renderCompendiumDirectory", (_app: unknown, html: HTMLElement) => {
+    const superseded = supersededCollections();
+    if (superseded.size === 0) return;
+    for (const entry of html.querySelectorAll<HTMLElement>("[data-pack]")) {
+      if (superseded.has(String(entry.dataset.pack ?? ""))) entry.remove();
+    }
+  });
 }
 
 /** The ids of the packs the picker should read, as the world is configured. */

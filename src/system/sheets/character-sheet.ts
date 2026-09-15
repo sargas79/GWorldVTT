@@ -188,6 +188,7 @@ import {
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
 import { allOutAttackOptionsFor, registeredManeuvers } from "../combat-extensions.js";
+import { supersededCollections } from "../compendium-sources.js";
 import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
 import { bindSectionListeners, decorateItemRows, renderSections, runRowAction } from "../sheet-extensions.js";
@@ -2412,7 +2413,7 @@ export async function chooseTemplateOptions(
 export async function pickTemplateItem(): Promise<any | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Template.${key}`);
 
-  const found: Array<{ uuid: string; name: string; kind: string; cost: number }> = [];
+  const found: Array<{ uuid: string; name: string; kind: string; cost: number; source?: string }> = [];
 
   for (const item of game.items ?? []) {
     if (item.type === "template") {
@@ -2425,8 +2426,11 @@ export async function pickTemplateItem(): Promise<any | null> {
     }
   }
 
+  // A system pack a module's copy of its book supersedes would list every
+  // template twice.
+  const superseded = supersededCollections();
   for (const pack of game.packs ?? []) {
-    if (pack.documentName !== "Item") continue;
+    if (pack.documentName !== "Item" || superseded.has(String(pack.collection))) continue;
     for (const entry of pack.index ?? []) {
       if (entry.type !== "template") continue;
       found.push({
@@ -2434,6 +2438,7 @@ export async function pickTemplateItem(): Promise<any | null> {
         name: entry.name,
         kind: "character",
         cost: 0,
+        source: String(pack.metadata?.flags?.[SYSTEM_ID]?.bookTitle ?? pack.title ?? pack.collection),
       });
     }
   }
@@ -2445,10 +2450,17 @@ export async function pickTemplateItem(): Promise<any | null> {
 
   found.sort((a, b) => a.name.localeCompare(b.name));
 
+  // Two books may each have a template of the same name -- a Vampire here and
+  // another there -- so where a name comes up more than once, its book says
+  // which is which.
+  const named = new Map<string, number>();
+  for (const entry of found) named.set(entry.name, (named.get(entry.name) ?? 0) + 1);
   const options = found
     .map(
       (entry) =>
         `<option value="${entry.uuid}">${foundry.utils.escapeHTML(entry.name)}${
+          (named.get(entry.name) ?? 0) > 1 && entry.source ? ` (${foundry.utils.escapeHTML(entry.source)})` : ""
+        }${
           entry.cost ? ` — ${entry.cost}` : ""
         }</option>`,
     )

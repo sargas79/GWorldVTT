@@ -13,8 +13,8 @@ import {
   availablePacks,
   bookState,
   chosenSources,
-  defaultSources,
   groupByBook,
+  supersededPacks,
   type PackSummary,
 } from "../compendium-sources.js";
 import { loadSkillCatalog } from "../skill-catalog.js";
@@ -50,14 +50,17 @@ export class CompendiumSourcesSettings extends HandlebarsApplicationMixin(Applic
   /** What the boxes read, which is not what is saved until Save is pressed. */
   #pending: Set<string> | null = null;
 
+  /** Every Item pack, less the system's packs a module's copy of their book stands in for. */
   #packs(): PackSummary[] {
-    return availablePacks();
+    const packs = availablePacks();
+    const replaced = supersededPacks(packs, SYSTEM_ID);
+    return packs.filter((pack) => !replaced.has(pack.collection));
   }
 
   #state(): Set<string> {
     if (this.#pending) return this.#pending;
     return new Set(
-      chosenSources(this.#packs(), game.settings.get(SYSTEM_ID, COMPENDIUM_SOURCES_KEY), SYSTEM_ID),
+      chosenSources(availablePacks(), game.settings.get(SYSTEM_ID, COMPENDIUM_SOURCES_KEY), SYSTEM_ID),
     );
   }
 
@@ -139,7 +142,7 @@ export class CompendiumSourcesSettings extends HandlebarsApplicationMixin(Applic
   }
 
   static async #onRestore(this: CompendiumSourcesSettings): Promise<void> {
-    this.#pending = new Set(defaultSources(this.#packs(), SYSTEM_ID));
+    this.#pending = new Set(chosenSources(availablePacks(), [], SYSTEM_ID));
     await this.render();
   }
 }
