@@ -173,6 +173,25 @@ async function promptForShots(most: number): Promise<number | null> {
 }
 
 /**
+ * Loads a ranged mode at once, without the Ready maneuvers or the card the
+ * Reload button takes -- for a module's rule that readies a weapon faster
+ * than the table. Shared magazines and the capacity hold as ever. Returns the
+ * new count, or null where the mode keeps none or the user can't change it.
+ */
+export async function loadInstantly(item: any, modeIndex: number, shots: number): Promise<number | null> {
+  if (!item?.isOwner || !isRuleOn("reloading")) return null;
+  const found = modeOf(item, Math.floor(Number(modeIndex)));
+  if (!found) return null;
+  const { mode, entry } = found;
+  const capacity = fullLoad(entry);
+  if (entry.thrown || capacity <= 0) return null;
+  const loaded = Math.max(0, Number(mode.loaded ?? 0) || 0);
+  const after = Math.min(capacity, loaded + Math.max(0, Math.floor(Number(shots) || 0)));
+  if (after !== loaded) await setLoaded(item, Math.floor(Number(modeIndex)), after);
+  return after;
+}
+
+/**
  * Takes the shells a shot fired off the count. A thrown weapon or one whose
  * column says nothing keeps no count, and is left alone.
  */

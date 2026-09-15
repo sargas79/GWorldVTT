@@ -360,11 +360,13 @@
                       {{> "gworld.die"}}
                     </span>
                     {{#if ../rules.feint}}
-                      <button type="button" class="ibtn tiny" data-action="feint"
-                              data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
-                              data-tooltip="{{localize "GWORLD.Feint.Hint"}}">
-                        {{localize "GWORLD.Feint.Action"}}
-                      </button>
+                      {{#unless (eq atk.feint false)}}
+                        <button type="button" class="ibtn tiny" data-action="feint"
+                                data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
+                                data-tooltip="{{localize "GWORLD.Feint.Hint"}}">
+                          {{localize "GWORLD.Feint.Action"}}
+                        </button>
+                      {{/unless}}
                     {{/if}}
                   {{else}}
                     <span class="bad" data-tooltip="{{localize "GWORLD.Melee.Unusable"}}">&mdash;</span>
@@ -474,6 +476,13 @@
                         data-bulk="{{atk.bulk}}" data-malfunction="{{atk.malfunction}}">
                     {{> "gworld.die"}}
                   </span>
+                  {{#if (and @root.rules.feint atk.feint)}}
+                    <button type="button" class="ibtn tiny" data-action="feint"
+                            data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
+                            data-tooltip="{{localize "GWORLD.Feint.Hint"}}">
+                      {{localize "GWORLD.Feint.Action"}}
+                    </button>
+                  {{/if}}
                 {{/if}}
               </td>
             </tr>

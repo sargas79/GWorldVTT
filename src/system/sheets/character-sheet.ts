@@ -187,7 +187,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
-import { allOutAttackOptionsFor, registeredManeuvers } from "../combat-extensions.js";
+import { allOutAttackOptionsFor, feintModifiers, registeredManeuvers } from "../combat-extensions.js";
 import { supersededCollections } from "../compendium-sources.js";
 import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
@@ -4192,6 +4192,21 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const foe = targets[0]?.actor;
     if (!foe) return;
 
+    // The row the feint was made from, and what a module's rules put on it (API 1.28.0).
+    const row = target.closest<HTMLElement>("[data-item-id]");
+    const item = row?.dataset.itemId ? this.actor.items.get(row.dataset.itemId) ?? null : null;
+    const modeIndex = Number(row?.dataset.modeIndex);
+    const ranged = row?.dataset.ranged === "1";
+    const mode = row && row.dataset.modeIndex !== undefined && Number.isInteger(modeIndex)
+      ? { index: modeIndex, ranged, ...(row.dataset.derivedMode ? { derived: row.dataset.derivedMode } : {}) }
+      : null;
+    const added = feintModifiers({ actor: this.actor, foe, item, mode, ranged });
+    if (added.refusal) {
+      ui.notifications?.warn(added.refusal);
+      return;
+    }
+    const evaluated = evaluateBonusFor(this.actor);
+
     const defense = feintDefenseScore(foe);
     const result = await rollFeint({
       label: game.i18n.format("GWORLD.Feint.Label", {
@@ -4199,7 +4214,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         foe: String(foe.name),
       }),
       // A Feint takes what Evaluate maneuvers before it earned (Campaigns p. 364).
-      feinter: { actor: this.actor, base, modifiers: evaluateBonusFor(this.actor) ? [{ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluateBonusFor(this.actor) }] : [] },
+      feinter: { actor: this.actor, base, modifiers: [...(evaluated ? [{ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluated }] : []), ...added.modifiers] },
       // Naming what they rolled against matters here: the rule lets them roll
       // their best of several things, and the card should say which it was.
       defender: { actor: foe, base: defense.score, note: defense.source },

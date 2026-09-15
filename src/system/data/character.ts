@@ -172,10 +172,10 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
   twoHanded: false, swung: false, reach: "C", parry: null, parryModifier: 0, minSt: null, usable: true,
   unbalanced: false, isFencing: false, unarmed: false, stBased: false, damageBase: "", damageModifier: 0,
   unarmedBonusSkill: "", explosive: false, fragmentation: "", affliction: false, afflictionAttribute: "",
-  afflictionModifier: 0,
+  afflictionModifier: 0, feint: true,
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
-  ...DERIVED_MELEE_DEFAULTS, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, rateOfFire: 1,
+  ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, rateOfFire: 1,
   recoil: 1, bulk: 0, shots: "", projectiles: 1, guidance: "", areaAttack: false, coneMaxWidth: 0, scopeBonus: 0,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false,
   ammunition: "", malediction: 0, ignoresDr: false,
@@ -222,6 +222,8 @@ export function detailsFields() {
 
 /** A resolved attack mode, ready for the Combat tab to render. */
 export interface DerivedAttack {
+  /** Whether the row offers a Feint (since 1.28.0): melee rows do unless a module says otherwise, ranged rows only when one says so. */
+  feint?: boolean;
   /** A follow-up attack rolled after the first, which a module adds. */
   followUp?: { damage: string; damageType: DamageType | string; explosive: boolean; label?: string } | null;
   /** Effects that need the GM, as tags on the row. */

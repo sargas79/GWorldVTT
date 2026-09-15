@@ -73,6 +73,8 @@ export const COMBAT_HOOKS = Object.freeze({
   maneuverAllowances: "gworld.maneuverAllowances",
   /** Before the melee attack dialog: `{ actor, item, maneuver, rapidStrike, deceptiveAttack }`, each `{ available, refusal }`. */
   meleeAttackOptions: "gworld.meleeAttackOptions",
+  /** Before a feint is rolled (since 1.28.0): `{ actor, foe, item, mode, ranged, modifiers, refusal }`, mutable. */
+  feintModifiers: "gworld.feintModifiers",
 });
 
 // ── an item's attack rows ──────────────────────────────────────────────────
@@ -103,6 +105,7 @@ export interface WeaponRowEntry {
 const WEAPON_ROW_FIELDS = [
   "skillLevel", "damage", "damageType", "armorDivisor", "halfDamageRange", "maxRange", "accuracy", "malfunction",
   "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp", "reach", "parry", "twoHanded",
+  "feint",
 ] as const;
 
 /**
@@ -127,6 +130,8 @@ export function adjustWeaponAttacks(options: {
   for (const entry of options.rows) {
     if (!Array.isArray(entry.row.notes)) entry.row.notes = [];
     if (entry.row.followUp === undefined) entry.row.followUp = null;
+    // Whether the row offers a Feint (since 1.28.0): melee rows do, ranged ones don't.
+    if (typeof entry.row.feint !== "boolean") entry.row.feint = entry.kind === "melee";
   }
   const before = options.rows.map((entry) => Object.fromEntries(WEAPON_ROW_FIELDS.map((key) => [key, entry.row[key]])));
   const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
@@ -161,6 +166,7 @@ export function adjustWeaponAttacks(options: {
       row.parryModifier = (Number(row.parryModifier) || 0) + (row.parry - was);
     }
     row.twoHanded = row.twoHanded === true;
+    row.feint = row.feint === true;
     row.notes = (Array.isArray(row.notes) ? row.notes : [])
       .filter((n: any) => typeof n?.label === "string" && n.label.trim())
       .map((n: any) => ({ label: String(n.label), hint: String(n.hint ?? "") }));
@@ -170,6 +176,25 @@ export function adjustWeaponAttacks(options: {
       : null;
     row.damageRollable = options.isRollable(entry);
   });
+}
+
+/** What `gworld.feintModifiers` hands a listener, and what it may change. */
+export interface FeintContext {
+  actor: any;
+  foe: any;
+  item: any;
+  mode: { index: number; ranged: boolean; derived?: string } | null;
+  ranged: boolean;
+  modifiers: ModifierLine[];
+  refusal: string | null;
+}
+
+/** Runs the feint hook: the lines modules put on the feinter's roll, and why it can't be made, if it can't. */
+export function feintModifiers(context: Omit<FeintContext, "modifiers" | "refusal">): { modifiers: ModifierLine[]; refusal: string | null } {
+  const hooked = callCombatHook(COMBAT_HOOKS.feintModifiers, { ...context, modifiers: [] as ModifierLine[], refusal: null as string | null });
+  const modifiers = (hooked.modifiers ?? []).filter((m) => typeof m?.label === "string" && typeof m.value === "number" && Number.isFinite(m.value));
+  const refusal = typeof hooked.refusal === "string" && hooked.refusal.trim() ? hooked.refusal.trim() : null;
+  return { modifiers, refusal };
 }
 
 /** Runs the equipment failure hook: the target, and the lines modules added to it. */
