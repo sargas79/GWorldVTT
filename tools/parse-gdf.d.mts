@@ -136,3 +136,6 @@ export declare function classifyCitation(
 export declare function techniqueDefaults(
   raw: string | undefined,
 ): Array<{ from: string; skill: string; modifier: number }> | null;
+
+/** The attribute terms a skill's default adds to rebase the technique ("+ST-DX"), or "" for none. */
+export declare function techniqueRebasing(raw: string | undefined): string;
