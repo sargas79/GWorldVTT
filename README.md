@@ -390,7 +390,7 @@ What's in it:
 |---|---|
 | `version` | The API's semver version. |
 | `satisfies(range)` | Whether this API meets a semver range. |
-| `rules` | The pure GURPS rules of the Basic Set: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer carries the rules of the rule group system 1.5.0 removed, which were never meant to be part of it. |
+| `rules` | The pure GURPS rules of the Basic Set: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer carries the rules of the rule group system 1.5.0 removed, which were never meant to be part of it. Since 1.17.0 it carries every rules module, attack options (slams, evading), explosions, the tactical rules and shield damage among them. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted through the system's chat cards. |
 | `actors` | `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`: read-only. `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), and `setPosture(actor, posture)` (since 1.16.0). |
