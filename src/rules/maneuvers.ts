@@ -209,3 +209,19 @@ export const MANEUVER_ORDER: readonly Maneuver[] = [
   "attack", "feint", "allOutAttack", "moveAndAttack", "allOutDefense",
   "concentrate", "wait",
 ];
+
+/**
+ * Consecutive Evaluate maneuvers after a turn ends (Campaigns p. 364): one
+ * more for a turn spent evaluating, to the +3 the bonus stops at, and none for
+ * any other turn -- the bonus is good "on your next turn only".
+ */
+export function evaluateTurnsAfterTurn(turns: number, maneuver: string): number {
+  if (maneuver !== "evaluate") return 0;
+  return Math.min(MAX_EVALUATE_BONUS, Math.max(0, Math.floor(Number(turns) || 0)) + 1);
+}
+
+/** Whether an attack on this maneuver takes a previous Evaluate's bonus: an Attack, Feint, All-Out Attack or Move and Attack (p. 364). */
+export function takesEvaluateBonus(maneuver: string, attacks: boolean): boolean {
+  if (maneuver === "evaluate") return false;
+  return maneuver === "feint" || attacks;
+}

@@ -82,7 +82,7 @@ import { isRuleOn } from "../optional-rules.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
-import { evaluateBonus } from "../../rules/maneuvers.js";
+import { evaluateBonus, takesEvaluateBonus } from "../../rules/maneuvers.js";
 import {
   MODULE_KEY, adjustWeaponAttacks, maneuverAllowancesFor, maneuverInfo, maneuverKeys, parryWeaponRows, type WeaponRowEntry,
 } from "../combat-extensions.js";
@@ -2487,7 +2487,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         movement: allowances.movement,
         option: this.maneuverOption,
       },
-      evaluateBonus: this.maneuver === "evaluate" ? evaluateBonus(this.evaluateTurns) : 0,
+      evaluateBonus: this.maneuver === "evaluate" || takesEvaluateBonus(this.maneuver, maneuverInfo(this.maneuver).attacks)
+        ? evaluateBonus(this.evaluateTurns)
+        : 0,
       // The aim as it stands, and what it is worth against a weapon of Acc 0:
       // the +1 and +2 for the extra turns, and the +1 for bracing. Each
       // weapon adds its own Accuracy when the shot is taken.

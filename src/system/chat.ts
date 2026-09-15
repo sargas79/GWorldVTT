@@ -15,10 +15,11 @@ import { SYSTEM_ID } from "./constants.js";
 import { applyDamageToActor, type AppliedDamage, type IncomingDamage } from "./damage.js";
 import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy } from "./weapon-damage.js";
 import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shields.js";
-import { rollSuccess } from "./roll.js";
+import { rollDamage, rollSuccess, type AttackWeaponFlag } from "./roll.js";
 import { currentTargets } from "./targets.js";
 import { blastAt } from "../rules/explosions.js";
-import { criticalEntry, criticalHitTableFor } from "../rules/criticals.js";
+import { criticalEntry, criticalHitTableFor, isUnarmedSkill } from "../rules/criticals.js";
+import { bareHandedParryModifier, canParryFlail, flailDefenseModifier, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
 import { rollKnockdown } from "./knockdown.js";
 import { rollDeathCheck } from "./dying.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
@@ -515,8 +516,8 @@ interface DefenseFlag {
   areaAttack?: boolean;
   /** True for a thrown Missile spell, which may be dodged or blocked but not parried. */
   noParry?: boolean;
-  /** The attacking weapon, for the parry to weigh (Campaigns p. 376). */
-  weapon?: { weight: number; material: string; swung: boolean };
+  /** The attacking weapon, for the parry to weigh and what it does to a defense (Characters p. 208, Campaigns p. 376). */
+  weapon?: AttackWeaponFlag;
   /** +1 to Dodge alone, for a target who saw the laser dot (Campaigns p. 411). */
   dodgeBonus?: number;
   /** Lines a module's attack option put on the defender's rolls, each for the defenses it names. */
@@ -546,6 +547,7 @@ const REFUSAL_LABELS: Record<NonNullable<DefenseChoice["reason"]>, string> = {
   missile: "GWORLD.Defense.MissileSpell",
   strappedIn: "GWORLD.Defense.StrappedIn",
   occupant: "GWORLD.Defense.Occupant",
+  flail: "GWORLD.Defense.Flail",
   cannonFodder: "GWORLD.Cinematic.CannonFodderDefense",
 };
 
@@ -663,6 +665,21 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       for (const choice of choices) {
         if (choice.key === "parry") Object.assign(choice, { available: false, shown: null, reason: "missile" });
       }
+    }
+
+    // What the attacking weapon does (Characters p. 208, Campaigns p. 376): a
+    // flail can't be parried with a fencing weapon or a knife, and a flail, a
+    // thrown weapon, or a weapon met bare-handed puts a penalty on the defense,
+    // which the button shows.
+    const parryNatural = defender.system?.derived?.defenses?.parry?.weapon?.natural === true;
+    for (const choice of choices) {
+      if (!choice.available) continue;
+      if (choice.key === "parry" && flag.weapon?.flail && !canParryFlail({ skill: choice.skillName, isFencing: choice.isFencing })) {
+        Object.assign(choice, { available: false, shown: null, reason: "flail" });
+        continue;
+      }
+      const lines = weaponDefenseLines(flag.weapon, flag.delivery, choice.key, choice.skillName, parryNatural);
+      if (choice.shown !== null) choice.shown += lines.reduce((sum, line) => sum + line.value, 0);
     }
 
     // What a module's rules take away from this defender: a defense, with the
@@ -877,6 +894,71 @@ function defensiveTechniquesOf(defender: any): Array<{ name: string; key: Defens
   return out;
 }
 
+/**
+ * The lines the attacking weapon puts on a defense: a flail's -4 to parry and
+ * -2 to block, halved for a nunchaku (Characters p. 208, Campaigns pp. 405,
+ * 548); a thrown weapon's -1 to parry, or -2 for one of 1 lb. or less; and -3
+ * to parry a weapon bare-handed, unless it thrusts or the parry is Judo or
+ * Karate (Campaigns p. 376).
+ */
+function weaponDefenseLines(
+  weapon: AttackWeaponFlag | undefined,
+  delivery: Delivery | undefined,
+  key: DefenseKey,
+  skill: string,
+  parryNatural: boolean,
+): Array<{ label: string; value: number }> {
+  const lines: Array<{ label: string; value: number }> = [];
+  const flail = flailDefenseModifier(weapon?.flail ?? null, key);
+  if (flail) lines.push({ label: game.i18n.localize("GWORLD.Defense.FlailLine"), value: flail });
+  if (key !== "parry") return lines;
+  if (delivery === "thrown" && weapon) {
+    lines.push({ label: game.i18n.localize("GWORLD.Defense.ThrownLine"), value: thrownParryModifier(weapon.weight) });
+  }
+  const bare = bareHandedParryModifier({
+    parrySkill: skill,
+    bareHanded: parryNatural || isUnarmedSkill(skill),
+    attackIsWeapon: delivery === "melee" || delivery === "thrown",
+    attackIsThrust: weapon?.thrust === true,
+  });
+  if (bare) lines.push({ label: game.i18n.localize("GWORLD.Defense.BareHandedLine"), value: bare });
+  return lines;
+}
+
+/**
+ * "If you successfully parry an unarmed attack (bite, punch, etc.) with a
+ * weapon, you may injure your attacker. Immediately roll against your skill
+ * with the weapon you used to parry. This roll is at -4 if your attacker used
+ * Judo or Karate." On a success he gets no defense, and damage is rolled
+ * normally (Campaigns p. 376).
+ */
+async function strikeParriedLimb(defender: any, itemId: string, attackSkill: string | undefined): Promise<void> {
+  const rows = ((defender?.system?.derived?.melee ?? []) as any[])
+    .filter((row) => row.itemId === itemId && row.damageRollable && typeof row.skillLevel === "number" && row.parry !== null);
+  const row = rows.sort((a, b) => (Number(b.parry) || 0) - (Number(a.parry) || 0))[0];
+  if (!row) return;
+  const penalty = parriedLimbStrikeModifier(attackSkill);
+  const label = game.i18n.format("GWORLD.Defense.StrikeLimb", { weapon: String(row.name ?? "") });
+  const outcome = await rollSuccess({
+    actor: defender,
+    base: row.skillLevel,
+    label,
+    kind: "skill",
+    skill: String(row.skillName ?? ""),
+    modifiers: penalty ? [{ label: game.i18n.localize("GWORLD.Defense.StrikeLimbJudoKarate"), value: penalty }] : [],
+  });
+  if (!outcome?.success) return;
+  await rollDamage({
+    actor: defender,
+    label,
+    formula: String(row.damage),
+    damageType: row.damageType,
+    armorDivisor: Number(row.armorDivisor) || 1,
+    item: defender.items?.get?.(itemId) ?? null,
+    mode: { index: Number(row.modeIndex) || 0, ranged: false },
+  });
+}
+
 /** A defense that cannot be rolled: named, greyed, and carrying its reason. */
 function refusedButton(choice: DefenseChoice): HTMLButtonElement {
   const button = document.createElement("button");
@@ -941,8 +1023,8 @@ async function rollDefense(options: {
   feverish: boolean;
   skill: string;
   isFencing: boolean;
-  /** The attacking weapon, which a parry has to weigh (Campaigns p. 376). */
-  attackWeapon?: { weight: number; material: string; swung: boolean };
+  /** The attacking weapon, which a parry has to weigh, and what it does to the defense (Campaigns p. 376). */
+  attackWeapon?: AttackWeaponFlag;
   /** How the blow arrived, and what it does (p. 417). */
   delivery?: Delivery;
   damageType?: string;
@@ -1033,6 +1115,8 @@ async function rollDefense(options: {
   if (deception !== 0) {
     modifiers.push({ label: game.i18n.localize("GWORLD.Melee.Deceptive"), value: deception });
   }
+  const bareHanded = key === "parry" && (parryWeapon?.natural === true || isUnarmedSkill(skill));
+  modifiers.push(...weaponDefenseLines(options.attackWeapon, options.delivery, key, skill, bareHanded));
   if (feverish) {
     modifiers.push({
       label: game.i18n.localize("GWORLD.ExtraEffort.Feverish"),
@@ -1102,6 +1186,20 @@ async function rollDefense(options: {
       attackWeapon: options.attackWeapon,
       parried: outcome?.success === true,
     });
+  }
+
+  // "A failed parry against a weapon means your attacker may choose to hit his
+  // original target or the arm you parried with!" (p. 376).
+  const armed = options.delivery === "melee" || options.delivery === "thrown";
+  if (outcome && !outcome.success && bareHanded && armed && isRuleOn("hitLocations")) {
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor: defender }),
+      content: `<p class="gc-note">${game.i18n.localize("GWORLD.Defense.ParriedArm")}</p>`,
+    });
+  }
+  // And a weapon that turned an unarmed attack may strike the limb (p. 376).
+  if (outcome?.success && key === "parry" && parryWeapon && !parryWeapon.natural && options.delivery === "unarmed") {
+    await strikeParriedLimb(defender, parryWeapon.itemId, options.attackWeapon?.skill);
   }
 
   // "... or forced to make an active defense, you lose your aim."

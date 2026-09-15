@@ -34,6 +34,7 @@ import {
   successRollTags,
 } from "./procedure-extensions.js";
 import { aimTurnsOf, loseAim } from "./aim.js";
+import { evaluateBonusFor } from "./evaluate.js";
 import { aimBonus } from "../rules/aim.js";
 import {
   scopeBonus,
@@ -132,6 +133,7 @@ import {
   type Guidance,
 } from "../rules/guided.js";
 import { allOutAttackBonus, strongAttackDamageBonus, type AllOutAttackOption } from "../rules/maneuvers.js";
+import { flailKind, type FlailKind } from "../rules/defenses.js";
 import { POSTURE_EFFECTS } from "../rules/posture.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
@@ -235,6 +237,20 @@ export function guidanceReport(options: {
   };
 }
 
+/**
+ * The attacking weapon as the defense card reads it: its weight and blade for
+ * the heavy-parry rules (Campaigns p. 376), and its skill, whether it thrusts
+ * and whether it is a flail, for what they do to a parry or block.
+ */
+export interface AttackWeaponFlag {
+  weight: number;
+  material: string;
+  swung: boolean;
+  skill?: string;
+  thrust?: boolean;
+  flail?: FlailKind;
+}
+
 export interface SuccessRollOptions {
   actor: any;
   /** The unmodified target number, e.g. a skill level or defense score. */
@@ -285,7 +301,7 @@ export interface SuccessRollOptions {
    * (p. 556): its weight, its blade's material, whether it was swung, and
    * whether it rolls again on "your weapon breaks".
    */
-  weapon?: { weight: number; material: string; swung: boolean; resistsBreakage: boolean };
+  weapon?: AttackWeaponFlag & { resistsBreakage: boolean };
   /** A bonus the target's Dodge alone gets, from a laser dot they saw (p. 411). */
   dodgeBonus?: number;
   /**
@@ -625,7 +641,7 @@ function attackFlags(
   defensePenalty: number,
   criticalHit: boolean,
   noParry = false,
-  weapon?: { weight: number; material: string; swung: boolean },
+  weapon?: AttackWeaponFlag,
   delivery?: Delivery,
   damageType?: string,
   /** True for an area attack, which no active defense stops (p. 413). */
@@ -664,7 +680,20 @@ function attackFlags(
         // A thrown Missile spell cannot be parried (Characters p. 241).
         ...(noParry ? { noParry: true } : {}),
         // What the defender's parry has to weigh (Campaigns p. 376).
-        ...(weapon ? { weapon: { weight: weapon.weight, material: weapon.material, swung: weapon.swung } } : {}),
+        // And, for the parry and block, its skill, whether it thrusts, and
+        // whether it is a flail (Characters p. 208, Campaigns p. 376).
+        ...(weapon
+          ? {
+              weapon: {
+                weight: weapon.weight,
+                material: weapon.material,
+                swung: weapon.swung,
+                ...(weapon.skill ? { skill: weapon.skill } : {}),
+                ...(weapon.thrust ? { thrust: true } : {}),
+                ...(weapon.flail ? { flail: weapon.flail } : {}),
+              },
+            }
+          : {}),
         // How the blow arrived and what it does, which is what decides whether
         // a point of fatigue can buy the defense back (p. 417). A punch cannot
         // be ducked this way; a bullet can.
@@ -1184,6 +1213,10 @@ async function rollAction(
     }
   }
 
+  // What Evaluate maneuvers before it earned a melee attack (Campaigns p. 364).
+  const evaluated = rollType === "attack" && !ranged ? evaluateBonusFor(actor) : 0;
+  if (evaluated) modifiers.push({ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluated });
+
   // Move and Attack in melee: "roll against your skill at -4", and "your
   // effective skill cannot exceed 9" (Characters p. 365). The cap is taken once
   // every other modifier is in; a module may lift or change it.
@@ -1249,6 +1282,9 @@ async function rollAction(
         material: target.dataset.material ?? "",
         swung: target.dataset.swung === "1",
         resistsBreakage: target.dataset.resistsBreakage === "1",
+        skill: String(target.dataset.rollSkill ?? ""),
+        thrust: target.dataset.ranged !== "1" && target.dataset.damageBase === "thr",
+        flail: flailKind(target.dataset.rollSkill, String(rolledItem?.name ?? rollLabel ?? "")),
       }
     : undefined;
 
