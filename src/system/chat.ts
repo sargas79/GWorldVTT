@@ -1339,6 +1339,9 @@ async function rollDefense(options: {
     defenseCounts: countsFor(defender, key === "parry" ? options.parryWeapon : null),
     // Since 1.27.0: whether Feverish Defense was bought for this defense.
     feverish,
+    // Since 1.33.0: where the blow was aimed, and whether the defender is retreating.
+    calledShot: options.calledShot ?? null,
+    retreating: options.retreating === true,
   });
 
   // "If struck by a potentially lethal attack ... the hero can choose to
