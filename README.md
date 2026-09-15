@@ -503,9 +503,11 @@ and skipped, and the roll goes on.
     Combat tab shows the movement. `option` is the All-Out Attack option on that
     maneuver, and the maneuver's own choice otherwise;
   - `gworld.meleeAttackOptions` (since 1.16.0): before the melee attack dialog, as
-    `{ actor, item, maneuver, rapidStrike, deceptiveAttack }`. Set an option's
-    `available: false` and `refusal` (text), and the dialog leaves it off and
-    says why;
+    `{ actor, item, maneuver, rapidStrike, deceptiveAttack }`, and since 1.27.0
+    `flurryOfBlows` and `mightyBlows`. Set an option's `available: false` and
+    `refusal` (text), and the dialog leaves it off and says why. Since 1.27.0,
+    `gworld.attackModifiers` also gets `extraEffort` (`{ flurryOfBlows, mightyBlows }`),
+    what the attack bought, and `gworld.defenseModifiers` gets `feverish`;
   - Since 1.19.0, a `gworld.attackModifiers` listener may set `refusal` (text): the
     attack isn't rolled, and the user is told why;
   - Since 1.21.0, `gworld.attackModifiers` also gets:

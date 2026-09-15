@@ -1292,6 +1292,8 @@ async function rollAction(
         deceptive: melee?.deceptive ?? 0,
         feint,
         evaluate: evaluated,
+        // Since 1.27.0: the system's extra effort bought for this attack.
+        extraEffort: { flurryOfBlows: melee?.flurryOfBlows === true, mightyBlows: melee?.mightyBlows === true },
       })
     : null;
   // A module's rules may make this attack impossible here: it isn't rolled.
@@ -2383,6 +2385,8 @@ export async function promptForMeleeAttack(options: {
   fatigue: number;
   /** True when Mighty Blows was bought, for the damage roll to collect. */
   mightyBlows: boolean;
+  /** Whether Flurry of Blows was bought for a Rapid Strike (since 1.27.0). */
+  flurryOfBlows: boolean;
   /** Where it was aimed, for the damage roll to collect. */
   calledShot: CalledShot | null;
   /** True when the blow was struck with the flat or the butt. */
@@ -2407,8 +2411,11 @@ export async function promptForMeleeAttack(options: {
     maneuver: String(options.actor?.system?.maneuver ?? ""),
     rapidStrike: { available: true, refusal: null as string | null },
     deceptiveAttack: { available: true, refusal: null as string | null },
+    // Since 1.27.0: the extra effort the dialog offers.
+    flurryOfBlows: { available: true, refusal: null as string | null },
+    mightyBlows: { available: true, refusal: null as string | null },
   });
-  const refusedHere = [offered.rapidStrike, offered.deceptiveAttack]
+  const refusedHere = [offered.rapidStrike, offered.deceptiveAttack, offered.flurryOfBlows, offered.mightyBlows]
     .filter((o) => o?.available === false && typeof o.refusal === "string" && o.refusal.trim())
     .map((o) => `<p style="margin:0;font-size:11px;opacity:0.8">${foundry.utils.escapeHTML(String(o.refusal))}</p>`)
     .join("");
@@ -2447,7 +2454,7 @@ export async function promptForMeleeAttack(options: {
              <span>${L("RapidStrike")} (${RAPID_STRIKE_PENALTY})</span>
            </label>`
         : ""}
-      ${effortAllowed && rapidAllowed
+      ${effortAllowed && rapidAllowed && offered.flurryOfBlows?.available !== false
         ? `<label style="display:flex;align-items:center;gap:8px">
              <input type="checkbox" name="flurry">
              <span>${E("Flurry")} (${flurryOfBlowsPenalty()}, ${EXTRA_EFFORT_FP} FP)</span>
@@ -2482,7 +2489,7 @@ export async function promptForMeleeAttack(options: {
              </select>
            </label>`
         : ""}
-      ${effortAllowed
+      ${effortAllowed && offered.mightyBlows?.available !== false
         ? `<label style="display:flex;align-items:center;gap:8px">
              <input type="checkbox" name="mighty">
              <span>${E("MightyBlows")} (${EXTRA_EFFORT_FP} FP)</span>
@@ -2661,6 +2668,7 @@ export async function promptForMeleeAttack(options: {
     // whatever the modules' options cost.
     fatigue: (flurried ? EXTRA_EFFORT_FP : 0) + (mightyBlows ? EXTRA_EFFORT_FP : 0) + addon.fatigue,
     mightyBlows,
+    flurryOfBlows: flurried,
     calledShot: aimed.shot,
     turned: turned === true,
     charging: charging === true,
