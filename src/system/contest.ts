@@ -15,7 +15,7 @@ import { SYSTEM_ID } from "./constants.js";
 import { regularContest } from "../rules/contests.js";
 import { resolveFeint, type FeintResult } from "../rules/maneuvers.js";
 import { quickContest, resolveSuccess } from "../rules/success.js";
-import { resolveContestScores, successRollModifiers } from "./procedure-extensions.js";
+import { afterQuickContest, resolveContestScores, successRollModifiers } from "./procedure-extensions.js";
 
 const CONTEST_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/contest.hbs`;
 const REGULAR_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/regular-contest.hbs`;
@@ -252,6 +252,10 @@ export async function rollQuickContest(options: {
           }),
     resultClass: result.outcome === "tie" ? "" : "success",
   });
+
+  // And the modules hear who won (since 1.37.0).
+  const report = (side: RolledSide) => ({ actor: side.side.actor ?? null, base: side.side.base, effective: side.effective, outcome: side.outcome });
+  afterQuickContest({ label: options.label, tags, first: report(first), second: report(second), outcome: result.outcome, marginOfVictory: result.marginOfVictory });
 
   return result;
 }

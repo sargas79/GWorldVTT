@@ -315,3 +315,25 @@ describe("First Aid rules (since 1.36.0)", () => {
     expect(api.firstAidRules({}, {})).toEqual({ refusal: "Needs surgery", stopsBleeding: false });
   });
 });
+
+describe("Quick Contest results (since 1.37.0)", () => {
+  it("tells a listener both sides, the tags and who won", async () => {
+    const api = await load();
+    const heard: any[] = [];
+    globals.Hooks = { callAll: (event: string, context: any) => { heard.push([event, context]); } };
+    const tags = ["quickContest", "evade"];
+    api.afterQuickContest({
+      label: "Evade",
+      tags,
+      first: { actor: { name: "mover" }, base: 12, effective: 10, outcome: { success: true, margin: 2 } },
+      second: { actor: { name: "foe" }, base: 11, effective: 11, outcome: { success: false, margin: 1 } },
+      outcome: "first",
+      marginOfVictory: 3,
+    });
+    expect(heard).toHaveLength(1);
+    expect(heard[0][0]).toBe("gworld.afterQuickContest");
+    expect(heard[0][1]).toMatchObject({ label: "Evade", tags: ["quickContest", "evade"], outcome: "first", marginOfVictory: 3, second: { effective: 11 } });
+    heard[0][1].tags.push("changed");
+    expect(tags).toEqual(["quickContest", "evade"]);
+  });
+});

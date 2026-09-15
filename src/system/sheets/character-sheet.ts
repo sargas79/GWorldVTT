@@ -4151,6 +4151,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         modifiers: [{ label: game.i18n.localize("GWORLD.Evade.Action"), value: modifier }],
       },
       second: { actor: foe, base: attributeOf(foe, "DX") },
+      // So a module can tell an evade from other contests (since 1.37.0).
+      tags: ["evade"],
     });
 
     // "If you win, you evade him and are free to move on. If you lose or tie,
