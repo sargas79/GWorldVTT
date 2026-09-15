@@ -112,6 +112,7 @@ import {
   resolveTechniqueDefaults,
 } from "../../rules/skills.js";
 import { musclePoweredRange } from "../../rules/ranged.js";
+import { THROWING_ART, throwingArtAttack, throwingArtBonus, throwingArtDamage } from "../../rules/throwing-art.js";
 import {
   checkPrerequisites,
   collegeSkillNames,
@@ -965,6 +966,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     basicLift: number,
     move: number,
     traits: TraitEffects,
+    /** DX as skills were worked out from, layered armour included. */
+    skillDx: number = attrs.DX ?? 10,
   ) {
     // "you may substitute half your skill level, rounded down, for Basic Move"
     // -- so the jump uses whichever of the two is better.
@@ -1016,10 +1019,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       climbing: { skill: this.skillLevelByName("Climbing") ?? (attrs.DX ?? 10) - 5 },
       // "Roll against DX-3 to hit a specific target, or against DX to lob
       // something into a general area", or Throwing skill for what fits in a
-      // hand.
+      // hand. Throwing Art throws anything, and known at DX or better it adds
+      // to the ST the distance is worked from (Characters p. 226).
       throwing: {
-        skill: this.skillLevelByName("Throwing") ?? (attrs.DX ?? 10) - 3,
-        strength: attrs.ST ?? 10,
+        skill: Math.max(
+          this.skillLevelByName("Throwing") ?? (attrs.DX ?? 10) - 3,
+          this.skillLevelByName(THROWING_ART) ?? -Infinity,
+        ),
+        strength: (attrs.ST ?? 10) + throwingArtBonus(this.skillLevelByName(THROWING_ART), skillDx),
         basicLift,
       },
       lifting: { skill: this.skillLevelByName("Lifting") },
@@ -1774,6 +1781,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // (p. 141): read into the melee levels, so the parry built on them follows.
     const legs = lameCombatPenalty(traits.lame);
 
+    // Asked of every thrown mode, so read once.
+    const throwingArtLevel = this.skillLevelByName(THROWING_ART);
+
     /**
      * The level a weapon's skill is rolled at: the character's own if they
      * have the skill, else the book's default for it. A pistol in the hands
@@ -1995,12 +2005,23 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // Bows and crossbows use their own ST for damage and range; a thrown
         // weapon uses the thrower's, Striking ST included.
         const st = mode.weaponSt ?? strikingSt;
+        // Throwing Art is rolled for anything Throwing or Thrown Weapon covers
+        // when it is the better skill, and knowing it well adds per die of the
+        // thrower's thrust or swing and to the ST the range is worked from
+        // (Characters p. 226). A grenade's fixed damage is not the thrower's.
+        const art = throwingArtAttack({
+          ...weaponSkill(mode.skill),
+          skill: String(mode.skill ?? ""),
+          throwingArt: throwingArtLevel,
+          dx: attrs.DX + layering,
+        });
+        const artDamage = throwingArtDamage(art.bonus, String(mode.damageBase ?? ""), st);
         // "Thrown weapons, and arrows and bolts, use the rules under Melee
         // Weapon Quality" (Characters p. 276): the cutting and impaling bonus
         // is theirs; a firearm's fine grade is in its Acc and Malf. instead.
         const rangedDamage = mode.damageSpecial ? SPECIAL : (firearm ? (d: string) => d : (d: string) => withQuality(d, mode.damageType))(
           withPuissance(perLevel(mode, resolveDamage(
-            st, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
+            st, mode.damageBase, mode.damageModifier + artDamage, mode.damageFormula, mode.minSt,
             Number(mode.damageExtraDice ?? 0) || 0,
           ))),
         );
@@ -2025,7 +2046,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         };
         const stretch = qualityRangeMultiplier(weaponClass, quality) * (round?.rangeMultiplier ?? 1);
         const baseRange = mode.rangeIsStMultiple
-          ? musclePoweredRange(mode.weaponSt ?? attrs.ST, mode.halfDamageRange, mode.maxRange)
+          ? musclePoweredRange((mode.weaponSt ?? attrs.ST) + art.bonus, mode.halfDamageRange, mode.maxRange)
           : { halfDamage: mode.halfDamageRange, max: mode.maxRange };
         const range = {
           halfDamage: Math.round((Number(baseRange.halfDamage) || 0) * stretch),
@@ -2036,20 +2057,20 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         const shotsEntry = parseShots(String(mode.shots ?? ""));
         const shotsCapacity = isRuleOn("reloading") && !shotsEntry.thrown ? fullLoad(shotsEntry) : 0;
         const shotsLoaded = shotsCapacity > 0 ? Math.min(shotsCapacity, Math.max(0, Number(mode.loaded ?? 0) || 0)) : 0;
-        const foundRanged = short(enchantedSkill(weaponSkill(mode.skill)), mode.minSt ?? null);
+        const foundRanged = short(enchantedSkill(art), mode.minSt ?? null);
         const skillLevel = foundRanged.level;
         const atDefault = foundRanged.atDefault;
 
         const rangedBasisSt = mode.weaponSt ?? strikingSt;
         const rangedBasisRange = mode.rangeIsStMultiple
-          ? musclePoweredRange(mode.weaponSt ?? attrs.ST, mode.halfDamageRange, mode.maxRange)
+          ? musclePoweredRange((mode.weaponSt ?? attrs.ST) + art.bonus, mode.halfDamageRange, mode.maxRange)
           : { halfDamage: mode.halfDamageRange, max: mode.maxRange };
         const rangedRow = {
           itemId: item.id,
           modeIndex: index,
           name: item.name,
           mode: mode.name ?? "",
-          skillName: mode.skill ?? "",
+          skillName: art.skill,
           skillLevel,
           atDefault,
           natural: false,
@@ -2119,7 +2140,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           basis: {
             st: rangedBasisSt,
             damage: mode.damageSpecial ? SPECIAL : withPuissance(perLevel(mode, resolveDamage(
-              rangedBasisSt, mode.damageBase, mode.damageModifier, mode.damageFormula, mode.minSt,
+              rangedBasisSt, mode.damageBase, mode.damageModifier + artDamage, mode.damageFormula, mode.minSt,
               Number(mode.damageExtraDice ?? 0) || 0,
             ))),
             damageType: String(mode.damageType ?? ""),
@@ -2663,7 +2684,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       melee,
       ranged,
       encumbrance,
-      feats: this.#physicalFeats(attrs, secondary.basicLift, encumbrance.move, traits),
+      feats: this.#physicalFeats(attrs, secondary.basicLift, encumbrance.move, traits, attrs.DX + layering),
       // What each Influence skill is worth to this character (Campaigns
       // p. 359). An unbought one is not left out: it defaults, and the dialog
       // shows the default so the player can see what they are risking.

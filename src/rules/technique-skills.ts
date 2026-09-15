@@ -40,7 +40,7 @@ const FAMILY_SKILLS: Record<Exclude<SkillFamily, "any">, readonly string[]> = {
   ranged: [
     "Artillery", "Beam Weapons", "Blowpipe", "Bolas", "Bow", "Crossbow", "Dropping", "Gunner", "Guns",
     "Innate Attack", "Lasso", "Liquid Projector", "Net", "Sling", "Spear Thrower", "Throwing",
-    "Thrown Weapon",
+    "Throwing Art", "Thrown Weapon",
   ],
 };
 
