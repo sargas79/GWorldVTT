@@ -1273,7 +1273,8 @@ async function rollAction(
   // what each line is for.
   const attackRow = target.closest<HTMLElement>("[data-item-id]");
   const attackModeIndex = Number(attackRow?.dataset.modeIndex);
-  const attackMode = rolledItem && attackRow?.dataset.modeIndex !== undefined && Number.isInteger(attackModeIndex)
+  // A derived mode the character has itself has no item, but still names its mode (API 1.35.0).
+  const attackMode = (rolledItem || attackRow?.dataset.derivedMode) && attackRow?.dataset.modeIndex !== undefined && Number.isInteger(attackModeIndex)
     ? { index: attackModeIndex, ranged: attackRow.dataset.ranged === "1", ...(attackRow.dataset.derivedMode ? { derived: attackRow.dataset.derivedMode } : {}) }
     : null;
   const hooked = rollType === "attack"
@@ -2719,7 +2720,7 @@ export async function handleDamageAction(
   const itemId = itemRow?.dataset.itemId;
   const item = itemId ? (actor?.items?.get?.(itemId) ?? null) : null;
   const modeIndex = Number(itemRow?.dataset.modeIndex);
-  const mode = item && itemRow?.dataset.modeIndex !== undefined && Number.isInteger(modeIndex)
+  const mode = (item || itemRow?.dataset.derivedMode) && itemRow?.dataset.modeIndex !== undefined && Number.isInteger(modeIndex)
     ? { index: modeIndex, ranged: itemRow.dataset.ranged === "1", ...(itemRow.dataset.derivedMode ? { derived: itemRow.dataset.derivedMode } : {}) }
     : null;
 

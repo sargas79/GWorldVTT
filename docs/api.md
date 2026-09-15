@@ -569,7 +569,8 @@ and a hint `p.ihint`.
 
   Since 1.35.0 a mode registered with `self: true` belongs to the character rather
   than a weapon: `applies(null, actor)` and `mode(null, actor, helpers)` are called once
-  per character, and the row has no item. Set `naturalKey` on the row (`punch`,
+  per character, and the row has no item; the attack and damage hooks still get its
+  `mode` with `derived`. Set `naturalKey` on the row (`punch`,
   `kick`, `bite`, `claw`) for what strikes, which Hurting Yourself reads.
 - **`combat.registerSlam({ module, key, label, kind, available?, prepare })`** (since
   1.31.0). Another way to slam (`kind: "slam"`) or shove (`"shove"`), offered in
