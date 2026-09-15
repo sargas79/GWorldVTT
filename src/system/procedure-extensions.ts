@@ -88,6 +88,8 @@ export const PROCEDURE_HOOKS = Object.freeze({
   turnEnd: "gworld.turnEnd",
   /** Before a bleeding roll: `{ actor, intervalSeconds, modifier }`, mutable. */
   bleedingSchedule: "gworld.bleedingSchedule",
+  /** Before a First Aid attempt (since 1.36.0): `{ healer, patient, refusal, stopsBleeding }`, mutable. */
+  firstAid: "gworld.firstAid",
   /** While a technique's defaults are read: `{ actor, item, defaults }`; push `{ from, skill, modifier }`. */
   techniqueDefaults: "gworld.techniqueDefaults",
   /** After a feint is rolled: `{ feinter, foe, result, record }`; set `record: false` to take the result over. */
@@ -726,6 +728,15 @@ async function expireConditions(actor: any, at: { round?: number; time?: number;
 // ── bleeding ───────────────────────────────────────────────────────────────
 
 /** How often a wound bleeds and at what modifier, after the listeners. */
+/** What the modules say about a First Aid attempt (since 1.36.0): a refusal, and whether success stops the bleeding. */
+export function firstAidRules(healer: any, patient: any): { refusal: string | null; stopsBleeding: boolean } {
+  const context = callCombatHook(PROCEDURE_HOOKS.firstAid, { healer, patient, refusal: null as string | null, stopsBleeding: true });
+  return {
+    refusal: typeof context.refusal === "string" && context.refusal.trim() ? context.refusal.trim() : null,
+    stopsBleeding: context.stopsBleeding !== false,
+  };
+}
+
 export function bleedingSchedule(actor: any, modifier: number): { intervalSeconds: number; modifier: number } {
   const context = callCombatHook(PROCEDURE_HOOKS.bleedingSchedule, { actor, intervalSeconds: 60, modifier });
   return {

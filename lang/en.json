@@ -2201,7 +2201,8 @@
         "asphyxiation": "Asphyxiation",
         "heartAttack": "Heart attack"
       },
-      "ResuscitateNeedsTl": "Resuscitation needs Physician or First Aid of TL7 or later; this healer's is TL{tl}"
+      "ResuscitateNeedsTl": "Resuscitation needs Physician or First Aid of TL7 or later; this healer's is TL{tl}",
+      "StillBleeding": "{patient} is bandaged, but still bleeding"
     },
     "Knockdown": {
       "Title": "Knockdown and stunning",

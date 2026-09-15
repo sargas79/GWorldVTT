@@ -306,3 +306,12 @@ describe("self derived modes (since 1.35.0)", () => {
     expect(api.grappleMoveRules({}, {}, "takedown")).toEqual({ refusal: null, waiveRequirements: false });
   });
 });
+
+describe("First Aid rules (since 1.36.0)", () => {
+  it("passes a listener's refusal and whether a bandage stops the bleeding", async () => {
+    const api = await load();
+    expect(api.firstAidRules({}, {})).toEqual({ refusal: null, stopsBleeding: true });
+    globals.Hooks = { callAll: (_event: string, context: any) => { context.stopsBleeding = false; context.refusal = " Needs surgery "; } };
+    expect(api.firstAidRules({}, {})).toEqual({ refusal: "Needs surgery", stopsBleeding: false });
+  });
+});

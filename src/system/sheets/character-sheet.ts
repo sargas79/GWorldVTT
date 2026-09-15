@@ -201,6 +201,7 @@ import {
   removeCondition,
   runGrappleAction,
   triggerManeuverResponse,
+  firstAidRules,
 } from "../procedure-extensions.js";
 import { SHEET_TABS, effectiveCost, effectiveWeight, itemSectionsFor, registeredItemType, runItemTypeAction, tabHasAddonSections, type SheetTab } from "../data-extensions.js";
 import { DRESS_STATES } from "../../rules/cinematic.js";
@@ -4499,6 +4500,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const patient = targets[0]?.actor;
     if (!patient) return;
 
+    // A module's rules may refuse this, or say a bandage won't stop this bleeding (API 1.36.0).
+    const rules = firstAidRules(this.actor, patient);
+    if (rules.refusal) {
+      ui.notifications?.warn(rules.refusal);
+      return;
+    }
+
     const modifier = await promptForNumber({
       title: game.i18n.localize("GWORLD.Recovery.FirstAid"),
       label: game.i18n.localize("GWORLD.Chat.Modifier"),
@@ -4510,7 +4518,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
     // "someone who is wounded but receives a successful First Aid roll ... loses
     // no HP to bleeding. A later roll will prevent further HP loss."
-    if (restored > 0) await stopBleeding(patient);
+    if (restored > 0 && rules.stopsBleeding) await stopBleeding(patient);
+    else if (restored > 0 && patient.statuses?.has?.("bleeding")) {
+      ui.notifications?.info(game.i18n.format("GWORLD.Recovery.StillBleeding", { patient: String(patient.name ?? "") }));
+    }
   }
 
   /**

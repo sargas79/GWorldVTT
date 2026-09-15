@@ -21,6 +21,7 @@ import {
   wakingFrom,
 } from "../rules/recovery.js";
 import { resolveSuccess } from "../rules/success.js";
+import { successRollModifiers } from "./procedure-extensions.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import {
@@ -256,9 +257,16 @@ export async function applyFirstAid(options: {
   const current = Number(hp.value) || 0;
   const max = Number(hp.max) || 0;
 
+  // What the patient's conditions and the modules add to the roll (API 1.36.0).
+  const added = successRollModifiers({
+    actor: healer, label: game.i18n.localize("GWORLD.Recovery.FirstAid"), kind: "skill", skill: "First Aid",
+    base: skill, tags: ["firstAid"], modifiers: [], opponent: patient,
+  }).reduce((sum, line) => sum + line.value, 0);
+  const target = skill + modifier + added;
+
   const check = new Roll("3d6");
   await check.evaluate();
-  const outcome = resolveSuccess(check.total, skill + modifier, dieResults(check));
+  const outcome = resolveSuccess(check.total, target, dieResults(check));
 
   // The table's dice are only rolled when there is something to roll them for:
   // a failure restores nothing, and a critical success takes the maximum.
@@ -290,7 +298,7 @@ export async function applyFirstAid(options: {
       minutes: entry.minutes,
       tl: techLevel,
     }),
-    target: skill + modifier,
+    target,
     dice: dieResults(check),
     roll: check.total,
     success: outcome.success,
