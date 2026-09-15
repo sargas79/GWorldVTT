@@ -976,6 +976,20 @@ export interface HitLocationRegistration {
   knockdown?: number;
   /** Whether it is offered right now (e.g. "my switch is on"). */
   available?: (context: { actor?: any; damageType?: string }) => boolean;
+  /**
+   * Where an attack aimed at it that misses by 1 lands (since 1.22.0): a Basic
+   * Set location or a registered `<module>.<key>`, or null for nowhere. Missing:
+   * the parent's rule.
+   */
+  missFallback?: string | null;
+  /** The arcs it may be aimed from (since 1.22.0). Missing: any the parent allows. */
+  arcs?: Array<"front" | "side" | "back">;
+  /** Added to the knockdown modifier for a damage type (since 1.22.0). */
+  knockdownFor?: (type: DamageType) => number;
+  /** Any shock calls for a knockdown roll, not only a major wound (since 1.22.0). */
+  shockKnockdown?: boolean;
+  /** A major wound's knockdown penalty in place of the parent's (since 1.22.0). */
+  majorWoundKnockdown?: number;
 }
 
 export interface AddonHitLocation {
@@ -990,6 +1004,11 @@ export interface AddonHitLocation {
   extraDr: number;
   knockdown: number;
   available: (context: { actor?: any; damageType?: string }) => boolean;
+  missFallback: string | null | undefined;
+  arcs: Array<"front" | "side" | "back"> | null;
+  knockdownFor: (type: DamageType) => number;
+  shockKnockdown: boolean;
+  majorWoundKnockdown: number | null;
 }
 
 const hitLocations = new Map<string, AddonHitLocation>();
@@ -1022,8 +1041,36 @@ export function registerHitLocation(registration: HitLocationRegistration): stri
     extraDr: Number(r.extraDr) || 0,
     knockdown: Number(r.knockdown) || 0,
     available: typeof r.available === "function" ? r.available : () => true,
+    missFallback: r.missFallback === undefined ? undefined : r.missFallback === null ? null : String(r.missFallback),
+    arcs: Array.isArray(r.arcs) ? r.arcs.filter((arc) => arc === "front" || arc === "side" || arc === "back") : null,
+    knockdownFor: typeof r.knockdownFor === "function" ? r.knockdownFor : () => 0,
+    shockKnockdown: r.shockKnockdown === true,
+    majorWoundKnockdown: typeof r.majorWoundKnockdown === "number" && Number.isFinite(r.majorWoundKnockdown) ? r.majorWoundKnockdown : null,
   });
   return key;
+}
+
+/**
+ * Where an aimed attack that misses by 1 lands (Campaigns p. 552): a Basic Set
+ * eye, skull, face, groin, neck or vitals shot lands on the torso, and a
+ * registered location says for itself or takes its parent's rule. Null for a
+ * miss that is simply a miss.
+ */
+export function missFallbackFor(shot: { hitLocation: HitLocation; addonLocation?: string | null }, basicSetFallback: (location: HitLocation) => boolean): { hitLocation: HitLocation; addonLocation: string | null } | null {
+  const added = shot.addonLocation ? hitLocations.get(shot.addonLocation) : undefined;
+  if (added && added.missFallback !== undefined) {
+    if (added.missFallback === null) return null;
+    const registered = hitLocations.get(added.missFallback);
+    if (registered) return { hitLocation: registered.parent, addonLocation: registered.key };
+    return HIT_LOCATIONS[added.missFallback as HitLocation] ? { hitLocation: added.missFallback as HitLocation, addonLocation: null } : null;
+  }
+  return basicSetFallback(shot.hitLocation) ? { hitLocation: "torso", addonLocation: null } : null;
+}
+
+/** Whether a registered location may be aimed at from an arc; true when it names none, or the arc is unknown. */
+export function registeredLocationAllowsArc(addonLocation: string | null | undefined, arc: "front" | "side" | "back" | null): boolean {
+  const added = addonLocation ? hitLocations.get(addonLocation) : undefined;
+  return !added?.arcs || arc === null || added.arcs.includes(arc);
 }
 
 export function registeredHitLocation(key: string): AddonHitLocation | undefined {
@@ -1061,6 +1108,8 @@ export function locationOverrides(addonLocation: string | null | undefined, type
   cripplingThreshold: number | null | undefined;
   extraDr: number;
   knockdown: number;
+  shockKnockdown: boolean;
+  majorWoundKnockdown: number | null;
 } | null {
   const added = addonLocation ? hitLocations.get(addonLocation) : undefined;
   if (!added) return null;
@@ -1075,13 +1124,40 @@ export function locationOverrides(addonLocation: string | null | undefined, type
     woundingModifier: wounding,
     cripplingThreshold: added.cripplingDivisor === undefined ? undefined : added.cripplingDivisor === null ? null : maxHp / added.cripplingDivisor,
     extraDr: added.extraDr,
-    knockdown: added.knockdown,
+    knockdown: added.knockdown + (() => {
+      try {
+        return Number(added.knockdownFor(type)) || 0;
+      } catch (error) {
+        console.warn(`gworld | hit location ${added.key} failed its knockdown check`, error);
+        return 0;
+      }
+    })(),
+    shockKnockdown: added.shockKnockdown,
+    majorWoundKnockdown: added.majorWoundKnockdown,
   };
 }
 
 /** Runs the random-hit-location hook over a location rolled on the Basic Set's table. */
-export function randomLocationWithHooks(roll: number, location: HitLocation, actor?: any): { hitLocation: HitLocation; addonLocation: string | null } {
-  const context = callCombatHook(COMBAT_HOOKS.randomHitLocation, { roll, location, addonLocation: null as string | null, actor });
+export function randomLocationWithHooks(
+  roll: number,
+  location: HitLocation,
+  actor?: any,
+  known: { damageType?: string | null; arc?: "front" | "side" | "back" | null } = {},
+): { hitLocation: HitLocation; addonLocation: string | null } {
+  const context = callCombatHook(COMBAT_HOOKS.randomHitLocation, {
+    roll,
+    location,
+    addonLocation: null as string | null,
+    actor,
+    // Since 1.22.0: what the caller knows about the blow, and a die of the
+    // system's own for a listener's sub-roll.
+    damageType: known.damageType ?? null,
+    arc: known.arc ?? null,
+    d6: () => {
+      const uniform = (globalThis as { CONFIG?: { Dice?: { randomUniform?: () => number } } }).CONFIG?.Dice?.randomUniform ?? Math.random;
+      return Math.min(6, Math.max(1, Math.ceil((1 - uniform()) * 6)));
+    },
+  });
   const added = context.addonLocation ? hitLocations.get(context.addonLocation) : undefined;
   if (added) return { hitLocation: added.parent, addonLocation: added.key };
   return { hitLocation: HIT_LOCATIONS[context.location] ? context.location : location, addonLocation: null };

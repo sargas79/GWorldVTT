@@ -70,7 +70,7 @@ export async function rollFall(options: FallOptions): Promise<number | null> {
   const locationRoll = new Roll("3d6");
   await locationRoll.evaluate();
   // A module may refine where a random blow lands.
-  const landed = randomLocationWithHooks(locationRoll.total, randomHitLocation(locationRoll.total).location, actor);
+  const landed = randomLocationWithHooks(locationRoll.total, randomHitLocation(locationRoll.total).location, actor, { damageType: "cr" });
   const hitLocation: HitLocation = landed.hitLocation;
 
   const damage: IncomingDamage = {

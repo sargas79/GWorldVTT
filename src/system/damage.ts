@@ -345,11 +345,12 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
       applied.majorWound || Boolean(critical?.majorWound && result.penetrating > 0),
   };
 
+  // A module's location may call for the roll on any shock (API 1.22.0).
   const required = knockdownRequired({
     majorWound: consequences.majorWound,
     hitLocation: damage.hitLocation,
     shock: consequences.shock,
-  });
+  }) || (overrides?.shockKnockdown === true && (consequences.shock ?? 0) !== 0);
 
   const record: AppliedDamage = {
     actorName: String(actor?.name ?? ""),
@@ -394,10 +395,12 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
           required: true,
           modifier: knockdownModifier({
             majorWound: consequences.majorWound,
-            hitLocation: damage.hitLocation,
+            // A module's location may set its own major-wound penalty in place
+            // of the parent's, which the torso's zero leaves room for.
+            hitLocation: overrides && overrides.majorWoundKnockdown !== null ? "torso" : damage.hitLocation,
             shock: consequences.shock,
             traitModifier: traits.knockdown + traits.htRolls,
-          }) + (overrides?.knockdown ?? 0),
+          }) + (overrides?.knockdown ?? 0) + (overrides && overrides.majorWoundKnockdown !== null && consequences.majorWound ? overrides.majorWoundKnockdown : 0),
         }
       : null,
     // Nothing bleeds that has no blood, and nothing bleeds from a cinematic
