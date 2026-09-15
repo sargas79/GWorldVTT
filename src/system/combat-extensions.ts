@@ -144,7 +144,7 @@ export function adjustWeaponAttacks(options: {
     options.rows.forEach((entry, index) => Object.assign(entry.row, before[index]));
     return;
   }
-  for (const entry of options.rows) {
+  options.rows.forEach((entry, index) => {
     const row = entry.row;
     if (entry.kind === "ranged") {
       const half = Math.max(0, Math.round(Number(row.halfDamageRange) || 0));
@@ -154,6 +154,12 @@ export function adjustWeaponAttacks(options: {
     // Reach is text, Parry a whole number or none, and two-handed a flag (since 1.21.0).
     row.reach = typeof row.reach === "string" ? row.reach : String(row.reach ?? "");
     row.parry = row.parry === null || row.parry === undefined || !Number.isFinite(Number(row.parry)) ? null : Math.round(Number(row.parry));
+    // A Parry moved up or down moves the weapon's parry modifier with it, so the
+    // defense worked out from the weapon's skill agrees with the row.
+    const was = before[index]?.parry;
+    if (typeof was === "number" && row.parry !== null && row.parry !== was) {
+      row.parryModifier = (Number(row.parryModifier) || 0) + (row.parry - was);
+    }
     row.twoHanded = row.twoHanded === true;
     row.notes = (Array.isArray(row.notes) ? row.notes : [])
       .filter((n: any) => typeof n?.label === "string" && n.label.trim())
@@ -163,7 +169,7 @@ export function adjustWeaponAttacks(options: {
       ? { damage: follow.damage, damageType: String(follow.damageType ?? "cr"), explosive: Boolean(follow.explosive), ...(follow.label ? { label: String(follow.label) } : {}) }
       : null;
     row.damageRollable = options.isRollable(entry);
-  }
+  });
 }
 
 /** Runs the equipment failure hook: the target, and the lines modules added to it. */
