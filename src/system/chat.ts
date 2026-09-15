@@ -569,6 +569,14 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-defend]")) return;
 
+  // Who attacked: the card's speaker.
+  const attacker = (() => {
+    try {
+      return (ChatMessage as any).implementation?.getSpeakerActor?.(message?.speaker) ?? null;
+    } catch {
+      return null;
+    }
+  })();
   for (const entry of flag.defenders) {
     const defender: any = await fromUuid(entry.uuid).catch(() => null);
     if (!defender?.isOwner) continue;
@@ -781,6 +789,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         ...(technique ? { technique } : {}),
         addonOptions: addonBoxes.filter((box) => box.checked).map((box) => String(box.dataset.addonDefense)),
         attackDefenseModifiers: flag.defenseModifiers ?? [],
+        attacker,
       });
     };
 
@@ -947,6 +956,8 @@ async function rollDefense(options: {
   addonOptions?: string[];
   /** Lines a module's attack option put on the defender's rolls. */
   attackDefenseModifiers?: Array<{ label: string; value: number; defenses?: DefenseKey[] }>;
+  /** The attacking actor, for the modules' hooks. */
+  attacker?: any;
 }): Promise<void> {
   const {
     defender, key, total, attack, arcPenalty, deception, retreating, feverish, skill, isFencing,
@@ -1041,7 +1052,7 @@ async function rollDefense(options: {
   // own options add, and whatever a module's hook adds on top.
   modifiers.push(...defenseModifiersFor(options.attackDefenseModifiers, key));
   modifiers.push(...addon.modifiers);
-  callCombatHook(COMBAT_HOOKS.defenseModifiers, { defender, defense: key, attack, modifiers });
+  callCombatHook(COMBAT_HOOKS.defenseModifiers, { defender, defense: key, attack, modifiers, deception, attacker: options.attacker ?? null });
 
   // "If struck by a potentially lethal attack ... the hero can choose to
   // convert his failed defense roll into a success" (p. 417) -- but not

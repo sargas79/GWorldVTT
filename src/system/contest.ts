@@ -115,8 +115,10 @@ export async function rollFeint(options: {
   feinter: ContestSide;
   defender: ContestSide;
 }): Promise<FeintResult> {
-  const feinter = await rollSide(options.feinter);
-  const defender = await rollSide(options.defender);
+  // A module's resolver may propose what each side rolls against.
+  const scores = resolveContestScores({ label: options.label, first: options.feinter, second: options.defender, tags: ["feint"] });
+  const feinter = await rollSide({ ...options.feinter, ...scores.first });
+  const defender = await rollSide({ ...options.defender, ...scores.second });
   const result = resolveFeint(feinter.outcome, defender.outcome);
 
   await postContest({

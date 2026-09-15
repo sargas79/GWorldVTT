@@ -53,7 +53,7 @@ export const COMBAT_HOOKS = Object.freeze({
   defenseChoices: "gworld.defenseChoices",
   /** The weapons a character's best parry is picked from: `{ actor, attackedThisTurn, candidates }`, mutable. */
   parryWeapons: "gworld.parryWeapons",
-  /** Before a defense roll: `{ defender, defense, attack, modifiers }`, mutable. */
+  /** Before a defense roll: `{ defender, defense, attack, modifiers, deception, attacker }`, mutable. */
   defenseModifiers: "gworld.defenseModifiers",
   /** Before a damage roll: `{ actor, item, mode, label, formula, damageType, modifiers }`, mutable. */
   damageModifiers: "gworld.damageModifiers",

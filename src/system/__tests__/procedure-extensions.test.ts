@@ -224,3 +224,25 @@ describe("bleeding and technique defaults", () => {
     ]);
   });
 });
+
+/** Feint extension points (sargas79/GWorldVTT#292). */
+describe("a feint's result", () => {
+  it("is recorded unless a listener takes it over", async () => {
+    const api = await load();
+    expect(api.feintResultRecorded({ feinter: {}, foe: {}, result: { success: true } })).toBe(true);
+    globals.Hooks = { callAll: (event: string, context: any) => { if (event === "gworld.feintResult") context.record = false; } };
+    expect(api.feintResultRecorded({ feinter: {}, foe: {}, result: { success: true } })).toBe(false);
+  });
+
+  it("lets a contest resolver propose a feint's scores", async () => {
+    const api = await load();
+    api.registerContestResolver({
+      module: "test-addon", key: "ruse", label: "Ruse",
+      applies: (context) => (context.tags ?? []).includes("feint"),
+      resolve: () => ({ first: { base: 13, note: "IQ" } }),
+    });
+    const scores = api.resolveContestScores({ label: "Feint", first: { actor: {}, base: 15 }, second: { actor: {}, base: 12 }, tags: ["feint"] });
+    expect(scores.first).toEqual({ base: 13, note: "IQ" });
+    expect(scores.second).toEqual({ base: 12 });
+  });
+});

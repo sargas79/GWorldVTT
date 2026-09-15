@@ -85,7 +85,18 @@ export const PROCEDURE_HOOKS = Object.freeze({
   bleedingSchedule: "gworld.bleedingSchedule",
   /** While a technique's defaults are read: `{ actor, item, defaults }`; push `{ from, skill, modifier }`. */
   techniqueDefaults: "gworld.techniqueDefaults",
+  /** After a feint is rolled: `{ feinter, foe, result, record }`; set `record: false` to take the result over. */
+  feintResult: "gworld.feintResult",
 });
+
+/**
+ * Tells the listeners how a feint went. Returns whether the system should
+ * record it as a feint against the foe's next defenses.
+ */
+export function feintResultRecorded(context: { feinter: any; foe: any; result: unknown }): boolean {
+  const hooked = callCombatHook(PROCEDURE_HOOKS.feintResult, { ...context, record: true });
+  return hooked.record !== false;
+}
 
 // ── maneuver options ───────────────────────────────────────────────────────
 
