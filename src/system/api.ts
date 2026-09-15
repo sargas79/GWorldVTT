@@ -180,7 +180,7 @@ export interface GWorldApi {
   readonly version: string;
   /** The pure GURPS rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. */
   readonly rules: typeof rules;
-  /** Rule groups and switches (see the README's "A module's own rules"). */
+  /** Rule groups and switches (see "A module's own rules" in docs/api.md). */
   readonly registry: {
     readonly registerRuleGroup: typeof registerRuleGroup;
     readonly registerRule: typeof registerRule;
