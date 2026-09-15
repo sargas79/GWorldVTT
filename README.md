@@ -489,6 +489,8 @@ and skipped, and the roll goes on.
     `{ actor, item, maneuver, rapidStrike, deceptiveAttack }`. Set an option's
     `available: false` and `refusal` (text), and the dialog leaves it off and
     says why;
+  - Since 1.19.0, a `gworld.attackModifiers` listener may set `refusal` (text): the
+    attack isn't rolled, and the user is told why;
   - Since 1.18.0, `gworld.attackModifiers` also gets `calledShot`, the location the
     blow is aimed at as `{ hitLocation, addonLocation }` or null, and `targets`,
     the actors of the targeted tokens;
