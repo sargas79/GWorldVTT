@@ -786,7 +786,10 @@ and a hint `p.ihint`.
   `attack`, `defense`, `contest`) and more: `fastDraw` and `teaching` from the
   skill's name, `fright`, `knockdown`, `bleeding`, and the defense
   (`dodge`, `parry`, `block`). `gworld.afterSuccessRoll` follows with the
-  `outcome`.
+  `outcome`. Since 1.30.0 each side of a contest also gets `opponent`, the
+  actor on the other side, and its `tags` say what the contest is: `feint`, or
+  `quickContest` with `disarm` for a disarm (tags a Quick Contest's caller
+  passes reach the contest resolvers too).
 - **`roll.registerContestResolver({ module, key, label, applies, resolve })`.**
   For the Quick Contests the system offers, the first resolver whose
   `applies(context)` takes the contest returns the `{ base, note }` either side

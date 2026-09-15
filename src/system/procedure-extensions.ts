@@ -297,6 +297,8 @@ export interface SuccessRollContext {
   /** What sort of roll it is beyond its kind: `fastDraw`, `fright`, `knockdown`, `teaching`, `contest`, a defense's name... */
   tags: string[];
   modifiers: ModifierLine[];
+  /** For a side of a contest, the actor on the other side (since 1.30.0). */
+  opponent?: any;
 }
 
 /** The tags a roll carries for what its skill is, beside the ones its caller gave. */
