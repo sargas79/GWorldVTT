@@ -66,6 +66,8 @@ export interface DefenseChoice {
   /** The penalty the arc adds, for the roll's modifier line. */
   arcPenalty: number;
   reason: DefenseRefusal | null;
+  /** A module's own words for why it is refused, shown in place of the reason's. */
+  refusal?: string | null;
   skillName: string;
   isFencing: boolean;
 }

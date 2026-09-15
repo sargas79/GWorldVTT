@@ -1164,9 +1164,15 @@ async function rollAction(
 
   // A module may add to the attack roll and to what the defender faces, with
   // what each line is for.
+  const attackRow = target.closest<HTMLElement>("[data-item-id]");
+  const attackModeIndex = Number(attackRow?.dataset.modeIndex);
   const hooked = rollType === "attack"
     ? callCombatHook(COMBAT_HOOKS.attackModifiers, {
         actor,
+        item: rolledItem,
+        mode: rolledItem && attackRow?.dataset.modeIndex !== undefined && Number.isInteger(attackModeIndex)
+          ? { index: attackModeIndex, ranged: attackRow.dataset.ranged === "1" }
+          : null,
         rollType,
         ranged: Boolean(ranged),
         modifiers,

@@ -84,7 +84,7 @@ import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
 import { evaluateBonus } from "../../rules/maneuvers.js";
 import {
-  adjustWeaponAttacks, maneuverAllowsDefense, maneuverAllowsParry, maneuverInfo, maneuverKeys, type WeaponRowEntry,
+  adjustWeaponAttacks, maneuverAllowsDefense, maneuverAllowsParry, maneuverInfo, maneuverKeys, parryWeaponRows, type WeaponRowEntry,
 } from "../combat-extensions.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
@@ -2324,10 +2324,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // already attacked in: an axe swung this turn is not coming back in time to
     // turn a blade (p. 269). It stays available on a turn nothing was swung, so
     // the flag is read here rather than baked into the parry score.
-    // An unready weapon is not in a position to parry either.
+    // An unready weapon is not in a position to parry either. A module may
+    // leave out another weapon, or let an unbalanced one back in.
     const bestParry = bestParryOption(
-      melee.filter((atk) => atk.usable && !atk.unready),
-      this.conditions.attackedThisTurn,
+      parryWeaponRows(this.parent, melee.filter((atk) => atk.usable && !atk.unready), Boolean(this.conditions.attackedThisTurn)),
     );
     const parryResult =
       parryAvailable && bestParry && bestParry.skillLevel !== null

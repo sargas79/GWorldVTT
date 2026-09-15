@@ -284,3 +284,61 @@ describe("hooks and state", () => {
     expect(api.expiringState(null, ["combat"])).toEqual([]);
   });
 });
+
+/** Defenses a module refuses, and the weapons it lets parry (sargas79/GWorldVTT#280). */
+describe("defense choices and parry weapons", () => {
+  /** Hooks whose listeners run straight away, as Foundry's callAll does. */
+  function hooks(listeners: Record<string, (context: any) => void>) {
+    globals.Hooks = { callAll: (event: string, context: unknown) => listeners[event]?.(context) };
+  }
+  const offered = [
+    { key: "dodge" as const, available: true },
+    { key: "parry" as const, available: true },
+    { key: "block" as const, available: false },
+  ];
+
+  it("takes a module's refusals of a defense, Retreat and Feverish Defense, but never offers what the system refused", async () => {
+    const api = await load();
+    hooks({
+      "gworld.defenseChoices": (context) => {
+        for (const choice of context.choices) {
+          choice.available = choice.key === "dodge";
+          choice.refusal = "Not after that attack";
+        }
+        context.retreat.available = false;
+        context.retreat.refusal = "No retreat";
+      },
+    });
+    const refused = api.moduleDefenseRefusals({ defender: {}, attack: "Axe", delivery: "melee", damageType: "cut", choices: offered });
+    expect([...refused.choices.entries()]).toEqual([["parry", "Not after that attack"]]);
+    expect(refused.retreat).toBe("No retreat");
+    expect(refused.feverish).toBeNull();
+  });
+
+  it("changes nothing with no listener", async () => {
+    const api = await load();
+    const refused = api.moduleDefenseRefusals({ defender: {}, attack: "Axe", delivery: "melee", damageType: "cut", choices: offered });
+    expect(refused.choices.size).toBe(0);
+    expect([refused.retreat, refused.feverish]).toEqual([null, null]);
+  });
+
+  const rows = [
+    { itemId: "axe", modeIndex: 0, name: "Axe", unbalanced: true, parry: 9 },
+    { itemId: "sword", modeIndex: 0, name: "Sword", unbalanced: false, parry: 10 },
+  ];
+
+  it("leaves out an unbalanced weapon on a turn it attacked, unless a module lets it back in", async () => {
+    const api = await load();
+    expect(api.parryWeaponRows({}, rows, true).map((r) => r.itemId)).toEqual(["sword"]);
+    expect(api.parryWeaponRows({}, rows, false).map((r) => r.itemId)).toEqual(["axe", "sword"]);
+    hooks({
+      "gworld.parryWeapons": (context) => {
+        for (const candidate of context.candidates) {
+          if (candidate.itemId === "axe") candidate.excluded = false;
+          if (candidate.itemId === "sword") Object.assign(candidate, { excluded: true, reason: "It just attacked" });
+        }
+      },
+    });
+    expect(api.parryWeaponRows({}, rows, true).map((r) => r.itemId)).toEqual(["axe"]);
+  });
+});
