@@ -32,6 +32,8 @@ export interface CatalogSkill {
   name: string;
   attribute: SkillAttribute;
   defaults: CatalogDefault[];
+  /** E, A, H or VH, for a default that depends on it (Weapon Master, Characters p. 99). */
+  difficulty?: string;
 }
 
 const catalog = new Map<string, CatalogSkill>();
@@ -77,7 +79,7 @@ export function defaultLevelFrom(
 }
 
 /** The index fields the catalog reads. */
-const INDEX_FIELDS = ["system.attribute", "system.defaults"];
+const INDEX_FIELDS = ["system.attribute", "system.defaults", "system.difficulty"];
 
 /**
  * Reads every skill in the chosen compendia into the catalog.
@@ -100,6 +102,7 @@ export async function loadSkillCatalog(): Promise<void> {
         name: String(entry.name ?? ""),
         attribute: (entry.system?.attribute ?? "DX") as SkillAttribute,
         defaults: Array.isArray(entry.system?.defaults) ? entry.system.defaults : [],
+        difficulty: String(entry.system?.difficulty ?? ""),
       });
     }
   }

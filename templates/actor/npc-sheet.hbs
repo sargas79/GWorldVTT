@@ -105,6 +105,7 @@
                         data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
                         data-hit-modifier="{{atk.hitModifier}}"
                         data-damage-type="{{atk.damageType}}"
+                        data-rapid-strike-halved="{{#if atk.rapidStrikeHalved}}1{{/if}}"
                         data-unarmed="{{#if atk.unarmed}}1{{/if}}">
                     {{> "gworld.die"}}
                   </span>

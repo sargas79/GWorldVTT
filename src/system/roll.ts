@@ -80,7 +80,7 @@ import {
 } from "../rules/extra-effort.js";
 import {
   OPPORTUNITY_LINE_PENALTY,
-  RAPID_STRIKE_PENALTY,
+  rapidStrikePenalty,
   bulkPenalty,
   canAimWhileWatching,
   deceptiveAttack,
@@ -1112,6 +1112,7 @@ async function rollAction(
         reach: target.dataset.reach ?? "",
         // A thrusting weapon on a Wait may be braced for a stop thrust (p. 366).
         stopThrust: actor?.system?.maneuver === "wait" && target.dataset.damageBase === "thr",
+        halvedRapidStrike: target.dataset.rapidStrikeHalved === "1",
       })
     : null;
   if (asksAboutMelee && melee === null) return null;
@@ -2404,6 +2405,8 @@ export async function promptForMeleeAttack(options: {
   reach?: string;
   /** Whether a stop thrust may be declared: a thrusting attack on a Wait (Campaigns p. 366). */
   stopThrust?: boolean;
+  /** A master's Rapid Strike with this attack is at half the penalty (Characters pp. 93, 99). */
+  halvedRapidStrike?: boolean;
 }): Promise<{
   /** A Wild Swing was declared (Campaigns p. 388). */
   wildSwing: boolean;
@@ -2459,6 +2462,8 @@ export async function promptForMeleeAttack(options: {
   const rapidAllowed = isRuleOn("rapidStrike") && offered.rapidStrike?.available !== false;
   const dualAllowed = isRuleOn("dualWeaponAttack");
   const effortAllowed = isRuleOn("extraEffort");
+  // Trained By A Master or Weapon Master halves it, and Flurry of Blows halves what is left.
+  const rapidPenalty = rapidStrikePenalty(options.halvedRapidStrike === true);
   const addonContext = attackContextFor({
     actor: options.actor, item: options.item, ranged: false, damageType: options.damageType,
     reach: options.reach ?? "", effectiveSkill: options.effectiveSkill,
@@ -2487,13 +2492,13 @@ export async function promptForMeleeAttack(options: {
       ${rapidAllowed
         ? `<label style="display:flex;align-items:center;gap:8px">
              <input type="checkbox" name="rapid">
-             <span>${L("RapidStrike")} (${RAPID_STRIKE_PENALTY})</span>
+             <span>${L("RapidStrike")} (${rapidPenalty})</span>
            </label>`
         : ""}
       ${effortAllowed && rapidAllowed && offered.flurryOfBlows?.available !== false
         ? `<label style="display:flex;align-items:center;gap:8px">
              <input type="checkbox" name="flurry">
-             <span>${E("Flurry")} (${flurryOfBlowsPenalty()}, ${EXTRA_EFFORT_FP} FP)</span>
+             <span>${E("Flurry")} (${flurryOfBlowsPenalty(rapidPenalty)}, ${EXTRA_EFFORT_FP} FP)</span>
            </label>`
         : ""}
       ${options.mounted
@@ -2648,7 +2653,7 @@ export async function promptForMeleeAttack(options: {
   if (rapid) {
     modifiers.push({
       label: flurried ? `${L("RapidStrike")} + ${E("Flurry")}` : L("RapidStrike"),
-      value: flurried ? flurryOfBlowsPenalty() : RAPID_STRIKE_PENALTY,
+      value: flurried ? flurryOfBlowsPenalty(rapidPenalty) : rapidPenalty,
     });
   }
   // "If the mount's velocity is 7 or more relative to the foe, the attack has
