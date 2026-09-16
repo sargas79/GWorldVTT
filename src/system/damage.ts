@@ -225,6 +225,10 @@ export function wornArmor(actor: any): ArmorPiece[] {
       frontOnly: item.system?.frontOnly === true,
       concealable: item.system?.concealable === true,
       hardened: Number(item.system?.hardened ?? 0) || 0,
+      drByLocation: (item.system?.drByLocation ?? []).map((e: { locations?: string[]; dr?: number }) => ({
+        locations: (e?.locations ?? []) as HitLocation[],
+        dr: Number(e?.dr ?? 0) || 0,
+      })),
       ablative: item.system?.ablative ?? "none",
       drLost: Number(item.system?.drLost ?? 0) || 0,
       forceField: item.system?.forceField === true,
@@ -280,7 +284,9 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     .filter((piece) => (piece.forceField === true || here.has(piece)) && protectsAgainst(piece, arc))
     .map((piece) => ({
       label: piece.name ?? "",
-      dr: drAgainst(piece, damage.type),
+      // A Force Field covers everything, so it is read at the spot the blow
+      // fell whatever its own list says (Characters p. 47).
+      dr: drAgainst(piece, damage.type, damage.hitLocation),
       applies: true,
       forceField: piece.forceField === true,
       flexible: piece.flexible === true,

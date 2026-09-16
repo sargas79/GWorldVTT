@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ARMOR_DIVISOR_STEPS, ablativeLoss, drAgainst, hardenedAgainst, remainingDr } from "../armor.js";
+import { ARMOR_DIVISOR_STEPS, ablativeLoss, drAgainst, hardenedAgainst, remainingDr, wornDrAt } from "../armor.js";
 import { armorLayers } from "../layered-armor.js";
 import type { ArmorPiece } from "../armor.js";
 
@@ -130,3 +130,66 @@ describe("a Force Field in the layers (Characters p. 47)", () => {
     expect(layers.hardened).toBe(0);
   });
 });
+
+/**
+ * A piece that armours one place better than the rest of itself: a suit whose
+ * torso is better armoured than its limbs, a helmet whose skull is better
+ * armoured than its face and eyes. The Basic Set's own case is footwear with a
+ * tougher sole (Characters p. 283), which `soleDr` carries.
+ */
+describe("a different DR on one location", () => {
+  const suit = piece({
+    dr: 30,
+    locations: ["torso", "arm", "leg", "groin"],
+    drByLocation: [{ locations: ["torso"], dr: 50 }],
+  });
+
+  it("gives the exception's figure where it applies", () => {
+    expect(drAgainst(suit, "cr", "torso")).toBe(50);
+  });
+
+  it("gives the piece's own figure everywhere else it covers", () => {
+    expect(drAgainst(suit, "cr", "arm")).toBe(30);
+    expect(drAgainst(suit, "cr", "leg")).toBe(30);
+  });
+
+  it("gives the piece's own figure where no location was named at all", () => {
+    expect(drAgainst(suit, "cr")).toBe(30);
+  });
+
+  it("counts the exception in what a location is worth", () => {
+    expect(wornDrAt([suit], "torso", "cr")).toBe(50);
+    expect(wornDrAt([suit], "arm", "cr")).toBe(30);
+  });
+
+  it("adds up with another piece over the same spot", () => {
+    const vest = piece({ dr: 5, locations: ["torso"] });
+    expect(wornDrAt([suit, vest], "torso", "cr")).toBe(55);
+  });
+
+  it("replaces the split rather than being cut by it", () => {
+    // A piece saying both would be saying two things about the same spot.
+    const helmet = piece({
+      dr: 24, drSplit: 18, drSplitAppliesTo: ["cr"], locations: ["skull", "face", "eye"],
+      drByLocation: [{ locations: ["skull"], dr: 36 }],
+    });
+    expect(drAgainst(helmet, "cr", "skull")).toBe(36);
+    expect(drAgainst(helmet, "cut", "skull")).toBe(36);
+    // Where no exception covers it, the split is read as it always was.
+    expect(drAgainst(helmet, "cr", "face")).toBe(18);
+    expect(drAgainst(helmet, "cut", "face")).toBe(24);
+  });
+
+  it("is spent by an ablative blow like the rest of the piece", () => {
+    const spent = piece({ dr: 30, drByLocation: [{ locations: ["torso"], dr: 50 }], ablative: "ablative", drLost: 10 });
+    expect(drAgainst(spent, "cr", "torso")).toBe(40);
+    expect(drAgainst(spent, "cr", "arm")).toBe(20);
+  });
+
+  it("changes nothing for a piece that names no exception", () => {
+    const plain = piece({ dr: 8, locations: ["torso"] });
+    expect(drAgainst(plain, "cr", "torso")).toBe(8);
+    expect(wornDrAt([plain], "torso", "cr")).toBe(8);
+  });
+});
+
