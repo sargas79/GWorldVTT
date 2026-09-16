@@ -4053,7 +4053,31 @@
       "BodyOutline": "Hit locations on the body",
       "CombatLog": "Combat log",
       "ShowInChat": "Show this card in the chat log",
-      "NoLog": "Nothing in the chat from this character yet."
+      "NoLog": "Nothing in the chat from this character yet.",
+      "Equipped": "Equipped",
+      "Area": {
+        "head": "Head",
+        "torso": "Torso",
+        "arms": "Arms",
+        "hands": "Hands",
+        "legs": "Legs",
+        "feet": "Feet"
+      },
+      "Nothing": "Nothing worn",
+      "Readied": "Readied and to hand",
+      "NothingReady": "Nothing ready. Equip a weapon or carry a consumable.",
+      "Unequip": "Unequip",
+      "Equip": "Equip",
+      "Stow": "Stow",
+      "Carry": "Carry",
+      "Drop": "Drop",
+      "MoveToStorage": "Move to storage",
+      "Backpack": "Carried and stored",
+      "SearchGear": "Search gear",
+      "SortByColumn": "Sort by {column}",
+      "DragToStore": "Nothing stored. Drag a row here, or press Stow, to leave it behind.",
+      "Legality": "Legality",
+      "NothingCarried": "Nothing carried yet. Browse the compendium or add an item."
     }
   }
 }

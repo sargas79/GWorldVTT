@@ -1023,6 +1023,132 @@
 /* The chat card the combat log points to, briefly. */
 .gworld-flash { outline: 2px solid #d9a441; outline-offset: -2px; transition: outline-color 1.4s ease; }
 
+/* ── Inventory ─────────────────────────────────────────────────────────── */
+
+.gworld.v2 .tab.v2-inventory { gap: 8px; }
+.gworld.v2 .v2-load-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 22px;
+  padding: 6px 14px;
+  border: 1px solid var(--v2-frame-line);
+  border-radius: var(--v2-radius);
+  background: var(--v2-frame-2);
+  font-family: var(--font-heading);
+  font-size: 17px;
+  color: var(--v2-frame-muted);
+}
+.gworld.v2 .v2-load-strip b { color: var(--v2-frame-text); font-weight: 600; }
+.gworld.v2 .v2-load-strip em { font-style: normal; }
+.gworld.v2 .v2-load-money { margin-left: auto; }
+.gworld.v2 .v2-load-pill {
+  padding: 3px 22px;
+  border: 2px solid #6d8fb1;
+  border-radius: 999px;
+  background: #3a5470;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.gworld.v2 .v2-load-pill.heavy { background: #6a5320; border-color: var(--v2-gold); }
+.gworld.v2 .v2-load-pill.over { background: #5a2723; border-color: #b85a50; }
+.gworld.v2 .v2-tiers { display: flex; flex-wrap: wrap; gap: 4px; }
+.gworld.v2 .v2-tier { padding: 1px 10px; border-radius: 999px; background: var(--v2-frame-2); color: var(--v2-frame-muted); font-size: 11.5px; }
+.gworld.v2 .v2-tier b { font-weight: 600; }
+.gworld.v2 .v2-tier.active { background: var(--v2-steel); color: #fff; }
+
+.gworld.v2 .v2-inventory-grid { display: grid; grid-template-columns: minmax(170px, 0.42fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.gworld.v2 .v2-inventory-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.gworld.v2 .v2-areas { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.gworld.v2 .v2-area { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-radius: 3px; background: var(--v2-panel-2); }
+.gworld.v2 .v2-area.empty { opacity: 0.7; }
+.gworld.v2 .v2-area-name { font-family: var(--font-heading); font-size: 15px; font-weight: 600; }
+.gworld.v2 .v2-area-piece {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--v2-ink);
+  cursor: pointer;
+}
+.gworld.v2 .v2-area-piece span { color: var(--v2-ink-muted); }
+.gworld.v2 .v2-area-piece.selected { color: var(--v2-gold-deep); font-weight: 600; }
+
+.gworld.v2 .v2-quick-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.gworld.v2 .v2-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 6px 8px;
+  border: 2px solid transparent;
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  text-align: center;
+  cursor: pointer;
+}
+.gworld.v2 .v2-slot.selected { border-color: var(--v2-gold); background: #f6e7c2; }
+.gworld.v2 .v2-slot img { width: 40px; height: 40px; border: 0; }
+.gworld.v2 .v2-slot-name { font-family: var(--font-heading); font-size: 15px; font-weight: 600; line-height: 1.1; }
+.gworld.v2 .v2-slot-meta,
+.gworld.v2 .v2-slot-state { font-size: 11px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-slot-buttons { display: flex; flex-direction: column; gap: 3px; width: 100%; }
+.gworld.v2 .v2-slot-buttons .v2-button { width: 100%; }
+
+.gworld.v2 .v2-table-wrap { overflow-x: auto; }
+.gworld.v2 .v2-gear-table { width: 100%; margin: 0; border: 0; border-collapse: collapse; background: none; font-size: 13.5px; }
+.gworld.v2 .v2-gear-table thead,
+.gworld.v2 .v2-gear-table thead tr { background: none; }
+.gworld.v2 .v2-gear-table th { padding: 4px 6px; border: 0; border-bottom: 1px solid var(--color-divider); background: none; text-align: left; text-shadow: none; }
+.gworld.v2 .v2-gear-table th.n,
+.gworld.v2 .v2-gear-table td.n { text-align: right; white-space: nowrap; }
+.gworld.v2 .v2-gear-table td.c { text-align: right; white-space: nowrap; }
+.gworld.v2 .v2-gear-table td { padding: 4px 6px; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--v2-ink) 10%, transparent); }
+.gworld.v2 .v2-gear-table tbody tr[data-v2-row] { cursor: pointer; }
+.gworld.v2 .v2-gear-table tbody tr[data-v2-row]:hover td { background: var(--v2-panel-2); }
+.gworld.v2 .v2-gear-table tbody tr.selected td { background: #dfe6ec; }
+.gworld.v2 .v2-gear-table tbody tr.dim td { color: var(--v2-ink-muted); }
+.gworld.v2 .v2-gear-table tr.v2-gear-group td {
+  padding-top: 8px;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--v2-ink-muted);
+  background: none;
+}
+.gworld.v2 .v2-gear-table tbody.v2-drop-over td { background: var(--v2-gold-soft); }
+.gworld.v2 .v2-gear-table .iconbtn { width: 22px; height: 22px; padding: 0; border: 0; background: none; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-sort {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--v2-ink-muted);
+  cursor: pointer;
+}
+.gworld.v2 .v2-sort.active { color: var(--v2-ink); }
+.gworld.v2 .v2-tag-red { background: var(--v2-red-soft); color: var(--v2-red); }
+
+.gworld.v2 .v2-detail-red { background: var(--v2-red); color: #fff; }
+.gworld.v2 .v2-detail-sub { font-size: 13px; color: var(--v2-ink-muted); margin-top: -4px; }
+.gworld.v2 .v2-breakdown li.v2-sub { padding-top: 0; font-size: 12px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-stacked { flex-direction: column; }
+.gworld.v2 .v2-stacked .v2-button { width: 100%; height: 32px; font-size: 16px; }
+
 /* ── narrow windows ────────────────────────────────────────────────────── */
 
 @container v2sheet (max-width: 980px) {
@@ -1048,7 +1174,9 @@
   .gworld.v2 .v2-points { grid-column: 1 / -1; justify-self: start; }
   .gworld.v2 .v2-strip-mods { align-items: flex-start; }
   .gworld.v2 .v2-combat-grid,
-  .gworld.v2 .v2-combat-side { grid-template-columns: minmax(0, 1fr); }
+  .gworld.v2 .v2-combat-side,
+  .gworld.v2 .v2-inventory-grid { grid-template-columns: minmax(0, 1fr); }
+  .gworld.v2 .v2-load-money { margin-left: 0; }
 }
 
 @media (prefers-reduced-motion: no-preference) {

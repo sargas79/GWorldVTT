@@ -42,6 +42,11 @@ import { mechanicFallbackLabel, mechanicsOf } from "../sheet-v2/trait-mechanics.
 import { previewAttack } from "../roll.js";
 import { targetedTokens } from "../targets.js";
 import { combatLog } from "../sheet-v2/combat-log.js";
+import { effectiveCost, effectiveWeight } from "../data-extensions.js";
+import { gearGroupOf } from "../gear-groups.js";
+import { legalityNote } from "../legality.js";
+import { isRuleOn } from "../optional-rules.js";
+import { armorByArea, asGearSort, readiedItems, sortGear, type GearSort } from "../sheet-v2/inventory-view.js";
 import { GWorldCharacterSheet } from "./character-sheet.js";
 
 const V2_ROOT = `systems/${SYSTEM_ID}/templates/actor/v2`;
@@ -64,6 +69,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2Chip: GWorldCharacterSheetV2.#onChip,
       v2Location: GWorldCharacterSheetV2.#onLocation,
       v2ShowMessage: GWorldCharacterSheetV2.#onShowMessage,
+      v2ToggleCarried: GWorldCharacterSheetV2.#onToggleCarried,
+      v2GearSort: GWorldCharacterSheetV2.#onGearSort,
     },
   };
 
@@ -74,7 +81,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     skills: { template: `${V2_ROOT}/tab-skills.hbs`, scrollable: [".v2-list-col", ".v2-detail-col"] },
     traits: { template: `${V2_ROOT}/tab-traits.hbs`, scrollable: [".v2-list-col", ".v2-detail-col"] },
     combat: { template: `${V2_ROOT}/tab-combat.hbs`, scrollable: [""] },
-    inventory: { template: `systems/${SYSTEM_ID}/templates/actor/tab-gear.hbs`, scrollable: [""] },
+    inventory: { template: `${V2_ROOT}/tab-inventory.hbs`, scrollable: [".v2-list-col", ".v2-detail-col"] },
     progression: { template: `systems/${SYSTEM_ID}/templates/actor/tab-attributes.hbs`, scrollable: [""] },
     journal: { template: `systems/${SYSTEM_ID}/templates/actor/tab-description.hbs`, scrollable: [""] },
     magic: { template: `systems/${SYSTEM_ID}/templates/actor/tab-magic.hbs`, scrollable: [""] },
@@ -115,6 +122,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       skills: await this.skillsContext(context, points.unspent),
       traits: await this.traitsContext(context, points.unspent),
       combat: this.combatContext(context),
+      inventory: await this.inventoryContext(context),
       folded: [...this.folded],
       opened: [...this.opened],
     };
@@ -214,6 +222,166 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         String(actor.id),
       ).map((line) => ({ ...line, time: line.timestamp ? new Date(line.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "" })),
     };
+  }
+
+  /* ── Inventory ───────────────────────────────────────────────────────── */
+
+  /** How the carried table is sorted, and which way. */
+  protected gearSort: { sort: GearSort; descending: boolean } = { sort: "name", descending: false };
+
+  protected async inventoryContext(context: Record<string, any>): Promise<Record<string, unknown>> {
+    const actor = this.actor;
+    const system = context.system;
+    const derived = context.derived;
+    const L = (key: string) => game.i18n.localize(key);
+    const physical = [...actor.items].filter((i: any) => ["equipment", "armor", "shield"].includes(i.type));
+    const armed = (item: any) => Boolean(item.system?.meleeModes?.length || item.system?.rangedModes?.length);
+    const attacksOf = (id: string) => [
+      ...(derived.melee ?? []).filter((a: any) => a.itemId === id).map((a: any) => ({ ...a, ranged: false })),
+      ...(derived.ranged ?? []).filter((a: any) => a.itemId === id).map((a: any) => ({ ...a, ranged: true })),
+    ];
+
+    const sort = asGearSort(this.gearSort.sort);
+    const carriedGroups = ((context.gearGroups ?? []) as Array<{ key: string; label: string; rows: any[] }>).map((group) => ({
+      ...group,
+      rows: sortGear(group.rows, sort, this.gearSort.descending).map((row) => ({ ...row, canCarry: actor.items.get(row.id)?.type === "equipment" })),
+    }));
+    const stored = sortGear(((context.items?.stored ?? []) as any[]).map((item) => {
+      const quantity = Number(item.system?.quantity ?? 1) || 1;
+      return { id: String(item.id), name: String(item.name ?? ""), quantity, weight: effectiveWeight(item) * quantity, cost: effectiveCost(item) * quantity };
+    }), sort, this.gearSort.descending);
+
+    const details = await Promise.all(physical.map(async (item: any) => {
+      const s = item.system ?? {};
+      const locations = (s.locations ?? []) as string[];
+      return {
+        key: `item:${item.id}`,
+        id: String(item.id),
+        name: String(item.name ?? ""),
+        img: item.img,
+        type: item.type,
+        typeLabel: L(`TYPES.Item.${item.type}`),
+        groupLabel: L(`GWORLD.Gear.Group.${gearGroupOf(item)}`),
+        quantity: Number(s.quantity ?? 1) || 1,
+        weight: effectiveWeight(item),
+        cost: effectiveCost(item),
+        equipped: Boolean(s.equipped),
+        carried: s.carried !== false,
+        canCarry: item.type === "equipment",
+        equippable: item.type !== "equipment" || armed(item),
+        attacks: attacksOf(String(item.id)),
+        dr: item.type === "armor" ? s.dr : null,
+        coverage: item.type === "armor"
+          ? (locations.length ? locations.map((l) => L(`GWORLD.HitLocation.${l}`)).join(", ") : L("GWORLD.Item.WholeBody"))
+          : "",
+        db: item.type === "shield" ? s.db : null,
+        legality: legalityNote(s.lc ?? null),
+        vehicle: s.category === "vehicle" && isRuleOn("vehicles"),
+        descriptionHtml: await this.enriched(s.description, item),
+        reference: s.reference ?? "",
+      };
+    }));
+
+    const readied = readiedItems(physical.map((item: any) => ({
+      id: String(item.id),
+      name: String(item.name ?? ""),
+      type: item.type,
+      img: item.img,
+      equipped: Boolean(item.system?.equipped),
+      carried: item.system?.carried !== false,
+      armed: armed(item),
+      category: String(item.system?.category ?? ""),
+      quantity: Number(item.system?.quantity ?? 1) || 1,
+      weight: effectiveWeight(item),
+      canCarry: item.type === "equipment",
+    })));
+
+    const areas = armorByArea(physical.filter((i: any) => i.type === "armor").map((item: any) => ({
+      id: String(item.id),
+      name: String(item.name ?? ""),
+      dr: Number(item.system?.dr ?? 0) || 0,
+      locations: (item.system?.locations ?? []) as string[],
+      equipped: Boolean(item.system?.equipped),
+    }))).map((area) => ({ ...area, label: L(`GWORLD.SheetV2.Area.${area.key}`) }));
+
+    const state = this.stateOf("inventory");
+    const keys = [...readied.map((r) => `item:${r.id}`), ...carriedGroups.flatMap((g) => g.rows.map((r: any) => `item:${r.id}`)), ...stored.map((r) => `item:${r.id}`)];
+    const selected = selectedKey(keys, state.selected);
+    state.selected = selected;
+    const chipKeys = carriedGroups.map((g) => g.key);
+    const chip = state.chip && ["all", "stored", ...chipKeys].includes(state.chip) ? state.chip : "all";
+    state.chip = chip;
+
+    return {
+      strip: {
+        carried: derived.encumbrance?.carriedWeight ?? 0,
+        basicLift: derived.basicLift,
+        tiers: context.encumbranceTiers ?? [],
+        level: L(`GWORLD.Encumbrance.${derived.encumbrance?.key ?? "none"}`),
+        encumbered: Number(derived.encumbrance?.level ?? 0) > 0,
+        overloaded: derived.encumbrance?.overloaded === true,
+        move: derived.move,
+        dodge: derived.defenses?.dodge?.total ?? null,
+        dodgePenalty: Number(derived.encumbrance?.dodgePenalty ?? 0) || 0,
+        money: system.money,
+      },
+      areas,
+      shields: physical.filter((i: any) => i.type === "shield" && i.system?.equipped).map((i: any) => ({ id: i.id, name: i.name, db: i.system?.db })),
+      readied: readied.map((r) => ({ ...r, key: `item:${r.id}`, selected: `item:${r.id}` === selected })),
+      carriedGroups,
+      stored,
+      details: details.map((d) => ({ ...d, selected: d.key === selected })),
+      selected,
+      chip,
+      chips: [
+        { key: "all", label: L("GWORLD.SheetV2.All"), active: chip === "all" },
+        ...carriedGroups.map((g) => ({ key: g.key, label: L(g.label), count: g.rows.length, active: chip === g.key })),
+        ...(stored.length ? [{ key: "stored", label: L("GWORLD.Gear.Stored"), count: stored.length, active: chip === "stored" }] : []),
+      ],
+      sort,
+      descending: this.gearSort.descending,
+      columns: (["name", "quantity", "weight", "cost"] as const).map((key) => ({
+        key,
+        label: L(`GWORLD.Column.${key === "name" ? "Item" : key === "quantity" ? "Qty" : key === "weight" ? "Weight" : "Cost"}`),
+        active: key === sort,
+        descending: key === sort && this.gearSort.descending,
+      })),
+    };
+  }
+
+  /**
+   * Moving equipment between carried and stored by dragging a row onto the
+   * other table. Only equipment has the flag; armour and shields are worn or
+   * not, which Equip says.
+   */
+  protected wireGearDrag(): void {
+    if (!this.isEditable) return;
+    const type = "application/x-gworld-item-row";
+    for (const row of this.element.querySelectorAll<HTMLElement>("[data-v2-draggable]")) {
+      row.addEventListener("dragstart", (event) => {
+        event.dataTransfer?.setData(type, String(row.dataset.itemId ?? ""));
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+      });
+    }
+    for (const zone of this.element.querySelectorAll<HTMLElement>("[data-v2-drop]")) {
+      zone.addEventListener("dragover", (event) => {
+        if (!event.dataTransfer?.types.includes(type)) return;
+        event.preventDefault();
+        zone.classList.add("v2-drop-over");
+      });
+      zone.addEventListener("dragleave", () => zone.classList.remove("v2-drop-over"));
+      zone.addEventListener("drop", (event) => {
+        const id = event.dataTransfer?.getData(type);
+        zone.classList.remove("v2-drop-over");
+        if (!id) return;
+        // This drop is the sheet's own; Foundry's drop handling would read it as an item from elsewhere.
+        event.preventDefault();
+        event.stopPropagation();
+        const item = this.actor.items.get(id);
+        const carried = zone.dataset.v2Drop === "carried";
+        if (item?.type === "equipment" && Boolean(item.system?.carried) !== carried) void item.update({ "system.carried": carried });
+      });
+    }
   }
 
   /* ── keeping the Combat tab current ──────────────────────────────────── */
@@ -624,6 +792,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     this.wireListFilters();
     this.wireStatusPicker();
     this.wireListControls();
+    this.wireGearDrag();
   }
 
   /**
@@ -766,6 +935,22 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     card.scrollIntoView({ block: "center", behavior: "smooth" });
     card.classList.add("gworld-flash");
     setTimeout(() => card.classList.remove("gworld-flash"), 1600);
+  }
+
+  /** Moves a piece of equipment into the pack or out of it. */
+  static async #onToggleCarried(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const item = this.itemFrom(target);
+    if (!item || item.type !== "equipment" || !this.isEditable) return;
+    await item.update({ "system.carried": !item.system.carried });
+  }
+
+  /** Sorts the carried and stored tables by a column, or flips the order of the one in force. */
+  static #onGearSort(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const sort = asGearSort(target.dataset.v2GearSort);
+    this.gearSort = sort === this.gearSort.sort
+      ? { sort, descending: !this.gearSort.descending }
+      : { sort, descending: false };
+    void this.render();
   }
 
   /** Takes a condition off the character, or puts it on. */
