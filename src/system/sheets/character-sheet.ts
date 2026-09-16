@@ -5321,8 +5321,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const shooter = this.actor.getActiveTokens?.()?.[0];
     // What forced the roll, for the modules that read it (since 1.49.0).
     const item = target.dataset.itemId ? (this.actor.items?.get?.(target.dataset.itemId) ?? null) : null;
+    // A derived mode says which it is, so a roll it forced isn't taken for one
+    // the item's own mode at that index forced (#409).
     const mode = target.dataset.modeIndex
-      ? { index: Number(target.dataset.modeIndex) || 0, ranged: target.dataset.modeRanged === "1" }
+      ? {
+          index: Number(target.dataset.modeIndex) || 0,
+          ranged: target.dataset.modeRanged === "1",
+          ...(target.dataset.derivedMode ? { derived: String(target.dataset.derivedMode) } : {}),
+        }
       : null;
     const hitLocation = (target.dataset.hitLocation ?? "torso") as HitLocation;
     const damageType = (target.dataset.damageType ?? "cr") as DamageType;

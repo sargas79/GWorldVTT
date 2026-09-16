@@ -24,7 +24,7 @@ export type HitLocation =
   | "foot";
 
 /** How a location behaves when a limb or extremity takes a major wound. */
-export type CripplingKind = "none" | "limb" | "extremity";
+export type CripplingKind = "none" | "limb" | "extremity" | "eye";
 
 /**
  * Extra DR a location grants against a given damage type.
@@ -86,7 +86,7 @@ const PRECISE_TYPES: readonly DamageType[] = ["imp", "pi-", "pi", "pi+", "pi++"]
 export const HIT_LOCATIONS: Record<HitLocation, HitLocationInfo> = {
   torso: { key: "torso", label: "Torso", toHit: 0, extraDr: 0, knockdown: 0, cripplingKind: "none", targetableBy: [], deliberateOnly: false },
   skull: { key: "skull", label: "Skull", toHit: -7, extraDr: 2, knockdown: -10, cripplingKind: "none", targetableBy: [], deliberateOnly: false },
-  eye: { key: "eye", label: "Eye", toHit: -9, extraDr: 0, knockdown: -10, cripplingKind: "none", targetableBy: PRECISE_TYPES, deliberateOnly: true },
+  eye: { key: "eye", label: "Eye", toHit: -9, extraDr: 0, knockdown: -10, cripplingKind: "eye", targetableBy: PRECISE_TYPES, deliberateOnly: true },
   face: { key: "face", label: "Face", toHit: -5, extraDr: 0, knockdown: -5, cripplingKind: "none", targetableBy: [], deliberateOnly: false },
   neck: { key: "neck", label: "Neck", toHit: -5, extraDr: 0, knockdown: 0, cripplingKind: "none", targetableBy: [], deliberateOnly: false },
   vitals: { key: "vitals", label: "Vitals", toHit: -3, extraDr: 0, knockdown: 0, cripplingKind: "none", targetableBy: PRECISE_TYPES, deliberateOnly: true },
@@ -227,6 +227,8 @@ export function cripplingThreshold(location: HitLocation, maxHp: number): number
   const kind = HIT_LOCATIONS[location].cripplingKind;
   if (kind === "limb") return maxHp / 2;
   if (kind === "extremity") return maxHp / 3;
+  // "Injury over HP/10 blinds the eye" (Campaigns p. 399).
+  if (kind === "eye") return maxHp / 10;
   return null;
 }
 
@@ -251,6 +253,9 @@ export function applyCrippling(
   if (threshold === null || injury <= threshold) {
     return { injury, excessLost: 0, crippled: false };
   }
+  // An eye blinded is still "a skull hit", so the whole blow counts: nothing
+  // past the threshold is lost as it is for a limb (p. 399).
+  if (HIT_LOCATIONS[location].cripplingKind === "eye") return { injury, excessLost: 0, crippled: true };
   const capped = Math.floor(threshold);
   return { injury: capped, excessLost: injury - capped, crippled: true };
 }

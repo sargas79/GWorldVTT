@@ -167,6 +167,12 @@ describe("crippling", () => {
     }
   });
 
+  it("blinds an eye above a tenth of HP, and loses none of the blow (Campaigns p. 399, #410)", () => {
+    expect(cripplingThreshold("eye", 30)).toBe(3);
+    expect(applyCrippling(3, "eye", 30)).toEqual({ injury: 3, excessLost: 0, crippled: false });
+    expect(applyCrippling(8, "eye", 30)).toEqual({ injury: 8, excessLost: 0, crippled: true });
+  });
+
   it("discards injury beyond the crippling threshold", () => {
     // A hand cannot absorb a killing blow: excess is lost, not carried over.
     const result = applyCrippling(20, "hand", 12);

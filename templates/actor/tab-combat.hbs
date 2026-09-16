@@ -316,7 +316,7 @@
                     data-resist="{{atk.afflictionAttribute}}"
                     data-resist-modifier="{{atk.afflictionModifier}}"
                     {{!-- What forced the roll, for the modules that read it. --}}
-                    data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}"
+                    data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}" data-derived-mode="{{atk.derivedMode}}"
                     data-damage-type="{{atk.damageType}}"
                     data-affliction-label="{{atk.name}} {{atk.mode}}">
                   {{atk.afflictionAttribute}}{{atk.afflictionModifier}}
@@ -421,7 +421,7 @@
                     data-resist-modifier="{{atk.afflictionModifier}}"
                     data-half-damage-range="{{atk.halfDamageRange}}"
                     {{!-- What forced the roll, for the modules that read it. --}}
-                    data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}" data-mode-ranged="1"
+                    data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}" data-mode-ranged="1" data-derived-mode="{{atk.derivedMode}}"
                     data-damage-type="{{atk.damageType}}"
                     data-affliction-label="{{atk.name}} {{atk.mode}}">
                   {{atk.afflictionAttribute}}{{atk.afflictionModifier}}
