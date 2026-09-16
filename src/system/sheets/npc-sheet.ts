@@ -10,7 +10,7 @@ import { handleDamageAction, handleRollAction } from "../roll.js";
 import { castSpell } from "../casting.js";
 import { isRuleOn } from "../optional-rules.js";
 import { swarmAttack, swarmOf } from "../swarms.js";
-import { GWorldCharacterSheet } from "./character-sheet.js";
+import { GWorldCharacterSheetV2 } from "./character-sheet-v2.js";
 import type { SwarmProtection } from "../../rules/swarms.js";
 import type { Attribute } from "../../rules/types.js";
 import { summariseDescription } from "../description-summary.js";
@@ -76,7 +76,7 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   };
 
   /** The full sheet this pane hands over to for editing, made the first time it is asked for. */
-  #fullSheet: GWorldCharacterSheet | null = null;
+  #fullSheet: GWorldCharacterSheetV2 | null = null;
 
   static override PARTS = {
     sheet: { template: `${TEMPLATE_ROOT}/npc-sheet.hbs`, scrollable: [".ibody"] },
@@ -203,7 +203,7 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
    * which takes this pane's place until its Summary button brings it back.
    */
   static async #onOpenFullSheet(this: GWorldNpcSheet) {
-    this.#fullSheet ??= new GWorldCharacterSheet({ document: this.actor });
+    this.#fullSheet ??= new GWorldCharacterSheetV2({ document: this.actor });
     await this.#fullSheet.render({ force: true });
     await this.close();
   }

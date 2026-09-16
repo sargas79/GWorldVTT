@@ -98,6 +98,8 @@
 .gworld.v2 .window-content > .v2-header { grid-column: 1 / -1; grid-row: 1; }
 .gworld.v2 .window-content > .v2-rail { grid-column: 1; grid-row: 2; }
 .gworld.v2 .window-content > .tab { grid-column: 2; grid-row: 2; min-height: 0; }
+/* A viewer with limited permission sees only the public description, across the whole window. */
+.gworld.v2 .window-content > .limited { grid-column: 1 / -1; grid-row: 1 / -1; background: var(--v2-panel); color: var(--v2-ink); }
 
 .gworld.v2 .blueprint { border-radius: var(--v2-radius); }
 .gworld.v2 .blueprint > .corner { display: none; }
@@ -1255,6 +1257,123 @@
 .gworld.v2 .v2-upgrade-button { height: 36px; font-size: 18px; }
 .gworld.v2 .v2-upgrade.over .v2-upgrade-button { background: var(--v2-red); border-color: #843229; color: #fff; }
 
+/* ── Journal ───────────────────────────────────────────────────────────── */
+
+.gworld.v2 .v2-journal-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  background: #3a5470;
+}
+.gworld.v2 .v2-pane-button {
+  width: auto;
+  height: 32px;
+  padding: 0 18px;
+  border: 1px solid #6d8fb1;
+  border-radius: 4px;
+  background: #4a6887;
+  color: #eef3f8;
+  font-family: var(--font-heading);
+  font-size: 17px;
+  cursor: pointer;
+}
+.gworld.v2 .v2-pane-button span { font-family: var(--font-body); font-size: 11px; opacity: 0.8; }
+.gworld.v2 .v2-pane-button:hover { background: #56769a; }
+.gworld.v2 .v2-pane-button.active { background: var(--v2-gold-soft); border-color: var(--v2-gold); color: var(--v2-ink); }
+
+.gworld.v2 .v2-journal-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(200px, 250px); gap: 14px; align-items: start; }
+.gworld.v2 .v2-journal-pane { display: grid; grid-template-columns: minmax(190px, 0.75fr) minmax(0, 1.5fr); gap: 14px; align-items: start; }
+.gworld.v2 .v2-journal-pane[hidden] { display: none; }
+.gworld.v2 .v2-profile { grid-template-columns: minmax(0, 1fr); }
+.gworld.v2 .v2-journal-list { gap: 6px; }
+.gworld.v2 .v2-journal-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  height: auto;
+  padding: 7px 10px;
+  border: 0;
+  border-left: 4px solid var(--v2-panel-line);
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.gworld.v2 .v2-journal-entry b { font-family: var(--font-heading); font-size: 17px; font-weight: 600; }
+.gworld.v2 .v2-journal-entry span { font-size: 12.5px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-journal-entry.selected { background: #efc978; border-left-color: var(--v2-gold-deep); }
+.gworld.v2 .v2-journal-entry.missing b { color: var(--v2-red); }
+.gworld.v2 .v2-drop-hint { margin: 2px 0 0; font-size: 11.5px; color: var(--v2-frame-muted); }
+
+.gworld.v2 .v2-journal-content { min-width: 0; }
+.gworld.v2 .v2-journal-page { gap: 10px; }
+.gworld.v2 .v2-journal-page[hidden] { display: none; }
+.gworld.v2 .v2-journal-head { display: flex; align-items: center; gap: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--color-divider); }
+.gworld.v2 .v2-journal-head img { width: 40px; height: 40px; border: 0; border-radius: 4px; object-fit: cover; }
+.gworld.v2 .v2-journal-head h2 {
+  flex: 1;
+  margin: 0;
+  border: 0;
+  font-family: var(--font-heading);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: inherit;
+}
+.gworld.v2 .v2-journal-tools { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.gworld.v2 .v2-journal-tools select { width: auto; height: 24px; font-size: 13px; }
+.gworld.v2 .v2-journal-section h3 { margin: 4px 0 4px; border: 0; font-family: var(--font-heading); font-size: 19px; font-weight: 600; color: inherit; }
+.gworld.v2 .v2-journal-section figure { margin: 0; }
+.gworld.v2 .v2-journal-section figure img { max-width: 100%; border: 0; border-radius: var(--v2-radius); }
+.gworld.v2 .v2-journal-section figcaption { font-size: 12px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-journal-section .v2-prose { font-size: 14.5px; }
+.gworld.v2 .v2-journal-welcome p { margin: 0; font-size: 14px; }
+
+.gworld.v2 .v2-related { gap: 6px; background: var(--v2-frame-2); color: var(--v2-frame-text); box-shadow: inset 0 0 0 1px var(--v2-frame-line); }
+.gworld.v2 .v2-related h3 {
+  margin: 6px 0 0;
+  border: 0;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--v2-frame-muted);
+}
+.gworld.v2 .v2-related-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: auto;
+  padding: 6px 8px;
+  border: 0;
+  border-left: 4px solid var(--v2-steel);
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  font-family: var(--font-heading);
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+.gworld.v2 .v2-related-link img { width: 22px; height: 22px; border: 0; border-radius: 50%; object-fit: cover; }
+.gworld.v2 .v2-related-link.v2-kind-quest { border-left-color: var(--v2-gold); }
+.gworld.v2 .v2-related-link.v2-kind-clue { border-left-color: var(--v2-red); }
+.gworld.v2 .v2-related-link.v2-kind-person { border-left-color: var(--v2-green); }
+.gworld.v2 .v2-related-link.v2-kind-place { border-left-color: var(--v2-steel); }
+.gworld.v2 .v2-related-link.v2-kind-note { border-left-color: var(--v2-ink-muted); }
+.gworld.v2 .v2-related-link.missing span { color: var(--v2-red); }
+.gworld.v2 .v2-related .v2-note { color: var(--v2-frame-muted); }
+
+.gworld.v2 .v2-personal-notes prose-mirror,
+.gworld.v2 .v2-profile prose-mirror { min-height: 120px; }
+
 /* ── narrow windows ────────────────────────────────────────────────────── */
 
 @container v2sheet (max-width: 980px) {
@@ -1282,7 +1401,9 @@
   .gworld.v2 .v2-combat-grid,
   .gworld.v2 .v2-combat-side,
   .gworld.v2 .v2-inventory-grid,
-  .gworld.v2 .v2-progress-grid { grid-template-columns: minmax(0, 1fr); }
+  .gworld.v2 .v2-progress-grid,
+  .gworld.v2 .v2-journal-grid,
+  .gworld.v2 .v2-journal-pane { grid-template-columns: minmax(0, 1fr); }
   .gworld.v2 .v2-progress-buttons { margin-left: 0; }
   .gworld.v2 .v2-load-money { margin-left: 0; }
 }

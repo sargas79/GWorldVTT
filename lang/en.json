@@ -20,14 +20,14 @@
   },
   "GWORLD": {
     "Sheet": {
-      "Character": "GURPS Character Sheet",
+      "Character": "GURPS Character Sheet (classic)",
       "Npc": "GURPS NPC Sheet",
-      "NpcFull": "GURPS NPC Sheet (full)",
+      "NpcFull": "GURPS NPC Sheet (classic, full)",
       "GenericItem": "GURPS Add-on Item Sheet",
       "Item": "GURPS Item",
       "Vehicle": "Vehicle",
-      "CharacterV2": "GURPS Character Sheet (new)",
-      "NpcFullV2": "GURPS NPC Sheet (new, full)"
+      "CharacterV2": "GURPS Character Sheet",
+      "NpcFullV2": "GURPS NPC Sheet (full)"
     },
     "Tab": {
       "attributes": "Attr",
@@ -4125,7 +4125,42 @@
         "templates": ""
       },
       "Score": "Score",
-      "Bought": "Bought above default"
+      "Bought": "Bought above default",
+      "MissingLink": "Missing document",
+      "Journal": {
+        "quest": "Quests",
+        "clue": "Clues",
+        "person": "People",
+        "place": "Places",
+        "note": "Notes",
+        "profile": "Profile",
+        "Empty": {
+          "quest": "No quests linked yet.",
+          "clue": "No clues linked yet.",
+          "person": "No people linked yet.",
+          "place": "No places linked yet.",
+          "note": "No notes linked yet."
+        },
+        "New": {
+          "quest": "New quest",
+          "clue": "New clue",
+          "person": "New person",
+          "place": "New place",
+          "note": "New note"
+        },
+        "DropHint": "Drop a journal entry or page here to link it. Drop an actor for a person, a scene for a place.",
+        "Kind": "Kind",
+        "Open": "Open",
+        "Remove": "Unlink",
+        "RemoveHint": "Take the link off this character. The journal entry itself is kept.",
+        "Missing": "The linked document no longer exists. Unlink it.",
+        "Hidden": "You do not have permission to read this entry.",
+        "NoText": "This entry has no text pages yet. Open it to write one.",
+        "Welcome": "Link the quests, clues, people, places and notes of this character's story. The text stays in Foundry's journal, with its own permissions, and shows here.",
+        "Related": "Related",
+        "RelatedHint": "Everything linked to this character, by kind.",
+        "Description": "Description"
+      }
     }
   }
 }

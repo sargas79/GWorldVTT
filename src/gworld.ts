@@ -136,16 +136,18 @@ Hooks.once("init", () => {
 
   const { DocumentSheetConfig } = foundry.applications.apps;
   DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.applications.sheets.ActorSheetV2);
-  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheet, {
-    types: ["character"],
-    makeDefault: true,
-    label: "GWORLD.Sheet.Character",
-  });
-  // The new character sheet, beside the classic one: any character can be
-  // switched to it, and back, from the sheet configuration.
+  // The new character sheet is the default; the classic one stays registered,
+  // and any character can be switched to it, and back, from the sheet
+  // configuration. Sheets are registered under their class names, so a world
+  // that already chose the classic sheet for a character keeps it.
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheetV2, {
     types: ["character"],
+    makeDefault: true,
     label: "GWORLD.Sheet.CharacterV2",
+  });
+  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheet, {
+    types: ["character"],
+    label: "GWORLD.Sheet.Character",
   });
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldNpcSheet, {
     types: ["npc"],
@@ -155,13 +157,13 @@ Hooks.once("init", () => {
   // An NPC is built like a character, so it is edited on the character's
   // sheet: the one-pane NPC sheet is for reading at the table, and opens
   // this one from its Edit button.
-  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheet, {
-    types: ["npc"],
-    label: "GWORLD.Sheet.NpcFull",
-  });
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheetV2, {
     types: ["npc"],
     label: "GWORLD.Sheet.NpcFullV2",
+  });
+  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheet, {
+    types: ["npc"],
+    label: "GWORLD.Sheet.NpcFull",
   });
   // A car in a chase is not a line on a shopping list (Campaigns pp. 462-469).
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldVehicleSheet, {

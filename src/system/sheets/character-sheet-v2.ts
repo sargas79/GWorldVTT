@@ -57,6 +57,16 @@ import {
 } from "../sheet-v2/progression.js";
 import { BASIC_SPEED_STEP } from "../../rules/attributes.js";
 import type { SecondaryKey } from "../sheet-v2/improvements.js";
+import {
+  JOURNAL_KINDS,
+  LINKABLE_DOCUMENTS,
+  addLink,
+  isJournalKind,
+  kindForDrop,
+  readLinks,
+  removeLink,
+  type JournalKind,
+} from "../sheet-v2/journal-links.js";
 import { GWorldCharacterSheet } from "./character-sheet.js";
 
 const V2_ROOT = `systems/${SYSTEM_ID}/templates/actor/v2`;
@@ -83,6 +93,11 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2GearSort: GWorldCharacterSheetV2.#onGearSort,
       v2Upgrade: GWorldCharacterSheetV2.#onUpgrade,
       v2ProgressionMode: GWorldCharacterSheetV2.#onProgressionMode,
+      v2JournalPane: GWorldCharacterSheetV2.#onJournalPane,
+      v2OpenLink: GWorldCharacterSheetV2.#onOpenLink,
+      v2RemoveLink: GWorldCharacterSheetV2.#onRemoveLink,
+      v2CreateEntry: GWorldCharacterSheetV2.#onCreateEntry,
+      v2ShowLink: GWorldCharacterSheetV2.#onShowLink,
     },
   };
 
@@ -95,8 +110,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     combat: { template: `${V2_ROOT}/tab-combat.hbs`, scrollable: [""] },
     inventory: { template: `${V2_ROOT}/tab-inventory.hbs`, scrollable: [".v2-list-col", ".v2-detail-col"] },
     progression: { template: `${V2_ROOT}/tab-progression.hbs`, scrollable: [".v2-list-col", ".v2-detail-col"] },
-    journal: { template: `systems/${SYSTEM_ID}/templates/actor/tab-description.hbs`, scrollable: [""] },
-    magic: { template: `systems/${SYSTEM_ID}/templates/actor/tab-magic.hbs`, scrollable: [""] },
+    journal: { template: `${V2_ROOT}/tab-journal.hbs`, scrollable: ["", ".v2-journal-content"] },
+    magic: { template: `${V2_ROOT}/tab-magic.hbs`, scrollable: [""] },
   };
 
   static override TABS: any = {
@@ -136,6 +151,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       combat: this.combatContext(context),
       inventory: await this.inventoryContext(context),
       progression: this.progressionContext(context, points.unspent),
+      journal: await this.journalContext(context),
       folded: [...this.folded],
       opened: [...this.opened],
     };
@@ -504,6 +520,135 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
 
   /** Which improvements the Progression tab lists. */
   protected progressionMode: ProgressionMode = "all";
+
+  /* ── Journal ─────────────────────────────────────────────────────────── */
+
+  /** Which pane of the Journal tab is open: a kind of link, or the profile. */
+  protected journalPane: JournalKind | "profile" = "quest";
+
+  /**
+   * The Journal tab. The text lives in Foundry's journal, with its own
+   * permissions; each linked document's pages are enriched and shown in
+   * place, for whoever may see them. A link to a document that is gone is
+   * shown as missing, to be removed.
+   */
+  protected async journalContext(context: Record<string, any>): Promise<Record<string, unknown>> {
+    const actor = this.actor;
+    const L = (key: string) => game.i18n.localize(key);
+    const user = game.user;
+    const links = readLinks(context.system.journalLinks);
+
+    const entries = await Promise.all(links.map(async (link) => {
+      const document: any = await fromUuid(link.uuid).catch(() => null);
+      const base = { uuid: link.uuid, kind: link.kind, key: `link:${link.uuid}` };
+      if (!document) return { ...base, name: L("GWORLD.SheetV2.MissingLink"), missing: true, visible: false, pages: [], summary: "" };
+      const visible = document.testUserPermission ? document.testUserPermission(user, "OBSERVER") : true;
+      const name = String(document.name ?? "");
+      if (!visible) return { ...base, name, missing: false, visible: false, pages: [], summary: "" };
+
+      const enrich = (html: unknown) => foundry.applications.ux.TextEditor.implementation.enrichHTML(String(html ?? ""), {
+        relativeTo: document,
+        secrets: document.isOwner === true,
+      });
+      const pageOf = async (page: any) => ({
+        name: String(page.name ?? ""),
+        type: page.type,
+        html: page.type === "text" ? await enrich(page.text?.content) : "",
+        src: page.type === "image" ? page.src : "",
+        caption: page.image?.caption ?? "",
+        showTitle: page.title?.show !== false,
+      });
+      let pages: Array<{ name: string; type: string; html: string; src: string; caption: string; showTitle: boolean }> = [];
+      let img = "";
+      if (document.documentName === "JournalEntry") {
+        const visiblePages = [...(document.pages ?? [])]
+          .filter((p: any) => !p.testUserPermission || p.testUserPermission(user, "OBSERVER"))
+          .sort((a: any, b: any) => (a.sort ?? 0) - (b.sort ?? 0));
+        pages = await Promise.all(visiblePages.map(pageOf));
+      } else if (document.documentName === "JournalEntryPage") {
+        pages = [await pageOf(document)];
+      } else if (document.documentName === "Actor") {
+        img = document.img ?? "";
+        const text = document.system?.details?.description || document.system?.details?.biography || "";
+        pages = text ? [{ name: "", type: "text", html: await enrich(text), src: "", caption: "", showTitle: false }] : [];
+      } else if (document.documentName === "Scene") {
+        img = document.thumb ?? document.background?.src ?? "";
+      }
+      const first = pages.find((p) => p.html)?.html ?? "";
+      return {
+        ...base,
+        name,
+        img,
+        documentType: L(`DOCUMENT.${document.documentName}`),
+        missing: false,
+        visible: true,
+        pages,
+        summary: firstLine(first),
+      };
+    }));
+
+    const panes = JOURNAL_KINDS.map((kind) => {
+      const list = entries.filter((e) => e.kind === kind).sort(byName);
+      const state = this.stateOf(`journal-${kind}`);
+      const selected = selectedKey(list.map((e) => e.key), state.selected);
+      state.selected = selected;
+      return {
+        kind,
+        label: L(`GWORLD.SheetV2.Journal.${kind}`),
+        empty: L(`GWORLD.SheetV2.Journal.Empty.${kind}`),
+        active: this.journalPane === kind,
+        entries: list.map((e) => ({ ...e, selected: e.key === selected })),
+        selected,
+      };
+    });
+
+    return {
+      pane: this.journalPane,
+      panes,
+      profileActive: this.journalPane === "profile",
+      kinds: JOURNAL_KINDS.map((kind) => ({ key: kind, label: L(`GWORLD.SheetV2.Journal.${kind}`) })),
+      related: panes.map((p) => ({ kind: p.kind, label: p.label, entries: p.entries })),
+      canCreate: Boolean(user?.can?.("JOURNAL_CREATE")) && this.isEditable,
+      npcDescription: actor.type === "npc"
+        ? await foundry.applications.ux.TextEditor.implementation.enrichHTML(String(actor.system?.details?.description ?? ""), { relativeTo: actor, secrets: actor.isOwner })
+        : null,
+    };
+  }
+
+  /**
+   * Links a journal entry, a page, an actor or a scene dropped on the sheet,
+   * as the kind of thing the Journal tab is showing where it landed. Items and
+   * everything else are the classic sheet's to handle.
+   */
+  async _onDropDocument(event: DragEvent, document: any): Promise<any> {
+    const name = String(document?.documentName ?? "");
+    const onJournal = Boolean((event.target as HTMLElement | null)?.closest?.('[data-tab="journal"]'));
+    const linkable = (LINKABLE_DOCUMENTS as readonly string[]).includes(name);
+    if (!linkable || (!onJournal && name !== "JournalEntry" && name !== "JournalEntryPage")) {
+      // Foundry's own handling, which the types this project declares do not describe.
+      return (GWorldCharacterSheet.prototype as any)._onDropDocument.call(this, event, document);
+    }
+    if (!this.isEditable) return null;
+    const where = (event.target as HTMLElement | null)?.closest?.<HTMLElement>("[data-v2-journal-kind]")?.dataset.v2JournalKind;
+    const kind = isJournalKind(where) ? where : kindForDrop(name, this.journalPane);
+    await this.actor.update({ "system.journalLinks": addLink(readLinks(this.actor.system.journalLinks), document.uuid, kind) });
+    this.journalPane = kind;
+    this.stateOf(`journal-${kind}`).selected = `link:${document.uuid}`;
+    return document;
+  }
+
+  /** A link's kind changed from its select, saved as it is chosen. */
+  protected wireJournalKinds(): void {
+    for (const select of this.element.querySelectorAll<HTMLSelectElement>("select[data-v2-link-kind]")) {
+      select.addEventListener("change", () => {
+        const uuid = select.dataset.v2LinkKind ?? "";
+        if (!uuid || !isJournalKind(select.value) || !this.isEditable) return;
+        this.journalPane = select.value;
+        this.stateOf(`journal-${select.value}`).selected = `link:${uuid}`;
+        void this.actor.update({ "system.journalLinks": addLink(readLinks(this.actor.system.journalLinks), uuid, select.value) });
+      });
+    }
+  }
 
   /* ── keeping the Combat tab current ──────────────────────────────────── */
 
@@ -914,6 +1059,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     this.wireStatusPicker();
     this.wireListControls();
     this.wireGearDrag();
+    this.wireJournalKinds();
   }
 
   /**
@@ -1112,6 +1258,79 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
   static #onProgressionMode(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
     this.progressionMode = asProgressionMode(target.dataset.v2Mode);
     void this.render();
+  }
+
+  /** Opens a pane of the Journal tab, in place. */
+  static #onJournalPane(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    this.showJournalPane(String(target.dataset.v2Pane ?? ""));
+  }
+
+  /** Shows one pane of the Journal tab and hides the rest. */
+  protected showJournalPane(pane: string): void {
+    if (pane !== "profile" && !isJournalKind(pane)) return;
+    this.journalPane = pane;
+    for (const button of this.element.querySelectorAll<HTMLElement>("[data-v2-pane]")) {
+      const on = button.dataset.v2Pane === pane;
+      button.classList.toggle("active", on);
+      button.setAttribute("aria-pressed", on ? "true" : "false");
+    }
+    for (const section of this.element.querySelectorAll<HTMLElement>("[data-v2-journal-pane]")) {
+      section.hidden = section.dataset.v2JournalPane !== pane;
+    }
+  }
+
+  /** Opens a linked document on its own sheet. */
+  static async #onOpenLink(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const uuid = target.closest<HTMLElement>("[data-v2-uuid]")?.dataset.v2Uuid;
+    if (!uuid) return;
+    const document: any = await fromUuid(uuid).catch(() => null);
+    if (!document) return;
+    if (document.documentName === "JournalEntryPage") {
+      document.parent?.sheet?.render({ force: true, pageId: document.id });
+      return;
+    }
+    if (document.documentName === "Scene") {
+      document.sheet?.render({ force: true });
+      return;
+    }
+    document.sheet?.render({ force: true });
+  }
+
+  /** Takes a link off the character. The document itself is left alone. */
+  static async #onRemoveLink(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const uuid = target.closest<HTMLElement>("[data-v2-uuid]")?.dataset.v2Uuid;
+    if (!uuid || !this.isEditable) return;
+    await this.actor.update({ "system.journalLinks": removeLink(readLinks(this.actor.system.journalLinks), uuid) });
+  }
+
+  /**
+   * Makes a journal entry for this character -- a quest, a clue, a note --
+   * owned by whoever made it, links it, and opens it to be written.
+   */
+  static async #onCreateEntry(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const kind = target.dataset.v2JournalKind;
+    if (!isJournalKind(kind) || !this.isEditable || !game.user?.can?.("JOURNAL_CREATE")) return;
+    const label = game.i18n.localize(`GWORLD.SheetV2.Journal.New.${kind}`);
+    const JournalEntry = (globalThis as any).JournalEntry;
+    const entry = await JournalEntry.implementation.create({
+      name: `${this.actor.name}: ${label}`,
+      ownership: { default: 0, [game.user.id]: 3 },
+      pages: [{ name: label, type: "text", text: { content: "" } }],
+    });
+    if (!entry) return;
+    this.journalPane = kind;
+    this.stateOf(`journal-${kind}`).selected = `link:${entry.uuid}`;
+    await this.actor.update({ "system.journalLinks": addLink(readLinks(this.actor.system.journalLinks), entry.uuid, kind) });
+    entry.sheet?.render({ force: true });
+  }
+
+  /** Shows a related link in its own pane. */
+  static #onShowLink(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const kind = target.dataset.v2JournalKind;
+    const uuid = target.dataset.v2Uuid;
+    if (!isJournalKind(kind) || !uuid) return;
+    this.showJournalPane(kind);
+    this.showSelected(`journal-${kind}`, `link:${uuid}`);
   }
 
   /** Takes a condition off the character, or puts it on. */

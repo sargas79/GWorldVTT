@@ -605,6 +605,20 @@ Row actions go on every element of a sheet that carries `data-item-id` for an
 item of their types: table rows on the classic sheet, and on the new sheet the
 list rows, cards and the detail panel of the selected item.
 
+The new sheet is the default for characters and for the NPC sheet's full
+sheet; the classic sheet stays registered as "GURPS Character Sheet (classic)".
+On the new sheet, each tab is an `ApplicationV2` part named after the tab, a
+module's sections sit on panels of their own, and the item descriptions a
+module supplies are enriched and shown in full in the detail panels. An NPC's
+`system.details.description` is shown and edited on its Journal tab.
+
+Two fields a module may read (since 1.56.0):
+
+- `system.pinnedSkills`: the ids of the skills pinned to the Overview.
+- `system.journalLinks`: `{ uuid, kind }` links to journal entries, pages,
+  actors and scenes, `kind` being `quest`, `clue`, `person`, `place` or `note`.
+  Point awards also carry a `session` label.
+
 ## Point pools, energy sources, spell attacks and resistance
 
 - **`points.registerPointPool({ module, key, label, available?, pools, canPay?, pay })`.**
