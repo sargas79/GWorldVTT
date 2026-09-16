@@ -554,6 +554,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     appearance: string; biography: string; notes: string;
   };
 
+  declare pinnedSkills: string[];
+  declare journalLinks: Array<{ uuid: string; kind: "quest" | "clue" | "person" | "place" | "note" }>;
+
   declare derived: ReturnType<CharacterData["buildDerived"]>;
 
   static override defineSchema() {
@@ -635,6 +638,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             note: new fields.StringField({ required: true, blank: true, initial: "" }),
             /** Epoch milliseconds, for ordering the log. */
             at: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+            /** The session the points were earned in, as the table names it: "Session 9". */
+            session: new fields.StringField({ required: true, blank: true, initial: "" }),
           }),
           { required: true, initial: [] },
         ),
@@ -998,6 +1003,33 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       }),
 
       details: new fields.SchemaField(detailsFields()),
+
+      /**
+       * Skills the player keeps to hand: the Overview lists these first. Item
+       * ids, so a pinned skill renamed stays pinned; an id whose item is gone
+       * is ignored rather than cleaned up, since nothing else reads it.
+       */
+      pinnedSkills: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: false }),
+        { required: true, initial: [] },
+      ),
+
+      /**
+       * Foundry journal entries and pages that belong to this character's
+       * story: quests, clues, people, places and notes. The journal holds the
+       * text, with its own permissions; the sheet keeps only the link and what
+       * kind of thing it is, and shows the linked text in place.
+       */
+      journalLinks: new fields.ArrayField(
+        new fields.SchemaField({
+          uuid: new fields.StringField({ required: true, blank: false }),
+          kind: new fields.StringField({
+            required: true, nullable: false, initial: "note",
+            choices: ["quest", "clue", "person", "place", "note"],
+          }),
+        }),
+        { required: true, initial: [] },
+      ),
     };
   }
 

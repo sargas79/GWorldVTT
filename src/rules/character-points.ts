@@ -21,6 +21,8 @@ export interface PointAward {
   note?: string;
   /** When it was awarded, as epoch milliseconds. Zero for one never stamped. */
   at?: number;
+  /** The session it was earned in, as the table names it. Blank for one never labelled. */
+  session?: string;
 }
 
 export interface PointsLedger {
@@ -79,4 +81,21 @@ export function pointsLedger(options: {
  */
 export function awardsNewestFirst(awards: readonly PointAward[]): PointAward[] {
   return [...awards].sort((a, b) => (Number(b.at) || 0) - (Number(a.at) || 0));
+}
+
+/**
+ * What the next award's session is probably called: one past the highest
+ * session number the log already names, or the first when none is numbered.
+ *
+ * Labels are the table's own text, so the number is read from the last run of
+ * digits in each ("Session 9", "S09", "9") and the label is written by `format`,
+ * which the sheet localizes.
+ */
+export function nextSessionLabel(awards: readonly PointAward[], format: (n: number) => string): string {
+  let highest = 0;
+  for (const award of awards) {
+    const digits = /(\d+)(?!.*\d)/.exec(String(award.session ?? ""));
+    if (digits) highest = Math.max(highest, Number(digits[1]));
+  }
+  return format(highest + 1);
 }

@@ -462,8 +462,8 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
 
 - **`registerItemType({ module, type, label, tab, columns?, actions?, builderStep?, indexFields?, available?, genericSheet? })`.**
   For a type the module's manifest declares under `documentTypes`, named
-  `<module>.<type>`. The character sheet lists the type on `tab` (`attributes`,
-  `skills`, `magic`, `traits`, `combat`, `body`, `gear`, `description`) with
+  `<module>.<type>`. The character sheet lists the type on `tab` (one of the
+  names under [Where a tab name shows](#where-a-tab-name-shows)) with
   a New button, the `columns(item, actor)` it gives, and a button for each of
   its `actions` (`{ key, label, icon?, visible?, run(item, actor) }`). A list
   on the Magic tab keeps that tab when the campaign has no magic.
@@ -543,7 +543,7 @@ one when it is registered, and a module that uses partials loads them with
 
 - **`sheets.registerSheetSection({ module, key, sheet, tab?, position?, template, context?, listeners?, visible? })`.**
   Renders `template` at the `start` or `end` (the default) of a character
-  sheet `tab`, or of the item sheet's body when `sheet` is `"item"`. The
+  sheet `tab` (see [Where a tab name shows](#where-a-tab-name-shows)), or of the item sheet's body when `sheet` is `"item"`. The
   template gets what `context(document, sheet)` returns, plus `document`,
   `editable` and `owner`. `listeners(element, document, sheet)` binds the
   section's own events, and only runs for a user who owns the document. Inputs
@@ -576,7 +576,34 @@ one when it is registered, and a module that uses partials loads them with
 
 Sheet markup follows the system's: a section is an `.isec`, a heading
 `.grph`, a list a `table.gt` with `tr[data-item-id]` rows, a button `.ibtn`,
-and a hint `p.ihint`.
+and a hint `p.ihint`. Both character sheets style that markup, so a section
+written for one reads the same on the other.
+
+### Where a tab name shows
+
+There are two character sheets: the classic one with eight tabs, and the new
+one, whose tabs are Overview, Skills, Traits, Combat, Inventory, Progression,
+Journal and Magic. A section or item type registered against any of these
+names shows on both (since 1.56.0 for the new names):
+
+| Registered against | Classic sheet | New sheet |
+| --- | --- | --- |
+| `attributes` | Attributes | Overview |
+| `overview` | Attributes | Overview |
+| `progression` | Attributes | Progression |
+| `skills` | Skills | Skills |
+| `magic` | Magic | Magic |
+| `traits` | Traits | Traits |
+| `combat` | Combat | Combat |
+| `body` | Body | Combat, after the combat tab's own |
+| `gear` | Gear | Inventory |
+| `inventory` | Gear | Inventory |
+| `description` | Description | Journal |
+| `journal` | Description | Journal |
+
+Row actions go on every element of a sheet that carries `data-item-id` for an
+item of their types: table rows on the classic sheet, and on the new sheet the
+list rows, cards and the detail panel of the selected item.
 
 ## Point pools, energy sources, spell attacks and resistance
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { awardsNewestFirst, earnedPoints, pointsLedger } from "../character-points.js";
+import { awardsNewestFirst, earnedPoints, nextSessionLabel, pointsLedger } from "../character-points.js";
 
 describe("what a character has earned", () => {
   it("adds the awards up", () => {
@@ -91,5 +91,27 @@ describe("reading the award log", () => {
     const awards = [{ points: 1, at: 1 }, { points: 2, at: 2 }];
     awardsNewestFirst(awards);
     expect(awards.map((a) => a.points)).toEqual([1, 2]);
+  });
+});
+
+describe("the next session's label", () => {
+  const label = (n: number) => `Session ${n}`;
+
+  it("starts at the first session when nothing is numbered", () => {
+    expect(nextSessionLabel([], label)).toBe("Session 1");
+    expect(nextSessionLabel([{ points: 3, session: "" }, { points: 1, note: "a correction" }], label)).toBe("Session 1");
+  });
+
+  it("follows the highest session number, however the table wrote it", () => {
+    const awards = [
+      { points: 3, session: "Session 8" },
+      { points: 2, session: "S09" },
+      { points: 1, session: "7" },
+    ];
+    expect(nextSessionLabel(awards, label)).toBe("Session 10");
+  });
+
+  it("reads the last number in a label", () => {
+    expect(nextSessionLabel([{ points: 3, session: "Book 2, session 14" }], label)).toBe("Session 15");
   });
 });

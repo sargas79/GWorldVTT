@@ -15,6 +15,7 @@
  * sheet, card or control goes on without it.
  */
 
+import { TAB_NAMES, type TabName } from "./sheet-tabs.js";
 import { SYSTEM_ID } from "./constants.js";
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
@@ -50,15 +51,15 @@ async function render(template: string, data: object): Promise<string> {
 
 // ── sheet sections ─────────────────────────────────────────────────────────
 
-/** The character sheet's tabs a section can go in. */
-const CHARACTER_TABS = ["attributes", "skills", "magic", "traits", "combat", "body", "gear", "description"] as const;
+/** The character sheet's tabs a section can go in: a classic tab's name or the new sheet's. */
+const CHARACTER_TABS = TAB_NAMES;
 
 export interface SheetSectionRegistration {
   module: string;
   key: string;
   sheet: "character" | "item";
   /** For the character sheet, the tab. The item sheet has one body, so it takes none. */
-  tab?: (typeof CHARACTER_TABS)[number];
+  tab?: TabName;
   position?: "start" | "end";
   /** A Handlebars template path, e.g. `modules/<module>/templates/section.hbs`. */
   template: string;
@@ -106,18 +107,26 @@ export function registerSheetSection(registration: SheetSectionRegistration): st
   return id;
 }
 
-/** The sections shown on this sheet's tab, in registration order. */
-function sectionsFor(sheet: "character" | "item", tab: string, document: any): SheetSection[] {
-  return sections.filter((s) => s.sheet === sheet && s.tab === tab && safely(`sheet section ${s.id}`, () => s.visible(document) === true, false));
+/**
+ * The sections shown on this sheet's tab: those registered against each of the
+ * names the tab gathers, in the order of those names and then of registration.
+ */
+function sectionsFor(sheet: "character" | "item", tabs: readonly string[], document: any): SheetSection[] {
+  return tabs
+    .flatMap((tab) => sections.filter((s) => s.sheet === sheet && s.tab === tab))
+    .filter((s) => safely(`sheet section ${s.id}`, () => s.visible(document) === true, false));
 }
 
-/** Renders the sections for a tab: `{ start, end }`, each a list of `{ id, html }`. */
-export async function renderSections(sheet: "character" | "item", tab: string, document: any, app: any): Promise<{
+/**
+ * Renders the sections for a tab: `{ start, end }`, each a list of `{ id, html }`.
+ * A part that gathers several registration names passes them all.
+ */
+export async function renderSections(sheet: "character" | "item", tab: string | readonly string[], document: any, app: any): Promise<{
   start: Array<{ id: string; html: string }>;
   end: Array<{ id: string; html: string }>;
 }> {
   const out = { start: [] as Array<{ id: string; html: string }>, end: [] as Array<{ id: string; html: string }> };
-  for (const section of sectionsFor(sheet, tab, document)) {
+  for (const section of sectionsFor(sheet, typeof tab === "string" ? [tab] : tab, document)) {
     try {
       const data = await section.context(document, app);
       const html = await render(section.template, {
