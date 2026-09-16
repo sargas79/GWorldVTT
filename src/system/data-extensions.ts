@@ -40,7 +40,50 @@ export const DATA_HOOKS = Object.freeze({
   skillLevels: "gworld.skillLevels",
   /** Once Move is worked out (since 1.42.0): `{ actor, move, lines }`; push `{ label, multiplier?, value? }`. */
   moveModifiers: "gworld.moveModifiers",
+  /** While a character's trait effects are gathered (since 1.47.0): `{ actor, effects, sources }`, both mutable. */
+  traitEffects: "gworld.traitEffects",
 });
+
+/** One thing added to a character's trait effects, and what added it. */
+export interface TraitEffectSource {
+  /** The effect changed, as its path in the effects: "sealed", "acute.vision". */
+  effect: string;
+  /** What changed it, shown in the sheet's breakdown: "Vacc Suit (TL 9)". */
+  label: string;
+  /** What it contributed, where the effect is a number. */
+  value?: number;
+}
+
+/**
+ * Asks the modules for their additions to a character's trait effects
+ * (since 1.47.0).
+ *
+ * Worn gear grants what the Basic Set describes in trait terms -- a sealed
+ * suit, Lifting ST, a sense the wearer does not have -- and neither
+ * `attributeBonuses`, which reaches the four attributes, nor `moveModifiers`,
+ * which reaches Move, can say so. A listener changes `effects` in place and
+ * says in `sources` what did it, so the sheet's breakdowns can show the piece
+ * of gear rather than an unexplained figure.
+ *
+ * The effects are handed over after the character's own traits and the
+ * system's own worn gear have been read, so a listener sees what is already
+ * there. One that throws changes nothing: the effects go back as they were.
+ */
+export function moduleTraitEffects<T>(actor: any, effects: T): { effects: T; sources: TraitEffectSource[] } {
+  const before = structuredClone(effects);
+  const context = { actor, effects, sources: [] as TraitEffectSource[] };
+  const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
+  try {
+    hooks?.callAll?.(DATA_HOOKS.traitEffects, context);
+  } catch (error) {
+    console.warn(`gworld | a ${DATA_HOOKS.traitEffects} listener failed`, error);
+    return { effects: before, sources: [] };
+  }
+  const sources = (Array.isArray(context.sources) ? context.sources : []).filter(
+    (s) => typeof s?.effect === "string" && typeof s?.label === "string",
+  );
+  return { effects: context.effects, sources };
+}
 
 /** A module's change to Move: a fraction of it, yards added or taken off, or both. */
 export interface MoveLine {

@@ -238,6 +238,20 @@
     </div>
   {{/if}}
 
+  {{#if grantedEffects.length}}
+    {{!-- What the character has without having bought it, and what grants it
+          (Characters pp. 285-286). --}}
+    <div class="isec">
+      <div class="ish"><span class="num">05</span>{{localize "GWORLD.Granted.Section"}}</div>
+      {{#each grantedEffects as |granted|}}
+        <div class="trait">
+          <span class="tn">{{granted.name}}{{#if granted.value}} {{granted.value}}{{/if}}</span>
+          <span class="td">{{localize "GWORLD.Granted.From" source=granted.label}}</span>
+        </div>
+      {{/each}}
+    </div>
+  {{/if}}
+
   {{> "gworld.addonSections"}}
 
 </section>

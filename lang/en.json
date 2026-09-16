@@ -3564,6 +3564,33 @@
       "NoDr": "Weakness ignores DR and defensive advantages.",
       "NotYet": "Not yet a full interval ({interval} min.): no injury."
     },
+    "Granted": {
+      "Section": "Granted by what you carry",
+      "From": "from {source}",
+      "sealed": "Sealed",
+      "vacuumSupport": "Vacuum Support",
+      "pressureSupport": "Pressure Support",
+      "doesntBreathe": "Doesn't Breathe",
+      "filterLungs": "Filter Lungs",
+      "radiationTolerance": "Radiation Tolerance",
+      "telescopicVision": "Telescopic Vision",
+      "hyperspectralVision": "Hyperspectral Vision",
+      "nightVision": "Night Vision",
+      "infravision": "Infravision",
+      "darkVision": "Dark Vision",
+      "damageResistance": "Damage Resistance",
+      "liftingSt": "Lifting ST",
+      "strikingSt": "Striking ST",
+      "superJump": "Super Jump",
+      "extraArms": "Extra Arms",
+      "extraAttacks": "Extra Attack",
+      "protectedSense": {
+        "vision": "Protected Vision",
+        "hearing": "Protected Hearing",
+        "tasteSmell": "Protected Smell",
+        "touch": "Protected Touch"
+      }
+    },
     "Malediction": {
       "Label": "{name} (Malediction {level})",
       "Range": "Range, {yards} yd. (Malediction {level})",

@@ -439,6 +439,18 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     below 0; the derived data keeps the lines as `moveLines`.
   - Since 1.42.0, a skill or attribute rolled from the sheet is tagged with the attribute
     it's based on (`ST`, `DX`, `IQ`, `HT`, `Will`, `Per`), so a condition's `rolls` can name it.
+  - `gworld.traitEffects` (since 1.47.0), with `{ actor, effects, sources }`,
+    once the character's own traits and the system's own worn gear have been
+    read. `effects` is what the traits came to, mutable: add Lifting ST and
+    Striking ST, Super Jump, Basic Move and Enhanced Move, DR, the senses
+    (Night Vision, Infravision, Hyperspectral and Telescopic Vision, Acute and
+    Protected senses), Sealed, Vacuum Support, Pressure Support, Doesn't
+    Breathe, Filter Lungs, Radiation Tolerance, Temperature Tolerance, Extra
+    Arms or Extra Attack. Push `{ effect, label, value? }` to `sources` to say
+    what granted each one: `effect` is the field's path (`"sealed"`,
+    `"protectedSense.vision"`) and `label` the thing it came from. The Traits
+    tab lists them under what the character carries, so an effect nobody paid
+    for is never unexplained. A listener that throws changes nothing.
   - `gworld.attributeBonuses`, with `{ actor, attributes, lines }`: push
     `{ attribute, label, value, source }`. They show on the attribute's card.
   - `gworld.defenseBonuses`, with `{ actor, defenses, lines }`: push

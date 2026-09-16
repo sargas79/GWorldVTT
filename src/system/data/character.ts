@@ -22,6 +22,7 @@ import { isUnarmedSkill } from "../../rules/criticals.js";
 import { reachForSize } from "../../rules/size.js";
 import { pointsLedger, type PointAward } from "../../rules/character-points.js";
 import {
+  addTraitEffects,
   afterSuperJump,
   impairedAttacks,
   lameCombatPenalty,
@@ -29,6 +30,7 @@ import {
   traitEffects,
   type TraitEffects,
 } from "../../rules/trait-effects.js";
+import { gearEffects, grantedEffectSources } from "../../rules/gear-effects.js";
 import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
 import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
@@ -43,7 +45,7 @@ import {
 import { agingRollsPerYear, lifespanFrom } from "../../rules/aging.js";
 import { culturallyAdaptable, languagePenalty, type Comprehension } from "../../rules/languages.js";
 import { sleepPeriodFrom } from "../../rules/sleep.js";
-import { radiationRow, radiationToleranceFrom, remainingDose } from "../../rules/radiation.js";
+import { radiationRow, remainingDose } from "../../rules/radiation.js";
 import { baseBlock, baseDodge, baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import {
   materialArmorDivisor,
@@ -88,7 +90,7 @@ import {
 } from "../combat-extensions.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
-  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine,
+  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleTraitEffects, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type TraitEffectSource,
 } from "../data-extensions.js";
 import { perDieOfBasicDamage, swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
@@ -1380,6 +1382,25 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       maxLevels: Number(item.system?.maxLevels ?? 0) || 0,
     }));
     const traits = traitEffects(heldTraits);
+
+    // Worn gear grants what the armour table's notes describe in trait terms:
+    // a vacc suit and its helmet seal the wearer, a gas mask filters what is
+    // breathed (Characters pp. 285-286). Each names the piece it came from, so
+    // the sheet can say where an effect the character never bought came from.
+    const traitEffectSources: TraitEffectSource[] = [];
+    for (const granted of gearEffects(
+      this.itemsOfType("armor").map((item) => ({
+        name: String(item.name ?? ""),
+        equipped: item.system?.equipped === true,
+      })),
+    )) {
+      addTraitEffects(traits, granted.effect);
+      traitEffectSources.push(...grantedEffectSources(granted));
+    }
+
+    // Then the modules, which see what the character's own traits and gear
+    // already came to (since 1.47.0).
+    traitEffectSources.push(...moduleTraitEffects(this.parent, traits).sources);
     // What the afflictions on this character come to (pp. 428-429). Read once,
     // because the penalties reach the attributes, the defenses and the sheet.
     // Pain Threshold changes what pain and agony cost (p. 428).
@@ -2738,7 +2759,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       sleepPeriod: sleepPeriodFrom(heldTraits),
       // The dose as it stands today, and what the table says of it (Campaigns pp. 435-436).
       radiation: this.#radiation(),
-      radiationTolerance: radiationToleranceFrom(heldTraits),
+      // Read off the gathered effects, so a suit or a module that grants it is
+      // counted alongside the trait the character bought.
+      radiationTolerance: Math.max(1, Number(traits.radiationTolerance) || 1),
+      traitEffectSources,
       regeneration: regenerationRate(traits.regeneration),
       // The attributes as everything else reads them: bought plus what traits
       // add. The sheet's inputs edit the bought figure and show this one.
