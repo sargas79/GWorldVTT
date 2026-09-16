@@ -548,12 +548,11 @@
         </button>
       {{/if}}
       {{#if rules.grappling}}
-        {{#unless grapple}}
-          <button type="button" class="ibtn" data-action="grapple"
-                  data-tooltip="{{localize "GWORLD.Grapple.Hint"}}">
-            {{localize "GWORLD.Grapple.Action"}}
-          </button>
-        {{/unless}}
+        {{!-- A fighter with a hand free can take hold of another foe. --}}
+        <button type="button" class="ibtn" data-action="grapple"
+                data-tooltip="{{localize "GWORLD.Grapple.Hint"}}">
+          {{localize "GWORLD.Grapple.Action"}}
+        </button>
       {{/if}}
       <button type="button" class="ibtn" data-action="disarm"
               data-tooltip="{{localize "GWORLD.Disarm.Hint"}}">
@@ -617,9 +616,11 @@
     </div>
 
     {{!-- A grapple changes what this character can do more than anything else
-          in a fight, so what it allows is shown rather than remembered. --}}
-    {{#if grapple}}
-      <div class="toolbar">
+          in a fight, so what it allows is shown rather than remembered. One
+          panel for each: a fighter can hold one foe while another holds him. --}}
+    {{#each grapples as |grapple|}}
+      <div class="toolbar" data-grapple-foe="{{grapple.foe}}">
+        {{#if grapple.foeName}}<span class="ihint">{{grapple.foeName}}</span>{{/if}}
         {{#if grapple.holding}}
           <button type="button" class="ibtn" data-action="takedown"
                   data-tooltip="{{localize "GWORLD.Grapple.TakedownHint"}}">
@@ -649,7 +650,7 @@
           </button>
         {{/if}}
         {{!-- What modules add to a grapple, for whichever end of it this is. --}}
-        {{#each grappleActions as |a|}}
+        {{#each grapple.actions as |a|}}
           <button type="button" class="ibtn" data-action="grappleAction" data-grapple-action="{{a.id}}">{{a.label}}</button>
         {{/each}}
       </div>
@@ -662,7 +663,7 @@
           {{localize "GWORLD.Grapple.StateHeld" hands=grapple.hands}}
         {{/if}}
       </p>
-    {{/if}}
+    {{/each}}
   </div>
 
   {{#if tactical}}

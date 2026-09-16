@@ -95,23 +95,19 @@ function afterGrappleContest(move: GrappleMove, actor: any, foe: any, grapple: G
  * Changes a grapple on both fighters (API 1.34.0): the hands on it, whether it
  * is a pin, and where it holds. The pinned condition follows.
  */
-export async function updateGrapple(actor: any, patch: { hands?: number; pinned?: boolean; hitLocation?: string }): Promise<boolean> {
-  const mine = grappleOf(actor);
+export async function updateGrapple(actor: any, patch: { hands?: number; pinned?: boolean; hitLocation?: string }, foe?: any): Promise<boolean> {
+  const mine = grappleOf(actor, foe);
   if (!mine) return false;
-  const foe = await foeOf(mine);
-  const theirs = grappleOf(foe);
+  const other = await foeOf(mine);
+  const theirs = grappleOf(other, actor);
   const next = (g: Grapple): Grapple => ({
     ...g,
     ...(patch.hands !== undefined && Number.isFinite(Number(patch.hands)) ? { hands: Math.max(1, Math.floor(Number(patch.hands))) } : {}),
     ...(typeof patch.pinned === "boolean" ? { pinned: patch.pinned } : {}),
     ...(typeof patch.hitLocation === "string" && patch.hitLocation ? { hitLocation: patch.hitLocation } : {}),
   });
-  if (actor?.isOwner) await actor.setFlag(SYSTEM_ID, GRAPPLE_FLAG, next(mine));
-  if (foe?.isOwner && theirs) await foe.setFlag(SYSTEM_ID, GRAPPLE_FLAG, next(theirs));
-  if (typeof patch.pinned === "boolean") {
-    const victim = mine.holding ? foe : actor;
-    if (victim?.isOwner) await setCondition(victim, "pinned", patch.pinned);
-  }
+  await writeGrapples(actor, grapplesOf(actor).map((g) => (g.foe === mine.foe ? next(g) : g)));
+  if (theirs) await writeGrapples(other, grapplesOf(other).map((g) => (g.foe === theirs.foe ? next(g) : g)));
   return true;
 }
 
@@ -139,10 +135,56 @@ export interface Grapple {
   hitLocation: string;
 }
 
-/** The grapple this actor is in, or null when they are in none. */
-export function grappleOf(actor: any): Grapple | null {
-  const flag = actor?.getFlag?.(SYSTEM_ID, GRAPPLE_FLAG) as Grapple | undefined;
-  return flag?.foe ? flag : null;
+/** Where every grapple is recorded, on each side of them (since 1.45.0). */
+export const GRAPPLES_FLAG = "grapples";
+
+/**
+ * Every grapple this actor is in, the oldest first.
+ *
+ * A fighter can hold one foe and be held by another, or grab two at once
+ * (sargas79/GWorldVTT#370). A world recorded before 1.45.0 has the one grapple
+ * under its own flag, which is read here as a list of one.
+ */
+export function grapplesOf(actor: any): Grapple[] {
+  const list = actor?.getFlag?.(SYSTEM_ID, GRAPPLES_FLAG);
+  if (Array.isArray(list)) return list.filter((grapple: any) => typeof grapple?.foe === "string" && grapple.foe);
+  const one = actor?.getFlag?.(SYSTEM_ID, GRAPPLE_FLAG) as Grapple | undefined;
+  return one?.foe ? [one] : [];
+}
+
+/** The uuid a foe is named by, whether given as the actor or as the uuid itself. */
+function uuidOf(foe: any): string {
+  return typeof foe === "string" ? foe : String(foe?.uuid ?? "");
+}
+
+/**
+ * One grapple this actor is in: the one against `foe`, or the first of them
+ * where no foe is named.
+ */
+export function grappleOf(actor: any, foe?: any): Grapple | null {
+  const list = grapplesOf(actor);
+  if (foe === undefined || foe === null) return list[0] ?? null;
+  const uuid = uuidOf(foe);
+  return list.find((grapple) => grapple.foe === uuid) ?? null;
+}
+
+/**
+ * Writes a fighter's grapples, and the conditions that follow from them.
+ *
+ * The single flag is kept as the first of them: a world, a macro or a module
+ * that reads it sees what it always saw while a fighter is in one grapple.
+ */
+async function writeGrapples(actor: any, list: Grapple[]): Promise<void> {
+  if (!actor?.isOwner) return;
+  if (list.length > 0) await actor.setFlag(SYSTEM_ID, GRAPPLES_FLAG, list);
+  else if (actor.getFlag?.(SYSTEM_ID, GRAPPLES_FLAG)) await actor.unsetFlag(SYSTEM_ID, GRAPPLES_FLAG);
+
+  if (list[0]) await actor.setFlag(SYSTEM_ID, GRAPPLE_FLAG, list[0]);
+  else if (actor.getFlag?.(SYSTEM_ID, GRAPPLE_FLAG)) await actor.unsetFlag(SYSTEM_ID, GRAPPLE_FLAG);
+
+  await setCondition(actor, "grappling", list.some((grapple) => grapple.holding));
+  await setCondition(actor, "grappled", list.some((grapple) => !grapple.holding));
+  await setCondition(actor, "pinned", list.some((grapple) => !grapple.holding && grapple.pinned));
 }
 
 /** Reads the other side of a grapple off the canvas. */
@@ -166,44 +208,40 @@ export async function beginGrapple(options: {
   const { grappler, victim, hands } = options;
   const hitLocation = options.hitLocation ?? "torso";
 
-  if (grappler?.isOwner) {
-    await grappler.setFlag(SYSTEM_ID, GRAPPLE_FLAG, {
-      foe: String(victim.uuid),
-      holding: true,
-      hands,
-      pinned: false,
-      hitLocation,
-    } satisfies Grapple);
-    await setCondition(grappler, "grappling", true);
-  }
+  // A grapple on a foe already held replaces that one; another foe is another
+  // grapple beside it (since 1.45.0).
+  const mine = grapplesOf(grappler).filter((grapple) => grapple.foe !== String(victim.uuid));
+  await writeGrapples(grappler, [...mine, {
+    foe: String(victim.uuid),
+    holding: true,
+    hands,
+    pinned: false,
+    hitLocation,
+  } satisfies Grapple]);
 
-  if (victim?.isOwner) {
-    await victim.setFlag(SYSTEM_ID, GRAPPLE_FLAG, {
-      foe: String(grappler.uuid),
-      holding: false,
-      hands,
-      pinned: false,
-      hitLocation,
-    } satisfies Grapple);
-    await setCondition(victim, "grappled", true);
-  }
+  const theirs = grapplesOf(victim).filter((grapple) => grapple.foe !== String(grappler.uuid));
+  await writeGrapples(victim, [...theirs, {
+    foe: String(grappler.uuid),
+    holding: false,
+    hands,
+    pinned: false,
+    hitLocation,
+  } satisfies Grapple]);
 }
 
-/** Lets go, on both sides. */
-export async function endGrapple(actor: any): Promise<void> {
-  const grapple = grappleOf(actor);
-  if (!grapple) return;
+/**
+ * Lets go, on both sides: of one foe, or of everybody where none is named.
+ */
+export async function endGrapple(actor: any, foe?: any): Promise<void> {
+  const uuid = foe === undefined || foe === null ? null : uuidOf(foe);
+  const ending = grapplesOf(actor).filter((grapple) => uuid === null || grapple.foe === uuid);
+  if (ending.length === 0) return;
 
-  const foe = await foeOf(grapple);
-
-  for (const [who, condition] of [
-    [actor, grapple.holding ? "grappling" : "grappled"],
-    [foe, grapple.holding ? "grappled" : "grappling"],
-  ] as const) {
-    if (!who?.isOwner) continue;
-    if (who.getFlag?.(SYSTEM_ID, GRAPPLE_FLAG)) await who.unsetFlag(SYSTEM_ID, GRAPPLE_FLAG);
-    await setCondition(who, condition, false);
-    await setCondition(who, "pinned", false);
+  await writeGrapples(actor, grapplesOf(actor).filter((grapple) => !ending.includes(grapple)));
+  for (const grapple of ending) {
+    const other = await foeOf(grapple);
+    if (!other) continue;
+    await writeGrapples(other, grapplesOf(other).filter((theirs) => theirs.foe !== String(actor?.uuid ?? "")));
   }
 }
 
@@ -255,9 +293,9 @@ function scoresOf(actor: any) {
  * An unconscious grappler is not holding on at all, so there is nothing to
  * contest.
  */
-export async function rollBreakFree(options: { actor: any }): Promise<boolean> {
+export async function rollBreakFree(options: { actor: any; foe?: any }): Promise<boolean> {
   const { actor } = options;
-  const grapple = grappleOf(actor);
+  const grapple = grappleOf(actor, options.foe);
   if (!grapple || grapple.holding) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.Grapple.NotGrappled"));
     return false;
@@ -322,9 +360,9 @@ export async function rollBreakFree(options: { actor: any }): Promise<boolean> {
  * "If you lose, you suffer the same effects!" -- which is what makes it worth
  * rolling rather than simply declaring.
  */
-export async function rollTakedown(options: { actor: any }): Promise<void> {
+export async function rollTakedown(options: { actor: any; foe?: any }): Promise<void> {
   const { actor } = options;
-  const grapple = grappleOf(actor);
+  const grapple = grappleOf(actor, options.foe);
   if (!grapple) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.Grapple.NotInOne"));
     return;
@@ -379,9 +417,9 @@ export async function rollTakedown(options: { actor: any }): Promise<void> {
  * A Regular Contest of ST, which is the slow kind: both sides keep at it until
  * one succeeds where the other fails.
  */
-export async function rollPin(options: { actor: any }): Promise<void> {
+export async function rollPin(options: { actor: any; foe?: any }): Promise<void> {
   const { actor } = options;
-  const grapple = grappleOf(actor);
+  const grapple = grappleOf(actor, options.foe);
   if (!grapple?.holding) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.Grapple.MustBeHolding"));
     return;
@@ -442,9 +480,9 @@ export async function rollPin(options: { actor: any }): Promise<void> {
  * "Roll a Quick Contest: your ST vs. the higher of your foe's ST or HT... If you
  * win, your foe takes crushing damage equal to your margin of victory."
  */
-export async function rollChoke(options: { actor: any }): Promise<void> {
+export async function rollChoke(options: { actor: any; foe?: any }): Promise<void> {
   const { actor } = options;
-  const grapple = grappleOf(actor);
+  const grapple = grappleOf(actor, options.foe);
   if (!grapple?.holding) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.Grapple.MustBeHolding"));
     return;

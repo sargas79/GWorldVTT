@@ -136,6 +136,7 @@ import {
   endGrapple,
   grapplingSkill,
   grappleOf,
+  grapplesOf,
   rollBreakFree,
   rollChoke,
   rollPin,
@@ -3280,16 +3281,15 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       isAllOutAttack: system.maneuver === "allOutAttack",
       // "If you have been grappled, you cannot take a Move maneuver unless you
       // have at least twice your foe's ST" (p. 371).
-      grappledCannotMove: (() => {
-        const grapple = grappleOf(this.actor);
-        if (!grapple || grapple.holding) return false;
+      grappledCannotMove: grapplesOf(this.actor).some((grapple) => {
+        if (grapple.holding) return false;
         const foe: any = fromUuidSync(grapple.foe);
         if (!foe) return false;
         return !canMoveWhileGrappled(
           Number(system.attributes?.ST ?? 10) || 10,
           Number(foe.system?.attributes?.ST ?? 10) || 10,
         );
-      })(),
+      }),
       aoaOptions: [
         ...(["determined", "double", "feint", "strong", "suppression"] as const).map((key) => ({
           key,
@@ -3366,17 +3366,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
       // The grapple this character is in, if any: what it allows is entirely
       // different depending on which end of it they are.
-      grappleActions: grappleActionsFor(this.actor, grappleOf(this.actor)),
-      grapple: (() => {
-        const held = grappleOf(this.actor);
-        if (!held) return null;
-        return {
-          holding: held.holding,
-          pinned: held.pinned,
-          hands: held.hands,
-          byTheNeck: held.hitLocation === "neck",
-        };
-      })(),
+      // Every grapple this character is in (since 1.45.0), each with its own
+      // buttons: what a grapple allows is entirely different depending on which
+      // end of it they are, and a fighter can be at both ends at once.
+      grapples: grapplesOf(this.actor).map((held) => ({
+        foe: held.foe,
+        foeName: String((fromUuidSync(held.foe) as any)?.name ?? ""),
+        holding: held.holding,
+        pinned: held.pinned,
+        hands: held.hands,
+        byTheNeck: held.hitLocation === "neck",
+        actions: grappleActionsFor(this.actor, held),
+      })),
 
       // Tactical combat, when the world is using it. Movement points are the
       // character's Move after encumbrance, and what each hex costs depends on
@@ -4653,29 +4654,34 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     await rollDisarm({ actor: this.actor, foe, fencingWeapon, jitteOrWhip, foeTwoHanded, target });
   }
 
+  /** Which grapple a button on the grapple panel belongs to (since 1.45.0). */
+  static #grappleFoe(target: HTMLElement): string | undefined {
+    return target.closest<HTMLElement>("[data-grapple-foe]")?.dataset.grappleFoe ?? undefined;
+  }
+
   /** Tries to get loose (Campaigns p. 371). */
-  static async #onBreakFree(this: GWorldCharacterSheet) {
-    await rollBreakFree({ actor: this.actor });
+  static async #onBreakFree(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    await rollBreakFree({ actor: this.actor, foe: GWorldCharacterSheet.#grappleFoe(target) });
   }
 
   /** Bears a standing foe to the ground (Campaigns p. 370). */
-  static async #onTakedown(this: GWorldCharacterSheet) {
-    await rollTakedown({ actor: this.actor });
+  static async #onTakedown(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    await rollTakedown({ actor: this.actor, foe: GWorldCharacterSheet.#grappleFoe(target) });
   }
 
   /** Pins a foe already on the ground (Campaigns p. 370). */
-  static async #onPin(this: GWorldCharacterSheet) {
-    await rollPin({ actor: this.actor });
+  static async #onPin(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    await rollPin({ actor: this.actor, foe: GWorldCharacterSheet.#grappleFoe(target) });
   }
 
   /** Chokes a foe held by the neck (Campaigns p. 370). */
-  static async #onChoke(this: GWorldCharacterSheet) {
-    await rollChoke({ actor: this.actor });
+  static async #onChoke(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    await rollChoke({ actor: this.actor, foe: GWorldCharacterSheet.#grappleFoe(target) });
   }
 
-  /** Lets go, which is a free action on your own turn. */
-  static async #onRelease(this: GWorldCharacterSheet) {
-    await endGrapple(this.actor);
+  /** Lets go of one foe, which is a free action on your own turn. */
+  static async #onRelease(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    await endGrapple(this.actor, GWorldCharacterSheet.#grappleFoe(target));
   }
 
   /**
@@ -5469,7 +5475,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   /** A module's button on the grapple panel. */
   static async #onGrappleAction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const id = target.dataset.grappleAction;
-    if (id) await runGrappleAction(this.actor, id, grappleOf(this.actor));
+    if (id) await runGrappleAction(this.actor, id, grappleOf(this.actor, GWorldCharacterSheet.#grappleFoe(target)));
   }
 
   /** Takes a timed condition off before it runs out. */
