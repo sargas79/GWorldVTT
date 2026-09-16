@@ -1647,9 +1647,20 @@ export function parseDr(value) {
 }
 
 /** The tech level, where the record states a plain number. */
-function techLevel(value) {
+/**
+ * The tech level a record is written at.
+ *
+ * A figure, or a superscience one: "the rules give the TL of superscience
+ * developments as '^' instead of a number" (Campaigns p. 513), so a data file
+ * writes "11^" for something superscientific at TL11 and "^" for something
+ * with no fixed TL at all. Both are kept as they are written, because the
+ * item's tech level is text and the caret is what the book prints.
+ *
+ * Anything else -- "Var.", a GCA formula -- is not a tech level and is dropped.
+ */
+export function techLevel(value) {
   const text = (value ?? "").trim();
-  return /^\d+$/.test(text) ? text : "";
+  return /^\d*\^$|^\d+$/.test(text) ? text : "";
 }
 
 function physical(f) {
@@ -1935,7 +1946,9 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
       // The footnote a split falls under and the piece's tech level should
       // agree. Where they do not, one of the two readings is wrong and the
       // wrong one silently changes what stops a mace.
-      const tl = Number(techLevel(f.get("techlvl")) || "0");
+      // The figure in the tech level, with a superscience caret left off:
+      // "11^" is TL11, and a bare "^" has no figure to compare at all.
+      const tl = Number(/\d+/.exec(techLevel(f.get("techlvl")))?.[0] ?? "0");
       if (dr.drSplit !== null && dr.lowTech === tl >= 7) {
         reject(name, `split DR footnote and TL${tl} disagree`);
         continue;
