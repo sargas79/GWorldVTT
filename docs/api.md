@@ -279,6 +279,8 @@ and the roll continues.
     In `gworld.defenseChoices` it also has `parriesFlail`. Set it true to let
     a weapon that couldn't parry a flail (a fencing weapon or a knife) parry
     one;
+  - Since 1.45.0: a fighter can be in more than one grapple; see the grapple
+    entries below.
   - Since 1.44.0:
     - an attack's defense flag keeps the attack roll's `tags`;
     - `gworld.breakageOdds` gets `attackTags` and `attackWeight`, the weight the attack
@@ -629,12 +631,16 @@ and a hint `p.ihint`.
     each rather than being doubled.
   - `notes` go on the card.
 - **Grapples** (since 1.34.0):
-  - `combat.grapple(actor)` is the grapple an actor is in, `{ foe, holding, hands,
-    pinned, hitLocation }`, or null.
-  - `combat.updateGrapple(actor, { hands?, pinned?, hitLocation? })` changes it on
-    both fighters; the pinned condition follows.
+  - `combat.grapple(actor, foe?)` is the grapple an actor is in, `{ foe, holding,
+    hands, pinned, hitLocation }`, or null. Since 1.45.0 a fighter may be in
+    several -- holding one foe while another holds him, or holding two at once --
+    so `foe` (an actor or its uuid) says which; with none, it is the first.
+  - `combat.grapples(actor)` (since 1.45.0) is all of them, the oldest first.
+  - `combat.updateGrapple(actor, { hands?, pinned?, hitLocation? }, foe?)` changes it
+    on both fighters; the pinned condition follows.
   - `combat.beginGrapple({ grappler, victim, hands, hitLocation? })` starts one,
-    and `combat.endGrapple(actor)` ends it.
+    beside any the fighter is already in, and `combat.endGrapple(actor, foe?)` ends
+    that one, or all of them where no foe is named.
   - `gworld.grappleContest` fires before a break free, takedown, pin or choke
     contest, with `{ move, actor, foe, grapple, first, second, winner }`. `first` is
     the side taking the action. Change a side's `base`, push to its `modifiers`,
