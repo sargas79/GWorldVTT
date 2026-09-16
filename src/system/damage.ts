@@ -168,6 +168,11 @@ export interface AppliedDamage {
    * your DR" (p. 47); without a field, nothing is refused.
    */
   touchEffectsReach: boolean;
+  /**
+   * The armour items a `gworld.armorDr` listener refused against this blow,
+   * by id. They stopped nothing, so none of their ablative DR is spent.
+   */
+  refusedPieces?: string[];
   /** The attack's armour divisor as Hardened left it (p. 47). */
   armorDivisorAfterHardening: number;
   /**
@@ -502,6 +507,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     // that does enough damage to pierce your DR" (Characters p. 47). Without a
     // field there is nothing to refuse them.
     touchEffectsReach: fieldAgainst <= 0 || result.penetrating > 0,
+    refusedPieces: lines.filter((line) => line.applies === false && line.itemId).map((line) => String(line.itemId)),
     armorDivisorAfterHardening: hardened.divisor,
     // Fit's "+1 to all HT rolls" goes on each of the three (Characters p. 55).
     htModifiers: {
@@ -622,6 +628,8 @@ async function spendAblativeDr(actor: any, damage: IncomingDamage, resolved: App
     if (item?.type !== "armor" || item.system?.equipped !== true) continue;
     const ablative = item.system?.ablative;
     if (ablative !== "ablative" && ablative !== "semiAblative") continue;
+    // A piece refused against this blow stopped none of it.
+    if (resolved.refusedPieces?.includes(String(item.id))) continue;
 
     const field = item.system?.forceField === true;
     const covered: string[] = item.system?.locations ?? [];

@@ -225,6 +225,29 @@ describe("gworld.armorDr", () => {
   });
 });
 
+describe("ablative DR on a refused piece (#466)", () => {
+  it("spends none of a semi-ablative field's DR on a blow a listener refused it against", async () => {
+    const actor = character(20, 20) as any;
+    const field = {
+      id: "field1", type: "armor", name: "Field",
+      system: {
+        dr: 60, drSplit: null, drSplitAppliesTo: [], locations: [], flexible: false, frontOnly: false, concealable: false,
+        equipped: true, hardened: 0, ablative: "semiAblative", drLost: 0, forceField: true,
+      },
+    };
+    actor.items = [field];
+    actor.updateEmbeddedDocuments = vi.fn(async () => {});
+    globals.Hooks = {
+      callAll: (event: string, context: { lines?: Array<{ applies: boolean }> }) => {
+        if (event === "gworld.armorDr") context.lines![0]!.applies = false;
+      },
+    };
+    const result = await applyDamageToActor(actor, { basicDamage: 30, type: "cut", armorDivisor: 1, hitLocation: "torso" } as never);
+    expect(result?.refusedPieces).toEqual(["field1"]);
+    expect(actor.updateEmbeddedDocuments).not.toHaveBeenCalled();
+  });
+});
+
 describe("ablative DR spent by a blow (Characters p. 47)", () => {
   /** The same character, with the piece exposed so its pool can be read after. */
   function armoured(options: { dr: number; ablative: string }) {
