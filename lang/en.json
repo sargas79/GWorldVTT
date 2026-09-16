@@ -3217,7 +3217,9 @@
       "HitModifier": "{modifier} to hit",
       "HitModifierHint": "This weapon is used at this modifier to hit with its skill. The parry is unchanged.",
       "FollowUp": "(follow-up)",
-      "FollowUpHint": "A follow-up attack: roll its damage after the first blow's.",
+      "FollowUpHint": "A follow-up attack (Characters p. 106): it lands only if the attack carrying it hits, and DR has no effect on it once that attack gets through.",
+      "Linked": "(linked)",
+      "LinkedHint": "A linked attack (Characters p. 106): it lands with this one on the same attack roll, and is rolled separately against DR.",
       "SkillCap": "Effective skill held to {cap}",
       "PostureLine": "Posture ({posture})",
       "TargetPostureLine": "Target's posture ({posture})"

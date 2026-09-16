@@ -234,7 +234,24 @@ export interface DerivedAttack {
   /** Whether the row offers a Feint (since 1.28.0): melee rows do unless a module says otherwise, ranged rows only when one says so. */
   feint?: boolean;
   /** A follow-up attack rolled after the first, which a module adds. */
-  followUp?: { damage: string; damageType: DamageType | string; explosive: boolean; label?: string } | null;
+  /**
+   * A second attack that lands with this one (Characters p. 106). A linked
+   * attack "is rolled separately against DR"; a follow-up only lands if the
+   * carrier hits, and ignores DR once the carrier penetrates, which `followUp`
+   * says. An affliction carries its resistance roll instead of damage.
+   */
+  followUp?: {
+    damage: string;
+    damageType: DamageType | string;
+    explosive: boolean;
+    label?: string;
+    armorDivisor?: number;
+    affliction?: boolean;
+    afflictionAttribute?: string;
+    afflictionModifier?: number;
+    fragmentation?: string;
+    followUp?: boolean;
+  } | null;
   /** Effects that need the GM, as tags on the row. */
   notes?: Array<{ label: string; hint: string }>;
   itemId: string;
@@ -434,6 +451,30 @@ interface DefenseView {
  * defensively: derived data is prepared while the world is still loading,
  * before the settings a mana level lives in can be asked.
  */
+/**
+ * A mode's linked or follow-up line as a derived row carries it
+ * (Characters p. 106). The same shape a module's `gworld.weaponAttacks`
+ * listener may set, so the Combat tab and the damage card need know only one.
+ */
+function linkedRow(linked: any): NonNullable<DerivedAttack["followUp"]> {
+  return {
+    damage: String(linked.damage ?? ""),
+    damageType: String(linked.damageType ?? "cr"),
+    explosive: linked.explosive === true,
+    armorDivisor: Number(linked.armorDivisor ?? 1) || 1,
+    ...(linked.affliction
+      ? {
+          affliction: true,
+          afflictionAttribute: String(linked.afflictionAttribute ?? ""),
+          afflictionModifier: Number(linked.afflictionModifier ?? 0) || 0,
+        }
+      : {}),
+    ...(linked.fragmentation ? { fragmentation: String(linked.fragmentation) } : {}),
+    ...(linked.followUp ? { followUp: true } : {}),
+    ...(linked.label ? { label: String(linked.label) } : {}),
+  };
+}
+
 function manaHere(): ManaLevel {
   try {
     return isRuleOn("manaLevels") ? currentMana() : "normal";
@@ -2086,6 +2127,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           rapidStrikeHalved: halvedRapidStrike(mastered, mode.skill),
           ignoresDr: Boolean(mode.ignoresDr),
           explosive: Boolean(mode.explosive),
+          // A second attack that lands with this one (Characters p. 106).
+          ...(mode.linked ? { followUp: linkedRow(mode.linked) } : {}),
           // The damage modifiers of Characters pp. 104-105 that change what
           // the blow does rather than how much of it lands.
           incendiary: Boolean(mode.incendiary),
@@ -2246,6 +2289,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           damageBase: String(mode.damageBase ?? ""),
           damageModifier: Number(mode.damageModifier ?? 0) || 0,
           explosive: Boolean(mode.explosive),
+          // A second attack that lands with this one (Characters p. 106).
+          ...(mode.linked ? { followUp: linkedRow(mode.linked) } : {}),
           // The damage modifiers of Characters pp. 104-105 that change what
           // the blow does rather than how much of it lands.
           incendiary: Boolean(mode.incendiary),

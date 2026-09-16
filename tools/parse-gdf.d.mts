@@ -61,6 +61,28 @@ export declare function alternatives(
   f: Map<string, string>,
 ): Array<{ name: string; f: Map<string, string> }>;
 export declare function weaponClassOf(mods: string | undefined): "" | "sword" | "cutting" | "crushing" | "firearm" | "bow";
+/** Mode names a data file gives to a second attack that lands with the first (Characters p. 106). */
+export declare const LINKED_MODE: RegExp;
+export declare const FOLLOW_UP_MODE: RegExp;
+
+/** The second line of an attack, taken from the mode the file wrote it as. */
+export declare function linkedLine(
+  mode: Record<string, unknown>,
+  followUp: boolean,
+  label: string,
+): {
+  damage: string;
+  damageType: string;
+  armorDivisor: number;
+  affliction?: boolean;
+  afflictionAttribute?: string;
+  afflictionModifier?: number;
+  explosive?: boolean;
+  fragmentation?: string;
+  followUp?: boolean;
+  label?: string;
+};
+
 /** What a trait is, once its cost has been read: the sign has the last word. */
 export declare function traitCategoryOf(
   section: string,

@@ -1511,6 +1511,44 @@ function meleeMode(name, f) {
   };
 }
 
+/**
+ * Mode names a data file gives to a second attack that lands with the first
+ * rather than instead of it (Characters p. 106).
+ */
+export const LINKED_MODE = /^linked\b/i;
+export const FOLLOW_UP_MODE = /^follow[ -]?up\b/i;
+
+/**
+ * The second line of an attack, taken from the mode the file wrote it as.
+ *
+ * A linked attack "is rolled separately against DR" and lands on the same
+ * attack roll as the one it is linked to; a follow-up only lands if that
+ * attack hits, and ignores DR once it penetrates. Either way it is not a way
+ * of attacking on its own, so it is folded into the mode before it rather
+ * than offered beside it.
+ */
+export function linkedLine(mode, followUp, label) {
+  const damage = mode.affliction
+    ? `${mode.afflictionAttribute}${mode.afflictionModifier || ""}`
+    : mode.damageFormula || `${mode.damageBase}${mode.damageModifier >= 0 ? "+" : ""}${mode.damageModifier || ""}`;
+  return {
+    damage,
+    damageType: mode.damageType ?? "cr",
+    armorDivisor: Number(mode.armorDivisor ?? 1) || 1,
+    ...(mode.affliction
+      ? {
+          affliction: true,
+          afflictionAttribute: mode.afflictionAttribute ?? "",
+          afflictionModifier: Number(mode.afflictionModifier ?? 0) || 0,
+        }
+      : {}),
+    ...(mode.explosive ? { explosive: true } : {}),
+    ...(mode.fragmentation ? { fragmentation: mode.fragmentation } : {}),
+    ...(followUp ? { followUp: true } : {}),
+    ...(label ? { label } : {}),
+  };
+}
+
 /** The unarmed skills a skillused() list names outright, in its order. */
 export function unarmedSkillsIn(value) {
   const found = [];
@@ -2068,6 +2106,18 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
       if (result.warning) note(`${name}: ${result.warning}`);
       if (result.skillWarning) note(`${name}: ${result.skillWarning}`);
       usable = true;
+
+      // A second line that lands with the attack before it rather than
+      // instead of it is folded into that attack, not offered beside it
+      // (Characters p. 106). With nothing before it there is nothing to link
+      // to, so it stands as a mode of its own.
+      const followUp = FOLLOW_UP_MODE.test(scope.name ?? "");
+      const into = isMelee ? meleeModes : rangedModes;
+      if ((LINKED_MODE.test(scope.name ?? "") || followUp) && into.length > 0) {
+        into[into.length - 1].linked = linkedLine(result.mode, followUp, scope.name.trim());
+        continue;
+      }
+
       if (isMelee) meleeModes.push(...byUnarmedSkill(result.mode, scope.f.get("skillused")));
       else rangedModes.push(result.mode);
     }

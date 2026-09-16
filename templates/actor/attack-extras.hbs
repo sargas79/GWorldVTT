@@ -1,9 +1,31 @@
 {{!-- What an attack row carries beyond its damage: a follow-up attack to roll
      after the first, and notes for effects the GM adjudicates. --}}
 {{#if atk.followUp}}
-  <span class="tag rollable" data-action="rollDamage" data-damage-formula="{{atk.followUp.damage}}" data-damage-type="{{atk.followUp.damageType}}"
-        data-damage-label="{{atk.name}} {{#if atk.followUp.label}}{{atk.followUp.label}}{{else}}{{localize 'GWORLD.Attack.FollowUp'}}{{/if}}" data-armor-divisor="1"
-        data-explosive="{{#if atk.followUp.explosive}}1{{/if}}" data-tooltip="{{localize 'GWORLD.Attack.FollowUpHint'}}">+{{atk.followUp.damage}} {{atk.followUp.damageType}}</span>
+  {{!-- A second attack that lands with this one (Characters p. 106), not
+        instead of it. Its own tooltip says which of the two it is. --}}
+  {{#with atk.followUp as |second|}}
+    {{#if second.affliction}}
+      {{!-- A linked affliction is resisted, not rolled for damage: the
+            electrolaser's shot burns and shocks on the one attack. --}}
+      <span class="tag rollable" data-action="affliction"
+            data-resist="{{second.afflictionAttribute}}"
+            data-resist-modifier="{{second.afflictionModifier}}"
+            data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}"
+            data-damage-type="{{second.damageType}}"
+            data-half-damage-range="{{atk.halfDamageRange}}"
+            data-affliction-label="{{atk.name}} {{#if second.label}}{{second.label}}{{else}}{{localize 'GWORLD.Attack.Linked'}}{{/if}}"
+            data-tooltip="{{#if second.followUp}}{{localize 'GWORLD.Attack.FollowUpHint'}}{{else}}{{localize 'GWORLD.Attack.LinkedHint'}}{{/if}}"
+            >{{second.afflictionAttribute}}{{second.afflictionModifier}}{{#unless (eq second.armorDivisor 1)}} ({{second.armorDivisor}}){{/unless}} {{localize "GWORLD.Affliction.Short"}}</span>
+    {{else}}
+      <span class="tag rollable" data-action="rollDamage"
+            data-damage-formula="{{second.damage}}" data-damage-type="{{second.damageType}}"
+            data-damage-label="{{atk.name}} {{#if second.label}}{{second.label}}{{else}}{{localize 'GWORLD.Attack.FollowUp'}}{{/if}}"
+            data-armor-divisor="{{#if second.armorDivisor}}{{second.armorDivisor}}{{else}}1{{/if}}"
+            data-explosive="{{#if second.explosive}}1{{/if}}" data-fragmentation="{{second.fragmentation}}"
+            data-tooltip="{{#if second.followUp}}{{localize 'GWORLD.Attack.FollowUpHint'}}{{else}}{{localize 'GWORLD.Attack.LinkedHint'}}{{/if}}"
+            >+{{second.damage}} {{second.damageType}}</span>
+    {{/if}}
+  {{/with}}
 {{/if}}
 {{!-- The damage modifiers of Characters pp. 104-105 that the apply acts on:
      shown so a GM can see what a blow carries before pressing it. --}}
