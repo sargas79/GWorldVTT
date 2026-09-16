@@ -1084,6 +1084,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare blocksPeripheralVision: boolean;
   declare soleDr: number | null;
   declare hardened: number;
+  declare drByLocation: Array<{ locations: string[]; dr: number }>;
   declare ablative: "none" | "ablative" | "semiAblative";
   declare drLost: number;
   declare forceField: boolean;
@@ -1185,6 +1186,33 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
         initial: null,
         min: 0,
       }),
+      /**
+       * Places where the piece gives a different DR from the rest of itself:
+       * a suit whose torso is better armoured than its limbs, a helmet whose
+       * skull is better armoured than its face and eyes. The Basic Set's own
+       * case is footwear with a tougher sole (Characters p. 283), which
+       * `soleDr` above carries.
+       *
+       * An exception replaces the piece's whole figure at that location, its
+       * split included. Splitting such a piece into two items is not the
+       * answer: it is one thing worn, bought and weighed once.
+       */
+      drByLocation: new fields.ArrayField(
+        new fields.SchemaField({
+          locations: new fields.ArrayField(
+            new fields.StringField({
+              required: true, nullable: false, blank: false, initial: "torso",
+              choices: [
+                "torso", "skull", "eye", "face", "neck",
+                "vitals", "groin", "arm", "leg", "hand", "foot",
+              ],
+            }),
+            { required: true, initial: [] },
+          ),
+          dr: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+        }),
+        { required: true, initial: [] },
+      ),
       /**
        * Hardened (Characters p. 47): "Each level of Hardened reduces the armor
        * divisor of an attack by one step." Six levels take an attack that

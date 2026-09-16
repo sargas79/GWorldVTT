@@ -503,6 +503,38 @@
           {{localize "GWORLD.Armor.ForceField"}}
         </label>
       </div>
+
+      {{!-- Places the piece armours differently from the rest of itself: a
+            suit whose torso is better armoured than its limbs, a helmet whose
+            skull is better armoured than its face. --}}
+      <div class="isub" data-mode-path="drByLocation">
+        <p class="ihint">{{localize "GWORLD.Armor.DrByLocationHint"}}</p>
+        {{#each system.drByLocation as |exception i|}}
+          <div class="irow" data-index="{{i}}">
+            <label>{{localize "GWORLD.Armor.DR"}}
+              <input type="number" name="system.drByLocation.{{i}}.dr" value="{{exception.dr}}" step="1" min="0"
+                     {{#unless @root.editable}}disabled{{/unless}} />
+            </label>
+            <div class="ichecks">
+              {{#each @root.choices.hitLocations as |loc|}}
+                <label class="icheck">
+                  <input type="checkbox" name="system.drByLocation.{{i}}.locations" value="{{loc}}"
+                         {{#if (includes exception.locations loc)}}checked{{/if}}
+                         {{#unless @root.editable}}disabled{{/unless}} />
+                  {{localize (concat "GWORLD.HitLocation." loc)}}
+                </label>
+              {{/each}}
+            </div>
+            {{#if @root.editable}}
+              <button type="button" class="ibtn tiny" data-action="deleteMode"
+                      aria-label="{{localize 'GWORLD.Armor.RemoveDrByLocation'}}">&times;</button>
+            {{/if}}
+          </div>
+        {{/each}}
+        {{#if editable}}
+          <button type="button" class="ibtn tiny" data-action="addMode">{{localize "GWORLD.Armor.AddDrByLocation"}}</button>
+        {{/if}}
+      </div>
       <p class="ihint">{{localize "GWORLD.Armor.LocationsHint"}}</p>
       <div class="ichecks">
         {{#each choices.hitLocations as |loc|}}

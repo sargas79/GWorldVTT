@@ -159,7 +159,7 @@ export function armorLayers(
     const reaches = piece.forceField === true || here.has(piece);
     if (!reaches || !protectsAgainst(piece, arc)) continue;
     hardened = Math.max(hardened, Math.max(0, Math.floor(piece.hardened ?? 0)));
-    const dr = drAgainst(piece, type);
+    const dr = drAgainst(piece, type, location);
     if (piece.forceField === true) fieldDr += dr;
     else if (piece.flexible) flexibleDr += dr;
     else rigidDr += dr;

@@ -59,6 +59,26 @@ export interface ArmorPiece {
   drLost?: number;
   /** A Force Field (p. 47): it meets the blow before any other armour does. */
   forceField?: boolean;
+  /**
+   * Places where the piece gives a different DR from the rest of itself: a
+   * suit whose torso is better armoured than its limbs, a helmet whose skull
+   * is better armoured than its face. The Basic Set's own case is footwear
+   * with a tougher sole (Characters p. 283), which `soleDr` carries.
+   *
+   * An exception replaces the piece's whole figure at that location, split
+   * and all: a piece with both a location exception and a damage-type split
+   * would be saying two different things about the same spot.
+   */
+  drByLocation?: ReadonlyArray<{ locations: readonly HitLocation[]; dr: number }>;
+}
+
+/** The DR a piece gives at one location, before any split or spending. */
+function baseDrAt(piece: ArmorPiece, location: HitLocation | undefined): number | null {
+  if (location === undefined) return null;
+  for (const exception of piece.drByLocation ?? []) {
+    if (exception.locations.includes(location)) return Math.max(0, Math.floor(exception.dr));
+  }
+  return null;
 }
 
 /** How a piece of armour is spent as it stops damage (Characters p. 47). */
@@ -138,10 +158,15 @@ export function remainingDr(dr: number, drLost: number | undefined): number {
 }
 
 /** The DR one piece offers against one kind of damage. */
-export function drAgainst(piece: ArmorPiece, type: DamageType): number {
-  const dr = piece.drSplit === null || !piece.drSplitAppliesTo.includes(type)
-    ? piece.dr
-    : piece.drSplit;
+export function drAgainst(piece: ArmorPiece, type: DamageType, location?: HitLocation): number {
+  // A place the piece armours differently from the rest of itself gives its
+  // own figure, and the split has nothing to say about it.
+  const exception = baseDrAt(piece, location);
+  const dr = exception !== null
+    ? exception
+    : piece.drSplit === null || !piece.drSplitAppliesTo.includes(type)
+      ? piece.dr
+      : piece.drSplit;
   // Ablative DR is "destroyed in the process" of stopping a blow, so what the
   // next one meets is what is left (Characters p. 47).
   return remainingDr(dr, piece.drLost);
@@ -164,7 +189,7 @@ export function wornDrAt(
   let total = 0;
   for (const piece of pieces) {
     const covered = piece.locations.length ? piece.locations : HIT_LOCATION_ORDER;
-    if (covered.includes(location)) total += drAgainst(piece, type);
+    if (covered.includes(location)) total += drAgainst(piece, type, location);
   }
   return total;
 }
@@ -187,10 +212,9 @@ export function drByLocation(
   ) as Record<HitLocation, number>;
 
   for (const piece of pieces) {
-    const value = drAgainst(piece, type);
     const covered = piece.locations.length ? piece.locations : HIT_LOCATION_ORDER;
     for (const loc of covered) {
-      if (loc in total) total[loc] += value;
+      if (loc in total) total[loc] += drAgainst(piece, type, loc);
     }
   }
 

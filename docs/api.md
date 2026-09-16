@@ -400,6 +400,17 @@ and the roll continues.
     the blow before the rest. A listener may also spend a pool of its own: the
     lines say what the piece was worth, and the result carries what got
     through. The actor's own natural DR is not a line; it is added after.
+
+    A piece's stored split is a list of damage types. A book that splits a DR
+    by something else -- full DR against a laser, or against a swinging melee
+    attack, a fall or a collision -- cannot say so in the piece, and should not:
+    which attacks count is that book's rule. Write the figure the piece gives
+    against everything else as its DR, keep the other figure in the module's
+    own extension data on the item, and raise the line here when the blow is
+    one the book means. A piece that armours one place better than the rest of
+    itself is different, and is the piece's own `drByLocation` (since 1.51.0):
+    a list of `{ locations, dr }`, each replacing the piece's figure at those
+    locations, split and all.
   - `gworld.equipmentFailure` (since 1.10.0): before a thing's equipment
     failure roll (Campaigns p. 485), with `{ actor, item, target, modifiers }`.
     Push lines to `modifiers`; the card shows them.
