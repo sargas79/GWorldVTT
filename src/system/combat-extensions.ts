@@ -84,6 +84,8 @@ export const COMBAT_HOOKS = Object.freeze({
   hurtingYourself: "gworld.hurtingYourself",
   /** Before a blow's DR is added up (since 1.48.0): `{ actor, item, mode, hitLocation, damageType, basicDamage, lines }`, the lines mutable. */
   armorDr: "gworld.armorDr",
+  /** Where a ranged mode's capacity and reload time are read (since 1.54.0): `{ actor, item, modeIndex, mode, entry }`, the entry mutable. */
+  shotsEntry: "gworld.shotsEntry",
 });
 
 /** One piece of worn armour as `gworld.armorDr` hands it to a listener. */

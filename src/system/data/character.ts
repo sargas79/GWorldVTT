@@ -65,7 +65,6 @@ import {
   ammunitionEffect,
   calibreOf,
   fullLoad,
-  parseShots,
   reloadTime,
   type AmmunitionType,
 } from "../../rules/ammunition.js";
@@ -88,6 +87,7 @@ import { evaluateBonus, takesEvaluateBonus } from "../../rules/maneuvers.js";
 import {
   MODULE_KEY, adjustWeaponAttacks, maneuverAllowancesFor, maneuverInfo, maneuverKeys, parryWeaponRows, type WeaponRowEntry,
 } from "../combat-extensions.js";
+import { shotsEntryFor } from "../shots-entry.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
   DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleTraitEffects, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type TraitEffectSource,
@@ -2216,7 +2216,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         };
         // The count of shots (Campaigns p. 373): what the column holds, and
         // what is in the weapon now. A thrown weapon keeps no count.
-        const shotsEntry = parseShots(String(mode.shots ?? ""));
+        const shotsEntry = shotsEntryFor(item, index, mode);
         const shotsCapacity = isRuleOn("reloading") && !shotsEntry.thrown ? fullLoad(shotsEntry) : 0;
         const shotsLoaded = shotsCapacity > 0 ? Math.min(shotsCapacity, Math.max(0, Number(mode.loaded ?? 0) || 0)) : 0;
         const foundRanged = short(enchantedSkill(art), mode.minSt ?? null);
