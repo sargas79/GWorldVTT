@@ -130,6 +130,36 @@ export function traitImprovement(trait: PricedTrait, unspent: number): Improveme
   return priced(from, to, from, to, cost, unspent);
 }
 
+/**
+ * Buying off a disadvantage or quirk: a levelled one loses a level, anything
+ * else goes altogether. The cost is the points it stops giving, so it is
+ * positive. Null for a trait that gives no points back.
+ */
+export function traitBuyOff(trait: PricedTrait, unspent: number): Improvement | null {
+  const levels = Number(trait.system?.levels ?? 0) || 0;
+  const current = traitCostAt(trait, levels);
+  if (isLevelled(trait) && levels > 1) {
+    const to = steppedLevels(trait, "down");
+    // The level gives fewer points afterwards: what it stops giving is the cost.
+    const cost = traitCostAt(trait, to) - current;
+    return cost > 0 ? priced(levels, to, levels, to, cost, unspent) : null;
+  }
+  return current < 0 ? priced(levels, 0, levels, 0, -current, unspent) : null;
+}
+
+/** Comprehension levels, lowest first, each a point more than the last. */
+export const COMPREHENSION_LEVELS = ["none", "broken", "accented", "native"] as const;
+
+/**
+ * The next comprehension level of a language's spoken or written side, a
+ * point each. Free for the character's native language. Null at native.
+ */
+export function languageImprovement(level: unknown, isNative: boolean, unspent: number): Improvement | null {
+  const from = COMPREHENSION_LEVELS.indexOf(level as (typeof COMPREHENSION_LEVELS)[number]);
+  if (from < 0 || from >= COMPREHENSION_LEVELS.length - 1) return null;
+  return priced(from, from + 1, from, from + 1, isNative ? 0 : 1, unspent);
+}
+
 /** The next point of an attribute: 10 for ST and HT, 20 for DX and IQ (Characters p. 14). */
 export function attributeImprovement(attribute: Attribute, score: number, unspent: number): Improvement {
   return priced(score, score + 1, score, score + 1, ATTRIBUTE_COST_PER_LEVEL[attribute], unspent);

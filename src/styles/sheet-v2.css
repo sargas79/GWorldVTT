@@ -1266,8 +1266,12 @@
 }
 .gworld.v2 .v2-category b { font-family: var(--font-heading); font-size: 17px; font-weight: 600; }
 .gworld.v2 .v2-category span { font-size: 13px; color: var(--v2-ink-muted); }
-.gworld.v2 .v2-category.active { background: #3a5470; border-color: var(--v2-gold); color: #fff; }
-.gworld.v2 .v2-category.active span { color: var(--v2-steel-soft); }
+/* Foundry styles a focused or hovered button too; the chosen category keeps its colours through both. */
+.gworld.v2 .v2-categories button.v2-category.active,
+.gworld.v2 .v2-categories button.v2-category.active:hover,
+.gworld.v2 .v2-categories button.v2-category.active:focus { background: #3a5470; border-color: var(--v2-gold); color: #fff; }
+.gworld.v2 .v2-categories button.v2-category.active span { color: var(--v2-steel-soft); }
+.gworld.v2 .v2-categories button.v2-category:not(.active):focus { background: var(--v2-panel); color: var(--v2-ink); }
 .gworld.v2 .v2-category.quiet { opacity: 0.65; cursor: default; }
 
 .gworld.v2 .v2-segmented { display: inline-flex; align-self: flex-start; border: 1px solid var(--v2-panel-line); border-radius: 4px; overflow: hidden; }
@@ -1287,11 +1291,12 @@
 .gworld.v2 .v2-segmented button.active { background: #3a5470; color: #fff; }
 
 .gworld.v2 .v2-improve-list { display: flex; flex-direction: column; gap: 5px; max-height: 420px; overflow-y: auto; padding-right: 2px; }
+/* Name first; the step, points and cost to its right, wrapping under it when the list is narrow. */
 .gworld.v2 .v2-improve-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 64px auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 2px 12px;
   padding: 7px 10px;
   border: 1px solid var(--v2-panel-line);
   border-left: 4px solid var(--v2-green);
@@ -1302,9 +1307,16 @@
 .gworld.v2 .v2-improve-row.over { border-left-color: var(--v2-red); }
 .gworld.v2 .v2-improve-row.selected { background: #efc978; border-color: var(--v2-gold-deep); }
 .gworld.v2 .v2-improve-row:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: 1px; }
-.gworld.v2 .v2-improve-name { font-family: var(--font-heading); font-size: 17px; font-weight: 600; min-width: 0; }
+.gworld.v2 .v2-improve-name { flex: 1 1 170px; font-family: var(--font-heading); font-size: 17px; font-weight: 600; min-width: 0; }
+.gworld.v2 .v2-improve-name .v2-tag { white-space: nowrap; }
 .gworld.v2 .v2-improve-step { font-family: var(--font-heading); font-size: 16px; white-space: nowrap; }
-.gworld.v2 .v2-improve-invested { font-size: 12px; color: var(--v2-ink-muted); text-align: right; }
+.gworld.v2 .v2-improve-invested { min-width: 48px; font-size: 12px; color: var(--v2-ink-muted); text-align: right; }
+.gworld.v2 .v2-improve-step,
+.gworld.v2 .v2-improve-invested,
+.gworld.v2 .v2-improve-cost { margin-left: auto; }
+.gworld.v2 .v2-improve-step + .v2-improve-invested,
+.gworld.v2 .v2-improve-invested + .v2-improve-cost,
+.gworld.v2 .v2-improve-step + .v2-improve-cost { margin-left: 0; }
 .gworld.v2 .v2-improve-cost { font-family: var(--font-heading); font-size: 16px; white-space: nowrap; }
 
 .gworld.v2 .v2-upgrade { padding: 0 0 14px; }
@@ -1444,6 +1456,12 @@
 
 .gworld.v2 .v2-personal-notes prose-mirror,
 .gworld.v2 .v2-profile prose-mirror { min-height: 120px; }
+
+/* A category's ways to buy something new, above its improvements. */
+.gworld.v2 .v2-add-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 7px 10px; border: 1px dashed var(--v2-panel-line); border-radius: var(--v2-radius); background: var(--v2-panel-2); }
+.gworld.v2 .v2-add-bar > span { margin-right: auto; font-family: var(--font-heading); font-size: 15px; font-weight: 600; }
+.gworld.v2 .v2-improve-row.buyoff { border-left-color: var(--v2-red); }
+.gworld.v2 .v2-improve-row.buyoff.selected { background: #efc978; }
 
 /* ── narrow windows ────────────────────────────────────────────────────── */
 

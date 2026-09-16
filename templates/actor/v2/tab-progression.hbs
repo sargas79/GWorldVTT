@@ -32,8 +32,8 @@
             <b>{{localize "GWORLD.SheetV2.AllImprovements"}}</b>
           </button>
           {{#each v2.progression.categories as |c|}}
-            <button type="button" class="v2-category{{#if c.active}} active{{/if}}{{#unless c.offered}} quiet{{/unless}}"
-                    {{#if c.offered}}data-action="v2Chip" data-v2-chip="progression:{{c.key}}"{{else}}disabled{{/if}}>
+            <button type="button" class="v2-category{{#if c.active}} active{{/if}}" data-action="v2Chip" data-v2-chip="progression:{{c.key}}"
+                    aria-pressed="{{#if c.active}}true{{else}}false{{/if}}">
               <b>{{c.label}}</b>
               <span class="{{#if c.negative}}v2-bad{{/if}}">{{c.points}} CP</span>
             </button>
@@ -55,16 +55,33 @@
                       aria-pressed="{{#if m.active}}true{{else}}false{{/if}}">{{m.label}}</button>
             {{/each}}
           </div>
+          {{#each v2.progression.categories as |c|}}
+            {{#if c.adds.length}}
+              <div class="v2-add-bar{{#unless c.active}} v2-off{{/unless}}" data-v2-chip-only="progression:{{c.key}}">
+                <span>{{localize "GWORLD.SheetV2.BuyNew" category=c.label}}</span>
+                {{#if @root.editable}}
+                  {{#each c.adds as |add|}}
+                    <button type="button" class="v2-button v2-button-small" data-action="{{add.action}}"
+                            {{#if add.itemType}}data-item-type="{{add.itemType}}"{{/if}}
+                            {{#if add.itemCategory}}data-category="{{add.itemCategory}}"{{/if}}
+                            {{#if add.itemTypes}}data-item-types="{{add.itemTypes}}"{{/if}}
+                            {{#if add.categories}}data-categories="{{add.categories}}"{{/if}}
+                            {{#if add.browseTitle}}data-browse-title="{{add.browseTitle}}"{{/if}}>{{#if (eq add.icon "search")}}{{> "gworld.search"}}{{else}}{{> "gworld.plus"}}{{/if}} {{add.label}}</button>
+                  {{/each}}
+                {{/if}}
+              </div>
+            {{/if}}
+          {{/each}}
           <div class="v2-improve-list" data-v2-list="progression" role="listbox" aria-label="{{localize 'GWORLD.SheetV2.Improvements'}}">
             {{#each v2.progression.rows as |row|}}
-              <div class="v2-improve-row{{#if row.selected}} selected{{/if}}{{#if row.improve.overspends}} over{{/if}}{{#if row.hidden}} v2-off{{/if}}"
+              <div class="v2-improve-row{{#if row.selected}} selected{{/if}}{{#if row.improve.overspends}} over{{/if}}{{#if (eq row.kind "buyoff")}} buyoff{{/if}}{{#if row.hidden}} v2-off{{/if}}"
                    data-v2-row="progression:{{row.key}}" data-v2-name="{{row.name}}" data-v2-chip-group="progression:{{row.category}}"
                    data-action="v2Select" role="option" tabindex="0" aria-selected="{{#if row.selected}}true{{else}}false{{/if}}">
-                <span class="v2-improve-name">{{row.name}}</span>
+                <span class="v2-improve-name">{{row.name}}{{#if (eq row.kind "buyoff")}} <span class="v2-tag v2-tag-red">{{localize "GWORLD.SheetV2.BuyOff"}}</span>{{/if}}</span>
                 <span class="v2-improve-step">
-                  {{#if row.improve.levelTo}}{{row.improve.levelFrom}} &rarr; <b>{{row.improve.levelTo}}</b>{{else}}{{row.improve.from}} &rarr; <b>{{row.improve.to}}</b>{{/if}}
+                  {{#if row.stepFrom}}{{row.stepFrom}} &rarr; <b>{{row.stepTo}}</b>{{else if row.improve.levelTo}}{{row.improve.levelFrom}} &rarr; <b>{{row.improve.levelTo}}</b>{{else}}{{row.improve.from}} &rarr; <b>{{row.improve.to}}</b>{{/if}}
                 </span>
-                <span class="v2-improve-invested">{{#if (eq row.category "attributes")}}{{row.invested}} CP{{else if (eq row.category "advantages")}}{{row.invested}} CP{{else}}{{row.improve.from}} {{localize "GWORLD.Column.Pts"}}{{/if}}</span>
+                {{#unless row.stepFrom}}<span class="v2-improve-invested">{{#if (or (eq row.category "attributes") (eq row.category "advantages") (eq row.kind "buyoff") (eq row.category "languages"))}}{{row.invested}} CP{{else}}{{row.improve.from}} {{localize "GWORLD.Column.Pts"}}{{/if}}</span>{{/unless}}
                 <span class="v2-improve-cost{{#if row.improve.overspends}} v2-bad{{/if}}">{{localize "GWORLD.SheetV2.CostCp" cost=row.improve.cost}}</span>
               </div>
             {{else}}
@@ -122,14 +139,16 @@
           <header class="v2-upgrade-head">
             <h3>{{row.name}}</h3>
             <span class="v2-upgrade-step">
-              {{#if row.improve.levelTo}}{{row.improve.levelFrom}} <i>&rarr;</i> <b>{{row.improve.levelTo}}</b>{{else}}{{row.improve.from}} <i>&rarr;</i> <b>{{row.improve.to}}</b>{{/if}}
+              {{#if row.stepFrom}}{{row.stepFrom}} <i>&rarr;</i> <b>{{row.stepTo}}</b>{{else if row.improve.levelTo}}{{row.improve.levelFrom}} <i>&rarr;</i> <b>{{row.improve.levelTo}}</b>{{else}}{{row.improve.from}} <i>&rarr;</i> <b>{{row.improve.to}}</b>{{/if}}
             </span>
             <span class="v2-upgrade-cost">{{localize "GWORLD.SheetV2.CostCp" cost=row.improve.cost}}</span>
           </header>
           {{#if row.summary}}<p class="v2-upgrade-summary">{{row.summary}}</p>{{/if}}
           <ul class="v2-breakdown">
             <li><span>{{row.categoryLabel}}</span><b>{{#if row.attribute}}{{row.attribute}}/{{row.difficulty}}{{/if}}</b></li>
-            <li><span>{{#if (eq row.category "attributes")}}{{localize "GWORLD.SheetV2.Score"}}{{else if (eq row.category "secondaries")}}{{localize "GWORLD.SheetV2.Bought"}}{{else if (eq row.category "advantages")}}{{localize "GWORLD.Trait.Levels"}}{{else}}{{localize "GWORLD.SheetV2.Invested"}}{{/if}}</span><b>{{row.improve.from}} &rarr; {{row.improve.to}}</b></li>
+            {{#unless row.stepFrom}}
+              <li><span>{{#if (eq row.category "attributes")}}{{localize "GWORLD.SheetV2.Score"}}{{else if (eq row.category "secondaries")}}{{localize "GWORLD.SheetV2.Bought"}}{{else if (or (eq row.category "advantages") (eq row.kind "buyoff"))}}{{localize "GWORLD.Trait.Levels"}}{{else}}{{localize "GWORLD.SheetV2.Invested"}}{{/if}}</span><b>{{row.improve.from}} &rarr; {{row.improve.to}}</b></li>
+            {{/unless}}
             <li><span>{{localize "GWORLD.SheetV2.LeftAfter"}}</span><b class="{{#if row.improve.overspends}}v2-bad{{/if}}">{{row.after}} CP</b></li>
           </ul>
           {{#if row.improve.overspends}}
@@ -137,7 +156,7 @@
           {{/if}}
           {{#if @root.editable}}
             <button type="button" class="v2-button v2-button-gold v2-upgrade-button" data-action="v2Upgrade" data-v2-upgrade="{{row.key}}">
-              {{#if row.improve.overspends}}{{localize "GWORLD.SheetV2.UpgradeAnyway"}}{{else}}{{localize "GWORLD.SheetV2.Upgrade"}}{{/if}}
+              {{#if (eq row.kind "buyoff")}}{{#if row.improve.overspends}}{{localize "GWORLD.SheetV2.BuyOffAnyway"}}{{else}}{{localize "GWORLD.SheetV2.BuyOff"}}{{/if}}{{else if row.improve.overspends}}{{localize "GWORLD.SheetV2.UpgradeAnyway"}}{{else}}{{localize "GWORLD.SheetV2.Upgrade"}}{{/if}}
             </button>
           {{/if}}
         </article>
