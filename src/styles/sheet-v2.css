@@ -804,8 +804,38 @@
 .gworld.v2 .v2-row-cp { font-family: var(--font-heading); font-size: 16px; font-weight: 600; white-space: nowrap; text-align: right; }
 .gworld.v2 .v2-levels { font-family: var(--font-body); font-size: 12px; color: var(--v2-ink-muted); }
 
-.gworld.v2 .v2-skill { grid-template-columns: 22px minmax(110px, 1.25fr) 58px 104px 36px minmax(0, 1.3fr); }
-.gworld.v2 .v2-trait { grid-template-columns: minmax(120px, 1.1fr) 62px minmax(0, 1.6fr); border-left-width: 4px; }
+.gworld.v2 .v2-skill { grid-template-columns: 22px minmax(110px, 1.25fr) 58px 104px 36px minmax(0, 1.3fr) auto; }
+.gworld.v2 .v2-trait { grid-template-columns: minmax(120px, 1.1fr) 62px minmax(0, 1.6fr) auto; border-left-width: 4px; }
+
+/* A row's own buttons: roll and delete, with any a module adds between them. */
+.gworld.v2 .v2-row-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 2px; min-width: 54px; }
+.gworld.v2 .v2-row-icon,
+.gworld.v2 .v2-row-actions .addon-row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: auto;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: var(--v2-ink-muted);
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: none;
+}
+.gworld.v2 .v2-row-icon svg { width: 15px; height: 15px; }
+.gworld.v2 .v2-row-icon:hover,
+.gworld.v2 .v2-row-actions .addon-row-action:hover { border-color: var(--v2-panel-line); background: var(--v2-panel); color: var(--v2-steel-deep); }
+.gworld.v2 .v2-row-icon.v2-row-delete:hover { border-color: #d9a39c; background: var(--v2-red-soft); color: var(--v2-red); }
+.gworld.v2 .v2-row-icon:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: 1px; }
+.gworld.v2 .v2-row-cr span { font-family: var(--font-heading); font-size: 13px; }
+/* The level rolls too, and now looks like it. */
+.gworld.v2 button.v2-row-level { border-radius: 4px; }
+.gworld.v2 button.v2-row-level:hover { background: var(--v2-steel-soft); }
 
 /* A trait's category is its stripe: steel for what helps, red for what hinders. */
 .gworld.v2 .v2-trait.v2-cat-advantage { border-left-color: var(--v2-steel); }
@@ -1388,7 +1418,7 @@
   .gworld.v2 .v2-split { grid-template-columns: minmax(0, 1fr); }
   .gworld.v2 .v2-list-col,
   .gworld.v2 .v2-detail-col { overflow: visible; }
-  .gworld.v2 .v2-skill { grid-template-columns: 22px minmax(100px, 1fr) 52px 100px 34px; }
+  .gworld.v2 .v2-skill { grid-template-columns: 22px minmax(100px, 1fr) 52px 100px 34px auto; }
   .gworld.v2 .v2-skill .v2-row-summary { display: none; }
   .gworld.v2 .v2-combat-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .gworld.v2 .v2-combat-side { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }

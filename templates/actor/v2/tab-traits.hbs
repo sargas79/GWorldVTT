@@ -46,6 +46,19 @@
                   </span>
                   <span class="v2-row-cp{{#if row.negative}} v2-bad{{/if}}">{{row.points}} CP</span>
                   <span class="v2-row-summary">{{row.summary}}</span>
+                  {{!-- Roll a self-control number and delete without opening the panel. --}}
+                  <span class="v2-row-actions">
+                    {{#if row.selfControl}}
+                      <button type="button" class="v2-row-icon v2-row-cr rollable" data-action="selfControlRoll"
+                              data-tooltip="{{localize 'GWORLD.Trait.SelfControlRollHint'}}"
+                              aria-label="{{localize 'GWORLD.Trait.SelfControlRollHint'}}">{{> "gworld.die"}}<span>{{row.selfControl}}</span></button>
+                    {{/if}}
+                    {{#if @root.editable}}
+                      <button type="button" class="v2-row-icon v2-row-delete" data-action="deleteItem"
+                              data-tooltip="{{localize 'GWORLD.SheetV2.DeleteNamed' name=row.name}}"
+                              aria-label="{{localize 'GWORLD.SheetV2.DeleteNamed' name=row.name}}">{{> "gworld.trash"}}</button>
+                    {{/if}}
+                  </span>
                 </div>
               {{/each}}
               {{#unless group.rows.length}}<p class="v2-empty">{{localize "GWORLD.SheetV2.NoneYet"}}</p>{{/unless}}

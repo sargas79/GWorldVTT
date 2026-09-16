@@ -4160,7 +4160,8 @@
         "Related": "Related",
         "RelatedHint": "Everything linked to this character, by kind.",
         "Description": "Description"
-      }
+      },
+      "DeleteNamed": "Delete {name}"
     }
   }
 }
