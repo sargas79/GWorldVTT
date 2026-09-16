@@ -61,6 +61,8 @@ export declare function alternatives(
   f: Map<string, string>,
 ): Array<{ name: string; f: Map<string, string> }>;
 export declare function weaponClassOf(mods: string | undefined): "" | "sword" | "cutting" | "crushing" | "firearm" | "bow";
+/** The tech level a record is written at, superscience carets kept (Campaigns p. 513). */
+export declare function techLevel(value: string | undefined): string;
 export declare function fullLoad(shots: string | undefined): number;
 export declare function costOfLivingPercent(text: string | undefined): number;
 export declare function displayWeight(text: string | undefined): number;

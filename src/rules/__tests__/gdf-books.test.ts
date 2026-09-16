@@ -19,6 +19,7 @@ import {
   handKeptTraitNames,
   isBookkeeping,
   parseSkillUsed,
+  techLevel,
   parseSkillUsedWithModifier,
   unarmedSkillsIn,
   powerOfRecord,
@@ -557,3 +558,27 @@ describe("parseDamage: the damage modifiers of Characters pp. 104-105", () => {
     expect(extras("1d", "imp").incendiary).toBeUndefined();
   });
 });
+
+describe("techLevel", () => {
+  it("keeps a plain figure", () => {
+    expect(techLevel("7")).toBe("7");
+    expect(techLevel("11")).toBe("11");
+    expect(techLevel(" 0 ")).toBe("0");
+  });
+
+  it("keeps a superscience tech level as the book prints it", () => {
+    // "the rules give the TL of superscience developments as '^' instead of a
+    // number" (Campaigns p. 513): a caret after the figure, or on its own.
+    expect(techLevel("11^")).toBe("11^");
+    expect(techLevel("^")).toBe("^");
+  });
+
+  it("drops anything that is not a tech level", () => {
+    expect(techLevel("Var.")).toBe("");
+    expect(techLevel("[techlevel]")).toBe("");
+    expect(techLevel("")).toBe("");
+    expect(techLevel(undefined)).toBe("");
+    expect(techLevel("^11")).toBe("");
+  });
+});
+
