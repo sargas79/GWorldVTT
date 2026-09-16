@@ -425,6 +425,18 @@ and the roll continues.
     itself is different, and is the piece's own `drByLocation` (since 1.51.0):
     a list of `{ locations, dr }`, each replacing the piece's figure at those
     locations, split and all.
+  - `gworld.shotsEntry` (since 1.54.0): wherever a ranged mode's capacity or
+    reload time is read -- the Reload button, loading at once, the shots
+    ready, the sheet's count -- with `{ actor, item, modeIndex, mode, entry }`.
+    `entry` is the parsed Shots column (`capacity`, `chambered`,
+    `reloadSeconds`, `perShot`, `thrown`, `text`) and is mutable: raise
+    `capacity` for a weapon loaded with more shots than its table line, or
+    change `reloadSeconds` for one that reloads faster or slower. The stored
+    column stays the table's figure, and modes that share a magazine are still
+    found by it. A figure that isn't a whole number reads as the table's; a
+    listener that throws changes nothing. The Reload button then offers the
+    Basic Set's Fast-Draw (Ammo) roll (Characters pp. 194-195) where a second
+    off would matter.
   - `gworld.equipmentFailure` (since 1.10.0): before a thing's equipment
     failure roll (Campaigns p. 485), with `{ actor, item, target, modifiers }`.
     Push lines to `modifiers`; the card shows them.

@@ -9,13 +9,14 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { shotsEntryFor } from "./shots-entry.js";
+import { normalizeSkillName } from "../rules/skills.js";
 import { isRuleOn } from "./optional-rules.js";
 import { shotsAfterFiring } from "../rules/cinematic.js";
 import { hasInfiniteAmmunition } from "./cinematic.js";
 import {
   crossbowReloadTime,
   fullLoad,
-  parseShots,
   reloadTime,
   type ShotsEntry,
 } from "../rules/ammunition.js";
@@ -36,7 +37,7 @@ function hasGoatsFoot(actor: any): boolean {
 function modeOf(item: any, modeIndex: number): { mode: any; entry: ShotsEntry } | null {
   const mode = item?.system?.rangedModes?.[modeIndex];
   if (!mode) return null;
-  return { mode, entry: parseShots(String(mode.shots ?? "")) };
+  return { mode, entry: shotsEntryFor(item, modeIndex, mode) };
 }
 
 /**
@@ -128,17 +129,28 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
     return;
   }
 
-  await setLoaded(item, modeIndex, loaded + plan.loading);
+  // Fast-Draw (Ammo) "always shaves at least one second off the reload time"
+  // on a success; a failure drops a round, a critical failure the lot
+  // (Characters pp. 194-195).
+  const fastDraw = await rollFastDrawAmmo(actor, item, plan);
+  let seconds = plan.seconds;
+  let loading = plan.loading;
+  if (fastDraw?.outcome === "success" && seconds !== null) seconds = Math.max(1, seconds - 1);
+  if (fastDraw?.outcome === "failure") loading = Math.max(0, loading - 1);
+  if (fastDraw?.outcome === "criticalFailure") loading = 0;
+
+  await setLoaded(item, modeIndex, loaded + loading);
   // "Reloading requires a number of Ready maneuvers" (p. 373).
   if (actor?.isOwner && actor.system?.maneuver !== undefined) await actor.update({ "system.maneuver": "ready" });
 
   const content = await foundry.applications.handlebars.renderTemplate(CARD_TEMPLATE, {
     name: String(item.name),
-    loaded: loaded + plan.loading,
+    loaded: loaded + loading,
     capacity,
-    seconds: plan.seconds,
+    seconds,
     perShot: plan.perShot,
-    loading: plan.loading,
+    loading,
+    fastDraw: fastDraw ? L(`FastDraw.${fastDraw.outcome}`) : "",
     goatsFoot: plan.needsGoatsFoot,
     mustStand: plan.mustStand,
   });
@@ -147,6 +159,43 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
   });
+}
+
+/** A character's level in a skill, compared by name the way the sheet compares it. */
+function skillLevelOf(actor: any, name: string): number | null {
+  const wanted = normalizeSkillName(name);
+  for (const item of actor?.items ?? []) {
+    if (item?.type !== "skill" || normalizeSkillName(String(item.name ?? "")) !== wanted) continue;
+    const level = item.system?.derived?.level;
+    return typeof level === "number" ? level : null;
+  }
+  return null;
+}
+
+/** The skill that reloads faster (Characters pp. 194-195). */
+const FAST_DRAW_AMMO = "Fast-Draw (Ammo)";
+
+/**
+ * Offers the Fast-Draw (Ammo) roll to a character who knows the skill, where
+ * a second off would change anything, and makes it. Null where it wasn't
+ * made.
+ */
+async function rollFastDrawAmmo(actor: any, item: any, plan: { seconds: number | null; perShot: boolean }): Promise<{ outcome: "success" | "failure" | "criticalFailure" } | null> {
+  if (!actor || plan.seconds === null || plan.seconds <= 1 || plan.perShot) return null;
+  const level = skillLevelOf(actor, FAST_DRAW_AMMO);
+  if (level === null) return null;
+  const wanted = await foundry.applications.api.DialogV2.confirm({
+    window: { title: L("Title") },
+    content: `<p>${L("FastDraw.Ask", { name: String(item?.name ?? ""), level })}</p>`,
+    rejectClose: false,
+  });
+  if (!wanted) return null;
+  // The roll module reaches this one, so it is loaded when the roll is made.
+  const { rollSuccess } = await import("./roll.js");
+  const result = await rollSuccess({ actor, base: level, label: L("FastDraw.Label"), skill: FAST_DRAW_AMMO });
+  if (!result) return null;
+  if (result.criticalFailure) return { outcome: "criticalFailure" };
+  return { outcome: result.success ? "success" : "failure" };
 }
 
 /** Asks how many shots to load, for a weapon loaded one at a time. */

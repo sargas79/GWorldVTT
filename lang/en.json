@@ -3449,7 +3449,14 @@
       "NeedsGoatsFoot": "{name} is three or four ST above you: it needs a goat’s foot to cock, and you have none.",
       "Empty": "{name} is empty.",
       "EmptyShort": "empty",
-      "EmptyHint": "Nothing left in it: reload before firing."
+      "EmptyHint": "Nothing left in it: reload before firing.",
+      "FastDraw": {
+        "Ask": "Roll Fast-Draw (Ammo) at {level} to reload {name} a second faster? A failure drops a round, a critical failure the whole load (Characters p. 195).",
+        "Label": "Fast-Draw (Ammo)",
+        "success": "Fast-Draw (Ammo): a second faster",
+        "failure": "Fast-Draw (Ammo) failed: a round dropped",
+        "criticalFailure": "Fast-Draw (Ammo) critically failed: the whole load dropped"
+      }
     },
     "EquipmentQuality": {
       "none": "No equipment",
