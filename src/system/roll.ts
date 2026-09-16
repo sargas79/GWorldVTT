@@ -120,7 +120,7 @@ import { effectiveLevelDifference } from "../rules/unarmed-techniques.js";
 import { turnedBlade } from "../rules/subduing.js";
 import { coverShot, struckCover, type CoverApproach } from "../rules/cover.js";
 import { breakWeapon } from "./weapon-damage.js";
-import { spendShots } from "./ammunition.js";
+import { shotsReady, spendShots } from "./ammunition.js";
 import { strikingPart } from "../rules/hurting-yourself.js";
 import type { DamageType } from "../rules/types.js";
 
@@ -1250,9 +1250,35 @@ async function rollAction(
     if (!paid) return null;
   }
   if (stance) modifiers.push(...stance.modifiers);
-  const asEffect = ({ criticalSkill, ...rest }: NonNullable<typeof stance>) => ({ ...rest, ...(criticalSkill !== null ? { criticalSkill } : {}) });
+  // A merged effect carries the two fields that may be absent as null, which
+  // the effect a listener writes says by leaving them out.
+  const asEffect = ({ criticalSkill, malfunction, ...rest }: NonNullable<typeof stance>) => ({
+    ...rest,
+    ...(criticalSkill !== null ? { criticalSkill } : {}),
+    ...(malfunction !== null ? { malfunction } : {}),
+  });
   const addon = stance && chosenAddon ? mergeAttackEffects([asEffect(chosenAddon), asEffect(stance)]) : (chosenAddon ?? stance);
   if (rollType === "attack") await recordAddonDamage(actor, addon?.damageModifiers ?? []);
+
+  // A setting that spends more than one shot needs the shots to spend
+  // (since 1.50.0). Refused rather than fired, because a weapon cannot use
+  // rounds it has not got, and the cost is not visible until the option is
+  // chosen.
+  if (rollType === "attack" && ranged && shot && isRuleOn("reloading")) {
+    const extra = Math.max(0, Math.floor(Number(shot.addon?.shots) || 0));
+    const modeIndex = Number(target.dataset.modeIndex);
+    const ready = extra > 0 && Number.isInteger(modeIndex) ? shotsReady(rolledItem, modeIndex) : null;
+    if (ready !== null && shot.shellsFired + extra > ready) {
+      ui.notifications?.warn(
+        game.i18n.format("GWORLD.Ranged.NotEnoughShots", {
+          name: String(rolledItem?.name ?? ""),
+          needed: shot.shellsFired + extra,
+          ready,
+        }),
+      );
+      return null;
+    }
+  }
 
   // Where the blow was aimed travels to the damage roll, which is a separate
   // click: an attack that went for the skull should not have to be told twice.
@@ -1361,6 +1387,13 @@ async function rollAction(
   // anything a module's option had to say about the attack.
   const noted = [
     ...(addon && addon.reachBonus !== 0 ? [game.i18n.format("GWORLD.Addon.Reach", { yards: addon.reachBonus > 0 ? `+${addon.reachBonus}` : addon.reachBonus })] : []),
+    // What a setting cost the weapon, beside what it was worth to the roll
+    // (since 1.50.0): rounds spent, a Malf. of its own, a halved Rate of Fire.
+    ...(addon && addon.shots > 0 ? [game.i18n.format("GWORLD.Addon.ExtraShots", { shots: addon.shots })] : []),
+    ...(addon && addon.malfunction !== null ? [game.i18n.format("GWORLD.Addon.Malfunction", { number: addon.malfunction })] : []),
+    ...(addon && addon.rateOfFireMultiplier !== 1 && shot?.rateOfFire
+      ? [game.i18n.format("GWORLD.Addon.RateOfFire", { rof: shot.rateOfFire })]
+      : []),
     ...(addon?.notes ?? []).map((note) => game.i18n.localize(note)),
   ];
   const label = [
@@ -1440,10 +1473,16 @@ async function rollAction(
     ...(addon && addon.criticalSkill !== null ? { criticalSkill: addon.criticalSkill } : {}),
     // A weapon that can jam says so on the button; one that cannot -- a bow, a
     // thrown rock -- carries nothing and is never asked.
-    ...(malfunctionNumber
+    ...(malfunctionNumber || addon?.malfunction
       ? {
           malfunction: {
-            number: malfunctionNumber,
+            // A setting that makes the weapon likelier to jam sets its own
+            // Malf. for this attack; the stricter of the two is rolled against
+            // (Campaigns p. 407). A weapon with no Malf. of its own can still
+            // be given one by the setting.
+            number: Math.min(
+              ...[malfunctionNumber, addon?.malfunction].filter((n): n is number => typeof n === "number" && n > 0),
+            ),
             techLevel: Number(actor?.system?.tl) || 3,
             revolver: target.dataset.revolver === "1",
           },
@@ -1505,7 +1544,9 @@ async function rollAction(
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     const item = id ? actor?.items?.get(id) : null;
     const modeIndex = Number(target.dataset.modeIndex);
-    if (item?.isOwner && Number.isInteger(modeIndex)) await spendShots(item, modeIndex, shot.shellsFired);
+    // "shots" on an option is what a setting spends beyond the shells fired.
+    const spent = shot.shellsFired + Math.max(0, Math.floor(Number(shot.addon?.shots) || 0));
+    if (item?.isOwner && Number.isInteger(modeIndex)) await spendShots(item, modeIndex, spent);
   }
 
   // A fumble that broke the weapon (Campaigns p. 556) is applied to it.
@@ -1729,6 +1770,11 @@ interface RangedShot {
   dodgeBonus?: number;
   /** What the modules' attack options chosen in the dialog add up to. */
   addon?: ReturnType<typeof applyAttackOptions>;
+  /**
+   * Rate of Fire after an option halved it (Campaigns p. 408), which is what
+   * the shells asked for were capped by.
+   */
+  rateOfFire?: number;
 }
 
 /** The context a module's attack option is shown and applied with. */
@@ -1967,8 +2013,16 @@ export async function promptForRangedAttack(options: {
   if (!result || typeof result !== "object") return null;
 
   const input = result as RangedInput & { calledShot?: string; addonValues?: Record<string, unknown> };
+  // The options are read first: one of them may halve the Rate of Fire
+  // (Campaigns p. 408), which the dialog's own field could not know when it
+  // was drawn, so the shots asked for are capped by what is left of it.
+  const chosenOptions = applyAttackOptions(addonContext, input.addonValues ?? {});
+  const effectiveRateOfFire = Math.max(
+    1,
+    Math.floor(rateOfFire * (chosenOptions.rateOfFireMultiplier > 0 ? chosenOptions.rateOfFireMultiplier : 1)),
+  );
   // A weapon cannot fire more shots than its Rate of Fire, nor fewer than one.
-  const shellsFired = Math.min(rateOfFire, Math.max(1, Math.floor(input.shots || 1)));
+  const shellsFired = Math.min(effectiveRateOfFire, Math.max(1, Math.floor(input.shots || 1)));
 
   // Each shell may be several pellets, which count as shots of their own.
   const pellets = multipleProjectiles({
@@ -1982,7 +2036,7 @@ export async function promptForRangedAttack(options: {
   const aimed = calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, false, options.actor);
   const modifiers = rangedModifiers({ ...input, shots: pellets.effectiveShots }, options);
   if (aimed.modifier) modifiers.push(aimed.modifier);
-  const addon = applyAttackOptions(addonContext, input.addonValues ?? {});
+  const addon = chosenOptions;
   modifiers.push(...addon.modifiers);
 
   return {
@@ -1991,6 +2045,7 @@ export async function promptForRangedAttack(options: {
     modifiers,
     shotsFired: pellets.effectiveShots,
     shellsFired,
+    rateOfFire: effectiveRateOfFire,
     recoil: pellets.recoil,
     coneMultiplier: pellets.coneMultiplier,
     calledShot: aimed.shot,

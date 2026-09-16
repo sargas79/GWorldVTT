@@ -195,6 +195,18 @@ export async function loadInstantly(item: any, modeIndex: number, shots: number)
  * Takes the shells a shot fired off the count. A thrown weapon or one whose
  * column says nothing keeps no count, and is left alone.
  */
+/**
+ * Shots the weapon has ready in one of its modes, or null where the mode keeps
+ * no count -- a thrown weapon, or one whose table gives no magazine.
+ */
+export function shotsReady(item: any, modeIndex: number): number | null {
+  const found = modeOf(item, modeIndex);
+  if (!found) return null;
+  const { mode, entry } = found;
+  if (entry.thrown || fullLoad(entry) <= 0) return null;
+  return Math.max(0, Number(mode.loaded ?? 0) || 0);
+}
+
 export async function spendShots(item: any, modeIndex: number, shellsFired: number): Promise<void> {
   if (!item?.isOwner || !isRuleOn("reloading")) return;
   const found = modeOf(item, modeIndex);

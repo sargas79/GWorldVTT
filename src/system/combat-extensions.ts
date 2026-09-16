@@ -459,6 +459,23 @@ export interface AttackEffect {
   criticalSkill?: number;
   /** FP spent before the roll. */
   fatigue?: number;
+  /**
+   * Shots spent beyond the one an attack takes (since 1.50.0): a setting that
+   * empties the cell faster. The attack is refused where the weapon has fewer
+   * left than the shot needs.
+   */
+  shots?: number;
+  /**
+   * The Malf. number for this attack alone (Campaigns p. 407), for a setting
+   * that makes the weapon likelier to jam (since 1.50.0). The strictest of
+   * the chosen options and the weapon's own is the one that counts.
+   */
+  malfunction?: number;
+  /**
+   * What the Rate of Fire is multiplied by (Campaigns p. 408): 0.5 for a
+   * setting that halves it (since 1.50.0). Never below one shot.
+   */
+  rateOfFireMultiplier?: number;
   /** Anything worth saying on the card. */
   notes?: string[];
 }
@@ -802,7 +819,7 @@ export function readAttackOptionValues(form: ParentNode | null | undefined, cont
 }
 
 /** Merges effects in order. */
-export function mergeAttackEffects(effects: AttackEffect[]): Required<Omit<AttackEffect, "criticalSkill">> & { criticalSkill: number | null } {
+export function mergeAttackEffects(effects: AttackEffect[]): Required<Omit<AttackEffect, "criticalSkill" | "malfunction">> & { criticalSkill: number | null; malfunction: number | null } {
   const out = {
     modifiers: [] as ModifierLine[],
     defenseModifiers: [] as Array<ModifierLine & { defenses?: DefenseKey[] }>,
@@ -810,6 +827,9 @@ export function mergeAttackEffects(effects: AttackEffect[]): Required<Omit<Attac
     reachBonus: 0,
     criticalSkill: null as number | null,
     fatigue: 0,
+    shots: 0,
+    malfunction: null as number | null,
+    rateOfFireMultiplier: 1,
     notes: [] as string[],
   };
   for (const effect of effects) {
@@ -819,6 +839,18 @@ export function mergeAttackEffects(effects: AttackEffect[]): Required<Omit<Attac
     out.reachBonus += Number(effect.reachBonus) || 0;
     if (typeof effect.criticalSkill === "number" && Number.isFinite(effect.criticalSkill)) out.criticalSkill = effect.criticalSkill;
     out.fatigue += Math.max(0, Number(effect.fatigue) || 0);
+    out.shots += Math.max(0, Math.floor(Number(effect.shots) || 0));
+    // Two settings that both make the weapon likelier to jam do not add: the
+    // strictest Malf. is the one the attack is rolled against.
+    if (typeof effect.malfunction === "number" && Number.isFinite(effect.malfunction)) {
+      const asked = Math.max(3, Math.min(18, Math.floor(effect.malfunction)));
+      out.malfunction = out.malfunction === null ? asked : Math.min(out.malfunction, asked);
+    }
+    // Two that each halve the rate of fire quarter it, which is what
+    // multiplying them means.
+    if (typeof effect.rateOfFireMultiplier === "number" && effect.rateOfFireMultiplier > 0 && Number.isFinite(effect.rateOfFireMultiplier)) {
+      out.rateOfFireMultiplier *= effect.rateOfFireMultiplier;
+    }
     out.notes.push(...(effect.notes ?? []).filter((n) => typeof n === "string"));
   }
   return out;
