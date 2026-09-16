@@ -1037,6 +1037,21 @@
               <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.SurgeHint'}}"><input type="checkbox" name="system.meleeModes.{{i}}.surge"
                      {{#if m.surge}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.Surge"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.IncendiaryHint'}}"><input type="checkbox" name="system.meleeModes.{{i}}.incendiary"
+                     {{#if m.incendiary}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.Incendiary"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.RadiationHint'}}"><input type="checkbox" name="system.meleeModes.{{i}}.radiation"
+                     {{#if m.radiation}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.Radiation"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.DoubleKnockbackHint'}}"><input type="checkbox" name="system.meleeModes.{{i}}.doubleKnockback"
+                     {{#if m.doubleKnockback}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.DoubleKnockback"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.NoKnockbackHint'}}"><input type="checkbox" name="system.meleeModes.{{i}}.noKnockback"
+                     {{#if m.noKnockback}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.NoKnockback"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.IgnoresDrHint'}}"><input type="checkbox" name="system.meleeModes.{{i}}.ignoresDr"
+                     {{#if m.ignoresDr}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.IgnoresDr"}}</label>
             </div>
           </div>
         {{else}}
@@ -1151,6 +1166,21 @@
               <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.SurgeHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.surge"
                      {{#if m.surge}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.Surge"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.IncendiaryHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.incendiary"
+                     {{#if m.incendiary}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.Incendiary"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.RadiationHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.radiation"
+                     {{#if m.radiation}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.Radiation"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.DoubleKnockbackHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.doubleKnockback"
+                     {{#if m.doubleKnockback}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.DoubleKnockback"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.NoKnockbackHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.noKnockback"
+                     {{#if m.noKnockback}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.NoKnockback"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.IgnoresDrHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.ignoresDr"
+                     {{#if m.ignoresDr}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.IgnoresDr"}}</label>
               {{#if @root.isTrait}}
                 <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.PerLevelHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.perLevel"
                        {{#if m.perLevel}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />

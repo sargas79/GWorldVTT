@@ -1077,8 +1077,24 @@ const number = (value, fallback = 0) => {
 /** Attributes an affliction can be resisted with. */
 const RESISTANCE = ["ST", "DX", "IQ", "HT", "Will", "Per"];
 
-/** The three facts a damage column can carry beside the damage itself. */
-const DAMAGE_EXTRAS = { damageExtraDice: 0, damageSpecial: false, surge: false };
+/** The facts a damage column can carry beside the damage itself. */
+const DAMAGE_EXTRAS = {
+  damageExtraDice: 0,
+  damageSpecial: false,
+  surge: false,
+};
+
+/**
+ * The damage modifiers of Characters pp. 104-105 that a mode may carry, each
+ * written only where it is set. The model gives them all a default of false,
+ * and nothing in the Basic Set's own file sets any of them -- so writing them
+ * out on every mode would add five lines to every weapon in its packs and say
+ * nothing. `surge` above predates them and is written either way, which is
+ * why it is not in here.
+ */
+function setModifiers(extras) {
+  return Object.fromEntries(Object.entries(extras).filter(([, on]) => on));
+}
 
 /**
  * The weapons of the Basic Set's unarmed table whose damage the unarmed skills
@@ -1142,11 +1158,28 @@ export function parseDamage(damage, damtype) {
     };
   }
 
-  // "burn sur" is burning damage with the Surge modifier (Characters
-  // p. 105): the blasters' shot, doubled against anything electrical.
-  const surged = /^(.*?)\s+sur$/i.exec(rawType);
-  const typeText = surged ? surged[1].trim() : rawType;
-  const surge = Boolean(surged);
+  // The modifiers a table prints after the damage type, none of which changes
+  // how much is rolled (Characters pp. 104-105). They come in any order and
+  // any combination -- "cr ex inc", "tox rad ex", "burn ex rad sur" -- and a
+  // supplement may hang a footnote dagger off one, so each is lifted out of
+  // the column wherever it sits and the type is what remains.
+  //
+  //   sur  Surge: doubled against anything electrical (p. 105).
+  //   inc  Incendiary: "may set fires" where it lands (p. 104).
+  //   rad  Radiation: rads as well as damage (p. 105).
+  //   dkb  Double knockback (p. 104).
+  //   nkb  No knockback at all (p. 105).
+  let typeText = rawType.replace(/[†*‡]/g, " ").trim();
+  const modifier = (word) => {
+    const found = new RegExp(`(?:^|\\s)${word}(?=\\s|$)`, "i").test(typeText);
+    if (found) typeText = typeText.replace(new RegExp(`(?:^|\\s)${word}(?=\\s|$)`, "i"), " ").replace(/\s+/g, " ").trim();
+    return found;
+  };
+  const surge = modifier("sur");
+  const incendiary = modifier("inc");
+  const radiation = modifier("rad");
+  const doubleKnockback = modifier("dkb");
+  const noKnockback = modifier("nkb");
 
   // "cr ex [2d]" is a crushing explosion throwing 2d of fragmentation
   // (GURPS Basic Set: Campaigns p. 414). The type, the blast and the
@@ -1155,6 +1188,7 @@ export function parseDamage(damage, damtype) {
   const type = blast ? blast[1].trim() : typeText;
   const explosive = Boolean(blast);
   const fragmentation = blast?.[2] ?? "";
+  const extras = { surge, ...setModifiers({ incendiary, radiation, doubleKnockback, noKnockback }) };
 
   if (!DAMAGE_TYPES.has(type)) return null;
 
@@ -1196,7 +1230,7 @@ export function parseDamage(damage, damtype) {
         afflictionModifier: 0,
         ...DAMAGE_EXTRAS,
         damageExtraDice: extraDice,
-        surge,
+        ...extras,
         // Only where it applies, so every other mode reads as it always has.
         ...(unarmedBonus ? { unarmedBonus: true } : {}),
       },
@@ -1219,7 +1253,7 @@ export function parseDamage(damage, damtype) {
         afflictionAttribute: "",
         afflictionModifier: 0,
         ...DAMAGE_EXTRAS,
-        surge,
+        ...extras,
       },
       usesWeaponSt: true,
     };
@@ -1239,7 +1273,7 @@ export function parseDamage(damage, damtype) {
         afflictionAttribute: "",
         afflictionModifier: 0,
         ...DAMAGE_EXTRAS,
-        surge,
+        ...extras,
       },
       usesWeaponSt: false,
     };
@@ -1398,7 +1432,14 @@ function meleeMode(name, f) {
   if (!parry) return { error: `parry "${f.get("parry") ?? ""}"` };
 
   const { minSt, twoHanded, unreadyAfterAttack } = parseMinSt(f.get("minst"));
-  const divisor = f.get("armordivisor");
+  // A data file writes a cosmic armour divisor "!". It is not one of the
+  // divisors the Basic Set lists, and it is not a number: it means DR has no
+  // effect on the blow at all, which the model already carries as its own
+  // fact for a Malediction (Characters p. 106). So it is read as that, and
+  // the divisor stays at one.
+  const rawDivisor = f.get("armordivisor");
+  const cosmic = rawDivisor !== undefined && rawDivisor.trim() === "!";
+  const divisor = cosmic ? undefined : rawDivisor;
   if (divisor !== undefined && !/^\d+(\.\d+)?$/.test(divisor.trim())) {
     return { error: `armour divisor "${divisor}"` };
   }
@@ -1412,6 +1453,7 @@ function meleeMode(name, f) {
       ...(used.modifier ? { skillModifier: used.modifier } : {}),
       ...damage.fields,
       armorDivisor: divisor === undefined ? 1 : Number(divisor),
+      ...(cosmic ? { ignoresDr: true } : {}),
       reach: (f.get("reach") ?? "C").trim(),
       ...parry,
       // The flail rule is about the weapon, and the table marks it in the
@@ -1493,7 +1535,14 @@ function rangedMode(name, f, thrown) {
     half = { ...half, distance: half.distance * YARDS_PER_MILE, miles: true };
   }
 
-  const divisor = f.get("armordivisor");
+  // A data file writes a cosmic armour divisor "!". It is not one of the
+  // divisors the Basic Set lists, and it is not a number: it means DR has no
+  // effect on the blow at all, which the model already carries as its own
+  // fact for a Malediction (Characters p. 106). So it is read as that, and
+  // the divisor stays at one.
+  const rawDivisor = f.get("armordivisor");
+  const cosmic = rawDivisor !== undefined && rawDivisor.trim() === "!";
+  const divisor = cosmic ? undefined : rawDivisor;
   if (divisor !== undefined && !/^\d+(\.\d+)?$/.test(divisor.trim())) {
     return { error: `armour divisor "${divisor}"` };
   }
@@ -1521,6 +1570,7 @@ function rangedMode(name, f, thrown) {
       skill,
       ...damage.fields,
       armorDivisor: divisor === undefined ? 1 : Number(divisor),
+      ...(cosmic ? { ignoresDr: true } : {}),
       accuracy: Number(acc[1]),
       scopeBonus: acc[2] ? Number(acc[2]) : 0,
       halfDamageRange: half?.distance ?? 0,

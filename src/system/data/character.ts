@@ -178,7 +178,8 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
   twoHanded: false, swung: false, reach: "C", parry: null, parryModifier: 0, minSt: null, usable: true,
   unbalanced: false, isFencing: false, unarmed: false, stBased: false, damageBase: "", damageModifier: 0,
   unarmedBonusSkill: "", weaponMasterPerDie: 0, explosive: false, fragmentation: "", affliction: false, afflictionAttribute: "",
-  afflictionModifier: 0, feint: true,
+  afflictionModifier: 0, feint: true, ignoresDr: false,
+  incendiary: false, radiation: false, doubleKnockback: false, noKnockback: false,
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
   ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, rateOfFire: 1,
@@ -380,6 +381,14 @@ export interface DerivedAttack {
   malediction?: number;
   /** True when DR does nothing against it, as for a Malediction. */
   ignoresDr?: boolean;
+  /** Incendiary (Characters p. 104): the blow carries a flame that lights things. */
+  incendiary?: boolean;
+  /** Radiation (Characters p. 104): a rad per point of basic damage rolled. */
+  radiation?: boolean;
+  /** Double Knockback (Characters p. 104): the shove is twice as far. */
+  doubleKnockback?: boolean;
+  /** An attack that shoves nobody, whatever its damage type. */
+  noKnockback?: boolean;
   rateOfFire?: number;
   /** Recoil, which decides how many of a burst's shots hit. */
   recoil?: number;
@@ -2042,7 +2051,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           weaponMasterPerDie: masterDamage ? meleeMasterPerDie : 0,
           // Half the Rapid Strike penalty for a master (pp. 93, 99).
           rapidStrikeHalved: halvedRapidStrike(mastered, mode.skill),
+          ignoresDr: Boolean(mode.ignoresDr),
           explosive: Boolean(mode.explosive),
+          // The damage modifiers of Characters pp. 104-105 that change what
+          // the blow does rather than how much of it lands.
+          incendiary: Boolean(mode.incendiary),
+          radiation: Boolean(mode.radiation),
+          doubleKnockback: Boolean(mode.doubleKnockback),
+          noKnockback: Boolean(mode.noKnockback),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),
           afflictionAttribute: mode.afflictionAttribute ?? "",
@@ -2179,7 +2195,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           scopeBonus: mode.scopeBonus ?? 0,
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
           malediction,
-          ignoresDr: malediction > 0,
+          ignoresDr: malediction > 0 || Boolean(mode.ignoresDr),
           rateOfFire: mode.rateOfFire ?? 1,
           recoil: mode.recoil ?? 0,
           bulk: mode.bulk ?? 0,
@@ -2197,6 +2213,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           damageBase: String(mode.damageBase ?? ""),
           damageModifier: Number(mode.damageModifier ?? 0) || 0,
           explosive: Boolean(mode.explosive),
+          // The damage modifiers of Characters pp. 104-105 that change what
+          // the blow does rather than how much of it lands.
+          incendiary: Boolean(mode.incendiary),
+          radiation: Boolean(mode.radiation),
+          doubleKnockback: Boolean(mode.doubleKnockback),
+          noKnockback: Boolean(mode.noKnockback),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),
           afflictionAttribute: mode.afflictionAttribute ?? "",

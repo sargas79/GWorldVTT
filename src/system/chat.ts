@@ -27,6 +27,7 @@ import { afterSuccessRoll, successRollTags } from "./procedure-extensions.js";
 import { addConsciousnessControls, consciousnessEntries } from "./consciousness.js";
 import { rollDeathCheck } from "./dying.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
+import { catchFire, irradiate } from "./hazards.js";
 import { EXTRA_EFFORT_FP, FEVERISH_DEFENSE_BONUS } from "../rules/extra-effort.js";
 import { spendFatigue } from "./extra-effort.js";
 import { isRuleOn } from "./optional-rules.js";
@@ -97,6 +98,14 @@ interface DamageFlag {
   material?: string;
   /** True when DR has no effect on the blow, as for a Malediction (Characters p. 106). */
   ignoresDr?: boolean;
+  /** Incendiary (Characters p. 104): the blow's flame can set things alight. */
+  incendiary?: boolean;
+  /** Radiation (Characters p. 104): a rad per point of basic damage rolled. */
+  radiation?: boolean;
+  /** Double Knockback (Characters p. 104): the shove is twice as far. */
+  doubleKnockback?: boolean;
+  /** An attack that shoves nobody, whatever its damage type. */
+  noKnockback?: boolean;
   /** The item the damage was rolled from. */
   itemUuid?: string;
   /** Where the blow came from (since 1.43.0). */
@@ -352,6 +361,8 @@ async function applyFromCard(options: {
     ...(flag.drMultiplier && flag.drMultiplier > 1 ? { drMultiplier: flag.drMultiplier } : {}),
     ...(flag.material ? { material: flag.material } : {}),
     ...(flag.ignoresDr ? { ignoresDr: true } : {}),
+    ...(flag.doubleKnockback ? { doubleKnockback: true } : {}),
+    ...(flag.noKnockback ? { noKnockback: true } : {}),
     ...(flag.itemUuid ? { itemUuid: flag.itemUuid } : {}),
     ...(flag.mode ? { mode: flag.mode } : {}),
     ...(flag.source ? { source: flag.source } : {}),
@@ -407,6 +418,17 @@ async function applyFromCard(options: {
       }
     }
 
+    // Radiation (Characters p. 104): "whether or not the attack penetrates
+    // DR, it inflicts 1 rad per point of basic damage rolled". The dose is
+    // read off the figure that reached this victim, so a bystander caught by
+    // the edge of a blast takes the smaller one.
+    if (flag.radiation) {
+      await irradiate({ actor, rads: incoming.basicDamage, protectionFactor: 1, modifier: 0 });
+      // "For a toxic attack, this dosage is instead of regular damage": the
+      // rads are the whole of what the attack did, so nothing is applied.
+      if (incoming.type === "tox") continue;
+    }
+
     const result = await applyDamageToActor(actor, incoming);
     // A null result is a permission refusal, which is worth naming: silently
     // skipping a target looks identical to a blow that did nothing.
@@ -416,6 +438,13 @@ async function applyFromCard(options: {
       // means -- so the token says so without anybody being asked.
       await syncHealthConditions(actor);
       if (result.bleeds && isRuleOn("bleeding")) await setCondition(actor, "bleeding", true);
+      // Incendiary (Characters p. 104) "gives the damage a secondary flame
+      // effect that can ignite volatile material", and Campaigns p. 433 counts
+      // incendiary damage with burning for what it takes to set things alight.
+      // The clothes are the volatile material a victim is wearing.
+      if (flag.incendiary) {
+        await catchFire({ actor, basicBurningDamage: incoming.basicDamage, tightBeam: false });
+      }
       // Remembered so the knockdown control on the card knows whose roll it is.
       knockdowns.push({ actor, result });
       // A bare-handed blow into hard DR hurts the hand that struck it (p. 379).

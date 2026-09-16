@@ -140,6 +140,39 @@ describe("knockback (GURPS Basic Set: Campaigns p. 378)", () => {
     const stopped = knockback({ basicDamage: 16, type: "cr", penetratedDr: false, targetStrength: 10 });
     expect(through.yards).toBe(stopped.yards);
   });
+
+  // Double Knockback (Characters p. 104) "lets a crushing or cutting attack
+  // inflict twice as much knockback as usual".
+  it("shoves twice as far for double knockback", () => {
+    const plain = knockback({ basicDamage: 16, type: "cr", penetratedDr: true, targetStrength: 10 });
+    const doubled = knockback({ basicDamage: 16, type: "cr", penetratedDr: true, targetStrength: 10, doubled: true });
+    expect(plain.yards).toBe(2);
+    expect(doubled.yards).toBe(4);
+  });
+
+  it("carries the extra yards into the roll to stay standing", () => {
+    const doubled = knockback({ basicDamage: 16, type: "cr", penetratedDr: true, targetStrength: 10, doubled: true });
+    expect(doubled.fallRollPenalty).toBe(-3);
+  });
+
+  it("doubles nothing where the attack causes no knockback at all", () => {
+    // Doubling applies to the yards, and an impaling blow shoves nobody.
+    const impaling = knockback({ basicDamage: 30, type: "imp", penetratedDr: true, targetStrength: 10, doubled: true });
+    expect(impaling.yards).toBe(0);
+  });
+
+  it("shoves nobody when the attack is marked as causing no knockback", () => {
+    const suppressed = knockback({ basicDamage: 30, type: "cr", penetratedDr: false, targetStrength: 10, suppressed: true });
+    expect(suppressed.yards).toBe(0);
+    expect(suppressed.fallRollPenalty).toBe(0);
+  });
+
+  it("lets no knockback beat double knockback where a mode says both", () => {
+    const both = knockback({
+      basicDamage: 30, type: "cr", penetratedDr: false, targetStrength: 10, doubled: true, suppressed: true,
+    });
+    expect(both.yards).toBe(0);
+  });
 });
 
 describe("Wild Swings and stop thrusts (Campaigns pp. 366, 388)", () => {
