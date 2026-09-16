@@ -129,6 +129,18 @@ describe("skill levels once all are known (#268)", () => {
     expect(craft.system.derived).toEqual({ level: 11, fromDefault: false, bonusLines: [] });
   });
 
+  it("hands a listener the attributes the skills came from (since 1.58.0)", async () => {
+    const api = await load();
+    const stealth = skill("Stealth", 14);
+    let seen: unknown = null;
+    globals.Hooks = { callAll: (_hook: string, context: { attributes: Record<string, number> }) => { seen = context.attributes; context.attributes.DX = 99; } };
+    const attributes = { ST: 10, DX: 12, IQ: 10, HT: 11, Will: 10, Per: 10 };
+    api.adjustSkillLevels({}, [stealth], () => null, attributes);
+    expect(seen).toEqual({ ST: 10, DX: 99, IQ: 10, HT: 11, Will: 10, Per: 10 });
+    // A listener gets a copy: the caller's scores are untouched.
+    expect(attributes.DX).toBe(12);
+  });
+
   it("changes nothing when a listener throws", async () => {
     const api = await load();
     const lore = skill("Lore", 15);
@@ -333,6 +345,67 @@ describe("Move changed by modules (since 1.42.0)", () => {
     expect(applyMoveLines(7, [{ label: "A yard short", value: -1 }])).toBe(6);
     expect(applyMoveLines(7, [{ label: "Wound", multiplier: 0.8 }, { label: "Short", value: -1 }])).toBe(4);
     expect(applyMoveLines(2, [{ label: "Crawl", value: -5 }])).toBe(0);
+  });
+});
+
+describe("traits a module takes out of play (since 1.61.0)", () => {
+  const items = () => [{ name: "Bionic Arm" }, { name: "Night Vision" }];
+
+  it("leaves out a trait a listener took out of play, and says why", async () => {
+    const { moduleTraitsInPlay } = await load();
+    globals.Hooks = {
+      callAll: (_hook: string, context: { traits: Array<{ name: string; inPlay: boolean; reason?: string }> }) => {
+        const arm = context.traits.find((t) => t.name === "Bionic Arm")!;
+        arm.inPlay = false;
+        arm.reason = "Recovering from surgery";
+      },
+    };
+    const result = moduleTraitsInPlay({}, items());
+    expect(result.inPlay.map((i: { name: string }) => i.name)).toEqual(["Night Vision"]);
+    expect(result.outOfPlay).toEqual([{ name: "Bionic Arm", reason: "Recovering from surgery" }]);
+  });
+
+  it("keeps every trait in play when a listener throws", async () => {
+    const { moduleTraitsInPlay } = await load();
+    globals.Hooks = { callAll: (_hook: string, context: { traits: Array<{ inPlay: boolean }> }) => { context.traits[0]!.inPlay = false; throw new Error("boom"); } };
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(moduleTraitsInPlay({}, items())).toEqual({ inPlay: items(), outOfPlay: [] });
+  });
+});
+
+describe("carried weight a module leaves out (since 1.58.0)", () => {
+  const lines = () => [
+    { item: { id: "suit" }, label: "Battlesuit", weight: 150, counts: true },
+    { item: { id: "pack" }, label: "Pack", weight: 40, counts: true },
+    { item: { id: "rope" }, label: "Rope", weight: 5, counts: true },
+  ];
+
+  it("adds up what counts and says what was left out or lowered, and why", async () => {
+    const { moduleCarriedWeight } = await load();
+    globals.Hooks = {
+      callAll: (_hook: string, context: { lines: Array<{ item: { id: string }; weight: number; counts: boolean; reason?: string }> }) => {
+        const [suit, pack] = context.lines;
+        suit!.counts = false;
+        suit!.reason = "Powered";
+        pack!.weight = 10;
+        pack!.reason = "Weightless load";
+      },
+    };
+    const result = moduleCarriedWeight({ name: "Someone" }, lines());
+    expect(result.total).toBe(15);
+    expect(result.notCounted).toEqual([
+      { label: "Battlesuit", weight: 150, counted: 0, reason: "Powered" },
+      { label: "Pack", weight: 40, counted: 10, reason: "Weightless load" },
+    ]);
+  });
+
+  it("never raises a weight, and ignores a listener that throws", async () => {
+    const { moduleCarriedWeight } = await load();
+    globals.Hooks = { callAll: (_hook: string, context: { lines: Array<{ weight: number }> }) => { context.lines[2]!.weight = 500; } };
+    expect(moduleCarriedWeight({}, lines()).total).toBe(195);
+    globals.Hooks = { callAll: (_hook: string, context: { lines: Array<{ counts: boolean }> }) => { context.lines[0]!.counts = false; throw new Error("boom"); } };
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(moduleCarriedWeight({}, lines())).toEqual({ total: 195, notCounted: [] });
   });
 });
 

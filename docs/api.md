@@ -93,8 +93,8 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0) and `stopBleeding(actor)` (since 1.36.0). |
-| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), and `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0). |
+| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0). |
@@ -428,6 +428,14 @@ and the roll continues.
     of its DR takes `0.1`. What stands comes off the rolled damage, the force
     field's before the rest's, and the location's own DR is still ignored.
 
+    Since 1.56.0 each line carries `itemId`, the armour item's id on the
+    actor, so a listener can read the piece's own data; and the context carries
+    `arc`, `"front"`, `"side"`, `"back"` or null, where the blow came from as
+    the damage card has it -- whether or not the table plays front-only armour.
+    A listener may also push a line of its own, for a layer that isn't an
+    armour item (a coating, a field from a device): it counts like any other,
+    and a `forceField` line meets the blow first.
+
     A piece's stored split is a list of damage types. A book that splits a DR
     by something else -- full DR against a laser, or against a swinging melee
     attack, a fall or a collision -- cannot say so in the piece, and should not:
@@ -484,6 +492,13 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
   or `null`. Modifiers run in registration order on the stored figures, never
   on their own output; the result is `item.effectivePrice`, and the character's
   wealth, encumbrance and gear lists use it. `effectivePrice(item)` works it out.
+- **`registerPoison({ module, key, label, poison, available? })`** (since 1.57.0).
+  Offers a poison in the sheet's dose dialog, after the Basic Set's named ones,
+  while `available()` says so. `poison` is the six numbers of Campaigns p. 437
+  (`delivery`, `delaySeconds`, `resistanceModifier` or null for no roll, `damage`
+  of `"toxic"`, `"fatigue"` or `"none"`, `dice`, `adds`, `intervalSeconds`,
+  `cycles`, and a `reference`). A dose made from it carries
+  `source: "<module>.<key>"`.
 - **`registerTechniqueKind({ module, key, label, derive, cost?, available? })`.**
   A technique whose `system.kind` is `<module>.<key>` gets its level from
   `derive(technique, actor, { levelOf, standard })`, which returns
@@ -518,6 +533,25 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     `"protectedSense.vision"`) and `label` the thing it came from. The Traits
     tab lists them under what the character carries, so an effect nobody paid
     for is never unexplained. A listener that throws changes nothing.
+  - `gworld.traitsInPlay` (since 1.61.0), with `{ actor, traits }`, when a
+    character's traits are gathered, before anything is worked out from them.
+    Each entry is `{ item, name, inPlay }`: set `inPlay` to false, with a
+    `reason`, for a trait the character has and has paid for but whose effects
+    don't count right now -- an implant still healing in, an ability something
+    suppresses. It is left out of the trait effects, talents, reactions and
+    everything else read from traits; its points still count.
+    `derived.traitsOutOfPlay` lists `{ name, reason }`. A listener that throws
+    changes nothing.
+  - `gworld.carriedWeight` (since 1.58.0), with `{ actor, lines }`, while a
+    character's carried weight is added up. Each line is one carried item,
+    `{ item, label, weight, counts }`, `weight` being its effective weight times
+    its quantity. Set `counts` to false to leave it out of encumbrance, or lower
+    `weight`, and say why in `reason`: a powered suit that carries its own
+    weight, a pack that holds its load weightlessly. The item keeps its weight
+    everywhere else. `derived.encumbrance.carriedWeight` is what counts, and
+    `derived.encumbrance.notCounted` lists the lines left out or lowered as
+    `{ label, weight, counted, reason }`. A weight can't be raised here, and a
+    listener that throws changes nothing.
   - `gworld.attributeBonuses`, with `{ actor, attributes, lines }`: push
     `{ attribute, label, value, source }`. They show on the attribute's card.
   - `gworld.defenseBonuses`, with `{ actor, defenses, lines }`: push
@@ -528,7 +562,9 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     and `fromDefault` to hold a skill to a ceiling another skill sets, or to
     give it its level at default, and `note` and `source` to say why: the
     note shows in the level's breakdown. `levelOf(name)` reads any skill's
-    level.
+    level. Since 1.58.0 `attributes` holds the ST, DX, IQ, HT, Will and Per
+    the skills were worked out from: the character's `derived` data isn't
+    written yet while this fires, so `actors.attribute` can't be read here.
 
 `tools/validate-packs.mjs --src <dir>` accepts documents of module types and
 `system.extensions` data.
@@ -584,7 +620,7 @@ written for one reads the same on the other.
 There are two character sheets: the classic one with eight tabs, and the new
 one, whose tabs are Overview, Skills, Traits, Combat, Inventory, Progression,
 Journal and Magic. A section or item type registered against any of these
-names shows on both (since 1.56.0 for the new names):
+names shows on both (since 1.62.0 for the new names):
 
 | Registered against | Classic sheet | New sheet |
 | --- | --- | --- |
@@ -612,7 +648,7 @@ module's sections sit on panels of their own, and the item descriptions a
 module supplies are enriched and shown in full in the detail panels. An NPC's
 `system.details.description` is shown and edited on its Journal tab.
 
-Two fields a module may read (since 1.56.0):
+Two fields a module may read (since 1.62.0):
 
 - `system.pinnedSkills`: the ids of the skills pinned to the Overview.
 - `system.journalLinks`: `{ uuid, kind }` links to journal entries, pages,
@@ -830,6 +866,25 @@ Two fields a module may read (since 1.56.0):
   `gworld.turnEnd` `(combat, combatant)`, on every client.
 - **Bleeding:** `gworld.bleedingSchedule` gets `{ actor, intervalSeconds, modifier }`
   before a bleeding roll, and may change either.
+- **Healing** (since 1.60.0): `actors.firstAid({ healer, patient, skill?, techLevel?, label?, modifier? })`,
+  `actors.attendPatient({ healer, patient, skill?, label?, modifier? })`, `actors.operate({ surgeon,
+  patient, skill?, techLevel?, anesthetic?, repairingCrippled?, equipmentQuality?, label?, modifier? })`
+  and `actors.rollMortalWound({ actor, physician?, traumaMaintenance?, modifier? })` roll what the
+  sheet's buttons roll (Campaigns pp. 423-425). `skill` and `techLevel` stand in for the healer's own,
+  so a device that treats on its own uses its figures, and `label` names it on the card. Each roll
+  passes through `gworld.successRollModifiers` tagged `firstAid`, `physician`, `surgery`, or
+  `mortalWound` (with `traumaMaintenance` when it is), so a module adds its gear or care there.
+- **Poison** (since 1.57.0): `actors.dosePoison(actor, poison, { doublings })` writes a
+  dose onto a character as the Poison button does, the delay stretched by size and
+  everything moved by the dose; `actors.activePoisons(actor)` lists them,
+  `actors.advancePoison(actor, id)` runs a cycle (a gas with no delay can be dosed and
+  rolled at once), and `actors.clearPoison(actor, id)` takes one off.
+  `gworld.poisonCycle` follows every cycle, the sheet's included, with `{ actor, poison,
+  source, resisted, margin, criticalFailure, hpLost, fpLost, hpLostToPoison, symptomsNow,
+  effectMinutes, finished }`. `resisted` is null where no roll is allowed, `symptomsNow`
+  names the thresholds of HP lost crossed this cycle (`"1/3"`, `"1/2"`, `"2/3"`), and
+  `effectMinutes` is the margin's minutes for a poison that does no damage. What a
+  poison does beyond its damage is its module's to apply there.
 - **Staying conscious** (since 1.43.0): `gworld.afterConsciousnessRoll` follows a roll to
   stay conscious at 0 HP or less with `{ actor, outcome, previousPosture }`; a failure has left
   the actor unconscious and lying down, which `actors.undoKnockdown` takes back.

@@ -22,6 +22,23 @@ describe("the add-on API", () => {
     expect(api.hooks).toEqual({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK });
   });
 
+  it("gives armour back spent ablative DR, never below none (since 1.59.0)", async () => {
+    const api = createApi();
+    const piece = (drLost: number, extra: Record<string, unknown> = {}) => {
+      const item = { type: "armor", isOwner: true, system: { drLost }, update: vi.fn(async (change: Record<string, number>) => { item.system.drLost = change["system.drLost"]!; }), ...extra };
+      return item;
+    };
+    const screen = piece(12);
+    expect(await api.items.restoreDr(screen, 5)).toBe(7);
+    expect(await api.items.restoreDr(screen, 50)).toBe(0);
+    expect(screen.system.drLost).toBe(0);
+    const whole = piece(0);
+    expect(await api.items.restoreDr(whole, 3)).toBe(0);
+    expect(whole.update).not.toHaveBeenCalled();
+    expect(await api.items.restoreDr(piece(4, { isOwner: false }), 1)).toBeNull();
+    expect(await api.items.restoreDr(piece(4, { type: "equipment" }), 1)).toBeNull();
+  });
+
   it("is frozen, so a module can't swap out part of it", () => {
     const api = createApi();
     expect(Object.isFrozen(api)).toBe(true);

@@ -90,7 +90,7 @@ import {
 import { shotsEntryFor } from "../shots-entry.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
-  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleTraitEffects, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type TraitEffectSource,
+  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleCarriedWeight, moduleTraitEffects, moduleTraitsInPlay, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type CarriedWeightLine, type TraitEffectSource,
 } from "../data-extensions.js";
 import { perDieOfBasicDamage, swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
@@ -1434,7 +1434,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // What this character's traits do to the numbers. Read first, because a
     // few of them are the numbers: Extra ST is a point of ST wherever ST is
     // read, and everything below reads it.
-    const heldTraits = this.itemsOfType("trait").map((item) => ({
+    // A module may say a trait isn't in play right now (since 1.61.0): it is
+    // still the character's, and still paid for, but none of it counts.
+    const traitsInPlay = moduleTraitsInPlay(this.parent, this.itemsOfType("trait"));
+    const heldTraits = traitsInPlay.inPlay.map((item: any) => ({
       name: String(item.name ?? ""),
       levels: Number(item.system?.levels ?? 0),
       // Injury Tolerance keeps its kind in its modifiers, and Temperature
@@ -1671,7 +1674,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     // A module may change a level now that every skill's is known: hold one
     // to a ceiling another skill sets, or give it its level at default.
-    adjustSkillLevels(this.parent, skillItems, (name) => this.skillLevelByName(name));
+    adjustSkillLevels(this.parent, skillItems, (name) => this.skillLevelByName(name), {
+      ST: attributeScore("ST"), DX: attributeScore("DX"), IQ: attributeScore("IQ"), HT: attributeScore("HT"),
+      Will: attributeScore("Will"), Per: attributeScore("Per"),
+    });
 
     // ── techniques ──────────────────────────────────────────────────────
     // A technique comes off a skill, the Parry or Block it gives, Dodge, or an
@@ -1858,15 +1864,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const shieldSkill = shieldItem ? this.skillLevelByName(shieldItem.system?.skill ?? "Shield") : null;
 
     // ── encumbrance ─────────────────────────────────────────────────────
-    let carriedWeight = 0;
+    const weightLines: CarriedWeightLine[] = [];
     for (const item of this.items) {
       const sys = item.system as { weight?: number; quantity?: number; carried?: boolean };
       if (sys?.carried === false || sys?.weight === undefined) continue;
       const w = effectiveWeight(item);
       const q = Number(sys.quantity ?? 1);
-      if (Number.isFinite(w) && Number.isFinite(q)) carriedWeight += w * q;
+      if (Number.isFinite(w) && Number.isFinite(q)) weightLines.push({ item, label: String(item.name ?? ""), weight: w * q, counts: true });
     }
-    const encumbrance = encumbranceState(carriedWeight, secondary.basicLift, secondary.basicMove);
+    // What the modules say doesn't count: a suit carrying its own weight (API 1.58.0).
+    const weighed = moduleCarriedWeight(this.parent, weightLines);
+    const carriedWeight = weighed.total;
+    const encumbrance = { ...encumbranceState(carriedWeight, secondary.basicLift, secondary.basicMove), notCounted: weighed.notCounted };
     const reeling = isReeling(this.hp.value, this.hp.max);
     // Fatigue has a chart of its own, with the same two halvings on it: someone
     // who has not eaten in three days moves and dodges like someone bleeding.
@@ -2854,6 +2863,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // counted alongside the trait the character bought.
       radiationTolerance: Math.max(1, Number(traits.radiationTolerance) || 1),
       traitEffectSources,
+      traitsOutOfPlay: traitsInPlay.outOfPlay,
       regeneration: regenerationRate(traits.regeneration),
       // The attributes as everything else reads them: bought plus what traits
       // add. The sheet's inputs edit the bought figure and show this one.

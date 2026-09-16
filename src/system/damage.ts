@@ -168,6 +168,11 @@ export interface AppliedDamage {
    * your DR" (p. 47); without a field, nothing is refused.
    */
   touchEffectsReach: boolean;
+  /**
+   * The armour items a `gworld.armorDr` listener refused against this blow,
+   * by id. They stopped nothing, so none of their ablative DR is spent.
+   */
+  refusedPieces?: string[];
   /** The attack's armour divisor as Hardened left it (p. 47). */
   armorDivisorAfterHardening: number;
   /**
@@ -216,6 +221,7 @@ export function wornArmor(actor: any): ArmorPiece[] {
   return items
     .filter((item) => item.type === "armor" && item.system?.equipped)
     .map((item) => ({
+      id: item.id,
       name: String(item.name ?? ""),
       dr: Number(item.system?.dr ?? 0),
       drSplit: item.system?.drSplit ?? null,
@@ -291,6 +297,8 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
       forceField: piece.forceField === true,
       flexible: piece.flexible === true,
       hardened: Math.max(0, Math.floor(piece.hardened ?? 0)),
+      // Which item the line is, so a listener can read the piece's own data (since 1.56.0).
+      ...(piece.id ? { itemId: piece.id } : {}),
     }));
   callCombatHook(COMBAT_HOOKS.armorDr, {
     actor,
@@ -302,6 +310,9 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     // Whether the blow ignores DR, which is when a line's againstIgnoresDr is
     // read (since 1.55.0).
     ignoresDr: damage.ignoresDr === true,
+    // Where the blow came from, as the card has it, whether or not the
+    // table's front-only armour rule reads it (since 1.56.0).
+    arc: damage.arc ?? null,
     lines,
   });
 
@@ -496,6 +507,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     // that does enough damage to pierce your DR" (Characters p. 47). Without a
     // field there is nothing to refuse them.
     touchEffectsReach: fieldAgainst <= 0 || result.penetrating > 0,
+    refusedPieces: lines.filter((line) => line.applies === false && line.itemId).map((line) => String(line.itemId)),
     armorDivisorAfterHardening: hardened.divisor,
     // Fit's "+1 to all HT rolls" goes on each of the three (Characters p. 55).
     htModifiers: {
@@ -616,6 +628,8 @@ async function spendAblativeDr(actor: any, damage: IncomingDamage, resolved: App
     if (item?.type !== "armor" || item.system?.equipped !== true) continue;
     const ablative = item.system?.ablative;
     if (ablative !== "ablative" && ablative !== "semiAblative") continue;
+    // A piece refused against this blow stopped none of it.
+    if (resolved.refusedPieces?.includes(String(item.id))) continue;
 
     const field = item.system?.forceField === true;
     const covered: string[] = item.system?.locations ?? [];

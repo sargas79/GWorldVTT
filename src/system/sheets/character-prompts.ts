@@ -46,6 +46,7 @@ import {
   type WoundDirt,
 } from "../../rules/disease.js";
 import { POISON_EXAMPLES, poisonNamed, type Poison, type Treatment } from "../../rules/poison.js";
+import { offeredPoisons, registeredPoison } from "../poison-registry.js";
 import { weaponTargetsFor } from "../weapon-damage.js";
 import { attackDirection, facingOf } from "../hex.js";
 import { SYSTEM_ID } from "../constants.js";
@@ -335,9 +336,11 @@ export async function promptForRations(): Promise<{
 export async function promptForPoison(): Promise<{ poison: Poison; doublings: number } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Poison.${key}`);
 
-  const options = POISON_EXAMPLES.map(
-    (poison) => `<option value="${poison.name}">${poison.name}</option>`,
-  ).join("");
+  // The Basic Set's named poisons, then any a module registered (since 1.57.0).
+  const options = [
+    ...POISON_EXAMPLES.map((poison) => `<option value="${poison.name}">${poison.name}</option>`),
+    ...offeredPoisons().map((poison) => `<option value="${poison.source}">${foundry.utils.escapeHTML(poison.label)}</option>`),
+  ].join("");
 
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Title") },
@@ -409,7 +412,7 @@ export async function promptForPoison(): Promise<{ poison: Poison; doublings: nu
           form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
 
         const doublings = Number(chosen("dose")) || 0;
-        const named = poisonNamed(chosen("poison"));
+        const named = poisonNamed(chosen("poison")) ?? registeredPoison(chosen("poison"));
         if (named) return { poison: named, doublings };
 
         const resistible = ticked("resistible");

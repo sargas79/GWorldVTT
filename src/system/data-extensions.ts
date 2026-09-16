@@ -18,6 +18,7 @@
  *     the system added, so a module can add its own or change one with a reason.
  */
 
+import { registerPoison } from "./poison-registry.js";
 import { TAB_NAMES, type TabName } from "./sheet-tabs.js";
 
 
@@ -38,13 +39,105 @@ export const DATA_HOOKS = Object.freeze({
   attributeBonuses: "gworld.attributeBonuses",
   /** After the defenses are worked out: `{ actor, defenses, lines }`; push `{ defense, label, value }`. */
   defenseBonuses: "gworld.defenseBonuses",
-  /** Once every skill's level is known: `{ actor, skills, levelOf }`; set an entry's `level`, `fromDefault` and `note`. */
+  /** Once every skill's level is known: `{ actor, skills, levelOf, attributes }`; set an entry's `level`, `fromDefault` and `note` (`attributes` since 1.58.0). */
   skillLevels: "gworld.skillLevels",
   /** Once Move is worked out (since 1.42.0): `{ actor, move, lines }`; push `{ label, multiplier?, value? }`. */
   moveModifiers: "gworld.moveModifiers",
   /** While a character's trait effects are gathered (since 1.47.0): `{ actor, effects, sources }`, both mutable. */
   traitEffects: "gworld.traitEffects",
+  /** While a character's carried weight is added up (since 1.58.0): `{ actor, lines }`, each line's `weight`, `counts` and `reason` mutable. */
+  carriedWeight: "gworld.carriedWeight",
+  /** When a character's traits are gathered (since 1.61.0): `{ actor, traits }`, each entry's `inPlay` and `reason` mutable. */
+  traitsInPlay: "gworld.traitsInPlay",
 });
+
+/** A trait as `gworld.traitsInPlay` hands it to a listener. */
+export interface TraitInPlay {
+  item: any;
+  name: string;
+  inPlay: boolean;
+  /** Why a listener took it out of play, for the sheet. */
+  reason?: string;
+}
+
+/**
+ * Asks the modules which of a character's traits are in play (since 1.61.0).
+ *
+ * A trait out of play is one the character has, and has paid for, whose
+ * effects don't count right now. Returns the trait items still in play, and
+ * the ones taken out with their reasons. A listener that throws changes
+ * nothing: every trait stays in play.
+ */
+export function moduleTraitsInPlay(actor: any, items: readonly any[]): { inPlay: any[]; outOfPlay: Array<{ name: string; reason: string }> } {
+  const traits: TraitInPlay[] = items.map((item) => ({ item, name: String(item?.name ?? ""), inPlay: true }));
+  const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
+  try {
+    hooks?.callAll?.(DATA_HOOKS.traitsInPlay, { actor, traits });
+  } catch (error) {
+    console.warn(`gworld | a ${DATA_HOOKS.traitsInPlay} listener failed`, error);
+    return { inPlay: [...items], outOfPlay: [] };
+  }
+  const inPlay: any[] = [];
+  const outOfPlay: Array<{ name: string; reason: string }> = [];
+  traits.forEach((entry, i) => {
+    if (entry?.inPlay === false) outOfPlay.push({ name: String(items[i]?.name ?? ""), reason: String(entry.reason ?? "") });
+    else inPlay.push(items[i]);
+  });
+  return { inPlay, outOfPlay };
+}
+
+/** One carried item's weight, as `gworld.carriedWeight` hands it to a listener. */
+export interface CarriedWeightLine {
+  item: any;
+  label: string;
+  /** Its effective weight times its quantity, in pounds. */
+  weight: number;
+  /** Whether it counts toward encumbrance at all. */
+  counts: boolean;
+  /** Why a listener left it out or lowered it, for the sheet. */
+  reason?: string;
+}
+
+/** A line a listener left out or lowered: what it would have weighed, what counts, and why. */
+export interface WeightNotCounted {
+  label: string;
+  weight: number;
+  counted: number;
+  reason: string;
+}
+
+/**
+ * Asks the modules which carried weight counts toward encumbrance (since
+ * 1.58.0), and adds up what does.
+ *
+ * A powered suit can carry its own weight, and a pack can hold its load
+ * weightlessly; the items still weigh what they weigh, so the change is made
+ * here rather than to the item. A listener sets a line's `counts` to false or
+ * lowers its `weight`, with a `reason`. One that throws changes nothing, and a
+ * weight can't be raised or made negative here.
+ */
+export function moduleCarriedWeight(actor: any, lines: CarriedWeightLine[]): { total: number; notCounted: WeightNotCounted[] } {
+  const before = lines.map((line) => ({ ...line }));
+  const context = { actor, lines };
+  const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
+  let read = lines;
+  try {
+    hooks?.callAll?.(DATA_HOOKS.carriedWeight, context);
+  } catch (error) {
+    console.warn(`gworld | a ${DATA_HOOKS.carriedWeight} listener failed`, error);
+    read = before;
+  }
+  let total = 0;
+  const notCounted: WeightNotCounted[] = [];
+  read.forEach((line, i) => {
+    const original = before[i]?.weight ?? 0;
+    const weight = Number(line?.weight);
+    const counted = line?.counts === false ? 0 : Number.isFinite(weight) ? Math.max(0, Math.min(original, weight)) : original;
+    total += counted;
+    if (counted < original) notCounted.push({ label: String(line.label ?? ""), weight: original, counted, reason: String(line.reason ?? "") });
+  });
+  return { total, notCounted };
+}
 
 /** One thing added to a character's trait effects, and what added it. */
 export interface TraitEffectSource {
@@ -133,7 +226,13 @@ export interface SkillLevelEntry {
  * listener changed is written to the skill's derived data, with its note as a
  * line in the level's breakdown. A listener that throws changes nothing.
  */
-export function adjustSkillLevels(actor: any, items: any[], levelOf: (name: string) => number | null): void {
+export function adjustSkillLevels(
+  actor: any,
+  items: any[],
+  levelOf: (name: string) => number | null,
+  /** The scores the skills were worked out from (since 1.58.0): the character's derived data isn't written yet. */
+  attributes: Readonly<Record<string, number>> = {},
+): void {
   const skills: SkillLevelEntry[] = items.map((item) => ({
     item,
     name: String(item?.name ?? ""),
@@ -143,7 +242,7 @@ export function adjustSkillLevels(actor: any, items: any[], levelOf: (name: stri
   const before = skills.map((s) => ({ level: s.level, fromDefault: s.fromDefault }));
   const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
   try {
-    hooks?.callAll?.(DATA_HOOKS.skillLevels, { actor, skills, levelOf });
+    hooks?.callAll?.(DATA_HOOKS.skillLevels, { actor, skills, levelOf, attributes: { ...attributes } });
   } catch (error) {
     console.warn(`gworld | a ${DATA_HOOKS.skillLevels} listener failed`, error);
     return;
@@ -669,6 +768,7 @@ export function afterPrepare(document: any): void {
 
 /** What the API exposes. */
 export const dataApi = Object.freeze({
+  registerPoison,
   registerDataExtension,
   getExtension,
   updateExtension,

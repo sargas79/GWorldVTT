@@ -40,6 +40,10 @@ import { conditionLabel, setCondition } from "./conditions.js";
 import { migrationApi } from "./migration.js";
 import { takeInjury, type InjuryTaken } from "./damage.js";
 import { stopBleeding } from "./bleeding.js";
+import { activePoisons, advancePoison, clearPoison, dosePoison, type ActivePoison } from "./poison.js";
+import { applyFirstAid, attendPatient, operate } from "./recovery.js";
+import { rollMortalWound } from "./dying.js";
+import type { Poison } from "../rules/poison.js";
 import { undoKnockdown } from "./knockdown.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
 import { rollFrightCheck } from "./fright.js";
@@ -67,7 +71,7 @@ import { manaLevel } from "./casting.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.56.0";
+export const API_VERSION = "1.62.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -158,6 +162,60 @@ const actors = {
     return stopBleeding(actor);
   },
 
+  /**
+   * Writes a dose onto a character (Campaigns pp. 437-438, since 1.57.0), as the sheet's
+   * Poison button does: a registered poison from `data.registerPoison` or one built on the
+   * spot. `doublings` is the dose: 1 double, -1 half. Null for a user who doesn't own it.
+   */
+  dosePoison(actor: any, poison: Poison, options: { doublings?: number } = {}): Promise<ActivePoison | null> {
+    return dosePoison({ actor, poison, doublings: options.doublings ?? 0 });
+  },
+
+  /** The doses at work on a character (since 1.57.0). Read-only copies. */
+  activePoisons(actor: any): ActivePoison[] {
+    return activePoisons(actor).map((dose) => ({ ...dose }));
+  },
+
+  /**
+   * Runs one cycle of a dose (since 1.57.0): the HT roll, the damage, the card, and
+   * `gworld.poisonCycle`. Returns the HP and FP it cost.
+   */
+  advancePoison(actor: any, id: string): Promise<number> {
+    return advancePoison({ actor, id });
+  },
+
+  /** Takes a dose off a character (since 1.57.0). */
+  clearPoison(actor: any, id: string): Promise<void> {
+    return clearPoison(actor, id);
+  },
+
+  /**
+   * First Aid on a patient (Campaigns p. 424, since 1.60.0), as the sheet's button does.
+   * `skill` and `techLevel` stand in for the healer's, for a device that treats on its own;
+   * `label` names who treats on the card. Returns the HP it moved.
+   */
+  firstAid(options: { healer: any; patient: any; skill?: number; techLevel?: number; label?: string; modifier?: number }): Promise<number> {
+    return applyFirstAid({ ...options, modifier: options.modifier ?? 0 });
+  },
+
+  /** A physician's rounds on a patient (p. 424, since 1.60.0); the roll is tagged `physician`. */
+  attendPatient(options: { healer: any; patient: any; skill?: number; label?: string; modifier?: number }): Promise<void> {
+    return attendPatient({ ...options, modifier: options.modifier ?? 0 });
+  },
+
+  /** An operation (p. 424, since 1.60.0); the roll is tagged `surgery`. */
+  operate(options: { surgeon: any; patient: any; skill?: number; techLevel?: number; anesthetic?: boolean; repairingCrippled?: boolean; equipmentQuality?: number; label?: string; modifier?: number }): Promise<void> {
+    return operate({ ...options, anesthetic: options.anesthetic ?? true, repairingCrippled: options.repairingCrippled ?? false, equipmentQuality: options.equipmentQuality ?? 0, modifier: options.modifier ?? 0 });
+  },
+
+  /**
+   * A mortally wounded character's check (p. 423, since 1.60.0), at the better of HT and a
+   * caregiver's `physician`; `traumaMaintenance` makes it daily. Tagged `mortalWound`.
+   */
+  rollMortalWound(options: { actor: any; physician?: number | null; traumaMaintenance?: boolean; modifier?: number }): Promise<void> {
+    return rollMortalWound(options);
+  },
+
   /** Takes back a knockdown's stun, fall and unconsciousness, and restores a posture (since 1.39.0). */
   undoKnockdown(actor: any, options: { posture?: string } = {}): Promise<boolean> {
     return undoKnockdown(actor, options);
@@ -189,6 +247,20 @@ const items = {
    */
   load(item: any, modeIndex: number, shots: number): Promise<number | null> {
     return loadInstantly(item, modeIndex, shots);
+  },
+
+  /**
+   * Gives a piece of armour back up to `points` of the ablative DR it has
+   * spent (since 1.59.0): `drLost` goes down, never below 0. Returns the new
+   * `drLost`, or null for an item that isn't armour or a user who doesn't own it.
+   */
+  async restoreDr(item: any, points: number): Promise<number | null> {
+    if (item?.type !== "armor" || !item.isOwner) return null;
+    const lost = Math.max(0, Math.floor(Number(item.system?.drLost) || 0));
+    const restored = Math.max(0, Math.floor(Number(points) || 0));
+    const next = Math.max(0, lost - restored);
+    if (next !== lost) await item.update({ "system.drLost": next });
+    return next;
   },
 };
 
