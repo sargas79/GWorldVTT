@@ -144,8 +144,29 @@ describe("gworld.armorDr", () => {
     };
     await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso" } as never);
     expect(seen).toEqual([
-      { label: "Plate", dr: 6, applies: true, forceField: false, flexible: false, hardened: 0 },
+      { label: "Plate", dr: 6, applies: true, forceField: false, flexible: false, hardened: 0, itemId: "armor1" },
     ]);
+  });
+
+  it("says where the blow came from (since 1.56.0)", async () => {
+    const { actor } = armoured({ dr: 6 });
+    const arcs: unknown[] = [];
+    globals.Hooks = { callAll: (event: string, context: { arc?: unknown }) => { if (event === "gworld.armorDr") arcs.push(context.arc); } };
+    await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso", arc: "back" } as never);
+    await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso" } as never);
+    expect(arcs).toEqual(["back", null]);
+  });
+
+  it("counts a line a listener adds, meeting the blow first when it is a field (since 1.56.0)", async () => {
+    const { actor } = armoured({ dr: 6 });
+    globals.Hooks = {
+      callAll: (event: string, context: { lines?: unknown[] }) => {
+        if (event === "gworld.armorDr") context.lines!.push({ label: "Coating", dr: 3, applies: true, forceField: false, flexible: true, hardened: 0 });
+      },
+    };
+    const result = await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso" } as never);
+    expect(result?.effectiveDr).toBe(9);
+    expect(result?.penetrating).toBe(1);
   });
 
   it("lets a listener refuse a piece against one kind of attack", async () => {
