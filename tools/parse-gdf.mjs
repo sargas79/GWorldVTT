@@ -435,6 +435,44 @@ function parseCost(raw, f) {
   return { points: 0, levels: 1, pointsPerLevel: 0, costTable: steps };
 }
 
+/** Whether a cost is paid or earned: 1 for points spent, -1 for points gained. */
+function costSign(cost) {
+  for (const figure of [cost.points, cost.pointsPerLevel, cost.costTable[0] ?? 0]) {
+    if (figure) return figure < 0 ? -1 : 1;
+  }
+  return 0;
+}
+
+/**
+ * What a trait is, once its cost has been read.
+ *
+ * A data file files a record by where its author put it, and that is not always
+ * where GURPS puts it: a book whose cybernetic implants all sit under
+ * Advantages will have some that cost negative points, and a trait that costs
+ * negative points is a disadvantage wherever the file keeps it. So the sign of
+ * the cost has the last word, and the section's four categories pair off:
+ * an advantage that is paid for becomes a disadvantage, and a perk a quirk.
+ *
+ * A trait that costs nothing flat is priced per level or from a table, and the
+ * same rule reads that instead. One that costs nothing at all keeps the
+ * section's word, there being nothing to disagree with.
+ */
+const OPPOSITE = new Map([
+  ["advantage", "disadvantage"],
+  ["perk", "quirk"],
+  ["disadvantage", "advantage"],
+  ["quirk", "perk"],
+]);
+
+export function traitCategoryOf(section, cost) {
+  const said = TRAIT_SECTIONS.get(section);
+  if (!said) return undefined;
+  const sign = costSign(cost);
+  if (sign === 0) return said;
+  const earned = said === "disadvantage" || said === "quirk";
+  return (sign < 0) === earned ? said : OPPOSITE.get(said);
+}
+
 /** The level cap from `upto()`, where it states a plain number. */
 function parseUpTo(value) {
   const m = /^(\d+)/.exec((value ?? "").trim());
@@ -469,8 +507,7 @@ function parseTraits(recs, reject, note, source) {
   const keptByHand = handKeptTraitNames(source.outDir, bookPrefix(source.prefix) === bookPrefix(BASIC_SET.prefix), source.book);
 
   for (const r of recs) {
-    const category = TRAIT_SECTIONS.get(r.section);
-    if (!category) continue;
+    if (!TRAIT_SECTIONS.has(r.section)) continue;
 
     const f = fields(r.text);
     if (!keeps(r, f, source)) continue;
@@ -488,6 +525,13 @@ function parseTraits(recs, reject, note, source) {
 
     const cost = parseCost(splitTop(r.text)[1], f);
     if (!cost) { reject(bare, `cost not a number: "${splitTop(r.text)[1] ?? ""}"`); continue; }
+
+    // What it is, which the sign of the cost settles rather than the section.
+    const category = traitCategoryOf(r.section, cost);
+    if (!category) continue;
+    if (category !== TRAIT_SECTIONS.get(r.section)) {
+      note(`${bare}: ${TRAIT_SECTIONS.get(r.section)} in the file, read as a ${category} at ${costSign(cost) < 0 ? "" : "+"}${cost.points || cost.pointsPerLevel || cost.costTable[0]} points`);
+    }
 
     // A handful of names are both an advantage and a disadvantage -- Wealth
     // runs from Dead Broke to Multimillionaire, and the book prices the halves

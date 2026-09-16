@@ -20,6 +20,7 @@ import {
   isBookkeeping,
   parseSkillUsed,
   techLevel,
+  traitCategoryOf,
   parseSkillUsedWithModifier,
   unarmedSkillsIn,
   powerOfRecord,
@@ -579,6 +580,51 @@ describe("techLevel", () => {
     expect(techLevel("")).toBe("");
     expect(techLevel(undefined)).toBe("");
     expect(techLevel("^11")).toBe("");
+  });
+});
+
+describe("traitCategoryOf", () => {
+  const flat = (points: number) => ({ points, pointsPerLevel: 0, costTable: [] as number[] });
+  const perLevel = (points: number) => ({ points: 0, pointsPerLevel: points, costTable: [] as number[] });
+  const table = (...steps: number[]) => ({ points: 0, pointsPerLevel: 0, costTable: steps });
+
+  it("keeps the section's word where the cost agrees with it", () => {
+    expect(traitCategoryOf("ADVANTAGES", flat(15))).toBe("advantage");
+    expect(traitCategoryOf("DISADVANTAGES", flat(-10))).toBe("disadvantage");
+    expect(traitCategoryOf("PERKS", flat(1))).toBe("perk");
+    expect(traitCategoryOf("QUIRKS", flat(-1))).toBe("quirk");
+  });
+
+  it("reads a trait that costs negative points as a disadvantage, whichever section holds it", () => {
+    // A book whose cybernetic implants all sit under Advantages has some that
+    // cost points rather than buying them.
+    expect(traitCategoryOf("ADVANTAGES", flat(-3))).toBe("disadvantage");
+    expect(traitCategoryOf("PERKS", flat(-1))).toBe("quirk");
+  });
+
+  it("reads a trait that costs positive points as an advantage, likewise", () => {
+    expect(traitCategoryOf("DISADVANTAGES", flat(5))).toBe("advantage");
+    expect(traitCategoryOf("QUIRKS", flat(1))).toBe("perk");
+  });
+
+  it("reads the per-level price where the flat cost is nothing", () => {
+    expect(traitCategoryOf("ADVANTAGES", perLevel(-10))).toBe("disadvantage");
+    expect(traitCategoryOf("DISADVANTAGES", perLevel(10))).toBe("advantage");
+    expect(traitCategoryOf("DISADVANTAGES", perLevel(-10))).toBe("disadvantage");
+  });
+
+  it("reads the first step of a cost table where there is neither", () => {
+    expect(traitCategoryOf("ADVANTAGES", table(-15, -25, -35))).toBe("disadvantage");
+    expect(traitCategoryOf("DISADVANTAGES", table(-10, -20))).toBe("disadvantage");
+  });
+
+  it("keeps the section's word for a trait that costs nothing at all", () => {
+    expect(traitCategoryOf("ADVANTAGES", flat(0))).toBe("advantage");
+    expect(traitCategoryOf("DISADVANTAGES", flat(0))).toBe("disadvantage");
+  });
+
+  it("says nothing for a section that holds no traits", () => {
+    expect(traitCategoryOf("EQUIPMENT", flat(5))).toBeUndefined();
   });
 });
 
