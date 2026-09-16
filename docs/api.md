@@ -383,6 +383,16 @@ and the roll continues.
     - `damageAt(entry, st)` and `rangeAt(entry, st)` work a mode out at another
       ST, and `addToDamage(formula, bonus)` adds to a dice formula. The range
       text and whether the damage can be rolled follow the figures;
+  - `gworld.armorDr` (since 1.48.0): before a blow's DR is added up, with
+    `{ actor, item, mode, hitLocation, damageType, basicDamage, lines }`. Each
+    of `lines` is one piece of worn armour reaching the spot:
+    `{ label, dr, applies, forceField, flexible, hardened, reason? }`, all
+    mutable. Change `dr` to double a piece against one kind of attack, set
+    `applies` to false to refuse it against another, raise `hardened` to step
+    the attack's armour divisor down, or set `forceField` so the piece meets
+    the blow before the rest. A listener may also spend a pool of its own: the
+    lines say what the piece was worth, and the result carries what got
+    through. The actor's own natural DR is not a line; it is added after.
   - `gworld.equipmentFailure` (since 1.10.0): before a thing's equipment
     failure roll (Campaigns p. 485), with `{ actor, item, target, modifiers }`.
     Push lines to `modifiers`; the card shows them.

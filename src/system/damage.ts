@@ -16,7 +16,9 @@
 
 import { parseVulnerability, vulnerabilityMultiplier, type Vulnerability } from "../rules/vulnerability.js";
 import { type ArmorPiece } from "../rules/armor.js";
-import { armorLayers, bluntTraumaInjury } from "../rules/layered-armor.js";
+import { bluntTraumaInjury } from "../rules/layered-armor.js";
+import { ablativeLoss, drAgainst, hardenedAgainst, remainingDr } from "../rules/armor.js";
+import { criticalDr } from "../rules/criticals.js";
 import type { Arc } from "../rules/tactical.js";
 import { isRuleOn } from "./optional-rules.js";
 import {
@@ -46,7 +48,8 @@ import {
   cannonFodderCollapses, cinematicExplosionInjury, knockbackStunPenalty,
 } from "../rules/cinematic.js";
 import { isCannonFodder } from "./cinematic.js";
-import { COMBAT_HOOKS, callCombatHook, locationOverrides } from "./combat-extensions.js";
+import { COMBAT_HOOKS, callCombatHook, locationOverrides, type ArmorDrLine } from "./combat-extensions.js";
+import { piecesAt, protectsAgainst } from "../rules/layered-armor.js";
 
 /** A critical hit, already rolled for on one of the tables. */
 export interface CriticalHit {
@@ -155,6 +158,19 @@ export interface AppliedDamage {
   /** DR the target has of their own, under whatever they are wearing. */
   naturalDr: number;
   /**
+   * A Force Field the blow met before any armour (Characters p. 47): what it
+   * was worth after the divisor, and what it actually took off the blow.
+   */
+  forceField: { dr: number; stopped: number };
+  /**
+   * Whether an effect that relies on touch reaches the target. A Force Field
+   * refuses one unless the attack carrying it "does enough damage to pierce
+   * your DR" (p. 47); without a field, nothing is refused.
+   */
+  touchEffectsReach: boolean;
+  /** The attack's armour divisor as Hardened left it (p. 47). */
+  armorDivisorAfterHardening: number;
+  /**
    * Modifiers the target's traits give to the HT rolls this blow calls for --
    * knockdown, staying conscious, staying alive. The rolls themselves are the
    * GM's; what the traits are worth to them is not.
@@ -200,6 +216,7 @@ export function wornArmor(actor: any): ArmorPiece[] {
   return items
     .filter((item) => item.type === "armor" && item.system?.equipped)
     .map((item) => ({
+      name: String(item.name ?? ""),
       dr: Number(item.system?.dr ?? 0),
       drSplit: item.system?.drSplit ?? null,
       drSplitAppliesTo: item.system?.drSplitAppliesTo ?? [],
@@ -207,6 +224,10 @@ export function wornArmor(actor: any): ArmorPiece[] {
       flexible: item.system?.flexible === true,
       frontOnly: item.system?.frontOnly === true,
       concealable: item.system?.concealable === true,
+      hardened: Number(item.system?.hardened ?? 0) || 0,
+      ablative: item.system?.ablative ?? "none",
+      drLost: Number(item.system?.drLost ?? 0) || 0,
+      forceField: item.system?.forceField === true,
     }));
 }
 
@@ -249,24 +270,79 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   const naturalDr = traits.damageResistance + (damage.hitLocation === "foot" ? traits.footDr : 0);
   const worn = wornArmor(actor);
   const arc = isRuleOn("frontArmor") ? (damage.arc ?? null) : null;
-  const layers = armorLayers(worn, damage.hitLocation, damage.type, arc);
+  // What each piece is worth against this blow, offered to the modules before
+  // any of it is added up (since 1.48.0): a listener may double a piece
+  // against one kind of attack, refuse it against another, or harden it.
+  const here = new Set(piecesAt(worn, damage.hitLocation));
+  const lines: ArmorDrLine[] = worn
+    // A Force Field "protects your entire body - including your eyes - as well
+    // as anything you are carrying" (Characters p. 47), wherever the blow fell.
+    .filter((piece) => (piece.forceField === true || here.has(piece)) && protectsAgainst(piece, arc))
+    .map((piece) => ({
+      label: piece.name ?? "",
+      dr: drAgainst(piece, damage.type),
+      applies: true,
+      forceField: piece.forceField === true,
+      flexible: piece.flexible === true,
+      hardened: Math.max(0, Math.floor(piece.hardened ?? 0)),
+    }));
+  callCombatHook(COMBAT_HOOKS.armorDr, {
+    actor,
+    item: damage.itemUuid ? (fromUuidSync(damage.itemUuid) ?? null) : null,
+    mode: damage.mode ?? null,
+    hitLocation: damage.hitLocation,
+    damageType: damage.type,
+    basicDamage: damage.basicDamage,
+    lines,
+  });
+
+  const layers = { rigidDr: 0, flexibleDr: 0, totalDr: 0, fieldDr: 0, hardened: 0 };
+  for (const line of lines) {
+    if (line.applies === false) continue;
+    layers.hardened = Math.max(layers.hardened, Math.max(0, Math.floor(Number(line.hardened) || 0)));
+    const dr = Math.max(0, Math.floor(Number(line.dr) || 0));
+    if (line.forceField) layers.fieldDr += dr;
+    else if (line.flexible) layers.flexibleDr += dr;
+    else layers.rigidDr += dr;
+  }
+  layers.totalDr = layers.rigidDr + layers.flexibleDr;
   const wornDr = layers.totalDr + naturalDr;
 
   // A blow that found a chink meets half the armour. It is applied to the worn
   // figure rather than inside the pipeline because natural DR is not armour
   // with gaps in it -- "joints or weak points in a suit of armor".
   const drMultiplier = Math.max(1, Math.floor(Number(damage.drMultiplier ?? 1)));
-  const armour = damage.ignoresDr ? 0 : (damage.chink ? chinkDr(wornDr) : wornDr) * drMultiplier;
+
+  // Hardened armour steps the attack's divisor down before any DR is read:
+  // "Each level of Hardened reduces the armor divisor of an attack by one
+  // step" (Characters p. 47), and six levels take one that ignores DR right
+  // down to none at all.
+  const hardened = hardenedAgainst(
+    Number(damage.armorDivisor ?? 1) || 1,
+    damage.ignoresDr === true,
+    layers.hardened,
+  );
+  const armour = hardened.ignoresDr ? 0 : (damage.chink ? chinkDr(wornDr) : wornDr) * drMultiplier;
 
   // A critical can double or triple the blow, or replace the roll with the
   // most the dice could have given. All of that happens to basic damage, before
   // DR and before the wounding modifier.
   const critical = damage.critical?.entry.damage;
-  const basicDamage = criticalBasicDamage({
+  const rolledDamage = criticalBasicDamage({
     rolled: damage.basicDamage,
     maximum: damage.maxDamage ?? damage.basicDamage,
     ...(critical ? { damage: critical } : {}),
   });
+
+  // A Force Field "reduces the damage from attacks before armor DR" (p. 47),
+  // so it comes off the rolled figure rather than adding to the armour under
+  // it. It is DR like any other: the divisor divides it and a critical halves
+  // or ignores it, which is what the pipeline does to the rest.
+  const fieldAgainst = hardened.ignoresDr
+    ? 0
+    : criticalDr(Math.floor(layers.fieldDr / (hardened.divisor > 0 ? hardened.divisor : 1)), critical);
+  const stoppedByField = Math.min(rolledDamage, fieldAgainst);
+  const basicDamage = Math.max(0, rolledDamage - stoppedByField);
 
   // A location a module registered changes what it says it changes -- the
   // wounding modifier, the crippling threshold, DR of its own, the knockdown
@@ -282,7 +358,8 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     ...(overrides && overrides.woundingModifier !== null ? { woundingOverride: overrides.woundingModifier } : {}),
     ...(overrides && overrides.cripplingThreshold !== undefined ? { cripplingThreshold: overrides.cripplingThreshold } : {}),
     type: damage.type,
-    armorDivisor: damage.armorDivisor,
+    // The divisor as Hardened left it, which is 1 where nothing hardened it.
+    armorDivisor: hardened.divisor,
     hitLocation: damage.hitLocation,
     maxHp: Number(hp.max) || 0,
     // Halving or ignoring DR is the critical's doing and belongs inside the
@@ -290,7 +367,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     ...(critical ? { critical } : {}),
     // A Malediction ignores the location's own DR as well as the armour's,
     // which is the one place the pipeline already knows how to drop it all.
-    ...(damage.ignoresDr ? { critical: { ...(critical ?? {}), ignoreDr: true } } : {}),
+    ...(hardened.ignoresDr ? { critical: { ...(critical ?? {}), ignoreDr: true } } : {}),
     // A body that is not flesh is hurt as its substance allows.
     ...(hasInjuryTolerance(traits.injuryTolerance) ? { tolerance: traits.injuryTolerance } : {}),
     // And a body with a Vulnerability is hurt worse by the thing it fears.
@@ -392,6 +469,12 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
         : null,
     cinematicBlast: blast,
     naturalDr,
+    forceField: { dr: fieldAgainst, stopped: stoppedByField },
+    // "Effects that rely on touch ... only affect you if carried by an attack
+    // that does enough damage to pierce your DR" (Characters p. 47). Without a
+    // field there is nothing to refuse them.
+    touchEffectsReach: fieldAgainst <= 0 || result.penetrating > 0,
+    armorDivisorAfterHardening: hardened.divisor,
     // Fit's "+1 to all HT rolls" goes on each of the three (Characters p. 55).
     htModifiers: {
       knockdown: traits.knockdown + traits.htRolls,
@@ -472,6 +555,13 @@ export async function applyDamageToActor(
   const incoming = callCombatHook(COMBAT_HOOKS.injury, { actor, item, mode, damage: { ...damage } }).damage;
 
   const resolved = resolveDamageAgainst(actor, incoming);
+
+  // Ablative DR is spent whether or not the blow got through: it "stops damage
+  // once", and semi-ablative loses its point "regardless of whether the attack
+  // penetrates DR" (Characters p. 47). So this comes before the early return
+  // for a blow that did no injury -- armour that stopped it is still worn down.
+  await spendAblativeDr(actor, incoming, resolved);
+
   if (resolved.injury === 0 && !resolved.collapsed) {
     callCombatHook(COMBAT_HOOKS.afterDamage, { actor, item, mode, damage: incoming, result: resolved });
     return resolved;
@@ -484,6 +574,42 @@ export async function applyDamageToActor(
   // And what it did, for a module with something that follows from it.
   callCombatHook(COMBAT_HOOKS.afterDamage, { actor, item, mode, damage: incoming, result: resolved });
   return resolved;
+}
+
+/**
+ * Takes what a blow destroyed off the ablative armour that stopped it
+ * (Characters p. 47).
+ *
+ * Which layer stopped which point is not something the book works out, so each
+ * ablative piece covering the spot is spent against the damage that reached
+ * the armour: the rolled figure for a Force Field, which meets the blow first,
+ * and what got past the field for everything under it.
+ */
+async function spendAblativeDr(actor: any, damage: IncomingDamage, resolved: AppliedDamage): Promise<void> {
+  const reachedArmour = resolved.basicDamage;
+  const reachedField = reachedArmour + resolved.forceField.stopped;
+  const updates: Array<Record<string, unknown>> = [];
+
+  for (const item of actor?.items ?? []) {
+    if (item?.type !== "armor" || item.system?.equipped !== true) continue;
+    const ablative = item.system?.ablative;
+    if (ablative !== "ablative" && ablative !== "semiAblative") continue;
+
+    const field = item.system?.forceField === true;
+    const covered: string[] = item.system?.locations ?? [];
+    // An empty list is whole-body coverage, and a field covers everything.
+    if (!field && covered.length > 0 && !covered.includes(damage.hitLocation)) continue;
+
+    const lost = ablativeLoss({
+      ablative,
+      dr: remainingDr(Number(item.system?.dr ?? 0), Number(item.system?.drLost ?? 0)),
+      basicDamage: field ? reachedField : reachedArmour,
+    });
+    if (lost <= 0) continue;
+    updates.push({ _id: item.id, "system.drLost": (Number(item.system?.drLost ?? 0) || 0) + lost });
+  }
+
+  if (updates.length > 0) await actor.updateEmbeddedDocuments?.("Item", updates);
 }
 
 /** Injury or fatigue taken off outside a damage card. */

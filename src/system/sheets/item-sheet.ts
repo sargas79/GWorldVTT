@@ -389,6 +389,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       hitLocations: [
         "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",
       ],
+      // How a piece of armour is spent as it stops damage (Characters p. 47).
+      ablative: ["none", "ablative", "semiAblative"],
       comprehension: keyed("Language", ["none", "broken", "accented", "native"]),
       spellDifficulties: keyed("Difficulty", ["H", "VH"]),
       spellClasses: [...SPELL_CLASSES],

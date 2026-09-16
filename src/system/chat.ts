@@ -477,6 +477,10 @@ async function applyFromCard(options: {
       // Handlebars cannot compare, so anything the card branches on is decided
       // here where the rules are in view.
       stopped: result.injury === 0,
+      // What a Force Field took off before the armour under it, and whether a
+      // touch effect got through it (Characters p. 47).
+      forceFieldStopped: result.forceField?.stopped ?? 0,
+      touchEffectsReach: result.touchEffectsReach !== false,
       pool: result.costsFatigue ? "FP" : "HP",
       shock: result.consequences.shock,
       hasShock: result.consequences.shock !== 0,
