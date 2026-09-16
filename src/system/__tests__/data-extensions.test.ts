@@ -335,6 +335,31 @@ describe("Move changed by modules (since 1.42.0)", () => {
   });
 });
 
+describe("traits a module takes out of play (since 1.61.0)", () => {
+  const items = () => [{ name: "Bionic Arm" }, { name: "Night Vision" }];
+
+  it("leaves out a trait a listener took out of play, and says why", async () => {
+    const { moduleTraitsInPlay } = await load();
+    globals.Hooks = {
+      callAll: (_hook: string, context: { traits: Array<{ name: string; inPlay: boolean; reason?: string }> }) => {
+        const arm = context.traits.find((t) => t.name === "Bionic Arm")!;
+        arm.inPlay = false;
+        arm.reason = "Recovering from surgery";
+      },
+    };
+    const result = moduleTraitsInPlay({}, items());
+    expect(result.inPlay.map((i: { name: string }) => i.name)).toEqual(["Night Vision"]);
+    expect(result.outOfPlay).toEqual([{ name: "Bionic Arm", reason: "Recovering from surgery" }]);
+  });
+
+  it("keeps every trait in play when a listener throws", async () => {
+    const { moduleTraitsInPlay } = await load();
+    globals.Hooks = { callAll: (_hook: string, context: { traits: Array<{ inPlay: boolean }> }) => { context.traits[0]!.inPlay = false; throw new Error("boom"); } };
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(moduleTraitsInPlay({}, items())).toEqual({ inPlay: items(), outOfPlay: [] });
+  });
+});
+
 describe("carried weight a module leaves out (since 1.58.0)", () => {
   const lines = () => [
     { item: { id: "suit" }, label: "Battlesuit", weight: 150, counts: true },

@@ -533,6 +533,15 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     `"protectedSense.vision"`) and `label` the thing it came from. The Traits
     tab lists them under what the character carries, so an effect nobody paid
     for is never unexplained. A listener that throws changes nothing.
+  - `gworld.traitsInPlay` (since 1.61.0), with `{ actor, traits }`, when a
+    character's traits are gathered, before anything is worked out from them.
+    Each entry is `{ item, name, inPlay }`: set `inPlay` to false, with a
+    `reason`, for a trait the character has and has paid for but whose effects
+    don't count right now -- an implant still healing in, an ability something
+    suppresses. It is left out of the trait effects, talents, reactions and
+    everything else read from traits; its points still count.
+    `derived.traitsOutOfPlay` lists `{ name, reason }`. A listener that throws
+    changes nothing.
   - `gworld.carriedWeight` (since 1.58.0), with `{ actor, lines }`, while a
     character's carried weight is added up. Each line is one carried item,
     `{ item, label, weight, counts }`, `weight` being its effective weight times

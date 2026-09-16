@@ -46,7 +46,44 @@ export const DATA_HOOKS = Object.freeze({
   traitEffects: "gworld.traitEffects",
   /** While a character's carried weight is added up (since 1.58.0): `{ actor, lines }`, each line's `weight`, `counts` and `reason` mutable. */
   carriedWeight: "gworld.carriedWeight",
+  /** When a character's traits are gathered (since 1.61.0): `{ actor, traits }`, each entry's `inPlay` and `reason` mutable. */
+  traitsInPlay: "gworld.traitsInPlay",
 });
+
+/** A trait as `gworld.traitsInPlay` hands it to a listener. */
+export interface TraitInPlay {
+  item: any;
+  name: string;
+  inPlay: boolean;
+  /** Why a listener took it out of play, for the sheet. */
+  reason?: string;
+}
+
+/**
+ * Asks the modules which of a character's traits are in play (since 1.61.0).
+ *
+ * A trait out of play is one the character has, and has paid for, whose
+ * effects don't count right now. Returns the trait items still in play, and
+ * the ones taken out with their reasons. A listener that throws changes
+ * nothing: every trait stays in play.
+ */
+export function moduleTraitsInPlay(actor: any, items: readonly any[]): { inPlay: any[]; outOfPlay: Array<{ name: string; reason: string }> } {
+  const traits: TraitInPlay[] = items.map((item) => ({ item, name: String(item?.name ?? ""), inPlay: true }));
+  const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
+  try {
+    hooks?.callAll?.(DATA_HOOKS.traitsInPlay, { actor, traits });
+  } catch (error) {
+    console.warn(`gworld | a ${DATA_HOOKS.traitsInPlay} listener failed`, error);
+    return { inPlay: [...items], outOfPlay: [] };
+  }
+  const inPlay: any[] = [];
+  const outOfPlay: Array<{ name: string; reason: string }> = [];
+  traits.forEach((entry, i) => {
+    if (entry?.inPlay === false) outOfPlay.push({ name: String(items[i]?.name ?? ""), reason: String(entry.reason ?? "") });
+    else inPlay.push(items[i]);
+  });
+  return { inPlay, outOfPlay };
+}
 
 /** One carried item's weight, as `gworld.carriedWeight` hands it to a listener. */
 export interface CarriedWeightLine {
