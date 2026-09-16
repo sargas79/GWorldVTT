@@ -20,6 +20,10 @@ function actor(options: {
     drSplitAppliesTo?: readonly string[];
     locations?: string[];
     equipped?: boolean;
+    hardened?: number;
+    forceField?: boolean;
+    ablative?: string;
+    drLost?: number;
   }>;
 }) {
   const { hp = 10, maxHp = 10, fp = 10, maxFp = 10, armor = [] } = options;
@@ -34,6 +38,10 @@ function actor(options: {
         drSplitAppliesTo: piece.drSplitAppliesTo ?? [],
         locations: piece.locations ?? [],
         equipped: piece.equipped ?? true,
+        hardened: piece.hardened ?? 0,
+        forceField: piece.forceField ?? false,
+        ablative: piece.ablative ?? "none",
+        drLost: piece.drLost ?? 0,
       },
     })),
   };
@@ -254,6 +262,69 @@ describe("a blow that ignores DR", () => {
     );
     expect(stopped.injury).toBe(0);
     expect(through.injury).toBe(10);
+  });
+});
+
+/**
+ * The kinds of DR a piece of armour can be made of (Characters p. 47), as the
+ * pipeline meets them.
+ */
+describe("Hardened armour against an armour divisor", () => {
+  const blowWithDivisor = (divisor: number, ignoresDr = false) =>
+    ({ basicDamage: 20, type: "cr", hitLocation: "torso", armorDivisor: divisor, ...(ignoresDr ? { ignoresDr: true } : {}) }) as never;
+
+  it("steps the divisor down, so more of the armour counts", () => {
+    const armoured = (hardened: number) => actor({ hp: 20, maxHp: 20, armor: [{ dr: 10, locations: ["torso"], hardened }] });
+    // A (5) divisor leaves DR 2 of the ten; hardened once it is a (3), leaving 3.
+    expect(resolveDamageAgainst(armoured(0), blowWithDivisor(5)).effectiveDr).toBe(2);
+    expect(resolveDamageAgainst(armoured(1), blowWithDivisor(5)).effectiveDr).toBe(3);
+    expect(resolveDamageAgainst(armoured(2), blowWithDivisor(5)).effectiveDr).toBe(5);
+  });
+
+  it("brings an attack that ignores DR back to meeting some", () => {
+    const armoured = (hardened: number) => actor({ hp: 20, maxHp: 20, armor: [{ dr: 10, locations: ["torso"], hardened }] });
+    expect(resolveDamageAgainst(armoured(0), blowWithDivisor(1, true)).effectiveDr).toBe(0);
+    // One level makes it a (100): a tenth of a point, which rounds to none.
+    expect(resolveDamageAgainst(armoured(6), blowWithDivisor(1, true)).effectiveDr).toBe(10);
+  });
+});
+
+describe("a Force Field before the armour (Characters p. 47)", () => {
+  const field = (dr: number, rest: number) =>
+    actor({ hp: 20, maxHp: 20, armor: [{ dr, forceField: true }, { dr: rest, locations: ["torso"] }] });
+
+  it("takes its share off the blow before the armour under it", () => {
+    // 20 damage, a field of 6 and DR 4 under it: 14 reaches the armour, 10 gets in.
+    const result = resolveDamageAgainst(field(6, 4), { basicDamage: 20, type: "cr", hitLocation: "torso", armorDivisor: 1 } as never);
+    expect(result.forceField.stopped).toBe(6);
+    expect(result.effectiveDr).toBe(4);
+    expect(result.penetrating).toBe(10);
+  });
+
+  it("protects the eyes, which no worn armour has to cover", () => {
+    const result = resolveDamageAgainst(field(6, 4), { basicDamage: 8, type: "cr", hitLocation: "eye", armorDivisor: 1 } as never);
+    expect(result.forceField.stopped).toBe(6);
+  });
+
+  it("keeps touch effects out while it holds, and lets them in once pierced", () => {
+    const held = resolveDamageAgainst(field(30, 0), { basicDamage: 8, type: "cr", hitLocation: "torso", armorDivisor: 1 } as never);
+    expect(held.touchEffectsReach).toBe(false);
+
+    const pierced = resolveDamageAgainst(field(2, 0), { basicDamage: 8, type: "cr", hitLocation: "torso", armorDivisor: 1 } as never);
+    expect(pierced.touchEffectsReach).toBe(true);
+  });
+
+  it("refuses nothing where the target has no field at all", () => {
+    const plain = resolveDamageAgainst(actor({ armor: [{ dr: 30, locations: ["torso"] }] }), blow(8, "cr"));
+    expect(plain.penetrating).toBe(0);
+    expect(plain.touchEffectsReach).toBe(true);
+  });
+});
+
+describe("armour a blow has already spent", () => {
+  it("meets only what is left of an ablative piece", () => {
+    const worn = actor({ hp: 20, maxHp: 20, armor: [{ dr: 10, locations: ["torso"], ablative: "ablative", drLost: 7 }] });
+    expect(resolveDamageAgainst(worn, blow(8, "cr")).effectiveDr).toBe(3);
   });
 });
 

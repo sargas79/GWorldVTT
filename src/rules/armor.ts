@@ -35,6 +35,8 @@ export const SPLIT_AGAINST = {
 } satisfies Record<string, readonly DamageType[]>;
 
 export interface ArmorPiece {
+  /** What the piece is called, for a breakdown that names it. */
+  name?: string;
   /** The DR that applies unless the split says otherwise. */
   dr: number;
   /** The second, lower DR, or null when the piece has only one. */
@@ -49,12 +51,100 @@ export interface ArmorPiece {
   frontOnly?: boolean;
   /** Concealable as or under clothing, which is what layering needs (p. 286). */
   concealable?: boolean;
+  /** Levels of Hardened (Characters p. 47), each a step off the attack's armour divisor. */
+  hardened?: number;
+  /** Whether the DR is spent as it stops damage, and how (p. 47). */
+  ablative?: Ablative;
+  /** Points of DR already destroyed, which "heals" at the rate lost HP does. */
+  drLost?: number;
+  /** A Force Field (p. 47): it meets the blow before any other armour does. */
+  forceField?: boolean;
+}
+
+/** How a piece of armour is spent as it stops damage (Characters p. 47). */
+export type Ablative = "none" | "ablative" | "semiAblative";
+
+/**
+ * The armour divisors in order, as Hardened steps down them (Characters p. 47):
+ * "These steps are, in order: 'ignores DR', 100, 10, 5, 3, 2, and 1 (no
+ * divisor)." The first step is written here as a divisor of 0, which is what
+ * the rest of the system already means by an attack that ignores DR.
+ */
+export const ARMOR_DIVISOR_STEPS: readonly number[] = [0, 100, 10, 5, 3, 2, 1];
+
+/** An attack's divisor as one piece of hardened armour meets it. */
+export interface HardenedAgainst {
+  /** The divisor left after the steps, never below 1. */
+  divisor: number;
+  /** Whether the attack still ignores DR entirely. */
+  ignoresDr: boolean;
+}
+
+/**
+ * What Hardened armour does to an attack's armour divisor (Characters p. 47):
+ * "Each level of Hardened reduces the armor divisor of an attack by one step."
+ *
+ * A divisor the ladder does not list stands at the first step it is no better
+ * than -- a (4) at (3) -- and steps down from there. A fractional divisor
+ * below 1 is the attack being *worse* against armour to begin with, and is
+ * left alone: Hardened is armour resisting penetration, not helping it.
+ */
+export function hardenedAgainst(
+  divisor: number,
+  ignoresDr: boolean,
+  levels: number,
+): HardenedAgainst {
+  const steps = Math.max(0, Math.floor(levels) || 0);
+  if (steps === 0) return { divisor, ignoresDr };
+  if (!ignoresDr && divisor < 1) return { divisor, ignoresDr };
+
+  // Where on the ladder the attack stands: an attack that ignores DR is at
+  // the top, and any other divisor takes the first step at or below it.
+  const start = ignoresDr ? 0 : ARMOR_DIVISOR_STEPS.findIndex((step) => step !== 0 && step <= divisor);
+  const from = start === -1 ? ARMOR_DIVISOR_STEPS.length - 1 : start;
+  const landed = ARMOR_DIVISOR_STEPS[Math.min(from + steps, ARMOR_DIVISOR_STEPS.length - 1)]!;
+  return { divisor: landed, ignoresDr: false };
+}
+
+/**
+ * The DR a piece has destroyed by stopping a blow (Characters p. 47).
+ *
+ * Ablative: "Each point of DR stops one point of basic damage but is destroyed
+ * in the process", so it loses whatever it actually stopped.
+ *
+ * Semi-ablative: "every 10 points of basic damage rolled removes one point of
+ * DR, regardless of whether the attack penetrates DR" -- read off the rolled
+ * figure rather than off what was stopped.
+ *
+ * Ordinary armour loses nothing, and neither loses more than it has left.
+ */
+export function ablativeLoss(options: {
+  ablative: Ablative | undefined;
+  /** The DR the piece still had when the blow landed. */
+  dr: number;
+  /** Basic damage rolled, before DR. */
+  basicDamage: number;
+}): number {
+  const dr = Math.max(0, Math.floor(options.dr));
+  const rolled = Math.max(0, options.basicDamage);
+  if (options.ablative === "ablative") return Math.min(dr, Math.floor(rolled));
+  if (options.ablative === "semiAblative") return Math.min(dr, Math.floor(rolled / 10));
+  return 0;
+}
+
+/** The DR a piece has left, after what earlier blows destroyed. */
+export function remainingDr(dr: number, drLost: number | undefined): number {
+  return Math.max(0, Math.floor(dr) - Math.max(0, Math.floor(drLost ?? 0)));
 }
 
 /** The DR one piece offers against one kind of damage. */
 export function drAgainst(piece: ArmorPiece, type: DamageType): number {
-  if (piece.drSplit === null) return piece.dr;
-  return piece.drSplitAppliesTo.includes(type) ? piece.drSplit : piece.dr;
+  const dr = piece.drSplit === null || !piece.drSplitAppliesTo.includes(type)
+    ? piece.dr
+    : piece.drSplit;
+  // Ablative DR is "destroyed in the process" of stopping a blow, so what the
+  // next one meets is what is left (Characters p. 47).
+  return remainingDr(dr, piece.drLost);
 }
 
 /**

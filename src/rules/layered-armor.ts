@@ -112,24 +112,57 @@ export function bluntTraumaInjury(options: {
   return Math.floor(reachingFlexible / per);
 }
 
+/** What a blow meets at one location, layer by layer. */
+export interface ArmorAtLocation {
+  /** Rigid DR, over the flexible. */
+  rigidDr: number;
+  /** Flexible DR, under it, which is what blunt trauma is read against. */
+  flexibleDr: number;
+  /** The two together: everything the blow meets as armour. */
+  totalDr: number;
+  /**
+   * A Force Field's DR (Characters p. 47), which is kept out of the total
+   * because it "reduces the damage from attacks before armor DR" rather than
+   * adding to what the blow finally meets.
+   */
+  fieldDr: number;
+  /** The best Hardened the wearer has here, in levels (p. 47). */
+  hardened: number;
+}
+
 /**
- * What a blow meets at one location: the rigid DR over the flexible, and the
+ * What a blow meets at one location: the rigid DR over the flexible, the
  * flexible DR under it, so blunt trauma can be worked out from what got
- * through the outer layer.
+ * through the outer layer, and the Force Field in front of both.
+ *
+ * A Force Field "protects your entire body - including your eyes - as well as
+ * anything you are carrying" (p. 47), so its own covered locations are not
+ * consulted: it is read wherever the blow landed.
+ *
+ * Hardened is a modifier on one piece, and the "Layered Defenses" box allows
+ * layers with different modifiers. An attack meets one divisor, not one per
+ * layer, so what is taken is the best hardening protecting the spot -- the
+ * wearer gets the benefit of the toughest thing they put on.
  */
 export function armorLayers(
   pieces: readonly ArmorPiece[],
   location: HitLocation,
   type: DamageType,
   arc: Arc | null = null,
-): { rigidDr: number; flexibleDr: number; totalDr: number } {
+): ArmorAtLocation {
   let rigidDr = 0;
   let flexibleDr = 0;
-  for (const piece of piecesAt(pieces, location)) {
-    if (!protectsAgainst(piece, arc)) continue;
+  let fieldDr = 0;
+  let hardened = 0;
+  const here = new Set(piecesAt(pieces, location));
+  for (const piece of pieces) {
+    const reaches = piece.forceField === true || here.has(piece);
+    if (!reaches || !protectsAgainst(piece, arc)) continue;
+    hardened = Math.max(hardened, Math.max(0, Math.floor(piece.hardened ?? 0)));
     const dr = drAgainst(piece, type);
-    if (piece.flexible) flexibleDr += dr;
+    if (piece.forceField === true) fieldDr += dr;
+    else if (piece.flexible) flexibleDr += dr;
     else rigidDr += dr;
   }
-  return { rigidDr, flexibleDr, totalDr: rigidDr + flexibleDr };
+  return { rigidDr, flexibleDr, totalDr: rigidDr + flexibleDr, fieldDr, hardened };
 }

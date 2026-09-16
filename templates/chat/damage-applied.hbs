@@ -42,8 +42,20 @@
         <div class="gc-result">
           {{localize "GWORLD.Chat.Stopped" dr=r.effectiveDr}}
         </div>
+        {{#if r.forceFieldStopped}}
+          {{!-- A field that held keeps a touch effect out too (Characters p. 47). --}}
+          <div class="gc-mods">
+            <span>{{localize "GWORLD.Armor.FieldStopped" dr=r.forceFieldStopped}}</span>
+            {{#unless r.touchEffectsReach}}
+              <span>{{localize "GWORLD.Armor.NoTouchEffects"}}</span>
+            {{/unless}}
+          </div>
+        {{/if}}
       {{else}}
         <div class="gc-mods">
+          {{#if r.forceFieldStopped}}
+            <span>{{localize "GWORLD.Armor.FieldStopped" dr=r.forceFieldStopped}}</span>
+          {{/if}}
           <span>{{localize "GWORLD.Chat.DrSubtracted"}} {{r.effectiveDr}}</span>
           <span>{{localize "GWORLD.Chat.Penetrating"}} {{r.penetrating}}</span>
           {{#if r.bluntTrauma}}

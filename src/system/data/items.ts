@@ -1083,6 +1083,10 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare concealable: boolean;
   declare blocksPeripheralVision: boolean;
   declare soleDr: number | null;
+  declare hardened: number;
+  declare ablative: "none" | "ablative" | "semiAblative";
+  declare drLost: number;
+  declare forceField: boolean;
   declare quantity: number;
   declare weight: number;
   declare cost: number;
@@ -1181,6 +1185,33 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
         initial: null,
         min: 0,
       }),
+      /**
+       * Hardened (Characters p. 47): "Each level of Hardened reduces the armor
+       * divisor of an attack by one step." Six levels take an attack that
+       * ignores DR all the way down to no divisor at all.
+       */
+      hardened: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 0, min: 0, max: 6,
+      }),
+      /**
+       * Whether the DR is spent as it stops damage (p. 47). Ablative DR "stops
+       * damage once"; semi-ablative loses a point per 10 points of basic damage
+       * rolled. "You cannot combine the two."
+       */
+      ablative: new fields.StringField({
+        required: true, nullable: false, blank: false,
+        initial: "none", choices: ["none", "ablative", "semiAblative"],
+      }),
+      /** Points of DR destroyed so far, which "heals" at the rate lost HP does. */
+      drLost: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 0, min: 0,
+      }),
+      /**
+       * A Force Field (p. 47): DR "projected a short distance from your body",
+       * which "reduces the damage from attacks before armor DR" and protects
+       * everything, the eyes included.
+       */
+      forceField: new fields.BooleanField({ initial: false }),
     };
   }
 }

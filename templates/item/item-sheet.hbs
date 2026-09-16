@@ -475,6 +475,34 @@
                  {{#unless editable}}disabled{{/unless}} />
         </label>
       </div>
+      {{!-- What the DR is made of, beyond how much of it there is
+            (Characters p. 47). --}}
+      <div class="ifields">
+        <label data-tooltip="{{localize 'GWORLD.Armor.HardenedHint'}}">{{localize "GWORLD.Armor.Hardened"}}
+          <input type="number" name="system.hardened" value="{{system.hardened}}" step="1" min="0" max="6"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label data-tooltip="{{localize 'GWORLD.Armor.AblativeHint'}}">{{localize "GWORLD.Armor.Ablative.Label"}}
+          <select name="system.ablative" {{#unless editable}}disabled{{/unless}}>
+            {{#each choices.ablative as |kind|}}
+              <option value="{{kind}}" {{#if (eq @root.system.ablative kind)}}selected{{/if}}>
+                {{localize (concat "GWORLD.Armor.Ablative." kind)}}
+              </option>
+            {{/each}}
+          </select>
+        </label>
+        <label data-tooltip="{{localize 'GWORLD.Armor.DrLostHint'}}">{{localize "GWORLD.Armor.DrLost"}}
+          <input type="number" name="system.drLost" value="{{system.drLost}}" step="1" min="0"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+      <div class="irow iflags">
+        <label class="icheck" data-tooltip="{{localize 'GWORLD.Armor.ForceFieldHint'}}">
+          <input type="checkbox" name="system.forceField" {{#if system.forceField}}checked{{/if}}
+                 {{#unless editable}}disabled{{/unless}} />
+          {{localize "GWORLD.Armor.ForceField"}}
+        </label>
+      </div>
       <p class="ihint">{{localize "GWORLD.Armor.LocationsHint"}}</p>
       <div class="ichecks">
         {{#each choices.hitLocations as |loc|}}

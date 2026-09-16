@@ -82,7 +82,27 @@ export const COMBAT_HOOKS = Object.freeze({
   weaponTargets: "gworld.weaponTargets",
   /** An unarmed blow applied to a target (since 1.32.0): `{ attacker, target, part, hitLocation, addonLocation, dr, basicDamage, minimumDr, applies }`, mutable. */
   hurtingYourself: "gworld.hurtingYourself",
+  /** Before a blow's DR is added up (since 1.48.0): `{ actor, item, mode, hitLocation, damageType, basicDamage, lines }`, the lines mutable. */
+  armorDr: "gworld.armorDr",
 });
+
+/** One piece of worn armour as `gworld.armorDr` hands it to a listener. */
+export interface ArmorDrLine {
+  /** What the piece is called. */
+  label: string;
+  /** The DR it offers against this blow, which a listener may change. */
+  dr: number;
+  /** Whether it counts at all: set false to refuse a piece against this attack. */
+  applies: boolean;
+  /** True for a Force Field, which meets the blow before the rest (Characters p. 47). */
+  forceField: boolean;
+  /** True for flexible armour, which blunt trauma is read against. */
+  flexible: boolean;
+  /** Levels of Hardened on the piece, which a listener may change. */
+  hardened: number;
+  /** Why a listener changed it, shown beside the figure. */
+  reason?: string;
+}
 
 // ── an item's attack rows ──────────────────────────────────────────────────
 
