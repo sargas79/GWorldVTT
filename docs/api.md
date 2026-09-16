@@ -375,6 +375,11 @@ and the roll continues.
       leaves the weapon unready). The context's `skillLevel(name)` reads the
       actor's level in a skill as this preparation worked it out, or null; the
       `actors` readers aren't ready yet while rows are worked out;
+    - Since 1.53.0, a mode may say how far an area attack reaches from where it
+      lands, as `radius` in yards (Campaigns p. 413). A cone says its width in
+      `coneMaxWidth` instead: they are different shapes and a mode carries at
+      most one. The Basic Set's stun grenade covers a 10-yard radius, its
+      chemical grenade 2 and a Molotov cocktail 1.
     - Since 1.46.0, also the damage modifiers of Characters pp. 104-105 that
       change what a hit does rather than how much of it lands: `incendiary`
       (the blow's flame can set the victim's clothes alight), `radiation` (a

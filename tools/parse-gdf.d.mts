@@ -61,6 +61,11 @@ export declare function alternatives(
   f: Map<string, string>,
 ): Array<{ name: string; f: Map<string, string> }>;
 export declare function weaponClassOf(mods: string | undefined): "" | "sword" | "cutting" | "crushing" | "firearm" | "bow";
+/** How far an area attack reaches from where it lands, from a `radius()` column. */
+export declare function parseRadius(value: string | undefined): number;
+/** The figure a book prints beside a damage type, which says nothing on its own. */
+export declare function areaNote(damtype: string | undefined): number;
+
 /** Mode names a data file gives to a second attack that lands with the first (Characters p. 106). */
 export declare const LINKED_MODE: RegExp;
 export declare const FOLLOW_UP_MODE: RegExp;

@@ -14947,7 +14947,9 @@
           "mount": "",
           "bulk": -2,
           "recoil": 0,
-          "malfunction": 17
+          "malfunction": 17,
+          "radius": 1,
+          "areaAttack": true
         }
       ]
     }
@@ -15011,7 +15013,9 @@
           "mount": "",
           "bulk": -2,
           "recoil": 0,
-          "malfunction": 17
+          "malfunction": 17,
+          "radius": 2,
+          "areaAttack": true
         }
       ]
     }
@@ -15203,7 +15207,9 @@
           "mount": "",
           "bulk": -2,
           "recoil": 0,
-          "malfunction": 17
+          "malfunction": 17,
+          "radius": 10,
+          "areaAttack": true
         }
       ]
     }
