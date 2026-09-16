@@ -69,7 +69,7 @@ import { manaLevel } from "./casting.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.58.0";
+export const API_VERSION = "1.59.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -218,6 +218,20 @@ const items = {
    */
   load(item: any, modeIndex: number, shots: number): Promise<number | null> {
     return loadInstantly(item, modeIndex, shots);
+  },
+
+  /**
+   * Gives a piece of armour back up to `points` of the ablative DR it has
+   * spent (since 1.59.0): `drLost` goes down, never below 0. Returns the new
+   * `drLost`, or null for an item that isn't armour or a user who doesn't own it.
+   */
+  async restoreDr(item: any, points: number): Promise<number | null> {
+    if (item?.type !== "armor" || !item.isOwner) return null;
+    const lost = Math.max(0, Math.floor(Number(item.system?.drLost) || 0));
+    const restored = Math.max(0, Math.floor(Number(points) || 0));
+    const next = Math.max(0, lost - restored);
+    if (next !== lost) await item.update({ "system.drLost": next });
+    return next;
   },
 };
 
