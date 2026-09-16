@@ -22,6 +22,8 @@ import {
   techLevel,
   traitCategoryOf,
   linkedLine,
+  parseRadius,
+  areaNote,
   LINKED_MODE,
   FOLLOW_UP_MODE,
   parseSkillUsedWithModifier,
@@ -699,6 +701,49 @@ describe("a linked or follow-up mode", () => {
     expect(line.fragmentation).toBeUndefined();
     expect(line.affliction).toBeUndefined();
     expect(line.label).toBeUndefined();
+  });
+});
+
+/**
+ * How far an area attack reaches from where it lands (Campaigns p. 413). A
+ * circle says its radius; a cone says its width instead, and the two are
+ * different shapes.
+ */
+describe("parseRadius", () => {
+  it("reads the yards a record's own column states", () => {
+    expect(parseRadius("10yd")).toBe(10);
+    expect(parseRadius("1.5yd")).toBe(1.5);
+    expect(parseRadius("10 yd.")).toBe(10);
+    expect(parseRadius("1000yd")).toBe(1000);
+    expect(parseRadius("2 yards")).toBe(2);
+  });
+
+  it("reads a bare figure as yards, which is the unit the column is in", () => {
+    expect(parseRadius("4")).toBe(4);
+  });
+
+  it("reads nothing from a blank or unreadable column", () => {
+    expect(parseRadius("")).toBe(0);
+    expect(parseRadius(undefined)).toBe(0);
+    expect(parseRadius("varies")).toBe(0);
+  });
+});
+
+describe("areaNote", () => {
+  it("finds the figure a book prints beside the damage type", () => {
+    // Read to be reported, not to be used: the stun grenade's is a radius and
+    // a dazzle weapon's is a cone's width, and the column does not say which.
+    expect(areaNote("aff (10 yd.)")).toBe(10);
+    expect(areaNote("aff (3 yd)")).toBe(3);
+    expect(areaNote("(2yd.)")).toBe(2);
+  });
+
+  it("finds nothing in a plain damage type", () => {
+    expect(areaNote("burn")).toBe(0);
+    expect(areaNote("cr ex")).toBe(0);
+    expect(areaNote("cr ex [2d]")).toBe(0);
+    expect(areaNote("")).toBe(0);
+    expect(areaNote(undefined)).toBe(0);
   });
 });
 

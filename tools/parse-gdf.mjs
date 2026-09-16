@@ -1147,6 +1147,45 @@ function setModifiers(extras) {
  */
 const UNARMED_TABLE_WEAPONS = new Set(["Blackjack", "Sap"]);
 
+/**
+ * How far an area attack reaches from where it lands, in yards, where a GCA
+ * record says so in its own column: "radius(10yd)".
+ */
+export function parseRadius(value) {
+  const m = /^(\d+(?:\.\d+)?)\s*(?:yd\.?|yards?)?$/i.exec((value ?? "").trim());
+  return m ? Number(m[1]) : 0;
+}
+
+/**
+ * The figure a book prints beside a damage type, which a data file writes as a
+ * parenthetical: "aff (10 yd.)".
+ *
+ * It is not one fact. The Basic Set's stun grenade "affects a 10-yard radius"
+ * (Characters p. 277, note [5]); a dazzle weapon in a later book "projects a
+ * cone with the specified width at maximum range". Same syntax, two shapes,
+ * and the damage column alone does not say which. So it is read only where
+ * something else says: a `radius()` column, or the table below.
+ */
+export function areaNote(damtype) {
+  const m = /\((\d+(?:\.\d+)?)\s*(?:yd\.?|yards?)\s*\)/i.exec(damtype ?? "");
+  return m ? Number(m[1]) : 0;
+}
+
+/**
+ * The Basic Set's own weapons whose area the book states in a note the record
+ * does not carry, with the radius each covers. Every one is a circle, and the
+ * page saying so is beside it.
+ */
+const BASIC_SET_RADIUS = new Map([
+  // "A Vision and Hearing-Based affliction that affects a 10-yard radius."
+  ["Stun Grenade", 10],
+  // "Fills a 2-yard radius with smoke, teargas, etc." (note [4]).
+  ["Chemical Grenade", 2],
+  // "the Molotov cocktail sets fire to a one-yard radius" (Campaigns p. 411).
+  ["Molotov Cocktail", 1],
+]);
+
+
 export function parseDamage(damage, damtype) {
   // A range note after the type -- "aff (10 yd.)" on a stun grenade -- is a
   // note, not part of the type.
@@ -2116,6 +2155,24 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
       if ((LINKED_MODE.test(scope.name ?? "") || followUp) && into.length > 0) {
         into[into.length - 1].linked = linkedLine(result.mode, followUp, scope.name.trim());
         continue;
+      }
+
+      // How far an area attack reaches from where it lands (Campaigns p. 413).
+      // The record's own column is taken where it has one; otherwise the Basic
+      // Set's three, whose radius is in a note the record does not carry. The
+      // figure a book prints beside the damage type says nothing on its own --
+      // a radius on one weapon, a cone's width on another -- so it is reported
+      // rather than read.
+      if (!isMelee) {
+        const stated = parseRadius(scope.f.get("radius") ?? f.get("radius"));
+        const known = isSupplement(source) ? 0 : (BASIC_SET_RADIUS.get(name) ?? 0);
+        const radius = stated || known;
+        if (radius > 0) {
+          result.mode.radius = radius;
+          result.mode.areaAttack = true;
+        } else if (areaNote(scope.f.get("damtype"))) {
+          note(`${name}: damage type says "${(scope.f.get("damtype") ?? "").trim()}"; a radius or a cone's width, and the record does not say which`);
+        }
       }
 
       if (isMelee) meleeModes.push(...byUnarmedSkill(result.mode, scope.f.get("skillused")));

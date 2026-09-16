@@ -838,6 +838,23 @@ function rangedModeField() {
       min: 0,
     }),
     /**
+     * How far an area attack reaches from where it lands, in yards, for one
+     * that covers a circle rather than a cone (Campaigns p. 413). The Basic
+     * Set's stun grenade "affects a 10-yard radius" and its chemical grenade
+     * "fills a 2-yard radius" (Characters p. 277, notes [4] and [5]); a
+     * Molotov cocktail "sets fire to a one-yard radius" (Campaigns p. 411).
+     *
+     * Zero for an attack that covers no circle. A cone says its width in
+     * `coneMaxWidth` instead: the two are different shapes and a mode carries
+     * at most one of them.
+     */
+    radius: new fields.NumberField({
+      required: true,
+      nullable: false,
+      initial: 0,
+      min: 0,
+    }),
+    /**
      * How unwieldy the weapon is, as a penalty: it applies when firing from a
      * vehicle or in close combat, and to attempts to keep the weapon hidden
      * (GURPS Basic Set: Characters p. 270). Zero or negative, never positive.
