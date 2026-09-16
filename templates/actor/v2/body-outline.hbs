@@ -1,0 +1,49 @@
+{{!-- A body outline whose regions are the Basic Set's hit locations. Called
+     with locations, each carrying key, label, dr and selected. Clicking a
+     region highlights it here and in the table beside it. --}}
+<svg class="v2-body" viewBox="0 0 120 250" role="img" aria-label="{{localize 'GWORLD.SheetV2.BodyOutline'}}">
+  <g data-v2-location="skull" data-action="v2Location" class="{{#if (eq location 'skull')}}selected{{/if}}">
+    <title>{{localize "GWORLD.HitLocation.skull"}}</title>
+    <path d="M44 30 a16 15 0 0 1 32 0 z"></path>
+  </g>
+  <g data-v2-location="face" data-action="v2Location" class="{{#if (eq location 'face')}}selected{{/if}}">
+    <title>{{localize "GWORLD.HitLocation.face"}}</title>
+    <path d="M44 30 h32 c0 10 -7 16 -16 16 c-9 0 -16 -6 -16 -16 z"></path>
+  </g>
+  <g data-v2-location="eye" data-action="v2Location" class="{{#if (eq location 'eye')}}selected{{/if}}">
+    <title>{{localize "GWORLD.HitLocation.eye"}}</title>
+    <circle cx="54" cy="34" r="2.6"></circle><circle cx="66" cy="34" r="2.6"></circle>
+  </g>
+  <g data-v2-location="neck" data-action="v2Location" class="{{#if (eq location 'neck')}}selected{{/if}}">
+    <title>{{localize "GWORLD.HitLocation.neck"}}</title>
+    <rect x="53" y="46" width="14" height="8" rx="2"></rect>
+  </g>
+  <g data-v2-location="arm" data-action="v2Location" class="{{#if (eq location 'arm')}}selected{{/if}}">
+    <title>{{localize "GWORLD.HitLocation.arm"}}</title>
+    <rect x="22" y="56" width="14" height="60" rx="6"></rect><rect x="84" y="56" width="14" height="60" rx="6"></rect>
+  </g>
+  <g data-v2-location="torso" data-action="v2Location" class="{{#if (eq location 'torso')}}selected{{/if}}">
+    <title>{{localize "GWORLD.HitLocation.torso"}}</title>
+    <path d="M38 55 q22 -4 44 0 l2 58 h-48 z"></path>
+  </g>
+  <g data-v2-location="vitals" data-action="v2Location" class="v2-body-inner {{#if (eq location 'vitals')}}selected{{/if}}">
+    <title>{{localize "GWORLD.HitLocation.vitals"}}</title>
+    <rect x="50" y="68" width="20" height="26" rx="4"></rect>
+  </g>
+  <g data-v2-location="groin" data-action="v2Location" class="{{#if (eq location 'groin')}}selected{{/if}}">
+    <title>{{localize "GWORLD.HitLocation.groin"}}</title>
+    <path d="M36 113 h48 l-8 18 h-32 z"></path>
+  </g>
+  <g data-v2-location="hand" data-action="v2Location" class="{{#if (eq location 'hand')}}selected{{/if}}">
+    <title>{{localize "GWORLD.HitLocation.hand"}}</title>
+    <ellipse cx="29" cy="125" rx="7" ry="9"></ellipse><ellipse cx="91" cy="125" rx="7" ry="9"></ellipse>
+  </g>
+  <g data-v2-location="leg" data-action="v2Location" class="{{#if (eq location 'leg')}}selected{{/if}}">
+    <title>{{localize "GWORLD.HitLocation.leg"}}</title>
+    <rect x="43" y="131" width="15" height="92" rx="6"></rect><rect x="62" y="131" width="15" height="92" rx="6"></rect>
+  </g>
+  <g data-v2-location="foot" data-action="v2Location" class="{{#if (eq location 'foot')}}selected{{/if}}">
+    <title>{{localize "GWORLD.HitLocation.foot"}}</title>
+    <ellipse cx="49" cy="232" rx="10" ry="6"></ellipse><ellipse cx="71" cy="232" rx="10" ry="6"></ellipse>
+  </g>
+</svg>

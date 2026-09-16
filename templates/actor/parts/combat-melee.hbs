@@ -1,0 +1,80 @@
+{{!-- Shared by both character sheets: the combat tab's melee. --}}
+<div class="isec">
+  <div class="ish"><span class="num">03</span>{{localize "GWORLD.Section.MeleeAttacks"}}</div>
+  {{#if derived.melee.length}}
+    <table class="gt">
+      <thead>
+        <tr>
+          <th>{{localize "GWORLD.Column.Weapon"}}</th>
+          <th class="n">{{localize "GWORLD.Column.Skill"}}</th>
+          <th>{{localize "GWORLD.Column.Damage"}}</th>
+          <th class="c">{{localize "GWORLD.Column.Reach"}}</th>
+          <th class="c">{{localize "GWORLD.Secondary.Parry"}}</th>
+          <th class="c">ST</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each derived.melee as |atk|}}
+          <tr data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}" data-derived-mode="{{atk.derivedMode}}" {{#if atk.atDefault}}class="dim"{{/if}}>
+            <td>
+              <span class="wname">{{atk.name}}</span> <span class="wmode">{{atk.mode}}</span>
+              {{#if atk.atDefault}}<span class="tag" data-tooltip="{{localize 'GWORLD.Attack.AtDefaultHint'}}">{{localize "GWORLD.Skill.Untrained"}}</span>{{/if}}
+              {{#if atk.unready}}<span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.Ready.UnreadyHint'}}">{{localize "GWORLD.Ready.Unready"}}</span>
+              {{else if atk.readiesAfterAttack}}<span class="tag" data-tooltip="{{localize 'GWORLD.Ready.AfterAttackHint'}}">&Dagger;</span>{{/if}}
+              {{#if atk.minStPenalty}}<span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.Breakage.MinStHint'}}">ST {{atk.minStPenalty}}</span>{{/if}}
+              {{#if atk.hitModifier}}<span class="tag" data-tooltip="{{localize 'GWORLD.Attack.HitModifierHint'}}">{{localize "GWORLD.Attack.HitModifier" modifier=(signed atk.hitModifier)}}</span>{{/if}}
+              {{#unless (eq atk.condition "sound")}}<span class="tag tag-danger" data-tooltip="{{localize 'GWORLD.Breakage.ConditionHint'}}">{{localize (concat "GWORLD.Breakage.Condition." atk.condition)}}</span>{{/unless}}
+            </td>
+            <td class="n">
+              {{#if atk.skillLevel}}<span class="lvl">{{atk.skillLevel}}</span>{{else}}<span class="bad">&mdash;</span>{{/if}}
+            </td>
+            {{#if atk.affliction}}
+              <td class="dmg rollable" {{> "gworld.part.attack-melee-affliction" atk=atk}}>
+                {{atk.afflictionAttribute}}{{atk.afflictionModifier}}
+                <span class="dt">{{localize "GWORLD.Affliction.Short"}}</span>
+              </td>
+            {{else}}
+              <td class="dmg{{#if atk.damageRollable}} rollable{{/if}}"
+                  {{> "gworld.part.attack-melee-damage" atk=atk}}>{{atk.damage}}
+                <span class="dt">{{atk.damageType}}</span>
+                {{> "gworld.attackExtras" atk=atk}}
+              </td>
+            {{/if}}
+            <td class="c">{{atk.reach}}</td>
+            <td class="c">{{#if atk.parry}}{{atk.parry}}{{else}}&mdash;{{/if}}</td>
+            <td class="c">{{#if atk.minSt}}{{atk.minSt}}{{else}}&mdash;{{/if}}</td>
+            <td class="c">
+              {{#if atk.unready}}
+                {{!-- Swung and not yet back up: a Ready maneuver, not an attack. --}}
+                {{#if @root.editable}}
+                  <button type="button" class="ibtn tiny" data-action="readyWeapon"
+                          data-tooltip="{{localize 'GWORLD.Ready.Hint'}}">
+                    {{localize "GWORLD.Ready.Action"}}
+                  </button>
+                {{/if}}
+              {{else if atk.skillLevel}}
+                {{#if atk.usable}}
+                  <span class="rollable" {{> "gworld.part.attack-melee-roll" atk=atk}}>
+                    {{> "gworld.die"}}
+                  </span>
+                  {{#if ../rules.feint}}
+                    {{#unless (eq atk.feint false)}}
+                      <button type="button" class="ibtn tiny" data-action="feint"
+                              data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
+                              data-tooltip="{{localize "GWORLD.Feint.Hint"}}">
+                        {{localize "GWORLD.Feint.Action"}}
+                      </button>
+                    {{/unless}}
+                  {{/if}}
+                {{else}}
+                  <span class="bad" data-tooltip="{{localize "GWORLD.Melee.Unusable"}}">&mdash;</span>
+                {{/if}}
+              {{/if}}
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  {{/if}}
+</div>

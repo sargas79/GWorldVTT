@@ -1,0 +1,38 @@
+{{!-- Shared by both character sheets: the attributes tab's campaign. --}}
+<div class="isec">
+  <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.Campaign"}}</div>
+  <div class="g4">
+    <div class="fld">
+      <span class="fl">{{localize "GWORLD.Field.TechLevel"}}</span>
+      <div class="fi">
+        <input type="number" name="system.tl" value="{{system.tl}}" step="1" min="0"
+               style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+               {{#unless editable}}disabled{{/unless}}>
+      </div>
+    </div>
+    <div class="fld">
+      <span class="fl">{{localize "GWORLD.Field.SizeModifier"}}</span>
+      <div class="fi">
+        <input type="number" name="system.sm" value="{{system.sm}}" step="1"
+               style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+               {{#unless editable}}disabled{{/unless}}>
+      </div>
+    </div>
+    <div class="fld">
+      <span class="fl">{{localize "GWORLD.Field.StartingPoints"}}</span>
+      <div class="fi">
+        <input type="number" name="system.points.starting" value="{{system.points.starting}}" step="5" min="0"
+               style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+               {{#unless editable}}disabled{{/unless}}>
+      </div>
+    </div>
+    <div class="fld">
+      <span class="fl">{{localize "GWORLD.Field.DisadvantageLimit"}}</span>
+      <div class="fi">
+        <input type="number" name="system.points.disadvantageLimit" value="{{system.points.disadvantageLimit}}" step="5" min="0"
+               style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+               {{#unless editable}}disabled{{/unless}}>
+      </div>
+    </div>
+  </div>
+</div>

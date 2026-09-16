@@ -179,6 +179,19 @@ describe("module item types", () => {
     expect(api.builderTypesFor("gear")).toEqual([]);
   });
 
+  it("lists a type registered under either sheet's tab name wherever that name shows", async () => {
+    const api = await load();
+    expect(api.registerItemType({ module: "test-addon", type: "test-addon.charm", label: "Charms", tab: "gear" })).toBe("test-addon.charm");
+    expect(api.registerItemType({ module: "test-addon", type: "test-addon.map", label: "Maps", tab: "inventory" })).toBe("test-addon.map");
+    const owner = actor([
+      { id: "a", name: "Map", type: "test-addon.map", system: {} },
+      { id: "b", name: "Charm", type: "test-addon.charm", system: {} },
+    ]);
+    expect(api.itemSectionsFor(owner, ["gear", "inventory"]).map((s) => s.type)).toEqual(["test-addon.charm", "test-addon.map"]);
+    expect(api.itemSectionsFor(owner, "gear").map((s) => s.type)).toEqual(["test-addon.charm"]);
+    expect(api.tabHasAddonSections(owner, ["description", "journal"])).toBe(false);
+  });
+
   it("summarises a module's compendium entry by its columns, reading the fields it names", async () => {
     const api = await load();
     api.registerItemType({

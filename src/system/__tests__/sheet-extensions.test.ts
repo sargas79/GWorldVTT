@@ -90,6 +90,19 @@ describe("sheet sections", () => {
     expect((await api.renderSections("character", "gear", {}, {})).end).toEqual([]);
   });
 
+  /** A module written for the classic sheet shows on the new one, and the other way round. */
+  it("gathers the sections of every name a tab shows, in the order of those names", async () => {
+    const api = await load();
+    expect(api.registerSheetSection({ module: "test-addon", key: "wounds", sheet: "character", tab: "body", template: "wounds.hbs" })).toBe("test-addon.wounds");
+    api.registerSheetSection({ module: "test-addon", key: "stance", sheet: "character", tab: "combat", template: "stance.hbs" });
+    expect(api.registerSheetSection({ module: "test-addon", key: "pack", sheet: "character", tab: "inventory", template: "pack.hbs" })).toBe("test-addon.pack");
+
+    expect((await api.renderSections("character", ["combat", "body"], {}, {})).end.map((s) => s.id)).toEqual(["test-addon.stance", "test-addon.wounds"]);
+    expect((await api.renderSections("character", ["gear", "inventory"], {}, {})).end.map((s) => s.id)).toEqual(["test-addon.pack"]);
+    expect((await api.renderSections("character", "body", {}, {})).end.map((s) => s.id)).toEqual(["test-addon.wounds"]);
+    expect(api.registerSheetSection({ module: "test-addon", key: "nowhere", sheet: "character", tab: "grimoire" as never, template: "x.hbs" })).toBeNull();
+  });
+
   it("refuses a character section with no tab, and a key used twice", async () => {
     const api = await load();
     expect(api.registerSheetSection({ module: "test-addon", key: "a", sheet: "character", template: "a.hbs" })).toBeNull();

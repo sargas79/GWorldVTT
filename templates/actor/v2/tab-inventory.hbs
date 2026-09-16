@@ -1,0 +1,230 @@
+<section class="tab v2-tab v2-list-tab v2-inventory{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+  {{> "gworld.addonSheetSections" sections=addonSheetSections.start}}
+
+  {{!-- What the load comes to, and what it costs in Move and Dodge. --}}
+  <div class="v2-load-strip">
+    <span>{{localize "GWORLD.Gear.Carried"}} <b>{{decimal v2.inventory.strip.carried 1}} lb</b> / {{localize "GWORLD.Secondary.BasicLift"}} <b>{{v2.inventory.strip.basicLift}} lb</b></span>
+    <span class="v2-load-pill{{#if v2.inventory.strip.encumbered}} heavy{{/if}}{{#if v2.inventory.strip.overloaded}} over{{/if}}"
+          data-tooltip="{{#if v2.inventory.strip.overloaded}}{{localize 'GWORLD.Hint.Overloaded'}}{{/if}}">{{v2.inventory.strip.level}}</span>
+    <span>{{localize "GWORLD.Secondary.Move"}} <b>{{v2.inventory.strip.move}}</b></span>
+    <span>{{localize "GWORLD.Secondary.Dodge"}} <b>{{#if v2.inventory.strip.dodge}}{{v2.inventory.strip.dodge}}{{else}}&mdash;{{/if}}</b>{{#if v2.inventory.strip.dodgePenalty}} <em class="v2-warn">({{v2.inventory.strip.dodgePenalty}})</em>{{/if}}</span>
+    <span class="v2-load-money">{{localize "GWORLD.Life.Cash"}} <b>${{v2.inventory.strip.money}}</b></span>
+  </div>
+  <div class="v2-tiers">
+    {{#each v2.inventory.strip.tiers as |tier|}}
+      <span class="v2-tier{{#if tier.active}} active{{/if}}"><b>{{localize tier.label}}</b> &le; {{tier.limit}} lb &middot; {{localize "GWORLD.Secondary.Move"}} {{tier.move}}</span>
+    {{/each}}
+  </div>
+
+  <div class="v2-split">
+    <div class="v2-list-col">
+      <div class="v2-inventory-grid">
+        {{!-- What is worn, area by area. --}}
+        <div class="v2-panel v2-equipped">
+          <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Equipped"}}</h2>
+          <ul class="v2-areas">
+            {{#each v2.inventory.areas as |area|}}
+              <li class="v2-area{{#unless area.pieces.length}} empty{{/unless}}">
+                <span class="v2-area-name">{{area.label}}</span>
+                {{#each area.pieces as |piece|}}
+                  <button type="button" class="v2-area-piece" data-item-id="{{piece.id}}" data-v2-row="inventory:item:{{piece.id}}" data-action="v2Select">
+                    {{piece.name}} <span>(DR {{piece.dr}})</span>
+                  </button>
+                {{else}}
+                  <span class="v2-muted">{{localize "GWORLD.SheetV2.Nothing"}}</span>
+                {{/each}}
+              </li>
+            {{/each}}
+            {{#each v2.inventory.shields as |shield|}}
+              <li class="v2-area">
+                <span class="v2-area-name">{{localize "TYPES.Item.shield"}}</span>
+                <button type="button" class="v2-area-piece" data-item-id="{{shield.id}}" data-v2-row="inventory:item:{{shield.id}}" data-action="v2Select">
+                  {{shield.name}} <span>(DB {{shield.db}})</span>
+                </button>
+              </li>
+            {{/each}}
+          </ul>
+        </div>
+
+        <div class="v2-inventory-main">
+          {{!-- What is ready to hand. --}}
+          <div class="v2-panel v2-panel-dark v2-readied-items">
+            <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Readied"}}</h2>
+            {{#if v2.inventory.readied.length}}
+              <div class="v2-quick-slots">
+                {{#each v2.inventory.readied as |item|}}
+                  <div class="v2-slot{{#if item.selected}} selected{{/if}}" data-item-id="{{item.id}}" data-v2-row="inventory:{{item.key}}" data-action="v2Select" tabindex="0">
+                    <span class="v2-slot-name">{{item.name}}</span>
+                    <img src="{{item.img}}" alt="">
+                    <span class="v2-slot-meta">{{#if (gt item.quantity 1)}}&times;{{item.quantity}} &middot; {{/if}}{{decimal item.weight 1}} lb</span>
+                    <span class="v2-slot-state">{{#if item.equipped}}{{localize "GWORLD.Item.Readied"}}{{else}}{{localize "GWORLD.Gear.Carried"}}{{/if}}</span>
+                    {{#if @root.editable}}
+                      <span class="v2-slot-buttons">
+                        <button type="button" class="v2-button v2-button-small{{#if item.equipped}} v2-button-gold{{/if}}" data-action="toggleEquipped">{{#if item.equipped}}{{localize "GWORLD.SheetV2.Unequip"}}{{else}}{{localize "GWORLD.SheetV2.Equip"}}{{/if}}</button>
+                        {{#if item.canCarry}}
+                          <button type="button" class="v2-button v2-button-small" data-action="v2ToggleCarried">{{localize "GWORLD.SheetV2.Stow"}}</button>
+                        {{/if}}
+                        <button type="button" class="v2-button v2-button-small v2-button-red" data-action="deleteItem">{{localize "GWORLD.SheetV2.Drop"}}</button>
+                      </span>
+                    {{/if}}
+                  </div>
+                {{/each}}
+              </div>
+            {{else}}
+              <p class="v2-empty">{{localize "GWORLD.SheetV2.NothingReady"}}</p>
+            {{/if}}
+          </div>
+
+          {{!-- Everything carried, then what is stored. --}}
+          <div class="v2-panel v2-backpack">
+            <div class="v2-ph v2-ph-tools">
+              <h2>{{localize "GWORLD.SheetV2.Backpack"}}</h2>
+              <label class="v2-search">
+                {{> "gworld.search"}}
+                <input type="search" data-v2-filter="inventory" placeholder="{{localize 'GWORLD.SheetV2.Search'}}"
+                       aria-label="{{localize 'GWORLD.SheetV2.SearchGear'}}" autocomplete="off">
+              </label>
+            </div>
+            <div class="v2-chips">
+              {{#each v2.inventory.chips as |chip|}}
+                <button type="button" class="v2-filter-chip{{#if chip.active}} active{{/if}}" data-action="v2Chip" data-v2-chip="inventory:{{chip.key}}"
+                        aria-pressed="{{#if chip.active}}true{{else}}false{{/if}}">{{chip.label}}{{#if chip.count}} <span>{{chip.count}}</span>{{/if}}</button>
+              {{/each}}
+            </div>
+            {{#if editable}}
+              <div class="v2-detail-actions">
+                <button type="button" class="v2-button" data-action="browseCompendium" data-item-types="equipment,armor,shield" data-browse-title="GWORLD.Picker.Gear">{{> "gworld.search"}} {{localize "GWORLD.Action.BrowseGear"}}</button>
+                <button type="button" class="v2-button" data-action="createItem" data-item-type="equipment">{{> "gworld.plus"}} {{localize "GWORLD.Action.AddEquipment"}}</button>
+                <button type="button" class="v2-button" data-action="createItem" data-item-type="armor">{{> "gworld.plus"}} {{localize "GWORLD.Action.AddArmor"}}</button>
+                <button type="button" class="v2-button" data-action="createItem" data-item-type="shield">{{> "gworld.plus"}} {{localize "GWORLD.Action.AddShield"}}</button>
+              </div>
+            {{/if}}
+            <div class="v2-table-wrap" data-v2-list="inventory">
+              <table class="v2-gear-table">
+                <thead>
+                  <tr>
+                    {{#each v2.inventory.columns as |col|}}
+                      <th class="{{#unless (eq col.key 'name')}}n{{/unless}}">
+                        <button type="button" class="v2-sort{{#if col.active}} active{{/if}}" data-action="v2GearSort" data-v2-gear-sort="{{col.key}}"
+                                aria-label="{{localize 'GWORLD.SheetV2.SortByColumn' column=col.label}}">{{col.label}}{{#if col.active}}{{#if col.descending}} &uarr;{{else}} &darr;{{/if}}{{/if}}</button>
+                      </th>
+                    {{/each}}
+                    <th></th>
+                  </tr>
+                </thead>
+                {{#each v2.inventory.carriedGroups as |group|}}
+                  <tbody data-v2-group data-v2-chip-group="inventory:{{group.key}}" data-v2-drop="carried"
+                         class="{{#unless (or (eq @root.v2.inventory.chip 'all') (eq @root.v2.inventory.chip group.key))}}v2-off{{/unless}}">
+                    <tr class="v2-gear-group"><td colspan="5">{{localize group.label}}</td></tr>
+                    {{#each group.rows as |row|}}
+                      <tr class="{{#if (eq (concat 'item:' row.id) @root.v2.inventory.selected)}}selected{{/if}}" data-item-id="{{row.id}}"
+                          data-v2-row="inventory:item:{{row.id}}" data-v2-name="{{row.name}}" data-action="v2Select"
+                          {{#if (and row.canCarry @root.editable)}}draggable="true" data-v2-draggable{{/if}}>
+                        <td>
+                          {{row.name}}
+                          {{#if row.equipped}}<span class="v2-tag v2-tag-steel">{{localize "GWORLD.Item.Equipped"}}</span>{{/if}}
+                          {{#if row.legality.label}}<span class="v2-tag{{#if row.legality.restricted}} v2-tag-red{{/if}}">{{row.legality.label}}</span>{{/if}}
+                        </td>
+                        <td class="n">{{row.quantity}}</td>
+                        <td class="n">{{decimal row.weight 1}} lb</td>
+                        <td class="n">${{row.cost}}</td>
+                        <td class="c">
+                          {{#if @root.editable}}
+                            {{#if row.canCarry}}
+                              <button type="button" class="iconbtn rollable" data-action="v2ToggleCarried"
+                                      data-tooltip="{{localize 'GWORLD.SheetV2.Stow'}}" aria-label="{{localize 'GWORLD.SheetV2.Stow'}}">&darr;</button>
+                            {{/if}}
+                            <button type="button" class="iconbtn rollable" data-action="deleteItem"
+                                    title="{{localize 'GWORLD.SheetV2.Drop'}}" aria-label="{{localize 'GWORLD.SheetV2.Drop'}}">{{> "gworld.trash"}}</button>
+                          {{/if}}
+                        </td>
+                      </tr>
+                    {{/each}}
+                  </tbody>
+                {{/each}}
+                <tbody data-v2-group data-v2-chip-group="inventory:stored" data-v2-drop="stored"
+                       class="v2-stored{{#unless (or (eq v2.inventory.chip 'all') (eq v2.inventory.chip 'stored'))}} v2-off{{/unless}}">
+                  <tr class="v2-gear-group"><td colspan="5">{{localize "GWORLD.Gear.Stored"}} <span class="v2-muted">&middot; {{localize "GWORLD.Hint.StoredNoEncumbrance"}}</span></td></tr>
+                  {{#each v2.inventory.stored as |row|}}
+                    <tr class="dim{{#if (eq (concat 'item:' row.id) @root.v2.inventory.selected)}} selected{{/if}}" data-item-id="{{row.id}}"
+                        data-v2-row="inventory:item:{{row.id}}" data-v2-name="{{row.name}}" data-action="v2Select"
+                        {{#if @root.editable}}draggable="true" data-v2-draggable{{/if}}>
+                      <td>{{row.name}}</td>
+                      <td class="n">{{row.quantity}}</td>
+                      <td class="n">{{decimal row.weight 1}} lb</td>
+                      <td class="n">${{row.cost}}</td>
+                      <td class="c">
+                        {{#if @root.editable}}
+                          <button type="button" class="iconbtn rollable" data-action="v2ToggleCarried"
+                                  data-tooltip="{{localize 'GWORLD.SheetV2.Carry'}}" aria-label="{{localize 'GWORLD.SheetV2.Carry'}}">&uarr;</button>
+                          <button type="button" class="iconbtn rollable" data-action="deleteItem"
+                                  title="{{localize 'GWORLD.SheetV2.Drop'}}" aria-label="{{localize 'GWORLD.SheetV2.Drop'}}">{{> "gworld.trash"}}</button>
+                        {{/if}}
+                      </td>
+                    </tr>
+                  {{else}}
+                    <tr><td colspan="5" class="v2-muted">{{localize "GWORLD.SheetV2.DragToStore"}}</td></tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="v2-panel">
+        {{> "gworld.part.gear-money"}}
+      </div>
+      {{> "gworld.addonSections"}}
+    </div>
+
+    {{!-- The selected item in full. --}}
+    <aside class="v2-detail-col" aria-live="polite">
+      {{#each v2.inventory.details as |item|}}
+        <article class="v2-panel v2-detail v2-item-detail" data-v2-detail="inventory:{{item.key}}" data-item-id="{{item.id}}" {{#unless item.selected}}hidden{{/unless}}>
+          <header class="v2-detail-head v2-detail-red">
+            <h3>{{item.name}}</h3>
+          </header>
+          <span class="v2-detail-sub">{{item.typeLabel}} &middot; {{item.groupLabel}}</span>
+          <ul class="v2-breakdown">
+            {{#each item.attacks as |atk|}}
+              <li><span>{{atk.mode}}{{#if atk.skillName}} ({{atk.skillName}}){{/if}}</span><b>{{#if atk.skillLevel}}{{atk.skillLevel}}{{else}}&mdash;{{/if}}</b></li>
+              <li class="v2-sub"><span>{{atk.damage}} {{atk.damageType}}{{#if atk.ranged}} &middot; Acc {{atk.accuracy}} &middot; {{atk.range}}{{#if atk.recoil}} &middot; Rcl {{atk.recoil}}{{/if}}{{#if atk.bulk}} &middot; Bulk {{atk.bulk}}{{/if}}{{else}} &middot; {{localize "GWORLD.Column.Reach"}} {{atk.reach}} &middot; {{localize "GWORLD.Secondary.Parry"}} {{#if atk.parry}}{{atk.parry}}{{else}}&mdash;{{/if}}{{/if}}</span></li>
+            {{/each}}
+            {{#if item.dr}}<li><span>DR</span><b>{{item.dr}}</b></li><li class="v2-sub"><span>{{item.coverage}}</span></li>{{/if}}
+            {{#if item.db}}<li><span>DB</span><b>{{item.db}}</b></li>{{/if}}
+            <li><span>{{localize "GWORLD.Column.Weight"}}</span><b>{{decimal item.weight 1}} lb{{#if (gt item.quantity 1)}} &times; {{item.quantity}}{{/if}}</b></li>
+            <li><span>{{localize "GWORLD.Column.Cost"}}</span><b>${{item.cost}}{{#if (gt item.quantity 1)}} &times; {{item.quantity}}{{/if}}</b></li>
+            {{#if item.legality.label}}
+              <li><span>{{localize "GWORLD.SheetV2.Legality"}}</span><b class="{{#if item.legality.restricted}}v2-bad{{/if}}">{{item.legality.label}}{{#if item.legality.status}} &middot; {{localize (concat 'GWORLD.Legality.Short.' item.legality.status)}}{{/if}}</b></li>
+            {{/if}}
+          </ul>
+          {{#if item.descriptionHtml}}<div class="v2-prose">{{{item.descriptionHtml}}}</div>{{/if}}
+          {{#if item.reference}}<p class="v2-reference">{{item.reference}}</p>{{/if}}
+          {{#if item.vehicle}}
+            <div class="v2-detail-actions">
+              <button type="button" class="v2-button" data-action="controlVehicle">{{> "gworld.die"}} {{localize "GWORLD.Hazard.Control"}}</button>
+              <button type="button" class="v2-button" data-action="shotAtVehicle">{{> "gworld.die"}} {{localize "GWORLD.Vehicle.ShotAt"}}</button>
+            </div>
+          {{/if}}
+          <div class="v2-detail-actions v2-stacked">
+            {{#if @root.editable}}
+              {{#if item.equippable}}
+                <button type="button" class="v2-button v2-button-steel" data-action="toggleEquipped">{{#if item.equipped}}{{localize "GWORLD.SheetV2.Unequip"}}{{else}}{{localize "GWORLD.SheetV2.Equip"}}{{/if}}</button>
+              {{/if}}
+              {{#if item.canCarry}}
+                <button type="button" class="v2-button v2-button-steel" data-action="v2ToggleCarried">{{#if item.carried}}{{localize "GWORLD.SheetV2.MoveToStorage"}}{{else}}{{localize "GWORLD.SheetV2.Carry"}}{{/if}}</button>
+              {{/if}}
+            {{/if}}
+            <button type="button" class="v2-button" data-action="editItem">{{localize "GWORLD.SheetV2.Edit"}}</button>
+            {{#if @root.editable}}
+              <button type="button" class="v2-button v2-button-red" data-action="deleteItem">{{localize "GWORLD.SheetV2.Drop"}}</button>
+            {{/if}}
+          </div>
+        </article>
+      {{else}}
+        <div class="v2-panel v2-detail"><p class="v2-empty">{{localize "GWORLD.SheetV2.NothingCarried"}}</p></div>
+      {{/each}}
+    </aside>
+  </div>
+</section>

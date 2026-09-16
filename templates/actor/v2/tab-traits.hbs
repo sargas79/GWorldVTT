@@ -1,0 +1,160 @@
+<section class="tab v2-tab v2-list-tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+  {{> "gworld.addonSheetSections" sections=addonSheetSections.start}}
+
+  <div class="v2-split">
+    <div class="v2-list-col">
+      <div class="v2-toolbar">
+        <label class="v2-search v2-search-wide">
+          {{> "gworld.search"}}
+          <input type="search" data-v2-filter="traits" placeholder="{{localize 'GWORLD.SheetV2.SearchTraits'}}…"
+                 aria-label="{{localize 'GWORLD.SheetV2.SearchTraits'}}" autocomplete="off">
+        </label>
+      </div>
+      <div class="v2-chips v2-chip-row" role="toolbar" aria-label="{{localize 'GWORLD.SheetV2.Filter'}}">
+        {{#each v2.traits.chips as |chip|}}
+          <button type="button" class="v2-filter-chip{{#if chip.active}} active{{/if}}" data-action="v2Chip" data-v2-chip="traits:{{chip.key}}"
+                  aria-pressed="{{#if chip.active}}true{{else}}false{{/if}}">{{chip.label}}{{#if chip.count}} <span>{{chip.count}}</span>{{/if}}</button>
+        {{/each}}
+      </div>
+
+      <div class="v2-groups" data-v2-list="traits">
+        {{#each v2.traits.groups as |group|}}
+          <details class="v2-group v2-trait-group v2-cat-{{group.key}}{{#unless (or (eq @root.v2.traits.chip 'all') (eq @root.v2.traits.chip group.key))}} v2-off{{/unless}}"
+                   data-v2-fold="traits:{{group.key}}" data-v2-group data-v2-chip-group="traits:{{group.key}}" {{#if group.open}}open{{/if}}>
+            <summary class="v2-group-head">
+              <span class="v2-group-title">{{group.label}}</span>
+              <span class="v2-group-sub{{#if (and group.negative group.total)}} v2-bad{{/if}}">{{group.total}} CP</span>
+              {{#if @root.editable}}
+                <span class="v2-group-tools">
+                  <button type="button" class="v2-button v2-button-small" data-action="browseCompendium" data-item-types="trait"
+                          data-categories="{{group.browseCategories}}" data-browse-title="{{group.browseTitle}}">{{> "gworld.search"}} {{localize "GWORLD.SheetV2.Browse"}}</button>
+                  <button type="button" class="v2-button v2-button-small" data-action="createItem" data-item-type="trait"
+                          data-category="{{group.key}}">{{> "gworld.plus"}} {{localize "GWORLD.SheetV2.Add"}}</button>
+                </span>
+              {{/if}}
+              <span class="v2-chevron" aria-hidden="true">{{> "gworld.v2icon.chevron"}}</span>
+            </summary>
+            <div class="v2-rows" role="listbox" aria-label="{{group.label}}">
+              {{#each group.rows as |row|}}
+                <div class="v2-row v2-trait v2-cat-{{row.category}}{{#if (eq row.key @root.v2.traits.selected)}} selected{{/if}}"
+                     data-item-id="{{row.id}}" data-v2-row="traits:{{row.key}}" data-v2-name="{{row.name}}"
+                     data-action="v2Select" role="option" tabindex="0"
+                     aria-selected="{{#if (eq row.key @root.v2.traits.selected)}}true{{else}}false{{/if}}">
+                  <span class="v2-row-name">
+                    {{row.name}}{{#if row.levelled}} <span class="v2-levels">{{row.levels}}{{#if row.levelName}} &middot; {{row.levelName}}{{/if}}</span>{{/if}}
+                    {{#if row.applied}}<span class="v2-tag v2-tag-steel" data-tooltip="{{localize 'GWORLD.Trait.AppliedHint'}}">{{localize "GWORLD.Trait.Applied"}}</span>{{/if}}
+                  </span>
+                  <span class="v2-row-cp{{#if row.negative}} v2-bad{{/if}}">{{row.points}} CP</span>
+                  <span class="v2-row-summary">{{row.summary}}</span>
+                </div>
+              {{/each}}
+              {{#unless group.rows.length}}<p class="v2-empty">{{localize "GWORLD.SheetV2.NoneYet"}}</p>{{/unless}}
+            </div>
+          </details>
+        {{/each}}
+
+        {{!-- What the character was built from. --}}
+        <div class="v2-panel v2-group-panel{{#unless (or (eq v2.traits.chip 'all') (eq v2.traits.chip 'templates'))}} v2-off{{/unless}}" data-v2-chip-group="traits:templates">
+          {{> "gworld.part.traits-templates"}}
+        </div>
+        <div class="v2-panel v2-group-panel{{#unless (eq v2.traits.chip 'all')}} v2-off{{/unless}}" data-v2-chip-group="traits:extra">
+          {{> "gworld.part.traits-psionics"}}
+          {{> "gworld.part.traits-granted"}}
+        </div>
+      </div>
+
+      {{!-- Where the points went, and the campaign's limit on disadvantages. --}}
+      <div class="v2-summary-bar">
+        <span>{{localize "GWORLD.SheetV2.PointSummary"}}:</span>
+        <span>{{localize "GWORLD.SheetV2.Categories.advantage"}} <b class="v2-steel">{{v2.traits.summary.advantages}}</b></span>
+        <span>{{localize "GWORLD.SheetV2.Categories.perk"}} <b class="v2-steel">{{v2.traits.summary.perks}}</b></span>
+        <span>{{localize "GWORLD.SheetV2.Categories.disadvantage"}} <b class="v2-bad">{{v2.traits.summary.disadvantages}}</b></span>
+        <span>{{localize "GWORLD.SheetV2.Categories.quirk"}} <b class="v2-bad">{{v2.traits.summary.quirks}}</b></span>
+        <span class="{{#if v2.traits.summary.overLimit}}v2-bad{{/if}}" data-tooltip="{{localize 'GWORLD.Hint.DisadvantageLimit'}}">
+          {{localize "GWORLD.SheetV2.Limit" total=v2.traits.summary.disadvantageTotal limit=v2.traits.summary.disadvantageLimit}}
+        </span>
+        <span class="v2-summary-total">{{localize "GWORLD.SheetV2.Total"}} <b>{{v2.traits.summary.total}}</b></span>
+      </div>
+      {{> "gworld.addonSections"}}
+    </div>
+
+    <aside class="v2-detail-col" aria-live="polite">
+      {{#each v2.traits.rows as |row|}}
+        <article class="v2-panel v2-detail v2-cat-{{row.category}}" data-v2-detail="traits:{{row.key}}" data-item-id="{{row.id}}" {{#unless row.selected}}hidden{{/unless}}>
+          <header class="v2-detail-head v2-detail-plain">
+            <h3>{{row.name}}</h3>
+            <span class="v2-detail-cp{{#if row.negative}} v2-bad{{/if}}">{{row.points}} CP</span>
+          </header>
+          <span class="v2-cat-badge v2-cat-badge-{{row.category}}">{{row.categoryLabel}}</span>
+          {{#if row.descriptionHtml}}
+            <div class="v2-prose">{{{row.descriptionHtml}}}</div>
+          {{/if}}
+          {{#if row.reference}}<p class="v2-reference">{{row.reference}}</p>{{/if}}
+
+          {{#if row.mechanics.length}}
+            <div class="v2-box">
+              <h4>{{localize "GWORLD.SheetV2.Mechanics"}}</h4>
+              <ul>
+                {{#each row.mechanics as |m|}}
+                  <li>{{#if m.numeric}}{{signed m.value}} {{/if}}{{m.label}}{{#unless m.numeric}}{{#if m.value}} {{m.value}}{{/if}}{{/unless}}</li>
+                {{/each}}
+              </ul>
+              <p class="v2-note">{{localize "GWORLD.Trait.AppliedHint"}}</p>
+            </div>
+          {{/if}}
+
+          {{#if (or row.levelled row.modifiers.length row.reactionModifier row.selfControl row.weakness)}}
+            <div class="v2-box">
+              <h4>{{localize "GWORLD.SheetV2.Details"}}</h4>
+              {{#if row.levelled}}
+                <div class="v2-box-line">
+                  <span>{{localize "GWORLD.Trait.Levels"}}</span>
+                  {{#if @root.editable}}
+                    <span class="ptstep">
+                      <button type="button" data-action="stepLevels" data-step="down" aria-label="{{localize 'GWORLD.Trait.OneLess'}}">&minus;</button>
+                      <input type="number" min="0" step="1" value="{{row.levels}}" data-item-field="system.levels"
+                             id="{{@root.sheetId}}-{{row.id}}-levels" aria-label="{{localize 'GWORLD.Trait.Levels'}}">
+                      <button type="button" data-action="stepLevels" data-step="up" aria-label="{{localize 'GWORLD.Trait.OneMore'}}">+</button>
+                    </span>
+                  {{else}}<b>{{row.levels}}</b>{{/if}}
+                </div>
+                {{#if row.improve}}
+                  <div class="v2-box-line{{#if row.improve.overspends}} v2-bad{{/if}}">
+                    <span>{{localize "GWORLD.SheetV2.NextLevel" level=row.improve.to}}</span>
+                    <b>{{localize "GWORLD.SheetV2.CostCp" cost=row.improve.cost}}</b>
+                  </div>
+                  {{#if row.improve.overspends}}<p class="v2-note v2-bad">{{localize "GWORLD.SheetV2.WouldOverspend" points=row.improve.overBy}}</p>{{/if}}
+                {{/if}}
+              {{/if}}
+              {{#if row.modifiers.length}}
+                <div class="v2-chips">
+                  {{#each row.modifiers as |m|}}<span class="v2-tag">{{signed m.value}}%{{#if m.name}} {{m.name}}{{/if}}</span>{{/each}}
+                </div>
+              {{/if}}
+              {{#if row.reactionModifier}}
+                <div class="v2-box-line"><span>{{localize "GWORLD.Trait.Reaction"}}</span><b>{{signed row.reactionModifier}}</b></div>
+              {{/if}}
+            </div>
+          {{/if}}
+
+          <div class="v2-detail-actions">
+            {{#if row.selfControl}}
+              <button type="button" class="v2-button v2-button-steel rollable" data-action="selfControlRoll"
+                      data-tooltip="{{localize 'GWORLD.Trait.SelfControlRollHint'}}">{{> "gworld.die"}} CR {{row.selfControl}}</button>
+            {{/if}}
+            {{#if row.weakness}}
+              <button type="button" class="v2-button v2-button-steel rollable" data-action="weaknessExposure"
+                      data-tooltip="{{localize 'GWORLD.Weakness.ExposedHint'}}">{{localize "GWORLD.Weakness.Exposed"}}</button>
+            {{/if}}
+            <button type="button" class="v2-button" data-action="editItem">{{localize "GWORLD.SheetV2.Edit"}}</button>
+            {{#if @root.editable}}
+              <button type="button" class="v2-button v2-button-red" data-action="deleteItem">{{> "gworld.trash"}} {{localize "GWORLD.Action.Delete"}}</button>
+            {{/if}}
+          </div>
+        </article>
+      {{else}}
+        <div class="v2-panel v2-detail"><p class="v2-empty">{{localize "GWORLD.SheetV2.SelectSomething"}}</p></div>
+      {{/each}}
+    </aside>
+  </div>
+</section>

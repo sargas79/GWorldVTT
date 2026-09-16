@@ -1,0 +1,68 @@
+{{!-- Shared by both character sheets: the description tab's npc. --}}
+{{#if npc}}
+  {{!-- What only an NPC has: the one-pane NPC sheet shows these, and this
+       is where they are changed. --}}
+  <div class="isec">
+    <div class="ish"><span class="num">00</span>{{localize "GWORLD.Npc.Section"}}</div>
+    <div class="g4">
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Npc.GroupSize"}}</span>
+        <div class="fi"><input type="number" name="system.groupSize" value="{{system.groupSize}}" min="1" step="1" {{#unless editable}}disabled{{/unless}}></div>
+      </div>
+      <div class="fld" style="grid-column: span 3">
+        <span class="fl">{{localize "GWORLD.Npc.Tactics"}}</span>
+        <div class="fi"><input type="text" name="system.tactics" value="{{system.tactics}}"
+                               placeholder="{{localize 'GWORLD.Npc.TacticsPlaceholder'}}" {{#unless editable}}disabled{{/unless}}></div>
+      </div>
+    </div>
+    {{#if npc.cannonFodderInPlay}}
+      <label class="inote icheck" data-tooltip="{{localize 'GWORLD.Cinematic.CannonFodderHint'}}">
+        <input type="checkbox" name="system.cannonFodder" {{checked system.cannonFodder}} {{#unless editable}}disabled{{/unless}}>
+        <span>{{localize "GWORLD.Cinematic.CannonFodder"}}</span>
+      </label>
+    {{/if}}
+    <label class="inote icheck">
+      <input type="checkbox" name="system.swarm.isSwarm" {{checked system.swarm.isSwarm}} {{#unless editable}}disabled{{/unless}}>
+      <span>{{localize "GWORLD.Npc.IsSwarm"}}</span>
+    </label>
+    {{#if system.swarm.isSwarm}}
+      <div class="g4">
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Npc.SwarmKind"}}</span>
+          <div class="fi">
+            <select name="system.swarm.kind" {{#unless editable}}disabled{{/unless}}>
+              {{selectOptions npc.swarmKinds selected=system.swarm.kind localize=true}}
+            </select>
+          </div>
+        </div>
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Npc.SwarmDamage"}}</span>
+          <div class="fi"><input type="text" name="system.swarm.damage" value="{{system.swarm.damage}}" placeholder="1d-2" {{#unless editable}}disabled{{/unless}}></div>
+        </div>
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Npc.SwarmFlatInjury"}}</span>
+          <div class="fi"><input type="number" name="system.swarm.flatInjury" value="{{system.swarm.flatInjury}}" min="0" step="1" {{#unless editable}}disabled{{/unless}}></div>
+        </div>
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Npc.SwarmDamageType"}}</span>
+          <div class="fi">
+            <select name="system.swarm.damageType" {{#unless editable}}disabled{{/unless}}>
+              {{selectOptions npc.damageTypes selected=system.swarm.damageType localize=true}}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="g4">
+        <div class="fld" style="grid-column: span 3">
+          <span class="fl">{{localize "GWORLD.Npc.SwarmAbout"}}</span>
+          <div class="fi"><input type="text" name="system.swarm.about" value="{{system.swarm.about}}"
+                                 placeholder="{{localize 'GWORLD.Npc.SwarmAboutPlaceholder'}}" {{#unless editable}}disabled{{/unless}}></div>
+        </div>
+        <label class="inote icheck">
+          <input type="checkbox" name="system.swarm.flying" {{checked system.swarm.flying}} {{#unless editable}}disabled{{/unless}}>
+          <span>{{localize "GWORLD.Npc.SwarmFlying"}}</span>
+        </label>
+      </div>
+    {{/if}}
+  </div>
+{{/if}}

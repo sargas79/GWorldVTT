@@ -19,6 +19,7 @@
  */
 
 import { registerPoison } from "./poison-registry.js";
+import { TAB_NAMES, type TabName } from "./sheet-tabs.js";
 
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
@@ -433,9 +434,12 @@ export async function updateExtension(document: any, module: string, patch: Reco
 
 // ── a module's item types ──────────────────────────────────────────────────
 
-/** Where on the character sheet a module's item type is listed. */
-export const SHEET_TABS = ["attributes", "skills", "magic", "traits", "combat", "body", "gear", "description"] as const;
-export type SheetTab = (typeof SHEET_TABS)[number];
+/**
+ * Where on the character sheet a module's item type is listed: a classic
+ * tab's name or the new sheet's (see sheet-tabs.ts for where each shows).
+ */
+export const SHEET_TABS = TAB_NAMES;
+export type SheetTab = TabName;
 
 /** The guided-build steps a module's type can be offered in. */
 export const BUILDER_STEPS = ["advantages", "disadvantages", "skills", "spells", "gear"] as const;
@@ -516,15 +520,21 @@ export function builderTypesFor(step: string): string[] {
   return [...itemTypes.values()].filter((t) => t.builderStep === step).map((t) => t.type);
 }
 
-/** The lists a tab shows for a module's item types on this actor. */
-export function itemSectionsFor(actor: any, tab: SheetTab): Array<{
+/**
+ * The lists a tab shows for a module's item types on this actor. A part that
+ * gathers several registration names passes them all, and gets the lists in
+ * that order.
+ */
+export function itemSectionsFor(actor: any, tab: SheetTab | readonly SheetTab[]): Array<{
   type: string;
   label: string;
   rows: Array<{ id: string; name: string; img: string; columns: Array<{ label: string; value: string | number }>; actions: Array<{ key: string; label: string; icon: string }> }>;
 }> {
   const owned = (type: string) => [...(actor?.items ?? [])].some((item: any) => item?.type === type);
-  return [...itemTypes.values()]
-    .filter((t) => t.tab === tab && (owned(t.type) || safely(() => t.available(actor) === true, false)))
+  const tabs: readonly SheetTab[] = typeof tab === "string" ? [tab] : tab;
+  return tabs
+    .flatMap((name) => [...itemTypes.values()].filter((t) => t.tab === name))
+    .filter((t) => owned(t.type) || safely(() => t.available(actor) === true, false))
     .map((t) => ({
       type: t.type,
       label: t.label,
@@ -569,7 +579,7 @@ export function addonItemSummary(item: { type: string; name?: string; system?: u
 }
 
 /** Whether any module's item type has a list to show on this tab for this actor. */
-export function tabHasAddonSections(actor: any, tab: SheetTab): boolean {
+export function tabHasAddonSections(actor: any, tab: SheetTab | readonly SheetTab[]): boolean {
   return itemSectionsFor(actor, tab).length > 0;
 }
 

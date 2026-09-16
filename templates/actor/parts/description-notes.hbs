@@ -1,0 +1,14 @@
+{{!-- Shared by both character sheets: the description tab's notes. --}}
+{{#if isOwner}}
+  <div class="isec">
+    <div class="ish">
+      <span class="num">05</span>{{localize "GWORLD.Section.Notes"}}
+      <span style="font-family: var(--font-body); font-size: 11px; letter-spacing: .04em; text-transform: none; color: var(--color-neutral-700)">
+        {{localize "GWORLD.Hint.GMOnly"}}
+      </span>
+    </div>
+    <prose-mirror class="box editor prose" name="system.details.notes"
+                  value="{{system.details.notes}}" toggled
+                  {{#unless editable}}disabled{{/unless}}>{{{notesHTML}}}</prose-mirror>
+  </div>
+{{/if}}

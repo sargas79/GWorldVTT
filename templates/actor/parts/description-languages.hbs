@@ -1,0 +1,46 @@
+{{!-- Shared by both character sheets: the description tab's languages. --}}
+<div class="isec">
+  <div class="ish"><span class="num">03</span>{{localize "GWORLD.Section.Languages"}}</div>
+  {{#if items.languages.length}}
+    <table class="gt">
+      <thead>
+        <tr>
+          <th>{{localize "GWORLD.Column.Language"}}</th>
+          <th class="n">{{localize "GWORLD.Column.Spoken"}}</th>
+          <th class="n">{{localize "GWORLD.Column.Written"}}</th>
+          <th class="n">{{localize "GWORLD.Column.Pts"}}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each items.languages as |lang|}}
+          <tr data-item-id="{{lang.id}}">
+            <td>
+              <span class="wname" data-action="editItem">{{lang.name}}</span>
+              {{#if lang.system.isNative}}<span class="tag">{{localize "GWORLD.Language.Native"}}</span>{{/if}}
+            </td>
+            <td class="n">{{localize (concat "GWORLD.Language." lang.system.spoken)}}</td>
+            <td class="n">{{localize (concat "GWORLD.Language." lang.system.written)}}</td>
+            <td class="n">{{lang.system.totalPoints}}</td>
+            <td class="c">
+              {{#if @root.editable}}
+                <button type="button" class="rollable iconbtn" data-action="deleteItem"
+                        title="{{localize 'GWORLD.Action.Delete'}}"
+                        aria-label="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
+              {{/if}}
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  {{/if}}
+  {{#if editable}}
+    <button type="button" class="ibtn" style="align-self: flex-start"
+            data-action="createItem" data-item-type="language">
+      {{> "gworld.plus"}} {{localize "GWORLD.Action.AddLanguage"}}
+    </button>
+  {{/if}}
+  <div style="font-size: 11px; color: var(--color-neutral-700)">
+    {{localize "GWORLD.Hint.Languages"}}
+  </div>
+</div>

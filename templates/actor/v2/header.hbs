@@ -1,0 +1,46 @@
+{{!-- The new sheet's header: who this is, which tab is open, and the point
+     budget. Shown on every tab. --}}
+<header class="v2-header">
+  <div class="v2-portrait">
+    <img src="{{#if actor.img}}{{actor.img}}{{else}}icons/svg/mystery-man.svg{{/if}}" alt="{{actor.name}}" data-edit="img"
+         {{#if editable}}data-action="editImage" class="rollable"{{/if}}>
+  </div>
+
+  <div class="v2-identity">
+    <div class="v2-eyebrow">
+      <span>{{#if npc}}{{localize "GWORLD.SheetV2.Npc"}}{{else}}{{localize "GWORLD.SheetV2.Character"}}{{/if}}</span>
+      <span aria-hidden="true">&mdash;</span>
+      <input class="v2-name" type="text" name="name" value="{{actor.name}}" aria-label="{{localize 'GWORLD.SheetV2.Name'}}"
+             {{#unless editable}}disabled{{/unless}}>
+    </div>
+    <h1 class="v2-title" data-v2-tab-title>{{localize v2.tabLabel}}</h1>
+    <div class="v2-meta">
+      {{#if system.details.player}}<span>{{system.details.player}}</span>{{/if}}
+      <span>TL {{system.tl}}</span>
+      {{#if npc.canShowSummary}}
+        <button type="button" class="v2-link" data-action="showSummary"
+                data-tooltip="{{localize "GWORLD.Npc.SummaryHint"}}">{{localize "GWORLD.Npc.Summary"}}</button>
+      {{/if}}
+    </div>
+  </div>
+
+  {{!-- Spending past the budget is never blocked: it is flagged, with how far over. --}}
+  <div class="v2-points v2-points-{{v2.points.state}}"
+       data-tooltip="{{#if (eq v2.points.state 'over')}}{{localize 'GWORLD.Hint.OverBudget'}}{{else}}{{localize 'GWORLD.SheetV2.PointsHint' spent=v2.points.spent available=v2.points.available}}{{/if}}">
+    <span class="v2-cp"><span class="v2-cp-label">CP</span> <b>{{v2.points.spent}}</b><span class="v2-cp-of">/ {{v2.points.available}}</span></span>
+    <span class="v2-ready">
+      {{#if (eq v2.points.state "over")}}
+        {{localize "GWORLD.SheetV2.Over" points=v2.points.overBy}}
+      {{else if (eq v2.points.state "ready")}}
+        {{localize "GWORLD.SheetV2.Ready" points=v2.points.unspent}}
+      {{else}}
+        {{localize "GWORLD.SheetV2.AllSpent"}}
+      {{/if}}
+    </span>
+    {{#if editable}}
+      <button type="button" class="v2-points-award" data-action="awardPoints"
+              data-tooltip="{{localize "GWORLD.Points.AwardHint"}}"
+              aria-label="{{localize "GWORLD.Points.Award"}}">{{> "gworld.plus"}}</button>
+    {{/if}}
+  </div>
+</header>

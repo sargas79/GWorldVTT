@@ -1,0 +1,129 @@
+<section class="tab v2-tab v2-journal{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+  {{> "gworld.addonSheetSections" sections=addonSheetSections.start}}
+
+  {{!-- Quests, clues, people, places and notes live in Foundry's journal; the
+        profile is the character's own. --}}
+  <div class="v2-journal-bar" role="toolbar" aria-label="{{localize 'GWORLD.SheetV2.Tab.journal'}}">
+    {{#each v2.journal.panes as |pane|}}
+      <button type="button" class="v2-pane-button{{#if pane.active}} active{{/if}}" data-action="v2JournalPane" data-v2-pane="{{pane.kind}}"
+              aria-pressed="{{#if pane.active}}true{{else}}false{{/if}}">{{pane.label}}{{#if pane.entries.length}} <span>{{pane.entries.length}}</span>{{/if}}</button>
+    {{/each}}
+    <button type="button" class="v2-pane-button{{#if v2.journal.profileActive}} active{{/if}}" data-action="v2JournalPane" data-v2-pane="profile"
+            aria-pressed="{{#if v2.journal.profileActive}}true{{else}}false{{/if}}">{{localize "GWORLD.SheetV2.Journal.profile"}}</button>
+  </div>
+
+  <div class="v2-journal-grid">
+    <div class="v2-journal-main">
+      {{#each v2.journal.panes as |pane|}}
+        <div class="v2-journal-pane" data-v2-journal-pane="{{pane.kind}}" data-v2-journal-kind="{{pane.kind}}" {{#unless pane.active}}hidden{{/unless}}>
+          <div class="v2-panel v2-panel-dark v2-journal-list">
+            <h2 class="v2-ph">{{pane.label}}</h2>
+            {{#each pane.entries as |entry|}}
+              <button type="button" class="v2-journal-entry{{#if entry.selected}} selected{{/if}}{{#if entry.missing}} missing{{/if}}"
+                      data-v2-row="journal-{{pane.kind}}:{{entry.key}}" data-action="v2Select"
+                      aria-pressed="{{#if entry.selected}}true{{else}}false{{/if}}">
+                <b>{{entry.name}}</b>
+                {{#if entry.summary}}<span>{{entry.summary}}</span>{{else if entry.documentType}}<span>{{entry.documentType}}</span>{{/if}}
+              </button>
+            {{else}}
+              <p class="v2-empty">{{pane.empty}}</p>
+            {{/each}}
+            <p class="v2-drop-hint">{{localize "GWORLD.SheetV2.Journal.DropHint"}}</p>
+            {{#if @root.v2.journal.canCreate}}
+              <button type="button" class="v2-button" data-action="v2CreateEntry" data-v2-journal-kind="{{pane.kind}}">{{> "gworld.plus"}} {{localize (concat "GWORLD.SheetV2.Journal.New." pane.kind)}}</button>
+            {{/if}}
+          </div>
+
+          <div class="v2-journal-content">
+            {{#each pane.entries as |entry|}}
+              <article class="v2-panel v2-journal-page" data-v2-detail="journal-{{pane.kind}}:{{entry.key}}" data-v2-uuid="{{entry.uuid}}" {{#unless entry.selected}}hidden{{/unless}}>
+                <header class="v2-journal-head">
+                  {{#if entry.img}}<img src="{{entry.img}}" alt="">{{/if}}
+                  <h2>{{entry.name}}</h2>
+                  <span class="v2-journal-tools">
+                    {{#if @root.editable}}
+                      <select data-v2-link-kind="{{entry.uuid}}" aria-label="{{localize 'GWORLD.SheetV2.Journal.Kind'}}">
+                        {{#each @root.v2.journal.kinds as |k|}}<option value="{{k.key}}" {{#if (eq k.key entry.kind)}}selected{{/if}}>{{k.label}}</option>{{/each}}
+                      </select>
+                    {{/if}}
+                    {{#unless entry.missing}}
+                      <button type="button" class="v2-button v2-button-small" data-action="v2OpenLink">{{localize "GWORLD.SheetV2.Journal.Open"}}</button>
+                    {{/unless}}
+                    {{#if @root.editable}}
+                      <button type="button" class="v2-button v2-button-small v2-button-red" data-action="v2RemoveLink"
+                              data-tooltip="{{localize 'GWORLD.SheetV2.Journal.RemoveHint'}}">{{localize "GWORLD.SheetV2.Journal.Remove"}}</button>
+                    {{/if}}
+                  </span>
+                </header>
+                {{#if entry.missing}}
+                  <p class="v2-note v2-bad">{{localize "GWORLD.SheetV2.Journal.Missing"}}</p>
+                {{else unless entry.visible}}
+                  <p class="v2-note">{{localize "GWORLD.SheetV2.Journal.Hidden"}}</p>
+                {{else}}
+                  {{#each entry.pages as |page|}}
+                    <section class="v2-journal-section">
+                      {{#if (and page.showTitle page.name)}}<h3>{{page.name}}</h3>{{/if}}
+                      {{#if page.html}}<div class="v2-prose">{{{page.html}}}</div>{{/if}}
+                      {{#if page.src}}<figure><img src="{{page.src}}" alt="{{page.caption}}">{{#if page.caption}}<figcaption>{{page.caption}}</figcaption>{{/if}}</figure>{{/if}}
+                    </section>
+                  {{else}}
+                    <p class="v2-note">{{localize "GWORLD.SheetV2.Journal.NoText"}}</p>
+                  {{/each}}
+                {{/if}}
+              </article>
+            {{else}}
+              <div class="v2-panel v2-journal-page v2-journal-welcome">
+                <p>{{localize "GWORLD.SheetV2.Journal.Welcome"}}</p>
+              </div>
+            {{/each}}
+          </div>
+        </div>
+      {{/each}}
+
+      {{!-- The character's own profile. --}}
+      <div class="v2-journal-pane v2-profile" data-v2-journal-pane="profile" {{#unless v2.journal.profileActive}}hidden{{/unless}}>
+        {{#if npc}}<div class="v2-panel">{{> "gworld.part.description-npc"}}</div>{{/if}}
+        <div class="v2-panel">
+          {{> "gworld.part.description-vitals"}}
+          {{> "gworld.part.description-appearance"}}
+        </div>
+        {{#if npc}}
+          <div class="v2-panel">
+            <div class="isec">
+              <div class="ish">{{localize "GWORLD.SheetV2.Journal.Description"}}</div>
+              <prose-mirror class="box editor prose" name="system.details.description" value="{{system.details.description}}" toggled
+                            {{#unless editable}}disabled{{/unless}}>{{{v2.journal.npcDescription}}}</prose-mirror>
+            </div>
+          </div>
+        {{/if}}
+        <div class="v2-panel">{{> "gworld.part.description-biography"}}</div>
+      </div>
+    </div>
+
+    {{!-- Everything linked, by kind, to jump to. --}}
+    <aside class="v2-panel v2-related">
+      <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Journal.Related"}}</h2>
+      {{#each v2.journal.related as |group|}}
+        {{#if group.entries.length}}
+          <h3>{{group.label}}</h3>
+          {{#each group.entries as |entry|}}
+            <button type="button" class="v2-related-link v2-kind-{{group.kind}}{{#if entry.missing}} missing{{/if}}" data-action="v2ShowLink"
+                    data-v2-journal-kind="{{group.kind}}" data-v2-uuid="{{entry.uuid}}">
+              {{#if entry.img}}<img src="{{entry.img}}" alt="">{{/if}}<span>{{entry.name}}</span>
+            </button>
+          {{/each}}
+        {{/if}}
+      {{/each}}
+      <p class="v2-note">{{localize "GWORLD.SheetV2.Journal.RelatedHint"}}</p>
+    </aside>
+  </div>
+
+  {{!-- Notes for whoever owns the character. --}}
+  {{#if isOwner}}
+    <div class="v2-panel v2-personal-notes">
+      {{> "gworld.part.description-notes"}}
+    </div>
+  {{/if}}
+
+  {{> "gworld.addonSections"}}
+</section>

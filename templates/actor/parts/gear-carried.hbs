@@ -1,0 +1,102 @@
+{{!-- Shared by both character sheets: the gear tab's carried. --}}
+<div class="isec">
+  <div class="ish"><span class="num">02</span>{{localize "GWORLD.Gear.Carried"}}</div>
+  <div class="toolbar">
+    {{!-- One kind at a time, or the whole inventory. Not a form field: it
+         filters what is shown and writes nothing to the actor. --}}
+    {{#if gearGroups.length}}
+      <label class="srch gfilter">
+        <span class="wmode">{{localize "GWORLD.Gear.Show"}}</span>
+        <select data-gear-filter aria-label="{{localize 'GWORLD.Gear.Show'}}">
+          <option value="">{{localize "GWORLD.Gear.All"}}</option>
+          {{#each gearGroups as |group|}}
+            <option value="{{group.key}}" {{#if group.selected}}selected{{/if}}>{{localize group.label}} ({{group.rows.length}})</option>
+          {{/each}}
+        </select>
+      </label>
+    {{/if}}
+    {{#if editable}}
+      <button type="button" class="ibtn" data-action="createItem" data-item-type="equipment">
+        {{> "gworld.plus"}} {{localize "GWORLD.Action.AddEquipment"}}
+      </button>
+      <button type="button" class="ibtn" data-action="createItem" data-item-type="armor">
+        {{> "gworld.plus"}} {{localize "GWORLD.Action.AddArmor"}}
+      </button>
+      <button type="button" class="ibtn" data-action="createItem" data-item-type="shield">
+        {{> "gworld.plus"}} {{localize "GWORLD.Action.AddShield"}}
+      </button>
+      <button type="button" class="ibtn" data-action="browseCompendium"
+              data-item-types="equipment,armor,shield" data-browse-title="GWORLD.Picker.Gear">
+        {{> "gworld.search"}} {{localize "GWORLD.Action.BrowseGear"}}
+      </button>
+    {{/if}}
+  </div>
+  {{#if gearGroups.length}}
+    <table class="gt">
+      <thead>
+        <tr>
+          <th class="c">{{localize "GWORLD.Column.Eq"}}</th>
+          <th>{{localize "GWORLD.Column.Item"}}</th>
+          <th class="n">{{localize "GWORLD.Column.Qty"}}</th>
+          <th class="n">{{localize "GWORLD.Column.Weight"}}</th>
+          <th class="n">{{localize "GWORLD.Column.Cost"}}</th>
+          <th>{{localize "GWORLD.Column.Notes"}}</th>
+          <th></th>
+        </tr>
+      </thead>
+      {{#each gearGroups as |group|}}
+        <tbody data-gear-group="{{group.key}}">
+          <tr class="ggroup">
+            <td colspan="7">{{localize group.label}}</td>
+          </tr>
+          {{#each group.rows as |row|}}
+            <tr data-item-id="{{row.id}}">
+              <td class="c">
+                {{#if row.equippable}}
+                  <input type="checkbox" data-action="toggleEquipped" {{#if row.equipped}}checked{{/if}}
+                         {{#unless @root.editable}}disabled{{/unless}}>
+                {{/if}}
+              </td>
+              <td>
+                <span class="wname" data-action="editItem">{{row.name}}</span>
+                {{#if row.vehicle}}
+                  <span class="rollable" data-action="controlVehicle"
+                        data-tooltip="{{localize 'GWORLD.Hazard.ControlHint'}}">{{> "gworld.die"}}</span>
+                  <span class="rollable" data-action="shotAtVehicle"
+                        data-tooltip="{{localize 'GWORLD.Vehicle.ShotAtHint'}}">{{> "gworld.die"}}</span>
+                  {{#if @root.rules.vehicleManeuvers}}
+                    <button type="button" class="ibtn tiny" data-action="jumpOutOfVehicle"
+                            data-tooltip="{{localize 'GWORLD.Hazard.JumpOutHint'}}">
+                      {{localize "GWORLD.Hazard.JumpOut"}}
+                    </button>
+                  {{/if}}
+                {{/if}}
+              </td>
+              <td class="n">{{row.quantity}}</td>
+              <td class="n">{{decimal row.weight 1}} lb</td>
+              <td class="n">${{row.cost}}</td>
+              <td class="wmode">
+                {{row.notes}}
+                {{#if row.legality.label}}
+                  <span class="tag{{#if row.legality.restricted}} tag-danger{{/if}}"
+                        {{#if row.legality.status}}data-tooltip="{{localize (concat 'GWORLD.Legality.Status.' row.legality.status)}}"{{/if}}>
+                    {{row.legality.label}}{{#if row.legality.status}} &middot; {{localize (concat 'GWORLD.Legality.Short.' row.legality.status)}}{{/if}}
+                  </span>
+                {{/if}}
+              </td>
+              <td class="c">
+                {{#if @root.editable}}
+                  <button type="button" class="rollable iconbtn" data-action="deleteItem" title="{{localize 'GWORLD.Action.Delete'}}">
+                    {{> "gworld.trash"}}
+                  </button>
+                {{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      {{/each}}
+    </table>
+  {{else}}
+    <div class="inote">{{> "gworld.info"}}<span>{{localize "GWORLD.Hint.NothingCarried"}}</span></div>
+  {{/if}}
+</div>

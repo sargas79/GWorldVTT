@@ -1,0 +1,11 @@
+{{!-- What an attack roll reads. Shared by both character sheets, so a roll made from either carries the same data. --}}
+data-action="roll" data-roll-type="attack" data-roll-skill="{{atk.skillName}}"
+data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
+data-hit-modifier="{{atk.hitModifier}}"
+data-damage-type="{{atk.damageType}}"
+data-unready-after="{{#if atk.readiesAfterAttack}}1{{/if}}"
+data-weapon-weight="{{atk.weight}}" data-material="{{atk.material}}"
+data-swung="{{#if atk.swung}}1{{/if}}" data-damage-base="{{atk.damageBase}}"
+data-resists-breakage="{{#if atk.resistsBreakage}}1{{/if}}"
+data-rapid-strike-halved="{{#if atk.rapidStrikeHalved}}1{{/if}}"
+data-unarmed="{{#if atk.unarmed}}1{{/if}}"

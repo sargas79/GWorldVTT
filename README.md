@@ -15,9 +15,15 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
 
 ## Features
 
-- **Characters:** a character sheet with seven tabs and a one-pane NPC sheet.
-  Point totals and a log of awarded points. Steppers for skill and trait
-  levels. A guided character build. Templates, racial templates and
+- **Characters:** a character sheet with Overview, Skills, Traits, Combat,
+  Inventory, Journal, Progression and Magic tabs, and a one-pane NPC sheet.
+  Lists are sorted by name, with search and a panel describing the selected
+  row. The Combat tab previews an attack's modifiers and chance of success;
+  the Progression tab prices every upgrade and flags an overspend without
+  blocking it; the Journal tab links Foundry journal entries and shows their
+  text. The classic sheet is still available from the sheet configuration.
+  Point totals and a log of awarded points by session. Steppers for skill and
+  trait levels. A guided character build. Templates, racial templates and
   meta-traits that can be removed cleanly, and GM-made templates.
 - **Traits:** the sheet reads and applies over fifty advantages and
   disadvantages, including Combat Reflexes, High Pain Threshold, DR, the

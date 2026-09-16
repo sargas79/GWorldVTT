@@ -1,0 +1,75 @@
+{{!-- Shared by both character sheets: the body tab's recovery. --}}
+<div class="isec">
+  <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.Recovery"}}</div>
+  <div class="toolbar">
+    <button type="button" class="ibtn" data-action="rest"
+            data-tooltip="{{localize "GWORLD.Recovery.RestHint"}}">
+      {{localize "GWORLD.Recovery.Rest"}}
+    </button>
+    <button type="button" class="ibtn" data-action="restDay"
+            data-tooltip="{{localize "GWORLD.Recovery.DailyHint"}}">
+      {{localize "GWORLD.Recovery.Daily"}}
+    </button>
+    <button type="button" class="ibtn" data-action="firstAid"
+            data-tooltip="{{localize "GWORLD.Recovery.FirstAidHint"}}">
+      {{localize "GWORLD.Recovery.FirstAid"}} {{derived.recovery.firstAid}}
+    </button>
+    <button type="button" class="ibtn" data-action="wake"
+            data-tooltip="{{localize "GWORLD.Recovery.WakingHint"}}">
+      {{localize "GWORLD.Recovery.Waking"}}
+    </button>
+    {{!-- The three that need a doctor rather than a bandage (pp. 424-425). --}}
+    <button type="button" class="ibtn" data-action="attendPatient"
+            data-tooltip="{{localize "GWORLD.Recovery.AttendHint"}}">
+      {{localize "GWORLD.Recovery.Attend"}}
+    </button>
+    <button type="button" class="ibtn" data-action="operate"
+            data-tooltip="{{localize "GWORLD.Recovery.SurgeryHint"}}">
+      {{localize "GWORLD.Recovery.Surgery"}}
+    </button>
+    <button type="button" class="ibtn" data-action="resuscitate"
+            data-tooltip="{{localize "GWORLD.Recovery.ResuscitateHint"}}">
+      {{localize "GWORLD.Recovery.Resuscitate"}}
+    </button>
+    {{#if derived.regeneration}}
+      <button type="button" class="ibtn" data-action="regenerate"
+              data-tooltip="{{localize "GWORLD.Recovery.RegenerationHint"}}">
+        {{localize "GWORLD.Recovery.Regeneration"}} ({{localize (concat "GWORLD.Recovery.Rate." derived.regeneration.key)}})
+      </button>
+    {{/if}}
+    {{#if rules.bleeding}}
+      <button type="button" class="ibtn" data-action="bleed"
+              data-tooltip="{{localize "GWORLD.Bleeding.Hint"}}">
+        {{localize "GWORLD.Bleeding.Action"}}
+      </button>
+    {{/if}}
+    <button type="button" class="ibtn" data-action="mortalWound"
+            data-tooltip="{{localize "GWORLD.Dying.MortalWoundHint"}}">
+      {{localize "GWORLD.Dying.MortalWound"}}
+    </button>
+    <button type="button" class="ibtn" data-action="cripplingDuration"
+            data-tooltip="{{localize "GWORLD.Dying.CripplingHint"}}">
+      {{localize "GWORLD.Dying.Crippling"}}
+    </button>
+    <button type="button" class="ibtn" data-action="suffocate"
+            data-tooltip="{{localize "GWORLD.Air.Hint"}}">
+      {{localize "GWORLD.Air.Action"}}
+    </button>
+    <button type="button" class="ibtn" data-action="catchBreath"
+            data-tooltip="{{localize "GWORLD.Air.BreatheHint"}}">
+      {{localize "GWORLD.Air.Breathe"}}
+    </button>
+    {{#if rules.exposure}}
+      <button type="button" class="ibtn" data-action="exposure"
+              data-tooltip="{{localize "GWORLD.Weather.Hint"}}">
+        {{localize "GWORLD.Weather.Action"}}
+      </button>
+      <button type="button" class="ibtn" data-action="setAlight">{{localize "GWORLD.Hazard.SetAlight"}}</button>
+      <button type="button" class="ibtn" data-action="restFromHunger">{{localize "GWORLD.Weather.RestTitle"}}</button>
+      <button type="button" class="ibtn" data-action="rations"
+              data-tooltip="{{localize "GWORLD.Weather.DeprivationHint"}}">
+        {{localize "GWORLD.Weather.DeprivationAction"}}
+      </button>
+    {{/if}}
+  </div>
+</div>

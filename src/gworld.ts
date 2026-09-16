@@ -8,6 +8,7 @@
 
 import { registerConsciousnessTurns } from "./system/consciousness.js";
 import "./styles/gworld.css";
+import "./styles/sheet-v2.css";
 
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
@@ -37,6 +38,7 @@ import {
   TraitData,
 } from "./system/data/items.js";
 import { GWorldCharacterSheet } from "./system/sheets/character-sheet.js";
+import { GWorldCharacterSheetV2 } from "./system/sheets/character-sheet-v2.js";
 import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldGenericItemSheet } from "./system/sheets/generic-item-sheet.js";
 import { setGenericSheetRegistrar } from "./system/data-extensions.js";
@@ -134,9 +136,17 @@ Hooks.once("init", () => {
 
   const { DocumentSheetConfig } = foundry.applications.apps;
   DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.applications.sheets.ActorSheetV2);
-  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheet, {
+  // The new character sheet is the default; the classic one stays registered,
+  // and any character can be switched to it, and back, from the sheet
+  // configuration. Sheets are registered under their class names, so a world
+  // that already chose the classic sheet for a character keeps it.
+  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheetV2, {
     types: ["character"],
     makeDefault: true,
+    label: "GWORLD.Sheet.CharacterV2",
+  });
+  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheet, {
+    types: ["character"],
     label: "GWORLD.Sheet.Character",
   });
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldNpcSheet, {
@@ -147,6 +157,10 @@ Hooks.once("init", () => {
   // An NPC is built like a character, so it is edited on the character's
   // sheet: the one-pane NPC sheet is for reading at the table, and opens
   // this one from its Edit button.
+  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheetV2, {
+    types: ["npc"],
+    label: "GWORLD.Sheet.NpcFullV2",
+  });
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheet, {
     types: ["npc"],
     label: "GWORLD.Sheet.NpcFull",

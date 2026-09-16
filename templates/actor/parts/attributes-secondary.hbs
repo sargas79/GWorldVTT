@@ -1,0 +1,45 @@
+{{!-- Shared by both character sheets: the attributes tab's secondary. --}}
+<div class="isec">
+  <div class="ish"><span class="num">02</span>{{localize "GWORLD.Section.Secondary"}}</div>
+  <div class="cellgrid" style="margin-bottom: 8px">
+    {{#each senseCells as |sense|}}
+      <div class="cell">
+        <span class="cl">{{sense.label}}</span>
+        {{#if sense.missing}}
+          <span class="cv" style="color: var(--color-neutral-700)">&mdash;</span>
+          <span class="cd">{{localize "GWORLD.Senses.Missing"}}</span>
+        {{else}}
+          <span style="display: flex; align-items: baseline; gap: 6px">
+            <span class="cv">{{sense.score}}</span>
+            <span class="iroll rollable" data-action="roll" data-roll-type="attribute"
+                  data-roll-label="{{sense.label}}" data-roll-target="{{sense.score}}"
+                  data-based-on="Per">{{> "gworld.die"}}</span>
+          </span>
+          <span class="cd">= Per{{#if sense.modifier}} {{signed sense.modifier}}{{/if}}</span>
+        {{/if}}
+      </div>
+    {{/each}}
+  </div>
+  <div class="cellgrid">
+    {{#each secondaryCells as |cell|}}
+      <div class="cell">
+        <span class="cl">{{cell.label}}</span>
+        {{#if cell.editable}}
+          <span style="display: flex; align-items: baseline; gap: 6px">
+            <span class="cv">{{cell.value}}</span>
+            <input type="number" name="system.purchased.{{cell.key}}" value="{{cell.purchased}}"
+                   step="{{cell.step}}" title="{{localize 'GWORLD.Secondary.AdjustHint'}}"
+                   style="width: 46px; background: none; border: 1px solid var(--color-divider); font: inherit; color: var(--color-accent-700)"
+                   {{#unless @root.editable}}disabled{{/unless}}>
+          </span>
+        {{else}}
+          <span class="cv">{{cell.value}}</span>
+        {{/if}}
+        <span class="cd">{{cell.derivation}}{{#if cell.cost}} &middot; {{cell.cost}} pts{{/if}}{{#if cell.granted}} &middot; {{signed cell.granted}} {{localize "GWORLD.Secondary.Granted"}}{{/if}}</span>
+        {{#if cell.lowered}}
+          <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Secondary.LoweredByIqHint'}}">{{signed cell.lowered}} {{localize "GWORLD.Secondary.LoweredByIq"}}</span>
+        {{/if}}
+      </div>
+    {{/each}}
+  </div>
+</div>
