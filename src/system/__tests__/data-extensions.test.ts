@@ -323,6 +323,42 @@ describe("Move changed by modules (since 1.42.0)", () => {
   });
 });
 
+describe("carried weight a module leaves out (since 1.58.0)", () => {
+  const lines = () => [
+    { item: { id: "suit" }, label: "Battlesuit", weight: 150, counts: true },
+    { item: { id: "pack" }, label: "Pack", weight: 40, counts: true },
+    { item: { id: "rope" }, label: "Rope", weight: 5, counts: true },
+  ];
+
+  it("adds up what counts and says what was left out or lowered, and why", async () => {
+    const { moduleCarriedWeight } = await load();
+    globals.Hooks = {
+      callAll: (_hook: string, context: { lines: Array<{ item: { id: string }; weight: number; counts: boolean; reason?: string }> }) => {
+        const [suit, pack] = context.lines;
+        suit!.counts = false;
+        suit!.reason = "Powered";
+        pack!.weight = 10;
+        pack!.reason = "Weightless load";
+      },
+    };
+    const result = moduleCarriedWeight({ name: "Someone" }, lines());
+    expect(result.total).toBe(15);
+    expect(result.notCounted).toEqual([
+      { label: "Battlesuit", weight: 150, counted: 0, reason: "Powered" },
+      { label: "Pack", weight: 40, counted: 10, reason: "Weightless load" },
+    ]);
+  });
+
+  it("never raises a weight, and ignores a listener that throws", async () => {
+    const { moduleCarriedWeight } = await load();
+    globals.Hooks = { callAll: (_hook: string, context: { lines: Array<{ weight: number }> }) => { context.lines[2]!.weight = 500; } };
+    expect(moduleCarriedWeight({}, lines()).total).toBe(195);
+    globals.Hooks = { callAll: (_hook: string, context: { lines: Array<{ counts: boolean }> }) => { context.lines[0]!.counts = false; throw new Error("boom"); } };
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(moduleCarriedWeight({}, lines())).toEqual({ total: 195, notCounted: [] });
+  });
+});
+
 describe("trait effects a module adds (since 1.47.0)", () => {
   const effects = () => ({ sealed: false, liftingSt: 0, protectedSense: { vision: false } });
 

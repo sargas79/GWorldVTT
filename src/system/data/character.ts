@@ -90,7 +90,7 @@ import {
 import { shotsEntryFor } from "../shots-entry.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
-  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleTraitEffects, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type TraitEffectSource,
+  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleCarriedWeight, moduleTraitEffects, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type CarriedWeightLine, type TraitEffectSource,
 } from "../data-extensions.js";
 import { perDieOfBasicDamage, swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
@@ -1826,15 +1826,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const shieldSkill = shieldItem ? this.skillLevelByName(shieldItem.system?.skill ?? "Shield") : null;
 
     // ── encumbrance ─────────────────────────────────────────────────────
-    let carriedWeight = 0;
+    const weightLines: CarriedWeightLine[] = [];
     for (const item of this.items) {
       const sys = item.system as { weight?: number; quantity?: number; carried?: boolean };
       if (sys?.carried === false || sys?.weight === undefined) continue;
       const w = effectiveWeight(item);
       const q = Number(sys.quantity ?? 1);
-      if (Number.isFinite(w) && Number.isFinite(q)) carriedWeight += w * q;
+      if (Number.isFinite(w) && Number.isFinite(q)) weightLines.push({ item, label: String(item.name ?? ""), weight: w * q, counts: true });
     }
-    const encumbrance = encumbranceState(carriedWeight, secondary.basicLift, secondary.basicMove);
+    // What the modules say doesn't count: a suit carrying its own weight (API 1.58.0).
+    const weighed = moduleCarriedWeight(this.parent, weightLines);
+    const carriedWeight = weighed.total;
+    const encumbrance = { ...encumbranceState(carriedWeight, secondary.basicLift, secondary.basicMove), notCounted: weighed.notCounted };
     const reeling = isReeling(this.hp.value, this.hp.max);
     // Fatigue has a chart of its own, with the same two halvings on it: someone
     // who has not eaten in three days moves and dodges like someone bleeding.

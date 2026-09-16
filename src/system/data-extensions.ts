@@ -44,7 +44,62 @@ export const DATA_HOOKS = Object.freeze({
   moveModifiers: "gworld.moveModifiers",
   /** While a character's trait effects are gathered (since 1.47.0): `{ actor, effects, sources }`, both mutable. */
   traitEffects: "gworld.traitEffects",
+  /** While a character's carried weight is added up (since 1.58.0): `{ actor, lines }`, each line's `weight`, `counts` and `reason` mutable. */
+  carriedWeight: "gworld.carriedWeight",
 });
+
+/** One carried item's weight, as `gworld.carriedWeight` hands it to a listener. */
+export interface CarriedWeightLine {
+  item: any;
+  label: string;
+  /** Its effective weight times its quantity, in pounds. */
+  weight: number;
+  /** Whether it counts toward encumbrance at all. */
+  counts: boolean;
+  /** Why a listener left it out or lowered it, for the sheet. */
+  reason?: string;
+}
+
+/** A line a listener left out or lowered: what it would have weighed, what counts, and why. */
+export interface WeightNotCounted {
+  label: string;
+  weight: number;
+  counted: number;
+  reason: string;
+}
+
+/**
+ * Asks the modules which carried weight counts toward encumbrance (since
+ * 1.58.0), and adds up what does.
+ *
+ * A powered suit can carry its own weight, and a pack can hold its load
+ * weightlessly; the items still weigh what they weigh, so the change is made
+ * here rather than to the item. A listener sets a line's `counts` to false or
+ * lowers its `weight`, with a `reason`. One that throws changes nothing, and a
+ * weight can't be raised or made negative here.
+ */
+export function moduleCarriedWeight(actor: any, lines: CarriedWeightLine[]): { total: number; notCounted: WeightNotCounted[] } {
+  const before = lines.map((line) => ({ ...line }));
+  const context = { actor, lines };
+  const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
+  let read = lines;
+  try {
+    hooks?.callAll?.(DATA_HOOKS.carriedWeight, context);
+  } catch (error) {
+    console.warn(`gworld | a ${DATA_HOOKS.carriedWeight} listener failed`, error);
+    read = before;
+  }
+  let total = 0;
+  const notCounted: WeightNotCounted[] = [];
+  read.forEach((line, i) => {
+    const original = before[i]?.weight ?? 0;
+    const weight = Number(line?.weight);
+    const counted = line?.counts === false ? 0 : Number.isFinite(weight) ? Math.max(0, Math.min(original, weight)) : original;
+    total += counted;
+    if (counted < original) notCounted.push({ label: String(line.label ?? ""), weight: original, counted, reason: String(line.reason ?? "") });
+  });
+  return { total, notCounted };
+}
 
 /** One thing added to a character's trait effects, and what added it. */
 export interface TraitEffectSource {

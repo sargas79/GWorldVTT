@@ -533,6 +533,16 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     `"protectedSense.vision"`) and `label` the thing it came from. The Traits
     tab lists them under what the character carries, so an effect nobody paid
     for is never unexplained. A listener that throws changes nothing.
+  - `gworld.carriedWeight` (since 1.58.0), with `{ actor, lines }`, while a
+    character's carried weight is added up. Each line is one carried item,
+    `{ item, label, weight, counts }`, `weight` being its effective weight times
+    its quantity. Set `counts` to false to leave it out of encumbrance, or lower
+    `weight`, and say why in `reason`: a powered suit that carries its own
+    weight, a pack that holds its load weightlessly. The item keeps its weight
+    everywhere else. `derived.encumbrance.carriedWeight` is what counts, and
+    `derived.encumbrance.notCounted` lists the lines left out or lowered as
+    `{ label, weight, counted, reason }`. A weight can't be raised here, and a
+    listener that throws changes nothing.
   - `gworld.attributeBonuses`, with `{ actor, attributes, lines }`: push
     `{ attribute, label, value, source }`. They show on the attribute's card.
   - `gworld.defenseBonuses`, with `{ actor, defenses, lines }`: push
