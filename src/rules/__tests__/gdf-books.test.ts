@@ -21,6 +21,9 @@ import {
   parseSkillUsed,
   techLevel,
   traitCategoryOf,
+  linkedLine,
+  LINKED_MODE,
+  FOLLOW_UP_MODE,
   parseSkillUsedWithModifier,
   unarmedSkillsIn,
   powerOfRecord,
@@ -625,6 +628,77 @@ describe("traitCategoryOf", () => {
 
   it("says nothing for a section that holds no traits", () => {
     expect(traitCategoryOf("EQUIPMENT", flat(5))).toBeUndefined();
+  });
+});
+
+/**
+ * A second attack that lands with the first rather than instead of it
+ * (Characters p. 106). The Basic Set prints three: both electrolasers and the
+ * cattle prod, each with a "linked" row under its own.
+ */
+describe("a linked or follow-up mode", () => {
+  it("knows the names a data file gives one", () => {
+    expect(LINKED_MODE.test("Linked")).toBe(true);
+    expect(LINKED_MODE.test("linked")).toBe(true);
+    expect(FOLLOW_UP_MODE.test("Follow-Up")).toBe(true);
+    expect(FOLLOW_UP_MODE.test("Follow Up")).toBe(true);
+    expect(FOLLOW_UP_MODE.test("Followup")).toBe(true);
+  });
+
+  it("does not mistake a mode whose name merely begins the same way", () => {
+    expect(LINKED_MODE.test("Linkedin Mode")).toBe(false);
+    expect(LINKED_MODE.test("Beam")).toBe(false);
+    expect(FOLLOW_UP_MODE.test("Follower")).toBe(false);
+  });
+
+  it("carries an affliction's resistance roll rather than damage", () => {
+    // The electrolaser's linked line is "HT-4(2) aff".
+    const line = linkedLine(
+      {
+        affliction: true, afflictionAttribute: "HT", afflictionModifier: -4,
+        armorDivisor: 2, damageType: "cr",
+      },
+      false,
+      "Linked",
+    );
+    expect(line).toEqual({
+      damage: "HT-4",
+      damageType: "cr",
+      armorDivisor: 2,
+      affliction: true,
+      afflictionAttribute: "HT",
+      afflictionModifier: -4,
+      label: "Linked",
+    });
+  });
+
+  it("carries a damage formula where the second line does damage", () => {
+    const line = linkedLine(
+      { damageFormula: "2d", damageType: "burn", armorDivisor: 1, explosive: true, fragmentation: "1d" },
+      false,
+      "Linked",
+    );
+    expect(line.damage).toBe("2d");
+    expect(line.damageType).toBe("burn");
+    expect(line.explosive).toBe(true);
+    expect(line.fragmentation).toBe("1d");
+  });
+
+  it("says which of the two it is", () => {
+    const linked = linkedLine({ damageFormula: "1d", damageType: "cr", armorDivisor: 1 }, false, "Linked");
+    const follows = linkedLine({ damageFormula: "1d", damageType: "cr", armorDivisor: 1 }, true, "Follow-Up");
+    // A linked attack is rolled separately against DR; a follow-up only lands
+    // if the carrier hits, and then ignores DR.
+    expect(linked.followUp).toBeUndefined();
+    expect(follows.followUp).toBe(true);
+  });
+
+  it("writes nothing it was not given", () => {
+    const line = linkedLine({ damageFormula: "1d", damageType: "cr", armorDivisor: 1 }, false, "");
+    expect(line.explosive).toBeUndefined();
+    expect(line.fragmentation).toBeUndefined();
+    expect(line.affliction).toBeUndefined();
+    expect(line.label).toBeUndefined();
   });
 });
 

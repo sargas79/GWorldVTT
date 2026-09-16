@@ -586,6 +586,44 @@ function meleeModeField() {
       initial: 0,
       max: 0,
     }),
+    /**
+     * A second attack that lands with this one (Characters p. 106).
+     *
+     * A linked attack "is rolled separately against DR" and arrives on the
+     * same attack roll: the Basic Set's Electrolaser Pistol burns and delivers
+     * its shock together, not one or the other. A follow-up attack only lands
+     * "if the carrier attack hits", and if that attack penetrates DR, "DR has
+     * no effect on the Follow-Up attack's damage or HT rolls" -- `followUp`
+     * says which of the two this is.
+     *
+     * Null for a mode that is only itself, which is nearly all of them.
+     */
+    linked: new fields.SchemaField(
+      {
+        /** A dice formula, or the attribute and penalty where it is an affliction. */
+        damage: new fields.StringField({ required: true, blank: true, initial: "" }),
+        damageType: new fields.StringField({
+          required: true,
+          nullable: false,
+          initial: "cr",
+          choices: ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
+        }),
+        armorDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0.1 }),
+        /** True where the second line is a resistance roll rather than damage. */
+        affliction: new fields.BooleanField({ initial: false }),
+        afflictionAttribute: new fields.StringField({ required: true, blank: true, initial: "" }),
+        afflictionModifier: new fields.NumberField({
+          required: true, nullable: false, integer: true, initial: 0, max: 0,
+        }),
+        explosive: new fields.BooleanField({ initial: false }),
+        fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
+        /** True for a follow-up, false for a linked attack. */
+        followUp: new fields.BooleanField({ initial: false }),
+        /** What the book calls it, where it calls it anything. */
+        label: new fields.StringField({ required: true, blank: true, initial: "" }),
+      },
+      { required: false, nullable: true, initial: null },
+    ),
     /** The weapon becomes unready after each attack unless ST is high enough. */
     unreadyAfterAttack: new fields.BooleanField({ initial: false }),
     /**
@@ -864,6 +902,44 @@ function rangedModeField() {
       initial: 0,
       max: 0,
     }),
+    /**
+     * A second attack that lands with this one (Characters p. 106).
+     *
+     * A linked attack "is rolled separately against DR" and arrives on the
+     * same attack roll: the Basic Set's Electrolaser Pistol burns and delivers
+     * its shock together, not one or the other. A follow-up attack only lands
+     * "if the carrier attack hits", and if that attack penetrates DR, "DR has
+     * no effect on the Follow-Up attack's damage or HT rolls" -- `followUp`
+     * says which of the two this is.
+     *
+     * Null for a mode that is only itself, which is nearly all of them.
+     */
+    linked: new fields.SchemaField(
+      {
+        /** A dice formula, or the attribute and penalty where it is an affliction. */
+        damage: new fields.StringField({ required: true, blank: true, initial: "" }),
+        damageType: new fields.StringField({
+          required: true,
+          nullable: false,
+          initial: "cr",
+          choices: ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
+        }),
+        armorDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0.1 }),
+        /** True where the second line is a resistance roll rather than damage. */
+        affliction: new fields.BooleanField({ initial: false }),
+        afflictionAttribute: new fields.StringField({ required: true, blank: true, initial: "" }),
+        afflictionModifier: new fields.NumberField({
+          required: true, nullable: false, integer: true, initial: 0, max: 0,
+        }),
+        explosive: new fields.BooleanField({ initial: false }),
+        fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
+        /** True for a follow-up, false for a linked attack. */
+        followUp: new fields.BooleanField({ initial: false }),
+        /** What the book calls it, where it calls it anything. */
+        label: new fields.StringField({ required: true, blank: true, initial: "" }),
+      },
+      { required: false, nullable: true, initial: null },
+    ),
     /** Damage per level of the trait carrying this mode (Characters p. 61). */
     perLevel: new fields.BooleanField({ initial: false }),
     /**

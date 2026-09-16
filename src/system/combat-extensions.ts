@@ -204,8 +204,28 @@ export function adjustWeaponAttacks(options: {
       .filter((n: any) => typeof n?.label === "string" && n.label.trim())
       .map((n: any) => ({ label: String(n.label), hint: String(n.hint ?? "") }));
     const follow = row.followUp;
+    // A second attack that lands with this one (Characters p. 106), kept in
+    // the shape the Combat tab and the damage card read. An affliction's
+    // resistance roll is the one case where the second line is not damage.
     row.followUp = follow && typeof follow.damage === "string" && follow.damage.trim()
-      ? { damage: follow.damage, damageType: String(follow.damageType ?? "cr"), explosive: Boolean(follow.explosive), ...(follow.label ? { label: String(follow.label) } : {}) }
+      ? {
+          damage: follow.damage,
+          damageType: String(follow.damageType ?? "cr"),
+          explosive: Boolean(follow.explosive),
+          armorDivisor: Number(follow.armorDivisor) > 0 ? Number(follow.armorDivisor) : 1,
+          ...(follow.affliction
+            ? {
+                affliction: true,
+                afflictionAttribute: String(follow.afflictionAttribute ?? ""),
+                afflictionModifier: Math.min(0, Math.floor(Number(follow.afflictionModifier) || 0)),
+              }
+            : {}),
+          ...(typeof follow.fragmentation === "string" && follow.fragmentation.trim()
+            ? { fragmentation: follow.fragmentation.trim() }
+            : {}),
+          ...(follow.followUp ? { followUp: true } : {}),
+          ...(follow.label ? { label: String(follow.label) } : {}),
+        }
       : null;
     row.damageRollable = options.isRollable(entry);
   });

@@ -386,7 +386,16 @@ and the roll continues.
       applied;
     - Push `notes` (`{ label, hint }`), shown as tags, or set `followUp`
       (`{ damage, damageType, explosive, label? }`), which the Combat tab offers
-      as a damage roll of its own.
+      as a damage roll of its own. Since 1.52.0 it also takes `armorDivisor`,
+      `fragmentation`, `followUp` and the affliction trio (`affliction`,
+      `afflictionAttribute`, `afflictionModifier`): a second attack that lands
+      *with* this one rather than instead of it (Characters p. 106). `followUp`
+      false is a linked attack, "rolled separately against DR"; true is a
+      follow-up, which lands only if the carrier hits and then ignores DR. An
+      affliction carries its resistance roll in place of damage, and the tab
+      offers it as a resistance roll rather than a damage roll. A mode carries
+      the same shape as its own `linked`, which is where the Basic Set's
+      electrolasers and cattle prod keep theirs.
     - `damageAt(entry, st)` and `rangeAt(entry, st)` work a mode out at another
       ST, and `addToDamage(formula, bonus)` adds to a dice formula. The range
       text and whether the damage can be rolled follow the figures;
