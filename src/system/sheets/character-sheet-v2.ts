@@ -47,6 +47,16 @@ import { gearGroupOf } from "../gear-groups.js";
 import { legalityNote } from "../legality.js";
 import { isRuleOn } from "../optional-rules.js";
 import { armorByArea, asGearSort, readiedItems, sortGear, type GearSort } from "../sheet-v2/inventory-view.js";
+import {
+  asProgressionMode,
+  awardHistory,
+  improvementRows,
+  ledgerCategories,
+  rowsForMode,
+  type ProgressionMode,
+} from "../sheet-v2/progression.js";
+import { BASIC_SPEED_STEP } from "../../rules/attributes.js";
+import type { SecondaryKey } from "../sheet-v2/improvements.js";
 import { GWorldCharacterSheet } from "./character-sheet.js";
 
 const V2_ROOT = `systems/${SYSTEM_ID}/templates/actor/v2`;
@@ -71,6 +81,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2ShowMessage: GWorldCharacterSheetV2.#onShowMessage,
       v2ToggleCarried: GWorldCharacterSheetV2.#onToggleCarried,
       v2GearSort: GWorldCharacterSheetV2.#onGearSort,
+      v2Upgrade: GWorldCharacterSheetV2.#onUpgrade,
+      v2ProgressionMode: GWorldCharacterSheetV2.#onProgressionMode,
     },
   };
 
@@ -82,7 +94,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     traits: { template: `${V2_ROOT}/tab-traits.hbs`, scrollable: [".v2-list-col", ".v2-detail-col"] },
     combat: { template: `${V2_ROOT}/tab-combat.hbs`, scrollable: [""] },
     inventory: { template: `${V2_ROOT}/tab-inventory.hbs`, scrollable: [".v2-list-col", ".v2-detail-col"] },
-    progression: { template: `systems/${SYSTEM_ID}/templates/actor/tab-attributes.hbs`, scrollable: [""] },
+    progression: { template: `${V2_ROOT}/tab-progression.hbs`, scrollable: [".v2-list-col", ".v2-detail-col"] },
     journal: { template: `systems/${SYSTEM_ID}/templates/actor/tab-description.hbs`, scrollable: [""] },
     magic: { template: `systems/${SYSTEM_ID}/templates/actor/tab-magic.hbs`, scrollable: [""] },
   };
@@ -123,6 +135,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       traits: await this.traitsContext(context, points.unspent),
       combat: this.combatContext(context),
       inventory: await this.inventoryContext(context),
+      progression: this.progressionContext(context, points.unspent),
       folded: [...this.folded],
       opened: [...this.opened],
     };
@@ -383,6 +396,114 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       });
     }
   }
+
+  /* ── Progression ─────────────────────────────────────────────────────── */
+
+  protected progressionContext(context: Record<string, any>, unspent: number): Record<string, unknown> {
+    const actor = this.actor;
+    const system = context.system;
+    const derived = context.derived;
+    const L = (key: string) => game.i18n.localize(key);
+    const scoreOf = (attribute: string): number | null => {
+      if (attribute === "Will") return Number(derived.will) || null;
+      if (attribute === "Per") return Number(derived.per) || null;
+      const value = derived.attributes?.[attribute] ?? system.attributes?.[attribute];
+      return value === undefined ? null : Number(value);
+    };
+
+    const rows = improvementRows({
+      unspent,
+      attributes: (["ST", "DX", "IQ", "HT"] as const).map((key) => ({
+        key,
+        score: Number(system.attributes?.[key] ?? 10),
+        cost: (Number(system.attributes?.[key] ?? 10) - 10) * (key === "DX" || key === "IQ" ? 20 : 10),
+      })),
+      secondaries: ((context.secondaryCells ?? []) as any[])
+        .filter((cell) => cell.editable && ["hp", "will", "per", "fp", "basicMove", "basicSpeed"].includes(cell.key))
+        .map((cell) => ({
+          key: cell.key as SecondaryKey,
+          label: cell.label,
+          purchased: Number(cell.purchased) || 0,
+          value: Number(cell.value) || 0,
+          cost: Number(cell.cost) || 0,
+        })),
+      items: [...actor.items]
+        .filter((i: any) => i.type === "skill" || i.type === "technique" || i.type === "spell")
+        .map((item: any) => ({
+          id: String(item.id),
+          name: String(item.name ?? ""),
+          type: item.type,
+          attributeScore: item.type === "skill" ? scoreOf(String(item.system?.attribute ?? "DX")) : null,
+          item,
+        })),
+      traits: [...actor.items]
+        .filter((i: any) => i.type === "trait")
+        .map((item: any) => ({
+          id: String(item.id),
+          name: String(item.name ?? ""),
+          category: String(item.system?.category ?? ""),
+          points: Number(item.system?.totalPoints ?? 0) || 0,
+          trait: item,
+        })),
+    });
+
+    const state = this.stateOf("progression");
+    const mode = asProgressionMode(this.progressionMode);
+    const shown = rowsForMode(rows, mode);
+    const chipKeys = ["all", ...new Set(shown.map((r) => r.category))];
+    const chip = state.chip && chipKeys.includes(state.chip) ? state.chip : "all";
+    state.chip = chip;
+    const selected = selectedKey(shown.filter((r) => chip === "all" || r.category === chip).map((r) => r.key), state.selected);
+    state.selected = selected;
+
+    const points = derived.points ?? {};
+    const stored = (system.points?.awards ?? []) as Array<{ points: number; note?: string; at?: number; session?: string }>;
+    const history = awardHistory(stored);
+
+    return {
+      summary: {
+        total: Number(points.available ?? 0),
+        starting: Number(points.starting ?? 0),
+        earned: Number(points.earned ?? 0),
+        spent: Number(points.spent ?? 0),
+        unspent,
+        over: unspent < 0,
+        overBy: unspent < 0 ? -unspent : 0,
+        sessions: history.sessions,
+        latestSession: history.latestSession,
+      },
+      categories: ledgerCategories(points).map((c) => ({
+        ...c,
+        label: L(`GWORLD.SheetV2.Ledger.${c.key}`),
+        negative: c.points < 0,
+        active: chip === c.key,
+        offered: shown.some((r) => r.category === c.key),
+      })),
+      chip,
+      modes: (["all", "affordable", "owned"] as const).map((key) => ({ key, label: L(`GWORLD.SheetV2.Mode.${key}`), active: key === mode })),
+      rows: shown.map((row) => {
+        const item = row.key.startsWith("item:") || row.key.startsWith("trait:") ? actor.items.get(row.key.split(":")[1]) : null;
+        return {
+          ...row,
+          selected: row.key === selected,
+          after: unspent - row.improve.cost,
+          categoryLabel: L(`GWORLD.SheetV2.Ledger.${row.category}`),
+          summary: item ? firstLine(item.system?.description) : L(`GWORLD.SheetV2.Explain.${row.category}`),
+          attribute: item?.type === "skill" ? item.system?.attribute : null,
+          difficulty: item?.system?.difficulty ?? null,
+          hidden: chip !== "all" && row.category !== chip,
+        };
+      }),
+      selected,
+      history: history.rows.map((award) => ({
+        ...award,
+        when: award.at ? new Date(award.at).toLocaleDateString() : "",
+      })),
+    };
+  }
+
+  /** Which improvements the Progression tab lists. */
+  protected progressionMode: ProgressionMode = "all";
 
   /* ── keeping the Combat tab current ──────────────────────────────────── */
 
@@ -950,6 +1071,46 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     this.gearSort = sort === this.gearSort.sort
       ? { sort, descending: !this.gearSort.descending }
       : { sort, descending: false };
+    void this.render();
+  }
+
+  /**
+   * Buys the next step of an improvement: a point of an attribute, a level of
+   * a secondary characteristic, a skill's next level, a trait's next level.
+   * Through the same steps the other tabs use, so the cost charged is the
+   * cost shown.
+   *
+   * Never refused for want of points: a GM may allow it, and a character
+   * being built is over and under by turns. An upgrade that leaves the
+   * character over budget says so.
+   */
+  static async #onUpgrade(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    if (!this.isEditable) return;
+    const [kind, id] = String(target.dataset.v2Upgrade ?? "").split(":");
+    const actor = this.actor;
+    if (kind === "attribute" && id && ["ST", "DX", "IQ", "HT"].includes(id)) {
+      await actor.update({ [`system.attributes.${id}`]: Number(actor.system.attributes?.[id] ?? 10) + 1 });
+    } else if (kind === "secondary" && id && ["hp", "will", "per", "fp", "basicMove", "basicSpeed"].includes(id)) {
+      const step = id === "basicSpeed" ? BASIC_SPEED_STEP : 1;
+      await actor.update({ [`system.purchased.${id}`]: Number(actor.system.purchased?.[id] ?? 0) + step });
+    } else if (kind === "item" && id) {
+      const item = actor.items.get(id);
+      if (item) await this.stepPoints(item, "up");
+    } else if (kind === "trait" && id) {
+      const item = actor.items.get(id);
+      if (item) await this.stepLevels(item, "up");
+    } else {
+      return;
+    }
+    const unspent = Number(actor.system?.derived?.points?.unspent ?? 0);
+    if (unspent < 0) {
+      ui.notifications?.warn(game.i18n.format("GWORLD.SheetV2.OverBudgetNotice", { name: actor.name, points: -unspent }));
+    }
+  }
+
+  /** Lists every improvement, those within the budget, or those already bought into. */
+  static #onProgressionMode(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    this.progressionMode = asProgressionMode(target.dataset.v2Mode);
     void this.render();
   }
 

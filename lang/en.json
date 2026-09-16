@@ -3945,7 +3945,8 @@
         "advantage": "Advantages",
         "perk": "Perks",
         "disadvantage": "Disadvantages",
-        "quirk": "Quirks"
+        "quirk": "Quirks",
+        "title": "Advancement categories"
       },
       "Category": {
         "advantage": "Advantage",
@@ -4077,7 +4078,54 @@
       "SortByColumn": "Sort by {column}",
       "DragToStore": "Nothing stored. Drag a row here, or press Stow, to leave it behind.",
       "Legality": "Legality",
-      "NothingCarried": "Nothing carried yet. Browse the compendium or add an item."
+      "NothingCarried": "Nothing carried yet. Browse the compendium or add an item.",
+      "Session": "Session",
+      "OverBudget": "Over budget",
+      "Available": "Available",
+      "OverBudgetHint": "This character has spent {points} CP more than they have. Nothing is blocked; the GM decides whether it stands.",
+      "OverBudgetNotice": "{name} is now {points} CP over budget.",
+      "AdvancementCategories": "Advancement categories",
+      "AllImprovements": "All improvements",
+      "Improvements": "Improvements",
+      "SearchImprovements": "Search improvements",
+      "Mode": {
+        "all": "All",
+        "affordable": "Affordable",
+        "owned": "Owned"
+      },
+      "NoImprovements": "Nothing to improve in this view.",
+      "History": "Advancement history",
+      "NoAwards": "No points awarded yet.",
+      "Invested": "Spent on it",
+      "LeftAfter": "Unspent afterwards",
+      "StillAllowed": "The upgrade is still allowed.",
+      "UpgradeAnyway": "Upgrade anyway",
+      "Ledger": {
+        "attributes": "Attributes",
+        "secondaries": "Secondary characteristics",
+        "advantages": "Advantages and perks",
+        "disadvantages": "Disadvantages",
+        "quirks": "Quirks",
+        "skills": "Skills",
+        "techniques": "Techniques",
+        "spells": "Spells",
+        "languages": "Languages",
+        "templates": "Templates"
+      },
+      "Explain": {
+        "attributes": "A point of an attribute, and every skill and characteristic based on it.",
+        "secondaries": "A level bought above what the attribute gives.",
+        "advantages": "The next level of an advantage.",
+        "disadvantages": "",
+        "quirks": "",
+        "skills": "",
+        "techniques": "",
+        "spells": "",
+        "languages": "",
+        "templates": ""
+      },
+      "Score": "Score",
+      "Bought": "Bought above default"
     }
   }
 }

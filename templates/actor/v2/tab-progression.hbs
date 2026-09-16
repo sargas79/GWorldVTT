@@ -1,12 +1,149 @@
-<section class="tab v2-tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+<section class="tab v2-tab v2-list-tab v2-progression{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
   {{> "gworld.addonSheetSections" sections=addonSheetSections.start}}
 
-  <div class="v2-panel">
-    {{> "gworld.part.attributes-points"}}
+  {{!-- Where the points stand. An overspend is flagged, never blocked. --}}
+  <div class="v2-progress-summary{{#if v2.progression.summary.over}} over{{/if}}">
+    <div><span>{{localize "GWORLD.SheetV2.Session"}}</span><b>{{#if v2.progression.summary.latestSession}}{{v2.progression.summary.latestSession}}{{else}}&mdash;{{/if}}</b></div>
+    <div><span>{{localize "GWORLD.Points.Starting"}}</span><b>{{v2.progression.summary.starting}} CP</b></div>
+    <div><span>{{localize "GWORLD.Points.Earned"}}</span><b class="v2-good">{{v2.progression.summary.earned}} CP</b></div>
+    <div><span>{{localize "GWORLD.Points.Spent"}}</span><b>{{v2.progression.summary.spent}} CP</b></div>
+    <div class="v2-progress-available">
+      <span>{{#if v2.progression.summary.over}}{{localize "GWORLD.SheetV2.OverBudget"}}{{else}}{{localize "GWORLD.SheetV2.Available"}}{{/if}}</span>
+      <b>{{#if v2.progression.summary.over}}{{v2.progression.summary.overBy}}{{else}}{{v2.progression.summary.unspent}}{{/if}} CP</b>
+    </div>
+    {{#if editable}}
+      <div class="v2-progress-buttons">
+        <button type="button" class="v2-button v2-button-gold" data-action="awardPoints">{{> "gworld.plus"}} {{localize "GWORLD.Points.Award"}}</button>
+        <button type="button" class="v2-button" data-action="openBuilder">{{localize "GWORLD.Builder.Open"}}</button>
+      </div>
+    {{/if}}
   </div>
-  <div class="v2-panel">
-    {{> "gworld.part.attributes-campaign"}}
-  </div>
+  {{#if v2.progression.summary.over}}
+    <p class="v2-over-note">{{localize "GWORLD.SheetV2.OverBudgetHint" points=v2.progression.summary.overBy}}</p>
+  {{/if}}
 
-  {{> "gworld.addonSections"}}
+  <div class="v2-split v2-progress-split">
+    <div class="v2-list-col">
+      <div class="v2-progress-grid">
+        {{!-- The ledger: every category with its points, each narrowing the list. --}}
+        <nav class="v2-panel v2-categories" aria-label="{{localize 'GWORLD.SheetV2.Categories.title'}}">
+          <h2 class="v2-ph">{{localize "GWORLD.SheetV2.AdvancementCategories"}}</h2>
+          <button type="button" class="v2-category{{#if (eq v2.progression.chip 'all')}} active{{/if}}" data-action="v2Chip" data-v2-chip="progression:all">
+            <b>{{localize "GWORLD.SheetV2.AllImprovements"}}</b>
+          </button>
+          {{#each v2.progression.categories as |c|}}
+            <button type="button" class="v2-category{{#if c.active}} active{{/if}}{{#unless c.offered}} quiet{{/unless}}"
+                    {{#if c.offered}}data-action="v2Chip" data-v2-chip="progression:{{c.key}}"{{else}}disabled{{/if}}>
+              <b>{{c.label}}</b>
+              <span class="{{#if c.negative}}v2-bad{{/if}}">{{c.points}} CP</span>
+            </button>
+          {{/each}}
+        </nav>
+
+        <div class="v2-panel v2-improvements">
+          <div class="v2-ph v2-ph-tools">
+            <h2>{{localize "GWORLD.SheetV2.Improvements"}}</h2>
+            <label class="v2-search">
+              {{> "gworld.search"}}
+              <input type="search" data-v2-filter="progression" placeholder="{{localize 'GWORLD.SheetV2.Search'}}"
+                     aria-label="{{localize 'GWORLD.SheetV2.SearchImprovements'}}" autocomplete="off">
+            </label>
+          </div>
+          <div class="v2-segmented" role="group" aria-label="{{localize 'GWORLD.SheetV2.Filter'}}">
+            {{#each v2.progression.modes as |m|}}
+              <button type="button" class="{{#if m.active}}active{{/if}}" data-action="v2ProgressionMode" data-v2-mode="{{m.key}}"
+                      aria-pressed="{{#if m.active}}true{{else}}false{{/if}}">{{m.label}}</button>
+            {{/each}}
+          </div>
+          <div class="v2-improve-list" data-v2-list="progression" role="listbox" aria-label="{{localize 'GWORLD.SheetV2.Improvements'}}">
+            {{#each v2.progression.rows as |row|}}
+              <div class="v2-improve-row{{#if row.selected}} selected{{/if}}{{#if row.improve.overspends}} over{{/if}}{{#if row.hidden}} v2-off{{/if}}"
+                   data-v2-row="progression:{{row.key}}" data-v2-name="{{row.name}}" data-v2-chip-group="progression:{{row.category}}"
+                   data-action="v2Select" role="option" tabindex="0" aria-selected="{{#if row.selected}}true{{else}}false{{/if}}">
+                <span class="v2-improve-name">{{row.name}}</span>
+                <span class="v2-improve-step">
+                  {{#if row.improve.levelTo}}{{row.improve.levelFrom}} &rarr; <b>{{row.improve.levelTo}}</b>{{else}}{{row.improve.from}} &rarr; <b>{{row.improve.to}}</b>{{/if}}
+                </span>
+                <span class="v2-improve-invested">{{#if (eq row.category "attributes")}}{{row.invested}} CP{{else if (eq row.category "advantages")}}{{row.invested}} CP{{else}}{{row.improve.from}} {{localize "GWORLD.Column.Pts"}}{{/if}}</span>
+                <span class="v2-improve-cost{{#if row.improve.overspends}} v2-bad{{/if}}">{{localize "GWORLD.SheetV2.CostCp" cost=row.improve.cost}}</span>
+              </div>
+            {{else}}
+              <p class="v2-empty">{{localize "GWORLD.SheetV2.NoImprovements"}}</p>
+            {{/each}}
+          </div>
+        </div>
+      </div>
+
+      {{!-- Points earned, session by session. --}}
+      <div class="v2-panel v2-history">
+        <h2 class="v2-ph">{{localize "GWORLD.SheetV2.History"}}</h2>
+        {{#if v2.progression.history.length}}
+          <table class="v2-gear-table">
+            <thead><tr>
+              <th>{{localize "GWORLD.Points.AwardSession"}}</th>
+              <th class="n">{{localize "GWORLD.Points.AwardPoints"}}</th>
+              <th>{{localize "GWORLD.Points.AwardNote"}}</th>
+              <th>{{localize "GWORLD.Points.AwardWhen"}}</th>
+              <th></th>
+            </tr></thead>
+            <tbody>
+              {{#each v2.progression.history as |award|}}
+                <tr>
+                  <td>{{#if award.session}}{{award.session}}{{else}}<span class="v2-muted">&mdash;</span>{{/if}}</td>
+                  <td class="n"><b class="{{#if (gt award.points 0)}}v2-good{{else}}v2-bad{{/if}}">{{signed award.points}} CP</b></td>
+                  <td>{{award.note}}</td>
+                  <td>{{award.when}}</td>
+                  <td class="c">
+                    {{#if @root.editable}}
+                      <button type="button" class="iconbtn rollable" data-action="deleteAward" data-index="{{award.index}}"
+                              title="{{localize 'GWORLD.Action.Delete'}}" aria-label="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>
+                    {{/if}}
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        {{else}}
+          <p class="v2-empty">{{localize "GWORLD.SheetV2.NoAwards"}}</p>
+        {{/if}}
+      </div>
+
+      <div class="v2-panel">
+        {{> "gworld.part.attributes-campaign"}}
+      </div>
+      {{> "gworld.part.skills-point-spending"}}
+      {{> "gworld.addonSections"}}
+    </div>
+
+    {{!-- The selected improvement in full. --}}
+    <aside class="v2-detail-col" aria-live="polite">
+      {{#each v2.progression.rows as |row|}}
+        <article class="v2-panel v2-detail v2-upgrade{{#if row.improve.overspends}} over{{/if}}" data-v2-detail="progression:{{row.key}}" {{#unless row.selected}}hidden{{/unless}}>
+          <header class="v2-upgrade-head">
+            <h3>{{row.name}}</h3>
+            <span class="v2-upgrade-step">
+              {{#if row.improve.levelTo}}{{row.improve.levelFrom}} <i>&rarr;</i> <b>{{row.improve.levelTo}}</b>{{else}}{{row.improve.from}} <i>&rarr;</i> <b>{{row.improve.to}}</b>{{/if}}
+            </span>
+            <span class="v2-upgrade-cost">{{localize "GWORLD.SheetV2.CostCp" cost=row.improve.cost}}</span>
+          </header>
+          {{#if row.summary}}<p class="v2-upgrade-summary">{{row.summary}}</p>{{/if}}
+          <ul class="v2-breakdown">
+            <li><span>{{row.categoryLabel}}</span><b>{{#if row.attribute}}{{row.attribute}}/{{row.difficulty}}{{/if}}</b></li>
+            <li><span>{{#if (eq row.category "attributes")}}{{localize "GWORLD.SheetV2.Score"}}{{else if (eq row.category "secondaries")}}{{localize "GWORLD.SheetV2.Bought"}}{{else if (eq row.category "advantages")}}{{localize "GWORLD.Trait.Levels"}}{{else}}{{localize "GWORLD.SheetV2.Invested"}}{{/if}}</span><b>{{row.improve.from}} &rarr; {{row.improve.to}}</b></li>
+            <li><span>{{localize "GWORLD.SheetV2.LeftAfter"}}</span><b class="{{#if row.improve.overspends}}v2-bad{{/if}}">{{row.after}} CP</b></li>
+          </ul>
+          {{#if row.improve.overspends}}
+            <p class="v2-note v2-bad">{{localize "GWORLD.SheetV2.WouldOverspend" points=row.improve.overBy}}. {{localize "GWORLD.SheetV2.StillAllowed"}}</p>
+          {{/if}}
+          {{#if @root.editable}}
+            <button type="button" class="v2-button v2-button-gold v2-upgrade-button" data-action="v2Upgrade" data-v2-upgrade="{{row.key}}">
+              {{#if row.improve.overspends}}{{localize "GWORLD.SheetV2.UpgradeAnyway"}}{{else}}{{localize "GWORLD.SheetV2.Upgrade"}}{{/if}}
+            </button>
+          {{/if}}
+        </article>
+      {{else}}
+        <div class="v2-panel v2-detail"><p class="v2-empty">{{localize "GWORLD.SheetV2.SelectSomething"}}</p></div>
+      {{/each}}
+    </aside>
+  </div>
 </section>
