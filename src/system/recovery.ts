@@ -245,12 +245,18 @@ export async function applyFirstAid(options: {
   healer: any;
   patient: any;
   modifier: number;
+  /** A skill that stands in for the healer's, as a device treating on its own does (since 1.60.0). */
+  skill?: number;
+  /** The TL the treatment is given at, where it isn't the healer's (since 1.60.0). */
+  techLevel?: number;
+  /** Who treats, as the card names them, where it isn't the healer (since 1.60.0). */
+  label?: string;
 }): Promise<number> {
   const { healer, patient, modifier } = options;
   if (!mayChange(patient)) return 0;
 
-  const skill = numberOr(healer?.system?.derived?.recovery?.firstAid, 6);
-  const techLevel = numberOr(healer?.system?.tl, 3);
+  const skill = typeof options.skill === "number" ? options.skill : numberOr(healer?.system?.derived?.recovery?.firstAid, 6);
+  const techLevel = typeof options.techLevel === "number" ? options.techLevel : numberOr(healer?.system?.tl, 3);
   const entry = firstAidAt(techLevel);
 
   const hp = patient.system?.hp ?? { value: 0, max: 0 };
@@ -293,7 +299,7 @@ export async function applyFirstAid(options: {
 
   await post(healer, {
     kind: game.i18n.localize("GWORLD.Recovery.FirstAid"),
-    detail: game.i18n.format("GWORLD.Recovery.FirstAidDetail", {
+    detail: (options.label ? `${options.label}: ` : "") + game.i18n.format("GWORLD.Recovery.FirstAidDetail", {
       patient: String(patient.name ?? ""),
       minutes: entry.minutes,
       tl: techLevel,
@@ -367,14 +373,23 @@ export async function attendPatient(options: {
   healer: any;
   patient: any;
   modifier: number;
+  /** A Physician skill that stands in for the healer's (since 1.60.0). */
+  skill?: number;
+  /** Who attends, as the card names them (since 1.60.0). */
+  label?: string;
 }): Promise<void> {
   const { healer, patient } = options;
   if (!mayChange(patient)) return;
 
-  const skill = skillLevelOf(healer, "Physician") ?? attributeOf(healer, "IQ") - 5;
+  const skill = typeof options.skill === "number" ? options.skill : (skillLevelOf(healer, "Physician") ?? attributeOf(healer, "IQ") - 5);
+  // What the modules add: care, gear, a medical bed (API 1.60.0, tagged "physician").
+  const added = successRollModifiers({
+    actor: healer, label: R("Attend"), kind: "skill", skill: "Physician",
+    base: skill, tags: ["physician"], modifiers: [], opponent: patient,
+  }).reduce((sum, line) => sum + line.value, 0);
   const roll = new Roll("3d6");
   await roll.evaluate();
-  const outcome = resolveSuccess(roll.total, skill + options.modifier, dieResults(roll));
+  const outcome = resolveSuccess(roll.total, skill + options.modifier + added, dieResults(roll));
   const result = cureResult(outcome);
   const moved = cureHitPoints(result);
 
@@ -386,8 +401,8 @@ export async function attendPatient(options: {
 
   await post(patient, {
     kind: R("Attend"),
-    detail: F("AttendBy", { healer: String(healer?.name ?? ""), skill }),
-    target: skill + options.modifier,
+    detail: F("AttendBy", { healer: options.label ?? String(healer?.name ?? ""), skill }),
+    target: skill + options.modifier + added,
     dice: dieResults(roll),
     roll: roll.total,
     lines: [
@@ -417,12 +432,22 @@ export async function operate(options: {
   repairingCrippled: boolean;
   equipmentQuality: number;
   modifier: number;
+  /** A Surgery skill and TL that stand in for the surgeon's (since 1.60.0). */
+  skill?: number;
+  techLevel?: number;
+  /** Who operates, as the card names them (since 1.60.0). */
+  label?: string;
 }): Promise<void> {
   const { surgeon, patient } = options;
   if (!mayChange(patient)) return;
 
-  const skill = skillLevelOf(surgeon, "Surgery") ?? attributeOf(surgeon, "IQ") - 5;
-  const techLevel = Number(surgeon?.system?.tl) || 3;
+  const skill = typeof options.skill === "number" ? options.skill : (skillLevelOf(surgeon, "Surgery") ?? attributeOf(surgeon, "IQ") - 5);
+  const techLevel = typeof options.techLevel === "number" ? options.techLevel : (Number(surgeon?.system?.tl) || 3);
+  // What the modules add (API 1.60.0, tagged "surgery").
+  const added = successRollModifiers({
+    actor: surgeon, label: R("Surgery"), kind: "skill", skill: "Surgery",
+    base: skill, tags: ["surgery"], modifiers: [], opponent: patient,
+  }).reduce((sum, line) => sum + line.value, 0);
   const situation = surgeryModifier({
     techLevel,
     equipmentQuality: options.equipmentQuality,
@@ -432,7 +457,7 @@ export async function operate(options: {
 
   const roll = new Roll("3d6");
   await roll.evaluate();
-  const target = skill + situation + options.modifier;
+  const target = skill + situation + options.modifier + added;
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
 
   const lines = [
@@ -450,7 +475,7 @@ export async function operate(options: {
 
   await post(patient, {
     kind: R("Surgery"),
-    detail: F("SurgeryBy", { surgeon: String(surgeon?.name ?? "") }),
+    detail: F("SurgeryBy", { surgeon: options.label ?? String(surgeon?.name ?? "") }),
     target,
     dice: dieResults(roll),
     roll: roll.total,

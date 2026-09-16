@@ -41,6 +41,8 @@ import { migrationApi } from "./migration.js";
 import { takeInjury, type InjuryTaken } from "./damage.js";
 import { stopBleeding } from "./bleeding.js";
 import { activePoisons, advancePoison, clearPoison, dosePoison, type ActivePoison } from "./poison.js";
+import { applyFirstAid, attendPatient, operate } from "./recovery.js";
+import { rollMortalWound } from "./dying.js";
 import type { Poison } from "../rules/poison.js";
 import { undoKnockdown } from "./knockdown.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
@@ -69,7 +71,7 @@ import { manaLevel } from "./casting.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.59.0";
+export const API_VERSION = "1.60.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -185,6 +187,33 @@ const actors = {
   /** Takes a dose off a character (since 1.57.0). */
   clearPoison(actor: any, id: string): Promise<void> {
     return clearPoison(actor, id);
+  },
+
+  /**
+   * First Aid on a patient (Campaigns p. 424, since 1.60.0), as the sheet's button does.
+   * `skill` and `techLevel` stand in for the healer's, for a device that treats on its own;
+   * `label` names who treats on the card. Returns the HP it moved.
+   */
+  firstAid(options: { healer: any; patient: any; skill?: number; techLevel?: number; label?: string; modifier?: number }): Promise<number> {
+    return applyFirstAid({ ...options, modifier: options.modifier ?? 0 });
+  },
+
+  /** A physician's rounds on a patient (p. 424, since 1.60.0); the roll is tagged `physician`. */
+  attendPatient(options: { healer: any; patient: any; skill?: number; label?: string; modifier?: number }): Promise<void> {
+    return attendPatient({ ...options, modifier: options.modifier ?? 0 });
+  },
+
+  /** An operation (p. 424, since 1.60.0); the roll is tagged `surgery`. */
+  operate(options: { surgeon: any; patient: any; skill?: number; techLevel?: number; anesthetic?: boolean; repairingCrippled?: boolean; equipmentQuality?: number; label?: string; modifier?: number }): Promise<void> {
+    return operate({ ...options, anesthetic: options.anesthetic ?? true, repairingCrippled: options.repairingCrippled ?? false, equipmentQuality: options.equipmentQuality ?? 0, modifier: options.modifier ?? 0 });
+  },
+
+  /**
+   * A mortally wounded character's check (p. 423, since 1.60.0), at the better of HT and a
+   * caregiver's `physician`; `traumaMaintenance` makes it daily. Tagged `mortalWound`.
+   */
+  rollMortalWound(options: { actor: any; physician?: number | null; traumaMaintenance?: boolean; modifier?: number }): Promise<void> {
+    return rollMortalWound(options);
   },
 
   /** Takes back a knockdown's stun, fall and unconsciousness, and restores a posture (since 1.39.0). */

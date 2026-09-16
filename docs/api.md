@@ -93,7 +93,7 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), and `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0). |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), and `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0). |
 | `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
@@ -816,6 +816,14 @@ and a hint `p.ihint`.
   `gworld.turnEnd` `(combat, combatant)`, on every client.
 - **Bleeding:** `gworld.bleedingSchedule` gets `{ actor, intervalSeconds, modifier }`
   before a bleeding roll, and may change either.
+- **Healing** (since 1.60.0): `actors.firstAid({ healer, patient, skill?, techLevel?, label?, modifier? })`,
+  `actors.attendPatient({ healer, patient, skill?, label?, modifier? })`, `actors.operate({ surgeon,
+  patient, skill?, techLevel?, anesthetic?, repairingCrippled?, equipmentQuality?, label?, modifier? })`
+  and `actors.rollMortalWound({ actor, physician?, traumaMaintenance?, modifier? })` roll what the
+  sheet's buttons roll (Campaigns pp. 423-425). `skill` and `techLevel` stand in for the healer's own,
+  so a device that treats on its own uses its figures, and `label` names it on the card. Each roll
+  passes through `gworld.successRollModifiers` tagged `firstAid`, `physician`, `surgery`, or
+  `mortalWound` (with `traumaMaintenance` when it is), so a module adds its gear or care there.
 - **Poison** (since 1.57.0): `actors.dosePoison(actor, poison, { doublings })` writes a
   dose onto a character as the Poison button does, the delay stretched by size and
   everything moved by the dose; `actors.activePoisons(actor)` lists them,

@@ -21,6 +21,7 @@ import {
   mortalWoundTarget,
 } from "../rules/mortal-wounds.js";
 import { resolveSuccess } from "../rules/success.js";
+import { successRollModifiers } from "./procedure-extensions.js";
 import { attributeOf, healthRollBonus, healthRollScore } from "./attributes.js";
 
 const DYING_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/dying.hbs`;
@@ -104,12 +105,20 @@ export async function rollMortalWound(options: {
   /** A caregiver's Physician skill, which replaces HT at TL6+ if better. */
   physician?: number | null;
   traumaMaintenance?: boolean;
+  /** A modifier the caller knows of (since 1.60.0). */
+  modifier?: number;
 }): Promise<void> {
   const { actor, physician = null, traumaMaintenance = false } = options;
   if (!actor?.isOwner) return;
 
   const ht = healthRollScore(actor);
-  const target = mortalWoundTarget({ health: ht, physician });
+  // What the modules add: a life-support unit's quality, say (API 1.60.0, tagged "mortalWound").
+  const added = successRollModifiers({
+    actor, label: game.i18n.localize("GWORLD.Dying.MortalWound"), kind: "attribute", skill: "HT",
+    base: mortalWoundTarget({ health: ht, physician }), tags: ["mortalWound", ...(traumaMaintenance ? ["traumaMaintenance"] : [])], modifiers: [],
+  }).reduce((sum, line) => sum + line.value, 0);
+  const modifier = (Number(options.modifier) || 0) + added;
+  const target = mortalWoundTarget({ health: ht, physician }) + modifier;
 
   const roll = new Roll("3d6");
   await roll.evaluate();
@@ -127,7 +136,7 @@ export async function rollMortalWound(options: {
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Dying.MortalWound"),
     ht,
-    modifier: 0,
+    modifier,
     target,
     detail: game.i18n.format("GWORLD.Dying.EveryMinutes", {
       minutes: mortalWoundInterval(traumaMaintenance),
