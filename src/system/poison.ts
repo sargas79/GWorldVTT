@@ -29,6 +29,8 @@ import {
 } from "../rules/poison.js";
 import { diseaseCycle, diseaseTreatmentBonus } from "../rules/disease.js";
 import { resolveSuccess } from "../rules/success.js";
+import { callCombatHook } from "./combat-extensions.js";
+import { PROCEDURE_HOOKS } from "./procedure-extensions.js";
 
 const POISON_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/poison.hbs`;
 
@@ -69,6 +71,8 @@ export interface ActivePoison {
    * cards read to call it an illness instead of a poison.
    */
   illness?: boolean;
+  /** The `<module>.<key>` of the module poison it was dosed from (since 1.57.0). */
+  source?: string;
 }
 
 /** The doses at work on an actor. */
@@ -158,6 +162,8 @@ export async function dosePoison(options: {
     delaySeconds: Math.round(delayForSize(poison.delaySeconds, sizeModifier) * dose.timeMultiplier),
     treatment: 0,
     reference: poison.reference ?? "",
+    // A module's own poison says whose it is, for the cycle hook (since 1.57.0).
+    ...(poison.source ? { source: poison.source } : {}),
   };
 
   await store(actor, [...activePoisons(actor), active]);
@@ -382,6 +388,24 @@ export async function advancePoison(options: { actor: any; id: string }): Promis
     actor,
     finished ? doses.filter((d) => d.id !== dose.id) : doses,
   );
+
+  // The modules hear the cycle (since 1.57.0): a poison of theirs may do more
+  // than damage -- a condition for the margin's minutes, a symptom at a third
+  // of HP lost -- and only its module knows what.
+  callCombatHook(PROCEDURE_HOOKS.poisonCycle, {
+    actor,
+    poison: { ...dose },
+    source: dose.source ?? null,
+    resisted: outcome ? outcome.success : null,
+    margin: outcome ? outcome.margin : 0,
+    criticalFailure: outcome ? outcome.criticalFailure : false,
+    hpLost,
+    fpLost,
+    hpLostToPoison: dose.hpLostToPoison ?? 0,
+    symptomsNow: [...symptomsNow],
+    effectMinutes: effectFor,
+    finished,
+  });
 
   const hp = actor.system?.hp ?? { value: 0, max: 0 };
   const fp = actor.system?.fp ?? { value: 0, max: 0 };

@@ -102,6 +102,11 @@ export const PROCEDURE_HOOKS = Object.freeze({
   techniqueDefaults: "gworld.techniqueDefaults",
   /** After a feint is rolled: `{ feinter, foe, result, record }`; set `record: false` to take the result over. */
   feintResult: "gworld.feintResult",
+  /**
+   * After a poison or illness cycle (since 1.57.0): `{ actor, poison, source, resisted, margin,
+   * criticalFailure, hpLost, fpLost, hpLostToPoison, symptomsNow, effectMinutes, finished }`.
+   */
+  poisonCycle: "gworld.poisonCycle",
 });
 
 /**

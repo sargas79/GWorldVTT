@@ -93,7 +93,7 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0) and `stopBleeding(actor)` (since 1.36.0). |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), and `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0). |
 | `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
@@ -492,6 +492,13 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
   or `null`. Modifiers run in registration order on the stored figures, never
   on their own output; the result is `item.effectivePrice`, and the character's
   wealth, encumbrance and gear lists use it. `effectivePrice(item)` works it out.
+- **`registerPoison({ module, key, label, poison, available? })`** (since 1.57.0).
+  Offers a poison in the sheet's dose dialog, after the Basic Set's named ones,
+  while `available()` says so. `poison` is the six numbers of Campaigns p. 437
+  (`delivery`, `delaySeconds`, `resistanceModifier` or null for no roll, `damage`
+  of `"toxic"`, `"fatigue"` or `"none"`, `dice`, `adds`, `intervalSeconds`,
+  `cycles`, and a `reference`). A dose made from it carries
+  `source: "<module>.<key>"`.
 - **`registerTechniqueKind({ module, key, label, derive, cost?, available? })`.**
   A technique whose `system.kind` is `<module>.<key>` gets its level from
   `derive(technique, actor, { levelOf, standard })`, which returns
@@ -797,6 +804,17 @@ and a hint `p.ihint`.
   `gworld.turnEnd` `(combat, combatant)`, on every client.
 - **Bleeding:** `gworld.bleedingSchedule` gets `{ actor, intervalSeconds, modifier }`
   before a bleeding roll, and may change either.
+- **Poison** (since 1.57.0): `actors.dosePoison(actor, poison, { doublings })` writes a
+  dose onto a character as the Poison button does, the delay stretched by size and
+  everything moved by the dose; `actors.activePoisons(actor)` lists them,
+  `actors.advancePoison(actor, id)` runs a cycle (a gas with no delay can be dosed and
+  rolled at once), and `actors.clearPoison(actor, id)` takes one off.
+  `gworld.poisonCycle` follows every cycle, the sheet's included, with `{ actor, poison,
+  source, resisted, margin, criticalFailure, hpLost, fpLost, hpLostToPoison, symptomsNow,
+  effectMinutes, finished }`. `resisted` is null where no roll is allowed, `symptomsNow`
+  names the thresholds of HP lost crossed this cycle (`"1/3"`, `"1/2"`, `"2/3"`), and
+  `effectMinutes` is the margin's minutes for a poison that does no damage. What a
+  poison does beyond its damage is its module's to apply there.
 - **Staying conscious** (since 1.43.0): `gworld.afterConsciousnessRoll` follows a roll to
   stay conscious at 0 HP or less with `{ actor, outcome, previousPosture }`; a failure has left
   the actor unconscious and lying down, which `actors.undoKnockdown` takes back.
