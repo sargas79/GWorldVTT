@@ -401,6 +401,12 @@ and the roll continues.
       offers it as a resistance roll rather than a damage roll. A mode carries
       the same shape as its own `linked`, which is where the Basic Set's
       electrolasers and cattle prod keep theirs.
+    - Since 1.55.0, also whether the row is an affliction: `affliction`,
+      `afflictionAttribute` and `afflictionModifier`. Make a damage row an
+      affliction resisted at a penalty of the listener's working out, or turn an
+      affliction back into the damage it carried; whether the tab offers a damage
+      roll or a resistance roll follows the row, not the stored mode. A row's
+      `followUp` is its linked attack, and setting it null drops that attack.
     - `damageAt(entry, st)` and `rangeAt(entry, st)` work a mode out at another
       ST, and `addToDamage(formula, bonus)` adds to a dice formula. The range
       text and whether the damage can be rolled follow the figures;
@@ -414,6 +420,13 @@ and the roll continues.
     the blow before the rest. A listener may also spend a pool of its own: the
     lines say what the piece was worth, and the result carries what got
     through. The actor's own natural DR is not a line; it is added after.
+
+    Since 1.55.0 the context also carries `ignoresDr`, true for an attack that
+    ignores DR, against which every piece usually counts for nothing. A line's
+    `againstIgnoresDr` (0 by default, 0 to 1) is the part of that piece that
+    still stands against such an attack: a force field that meets it at a tenth
+    of its DR takes `0.1`. What stands comes off the rolled damage, the force
+    field's before the rest's, and the location's own DR is still ignored.
 
     A piece's stored split is a list of damage types. A book that splits a DR
     by something else -- full DR against a laser, or against a swinging melee

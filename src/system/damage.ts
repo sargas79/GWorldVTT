@@ -299,10 +299,13 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     hitLocation: damage.hitLocation,
     damageType: damage.type,
     basicDamage: damage.basicDamage,
+    // Whether the blow ignores DR, which is when a line's againstIgnoresDr is
+    // read (since 1.55.0).
+    ignoresDr: damage.ignoresDr === true,
     lines,
   });
 
-  const layers = { rigidDr: 0, flexibleDr: 0, totalDr: 0, fieldDr: 0, hardened: 0 };
+  const layers = { rigidDr: 0, flexibleDr: 0, totalDr: 0, fieldDr: 0, hardened: 0, fieldAgainstIgnoring: 0, armourAgainstIgnoring: 0 };
   for (const line of lines) {
     if (line.applies === false) continue;
     layers.hardened = Math.max(layers.hardened, Math.max(0, Math.floor(Number(line.hardened) || 0)));
@@ -310,6 +313,12 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     if (line.forceField) layers.fieldDr += dr;
     else if (line.flexible) layers.flexibleDr += dr;
     else layers.rigidDr += dr;
+    // The part a listener says still stands against an attack that ignores DR.
+    const part = Math.max(0, Math.min(1, Number(line.againstIgnoresDr) || 0));
+    if (part > 0) {
+      if (line.forceField) layers.fieldAgainstIgnoring += Math.floor(dr * part);
+      else layers.armourAgainstIgnoring += Math.floor(dr * part);
+    }
   }
   layers.totalDr = layers.rigidDr + layers.flexibleDr;
   const wornDr = layers.totalDr + naturalDr;
@@ -344,11 +353,18 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   // so it comes off the rolled figure rather than adding to the armour under
   // it. It is DR like any other: the divisor divides it and a critical halves
   // or ignores it, which is what the pipeline does to the rest.
+  // An attack that ignores DR meets only what a listener let stand against
+  // it: that part of a force field first, then that part of the armour, each
+  // off the rolled figure as a field's is, since everything else about the
+  // blow -- the location's own DR included -- is still ignored.
   const fieldAgainst = hardened.ignoresDr
-    ? 0
+    ? criticalDr(layers.fieldAgainstIgnoring, critical)
     : criticalDr(Math.floor(layers.fieldDr / (hardened.divisor > 0 ? hardened.divisor : 1)), critical);
   const stoppedByField = Math.min(rolledDamage, fieldAgainst);
-  const basicDamage = Math.max(0, rolledDamage - stoppedByField);
+  const stoppedByArmour = hardened.ignoresDr
+    ? Math.min(rolledDamage - stoppedByField, criticalDr(layers.armourAgainstIgnoring, critical))
+    : 0;
+  const basicDamage = Math.max(0, rolledDamage - stoppedByField - stoppedByArmour);
 
   // A location a module registered changes what it says it changes -- the
   // wounding modifier, the crippling threshold, DR of its own, the knockdown

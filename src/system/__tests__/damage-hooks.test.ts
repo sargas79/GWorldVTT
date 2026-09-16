@@ -160,6 +160,35 @@ describe("gworld.armorDr", () => {
     expect(result?.penetrating).toBe(10);
   });
 
+  it("counts nothing against an attack that ignores DR, unless a listener lets part of a piece stand (since 1.55.0)", async () => {
+    const plain = armoured({ dr: 60, forceField: true });
+    let flag: unknown = null;
+    globals.Hooks = { callAll: (event: string, context: { ignoresDr?: boolean }) => { if (event === "gworld.armorDr") flag = context.ignoresDr; } };
+    const through = await applyDamageToActor(plain.actor, { basicDamage: 10, type: "cor", armorDivisor: 1, hitLocation: "torso", ignoresDr: true } as never);
+    expect(flag).toBe(true);
+    expect(through?.penetrating).toBe(10);
+
+    // A field that stands at a tenth against it: DR 60 stops 6 of the 10.
+    const field = armoured({ dr: 60, forceField: true });
+    globals.Hooks = {
+      callAll: (event: string, context: { lines?: Array<{ againstIgnoresDr?: number }> }) => {
+        if (event === "gworld.armorDr") context.lines![0]!.againstIgnoresDr = 0.1;
+      },
+    };
+    const screened = await applyDamageToActor(field.actor, { basicDamage: 10, type: "cor", armorDivisor: 1, hitLocation: "torso", ignoresDr: true } as never);
+    expect(screened?.penetrating).toBe(4);
+
+    // Armour too, and never more than the blow; a part above 1 counts as the whole piece.
+    const plate = armoured({ dr: 30 });
+    globals.Hooks = {
+      callAll: (event: string, context: { lines?: Array<{ againstIgnoresDr?: number }> }) => {
+        if (event === "gworld.armorDr") context.lines![0]!.againstIgnoresDr = 5;
+      },
+    };
+    const stopped = await applyDamageToActor(plate.actor, { basicDamage: 10, type: "cor", armorDivisor: 1, hitLocation: "torso", ignoresDr: true } as never);
+    expect(stopped?.penetrating).toBe(0);
+  });
+
   it("lets a listener double a piece, or harden it", async () => {
     const { actor } = armoured({ dr: 6 });
     globals.Hooks = {

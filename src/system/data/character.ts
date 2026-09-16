@@ -2342,7 +2342,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           const parsed = parseDiceAdds(formula);
           return parsed && bonus ? formatDiceAdds(addModifier(parsed, bonus)) : formula;
         },
-        isRollable: (entry) => !entry.mode.affliction && !entry.mode.damageSpecial && parseDiceAdds(String(entry.row.damage ?? "")) !== null,
+        // Read from the row, which a module may have made an affliction or
+        // turned back into damage (since 1.55.0).
+        isRollable: (entry) => !entry.row.affliction && !entry.mode.damageSpecial && parseDiceAdds(String(entry.row.damage ?? "")) !== null,
         skillLevel: (name) => this.skillLevelByName(name),
       });
     }
