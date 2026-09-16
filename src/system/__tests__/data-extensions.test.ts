@@ -322,3 +322,61 @@ describe("Move changed by modules (since 1.42.0)", () => {
     expect(applyMoveLines(2, [{ label: "Crawl", value: -5 }])).toBe(0);
   });
 });
+
+describe("trait effects a module adds (since 1.47.0)", () => {
+  const effects = () => ({ sealed: false, liftingSt: 0, protectedSense: { vision: false } });
+
+  it("keeps what a listener changed, and what it says granted it", async () => {
+    const { moduleTraitEffects } = await load();
+    globals.Hooks = {
+      callAll: (_hook: string, context: {
+        effects: { sealed: boolean; liftingSt: number };
+        sources: Array<{ effect: string; label: string; value?: number }>;
+      }) => {
+        context.effects.sealed = true;
+        context.effects.liftingSt += 10;
+        context.sources.push({ effect: "sealed", label: "Power Armour" });
+        context.sources.push({ effect: "liftingSt", label: "Power Armour", value: 10 });
+      },
+    };
+    const result = moduleTraitEffects({ name: "Someone" }, effects());
+    expect(result.effects.sealed).toBe(true);
+    expect(result.effects.liftingSt).toBe(10);
+    expect(result.sources).toEqual([
+      { effect: "sealed", label: "Power Armour" },
+      { effect: "liftingSt", label: "Power Armour", value: 10 },
+    ]);
+  });
+
+  it("changes nothing at all when a listener throws", async () => {
+    const { moduleTraitEffects } = await load();
+    globals.Hooks = {
+      callAll: (_hook: string, context: { effects: { sealed: boolean } }) => {
+        context.effects.sealed = true;
+        throw new Error("boom");
+      },
+    };
+    const result = moduleTraitEffects({ name: "Someone" }, effects());
+    expect(result.effects.sealed).toBe(false);
+    expect(result.sources).toEqual([]);
+  });
+
+  it("drops a source that does not say what it is or what granted it", async () => {
+    const { moduleTraitEffects } = await load();
+    globals.Hooks = {
+      callAll: (_hook: string, context: { sources: unknown[] }) => {
+        context.sources.push({ effect: "sealed" }, { label: "Nothing" }, { effect: "sealed", label: "A Suit" });
+      },
+    };
+    expect(moduleTraitEffects({}, effects()).sources).toEqual([{ effect: "sealed", label: "A Suit" }]);
+  });
+
+  it("leaves the effects alone where no module is listening", async () => {
+    const { moduleTraitEffects } = await load();
+    delete globals.Hooks;
+    const result = moduleTraitEffects({}, effects());
+    expect(result.effects.sealed).toBe(false);
+    expect(result.sources).toEqual([]);
+  });
+});
+

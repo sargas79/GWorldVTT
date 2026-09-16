@@ -3311,6 +3311,24 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // so its number follows theirs rather than being written twice.
       templateSectionNum: "04",
 
+      // What the character has without having bought it: a sealed suit, a
+      // filtered mask, whatever a module grants. Each says what granted it,
+      // so an effect nobody paid for is never unexplained.
+      grantedEffects: (derived.traitEffectSources ?? []).map(
+        (line: { effect: string; label: string; value?: number }) => {
+          // A module may grant an effect the system has no name for, and
+          // Foundry hands a missing key back unchanged. Showing the key is
+          // worse than showing the effect as the module spelled it.
+          const key = `GWORLD.Granted.${line.effect}`;
+          const name = game.i18n.localize(key);
+          return {
+            label: line.label,
+            name: name === key ? line.effect : name,
+            value: typeof line.value === "number" ? line.value : null,
+          };
+        },
+      ),
+
       // A trait is levelled if it is priced per level or from a table. Only
       // those get a levels field: a flat 15-point advantage has nothing to
       // buy, and a box that can only read zero invites being typed into.

@@ -19,6 +19,7 @@
  */
 
 import { injuryToleranceFrom, noInjuryTolerance, type InjuryTolerance } from "./injury-tolerance.js";
+import { radiationToleranceFrom } from "./radiation.js";
 import { isTalent } from "./talents.js";
 import { isSocialTrait } from "./social.js";
 
@@ -159,6 +160,36 @@ export interface TraitEffects {
    * one side, and without one they are split.
    */
   temperatureTolerance: { coldF: number; heatF: number };
+  /**
+   * Sealed (p. 82): "encased in a gas- and liquid-impermeable layer", so
+   * waterproof and immune to anything corrosive or toxic that has to touch
+   * skin. It is not an air supply and not a pressure suit on its own.
+   */
+  sealed: boolean;
+  /** Vacuum Support (p. 96): "immune to deleterious effects associated with vacuum and decompression". */
+  vacuumSupport: boolean;
+  /** Pressure Support (p. 77), as its level: 0 for a body that needs its own pressure. */
+  pressureSupport: number;
+  /** Doesn't Breathe (p. 49): no air is needed at all. */
+  doesntBreathe: boolean;
+  /** Filter Lungs (p. 55): what is breathed is filtered first. */
+  filterLungs: boolean;
+  /**
+   * Radiation Tolerance (p. 79): the divisor on a dose received, "after
+   * dividing by the Protection Factor (PF) of artificial protection such as
+   * armor". 1 for a body with none.
+   */
+  radiationTolerance: number;
+  /**
+   * Protected Sense (p. 78), by sense: the sense "rapidly adapts to the most
+   * intense of stimuli", never takes permanent damage from overload, and gets
+   * "+5 to rolls to resist temporary damage and Sense-Based attacks".
+   */
+  protectedSense: { vision: boolean; hearing: boolean; tasteSmell: boolean; touch: boolean };
+  /** Telescopic Vision (p. 92), as its levels. */
+  telescopicVision: number;
+  /** Hyperspectral Vision (p. 60): the whole spectrum at once. */
+  hyperspectralVision: boolean;
 }
 
 /** What no traits at all come to, and the shape everything is added onto. */
@@ -211,6 +242,15 @@ export function noTraitEffects(): TraitEffects {
     lame: null,
     oneArm: false,
     temperatureTolerance: { coldF: 0, heatF: 0 },
+    sealed: false,
+    vacuumSupport: false,
+    pressureSupport: 0,
+    doesntBreathe: false,
+    filterLungs: false,
+    radiationTolerance: 1,
+    protectedSense: { vision: false, hearing: false, tasteSmell: false, touch: false },
+    telescopicVision: 0,
+    hyperspectralVision: false,
   };
 }
 
@@ -371,8 +411,11 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   "dark vision": () => ({ darkVision: true }),
   infravision: () => ({ infravision: true }),
   "hyperspectral vision": () => ({
-    nightVision: 9, infravision: true, acute: { vision: 3, hearing: 0, tasteSmell: 0, touch: 0 },
+    nightVision: 9, infravision: true, hyperspectralVision: true,
+    acute: { vision: 3, hearing: 0, tasteSmell: 0, touch: 0 },
   }),
+  // "Telescopic Vision lets you 'zoom in'" (p. 92), a level at a time.
+  "telescopic vision": (levels) => ({ telescopicVision: levels }),
 
   // "+1 per level to all Sense rolls" for that sense (p. 35).
   "acute vision": (levels) => ({ acute: { vision: levels, hearing: 0, tasteSmell: 0, touch: 0 } }),
@@ -389,6 +432,23 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   deafness: () => ({ deafness: true }),
   blindness: () => ({ blindness: true }),
   "one arm": () => ({ oneArm: true }),
+
+  // The body sealed against what is outside it. Sealed is the layer (p. 82);
+  // it is neither an air supply nor a pressure suit, so the others are bought
+  // beside it. "You must still breathe, unless you also have Doesn't Breathe."
+  sealed: () => ({ sealed: true }),
+  "vacuum support": () => ({ vacuumSupport: true }),
+  "pressure support": (levels) => ({ pressureSupport: levels }),
+  "doesn't breathe": () => ({ doesntBreathe: true }),
+  "doesnt breathe": () => ({ doesntBreathe: true }),
+  "filter lungs": () => ({ filterLungs: true }),
+
+  // Protected Sense (p. 78), which the compendium carries per sense.
+  "protected vision": () => ({ protectedSense: { vision: true, hearing: false, tasteSmell: false, touch: false } }),
+  "protected hearing": () => ({ protectedSense: { vision: false, hearing: true, tasteSmell: false, touch: false } }),
+  "protected smell": () => ({ protectedSense: { vision: false, hearing: false, tasteSmell: true, touch: false } }),
+  "protected taste": () => ({ protectedSense: { vision: false, hearing: false, tasteSmell: true, touch: false } }),
+  "protected touch": () => ({ protectedSense: { vision: false, hearing: false, tasteSmell: false, touch: true } }),
 
   // Lame (p. 141): crippled legs, one leg, or none.
   "lame (crippled legs)": () => ({ lame: "crippled" }),
@@ -423,6 +483,9 @@ function temperatureTolerance(trait: HeldTrait): { coldF: number; heatF: number 
  */
 const INJURY_TOLERANCE = /^injury tolerance\b/;
 
+/** Radiation Tolerance's divisor comes off a table rather than adding up. */
+const RADIATION_TOLERANCE = "radiation tolerance";
+
 /**
  * The name a trait is matched by.
  *
@@ -442,6 +505,7 @@ export function isReadTrait(name: string, talentSkills: readonly string[] = []):
   const key = matchName(name);
   return (
     key in TRAIT_EFFECTS ||
+    key === RADIATION_TOLERANCE ||
     INJURY_TOLERANCE.test(key) ||
     TEMPERATURE_TOLERANCE.test(key) ||
     isTalent(key, talentSkills) ||
@@ -451,7 +515,7 @@ export function isReadTrait(name: string, talentSkills: readonly string[] = []):
 
 /** Every trait name this system reads, for showing what is understood. */
 export function readTraitNames(): string[] {
-  return Object.keys(TRAIT_EFFECTS);
+  return [...Object.keys(TRAIT_EFFECTS), RADIATION_TOLERANCE];
 }
 
 /**
@@ -474,6 +538,15 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
       );
       continue;
     }
+    if (key === RADIATION_TOLERANCE) {
+      // The divisor comes off a table rather than adding up, and two of the
+      // trait is still whichever divides by more.
+      total.radiationTolerance = Math.max(
+        total.radiationTolerance,
+        radiationToleranceFrom([{ name: trait.name, levels: trait.levels ?? 0 }]),
+      );
+      continue;
+    }
     if (TEMPERATURE_TOLERANCE.test(key)) {
       const zone = temperatureTolerance(trait);
       total.temperatureTolerance.coldF += zone.coldF;
@@ -488,72 +561,97 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
     const levels = Math.max(1, Math.floor(trait.levels ?? 0) || 1);
     const applied = effect(levels);
 
-    total.activeDefense += applied.activeDefense ?? 0;
-    total.frightCheck += applied.frightCheck ?? 0;
-    total.knockdown += applied.knockdown ?? 0;
-    total.survival += applied.survival ?? 0;
-    total.consciousness += applied.consciousness ?? 0;
-    total.damageResistance += applied.damageResistance ?? 0;
-    total.footDr += applied.footDr ?? 0;
-    total.superJump += applied.superJump ?? 0;
-    total.strikingSt += applied.strikingSt ?? 0;
-    total.liftingSt += applied.liftingSt ?? 0;
-    total.armSt += applied.armSt ?? 0;
-    total.extraAttacks += applied.extraAttacks ?? 0;
-    total.extraArms += applied.extraArms ?? 0;
-    // Two Regenerations or two Unkillables do not add: the better one holds.
-    total.regeneration = Math.max(total.regeneration, applied.regeneration ?? 0);
-    total.unkillable = Math.max(total.unkillable, applied.unkillable ?? 0);
-    for (const key of ["ST", "DX", "IQ", "HT"] as const) {
-      total.attributes[key] += applied.attributes?.[key] ?? 0;
-    }
-    for (const key of ["hp", "fp", "will", "per", "basicMove", "basicSpeed"] as const) {
-      total.secondary[key] += applied.secondary?.[key] ?? 0;
-    }
-
-    total.unfazeable ||= applied.unfazeable ?? false;
-    total.noShock ||= applied.noShock ?? false;
-    total.aquatic ||= applied.aquatic ?? false;
-    total.ambidextrous ||= applied.ambidextrous ?? false;
-    total.indomitable ||= applied.indomitable ?? false;
-    total.slaveMentality ||= applied.slaveMentality ?? false;
-
-    total.shockMultiplier = Math.max(total.shockMultiplier, applied.shockMultiplier ?? 1);
-    total.enhancedMove = Math.max(total.enhancedMove, applied.enhancedMove ?? 1);
-
-    // Magery 0 and Magery N are two records for one talent, so the level is
-    // the highest either says rather than their sum: Magery 0 beside Magery 3
-    // is Magery 3, not Magery 3 counted twice.
-    total.magery = highest(total.magery, applied.magery);
-    total.ritualMagery = highest(total.ritualMagery, applied.ritualMagery);
-    total.magicResistance += applied.magicResistance ?? 0;
-    total.enhancedDodge += applied.enhancedDodge ?? 0;
-    total.enhancedBlock += applied.enhancedBlock ?? 0;
-    total.enhancedParry.all += applied.enhancedParry?.all ?? 0;
-    total.enhancedParry.bareHands += applied.enhancedParry?.bareHands ?? 0;
-    // Fit and Very Fit do not add: whoever has both is Very Fit.
-    total.htRolls = Math.max(total.htRolls, applied.htRolls ?? 0);
-    total.fatigueRecoveryMultiplier = Math.max(
-      total.fatigueRecoveryMultiplier, applied.fatigueRecoveryMultiplier ?? 1,
-    );
-    total.fatigueLossHalved ||= applied.fatigueLossHalved ?? false;
-    total.nightVision = Math.min(9, total.nightVision + (applied.nightVision ?? 0));
-    total.darkVision ||= applied.darkVision ?? false;
-    total.infravision ||= applied.infravision ?? false;
-    for (const sense of ["vision", "hearing", "tasteSmell", "touch"] as const) {
-      total.acute[sense] += applied.acute?.[sense] ?? 0;
-    }
-    if (applied.badSight) total.badSight = applied.badSight;
-    total.oneEye ||= applied.oneEye ?? false;
-    total.hardOfHearing ||= applied.hardOfHearing ?? false;
-    total.deafness ||= applied.deafness ?? false;
-    total.blindness ||= applied.blindness ?? false;
-    total.oneArm ||= applied.oneArm ?? false;
-    // Two kinds of Lame do not add either: the worse one is the one you have.
-    if (applied.lame) total.lame = worseLameness(total.lame, applied.lame);
+    addTraitEffects(total, applied);
   }
 
   return total;
+}
+
+/**
+ * Adds one trait's effects onto a running total.
+ *
+ * Bonuses add. The ones that cannot are either flags, which are true once
+ * anything sets them, or figures where the more extreme wins -- nobody has two
+ * Regenerations, and if they did, the faster is the one that matters.
+ *
+ * Exported because a trait is not the only thing that grants these: worn gear
+ * does too (Characters pp. 285-286), and a module may.
+ */
+export function addTraitEffects(total: TraitEffects, applied: Partial<TraitEffects>): void {
+  total.activeDefense += applied.activeDefense ?? 0;
+  total.frightCheck += applied.frightCheck ?? 0;
+  total.knockdown += applied.knockdown ?? 0;
+  total.survival += applied.survival ?? 0;
+  total.consciousness += applied.consciousness ?? 0;
+  total.damageResistance += applied.damageResistance ?? 0;
+  total.footDr += applied.footDr ?? 0;
+  total.superJump += applied.superJump ?? 0;
+  total.strikingSt += applied.strikingSt ?? 0;
+  total.liftingSt += applied.liftingSt ?? 0;
+  total.armSt += applied.armSt ?? 0;
+  total.extraAttacks += applied.extraAttacks ?? 0;
+  total.extraArms += applied.extraArms ?? 0;
+  // Two Regenerations or two Unkillables do not add: the better one holds.
+  total.regeneration = Math.max(total.regeneration, applied.regeneration ?? 0);
+  total.unkillable = Math.max(total.unkillable, applied.unkillable ?? 0);
+  for (const key of ["ST", "DX", "IQ", "HT"] as const) {
+    total.attributes[key] += applied.attributes?.[key] ?? 0;
+  }
+  for (const key of ["hp", "fp", "will", "per", "basicMove", "basicSpeed"] as const) {
+    total.secondary[key] += applied.secondary?.[key] ?? 0;
+  }
+
+  total.unfazeable ||= applied.unfazeable ?? false;
+  total.noShock ||= applied.noShock ?? false;
+  total.aquatic ||= applied.aquatic ?? false;
+  total.ambidextrous ||= applied.ambidextrous ?? false;
+  total.indomitable ||= applied.indomitable ?? false;
+  total.slaveMentality ||= applied.slaveMentality ?? false;
+
+  total.shockMultiplier = Math.max(total.shockMultiplier, applied.shockMultiplier ?? 1);
+  total.enhancedMove = Math.max(total.enhancedMove, applied.enhancedMove ?? 1);
+
+  // Magery 0 and Magery N are two records for one talent, so the level is
+  // the highest either says rather than their sum: Magery 0 beside Magery 3
+  // is Magery 3, not Magery 3 counted twice.
+  total.magery = highest(total.magery, applied.magery);
+  total.ritualMagery = highest(total.ritualMagery, applied.ritualMagery);
+  total.magicResistance += applied.magicResistance ?? 0;
+  total.enhancedDodge += applied.enhancedDodge ?? 0;
+  total.enhancedBlock += applied.enhancedBlock ?? 0;
+  total.enhancedParry.all += applied.enhancedParry?.all ?? 0;
+  total.enhancedParry.bareHands += applied.enhancedParry?.bareHands ?? 0;
+  // Fit and Very Fit do not add: whoever has both is Very Fit.
+  total.htRolls = Math.max(total.htRolls, applied.htRolls ?? 0);
+  total.fatigueRecoveryMultiplier = Math.max(
+    total.fatigueRecoveryMultiplier, applied.fatigueRecoveryMultiplier ?? 1,
+  );
+  total.fatigueLossHalved ||= applied.fatigueLossHalved ?? false;
+  total.nightVision = Math.min(9, total.nightVision + (applied.nightVision ?? 0));
+  total.darkVision ||= applied.darkVision ?? false;
+  total.infravision ||= applied.infravision ?? false;
+  total.hyperspectralVision ||= applied.hyperspectralVision ?? false;
+  total.telescopicVision += applied.telescopicVision ?? 0;
+  total.sealed ||= applied.sealed ?? false;
+  total.vacuumSupport ||= applied.vacuumSupport ?? false;
+  total.doesntBreathe ||= applied.doesntBreathe ?? false;
+  total.filterLungs ||= applied.filterLungs ?? false;
+  // Two Pressure Supports do not add: the higher level is the one you have.
+  total.pressureSupport = Math.max(total.pressureSupport, applied.pressureSupport ?? 0);
+  for (const sense of ["vision", "hearing", "tasteSmell", "touch"] as const) {
+    total.protectedSense[sense] ||= applied.protectedSense?.[sense] ?? false;
+  }
+  for (const sense of ["vision", "hearing", "tasteSmell", "touch"] as const) {
+    total.acute[sense] += applied.acute?.[sense] ?? 0;
+  }
+  if (applied.badSight) total.badSight = applied.badSight;
+  total.oneEye ||= applied.oneEye ?? false;
+  total.hardOfHearing ||= applied.hardOfHearing ?? false;
+  total.deafness ||= applied.deafness ?? false;
+  total.blindness ||= applied.blindness ?? false;
+  total.oneArm ||= applied.oneArm ?? false;
+  // Two kinds of Lame do not add either: the worse one is the one you have.
+  if (applied.lame) total.lame = worseLameness(total.lame, applied.lame);
 }
 
 /** The higher of two levels, where null means the talent is absent. */
