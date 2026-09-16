@@ -129,6 +129,18 @@ describe("skill levels once all are known (#268)", () => {
     expect(craft.system.derived).toEqual({ level: 11, fromDefault: false, bonusLines: [] });
   });
 
+  it("hands a listener the attributes the skills came from (since 1.58.0)", async () => {
+    const api = await load();
+    const stealth = skill("Stealth", 14);
+    let seen: unknown = null;
+    globals.Hooks = { callAll: (_hook: string, context: { attributes: Record<string, number> }) => { seen = context.attributes; context.attributes.DX = 99; } };
+    const attributes = { ST: 10, DX: 12, IQ: 10, HT: 11, Will: 10, Per: 10 };
+    api.adjustSkillLevels({}, [stealth], () => null, attributes);
+    expect(seen).toEqual({ ST: 10, DX: 99, IQ: 10, HT: 11, Will: 10, Per: 10 });
+    // A listener gets a copy: the caller's scores are untouched.
+    expect(attributes.DX).toBe(12);
+  });
+
   it("changes nothing when a listener throws", async () => {
     const api = await load();
     const lore = skill("Lore", 15);

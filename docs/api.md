@@ -553,7 +553,9 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     and `fromDefault` to hold a skill to a ceiling another skill sets, or to
     give it its level at default, and `note` and `source` to say why: the
     note shows in the level's breakdown. `levelOf(name)` reads any skill's
-    level.
+    level. Since 1.58.0 `attributes` holds the ST, DX, IQ, HT, Will and Per
+    the skills were worked out from: the character's `derived` data isn't
+    written yet while this fires, so `actors.attribute` can't be read here.
 
 `tools/validate-packs.mjs --src <dir>` accepts documents of module types and
 `system.extensions` data.

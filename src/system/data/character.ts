@@ -1639,7 +1639,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     // A module may change a level now that every skill's is known: hold one
     // to a ceiling another skill sets, or give it its level at default.
-    adjustSkillLevels(this.parent, skillItems, (name) => this.skillLevelByName(name));
+    adjustSkillLevels(this.parent, skillItems, (name) => this.skillLevelByName(name), {
+      ST: attributeScore("ST"), DX: attributeScore("DX"), IQ: attributeScore("IQ"), HT: attributeScore("HT"),
+      Will: attributeScore("Will"), Per: attributeScore("Per"),
+    });
 
     // ── techniques ──────────────────────────────────────────────────────
     // A technique comes off a skill, the Parry or Block it gives, Dodge, or an

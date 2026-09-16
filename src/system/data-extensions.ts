@@ -38,7 +38,7 @@ export const DATA_HOOKS = Object.freeze({
   attributeBonuses: "gworld.attributeBonuses",
   /** After the defenses are worked out: `{ actor, defenses, lines }`; push `{ defense, label, value }`. */
   defenseBonuses: "gworld.defenseBonuses",
-  /** Once every skill's level is known: `{ actor, skills, levelOf }`; set an entry's `level`, `fromDefault` and `note`. */
+  /** Once every skill's level is known: `{ actor, skills, levelOf, attributes }`; set an entry's `level`, `fromDefault` and `note` (`attributes` since 1.58.0). */
   skillLevels: "gworld.skillLevels",
   /** Once Move is worked out (since 1.42.0): `{ actor, move, lines }`; push `{ label, multiplier?, value? }`. */
   moveModifiers: "gworld.moveModifiers",
@@ -188,7 +188,13 @@ export interface SkillLevelEntry {
  * listener changed is written to the skill's derived data, with its note as a
  * line in the level's breakdown. A listener that throws changes nothing.
  */
-export function adjustSkillLevels(actor: any, items: any[], levelOf: (name: string) => number | null): void {
+export function adjustSkillLevels(
+  actor: any,
+  items: any[],
+  levelOf: (name: string) => number | null,
+  /** The scores the skills were worked out from (since 1.58.0): the character's derived data isn't written yet. */
+  attributes: Readonly<Record<string, number>> = {},
+): void {
   const skills: SkillLevelEntry[] = items.map((item) => ({
     item,
     name: String(item?.name ?? ""),
@@ -198,7 +204,7 @@ export function adjustSkillLevels(actor: any, items: any[], levelOf: (name: stri
   const before = skills.map((s) => ({ level: s.level, fromDefault: s.fromDefault }));
   const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
   try {
-    hooks?.callAll?.(DATA_HOOKS.skillLevels, { actor, skills, levelOf });
+    hooks?.callAll?.(DATA_HOOKS.skillLevels, { actor, skills, levelOf, attributes: { ...attributes } });
   } catch (error) {
     console.warn(`gworld | a ${DATA_HOOKS.skillLevels} listener failed`, error);
     return;
