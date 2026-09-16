@@ -14,7 +14,9 @@ import { byName } from "../sort.js";
 import {
   attributeImprovement,
   itemImprovement,
+  languageImprovement,
   secondaryImprovement,
+  traitBuyOff,
   traitImprovement,
   type Improvement,
   type LevelledItem,
@@ -44,8 +46,13 @@ export function ledgerCategories(ledger: Partial<Record<ProgressionCategory, unk
 }
 
 export interface ImprovementRow {
-  /** "attribute:DX", "secondary:hp", "item:<id>" or "trait:<id>": what an upgrade acts on. */
+  /**
+   * What an upgrade acts on: "attribute:DX", "secondary:hp", "item:<id>",
+   * "trait:<id>", "buyoff:<id>" or "language:<id>:spoken".
+   */
   key: string;
+  /** "upgrade" buys the next step; "buyoff" pays to lose a disadvantage or a level of one. */
+  kind: "upgrade" | "buyoff";
   category: ProgressionCategory;
   name: string;
   /** Points already in it: the score's cost for an attribute, the points for an item. */
@@ -61,33 +68,48 @@ export interface ProgressionInput {
   secondaries: Array<{ key: SecondaryKey; label: string; purchased: number; value: number; cost: number }>;
   items: Array<{ id: string; name: string; type: "skill" | "technique" | "spell"; attributeScore: number | null; item: LevelledItem }>;
   traits: Array<{ id: string; name: string; category: string; points: number; trait: PricedTrait }>;
+  languages?: Array<{ id: string; name: string; spoken: string; written: string; isNative: boolean; points: number }>;
 }
 
 /**
  * Every improvement on offer, a row each: attributes and secondary
- * characteristics in the book's order, then skills, techniques, spells and
- * levelled advantages and perks, each run by name.
+ * characteristics in the book's order, then skills, techniques, spells,
+ * levelled advantages and perks, disadvantages and quirks to buy off, and
+ * languages' comprehension, each run by name.
  */
 export function improvementRows(input: ProgressionInput): ImprovementRow[] {
   const rows: ImprovementRow[] = [];
   for (const a of input.attributes) {
-    rows.push({ key: `attribute:${a.key}`, category: "attributes", name: a.key, invested: a.cost, owned: true, improve: attributeImprovement(a.key, a.score, input.unspent) });
+    rows.push({ kind: "upgrade", key: `attribute:${a.key}`, category: "attributes", name: a.key, invested: a.cost, owned: true, improve: attributeImprovement(a.key, a.score, input.unspent) });
   }
   for (const s of input.secondaries) {
-    rows.push({ key: `secondary:${s.key}`, category: "secondaries", name: s.label, invested: s.cost, owned: s.purchased !== 0, improve: secondaryImprovement(s.key, s.purchased, s.value, input.unspent) });
+    rows.push({ kind: "upgrade", key: `secondary:${s.key}`, category: "secondaries", name: s.label, invested: s.cost, owned: s.purchased !== 0, improve: secondaryImprovement(s.key, s.purchased, s.value, input.unspent) });
   }
   const categoryOf = { skill: "skills", technique: "techniques", spell: "spells" } as const;
   for (const entry of [...input.items].sort(byName)) {
     const improve = itemImprovement(entry.item, input.unspent, entry.attributeScore);
     if (!improve) continue;
-    rows.push({ key: `item:${entry.id}`, category: categoryOf[entry.type], name: entry.name, invested: improve.from, owned: improve.from > 0, improve });
+    rows.push({ kind: "upgrade", key: `item:${entry.id}`, category: categoryOf[entry.type], name: entry.name, invested: improve.from, owned: improve.from > 0, improve });
   }
   for (const entry of [...input.traits].sort(byName)) {
     // Buying more of a disadvantage is not improving the character.
     if (entry.category !== "advantage" && entry.category !== "perk") continue;
     const improve = traitImprovement(entry.trait, input.unspent);
     if (!improve) continue;
-    rows.push({ key: `trait:${entry.id}`, category: "advantages", name: entry.name, invested: entry.points, owned: true, improve });
+    rows.push({ kind: "upgrade", key: `trait:${entry.id}`, category: "advantages", name: entry.name, invested: entry.points, owned: true, improve });
+  }
+  for (const entry of [...input.traits].sort(byName)) {
+    if (entry.category !== "disadvantage" && entry.category !== "quirk") continue;
+    const improve = traitBuyOff(entry.trait, input.unspent);
+    if (!improve) continue;
+    rows.push({ kind: "buyoff", key: `buyoff:${entry.id}`, category: entry.category === "quirk" ? "quirks" : "disadvantages", name: entry.name, invested: entry.points, owned: true, improve });
+  }
+  for (const entry of [...(input.languages ?? [])].sort(byName)) {
+    for (const aspect of ["spoken", "written"] as const) {
+      const improve = languageImprovement(entry[aspect], entry.isNative, input.unspent);
+      if (!improve) continue;
+      rows.push({ kind: "upgrade", key: `language:${entry.id}:${aspect}`, category: "languages", name: `${entry.name} (${aspect})`, invested: entry.points, owned: true, improve });
+    }
   }
   return rows;
 }

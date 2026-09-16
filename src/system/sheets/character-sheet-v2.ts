@@ -273,11 +273,11 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const sort = asGearSort(this.gearSort.sort);
     const carriedGroups = ((context.gearGroups ?? []) as Array<{ key: string; label: string; rows: any[] }>).map((group) => ({
       ...group,
-      rows: sortGear(group.rows, sort, this.gearSort.descending).map((row) => ({ ...row, canCarry: actor.items.get(row.id)?.type === "equipment" })),
+      rows: sortGear(group.rows, sort, this.gearSort.descending).map((row) => ({ ...row, img: actor.items.get(row.id)?.img ?? "", canCarry: actor.items.get(row.id)?.type === "equipment" })),
     }));
     const stored = sortGear(((context.items?.stored ?? []) as any[]).map((item) => {
       const quantity = Number(item.system?.quantity ?? 1) || 1;
-      return { id: String(item.id), name: String(item.name ?? ""), quantity, weight: effectiveWeight(item) * quantity, cost: effectiveCost(item) * quantity };
+      return { id: String(item.id), name: String(item.name ?? ""), img: item.img ?? "", quantity, weight: effectiveWeight(item) * quantity, cost: effectiveCost(item) * quantity };
     }), sort, this.gearSort.descending);
 
     const details = await Promise.all(physical.map(async (item: any) => {
@@ -461,6 +461,16 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
           points: Number(item.system?.totalPoints ?? 0) || 0,
           trait: item,
         })),
+      languages: [...actor.items]
+        .filter((i: any) => i.type === "language")
+        .map((item: any) => ({
+          id: String(item.id),
+          name: String(item.name ?? ""),
+          spoken: String(item.system?.spoken ?? "none"),
+          written: String(item.system?.written ?? "none"),
+          isNative: item.system?.isNative === true,
+          points: Number(item.system?.totalPoints ?? 0) || 0,
+        })),
     });
 
     const state = this.stateOf("progression");
@@ -493,16 +503,27 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         label: L(`GWORLD.SheetV2.Ledger.${c.key}`),
         negative: c.points < 0,
         active: chip === c.key,
-        offered: shown.some((r) => r.category === c.key),
+        offered: true,
+        adds: this.progressionAdds(c.key, context),
       })),
       chip,
       modes: (["all", "affordable", "owned"] as const).map((key) => ({ key, label: L(`GWORLD.SheetV2.Mode.${key}`), active: key === mode })),
       rows: shown.map((row) => {
-        const item = row.key.startsWith("item:") || row.key.startsWith("trait:") ? actor.items.get(row.key.split(":")[1]) : null;
+        const item = /^(item|trait|buyoff|language):/.test(row.key) ? actor.items.get(row.key.split(":")[1]) : null;
         return {
           ...row,
           selected: row.key === selected,
           after: unspent - row.improve.cost,
+          // A language's step reads as its comprehension levels, and buying a
+          // disadvantage off entirely reads as its removal.
+          ...(row.key.startsWith("language:")
+            ? {
+                stepFrom: L(`GWORLD.Language.${["none", "broken", "accented", "native"][row.improve.from]}`),
+                stepTo: L(`GWORLD.Language.${["none", "broken", "accented", "native"][row.improve.to]}`),
+              }
+            : row.kind === "buyoff" && row.improve.to === 0
+              ? { stepFrom: `${row.invested} CP`, stepTo: L("GWORLD.SheetV2.Removed") }
+              : {}),
           categoryLabel: L(`GWORLD.SheetV2.Ledger.${row.category}`),
           summary: item ? firstLine(item.system?.description) : L(`GWORLD.SheetV2.Explain.${row.category}`),
           attribute: item?.type === "skill" ? item.system?.attribute : null,
@@ -516,6 +537,39 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         when: award.at ? new Date(award.at).toLocaleDateString() : "",
       })),
     };
+  }
+
+  /**
+   * The ways to buy something new in a category of the Progression tab: the
+   * compendium picker, a new blank item, or a template. Each is one of the
+   * sheet's own actions, so it works as it does on the tab it belongs to.
+   */
+  protected progressionAdds(category: string, context: Record<string, any>): Array<Record<string, string>> {
+    const L = (key: string) => game.i18n.localize(key);
+    const browse = (itemTypes: string, browseTitle: string, categories = "") =>
+      ({ action: "browseCompendium", itemTypes, categories, browseTitle, label: L("GWORLD.SheetV2.Browse"), icon: "search" });
+    const create = (itemType: string, label: string, itemCategory = "") =>
+      ({ action: "createItem", itemType, itemCategory, label: L(label), icon: "plus" });
+    switch (category) {
+      case "advantages":
+        return [browse("trait", "GWORLD.Picker.Advantages", "advantage,perk"), create("trait", "GWORLD.Action.AddAdvantage", "advantage"), create("trait", "GWORLD.SheetV2.AddPerk", "perk")];
+      case "disadvantages":
+        return [browse("trait", "GWORLD.Picker.Disadvantages", "disadvantage,quirk"), create("trait", "GWORLD.Action.AddDisadvantage", "disadvantage")];
+      case "quirks":
+        return [browse("trait", "GWORLD.Picker.Quirks", "quirk"), create("trait", "GWORLD.Action.AddQuirk", "quirk")];
+      case "skills":
+        return [browse("skill,technique", "GWORLD.Picker.Skills"), create("skill", "GWORLD.Action.AddSkill")];
+      case "techniques":
+        return [browse("skill,technique", "GWORLD.Picker.Skills"), create("technique", "GWORLD.Action.AddTechnique")];
+      case "spells":
+        return context.rules?.magic ? [browse("spell", "GWORLD.Picker.Spells"), create("spell", "GWORLD.Action.AddSpell")] : [];
+      case "languages":
+        return [create("language", "GWORLD.Action.AddLanguage")];
+      case "templates":
+        return [{ action: "applyTemplate", label: L("GWORLD.Template.Apply"), icon: "plus" }];
+      default:
+        return [];
+    }
   }
 
   /** Which improvements the Progression tab lists. */
@@ -1116,6 +1170,18 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       const key = String(group.dataset.v2ChipGroup ?? "").slice(list.length + 1);
       group.classList.toggle("v2-off", chip !== "all" && key !== chip);
     }
+    for (const part of this.element.querySelectorAll<HTMLElement>(`[data-v2-chip-only^="${list}:"]`)) {
+      const key = String(part.dataset.v2ChipOnly ?? "").slice(list.length + 1);
+      part.classList.toggle("v2-off", key !== chip);
+    }
+    // The detail panel follows the chip: a selected row the chip hid gives way
+    // to the first row still shown.
+    const rows = [...this.element.querySelectorAll<HTMLElement>(`[data-v2-row^="${list}:"]`)];
+    const shown = (row: HTMLElement) => !row.closest(".v2-off") && !row.hidden;
+    const current = rows.find((row) => row.dataset.v2Row === `${list}:${this.stateOf(list).selected}`);
+    if (current && shown(current)) return;
+    const first = rows.find(shown);
+    if (first) this.showSelected(list, String(first.dataset.v2Row).slice(list.length + 1));
   }
 
   /**
@@ -1232,7 +1298,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
    */
   static async #onUpgrade(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
     if (!this.isEditable) return;
-    const [kind, id] = String(target.dataset.v2Upgrade ?? "").split(":");
+    const [kind, ...rest] = String(target.dataset.v2Upgrade ?? "").split(":");
+    const id = rest.join(",");
     const actor = this.actor;
     if (kind === "attribute" && id && ["ST", "DX", "IQ", "HT"].includes(id)) {
       await actor.update({ [`system.attributes.${id}`]: Number(actor.system.attributes?.[id] ?? 10) + 1 });
@@ -1245,6 +1312,29 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     } else if (kind === "trait" && id) {
       const item = actor.items.get(id);
       if (item) await this.stepLevels(item, "up");
+    } else if (kind === "buyoff" && id) {
+      // A levelled disadvantage loses a level; anything else goes, once confirmed.
+      const item = actor.items.get(id);
+      if (!item) return;
+      const levels = Number(item.system?.levels ?? 0) || 0;
+      if (isLevelled(item) && levels > 1) {
+        await this.stepLevels(item, "down");
+      } else {
+        const confirmed = await foundry.applications.api.DialogV2.confirm({
+          window: { title: game.i18n.localize("GWORLD.SheetV2.BuyOffTitle") },
+          content: `<p>${game.i18n.format("GWORLD.SheetV2.BuyOffConfirm", { name: foundry.utils.escapeHTML(String(item.name ?? "")), points: -Number(item.system?.totalPoints ?? 0) })}</p>`,
+        });
+        if (!confirmed) return;
+        await item.delete();
+      }
+    } else if (kind === "language" && id) {
+      const [itemId, aspect] = id.split(",");
+      const item = itemId ? actor.items.get(itemId) : null;
+      if (!item || (aspect !== "spoken" && aspect !== "written")) return;
+      const levels = ["none", "broken", "accented", "native"];
+      const at = levels.indexOf(String(item.system?.[aspect] ?? "none"));
+      if (at < 0 || at >= levels.length - 1) return;
+      await item.update({ [`system.${aspect}`]: levels[at + 1] });
     } else {
       return;
     }

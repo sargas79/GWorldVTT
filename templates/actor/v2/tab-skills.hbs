@@ -96,6 +96,20 @@
                     <span class="v2-row-level v2-muted" data-tooltip="{{localize 'GWORLD.Skill.NoDefault'}}">&mdash;</span>
                   {{/if}}
                   <span class="v2-row-summary">{{row.summary}}</span>
+                  {{!-- Roll and delete without opening the panel. Add-on row actions go before delete. --}}
+                  <span class="v2-row-actions">
+                    {{#if row.rollable}}
+                      <button type="button" class="v2-row-icon rollable" data-action="roll" data-roll-type="skill"
+                              data-roll-label="{{row.name}}" data-roll-target="{{row.level}}" {{#if row.attribute}}data-based-on="{{row.attribute}}"{{/if}}
+                              data-tooltip="{{localize 'GWORLD.SheetV2.RollSkill' name=row.name level=row.level}}"
+                              aria-label="{{localize 'GWORLD.SheetV2.RollSkill' name=row.name level=row.level}}">{{> "gworld.die"}}</button>
+                    {{/if}}
+                    {{#if @root.editable}}
+                      <button type="button" class="v2-row-icon v2-row-delete" data-action="deleteItem"
+                              data-tooltip="{{localize 'GWORLD.SheetV2.DeleteNamed' name=row.name}}"
+                              aria-label="{{localize 'GWORLD.SheetV2.DeleteNamed' name=row.name}}">{{> "gworld.trash"}}</button>
+                    {{/if}}
+                  </span>
                 </div>
               {{/each}}
             </div>

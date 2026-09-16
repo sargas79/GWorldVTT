@@ -4160,7 +4160,16 @@
         "Related": "Related",
         "RelatedHint": "Everything linked to this character, by kind.",
         "Description": "Description"
-      }
+      },
+      "DeleteNamed": "Delete {name}",
+      "DropNamed": "Drop {name}",
+      "AddPerk": "Add Perk",
+      "BuyNew": "Buy new {category}",
+      "BuyOff": "Buy off",
+      "BuyOffAnyway": "Buy off anyway",
+      "BuyOffTitle": "Buy off a disadvantage",
+      "BuyOffConfirm": "Buy off {name}? It is removed from the character, and the {points} points it gave are spent.",
+      "Removed": "removed"
     }
   }
 }
