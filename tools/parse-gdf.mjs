@@ -1055,6 +1055,12 @@ const LOCATIONS = new Map([
   ["body", ["torso", "vitals", "groin"]],
   ["head", ["skull", "face"]],
   ["full suit", []],
+  // "all" is what a data file writes for a suit covering the wearer from head
+  // to foot: the same idea as "full suit", spelled out rather than left to the
+  // pack's own reading. Ultra-tech suits, battlesuits and exoskeletons use it.
+  ["all", ["torso", "vitals", "skull", "face", "eye", "neck", "groin", "arm", "leg", "hand", "foot"]],
+  // A powered sleeve is worn on one arm and grips with the hand on it.
+  ["one arm and hand", ["arm", "hand"]],
 ]);
 
 const number = (value, fallback = 0) => {
@@ -1349,6 +1355,9 @@ function malfunctionOf(raw) {
   return Number.isInteger(value) && value >= 3 && value <= 18 ? value : null;
 }
 
+/** Yards in a mile, for the ranges a book prints in miles (Characters p. 270). */
+const YARDS_PER_MILE = 1760;
+
 /**
  * A range figure. It is either a distance in yards, or a multiple of ST --
  * which GCA writes `ST*15` for the wielder's ST and `me::weaponst*15` for a
@@ -1356,10 +1365,18 @@ function malfunctionOf(raw) {
  * uses for thrown weapons, and cannot be reduced to a number here.
  */
 function parseRange(value) {
-  const text = (value ?? "").trim();
+  const text = (value ?? "").trim().replace(/(\d),(?=\d)/g, "$1");
   if (text === "") return { distance: 0, stMultiple: false, ofWeapon: false };
   if (/^\d+(\.\d+)?$/.test(text)) {
     return { distance: Number(text), stMultiple: false, ofWeapon: false };
+  }
+  // A range the book prints in miles, where the tables otherwise give yards.
+  // The unit is marked on the maximum alone -- "17/50 mi." arrives as
+  // rangehalfdam(17), rangemax(50 mi.) -- so the half is converted beside it
+  // where the pair is read, not here.
+  const miles = /^(\d+(?:\.\d+)?)\s*mi\.?$/i.exec(text);
+  if (miles) {
+    return { distance: Number(miles[1]) * YARDS_PER_MILE, stMultiple: false, ofWeapon: false, miles: true };
   }
   const st = /^(?:me::weaponst|ST(?::ST)?)\s*\*\s*(\d+(?:\.\d+)?)$/i.exec(text);
   if (st) {
@@ -1442,10 +1459,16 @@ function rangedMode(name, f, thrown) {
   const damage = parseDamage(f.get("damage"), f.get("damtype"));
   if (!damage) return { error: `damage "${f.get("damage") ?? ""}" ${f.get("damtype") ?? ""}` };
 
-  const acc = /^(\d+)(?:\s*\+\s*(\d+))?$/.exec((f.get("acc") ?? "0").trim() || "0");
+  // A jet is sprayed rather than fired, and the tables print "Jet" in the
+  // Accuracy column (Characters p. 106; the flamethrower, p. 281). There is no
+  // Accuracy to add and no half-damage range: the column beside it gives how
+  // far the jet reaches, in yards, which is the maximum range read below.
+  const rawAcc = (f.get("acc") ?? "0").trim() || "0";
+  const jet = /^jet$/i.test(rawAcc);
+  const acc = jet ? ["jet", "0", undefined] : /^(\d+)(?:\s*\+\s*(\d+))?$/.exec(rawAcc);
   if (!acc) return { error: `accuracy "${f.get("acc") ?? ""}"` };
 
-  const half = parseRange(f.get("rangehalfdam"));
+  let half = parseRange(f.get("rangehalfdam"));
   const max = parseRange(f.get("rangemax"));
 
   // How far a thrown weapon goes is a property of the thrower, not the
@@ -1462,6 +1485,12 @@ function rangedMode(name, f, thrown) {
   // multiple of ST would need two units in one pair of fields.
   if (half && max && half.distance > 0 && half.stMultiple !== max.stMultiple) {
     return { error: "half and maximum range are in different units" };
+  }
+  // The unit is marked on the maximum alone, so a bare half-damage range
+  // beside a maximum in miles is in miles too: "17/50 mi." is seventeen miles
+  // and fifty, not seventeen yards and fifty miles.
+  if (max?.miles && half && !half.miles && !half.stMultiple && half.distance > 0) {
+    half = { ...half, distance: half.distance * YARDS_PER_MILE, miles: true };
   }
 
   const divisor = f.get("armordivisor");
@@ -1615,7 +1644,10 @@ export function displayWeight(text) {
  * same column in full; this is only what a fresh weapon starts with.
  */
 export function fullLoad(shots) {
-  const m = /^(T|\d+)(\+1)?/i.exec((shots ?? "").trim());
+  // GCA writes a large magazine the way the book prints it, with a thousands
+  // separator: "9,000(3)". Left in, the number stops at the comma and a
+  // 9,000-shot power cell arrives holding nine.
+  const m = /^(T|\d+)(\+1)?/i.exec((shots ?? "").trim().replace(/(\d),(?=\d)/g, "$1"));
   if (!m) return 0;
   if (m[1].toUpperCase() === "T") return 1;
   return Number(m[1]) + (m[2] ? 1 : 0);

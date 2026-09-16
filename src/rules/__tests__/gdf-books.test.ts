@@ -13,6 +13,7 @@ import {
   bookPrefix,
   classifyCitation,
   entryName,
+  fullLoad,
   groupsOf,
   handKeptTraitNames,
   isBookkeeping,
@@ -458,5 +459,30 @@ describe("handKeptTraitNames", () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("fullLoad", () => {
+  it("counts a magazine and the round already chambered", () => {
+    expect(fullLoad("30+1(3)")).toBe(31);
+    expect(fullLoad("5(3i)")).toBe(5);
+  });
+
+  it("reads a magazine written with a thousands separator", () => {
+    // A data file writes a large power cell the way the book prints it. Read
+    // without the separator the number stops at the comma, and a 9,000-shot
+    // cell arrives holding nine.
+    expect(fullLoad("9,000(3)")).toBe(9000);
+    expect(fullLoad("3,600(3)")).toBe(3600);
+    expect(fullLoad("1,000(5)")).toBe(1000);
+  });
+
+  it("counts a thrown weapon as the one in hand", () => {
+    expect(fullLoad("T(1)")).toBe(1);
+  });
+
+  it("counts nothing where the column is blank", () => {
+    expect(fullLoad("")).toBe(0);
+    expect(fullLoad(undefined)).toBe(0);
   });
 });
