@@ -100,6 +100,21 @@
       </div>
     </div>
 
+    <div class="v2-journal-side">
+    {{!-- The character's artwork, full size. --}}
+    <figure class="v2-panel v2-portrait-card">
+      <button type="button" class="v2-portrait-frame" data-action="v2ViewPortrait"
+              data-tooltip="{{localize 'GWORLD.SheetV2.Journal.ViewPortrait'}}" aria-label="{{localize 'GWORLD.SheetV2.Journal.ViewPortrait'}}">
+        <img src="{{#if actor.img}}{{actor.img}}{{else}}icons/svg/mystery-man.svg{{/if}}" alt="{{actor.name}}">
+      </button>
+      <figcaption>
+        <span class="v2-portrait-name">{{actor.name}}</span>
+        {{#if editable}}
+          <button type="button" class="v2-button v2-button-small" data-action="v2EditPortrait">{{localize "GWORLD.SheetV2.Journal.ChangePortrait"}}</button>
+        {{/if}}
+      </figcaption>
+    </figure>
+
     {{!-- Everything linked, by kind, to jump to. --}}
     <aside class="v2-panel v2-related">
       <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Journal.Related"}}</h2>
@@ -116,6 +131,7 @@
       {{/each}}
       <p class="v2-note">{{localize "GWORLD.SheetV2.Journal.RelatedHint"}}</p>
     </aside>
+    </div>
   </div>
 
   {{!-- Notes for whoever owns the character. --}}

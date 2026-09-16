@@ -4159,7 +4159,9 @@
         "Welcome": "Link the quests, clues, people, places and notes of this character's story. The text stays in Foundry's journal, with its own permissions, and shows here.",
         "Related": "Related",
         "RelatedHint": "Everything linked to this character, by kind.",
-        "Description": "Description"
+        "Description": "Description",
+        "ViewPortrait": "View the portrait full size",
+        "ChangePortrait": "Change"
       },
       "DeleteNamed": "Delete {name}",
       "DropNamed": "Drop {name}",
