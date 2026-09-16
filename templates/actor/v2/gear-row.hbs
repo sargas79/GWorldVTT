@@ -1,0 +1,35 @@
+{{!-- One piece of gear as a list row: picture and name with its tags,
+     quantity, weight, cost, and its buttons. Called with row and stored.
+     Equipment drags between carried and stored. --}}
+<div class="v2-row v2-gear{{#if stored}} dim{{/if}}{{#if (eq (concat 'item:' row.id) @root.v2.inventory.selected)}} selected{{/if}}"
+     data-item-id="{{row.id}}" data-v2-row="inventory:item:{{row.id}}" data-v2-name="{{row.name}}" data-action="v2Select"
+     role="option" tabindex="0" aria-selected="{{#if (eq (concat 'item:' row.id) @root.v2.inventory.selected)}}true{{else}}false{{/if}}"
+     {{#if (and @root.editable (or stored row.canCarry))}}draggable="true" data-v2-draggable{{/if}}>
+  <img class="v2-gear-img" src="{{row.img}}" alt="">
+  <span class="v2-row-name">
+    {{row.name}}
+    {{#if row.equipped}}<span class="v2-tag v2-tag-steel">{{localize "GWORLD.Item.Equipped"}}</span>{{/if}}
+    {{#if row.legality.label}}<span class="v2-tag{{#if row.legality.restricted}} v2-tag-red{{/if}}">{{row.legality.label}}</span>{{/if}}
+  </span>
+  <span class="v2-gear-num">{{row.quantity}}</span>
+  <span class="v2-gear-num">{{decimal row.weight 1}} lb</span>
+  <span class="v2-gear-num">${{row.cost}}</span>
+  <span class="v2-row-actions">
+    {{#if @root.editable}}
+      {{#if row.equippable}}
+        <button type="button" class="v2-row-icon{{#if row.equipped}} on{{/if}}" data-action="toggleEquipped"
+                data-tooltip="{{#if row.equipped}}{{localize 'GWORLD.SheetV2.Unequip'}}{{else}}{{localize 'GWORLD.SheetV2.Equip'}}{{/if}}"
+                aria-label="{{#if row.equipped}}{{localize 'GWORLD.SheetV2.Unequip'}}{{else}}{{localize 'GWORLD.SheetV2.Equip'}}{{/if}}"
+                aria-pressed="{{#if row.equipped}}true{{else}}false{{/if}}">{{> "gworld.v2icon.hand"}}</button>
+      {{/if}}
+      {{#if (or stored row.canCarry)}}
+        <button type="button" class="v2-row-icon" data-action="v2ToggleCarried"
+                data-tooltip="{{#if stored}}{{localize 'GWORLD.SheetV2.Carry'}}{{else}}{{localize 'GWORLD.SheetV2.Stow'}}{{/if}}"
+                aria-label="{{#if stored}}{{localize 'GWORLD.SheetV2.Carry'}}{{else}}{{localize 'GWORLD.SheetV2.Stow'}}{{/if}}">{{#if stored}}&uarr;{{else}}&darr;{{/if}}</button>
+      {{/if}}
+      <button type="button" class="v2-row-icon v2-row-delete" data-action="deleteItem"
+              data-tooltip="{{localize 'GWORLD.SheetV2.DropNamed' name=row.name}}"
+              aria-label="{{localize 'GWORLD.SheetV2.DropNamed' name=row.name}}">{{> "gworld.trash"}}</button>
+    {{/if}}
+  </span>
+</div>

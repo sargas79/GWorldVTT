@@ -273,11 +273,11 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const sort = asGearSort(this.gearSort.sort);
     const carriedGroups = ((context.gearGroups ?? []) as Array<{ key: string; label: string; rows: any[] }>).map((group) => ({
       ...group,
-      rows: sortGear(group.rows, sort, this.gearSort.descending).map((row) => ({ ...row, canCarry: actor.items.get(row.id)?.type === "equipment" })),
+      rows: sortGear(group.rows, sort, this.gearSort.descending).map((row) => ({ ...row, img: actor.items.get(row.id)?.img ?? "", canCarry: actor.items.get(row.id)?.type === "equipment" })),
     }));
     const stored = sortGear(((context.items?.stored ?? []) as any[]).map((item) => {
       const quantity = Number(item.system?.quantity ?? 1) || 1;
-      return { id: String(item.id), name: String(item.name ?? ""), quantity, weight: effectiveWeight(item) * quantity, cost: effectiveCost(item) * quantity };
+      return { id: String(item.id), name: String(item.name ?? ""), img: item.img ?? "", quantity, weight: effectiveWeight(item) * quantity, cost: effectiveCost(item) * quantity };
     }), sort, this.gearSort.descending);
 
     const details = await Promise.all(physical.map(async (item: any) => {

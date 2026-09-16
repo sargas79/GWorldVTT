@@ -65,6 +65,11 @@ const ICONS: Record<string, string> = {
   "gworld.v2icon.star": `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
     <path d="M12 3l2.4 5.2 5.6.6-4.2 3.8 1.2 5.6L12 15.4 7 18.2l1.2-5.6L4 8.8l5.6-.6z"></path>
   </svg>`,
+  // Worn or held, for the Equip button on a row of gear.
+  "gworld.v2icon.hand": `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 11V6a2 2 0 0 0-4 0v5"></path><path d="M14 10V4a2 2 0 0 0-4 0v6"></path><path d="M10 10.5V6a2 2 0 0 0-4 0v8"></path>
+    <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path>
+  </svg>`,
   "gworld.v2icon.chevron": `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="m6 9 6 6 6-6"></path>
   </svg>`,
@@ -85,6 +90,7 @@ const FILE_PARTIALS: Record<string, string> = {
   // The new character sheet's own pieces.
   "gworld.v2.attackCard": `systems/${SYSTEM_ID}/templates/actor/v2/attack-card.hbs`,
   "gworld.v2.bodyOutline": `systems/${SYSTEM_ID}/templates/actor/v2/body-outline.hbs`,
+  "gworld.v2.gearRow": `systems/${SYSTEM_ID}/templates/actor/v2/gear-row.hbs`,
   // The classic tabs' sections, one partial each, so both character sheets
   // draw them from one copy: a section a module's rule reads, or a button a
   // module decorates, is the same markup on either sheet.
