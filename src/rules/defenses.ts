@@ -2,6 +2,7 @@
  * Active defenses: Dodge, Parry, and Block (GURPS Lite p. 28).
  */
 
+import { sameSkill } from "./skills.js";
 import { halveForReeling } from "./injury.js";
 import { POSTURE_EFFECTS } from "./posture.js";
 import type { EncumbranceLevel, Posture } from "./types.js";
@@ -294,6 +295,30 @@ export function multipleParryPenalty(previous: number, options: { fencing: boole
   const step = options.fencing && options.trained ? -1 : options.fencing || options.trained ? -2 : -4;
   const count = Math.max(0, Math.floor(previous));
   return count === 0 ? 0 : count * step;
+}
+
+/**
+ * Whether a master parries at half the penalty with a weapon.
+ *
+ * Trained By A Master and Weapon Master each halve the penalty "to parry more
+ * than once per turn" on the same terms as a Rapid Strike (Characters pp. 93,
+ * 99): the first with an unarmed or Melee Weapon skill, the second with a
+ * weapon of its class used with a skill actually learned. The character's own
+ * attack rows have already made that test, so this reads their answer for the
+ * weapon about to parry rather than making it again. A weapon with no attack
+ * row of its own -- a module's defense, say -- halves nothing.
+ */
+export function masterHalvesParry(
+  rows: ReadonlyArray<{ skillName?: string; itemId?: string; rapidStrikeHalved?: boolean }>,
+  weapon: { skill?: string; itemId?: string } | null,
+): boolean {
+  const skill = String(weapon?.skill ?? "");
+  if (!skill) return false;
+  const itemId = String(weapon?.itemId ?? "");
+  const row = rows.find(
+    (r) => sameSkill(String(r.skillName ?? ""), skill) && (itemId ? String(r.itemId ?? "") === itemId : true),
+  );
+  return row?.rapidStrikeHalved === true;
 }
 
 /** Whether an attack can be blocked at all: "You cannot block bullets or beam weapons" (Campaigns p. 375). */

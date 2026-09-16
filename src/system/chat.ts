@@ -20,7 +20,7 @@ import { rollDamage, rollSuccess, type AttackWeaponFlag } from "./roll.js";
 import { currentTargets } from "./targets.js";
 import { blastAt } from "../rules/explosions.js";
 import { criticalEntry, criticalHitTableFor, isUnarmedSkill } from "../rules/criticals.js";
-import { BLOCKS_PER_TURN, acrobaticDefenseModifier, bareHandedParryModifier, mayTryAcrobatic, blockableAttack, canParryFlail, flailDefenseModifier, multipleParryPenalty, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
+import { BLOCKS_PER_TURN, acrobaticDefenseModifier, bareHandedParryModifier, mayTryAcrobatic, blockableAttack, canParryFlail, flailDefenseModifier, masterHalvesParry, multipleParryPenalty, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
 import { getCombatState, setCombatState } from "./combat-extensions.js";
 import { rollKnockdown } from "./knockdown.js";
 import { afterSuccessRoll, successRollTags } from "./procedure-extensions.js";
@@ -1178,14 +1178,23 @@ async function countDefense(defender: any, key: DefenseKey, parryWeapon: { itemI
   await setCombatState(defender, SYSTEM_ID, DEFENSE_COUNTS, counts, "turn");
 }
 
-/** Whether a defender has Trained By A Master or Weapon Master, which halves the multiple-parry penalty. */
-function masterTrained(defender: any): boolean {
-  return [...(defender?.items ?? [])].some((item: any) => item.type === "trait" && /^(trained by a master|weapon master)\b/i.test(String(item.name ?? "")));
+/**
+ * Whether a master parries at half the penalty with this weapon.
+ *
+ * Trained By A Master and Weapon Master each halve the penalty "to parry more
+ * than once per turn" on the same terms as a Rapid Strike (Characters pp. 93,
+ * 99): the first with an unarmed or Melee Weapon skill, the second with a
+ * weapon of its class and a skill actually learned. The attack rows have
+ * already made that test, so the parry reads their answer rather than asking
+ * again -- and a weapon with no row of its own halves nothing.
+ */
+function masterTrained(defender: any, parryWeapon: DefenseParryWeapon | null): boolean {
+  return masterHalvesParry(defender?.system?.derived?.melee ?? [], parryWeapon);
 }
 
 /** The multiple-parry line for a parry with this weapon (Campaigns p. 376). */
 function multipleParryLines(defender: any, parryWeapon: DefenseParryWeapon | null): Array<{ label: string; value: number }> {
-  const value = multipleParryPenalty(countsFor(defender, parryWeapon).parries, { fencing: parryWeapon?.isFencing === true, trained: masterTrained(defender) });
+  const value = multipleParryPenalty(countsFor(defender, parryWeapon).parries, { fencing: parryWeapon?.isFencing === true, trained: masterTrained(defender, parryWeapon) });
   return value ? [{ label: game.i18n.localize("GWORLD.Defense.MultipleParries"), value }] : [];
 }
 

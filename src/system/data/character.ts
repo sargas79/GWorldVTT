@@ -270,7 +270,7 @@ export interface DerivedAttack {
   unarmedBonusSkill?: string;
   /** Weapon Master's damage bonus per die on this blow, or 0 (Characters p. 99). */
   weaponMasterPerDie?: number;
-  /** True when a master makes a Rapid Strike with it at half the penalty (Characters pp. 93, 99). */
+  /** True when a master halves the penalty for a Rapid Strike with it, and for parrying again (Characters pp. 93, 99). */
   rapidStrikeHalved?: boolean;
   damage: string;
   damageType: DamageType;

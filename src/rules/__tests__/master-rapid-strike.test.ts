@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { RAPID_STRIKE_PENALTY, halvesRapidStrike, rapidStrikePenalty } from "../attack-options.js";
+import { masterHalvesParry, multipleParryPenalty } from "../defenses.js";
 import { flurryOfBlowsPenalty } from "../extra-effort.js";
 import { weaponMasterDefault } from "../weapon-master.js";
 
@@ -57,5 +58,42 @@ describe("weaponMasterDefault", () => {
     expect(weaponMasterDefault({ attribute: "IQ", difficulty: "A", dx: 12 })).toBe(null);
     expect(weaponMasterDefault({ attribute: "DX", difficulty: "VH", dx: 12 })).toBe(null);
     expect(weaponMasterDefault({ attribute: "DX", difficulty: "", dx: 12 })).toBe(null);
+  });
+});
+
+/**
+ * The same halving covers parrying more than once a turn (Campaigns p. 376),
+ * and on the same terms, so a parry reads the answer off the attack rows.
+ */
+describe("masterHalvesParry", () => {
+  const rows = [
+    { skillName: "Broadsword", itemId: "sword", rapidStrikeHalved: true },
+    { skillName: "Shield (Shield)", itemId: "shield", rapidStrikeHalved: false },
+    { skillName: "Karate", itemId: "", rapidStrikeHalved: true },
+  ];
+
+  it("halves it for a weapon whose attack row a master's benefits reach", () => {
+    expect(masterHalvesParry(rows, { skill: "Broadsword", itemId: "sword" })).toBe(true);
+    expect(masterHalvesParry(rows, { skill: "Karate", itemId: "" })).toBe(true);
+  });
+
+  it("leaves a weapon the benefits do not reach at the full penalty", () => {
+    expect(masterHalvesParry(rows, { skill: "Shield (Shield)", itemId: "shield" })).toBe(false);
+    // The same skill on another item is another weapon: an axe is not the mastered sword.
+    expect(masterHalvesParry(rows, { skill: "Broadsword", itemId: "axe" })).toBe(false);
+  });
+
+  it("halves nothing for a weapon with no attack row, or no skill", () => {
+    expect(masterHalvesParry(rows, { skill: "Rapier", itemId: "rapier" })).toBe(false);
+    expect(masterHalvesParry(rows, { skill: "", itemId: "sword" })).toBe(false);
+    expect(masterHalvesParry(rows, null)).toBe(false);
+    expect(masterHalvesParry([], { skill: "Broadsword", itemId: "sword" })).toBe(false);
+  });
+
+  it("feeds the multiple-parry penalty: -4 a parry, or -2 for a master", () => {
+    const sword = { skill: "Broadsword", itemId: "sword" };
+    const shield = { skill: "Shield (Shield)", itemId: "shield" };
+    expect(multipleParryPenalty(1, { fencing: false, trained: masterHalvesParry(rows, sword) })).toBe(-2);
+    expect(multipleParryPenalty(1, { fencing: false, trained: masterHalvesParry(rows, shield) })).toBe(-4);
   });
 });
