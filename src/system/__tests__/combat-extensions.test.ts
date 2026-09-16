@@ -310,6 +310,23 @@ describe("an item's attack rows (#270)", () => {
     expect(rows[1]!.row).toMatchObject({ parry: null, twoHanded: false });
   });
 
+  it("lets a listener make a row an affliction, or turn one back into damage (since 1.55.0)", async () => {
+    const api = await load();
+    const rows = entries();
+    Object.assign(rows[1]!.row, { affliction: true, afflictionAttribute: "HT", afflictionModifier: -4, damage: "—" });
+    globals.Hooks = {
+      callAll: (_event: string, context: any) => {
+        // The melee row becomes a stun at HT-3; the ranged affliction becomes the burn it carried.
+        Object.assign(context.rows[0].row, { affliction: true, afflictionAttribute: "HT", afflictionModifier: "-3.5", damage: "—" });
+        Object.assign(context.rows[1].row, { affliction: false, damage: "1d-3" });
+      },
+    };
+    const isRollable = (entry: any) => !entry.row.affliction && entry.row.damage !== "—";
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: rows as never, ...helpers, isRollable } as never);
+    expect(rows[0]!.row).toMatchObject({ affliction: true, afflictionAttribute: "HT", afflictionModifier: -4, damageRollable: false });
+    expect(rows[1]!.row).toMatchObject({ affliction: false, afflictionAttribute: "", afflictionModifier: 0, damage: "1d-3", damageRollable: true });
+  });
+
   it("offers a Feint from melee rows and not ranged ones until a listener says otherwise (since 1.28.0)", async () => {
     const api = await load();
     globals.Hooks = { callAll: () => undefined };

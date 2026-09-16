@@ -82,7 +82,7 @@ export const COMBAT_HOOKS = Object.freeze({
   weaponTargets: "gworld.weaponTargets",
   /** An unarmed blow applied to a target (since 1.32.0): `{ attacker, target, part, hitLocation, addonLocation, dr, basicDamage, minimumDr, applies }`, mutable. */
   hurtingYourself: "gworld.hurtingYourself",
-  /** Before a blow's DR is added up (since 1.48.0): `{ actor, item, mode, hitLocation, damageType, basicDamage, lines }`, the lines mutable. */
+  /** Before a blow's DR is added up (since 1.48.0): `{ actor, item, mode, hitLocation, damageType, basicDamage, ignoresDr, lines }`, the lines mutable (`ignoresDr` since 1.55.0). */
   armorDr: "gworld.armorDr",
   /** Where a ranged mode's capacity and reload time are read (since 1.54.0): `{ actor, item, modeIndex, mode, entry }`, the entry mutable. */
   shotsEntry: "gworld.shotsEntry",
@@ -90,6 +90,12 @@ export const COMBAT_HOOKS = Object.freeze({
 
 /** One piece of worn armour as `gworld.armorDr` hands it to a listener. */
 export interface ArmorDrLine {
+  /**
+   * The part of the piece's DR that still counts against an attack that
+   * ignores DR (since 1.55.0): 0 for none, which is every piece unless a
+   * listener says otherwise.
+   */
+  againstIgnoresDr?: number;
   /** What the piece is called. */
   label: string;
   /** The DR it offers against this blow, which a listener may change. */
@@ -134,7 +140,7 @@ export interface WeaponRowEntry {
 const WEAPON_ROW_FIELDS = [
   "skillLevel", "damage", "damageType", "armorDivisor", "halfDamageRange", "maxRange", "accuracy", "malfunction",
   "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp", "reach", "parry", "twoHanded",
-  "feint", "skillName", "readiesAfterAttack",
+  "feint", "skillName", "readiesAfterAttack", "affliction", "afflictionAttribute", "afflictionModifier",
 ] as const;
 
 /**
@@ -229,6 +235,11 @@ export function adjustWeaponAttacks(options: {
           ...(follow.label ? { label: String(follow.label) } : {}),
         }
       : null;
+    // Whether the row is an affliction, what resists it and at what (since
+    // 1.55.0). A row that is not one resists with nothing.
+    row.affliction = row.affliction === true;
+    row.afflictionAttribute = row.affliction ? String(row.afflictionAttribute ?? "") : "";
+    row.afflictionModifier = row.affliction ? Math.floor(Number(row.afflictionModifier) || 0) : 0;
     row.damageRollable = options.isRollable(entry);
   });
 }
