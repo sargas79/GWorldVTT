@@ -196,3 +196,64 @@ describe("a cinematic blast", () => {
     expect(result.bleeds).toBe(false);
   });
 });
+
+/**
+ * The damage modifiers a mode can carry that change the shove rather than the
+ * wound (Characters p. 104). A blow reaches the pipeline with them set, and
+ * the knockback it reports is what the card shows and what the roll to stay
+ * standing is taken against.
+ */
+describe("knockback modifiers on a blow", () => {
+  // The stand-in carries no ST, so the pipeline reads its maximum HP in place
+  // of one: 10 shoves a yard per 8 points of damage before DR.
+  const shove = (extra: Record<string, unknown>) =>
+    resolveDamageAgainst(
+      actor({ hp: 10, maxHp: 10 }),
+      { basicDamage: 16, type: "cr", hitLocation: "torso", armorDivisor: 1, ...extra } as never,
+    ).knockback;
+
+  it("shoves the usual distance when the blow carries neither", () => {
+    expect(shove({}).yards).toBe(2);
+  });
+
+  it("shoves twice as far for double knockback", () => {
+    expect(shove({ doubleKnockback: true }).yards).toBe(4);
+    expect(shove({ doubleKnockback: true }).fallRollPenalty).toBe(-3);
+  });
+
+  it("shoves nobody for an attack marked as causing none", () => {
+    expect(shove({ noKnockback: true }).yards).toBe(0);
+  });
+
+  it("leaves the wound alone either way", () => {
+    // Knockback is worked out beside the injury, not out of it.
+    const doubled = resolveDamageAgainst(
+      actor({ hp: 10, maxHp: 10 }),
+      { basicDamage: 16, type: "cr", hitLocation: "torso", armorDivisor: 1, doubleKnockback: true } as never,
+    );
+    const plain = resolveDamageAgainst(
+      actor({ hp: 10, maxHp: 10 }),
+      { basicDamage: 16, type: "cr", hitLocation: "torso", armorDivisor: 1 } as never,
+    );
+    expect(doubled.injury).toBe(plain.injury);
+  });
+});
+
+/**
+ * A cosmic armour divisor, which a data file writes as "!". It is read as the
+ * attack ignoring DR, the same fact a Malediction carries (Characters p. 106),
+ * so armour and the location's own DR both count for nothing.
+ */
+describe("a blow that ignores DR", () => {
+  it("meets no worn armour at all", () => {
+    const armoured = actor({ hp: 12, maxHp: 12, armor: [{ dr: 20, locations: ["torso"] }] });
+    const stopped = resolveDamageAgainst(armoured, blow(10, "cr"));
+    const through = resolveDamageAgainst(
+      armoured,
+      { basicDamage: 10, type: "cr", hitLocation: "torso", armorDivisor: 1, ignoresDr: true } as never,
+    );
+    expect(stopped.injury).toBe(0);
+    expect(through.injury).toBe(10);
+  });
+});
+

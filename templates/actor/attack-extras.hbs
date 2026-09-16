@@ -5,4 +5,11 @@
         data-damage-label="{{atk.name}} {{#if atk.followUp.label}}{{atk.followUp.label}}{{else}}{{localize 'GWORLD.Attack.FollowUp'}}{{/if}}" data-armor-divisor="1"
         data-explosive="{{#if atk.followUp.explosive}}1{{/if}}" data-tooltip="{{localize 'GWORLD.Attack.FollowUpHint'}}">+{{atk.followUp.damage}} {{atk.followUp.damageType}}</span>
 {{/if}}
+{{!-- The damage modifiers of Characters pp. 104-105 that the apply acts on:
+     shown so a GM can see what a blow carries before pressing it. --}}
+{{#if atk.ignoresDr}}<span class="tag" data-tooltip="{{localize 'GWORLD.Malediction.IgnoresDrHint'}}">{{localize "GWORLD.Malediction.IgnoresDr"}}</span>{{/if}}
+{{#if atk.incendiary}}<span class="tag" data-tooltip="{{localize 'GWORLD.Item.IncendiaryHint'}}">{{localize "GWORLD.Item.Incendiary"}}</span>{{/if}}
+{{#if atk.radiation}}<span class="tag" data-tooltip="{{localize 'GWORLD.Item.RadiationHint'}}">{{localize "GWORLD.Item.Radiation"}}</span>{{/if}}
+{{#if atk.doubleKnockback}}<span class="tag" data-tooltip="{{localize 'GWORLD.Item.DoubleKnockbackHint'}}">{{localize "GWORLD.Item.DoubleKnockback"}}</span>{{/if}}
+{{#if atk.noKnockback}}<span class="tag" data-tooltip="{{localize 'GWORLD.Item.NoKnockbackHint'}}">{{localize "GWORLD.Item.NoKnockback"}}</span>{{/if}}
 {{#each atk.notes as |n|}}<span class="tag" data-tooltip="{{n.hint}}">{{n.label}}</span>{{/each}}

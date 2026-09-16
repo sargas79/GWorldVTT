@@ -480,6 +480,27 @@ function meleeModeField() {
      * runs on electricity.
      */
     surge: new fields.BooleanField({ initial: false }),
+    /**
+     * The other damage modifiers a table can print after the type, none of
+     * which changes how much damage is rolled (Characters pp. 104-105).
+     *
+     * "inc" is incendiary, which "may set fires" where it lands (p. 104).
+     * "rad" delivers rads as well as its damage (p. 105).
+     * "dkb" doubles knockback (p. 104): a force beam throws a man further than
+     * its injury suggests. "nkb" removes it (p. 105), for a blow that reaches
+     * inside a body without shoving it.
+     */
+    incendiary: new fields.BooleanField({ initial: false }),
+    radiation: new fields.BooleanField({ initial: false }),
+    doubleKnockback: new fields.BooleanField({ initial: false }),
+    noKnockback: new fields.BooleanField({ initial: false }),
+    /**
+     * A cosmic armour divisor, which a data file writes "(!)": the attack
+     * ignores DR altogether rather than dividing it (Characters p. 105). Kept
+     * apart from `armorDivisor` because no number says "all of it", and
+     * because what does stop such an attack is named in the weapon's own rules.
+     */
+    ignoresDr: new fields.BooleanField({ initial: false }),
     damageType: new fields.StringField({
       required: true,
       nullable: false,
@@ -617,6 +638,27 @@ function rangedModeField() {
      * runs on electricity.
      */
     surge: new fields.BooleanField({ initial: false }),
+    /**
+     * The other damage modifiers a table can print after the type, none of
+     * which changes how much damage is rolled (Characters pp. 104-105).
+     *
+     * "inc" is incendiary, which "may set fires" where it lands (p. 104).
+     * "rad" delivers rads as well as its damage (p. 105).
+     * "dkb" doubles knockback (p. 104): a force beam throws a man further than
+     * its injury suggests. "nkb" removes it (p. 105), for a blow that reaches
+     * inside a body without shoving it.
+     */
+    incendiary: new fields.BooleanField({ initial: false }),
+    radiation: new fields.BooleanField({ initial: false }),
+    doubleKnockback: new fields.BooleanField({ initial: false }),
+    noKnockback: new fields.BooleanField({ initial: false }),
+    /**
+     * A cosmic armour divisor, which a data file writes "(!)": the attack
+     * ignores DR altogether rather than dividing it (Characters p. 105). Kept
+     * apart from `armorDivisor` because no number says "all of it", and
+     * because what does stop such an attack is named in the weapon's own rules.
+     */
+    ignoresDr: new fields.BooleanField({ initial: false }),
     damageType: new fields.StringField({
       required: true,
       nullable: false,

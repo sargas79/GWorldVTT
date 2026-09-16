@@ -775,6 +775,14 @@ export interface DamageRollOptions {
   material?: string;
   /** True when DR has no effect on the blow, as for a Malediction (Characters p. 106). */
   ignoresDr?: boolean;
+  /** Incendiary (Characters p. 104): the blow's flame can set things alight. */
+  incendiary?: boolean;
+  /** Radiation (Characters p. 104): a rad per point of basic damage rolled. */
+  radiation?: boolean;
+  /** Double Knockback (Characters p. 104): the shove is twice as far. */
+  doubleKnockback?: boolean;
+  /** An attack that shoves nobody, whatever its damage type. */
+  noKnockback?: boolean;
   /** The item the blow comes from, for a module's hooks; its UUID travels on the card. */
   item?: any;
   /** Which of the item's modes it was rolled from. */
@@ -900,6 +908,12 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(mass > 1 ? { drMultiplier: mass } : {}),
           ...(options.material ? { material: options.material } : {}),
           ...(options.ignoresDr ? { ignoresDr: true } : {}),
+          // Carried to the apply, where a dose, a fire and a shove are worked
+          // out against the victim rather than against the dice (pp. 104-105).
+          ...(options.incendiary ? { incendiary: true } : {}),
+          ...(options.radiation ? { radiation: true } : {}),
+          ...(options.doubleKnockback ? { doubleKnockback: true } : {}),
+          ...(options.noKnockback ? { noKnockback: true } : {}),
           ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
           ...(mode ? { mode } : {}),
           ...(options.source ? { source: String(options.source) } : {}),
@@ -2906,6 +2920,10 @@ export async function handleDamageAction(
     ...(halved ? { halfDamage: true } : {}),
     ...(target.dataset.material ? { material: target.dataset.material } : {}),
     ...(target.dataset.ignoresDr === "1" ? { ignoresDr: true } : {}),
+    ...(target.dataset.incendiary === "1" ? { incendiary: true } : {}),
+    ...(target.dataset.radiation === "1" ? { radiation: true } : {}),
+    ...(target.dataset.doubleKnockback === "1" ? { doubleKnockback: true } : {}),
+    ...(target.dataset.noKnockback === "1" ? { noKnockback: true } : {}),
     ...(item ? { item } : {}),
     ...(mode ? { mode } : {}),
     ...(strikingPart(target.dataset.naturalKey ?? "") ? { strikingPart: strikingPart(target.dataset.naturalKey ?? "") } : {}),

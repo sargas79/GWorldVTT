@@ -149,6 +149,19 @@ export interface KnockbackInput {
    * one would. Nothing else about the rule changes here.
    */
   cinematic?: boolean;
+  /**
+   * Double Knockback (Characters p. 104), which "lets a crushing or cutting
+   * attack inflict twice as much knockback as usual". Knockback is measured
+   * in yards, so it is the distance that doubles -- and with it the penalty
+   * to stay standing, which is what the extra yards are for.
+   */
+  doubled?: boolean;
+  /**
+   * An attack that shoves nobody, whatever its damage type. Nothing in the
+   * Basic Set's own weapons sets this; it is here for an attack a module
+   * defines as causing no knockback.
+   */
+  suppressed?: boolean;
 }
 
 export interface KnockbackResult {
@@ -178,7 +191,10 @@ export function knockback({
   penetratedDr,
   targetStrength,
   cinematic = false,
+  doubled = false,
+  suppressed = false,
 }: KnockbackInput): KnockbackResult {
+  if (suppressed) return { yards: 0, fallRollPenalty: 0 };
   // "Work out knockback for a piercing attack just as if it were a crushing
   // attack" (p. 417) -- which means it shoves whether or not it penetrated,
   // exactly as a crushing blow does.
@@ -187,7 +203,7 @@ export function knockback({
   if (!causes || basicDamage <= 0) return { yards: 0, fallRollPenalty: 0 };
 
   const perYard = targetStrength <= 3 ? 1 : targetStrength - 2;
-  const yards = Math.floor(basicDamage / perYard);
+  const yards = Math.floor(basicDamage / perYard) * (doubled ? 2 : 1);
 
   return { yards, fallRollPenalty: yards > 1 ? -(yards - 1) : 0 };
 }

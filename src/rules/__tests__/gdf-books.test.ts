@@ -15,6 +15,7 @@ import {
   entryName,
   fullLoad,
   groupsOf,
+  parseDamage,
   handKeptTraitNames,
   isBookkeeping,
   parseSkillUsed,
@@ -484,5 +485,75 @@ describe("fullLoad", () => {
   it("counts nothing where the column is blank", () => {
     expect(fullLoad("")).toBe(0);
     expect(fullLoad(undefined)).toBe(0);
+  });
+});
+
+describe("parseDamage: the damage modifiers of Characters pp. 104-105", () => {
+  const extras = (damage: string, type: string): Record<string, unknown> => parseDamage(damage, type)!.fields;
+
+  it("reads each modifier off the damage type", () => {
+    expect(extras("2d", "burn inc").incendiary).toBe(true);
+    expect(extras("2d", "burn rad").radiation).toBe(true);
+    expect(extras("2d", "cr dkb").doubleKnockback).toBe(true);
+    expect(extras("2d", "cr nkb").noKnockback).toBe(true);
+    expect(extras("2d", "burn sur").surge).toBe(true);
+  });
+
+  it("leaves the damage type itself behind once they are stripped", () => {
+    expect(extras("2d", "burn inc").damageType).toBe("burn");
+    expect(extras("2d", "cr dkb").damageType).toBe("cr");
+    expect(extras("6d", "tox rad").damageType).toBe("tox");
+  });
+
+  it("reads them in any order and any combination", () => {
+    // A data file writes them as the book prints them, which is not one order,
+    // and mixes them with the explosive and fragmentation notes.
+    const burning = extras("3d", "burn ex sur");
+    expect(burning.surge).toBe(true);
+    expect(burning.explosive).toBe(true);
+    expect(burning.damageType).toBe("burn");
+
+    const toxic = extras("4d", "tox rad ex");
+    expect(toxic.radiation).toBe(true);
+    expect(toxic.explosive).toBe(true);
+    expect(toxic.damageType).toBe("tox");
+
+    const shoving = extras("2d", "cr dkb ex");
+    expect(shoving.doubleKnockback).toBe(true);
+    expect(shoving.explosive).toBe(true);
+    expect(shoving.damageType).toBe("cr");
+
+    // A fragmentation note sits among them and is still read as one.
+    const burst = extras("5d", "cr ex inc [2d]");
+    expect(burst.incendiary).toBe(true);
+    expect(burst.fragmentation).toBe("2d");
+    expect(burst.damageType).toBe("cr");
+  });
+
+  it("reads one written with a footnote dagger beside it", () => {
+    const daggered = extras("2d", "tox rad†");
+    expect(daggered.radiation).toBe(true);
+    expect(daggered.damageType).toBe("tox");
+  });
+
+  it("writes none of them out for a plain damage type", () => {
+    // The model defaults them all to false, and nothing in the Basic Set's own
+    // file sets any of them. Writing them out anyway would add five lines to
+    // every weapon in its packs and say nothing, so an unset one is absent.
+    const plain = extras("2d", "cr");
+    expect(plain.incendiary).toBeUndefined();
+    expect(plain.radiation).toBeUndefined();
+    expect(plain.doubleKnockback).toBeUndefined();
+    expect(plain.noKnockback).toBeUndefined();
+
+    // Surge predates them and is written either way, which is what keeps the
+    // Basic Set's own packs exactly as they are.
+    expect(plain.surge).toBe(false);
+  });
+
+  it("does not mistake a type that merely contains a modifier's letters", () => {
+    // No whole word in either of these is one of the modifiers.
+    expect(extras("1d", "cut").incendiary).toBeUndefined();
+    expect(extras("1d", "imp").incendiary).toBeUndefined();
   });
 });

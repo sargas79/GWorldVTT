@@ -101,6 +101,10 @@ export interface IncomingDamage {
    * for nothing.
    */
   ignoresDr?: boolean;
+  /** Double Knockback (Characters p. 104): the shove is twice as far. */
+  doubleKnockback?: boolean;
+  /** An attack that shoves nobody, whatever its damage type. */
+  noKnockback?: boolean;
   /** The item the blow was rolled from, where the card knows it. */
   itemUuid?: string;
   /** Where the blow came from, where its roll said (since 1.43.0): "parriedLimb" for the strike after a bare-handed parry. */
@@ -320,6 +324,8 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     penetratedDr: result.penetrating > 0,
     targetStrength: attributeOf(actor, "ST", Number(hp.max) || 10),
     cinematic: isRuleOn("cinematicKnockback"),
+    ...(damage.doubleKnockback ? { doubled: true } : {}),
+    ...(damage.noKnockback ? { suppressed: true } : {}),
   });
 
   const pool = result.costsFatigue ? fp : hp;

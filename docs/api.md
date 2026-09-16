@@ -368,6 +368,15 @@ and the roll continues.
       leaves the weapon unready). The context's `skillLevel(name)` reads the
       actor's level in a skill as this preparation worked it out, or null; the
       `actors` readers aren't ready yet while rows are worked out;
+    - Since 1.46.0, also the damage modifiers of Characters pp. 104-105 that
+      change what a hit does rather than how much of it lands: `incendiary`
+      (the blow's flame can set the victim's clothes alight), `radiation` (a
+      rad per point of basic damage rolled, whether or not it gets through DR,
+      and for a toxic attack instead of the damage), `doubleKnockback` (the
+      shove is twice as far), `noKnockback` (it shoves nobody) and `ignoresDr`
+      (DR counts for nothing, as for a Malediction). Each is shown as a tag on
+      the row, travels on the damage card, and is acted on when the blow is
+      applied;
     - Push `notes` (`{ label, hint }`), shown as tags, or set `followUp`
       (`{ damage, damageType, explosive, label? }`), which the Combat tab offers
       as a damage roll of its own.
