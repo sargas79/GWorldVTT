@@ -612,6 +612,22 @@ and a hint `p.ihint`.
   actor on the other side, and its `tags` say what the contest is: `feint`, or
   `quickContest` with `disarm` for a disarm (tags a Quick Contest's caller
   passes reach the contest resolvers too).
+- **Resistance rolls** (since 1.49.0): the roll an affliction forces
+  (Characters p. 36; the afflictions of Campaigns pp. 428-429) is tagged
+  `resist` and `affliction`, and carries `attack`:
+  `{ attacker, item, mode, distanceYards, halfDamageRange, dr, drCounted }`.
+  A cone or area attack makes the same roll, so the same tags and the same
+  `attack` reach it. `dr` is what the victim's worn armour was worth at the
+  location struck: an affliction is not damage and none of it is subtracted,
+  but a module with a rule that reads armour can.
+- **An affliction's effect** (since 1.49.0): `gworld.afflictionEffect` fires
+  when a resistance roll fails, with
+  `{ actor, attacker, item, mode, label, margin, effects }`. Push a
+  `ConditionApplication` to `effects` -- the same shape `api.applyCondition`
+  takes -- to name what the attack does, instead of leaving the card's list of
+  the Basic Set's afflictions for the GM to pick from, or beside it. The
+  system pushes nothing: which of the three bands one of its own afflictions
+  inflicts is the GM's call, and the card asks.
 - **Quick Contest results** (since 1.37.0): `gworld.afterQuickContest` follows every
   Quick Contest, once its card is posted, with `{ label, tags, first, second, outcome,
   marginOfVictory }`. Each side is `{ actor, base, effective, outcome }`, where

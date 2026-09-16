@@ -73,6 +73,8 @@ export const PROCEDURE_HOOKS = Object.freeze({
   successRollModifiers: "gworld.successRollModifiers",
   /** After a success roll is posted: `{ actor, label, kind, skill, tags, outcome }`. */
   afterSuccessRoll: "gworld.afterSuccessRoll",
+  /** A resistance roll that failed (since 1.49.0): `{ actor, attacker, item, mode, label, margin, effects }`; push to `effects`. */
+  afflictionEffect: "gworld.afflictionEffect",
   /** When a maneuver's attacks are worked out: `{ actor, maneuver, option, count, pickTargets }`, mutable. */
   attackSequence: "gworld.attackSequence",
   grappleMove: "gworld.grappleMove",
@@ -311,6 +313,31 @@ export interface SuccessRollContext {
   modifiers: ModifierLine[];
   /** For a side of a contest, the actor on the other side (since 1.30.0). */
   opponent?: any;
+  /**
+   * What the roll is being made against, where it is an attack (since 1.49.0).
+   * On a resistance roll this is what the attacker did: a module can read the
+   * weapon, how far off it was fired, and what the armour was worth, none of
+   * which the roll itself carries.
+   */
+  attack?: ResistedAttack;
+}
+
+/** The attack a resistance roll is made against (since 1.49.0). */
+export interface ResistedAttack {
+  /** Whoever made it. */
+  attacker: any;
+  /** The item it came from, where the roll knows it. */
+  item: any;
+  /** Which of that item's modes: `{ index, ranged }`. */
+  mode: { index: number; ranged: boolean; derived?: string } | null;
+  /** Yards between the two, or null where there is nothing on a map to measure. */
+  distanceYards: number | null;
+  /** The mode's 1/2D range in yards, 0 for one without. */
+  halfDamageRange: number;
+  /** The target's DR at the location struck, where the attack met any. */
+  dr: number;
+  /** Whether that DR counted at all: false for an attack that got past it. */
+  drCounted: boolean;
 }
 
 /** The tags a roll carries for what its skill is, beside the ones its caller gave. */

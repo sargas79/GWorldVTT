@@ -31,6 +31,7 @@ import {
   maneuverOptionAttackEffect,
   recordAttackMade,
   successRollModifiers,
+  type ResistedAttack,
   successRollTags,
 } from "./procedure-extensions.js";
 import { aimTurnsOf, loseAim } from "./aim.js";
@@ -350,6 +351,12 @@ export interface SuccessRollOptions {
    * Teaching skill is tagged from its name.
    */
   tags?: string[];
+  /**
+   * What the roll is made against, where it is an attack (since 1.49.0). It
+   * reaches the `gworld.successRollModifiers` listeners untouched, so a module
+   * can read the weapon and the range a resistance roll was forced by.
+   */
+  attack?: ResistedAttack;
 }
 
 /** A critical miss, with what the table said and whether the weapon resisted. */
@@ -380,7 +387,10 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   const given = options.modifiers ?? [];
   const modifiers = [
     ...given,
-    ...successRollModifiers({ actor, label, kind, skill: String(options.skill ?? ""), base, tags, modifiers: [...given] }),
+    ...successRollModifiers({
+      actor, label, kind, skill: String(options.skill ?? ""), base, tags, modifiers: [...given],
+      ...(options.attack ? { attack: options.attack } : {}),
+    }),
   ];
 
   const totalModifier = modifiers.reduce((sum, m) => sum + m.value, 0);

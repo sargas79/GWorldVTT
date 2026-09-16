@@ -13,7 +13,9 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
-import { setCondition } from "./conditions.js";
+import { conditionLabel, setCondition } from "./conditions.js";
+import { callCombatHook } from "./combat-extensions.js";
+import { PROCEDURE_HOOKS, applyCondition, type ConditionApplication } from "./procedure-extensions.js";
 import {
   AFFLICTIONS,
   PAIN_GRADES,
@@ -313,3 +315,40 @@ function describe(effect: AfflictionEffect): string[] {
   for (const skill of effect.forbids) out.push(L("Forbids", { skill }));
   return out;
 }
+
+/**
+ * What a failed resistance roll leaves behind (since 1.49.0).
+ *
+ * The Basic Set's own afflictions are the GM's to pick: "the GM should choose"
+ * which of the three bands an attack inflicts, and the card asks rather than
+ * guesses. A module whose book says exactly what its own weapon does has no
+ * such choice to offer, so `gworld.afflictionEffect` lets it name the
+ * condition instead -- or add a second one beside whatever the GM picks.
+ *
+ * Nothing is applied where no listener pushed anything, which is every
+ * affliction the system carries on its own.
+ */
+export async function applyAfflictionEffects(context: {
+  actor: any;
+  attacker: any;
+  item: any;
+  mode: { index: number; ranged: boolean; derived?: string } | null;
+  label: string;
+  margin: number;
+}): Promise<string[]> {
+  const fired = callCombatHook(PROCEDURE_HOOKS.afflictionEffect, {
+    ...context,
+    effects: [] as ConditionApplication[],
+  });
+  const effects = Array.isArray(fired.effects) ? fired.effects : [];
+  const applied: string[] = [];
+  for (const effect of effects) {
+    const key = await applyCondition(context.actor, effect, {
+      setSystemCondition: setCondition,
+      systemConditionLabel: conditionLabel,
+    });
+    if (key) applied.push(key);
+  }
+  return applied;
+}
+

@@ -95,6 +95,8 @@ import {
 } from "../hazards.js";
 import type { CollisionAngle } from "../../rules/collisions.js";
 import type { DamageType } from "../../rules/types.js";
+import type { HitLocation } from "../../rules/hit-locations.js";
+import { wornDrAt } from "../../rules/armor.js";
 import { culturePenalty, languagePenalty, type Comprehension } from "../../rules/languages.js";
 import type { StudyMethod } from "../../rules/study.js";
 import { flyingTurn, rollPushingTheEnvelope, rollStayOn } from "../mounted.js";
@@ -146,7 +148,8 @@ import { grappleSizeBonus } from "../../rules/size.js";
 import { rollStunRecovery } from "../knockdown.js";
 import { applyFirstAid, regenerate, restForADay, restForFatigue, tryToWake } from "../recovery.js";
 import { rollFrightCheck } from "../fright.js";
-import { traitsOf } from "../damage.js";
+import { traitsOf, wornArmor } from "../damage.js";
+import { applyAfflictionEffects } from "../afflictions.js";
 import { feintDefenseScore, recordFeint } from "../feint.js";
 import { attackDirection, facingOf } from "../hex.js";
 import { facingChangeAtEndOfMove, facingChangeCost, hexMovementCost } from "../../rules/tactical.js";
@@ -5316,6 +5319,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // A ranged affliction past its 1/2D is resisted at +3 (Characters p. 270).
     const halfDamageRange = Number(target.dataset.halfDamageRange) || 0;
     const shooter = this.actor.getActiveTokens?.()?.[0];
+    // What forced the roll, for the modules that read it (since 1.49.0).
+    const item = target.dataset.itemId ? (this.actor.items?.get?.(target.dataset.itemId) ?? null) : null;
+    const mode = target.dataset.modeIndex
+      ? { index: Number(target.dataset.modeIndex) || 0, ranged: target.dataset.modeRanged === "1" }
+      : null;
+    const hitLocation = (target.dataset.hitLocation ?? "torso") as HitLocation;
+    const damageType = (target.dataset.damageType ?? "cr") as DamageType;
 
     const targets = currentTargets();
     if (targets.length === 0) {
@@ -5333,7 +5343,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       if (key && seen.has(key)) continue;
       if (key) seen.add(key);
 
-      await rollSuccess({
+      const yards = yardsBetween(shooter, token);
+      // What the victim's armour was worth against the attack that forced the
+      // roll. An affliction is not damage, so none of it is subtracted here:
+      // it is told to the modules, which may have a rule that reads it.
+      const drHere = wornDrAt(wornArmor(victim), hitLocation, damageType);
+
+      const outcome = await rollSuccess({
         actor: victim,
         base: resistanceScore(victim, attribute),
         label: game.i18n.format("GWORLD.Affliction.Label", {
@@ -5341,6 +5357,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           resist: `${attribute}${modifier || ""}`,
         }),
         kind: "attribute",
+        // A resistance roll is its own kind of roll, and a module may have
+        // something to say to all of them or to this one (since 1.49.0).
+        tags: ["resist", "affliction"],
+        attack: {
+          attacker: this.actor,
+          item,
+          mode,
+          distanceYards: yards,
+          halfDamageRange,
+          dr: drHere,
+          drCounted: drHere > 0,
+        },
         modifiers: [
           ...(modifier === 0 ? [] : [{ label: game.i18n.localize("GWORLD.Affliction.Short"), value: modifier }]),
           // "Those that require a HT roll to resist are resisted at +3" past 1/2D.
@@ -5356,6 +5384,20 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           label,
         },
       });
+
+      // A roll that failed is an effect somebody now has. Which one is the
+      // GM's from the card for the Basic Set's own afflictions; a module may
+      // name its own instead, or beside it (since 1.49.0).
+      if (outcome && !outcome.success) {
+        await applyAfflictionEffects({
+          actor: victim,
+          attacker: this.actor,
+          item,
+          mode,
+          label,
+          margin: outcome.margin,
+        });
+      }
     }
   }
 
