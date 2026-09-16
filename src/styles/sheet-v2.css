@@ -63,7 +63,8 @@
 
 /* A panel's ground is cream, and the classic tokens follow it. */
 .gworld.v2 .v2-panel,
-.gworld.v2 .v2-cream {
+.gworld.v2 .v2-cream,
+.gworld.v2 .window-content > .limited {
   --color-bg: var(--v2-panel);
   --color-surface: var(--v2-panel-2);
   --color-text: var(--v2-ink);
