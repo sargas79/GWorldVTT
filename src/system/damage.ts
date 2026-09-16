@@ -216,6 +216,7 @@ export function wornArmor(actor: any): ArmorPiece[] {
   return items
     .filter((item) => item.type === "armor" && item.system?.equipped)
     .map((item) => ({
+      id: item.id,
       name: String(item.name ?? ""),
       dr: Number(item.system?.dr ?? 0),
       drSplit: item.system?.drSplit ?? null,
@@ -291,6 +292,8 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
       forceField: piece.forceField === true,
       flexible: piece.flexible === true,
       hardened: Math.max(0, Math.floor(piece.hardened ?? 0)),
+      // Which item the line is, so a listener can read the piece's own data (since 1.56.0).
+      ...(piece.id ? { itemId: piece.id } : {}),
     }));
   callCombatHook(COMBAT_HOOKS.armorDr, {
     actor,
@@ -302,6 +305,9 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     // Whether the blow ignores DR, which is when a line's againstIgnoresDr is
     // read (since 1.55.0).
     ignoresDr: damage.ignoresDr === true,
+    // Where the blow came from, as the card has it, whether or not the
+    // table's front-only armour rule reads it (since 1.56.0).
+    arc: damage.arc ?? null,
     lines,
   });
 

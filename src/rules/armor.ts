@@ -35,6 +35,8 @@ export const SPLIT_AGAINST = {
 } satisfies Record<string, readonly DamageType[]>;
 
 export interface ArmorPiece {
+  /** The item's id on the actor, where the piece is one. */
+  id?: string;
   /** What the piece is called, for a breakdown that names it. */
   name?: string;
   /** The DR that applies unless the split says otherwise. */

@@ -82,7 +82,7 @@ export const COMBAT_HOOKS = Object.freeze({
   weaponTargets: "gworld.weaponTargets",
   /** An unarmed blow applied to a target (since 1.32.0): `{ attacker, target, part, hitLocation, addonLocation, dr, basicDamage, minimumDr, applies }`, mutable. */
   hurtingYourself: "gworld.hurtingYourself",
-  /** Before a blow's DR is added up (since 1.48.0): `{ actor, item, mode, hitLocation, damageType, basicDamage, ignoresDr, lines }`, the lines mutable (`ignoresDr` since 1.55.0). */
+  /** Before a blow's DR is added up (since 1.48.0): `{ actor, item, mode, hitLocation, damageType, basicDamage, ignoresDr, arc, lines }`, the lines mutable (`ignoresDr` since 1.55.0, `arc` since 1.56.0). */
   armorDr: "gworld.armorDr",
   /** Where a ranged mode's capacity and reload time are read (since 1.54.0): `{ actor, item, modeIndex, mode, entry }`, the entry mutable. */
   shotsEntry: "gworld.shotsEntry",
@@ -110,6 +110,11 @@ export interface ArmorDrLine {
   hardened: number;
   /** Why a listener changed it, shown beside the figure. */
   reason?: string;
+  /**
+   * The id of the armour item on the actor (since 1.56.0), so a listener can
+   * read the piece's own data. Absent on a line a listener added itself.
+   */
+  itemId?: string;
 }
 
 // ── an item's attack rows ──────────────────────────────────────────────────

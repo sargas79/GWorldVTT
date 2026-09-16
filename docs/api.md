@@ -428,6 +428,14 @@ and the roll continues.
     of its DR takes `0.1`. What stands comes off the rolled damage, the force
     field's before the rest's, and the location's own DR is still ignored.
 
+    Since 1.56.0 each line carries `itemId`, the armour item's id on the
+    actor, so a listener can read the piece's own data; and the context carries
+    `arc`, `"front"`, `"side"`, `"back"` or null, where the blow came from as
+    the damage card has it -- whether or not the table plays front-only armour.
+    A listener may also push a line of its own, for a layer that isn't an
+    armour item (a coating, a field from a device): it counts like any other,
+    and a `forceField` line meets the blow first.
+
     A piece's stored split is a list of damage types. A book that splits a DR
     by something else -- full DR against a laser, or against a swinging melee
     attack, a fall or a collision -- cannot say so in the piece, and should not:
