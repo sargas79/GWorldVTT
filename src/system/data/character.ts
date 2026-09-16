@@ -1723,6 +1723,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       drSplit: item.system?.drSplit ?? null,
       drSplitAppliesTo: item.system?.drSplitAppliesTo ?? [],
       locations: item.system?.locations ?? [],
+      // What the piece is made of, so the figure the sheet shows is the one
+      // the damage pipeline will actually subtract (Characters p. 47): a
+      // place it armours better than the rest of itself, what an ablative
+      // blow has already destroyed, and a field that covers everything.
+      drByLocation: ((item.system?.drByLocation ?? []) as Array<{ locations?: string[]; dr?: number }>).map((e) => ({
+        locations: (e?.locations ?? []) as HitLocation[],
+        dr: (Number(e?.dr ?? 0) || 0) + magicOf(item).fortify,
+      })),
+      drLost: Number(item.system?.drLost ?? 0) || 0,
+      forceField: item.system?.forceField === true,
+      flexible: item.system?.flexible === true,
+      hardened: Number(item.system?.hardened ?? 0) || 0,
     }));
 
     // The Damage Resistance advantage is armour the character is: it covers
