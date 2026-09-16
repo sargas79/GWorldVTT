@@ -280,6 +280,33 @@
   color: var(--v2-ink);
 }
 
+/*
+ * What an add-on module puts on a tab -- a section from its template, or a
+ * list of its item type -- sits on a cream panel of its own, so markup written
+ * for the classic sheet reads the same here.
+ */
+.gworld.v2 .addon-sheet-section,
+.gworld.v2 .addon-section {
+  --color-bg: var(--v2-panel);
+  --color-surface: var(--v2-panel-2);
+  --color-text: var(--v2-ink);
+  --color-accent: var(--v2-steel);
+  --color-divider: color-mix(in srgb, var(--v2-ink) 17%, transparent);
+  --color-neutral-200: var(--v2-panel-2);
+  --color-neutral-700: var(--v2-ink-muted);
+  --color-accent-100: var(--v2-steel-soft);
+  --color-accent-700: var(--v2-steel-deep);
+  --color-accent-900: #22354a;
+  --color-danger: var(--v2-red);
+  padding: 12px 14px;
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  box-shadow: var(--v2-shadow);
+}
+.gworld.v2 .v2-panel .addon-sheet-section,
+.gworld.v2 .v2-panel .addon-section { padding: 0; box-shadow: none; }
+
 /* ── panels ────────────────────────────────────────────────────────────── */
 
 .gworld.v2 .v2-panel {
@@ -903,6 +930,99 @@
 .gworld.v2 .v2-improve-text strong { font-family: var(--font-heading); font-size: 16px; }
 .gworld.v2 .v2-improve-buttons { display: inline-flex; gap: 4px; }
 
+/* ── Combat ────────────────────────────────────────────────────────────── */
+
+.gworld.v2 .v2-status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  padding: 7px 4px;
+  border: 1px solid var(--v2-frame-line);
+  border-radius: var(--v2-radius);
+  background: var(--v2-frame-2);
+  font-family: var(--font-heading);
+  font-size: 17px;
+  color: var(--v2-frame-muted);
+}
+.gworld.v2 .v2-status-bar > span { padding: 0 14px; }
+.gworld.v2 .v2-status-bar > span + span { border-left: 1px solid var(--v2-frame-line); }
+.gworld.v2 .v2-status-bar b { color: var(--v2-frame-text); font-weight: 600; }
+.gworld.v2 .v2-warn { color: var(--v2-gold) !important; }
+
+.gworld.v2 .v2-maneuver { padding-top: 10px; }
+
+.gworld.v2 .v2-combat-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(260px, 1fr) minmax(250px, 0.95fr);
+  gap: 14px;
+  align-items: start;
+}
+.gworld.v2 .v2-attack-list { display: flex; flex-direction: column; gap: 6px; max-height: 520px; overflow-y: auto; padding-right: 2px; }
+.gworld.v2 .v2-attack[data-v2-row] { cursor: pointer; }
+.gworld.v2 .v2-attack[data-v2-row]:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: 1px; }
+
+.gworld.v2 .v2-preview-col { display: flex; flex-direction: column; min-width: 0; }
+.gworld.v2 .v2-preview[hidden] { display: none; }
+.gworld.v2 .v2-kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; font-size: 14px; }
+.gworld.v2 .v2-kv b { text-align: right; font-weight: 600; }
+.gworld.v2 .v2-preview-main { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: end; }
+.gworld.v2 .v2-effective {
+  padding: 8px 12px;
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel-2);
+  text-align: center;
+}
+.gworld.v2 .v2-dice-chart { display: flex; align-items: flex-end; gap: 2px; height: 86px; }
+.gworld.v2 .v2-bar-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 0; }
+.gworld.v2 .v2-bar-col i { display: block; width: 100%; border-radius: 2px 2px 0 0; background: var(--v2-panel-3); }
+.gworld.v2 .v2-bar-col em { font-style: normal; font-size: 9px; line-height: 1.4; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-outcome-success i { background: var(--v2-steel); }
+.gworld.v2 .v2-outcome-criticalSuccess i { background: var(--v2-gold); }
+.gworld.v2 .v2-outcome-criticalFailure i { background: var(--v2-red); }
+.gworld.v2 .v2-preview-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.gworld.v2 .v2-preview-actions .v2-button-gold { flex: 1 1 100%; height: 32px; font-size: 17px; }
+.gworld.v2 .v2-attack-extras:empty { display: none; }
+
+.gworld.v2 .v2-combat-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.gworld.v2 .v2-locations-body { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; align-items: start; }
+.gworld.v2 .v2-body { width: 100%; height: auto; max-height: 240px; }
+.gworld.v2 .v2-body g { cursor: pointer; }
+.gworld.v2 .v2-body g > * { fill: #4a4f55; stroke: var(--v2-panel); stroke-width: 1.2; }
+.gworld.v2 .v2-body g:hover > * { fill: #626870; }
+.gworld.v2 .v2-body g.v2-body-inner > * { fill: #5b6168; stroke-dasharray: 2 2; }
+.gworld.v2 .v2-body g.selected > * { fill: var(--v2-gold); }
+.gworld.v2 .v2-location-table { width: 100%; margin: 0; border-collapse: collapse; font-size: 13px; background: none; border: 0; }
+.gworld.v2 .v2-location-table thead,
+.gworld.v2 .v2-location-table thead tr { background: none; }
+.gworld.v2 .v2-location-table th { padding: 2px 4px; font-weight: 500; text-align: left; color: var(--v2-ink-muted); background: none; border: 0; text-shadow: none; }
+.gworld.v2 .v2-location-table td { padding: 2px 4px; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--v2-ink) 10%, transparent); }
+.gworld.v2 .v2-location-table tbody tr { cursor: pointer; }
+.gworld.v2 .v2-location-table tbody tr:hover td { background: var(--v2-panel-2); }
+.gworld.v2 .v2-location-table tbody tr.selected td { background: var(--v2-gold-soft); }
+.gworld.v2 .v2-location-table tbody tr:focus-visible { outline: 2px solid var(--v2-gold); }
+
+.gworld.v2 .v2-log-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; }
+.gworld.v2 .v2-log-list li { border-left: 4px solid var(--v2-ink-muted); background: var(--v2-panel-2); border-radius: 2px; }
+.gworld.v2 .v2-log-list li.v2-log-roll { border-left-color: var(--v2-gold); }
+.gworld.v2 .v2-log-list button {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 3px 8px;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-size: 13px;
+  color: var(--v2-ink);
+  cursor: pointer;
+}
+.gworld.v2 .v2-log-list time { font-size: 11px; color: var(--v2-ink-muted); margin-right: 6px; }
+
+.gworld.v2 .v2-drawer-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 14px; }
+
+/* The chat card the combat log points to, briefly. */
+.gworld-flash { outline: 2px solid #d9a441; outline-offset: -2px; transition: outline-color 1.4s ease; }
+
 /* ── narrow windows ────────────────────────────────────────────────────── */
 
 @container v2sheet (max-width: 980px) {
@@ -918,6 +1038,8 @@
   .gworld.v2 .v2-detail-col { overflow: visible; }
   .gworld.v2 .v2-skill { grid-template-columns: 22px minmax(100px, 1fr) 52px 100px 34px; }
   .gworld.v2 .v2-skill .v2-row-summary { display: none; }
+  .gworld.v2 .v2-combat-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .gworld.v2 .v2-combat-side { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 
 @container v2sheet (max-width: 700px) {
@@ -925,6 +1047,8 @@
   .gworld.v2 .v2-header { grid-template-columns: auto minmax(0, 1fr); }
   .gworld.v2 .v2-points { grid-column: 1 / -1; justify-self: start; }
   .gworld.v2 .v2-strip-mods { align-items: flex-start; }
+  .gworld.v2 .v2-combat-grid,
+  .gworld.v2 .v2-combat-side { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: no-preference) {

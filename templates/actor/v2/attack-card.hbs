@@ -1,11 +1,14 @@
 {{!-- One attack as a card, carrying the same roll data as the classic sheet's
      attack rows: the shared partials put it there. Called with atk, ranged
      and key. --}}
+{{!-- Given a list, the card is a row of it: clicking selects it. --}}
 <div class="v2-attack{{#if atk.atDefault}} dim{{/if}}{{#if selected}} selected{{/if}}"
      data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}" data-derived-mode="{{atk.derivedMode}}"
-     {{#if ranged}}data-ranged="1"{{/if}} data-v2-attack="{{key}}" data-v2-name="{{atk.name}} {{atk.mode}}">
+     {{#if ranged}}data-ranged="1"{{/if}} data-v2-attack="{{key}}" data-v2-name="{{atk.name}} {{atk.mode}}"
+     {{#if list}}data-v2-row="{{list}}:{{key}}" data-action="v2Select" tabindex="0" role="option"
+     aria-selected="{{#if selected}}true{{else}}false{{/if}}"{{/if}}>
   <div class="v2-attack-head">
-    <span class="v2-attack-name" {{#if selectable}}data-action="v2SelectAttack"{{/if}}>
+    <span class="v2-attack-name">
       {{atk.name}}{{#if atk.mode}} <span class="v2-attack-mode">{{atk.mode}}</span>{{/if}}
     </span>
     {{#if atk.unready}}

@@ -84,6 +84,7 @@ const FILE_PARTIALS: Record<string, string> = {
   "gworld.attackExtras": `systems/${SYSTEM_ID}/templates/actor/attack-extras.hbs`,
   // The new character sheet's own pieces.
   "gworld.v2.attackCard": `systems/${SYSTEM_ID}/templates/actor/v2/attack-card.hbs`,
+  "gworld.v2.bodyOutline": `systems/${SYSTEM_ID}/templates/actor/v2/body-outline.hbs`,
   // The classic tabs' sections, one partial each, so both character sheets
   // draw them from one copy: a section a module's rule reads, or a button a
   // module decorates, is the same markup on either sheet.

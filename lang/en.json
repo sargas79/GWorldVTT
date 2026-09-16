@@ -4033,7 +4033,27 @@
         "radiationTolerance": "Radiation Tolerance",
         "telescopicVision": "Telescopic Vision",
         "hyperspectralVision": "Hyperspectral Vision"
-      }
+      },
+      "Attacks": "Attacks",
+      "AttackPreview": "Attack preview",
+      "Weapon": "Weapon",
+      "Targets": "{count} targets",
+      "NoTarget": "No target selected",
+      "EffectiveSkill": "Effective skill",
+      "ChartLabel": "3d6 against {target}: {chance}% chance of success",
+      "BaseSkill": "Skill",
+      "SkillCap": "Capped at",
+      "PreviewHint": "Shift-click the attack for the full dialog. What its options and modules add is not shown here.",
+      "TakeShot": "Take the shot",
+      "Attack": "Attack",
+      "Damage": "Damage",
+      "ActiveDefenses": "Active defenses",
+      "RetreatHint": "Retreat: +3 to Dodge, +1 to Parry and Block (+3 with a fencing weapon), chosen when you defend.",
+      "HitLocations": "Hit locations and armor",
+      "BodyOutline": "Hit locations on the body",
+      "CombatLog": "Combat log",
+      "ShowInChat": "Show this card in the chat log",
+      "NoLog": "Nothing in the chat from this character yet."
     }
   }
 }

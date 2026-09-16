@@ -557,6 +557,208 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
 }
 
 /**
+ * The lines a roll takes before anything its dialog adds: a weapon's own
+ * to-hit, a lowered attribute, and for an attack the traits that impair it
+ * and All-Out Attack's bonus.
+ *
+ * The roll pushes these, and the character sheet's attack preview shows them
+ * before any roll is made, so the two can never disagree.
+ */
+export function standingRollLines(actor: any, options: {
+  rollType: string | undefined;
+  ranged: boolean;
+  /** The weapon's own "-2 to hit", as its row carries it. */
+  hitModifier?: unknown;
+  /** The attribute the roll is based on, for a lowered attribute's penalty. */
+  basedOn?: string | undefined;
+  /** A Wild Swing takes no Determined bonus (p. 388). */
+  wildSwing?: boolean;
+  /** Whether a dialog asked about the attack, which then saw to sight. */
+  dialogAsked: boolean;
+}): RollModifier[] {
+  const lines: RollModifier[] = [];
+  const { rollType, ranged } = options;
+
+  // A weapon used at a penalty with its own skill -- "-2 to hit", as a data
+  // file may list it -- takes its own line off the attack, so the card says
+  // where the number came from.
+  const hitModifier = rollType === "attack" ? Number(options.hitModifier) || 0 : 0;
+  if (hitModifier !== 0) {
+    lines.push({ label: game.i18n.localize("GWORLD.Attack.WeaponToHit"), value: hitModifier });
+  }
+
+  // Something has temporarily knocked an attribute down (p. 421). It comes off
+  // every skill that attribute governs -- and off nothing else: a defense, a
+  // resistance roll and a Fright Check are all exempt, which is why this reads
+  // the kind of roll rather than applying itself everywhere.
+  const knockedDown = temporaryPenalty(actor, options.basedOn, rollKind(rollType));
+  if (knockedDown !== 0) {
+    lines.push({ label: game.i18n.localize("GWORLD.Penalties.Label"), value: knockedDown });
+  }
+
+  // Bad Sight and One Eye each take their own line off an attack
+  // (Characters pp. 123, 147) -- One Eye's -3 at range only when the shot
+  // was not aimed -- and a blind fighter attacks blind even when nothing in
+  // the dialog was ticked.
+  if (rollType === "attack") {
+    const traits = actor?.system?.derived?.traitEffects;
+    const impaired = traits
+      ? impairedAttacks(traits, {
+          ranged,
+          aimed: ranged && aimTurnsOf(actor) > 0,
+          closeCombat: actor?.system?.conditions?.closeCombat === true,
+        })
+      : [];
+    for (const penalty of impaired) lines.push({ label: penalty.trait, value: penalty.value });
+
+    // All-Out Attack (Determined): "Make a single attack at +4 to hit!" in
+    // melee, "+1 to hit" at range (p. 365). The other options buy something
+    // other than accuracy, so they add nothing here.
+    if (actor?.system?.maneuver === "allOutAttack") {
+      const option = String(actor.system.allOutAttackOption ?? "determined") as AllOutAttackOption;
+      // "you may not choose the 'Determined' option to get +4 to hit to offset
+      // the Wild Swing penalty" (p. 388).
+      const bonus = options.wildSwing ? 0 : allOutAttackBonus(option, ranged);
+      if (bonus !== 0) {
+        lines.push({ label: game.i18n.localize(`GWORLD.Maneuver.AllOutAttackOption.${option}`), value: bonus });
+      }
+    }
+    if (!options.dialogAsked && eyesOf(actor).blindness) {
+      const blind = sightModifier("clear", false, eyesOf(actor));
+      if (blind) lines.push(blind);
+    }
+  }
+  return lines;
+}
+
+/**
+ * The lines an attack takes for where the fighters are and what they did
+ * before: the Posture Table (Characters p. 551) for a melee attack from a low
+ * posture and a shot at a low target, what Evaluate earned a melee attack
+ * (Campaigns p. 364), and Move and Attack's -4 (p. 365).
+ */
+export function positionRollLines(actor: any, options: { rollType: string | undefined; ranged: boolean }): RollModifier[] {
+  const lines: RollModifier[] = [];
+  const { rollType, ranged } = options;
+  if (rollType !== "attack") return lines;
+
+  const own = String(actor?.system?.posture ?? "standing") as Posture;
+  if (!ranged && own !== "standing" && POSTURE_EFFECTS[own]?.attack) {
+    lines.push({ label: game.i18n.format("GWORLD.Attack.PostureLine", { posture: game.i18n.localize(`GWORLD.Posture.${own}`) }), value: POSTURE_EFFECTS[own].attack });
+  }
+  const aimedAt = targetedTokens();
+  const theirs = aimedAt.length === 1 ? String(aimedAt[0]?.actor?.system?.posture ?? "standing") as Posture : "standing";
+  if (ranged && theirs !== "standing" && POSTURE_EFFECTS[theirs]?.target) {
+    lines.push({ label: game.i18n.format("GWORLD.Attack.TargetPostureLine", { posture: game.i18n.localize(`GWORLD.Posture.${theirs}`) }), value: POSTURE_EFFECTS[theirs].target });
+  }
+
+  const evaluated = !ranged ? evaluateBonusFor(actor) : 0;
+  if (evaluated) lines.push({ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluated });
+
+  // "Roll against your skill at -4", and "your effective skill cannot exceed
+  // 9": the cap is taken once every other modifier is in; a module may lift it.
+  if (!ranged && actor?.system?.maneuver === "moveAndAttack") {
+    lines.push({ label: game.i18n.localize("GWORLD.Maneuver.moveAndAttack"), value: -4 });
+  }
+  return lines;
+}
+
+/** What an attack's preview shows: every line known before the roll, and where they leave the skill. */
+export interface AttackPreview {
+  base: number;
+  lines: RollModifier[];
+  /** The skill after every line, before any cap. */
+  total: number;
+  /** The skill Move and Attack caps it at, where it does; otherwise null. */
+  cap: number | null;
+  /** The skill that will be rolled against. */
+  effective: number;
+  /** The range to the one target and its size, where the map gives them. */
+  measured: { rangeYards: number; targetSizeModifier: number } | null;
+}
+
+/**
+ * The lines an attack will take before its dialog or a module adds anything,
+ * for the character sheet to show ahead of the roll.
+ *
+ * Built from the same pieces the roll pushes: the standing lines, the quick
+ * shot's range and size where the map measures them, what the options on the
+ * attacker's maneuver add, and the position lines. What a shift-click dialog
+ * or a module's `attackModifiers` hook adds at roll time is not known yet and
+ * not shown.
+ */
+export function previewAttack(actor: any, row: {
+  ranged: boolean;
+  item?: any;
+  skillLevel: number;
+  hitModifier?: unknown;
+  damageType?: string;
+  reach?: string;
+  weapon?: Record<string, unknown>;
+}): AttackPreview {
+  const base = Number(row.skillLevel) || 0;
+  const lines: RollModifier[] = [];
+  const measured = row.ranged ? measuredShot(actor) : null;
+  if (row.ranged && measured) {
+    lines.push(...quickShot(measured, weaponFromDataset(actor, row.weapon ?? {})).modifiers);
+  }
+  lines.push(...standingRollLines(actor, { rollType: "attack", ranged: row.ranged, hitModifier: row.hitModifier, dialogAsked: false }));
+  const stance = maneuverOptionAttackEffect(attackContextFor({
+    actor, item: row.item ?? null, ranged: row.ranged, damageType: row.damageType ?? "", reach: row.reach ?? "", effectiveSkill: base,
+  }));
+  if (stance) lines.push(...stance.modifiers);
+  lines.push(...positionRollLines(actor, { rollType: "attack", ranged: row.ranged }));
+
+  const shown = lines.filter((m) => Number.isFinite(m.value) && m.value !== 0);
+  const total = base + shown.reduce((sum, m) => sum + m.value, 0);
+  const cap = !row.ranged && actor?.system?.maneuver === "moveAndAttack" ? WILD_SWING_SKILL_CAP : null;
+  return { base, lines: shown, total, cap, effective: cap === null ? total : Math.min(total, cap), measured };
+}
+
+/**
+ * The weapon a ranged attack is resolved with, read from its row's data: the
+ * same object whether the row is a classic sheet's table row or the new
+ * sheet's card.
+ */
+export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) {
+  const n = (key: string) => Number(dataset[key]) || 0;
+  return {
+    damageType: String(dataset.damageType ?? "cr") as DamageType,
+    accuracy: n("accuracy"),
+    scopeBonus: n("scopeBonus"),
+    rateOfFire: n("rateOfFire") || 1,
+    recoil: n("recoil"),
+    bulk: n("bulk"),
+    // A shotgun's pellets, and the range inside which they strike as one.
+    projectiles: Math.max(1, n("projectiles") || 1),
+    halfDamageRange: n("halfDamageRange"),
+    // How the projectile steers and how far it can fly (Campaigns p. 412),
+    // and whether it covers ground rather than striking a point (p. 413).
+    guidance: String(dataset.guidance ?? ""),
+    maxRange: n("maxRange"),
+    areaAttack: dataset.areaAttack === "1",
+    coneMaxWidth: n("coneMaxWidth"),
+    // The turns spent on an Aim maneuver, which is what buys the Accuracy.
+    aim: {
+      turns: aimTurnsOf(actor),
+      braced: Boolean(actor?.system?.aim?.braced),
+    },
+    eyes: eyesOf(actor),
+    // What is left in the weapon caps the burst (Campaigns p. 373).
+    loaded: dataset.loaded === undefined || dataset.loaded === "" ? null : Number(dataset.loaded) || 0,
+    // A shooter on a Wait is covering ground, and the area they declared
+    // is what the penalty comes off.
+    watching:
+      actor?.system?.maneuver === "wait"
+        ? {
+            hexesWatched: Number(actor.system?.wait?.hexesWatched ?? 1),
+            coveringLine: Boolean(actor.system?.wait?.coveringLine),
+          }
+        : null,
+  };
+}
+
+/**
  * The penalty a lowered attribute puts on this roll (p. 421).
  *
  * Returns zero for a roll the rule exempts, and for a button that does not say
@@ -1056,42 +1258,8 @@ async function rollAction(
   // the map -- the distance from the shooter's token to the one target --
   // and rolls with nothing else asked; where that cannot be measured, or on
   // a shift-click, the dialog asks for everything.
-  const recoil = Number(target.dataset.recoil) || 0;
   const malfunctionNumber = Number(target.dataset.malfunction) || 0;
-  const weapon = {
-    damageType: (target.dataset.damageType ?? "cr") as DamageType,
-    accuracy: Number(target.dataset.accuracy) || 0,
-    scopeBonus: Number(target.dataset.scopeBonus) || 0,
-    rateOfFire: Number(target.dataset.rateOfFire) || 1,
-    recoil,
-    bulk: Number(target.dataset.bulk) || 0,
-    // A shotgun's pellets, and the range inside which they strike as one.
-    projectiles: Math.max(1, Number(target.dataset.projectiles) || 1),
-    halfDamageRange: Number(target.dataset.halfDamageRange) || 0,
-    // How the projectile steers and how far it can fly (Campaigns p. 412),
-    // and whether it covers ground rather than striking a point (p. 413).
-    guidance: String(target.dataset.guidance ?? ""),
-    maxRange: Number(target.dataset.maxRange) || 0,
-    areaAttack: target.dataset.areaAttack === "1",
-    coneMaxWidth: Number(target.dataset.coneMaxWidth) || 0,
-    // The turns spent on an Aim maneuver, which is what buys the Accuracy.
-    aim: {
-      turns: aimTurnsOf(actor),
-      braced: Boolean(actor?.system?.aim?.braced),
-    },
-    eyes: eyesOf(actor),
-    // What is left in the weapon caps the burst (Campaigns p. 373).
-    loaded: target.dataset.loaded === undefined || target.dataset.loaded === "" ? null : Number(target.dataset.loaded) || 0,
-    // A shooter on a Wait is covering ground, and the area they declared
-    // is what the penalty comes off.
-    watching:
-      actor?.system?.maneuver === "wait"
-        ? {
-            hexesWatched: Number(actor.system?.wait?.hexesWatched ?? 1),
-            coveringLine: Boolean(actor.system?.wait?.coveringLine),
-          }
-        : null,
-  };
+  const weapon = weaponFromDataset(actor, { ...target.dataset });
   // A shot from a vehicle always asks, since whether the car swerved and
   // whether it is the car's own gun are things no map can say (p. 469). The
   // range is still measured, so the field starts at the right figure.
@@ -1163,55 +1331,14 @@ async function rollAction(
       : await maybePromptModifiers(event);
   if (modifiers === null) return null;
 
-  // Something has temporarily knocked an attribute down (p. 421). It comes off
-  // every skill that attribute governs -- and off nothing else: a defense, a
-  // resistance roll and a Fright Check are all exempt, which is why this reads
-  // the kind of roll rather than applying itself everywhere.
-  // A weapon used at a penalty with its own skill -- "-2 to hit", as a data
-  // file may list it -- takes its own line off the attack, so the card says
-  // where the number came from.
-  const hitModifier = rollType === "attack" ? Number(target.dataset.hitModifier) || 0 : 0;
-  if (hitModifier !== 0) {
-    modifiers.push({ label: game.i18n.localize("GWORLD.Attack.WeaponToHit"), value: hitModifier });
-  }
-
-  const knockedDown = temporaryPenalty(actor, target.dataset.basedOn, rollKind(rollType));
-  if (knockedDown !== 0) {
-    modifiers.push({ label: game.i18n.localize("GWORLD.Penalties.Label"), value: knockedDown });
-  }
-
-  // Bad Sight and One Eye each take their own line off an attack
-  // (Characters pp. 123, 147) -- One Eye's -3 at range only when the shot
-  // was not aimed -- and a blind fighter attacks blind even when nothing in
-  // the dialog was ticked.
-  if (rollType === "attack") {
-    const traits = actor?.system?.derived?.traitEffects;
-    const impaired = traits
-      ? impairedAttacks(traits, {
-          ranged: Boolean(ranged),
-          aimed: Boolean(ranged) && aimTurnsOf(actor) > 0,
-          closeCombat: actor?.system?.conditions?.closeCombat === true,
-        })
-      : [];
-    for (const penalty of impaired) modifiers.push({ label: penalty.trait, value: penalty.value });
-
-    // All-Out Attack (Determined): "Make a single attack at +4 to hit!" in
-    // melee, "+1 to hit" at range (p. 365). The other options buy something
-    // other than accuracy, so they add nothing here.
-    if (actor?.system?.maneuver === "allOutAttack") {
-      const option = String(actor.system.allOutAttackOption ?? "determined") as AllOutAttackOption;
-      // "you may not choose the 'Determined' option to get +4 to hit to offset
-      // the Wild Swing penalty" (p. 388).
-      const bonus = melee?.wildSwing ? 0 : allOutAttackBonus(option, Boolean(ranged));
-      if (bonus !== 0) {
-        modifiers.push({ label: game.i18n.localize(`GWORLD.Maneuver.AllOutAttackOption.${option}`), value: bonus });
-      }
-    }
-    if (!melee && !shot && eyesOf(actor).blindness) {
-      const blind = sightModifier("clear", false, eyesOf(actor));
-      if (blind) modifiers.push(blind);
-    }
-  }
+  modifiers.push(...standingRollLines(actor, {
+    rollType,
+    ranged: Boolean(ranged),
+    hitModifier: target.dataset.hitModifier,
+    basedOn: target.dataset.basedOn,
+    wildSwing: melee?.wildSwing === true,
+    dialogAsked: Boolean(melee || shot),
+  }));
 
   // "You must declare that you are using extra effort and spend the required FP
   // before you make your attack" -- and a fighter who cannot pay does not get
@@ -1309,29 +1436,11 @@ async function rollAction(
   const feint =
     rollType === "attack" && isRuleOn("feint") ? await consumeFeint(actor) : 0;
 
-  // The Posture Table (Characters p. 551): a melee attack from a low posture,
-  // and a shot at a low target.
-  if (rollType === "attack") {
-    const own = String(actor?.system?.posture ?? "standing") as Posture;
-    if (!ranged && own !== "standing" && POSTURE_EFFECTS[own]?.attack) {
-      modifiers.push({ label: game.i18n.format("GWORLD.Attack.PostureLine", { posture: game.i18n.localize(`GWORLD.Posture.${own}`) }), value: POSTURE_EFFECTS[own].attack });
-    }
-    const aimedAt = targetedTokens();
-    const theirs = aimedAt.length === 1 ? String(aimedAt[0]?.actor?.system?.posture ?? "standing") as Posture : "standing";
-    if (ranged && theirs !== "standing" && POSTURE_EFFECTS[theirs]?.target) {
-      modifiers.push({ label: game.i18n.format("GWORLD.Attack.TargetPostureLine", { posture: game.i18n.localize(`GWORLD.Posture.${theirs}`) }), value: POSTURE_EFFECTS[theirs].target });
-    }
-  }
-
-  // What Evaluate maneuvers before it earned a melee attack (Campaigns p. 364).
+  modifiers.push(...positionRollLines(actor, { rollType, ranged: Boolean(ranged) }));
+  // What Evaluate earned and whether this is Move and Attack, which the hook
+  // below is told separately; positionRollLines has put their lines in.
   const evaluated = rollType === "attack" && !ranged ? evaluateBonusFor(actor) : 0;
-  if (evaluated) modifiers.push({ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluated });
-
-  // Move and Attack in melee: "roll against your skill at -4", and "your
-  // effective skill cannot exceed 9" (Characters p. 365). The cap is taken once
-  // every other modifier is in; a module may lift or change it.
   const movingMelee = rollType === "attack" && !ranged && actor?.system?.maneuver === "moveAndAttack";
-  if (movingMelee) modifiers.push({ label: game.i18n.localize("GWORLD.Maneuver.moveAndAttack"), value: -4 });
 
   // A module may add to the attack roll and to what the defender faces, with
   // what each line is for.

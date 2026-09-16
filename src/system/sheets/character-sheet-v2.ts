@@ -39,6 +39,9 @@ import { asSortMode, firstLine, groupRows, selectedKey, sortRows, type SortMode 
 import { isLevelled, itemImprovement, traitImprovement } from "../sheet-v2/improvements.js";
 import { successChance } from "../sheet-v2/success-chance.js";
 import { mechanicFallbackLabel, mechanicsOf } from "../sheet-v2/trait-mechanics.js";
+import { previewAttack } from "../roll.js";
+import { targetedTokens } from "../targets.js";
+import { combatLog } from "../sheet-v2/combat-log.js";
 import { GWorldCharacterSheet } from "./character-sheet.js";
 
 const V2_ROOT = `systems/${SYSTEM_ID}/templates/actor/v2`;
@@ -59,6 +62,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2ToggleStatus: GWorldCharacterSheetV2.#onToggleStatus,
       v2Select: GWorldCharacterSheetV2.#onSelect,
       v2Chip: GWorldCharacterSheetV2.#onChip,
+      v2Location: GWorldCharacterSheetV2.#onLocation,
+      v2ShowMessage: GWorldCharacterSheetV2.#onShowMessage,
     },
   };
 
@@ -68,7 +73,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     overview: { template: `${V2_ROOT}/tab-overview.hbs`, scrollable: [""] },
     skills: { template: `${V2_ROOT}/tab-skills.hbs`, scrollable: [".v2-list-col", ".v2-detail-col"] },
     traits: { template: `${V2_ROOT}/tab-traits.hbs`, scrollable: [".v2-list-col", ".v2-detail-col"] },
-    combat: { template: `systems/${SYSTEM_ID}/templates/actor/tab-combat.hbs`, scrollable: [""] },
+    combat: { template: `${V2_ROOT}/tab-combat.hbs`, scrollable: [""] },
     inventory: { template: `systems/${SYSTEM_ID}/templates/actor/tab-gear.hbs`, scrollable: [""] },
     progression: { template: `systems/${SYSTEM_ID}/templates/actor/tab-attributes.hbs`, scrollable: [""] },
     journal: { template: `systems/${SYSTEM_ID}/templates/actor/tab-description.hbs`, scrollable: [""] },
@@ -109,8 +114,147 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       ...this.overviewContext(context),
       skills: await this.skillsContext(context, points.unspent),
       traits: await this.traitsContext(context, points.unspent),
+      combat: this.combatContext(context),
+      folded: [...this.folded],
+      opened: [...this.opened],
     };
     return context;
+  }
+
+  /* ── Combat ──────────────────────────────────────────────────────────── */
+
+  protected combatContext(context: Record<string, any>): Record<string, unknown> {
+    const actor = this.actor;
+    const system = context.system;
+    const derived = context.derived;
+    const L = (key: string) => game.i18n.localize(key);
+
+    // Every attack the character has, by name, each with what its roll will
+    // take before any dialog asks for more.
+    const entries = [
+      ...(derived.melee ?? []).map((atk: any) => ({ atk, ranged: false })),
+      ...(derived.ranged ?? []).map((atk: any) => ({ atk, ranged: true })),
+    ].sort((a, b) => byName(a.atk, b.atk));
+
+    const attacks = entries.map(({ atk, ranged }) => {
+      const key = attackKey(atk, ranged);
+      const item = atk.itemId ? actor.items.get(atk.itemId) ?? null : null;
+      const level = Number(atk.skillLevel);
+      const hasSkill = atk.skillLevel !== null && atk.skillLevel !== undefined && Number.isFinite(level);
+      const preview = hasSkill
+        ? previewAttack(actor, {
+            ranged,
+            item,
+            skillLevel: level,
+            hitModifier: atk.hitModifier,
+            damageType: atk.damageType,
+            reach: atk.reach,
+            weapon: ranged
+              ? {
+                  damageType: atk.damageType, accuracy: atk.accuracy, scopeBonus: atk.scopeBonus, rateOfFire: atk.rateOfFire,
+                  recoil: atk.recoil, bulk: atk.bulk, projectiles: atk.projectiles, halfDamageRange: atk.halfDamageRange,
+                  guidance: atk.guidance, maxRange: atk.maxRange, areaAttack: atk.areaAttack ? "1" : "",
+                  coneMaxWidth: atk.coneMaxWidth, loaded: atk.shotsCapacity ? atk.shotsLoaded : "",
+                }
+              : {},
+          })
+        : null;
+      const chance = preview ? successChance(preview.effective) : null;
+      return {
+        key,
+        atk,
+        ranged,
+        equipped: Boolean(item?.system?.equipped),
+        preview,
+        chance,
+        // The bars of the 3d6 chart, scaled to the tallest total.
+        bars: chance?.distribution.map((d) => ({ ...d, height: Math.round((d.ways / 27) * 100) })) ?? [],
+      };
+    });
+    const state = this.stateOf("attacks");
+    // An equipped weapon is the likelier one to be wanted first.
+    const preferred = attacks.find((a) => a.equipped)?.key ?? attacks[0]?.key ?? null;
+    const selected = selectedKey(attacks.map((a) => a.key), state.selected ?? preferred);
+    state.selected = selected;
+
+    const targets = targetedTokens();
+    const locations = (derived.hitLocations ?? []).map((loc: any) => ({
+      ...loc,
+      label: L(`GWORLD.HitLocation.${loc.key}`),
+    }));
+    const locationState = this.stateOf("locations");
+    const location = selectedKey(locations.map((l: any) => l.key), locationState.selected ?? "torso");
+    locationState.selected = location;
+
+    return {
+      attacks: attacks.map((a) => ({ ...a, selected: a.key === selected })),
+      selected,
+      target: targets.length === 1
+        ? { name: String(targets[0]?.name ?? targets[0]?.document?.name ?? targets[0]?.actor?.name ?? ""), count: 1 }
+        : { name: "", count: targets.length },
+      status: {
+        posture: L(`GWORLD.Posture.${system.posture ?? "standing"}`),
+        maneuver: L(`GWORLD.Maneuver.${system.maneuver || "doNothing"}`),
+        encumbrance: L(`GWORLD.Encumbrance.${derived.encumbrance?.key ?? "none"}`),
+        encumbered: Number(derived.encumbrance?.level ?? 0) > 0,
+        move: derived.move,
+        reeling: derived.reeling === true,
+      },
+      locations: locations.map((l: any) => ({ ...l, selected: l.key === location })),
+      location,
+      log: combatLog(
+        (game.messages?.contents ?? []).map((m: any) => ({
+          id: String(m.id),
+          speakerActor: m.speaker?.actor ?? null,
+          flavor: m.flavor,
+          content: m.content,
+          timestamp: m.timestamp,
+          rolls: m.rolls,
+        })),
+        String(actor.id),
+      ).map((line) => ({ ...line, time: line.timestamp ? new Date(line.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "" })),
+    };
+  }
+
+  /* ── keeping the Combat tab current ──────────────────────────────────── */
+
+  /** Hooks this sheet listens to while it is open, to take off again when it closes. */
+  #hooks: Array<[string, number]> = [];
+
+  /** A redraw asked for by something outside the actor, gathered up so a burst of them draws once. */
+  #redrawTimer: ReturnType<typeof setTimeout> | null = null;
+  #redrawSoon(): void {
+    if (this.#redrawTimer) clearTimeout(this.#redrawTimer);
+    this.#redrawTimer = setTimeout(() => {
+      this.#redrawTimer = null;
+      if ((this as any).rendered) void this.render();
+    }, 150);
+  }
+
+  override async _onFirstRender(context: object, options: object): Promise<void> {
+    await super._onFirstRender(context, options);
+    // The attack preview reads the targets, and the combat log the chat: both
+    // change without the actor changing, which is all a sheet redraws for.
+    const on = (hook: string, fn: (...args: any[]) => void) => this.#hooks.push([hook, Hooks.on(hook, fn)]);
+    on("targetToken", (user: any) => {
+      if (user?.id === game.user?.id) this.#redrawSoon();
+    });
+    const logged = (message: any) => {
+      if (message?.speaker?.actor === this.actor.id) this.#redrawSoon();
+    };
+    on("createChatMessage", logged);
+    on("deleteChatMessage", logged);
+    // A linked journal page changing redraws the Journal tab.
+    on("updateJournalEntryPage", (page: any) => {
+      const links = (this.actor.system?.journalLinks ?? []) as Array<{ uuid: string }>;
+      if (links.some((l) => l.uuid === page?.uuid || l.uuid === page?.parent?.uuid)) this.#redrawSoon();
+    });
+  }
+
+  override async _onClose(options: object): Promise<void> {
+    await super._onClose(options);
+    for (const [hook, id] of this.#hooks) Hooks.off(hook, id);
+    this.#hooks = [];
   }
 
   /* ── view state ──────────────────────────────────────────────────────── */
@@ -125,6 +269,9 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
 
   /** Groups folded shut, as "<list>:<group>". */
   protected folded = new Set<string>();
+
+  /** Folds that start shut and have been opened. */
+  protected opened = new Set<string>();
 
   protected stateOf(list: string) {
     if (!this.listState.has(list)) this.listState.set(list, {});
@@ -493,7 +640,12 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     for (const fold of this.element.querySelectorAll<HTMLDetailsElement>("details[data-v2-fold]")) {
       fold.addEventListener("toggle", () => {
         const key = fold.dataset.v2Fold ?? "";
-        if (fold.open) this.folded.delete(key);
+        // A fold that starts shut remembers being opened; one that starts
+        // open remembers being shut.
+        if (fold.dataset.v2Default === "closed") {
+          if (fold.open) this.opened.add(key);
+          else this.opened.delete(key);
+        } else if (fold.open) this.folded.delete(key);
         else this.folded.add(key);
       });
     }
@@ -590,6 +742,30 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const [list, chip] = String(target.dataset.v2Chip ?? "").split(":");
     if (!list || !chip) return;
     this.showChip(list, chip);
+  }
+
+  /** Highlights a hit location on the body outline and in the table. */
+  static #onLocation(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const key = target.closest<HTMLElement>("[data-v2-location]")?.dataset.v2Location;
+    if (!key) return;
+    this.stateOf("locations").selected = key;
+    for (const el of this.element.querySelectorAll<HTMLElement | SVGElement>("[data-v2-location]")) {
+      el.classList.toggle("selected", el.dataset.v2Location === key);
+    }
+  }
+
+  /** Scrolls the chat log to a message the combat log lists, and opens the chat if it is closed. */
+  static #onShowMessage(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-message-id]")?.dataset.messageId;
+    if (!id) return;
+    const sidebar: any = (ui as any).sidebar;
+    sidebar?.expand?.();
+    sidebar?.changeTab?.("chat", "primary");
+    const card = document.querySelector<HTMLElement>(`#chat .chat-log [data-message-id="${id}"], .chat-log [data-message-id="${id}"]`);
+    if (!card) return;
+    card.scrollIntoView({ block: "center", behavior: "smooth" });
+    card.classList.add("gworld-flash");
+    setTimeout(() => card.classList.remove("gworld-flash"), 1600);
   }
 
   /** Takes a condition off the character, or puts it on. */
