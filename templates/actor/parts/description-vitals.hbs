@@ -1,0 +1,30 @@
+{{!-- Shared by both character sheets: the description tab's vitals. --}}
+<div class="isec">
+  <div class="ish"><span class="num">01</span>{{localize "GWORLD.Section.VitalStatistics"}}</div>
+  <div class="g4">
+    <div class="fld">
+      <span class="fl">{{localize "GWORLD.Field.Player"}}</span>
+      <div class="fi"><input type="text" name="system.details.player" value="{{system.details.player}}" {{#unless editable}}disabled{{/unless}}></div>
+    </div>
+    <div class="fld">
+      <span class="fl">{{localize "GWORLD.Field.Height"}}</span>
+      <div class="fi"><input type="text" name="system.details.height" value="{{system.details.height}}" {{#unless editable}}disabled{{/unless}}></div>
+    </div>
+    <div class="fld">
+      <span class="fl">{{localize "GWORLD.Field.Weight"}}</span>
+      <div class="fi"><input type="text" name="system.details.weight" value="{{system.details.weight}}" {{#unless editable}}disabled{{/unless}}></div>
+    </div>
+    <div class="fld">
+      <span class="fl">{{localize "GWORLD.Field.Age"}}</span>
+      <div class="fi">
+        <input type="text" name="system.details.age" value="{{system.details.age}}" {{#unless editable}}disabled{{/unless}}>
+        {{#if (and rules.aging derived.aging.rollsPerYear)}}
+          <button type="button" class="ibtn tiny" data-action="agingRoll"
+                  data-tooltip="{{localize 'GWORLD.Life.AgingHint' rolls=derived.aging.rollsPerYear}}">
+            {{localize "GWORLD.Life.Aging"}}
+          </button>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</div>

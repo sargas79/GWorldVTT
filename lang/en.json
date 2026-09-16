@@ -25,7 +25,9 @@
       "NpcFull": "GURPS NPC Sheet (full)",
       "GenericItem": "GURPS Add-on Item Sheet",
       "Item": "GURPS Item",
-      "Vehicle": "Vehicle"
+      "Vehicle": "Vehicle",
+      "CharacterV2": "GURPS Character Sheet (new)",
+      "NpcFullV2": "GURPS NPC Sheet (new, full)"
     },
     "Tab": {
       "attributes": "Attr",
@@ -1946,6 +1948,7 @@
       "ForceFieldHint": "DR projected off the body (p. 47): it covers everything including the eyes, meets the blow before any other armour, and refuses a touch effect unless the attack pierces it.",
       "SoleHint": "Footwear with its own DR on the underside — boots DR 2, with 5 on the sole (p. 283). Leave blank otherwise.",
       "Layering": "layered {penalty}",
+      "LayeringShort": "Layered armor",
       "LayeringHint": "An extra layer of armour off the head: -1 to DX and DX-based skills (Characters p. 286).",
       "IllegalLayer": "cannot be layered",
       "IllegalLayerHint": "Armour is layered over something that is not both flexible and concealable, which the book does not allow (Characters p. 286).",
@@ -3868,6 +3871,47 @@
       "Traits": "Hard to Subdue, Fit",
       "Out": "{name} falls unconscious",
       "TurnStart": "{name} is at 0 HP or less: roll HT to stay conscious, unless this turn is Do Nothing with no defense rolls."
+    },
+    "SheetV2": {
+      "Tabs": "Character sheet tabs",
+      "Tab": {
+        "overview": "Overview",
+        "skills": "Skills",
+        "traits": "Traits",
+        "combat": "Combat",
+        "inventory": "Inventory",
+        "journal": "Journal",
+        "progression": "Progression",
+        "magic": "Magic"
+      },
+      "Character": "Character",
+      "Npc": "NPC",
+      "Name": "Name",
+      "PointsHint": "{spent} character points spent of {available}",
+      "Ready": "+{points} ready",
+      "AllSpent": "All spent",
+      "Over": "{points} over",
+      "Vitals": "Vitals",
+      "CurrentHp": "Current HP",
+      "CurrentFp": "Current FP",
+      "CurrentActions": "Current actions",
+      "NoAttacks": "No attacks. Add a weapon on the Inventory tab.",
+      "RollAttack": "Roll the attack",
+      "ActiveSkills": "Active skills",
+      "Search": "Search…",
+      "SearchSkills": "Search skills",
+      "Pin": "Pin to the Overview",
+      "Unpin": "Unpin from the Overview",
+      "RollSkill": "Roll {name} at {level}",
+      "NoSkills": "No trained skills yet. Add some on the Skills tab.",
+      "Defenses": "Defenses",
+      "ShieldDb": "+{db} DB from {name}",
+      "Conditions": "Conditions",
+      "RemoveCondition": "Take this condition off",
+      "NoConditions": "None",
+      "AddCondition": "+ Condition",
+      "ContextModifiers": "Active modifiers",
+      "NoModifiers": "Nothing is modifying rolls right now"
     }
   }
 }

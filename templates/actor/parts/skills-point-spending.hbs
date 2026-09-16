@@ -1,0 +1,15 @@
+{{!-- Shared by both character sheets: the skills tab's point spending. --}}
+{{!-- Points to spend on outcomes (Campaigns p. 347), while a module's pool is in play. --}}
+{{#if pointSpending.inPlay}}
+  <div class="npcline" style="gap: 10px; align-items: center; flex-wrap: wrap">
+    <span class="fl">{{localize "GWORLD.BonusPoints.Title"}}</span>
+    <span class="tag">{{localize "GWORLD.BonusPoints.Unspent" value=derived.points.unspent}}</span>
+    {{!-- Pools add-on modules registered. --}}
+    {{#each pointSpending.pools as |pool|}}
+      <span class="tag tag-accent">{{localize "GWORLD.BonusPoints.Pool" label=pool.label value=pool.available}}</span>
+    {{/each}}
+    {{#if editable}}
+      <button type="button" class="ibtn" data-action="requestGuidance" data-tooltip="{{localize 'GWORLD.BonusPoints.GuidanceHint'}}">{{localize "GWORLD.BonusPoints.Guidance"}}</button>
+    {{/if}}
+  </div>
+{{/if}}

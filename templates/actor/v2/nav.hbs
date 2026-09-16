@@ -1,0 +1,11 @@
+{{!-- The sidebar. data-action="tab" routes the click through Foundry's
+     action dispatcher; data-tab and data-group alone do nothing. --}}
+<nav class="v2-rail tabs" data-group="primary" aria-label="{{localize 'GWORLD.SheetV2.Tabs'}}">
+  {{#each tabs as |tab|}}
+    <a class="v2-rail-item {{tab.cssClass}}" data-action="tab" data-group="{{tab.group}}" data-tab="{{tab.id}}"
+       data-tooltip="{{localize tab.label}}" data-tooltip-direction="RIGHT" role="tab" tabindex="0">
+      <span class="v2-rail-icon" aria-hidden="true">{{> (concat "gworld.v2icon." tab.id)}}</span>
+      <span class="v2-rail-label">{{localize tab.label}}</span>
+    </a>
+  {{/each}}
+</nav>

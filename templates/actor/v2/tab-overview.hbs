@@ -1,0 +1,194 @@
+<section class="tab v2-tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+  {{> "gworld.addonSheetSections" sections=addonSheetSections.start}}
+
+  <div class="v2-overview">
+    {{!-- Vitals: what is left of the character, and what they can still do. --}}
+    <div class="v2-panel v2-vitals">
+      <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Vitals"}}</h2>
+      <div class="v2-pool">
+        <div class="v2-pool-head">
+          <span class="v2-pool-name">{{localize "GWORLD.Secondary.HP"}}</span>
+          <span class="v2-pool-value">
+            <input type="number" name="system.hp.value" value="{{system.hp.value}}" step="1"
+                   aria-label="{{localize 'GWORLD.SheetV2.CurrentHp'}}" {{#unless editable}}disabled{{/unless}}>
+            <span>/ {{system.hp.max}}</span>
+          </span>
+        </div>
+        <div class="v2-bar v2-bar-hp"><span style="width: {{v2.vitals.hp.percent}}%"></span></div>
+        {{#if v2.vitals.hp.hurt}}<span class="v2-pool-status v2-bad">{{v2.vitals.hp.statusLabel}}</span>{{/if}}
+      </div>
+      <div class="v2-pool">
+        <div class="v2-pool-head">
+          <span class="v2-pool-name">{{localize "GWORLD.Secondary.FP"}}</span>
+          <span class="v2-pool-value">
+            <input type="number" name="system.fp.value" value="{{system.fp.value}}" step="1"
+                   aria-label="{{localize 'GWORLD.SheetV2.CurrentFp'}}" {{#unless editable}}disabled{{/unless}}>
+            <span>/ {{system.fp.max}}</span>
+          </span>
+        </div>
+        <div class="v2-bar v2-bar-fp"><span style="width: {{v2.vitals.fp.percent}}%"></span></div>
+        {{#if v2.vitals.fp.tired}}<span class="v2-pool-status v2-bad">{{v2.vitals.fp.statusLabel}}</span>{{/if}}
+      </div>
+      <div class="v2-stat-pair">
+        <div class="v2-stat">
+          <span class="v2-stat-label">{{localize "GWORLD.Secondary.Move"}}</span>
+          <span class="v2-stat-value">{{v2.vitals.move}}</span>
+          <span class="v2-stat-note">{{localize "GWORLD.Secondary.BasicMove"}} {{v2.vitals.basicMove}}</span>
+        </div>
+        <div class="v2-stat">
+          <span class="v2-stat-label">{{localize "GWORLD.Secondary.BasicSpeed"}}</span>
+          <span class="v2-stat-value">{{decimal v2.vitals.basicSpeed 2}}</span>
+          <span class="v2-stat-note">{{v2.vitals.posture}}</span>
+        </div>
+      </div>
+      <div class="v2-stat-row">
+        <span class="v2-stat-label">{{localize "GWORLD.Field.ThrustSwing"}}</span>
+        <span class="v2-stat-inline">{{v2.vitals.thrust}} / {{v2.vitals.swing}}</span>
+      </div>
+      <div class="v2-load">
+        <div class="v2-load-head">
+          <strong>{{v2.vitals.encumbrance.label}}</strong>
+          <span>{{decimal v2.vitals.encumbrance.carried 1}} / {{v2.vitals.encumbrance.basicLift}} lb</span>
+        </div>
+        <span class="v2-stat-note">{{localize "GWORLD.Field.Encumbrance"}}</span>
+        <div class="v2-bar v2-bar-load v2-load-{{v2.vitals.encumbrance.level}}"><span style="width: {{v2.vitals.encumbrance.percent}}%"></span></div>
+      </div>
+    </div>
+
+    <div class="v2-overview-middle">
+      {{!-- The character's attacks, each rolled from its card. --}}
+      <div class="v2-panel v2-panel-dark v2-actions">
+        <h2 class="v2-ph">{{localize "GWORLD.SheetV2.CurrentActions"}}</h2>
+        {{#if v2.attacks.length}}
+          <div class="v2-attack-grid">
+            {{#each v2.attacks as |entry|}}
+              {{> "gworld.v2.attackCard" atk=entry.atk ranged=entry.ranged key=entry.key}}
+            {{/each}}
+          </div>
+        {{else}}
+          <p class="v2-empty">{{localize "GWORLD.SheetV2.NoAttacks"}}</p>
+        {{/if}}
+      </div>
+
+      {{!-- The skills in use: pinned ones first, then every trained skill, by name. --}}
+      <div class="v2-panel v2-active-skills">
+        <div class="v2-ph v2-ph-tools">
+          <h2>{{localize "GWORLD.SheetV2.ActiveSkills"}}</h2>
+          <label class="v2-search">
+            {{> "gworld.search"}}
+            <input type="search" data-v2-filter="overview-skills" placeholder="{{localize 'GWORLD.SheetV2.Search'}}"
+                   aria-label="{{localize 'GWORLD.SheetV2.SearchSkills'}}" autocomplete="off">
+          </label>
+        </div>
+        {{#if v2.activeSkills.length}}
+          <ul class="v2-skill-list" data-v2-list="overview-skills">
+            {{#each v2.activeSkills as |skill|}}
+              <li class="v2-skill-row{{#if skill.pinned}} pinned{{/if}}" data-item-id="{{skill.id}}" data-v2-name="{{skill.name}}">
+                {{#if @root.editable}}
+                  <button type="button" class="v2-pin{{#if skill.pinned}} on{{/if}}" data-action="v2PinSkill"
+                          aria-pressed="{{#if skill.pinned}}true{{else}}false{{/if}}"
+                          data-tooltip="{{#if skill.pinned}}{{localize 'GWORLD.SheetV2.Unpin'}}{{else}}{{localize 'GWORLD.SheetV2.Pin'}}{{/if}}"
+                          aria-label="{{#if skill.pinned}}{{localize 'GWORLD.SheetV2.Unpin'}}{{else}}{{localize 'GWORLD.SheetV2.Pin'}}{{/if}}">{{> "gworld.v2icon.star"}}</button>
+                {{else if skill.pinned}}
+                  <span class="v2-pin on" aria-hidden="true">{{> "gworld.v2icon.star"}}</span>
+                {{/if}}
+                <span class="v2-skill-name" data-action="editItem">{{skill.name}}</span>
+                {{#if skill.rollable}}
+                  <button type="button" class="v2-skill-level rollable" data-action="roll" data-roll-type="skill"
+                          data-roll-label="{{skill.name}}" data-roll-target="{{skill.level}}" data-based-on="{{skill.attribute}}"
+                          {{#if skill.bonusLines.length}}data-tooltip="{{bonusLines skill.bonusLines}}"{{/if}}
+                          aria-label="{{localize 'GWORLD.SheetV2.RollSkill' name=skill.name level=skill.level}}">{{skill.level}}</button>
+                {{else}}
+                  <span class="v2-skill-level v2-muted">&mdash;</span>
+                {{/if}}
+              </li>
+            {{/each}}
+          </ul>
+        {{else}}
+          <p class="v2-empty">{{localize "GWORLD.SheetV2.NoSkills"}}</p>
+        {{/if}}
+      </div>
+    </div>
+
+    {{!-- Defenses, rolled from here, and DR where a blow usually lands. --}}
+    <div class="v2-panel v2-defenses">
+      <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Defenses"}}</h2>
+      <div class="v2-defense-row">
+        {{#each defenseCards as |def|}}
+          <div class="v2-defense">
+            <span class="v2-stat-label">{{localize def.label}}</span>
+            {{#if def.available}}
+              <button type="button" class="v2-defense-value rollable" data-action="roll" data-roll-type="{{def.key}}"
+                      data-roll-label="{{localize def.label}}" data-roll-target="{{def.total}}"
+                      data-tooltip="{{def.math}}">{{def.total}}</button>
+            {{else}}
+              <span class="v2-defense-value v2-muted">&mdash;</span>
+            {{/if}}
+            <span class="v2-stat-note">{{def.source}}</span>
+          </div>
+        {{/each}}
+      </div>
+      <div class="v2-defense-row v2-dr-row">
+        {{#each v2.dr as |loc|}}
+          <div class="v2-defense">
+            <span class="v2-stat-label">{{loc.label}} DR</span>
+            <span class="v2-defense-value">{{loc.dr}}{{#if loc.splits}}*{{/if}}</span>
+          </div>
+        {{/each}}
+      </div>
+      {{#if derived.shieldDb}}
+        <p class="v2-note">{{localize "GWORLD.SheetV2.ShieldDb" db=derived.shieldDb name=derived.shieldName}}</p>
+      {{/if}}
+    </div>
+  </div>
+
+  {{!-- Conditions on the character, and what is modifying rolls right now. --}}
+  <div class="v2-strip">
+    <div class="v2-strip-group">
+      <h2 class="v2-strip-title">{{localize "GWORLD.SheetV2.Conditions"}}</h2>
+      <div class="v2-chips">
+        {{#each v2.statuses.active as |status|}}
+          <button type="button" class="v2-chip v2-chip-red" data-action="v2ToggleStatus" data-status="{{status.id}}"
+                  data-tooltip="{{localize 'GWORLD.SheetV2.RemoveCondition'}}" {{#unless @root.editable}}disabled{{/unless}}>
+            <img src="{{status.img}}" alt="">{{status.label}}
+          </button>
+        {{/each}}
+        {{#each timedConditions as |c|}}
+          <span class="v2-chip v2-chip-steel" data-tooltip="{{c.effects}}">{{c.label}}{{#if c.remaining}} &middot; {{c.remaining}}{{/if}}
+            {{#if @root.editable}}<button type="button" class="v2-chip-x" data-action="removeTimedCondition" data-condition-id="{{c.id}}"
+                    aria-label="{{localize 'GWORLD.Action.Delete'}}">&times;</button>{{/if}}
+          </span>
+        {{/each}}
+        {{#unless (or v2.statuses.active.length timedConditions.length)}}
+          <span class="v2-muted">{{localize "GWORLD.SheetV2.NoConditions"}}</span>
+        {{/unless}}
+        {{#if editable}}
+          <select class="v2-add-status" data-v2-add-status aria-label="{{localize 'GWORLD.SheetV2.AddCondition'}}">
+            <option value="">{{localize "GWORLD.SheetV2.AddCondition"}}</option>
+            {{#each v2.statuses.inactive as |status|}}
+              <option value="{{status.id}}">{{status.label}}</option>
+            {{/each}}
+          </select>
+        {{/if}}
+      </div>
+    </div>
+    <div class="v2-strip-group v2-strip-mods">
+      <h2 class="v2-strip-title">{{localize "GWORLD.SheetV2.ContextModifiers"}}</h2>
+      <div class="v2-chips">
+        {{#each v2.contextModifiers as |m|}}
+          <span class="v2-chip v2-chip-dark">{{m.label}}{{#if m.appliesTo}} <em>{{m.appliesTo}}</em>{{/if}} <b class="{{#if (gt m.value 0)}}v2-good{{else}}v2-bad{{/if}}">{{signed m.value}}</b></span>
+        {{else}}
+          <span class="v2-muted">{{localize "GWORLD.SheetV2.NoModifiers"}}</span>
+        {{/each}}
+      </div>
+    </div>
+  </div>
+
+  {{!-- The attributes and secondary characteristics, bought and read here. --}}
+  <div class="v2-panel v2-attributes">
+    {{> "gworld.part.attributes-basic"}}
+    {{> "gworld.part.attributes-secondary"}}
+  </div>
+
+  {{> "gworld.addonSections"}}
+</section>

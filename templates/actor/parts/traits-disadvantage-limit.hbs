@@ -1,0 +1,14 @@
+{{!-- Shared by both character sheets: the traits tab's disadvantage limit. --}}
+<div class="meterwrap">
+  <div style="display: flex; justify-content: space-between; font-size: 11px">
+    <span class="fl">{{localize "GWORLD.Section.DisadvantageLimit"}}</span>
+    <span><strong>{{derived.points.disadvantageTotal}}</strong> of {{derived.points.disadvantageLimit}}</span>
+  </div>
+  <div class="meter">
+    <div class="mfill {{#if disadvantageOverLimit}}over{{/if}}"
+         style="width: {{percent derived.points.disadvantageTotal derived.points.disadvantageLimit}}%"></div>
+  </div>
+  <div style="font-size: 11px; color: var(--color-neutral-700)">
+    {{localize "GWORLD.Hint.DisadvantageLimit"}}
+  </div>
+</div>

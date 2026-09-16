@@ -1,0 +1,12 @@
+<section class="tab v2-tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+  {{> "gworld.addonSheetSections" sections=addonSheetSections.start}}
+
+  <div class="v2-panel">
+    {{> "gworld.part.attributes-points"}}
+  </div>
+  <div class="v2-panel">
+    {{> "gworld.part.attributes-campaign"}}
+  </div>
+
+  {{> "gworld.addonSections"}}
+</section>

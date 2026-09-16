@@ -34,6 +34,40 @@ const ICONS: Record<string, string> = {
   "gworld.lock": `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
     <rect x="4" y="10" width="16" height="10"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
   </svg>`,
+  // The new character sheet's sidebar, one per tab, and its pin. Lucide
+  // geometry at the same stroke as the rest.
+  "gworld.v2icon.overview": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+    <rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect>
+  </svg>`,
+  "gworld.v2icon.skills": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+    <path d="m12 3 9 5-9 5-9-5 9-5z"></path><path d="m3 13 9 5 9-5"></path><path d="m3 17.5 9 5 9-5"></path>
+  </svg>`,
+  "gworld.v2icon.traits": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M12 3l2.4 5.2 5.6.6-4.2 3.8 1.2 5.6L12 15.4 7 18.2l1.2-5.6L4 8.8l5.6-.6z"></path>
+  </svg>`,
+  "gworld.v2icon.combat": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14.5 17.5 3 6V3h3l11.5 11.5"></path><path d="m13 19 6-6"></path><path d="m16 16 4 4"></path><path d="m19 21 2-2"></path>
+    <path d="M14.5 6.5 18 3h3v3l-3.5 3.5"></path><path d="m5 14 4 4"></path><path d="m7 17-3 3"></path><path d="m3 19 2 2"></path>
+  </svg>`,
+  "gworld.v2icon.inventory": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+    <rect x="3" y="7" width="18" height="13" rx="1"></rect><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M3 12h18"></path>
+  </svg>`,
+  "gworld.v2icon.journal": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"></path><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"></path>
+  </svg>`,
+  "gworld.v2icon.progression": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path>
+  </svg>`,
+  "gworld.v2icon.magic": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <path d="M15 4V2"></path><path d="M15 16v-2"></path><path d="M8 9h2"></path><path d="M20 9h2"></path><path d="M17.8 11.8 19 13"></path>
+    <path d="M17.8 6.2 19 5"></path><path d="m3 21 9-9"></path><path d="M12.2 6.2 11 5"></path>
+  </svg>`,
+  "gworld.v2icon.star": `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M12 3l2.4 5.2 5.6.6-4.2 3.8 1.2 5.6L12 15.4 7 18.2l1.2-5.6L4 8.8l5.6-.6z"></path>
+  </svg>`,
+  "gworld.v2icon.chevron": `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m6 9 6 6 6-6"></path>
+  </svg>`,
 };
 
 /**
@@ -48,6 +82,50 @@ const FILE_PARTIALS: Record<string, string> = {
   "gworld.addonSections": `systems/${SYSTEM_ID}/templates/actor/addon-sections.hbs`,
   "gworld.addonSheetSections": `systems/${SYSTEM_ID}/templates/actor/addon-sheet-sections.hbs`,
   "gworld.attackExtras": `systems/${SYSTEM_ID}/templates/actor/attack-extras.hbs`,
+  // The new character sheet's own pieces.
+  "gworld.v2.attackCard": `systems/${SYSTEM_ID}/templates/actor/v2/attack-card.hbs`,
+  // The classic tabs' sections, one partial each, so both character sheets
+  // draw them from one copy: a section a module's rule reads, or a button a
+  // module decorates, is the same markup on either sheet.
+  "gworld.part.attack-melee-affliction": `systems/${SYSTEM_ID}/templates/actor/parts/attack-melee-affliction.hbs`,
+  "gworld.part.attack-melee-damage": `systems/${SYSTEM_ID}/templates/actor/parts/attack-melee-damage.hbs`,
+  "gworld.part.attack-melee-roll": `systems/${SYSTEM_ID}/templates/actor/parts/attack-melee-roll.hbs`,
+  "gworld.part.attack-ranged-affliction": `systems/${SYSTEM_ID}/templates/actor/parts/attack-ranged-affliction.hbs`,
+  "gworld.part.attack-ranged-damage": `systems/${SYSTEM_ID}/templates/actor/parts/attack-ranged-damage.hbs`,
+  "gworld.part.attack-ranged-roll": `systems/${SYSTEM_ID}/templates/actor/parts/attack-ranged-roll.hbs`,
+  "gworld.part.attributes-basic": `systems/${SYSTEM_ID}/templates/actor/parts/attributes-basic.hbs`,
+  "gworld.part.attributes-campaign": `systems/${SYSTEM_ID}/templates/actor/parts/attributes-campaign.hbs`,
+  "gworld.part.attributes-damage": `systems/${SYSTEM_ID}/templates/actor/parts/attributes-damage.hbs`,
+  "gworld.part.attributes-points": `systems/${SYSTEM_ID}/templates/actor/parts/attributes-points.hbs`,
+  "gworld.part.attributes-secondary": `systems/${SYSTEM_ID}/templates/actor/parts/attributes-secondary.hbs`,
+  "gworld.part.body-feats": `systems/${SYSTEM_ID}/templates/actor/parts/body-feats.hbs`,
+  "gworld.part.body-hazards": `systems/${SYSTEM_ID}/templates/actor/parts/body-hazards.hbs`,
+  "gworld.part.body-locations": `systems/${SYSTEM_ID}/templates/actor/parts/body-locations.hbs`,
+  "gworld.part.body-protection": `systems/${SYSTEM_ID}/templates/actor/parts/body-protection.hbs`,
+  "gworld.part.body-recovery": `systems/${SYSTEM_ID}/templates/actor/parts/body-recovery.hbs`,
+  "gworld.part.combat-actions": `systems/${SYSTEM_ID}/templates/actor/parts/combat-actions.hbs`,
+  "gworld.part.combat-defenses": `systems/${SYSTEM_ID}/templates/actor/parts/combat-defenses.hbs`,
+  "gworld.part.combat-maneuver": `systems/${SYSTEM_ID}/templates/actor/parts/combat-maneuver.hbs`,
+  "gworld.part.combat-melee": `systems/${SYSTEM_ID}/templates/actor/parts/combat-melee.hbs`,
+  "gworld.part.combat-movement": `systems/${SYSTEM_ID}/templates/actor/parts/combat-movement.hbs`,
+  "gworld.part.combat-ranged": `systems/${SYSTEM_ID}/templates/actor/parts/combat-ranged.hbs`,
+  "gworld.part.description-appearance": `systems/${SYSTEM_ID}/templates/actor/parts/description-appearance.hbs`,
+  "gworld.part.description-biography": `systems/${SYSTEM_ID}/templates/actor/parts/description-biography.hbs`,
+  "gworld.part.description-languages": `systems/${SYSTEM_ID}/templates/actor/parts/description-languages.hbs`,
+  "gworld.part.description-notes": `systems/${SYSTEM_ID}/templates/actor/parts/description-notes.hbs`,
+  "gworld.part.description-npc": `systems/${SYSTEM_ID}/templates/actor/parts/description-npc.hbs`,
+  "gworld.part.description-vitals": `systems/${SYSTEM_ID}/templates/actor/parts/description-vitals.hbs`,
+  "gworld.part.gear-carried": `systems/${SYSTEM_ID}/templates/actor/parts/gear-carried.hbs`,
+  "gworld.part.gear-encumbrance": `systems/${SYSTEM_ID}/templates/actor/parts/gear-encumbrance.hbs`,
+  "gworld.part.gear-money": `systems/${SYSTEM_ID}/templates/actor/parts/gear-money.hbs`,
+  "gworld.part.gear-stored": `systems/${SYSTEM_ID}/templates/actor/parts/gear-stored.hbs`,
+  "gworld.part.magic-body": `systems/${SYSTEM_ID}/templates/actor/parts/magic-body.hbs`,
+  "gworld.part.skills-point-spending": `systems/${SYSTEM_ID}/templates/actor/parts/skills-point-spending.hbs`,
+  "gworld.part.skills-techniques": `systems/${SYSTEM_ID}/templates/actor/parts/skills-techniques.hbs`,
+  "gworld.part.traits-disadvantage-limit": `systems/${SYSTEM_ID}/templates/actor/parts/traits-disadvantage-limit.hbs`,
+  "gworld.part.traits-granted": `systems/${SYSTEM_ID}/templates/actor/parts/traits-granted.hbs`,
+  "gworld.part.traits-psionics": `systems/${SYSTEM_ID}/templates/actor/parts/traits-psionics.hbs`,
+  "gworld.part.traits-templates": `systems/${SYSTEM_ID}/templates/actor/parts/traits-templates.hbs`,
 };
 
 /** Loads the partials that live in files. Awaited during init. */

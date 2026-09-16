@@ -1,0 +1,7 @@
+{{!-- Shared by both character sheets: the description tab's biography. --}}
+<div class="isec">
+  <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.Biography"}}</div>
+  <prose-mirror class="box editor prose" name="system.details.biography"
+                value="{{system.details.biography}}" toggled
+                {{#unless editable}}disabled{{/unless}}>{{{biographyHTML}}}</prose-mirror>
+</div>

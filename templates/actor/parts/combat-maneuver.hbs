@@ -1,0 +1,259 @@
+{{!-- Shared by both character sheets: the combat tab's maneuver. --}}
+<div class="isec">
+  <div class="ish"><span class="num">01</span>{{localize "GWORLD.Section.Maneuver"}}</div>
+  <div class="g3">
+    <div class="fld">
+      <span class="fl">{{localize "GWORLD.Field.Maneuver"}}</span>
+      <div class="fi">
+        <select name="system.maneuver" {{#unless editable}}disabled{{/unless}}>
+          {{#each maneuvers as |m|}}
+            <option value="{{m.key}}" {{#if m.selected}}selected{{/if}}>{{m.label}}</option>
+          {{/each}}
+        </select>
+      </div>
+    </div>
+    {{#if maneuverOptions.length}}
+      {{!-- A module's maneuver that asks for a choice made with it. --}}
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Maneuver.Option"}}</span>
+        <div class="fi">
+          <select name="system.maneuverOption" {{#unless editable}}disabled{{/unless}}>
+            {{#each maneuverOptions as |o|}}
+              <option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+    {{/if}}
+    {{#if addonManeuverOptions.length}}
+      {{!-- Options modules offer on this maneuver, and the responses a Wait
+           holds ready. Not form fields: each choice is saved as it is made. --}}
+      <div class="fld wide addon-maneuver-options">
+        <span class="fl">{{localize "GWORLD.Maneuver.AddonOptions"}}</span>
+        <div class="fi" style="display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center">
+          {{#each addonManeuverOptions as |o|}}
+            {{{o.control}}}
+            {{#if o.response}}
+              <button type="button" class="ibtn tiny" data-action="maneuverResponse" data-option-id="{{o.id}}"
+                      {{#unless @root.editable}}disabled{{/unless}}>{{o.response}}</button>
+            {{/if}}
+            {{#if o.refused}}<span class="tag tag-danger">{{o.refused}}</span>{{/if}}
+          {{/each}}
+        </div>
+      </div>
+    {{/if}}
+    {{#if attackSequence.shown}}
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Attack.SequenceLabel"}}</span>
+        <div class="fi">{{attackSequence.made}} / {{attackSequence.count}}</div>
+      </div>
+    {{/if}}
+    {{#if timedConditions.length}}
+      <div class="fld wide">
+        <span class="fl">{{localize "GWORLD.Condition.Timed"}}</span>
+        <div class="fi" style="display: flex; flex-wrap: wrap; gap: 4px 8px">
+          {{#each timedConditions as |c|}}
+            <span class="tag tag-danger" data-tooltip="{{c.effects}}">{{c.label}}{{#if c.remaining}} &middot; {{c.remaining}}{{/if}}
+              {{#if @root.editable}}<button type="button" class="iconbtn" data-action="removeTimedCondition" data-condition-id="{{c.id}}"
+                      aria-label="{{localize 'GWORLD.Action.Delete'}}">&times;</button>{{/if}}
+            </span>
+          {{/each}}
+        </div>
+      </div>
+    {{/if}}
+    {{#if grappledCannotMove}}
+      <p class="ihint warn">{{localize "GWORLD.Grapple.CannotMove"}}</p>
+    {{/if}}
+    {{#if isAllOutAttack}}
+      {{!-- "You must specify one of these options before you attack" (p. 365). --}}
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Maneuver.Option"}}</span>
+        <div class="fi">
+          <select name="system.allOutAttackOption" {{#unless editable}}disabled{{/unless}}
+                  data-tooltip="{{localize 'GWORLD.Maneuver.AllOutAttackOption.Hint'}}">
+            {{#each aoaOptions as |o|}}
+              <option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{localize o.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+    {{/if}}
+    {{#if isAllOutDefense}}
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Maneuver.Option"}}</span>
+        <div class="fi">
+          <select name="system.allOutDefenseOption" {{#unless editable}}disabled{{/unless}}>
+            <option value="increased" {{#if aodIncreased}}selected{{/if}}>{{localize "GWORLD.Maneuver.Increased"}}</option>
+            <option value="double" {{#unless aodIncreased}}selected{{/unless}}>{{localize "GWORLD.Maneuver.Double"}}</option>
+          </select>
+        </div>
+      </div>
+      {{#if aodIncreased}}
+        <div class="fld">
+          <span class="fl">{{localize "GWORLD.Maneuver.Target"}}</span>
+          <div class="fi">
+            <select name="system.allOutDefenseTarget" {{#unless editable}}disabled{{/unless}}>
+              {{#each aodTargets as |t|}}
+                <option value="{{t.key}}" {{#if t.selected}}selected{{/if}}>{{localize t.label}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+      {{/if}}
+    {{/if}}
+    {{#if isAiming}}
+      {{!-- Turns spent aiming, and bracing: Accuracy after one, +1 and +2
+           for the next two, +1 braced. Each weapon adds its own Acc when
+           the shot is taken; the figure here is what the turns are worth. --}}
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.AimTurns"}}</span>
+        <div class="fi">
+          <input type="number" name="system.aim.turns" value="{{system.aim.turns}}"
+                 min="0" max="3" step="1"
+                 style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+                 {{#unless editable}}disabled{{/unless}}>
+          <span style="font-size: 10px; color: var(--color-accent-700)">Acc {{signed derived.aim.extra}}</span>
+        </div>
+      </div>
+      <label class="fld icheck">
+        <input type="checkbox" name="system.aim.braced"
+               {{#if system.aim.braced}}checked{{/if}} {{#unless editable}}disabled{{/unless}}>
+        <span>{{localize "GWORLD.Field.Braced"}}</span>
+      </label>
+    {{/if}}
+    {{#if isEvaluating}}
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.EvaluateTurns"}}</span>
+        <div class="fi">
+          <input type="number" name="system.evaluateTurns" value="{{system.evaluateTurns}}"
+                 min="0" step="1"
+                 style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+                 {{#unless editable}}disabled{{/unless}}>
+          <span style="font-size: 10px; color: var(--color-accent-700)">{{signed derived.evaluateBonus}}</span>
+        </div>
+      </div>
+    {{/if}}
+    {{#if showOpportunityFire}}
+      <div class="fld wide">
+        <span class="fl">{{localize "GWORLD.Wait.Trigger"}}</span>
+        <div class="fi">
+          <input type="text" name="system.wait.trigger" value="{{system.wait.trigger}}"
+                 placeholder="{{localize "GWORLD.Wait.TriggerHint"}}"
+                 style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+                 {{#unless editable}}disabled{{/unless}}>
+        </div>
+      </div>
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Wait.HexesWatched"}}</span>
+        <div class="fi">
+          <input type="number" name="system.wait.hexesWatched" value="{{system.wait.hexesWatched}}"
+                 min="1" step="1"
+                 style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
+                 {{#unless editable}}disabled{{/unless}}>
+          <span style="font-size: 10px; color: var(--color-accent-700)">{{signed waitPenalty}}</span>
+        </div>
+      </div>
+      <label class="fld icheck">
+        <input type="checkbox" name="system.wait.coveringLine"
+               {{#if system.wait.coveringLine}}checked{{/if}} {{#unless editable}}disabled{{/unless}}>
+        <span>{{localize "GWORLD.Wait.CoveringLine"}}</span>
+      </label>
+    {{/if}}
+    <div class="fld">
+      <span class="fl">{{localize "GWORLD.Field.Defenses"}}</span>
+      <div class="fi">
+        {{#if derived.maneuver.defenseAvailable}}
+          <span>{{#if derived.maneuver.parryAvailable}}{{localize "GWORLD.Maneuver.AnyDefense"}}{{else}}{{localize "GWORLD.Maneuver.NoParry"}}{{/if}}</span>
+        {{else}}
+          <span class="bad">{{localize "GWORLD.Maneuver.NoDefense"}}</span>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+  <div class="istance">
+    {{!-- The posture is chosen here as well as read here. It used to be a
+         label only, and a character knocked down by a takedown had no way
+         back up from the tab where the fight is run.
+
+         Not a form field: the Attributes tab already has one named
+         system.posture, and two fields of one name submit as a pair the
+         schema refuses. This one writes the actor itself when changed. --}}
+    <label class="ichip on iposture" data-tooltip="{{localize "GWORLD.Field.PostureHint"}}">
+      <span class="ichip-label">{{localize "GWORLD.Field.Posture"}}</span>
+      <select data-posture-select aria-label="{{localize "GWORLD.Field.Posture"}}"
+              {{#unless editable}}disabled{{/unless}}>
+        {{#each postures as |posture|}}
+          <option value="{{posture.key}}" {{#if posture.selected}}selected{{/if}}>{{posture.label}}</option>
+        {{/each}}
+      </select>
+    </label>
+    {{#if rules.bulletproofNudity}}
+      {{!-- How much they are wearing, which is worth something to every
+           active defense under Bulletproof Nudity (Campaigns p. 417). --}}
+      <label class="ichip on" data-tooltip="{{localize 'GWORLD.Cinematic.DressHint'}}">
+        <span class="ichip-label">{{localize "GWORLD.Cinematic.Dress"}}</span>
+        <select name="system.dress.state" aria-label="{{localize 'GWORLD.Cinematic.Dress'}}"
+                {{#unless editable}}disabled{{/unless}}>
+          {{#each dressStates as |d|}}
+            <option value="{{d.key}}" {{#if d.selected}}selected{{/if}}>{{d.label}}</option>
+          {{/each}}
+        </select>
+      </label>
+      <label class="ichip {{#if system.dress.topless}}on{{/if}}"
+             data-tooltip="{{localize 'GWORLD.Cinematic.ToplessHint'}}">
+        <input type="checkbox" name="system.dress.topless"
+               {{#if system.dress.topless}}checked{{/if}} {{#unless editable}}disabled{{/unless}}>
+        <span class="ichip-label">{{localize "GWORLD.Cinematic.Topless"}}</span>
+      </label>
+    {{/if}}
+    {{#each conditionChips as |chip|}}
+      <button type="button" class="ichip {{#if chip.active}}on{{/if}}"
+              data-action="toggleCondition" data-condition="{{chip.key}}">{{localize chip.label}}</button>
+    {{/each}}
+    {{#if derived.encumbrance.dodgePenalty}}
+      <span class="ichip warn">
+        {{localize (concat "GWORLD.Encumbrance." derived.encumbrance.key)}} {{derived.encumbrance.dodgePenalty}}
+      </span>
+    {{/if}}
+    {{#if derived.reeling}}
+      <span class="ichip warn">{{localize "GWORLD.Health.reeling"}}</span>
+    {{/if}}
+    {{#if (gt derived.attacksPerTurn 1)}}
+      <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Attack.ExtraAttackHint'}}">
+        {{localize "GWORLD.Attack.PerTurn" count=derived.attacksPerTurn}}
+      </span>
+    {{/if}}
+    {{#if derived.extraArms}}
+      <span class="ichip warn">{{localize "GWORLD.Attack.ExtraArms" count=derived.extraArms}}</span>
+    {{/if}}
+    {{#each derived.attackPenalties.melee as |p|}}
+      <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Attack.ImpairedMelee'}}">{{p.trait}} {{signed p.value}}</span>
+    {{/each}}
+    {{#each derived.attackPenalties.ranged as |p|}}
+      {{#unless (eq p.trait "Lame")}}
+        <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Attack.ImpairedRanged'}}">{{p.trait}} {{signed p.value}}</span>
+      {{/unless}}
+    {{/each}}
+    {{#if derived.vision.blindness}}
+      <span class="ichip warn">{{localize "GWORLD.Sight.Blindness"}}</span>
+    {{/if}}
+    {{#if derived.legPenalty}}
+      <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Attack.LameHint'}}">{{localize "GWORLD.Attack.Lame" penalty=derived.legPenalty}}</span>
+    {{/if}}
+    {{#if derived.armorNotes.layeringPenalty}}
+      <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Armor.LayeringHint'}}">{{localize "GWORLD.Armor.Layering" penalty=derived.armorNotes.layeringPenalty}}</span>
+    {{/if}}
+    {{#if derived.armorNotes.illegalLayering}}
+      <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Armor.IllegalLayerHint'}}">{{localize "GWORLD.Armor.IllegalLayer"}}</span>
+    {{/if}}
+    {{#if derived.armorNotes.noPeripheralVision}}
+      <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Armor.NoPeripheralHint'}}">{{localize "GWORLD.Armor.NoPeripheral"}}</span>
+    {{/if}}
+    {{#if derived.armorNotes.frontOnly}}
+      <span class="ichip" data-tooltip="{{localize 'GWORLD.Armor.FrontOnlyHint'}}">{{localize "GWORLD.Armor.FrontOnly"}}</span>
+    {{/if}}
+    {{#if derived.shieldBroken}}
+      <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Shield.BrokenHint'}}">{{localize "GWORLD.Shield.Broken"}}</span>
+    {{/if}}
+  </div>
+</div>

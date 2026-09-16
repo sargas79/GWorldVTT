@@ -8,6 +8,7 @@
 
 import { registerConsciousnessTurns } from "./system/consciousness.js";
 import "./styles/gworld.css";
+import "./styles/sheet-v2.css";
 
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
@@ -37,6 +38,7 @@ import {
   TraitData,
 } from "./system/data/items.js";
 import { GWorldCharacterSheet } from "./system/sheets/character-sheet.js";
+import { GWorldCharacterSheetV2 } from "./system/sheets/character-sheet-v2.js";
 import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldGenericItemSheet } from "./system/sheets/generic-item-sheet.js";
 import { setGenericSheetRegistrar } from "./system/data-extensions.js";
@@ -139,6 +141,12 @@ Hooks.once("init", () => {
     makeDefault: true,
     label: "GWORLD.Sheet.Character",
   });
+  // The new character sheet, beside the classic one: any character can be
+  // switched to it, and back, from the sheet configuration.
+  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheetV2, {
+    types: ["character"],
+    label: "GWORLD.Sheet.CharacterV2",
+  });
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldNpcSheet, {
     types: ["npc"],
     makeDefault: true,
@@ -150,6 +158,10 @@ Hooks.once("init", () => {
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheet, {
     types: ["npc"],
     label: "GWORLD.Sheet.NpcFull",
+  });
+  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheetV2, {
+    types: ["npc"],
+    label: "GWORLD.Sheet.NpcFullV2",
   });
   // A car in a chase is not a line on a shopping list (Campaigns pp. 462-469).
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldVehicleSheet, {

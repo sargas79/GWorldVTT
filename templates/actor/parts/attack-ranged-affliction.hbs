@@ -1,0 +1,9 @@
+{{!-- What an affliction attack's resistance roll reads. Shared by both character sheets, so a roll made from either carries the same data. --}}
+data-action="affliction"
+data-resist="{{atk.afflictionAttribute}}"
+data-resist-modifier="{{atk.afflictionModifier}}"
+data-half-damage-range="{{atk.halfDamageRange}}"
+{{!-- What forced the roll, for the modules that read it. --}}
+data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}" data-mode-ranged="1" data-derived-mode="{{atk.derivedMode}}"
+data-damage-type="{{atk.damageType}}"
+data-affliction-label="{{atk.name}} {{atk.mode}}"

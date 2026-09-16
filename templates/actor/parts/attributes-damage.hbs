@@ -1,0 +1,37 @@
+{{!-- Shared by both character sheets: the attributes tab's damage. --}}
+<div class="isec">
+  <div class="ish"><span class="num">03</span>{{localize "GWORLD.Section.DamageBearing"}}</div>
+  <div class="g3">
+    <div class="fld">
+      <span class="fl">{{localize "GWORLD.Field.ThrustSwing"}}</span>
+      <div class="fi">
+        <span class="dmg">{{derived.thrust}} / {{derived.swing}}</span>
+        {{> "gworld.die"}}
+      </div>
+    </div>
+    <div class="fld">
+      <span class="fl">{{localize "GWORLD.Field.Posture"}}</span>
+      <div class="fi">
+        <select name="system.posture" {{#unless editable}}disabled{{/unless}}>
+          {{#each postures as |posture|}}
+            <option value="{{posture.key}}" {{#if posture.selected}}selected{{/if}}>{{posture.label}}</option>
+          {{/each}}
+        </select>
+        {{#if postureMoveShown}}
+          <span class="ichip" data-tooltip="{{localize 'GWORLD.Posture.MoveHint'}}">{{localize "GWORLD.Posture.Move" move=postureMove}}</span>
+        {{/if}}
+      </div>
+    </div>
+    <div class="fld">
+      <span class="fl">{{localize "GWORLD.Field.Encumbrance"}}</span>
+      <div class="fi">
+        <span>{{localize (concat "GWORLD.Encumbrance." derived.encumbrance.key)}} &middot; {{decimal derived.encumbrance.carriedWeight 1}} lb</span>
+        {{#if derived.encumbrance.dodgePenalty}}
+          <span style="font-size: 10px; letter-spacing: .06em; color: var(--color-accent-700)">
+            {{derived.encumbrance.dodgePenalty}} DODGE
+          </span>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</div>

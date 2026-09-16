@@ -1,0 +1,62 @@
+{{!-- One attack as a card, carrying the same roll data as the classic sheet's
+     attack rows: the shared partials put it there. Called with atk, ranged
+     and key. --}}
+<div class="v2-attack{{#if atk.atDefault}} dim{{/if}}{{#if selected}} selected{{/if}}"
+     data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}" data-derived-mode="{{atk.derivedMode}}"
+     {{#if ranged}}data-ranged="1"{{/if}} data-v2-attack="{{key}}" data-v2-name="{{atk.name}} {{atk.mode}}">
+  <div class="v2-attack-head">
+    <span class="v2-attack-name" {{#if selectable}}data-action="v2SelectAttack"{{/if}}>
+      {{atk.name}}{{#if atk.mode}} <span class="v2-attack-mode">{{atk.mode}}</span>{{/if}}
+    </span>
+    {{#if atk.unready}}
+      {{#if @root.editable}}
+        <button type="button" class="v2-badge v2-badge-muted" data-action="readyWeapon"
+                data-tooltip="{{localize 'GWORLD.Ready.Hint'}}">{{localize "GWORLD.Ready.Action"}}</button>
+      {{else}}
+        <span class="v2-badge v2-badge-muted">{{localize "GWORLD.Ready.Unready"}}</span>
+      {{/if}}
+    {{else if atk.empty}}
+      <span class="v2-badge v2-badge-muted" data-tooltip="{{localize 'GWORLD.Reload.EmptyHint'}}">{{localize "GWORLD.Reload.EmptyShort"}}</span>
+    {{else if atk.skillLevel}}
+      {{#if ranged}}
+        <button type="button" class="v2-badge v2-badge-{{#if ranged}}red{{else}}steel{{/if}} rollable" {{> "gworld.part.attack-ranged-roll" atk=atk}}>{{atk.skillLevel}}</button>
+      {{else if atk.usable}}
+        <button type="button" class="v2-badge v2-badge-steel rollable" {{> "gworld.part.attack-melee-roll" atk=atk}}
+                data-tooltip="{{localize 'GWORLD.SheetV2.RollAttack'}}">{{atk.skillLevel}}</button>
+      {{else}}
+        <span class="v2-badge v2-badge-muted" data-tooltip="{{localize "GWORLD.Melee.Unusable"}}">{{atk.skillLevel}}</span>
+      {{/if}}
+    {{else}}
+      <span class="v2-badge v2-badge-muted">&mdash;</span>
+    {{/if}}
+  </div>
+  <div class="v2-attack-damage">
+    {{#if atk.affliction}}
+      {{#if ranged}}
+        <span class="rollable" {{> "gworld.part.attack-ranged-affliction" atk=atk}}>{{atk.afflictionAttribute}}{{atk.afflictionModifier}} {{localize "GWORLD.Affliction.Short"}}</span>
+      {{else}}
+        <span class="rollable" {{> "gworld.part.attack-melee-affliction" atk=atk}}>{{atk.afflictionAttribute}}{{atk.afflictionModifier}} {{localize "GWORLD.Affliction.Short"}}</span>
+      {{/if}}
+    {{else}}
+      {{#if ranged}}
+        <span class="{{#if atk.damageRollable}}rollable{{/if}}" {{> "gworld.part.attack-ranged-damage" atk=atk}}>{{atk.damage}} {{atk.damageType}}</span>
+      {{else}}
+        <span class="{{#if atk.damageRollable}}rollable{{/if}}" {{> "gworld.part.attack-melee-damage" atk=atk}}>{{atk.damage}} {{atk.damageType}}</span>
+      {{/if}}
+    {{/if}}
+  </div>
+  <div class="v2-attack-stats">
+    {{#if ranged}}
+      {{#if atk.malediction}}
+        <span>{{localize "GWORLD.Malediction.Short" level=atk.malediction}}</span>
+      {{else}}
+        <span>{{localize "GWORLD.Column.Acc"}} {{atk.accuracy}}</span>
+        <span>{{localize "GWORLD.Column.Range"}} {{atk.range}}</span>
+      {{/if}}
+      {{#if atk.shotsCapacity}}<span>{{localize "GWORLD.Column.Shots"}} {{atk.shotsLoaded}}/{{atk.shotsCapacity}}</span>{{else if atk.shots}}<span>{{localize "GWORLD.Column.Shots"}} {{atk.shots}}</span>{{/if}}
+    {{else}}
+      <span>{{localize "GWORLD.Column.Reach"}} {{atk.reach}}</span>
+      <span>{{localize "GWORLD.Secondary.Parry"}} {{#if atk.parry}}{{atk.parry}}{{else}}&mdash;{{/if}}</span>
+    {{/if}}
+  </div>
+</div>
