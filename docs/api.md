@@ -183,6 +183,13 @@ and the roll continues.
   - `defenseModifiers`: lines on the defender's rolls, optionally limited to certain defenses;
   - `damageModifiers`: lines on the damage roll that follows;
   - `reachBonus`, `criticalSkill`, `fatigue`, `notes`.
+  - Since 1.50.0, what the setting costs the weapon: `shots`, rounds spent
+    beyond the shells fired (the attack is refused where the weapon has fewer
+    ready, and the extra come off its count with the rest); `malfunction`, the
+    Malf. number for this attack alone (Campaigns p. 407, the strictest of the
+    weapon's own and the settings chosen); and `rateOfFireMultiplier`, which
+    caps the shots this attack may fire (Campaigns p. 408, `0.5` to halve it,
+    and two halvings quarter it). The attack card names each one.
 
   `refuse(context)` returns a reason to disable the option. `context.chosen` lists
   the other options chosen.

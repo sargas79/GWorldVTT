@@ -117,6 +117,9 @@
       "Weapon": "Weapon",
       "Damage": "Damage",
       "Reach": "Reach",
+      "ExtraShots": "spends {shots} more shots",
+      "Malfunction": "Malf. {number}",
+      "RateOfFire": "RoF {rof}",
       "Acc": "Acc",
       "Range": "Range",
       "RoF": "RoF",
@@ -1536,6 +1539,7 @@
       "TooLowToAttempt": "{label}: effective {effective} is below 3, so the roll cannot be attempted."
     },
     "Ranged": {
+      "NotEnoughShots": "{name} needs {needed} shots for that and has {ready}.",
       "Title": "Ranged attack",
       "Range": "Range (yards)",
       "TargetSpeed": "Target speed (yards/second)",
