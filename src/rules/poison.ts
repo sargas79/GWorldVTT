@@ -48,6 +48,8 @@ export interface Poison {
   cycles: number;
   /** Where the book gives one, so a card can cite it. */
   reference?: string;
+  /** The `<module>.<key>` of a module's registered poison (since 1.57.0); absent for the system's own. */
+  source?: string;
 }
 
 /**

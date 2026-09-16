@@ -18,6 +18,8 @@
  *     the system added, so a module can add its own or change one with a reason.
  */
 
+import { registerPoison } from "./poison-registry.js";
+
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 
@@ -658,6 +660,7 @@ export function afterPrepare(document: any): void {
 
 /** What the API exposes. */
 export const dataApi = Object.freeze({
+  registerPoison,
   registerDataExtension,
   getExtension,
   updateExtension,

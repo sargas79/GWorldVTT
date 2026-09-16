@@ -40,6 +40,8 @@ import { conditionLabel, setCondition } from "./conditions.js";
 import { migrationApi } from "./migration.js";
 import { takeInjury, type InjuryTaken } from "./damage.js";
 import { stopBleeding } from "./bleeding.js";
+import { activePoisons, advancePoison, clearPoison, dosePoison, type ActivePoison } from "./poison.js";
+import type { Poison } from "../rules/poison.js";
 import { undoKnockdown } from "./knockdown.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
 import { rollFrightCheck } from "./fright.js";
@@ -67,7 +69,7 @@ import { manaLevel } from "./casting.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.56.0";
+export const API_VERSION = "1.57.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -156,6 +158,33 @@ const actors = {
   /** Ends an actor's bleeding and clears the condition (since 1.36.0), for a user who owns it. */
   stopBleeding(actor: any): Promise<void> {
     return stopBleeding(actor);
+  },
+
+  /**
+   * Writes a dose onto a character (Campaigns pp. 437-438, since 1.57.0), as the sheet's
+   * Poison button does: a registered poison from `data.registerPoison` or one built on the
+   * spot. `doublings` is the dose: 1 double, -1 half. Null for a user who doesn't own it.
+   */
+  dosePoison(actor: any, poison: Poison, options: { doublings?: number } = {}): Promise<ActivePoison | null> {
+    return dosePoison({ actor, poison, doublings: options.doublings ?? 0 });
+  },
+
+  /** The doses at work on a character (since 1.57.0). Read-only copies. */
+  activePoisons(actor: any): ActivePoison[] {
+    return activePoisons(actor).map((dose) => ({ ...dose }));
+  },
+
+  /**
+   * Runs one cycle of a dose (since 1.57.0): the HT roll, the damage, the card, and
+   * `gworld.poisonCycle`. Returns the HP and FP it cost.
+   */
+  advancePoison(actor: any, id: string): Promise<number> {
+    return advancePoison({ actor, id });
+  },
+
+  /** Takes a dose off a character (since 1.57.0). */
+  clearPoison(actor: any, id: string): Promise<void> {
+    return clearPoison(actor, id);
   },
 
   /** Takes back a knockdown's stun, fall and unconsciousness, and restores a posture (since 1.39.0). */
