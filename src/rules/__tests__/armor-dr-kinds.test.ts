@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { ARMOR_DIVISOR_STEPS, ablativeLoss, drAgainst, hardenedAgainst, remainingDr, wornDrAt } from "../armor.js";
 import { armorLayers } from "../layered-armor.js";
+import { splitSummary } from "../armor.js";
 import type { ArmorPiece } from "../armor.js";
 
 const piece = (over: Partial<ArmorPiece> = {}): ArmorPiece => ({
@@ -190,6 +191,41 @@ describe("a different DR on one location", () => {
     const plain = piece({ dr: 8, locations: ["torso"] });
     expect(drAgainst(plain, "cr", "torso")).toBe(8);
     expect(wornDrAt([plain], "torso", "cr")).toBe(8);
+  });
+});
+
+/**
+ * The figure the sheet shows for a location comes from the same profile the
+ * damage pipeline reads, so what a player sees is what will be subtracted.
+ */
+describe("the profile a sheet shows", () => {
+  it("leads with the exception's figure where the piece armours a place better", () => {
+    const suit = piece({
+      dr: 30,
+      locations: ["torso", "arm", "leg"],
+      drByLocation: [{ locations: ["torso"], dr: 50 }],
+    });
+    expect(splitSummary([suit], "torso").bands[0]?.dr).toBe(50);
+    expect(splitSummary([suit], "arm").bands[0]?.dr).toBe(30);
+  });
+
+  it("shows what is left of a piece an earlier blow spent", () => {
+    const spent = piece({ dr: 20, locations: ["torso"], ablative: "ablative", drLost: 8 });
+    expect(splitSummary([spent], "torso").bands[0]?.dr).toBe(12);
+  });
+
+  it("leads each location of a helmet with its own figure", () => {
+    const helmet = piece({
+      dr: 24, locations: ["skull", "face", "eye"],
+      drByLocation: [{ locations: ["skull"], dr: 36 }],
+    });
+    // The skull's own DR 2 is armour the body came with, and toxic is exempt
+    // from it, so the skull has a band either way. The figure is what matters.
+    expect(splitSummary([helmet], "skull").bands[0]?.dr).toBe(38);
+    expect(splitSummary([helmet], "face").bands[0]?.dr).toBe(24);
+    // An exception is not a damage-type split: the face, with no exception and
+    // no split, is protected evenly.
+    expect(splitSummary([helmet], "face").splits).toBe(false);
   });
 });
 
