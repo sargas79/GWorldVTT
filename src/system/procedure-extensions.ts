@@ -126,6 +126,12 @@ export const PROCEDURE_HOOKS = Object.freeze({
    * `tasteSmell`, `touch`, or blank where the roll names none.
    */
   detectionModifiers: "gworld.detectionModifiers",
+  /**
+   * Before an explosion's damage is scaled for someone away from its centre
+   * (since 1.63.0): `{ flag, itemUuid, distanceYards, divisorPerYard }`. Set
+   * `divisorPerYard` (3 by default) for a blast that falls off differently.
+   */
+  explosionFalloff: "gworld.explosionFalloff",
 });
 
 /**
@@ -364,6 +370,8 @@ export interface ResistedAttack {
   dr: number;
   /** Whether that DR counted at all: false for an attack that got past it. */
   drCounted: boolean;
+  /** For an area attack, yards from its centre (since 1.63.0); absent otherwise. */
+  distance?: number;
 }
 
 /** The tags a roll carries for what its skill is, beside the ones its caller gave. */

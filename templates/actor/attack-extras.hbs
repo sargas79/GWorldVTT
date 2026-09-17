@@ -13,6 +13,7 @@
             data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}"
             data-damage-type="{{second.damageType}}"
             data-half-damage-range="{{atk.halfDamageRange}}"
+            data-area-attack="{{#if atk.areaAttack}}1{{/if}}"
             data-affliction-label="{{atk.name}} {{#if second.label}}{{second.label}}{{else}}{{localize 'GWORLD.Attack.Linked'}}{{/if}}"
             data-tooltip="{{#if second.followUp}}{{localize 'GWORLD.Attack.FollowUpHint'}}{{else}}{{localize 'GWORLD.Attack.LinkedHint'}}{{/if}}"
             >{{second.afflictionAttribute}}{{second.afflictionModifier}}{{#unless (eq second.armorDivisor 1)}} ({{second.armorDivisor}}){{/unless}} {{localize "GWORLD.Affliction.Short"}}</span>
@@ -22,6 +23,7 @@
             data-damage-label="{{atk.name}} {{#if second.label}}{{second.label}}{{else}}{{localize 'GWORLD.Attack.FollowUp'}}{{/if}}"
             data-armor-divisor="{{#if second.armorDivisor}}{{second.armorDivisor}}{{else}}1{{/if}}"
             data-explosive="{{#if second.explosive}}1{{/if}}" data-fragmentation="{{second.fragmentation}}"
+            data-radiation="{{#if second.radiation}}1{{/if}}" data-surge="{{#if second.surge}}1{{/if}}"
             data-tooltip="{{#if second.followUp}}{{localize 'GWORLD.Attack.FollowUpHint'}}{{else}}{{localize 'GWORLD.Attack.LinkedHint'}}{{/if}}"
             >+{{second.damage}} {{second.damageType}}</span>
     {{/if}}

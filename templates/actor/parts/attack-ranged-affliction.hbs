@@ -3,6 +3,7 @@ data-action="affliction"
 data-resist="{{atk.afflictionAttribute}}"
 data-resist-modifier="{{atk.afflictionModifier}}"
 data-half-damage-range="{{atk.halfDamageRange}}"
+data-area-attack="{{#if atk.areaAttack}}1{{/if}}"
 {{!-- What forced the roll, for the modules that read it. --}}
 data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}" data-mode-ranged="1" data-derived-mode="{{atk.derivedMode}}"
 data-damage-type="{{atk.damageType}}"

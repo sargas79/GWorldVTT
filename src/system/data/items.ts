@@ -621,6 +621,9 @@ function meleeModeField() {
         fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
         /** True for a follow-up, false for a linked attack. */
         followUp: new fields.BooleanField({ initial: false }),
+        /** Radiation and Surge on the second line, as on a mode (since API 1.63.0). */
+        radiation: new fields.BooleanField({ initial: false }),
+        surge: new fields.BooleanField({ initial: false }),
         /** What the book calls it, where it calls it anything. */
         label: new fields.StringField({ required: true, blank: true, initial: "" }),
       },
@@ -964,6 +967,9 @@ function rangedModeField() {
         fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
         /** True for a follow-up, false for a linked attack. */
         followUp: new fields.BooleanField({ initial: false }),
+        /** Radiation and Surge on the second line, as on a mode (since API 1.63.0). */
+        radiation: new fields.BooleanField({ initial: false }),
+        surge: new fields.BooleanField({ initial: false }),
         /** What the book calls it, where it calls it anything. */
         label: new fields.StringField({ required: true, blank: true, initial: "" }),
       },

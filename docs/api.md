@@ -795,6 +795,16 @@ Two fields a module may read (since 1.62.0):
   `soleDr` on the foot. `gworld.armorDr` carries `fromBelow`. Armour spent by
   a blow is its ablative DR, which `items.restoreDr` gives back; the system
   keeps no other hit points for armour.
+- **Distance from a blast's centre** (since 1.63.0): an area affliction's
+  resistance roll carries `attack.distance`, yards from the centre (this user's
+  latest template on the scene, or else the first target), and
+  `gworld.afflictionEffect` gets `distance` too. An explosion's damage carries
+  `blastDistance` into the damage hooks, and before it is scaled
+  `gworld.explosionFalloff` fires with `{ flag, itemUuid, distanceYards,
+  divisorPerYard }`: set `divisorPerYard` (3) for a blast divided by the
+  distance alone, say; its reach grows to match. A linked or follow-up line
+  carries `radiation` and `surge` as a mode does, and `surge` travels to the
+  apply as `IncomingDamage.surge`.
 - **Modifier areas** (since 1.63.0): `areas.add(scene, { id?, label, center,
   radius, region, lines, expires })` keeps an area on a scene: a circle
   (`center` in scene pixels, `radius` in yards) or a scene region by id. Each

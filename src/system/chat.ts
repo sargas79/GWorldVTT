@@ -23,7 +23,7 @@ import { criticalEntry, criticalHitTableFor, isUnarmedSkill } from "../rules/cri
 import { BLOCKS_PER_TURN, acrobaticDefenseModifier, bareHandedParryModifier, mayTryAcrobatic, blockableAttack, canParryFlail, flailDefenseModifier, masterHalvesParry, multipleParryPenalty, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
 import { getCombatState, setCombatState } from "./combat-extensions.js";
 import { rollKnockdown } from "./knockdown.js";
-import { afterSuccessRoll, successRollTags } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, afterSuccessRoll, successRollTags } from "./procedure-extensions.js";
 import { addConsciousnessControls, consciousnessEntries } from "./consciousness.js";
 import { rollDeathCheck } from "./dying.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
@@ -108,6 +108,8 @@ interface DamageFlag {
   noKnockback?: boolean;
   /** A blow whose whole effect is knockback and blunt trauma, with no other injury (since API 1.63.0). */
   kineticOnly?: boolean;
+  /** Surge (Characters p. 105): burning damage that does double to anything electrical, for the modules that read it (since API 1.63.0). */
+  surge?: boolean;
   /** The item the damage was rolled from. */
   itemUuid?: string;
   /** Where the blow came from (since 1.43.0). */
@@ -332,13 +334,20 @@ async function applyFromCard(options: {
     return;
   }
 
-  // Outside a blast, distance means nothing and the blow lands as rolled.
+  // Outside a blast, distance means nothing and the blow lands as rolled. A
+  // module may make a blast fall off more slowly (since API 1.63.0).
+  const falloff = flag.explosive && distanceYards > 0
+    ? callCombatHook(PROCEDURE_HOOKS.explosionFalloff, {
+        flag: { ...flag }, itemUuid: flag.itemUuid ?? null, distanceYards, divisorPerYard: 3,
+      })
+    : null;
   const blast = flag.explosive
     ? blastAt({
         rolledDamage: flag.basicDamage,
         distanceYards,
         diceOfDamage: flag.diceOfDamage ?? 0,
         armorDivisor: flag.armorDivisor,
+        ...(falloff ? { divisorPerYard: Number(falloff.divisorPerYard) || 3 } : {}),
       })
     : null;
 
@@ -379,6 +388,7 @@ async function applyFromCard(options: {
     ...(flag.doubleKnockback ? { doubleKnockback: true } : {}),
     ...(flag.noKnockback ? { noKnockback: true } : {}),
     ...(flag.kineticOnly ? { kineticOnly: true } : {}),
+    ...(flag.surge ? { surge: true } : {}),
     ...(flag.itemUuid ? { itemUuid: flag.itemUuid } : {}),
     ...(flag.mode ? { mode: flag.mode } : {}),
     ...(flag.source ? { source: flag.source } : {}),
@@ -393,6 +403,9 @@ async function applyFromCard(options: {
     ...(options.arc ? { arc: options.arc } : {}),
     ...(options.fromBelow ? { fromBelow: true } : {}),
     ...(cinematicBlast ? { cinematicBlast: true } : {}),
+    // Yards from the blast's centre, for the damage hooks (since API 1.63.0).
+    ...(flag.explosive ? { blastDistance: Math.max(0, distanceYards) } : {}),
+    ...(flag.surge ? { surge: true } : {}),
   };
 
   const applied: AppliedDamage[] = [];

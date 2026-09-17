@@ -37,10 +37,13 @@ export function fragmentationRadius(diceOfFragmentation: number): number {
  * struck directly and takes the listed damage as is, which is the caller's
  * business rather than a division by zero here.
  */
-export function collateralDamage(rolledDamage: number, distanceYards: number): number {
+export function collateralDamage(rolledDamage: number, distanceYards: number, perYard = COLLATERAL_DIVISOR_PER_YARD): number {
   if (distanceYards <= 0) return Math.max(0, Math.floor(rolledDamage));
-  return Math.max(0, Math.floor(rolledDamage / (3 * distanceYards)));
+  return Math.max(0, Math.floor(rolledDamage / (Math.max(0.1, perYard) * distanceYards)));
 }
+
+/** What a blast's damage is divided by for each yard from its centre. */
+export const COLLATERAL_DIVISOR_PER_YARD = 3;
 
 /**
  * What an explosion does to one victim, given a single rolled figure.
@@ -72,8 +75,14 @@ export function blastAt(options: {
   diceOfDamage: number;
   /** The divisor on the attack, which applies only to a direct hit. */
   armorDivisor?: number;
+  /**
+   * What the damage is divided by per yard (since API 1.63.0): 3 as the Basic
+   * Set has it, less for a blast that carries further. The reach grows to match.
+   */
+  divisorPerYard?: number;
 }): BlastEffect {
   const { rolledDamage, distanceYards, diceOfDamage, armorDivisor = 1 } = options;
+  const perYard = Math.max(0.1, Number(options.divisorPerYard) || COLLATERAL_DIVISOR_PER_YARD);
 
   if (distanceYards <= 0) {
     return {
@@ -84,9 +93,9 @@ export function blastAt(options: {
     };
   }
 
-  const outOfRange = distanceYards > blastRadius(diceOfDamage);
+  const outOfRange = distanceYards > blastRadius(diceOfDamage) * (COLLATERAL_DIVISOR_PER_YARD / perYard);
   return {
-    damage: outOfRange ? 0 : collateralDamage(rolledDamage, distanceYards),
+    damage: outOfRange ? 0 : collateralDamage(rolledDamage, distanceYards, perYard),
     armorDivisor: 1,
     direct: false,
     outOfRange,

@@ -2875,6 +2875,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       ui.notifications?.warn(game.i18n.localize("GWORLD.Affliction.NoTarget"));
       return;
     }
+    // An area affliction's centre (since API 1.63.0): this user's latest
+    // template on the map, or else the first target.
+    const centre = target.dataset.areaAttack === "1" ? areaCentre(targets) : null;
 
     // One roll each: an affliction is resisted individually, and two people
     // caught by the same stun gun do not share a roll.
@@ -2887,6 +2890,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       if (key) seen.add(key);
 
       const yards = yardsBetween(shooter, token);
+      const fromCentre = centre ? yardsBetween(centre, token) : null;
+      const distance = fromCentre === null ? {} : { distance: fromCentre };
       // What the victim's armour was worth against the attack that forced the
       // roll. An affliction is not damage, so none of it is subtracted here:
       // it is told to the modules, which may have a rule that reads it.
@@ -2898,10 +2903,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           actor: victim,
           modifier,
           tags: ["resist", "affliction"],
-          attack: { attacker: this.actor, item, mode, distanceYards: yards, halfDamageRange, dr: drHere, drCounted: drHere > 0 },
+          attack: { attacker: this.actor, item, mode, distanceYards: yards, halfDamageRange, dr: drHere, drCounted: drHere > 0, ...distance },
         });
         if (fright && !fright.success) {
-          await applyAfflictionEffects({ actor: victim, attacker: this.actor, item, mode, label, margin: fright.margin, frightEffect: fright.effect });
+          await applyAfflictionEffects({ actor: victim, attacker: this.actor, item, mode, label, margin: fright.margin, frightEffect: fright.effect, ...distance });
         }
         continue;
       }
@@ -2925,6 +2930,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           halfDamageRange,
           dr: drHere,
           drCounted: drHere > 0,
+          ...distance,
         },
         modifiers: [
           ...(modifier === 0 ? [] : [{ label: game.i18n.localize("GWORLD.Affliction.Short"), value: modifier }]),
@@ -2953,6 +2959,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           mode,
           label,
           margin: outcome.margin,
+          ...distance,
         });
       }
     }
@@ -3570,4 +3577,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     return id ? this.actor.items.get(id) : null;
   }
+}
+
+/**
+ * Where an area attack is centred, as something `yardsBetween` can measure
+ * from: the last template this user placed on the scene, or the first target.
+ */
+function areaCentre(targets: any[]): { center: { x: number; y: number } } | null {
+  const templates: any[] = (globalThis as any).canvas?.templates?.placeables ?? [];
+  const mine = templates.filter((t) => t?.document?.author?.id === game.user?.id || t?.document?.user?.id === game.user?.id);
+  const last = mine[mine.length - 1]?.document;
+  if (last && Number.isFinite(last.x) && Number.isFinite(last.y)) return { center: { x: last.x, y: last.y } };
+  const first = targets[0];
+  return first?.center ? { center: first.center } : null;
 }
