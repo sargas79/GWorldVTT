@@ -779,6 +779,10 @@ Two fields a module may read (since 1.62.0):
   `gworld.afflictionEffect` with the check's margin and `frightEffect`, the
   table's entry. `rollFrightCheckOutcome` returns `{ success, margin, effect,
   total }`.
+- **Kinetic-only blows** (since 1.63.0): a mode's `kineticOnly`, and the same
+  option on `roll.damage`, makes a blow whose whole effect is its shove:
+  knockback worked out as a crushing blow's, blunt trauma where flexible armour
+  stops it, and no other injury.
 - **Stun recovery** (since 1.63.0): the roll to recover from stun passes through
   `gworld.successRollModifiers` tagged `stunRecovery` and `HT` (or `IQ` and
   `mental`), so a condition or a module can make recovery harder.

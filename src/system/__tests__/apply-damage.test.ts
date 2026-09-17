@@ -328,3 +328,15 @@ describe("armour a blow has already spent", () => {
   });
 });
 
+/** A blow that only shoves (since API 1.63.0). */
+describe("a kinetic-only blow", () => {
+  it("shoves as a crushing blow and wounds nobody", () => {
+    const hit = resolveDamageAgainst(
+      actor({ hp: 10, maxHp: 10 }),
+      { basicDamage: 16, type: "cut", hitLocation: "torso", armorDivisor: 1, kineticOnly: true } as never,
+    );
+    expect(hit.injury).toBe(0);
+    expect(hit.crippled).toBe(false);
+    expect(hit.knockback.yards).toBe(2);
+  });
+});

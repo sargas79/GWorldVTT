@@ -106,6 +106,8 @@ interface DamageFlag {
   doubleKnockback?: boolean;
   /** An attack that shoves nobody, whatever its damage type. */
   noKnockback?: boolean;
+  /** A blow whose whole effect is knockback and blunt trauma, with no other injury (since API 1.63.0). */
+  kineticOnly?: boolean;
   /** The item the damage was rolled from. */
   itemUuid?: string;
   /** Where the blow came from (since 1.43.0). */
@@ -363,6 +365,7 @@ async function applyFromCard(options: {
     ...(flag.ignoresDr ? { ignoresDr: true } : {}),
     ...(flag.doubleKnockback ? { doubleKnockback: true } : {}),
     ...(flag.noKnockback ? { noKnockback: true } : {}),
+    ...(flag.kineticOnly ? { kineticOnly: true } : {}),
     ...(flag.itemUuid ? { itemUuid: flag.itemUuid } : {}),
     ...(flag.mode ? { mode: flag.mode } : {}),
     ...(flag.source ? { source: flag.source } : {}),

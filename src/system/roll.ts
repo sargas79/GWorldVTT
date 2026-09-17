@@ -995,6 +995,8 @@ export interface DamageRollOptions {
   doubleKnockback?: boolean;
   /** An attack that shoves nobody, whatever its damage type. */
   noKnockback?: boolean;
+  /** A blow whose whole effect is knockback and blunt trauma, with no other injury (since API 1.63.0). */
+  kineticOnly?: boolean;
   /** The item the blow comes from, for a module's hooks; its UUID travels on the card. */
   item?: any;
   /** Which of the item's modes it was rolled from. */
@@ -1126,6 +1128,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(options.radiation ? { radiation: true } : {}),
           ...(options.doubleKnockback ? { doubleKnockback: true } : {}),
           ...(options.noKnockback ? { noKnockback: true } : {}),
+          ...(options.kineticOnly ? { kineticOnly: true } : {}),
           ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
           ...(mode ? { mode } : {}),
           ...(options.source ? { source: String(options.source) } : {}),
@@ -3098,6 +3101,7 @@ export async function handleDamageAction(
     ...(target.dataset.radiation === "1" ? { radiation: true } : {}),
     ...(target.dataset.doubleKnockback === "1" ? { doubleKnockback: true } : {}),
     ...(target.dataset.noKnockback === "1" ? { noKnockback: true } : {}),
+    ...(target.dataset.kineticOnly === "1" ? { kineticOnly: true } : {}),
     ...(item ? { item } : {}),
     ...(mode ? { mode } : {}),
     ...(strikingPart(target.dataset.naturalKey ?? "") ? { strikingPart: strikingPart(target.dataset.naturalKey ?? "") } : {}),

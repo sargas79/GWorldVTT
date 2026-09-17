@@ -108,6 +108,12 @@ export interface IncomingDamage {
   doubleKnockback?: boolean;
   /** An attack that shoves nobody, whatever its damage type. */
   noKnockback?: boolean;
+  /**
+   * A blow whose whole effect is its shove (since API 1.63.0): knockback as a
+   * crushing blow's, blunt trauma where flexible armour stops it, and no other
+   * injury -- what gets through DR bruises nobody further.
+   */
+  kineticOnly?: boolean;
   /** The item the blow was rolled from, where the card knows it. */
   itemUuid?: string;
   /** Where the blow came from, where its roll said (since 1.43.0): "parriedLimb" for the strike after a bare-handed parry. */
@@ -428,9 +434,11 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   // Knockback is worked out from damage before DR, and a crushing blow causes
   // it whether or not it got through (p. 378). It comes before the injury
   // because under Cinematic Explosions the injury is worked out from it.
+  const kinetic = damage.kineticOnly === true;
   const shoved = knockback({
     basicDamage,
-    type: damage.type,
+    // A kinetic blow shoves as a crushing one does, through DR or not.
+    type: kinetic ? "cr" : damage.type,
     penetratedDr: result.penetrating > 0,
     targetStrength: attributeOf(actor, "ST", Number(hp.max) || 10),
     cinematic: isRuleOn("cinematicKnockback"),
@@ -448,7 +456,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   const blast = damage.cinematicBlast === true;
   // Blunt trauma "is actual injury, not basic damage. There is no wounding
   // multiplier", so it is added after the pipeline rather than inside it.
-  const injury = blast ? cinematicExplosionInjury(shoved.yards) : result.injury + trauma;
+  const injury = blast ? cinematicExplosionInjury(shoved.yards) : kinetic ? trauma : result.injury + trauma;
   const applied = applyInjury(injury, previous, max, { unkillable: traits.unkillable });
 
   // Two of the critical results change what follows from the injury rather than
@@ -484,8 +492,8 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     // lost over the crippling threshold, by a wound the rule says never
     // happened.
     bluntTrauma: blast ? 0 : trauma,
-    excessLost: blast ? 0 : result.excessLost,
-    crippled: blast ? false : result.crippled,
+    excessLost: blast || kinetic ? 0 : result.excessLost,
+    crippled: blast || kinetic ? false : result.crippled,
     costsFatigue: result.costsFatigue,
     previous,
     current: applied.currentHp,

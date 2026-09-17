@@ -181,7 +181,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
   unbalanced: false, isFencing: false, unarmed: false, stBased: false, damageBase: "", damageModifier: 0,
   unarmedBonusSkill: "", weaponMasterPerDie: 0, explosive: false, fragmentation: "", affliction: false, afflictionAttribute: "",
   afflictionModifier: 0, feint: true, ignoresDr: false,
-  incendiary: false, radiation: false, doubleKnockback: false, noKnockback: false,
+  incendiary: false, radiation: false, doubleKnockback: false, noKnockback: false, kineticOnly: false,
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
   ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, rateOfFire: 1,
@@ -408,6 +408,8 @@ export interface DerivedAttack {
   doubleKnockback?: boolean;
   /** An attack that shoves nobody, whatever its damage type. */
   noKnockback?: boolean;
+  /** A blow whose whole effect is knockback and blunt trauma, with no other injury (since API 1.63.0). */
+  kineticOnly?: boolean;
   rateOfFire?: number;
   /** Recoil, which decides how many of a burst's shots hit. */
   recoil?: number;
@@ -2176,6 +2178,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           radiation: Boolean(mode.radiation),
           doubleKnockback: Boolean(mode.doubleKnockback),
           noKnockback: Boolean(mode.noKnockback),
+          kineticOnly: Boolean(mode.kineticOnly),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),
           afflictionAttribute: mode.afflictionAttribute ?? "",
@@ -2338,6 +2341,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           radiation: Boolean(mode.radiation),
           doubleKnockback: Boolean(mode.doubleKnockback),
           noKnockback: Boolean(mode.noKnockback),
+          kineticOnly: Boolean(mode.kineticOnly),
           fragmentation: mode.fragmentation ?? "",
           affliction: Boolean(mode.affliction),
           afflictionAttribute: mode.afflictionAttribute ?? "",

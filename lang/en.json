@@ -1439,7 +1439,9 @@
       "ConeMaxWidth": "Cone width",
       "ConeMaxWidthHint": "How wide the cone is at its widest, in yards. It spreads by that width over the weapon's Max range; leave at zero where the table does not say, and it spreads a yard per yard.",
       "EquipmentModifier": "Stated modifier",
-      "EquipmentModifierHint": "A modifier these tools give their skills that no grade describes (a small kit at -2). Leave it blank to use the grade."
+      "EquipmentModifierHint": "A modifier these tools give their skills that no grade describes (a small kit at -2). Leave it blank to use the grade.",
+      "KineticOnly": "Knockback only",
+      "KineticOnlyHint": "A blow whose whole effect is its shove: knockback as a crushing blow's, blunt trauma where flexible armour stops it, and no other injury."
     },
     "Gear": {
       "Carried": "Carried",
