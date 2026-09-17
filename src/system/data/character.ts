@@ -37,7 +37,7 @@ import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
 import { senseScores } from "../../rules/senses.js";
 import {
-  clothingCost, costOfLiving, equipmentQualityModifier, gearCost, monthlyIncomeFromTraits, monthlyPay,
+  clothingCost, costOfLiving, gearCost, toolModifier, monthlyIncomeFromTraits, monthlyPay,
   pointsForMoney, signatureGearPoints, signatureGearValue, startingWealth, statusFrom, wealthFrom,
   type EquipmentQuality,
   type WealthLevel,
@@ -1272,7 +1272,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       if (sys?.carried === false) continue;
       const skills: string[] = Array.isArray(sys?.forSkills) ? sys.forSkills : [];
       if (skills.length === 0) continue;
-      const bonus = equipmentQualityModifier(String(sys.equipmentQuality ?? "basic") as EquipmentQuality, { tl });
+      const bonus = toolModifier(String(sys.equipmentQuality ?? "basic") as EquipmentQuality, sys.equipmentModifier, { tl });
       for (const raw of skills) {
         const skill = String(raw ?? "").trim();
         if (!skill) continue;

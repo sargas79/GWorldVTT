@@ -571,6 +571,9 @@ System item fields a module's data may set:
   DR, which step down the armour divisor of a blow the shield takes under
   Damage to Shields; and a `composition` of `"none"`, for a shield made of
   nothing the table lists, which changes no cost, weight, DR or HP.
+- **Equipment** (since 1.63.0): `equipmentModifier`, a number or null. When set,
+  it is the modifier the item gives the skills in `forSkills` in place of its
+  `equipmentQuality` grade's.
 
 `tools/validate-packs.mjs --src <dir>` accepts documents of module types and
 `system.extensions` data.
