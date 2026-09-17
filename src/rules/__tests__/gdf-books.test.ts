@@ -31,6 +31,8 @@ import {
   powerOfRecord,
   qualityVariantOf,
   reference,
+  STANDARD_SELF_CONTROL,
+  takesSelfControlRoll,
   talentSkillsOf,
   techniqueDefault,
   techniqueDefaults,
@@ -747,3 +749,24 @@ describe("areaNote", () => {
   });
 });
 
+// The book prices Bad Temper and the rest "for a self-control number of 12",
+// and the file says which they are with a modifier group rather than a
+// number (sargas79/GWorldVTT#547).
+describe("takesSelfControlRoll", () => {
+  it("reads the Self-Control group off a disadvantage's modifiers", () => {
+    expect(takesSelfControlRoll("Self-Control")).toBe(true);
+    expect(takesSelfControlRoll("Self-Control, Berserk")).toBe(true);
+    expect(takesSelfControlRoll(" self-control ")).toBe(true);
+  });
+
+  it("leaves a trait with other groups, or none, without a roll", () => {
+    expect(takesSelfControlRoll("Fanaticism")).toBe(false);
+    expect(takesSelfControlRoll("Self-Control Enhancements")).toBe(false);
+    expect(takesSelfControlRoll("")).toBe(false);
+    expect(takesSelfControlRoll(undefined)).toBe(false);
+  });
+
+  it("stamps the book's standard number", () => {
+    expect(STANDARD_SELF_CONTROL).toBe(12);
+  });
+});

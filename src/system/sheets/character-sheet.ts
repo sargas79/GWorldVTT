@@ -3317,8 +3317,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    */
   static async #onToggleSkillOrder(this: GWorldCharacterSheet) {
     const current = asSkillOrder(game.settings.get(SYSTEM_ID, SKILL_ORDER));
+    // The setting's own change handler redraws every open sheet, this one included.
     await game.settings.set(SYSTEM_ID, SKILL_ORDER, otherOrder(current));
-    await this.render();
   }
 
   /**

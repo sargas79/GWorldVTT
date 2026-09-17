@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { asSkillOrder, groupSkills, otherOrder } from "../skill-groups.js";
+import { ALL_SKILLS_SECTION, SKILL_GROUP_ORDER, asSkillOrder, groupSkills, otherOrder, skillSectionOf, skillSectionOrder } from "../skill-groups.js";
 
 const skills = [
   { id: "1", name: "Stealth", attribute: "DX" as const, points: 2, level: 12, hasDefault: true },
@@ -70,5 +70,23 @@ describe("the order setting", () => {
     expect(asSkillOrder("attribute")).toBe("attribute");
     expect(asSkillOrder(undefined)).toBe("attribute");
     expect(asSkillOrder("nonsense")).toBe("attribute");
+  });
+});
+
+describe("the new sheet's sections", () => {
+  it("files a skill under its attribute in the printed order", () => {
+    expect(skillSectionOf("attribute", "IQ")).toBe("IQ");
+    expect(skillSectionOrder("attribute")).toEqual([...SKILL_GROUP_ORDER]);
+  });
+
+  it("files every skill under one section for the alphabetical list", () => {
+    expect(skillSectionOf("alphabetical", "IQ")).toBe(ALL_SKILLS_SECTION);
+    expect(skillSectionOf("alphabetical", "DX")).toBe(ALL_SKILLS_SECTION);
+    expect(skillSectionOrder("alphabetical")).toEqual([ALL_SKILLS_SECTION]);
+  });
+
+  it("keeps that section apart from the attributes and from techniques", () => {
+    expect(SKILL_GROUP_ORDER as readonly string[]).not.toContain(ALL_SKILLS_SECTION);
+    expect(ALL_SKILLS_SECTION).not.toBe("techniques");
   });
 });

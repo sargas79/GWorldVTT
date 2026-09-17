@@ -219,6 +219,11 @@ function validateItem(entry, file) {
     if (SPECIFIED_TRAITS.has(String(name).replace(/\s+\((?:Advantage|Disadvantage)\)$/, ""))) {
       check(sys.needsSpecialty === true, file, name, "needs a specification, but needsSpecialty is not set");
     }
+    // A self-control number is one the book prices for, or none at all; the
+    // data model refuses anything else and the trait would fail to load.
+    if (sys.selfControl !== undefined && sys.selfControl !== null) {
+      check([6, 9, 12, 15].includes(sys.selfControl), file, name, `selfControl must be 6, 9, 12 or 15, got "${sys.selfControl}"`);
+    }
     check(Number.isInteger(sys.points), file, name, "points must be an integer");
     check(Number.isInteger(sys.pointsPerLevel), file, name, "pointsPerLevel must be an integer");
     check(

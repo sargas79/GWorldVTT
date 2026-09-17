@@ -29,7 +29,8 @@ import {
   poolPercent,
   togglePinned,
 } from "../sheet-v2/overview.js";
-import { SKILL_GROUP_ORDER } from "../skill-groups.js";
+import { ALL_SKILLS_SECTION, asSkillOrder, skillSectionOf, skillSectionOrder } from "../skill-groups.js";
+import { SKILL_ORDER } from "../settings.js";
 import { techniqueDefaultLabel } from "../item-summary.js";
 import { isOpenTechniqueData } from "../open-techniques.js";
 import { isReadTrait } from "../../rules/trait-effects.js";
@@ -836,6 +837,9 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const state = this.stateOf("skills");
     const sort = asSortMode(state.sort);
     state.sort = sort;
+    // The same client setting the classic sheet reads: attribute sections as
+    // the printed sheet has them, or one alphabetical list.
+    const order = asSkillOrder(game.settings.get(SYSTEM_ID, SKILL_ORDER));
     const pinned = new Set<string>(context.system.pinnedSkills ?? []);
     const scoreOf = (attribute: string): number | null => {
       if (attribute === "Will") return Number(derived.will) || null;
@@ -855,7 +859,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         item,
         kind: "skill",
         name: String(item.name ?? ""),
-        group: attribute,
+        group: skillSectionOf(order, attribute),
         attribute,
         difficulty: system.difficulty,
         techLevel: system.techLevel,
@@ -911,11 +915,16 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       };
     }));
 
-    const groups = groupRows(sortRows([...skillRows, ...techniqueRows], sort), (row) => row.group, [...SKILL_GROUP_ORDER, "techniques"])
+    // A section is an attribute's, headed "DX-based" with the score, or one
+    // of the two that are not: the alphabetical list's, or the techniques'.
+    const isAttributeSection = (key: string) => key !== "techniques" && key !== ALL_SKILLS_SECTION;
+    const sectionLabel = (key: string) =>
+      key === "techniques" ? L("GWORLD.Section.Techniques") : key === ALL_SKILLS_SECTION ? L("GWORLD.Tab.skills") : key;
+    const groups = groupRows(sortRows([...skillRows, ...techniqueRows], sort), (row) => row.group, [...skillSectionOrder(order), "techniques"])
       .map((group) => ({
         key: group.key,
-        label: group.key === "techniques" ? L("GWORLD.Section.Techniques") : game.i18n.format("GWORLD.SheetV2.BasedOn", { attribute: group.key }),
-        score: group.key === "techniques" ? null : scoreOf(group.key),
+        label: isAttributeSection(group.key) ? game.i18n.format("GWORLD.SheetV2.BasedOn", { attribute: group.key }) : sectionLabel(group.key),
+        score: isAttributeSection(group.key) ? scoreOf(group.key) : null,
         open: !this.folded.has(`skills:${group.key}`),
         points: group.rows.reduce((sum, row) => sum + row.points, 0),
         rows: group.rows,
@@ -930,13 +939,14 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       sorts: (["name", "level", "points"] as const).map((key) => ({ key, label: L(`GWORLD.SheetV2.Sort.${key}`), selected: key === sort })),
       chips: this.chips("skills", [
         { key: "all", label: L("GWORLD.SheetV2.All") },
-        ...groups.map((g) => ({ key: g.key, label: g.key === "techniques" ? L("GWORLD.Section.Techniques") : g.key, count: g.rows.length })),
+        ...groups.map((g) => ({ key: g.key, label: sectionLabel(g.key), count: g.rows.length })),
         { key: "languages", label: L("GWORLD.Section.Languages") },
       ]),
       groups,
       rows: all.map((row) => ({ ...row, selected: row.key === selected })),
       selected,
       chip: state.chip,
+      alphabetical: order === "alphabetical",
       trainedCount: skillRows.filter((r) => r.trained).length,
       points: Number(derived.points?.skills ?? 0) + Number(derived.points?.techniques ?? 0),
     };

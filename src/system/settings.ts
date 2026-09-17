@@ -119,6 +119,13 @@ export function registerSettings(): void {
       alphabetical: "GWORLD.Settings.SkillOrder.alphabetical",
     },
     default: "attribute",
+    // Changed from the settings menu, an open sheet follows straight away,
+    // as it does from the sheet's own button.
+    onChange: () => {
+      for (const app of ((foundry.applications as any).instances as Map<number, unknown>).values()) {
+        if ((app as any).document?.documentName === "Actor") (app as any).render();
+      }
+    },
   });
 
   // The arrow on the token that says which way it faces. Drawn when the

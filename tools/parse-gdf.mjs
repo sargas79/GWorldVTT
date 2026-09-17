@@ -583,6 +583,9 @@ function parseTraits(recs, reject, note, source) {
         // book makes them say it.
         specialty: "",
         needsSpecialty: needsSpecialty(bare, r.text),
+        // A disadvantage the book prices with a self-control roll comes with
+        // the standard number; the sheet's dropdown reprices it for another.
+        selfControl: takesSelfControlRoll(f.get("mods")) ? STANDARD_SELF_CONTROL : null,
         reactionModifier: 0,
         talentSkills: talentSkillsOf(bare, f, source.groups ?? new Map()),
         ...powerOfRecord(f, source.powerCategory ?? null),
@@ -1947,6 +1950,24 @@ const CONSUMABLE_NAMES = /\b(water|gasoline|kerosene|oil|candle|torch|matches|ra
  * Class Quality", "Crushing/Imp Class Quality", "Guns", "Beams", "Bow
  * Quality". Blank where it offers none, and the sheet reads the modes.
  */
+/**
+ * The self-control number a disadvantage comes with (Characters p. 120).
+ *
+ * The book prices Bad Temper, Greed, Phobia and the rest "for a self-control
+ * number of 12"; the other numbers are the same trait at another price. The
+ * data file marks each such disadvantage with the Self-Control modifier group
+ * rather than a number, so the standard one is stamped here and the sheet's
+ * dropdown reprices it for any other.
+ */
+export const STANDARD_SELF_CONTROL = 12;
+
+/** Whether a record's `mods(...)` names the Self-Control group. */
+export function takesSelfControlRoll(mods) {
+  return String(mods ?? "")
+    .split(",")
+    .some((group) => group.trim().toLowerCase() === "self-control");
+}
+
 export function weaponClassOf(mods) {
   const text = mods ?? "";
   if (/Sword Class/i.test(text)) return "sword";
