@@ -112,6 +112,11 @@ export const PROCEDURE_HOOKS = Object.freeze({
    * Set `minutes` (a day is 1440) and a `label` for care that changes how often the check comes round.
    */
   mortalWoundInterval: "gworld.mortalWoundInterval",
+  /**
+   * Before a dose of radiation is added (since 1.63.0): `{ actor, rads, protectionFactor, sources }`.
+   * `rads` is mutable; push a label to `sources` to say why it changed.
+   */
+  radiationDose: "gworld.radiationDose",
 });
 
 /**

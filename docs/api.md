@@ -779,6 +779,14 @@ Two fields a module may read (since 1.62.0):
   `gworld.afflictionEffect` with the check's margin and `frightEffect`, the
   table's entry. `rollFrightCheckOutcome` returns `{ success, margin, effect,
   total }`.
+- **Hazards** (since 1.63.0): `hazards.shock({ actor, kind, modifier, continuous,
+  formula, metalArmor })` runs an electrical shock as the GM tool does
+  (Campaigns pp. 432-433): `kind` is `nonlethal`, `lethal` or `localized`,
+  `formula` the burning damage for a lethal or localized one, and `metalArmor`
+  holds metallic armour to DR 1. `hazards.irradiate({ actor, rads,
+  protectionFactor, modifier })` adds a dose of radiation (p. 435). Before a
+  dose is added, `gworld.radiationDose` fires with `{ actor, rads,
+  protectionFactor, sources }`: change `rads`, and push a label to `sources`.
 - **Kinetic-only blows** (since 1.63.0): a mode's `kineticOnly`, and the same
   option on `roll.damage`, makes a blow whose whole effect is its shove:
   knockback worked out as a crushing blow's, blunt trauma where flexible armour

@@ -26,7 +26,8 @@ import {
 } from "../rules/fire.js";
 import { dailyMiles, marchingFatiguePerHour, type Terrain, type TravelWeather } from "../rules/hiking.js";
 import { randomHitLocation, type HitLocation } from "../rules/hit-locations.js";
-import { randomLocationWithHooks } from "./combat-extensions.js";
+import { callCombatHook, randomLocationWithHooks } from "./combat-extensions.js";
+import { PROCEDURE_HOOKS } from "./procedure-extensions.js";
 import { applyInjury } from "../rules/injury.js";
 import {
   protectedDose, radiationEffect, radiationRow, remainingDose,
@@ -549,7 +550,12 @@ export async function irradiate(options: {
   // Radiation Tolerance.
   const healed = remainingDose(Number(stored.dose) || 0, daysSince);
   const tolerance = Number(actor.system?.derived?.radiationTolerance) || 1;
-  const received = protectedDose(options.rads, Math.max(1, options.protectionFactor) * tolerance);
+  // A module may change the dose before shielding: a drug that halves it, say (since API 1.63.0).
+  const dosed = callCombatHook(PROCEDURE_HOOKS.radiationDose, {
+    actor, rads: options.rads, protectionFactor: options.protectionFactor, sources: [] as string[],
+  });
+  const rads = Math.max(0, Number(dosed.rads) || 0);
+  const received = protectedDose(rads, Math.max(1, options.protectionFactor) * tolerance);
   const accumulated = healed + received;
   await actor.update({ "system.radiation.dose": accumulated, "system.radiation.at": now });
 
