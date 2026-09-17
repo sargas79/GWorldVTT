@@ -2107,10 +2107,16 @@ export async function chooseTemplateOptions(
     root?.addEventListener("change", recount);
   });
 
+  // The window is a fixed height and Foundry's content wrapper clips what
+  // does not fit, so a template with a hundred options used to lose its
+  // lower groups and its Apply button behind the frame. The class gives the
+  // options a scroller of their own (styles/gworld.css, .tpl-options), with
+  // the buttons kept below it.
   const result = await foundry.applications.api.DialogV2.prompt({
+    classes: ["gworld-template-options"],
     window: { title: `${template.name} — ${templateCost(template)} ${L("Points")}` },
     position: { width: 560, height: Math.min(760, Math.round((globalThis as any).innerHeight * 0.85) || 760) },
-    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+    content: `<div class="gworld tpl-options">
       <p class="ihint">${L(template.kind === "racial" ? "racial" : "character")}${
         modifiers ? ` · ${escape(modifiers)}` : ""
       }${template.reference ? ` · ${escape(template.reference)}` : ""}</p>

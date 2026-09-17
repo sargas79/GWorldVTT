@@ -15,11 +15,11 @@
  */
 
 /** The categories a piece of equipment can be given. */
-export const EQUIPMENT_CATEGORIES = ["weapon", "tool", "consumable", "vehicle", "misc"] as const;
+export const EQUIPMENT_CATEGORIES = ["weapon", "tool", "ammunition", "consumable", "vehicle", "misc"] as const;
 export type EquipmentCategory = (typeof EQUIPMENT_CATEGORIES)[number];
 
 /** The groups the tab shows, in the order it shows them. */
-export const GEAR_GROUPS = ["armor", "shield", "weapon", "tool", "consumable", "vehicle", "misc"] as const;
+export const GEAR_GROUPS = ["armor", "shield", "weapon", "ammunition", "tool", "consumable", "vehicle", "misc"] as const;
 export type GearGroup = (typeof GEAR_GROUPS)[number];
 
 /** What the grouping needs to know about an item. */

@@ -26,7 +26,7 @@ import {
   previousSkillPoints,
   previousTechniquePoints,
 } from "../rules/skills.js";
-import { nextTraitLevel, previousTraitLevel } from "../rules/traits.js";
+import { nextTraitLevel, previousTraitLevel, traitLevelCeiling } from "../rules/traits.js";
 
 export type StepDirection = "up" | "down";
 
@@ -68,13 +68,37 @@ export interface LevelledTrait {
   } | null;
 }
 
-/** The levels a trait would have one step up or down. The same figure at a limit. */
-export function steppedLevels(trait: LevelledTrait, direction: StepDirection): number {
+function levelShape(trait: LevelledTrait) {
   const system = trait.system ?? {};
-  const shape = {
+  return {
     levels: Number(system.levels ?? 0) || 0,
     maxLevels: Number(system.maxLevels ?? 0) || 0,
     costTable: (Array.isArray(system.costTable) ? system.costTable : []) as number[],
   };
+}
+
+/** The levels a trait would have one step up or down. The same figure at a limit. */
+export function steppedLevels(trait: LevelledTrait, direction: StepDirection): number {
+  const shape = levelShape(trait);
   return direction === "down" ? previousTraitLevel(shape) : nextTraitLevel(shape);
+}
+
+/**
+ * A level typed into a box, brought within what the trait can hold.
+ *
+ * The buttons stop where the book stops; a typed figure has to stop there
+ * too, or Intolerance could be written at 7 levels against a cap of 2, and a
+ * tabled trait past its last row would have no price at all. Nonsense and
+ * blanks come back as the level held now. Zero is allowed: Magery 0 is a
+ * level of Magery.
+ */
+export function clampedLevels(trait: LevelledTrait, typed: unknown): number {
+  const shape = levelShape(trait);
+  // Number("") is 0, which is not what an emptied box means.
+  if (typed === null || typed === undefined || String(typed).trim() === "") return shape.levels;
+  const value = Math.round(Number(typed));
+  if (!Number.isFinite(value)) return shape.levels;
+  const ceiling = traitLevelCeiling(shape);
+  const floored = Math.max(0, value);
+  return ceiling === null ? floored : Math.min(floored, ceiling);
 }

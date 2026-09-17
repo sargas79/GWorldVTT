@@ -12,7 +12,7 @@ import {
   traitLevelName,
 } from "../../rules/traits.js";
 import type { Enchantment } from "../../rules/enchanting.js";
-import { AMMUNITION_TYPES } from "../../rules/ammunition.js";
+import { AMMUNITION_TYPES, ammunitionFitOfName, type AmmunitionType } from "../../rules/ammunition.js";
 import { EQUIPMENT_QUALITIES, type EquipmentQuality } from "../../rules/wealth.js";
 import {
   WEAPON_CLASSES,
@@ -189,6 +189,8 @@ function descriptionFields() {
 export class TraitData extends foundry.abstract.TypeDataModel {
   declare points: number;
   declare category: "advantage" | "disadvantage" | "quirk" | "perk";
+  declare specialty: string;
+  declare needsSpecialty: boolean;
   declare levels: number;
   declare pointsPerLevel: number;
   declare costTable: number[];
@@ -213,6 +215,16 @@ export class TraitData extends foundry.abstract.TypeDataModel {
         initial: "advantage",
         choices: ["advantage", "disadvantage", "quirk", "perk"],
       }),
+      /**
+       * What the trait is of, where the book makes the player say: the
+       * behaviour of a Compulsive Behavior, the group of an Intolerance, the
+       * weapon of a Weapon Master (Characters p. 128 and throughout). Kept
+       * apart from the name so the compendium's name survives, and shown
+       * beside it the way the book writes it: "Compulsive Behavior (Gambling)".
+       */
+      specialty: new fields.StringField({ required: true, blank: true, initial: "" }),
+      /** True for a trait that is incomplete until `specialty` says what it is of. */
+      needsSpecialty: new fields.BooleanField({ required: true, initial: false }),
       /**
        * Enhancements and limitations (Characters pp. 101-102), each a name
        * and a percentage: Reliable +20, Costs Fatigue -40. They scale the
@@ -757,6 +769,13 @@ function rangedModeField() {
      */
     loaded: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
     /**
+     * The id of the carried ammunition item the loaded rounds came from,
+     * so a reload draws on the same box and a swap puts them back in it.
+     * Blank for a weapon loaded from nowhere in particular, as before the
+     * rounds were counted.
+     */
+    loadedFrom: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /**
      * The weight of one full reload, in pounds -- the figure after the slash
      * in the table's Weight column (Characters p. 270), which the GCA file
      * does not carry. "Ammo cost is $20 times this weight" (p. 278).
@@ -1003,6 +1022,22 @@ function rangedModeField() {
  * Modes model that directly instead of forcing duplicate items.
  */
 export class EquipmentData extends foundry.abstract.TypeDataModel {
+  /**
+   * Arrows and bolts made before rounds were their own kind of gear were
+   * filed as consumables. They read as ammunition that fits a bow or a
+   * crossbow, without a migration: the stored record is left alone, and
+   * the next edit of the item writes what it now reads as.
+   */
+  override prepareBaseData(): void {
+    super.prepareBaseData();
+    const self = this as any;
+    if (self.category !== "consumable") return;
+    const fits = ammunitionFitOfName(String((this.parent as any)?.name ?? ""));
+    if (!fits) return;
+    self.category = "ammunition";
+    if (!String(self.ammunition?.fits ?? "").trim()) self.ammunition = { ...(self.ammunition ?? { kind: "" }), fits };
+  }
+
   declare enchantments: Enchantment[];
   declare quantity: number;
   declare weight: number;
@@ -1020,6 +1055,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare missedMaintenance: number;
   declare complexity: number;
   declare equipmentQuality: EquipmentQuality;
+  declare ammunition: { kind: AmmunitionType; fits: string };
   declare equipmentModifier: number | null;
   declare forSkills: string[];
   declare meleeModes: unknown[];
@@ -1061,6 +1097,18 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
        * quality: this is the difference between a surgeon's crash kit and a
        * handful of leaves and clean mud.
        */
+      /**
+       * What a box of rounds is, for equipment filed as ammunition
+       * (Characters p. 278): the kind the weapon fires it as -- ordinary,
+       * hollow-point, APHC, APDS, bodkin, silver -- and what it fits, written
+       * the way a weapon's name states its calibre ("9mm", ".40", "12G") or
+       * "arrow" / "bolt". The rounds themselves are the item's quantity;
+       * weight and cost are per round.
+       */
+      ammunition: new fields.SchemaField({
+        kind: new fields.StringField({ required: true, nullable: false, blank: true, initial: "", choices: [...AMMUNITION_TYPES] }),
+        fits: new fields.StringField({ required: true, blank: true, initial: "" }),
+      }),
       equipmentQuality: new fields.StringField({
         required: true,
         nullable: false,

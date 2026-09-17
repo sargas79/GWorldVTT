@@ -52,6 +52,7 @@ import {
   splitTop,
 } from "./gdf.mjs";
 import { existingIds as existingSpellIds, parseSpells } from "./parse-gdf-spells.mjs";
+import { needsSpecialty } from "./specified-traits.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -578,6 +579,10 @@ function parseTraits(recs, reject, note, source) {
         // Names past the last priced level name levels that cannot be bought.
         levelNames: maxLevels > 0 ? levelNames.slice(0, maxLevels) : levelNames,
         maxLevels,
+        // What the trait is of is the player's to say; the flag says the
+        // book makes them say it.
+        specialty: "",
+        needsSpecialty: needsSpecialty(bare, r.text),
         reactionModifier: 0,
         talentSkills: talentSkillsOf(bare, f, source.groups ?? new Map()),
         ...powerOfRecord(f, source.powerCategory ?? null),
@@ -1952,8 +1957,22 @@ export function weaponClassOf(mods) {
   return "";
 }
 
+/**
+ * What a record of rounds fits, where it is one: arrows fit bows and bolts
+ * crossbows (Characters pp. 275-276). Blank for everything else.
+ */
+function ammunitionFitOf(name) {
+  // The name must end or go on with a space, a comma or a parenthesis: a
+  // Bolt-Action Rifle is not a bolt.
+  if (/^arrows?(?=[\s,(]|$)/i.test(name)) return "arrow";
+  if (/^(?:crossbow )?bolts?(?=[\s,(]|$)/i.test(name)) return "bolt";
+  return "";
+}
+
 function categoryOf(name, armed) {
   if (armed) return "weapon";
+  // Rounds are carried to be loaded, not merely used up.
+  if (ammunitionFitOf(name)) return "ammunition";
   // A cutting torch's gas bottle is used up; the torch itself is not.
   if (/gas bottle/i.test(name)) return "consumable";
   if (TOOL_NAMES.test(name)) return "tool";
@@ -2205,6 +2224,8 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
         // instead, and that figure is the book's.
         weight: common.weight || displayWeight(r.text),
         category: categoryOf(name, armed),
+        // Only rounds say what they fit; the field's default covers the rest.
+        ...(ammunitionFitOf(name) ? { ammunition: { kind: "", fits: ammunitionFitOf(name) } } : {}),
         equipmentQuality: "basic",
         forSkills: [],
         // The table's price buys good quality (Characters p. 274), and the

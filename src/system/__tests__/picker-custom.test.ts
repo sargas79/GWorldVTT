@@ -1,6 +1,37 @@
 import { describe, expect, it } from "vitest";
 
-import { customItemData } from "../picker-merge.js";
+import { customItemData, customKindKey, namedByPlayer } from "../picker-merge.js";
+
+/**
+ * A quirk or a perk is the player's own words, so its name is written in the
+ * row; so is a trait that came from nowhere in the compendia. A trait the
+ * book prints keeps the book's name.
+ */
+describe("whose name it is", () => {
+  it("is the player's for a quirk or a perk", () => {
+    expect(namedByPlayer({ type: "trait", system: { category: "quirk", reference: "" } })).toBe(true);
+    expect(namedByPlayer({ type: "trait", system: { category: "perk", reference: "B100" } })).toBe(true);
+  });
+
+  it("is the player's for a trait with no compendium source", () => {
+    expect(namedByPlayer({ type: "trait", system: { category: "disadvantage", reference: "" } })).toBe(true);
+    expect(namedByPlayer({ type: "trait", system: { category: "advantage" } })).toBe(true);
+  });
+
+  it("is the book's for a printed trait, and never a skill's", () => {
+    expect(namedByPlayer({ type: "trait", system: { category: "disadvantage", reference: "B128" } })).toBe(false);
+    expect(namedByPlayer({ type: "skill", system: {} })).toBe(false);
+  });
+});
+
+/** "New quirk", never "New Trait": the kind a custom entry is named for. */
+describe("what a custom entry is called", () => {
+  it("names a trait by its category and anything else by its type", () => {
+    expect(customKindKey({ itemType: "trait", category: "quirk" })).toBe("GWORLD.Picker.Kind.quirk");
+    expect(customKindKey({ itemType: "trait", category: "perk" })).toBe("GWORLD.Picker.Kind.perk");
+    expect(customKindKey({ itemType: "skill" })).toBe("TYPES.Item.skill");
+  });
+});
 
 /** What an Add button makes when the list doesn't have what is wanted. */
 describe("a custom entry from the picker", () => {

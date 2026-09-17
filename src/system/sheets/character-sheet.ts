@@ -8,7 +8,7 @@
  */
 
 import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
-import { customItemData } from "../picker-merge.js";
+import { customItemData, customKindKey } from "../picker-merge.js";
 import { rememberFocus, restoreFocus, type RememberedFocus } from "../focus-memory.js";
 import { techniqueDefaultLabel } from "../item-summary.js";
 import { CharacterBuilder } from "../apps/character-builder.js";
@@ -110,7 +110,7 @@ import {
 import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
 import { rollDisarm } from "../disarm.js";
 import { rollStrikeToBreak, weaponTargetsFor } from "../weapon-damage.js";
-import { reloadWeapon } from "../ammunition.js";
+import { buyAmmunition, chooseAndLoad, reloadWeapon } from "../ammunition.js";
 import { clothingCost } from "../../rules/wealth.js";
 import {
   beginGrapple,
@@ -172,7 +172,7 @@ import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
 import { bindSectionListeners, decorateItemRows, renderSections, runRowAction } from "../sheet-extensions.js";
 import { byName, sortedByName } from "../sort.js";
-import { steppedLevels, steppedPoints, type StepDirection } from "../advancement.js";
+import { clampedLevels, steppedLevels, steppedPoints, type StepDirection } from "../advancement.js";
 import {
   activeConditions,
   attackSequenceFor,
@@ -505,6 +505,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       toggleSkillOrder: GWorldCharacterSheet.#onToggleSkillOrder,
       readyWeapon: GWorldCharacterSheet.#onReadyWeapon,
       reloadWeapon: GWorldCharacterSheet.#onReloadWeapon,
+      loadAmmunition: GWorldCharacterSheet.#onLoadAmmunition,
+      buyAmmunition: GWorldCharacterSheet.#onBuyAmmunition,
       regenerate: GWorldCharacterSheet.#onRegenerate,
       study: GWorldCharacterSheet.#onStudy,
       workMonth: GWorldCharacterSheet.#onWorkMonth,
@@ -1193,14 +1195,40 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         const field = input.dataset.itemField;
         if (!item || !field) return;
 
+        // Levels stop where the book stops, typed as well as stepped: the
+        // buttons already refuse to pass the cap, and the box must too.
+        if (field === "system.levels") {
+          const next = clampedLevels(item, input.value);
+          if (next === Number(item.system?.levels ?? 0)) void this.render();
+          else void item.update({ [field]: next });
+          return;
+        }
+
         const value = Math.round(Number(input.value));
-        if (!Number.isFinite(value)) {
+        if (input.value.trim() === "" || !Number.isFinite(value)) {
           // A field cleared or typed into nonsense is put back rather than
           // written, so a stray keystroke cannot silently zero a skill.
+          // Number("") is 0, so the blank is checked on its own.
           void this.render();
           return;
         }
         void item.update({ [field]: Math.max(0, value) });
+      });
+    }
+
+    // A name the player writes in the row: a quirk's or a perk's, or a custom
+    // trait's. Blank is not a name, so an emptied field is put back.
+    for (const input of this.element.querySelectorAll<HTMLInputElement>("input[data-item-text]")) {
+      input.addEventListener("change", () => {
+        const item = this.itemFrom(input);
+        const field = input.dataset.itemText;
+        if (!item || !field) return;
+        const value = input.value.trim();
+        if (!value && field === "name") {
+          void this.render();
+          return;
+        }
+        void item.update({ [field]: value });
       });
     }
 
@@ -3204,10 +3232,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // The button under Disadvantages makes a disadvantage: the category is
     // part of what was asked for, not something to set afterwards.
     const category = target.dataset.category;
+    const custom = { itemType: type, ...(category ? { category } : {}) };
+    // Named for what it is -- "New quirk" -- as the picker names its custom
+    // entries, rather than "New Trait" for every category alike.
+    const kind = category ? game.i18n.localize(customKindKey(custom)).toLowerCase() : label;
     // The same defaults the picker's custom entries get, from one place: a
     // quirk is -1 and a perk 1, and building them here as well is how this
     // button used to make quirks that cost nothing.
-    const data = customItemData({ itemType: type, ...(category ? { category } : {}) }, `New ${label}`);
+    const data = customItemData(custom, game.i18n.format("GWORLD.Picker.NewCustom", { kind }));
     await this.actor.createEmbeddedDocuments("Item", [data]);
   }
 
@@ -3307,6 +3339,20 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const item = this.itemFrom(target);
     if (!item) return;
     await reloadWeapon(this.actor, item, Number(target.dataset.modeIndex) || 0);
+  }
+
+  /** Loads a weapon from a box of rounds the character carries (Characters p. 278). */
+  static async #onLoadAmmunition(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.itemFrom(target);
+    if (!item) return;
+    await chooseAndLoad(this.actor, item, Number(target.dataset.modeIndex) || 0);
+  }
+
+  /** Buys a box of rounds that fit the weapon, priced by the book's rule (Characters p. 278). */
+  static async #onBuyAmmunition(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.itemFrom(target);
+    if (!item) return;
+    await buyAmmunition(this.actor, item, Number(target.dataset.modeIndex) || 0);
   }
 
   /**

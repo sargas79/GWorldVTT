@@ -90,7 +90,8 @@ export interface ReadyCandidate {
  */
 export function readiedItems<T extends ReadyCandidate>(items: readonly T[]): T[] {
   const inHand = items.filter((i) => i.equipped && (i.armed || i.type === "shield")).sort(byName);
-  const handy = items.filter((i) => !inHand.includes(i) && i.carried && i.category === "consumable").sort(byName);
+  // A quiver of arrows is as handy as a draught: rounds count with consumables.
+  const handy = items.filter((i) => !inHand.includes(i) && i.carried && (i.category === "consumable" || i.category === "ammunition")).sort(byName);
   return [...inHand, ...handy];
 }
 

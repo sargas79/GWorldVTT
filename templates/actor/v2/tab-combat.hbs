@@ -45,6 +45,23 @@
             {{/if}}
           </div>
 
+          {{!-- The attack's row of the weapon table, heading over figure, and what it is loaded with. --}}
+          {{#if entry.strip}}
+            <div class="v2-weapon-strip v2-preview-strip">
+              {{#each entry.strip.cells as |cell|}}
+                {{#if @first}}
+                {{else if @last}}
+                  {{#if cell}}<span class="v2-weapon-notes">{{cell}}</span>{{/if}}
+                {{else}}
+                  <span class="v2-weapon-cell"><small>{{lookup entry.strip.columns @index}}</small><b>{{cell}}</b></span>
+                {{/if}}
+              {{/each}}
+              {{#if entry.atk.ammunitionSource}}
+                <span class="v2-weapon-notes" data-tooltip="{{localize 'GWORLD.Ammunition.SourceHint'}}">{{localize "GWORLD.Ammunition.Left" name=entry.atk.ammunitionSource.name rounds=entry.atk.ammunitionSource.rounds}}</span>
+              {{/if}}
+            </div>
+          {{/if}}
+
           {{#if entry.preview}}
             <div class="v2-preview-main">
               <div class="v2-effective">
@@ -109,6 +126,10 @@
             {{/if}}
             {{#if (and entry.ranged entry.atk.reloadable @root.editable)}}
               <button type="button" class="v2-button" data-action="reloadWeapon" data-mode-index="{{entry.atk.modeIndex}}">{{localize "GWORLD.Reload.Action"}}</button>
+            {{/if}}
+            {{#if (and entry.ranged entry.atk.shotsCapacity @root.editable)}}
+              <button type="button" class="v2-button" data-action="loadAmmunition" data-mode-index="{{entry.atk.modeIndex}}"
+                      data-tooltip="{{localize 'GWORLD.Ammunition.LoadFromCarried'}}">{{localize "GWORLD.Ammunition.Load"}}</button>
             {{/if}}
           </div>
           <div class="v2-attack-extras">{{> "gworld.attackExtras" atk=entry.atk}}</div>
@@ -185,6 +206,29 @@
   </div>
 
   {{!-- Every other action from the classic Combat and Body tabs, in folds. --}}
+  {{!-- The weapon tables, as a character sheet prints them: every carried weapon's
+       modes under the book's column headings, a weapon with several modes heading them. --}}
+  {{#if v2.combat.weaponTables.length}}
+    <div class="v2-panel v2-weapons-panel">
+      {{#each v2.combat.weaponTables as |table|}}
+        <h2 class="v2-ph">{{table.title}}</h2>
+        <div class="v2-table-wrap">
+          <table class="v2-weapon-table v2-weapon-{{table.key}}">
+            <thead><tr>{{#each table.columns as |column|}}<th>{{column}}</th>{{/each}}</tr></thead>
+            <tbody>
+              {{#each table.groups as |group|}}
+                {{#unless group.single}}<tr class="v2-weapon-head"><td colspan="{{table.columns.length}}">{{group.name}}</td></tr>{{/unless}}
+                {{#each group.rows as |cells|}}
+                  <tr{{#unless group.single}} class="v2-weapon-mode"{{/unless}}>{{#each cells as |cell|}}<td>{{cell}}</td>{{/each}}</tr>
+                {{/each}}
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{/each}}
+    </div>
+  {{/if}}
+
   <details class="v2-group v2-drawer" data-v2-fold="combat:actions" {{#unless (includes @root.v2.folded "combat:actions")}}open{{/unless}}>
     <summary class="v2-group-head"><span class="v2-group-title">{{localize "GWORLD.Section.Actions"}}</span><span class="v2-chevron" aria-hidden="true">{{> "gworld.v2icon.chevron"}}</span></summary>
     <div class="v2-drawer-body">{{> "gworld.part.combat-actions"}}{{> "gworld.part.combat-movement"}}</div>

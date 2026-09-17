@@ -8,6 +8,7 @@ const sword = { type: "equipment", system: { category: "misc", meleeModes: [{}] 
 const pistol = { type: "equipment", system: { category: "tool", rangedModes: [{}] } };
 const lockpicks = { type: "equipment", system: { category: "tool" } };
 const rations = { type: "equipment", system: { category: "consumable" } };
+const rounds = { type: "equipment", system: { category: "ammunition" } };
 const rope = { type: "equipment", system: { category: "misc" } };
 const unfiled = { type: "equipment", system: {} };
 
@@ -15,6 +16,12 @@ describe("gearGroupOf", () => {
   it("files armour and shields by their type, whatever their fields say", () => {
     expect(gearGroupOf(hardsuit)).toBe("armor");
     expect(gearGroupOf(buckler)).toBe("shield");
+  });
+
+  /** A box of rounds is its own kind of gear, listed under the weapons it feeds. */
+  it("files ammunition under its own group", () => {
+    expect(gearGroupOf(rounds)).toBe("ammunition");
+    expect(isEquipmentCategory("ammunition")).toBe(true);
   });
 
   /** A sword filed as a tool is still a sword: the attack mode decides. */

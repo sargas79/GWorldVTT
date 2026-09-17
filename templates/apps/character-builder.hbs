@@ -133,10 +133,46 @@
         </div>
         <ul class="gb-list">
           {{#each items as |item|}}
-            <li class="gb-row">
-              <span class="gb-name">{{item.name}}</span>
+            <li class="gb-row{{#if item.incomplete}} gb-row-incomplete{{/if}}" data-item-id="{{item.id}}">
+              {{#if item.nameEditable}}
+                {{!-- A quirk or a perk is the player's own words, written here; one the book
+                     makes the player specify -- Habit, Distinctive Feature -- asks for that too. --}}
+                <span class="gb-name-cell">
+                  <input type="text" class="gb-name gb-name-input" value="{{item.name}}" placeholder="{{item.namePlaceholder}}"
+                         id="{{@root.appId}}-{{item.id}}-name" data-item-name="{{item.id}}"
+                         aria-label="{{localize 'GWORLD.Item.Name'}}" />
+                  {{#if item.needsSpecialty}}
+                    <input type="text" class="gb-specialty" value="{{item.specialty}}" placeholder="{{localize 'GWORLD.Trait.SpecialtyPlaceholder'}}"
+                           id="{{@root.appId}}-{{item.id}}-specialty" data-item-specialty="{{item.id}}"
+                           aria-label="{{localize 'GWORLD.Trait.Specialty'}}" />
+                  {{/if}}
+                </span>
+              {{else if item.needsSpecialty}}
+                {{!-- A trait the book makes the player specify: the behaviour, the group, the weapon. --}}
+                <span class="gb-name-cell">
+                  <span class="gb-name">{{item.name}}{{#if item.levelName}} <span class="gb-level-name">&middot; {{item.levelName}}</span>{{/if}}</span>
+                  <input type="text" class="gb-specialty" value="{{item.specialty}}" placeholder="{{localize 'GWORLD.Trait.SpecialtyPlaceholder'}}"
+                         id="{{@root.appId}}-{{item.id}}-specialty" data-item-specialty="{{item.id}}"
+                         aria-label="{{localize 'GWORLD.Trait.Specialty'}}" />
+                </span>
+              {{else}}
+                <span class="gb-name">{{item.name}}{{#if item.levelName}} <span class="gb-level-name">&middot; {{item.levelName}}</span>{{/if}}</span>
+              {{/if}}
               <span class="gb-detail">{{item.detail}}</span>
-              {{#if item.field}}
+              {{#if item.stepper}}
+                {{!-- Levels move one at a time, and stop where the book stops. --}}
+                <span class="gb-spend gb-stepper">
+                  <button type="button" data-action="stepLevels" data-step="down" {{#if item.atFloor}}disabled{{/if}}
+                          aria-label="{{localize 'GWORLD.Trait.OneLess'}}">&minus;</button>
+                  <input type="number" min="0" step="1" value="{{item.value}}"
+                         id="{{@root.appId}}-{{item.id}}-spend"
+                         data-item-id="{{item.id}}" data-item-field="{{item.field}}"
+                         aria-label="{{localize 'GWORLD.Trait.Levels'}}" />
+                  <button type="button" data-action="stepLevels" data-step="up" {{#if item.atCeiling}}disabled{{/if}}
+                          aria-label="{{localize 'GWORLD.Trait.OneMore'}}">+</button>
+                  <span>{{item.unit}}</span>
+                </span>
+              {{else if item.field}}
                 <label class="gb-spend">
                   <input type="number" min="0" step="1" value="{{item.value}}"
                          id="{{@root.appId}}-{{item.id}}-spend"
@@ -182,6 +218,12 @@
             </div>
           {{/if}}
         </div>
+        {{#if review.unnamed.length}}
+          <p class="gb-incomplete">{{localize "GWORLD.Builder.Review.Unnamed" count=review.unnamed.length}}</p>
+        {{/if}}
+        {{#if review.unspecified.length}}
+          <p class="gb-incomplete">{{localize "GWORLD.Builder.Review.Unspecified" count=review.unspecified.length names=(join review.unspecified ", ")}}</p>
+        {{/if}}
         <div class="v2-stat-pair">
           <div class="v2-stat">
             <span class="v2-stat-label">{{localize "GWORLD.Points.Spent"}}</span>

@@ -786,6 +786,33 @@
 /* A template's grants, and the options dialog's folding groups. */
 .gworld .tpl-grant-list { margin: 4px 0 0; padding-left: 18px; columns: 2 14em; column-gap: 18px; }
 .gworld .tpl-grant-list li { break-inside: avoid; }
+/* The template options dialog. Foundry's .window-content is a flex column
+   that clips its overflow, and its content wrapper floors at its own
+   content height, so a long template ran off the bottom of the window with
+   the Apply button behind it. The wrapper is made to shrink, and the
+   options scroll inside it while the buttons stay below. */
+.application.gworld-template-options .window-content > form,
+.application.gworld-template-options .dialog-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.application.gworld-template-options .form-footer { flex: none; }
+.gworld.tpl-options {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+}
+.gworld.tpl-options::-webkit-scrollbar { width: 10px; }
+.gworld.tpl-options::-webkit-scrollbar-thumb { background: var(--color-divider, #999); border-radius: 5px; border: 2px solid transparent; background-clip: padding-box; }
+.gworld.tpl-options > * { flex: none; }
 .gworld details.tpl-fold > summary { display: flex; align-items: baseline; gap: 6px; cursor: pointer; list-style: none; }
 .gworld details.tpl-fold > summary::-webkit-details-marker { display: none; }
 .gworld details.tpl-fold > summary::before {

@@ -13,6 +13,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { basicSetVolume } from "./gdf.mjs";
+import { SPECIFIED_TRAITS } from "./specified-traits.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -41,10 +42,11 @@ const DIFFICULTIES = new Set(["E", "A", "H", "VH", "W"]);
 const DAMAGE_TYPES = new Set([
   "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox",
 ]);
-const EQUIPMENT_CATEGORIES = new Set(["weapon", "tool", "consumable", "vehicle", "misc"]);
+const EQUIPMENT_CATEGORIES = new Set(["weapon", "tool", "ammunition", "consumable", "vehicle", "misc"]);
 const WEAPON_QUALITIES = new Set(["cheap", "good", "fine", "veryFine"]);
 const AMMUNITION_TYPES = new Set(["", "hp", "aphc", "apds", "bodkin", "silver"]);
 const EQUIPMENT_QUALITIES = new Set(["none", "improvised", "basic", "good", "fine", "best"]);
+const AMMUNITION_KINDS = new Set(["", "hp", "aphc", "apds", "bodkin", "silver"]);
 const WEAPON_MATERIALS = new Set(["", "stone", "bronze", "iron", "steel", "wood", "plastic", "silver", "silverCoated"]);
 const WEAPON_CLASSES = new Set(["", "fencing", "sword", "cutting", "crushing", "firearm", "bow"]);
 const HIT_LOCATIONS = new Set([
@@ -209,6 +211,14 @@ function validateItem(entry, file) {
 
   if (entry.type === "trait") {
     check(TRAIT_CATEGORIES.has(sys.category), file, name, `bad category "${sys.category}"`);
+    // A trait the book makes the player specify says so, or the sheet never
+    // asks and a Phobia goes on the character with nothing feared.
+    if (sys.needsSpecialty !== undefined) {
+      check(typeof sys.needsSpecialty === "boolean", file, name, "needsSpecialty must be true or false");
+    }
+    if (SPECIFIED_TRAITS.has(String(name).replace(/\s+\((?:Advantage|Disadvantage)\)$/, ""))) {
+      check(sys.needsSpecialty === true, file, name, "needs a specification, but needsSpecialty is not set");
+    }
     check(Number.isInteger(sys.points), file, name, "points must be an integer");
     check(Number.isInteger(sys.pointsPerLevel), file, name, "pointsPerLevel must be an integer");
     check(
@@ -456,6 +466,11 @@ function validateItem(entry, file) {
 
   if (entry.type === "equipment" && sys.equipmentQuality !== undefined) {
     check(EQUIPMENT_QUALITIES.has(sys.equipmentQuality), file, name, `bad equipment quality "${sys.equipmentQuality}"`);
+    // A box of rounds says what a weapon fires it as, from the kinds the model knows.
+    if (sys.ammunition !== undefined) {
+      check(AMMUNITION_KINDS.has(String(sys.ammunition?.kind ?? "")), file, name, `bad ammunition kind "${sys.ammunition?.kind}"`);
+      check(typeof (sys.ammunition?.fits ?? "") === "string", file, name, "ammunition.fits must be a string");
+    }
   }
   if (["equipment", "armor", "shield"].includes(entry.type)) {
     check(

@@ -37,6 +37,12 @@ import { weaknessOf } from "../../rules/weakness.js";
 import { traitLevelName } from "../../rules/traits.js";
 import { asSortMode, firstLine, groupRows, selectedKey, sortRows, type SortMode } from "../sheet-v2/list-view.js";
 import { isLevelled, itemImprovement, traitImprovement } from "../sheet-v2/improvements.js";
+import { namePlaceholderKey, namedByPlayer } from "../picker-merge.js";
+import { gearStatistics, weaponTablesOf } from "../sheet-v2/gear-statistics.js";
+import { shotsEntryFor } from "../shots-entry.js";
+import { fullLoad } from "../../rules/ammunition.js";
+import { isAmmunition } from "../ammunition.js";
+import { lacksSpecialty, traitDisplayName } from "../../rules/traits.js";
 import { successChance } from "../sheet-v2/success-chance.js";
 import { mechanicFallbackLabel, mechanicsOf } from "../sheet-v2/trait-mechanics.js";
 import { previewAttack } from "../roll.js";
@@ -175,9 +181,14 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       ...(derived.ranged ?? []).map((atk: any) => ({ atk, ranged: true })),
     ].sort((a, b) => byName(a.atk, b.atk));
 
+    const localize = (key: string, data?: Record<string, unknown>) => (data ? game.i18n.format(key, data) : game.i18n.localize(key));
     const attacks = entries.map(({ atk, ranged }) => {
       const key = attackKey(atk, ranged);
       const item = atk.itemId ? actor.items.get(atk.itemId) ?? null : null;
+      // The attack's row of the weapon table, for the preview: the column
+      // heading over each figure. A natural attack has no item behind it.
+      const table = gearStatistics({ type: "equipment", system: item?.system ?? {} }, [{ ...atk, ranged }], localize).tables[0];
+      const strip = table ? { columns: table.columns, cells: table.rows[0] ?? [] } : null;
       const level = Number(atk.skillLevel);
       const hasSkill = atk.skillLevel !== null && atk.skillLevel !== undefined && Number.isFinite(level);
       const preview = hasSkill
@@ -203,6 +214,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         key,
         atk,
         ranged,
+        strip,
         equipped: Boolean(item?.system?.equipped),
         preview,
         chance,
@@ -225,8 +237,25 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const location = selectedKey(locations.map((l: any) => l.key), locationState.selected ?? "torso");
     locationState.selected = location;
 
+    // The weapon tables as a character sheet prints them: the same attacks
+    // as the list above -- the weapons carried, a shield in hand, a punch, a
+    // trait that is an attack -- under the book's column headings, a weapon
+    // with several modes as a row of its own with the modes beneath it.
+    const byWeapon = new Map<string, { name: string; item: any; attacks: any[] }>();
+    for (const { atk, ranged } of entries) {
+      const key = atk.itemId ? `item:${atk.itemId}` : `natural:${atk.name}`;
+      const group = byWeapon.get(key) ?? { name: String(atk.name ?? ""), item: atk.itemId ? actor.items.get(atk.itemId) ?? null : null, attacks: [] };
+      group.attacks.push({ ...atk, ranged });
+      byWeapon.set(key, group);
+    }
+    const weaponTables = weaponTablesOf([...byWeapon.values()].map((group) => ({
+      name: group.name,
+      tables: gearStatistics({ type: "equipment", system: group.item?.system ?? {} }, group.attacks, localize).tables,
+    })));
+
     return {
       attacks: attacks.map((a) => ({ ...a, selected: a.key === selected })),
+      weaponTables,
       selected,
       target: targets.length === 1
         ? { name: String(targets[0]?.name ?? targets[0]?.document?.name ?? targets[0]?.actor?.name ?? ""), count: 1 }
@@ -265,6 +294,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const system = context.system;
     const derived = context.derived;
     const L = (key: string) => game.i18n.localize(key);
+    const localize = (key: string, data?: Record<string, unknown>) => (data ? game.i18n.format(key, data) : game.i18n.localize(key));
     const physical = [...actor.items].filter((i: any) => ["equipment", "armor", "shield"].includes(i.type));
     const armed = (item: any) => Boolean(item.system?.meleeModes?.length || item.system?.rangedModes?.length);
     const attacksOf = (id: string) => [
@@ -275,16 +305,23 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const sort = asGearSort(this.gearSort.sort);
     const carriedGroups = ((context.gearGroups ?? []) as Array<{ key: string; label: string; rows: any[] }>).map((group) => ({
       ...group,
-      rows: sortGear(group.rows, sort, this.gearSort.descending).map((row) => ({ ...row, img: actor.items.get(row.id)?.img ?? "", canCarry: actor.items.get(row.id)?.type === "equipment" })),
+      rows: sortGear(group.rows, sort, this.gearSort.descending).map((row) => ({ ...row, img: actor.items.get(row.id)?.img ?? "", canCarry: actor.items.get(row.id)?.type === "equipment", ammunition: isAmmunition(actor.items.get(row.id)) })),
     }));
     const stored = sortGear(((context.items?.stored ?? []) as any[]).map((item) => {
       const quantity = Number(item.system?.quantity ?? 1) || 1;
       return { id: String(item.id), name: String(item.name ?? ""), img: item.img ?? "", quantity, weight: effectiveWeight(item) * quantity, cost: effectiveCost(item) * quantity };
     }), sort, this.gearSort.descending);
 
+    const reloading = isRuleOn("reloading");
     const details = await Promise.all(physical.map(async (item: any) => {
       const s = item.system ?? {};
-      const locations = (s.locations ?? []) as string[];
+      const attacks = attacksOf(String(item.id));
+      // A weapon with a magazine loads from the rounds carried, on the Combat
+      // tab; Buy ammunition lives here. Which mode holds the magazine.
+      const modes: any[] = Array.isArray(s.rangedModes) ? s.rangedModes : [];
+      const loadModeIndex = reloading
+        ? modes.findIndex((mode: any, index: number) => { const entry = shotsEntryFor(item, index, mode); return !entry.thrown && fullLoad(entry) > 0; })
+        : -1;
       return {
         key: `item:${item.id}`,
         id: String(item.id),
@@ -300,14 +337,14 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         carried: s.carried !== false,
         canCarry: item.type === "equipment",
         equippable: item.type !== "equipment" || armed(item),
-        attacks: attacksOf(String(item.id)),
-        dr: item.type === "armor" ? s.dr : null,
-        coverage: item.type === "armor"
-          ? (locations.length ? locations.map((l) => L(`GWORLD.HitLocation.${l}`)).join(", ") : L("GWORLD.Item.WholeBody"))
-          : "",
-        db: item.type === "shield" ? s.db : null,
+        // The equipment's own figures: what the book prints and the player looks for.
+        stats: gearStatistics(item, attacks, localize),
         legality: legalityNote(s.lc ?? null),
         vehicle: s.category === "vehicle" && isRuleOn("vehicles"),
+        loadable: loadModeIndex >= 0,
+        loadModeIndex: Math.max(0, loadModeIndex),
+        // A box of rounds says how many it has left, and that count is edited here.
+        isAmmunition: isAmmunition(item),
         descriptionHtml: await this.enriched(s.description, item),
         reference: s.reference ?? "",
       };
@@ -410,7 +447,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         event.stopPropagation();
         const item = this.actor.items.get(id);
         const carried = zone.dataset.v2Drop === "carried";
-        if (item?.type === "equipment" && Boolean(item.system?.carried) !== carried) void item.update({ "system.carried": carried });
+        // Stowing puts the thing down: nothing left behind stays in hand.
+        if (item?.type === "equipment" && Boolean(item.system?.carried) !== carried) void item.update({ "system.carried": carried, ...(carried ? {} : { "system.equipped": false }) });
       });
     }
   }
@@ -946,6 +984,15 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         selfControl: system.selfControl ?? null,
         weakness: weaknessOf({ name: String(item.name ?? "") }) !== null,
         applied: isReadTrait(String(item.name ?? ""), system.talentSkills ?? []),
+        // What the trait is of, where the book makes the player say, shown
+        // with the name as the book writes it.
+        displayName: traitDisplayName(String(item.name ?? ""), String(system.specialty ?? "")),
+        needsSpecialty: Boolean(system.needsSpecialty),
+        specialty: String(system.specialty ?? ""),
+        lacksSpecialty: lacksSpecialty(system),
+        // A quirk's or a perk's name is the player's to write in the panel.
+        playerNamed: namedByPlayer(item),
+        namePlaceholder: L(namePlaceholderKey(category)),
         mechanics,
         summary: firstLine(system.description),
         descriptionHtml: await this.enriched(system.description, item),
@@ -1278,7 +1325,9 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
   static async #onToggleCarried(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
     const item = this.itemFrom(target);
     if (!item || item.type !== "equipment" || !this.isEditable) return;
-    await item.update({ "system.carried": !item.system.carried });
+    // Stowing puts the thing down: nothing left behind stays in hand.
+    const carried = !item.system.carried;
+    await item.update({ "system.carried": carried, ...(carried ? {} : { "system.equipped": false }) });
   }
 
   /** Sorts the carried and stored tables by a column, or flips the order of the one in force. */

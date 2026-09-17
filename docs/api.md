@@ -59,6 +59,15 @@ Basic Set's.
    **Configure Settings → Compendium sources** shows the book as one row with
    one switch.
 
+A trait the book makes the player specify -- Compulsive Behavior, Intolerance,
+Phobia, Weapon Master -- carries `needsSpecialty: true`, and the sheet and the
+guided build then ask what it is of and keep the answer in `specialty`, shown
+after the name as the book writes it. The parser sets the flag from GCA's own
+input prompts (`#InputToTag(...)`) and from the Basic Set list in
+`tools/specified-traits.mjs`; a book whose data file carries no prompt for such
+a trait can set the flag on the record by hand, and `validate-packs` checks that
+the Basic Set's names carry it wherever they appear.
+
 A spell record holds statistics only: colleges, class, cost, time, duration,
 the Magery it needs, and a prerequisite line the sheet can parse, such as
 `Magery 1, Create Fire, Shape Fire or Seek Fire`, `6 Air spells`,
@@ -997,6 +1006,21 @@ Two fields a module may read (since 1.62.0):
 - **Random hit locations** (since 1.43.0): `roll.hitLocation({ actor?, damageType?, arc? })`
   rolls 3d on the table through `gworld.randomHitLocation` and returns `{ hitLocation,
   addonLocation, roll }`.
+- **Attacks come from the gear carried** (since 1.67.0): `derived.melee` and
+  `derived.ranged` list the equipment the character carries (`system.carried` not false),
+  an equipped shield, natural attacks and traits that are attacks. A weapon moved to
+  storage leaves the list until it is carried again, and stowing it unequips it. A module
+  that enumerated stored weapons through the derived lists should read `actor.items`.
+- **Ammunition as carried items** (since 1.67.0): equipment filed as `ammunition` is a
+  box of rounds -- `system.ammunition.kind` is what a weapon fires it as (the same list
+  as a ranged mode's `ammunition`), `system.ammunition.fits` what it fits ("9mm", ".40",
+  "12G", "arrow", "bolt", or a weapon's name; blank fits anything), `quantity` the rounds,
+  weight and cost per round. `actors.loadAmmunition(actor, weaponId, modeIndex,
+  ammunitionId)` loads a weapon from a box: the rounds come off it, what was in the weapon
+  from another box goes back to that box, the mode's `ammunition` kind and `loadedFrom`
+  follow, and a Reload draws on the same box until it is empty.
+  `actors.carriedAmmunitionFor(actor, weaponId, modeIndex?)` lists what carried fits. A
+  weapon whose mode names no `loadedFrom` reloads as before, from nowhere in particular.
 - **Undoing damage** (since 1.66.0): `applyDamage` returns a `transaction` on its result
   recording what that application changed -- the pool and its value before and after, each
   ablative armour piece worn down, and an aim it spoiled.

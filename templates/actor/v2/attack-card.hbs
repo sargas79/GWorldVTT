@@ -57,6 +57,9 @@
         <span>{{localize "GWORLD.Column.Range"}} {{atk.range}}</span>
       {{/if}}
       {{#if atk.shotsCapacity}}<span>{{localize "GWORLD.Column.Shots"}} {{atk.shotsLoaded}}/{{atk.shotsCapacity}}</span>{{else if atk.shots}}<span>{{localize "GWORLD.Column.Shots"}} {{atk.shots}}</span>{{/if}}
+      {{!-- What it is loaded with, and the box it came from with what that has left. --}}
+      {{#if atk.ammunition}}<span>{{localize (concat "GWORLD.Ammunition." atk.ammunition)}}</span>{{/if}}
+      {{#if atk.ammunitionSource}}<span data-tooltip="{{localize 'GWORLD.Ammunition.SourceHint'}}">{{localize "GWORLD.Ammunition.Left" name=atk.ammunitionSource.name rounds=atk.ammunitionSource.rounds}}</span>{{/if}}
     {{else}}
       <span>{{localize "GWORLD.Column.Reach"}} {{atk.reach}}</span>
       <span>{{localize "GWORLD.Secondary.Parry"}} {{#if atk.parry}}{{atk.parry}}{{else}}&mdash;{{/if}}</span>

@@ -177,6 +177,36 @@ export interface PickerCustom {
   category?: string;
 }
 
+/**
+ * The key naming what a custom entry is: the category for a trait ("Quirk"),
+ * the type's own label for anything else. The picker's custom row and the
+ * sheet's Add buttons both name a new item from it, so a quirk made either
+ * way is a "New quirk" and never a "New Trait".
+ */
+export function customKindKey(custom: PickerCustom): string {
+  return custom.category ? `GWORLD.Picker.Kind.${custom.category}` : `TYPES.Item.${custom.itemType}`;
+}
+
+/**
+ * Whether an item's name is the player's to write in the row.
+ *
+ * A quirk or a perk is the player's own words -- "Always orders the fish" --
+ * and so is any trait that came from nowhere in the compendia, which is what
+ * a blank reference means. A trait the book prints keeps the book's name.
+ */
+export function namedByPlayer(item: { type?: unknown; system?: { category?: unknown; reference?: unknown } | null }): boolean {
+  if (item.type !== "trait") return false;
+  const category = String(item.system?.category ?? "");
+  if (category === "quirk" || category === "perk") return true;
+  return !String(item.system?.reference ?? "").trim();
+}
+
+/** The key of what a name field asks for, until it is filled in. */
+export function namePlaceholderKey(category: unknown): string {
+  const kind = String(category ?? "");
+  return kind === "quirk" || kind === "perk" ? `GWORLD.Builder.NamePlaceholder.${kind}` : "GWORLD.Builder.NamePlaceholder.trait";
+}
+
 /** The data for a custom entry. */
 export function customItemData(custom: PickerCustom, name: string): Record<string, unknown> {
   const system: Record<string, unknown> = {};

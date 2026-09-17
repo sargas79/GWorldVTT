@@ -19,7 +19,10 @@
 import { SYSTEM_ID } from "../constants.js";
 import { rememberFocus, restoreFocus, type RememberedFocus } from "../focus-memory.js";
 import { CompendiumPicker } from "./compendium-picker.js";
+import { clampedLevels, steppedLevels } from "../advancement.js";
 import { builderTypesFor } from "../data-extensions.js";
+import { customKindKey, levelCeiling, namePlaceholderKey, namedByPlayer, type PickerCustom } from "../picker-merge.js";
+import { lacksSpecialty, traitLevelName } from "../../rules/traits.js";
 import {
   applyTemplateToActor,
   confirmAndRemoveTemplate,
@@ -35,6 +38,8 @@ interface Step {
   id: string;
   /** Item types this step's Browse button offers, if it offers one. */
   types?: string[];
+  /** What the picker makes when the list doesn't have what is wanted. */
+  custom?: PickerCustom;
   /**
    * The trait categories this step lists and offers. Advantages and
    * disadvantages are the same item type, so a step that does not say which it
@@ -57,11 +62,14 @@ const STEPS: readonly Step[] = [
   // (Characters p. 258). Skipping the step is the ordinary case.
   { id: "templates" },
   { id: "attributes" },
-  { id: "advantages", types: ["trait"], categories: ["advantage", "perk"] },
-  { id: "disadvantages", types: ["trait"], categories: ["disadvantage", "quirk"] },
-  { id: "skills", types: ["skill", "technique"] },
+  // What the picker makes when the list doesn't have what is wanted: a perk
+  // or a quirk in the player's own words, a skill or a piece of gear of the
+  // player's own. The sheet's Add buttons offer the same.
+  { id: "advantages", types: ["trait"], categories: ["advantage", "perk"], custom: { itemType: "trait", category: "perk" } },
+  { id: "disadvantages", types: ["trait"], categories: ["disadvantage", "quirk"], custom: { itemType: "trait", category: "quirk" } },
+  { id: "skills", types: ["skill", "technique"], custom: { itemType: "skill" } },
   { id: "spells", types: ["spell"] },
-  { id: "gear", types: ["equipment", "armor", "shield"] },
+  { id: "gear", types: ["equipment", "armor", "shield"], custom: { itemType: "equipment" } },
   { id: "review" },
 ];
 
@@ -102,6 +110,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       next: CharacterBuilder.#onNext,
       browse: CharacterBuilder.#onBrowse,
       deleteItem: CharacterBuilder.#onDeleteItem,
+      stepLevels: CharacterBuilder.#onStepLevels,
       finish: CharacterBuilder.#onFinish,
       applyTemplate: CharacterBuilder.#onApplyTemplate,
       removeTemplate: CharacterBuilder.#onRemoveTemplate,
@@ -150,6 +159,19 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     field: string;
     value: number;
     unit: string;
+    /** A levelled trait steps a level at a time, between the book's limits. */
+    stepper: boolean;
+    atFloor: boolean;
+    atCeiling: boolean;
+    /** The book's name for the level held, where it names them. */
+    levelName: string;
+    /** A quirk, a perk or a custom trait: the name is the player's to write. */
+    nameEditable: boolean;
+    namePlaceholder: string;
+    /** A trait the book makes the player specify, and what they have said. */
+    needsSpecialty: boolean;
+    specialty: string;
+    incomplete: boolean;
   }> {
     if (!step.types) return [];
     const types = new Set(step.types);
@@ -165,13 +187,25 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       })
       .map((item: any) => {
         const spend = spendableOn(item);
+        const stepper = spend?.unit === "levels";
+        const levels = spend?.value ?? 0;
+        const ceiling = stepper ? levelCeiling(item) : null;
         return {
           id: item.id,
           name: item.name,
           detail: detailFor(item),
           field: spend?.field ?? "",
-          value: spend?.value ?? 0,
+          value: levels,
           unit: spend?.unit ?? "",
+          stepper,
+          atFloor: stepper && levels <= 0,
+          atCeiling: stepper && ceiling !== null && levels >= ceiling,
+          levelName: stepper ? traitLevelName(item.system?.levelNames ?? [], levels) ?? "" : "",
+          nameEditable: namedByPlayer(item),
+          namePlaceholder: namedByPlayer(item) ? game.i18n.localize(namePlaceholderKey(item.system?.category)) : "",
+          needsSpecialty: Boolean(item.system?.needsSpecialty),
+          specialty: String(item.system?.specialty ?? ""),
+          incomplete: lacksSpecialty(item.system ?? {}),
         };
       });
   }
@@ -214,6 +248,11 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       unspent: points.unspent ?? points.remaining ?? 0,
       over: Boolean(points.overBudget),
       gear: count((item) => ["equipment", "armor", "shield"].includes(item.type)),
+      // What is still named by default -- three "New quirk" rows say nothing
+      // about the character. Flagged, not refused: the sheet edits all of it.
+      unnamed: items.filter((item) => stillDefaultNamed(item)).map((item) => item.name),
+      // A Phobia with nothing feared is not a Phobia yet.
+      unspecified: items.filter((item) => item.type === "trait" && lacksSpecialty(item.system ?? {})).map((item) => item.name),
     };
   }
 
@@ -345,6 +384,33 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       });
     }
 
+    // A quirk's or a perk's name is written in the row. Blank is not a name,
+    // so an emptied field is put back to what the item is called.
+    for (const input of this.element.querySelectorAll<HTMLInputElement>("input[data-item-name]")) {
+      input.addEventListener("change", () => {
+        const item = this.#actor.items?.get(input.dataset.itemName ?? "");
+        if (!item) return;
+        const name = input.value.trim();
+        if (!name || name === item.name) {
+          void this.render();
+          return;
+        }
+        void item.update({ name });
+      });
+    }
+
+    // What a trait is of: the behaviour, the group, the weapon. Blank is
+    // allowed, and leaves the row marked as still to be said.
+    for (const input of this.element.querySelectorAll<HTMLInputElement>("input[data-item-specialty]")) {
+      input.addEventListener("change", () => {
+        const item = this.#actor.items?.get(input.dataset.itemSpecialty ?? "");
+        if (!item) return;
+        const specialty = input.value.trim();
+        if (specialty === String(item.system?.specialty ?? "")) return;
+        void item.update({ "system.specialty": specialty });
+      });
+    }
+
     for (const input of this.element.querySelectorAll<HTMLInputElement>("input[data-path]")) {
       input.addEventListener("change", () => {
         const path = input.dataset.path;
@@ -419,6 +485,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
         actor: this.#actor,
         types: step.types,
         ...(step.categories ? { categories: step.categories } : {}),
+        ...(step.custom ? { custom: step.custom } : {}),
         title: game.i18n.localize(`GWORLD.Builder.Browse.${step.id}`),
       });
     } finally {
@@ -429,7 +496,13 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     }
   }
 
-  /** Writes a points or levels change straight through to the item. */
+  /**
+   * Writes a points or levels change straight through to the item.
+   *
+   * Levels stop where the book stops, whether they arrive from the buttons or
+   * the box: a figure typed past the cap is brought back to it, and one that
+   * is not a number is put back to what the trait holds.
+   */
   static async #onSpend(
     this: CharacterBuilder,
     _event: Event,
@@ -442,12 +515,40 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     const item = this.#actor.items?.get(id);
     if (!item) return;
 
-    const value = Math.round(Number((target as HTMLInputElement).value));
-    if (!Number.isFinite(value)) {
+    const typed = (target as HTMLInputElement).value;
+    if (field === "system.levels") {
+      const next = clampedLevels(item, typed);
+      if (next === Number(item.system?.levels ?? 0)) {
+        await this.render();
+        return;
+      }
+      await item.update({ [field]: next });
+      return;
+    }
+
+    // Number("") is 0: an emptied box is put back, not written as nothing.
+    const value = Math.round(Number(typed));
+    if (String(typed).trim() === "" || !Number.isFinite(value)) {
       await this.render();
       return;
     }
     await item.update({ [field]: Math.max(0, value) });
+  }
+
+  /** Moves a levelled trait one level up or down, stopping where the book stops. */
+  static async #onStepLevels(
+    this: CharacterBuilder,
+    _event: Event,
+    target: HTMLElement,
+  ): Promise<void> {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    if (!id) return;
+    const item = this.#actor.items?.get(id);
+    if (!item) return;
+
+    const next = steppedLevels(item, target.dataset.step === "down" ? "down" : "up");
+    if (next === Number(item.system?.levels ?? 0)) return;
+    await item.update({ "system.levels": next });
   }
 
   static async #onDeleteItem(
@@ -482,6 +583,19 @@ function spendableOn(item: any): { field: string; value: number; unit: string } 
   }
 
   return null;
+}
+
+/**
+ * Whether a player-named trait still carries the name it was made with --
+ * "New quirk" -- or none at all.
+ */
+function stillDefaultNamed(item: any): boolean {
+  if (!namedByPlayer(item)) return false;
+  const name = String(item.name ?? "").trim();
+  if (!name) return true;
+  const custom: PickerCustom = { itemType: "trait", category: String(item.system?.category ?? "") };
+  const kind = game.i18n.localize(customKindKey(custom)).toLowerCase();
+  return name === game.i18n.format("GWORLD.Picker.NewCustom", { kind });
 }
 
 /** The one figure worth showing beside a chosen item's name. */

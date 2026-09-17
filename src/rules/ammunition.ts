@@ -204,6 +204,68 @@ export function ammunitionEffect(
   }
 }
 
+// ── ammunition as something carried (Characters p. 278) ─────────────────
+
+/** What a box of rounds says it fits, and what the weapon is: name and priced class. */
+export interface AmmunitionFit {
+  name: string;
+  weaponClass?: string;
+}
+
+/**
+ * What a record of rounds fits, read off its name: "Arrow" and "Arrows" fit
+ * bows, "Bolt" and "Crossbow Bolt" crossbows (Characters pp. 275-276).
+ * Blank for anything else -- a Bolt-Action Rifle is not a bolt, so the
+ * name must end or go on with a space, a comma or a parenthesis.
+ */
+export function ammunitionFitOfName(name: string): string {
+  const text = String(name ?? "").trim();
+  if (/^arrows?(?=[\s,(]|$)/i.test(text)) return "arrow";
+  if (/^(?:crossbow )?bolts?(?=[\s,(]|$)/i.test(text)) return "bolt";
+  return "";
+}
+
+/**
+ * Whether rounds that say what they fit go in this weapon.
+ *
+ * A fit is written the way the weapon's name states its calibre -- "9mm",
+ * ".40", "12G" -- and matches that token in the name, not a longer one:
+ * 7.62mm rounds do not fit a 7.62mmS rifle. "arrow" fits a bow and "bolt" a
+ * crossbow or prodd. A weapon's own name fits it. Blank fits anything.
+ */
+export function ammunitionFits(weapon: AmmunitionFit, fits: string): boolean {
+  const wanted = String(fits ?? "").trim().toLowerCase();
+  if (!wanted) return true;
+  const name = String(weapon.name ?? "").toLowerCase();
+  const crossbow = /crossbow|prodd/.test(name);
+  const bow = !crossbow && (weapon.weaponClass === "bow" || /\bbow\b/.test(name));
+  if (wanted === "arrow" || wanted === "arrows") return bow;
+  if (wanted === "bolt" || wanted === "bolts") return crossbow;
+  const token = wanted.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${token}(?![a-z0-9])`).test(name);
+}
+
+/**
+ * What loading a weapon from a box takes and puts back.
+ *
+ * From the same box the rounds came from, the weapon tops up. From another,
+ * what was in it goes back to its own box first -- a magazine of ball is not
+ * lost by loading hollow-point -- and the weapon fills from the new one, as
+ * far as the box goes.
+ */
+export function loadPlan(options: { capacity: number; loaded: number; available: number; sameSource: boolean }): {
+  take: number;
+  returned: number;
+  loaded: number;
+} {
+  const capacity = Math.max(0, Math.floor(options.capacity) || 0);
+  const held = Math.max(0, Math.min(capacity, Math.floor(options.loaded) || 0));
+  const keep = options.sameSource ? held : 0;
+  const returned = options.sameSource ? 0 : held;
+  const take = Math.max(0, Math.min(capacity - keep, Math.floor(options.available) || 0));
+  return { take, returned, loaded: keep + take };
+}
+
 /** The kinds a weapon can be loaded with, the plain round first. */
 export function availableAmmunition(
   weapon: { damageType: DamageType; armorDivisor: number; calibreMm: number | null; tl: number; bow: boolean },

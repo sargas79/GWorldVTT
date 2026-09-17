@@ -185,6 +185,23 @@ export function previousTraitLevel(trait: { levels: number }): number {
 }
 
 /**
+ * A trait's name with what it is of, as the book writes it: "Compulsive
+ * Behavior (Gambling)", "Intolerance (Elves)". The bare name where nothing
+ * has been said, and the bare name where the name already carries it.
+ */
+export function traitDisplayName(name: string, specialty: string): string {
+  const base = String(name ?? "").trim();
+  const detail = String(specialty ?? "").trim();
+  if (!detail || base.endsWith(`(${detail})`)) return base;
+  return `${base} (${detail})`;
+}
+
+/** Whether a trait that needs a specification is still without one. */
+export function lacksSpecialty(trait: { needsSpecialty?: unknown; specialty?: unknown }): boolean {
+  return Boolean(trait.needsSpecialty) && !String(trait.specialty ?? "").trim();
+}
+
+/**
  * The highest level this trait can reach, or null where the book sets no
  * limit and the cost is a flat rate per level.
  */

@@ -1,16 +1,44 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  lacksSpecialty,
   nextTraitLevel,
   parseCostTable,
   parseLevelNames,
   traitCostLabel,
+  traitDisplayName,
   traitLevelCeiling,
   traitLevelName,
   traitPoints,
   previousTraitLevel,
   type TraitCost,
 } from "../traits.js";
+
+/**
+ * A trait that needs a specification is shown with it the way the book
+ * writes it (Characters p. 128): "Compulsive Behavior (Gambling)".
+ */
+describe("a trait's name with what it is of", () => {
+  it("puts the specification in parentheses after the name", () => {
+    expect(traitDisplayName("Compulsive Behavior", "Gambling")).toBe("Compulsive Behavior (Gambling)");
+    expect(traitDisplayName("Intolerance", "  Elves ")).toBe("Intolerance (Elves)");
+  });
+
+  it("is the bare name where nothing has been said", () => {
+    expect(traitDisplayName("Phobia", "")).toBe("Phobia");
+    expect(traitDisplayName("Gullibility", "   ")).toBe("Gullibility");
+  });
+
+  it("does not say it twice when the name already carries it", () => {
+    expect(traitDisplayName("Weapon Master (Rapier)", "Rapier")).toBe("Weapon Master (Rapier)");
+  });
+
+  it("knows which traits are still waiting for one", () => {
+    expect(lacksSpecialty({ needsSpecialty: true, specialty: "" })).toBe(true);
+    expect(lacksSpecialty({ needsSpecialty: true, specialty: "Spiders" })).toBe(false);
+    expect(lacksSpecialty({ needsSpecialty: false, specialty: "" })).toBe(false);
+  });
+});
 
 const flat = (points: number): TraitCost => ({
   points,
