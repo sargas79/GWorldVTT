@@ -13,7 +13,13 @@
  * renders in the classic markup therefore reads correctly wherever it lands.
  */
 
-.gworld.v2 {
+/*
+ * The palette is defined on .gworld rather than on .gworld.v2, so the system's
+ * other windows -- the compendium picker, the compendium sources -- can read
+ * the same tokens instead of keeping a second copy of the colours. Defining
+ * them changes nothing on its own; only referring to them does.
+ */
+.gworld {
   --v2-frame: #1e2226;
   --v2-frame-2: #272c31;
   --v2-frame-3: #31373d;
@@ -41,7 +47,13 @@
 
   --v2-radius: 4px;
   --v2-shadow: 0 1px 0 rgb(0 0 0 / 0.25), 0 2px 8px rgb(0 0 0 / 0.18);
+}
 
+/*
+ * The frame's theme, which stays on the sheet: it points the classic tokens at
+ * the dark ground, and the classic sheet must keep its own.
+ */
+.gworld.v2 {
   /* The classic tokens, for the frame. */
   --color-bg: var(--v2-frame);
   --color-surface: var(--v2-frame-2);
@@ -61,10 +73,20 @@
   container: v2sheet / inline-size;
 }
 
-/* A panel's ground is cream, and the classic tokens follow it. */
+/*
+ * A panel's ground is cream, and the classic tokens follow it.
+ *
+ * The compendium picker and the compendium sources join the list rather than
+ * restating the colours: both are the system's own windows, both are built out
+ * of the classic markup, and pointing their tokens here is what makes them
+ * read as part of the same sheet. Foundry's own compendium windows are not
+ * touched -- these are two selectors, not a theme for everything.
+ */
 .gworld.v2 .v2-panel,
 .gworld.v2 .v2-cream,
-.gworld.v2 .window-content > .limited {
+.gworld.v2 .window-content > .limited,
+.gworld-picker .gp,
+.gworld-rules .gr {
   --color-bg: var(--v2-panel);
   --color-surface: var(--v2-panel-2);
   --color-text: var(--v2-ink);

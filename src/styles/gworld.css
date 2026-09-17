@@ -1307,24 +1307,59 @@
 
 /* ── the compendium picker ──────────────────────────────────────────────── */
 
+/*
+ * The window's own ground, so the panel does not sit on a strip of Foundry's
+ * default. Scoped to these two windows: Foundry's compendium windows keep
+ * their own look.
+ */
+.gworld-picker .window-content,
+.gworld-rules .window-content {
+  padding: 0;
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+}
+
 .gworld-picker .gp {
   display: flex;
   flex-direction: column;
   height: 100%;
   gap: 8px;
   padding: 8px;
+  border-radius: var(--v2-radius);
+  font-family: var(--font-body);
 }
+/*
+ * The search sits on the dark frame, the way the sheet's header does, so the
+ * window reads as one of the system's rather than a plain dialog.
+ */
 .gworld-picker .gp-search {
   display: flex;
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
+  margin: -8px -8px 0;
+  padding: 8px;
+  background: linear-gradient(180deg, #252a2f, var(--v2-frame));
+  border-bottom: 1px solid var(--v2-frame-line);
+  color: var(--v2-frame-text);
 }
 .gworld-picker .gp-search input {
   flex: 1 1 auto;
   min-width: 0;
+  padding: 3px 6px;
+  background: var(--v2-frame-3);
+  border: 1px solid var(--v2-frame-line);
+  border-radius: var(--v2-radius);
   font: inherit;
+  color: var(--v2-frame-text);
 }
+.gworld-picker .gp-search input::placeholder { color: var(--v2-frame-muted); }
+.gworld-picker .gp-search input:focus {
+  outline: 2px solid var(--v2-gold);
+  outline-offset: 1px;
+  border-color: var(--v2-gold-deep);
+}
+.gworld-picker .gp-search .gp-count { color: var(--v2-frame-muted); }
 .gworld-picker .gp-count {
   flex: 0 0 auto;
   font-size: 10.5px;
@@ -1340,7 +1375,17 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--v2-panel-line) transparent;
 }
+.gworld-picker .gp-list::-webkit-scrollbar { width: 10px; }
+.gworld-picker .gp-list::-webkit-scrollbar-track { background: transparent; }
+.gworld-picker .gp-list::-webkit-scrollbar-thumb {
+  background: var(--v2-panel-line);
+  border: 2px solid var(--v2-panel);
+  border-radius: 5px;
+}
+.gworld-picker .gp-list::-webkit-scrollbar-thumb:hover { background: var(--v2-panel-3); }
 .gworld-picker .gp-row {
   display: grid;
   /* name, statistics, the amount to take, and the button */
@@ -1348,7 +1393,7 @@
   align-items: center;
   gap: 8px;
   padding: 4px 6px;
-  border-bottom: 1px solid var(--color-neutral-300);
+  border-bottom: 1px solid var(--v2-panel-line);
 }
 /* How much to take, chosen before it is taken: levels of a trait, points in
    a skill, and what that comes to. */
@@ -1373,30 +1418,30 @@
   width: 1.4em;
   padding: 0;
   background: none;
-  border: 1px solid var(--color-neutral-500);
+  border: 1px solid var(--v2-panel-line);
   border-radius: 3px;
   font: inherit;
   line-height: 1.3;
   color: inherit;
   cursor: pointer;
 }
-.gworld-picker .gp-step:hover { border-color: var(--color-accent); color: var(--color-accent-700); }
-.gworld-picker .gp-step:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+.gworld-picker .gp-step:hover { border-color: var(--v2-steel); color: var(--v2-steel-deep); }
+.gworld-picker .gp-step:focus-visible { outline: 2px solid var(--v2-steel); outline-offset: 1px; }
 /* What those points reach, beside what they cost. */
-.gworld-picker .gp-level { color: var(--color-neutral-700); font-style: italic; }
+.gworld-picker .gp-level { color: var(--v2-ink-muted); font-style: italic; }
 .gworld-picker .gp-amount input {
   width: 2.6em;
   appearance: textfield;
   padding: 0;
   background: none;
   border: 0;
-  border-bottom: 1px dotted var(--color-neutral-500);
+  border-bottom: 1px dotted var(--v2-panel-line);
   font: inherit;
   color: inherit;
   text-align: right;
 }
-.gworld-picker .gp-amount input:focus { outline: none; border-bottom-color: var(--color-accent); }
-.gworld-picker .gp-cost { color: var(--color-accent-700); }
+.gworld-picker .gp-amount input:focus { outline: 2px solid var(--v2-steel); outline-offset: 1px; border-bottom-color: var(--v2-steel); }
+.gworld-picker .gp-cost { color: var(--v2-gold-deep); font-weight: 600; }
 /* The ledger, so what an entry costs can be weighed against what is left. */
 .gworld-picker .gp-ledger {
   display: flex;
@@ -1405,25 +1450,28 @@
   flex: 0 0 auto;
   padding: 4px 8px;
   font-size: 11px;
-  background: color-mix(in srgb, var(--color-text) 5%, transparent);
-  border-left: 2px solid var(--color-neutral-700);
+  background: var(--v2-panel-2);
+  border-left: 2px solid var(--v2-gold-deep);
+  border-radius: var(--v2-radius);
 }
-.gworld-picker .gp-ledger.over { color: var(--color-warning, #a33); }
+.gworld-picker .gp-ledger.over { color: var(--v2-red); font-weight: 600; }
 /* The compendia take a moment to read; the window says so rather than
    opening empty. */
 .gworld-picker .gp-loading { display: flex; align-items: center; gap: 8px; }
 .gworld-picker .gp-spinner {
   width: 12px;
   height: 12px;
-  border: 2px solid var(--color-divider);
-  border-top-color: var(--color-accent);
+  border: 2px solid var(--v2-panel-line);
+  border-top-color: var(--v2-steel);
   border-radius: 50%;
   animation: gworld-spin 0.8s linear infinite;
 }
 @keyframes gworld-spin { to { transform: rotate(360deg); } }
-.gworld-picker .gp-row:hover { background: color-mix(in srgb, var(--color-text) 5%, transparent); }
+.gworld-picker .gp-row:hover { background: color-mix(in srgb, var(--v2-steel) 10%, transparent); }
+/* Keyboard focus anywhere in a row marks the whole row, not just the control. */
+.gworld-picker .gp-row:focus-within { background: color-mix(in srgb, var(--v2-steel) 14%, transparent); }
 /* Already taken this session: still addable, since a character may want two. */
-.gworld-picker .gp-row.added .gp-name { color: var(--color-neutral-800); }
+.gworld-picker .gp-row.added .gp-name { color: var(--v2-ink-muted); font-style: italic; }
 .gworld-picker .gp-name { min-width: 0; overflow-wrap: anywhere; }
 /* Which pack a row came from, shown only when more than one contributes. */
 .gworld-picker .gp-source {
@@ -1442,15 +1490,24 @@
 .gworld-picker .gp-add {
   width: auto;
   padding: 2px 8px;
+  background: var(--v2-panel-2);
+  border: 1px solid var(--v2-panel-line);
+  border-radius: var(--v2-radius);
   font-family: var(--font-heading);
   font-size: 10.5px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: var(--v2-ink);
   cursor: pointer;
 }
+.gworld-picker .gp-add:hover {
+  background: var(--v2-gold-soft);
+  border-color: var(--v2-gold-deep);
+}
+.gworld-picker .gp-add:focus-visible { outline: 2px solid var(--v2-steel); outline-offset: 1px; }
 .gworld-picker .gp-empty {
   padding: 12px 6px;
-  color: var(--color-neutral-800);
+  color: var(--v2-ink-muted);
   font-size: 12px;
 }
 
@@ -1548,6 +1605,15 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--v2-panel-line) transparent;
+}
+.gworld-rules .gr-body::-webkit-scrollbar { width: 10px; }
+.gworld-rules .gr-body::-webkit-scrollbar-track { background: transparent; }
+.gworld-rules .gr-body::-webkit-scrollbar-thumb {
+  background: var(--v2-panel-line);
+  border: 2px solid var(--v2-panel);
+  border-radius: 5px;
 }
 .gworld-rules .gr-group h3 {
   margin: 0 0 4px;
@@ -1555,8 +1621,8 @@
   font-size: 10.5px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-neutral-700);
-  border-bottom: 1px solid var(--color-divider);
+  color: var(--v2-ink-muted);
+  border-bottom: 1px solid var(--v2-panel-line);
   padding-bottom: 3px;
 }
 /* A module's group says which module it comes from, so nobody takes an
@@ -1576,7 +1642,8 @@
   padding: 5px 2px;
   cursor: pointer;
 }
-.gworld-rules .gr-rule:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.gworld-rules .gr-rule:hover { background: color-mix(in srgb, var(--v2-steel) 10%, transparent); }
+.gworld-rules .gr-rule:focus-within { background: color-mix(in srgb, var(--v2-steel) 14%, transparent); }
 .gworld-rules .gr-rule input { flex: 0 0 auto; margin-top: 2px; }
 /* One row per book, its packs indented under it. */
 .gworld-rules .gr-book > .gr-rule { font-weight: 600; }
