@@ -100,22 +100,38 @@
       </div>
     </div>
 
-    {{!-- Everything linked, by kind, to jump to. --}}
-    <aside class="v2-panel v2-related">
-      <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Journal.Related"}}</h2>
-      {{#each v2.journal.related as |group|}}
-        {{#if group.entries.length}}
-          <h3>{{group.label}}</h3>
-          {{#each group.entries as |entry|}}
-            <button type="button" class="v2-related-link v2-kind-{{group.kind}}{{#if entry.missing}} missing{{/if}}" data-action="v2ShowLink"
-                    data-v2-journal-kind="{{group.kind}}" data-v2-uuid="{{entry.uuid}}">
-              {{#if entry.img}}<img src="{{entry.img}}" alt="">{{/if}}<span>{{entry.name}}</span>
-            </button>
-          {{/each}}
-        {{/if}}
-      {{/each}}
-      <p class="v2-note">{{localize "GWORLD.SheetV2.Journal.RelatedHint"}}</p>
-    </aside>
+    <div class="v2-journal-side">
+      {{!-- The character's artwork, full size. --}}
+      <figure class="v2-panel v2-portrait-card">
+        <button type="button" class="v2-portrait-frame" data-action="v2ViewPortrait"
+                data-tooltip="{{localize 'GWORLD.SheetV2.Journal.ViewPortrait'}}" aria-label="{{localize 'GWORLD.SheetV2.Journal.ViewPortrait'}}">
+          <img src="{{#if actor.img}}{{actor.img}}{{else}}icons/svg/mystery-man.svg{{/if}}" alt="{{actor.name}}">
+        </button>
+        <figcaption>
+          <span class="v2-portrait-name">{{actor.name}}</span>
+          {{#if editable}}
+            <button type="button" class="v2-button v2-button-small" data-action="v2EditPortrait">{{localize "GWORLD.SheetV2.Journal.ChangePortrait"}}</button>
+          {{/if}}
+        </figcaption>
+      </figure>
+
+      {{!-- Everything linked, by kind, to jump to. --}}
+      <aside class="v2-panel v2-related">
+        <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Journal.Related"}}</h2>
+        {{#each v2.journal.related as |group|}}
+          {{#if group.entries.length}}
+            <h3>{{group.label}}</h3>
+            {{#each group.entries as |entry|}}
+              <button type="button" class="v2-related-link v2-kind-{{group.kind}}{{#if entry.missing}} missing{{/if}}" data-action="v2ShowLink"
+                      data-v2-journal-kind="{{group.kind}}" data-v2-uuid="{{entry.uuid}}">
+                {{#if entry.img}}<img src="{{entry.img}}" alt="">{{/if}}<span>{{entry.name}}</span>
+              </button>
+            {{/each}}
+          {{/if}}
+        {{/each}}
+        <p class="v2-note">{{localize "GWORLD.SheetV2.Journal.RelatedHint"}}</p>
+      </aside>
+    </div>
   </div>
 
   {{!-- Notes for whoever owns the character. --}}

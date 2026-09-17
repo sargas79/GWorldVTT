@@ -98,6 +98,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2RemoveLink: GWorldCharacterSheetV2.#onRemoveLink,
       v2CreateEntry: GWorldCharacterSheetV2.#onCreateEntry,
       v2ShowLink: GWorldCharacterSheetV2.#onShowLink,
+      v2ViewPortrait: GWorldCharacterSheetV2.#onViewPortrait,
+      v2EditPortrait: GWorldCharacterSheetV2.#onEditPortrait,
     },
   };
 
@@ -1421,6 +1423,33 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     if (!isJournalKind(kind) || !uuid) return;
     this.showJournalPane(kind);
     this.showSelected(`journal-${kind}`, `link:${uuid}`);
+  }
+
+  /** Opens the character's portrait full size, where a GM can show it to the players. */
+  static #onViewPortrait(this: GWorldCharacterSheetV2) {
+    const actor = this.actor;
+    new (foundry.applications.apps as any).ImagePopout({
+      src: String(actor.img || "icons/svg/mystery-man.svg"),
+      uuid: actor.uuid,
+      window: { title: String(actor.name ?? "") },
+    }).render({ force: true });
+  }
+
+  /**
+   * Picks a new portrait. Foundry's own editImage action needs the <img>
+   * itself as the target, and this one is a button.
+   */
+  static async #onEditPortrait(this: GWorldCharacterSheetV2) {
+    if (!this.isEditable) return;
+    const actor = this.actor;
+    const fp = new foundry.applications.apps.FilePicker.implementation({
+      current: String(actor._source?.img ?? actor.img ?? ""),
+      type: "image",
+      callback: (path: string) => {
+        void actor.update({ img: path });
+      },
+    });
+    await fp.browse();
   }
 
   /** Takes a condition off the character, or puts it on. */
