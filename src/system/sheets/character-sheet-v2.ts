@@ -548,23 +548,25 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
    */
   protected progressionAdds(category: string, context: Record<string, any>): Array<Record<string, string>> {
     const L = (key: string) => game.i18n.localize(key);
-    const browse = (itemTypes: string, browseTitle: string, categories = "") =>
-      ({ action: "browseCompendium", itemTypes, categories, browseTitle, label: L("GWORLD.SheetV2.Browse"), icon: "search" });
+    // Each Add opens the list of what the books offer, and can make one of its
+    // own from what is typed there.
+    const add = (itemTypes: string, browseTitle: string, label: string, customCategory = "") =>
+      ({ action: "browseCompendium", itemTypes, categories: customCategory, browseTitle, customType: itemTypes, customCategory, label: L(label), icon: "plus" });
     const create = (itemType: string, label: string, itemCategory = "") =>
       ({ action: "createItem", itemType, itemCategory, label: L(label), icon: "plus" });
     switch (category) {
       case "advantages":
-        return [browse("trait", "GWORLD.Picker.Advantages", "advantage,perk"), create("trait", "GWORLD.Action.AddAdvantage", "advantage"), create("trait", "GWORLD.SheetV2.AddPerk", "perk")];
+        return [add("trait", "GWORLD.Picker.AdvantagesOnly", "GWORLD.Action.AddAdvantage", "advantage"), add("trait", "GWORLD.Picker.Perks", "GWORLD.SheetV2.AddPerk", "perk")];
       case "disadvantages":
-        return [browse("trait", "GWORLD.Picker.Disadvantages", "disadvantage,quirk"), create("trait", "GWORLD.Action.AddDisadvantage", "disadvantage")];
+        return [add("trait", "GWORLD.Picker.DisadvantagesOnly", "GWORLD.Action.AddDisadvantage", "disadvantage")];
       case "quirks":
-        return [browse("trait", "GWORLD.Picker.Quirks", "quirk"), create("trait", "GWORLD.Action.AddQuirk", "quirk")];
+        return [add("trait", "GWORLD.Picker.Quirks", "GWORLD.Action.AddQuirk", "quirk")];
       case "skills":
-        return [browse("skill,technique", "GWORLD.Picker.Skills"), create("skill", "GWORLD.Action.AddSkill")];
+        return [add("skill", "GWORLD.Picker.SkillsOnly", "GWORLD.Action.AddSkill")];
       case "techniques":
-        return [browse("skill,technique", "GWORLD.Picker.Skills"), create("technique", "GWORLD.Action.AddTechnique")];
+        return [add("technique", "GWORLD.Picker.Techniques", "GWORLD.Action.AddTechnique")];
       case "spells":
-        return context.rules?.magic ? [browse("spell", "GWORLD.Picker.Spells"), create("spell", "GWORLD.Action.AddSpell")] : [];
+        return context.rules?.magic ? [add("spell", "GWORLD.Picker.Spells", "GWORLD.Action.AddSpell")] : [];
       case "languages":
         return [create("language", "GWORLD.Action.AddLanguage")];
       case "templates":
@@ -910,8 +912,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const state = this.stateOf("traits");
     const order = ["advantage", "perk", "disadvantage", "quirk"];
     const browse = (key: string) => ({
-      browseCategories: key === "advantage" || key === "perk" ? "advantage,perk" : key === "disadvantage" ? "disadvantage,quirk" : "quirk",
-      browseTitle: key === "advantage" || key === "perk" ? "GWORLD.Picker.Advantages" : key === "disadvantage" ? "GWORLD.Picker.Disadvantages" : "GWORLD.Picker.Quirks",
+      browseCategories: key,
+      browseTitle: key === "advantage" ? "GWORLD.Picker.AdvantagesOnly" : key === "perk" ? "GWORLD.Picker.Perks" : key === "disadvantage" ? "GWORLD.Picker.DisadvantagesOnly" : "GWORLD.Picker.Quirks",
     });
 
     const rows = await Promise.all([...actor.items].filter((i: any) => i.type === "trait").map(async (item: any) => {

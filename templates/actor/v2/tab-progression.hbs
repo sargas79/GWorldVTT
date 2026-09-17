@@ -82,7 +82,9 @@
                             {{#if add.itemCategory}}data-category="{{add.itemCategory}}"{{/if}}
                             {{#if add.itemTypes}}data-item-types="{{add.itemTypes}}"{{/if}}
                             {{#if add.categories}}data-categories="{{add.categories}}"{{/if}}
-                            {{#if add.browseTitle}}data-browse-title="{{add.browseTitle}}"{{/if}}>{{#if (eq add.icon "search")}}{{> "gworld.search"}}{{else}}{{> "gworld.plus"}}{{/if}} {{add.label}}</button>
+                            {{#if add.browseTitle}}data-browse-title="{{add.browseTitle}}"{{/if}}
+                            {{#if add.customType}}data-custom-type="{{add.customType}}"{{/if}}
+                            {{#if add.customCategory}}data-custom-category="{{add.customCategory}}"{{/if}}>{{#if (eq add.icon "search")}}{{> "gworld.search"}}{{else}}{{> "gworld.plus"}}{{/if}} {{add.label}}</button>
                   {{/each}}
                 {{/if}}
               </div>

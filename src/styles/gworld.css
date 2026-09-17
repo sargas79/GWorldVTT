@@ -1632,3 +1632,8 @@
 .gworld .icrewrow .iconbtn { margin-left: auto; }
 
 .gworld .isheet-vehicle .ipv input { width: 62px; }
+
+/* The picker's own entry, for what the books don't list. */
+.gworld-picker .gp-custom { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border-top: 1px solid var(--color-border-light-2, #ccc); }
+.gworld-picker .gp-custom .gp-add { width: auto; padding: 0 10px; }
+.gworld-picker .gp-custom-hint { font-size: 11px; opacity: 0.8; }

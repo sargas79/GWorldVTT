@@ -3092,11 +3092,15 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // the whole 641 with the advantages mixed through them.
     const categories = (target.dataset.categories ?? "").split(",").filter(Boolean);
 
+    // An Add button can make something the list doesn't have, as what it adds.
+    const customType = target.dataset.customType;
+    const customCategory = target.dataset.customCategory;
     await CompendiumPicker.open({
       actor: this.actor,
       types,
       ...(categories.length > 0 ? { categories } : {}),
       title: game.i18n.localize(target.dataset.browseTitle ?? "GWORLD.Picker.Title"),
+      ...(customType ? { custom: { itemType: customType, ...(customCategory ? { category: customCategory } : {}) } } : {}),
     });
   }
 

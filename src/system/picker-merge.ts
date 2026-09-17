@@ -156,3 +156,19 @@ export function planAddition(options: {
 
   return { action: "create", data: { ...data, system } };
 }
+
+/** What the picker makes when the list doesn't have what is wanted. */
+export interface PickerCustom {
+  itemType: string;
+  /** A trait's category: a quirk is a -1 point disadvantage with no levels (Characters p. 162). */
+  category?: string;
+}
+
+/** The data for a custom entry. */
+export function customItemData(custom: PickerCustom, name: string): Record<string, unknown> {
+  const system: Record<string, unknown> = {};
+  if (custom.category) system.category = custom.category;
+  if (custom.itemType === "trait" && custom.category === "quirk") Object.assign(system, { points: -1, levels: 0, pointsPerLevel: 0 });
+  if (custom.itemType === "trait" && custom.category === "perk") Object.assign(system, { points: 1, levels: 0, pointsPerLevel: 0 });
+  return { name, type: custom.itemType, system };
+}

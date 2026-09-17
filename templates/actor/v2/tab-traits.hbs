@@ -27,9 +27,8 @@
               {{#if @root.editable}}
                 <span class="v2-group-tools">
                   <button type="button" class="v2-button v2-button-small" data-action="browseCompendium" data-item-types="trait"
-                          data-categories="{{group.browseCategories}}" data-browse-title="{{group.browseTitle}}">{{> "gworld.search"}} {{localize "GWORLD.SheetV2.Browse"}}</button>
-                  <button type="button" class="v2-button v2-button-small" data-action="createItem" data-item-type="trait"
-                          data-category="{{group.key}}">{{> "gworld.plus"}} {{localize "GWORLD.SheetV2.Add"}}</button>
+                          data-categories="{{group.browseCategories}}" data-browse-title="{{group.browseTitle}}"
+                          data-custom-type="trait" data-custom-category="{{group.key}}">{{> "gworld.plus"}} {{localize "GWORLD.SheetV2.Add"}}</button>
                 </span>
               {{/if}}
               <span class="v2-chevron" aria-hidden="true">{{> "gworld.v2icon.chevron"}}</span>

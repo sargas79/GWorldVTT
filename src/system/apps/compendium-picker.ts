@@ -22,9 +22,11 @@ import { addonItemSummary, pickerIndexFields } from "../data-extensions.js";
 import { sourceCollections } from "../compendium-sources.js";
 import {
   amountKind,
+  customItemData,
   levelCeiling,
   planAddition,
   previewCost,
+  type PickerCustom,
   type PlannedItem,
 } from "../picker-merge.js";
 
@@ -117,6 +119,7 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     window: { title: "GWORLD.Picker.Title", resizable: true },
     actions: {
       add: CompendiumPicker.#onAdd,
+      addCustom: CompendiumPicker.#onAddCustom,
     },
   };
 
@@ -134,6 +137,8 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
   #added = new Set<string>();
   /** The amount typed beside each row, kept across re-renders. */
   #amounts = new Map<string, number>();
+  /** What a custom entry is made as, when the list doesn't have what is wanted. */
+  #custom: PickerCustom | null;
 
   constructor(options: {
     actor: any;
@@ -141,11 +146,13 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     /** Trait categories to offer, when the caller wants only some of them. */
     categories?: string[];
     title?: string;
+    custom?: PickerCustom;
   }) {
     super({ window: options.title ? { title: options.title } : {} });
     this.#actor = options.actor;
     this.#types = options.types;
     this.#categories = options.categories ?? [];
+    this.#custom = options.custom ?? null;
   }
 
   /** Opens a picker for one actor and set of types. */
@@ -154,6 +161,7 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     types: string[];
     categories?: string[];
     title?: string;
+    custom?: PickerCustom;
   }): Promise<CompendiumPicker> {
     const app = new CompendiumPicker(options);
     await app.render(true);
@@ -205,6 +213,16 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
       // Basic Set's Fireball and a module's are two rows with one name.
       showSource: sources.size > 1,
       entries: shown.map((entry) => this.#row(entry)),
+      // Something the books don't list -- most quirks are the player's own
+      // words -- is made from what was typed in the search box.
+      custom: this.#custom
+        ? {
+            label: this.#query.trim()
+              ? game.i18n.format("GWORLD.Picker.AddCustomNamed", { name: this.#query.trim(), kind: this.#customLabel() })
+              : game.i18n.format("GWORLD.Picker.AddCustom", { kind: this.#customLabel() }),
+            hint: this.#custom.category === "quirk" ? game.i18n.localize("GWORLD.Picker.CustomQuirkHint") : "",
+          }
+        : null,
       total: matching.length,
       truncated: matching.length > shown.length,
       // The ledger rides along here too: what has been spent and what is left
@@ -217,6 +235,27 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
         over: Boolean(points.overBudget),
       },
     };
+  }
+
+  /** What a custom entry is called: "quirk", "skill". */
+  #customLabel(): string {
+    const custom = this.#custom;
+    if (!custom) return "";
+    const key = custom.category ? `GWORLD.Picker.Kind.${custom.category}` : `TYPES.Item.${custom.itemType}`;
+    return game.i18n.localize(key).toLowerCase();
+  }
+
+  /** Makes a custom entry from the search box: a quirk at -1 point and no levels, anything else blank. */
+  static async #onAddCustom(this: CompendiumPicker): Promise<void> {
+    const custom = this.#custom;
+    if (!custom || !this.#actor?.isOwner) return;
+    const typed = this.#query.trim();
+    const kind = this.#customLabel();
+    const name = typed || game.i18n.format("GWORLD.Picker.NewCustom", { kind });
+    await this.#actor.createEmbeddedDocuments("Item", [customItemData(custom, name)]);
+    ui.notifications?.info(game.i18n.format("GWORLD.Picker.Added", { name }));
+    this.#query = "";
+    await this.render();
   }
 
   /** One row, with the amount field it needs and what that amount costs. */
