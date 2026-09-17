@@ -1114,6 +1114,9 @@
               <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.DoubleKnockbackHint'}}"><input type="checkbox" name="system.meleeModes.{{i}}.doubleKnockback"
                      {{#if m.doubleKnockback}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.DoubleKnockback"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.KineticOnlyHint'}}"><input type="checkbox" name="system.meleeModes.{{i}}.kineticOnly"
+                     {{#if m.kineticOnly}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.KineticOnly"}}</label>
               <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.NoKnockbackHint'}}"><input type="checkbox" name="system.meleeModes.{{i}}.noKnockback"
                      {{#if m.noKnockback}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.NoKnockback"}}</label>
@@ -1243,6 +1246,9 @@
               <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.DoubleKnockbackHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.doubleKnockback"
                      {{#if m.doubleKnockback}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.DoubleKnockback"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.KineticOnlyHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.kineticOnly"
+                     {{#if m.kineticOnly}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.KineticOnly"}}</label>
               <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.NoKnockbackHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.noKnockback"
                      {{#if m.noKnockback}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.NoKnockback"}}</label>

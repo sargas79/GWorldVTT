@@ -494,6 +494,8 @@ function meleeModeField() {
     radiation: new fields.BooleanField({ initial: false }),
     doubleKnockback: new fields.BooleanField({ initial: false }),
     noKnockback: new fields.BooleanField({ initial: false }),
+    /** Knockback and blunt trauma, and no other injury (since API 1.63.0). */
+    kineticOnly: new fields.BooleanField({ initial: false }),
     /**
      * A cosmic armour divisor, which a data file writes "(!)": the attack
      * ignores DR altogether rather than dividing it (Characters p. 105). Kept
@@ -690,6 +692,8 @@ function rangedModeField() {
     radiation: new fields.BooleanField({ initial: false }),
     doubleKnockback: new fields.BooleanField({ initial: false }),
     noKnockback: new fields.BooleanField({ initial: false }),
+    /** Knockback and blunt trauma, and no other injury (since API 1.63.0). */
+    kineticOnly: new fields.BooleanField({ initial: false }),
     /**
      * A cosmic armour divisor, which a data file writes "(!)": the attack
      * ignores DR altogether rather than dividing it (Characters p. 105). Kept
