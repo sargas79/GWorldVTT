@@ -58,6 +58,9 @@ const ICONS: Record<string, string> = {
   "gworld.v2icon.progression": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path>
   </svg>`,
+  "gworld.v2icon.build": `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 11V6a3 3 0 0 1 6 0v5"></path><path d="M5 11h14l-1 10H6z"></path><path d="M12 15v2"></path>
+  </svg>`,
   "gworld.v2icon.magic": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
     <path d="M15 4V2"></path><path d="M15 16v-2"></path><path d="M8 9h2"></path><path d="M20 9h2"></path><path d="M17.8 11.8 19 13"></path>
     <path d="M17.8 6.2 19 5"></path><path d="m3 21 9-9"></path><path d="M12.2 6.2 11 5"></path>

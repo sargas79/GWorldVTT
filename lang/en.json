@@ -791,6 +791,7 @@
     "Builder": {
       "Title": "Build a character",
       "Open": "Guided build",
+      "OpenHint": "Build the character step by step, with the points in view.",
       "Step": "Step",
       "Points": "points",
       "Back": "Back",
@@ -829,6 +830,17 @@
         "gear": "Add gear, armour or a shield"
       },
       "Opening": "Opening…",
+      "Short": {
+        "points": "Points",
+        "templates": "Template",
+        "attributes": "Attributes",
+        "advantages": "Advantages",
+        "disadvantages": "Disadvantages",
+        "skills": "Skills",
+        "spells": "Spells",
+        "gear": "Gear",
+        "review": "Review"
+      },
       "Review": {
         "Category": "Category",
         "Chosen": "Chosen",
