@@ -1,0 +1,115 @@
+<section class="tab v2-tab party-tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+  {{#if members.length}}
+    <div class="party-roster">
+      {{#each members as |m|}}
+        <div class="v2-panel party-member{{#if m.missing}} missing{{/if}}" data-member-uuid="{{m.uuid}}">
+          {{#if m.missing}}
+            {{!-- The actor is gone; the row says so until it is taken off the list. --}}
+            <span class="party-portrait party-portrait-missing" aria-hidden="true">?</span>
+            <div class="party-identity">
+              <span class="party-name v2-muted">{{localize "GWORLD.Party.MissingName"}}</span>
+              <span class="party-sub">{{localize "GWORLD.Party.Missing"}}</span>
+            </div>
+            <span class="party-pools"></span>
+            <span class="party-stats"></span>
+            <span class="party-chips"></span>
+            <span class="v2-row-actions party-actions">
+              {{#if @root.editable}}
+                <button type="button" class="v2-row-icon v2-row-delete" data-action="removeMember"
+                        data-tooltip="{{localize 'GWORLD.Party.Remove'}}" aria-label="{{localize 'GWORLD.Party.Remove'}}">{{> "gworld.trash"}}</button>
+              {{/if}}
+            </span>
+          {{else}}
+            <button type="button" class="party-portrait" data-action="openMember"
+                    data-tooltip="{{localize 'GWORLD.Party.Open'}}" aria-label="{{localize 'GWORLD.Party.OpenNamed' name=m.name}}">
+              <img src="{{m.img}}" alt="">
+            </button>
+
+            <div class="party-identity">
+              <button type="button" class="party-name" data-action="openMember">{{m.name}}</button>
+              <span class="party-sub">{{m.typeLabel}}{{#if m.player}} &middot; {{m.player}}{{/if}}</span>
+              <span class="v2-badge party-cp{{#if (eq m.points.state 'over')}} v2-badge-red{{else}} v2-badge-muted{{/if}}"
+                    data-tooltip="{{m.points.hint}}">{{m.points.spent}} / {{m.points.available}} CP</span>
+            </div>
+
+            {{!-- What is left of them: the pools, editable by whoever owns the member. --}}
+            <div class="party-pools">
+              <div class="v2-pool">
+                <div class="v2-pool-head">
+                  <span class="v2-pool-name">{{localize "GWORLD.Party.Hp"}}</span>
+                  <span class="v2-pool-value">
+                    {{#if m.canEdit}}
+                      <input type="number" value="{{m.hp.value}}" step="1" data-member-field="system.hp.value"
+                             aria-label="{{localize 'GWORLD.SheetV2.CurrentHp'}}">
+                    {{else}}<b>{{m.hp.value}}</b>{{/if}}
+                    <span>/ {{m.hp.max}}</span>
+                  </span>
+                </div>
+                <div class="v2-bar v2-bar-hp"><span style="width: {{m.hp.percent}}%"></span></div>
+                {{#if m.hp.hurt}}<span class="v2-pool-status v2-bad">{{m.hp.statusLabel}}</span>{{/if}}
+              </div>
+              <div class="v2-pool">
+                <div class="v2-pool-head">
+                  <span class="v2-pool-name">{{localize "GWORLD.Party.Fp"}}</span>
+                  <span class="v2-pool-value">
+                    {{#if m.canEdit}}
+                      <input type="number" value="{{m.fp.value}}" step="1" data-member-field="system.fp.value"
+                             aria-label="{{localize 'GWORLD.SheetV2.CurrentFp'}}">
+                    {{else}}<b>{{m.fp.value}}</b>{{/if}}
+                    <span>/ {{m.fp.max}}</span>
+                  </span>
+                </div>
+                <div class="v2-bar v2-bar-fp"><span style="width: {{m.fp.percent}}%"></span></div>
+                {{#if m.fp.tired}}<span class="v2-pool-status v2-bad">{{m.fp.statusLabel}}</span>{{/if}}
+              </div>
+            </div>
+
+            {{!-- The passive figures, each rolled from here for this member. --}}
+            <div class="party-stats">
+              {{#each m.stats as |s|}}
+                <div class="party-stat">
+                  <span class="v2-stat-label">{{s.label}}</span>
+                  {{#if s.roll}}
+                    <button type="button" class="party-stat-value rollable" data-action="roll" data-roll-type="{{s.roll.type}}"
+                            data-roll-label="{{s.roll.label}}" data-roll-target="{{s.text}}" data-based-on="{{s.roll.basedOn}}"
+                            aria-label="{{localize 'GWORLD.Party.RollFor' what=s.roll.label name=m.name}}">{{s.text}}</button>
+                  {{else}}
+                    <span class="party-stat-value{{#if s.muted}} v2-muted{{/if}}">{{s.text}}</span>
+                  {{/if}}
+                  {{#if s.note}}<span class="v2-stat-note">{{s.note}}</span>{{/if}}
+                </div>
+              {{/each}}
+            </div>
+
+            <div class="party-chips v2-chips">
+              {{#each m.chips as |c|}}
+                <span class="v2-chip v2-chip-{{c.tone}}" {{#if c.hint}}data-tooltip="{{c.hint}}"{{/if}}>{{#if c.img}}<img src="{{c.img}}" alt="">{{/if}}{{c.label}}</span>
+              {{/each}}
+            </div>
+
+            <span class="v2-row-actions party-actions">
+              {{#if @root.editable}}
+                <button type="button" class="v2-row-icon" data-action="moveMember" data-by="-1"
+                        data-tooltip="{{localize 'GWORLD.Party.MoveUp'}}" aria-label="{{localize 'GWORLD.Party.MoveUp'}}">{{> "gworld.v2icon.arrowUp"}}</button>
+                <button type="button" class="v2-row-icon" data-action="moveMember" data-by="1"
+                        data-tooltip="{{localize 'GWORLD.Party.MoveDown'}}" aria-label="{{localize 'GWORLD.Party.MoveDown'}}">{{> "gworld.v2icon.arrowDown"}}</button>
+                <button type="button" class="v2-row-icon v2-row-delete" data-action="removeMember"
+                        data-tooltip="{{localize 'GWORLD.Party.Remove'}}" aria-label="{{localize 'GWORLD.Party.Remove'}}">{{> "gworld.trash"}}</button>
+              {{/if}}
+            </span>
+          {{/if}}
+        </div>
+      {{/each}}
+    </div>
+  {{else}}
+    <div class="v2-panel party-empty">
+      <p class="v2-empty">{{localize "GWORLD.Party.NoMembers"}}</p>
+      {{#if editable}}
+        <div class="party-buttons">
+          <button type="button" class="v2-button v2-button-steel" data-action="addMembers">{{> "gworld.plus"}} {{localize "GWORLD.Party.AddMembers"}}</button>
+          <button type="button" class="v2-button" data-action="addPlayers">{{localize "GWORLD.Party.AddPlayers"}}</button>
+        </div>
+      {{/if}}
+    </div>
+  {{/if}}
+</section>

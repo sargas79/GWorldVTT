@@ -70,12 +70,13 @@ import { REGISTER_RULES_HOOK, isAddonRuleKey, namespacedRuleKey, registerRule, r
 import { rollDamage, rollSuccess } from "./roll.js";
 import { postResistance } from "./spell-resistance.js";
 import { manaLevel } from "./casting.js";
+import { PARTY_CHANGED_HOOK, addMembers, campaignTerms, membersOf, partyOf, removeMember } from "./party.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.67.0";
+export const API_VERSION = "1.68.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -355,8 +356,10 @@ export interface GWorldApi {
   readonly hazards: typeof hazardsApi;
   /** Areas on a scene that change rolls made in or through them (since 1.63.0). */
   readonly areas: typeof areasApi;
-  /** The hooks the API fires, by name. */
-  readonly hooks: { readonly registerRules: string; readonly ready: string };
+  /** The party an actor is in, its members and the campaign's terms (since 1.68.0). */
+  readonly party: typeof partyApi;
+  /** The hooks the API fires, by name; `partyChanged` since 1.68.0. */
+  readonly hooks: { readonly registerRules: string; readonly ready: string; readonly partyChanged: string };
   /** Whether this API satisfies a semver range, as a module's manifest would declare it. */
   readonly satisfies: (range: string) => boolean;
 }
@@ -409,6 +412,9 @@ const points = Object.freeze({ ...pointsApi, spendUnspent: spendUnspentPoints })
 /** The magic namespace: energy sources and spell attacks, and from 1.9.0 resistance cards. */
 const magic = Object.freeze({ ...magicApi, postResistance, manaLevel });
 
+/** The party namespace (since 1.68.0): which party an actor is in, its members, and the campaign's terms. */
+const partyApi = Object.freeze({ of: partyOf, membersOf, campaignTerms, addMembers, removeMember });
+
 /** Builds the frozen API object. */
 export function createApi(): GWorldApi {
   return Object.freeze({
@@ -427,7 +433,8 @@ export function createApi(): GWorldApi {
     hazards: hazardsApi,
     areas: areasApi,
     chat: chatApi,
-    hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK }),
+    party: partyApi,
+    hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: PARTY_CHANGED_HOOK }),
     satisfies: (range: string) => satisfiesApiRange(API_VERSION, range),
   });
 }

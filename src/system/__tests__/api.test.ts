@@ -19,7 +19,15 @@ describe("the add-on API", () => {
     const api = createApi();
     expect(parseVersion(api.version)).not.toBeNull();
     expect(api.version).toBe(API_VERSION);
-    expect(api.hooks).toEqual({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK });
+    expect(api.hooks).toEqual({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: "gworld.partyChanged" });
+  });
+
+  it("reaches the party: whose it is, its members and the campaign's terms (since 1.68.0)", () => {
+    const api = createApi();
+    expect(Object.keys(api.party).sort()).toEqual(["addMembers", "campaignTerms", "membersOf", "of", "removeMember"]);
+    // Nothing is in a party where there is no world.
+    expect(api.party.of({ uuid: "Actor.nobody", type: "character" })).toBeNull();
+    expect(api.party.campaignTerms({ uuid: "Actor.nobody", type: "character" })).toBeNull();
   });
 
   it("reaches the hazards: shocks and radiation (since 1.63.0)", () => {

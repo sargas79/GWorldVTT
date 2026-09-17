@@ -4,10 +4,17 @@
   {{!-- Where the points stand. An overspend is flagged, never blocked. --}}
   <div class="v2-progress-summary{{#if v2.progression.summary.over}} over{{/if}}">
     <div><span>{{localize "GWORLD.SheetV2.Session"}}</span><b>{{#if v2.progression.summary.latestSession}}{{v2.progression.summary.latestSession}}{{else}}&mdash;{{/if}}</b></div>
-    {{!-- The campaign's terms, set here as the guided build's first step sets them. --}}
+    {{!-- The campaign's terms, set here as the guided build's first step sets
+         them -- unless the party has set them, when they are read from it and
+         cannot be typed over: no input, so nothing is saved onto the character. --}}
     <div class="v2-campaign-field">
       <label for="{{actor.id}}-v2-tl">{{localize "GWORLD.Field.TechLevel"}}</label>
-      <b><input type="number" id="{{actor.id}}-v2-tl" name="system.tl" value="{{system.tl}}" step="1" min="0" {{#unless editable}}disabled{{/unless}}></b>
+      {{#if derived.campaign.locked.tl}}
+        <b>{{system.tl}}</b>
+        <button type="button" class="v2-link v2-campaign-lock" data-action="openParty" data-tooltip="{{localize 'GWORLD.Party.SetByHint'}}">{{localize "GWORLD.Party.SetBy" party=derived.campaign.party.name}}</button>
+      {{else}}
+        <b><input type="number" id="{{actor.id}}-v2-tl" name="system.tl" value="{{system.tl}}" step="1" min="0" {{#unless editable}}disabled{{/unless}}></b>
+      {{/if}}
     </div>
     <div class="v2-campaign-field">
       <label for="{{actor.id}}-v2-sm">{{localize "GWORLD.SheetV2.SizeModifier"}}</label>
@@ -15,11 +22,21 @@
     </div>
     <div class="v2-campaign-field">
       <label for="{{actor.id}}-v2-starting">{{localize "GWORLD.Points.Starting"}}</label>
-      <b><input type="number" id="{{actor.id}}-v2-starting" name="system.points.starting" value="{{system.points.starting}}" step="5" min="0" {{#unless editable}}disabled{{/unless}}> CP</b>
+      {{#if derived.campaign.locked.startingPoints}}
+        <b>{{system.points.starting}} CP</b>
+        <button type="button" class="v2-link v2-campaign-lock" data-action="openParty" data-tooltip="{{localize 'GWORLD.Party.SetByHint'}}">{{localize "GWORLD.Party.SetBy" party=derived.campaign.party.name}}</button>
+      {{else}}
+        <b><input type="number" id="{{actor.id}}-v2-starting" name="system.points.starting" value="{{system.points.starting}}" step="5" min="0" {{#unless editable}}disabled{{/unless}}> CP</b>
+      {{/if}}
     </div>
     <div class="v2-campaign-field">
       <label for="{{actor.id}}-v2-limit" data-tooltip="{{localize "GWORLD.Hint.DisadvantageLimit"}}">{{localize "GWORLD.Field.DisadvantageLimit"}}</label>
-      <b><input type="number" id="{{actor.id}}-v2-limit" name="system.points.disadvantageLimit" value="{{system.points.disadvantageLimit}}" step="5" min="0" {{#unless editable}}disabled{{/unless}}> CP</b>
+      {{#if derived.campaign.locked.disadvantageLimit}}
+        <b>{{system.points.disadvantageLimit}} CP</b>
+        <button type="button" class="v2-link v2-campaign-lock" data-action="openParty" data-tooltip="{{localize 'GWORLD.Party.SetByHint'}}">{{localize "GWORLD.Party.SetBy" party=derived.campaign.party.name}}</button>
+      {{else}}
+        <b><input type="number" id="{{actor.id}}-v2-limit" name="system.points.disadvantageLimit" value="{{system.points.disadvantageLimit}}" step="5" min="0" {{#unless editable}}disabled{{/unless}}> CP</b>
+      {{/if}}
     </div>
     <div><span>{{localize "GWORLD.Points.Earned"}}</span><b class="v2-good">{{v2.progression.summary.earned}} CP</b></div>
     <div><span>{{localize "GWORLD.Points.Spent"}}</span><b>{{v2.progression.summary.spent}} CP</b></div>

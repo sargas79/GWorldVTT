@@ -21,6 +21,8 @@ import { catalogSkill, defaultLevelFrom } from "../skill-catalog.js";
 import { isUnarmedSkill } from "../../rules/criticals.js";
 import { reachForSize } from "../../rules/size.js";
 import { pointsLedger, type PointAward } from "../../rules/character-points.js";
+import { campaignTerms } from "../party.js";
+import { lockedTerms, type CampaignTermKey } from "../party/roster.js";
 import {
   addTraitEffects,
   afterSuperJump,
@@ -574,6 +576,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
   declare pinnedSkills: string[];
   declare journalLinks: Array<{ uuid: string; kind: "quest" | "clue" | "person" | "place" | "note" }>;
+
+  /**
+   * The party this character is in and which of the campaign's terms it
+   * sets, worked out at the start of every preparation. Not stored: the
+   * party is the record of its own terms.
+   */
+  campaign: { party: { id: string; uuid: string; name: string } | null; locked: Record<CampaignTermKey, boolean> } = {
+    party: null,
+    locked: { tl: false, startingPoints: false, disadvantageLimit: false },
+  };
 
   declare derived: ReturnType<CharacterData["buildDerived"]>;
 
@@ -1331,6 +1343,23 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       unaging: lifespan.unaging,
       lifespanMultiplier: lifespan.multiplier,
     };
+  }
+
+  /**
+   * The campaign's terms come from the party, where the GM set them, rather
+   * than from what the player typed: the Tech Level, the starting points and
+   * the disadvantage limit a party has set replace this character's own for
+   * the whole preparation. The stored fields are left as they were, so a
+   * character that leaves the party reads its own again.
+   */
+  override prepareBaseData(): void {
+    super.prepareBaseData();
+    const terms = campaignTerms(this.parent);
+    this.campaign = { party: terms?.party ?? null, locked: lockedTerms(terms) };
+    if (!terms) return;
+    if (terms.tl !== null) this.tl = terms.tl;
+    if (terms.startingPoints !== null) this.points.starting = terms.startingPoints;
+    if (terms.disadvantageLimit !== null) this.points.disadvantageLimit = terms.disadvantageLimit;
   }
 
   override prepareDerivedData(): void {
@@ -3041,6 +3070,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // Unkillable is not dead at -5xHP; only destruction at -10xHP is the end.
       status: healthStatus(this.hp.value, this.hp.max, { unkillable: traits.unkillable }),
       reeling,
+      // The party this character is in, and which of the campaign's terms it
+      // sets -- the sheets show those read-only, with where they come from.
+      campaign: this.campaign,
       mounted: this.mounted,
       ridingSkill,
       // What this character was built from, for the sheet to list and unpick.

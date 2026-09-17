@@ -11,6 +11,7 @@ spells, gear) and rules registered through `game.gworld.api`.
 - [Sheet and chat extension points](#sheet-and-chat-extension-points)
 - [Point pools, energy sources, spell attacks and resistance](#point-pools-energy-sources-spell-attacks-and-resistance)
 - [Inside the system's own procedures](#inside-the-systems-own-procedures)
+- [The party](#the-party)
 - [Taking over data the system is dropping](#taking-over-data-the-system-is-dropping)
 
 ## Packs for another book
@@ -1053,6 +1054,30 @@ Two fields a module may read (since 1.62.0):
   used.
 
 `combat.hooks` lists every hook's name.
+
+## The party
+
+A `party` actor lists the characters a campaign follows and holds the terms
+the campaign was set on: the starting points, the disadvantage limit and the
+Tech Level. A term the GM has set on the party replaces the member's own
+during preparation -- `actor.system.tl` and `actor.system.points.starting`
+already read the party's figure, and `actor.system.derived.campaign` says
+which party it came from and which terms are locked. `game.gworld.api.party`
+(since 1.68.0):
+
+- **`party.of(actor)`** -- the party the actor is in, or null. A token's actor
+  is looked up by its world actor.
+- **`party.membersOf(party)`** -- the member actors that still exist, in the
+  party's order.
+- **`party.campaignTerms(actor)`** -- `{ party: { id, uuid, name }, tl,
+  startingPoints, disadvantageLimit }` for an actor in a party, each term
+  null where the GM left it blank; null for an actor in no party.
+- **`party.addMembers(party, actors)`** and **`party.removeMember(party, uuid)`**
+  -- change the roster, for a user who owns the party. Only characters and
+  NPCs join, and an actor is in one party at a time.
+- **`hooks.partyChanged`** (`gworld.partyChanged`) fires with `(party,
+  members)` when a party's roster or terms change, after its members have been
+  prepared again.
 
 ## Taking over data the system is dropping
 

@@ -76,6 +76,20 @@ const ICONS: Record<string, string> = {
   "gworld.v2icon.chevron": `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="m6 9 6 6 6-6"></path>
   </svg>`,
+  // The party sheet's tabs, and its rows' move buttons.
+  "gworld.v2icon.members": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0"></path>
+    <path d="M16 4.5a3.5 3.5 0 0 1 0 7"></path><path d="M17.5 13.6A6.5 6.5 0 0 1 21.5 20"></path>
+  </svg>`,
+  "gworld.v2icon.campaign": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 21V4"></path><path d="M5 4h13l-3 4.5 3 4.5H5"></path>
+  </svg>`,
+  "gworld.v2icon.arrowUp": `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path>
+  </svg>`,
+  "gworld.v2icon.arrowDown": `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 5v14"></path><path d="m19 12-7 7-7-7"></path>
+  </svg>`,
 };
 
 /**

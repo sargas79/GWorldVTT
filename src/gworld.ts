@@ -9,6 +9,7 @@
 import { registerConsciousnessTurns } from "./system/consciousness.js";
 import "./styles/gworld.css";
 import "./styles/sheet-v2.css";
+import "./styles/party.css";
 
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
@@ -24,6 +25,9 @@ import { SYSTEM_ID } from "./system/constants.js";
 import { CharacterData } from "./system/data/character.js";
 import { NpcData } from "./system/data/npc.js";
 import { VehicleData } from "./system/data/vehicle.js";
+import { PartyData } from "./system/data/party.js";
+import { registerPartyHooks } from "./system/party.js";
+import { GWorldPartySheet } from "./system/sheets/party-sheet.js";
 import { GWorldItem } from "./system/documents/item.js";
 import {
   ArmorData,
@@ -68,6 +72,7 @@ Hooks.once("init", () => {
   CONFIG.Actor.dataModels.character = CharacterData;
   CONFIG.Actor.dataModels.npc = NpcData;
   CONFIG.Actor.dataModels.vehicle = VehicleData;
+  CONFIG.Actor.dataModels.party = PartyData;
 
   // Each kind of item gets its own picture rather than Foundry's one bag.
   CONFIG.Item.documentClass = GWorldItem;
@@ -118,6 +123,9 @@ Hooks.once("init", () => {
   registerChatHooks();
   registerSupersededPackHiding();
   registerSheetExtensionHooks();
+  // Which party an actor is in, the members' refresh when a party changes,
+  // and the party's members nested under it in the sidebar.
+  registerPartyHooks();
 
   // Which way a token faces, drawn on it, and the keys that turn it a hex
   // side at a time.
@@ -170,6 +178,12 @@ Hooks.once("init", () => {
     types: ["vehicle"],
     makeDefault: true,
     label: "GWORLD.Sheet.Vehicle",
+  });
+  // The people a campaign follows, on one page, and the terms it was set on.
+  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldPartySheet, {
+    types: ["party"],
+    makeDefault: true,
+    label: "GWORLD.Sheet.Party",
   });
 
   // Without this, items fall back to Foundry's core sheet, which knows nothing

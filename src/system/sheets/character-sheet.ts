@@ -188,6 +188,7 @@ import {
 } from "../procedure-extensions.js";
 import { effectiveCost, effectiveWeight, itemSectionsFor, registeredItemType, runItemTypeAction, tabHasAddonSections } from "../data-extensions.js";
 import { registeredTabsShownOn, type SheetKind } from "../sheet-tabs.js";
+import { partyOf } from "../party.js";
 import { DRESS_STATES } from "../../rules/cinematic.js";
 import { awardsNewestFirst, nextSessionLabel, type PointAward } from "../../rules/character-points.js";
 import { isReadTrait } from "../../rules/trait-effects.js";
@@ -435,6 +436,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       browseCompendium: GWorldCharacterSheet.#onBrowseCompendium,
       openBuilder: GWorldCharacterSheet.#onOpenBuilder,
       awardPoints: GWorldCharacterSheet.#onAwardPoints,
+      openParty: GWorldCharacterSheet.#onOpenParty,
       deleteAward: GWorldCharacterSheet.#onDeleteAward,
       slam: GWorldCharacterSheet.#onSlam,
       shove: GWorldCharacterSheet.#onShove,
@@ -1762,6 +1764,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    */
   static async #onRoll(this: GWorldCharacterSheet, event: Event, target: HTMLElement) {
     await handleRollAction(this.actor, event, target);
+  }
+
+  /** Opens the party whose terms this character reads. */
+  static async #onOpenParty(this: GWorldCharacterSheet) {
+    await partyOf(this.actor)?.sheet?.render(true);
   }
 
   /** Rolls an attack mode's damage and posts it to chat. */
