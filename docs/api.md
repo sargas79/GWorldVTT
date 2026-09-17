@@ -790,6 +790,11 @@ Two fields a module may read (since 1.62.0):
   protectionFactor, modifier })` adds a dose of radiation (p. 435). Before a
   dose is added, `gworld.radiationDose` fires with `{ actor, rads,
   protectionFactor, sources }`: change `rads`, and push a label to `sources`.
+- **Blows from below** (since 1.63.0): a blow applied with `fromBelow` (a
+  checkbox on the damage card when the foot is struck) meets footwear's
+  `soleDr` on the foot. `gworld.armorDr` carries `fromBelow`. Armour spent by
+  a blow is its ablative DR, which `items.restoreDr` gives back; the system
+  keeps no other hit points for armour.
 - **Kinetic-only blows** (since 1.63.0): a mode's `kineticOnly`, and the same
   option on `roll.damage`, makes a blow whose whole effect is its shove:
   knockback worked out as a crushing blow's, blunt trauma where flexible armour

@@ -17,7 +17,7 @@
 import { parseVulnerability, vulnerabilityMultiplier, type Vulnerability } from "../rules/vulnerability.js";
 import { type ArmorPiece } from "../rules/armor.js";
 import { bluntTraumaInjury } from "../rules/layered-armor.js";
-import { ablativeLoss, drAgainst, hardenedAgainst, remainingDr } from "../rules/armor.js";
+import { ablativeLoss, drAgainst, drFromBelow, hardenedAgainst, remainingDr } from "../rules/armor.js";
 import { criticalDr } from "../rules/criticals.js";
 import type { Arc } from "../rules/tactical.js";
 import { isRuleOn } from "./optional-rules.js";
@@ -126,6 +126,8 @@ export interface IncomingDamage {
    * null means no facing is in play, and every blow meets it.
    */
   arc?: Arc | null;
+  /** A blow from underneath (since 1.63.0): a foot meets its footwear's `soleDr`. */
+  fromBelow?: boolean;
 }
 
 /** What applying a blow did. */
@@ -244,6 +246,7 @@ export function wornArmor(actor: any): ArmorPiece[] {
       ablative: item.system?.ablative ?? "none",
       drLost: Number(item.system?.drLost ?? 0) || 0,
       forceField: item.system?.forceField === true,
+      soleDr: typeof item.system?.soleDr === "number" ? item.system.soleDr : null,
     }));
 }
 
@@ -298,7 +301,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
       label: piece.name ?? "",
       // A Force Field covers everything, so it is read at the spot the blow
       // fell whatever its own list says (Characters p. 47).
-      dr: drAgainst(piece, damage.type, damage.hitLocation),
+      dr: damage.fromBelow === true ? drFromBelow(piece, damage.type, damage.hitLocation) : drAgainst(piece, damage.type, damage.hitLocation),
       applies: true,
       forceField: piece.forceField === true,
       flexible: piece.flexible === true,
@@ -319,6 +322,8 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     // Where the blow came from, as the card has it, whether or not the
     // table's front-only armour rule reads it (since 1.56.0).
     arc: damage.arc ?? null,
+    // A blow from underneath (since 1.63.0).
+    fromBelow: damage.fromBelow === true,
     lines,
   });
 

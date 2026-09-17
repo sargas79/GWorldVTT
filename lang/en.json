@@ -1959,7 +1959,8 @@
       "NoPeripheral": "no peripheral vision",
       "NoPeripheralHint": "A great helm gives the wearer No Peripheral Vision while worn (Characters p. 283).",
       "BluntTrauma": "blunt trauma",
-      "StruckFrom": "Struck from"
+      "StruckFrom": "Struck from",
+      "FromBelow": "From below"
     },
     "Shield": {
       "DB": "Defense Bonus",

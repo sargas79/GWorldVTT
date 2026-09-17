@@ -340,3 +340,19 @@ describe("a kinetic-only blow", () => {
     expect(hit.knockback.yards).toBe(2);
   });
 });
+
+/** A blow from underneath meets a boot's sole (since API 1.63.0). */
+describe("a blow from below", () => {
+  const booted = () => {
+    const target = actor({ hp: 10, maxHp: 10, armor: [{ dr: 2, locations: ["foot"] }] });
+    (target.items[0]!.system as Record<string, unknown>).soleDr = 5;
+    return target;
+  };
+
+  it("meets the sole on the foot, and the boot's own DR otherwise", () => {
+    const under = resolveDamageAgainst(booted(), { basicDamage: 6, type: "cr", hitLocation: "foot", armorDivisor: 1, fromBelow: true } as never);
+    const side = resolveDamageAgainst(booted(), { basicDamage: 6, type: "cr", hitLocation: "foot", armorDivisor: 1 } as never);
+    expect(under.penetrating).toBe(1);
+    expect(side.penetrating).toBe(4);
+  });
+});

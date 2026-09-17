@@ -72,6 +72,8 @@ export interface ArmorPiece {
    * would be saying two different things about the same spot.
    */
   drByLocation?: ReadonlyArray<{ locations: readonly HitLocation[]; dr: number }>;
+  /** Footwear's DR on the underside of the foot (Characters p. 283), met by a blow from below. */
+  soleDr?: number | null;
 }
 
 /** The DR a piece gives at one location, before any split or spending. */
@@ -271,4 +273,13 @@ export function splitSummary(
 ): { splits: boolean; bands: DrBand[] } {
   const bands = drProfile(pieces, location);
   return { splits: bands.length > 1, bands };
+}
+
+/**
+ * The DR a piece gives a blow from below (since API 1.63.0): footwear's
+ * `soleDr` on the foot, where it has one, and its ordinary figure otherwise.
+ */
+export function drFromBelow(piece: ArmorPiece, type: DamageType, location: HitLocation): number {
+  if (location === "foot" && typeof piece.soleDr === "number") return Math.max(0, piece.soleDr);
+  return drAgainst(piece, type, location);
 }
