@@ -1459,6 +1459,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       powerTalent: item.system?.powerTalent === true,
       maxLevels: Number(item.system?.maxLevels ?? 0) || 0,
     }));
+    // What a module puts back while a trait is out of play: a mitigated
+    // disadvantage the character suffers again (since 1.63.0).
+    for (const restored of traitsInPlay.restored) {
+      heldTraits.push({
+        name: restored.name, levels: Number(restored.levels ?? 0) || 0, modifiers: [], reactionModifier: 0,
+        talentSkills: [], masteredWeapons: [], power: "", powerTalent: false, maxLevels: 0,
+      });
+    }
     const traits = traitEffects(heldTraits);
 
     // Worn gear grants what the armour table's notes describe in trait terms:

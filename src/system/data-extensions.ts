@@ -58,6 +58,20 @@ export interface TraitInPlay {
   inPlay: boolean;
   /** Why a listener took it out of play, for the sheet. */
   reason?: string;
+  /**
+   * Disadvantages the character suffers again while this trait is out of play
+   * (since 1.63.0): a mitigated disadvantage returning, a lost sense an implant
+   * made up for. Each is read into the trait effects as if the character had it.
+   */
+  restores?: RestoredTrait[];
+}
+
+/** A trait a listener puts back while another is out of play (since 1.63.0). */
+export interface RestoredTrait {
+  name: string;
+  /** For the sheet: what it would cost. */
+  points?: number;
+  levels?: number;
 }
 
 /**
@@ -68,22 +82,32 @@ export interface TraitInPlay {
  * the ones taken out with their reasons. A listener that throws changes
  * nothing: every trait stays in play.
  */
-export function moduleTraitsInPlay(actor: any, items: readonly any[]): { inPlay: any[]; outOfPlay: Array<{ name: string; reason: string }> } {
+export function moduleTraitsInPlay(actor: any, items: readonly any[]): {
+  inPlay: any[];
+  outOfPlay: Array<{ name: string; reason: string; restores?: RestoredTrait[] }>;
+  restored: RestoredTrait[];
+} {
   const traits: TraitInPlay[] = items.map((item) => ({ item, name: String(item?.name ?? ""), inPlay: true }));
   const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
   try {
     hooks?.callAll?.(DATA_HOOKS.traitsInPlay, { actor, traits });
   } catch (error) {
     console.warn(`gworld | a ${DATA_HOOKS.traitsInPlay} listener failed`, error);
-    return { inPlay: [...items], outOfPlay: [] };
+    return { inPlay: [...items], outOfPlay: [], restored: [] };
   }
   const inPlay: any[] = [];
-  const outOfPlay: Array<{ name: string; reason: string }> = [];
+  const outOfPlay: Array<{ name: string; reason: string; restores?: RestoredTrait[] }> = [];
+  const restored: RestoredTrait[] = [];
   traits.forEach((entry, i) => {
-    if (entry?.inPlay === false) outOfPlay.push({ name: String(items[i]?.name ?? ""), reason: String(entry.reason ?? "") });
-    else inPlay.push(items[i]);
+    if (entry?.inPlay === false) {
+      const restores = (Array.isArray(entry.restores) ? entry.restores : [])
+        .filter((r) => r && typeof r.name === "string" && r.name.trim())
+        .map((r) => ({ name: r.name.trim(), ...(Number.isFinite(r.points) ? { points: Number(r.points) } : {}), ...(Number.isFinite(r.levels) ? { levels: Number(r.levels) } : {}) }));
+      outOfPlay.push({ name: String(items[i]?.name ?? ""), reason: String(entry.reason ?? ""), ...(restores.length ? { restores } : {}) });
+      restored.push(...restores);
+    } else inPlay.push(items[i]);
   });
-  return { inPlay, outOfPlay };
+  return { inPlay, outOfPlay, restored };
 }
 
 /** One carried item's weight, as `gworld.carriedWeight` hands it to a listener. */

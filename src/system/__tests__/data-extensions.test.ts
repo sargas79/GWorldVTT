@@ -363,13 +363,29 @@ describe("traits a module takes out of play (since 1.61.0)", () => {
     const result = moduleTraitsInPlay({}, items());
     expect(result.inPlay.map((i: { name: string }) => i.name)).toEqual(["Night Vision"]);
     expect(result.outOfPlay).toEqual([{ name: "Bionic Arm", reason: "Recovering from surgery" }]);
+    expect(result.restored).toEqual([]);
+  });
+
+  it("puts back the disadvantages a listener names while a trait is out of play (since 1.63.0)", async () => {
+    const { moduleTraitsInPlay } = await load();
+    globals.Hooks = {
+      callAll: (_hook: string, context: { traits: Array<{ name: string; inPlay: boolean; reason?: string; restores?: unknown[] }> }) => {
+        const arm = context.traits.find((t) => t.name === "Bionic Arm")!;
+        arm.inPlay = false;
+        arm.reason = "Recovering from surgery";
+        arm.restores = [{ name: "One Arm", points: -20 }, { name: "" }];
+      },
+    };
+    const result = moduleTraitsInPlay({}, items());
+    expect(result.restored).toEqual([{ name: "One Arm", points: -20 }]);
+    expect(result.outOfPlay).toEqual([{ name: "Bionic Arm", reason: "Recovering from surgery", restores: [{ name: "One Arm", points: -20 }] }]);
   });
 
   it("keeps every trait in play when a listener throws", async () => {
     const { moduleTraitsInPlay } = await load();
     globals.Hooks = { callAll: (_hook: string, context: { traits: Array<{ inPlay: boolean }> }) => { context.traits[0]!.inPlay = false; throw new Error("boom"); } };
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    expect(moduleTraitsInPlay({}, items())).toEqual({ inPlay: items(), outOfPlay: [] });
+    expect(moduleTraitsInPlay({}, items())).toEqual({ inPlay: items(), outOfPlay: [], restored: [] });
   });
 });
 
