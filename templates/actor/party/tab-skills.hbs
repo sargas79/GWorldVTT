@@ -1,0 +1,57 @@
+<section class="tab v2-tab party-tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+  <div class="party-skills-grid">
+    {{!-- Who is the party's best at what: every skill somebody has points in. --}}
+    <div class="v2-panel party-skills">
+      <div class="v2-ph v2-ph-tools">
+        <h2>{{localize "GWORLD.Party.SkillsHeading"}}</h2>
+        <label class="v2-search">
+          {{> "gworld.search"}}
+          <input type="search" data-party-filter="skills" placeholder="{{localize 'GWORLD.Party.SearchSkills'}}"
+                 aria-label="{{localize 'GWORLD.Party.SearchSkills'}}" autocomplete="off">
+        </label>
+      </div>
+      <p class="v2-note">{{localize "GWORLD.Party.SkillsHint"}}</p>
+      {{#if skills.length}}
+        <ul class="v2-skill-list party-skill-list" data-party-list="skills">
+          {{#each skills as |row|}}
+            <li class="v2-skill-row" data-party-name="{{row.name}}" data-member-uuid="{{row.best.uuid}}">
+              <span class="v2-skill-name">{{row.name}}</span>
+              <span class="party-holder">
+                {{row.best.memberName}}{{#if row.others.length}} <em data-tooltip="{{localize 'GWORLD.Party.AlsoKnownBy' list=row.othersText}}">+{{row.others.length}}</em>{{/if}}
+              </span>
+              <button type="button" class="v2-skill-level rollable" data-action="roll" data-roll-type="skill"
+                      data-roll-label="{{row.name}}" data-roll-target="{{row.best.level}}" data-based-on="{{row.best.attribute}}"
+                      aria-label="{{localize 'GWORLD.Party.RollFor' what=row.name name=row.best.memberName}}">{{row.best.level}}</button>
+            </li>
+          {{/each}}
+        </ul>
+      {{else}}
+        <p class="v2-empty">{{localize "GWORLD.Party.NoSkills"}}</p>
+      {{/if}}
+    </div>
+
+    {{!-- The languages between them, with the best speaker and writer of each. --}}
+    <div class="v2-panel party-languages">
+      <h2 class="v2-ph">{{localize "GWORLD.Party.Languages"}}</h2>
+      {{#if languages.length}}
+        <ul class="party-language-list">
+          {{#each languages as |row|}}
+            <li class="party-language">
+              <span class="v2-skill-name">{{row.name}}</span>
+              <span class="party-language-level">
+                <span class="v2-stat-label">{{localize "GWORLD.Language.Spoken"}}</span>
+                {{#if row.spoken}}{{row.spoken.levelLabel}} <em>{{row.spoken.memberName}}</em>{{else}}<span class="v2-muted">&mdash;</span>{{/if}}
+              </span>
+              <span class="party-language-level">
+                <span class="v2-stat-label">{{localize "GWORLD.Language.Written"}}</span>
+                {{#if row.written}}{{row.written.levelLabel}} <em>{{row.written.memberName}}</em>{{else}}<span class="v2-muted">&mdash;</span>{{/if}}
+              </span>
+            </li>
+          {{/each}}
+        </ul>
+      {{else}}
+        <p class="v2-empty">{{localize "GWORLD.Party.NoLanguages"}}</p>
+      {{/if}}
+    </div>
+  </div>
+</section>

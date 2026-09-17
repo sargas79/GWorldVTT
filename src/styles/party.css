@@ -1,0 +1,205 @@
+/**
+ * The party sheet, and the party in the Actors sidebar.
+ *
+ * The sheet wears the new character sheet's frame and components
+ * (sheet-v2.css); this holds only what that stylesheet lacks: a member's
+ * row, the skills and campaign panels, and the sidebar's nesting.
+ */
+
+/* ── the roster ────────────────────────────────────────────────────────── */
+
+.gworld.party.v2 .party-roster { display: flex; flex-direction: column; gap: 10px; }
+
+.gworld.party.v2 .party-member {
+  display: grid;
+  grid-template-columns: 56px minmax(140px, 0.9fr) minmax(170px, 0.8fr) auto minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  align-items: center;
+  padding: 10px 14px;
+}
+.gworld.party.v2 .party-member.missing { opacity: 0.7; }
+
+.gworld.party.v2 .party-portrait {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 2px solid var(--v2-panel-line);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--v2-panel-3);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 24px;
+  color: var(--v2-ink-muted);
+  box-shadow: none;
+}
+.gworld.party.v2 .party-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: center top; border: 0; }
+.gworld.party.v2 .party-portrait:hover { border-color: var(--v2-gold); }
+.gworld.party.v2 .party-portrait-missing { cursor: default; }
+
+.gworld.party.v2 .party-identity { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+.gworld.party.v2 .party-name {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: left;
+  color: var(--v2-ink);
+  cursor: pointer;
+}
+.gworld.party.v2 button.party-name:hover { color: var(--v2-steel); }
+.gworld.party.v2 .party-sub { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--v2-ink-muted); }
+.gworld.party.v2 .party-cp { font-size: 14px; padding: 1px 8px; }
+
+.gworld.party.v2 .party-pools { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.gworld.party.v2 .party-pools .v2-pool-name,
+.gworld.party.v2 .party-pools .v2-pool-value { font-size: 15px; }
+.gworld.party.v2 .party-pools .v2-pool-value input { height: 22px; }
+.gworld.party.v2 .party-pools .v2-bar { height: 10px; }
+
+.gworld.party.v2 .party-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(46px, auto));
+  gap: 4px 12px;
+}
+.gworld.party.v2 .party-stat { text-align: center; }
+.gworld.party.v2 .party-stat .v2-stat-label { font-size: 12px; }
+.gworld.party.v2 .party-stat .v2-stat-note { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gworld.party.v2 .party-stat-value {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.gworld.party.v2 button.party-stat-value { cursor: pointer; }
+.gworld.party.v2 button.party-stat-value:hover { color: var(--v2-steel); }
+
+.gworld.party.v2 .party-chips { min-width: 0; }
+.gworld.party.v2 .party-chips .v2-chip { font-size: 13px; padding: 2px 9px; }
+.gworld.party.v2 .party-chips .v2-chip img { width: 14px; height: 14px; }
+
+.gworld.party.v2 .party-actions { flex-direction: column; min-width: 0; }
+
+.gworld.party.v2 .party-empty { align-items: flex-start; }
+.gworld.party.v2 .party-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ── skills and languages ──────────────────────────────────────────────── */
+
+.gworld.party.v2 .party-skills-grid,
+.gworld.party.v2 .party-campaign-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(220px, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.gworld.party.v2 .party-skill-list { max-height: none; }
+.gworld.party.v2 .party-holder { font-size: 13px; color: var(--v2-ink-muted); white-space: nowrap; }
+.gworld.party.v2 .party-holder em { font-style: normal; font-weight: 600; color: var(--v2-steel-deep); cursor: help; }
+
+.gworld.party.v2 .party-language-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.gworld.party.v2 .party-language {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 4px 14px;
+  align-items: baseline;
+  padding: 4px 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--v2-ink) 12%, transparent);
+}
+.gworld.party.v2 .party-language-level { font-size: 13px; white-space: nowrap; }
+.gworld.party.v2 .party-language-level .v2-stat-label { display: inline; font-size: 12px; margin-right: 4px; }
+.gworld.party.v2 .party-language-level em { font-style: normal; color: var(--v2-ink-muted); }
+
+/* ── the campaign ──────────────────────────────────────────────────────── */
+
+.gworld.party.v2 .party-fields { display: flex; flex-direction: column; gap: 10px; }
+.gworld.party.v2 .party-field { display: flex; flex-direction: column; gap: 3px; }
+.gworld.party.v2 .party-field input,
+.gworld.party.v2 .party-field select {
+  width: 100%;
+  max-width: 220px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--color-divider);
+  border-radius: 4px;
+  background: var(--v2-panel-2);
+  color: var(--v2-ink);
+  font-family: var(--font-heading);
+  font-size: 17px;
+}
+.gworld.party.v2 .party-field input::placeholder { font-family: var(--font-body); font-size: 12px; color: var(--v2-ink-muted); }
+.gworld.party.v2 .party-field input:disabled,
+.gworld.party.v2 .party-field select:disabled { opacity: 0.7; }
+.gworld.party.v2 .party-field-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--font-heading); font-size: 17px; }
+.gworld.party.v2 .party-notes .editor { min-height: 160px; }
+
+/* ── narrower ──────────────────────────────────────────────────────────── */
+
+@container v2sheet (max-width: 900px) {
+  .gworld.party.v2 .party-member { grid-template-columns: 56px minmax(0, 1fr) auto; }
+  .gworld.party.v2 .party-pools,
+  .gworld.party.v2 .party-stats,
+  .gworld.party.v2 .party-chips { grid-column: 1 / -1; }
+  .gworld.party.v2 .party-stats { grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); }
+  .gworld.party.v2 .party-actions { flex-direction: row; }
+  .gworld.party.v2 .party-skills-grid,
+  .gworld.party.v2 .party-campaign-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── the sidebar ───────────────────────────────────────────────────────── */
+
+/* A party's row holds its members, as a folder holds its contents. */
+#actors .directory-item.gworld-party { flex-wrap: wrap; }
+#actors .directory-item.gworld-party > .gworld-party-toggle {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  cursor: pointer;
+  line-height: 1;
+}
+#actors .directory-item.gworld-party > .gworld-party-toggle::before {
+  content: "";
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 0 auto;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid currentColor;
+  transition: transform 120ms ease;
+}
+#actors .directory-item.gworld-party.gworld-party-folded > .gworld-party-toggle::before { transform: rotate(-90deg); }
+#actors .directory-item.gworld-party > .entry-name { font-weight: bold; }
+#actors .gworld-party-members {
+  flex: 1 0 100%;
+  margin: 4px 0 0 12px;
+  padding: 0 0 0 8px;
+  border-left: 2px solid rgb(255 255 255 / 0.25);
+  list-style: none;
+}
+#actors .gworld-party-members:empty { display: none; }
+#actors .directory-item.gworld-party.gworld-party-folded > .gworld-party-members { display: none; }
+#actors .directory-item.gworld-party.gworld-party-over { box-shadow: inset 0 0 0 2px #d9a441; }

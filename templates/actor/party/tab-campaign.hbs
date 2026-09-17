@@ -1,0 +1,74 @@
+<section class="tab v2-tab party-tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+  <div class="party-campaign-grid">
+    {{!-- The terms the characters were made on. Blank means each keeps its own. --}}
+    <div class="v2-panel party-creation">
+      <h2 class="v2-ph">{{localize "GWORLD.Party.Creation"}}</h2>
+      <p class="v2-note">{{localize "GWORLD.Party.CreationHint"}}</p>
+      <div class="party-fields">
+        <label class="party-field">
+          <span class="v2-stat-label">{{localize "GWORLD.Field.StartingPoints"}}</span>
+          <input type="number" name="system.campaign.startingPoints" value="{{campaign.startingPoints}}" step="5" min="0"
+                 placeholder="{{localize 'GWORLD.Party.Unset'}}" {{#unless editable}}disabled{{/unless}}>
+        </label>
+        <label class="party-field">
+          <span class="v2-stat-label" data-tooltip="{{localize 'GWORLD.Hint.DisadvantageLimit'}}">{{localize "GWORLD.Field.DisadvantageLimit"}}</span>
+          <input type="number" name="system.campaign.disadvantageLimit" value="{{campaign.disadvantageLimit}}" step="5" min="0"
+                 placeholder="{{localize 'GWORLD.Party.Unset'}}" {{#unless editable}}disabled{{/unless}}>
+        </label>
+        <label class="party-field">
+          <span class="v2-stat-label">{{localize "GWORLD.Field.TechLevel"}}</span>
+          <input type="number" name="system.campaign.tl" value="{{campaign.tl}}" step="1" min="0"
+                 placeholder="{{localize 'GWORLD.Party.Unset'}}" {{#unless editable}}disabled{{/unless}}>
+        </label>
+      </div>
+      {{#if campaign.affected}}
+        <p class="v2-note">{{localize "GWORLD.Party.AffectedMembers" names=campaign.affected}}</p>
+      {{/if}}
+    </div>
+
+    {{!-- The world's own settings, which only a GM can write. --}}
+    {{#if world}}
+      <div class="v2-panel party-world">
+        <h2 class="v2-ph">{{localize "GWORLD.Party.World"}}</h2>
+        <p class="v2-note">{{localize "GWORLD.Party.WorldHint"}}</p>
+        <div class="party-fields">
+          {{#if world.mana}}
+            <div class="party-field">
+              <span class="v2-stat-label">{{localize "GWORLD.Mana.Setting"}}</span>
+              <span class="party-field-row">
+                <b>{{world.mana.worldLabel}}</b>
+                {{#if world.mana.fromScene}}<span class="v2-tag v2-tag-steel">{{localize "GWORLD.Party.SceneMana" level=world.mana.label}}</span>{{/if}}
+                <button type="button" class="v2-button v2-button-small" data-action="changeMana">{{localize "GWORLD.Mana.Change"}}</button>
+              </span>
+            </div>
+          {{/if}}
+          <label class="party-field">
+            <span class="v2-stat-label">{{localize "GWORLD.Legality.Setting"}}{{#unless world.controlRating.inPlay}} <em class="v2-muted">({{localize "GWORLD.Party.RuleOff"}})</em>{{/unless}}</span>
+            <select data-world-setting="{{world.controlRating.key}}" aria-label="{{localize 'GWORLD.Legality.Setting'}}">
+              {{#each world.controlRating.options as |o|}}<option value="{{o.value}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}
+            </select>
+          </label>
+          <label class="party-field">
+            <span class="v2-stat-label">{{localize "GWORLD.Settings.CombatStyle.Name"}}</span>
+            <select data-world-setting="{{world.combatStyle.key}}" aria-label="{{localize 'GWORLD.Settings.CombatStyle.Name'}}">
+              {{#each world.combatStyle.options as |o|}}<option value="{{o.value}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}
+            </select>
+          </label>
+        </div>
+        <div class="party-buttons">
+          <button type="button" class="v2-button" data-action="openRules">{{localize "GWORLD.Rules.MenuLabel"}}</button>
+          <button type="button" class="v2-button" data-action="openSources">{{localize "GWORLD.Sources.MenuLabel"}}</button>
+        </div>
+      </div>
+    {{/if}}
+  </div>
+
+  <div class="v2-panel party-notes">
+    <h2 class="v2-ph">{{localize "GWORLD.Party.Notes"}}</h2>
+    {{#if editable}}
+      <prose-mirror class="box editor prose" name="system.description" value="{{system.description}}" toggled>{{{descriptionHTML}}}</prose-mirror>
+    {{else}}
+      <div class="box prose">{{{descriptionHTML}}}</div>
+    {{/if}}
+  </div>
+</section>

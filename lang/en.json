@@ -3,7 +3,8 @@
     "Actor": {
       "character": "Character",
       "npc": "NPC",
-      "vehicle": "Vehicle"
+      "vehicle": "Vehicle",
+      "party": "Party"
     },
     "Item": {
       "trait": "Trait",
@@ -27,7 +28,8 @@
       "Item": "GURPS Item",
       "Vehicle": "Vehicle",
       "CharacterV2": "GURPS Character Sheet",
-      "NpcFullV2": "GURPS NPC Sheet (full)"
+      "NpcFullV2": "GURPS NPC Sheet (full)",
+      "Party": "GURPS Party"
     },
     "Tab": {
       "attributes": "Attr",
@@ -4011,6 +4013,61 @@
       "Traits": "Hard to Subdue, Fit",
       "Out": "{name} falls unconscious",
       "TurnStart": "{name} is at 0 HP or less: roll HT to stay conscious, unless this turn is Do Nothing with no defense rolls."
+    },
+    "Party": {
+      "Tab": {
+        "members": "Members",
+        "skills": "Skills",
+        "campaign": "Campaign"
+      },
+      "Eyebrow": "Party",
+      "Name": "Party name",
+      "OneMember": "1 member",
+      "Members": "{count} members",
+      "Character": "Character",
+      "Npc": "NPC",
+      "Fold": "Fold or unfold the party",
+      "NoMembers": "Nobody yet. Drop characters here from the sidebar, or add them.",
+      "AddMembers": "Add members",
+      "AddMembersHint": "Choose who is in the party from the world's characters. A character can also be dropped onto this sheet, or onto the party's row in the sidebar.",
+      "AddTitle": "Add to the party",
+      "AddHint": "Tick who joins. Player characters are ticked already.",
+      "Add": "Add",
+      "InParty": "in {party}",
+      "NoneToAdd": "Every character in the world is already in this party.",
+      "AddPlayers": "Add every player character",
+      "NoPlayerCharacters": "No character is owned by a player yet.",
+      "Open": "Open the sheet",
+      "OpenNamed": "Open {name}",
+      "Remove": "Leave the party",
+      "MoveUp": "Move up",
+      "MoveDown": "Move down",
+      "MissingName": "Missing",
+      "Missing": "This actor no longer exists. Take it off the list.",
+      "AlreadyIn": "{name} is already in {party}.",
+      "CannotJoin": "{name} cannot join a party: only characters and NPCs can.",
+      "Hp": "HP",
+      "Fp": "FP",
+      "DrSplits": "differs by damage type",
+      "RollFor": "Roll {what} for {name}",
+      "SkillsHeading": "Best in the party",
+      "SkillsHint": "Every skill somebody has put points into, with the highest level and who holds it. Click a level to roll it for them.",
+      "SearchSkills": "Search skills…",
+      "NoSkills": "Nobody has put points into a skill yet.",
+      "AlsoKnownBy": "Also: {list}",
+      "Languages": "Languages",
+      "NoLanguages": "No languages recorded on anyone.",
+      "Creation": "Character creation",
+      "CreationHint": "The terms every member was made on (Characters pp. 10-11, 22). Set here, a figure replaces the one on each member's sheet and cannot be changed there; left blank, each member keeps its own.",
+      "Unset": "as on each sheet",
+      "AffectedMembers": "Applies to {names}.",
+      "World": "The world",
+      "WorldHint": "Foundry's settings for this world, the same ones as on the settings page.",
+      "SceneMana": "this scene: {level}",
+      "RuleOff": "rule off",
+      "Notes": "Notes",
+      "SetBy": "Set by {party}",
+      "SetByHint": "This is the campaign's figure, set on the party sheet. Change it there."
     },
     "SheetV2": {
       "SizeModifier": "Size Modifier",

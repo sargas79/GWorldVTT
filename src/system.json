@@ -171,7 +171,8 @@
     "Actor": {
       "character": {},
       "npc": {},
-      "vehicle": {}
+      "vehicle": {},
+      "party": {}
     },
     "Item": {
       "trait": {},
