@@ -1741,3 +1741,25 @@
   .gworld.v2.gworld-builder .gb-row { grid-template-columns: minmax(0, 1fr) 90px 30px; }
   .gworld.v2.gworld-builder .gb-row .gb-detail { display: none; }
 }
+
+/* Money, cost of living and job. */
+.gworld.v2 .v2-money-standing { font-size: 12px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-money-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 8px; }
+.gworld.v2 .v2-money-cell { display: flex; flex-direction: column; gap: 4px; padding: 10px; border: 1px solid var(--color-divider); border-radius: 4px; }
+.gworld.v2 .v2-money-cell label, .gworld.v2 .v2-money-label { font-family: var(--font-heading); font-size: 13px; color: var(--v2-ink-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.gworld.v2 .v2-money-value { font-family: var(--font-heading); font-size: 22px; font-weight: 600; display: flex; align-items: baseline; gap: 2px; }
+.gworld.v2 .v2-money-value input { width: 6em; font: inherit; background: transparent; border: 0; border-bottom: 1px dashed var(--v2-ink-muted); color: inherit; padding: 0; }
+.gworld.v2 .v2-money-value input:focus-visible { outline: 2px solid var(--v2-ink-muted); outline-offset: 2px; }
+.gworld.v2 .v2-money-cell small { font-size: 11px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-money-cell .v2-button { align-self: flex-start; margin-top: auto; }
+.gworld.v2 .v2-money-budget { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.gworld.v2 .v2-money-budget li { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
+.gworld.v2 .v2-money-net { border-top: 1px solid var(--color-divider); padding-top: 2px; font-weight: 600; }
+.gworld.v2 .v2-money .v2-good { color: #3f7a34; }
+.gworld.v2 .v2-money .v2-bad { color: #a2463c; }
+.gworld.v2 .v2-job { margin-top: 12px; }
+.gworld.v2 .v2-job-head { font-family: var(--font-heading); font-size: 14px; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px; }
+.gworld.v2 .v2-job-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+.gworld.v2 .v2-job-fields label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-job-fields .v2-job-risk { grid-column: 1 / -1; }
+.gworld.v2 .v2-job-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--v2-ink-muted); }

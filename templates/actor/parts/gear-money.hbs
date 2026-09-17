@@ -55,7 +55,14 @@
       </div>
       <div class="fld">
         <span class="fl">{{localize "GWORLD.Life.JobSkill"}}</span>
-        <div class="fi"><input type="text" name="system.job.skill" value="{{system.job.skill}}" {{#unless editable}}disabled{{/unless}}></div>
+        <div class="fi">
+          <select name="system.job.skill" {{#unless editable}}disabled{{/unless}}>
+            <option value="">&mdash;</option>
+            {{#each jobSkills as |option|}}
+              <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+            {{/each}}
+          </select>
+        </div>
       </div>
       <div class="fld">
         <span class="fl">{{localize "GWORLD.Life.JobLevel"}}</span>
