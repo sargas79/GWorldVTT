@@ -24,6 +24,12 @@
     </div>
   </div>
 
+  <div class="v2-header-side">
+  {{#if editable}}
+    <button type="button" class="v2-button v2-build-button" data-action="openBuilder"
+            data-tooltip="{{localize "GWORLD.Builder.OpenHint"}}">{{> "gworld.v2icon.build"}} {{localize "GWORLD.Builder.Open"}}</button>
+  {{/if}}
+
   {{!-- Spending past the budget is never blocked: it is flagged, with how far over. --}}
   <div class="v2-points v2-points-{{v2.points.state}}"
        data-tooltip="{{#if (eq v2.points.state 'over')}}{{localize 'GWORLD.Hint.OverBudget'}}{{else}}{{localize 'GWORLD.SheetV2.PointsHint' spent=v2.points.spent available=v2.points.available}}{{/if}}">
@@ -42,5 +48,6 @@
               data-tooltip="{{localize "GWORLD.Points.AwardHint"}}"
               aria-label="{{localize "GWORLD.Points.Award"}}">{{> "gworld.plus"}}</button>
     {{/if}}
+  </div>
   </div>
 </header>

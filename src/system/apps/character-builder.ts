@@ -91,11 +91,13 @@ const WATCHED_HOOKS = ["updateActor", "createItem", "updateItem", "deleteItem"] 
 
 export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) {
   static override DEFAULT_OPTIONS = {
-    classes: ["gworld", "gworld-builder"],
-    position: { width: 520, height: 620 },
+    // "v2" gives it the character sheet's look: its tokens, panels and buttons.
+    classes: ["gworld", "v2", "gworld-builder"],
+    position: { width: 760, height: 720 },
     window: { title: "GWORLD.Builder.Title", resizable: true },
     actions: {
       back: CharacterBuilder.#onBack,
+      goto: CharacterBuilder.#onGoto,
       next: CharacterBuilder.#onNext,
       browse: CharacterBuilder.#onBrowse,
       deleteItem: CharacterBuilder.#onDeleteItem,
@@ -232,6 +234,13 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       isFirst: this.#step === 0,
       isLast: this.#step === STEPS.length - 1,
       isReview: step.id === "review",
+      steps: STEPS.map((s, index) => ({
+        id: s.id,
+        index,
+        number: index + 1,
+        active: index === this.#step,
+        done: index < this.#step,
+      })),
       hasBrowse: Boolean(step.types),
       browseTypes: [...(step.types ?? []), ...(step.types ? builderTypesFor(step.id) : [])].join(","),
       items: this.#itemsForStep(step),
@@ -262,6 +271,9 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
         available: points.available ?? points.starting ?? 0,
         earned: points.earned ?? 0,
         remaining: points.remaining ?? 0,
+        // As the sheet's header reads it: points to spend, all spent, or over.
+        state: points.overBudget ? "over" : (points.remaining ?? 0) > 0 ? "ready" : "spent",
+        overBy: Math.max(0, (points.spent ?? 0) - (points.available ?? points.starting ?? 0)),
         attributes: points.attributes ?? 0,
         advantages: points.advantages ?? 0,
         disadvantages: points.disadvantages ?? 0,
@@ -327,6 +339,14 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
 
   static async #onBack(this: CharacterBuilder): Promise<void> {
     this.#step = Math.max(0, this.#step - 1);
+    await this.render();
+  }
+
+  /** Jumps to a step: the steps are an order to build in, not a gate. */
+  static async #onGoto(this: CharacterBuilder, _event: Event, target: HTMLElement): Promise<void> {
+    const index = Number(target.dataset.step);
+    if (!Number.isInteger(index)) return;
+    this.#step = Math.min(STEPS.length - 1, Math.max(0, index));
     await this.render();
   }
 

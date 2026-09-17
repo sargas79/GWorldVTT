@@ -1418,93 +1418,6 @@
   font-size: 12px;
 }
 
-/* ── the guided builder ─────────────────────────────────────────────────── */
-
-.gworld-builder .gb {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  gap: 8px;
-  padding: 10px;
-}
-.gworld-builder .gb-head {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex: 0 0 auto;
-}
-.gworld-builder .gb-step {
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-neutral-700);
-}
-.gworld-builder .gb-title { font-family: var(--font-heading); font-size: 15px; }
-
-/* The ledger rides along on every step; losing track of it is what the
-   guided build exists to prevent. */
-.gworld-builder .gb-ledger {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  flex: 0 0 auto;
-  padding: 5px 8px;
-  font-size: 11.5px;
-  background: color-mix(in srgb, var(--color-text) 5%, transparent);
-  border-left: 2px solid var(--color-neutral-700);
-}
-.gworld-builder .gb-ledger .over { color: var(--color-warning, #a33); font-weight: 600; }
-
-.gworld-builder .gb-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.gworld-builder .gb-hint { margin: 0; font-size: 11.5px; color: var(--color-neutral-800); }
-.gworld-builder .gb-browse { align-self: flex-start; }
-
-.gworld-builder .gb-list { margin: 0; padding: 0; list-style: none; }
-.gworld-builder .gb-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto auto;
-  align-items: center;
-  gap: 8px;
-  padding: 3px 4px;
-  border-bottom: 1px solid var(--color-neutral-300);
-}
-.gworld-builder .gb-detail {
-  font-size: 11px;
-  color: var(--color-accent-700);
-  white-space: nowrap;
-}
-.gworld-builder .gb-remove {
-  width: auto;
-  padding: 2px 6px;
-  line-height: 1;
-  cursor: pointer;
-}
-.gworld-builder .gb-empty {
-  padding: 8px 4px;
-  font-size: 12px;
-  color: var(--color-neutral-800);
-}
-
-/* The review: a row per category, then the total on its own, set apart. */
-.gworld-builder table.gb-review { margin: 0; }
-.gworld-builder .ledger { margin-top: 4px; }
-
-.gworld-builder .gb-foot {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  flex: 0 0 auto;
-  padding-top: 6px;
-  border-top: 1px solid var(--color-neutral-300);
-}
-
 /* Retreating: an option on any defense against a melee attack, worth more to
    a Dodge than to most parries. */
 .gworld-chat .gc-retreat {
@@ -1549,28 +1462,6 @@
   text-align: right;
 }
 .gworld .tag.taglevels input:focus { outline: none; border-bottom-style: solid; }
-
-/* Spending on an item from inside the builder, rather than going and finding
-   its own sheet. */
-.gworld-builder .gb-spend {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--color-neutral-800);
-  white-space: nowrap;
-}
-.gworld-builder .gb-spend input {
-  width: 3.2em;
-  padding: 0;
-  background: none;
-  border: 0;
-  border-bottom: 1px dotted var(--color-neutral-500);
-  font: inherit;
-  color: inherit;
-  text-align: right;
-}
-.gworld-builder .gb-spend input:focus { outline: none; border-bottom-color: var(--color-accent); }
 
 /* Stepping skill points along the cost table, rather than one at a time: the
    totals between the steps buy nothing. */
