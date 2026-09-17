@@ -1724,9 +1724,12 @@
 .gworld.v2.gworld-builder .gb-foot .v2-button:not(.v2-button-gold) { background: var(--v2-frame-3); border-color: var(--v2-frame-line); color: var(--v2-frame-text); }
 .gworld.v2.gworld-builder .gb-foot .v2-button:not(.v2-button-gold):hover:not(:disabled) { background: var(--v2-frame-line); }
 
-@container v2sheet (max-width: 560px) {
+/* The sheet narrows its header at 700px; the builder's ledger goes under it then too. */
+@container v2sheet (max-width: 700px) {
   .gworld.v2.gworld-builder .gb-header { grid-template-columns: auto minmax(0, 1fr); }
-  .gworld.v2.gworld-builder .gb-ledgers { grid-column: 1 / -1; align-items: flex-start; }
+  .gworld.v2.gworld-builder .gb-ledgers { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 12px; }
+}
+@container v2sheet (max-width: 560px) {
   .gworld.v2.gworld-builder .gb-attributes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .gworld.v2.gworld-builder .gb-row { grid-template-columns: minmax(0, 1fr) 90px 30px; }
   .gworld.v2.gworld-builder .gb-row .gb-detail { display: none; }
