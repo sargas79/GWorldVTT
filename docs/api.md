@@ -771,6 +771,17 @@ Two fields a module may read (since 1.62.0):
   the Basic Set's afflictions for the GM to pick from, or beside it. The
   system pushes nothing: which of the three bands one of its own afflictions
   inflicts is the GM's call, and the card asks.
+- **Afflictions resisted with a Fright Check** (since 1.63.0): a mode whose
+  `afflictionAttribute` is `fright` rolls a Fright Check at its
+  `afflictionModifier` instead of an attribute roll. The check passes through
+  `gworld.successRollModifiers` tagged `fright`, `will`, `resist` and
+  `affliction`, with the same `attack`, and a failure fires
+  `gworld.afflictionEffect` with the check's margin and `frightEffect`, the
+  table's entry. `rollFrightCheckOutcome` returns `{ success, margin, effect,
+  total }`.
+- **Stun recovery** (since 1.63.0): the roll to recover from stun passes through
+  `gworld.successRollModifiers` tagged `stunRecovery` and `HT` (or `IQ` and
+  `mental`), so a condition or a module can make recovery harder.
 - **Quick Contest results** (since 1.37.0): `gworld.afterQuickContest` follows every
   Quick Contest, once its card is posted, with `{ label, tags, first, second, outcome,
   marginOfVictory }`. Each side is `{ actor, base, effective, outcome }`, where

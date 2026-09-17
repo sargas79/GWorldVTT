@@ -151,10 +151,16 @@ export async function rollStunRecovery(options: {
   const attribute = mental ? "IQ" : "HT";
   // A HT roll reads Fit; the IQ roll for mental stun does not.
   const score = mental ? attributeOf(actor, attribute) : healthRollScore(actor);
+  // Conditions and modules may make recovery harder or easier (since API 1.63.0, tagged "stunRecovery").
+  const modifier = successRollModifiers({
+    actor, label: game.i18n.localize("GWORLD.Knockdown.recovered"), kind: "attribute", skill: attribute,
+    base: score, tags: ["stunRecovery", attribute, ...(mental ? ["mental"] : [])], modifiers: [],
+  }).reduce((sum, line) => sum + line.value, 0);
+  const target = score + modifier;
 
   const roll = new Roll("3d6");
   await roll.evaluate();
-  const outcome = resolveSuccess(roll.total, score, dieResults(roll));
+  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
   const recovered = recoversFromStun(outcome);
 
   if (recovered) {
@@ -165,8 +171,8 @@ export async function rollStunRecovery(options: {
   const content = await foundry.applications.handlebars.renderTemplate(KNOCKDOWN_TEMPLATE, {
     name: String(actor.name ?? ""),
     ht: score,
-    modifier: 0,
-    target: score,
+    modifier,
+    target,
     dice: dieResults(roll),
     roll: roll.total,
     margin: outcome.margin,

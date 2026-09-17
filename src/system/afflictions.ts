@@ -335,6 +335,8 @@ export async function applyAfflictionEffects(context: {
   mode: { index: number; ranged: boolean; derived?: string } | null;
   label: string;
   margin: number;
+  /** The Fright Check table's entry, where the affliction was resisted with one (since 1.63.0). */
+  frightEffect?: string | null;
 }): Promise<string[]> {
   const fired = callCombatHook(PROCEDURE_HOOKS.afflictionEffect, {
     ...context,

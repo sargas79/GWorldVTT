@@ -115,7 +115,7 @@ import {
 import { grappleSizeBonus } from "../../rules/size.js";
 import { rollStunRecovery } from "../knockdown.js";
 import { applyFirstAid, regenerate, restForADay, restForFatigue, tryToWake } from "../recovery.js";
-import { rollFrightCheck } from "../fright.js";
+import { isFrightResistance, rollFrightCheck, rollFrightCheckOutcome } from "../fright.js";
 import { traitsOf, wornArmor } from "../damage.js";
 import { applyAfflictionEffects } from "../afflictions.js";
 import { feintDefenseScore, recordFeint } from "../feint.js";
@@ -2891,6 +2891,20 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // roll. An affliction is not damage, so none of it is subtracted here:
       // it is told to the modules, which may have a rule that reads it.
       const drHere = wornDrAt(wornArmor(victim), hitLocation, damageType);
+
+      // An affliction resisted with a Fright Check rather than an attribute (since API 1.63.0).
+      if (isFrightResistance(attribute)) {
+        const fright = await rollFrightCheckOutcome({
+          actor: victim,
+          modifier,
+          tags: ["resist", "affliction"],
+          attack: { attacker: this.actor, item, mode, distanceYards: yards, halfDamageRange, dr: drHere, drCounted: drHere > 0 },
+        });
+        if (fright && !fright.success) {
+          await applyAfflictionEffects({ actor: victim, attacker: this.actor, item, mode, label, margin: fright.margin, frightEffect: fright.effect });
+        }
+        continue;
+      }
 
       const outcome = await rollSuccess({
         actor: victim,
