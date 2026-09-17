@@ -210,6 +210,16 @@ function addApplyControls(message: any, html: HTMLElement): void {
     row.append(arcSelect);
   }
 
+  // A blow from underneath meets the sole of a boot on the foot (since API 1.63.0).
+  const below = document.createElement("input");
+  below.type = "checkbox";
+  const belowLabel = document.createElement("label");
+  belowLabel.className = "gc-retreat";
+  belowLabel.append(below, document.createTextNode(game.i18n.localize("GWORLD.Armor.FromBelow")));
+  const showBelow = () => { belowLabel.hidden = readLocationValue(select.value)?.hitLocation !== "foot"; };
+  select.addEventListener("change", showBelow);
+  showBelow();
+
   // Whether the blow was a critical is known by whoever rolled the attack, not
   // by this card: the attack was a separate roll, possibly minutes ago. So it
   // is asked rather than assumed, and the table is rolled at the moment of
@@ -240,6 +250,7 @@ function addApplyControls(message: any, html: HTMLElement): void {
       hitLocation: where.hitLocation,
       addonLocation: where.addonLocation,
       arc: (arcSelect?.value ?? null) as Arc | null,
+      fromBelow: !belowLabel.hidden && below.checked,
       distanceYards: distance ? Math.max(0, Number(distance.value) || 0) : 0,
       critical: critical?.checked ?? false,
     });
@@ -247,6 +258,7 @@ function addApplyControls(message: any, html: HTMLElement): void {
 
   row.append(select);
   if (distance) row.append(distance);
+  row.append(belowLabel);
   if (criticalLabel) row.append(criticalLabel);
   row.append(button);
   root.append(row);
@@ -311,6 +323,7 @@ async function applyFromCard(options: {
   distanceYards: number;
   critical: boolean;
   arc?: Arc | null;
+  fromBelow?: boolean;
 }): Promise<void> {
   const { flag, hitLocation, distanceYards } = options;
   const targets = currentTargets();
@@ -378,6 +391,7 @@ async function applyFromCard(options: {
       : {}),
     ...(critical ? { critical: critical.hit } : {}),
     ...(options.arc ? { arc: options.arc } : {}),
+    ...(options.fromBelow ? { fromBelow: true } : {}),
     ...(cinematicBlast ? { cinematicBlast: true } : {}),
   };
 
