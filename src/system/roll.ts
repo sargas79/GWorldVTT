@@ -2039,12 +2039,27 @@ function drawBreakdown(root: HTMLElement, breakdown: RollBreakdown): void {
  */
 function showRangedBreakdown(
   root: HTMLElement,
-  input: RangedInput,
+  input: RangedInput & { calledShot?: string; addonValues?: Record<string, unknown> },
   options: Parameters<typeof promptForRangedAttack>[0],
   rateOfFire: number,
 ): void {
   const actor = options.actor;
-  const shells = Math.min(Math.max(1, Math.floor(input.shots || 1)), Math.max(1, rateOfFire));
+
+  // The modules' options first, exactly as the shot reads them: one of them may
+  // halve the Rate of Fire, which decides how many shots the recoil is reckoned
+  // over, and several add modifiers of their own.
+  const chosen = applyAttackOptions(
+    attackContextFor({
+      actor, item: options.item, ranged: true, damageType: options.damageType,
+      effectiveSkill: Number(options.effectiveSkill) || 0,
+    }),
+    input.addonValues ?? {},
+  );
+  const effectiveRateOfFire = Math.max(
+    1,
+    Math.floor(rateOfFire * (chosen.rateOfFireMultiplier > 0 ? chosen.rateOfFireMultiplier : 1)),
+  );
+  const shells = Math.min(Math.max(1, Math.floor(input.shots || 1)), effectiveRateOfFire);
   const pellets = multipleProjectiles({
     shotsFired: shells,
     projectiles: options.projectiles ?? 1,
@@ -2054,13 +2069,9 @@ function showRangedBreakdown(
   });
 
   const fromDialog = rangedModifiers({ ...input, shots: pellets.effectiveShots }, options);
-  const called = calledShotModifier(
-    (input as RangedInput & { calledShot?: string }).calledShot ?? UNAIMED,
-    options.damageType,
-    false,
-    actor,
-  );
+  const called = calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, false, actor);
   if (called.modifier) fromDialog.push(called.modifier);
+  fromDialog.push(...chosen.modifiers);
 
   // What the roll will add once the dialog closes: the shooter's condition and
   // where they are standing. Asked with dialogAsked, as the roll asks it.
@@ -2281,7 +2292,7 @@ export async function promptForRangedAttack(options: {
       // shooter decides whether to aim another second by seeing what it buys.
       const update = () => {
         const form = root.closest<HTMLElement>(".application") ?? root;
-        showRangedBreakdown(root, readForm(form) as RangedInput, options, rateOfFire);
+        showRangedBreakdown(root, readForm(form) as Parameters<typeof showRangedBreakdown>[1], options, rateOfFire);
       };
       root.addEventListener("change", update);
       root.addEventListener("input", update);
@@ -3089,9 +3100,12 @@ export async function promptForMeleeAttack(options: {
           }),
           ...positionRollLines(options.actor, { rollType: "attack", ranged: false }),
         ];
-        // A Move and Attack cannot be rolled above 9, however good the fighter
-        // (p. 365), so the ceiling is shown rather than sprung at roll time.
-        const cap = options.actor?.system?.maneuver === "moveAndAttack" ? WILD_SWING_SKILL_CAP : null;
+        // Move and Attack and a Wild Swing both hold skill to 9 (pp. 365, 388),
+        // so the ceiling is shown rather than sprung at roll time. The same
+        // pair the roll itself caps on.
+        const cap = options.actor?.system?.maneuver === "moveAndAttack" || answers.wildSwing
+          ? WILD_SWING_SKILL_CAP
+          : null;
         drawBreakdown(root, rollBreakdown(Number(options.effectiveSkill) || 0, [
           { modifiers: automatic, automatic: true },
           { modifiers, automatic: false },

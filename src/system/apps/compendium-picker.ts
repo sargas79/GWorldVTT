@@ -23,6 +23,7 @@ import { sourceCollections } from "../compendium-sources.js";
 import {
   amountKind,
   customItemData,
+  existingPoints,
   levelCeiling,
   planAddition,
   pointSteps,
@@ -280,7 +281,8 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     // Snapped here as well as on the field, so a total that never passed
     // through the field -- a remembered one, or a default -- is still a total
     // that buys something.
-    const amount = kind ? snapAmount(item, this.#amounts.get(entry.uuid) ?? 1) : 1;
+    const held = kind === "points" ? this.#heldFor(item) : 0;
+    const amount = kind ? snapAmount(item, this.#amounts.get(entry.uuid) ?? 1, held) : 1;
     const ceiling = kind === "levels" ? levelCeiling(item) : null;
     const cost = kind ? previewCost(item, amount) : null;
     return {
@@ -293,7 +295,7 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
         ? game.i18n.localize("GWORLD.Trait.Levels")
         : game.i18n.localize("GWORLD.Picker.Points"),
       cost: cost === null ? null : game.i18n.format("GWORLD.Picker.Cost", { points: cost }),
-      levelLabel: this.#levelLabel(item, amount),
+      levelLabel: this.#levelLabel(item, held + amount),
     };
   }
 
@@ -314,6 +316,24 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
   #itemFor(uuid: string): PlannedItem | null {
     const entry = this.#entries?.find((e) => e.uuid === uuid);
     return entry ? { type: entry.type, name: entry.name, system: entry.system } : null;
+  }
+
+  /**
+   * The points the character already has in an entry. The amount beside a row
+   * is added to these, so it is their sum that has to land on a step.
+   */
+  #heldFor(item: PlannedItem): number {
+    return existingPoints(item, this.#ownedItems());
+  }
+
+  /** The character's items, in the shape the merge rules read. */
+  #ownedItems(): PlannedItem[] {
+    return [...(this.#actor?.items ?? [])].map((item: any) => ({
+      id: item.id,
+      type: item.type,
+      name: item.name,
+      system: item.system,
+    }));
   }
 
   /** Writes an amount back to its field and re-prices the row around it. */
@@ -341,9 +361,13 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
       costLabel.textContent = game.i18n.format("GWORLD.Picker.Cost", { points: cost });
     }
 
-    // The level those points reach, kept in step with the cost beside it.
+    // The level those points reach, kept in step with the cost beside it. The
+    // level is the one the character ends up at, so what they already hold
+    // counts towards it.
     const levelLabel = row?.querySelector<HTMLElement>(".gp-level");
-    if (levelLabel) levelLabel.textContent = this.#levelLabel(item, amount) ?? "";
+    if (levelLabel) {
+      levelLabel.textContent = this.#levelLabel(item, this.#heldFor(item) + amount) ?? "";
+    }
   }
 
   override async _onRender(context: object, options: object): Promise<void> {
@@ -365,7 +389,8 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
       input.addEventListener("change", () => {
         const uuid = input.dataset.amountFor;
         if (!uuid) return;
-        this.#setAmount(input, snapAmount(this.#itemFor(uuid)!, Number(input.value)));
+        const item = this.#itemFor(uuid)!;
+        this.#setAmount(input, snapAmount(item, Number(input.value), this.#heldFor(item)));
       });
     }
 
@@ -380,7 +405,7 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
         const direction = Number(button.dataset.step) < 0 ? -1 : 1;
         const item = this.#itemFor(uuid)!;
         // The step is the table's, not one: 4 points goes to 8, not to 5.
-        const stepped = steppedAmount(item, Number(input.value), direction);
+        const stepped = steppedAmount(item, Number(input.value), direction, this.#heldFor(item));
         const ceiling = amountKind(item) === "levels" ? levelCeiling(item) : null;
         this.#setAmount(input, ceiling === null ? stepped : Math.min(stepped, ceiling));
       });
@@ -428,15 +453,11 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
 
     // Snapped once more at the point of taking it: whatever route the number
     // arrived by, what is spent is a total that buys a level.
-    const amount = snapAmount({ type: data.type, name: data.name, system: data.system }, this.#amounts.get(uuid) ?? 1);
+    const planned: PlannedItem = { type: data.type, name: data.name, system: data.system };
+    const amount = snapAmount(planned, this.#amounts.get(uuid) ?? 1, existingPoints(planned, this.#ownedItems()));
     const plan = planAddition({
       source: data,
-      existing: [...(this.#actor.items ?? [])].map((item: any) => ({
-        id: item.id,
-        type: item.type,
-        name: item.name,
-        system: item.system,
-      })),
+      existing: this.#ownedItems(),
       chosen: { levels: amount, points: amount },
     });
 

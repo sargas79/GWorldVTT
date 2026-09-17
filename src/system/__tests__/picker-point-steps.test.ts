@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { pointSteps, snapAmount, steppedAmount } from "../picker-merge.js";
+import { existingPoints, pointSteps, snapAmount, steppedAmount } from "../picker-merge.js";
 
 const skill = (difficulty: string) => ({
   type: "skill",
@@ -125,5 +125,99 @@ describe("stepping the field", () => {
     expect(steppedAmount(trait, 2, 1)).toBe(3);
     expect(steppedAmount(trait, 3, -1)).toBe(2);
     expect(snapAmount(trait, 3)).toBe(3);
+  });
+});
+
+
+describe("the amount is added to what the character already has", () => {
+  // planAddition writes `from + points`, so it is the total that has to land on
+  // a step. Snapping the increment on its own put the total off the table.
+  const average = skill("A");
+
+  it("snaps the total, not the increment", () => {
+    // Already worth 1 point, asked for 3 more: 4 is a step, so 3 stands.
+    expect(snapAmount(average, 3, 1)).toBe(3);
+    // Asked for 2 more from 1: the total 3 buys nothing 2 does not, so it
+    // comes back to a total of 2 -- one point.
+    expect(snapAmount(average, 2, 1)).toBe(1);
+  });
+
+  it("always adds at least the next step up", () => {
+    for (const held of [0, 1, 2, 4, 8, 12]) {
+      const added = snapAmount(average, 1, held);
+      expect(added).toBeGreaterThan(0);
+      const total = held + added;
+      // The total reached must itself be a step.
+      expect(pointSteps(average, total).points).toBe(total);
+      // And it must be the very next one above what they hold -- for somebody
+      // who holds none, that is the cheapest total there is, not the one above.
+      expect(total).toBe(held <= 0 ? pointSteps(average, 0).points : pointSteps(average, held).next);
+    }
+  });
+
+  it("behaves as before for a character who has none of it", () => {
+    for (const amount of [1, 2, 3, 4, 5, 8]) {
+      expect(snapAmount(average, amount, 0)).toBe(snapAmount(average, amount));
+    }
+  });
+
+  it("steps the field through the totals above what is held", () => {
+    // Holding 2, the reachable totals are 4, 8, 12 -- so the field shows the
+    // increments 2, 6, 10.
+    expect(steppedAmount(average, 2, 1, 2)).toBe(6);
+    expect(steppedAmount(average, 6, -1, 2)).toBe(2);
+    // And never below one step up.
+    expect(steppedAmount(average, 2, -1, 2)).toBe(2);
+  });
+
+  it("copes with points already off the table", () => {
+    // A skill somehow left at 3 points: the next real total is 4.
+    expect(3 + snapAmount(average, 1, 3)).toBe(4);
+  });
+});
+
+describe("finding what the character already holds", () => {
+  const owned = [
+    { id: "1", type: "skill", name: "Broadsword", system: { points: 4 } },
+    { id: "2", type: "spell", name: "Light", system: { points: 2 } },
+  ];
+
+  it("matches by type and name", () => {
+    expect(existingPoints({ type: "skill", name: "Broadsword" }, owned)).toBe(4);
+    expect(existingPoints({ type: "spell", name: "Light" }, owned)).toBe(2);
+  });
+
+  it("does not match a different type with the same name", () => {
+    expect(existingPoints({ type: "spell", name: "Broadsword" }, owned)).toBe(0);
+  });
+
+  it("is zero for something the character does not have", () => {
+    expect(existingPoints({ type: "skill", name: "Stealth" }, owned)).toBe(0);
+    expect(existingPoints({ type: "skill", name: "Broadsword" }, [])).toBe(0);
+  });
+});
+
+describe("spells, which do not all use the skill table", () => {
+  const spell = (difficulty: string, style?: string) => ({
+    type: "spell",
+    name: "Test Spell",
+    system: { difficulty, ...(style ? { derived: { style } } : {}) },
+  });
+
+  it("steps an ordinary spell up the Skill Cost Table", () => {
+    expect(climb(spell("H"), 4)).toEqual([1, 2, 4, 8]);
+  });
+
+  it("steps a ritual spell as a Hard technique, as the sheet does", () => {
+    // advancement.ts routes ritual spells through nextSpellPoints, which is
+    // the technique table; the picker used to price them off the skill one and
+    // snap 3 down to 2, buying a level less than asked for.
+    expect(climb(spell("H", "ritual"), 4)).toEqual([2, 3, 4, 5]);
+    expect(snapAmount(spell("H", "ritual"), 3)).toBe(3);
+    expect(snapAmount(spell("H", "ritual"), 1)).toBe(2);
+  });
+
+  it("treats a spell with no style stated as an ordinary one", () => {
+    expect(snapAmount(spell("H"), 3)).toBe(2);
   });
 });

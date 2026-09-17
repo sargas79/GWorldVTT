@@ -23,3 +23,6 @@ packs-src/*/.rejected*.txt
 # .graphify_python. Each clone builds its own with `graphify update .` (AST
 # only, no API cost).
 graphify-out/
+
+# Local render harness output (screenshots for eyeballing layout).
+.harness/

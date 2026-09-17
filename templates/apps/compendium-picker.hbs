@@ -42,7 +42,10 @@
           {{#if entry.amountKind}}
             {{!-- Stepped by buttons, not the browser's spinner: points climb a
                   cost table, so the step is not always one. --}}
-            <label class="gp-amount">
+            {{!-- A div, not a label: a button is labelable, so a label wrapping
+                  these would make the minus button its control and clicking the
+                  text beside the field would quietly step the amount down. --}}
+            <div class="gp-amount">
               <button type="button" class="gp-step" data-step-for="{{entry.uuid}}" data-step="-1"
                       aria-label="{{localize 'GWORLD.Picker.StepDown'}}"
                       data-tooltip="{{localize 'GWORLD.Picker.StepDown'}}">&minus;</button>
@@ -55,7 +58,7 @@
               <span class="gp-unit">{{entry.unit}}</span>
               <span class="gp-cost">{{entry.cost}}</span>
               {{#if entry.levelLabel}}<span class="gp-level">{{entry.levelLabel}}</span>{{/if}}
-            </label>
+            </div>
           {{else}}
             <span class="gp-amount"></span>
           {{/if}}

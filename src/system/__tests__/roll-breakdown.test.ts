@@ -70,6 +70,15 @@ describe("the pre-roll breakdown", () => {
     expect(breakdown.effective).toBe(9);
   });
 
+  it("caps a Wild Swing as well as a Move and Attack", () => {
+    // Both hold skill to 9 (pp. 365, 388), and the roll caps on either -- so a
+    // preview that only knew about Move and Attack showed a level above 9 that
+    // the roll would not use.
+    const swing = rollBreakdown(16, [manual({ label: "Wild Swing", value: -5 })], { cap: 9 });
+    expect(swing.total).toBe(11);
+    expect(swing.effective).toBe(9);
+  });
+
   it("leaves a total already under the cap alone", () => {
     const breakdown = rollBreakdown(10, [manual({ label: "Range", value: -4 })], { cap: 9 });
     expect(breakdown.effective).toBe(6);

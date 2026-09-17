@@ -27,6 +27,7 @@ import {
   techniquePointCost,
   type TechniqueDifficulty,
 } from "../rules/skills.js";
+import { nextSpellPoints, previousSpellPoints, type MagicStyle, type SpellDifficulty } from "../rules/magic.js";
 import type { Difficulty } from "../rules/types.js";
 
 /** The parts of an item the plan reads. */
@@ -256,33 +257,94 @@ export function pointSteps(item: PlannedItem, points: number): PointSteps {
   }
 
   const difficulty = skillDifficulty(system);
-  const cheapest = nextSkillPoints(0, difficulty);
+  // A ritual spell is priced as a Hard technique, not off the Skill Cost Table
+  // (the sheet's own stepping does the same in advancement.ts), so a spell is
+  // asked about through its own pair rather than the skill one.
+  const spell = item.type === "spell";
+  const style = (system?.derived?.style ?? "standard") as MagicStyle;
+  const up = (points: number) => spell
+    ? nextSpellPoints(points, difficulty as SpellDifficulty, style)
+    : nextSkillPoints(points, difficulty);
+  const down = (points: number) => spell
+    ? previousSpellPoints(points, difficulty as SpellDifficulty, style)
+    : previousSkillPoints(points, difficulty);
+
+  const cheapest = up(0);
+  // A ritual spell's totals are the technique table's, which the relative-level
+  // helpers do not describe, so the snap walks the same steps the field does.
+  if (spell && style === "ritual") {
+    let snapped = cheapest;
+    while (up(snapped) <= wanted) snapped = up(snapped);
+    return {
+      points: snapped,
+      next: up(snapped),
+      previous: Math.max(cheapest, down(snapped)),
+      relativeLevel: techniqueLevelsForPoints(snapped, "H"),
+    };
+  }
+
   const reached = relativeLevelForPoints(wanted, difficulty);
   const snapped = reached === null
     ? cheapest
     : (pointsForRelativeLevel(reached, difficulty) ?? cheapest);
   return {
     points: snapped,
-    next: nextSkillPoints(snapped, difficulty),
-    previous: Math.max(cheapest, previousSkillPoints(snapped, difficulty)),
+    next: up(snapped),
+    previous: Math.max(cheapest, down(snapped)),
     relativeLevel: relativeLevelForPoints(snapped, difficulty),
   };
 }
 
 /**
+ * The points a character already has in an entry, if they have it at all.
+ *
+ * The amount beside a row is what will be *added* -- `planAddition` writes
+ * `from + points` -- so the total to keep on the table is the one the character
+ * ends up at, not the amount by itself. Raising a skill already worth 1 point
+ * by 3 reaches 4, which is a step; snapping the 3 on its own to 2 would reach 3,
+ * which buys nothing 2 does not.
+ */
+export function existingPoints(item: PlannedItem, existing: readonly PlannedItem[]): number {
+  const match = existing.find(
+    (candidate) => candidate.id && candidate.type === item.type && sameName(candidate.name, item.name),
+  );
+  return Math.max(0, Math.floor(Number(match?.system?.points ?? 0)));
+}
+
+/**
  * The amount to take for an entry, snapped where the entry is priced from a
  * table. Levelled traits are counted in levels and pass through.
+ *
+ * `held` is what the character already has in it, so the snap lands the *total*
+ * on a step rather than the increment.
  */
-export function snapAmount(item: PlannedItem, amount: number): number {
+export function snapAmount(item: PlannedItem, amount: number, held = 0): number {
   if (!pricedByTable(item)) return Math.max(1, Math.floor(Number(amount) || 1));
-  return pointSteps(item, amount).points;
+  const floor = Math.max(0, Math.floor(Number(held) || 0));
+  const wanted = floor + Math.max(0, Math.floor(Number(amount) || 0));
+  // Never below the smallest total that adds anything: an amount of nothing
+  // would buy nothing, and the field is there to buy something.
+  const total = Math.max(smallestTotalAbove(item, floor), pointSteps(item, wanted).points);
+  return total - floor;
+}
+
+/**
+ * The cheapest total on the table that is worth more than the points already
+ * held. For a character with none, that is the cheapest total there is.
+ */
+function smallestTotalAbove(item: PlannedItem, held: number): number {
+  return held <= 0 ? pointSteps(item, 0).points : pointSteps(item, held).next;
 }
 
 /** The step above or below an amount, for the field's spinner. */
-export function steppedAmount(item: PlannedItem, amount: number, direction: 1 | -1): number {
+export function steppedAmount(item: PlannedItem, amount: number, direction: 1 | -1, held = 0): number {
   if (!pricedByTable(item)) {
     return Math.max(1, Math.floor(Number(amount) || 1) + direction);
   }
-  const steps = pointSteps(item, amount);
-  return direction > 0 ? steps.next : steps.previous;
+  const floor = Math.max(0, Math.floor(Number(held) || 0));
+  const total = floor + snapAmount(item, amount, floor);
+  const steps = pointSteps(item, total);
+  const moved = direction > 0 ? steps.next : steps.previous;
+  // Down stops at the cheapest total that adds anything to what they hold.
+  return Math.max(smallestTotalAbove(item, floor), moved) - floor;
 }
