@@ -267,8 +267,11 @@ export function materialArmorDivisor(material: WeaponMaterial, type: DamageType)
  * +3 DR, and x2 HP. At TL7+, plastic riot shields (made of Lexan, etc.)
  * have x1/2 weight but otherwise identical statistics. Shield composition
  * never affects DB."
+ *
+ * "none" is for a shield that is not made of anything the table lists -- a
+ * field projected from a device, say -- and changes nothing (since API 1.63.0).
  */
-export const SHIELD_COMPOSITIONS = ["wood", "iron", "plastic"] as const;
+export const SHIELD_COMPOSITIONS = ["wood", "iron", "plastic", "none"] as const;
 export type ShieldComposition = (typeof SHIELD_COMPOSITIONS)[number];
 
 export interface ShieldCompositionEffect {

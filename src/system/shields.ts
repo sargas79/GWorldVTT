@@ -13,6 +13,7 @@ import { isRuleOn } from "./optional-rules.js";
 import {
   overpenetrationLocation,
   shieldCoverDr,
+  shieldDrAgainst,
   shieldFallsOff,
   shieldGivesDb,
   shieldState,
@@ -90,14 +91,13 @@ export interface ShieldOutcome {
 export async function applyDamageToShield(
   defender: any,
   shield: any,
-  damage: { basicDamage: number; damageType: DamageType; armorDivisor: number; hitLocation: HitLocation },
+  damage: { basicDamage: number; damageType: DamageType; armorDivisor: number; hitLocation: HitLocation; ignoresDr?: boolean },
 ): Promise<ShieldOutcome | null> {
   if (!shield?.isOwner) return null;
   const dr = Number(shield.system?.dr ?? 0) || 0;
   const hp = Number(shield.system?.hp ?? 0) || 0;
-  const divisor = damage.armorDivisor > 0 ? damage.armorDivisor : 1;
-  // The divisor works on the shield's DR as it does on anyone's.
-  const effectiveDr = divisor >= 1 ? Math.floor(dr / divisor) : Math.round(dr / divisor);
+  // The divisor works on the shield's DR as it does on anyone's, after the shield's Hardened.
+  const effectiveDr = shieldDrAgainst({ dr, armorDivisor: damage.armorDivisor, ignoresDr: damage.ignoresDr === true, hardened: Number(shield.system?.hardened ?? 0) || 0 });
   const hit = strikeShield({ basicDamage: damage.basicDamage, dr: effectiveDr, hp });
 
   const before = Number(shield.system?.hpLost ?? 0) || 0;

@@ -7,6 +7,7 @@
  * took that blow squarely, and a shield can only take so many.
  */
 
+import { hardenedAgainst } from "./armor.js";
 import { objectState, type ObjectState } from "./objects.js";
 
 /**
@@ -103,4 +104,18 @@ export function shieldFallsOff(hpLost: number, hp: number): boolean {
  */
 export function overpenetrationLocation(die: number, aimedAt: string): string {
   return die <= 2 ? "arm" : aimedAt;
+}
+
+/**
+ * The DR a shield offers a blow (p. 484): its own DR at the blow's armour
+ * divisor, after the shield's levels of Hardened (Characters p. 47) have
+ * stepped that divisor down. A blow that ignores DR meets none, unless
+ * Hardened brings it back onto the ladder.
+ */
+export function shieldDrAgainst(options: { dr: number; armorDivisor: number; ignoresDr?: boolean; hardened?: number }): number {
+  const dr = Math.max(0, options.dr);
+  const hardened = hardenedAgainst(options.armorDivisor > 0 ? options.armorDivisor : 1, options.ignoresDr === true, options.hardened ?? 0);
+  if (hardened.ignoresDr) return 0;
+  const divisor = hardened.divisor > 0 ? hardened.divisor : 1;
+  return divisor >= 1 ? Math.floor(dr / divisor) : Math.round(dr / divisor);
 }

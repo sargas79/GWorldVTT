@@ -19,6 +19,7 @@ import {
   shieldGivesDb,
   shieldState,
   shieldTookTheBlow,
+  shieldDrAgainst,
   strikeShield,
 } from "../shield-damage.js";
 
@@ -146,5 +147,18 @@ describe("Damage to Shields (Campaigns p. 484)", () => {
     expect(overpenetrationLocation(2, "skull")).toBe("arm");
     expect(overpenetrationLocation(3, "skull")).toBe("skull");
     expect(overpenetrationLocation(6, "torso")).toBe("torso");
+  });
+});
+
+describe("a Hardened shield's DR against a blow (Characters p. 47; Campaigns p. 484)", () => {
+  it("steps the divisor down a level of Hardened at a time", () => {
+    expect(shieldDrAgainst({ dr: 100, armorDivisor: 5 })).toBe(20);
+    expect(shieldDrAgainst({ dr: 100, armorDivisor: 5, hardened: 1 })).toBe(33);
+    expect(shieldDrAgainst({ dr: 100, armorDivisor: 1, hardened: 2 })).toBe(100);
+  });
+
+  it("offers nothing to a blow that ignores DR, unless Hardened brings it back", () => {
+    expect(shieldDrAgainst({ dr: 100, armorDivisor: 1, ignoresDr: true })).toBe(0);
+    expect(shieldDrAgainst({ dr: 100, armorDivisor: 1, ignoresDr: true, hardened: 1 })).toBe(1);
   });
 });
