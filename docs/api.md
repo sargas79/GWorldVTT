@@ -541,7 +541,10 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     suppresses. It is left out of the trait effects, talents, reactions and
     everything else read from traits; its points still count.
     `derived.traitsOutOfPlay` lists `{ name, reason }`. A listener that throws
-    changes nothing.
+    changes nothing. Since 1.63.0 an entry taken out of play may also carry
+    `restores: [{ name, points?, levels? }]`: disadvantages the character
+    suffers again while the trait is out, read into the trait effects as if
+    the character had them, and listed on the entry in `traitsOutOfPlay`.
   - `gworld.carriedWeight` (since 1.58.0), with `{ actor, lines }`, while a
     character's carried weight is added up. Each line is one carried item,
     `{ item, label, weight, counts }`, `weight` being its effective weight times
