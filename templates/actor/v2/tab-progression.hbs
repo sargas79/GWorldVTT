@@ -4,7 +4,23 @@
   {{!-- Where the points stand. An overspend is flagged, never blocked. --}}
   <div class="v2-progress-summary{{#if v2.progression.summary.over}} over{{/if}}">
     <div><span>{{localize "GWORLD.SheetV2.Session"}}</span><b>{{#if v2.progression.summary.latestSession}}{{v2.progression.summary.latestSession}}{{else}}&mdash;{{/if}}</b></div>
-    <div><span>{{localize "GWORLD.Points.Starting"}}</span><b>{{v2.progression.summary.starting}} CP</b></div>
+    {{!-- The campaign's terms, set here as the guided build's first step sets them. --}}
+    <div class="v2-campaign-field">
+      <label for="{{actor.id}}-v2-tl">{{localize "GWORLD.Field.TechLevel"}}</label>
+      <b><input type="number" id="{{actor.id}}-v2-tl" name="system.tl" value="{{system.tl}}" step="1" min="0" {{#unless editable}}disabled{{/unless}}></b>
+    </div>
+    <div class="v2-campaign-field">
+      <label for="{{actor.id}}-v2-sm">{{localize "GWORLD.SheetV2.SizeModifier"}}</label>
+      <b><input type="number" id="{{actor.id}}-v2-sm" name="system.sm" value="{{system.sm}}" step="1" {{#unless editable}}disabled{{/unless}}></b>
+    </div>
+    <div class="v2-campaign-field">
+      <label for="{{actor.id}}-v2-starting">{{localize "GWORLD.Points.Starting"}}</label>
+      <b><input type="number" id="{{actor.id}}-v2-starting" name="system.points.starting" value="{{system.points.starting}}" step="5" min="0" {{#unless editable}}disabled{{/unless}}> CP</b>
+    </div>
+    <div class="v2-campaign-field">
+      <label for="{{actor.id}}-v2-limit" data-tooltip="{{localize "GWORLD.Hint.DisadvantageLimit"}}">{{localize "GWORLD.Field.DisadvantageLimit"}}</label>
+      <b><input type="number" id="{{actor.id}}-v2-limit" name="system.points.disadvantageLimit" value="{{system.points.disadvantageLimit}}" step="5" min="0" {{#unless editable}}disabled{{/unless}}> CP</b>
+    </div>
     <div><span>{{localize "GWORLD.Points.Earned"}}</span><b class="v2-good">{{v2.progression.summary.earned}} CP</b></div>
     <div><span>{{localize "GWORLD.Points.Spent"}}</span><b>{{v2.progression.summary.spent}} CP</b></div>
     <div class="v2-progress-available">
@@ -125,9 +141,6 @@
         {{/if}}
       </div>
 
-      <div class="v2-panel">
-        {{> "gworld.part.attributes-campaign"}}
-      </div>
       {{> "gworld.part.skills-point-spending"}}
       {{> "gworld.addonSections"}}
     </div>

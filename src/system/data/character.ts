@@ -824,6 +824,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           }),
           /** The template item this came from, for showing what it says. */
           uuid: new fields.StringField({ required: true, blank: true, initial: "" }),
+          /** Where the template is printed, so the player knows where to read it. */
+          reference: new fields.StringField({ required: true, blank: true, initial: "" }),
           /** Points billed for the modifiers themselves; a racial cost. */
           attributeCost: new fields.NumberField({
             required: true, nullable: false, integer: true, initial: 0,

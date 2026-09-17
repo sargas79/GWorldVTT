@@ -112,6 +112,8 @@ export interface Template {
   features: string[];
   /** Traits members of the race may not have. Also free (p. 261). */
   tabooTraits: string[];
+  /** Where the template is printed, "Characters p. 261", for the player to look it up. */
+  reference?: string;
 }
 
 /** Everything in a template that everybody who takes it gets. */

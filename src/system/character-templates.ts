@@ -54,6 +54,8 @@ export interface AppliedTemplate {
   /** When it was applied; null on records made before this was kept. */
   at?: number | null;
   itemIds: string[];
+  /** Where the template is printed, kept so the sheet can say where to read it. */
+  reference?: string;
   /**
    * Items an earlier template had already added that this one raised, with
    * what they were before, so taking it off lowers them again (p. 259).
@@ -280,6 +282,7 @@ export async function applyTemplateToActor(options: {
     // After the items were made, so nothing it created counts as edited.
     at: Date.now(),
     itemIds: created.map((item: { id: string }) => item.id),
+    ...(template.reference ? { reference: template.reference } : {}),
     ...(raised.length ? { raised } : {}),
   };
 
@@ -503,6 +506,7 @@ export function templateFromItem(item: any): Template | null {
     choices: system?.choices ?? [],
     features: system?.features ?? [],
     tabooTraits: system?.tabooTraits ?? [],
+    ...(system?.reference ? { reference: String(system.reference) } : {}),
   };
 }
 

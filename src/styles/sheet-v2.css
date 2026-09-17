@@ -1259,6 +1259,13 @@
 .gworld.v2 .v2-progress-summary.over .v2-progress-available b,
 .gworld.v2 .v2-progress-summary.over .v2-progress-available span { color: #ff9f93; }
 .gworld.v2 .v2-progress-buttons { flex-direction: row !important; gap: 6px; margin-left: auto; border-left: 0 !important; }
+/* The campaign's terms, editable in the summary bar. */
+.gworld.v2 .v2-campaign-field label { font-family: var(--font-heading); font-size: 14px; color: var(--v2-frame-muted); }
+.gworld.v2 .v2-campaign-field input {
+  width: 3.4em; background: transparent; border: 0; border-bottom: 1px dashed var(--v2-frame-muted);
+  font: inherit; color: inherit; text-align: center; padding: 0;
+}
+.gworld.v2 .v2-campaign-field input:focus-visible { outline: 2px solid var(--v2-frame-muted); outline-offset: 2px; }
 .gworld.v2 .v2-over-note { margin: 0; padding: 6px 12px; border-radius: var(--v2-radius); background: #5a2723; color: #ffd2cb; font-size: 13px; }
 
 .gworld.v2 .v2-progress-grid { display: grid; grid-template-columns: minmax(180px, 0.55fr) minmax(0, 1fr); gap: 12px; align-items: start; }

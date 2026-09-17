@@ -526,6 +526,46 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * asynchronous and every edit redraws the sheet, so each is read once.
    */
   #templateDescriptions = new Map<string, string>();
+  #templateReferences = new Map<string, string>();
+
+  /**
+   * What an applied template gave the character, as lines: the scores it set
+   * or granted, and the items it added or raised that are still on the sheet.
+   */
+  #templateGrants(record: any): string[] {
+    const lines: string[] = [];
+    const label = (key: string) => {
+      const [, field] = key.includes(".") ? key.split(".") : ["", key];
+      const name = field ?? key;
+      const known: Record<string, string> = { hp: "HP", fp: "FP", will: "Will", per: "Per", basicSpeed: "Basic Speed", basicMove: "Basic Move", sm: "SM" };
+      return known[name] ?? name;
+    };
+    // Stored as paths ("attributes.ST"), which Foundry keeps nested.
+    const written = foundry.utils.flattenObject(record?.written ?? {}) as Record<string, number>;
+    const previous = foundry.utils.flattenObject(record?.previous ?? {}) as Record<string, number>;
+    for (const [key, value] of Object.entries(written)) {
+      if (key.startsWith("attributes.")) lines.push(`${label(key)} ${value}`);
+      else if (key.startsWith("purchased.")) {
+        const added = (Number(value) || 0) - (Number(previous[key]) || 0);
+        if (added) lines.push(`${label(key)} ${added > 0 ? "+" : ""}${added}`);
+      }
+    }
+    for (const [key, value] of Object.entries(record?.granted ?? {})) {
+      const n = Number(value) || 0;
+      if (n) lines.push(`${label(key)} ${n > 0 ? "+" : ""}${n}`);
+    }
+    for (const id of record?.itemIds ?? []) {
+      const item = this.actor.items.get(id);
+      if (!item) continue;
+      const points = Number(item.system?.points);
+      lines.push(Number.isFinite(points) && item.system?.points !== undefined ? `${item.name} [${points}]` : String(item.name));
+    }
+    for (const raised of record?.raised ?? []) {
+      const item = this.actor.items.get(raised.id);
+      if (item) lines.push(game.i18n.format("GWORLD.Template.RaisedLine", { name: item.name }));
+    }
+    return lines;
+  }
 
   /** What the traits tab shows for each applied template, its description included. */
   async #appliedTemplateRows(applied: any[]): Promise<object[]> {
@@ -537,6 +577,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         if (!this.#templateDescriptions.has(uuid)) {
           const document = await fromUuid(uuid).catch(() => null);
           this.#templateDescriptions.set(uuid, String((document as any)?.system?.description ?? ""));
+          this.#templateReferences.set(uuid, String((document as any)?.system?.reference ?? ""));
         }
         html = this.#templateDescriptions.get(uuid) ?? "";
       }
@@ -544,6 +585,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       rows.push({
         ...record,
         index,
+        grants: this.#templateGrants(record),
+        reference: String(record?.reference ?? "") || (uuid ? this.#templateReferences.get(uuid) ?? "" : ""),
         descriptionHtml: html,
         descriptionKey: key,
         description: { ...summariseDescription(html), open: this.#openDescriptions.has(key) },

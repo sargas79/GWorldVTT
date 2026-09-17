@@ -87,6 +87,7 @@
                 {{localize applied.kindLabel}}
                 {{#if applied.attributeCost}} &middot; {{applied.attributeCost}} CP{{/if}}
                 &middot; {{localize "GWORLD.Template.Granted" count=applied.granted}}
+                {{#if applied.reference}}&middot; {{applied.reference}}{{/if}}
               </span>
               <span></span>
               <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index="{{applied.index}}"
