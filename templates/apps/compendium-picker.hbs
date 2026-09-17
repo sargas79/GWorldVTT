@@ -52,4 +52,10 @@
       {{/each}}
     {{/if}}
   </ul>
+  {{#if custom}}
+    <div class="gp-custom">
+      <button type="button" class="gp-add" data-action="addCustom">{{> "gworld.plus"}} {{custom.label}}</button>
+      {{#if custom.hint}}<span class="gp-custom-hint">{{custom.hint}}</span>{{/if}}
+    </div>
+  {{/if}}
 </div>
