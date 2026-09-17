@@ -1318,6 +1318,11 @@
       "RemoveItems": "Remove them too",
       "KeepItems": "Keep them",
       "NoneApplied": "Built from nothing in particular.",
+      "ReferenceHint": "Where the template is printed, to read it in full",
+      "Grants": "What it granted ({count})",
+      "RaisedLine": "{name} (raised)",
+      "PickedCount": "{value} picked",
+      "PickedPoints": "{value} pts picked",
       "NoneFound": "No templates anywhere. Make one as an Item of type Template.",
       "Choose": "Which template",
       "Billed": "{points} pts billed",
@@ -3905,6 +3910,7 @@
       "TurnStart": "{name} is at 0 HP or less: roll HT to stay conscious, unless this turn is Do Nothing with no defense rolls."
     },
     "SheetV2": {
+      "SizeModifier": "Size Modifier",
       "Tabs": "Character sheet tabs",
       "Tab": {
         "overview": "Overview",

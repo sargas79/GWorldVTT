@@ -253,7 +253,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       // What this character has already been built from, so the step shows
       // progress rather than offering the same button twice.
       templates: (this.#actor.system?.derived?.templates ?? []).map(
-        (applied: { name: string; kind: string; attributeCost: number; itemIds?: string[] }, index: number) => ({
+        (applied: { name: string; kind: string; attributeCost: number; itemIds?: string[]; reference?: string }, index: number) => ({
           ...applied,
           index,
           kindLabel: `GWORLD.Template.${applied.kind}`,

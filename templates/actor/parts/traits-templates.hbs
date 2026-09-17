@@ -26,7 +26,19 @@
           {{localize "GWORLD.Template.Billed" points=applied.attributeCost}} &middot;
         {{/if}}
         {{localize "GWORLD.Template.Granted" count=applied.itemIds.length}}
+        {{#if applied.reference}}
+          &middot; <span class="ref" data-tooltip="{{localize "GWORLD.Template.ReferenceHint"}}">{{applied.reference}}</span>
+        {{/if}}
       </span>
+      {{!-- Everything it gave, folded: a big template grants dozens of things. --}}
+      {{#if applied.grants.length}}
+        <details class="td tdfold tpl-grants">
+          <summary>{{localize "GWORLD.Template.Grants" count=applied.grants.length}}</summary>
+          <ul class="tpl-grant-list">
+            {{#each applied.grants as |line|}}<li>{{line}}</li>{{/each}}
+          </ul>
+        </details>
+      {{/if}}
       {{!-- The template's own text, folded to its first line as a trait's is. --}}
       {{#if applied.descriptionHtml}}
         {{#if applied.description.more}}

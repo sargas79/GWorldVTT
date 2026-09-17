@@ -783,6 +783,18 @@
   color: var(--color-neutral-700);
 }
 .gworld .tdfold[open] > summary::before { transform: rotate(45deg); }
+/* A template's grants, and the options dialog's folding groups. */
+.gworld .tpl-grant-list { margin: 4px 0 0; padding-left: 18px; columns: 2 14em; column-gap: 18px; }
+.gworld .tpl-grant-list li { break-inside: avoid; }
+.gworld details.tpl-fold > summary { display: flex; align-items: baseline; gap: 6px; cursor: pointer; list-style: none; }
+.gworld details.tpl-fold > summary::-webkit-details-marker { display: none; }
+.gworld details.tpl-fold > summary::before {
+  content: ""; flex: 0 0 auto; width: 5px; height: 5px; margin-right: 2px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform 120ms ease;
+}
+.gworld details.tpl-fold[open] > summary::before { transform: rotate(45deg); }
+.gworld details.tpl-fold > summary .gc-mod { margin-left: auto; }
 
 /* The NPC sheet's description fold: the section label, then the first line of
    the description beside it while closed. */

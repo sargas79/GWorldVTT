@@ -2023,6 +2023,11 @@ export async function promptForPenalties(current: {
  * asks for stated above them, because "select two skills from" is a rule the
  * player is meant to be able to see themselves keeping.
  */
+/** A group's running total as its heading shows it. */
+function pickedText(kind: string, value: number): string {
+  return game.i18n.format(kind === "count" ? "GWORLD.Template.PickedCount" : "GWORLD.Template.PickedPoints", { value });
+}
+
 export async function chooseTemplateOptions(
   template: Template,
 ): Promise<TemplateEntry[] | null> {
@@ -2034,15 +2039,20 @@ export async function chooseTemplateOptions(
     ` <span class="gc-mod">[${entry.points}]</span>`;
 
   const required = requiredEntries(template);
+  // A template can offer well over a hundred options, so every list folds:
+  // what everybody gets starts closed, and each group shows how much has been
+  // picked from it while it is closed.
   const requiredList = required.length
-    ? `<div class="isub">
-         <div class="isub-head">${L("Required")}</div>
+    ? `<details class="isub tpl-fold">
+         <summary class="isub-head">${L("Required")} <span class="gc-mod">(${required.length})</span></summary>
          <ul style="margin:0;padding-left:18px">
            ${required.map((entry) => `<li>${line(entry)}</li>`).join("")}
          </ul>
-       </div>`
+       </details>`
     : "";
 
+  // The first group there is something to tick in starts open.
+  const firstWithOptions = template.choices.findIndex((group) => !choiceMetElsewhere(template, group) && entriesInGroup(template, group.id).length > 0);
   const groups = template.choices
     .map((group, groupIndex) => {
       const options = entriesInGroup(template, group.id)
@@ -2064,11 +2074,13 @@ export async function chooseTemplateOptions(
           ? game.i18n.format("GWORLD.Template.PickCount", { count: group.required })
           : game.i18n.format("GWORLD.Template.PickPoints", { points: group.required });
 
-      return `<div class="isub">
-                <div class="isub-head">${escape(group.label)}</div>
+      return `<details class="isub tpl-fold" data-group-fold="${groupIndex}" ${groupIndex === firstWithOptions ? "open" : ""}>
+                <summary class="isub-head">${escape(group.label)}
+                  <span class="gc-mod" data-picked="${groupIndex}" data-kind="${group.kind}">${pickedText(group.kind, 0)}</span>
+                </summary>
                 <p class="ihint">${asks}</p>
                 ${options}
-              </div>`;
+              </details>`;
     })
     .join("");
 
@@ -2078,12 +2090,30 @@ export async function chooseTemplateOptions(
     ...(template.sizeModifier ? [`SM ${template.sizeModifier}`] : []),
   ].join(", ");
 
+  // Keep each group's count in step with its ticks.
+  const hook = Hooks.on("renderDialogV2", (_app: unknown, element: HTMLElement) => {
+    const root: HTMLElement | undefined = element instanceof HTMLElement ? element : (element as any)?.[0];
+    if (!root?.querySelector?.("[data-group-fold]")) return;
+    Hooks.off("renderDialogV2", hook);
+    const recount = () => {
+      for (const [groupIndex, group] of template.choices.entries()) {
+        const ticked = [...root.querySelectorAll<HTMLInputElement>(`input[name="pick"][data-group="${groupIndex}"]`)].filter((box) => box.checked);
+        const entries = entriesInGroup(template, group.id);
+        const value = group.kind === "count" ? ticked.length : ticked.reduce((sum, box) => sum + (Number(entries[Number(box.dataset.entry)]?.points) || 0), 0);
+        const badge = root.querySelector<HTMLElement>(`[data-picked="${groupIndex}"]`);
+        if (badge) badge.textContent = pickedText(group.kind, value);
+      }
+    };
+    root?.addEventListener("change", recount);
+  });
+
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: `${template.name} — ${templateCost(template)} ${L("Points")}` },
+    position: { width: 560, height: Math.min(760, Math.round((globalThis as any).innerHeight * 0.85) || 760) },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
       <p class="ihint">${L(template.kind === "racial" ? "racial" : "character")}${
         modifiers ? ` · ${escape(modifiers)}` : ""
-      }</p>
+      }${template.reference ? ` · ${escape(template.reference)}` : ""}</p>
       ${requiredList}
       ${groups}
       ${
@@ -2119,6 +2149,7 @@ export async function chooseTemplateOptions(
     },
     rejectClose: false,
   });
+  Hooks.off("renderDialogV2", hook);
 
   if (!result || typeof result !== "object") return null;
   const { picks, byGroup } = result as { picks: TemplateEntry[]; byGroup: TemplateEntry[][] };

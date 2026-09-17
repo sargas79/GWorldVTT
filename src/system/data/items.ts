@@ -1648,6 +1648,7 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
  * is an option in "select two skills from" or "20 points chosen from among".
  */
 export class TemplateData extends foundry.abstract.TypeDataModel {
+  declare reference: string;
   declare kind: TemplateKind;
   declare statedCost: number;
   declare attributes: { ST: number; DX: number; IQ: number; HT: number };
@@ -1771,6 +1772,7 @@ export class TemplateData extends foundry.abstract.TypeDataModel {
       choices: this.choices.map((choice) => ({ ...choice })),
       features: [...this.features],
       tabooTraits: [...this.tabooTraits],
+      ...(this.reference ? { reference: this.reference } : {}),
     };
   }
 }
