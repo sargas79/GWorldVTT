@@ -22,6 +22,12 @@ describe("the add-on API", () => {
     expect(api.hooks).toEqual({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK });
   });
 
+  it("reaches the hazards: shocks and radiation (since 1.63.0)", () => {
+    const api = createApi();
+    expect(typeof api.hazards.shock).toBe("function");
+    expect(typeof api.hazards.irradiate).toBe("function");
+  });
+
   it("gives armour back spent ablative DR, never below none (since 1.59.0)", async () => {
     const api = createApi();
     const piece = (drLost: number, extra: Record<string, unknown> = {}) => {
