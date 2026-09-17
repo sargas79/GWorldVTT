@@ -847,6 +847,12 @@
         "NoPoints": "no points"
       }
     },
+    "Breakdown": {
+      "Base": "Base skill",
+      "Effective": "Effective skill",
+      "Auto": "(automatic)",
+      "Cap": "Capped at"
+    },
     "Picker": {
       "Title": "Add from the compendia",
       "Skills": "Add a skill or technique",
