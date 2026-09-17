@@ -13,7 +13,7 @@
 import { HIRED_RATE_PER_HOUR, hiredTechnicianSkill } from "../../rules/repairs.js";
 import { isLegalityClass, licenseCost } from "../../rules/legality.js";
 import { objectState, rollsToKeepWorking } from "../../rules/objects.js";
-import { parseCostTable, parseLevelNames } from "../../rules/traits.js";
+import { parseCostTable, parseLevelNames, selfControlChoices } from "../../rules/traits.js";
 import { isWeaponMaster } from "../../rules/weapon-master.js";
 import { SPELL_CLASSES } from "../../rules/magic.js";
 import { SYSTEM_ID } from "../constants.js";
@@ -426,8 +426,6 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         "": "GWORLD.WeaponClass.none",
         ...keyed("WeaponClass", WEAPON_CLASSES.filter((c) => c !== "")),
       },
-      // The self-control numbers, with "none" first. Keys are strings because
-      // a select's values are, and the form reader turns the number back.
       templateKinds: keyed("Template", ["character", "racial", "lens", "metaTrait"]),
       choiceKinds: keyed("Template", ["count", "points"]),
       entryTypes: keyed("Template", ["trait", "skill", "technique", "language", "equipment"]),
@@ -445,14 +443,13 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         { key: "basicSpeed", label: "GWORLD.Secondary.BasicSpeed" },
         { key: "basicMove", label: "GWORLD.Secondary.BasicMove" },
       ],
-      selfControl: {
-        "": "GWORLD.Trait.NoSelfControl",
-        "6": "GWORLD.Trait.SelfControl6",
-        "9": "GWORLD.Trait.SelfControl9",
-        "12": "GWORLD.Trait.SelfControl12",
-        "15": "GWORLD.Trait.SelfControl15",
-      },
     };
+
+    // The self-control options are a list, not a choices object: the order is
+    // part of the fix (see selfControlChoices), and an object cannot hold one.
+    context.selfControlOptions = selfControlChoices((item.system as any)?.selfControl, {
+      category: String((item.system as any)?.category ?? ""),
+    });
 
     // Only the loads a weapon can actually take (Characters pp. 276, 279): no
     // hollow-points in a bow, no silver bullets before TL4. The one it is

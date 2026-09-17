@@ -198,3 +198,71 @@ export function traitLevelCeiling(trait: {
   if (priced === null) return capped;
   return Math.min(capped, priced);
 }
+
+/**
+ * The self-control numbers the book offers, cheapest to resist last
+ * (Characters p. 120).
+ */
+export const SELF_CONTROL_NUMBERS: readonly number[] = Object.freeze([6, 9, 12, 15]);
+
+/**
+ * The number a disadvantage takes when a self-control roll is turned on.
+ *
+ * 12 is the book's standard -- "roll against 12 or less" is the wording most
+ * disadvantages carry -- and it is the one number that leaves the cost alone
+ * (x1), so offering it first changes the price of nothing.
+ */
+export const DEFAULT_SELF_CONTROL = 12;
+
+/** One option in the self-control dropdown. */
+export interface SelfControlChoice {
+  /** The submitted value: the empty string for no roll, so a select can carry it. */
+  value: string;
+  /** Localization key for the option's text. */
+  label: string;
+  /** Localization key for its tooltip. */
+  hint: string;
+  /** Whether the trait currently holds this option. */
+  selected: boolean;
+  /** Set on the book's standard, for a disadvantage that takes a roll. */
+  standard: boolean;
+}
+
+/**
+ * The self-control dropdown's options, None first.
+ *
+ * The order matters and is why this is a list rather than an object. Keyed by
+ * "6", "9", "12", "15" and "", an object iterates its integer-like keys first,
+ * so None rendered last; a trait with no roll (null) then matched no option,
+ * the browser showed the first one -- 6 -- and the next submit saved it, which
+ * turned a trait with no self-control roll into one costing twice as much.
+ *
+ * Selection is decided here rather than left to the browser's fallback, so a
+ * value the list does not hold lands on None (x1) rather than on a multiplier
+ * nobody chose.
+ */
+export function selfControlChoices(
+  selfControl: number | null | undefined,
+  options: { category?: string } = {},
+): SelfControlChoice[] {
+  const current = selfControl === null || selfControl === undefined ? null : Number(selfControl);
+  const known = current !== null && SELF_CONTROL_NUMBERS.includes(current);
+  const disadvantage = options.category === "disadvantage";
+
+  return [
+    {
+      value: "",
+      label: "GWORLD.Trait.NoSelfControl",
+      hint: "GWORLD.Trait.NoSelfControlHint",
+      selected: !known,
+      standard: false,
+    },
+    ...SELF_CONTROL_NUMBERS.map((number) => ({
+      value: String(number),
+      label: `GWORLD.Trait.SelfControl${number}`,
+      hint: `GWORLD.Trait.SelfControl${number}Hint`,
+      selected: known && current === number,
+      standard: disadvantage && number === DEFAULT_SELF_CONTROL,
+    })),
+  ];
+}

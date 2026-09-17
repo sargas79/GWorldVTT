@@ -13,7 +13,13 @@
  * renders in the classic markup therefore reads correctly wherever it lands.
  */
 
-.gworld.v2 {
+/*
+ * The palette is defined on .gworld rather than on .gworld.v2, so the system's
+ * other windows -- the compendium picker, the compendium sources -- can read
+ * the same tokens instead of keeping a second copy of the colours. Defining
+ * them changes nothing on its own; only referring to them does.
+ */
+.gworld {
   --v2-frame: #1e2226;
   --v2-frame-2: #272c31;
   --v2-frame-3: #31373d;
@@ -41,7 +47,13 @@
 
   --v2-radius: 4px;
   --v2-shadow: 0 1px 0 rgb(0 0 0 / 0.25), 0 2px 8px rgb(0 0 0 / 0.18);
+}
 
+/*
+ * The frame's theme, which stays on the sheet: it points the classic tokens at
+ * the dark ground, and the classic sheet must keep its own.
+ */
+.gworld.v2 {
   /* The classic tokens, for the frame. */
   --color-bg: var(--v2-frame);
   --color-surface: var(--v2-frame-2);
@@ -61,10 +73,20 @@
   container: v2sheet / inline-size;
 }
 
-/* A panel's ground is cream, and the classic tokens follow it. */
+/*
+ * A panel's ground is cream, and the classic tokens follow it.
+ *
+ * The compendium picker and the compendium sources join the list rather than
+ * restating the colours: both are the system's own windows, both are built out
+ * of the classic markup, and pointing their tokens here is what makes them
+ * read as part of the same sheet. Foundry's own compendium windows are not
+ * touched -- these are two selectors, not a theme for everything.
+ */
 .gworld.v2 .v2-panel,
 .gworld.v2 .v2-cream,
-.gworld.v2 .window-content > .limited {
+.gworld.v2 .window-content > .limited,
+.gworld-picker .gp,
+.gworld-rules .gr {
   --color-bg: var(--v2-panel);
   --color-surface: var(--v2-panel-2);
   --color-text: var(--v2-ink);
@@ -1567,9 +1589,20 @@
  * one column, the sheet's header on top, the steps under it, and the step's
  * panel on the dark frame.
  */
-.gworld.v2.gworld-builder .window-content { display: block; padding: 0; overflow: hidden; }
-.gworld.v2.gworld-builder .gb { display: flex; flex-direction: column; height: 100%; }
-.gworld.v2.gworld-builder .gb-header { grid-template-columns: auto minmax(0, 1fr) auto; padding: 10px 14px; }
+/*
+ * A flex column rather than a block, so .gb is sized by the window instead of
+ * by a percentage height that only resolves when the parent has a definite one.
+ */
+.gworld.v2.gworld-builder .window-content { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.gworld.v2.gworld-builder .gb { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; height: 100%; }
+/*
+ * The header, the steps and the footer hold their own height; only the body
+ * gives. Without flex: none they keep the default flex-shrink of 1, so a long
+ * template makes the browser squeeze every sibling in proportion -- the header
+ * ends up shorter than the portrait and title inside it, which then paint
+ * outside its box and over the step options beneath.
+ */
+.gworld.v2.gworld-builder .gb-header { flex: none; grid-template-columns: auto minmax(0, 1fr) auto; padding: 10px 14px; }
 .gworld.v2.gworld-builder .gb-header .v2-portrait { width: 56px; height: 56px; }
 .gworld.v2.gworld-builder .gb-header .v2-title { font-size: 24px; }
 .gworld.v2.gworld-builder .gb-actor { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1588,6 +1621,7 @@
 .gworld.v2.gworld-builder .gb-limit.over b { color: #f0998f; }
 
 .gworld.v2.gworld-builder .gb-steps {
+  flex: none;
   display: flex;
   flex-wrap: wrap;
   gap: 3px;
@@ -1636,8 +1670,20 @@
   gap: 12px;
   padding: 14px 16px;
   overflow-y: auto;
+  /* Shown rather than only present, so a long step looks scrollable. */
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--v2-frame-line) transparent;
   background: var(--v2-frame);
 }
+.gworld.v2.gworld-builder .gb-body::-webkit-scrollbar { width: 10px; }
+.gworld.v2.gworld-builder .gb-body::-webkit-scrollbar-track { background: transparent; }
+.gworld.v2.gworld-builder .gb-body::-webkit-scrollbar-thumb {
+  background: var(--v2-frame-line);
+  border: 2px solid var(--v2-frame);
+  border-radius: 5px;
+}
+.gworld.v2.gworld-builder .gb-body::-webkit-scrollbar-thumb:hover { background: var(--v2-frame-3); }
 .gworld.v2.gworld-builder .gb-hint { margin: 0; font-size: 13.5px; line-height: 1.4; color: var(--v2-frame-muted); }
 
 .gworld.v2.gworld-builder .gb-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
@@ -1721,6 +1767,7 @@
 .gworld.v2.gworld-builder .v2-stat-value small { font-size: 16px; color: var(--v2-ink-muted); }
 
 .gworld.v2.gworld-builder .gb-foot {
+  flex: none;
   display: flex;
   justify-content: space-between;
   gap: 8px;

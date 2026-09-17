@@ -45,6 +45,7 @@ import { applyFirstAid, attendPatient, operate } from "./recovery.js";
 import { rollMortalWound } from "./dying.js";
 import type { Poison } from "../rules/poison.js";
 import { undoKnockdown } from "./knockdown.js";
+import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from "./damage-undo.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
 import { irradiate, shock } from "./hazards.js";
 import { addArea, listAreas, removeArea } from "./modifier-areas.js";
@@ -73,7 +74,7 @@ import { manaLevel } from "./casting.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.65.0";
+export const API_VERSION = "1.66.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -221,6 +222,23 @@ const actors = {
   /** Takes back a knockdown's stun, fall and unconsciousness, and restores a posture (since 1.39.0). */
   undoKnockdown(actor: any, options: { posture?: string } = {}): Promise<boolean> {
     return undoKnockdown(actor, options);
+  },
+
+  /**
+   * Takes back one application of damage (since 1.66.0), given the record
+   * `applyDamage` returned on its result.
+   *
+   * Refuses, rather than overwriting, where anything the application changed
+   * has moved since; the outcome says which way. A module that applies damage
+   * through its own path can keep the record and offer the same undo.
+   */
+  undoDamage(transaction: DamageTransaction): Promise<UndoOutcome> {
+    return undoDamage(transaction);
+  },
+
+  /** Whether a damage record still describes something worth undoing (since 1.66.0). */
+  isUndoable(transaction: DamageTransaction | null | undefined): boolean {
+    return isUndoable(transaction);
   },
 
   /**

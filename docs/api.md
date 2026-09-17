@@ -997,6 +997,16 @@ Two fields a module may read (since 1.62.0):
 - **Random hit locations** (since 1.43.0): `roll.hitLocation({ actor?, damageType?, arc? })`
   rolls 3d on the table through `gworld.randomHitLocation` and returns `{ hitLocation,
   addonLocation, roll }`.
+- **Undoing damage** (since 1.66.0): `applyDamage` returns a `transaction` on its result
+  recording what that application changed -- the pool and its value before and after, each
+  ablative armour piece worn down, and an aim it spoiled.
+  `actors.undoDamage(transaction)` takes it back for a user who owns the actor, and
+  `actors.isUndoable(transaction)` says whether it still describes anything worth undoing.
+  The undo **refuses rather than overwrites**: where any field it touched has moved since,
+  nothing is written and the outcome is `{ ok: false, reason }` -- `poolChanged`,
+  `armorChanged`, `armorGone` or `actorGone`. A module applying damage through its own
+  path can keep the transaction and offer the same undo from its own card. The health
+  conditions follow the pool, so call `syncHealthConditions` after a successful undo.
 - **Knockdown** (since 1.39.0): `gworld.afterKnockdown` follows a knockdown roll once
   its result is applied, with `{ actor, outcome, result, previousPosture }` (`result` is
   `{ outcome, stunned, prone, unconscious }`). `actors.undoKnockdown(actor, { posture })`

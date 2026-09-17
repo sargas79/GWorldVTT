@@ -23,6 +23,7 @@ import {
 import { consumeTurnedBlade, recordTurnedBlade } from "./turned-blade.js";
 import { consumePulledBlow, pulledFormula, recordPulledBlow } from "./pulled-blow.js";
 import { isRuleOn } from "./optional-rules.js";
+import { rollBreakdown, signed, type RollBreakdown } from "./roll-breakdown.js";
 import { targetedTokens, withTargets } from "./targets.js";
 import {
   afterSuccessRoll,
@@ -1989,6 +1990,102 @@ function attackContextFor(options: {
  *
  * Returns null when the dialog is dismissed, which cancels the roll.
  */
+/**
+ * Draws the running "base -> modifiers -> effective" block inside an attack
+ * dialog.
+ *
+ * Automatic lines are marked apart from the ones the player typed, which is
+ * the distinction that tells them which numbers are theirs to change. The
+ * markup is rebuilt each time rather than patched: it is a dozen lines, and a
+ * redraw cannot fall out of step with the numbers the way a patch can.
+ */
+function drawBreakdown(root: HTMLElement, breakdown: RollBreakdown): void {
+  const slot = root.querySelector<HTMLElement>("[data-roll-breakdown]");
+  if (!slot) return;
+
+  const L = (key: string) => game.i18n.localize(`GWORLD.Breakdown.${key}`);
+  const line = (label: string, value: string, className = "") =>
+    `<div class="gb-line ${className}"><span>${foundry.utils.escapeHTML(label)}</span><span>${value}</span></div>`;
+
+  const lines = breakdown.lines
+    .map((entry) =>
+      line(
+        entry.automatic ? `${entry.label} ${L("Auto")}` : entry.label,
+        signed(entry.value),
+        entry.automatic ? "gb-auto" : "gb-manual",
+      ),
+    )
+    .join("");
+
+  const capped = breakdown.cap !== null && breakdown.effective < breakdown.total
+    ? line(L("Cap"), String(breakdown.cap), "gb-cap")
+    : "";
+
+  slot.innerHTML = `<div class="gb-breakdown">
+    ${line(L("Base"), String(breakdown.base), "gb-base")}
+    ${lines}
+    ${capped}
+    ${line(L("Effective"), String(breakdown.effective), "gb-effective")}
+  </div>`;
+}
+
+/**
+ * The lines a ranged attack will be rolled with, as the dialog's fields stand.
+ *
+ * `rangedModifiers` is the same function the shot itself is built from, and
+ * the standing and position lines are the ones the roll adds afterwards, so
+ * what is shown here is what will be rolled -- short of what a module's hook
+ * adds at roll time, which nothing can know yet.
+ */
+function showRangedBreakdown(
+  root: HTMLElement,
+  input: RangedInput & { calledShot?: string; addonValues?: Record<string, unknown> },
+  options: Parameters<typeof promptForRangedAttack>[0],
+  rateOfFire: number,
+): void {
+  const actor = options.actor;
+
+  // The modules' options first, exactly as the shot reads them: one of them may
+  // halve the Rate of Fire, which decides how many shots the recoil is reckoned
+  // over, and several add modifiers of their own.
+  const chosen = applyAttackOptions(
+    attackContextFor({
+      actor, item: options.item, ranged: true, damageType: options.damageType,
+      effectiveSkill: Number(options.effectiveSkill) || 0,
+    }),
+    input.addonValues ?? {},
+  );
+  const effectiveRateOfFire = Math.max(
+    1,
+    Math.floor(rateOfFire * (chosen.rateOfFireMultiplier > 0 ? chosen.rateOfFireMultiplier : 1)),
+  );
+  const shells = Math.min(Math.max(1, Math.floor(input.shots || 1)), effectiveRateOfFire);
+  const pellets = multipleProjectiles({
+    shotsFired: shells,
+    projectiles: options.projectiles ?? 1,
+    recoil: options.recoil,
+    rangeYards: input.range,
+    halfDamageRange: options.halfDamageRange ?? 0,
+  });
+
+  const fromDialog = rangedModifiers({ ...input, shots: pellets.effectiveShots }, options);
+  const called = calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, false, actor);
+  if (called.modifier) fromDialog.push(called.modifier);
+  fromDialog.push(...chosen.modifiers);
+
+  // What the roll will add once the dialog closes: the shooter's condition and
+  // where they are standing. Asked with dialogAsked, as the roll asks it.
+  const automatic = [
+    ...standingRollLines(actor, { rollType: "attack", ranged: true, dialogAsked: true }),
+    ...positionRollLines(actor, { rollType: "attack", ranged: true }),
+  ];
+
+  drawBreakdown(root, rollBreakdown(Number(options.effectiveSkill) || 0, [
+    { modifiers: automatic, automatic: true },
+    { modifiers: fromDialog, automatic: false },
+  ]));
+}
+
 export async function promptForRangedAttack(options: {
   /** What the weapon does, which decides where it can be aimed. */
   damageType: DamageType;
@@ -2091,9 +2188,7 @@ export async function promptForRangedAttack(options: {
       </fieldset>`
     : "";
 
-  const result = await foundry.applications.api.DialogV2.prompt({
-    window: { title: L("Title") },
-    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+  const content = `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
       ${field("range", L("Range"), String(options.initialRange ?? 0))}
       ${field("elevation", L("Elevation"), "0")}
       ${field("speed", L("TargetSpeed"), "0")}
@@ -2131,59 +2226,81 @@ export async function promptForRangedAttack(options: {
       </label>
       ${vehicleFields}
       ${attackOptionFields(addonContext)}
-    </div>`,
+      <div data-roll-breakdown></div>
+    </div>`;
+  /*
+   * One reader for the form, used both by the running total the shooter is
+   * shown and by the shot that is actually taken, so the number in front of
+   * them is the number they get.
+   */
+  const readForm = (form: HTMLElement | null) => {
+    const num = (name: string) =>
+      Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
+    const addonValues = readAttackOptionValues(form, addonContext);
+    const aimed =
+      form?.querySelector<HTMLInputElement>('input[name="aimed"]')?.checked ?? false;
+    const situation =
+      form?.querySelector<HTMLSelectElement>('select[name="situation"]')?.value ?? "normal";
+    const sight = (form?.querySelector<HTMLSelectElement>('select[name="sight"]')?.value ??
+      "clear") as Sight;
+    const cover =
+      form?.querySelector<HTMLSelectElement>('select[name="cover"]')?.value ?? "none";
+    const calledShot =
+      form?.querySelector<HTMLSelectElement>('select[name="calledShot"]')?.value ?? UNAIMED;
+    return {
+      addonValues,
+      range: num("range"),
+      elevation: num("elevation"),
+      speed: num("speed"),
+      size: num("size"),
+      modifier: num("modifier"),
+      shots: rateOfFire > 1 ? num("shots") : 1,
+      situation: situation as RangedInput["situation"],
+      sight,
+      darkness: num("darkness"),
+      cover: cover as CoverApproach | "none",
+      calledShot,
+      aimed,
+      laser: {
+        on: form?.querySelector<HTMLInputElement>('input[name="laser"]')?.checked ?? false,
+        targetSees: form?.querySelector<HTMLInputElement>('input[name="laserSeen"]')?.checked ?? false,
+      },
+      vehicle: aboard
+        ? {
+            kind: (form?.querySelector<HTMLSelectElement>('select[name="vehicleKind"]')?.value ??
+              "handheld") as VehicleAttackKind,
+            operator: aboard.operator,
+            dodged: form?.querySelector<HTMLInputElement>('input[name="vehicleDodged"]')?.checked ?? false,
+            flying: aboard.flying,
+            moving: aboard.moving,
+            stabilityRating: aboard.stabilityRating,
+            stabilized: form?.querySelector<HTMLInputElement>('input[name="stabilized"]')?.checked ?? false,
+            targetingTl: form?.querySelector<HTMLInputElement>('input[name="targetingSystem"]')?.checked
+              ? aboard.techLevel
+              : 0,
+          }
+        : null,
+    };
+  };
+
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content,
+    render: (_event: Event, dialog: any) => {
+      const root: HTMLElement = dialog.element ?? dialog;
+      // The effective level, kept in step with the fields as they change: the
+      // shooter decides whether to aim another second by seeing what it buys.
+      const update = () => {
+        const form = root.closest<HTMLElement>(".application") ?? root;
+        showRangedBreakdown(root, readForm(form) as Parameters<typeof showRangedBreakdown>[1], options, rateOfFire);
+      };
+      root.addEventListener("change", update);
+      root.addEventListener("input", update);
+      update();
+    },
     ok: {
       label: game.i18n.localize("GWORLD.Chat.Roll"),
-      callback: (_event: Event, button: HTMLElement) => {
-        const form = button.closest<HTMLElement>(".application");
-        const num = (name: string) =>
-          Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
-        const addonValues = readAttackOptionValues(form, addonContext);
-        const aimed =
-          form?.querySelector<HTMLInputElement>('input[name="aimed"]')?.checked ?? false;
-        const situation =
-          form?.querySelector<HTMLSelectElement>('select[name="situation"]')?.value ?? "normal";
-        const sight = (form?.querySelector<HTMLSelectElement>('select[name="sight"]')?.value ??
-          "clear") as Sight;
-        const cover =
-          form?.querySelector<HTMLSelectElement>('select[name="cover"]')?.value ?? "none";
-        const calledShot =
-          form?.querySelector<HTMLSelectElement>('select[name="calledShot"]')?.value ?? UNAIMED;
-        return {
-          addonValues,
-          range: num("range"),
-          elevation: num("elevation"),
-          speed: num("speed"),
-          size: num("size"),
-          modifier: num("modifier"),
-          shots: rateOfFire > 1 ? num("shots") : 1,
-          situation: situation as RangedInput["situation"],
-          sight,
-          darkness: num("darkness"),
-          cover: cover as CoverApproach | "none",
-          calledShot,
-          aimed,
-          laser: {
-            on: form?.querySelector<HTMLInputElement>('input[name="laser"]')?.checked ?? false,
-            targetSees: form?.querySelector<HTMLInputElement>('input[name="laserSeen"]')?.checked ?? false,
-          },
-          vehicle: aboard
-            ? {
-                kind: (form?.querySelector<HTMLSelectElement>('select[name="vehicleKind"]')?.value ??
-                  "handheld") as VehicleAttackKind,
-                operator: aboard.operator,
-                dodged: form?.querySelector<HTMLInputElement>('input[name="vehicleDodged"]')?.checked ?? false,
-                flying: aboard.flying,
-                moving: aboard.moving,
-                stabilityRating: aboard.stabilityRating,
-                stabilized: form?.querySelector<HTMLInputElement>('input[name="stabilized"]')?.checked ?? false,
-                targetingTl: form?.querySelector<HTMLInputElement>('input[name="targetingSystem"]')?.checked
-                  ? aboard.techLevel
-                  : 0,
-              }
-            : null,
-        };
-      },
+      callback: (_event: Event, button: HTMLElement) => readForm(button.closest<HTMLElement>(".application")),
     },
     rejectClose: false,
   });
@@ -2640,6 +2757,138 @@ function darknessModifier(darkness: number, eyes: Eyes = {}): RollModifier | nul
  *
  * Returns null when the dialog is dismissed, which cancels the roll.
  */
+/** What the melee dialog was answered with, as the modifier lines read it. */
+interface MeleeAnswers {
+  deceptive: number;
+  modifier: number;
+  rapid: boolean;
+  flurry: boolean;
+  sight: Sight;
+  darkness: number;
+  calledShot: string;
+  ground: number;
+  dual: string;
+  charging: boolean;
+  wildSwing: boolean;
+  addonValues: Record<string, unknown>;
+}
+
+/** Everything the melee attack's answers work out to, lines and all. */
+interface MeleeAssembly {
+  modifiers: RollModifier[];
+  deception: ReturnType<typeof deceptiveAttack>;
+  flurried: boolean;
+  aimed: ReturnType<typeof calledShotModifier>;
+  addon: ReturnType<typeof applyAttackOptions>;
+  groundPenalty: number;
+}
+
+/**
+ * Turns the melee dialog's answers into the lines the roll will carry.
+ *
+ * Pulled out of the dialog so the running total the fighter is shown and the
+ * attack that is actually made are worked out by the same code. Everything the
+ * caller needs besides the lines comes back with them, so nothing has to be
+ * computed twice and the two cannot drift apart.
+ */
+function assembleMeleeAttack(
+  answers: MeleeAnswers,
+  options: Parameters<typeof promptForMeleeAttack>[0],
+  context: { addonContext: ReturnType<typeof attackContextFor>; effortAllowed: boolean; rapidPenalty: number },
+): MeleeAssembly {
+  const L = (key: string) => game.i18n.localize(`GWORLD.Melee.${key}`);
+  const E = (key: string) => game.i18n.localize(`GWORLD.ExtraEffort.${key}`);
+  const {
+    deceptive, modifier, rapid, flurry, sight, darkness, calledShot, ground, dual, charging,
+    wildSwing, addonValues,
+  } = answers;
+  const { addonContext, effortAllowed, rapidPenalty } = context;
+
+  // "You may not reduce your final effective skill below 10", so the ceiling is
+  // set against the skill after the situational modifier, not before it. A
+  // fighter at 16 who is also at -4 for something can afford one level of
+  // deception, not three.
+  const deception = deceptiveAttack(options.effectiveSkill + modifier, deceptive);
+  const modifiers: RollModifier[] = [];
+
+  if (deception.attackPenalty !== 0) {
+    modifiers.push({ label: L("Deceptive"), value: deception.attackPenalty });
+  }
+  // A Flurry of Blows buys half the Rapid Strike penalty back, so the two are
+  // one modifier rather than a penalty and a refund.
+  const flurried = rapid && flurry && effortAllowed;
+  if (rapid) {
+    modifiers.push({
+      label: flurried ? `${L("RapidStrike")} + ${E("Flurry")}` : L("RapidStrike"),
+      value: flurried ? flurryOfBlowsPenalty(rapidPenalty) : rapidPenalty,
+    });
+  }
+  // "If the mount's velocity is 7 or more relative to the foe, the attack has
+  // -1 to hit but +1 damage" (p. 396). The damage half is collected at the
+  // damage roll, which is a separate click.
+  if (charging) {
+    modifiers.push({
+      label: game.i18n.localize("GWORLD.Mounted.Charging"),
+      value: mountedAttack(CHARGE_VELOCITY).toHit,
+    });
+  }
+
+  // Both hands at once: each roll is separate, so this is the modifier for the
+  // hand being rolled now (p. 417). The technique and Ambidexterity come off the
+  // sheet rather than being asked about again.
+  if (dual === "primary" || dual === "off") {
+    const both = dualWeaponAttack({
+      technique: options.dualWeaponTechnique ?? 0,
+      ambidextrous: options.ambidextrous === true,
+      offHandTraining: options.offHandTraining ?? 0,
+    });
+    modifiers.push({
+      label: game.i18n.localize(dual === "off" ? "GWORLD.Melee.DualOff" : "GWORLD.Melee.DualPrimary"),
+      value: dual === "off" ? both.offHand : both.primary,
+    });
+  }
+
+  // "You cannot target a particular part of the foe's body" on a Wild Swing:
+  // the location is rolled (p. 388).
+  const aimed = calledShotModifier(wildSwing ? UNAIMED : calledShot, options.damageType, false, options.actor);
+  if (aimed.modifier) modifiers.push(aimed.modifier);
+
+  // What the modules' options chosen here do to the roll; the rest of what
+  // they do travels with the result.
+  const addon = applyAttackOptions(addonContext, addonValues ?? {});
+  modifiers.push(...addon.modifiers);
+
+  const unseen = sightModifier(sight, false, options.eyes);
+  if (unseen) modifiers.push(unseen);
+  const dark = darknessModifier(darkness, options.eyes);
+  if (dark) modifiers.push(dark);
+  // A Wild Swing is at -5 or the visibility penalty, whichever is worse.
+  if (wildSwing) {
+    const swing = wildSwingPenalty((unseen?.value ?? 0) + (dark?.value ?? 0));
+    if (swing) modifiers.push({ label: L("WildSwing"), value: swing });
+  }
+
+  if (modifier !== 0) {
+    modifiers.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: modifier });
+  }
+
+  // "the lower fighter is at -1 to any active defense" and worse as the drop
+  // grows (p. 402). Only the defense half is applied: the rest of that rule is
+  // about which locations each fighter can reach, which needs a called shot to
+  // matter and a map to know.
+  //
+  // A long weapon closes the gap first: "each yard past the first brings the
+  // foe three feet closer to you. This does not bring you any closer to your
+  // foe!" So a man with a greatsword fighting somebody six feet above him
+  // fights as though the drop were three.
+  const levels = levelDifference(
+    effectiveLevelDifference({ feet: ground, reachYards: options.reachYards ?? 1 }),
+  );
+  const groundPenalty = levels.negligible ? 0 : levels.lower.defense;
+
+  return { modifiers, deception, flurried, aimed, addon, groundPenalty };
+}
+
 export async function promptForMeleeAttack(options: {
   effectiveSkill: number;
   /** What the weapon does, which decides where it can be aimed. */
@@ -2833,43 +3082,76 @@ export async function promptForMeleeAttack(options: {
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" style="width:90px">
       </label>
+      <div data-roll-breakdown></div>
     </div>`,
+    render: (_event: Event, dialog: any) => {
+      const root: HTMLElement = dialog.element ?? dialog;
+      // The running total, kept in step with the boxes: a fighter weighing a
+      // Deceptive Attack against a Rapid Strike can see what each costs.
+      const update = () => {
+        const form = root.closest<HTMLElement>(".application") ?? root;
+        const answers = readMeleeForm(form) as unknown as MeleeAnswers;
+        const { modifiers } = assembleMeleeAttack(answers, options, {
+          addonContext, effortAllowed, rapidPenalty,
+        });
+        const automatic = [
+          ...standingRollLines(options.actor, {
+            rollType: "attack", ranged: false, wildSwing: answers.wildSwing, dialogAsked: true,
+          }),
+          ...positionRollLines(options.actor, { rollType: "attack", ranged: false }),
+        ];
+        // Move and Attack and a Wild Swing both hold skill to 9 (pp. 365, 388),
+        // so the ceiling is shown rather than sprung at roll time. The same
+        // pair the roll itself caps on.
+        const cap = options.actor?.system?.maneuver === "moveAndAttack" || answers.wildSwing
+          ? WILD_SWING_SKILL_CAP
+          : null;
+        drawBreakdown(root, rollBreakdown(Number(options.effectiveSkill) || 0, [
+          { modifiers: automatic, automatic: true },
+          { modifiers, automatic: false },
+        ], { cap }));
+      };
+      root.addEventListener("change", update);
+      root.addEventListener("input", update);
+      update();
+    },
     ok: {
       label: game.i18n.localize("GWORLD.Chat.Roll"),
-      callback: (_event: Event, button: HTMLElement) => {
-        const form = button.closest<HTMLElement>(".application");
-        const num = (name: string) =>
-          Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
-        const ticked = (name: string) =>
-          form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
-        return {
-          addonValues: readAttackOptionValues(form, addonContext),
-          deceptive: num("deceptive"),
-          modifier: num("modifier"),
-          rapid: ticked("rapid"),
-          flurry: ticked("flurry"),
-          mighty: ticked("mighty"),
-          sight: (form?.querySelector<HTMLSelectElement>('select[name="sight"]')?.value ??
-            "clear") as Sight,
-          darkness: num("darkness"),
-          calledShot:
-            form?.querySelector<HTMLSelectElement>('select[name="calledShot"]')?.value ?? UNAIMED,
-          turned: ticked("turned"),
-          ground:
-            Number(form?.querySelector<HTMLSelectElement>('select[name="ground"]')?.value ?? 0) || 0,
-          dual: form?.querySelector<HTMLSelectElement>('select[name="dual"]')?.value ?? "no",
-          charging: ticked("charging"),
-          pullSt: num("pullSt"),
-          lanceSt: num("lanceSt"),
-          lanceYards: num("lanceYards"),
-          jousting: ticked("jousting"),
-          wildSwing: ticked("wildSwing"),
-          stopThrustYards: num("stopThrustYards"),
-        };
-      },
+      callback: (_event: Event, button: HTMLElement) => readMeleeForm(button.closest<HTMLElement>(".application")),
     },
     rejectClose: false,
   });
+
+  function readMeleeForm(form: HTMLElement | null) {
+    const num = (name: string) =>
+      Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
+    const ticked = (name: string) =>
+      form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+    return {
+      addonValues: readAttackOptionValues(form, addonContext),
+      deceptive: num("deceptive"),
+      modifier: num("modifier"),
+      rapid: ticked("rapid"),
+      flurry: ticked("flurry"),
+      mighty: ticked("mighty"),
+      sight: (form?.querySelector<HTMLSelectElement>('select[name="sight"]')?.value ??
+        "clear") as Sight,
+      darkness: num("darkness"),
+      calledShot:
+        form?.querySelector<HTMLSelectElement>('select[name="calledShot"]')?.value ?? UNAIMED,
+      turned: ticked("turned"),
+      ground:
+        Number(form?.querySelector<HTMLSelectElement>('select[name="ground"]')?.value ?? 0) || 0,
+      dual: form?.querySelector<HTMLSelectElement>('select[name="dual"]')?.value ?? "no",
+      charging: ticked("charging"),
+      pullSt: num("pullSt"),
+      lanceSt: num("lanceSt"),
+      lanceYards: num("lanceYards"),
+      jousting: ticked("jousting"),
+      wildSwing: ticked("wildSwing"),
+      stopThrustYards: num("stopThrustYards"),
+    };
+  }
 
   if (!result || typeof result !== "object") return null;
   const {
@@ -2897,87 +3179,15 @@ export async function promptForMeleeAttack(options: {
     jousting: boolean;
   };
 
-  // "You may not reduce your final effective skill below 10", so the ceiling is
-  // set against the skill after the situational modifier, not before it. A
-  // fighter at 16 who is also at -4 for something can afford one level of
-  // deception, not three.
-  const deception = deceptiveAttack(options.effectiveSkill + modifier, deceptive);
-  const modifiers: RollModifier[] = [];
-
-  if (deception.attackPenalty !== 0) {
-    modifiers.push({ label: L("Deceptive"), value: deception.attackPenalty });
-  }
-  // A Flurry of Blows buys half the Rapid Strike penalty back, so the two are
-  // one modifier rather than a penalty and a refund.
-  const flurried = rapid && flurry && effortAllowed;
-  if (rapid) {
-    modifiers.push({
-      label: flurried ? `${L("RapidStrike")} + ${E("Flurry")}` : L("RapidStrike"),
-      value: flurried ? flurryOfBlowsPenalty(rapidPenalty) : rapidPenalty,
-    });
-  }
-  // "If the mount's velocity is 7 or more relative to the foe, the attack has
-  // -1 to hit but +1 damage" (p. 396). The damage half is collected at the
-  // damage roll, which is a separate click.
-  if (charging) {
-    modifiers.push({
-      label: game.i18n.localize("GWORLD.Mounted.Charging"),
-      value: mountedAttack(CHARGE_VELOCITY).toHit,
-    });
-  }
-
-  // Both hands at once: each roll is separate, so this is the modifier for the
-  // hand being rolled now (p. 417). The technique and Ambidexterity come off the
-  // sheet rather than being asked about again.
-  if (dual === "primary" || dual === "off") {
-    const both = dualWeaponAttack({
-      technique: options.dualWeaponTechnique ?? 0,
-      ambidextrous: options.ambidextrous === true,
-      offHandTraining: options.offHandTraining ?? 0,
-    });
-    modifiers.push({
-      label: game.i18n.localize(dual === "off" ? "GWORLD.Melee.DualOff" : "GWORLD.Melee.DualPrimary"),
-      value: dual === "off" ? both.offHand : both.primary,
-    });
-  }
-
-  // "You cannot target a particular part of the foe's body" on a Wild Swing:
-  // the location is rolled (p. 388).
-  const aimed = calledShotModifier(wildSwing ? UNAIMED : calledShot, options.damageType, false, options.actor);
-  if (aimed.modifier) modifiers.push(aimed.modifier);
-
-  // What the modules' options chosen here do to the roll; the rest of what
-  // they do travels with the result.
-  const addon = applyAttackOptions(addonContext, addonValues ?? {});
-  modifiers.push(...addon.modifiers);
-
-  const unseen = sightModifier(sight, false, options.eyes);
-  if (unseen) modifiers.push(unseen);
-  const dark = darknessModifier(darkness, options.eyes);
-  if (dark) modifiers.push(dark);
-  // A Wild Swing is at -5 or the visibility penalty, whichever is worse.
-  if (wildSwing) {
-    const swing = wildSwingPenalty((unseen?.value ?? 0) + (dark?.value ?? 0));
-    if (swing) modifiers.push({ label: L("WildSwing"), value: swing });
-  }
-
-  if (modifier !== 0) {
-    modifiers.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: modifier });
-  }
-
-  // "the lower fighter is at -1 to any active defense" and worse as the drop
-  // grows (p. 402). Only the defense half is applied: the rest of that rule is
-  // about which locations each fighter can reach, which needs a called shot to
-  // matter and a map to know.
-  //
-  // A long weapon closes the gap first: "each yard past the first brings the
-  // foe three feet closer to you. This does not bring you any closer to your
-  // foe!" So a man with a greatsword fighting somebody six feet above him
-  // fights as though the drop were three.
-  const levels = levelDifference(
-    effectiveLevelDifference({ feet: ground, reachYards: options.reachYards ?? 1 }),
+  const assembled = assembleMeleeAttack(
+    {
+      deceptive, modifier, rapid, flurry, sight, darkness, calledShot, ground, dual, charging,
+      wildSwing, addonValues: addonValues ?? {},
+    },
+    options,
+    { addonContext, effortAllowed, rapidPenalty },
   );
-  const groundPenalty = levels.negligible ? 0 : levels.lower.defense;
+  const { modifiers, deception, flurried, aimed, addon, groundPenalty } = assembled;
 
   const mightyBlows = mighty && effortAllowed;
   return {
