@@ -83,11 +83,6 @@ export function steppedLevels(trait: LevelledTrait, direction: StepDirection): n
   return direction === "down" ? previousTraitLevel(shape) : nextTraitLevel(shape);
 }
 
-/** The most levels a trait can hold, or null where the book sets no limit. */
-export function levelCeiling(trait: LevelledTrait): number | null {
-  return traitLevelCeiling(levelShape(trait));
-}
-
 /**
  * A level typed into a box, brought within what the trait can hold.
  *

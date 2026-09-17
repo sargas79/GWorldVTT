@@ -6113,10 +6113,6 @@
       "description": "",
       "reference": "Basic Set: Characters p. 279",
       "category": "weapon",
-      "ammunition": {
-        "kind": "",
-        "fits": "bolt"
-      },
       "equipmentQuality": "basic",
       "forSkills": [],
       "quality": "good",

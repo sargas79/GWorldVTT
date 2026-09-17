@@ -1205,9 +1205,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         }
 
         const value = Math.round(Number(input.value));
-        if (!Number.isFinite(value)) {
+        if (input.value.trim() === "" || !Number.isFinite(value)) {
           // A field cleared or typed into nonsense is put back rather than
           // written, so a stray keystroke cannot silently zero a skill.
+          // Number("") is 0, so the blank is checked on its own.
           void this.render();
           return;
         }

@@ -104,7 +104,7 @@ export function carriedAmmunitionFor(actor: any, item: any, modeIndex = 0): any[
  * and takes the Ready maneuvers the table lists.
  */
 export async function loadAmmunition(actor: any, item: any, modeIndex: number, box: any): Promise<boolean> {
-  if (!item?.isOwner || !box || !isAmmunition(box)) return false;
+  if (!item?.isOwner || !box || !isAmmunition(box) || !isRuleOn("reloading")) return false;
   const found = modeOf(item, modeIndex);
   if (!found) return false;
   const { mode, entry } = found;
@@ -156,7 +156,7 @@ export async function loadAmmunition(actor: any, item: any, modeIndex: number, b
  * loads it. Says so when nothing carried fits.
  */
 export async function chooseAndLoad(actor: any, item: any, modeIndex: number): Promise<boolean> {
-  if (!item?.isOwner) return false;
+  if (!item?.isOwner || !isRuleOn("reloading")) return false;
   const boxes = carriedAmmunitionFor(actor, item, modeIndex);
   if (boxes.length === 0) {
     ui.notifications?.warn(A("NothingFits", { name: String(item.name) }));
@@ -190,12 +190,16 @@ function calibreTokenOf(name: string): string {
   return m ? m[1]!.trim() : "";
 }
 
-/** What rounds for this weapon say they fit: its calibre, or arrow / bolt. */
+/**
+ * What rounds for this weapon say they fit: its calibre, or arrow / bolt.
+ * The bow and crossbow cases are the fit rule's own, so what Buy makes is
+ * what Load will accept.
+ */
 export function ammunitionFitFor(item: any): string {
-  const name = String(item?.name ?? "");
-  if (/crossbow|prodd/i.test(name)) return "bolt";
-  if (item?.system?.weaponClass === "bow" || /\bbow\b/i.test(name)) return "arrow";
-  return calibreTokenOf(name) || name;
+  const weapon = fitOf(item);
+  if (ammunitionFits(weapon, "bolt")) return "bolt";
+  if (ammunitionFits(weapon, "arrow")) return "arrow";
+  return calibreTokenOf(weapon.name) || weapon.name;
 }
 
 /** A compendium record of rounds that fit the weapon, where the packs hold one. */
@@ -221,7 +225,7 @@ async function packAmmunitionFor(item: any): Promise<Record<string, any> | null>
  * where there is one.
  */
 export async function buyAmmunition(actor: any, item: any, modeIndex: number): Promise<any | null> {
-  if (!actor?.isOwner || !item) return null;
+  if (!actor?.isOwner || !item || !isRuleOn("reloading")) return null;
   const found = modeOf(item, modeIndex);
   if (!found) return null;
   const { mode, entry } = found;
@@ -264,11 +268,12 @@ export async function buyAmmunition(actor: any, item: any, modeIndex: number): P
   // Per round: the pack's figure, else the table's reload weight over the load.
   const roundWeight = record ? Number(record.system?.weight) || 0
     : capacity > 0 ? (Number(mode.reloadWeight) || 0) / capacity : 0;
-  const multiplier = kind ? ammunitionEffect(kind as AmmunitionType, shape).costMultiplier : 1;
+  const effect = kind ? ammunitionEffect(kind as AmmunitionType, shape) : null;
+  const multiplier = effect?.costMultiplier ?? 1;
   const roundCost = Math.round((record ? Number(record.system?.cost) || ammunitionCost(roundWeight) : ammunitionCost(roundWeight)) * multiplier * 100) / 100;
   const baseName = record ? String(record.name) : A("RoundsFor", { fits });
   const name = kind ? `${baseName}, ${A(kind).toLowerCase()}` : baseName;
-  const lc = kind ? ammunitionEffect(kind as AmmunitionType, shape).lc : null;
+  const lc = effect?.lc ?? null;
 
   const data = {
     ...(record ?? {}),

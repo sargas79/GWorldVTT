@@ -213,6 +213,19 @@ export interface AmmunitionFit {
 }
 
 /**
+ * What a record of rounds fits, read off its name: "Arrow" and "Arrows" fit
+ * bows, "Bolt" and "Crossbow Bolt" crossbows (Characters pp. 275-276).
+ * Blank for anything else -- a Bolt-Action Rifle is not a bolt, so the
+ * name must end or go on with a space, a comma or a parenthesis.
+ */
+export function ammunitionFitOfName(name: string): string {
+  const text = String(name ?? "").trim();
+  if (/^arrows?(?=[\s,(]|$)/i.test(text)) return "arrow";
+  if (/^(?:crossbow )?bolts?(?=[\s,(]|$)/i.test(text)) return "bolt";
+  return "";
+}
+
+/**
  * Whether rounds that say what they fit go in this weapon.
  *
  * A fit is written the way the weapon's name states its calibre -- "9mm",

@@ -14,7 +14,7 @@
   {{#if (and @root.editable row.ammunition)}}
     {{!-- A box of rounds: the count is edited in the row as rounds are bought, found and lost. --}}
     <input type="number" class="v2-gear-num v2-gear-qty" min="0" step="1" value="{{row.quantity}}" data-item-field="system.quantity"
-           aria-label="{{localize 'GWORLD.Ammunition.Rounds'}}" data-tooltip="{{localize 'GWORLD.Ammunition.RoundsHint'}}">
+           id="{{@root.sheetId}}-{{row.id}}-qty" aria-label="{{localize 'GWORLD.Ammunition.Rounds'}}" data-tooltip="{{localize 'GWORLD.Ammunition.RoundsHint'}}">
   {{else}}
     <span class="v2-gear-num">{{row.quantity}}</span>
   {{/if}}

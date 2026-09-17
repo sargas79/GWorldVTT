@@ -1006,6 +1006,11 @@ Two fields a module may read (since 1.62.0):
 - **Random hit locations** (since 1.43.0): `roll.hitLocation({ actor?, damageType?, arc? })`
   rolls 3d on the table through `gworld.randomHitLocation` and returns `{ hitLocation,
   addonLocation, roll }`.
+- **Attacks come from the gear carried** (since 1.67.0): `derived.melee` and
+  `derived.ranged` list the equipment the character carries (`system.carried` not false),
+  an equipped shield, natural attacks and traits that are attacks. A weapon moved to
+  storage leaves the list until it is carried again, and stowing it unequips it. A module
+  that enumerated stored weapons through the derived lists should read `actor.items`.
 - **Ammunition as carried items** (since 1.67.0): equipment filed as `ammunition` is a
   box of rounds -- `system.ammunition.kind` is what a weapon fires it as (the same list
   as a ranged mode's `ammunition`), `system.ammunition.fits` what it fits ("9mm", ".40",

@@ -135,10 +135,18 @@
           {{#each items as |item|}}
             <li class="gb-row{{#if item.incomplete}} gb-row-incomplete{{/if}}" data-item-id="{{item.id}}">
               {{#if item.nameEditable}}
-                {{!-- A quirk or a perk is the player's own words, written here. --}}
-                <input type="text" class="gb-name gb-name-input" value="{{item.name}}" placeholder="{{item.namePlaceholder}}"
-                       id="{{@root.appId}}-{{item.id}}-name" data-item-name="{{item.id}}"
-                       aria-label="{{localize 'GWORLD.Item.Name'}}" />
+                {{!-- A quirk or a perk is the player's own words, written here; one the book
+                     makes the player specify -- Habit, Distinctive Feature -- asks for that too. --}}
+                <span class="gb-name-cell">
+                  <input type="text" class="gb-name gb-name-input" value="{{item.name}}" placeholder="{{item.namePlaceholder}}"
+                         id="{{@root.appId}}-{{item.id}}-name" data-item-name="{{item.id}}"
+                         aria-label="{{localize 'GWORLD.Item.Name'}}" />
+                  {{#if item.needsSpecialty}}
+                    <input type="text" class="gb-specialty" value="{{item.specialty}}" placeholder="{{localize 'GWORLD.Trait.SpecialtyPlaceholder'}}"
+                           id="{{@root.appId}}-{{item.id}}-specialty" data-item-specialty="{{item.id}}"
+                           aria-label="{{localize 'GWORLD.Trait.Specialty'}}" />
+                  {{/if}}
+                </span>
               {{else if item.needsSpecialty}}
                 {{!-- A trait the book makes the player specify: the behaviour, the group, the weapon. --}}
                 <span class="gb-name-cell">

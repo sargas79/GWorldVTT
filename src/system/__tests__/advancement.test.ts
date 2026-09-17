@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { clampedLevels, levelCeiling, steppedLevels, steppedPoints } from "../advancement.js";
+import { clampedLevels, steppedLevels, steppedPoints } from "../advancement.js";
+import { levelCeiling } from "../picker-merge.js";
 
 /**
  * A figure typed into the levels box is held to the same limits the buttons
@@ -8,9 +9,9 @@ import { clampedLevels, levelCeiling, steppedLevels, steppedPoints } from "../ad
  * last priced row, and nothing goes below none.
  */
 describe("a typed level", () => {
-  const intolerance = { system: { levels: 1, maxLevels: 2, costTable: [] } };
-  const wealth = { system: { levels: 2, maxLevels: 0, costTable: [10, 20, 30, 50, 75] } };
-  const charisma = { system: { levels: 3, maxLevels: 0, costTable: [] } };
+  const intolerance = { type: "trait", name: "Intolerance", system: { levels: 1, maxLevels: 2, costTable: [] } };
+  const wealth = { type: "trait", name: "Wealth", system: { levels: 2, maxLevels: 0, costTable: [10, 20, 30, 50, 75] } };
+  const charisma = { type: "trait", name: "Charisma", system: { levels: 3, maxLevels: 0, costTable: [] } };
 
   it("is brought back to the printed cap", () => {
     expect(clampedLevels(intolerance, "7")).toBe(2);

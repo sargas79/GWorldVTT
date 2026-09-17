@@ -1962,8 +1962,10 @@ export function weaponClassOf(mods) {
  * crossbows (Characters pp. 275-276). Blank for everything else.
  */
 function ammunitionFitOf(name) {
-  if (/^arrows?\b/i.test(name)) return "arrow";
-  if (/^(crossbow )?bolts?\b/i.test(name)) return "bolt";
+  // The name must end or go on with a space, a comma or a parenthesis: a
+  // Bolt-Action Rifle is not a bolt.
+  if (/^arrows?(?=[\s,(]|$)/i.test(name)) return "arrow";
+  if (/^(?:crossbow )?bolts?(?=[\s,(]|$)/i.test(name)) return "bolt";
   return "";
 }
 

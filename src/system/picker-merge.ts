@@ -201,6 +201,12 @@ export function namedByPlayer(item: { type?: unknown; system?: { category?: unkn
   return !String(item.system?.reference ?? "").trim();
 }
 
+/** The key of what a name field asks for, until it is filled in. */
+export function namePlaceholderKey(category: unknown): string {
+  const kind = String(category ?? "");
+  return kind === "quirk" || kind === "perk" ? `GWORLD.Builder.NamePlaceholder.${kind}` : "GWORLD.Builder.NamePlaceholder.trait";
+}
+
 /** The data for a custom entry. */
 export function customItemData(custom: PickerCustom, name: string): Record<string, unknown> {
   const system: Record<string, unknown> = {};

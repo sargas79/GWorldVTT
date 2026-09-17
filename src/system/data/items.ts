@@ -12,7 +12,7 @@ import {
   traitLevelName,
 } from "../../rules/traits.js";
 import type { Enchantment } from "../../rules/enchanting.js";
-import { AMMUNITION_TYPES, type AmmunitionType } from "../../rules/ammunition.js";
+import { AMMUNITION_TYPES, ammunitionFitOfName, type AmmunitionType } from "../../rules/ammunition.js";
 import { EQUIPMENT_QUALITIES, type EquipmentQuality } from "../../rules/wealth.js";
 import {
   WEAPON_CLASSES,
@@ -1022,6 +1022,22 @@ function rangedModeField() {
  * Modes model that directly instead of forcing duplicate items.
  */
 export class EquipmentData extends foundry.abstract.TypeDataModel {
+  /**
+   * Arrows and bolts made before rounds were their own kind of gear were
+   * filed as consumables. They read as ammunition that fits a bow or a
+   * crossbow, without a migration: the stored record is left alone, and
+   * the next edit of the item writes what it now reads as.
+   */
+  override prepareBaseData(): void {
+    super.prepareBaseData();
+    const self = this as any;
+    if (self.category !== "consumable") return;
+    const fits = ammunitionFitOfName(String((this.parent as any)?.name ?? ""));
+    if (!fits) return;
+    self.category = "ammunition";
+    if (!String(self.ammunition?.fits ?? "").trim()) self.ammunition = { ...(self.ammunition ?? { kind: "" }), fits };
+  }
+
   declare enchantments: Enchantment[];
   declare quantity: number;
   declare weight: number;

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   ammunitionCost,
   ammunitionEffect,
+  ammunitionFitOfName,
   ammunitionFits,
   availableAmmunition,
   calibreOf,
@@ -141,6 +142,15 @@ describe("what carried ammunition fits", () => {
     expect(ammunitionFits({ name: "Crossbow", weaponClass: "bow" }, "bolt")).toBe(true);
     expect(ammunitionFits({ name: "Pistol Crossbow" }, "bolts")).toBe(true);
     expect(ammunitionFits({ name: "Auto Pistol, .40" }, "arrow")).toBe(false);
+  });
+
+  it("reads arrows and bolts off a record's name, and not a bolt-action rifle", () => {
+    expect(ammunitionFitOfName("Arrow")).toBe("arrow");
+    expect(ammunitionFitOfName("Arrows (20)")).toBe("arrow");
+    expect(ammunitionFitOfName("Crossbow Bolt")).toBe("bolt");
+    expect(ammunitionFitOfName("Bolt, quarrel")).toBe("bolt");
+    expect(ammunitionFitOfName("Bolt-Action Rifle, 7.62mm")).toBe("");
+    expect(ammunitionFitOfName("Arrowhead, broadhead")).toBe("");
   });
 
   it("fits anything when it says nothing, and fits a weapon named outright", () => {

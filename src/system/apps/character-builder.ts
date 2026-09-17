@@ -19,9 +19,9 @@
 import { SYSTEM_ID } from "../constants.js";
 import { rememberFocus, restoreFocus, type RememberedFocus } from "../focus-memory.js";
 import { CompendiumPicker } from "./compendium-picker.js";
-import { clampedLevels, levelCeiling, steppedLevels } from "../advancement.js";
+import { clampedLevels, steppedLevels } from "../advancement.js";
 import { builderTypesFor } from "../data-extensions.js";
-import { customKindKey, namedByPlayer, type PickerCustom } from "../picker-merge.js";
+import { customKindKey, levelCeiling, namePlaceholderKey, namedByPlayer, type PickerCustom } from "../picker-merge.js";
 import { lacksSpecialty, traitLevelName } from "../../rules/traits.js";
 import {
   applyTemplateToActor,
@@ -202,7 +202,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
           atCeiling: stepper && ceiling !== null && levels >= ceiling,
           levelName: stepper ? traitLevelName(item.system?.levelNames ?? [], levels) ?? "" : "",
           nameEditable: namedByPlayer(item),
-          namePlaceholder: namedByPlayer(item) ? namePlaceholderFor(item) : "",
+          namePlaceholder: namedByPlayer(item) ? game.i18n.localize(namePlaceholderKey(item.system?.category)) : "",
           needsSpecialty: Boolean(item.system?.needsSpecialty),
           specialty: String(item.system?.specialty ?? ""),
           incomplete: lacksSpecialty(item.system ?? {}),
@@ -526,8 +526,9 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       return;
     }
 
+    // Number("") is 0: an emptied box is put back, not written as nothing.
     const value = Math.round(Number(typed));
-    if (!Number.isFinite(value)) {
+    if (String(typed).trim() === "" || !Number.isFinite(value)) {
       await this.render();
       return;
     }
@@ -582,13 +583,6 @@ function spendableOn(item: any): { field: string; value: number; unit: string } 
   }
 
   return null;
-}
-
-/** What the name field asks for, until it is filled in. */
-function namePlaceholderFor(item: any): string {
-  const category = String(item.system?.category ?? "");
-  const key = category === "quirk" || category === "perk" ? `GWORLD.Builder.NamePlaceholder.${category}` : "GWORLD.Builder.NamePlaceholder.trait";
-  return game.i18n.localize(key);
 }
 
 /**
