@@ -15,7 +15,19 @@
  */
 
 import { traitLevelCeiling, traitPoints } from "../rules/traits.js";
-import { normalizeSkillName } from "../rules/skills.js";
+import {
+  nextSkillPoints,
+  nextTechniquePoints,
+  normalizeSkillName,
+  pointsForRelativeLevel,
+  previousSkillPoints,
+  previousTechniquePoints,
+  relativeLevelForPoints,
+  techniqueLevelsForPoints,
+  techniquePointCost,
+  type TechniqueDifficulty,
+} from "../rules/skills.js";
+import type { Difficulty } from "../rules/types.js";
 
 /** The parts of an item the plan reads. */
 export interface PlannedItem {
@@ -171,4 +183,106 @@ export function customItemData(custom: PickerCustom, name: string): Record<strin
   if (custom.itemType === "trait" && custom.category === "quirk") Object.assign(system, { points: -1, levels: 0, pointsPerLevel: 0 });
   if (custom.itemType === "trait" && custom.category === "perk") Object.assign(system, { points: 1, levels: 0, pointsPerLevel: 0 });
   return { name, type: custom.itemType, system };
+}
+
+/**
+ * The point totals an amount field may hold.
+ *
+ * Points bought a level at a time do not buy a level at a time. The Skill Cost
+ * Table steps 1, 2, 4, 8 and then by 4, so 3 points buy exactly what 2 buy and
+ * 5 exactly what 4 buy. A spinner stepping by one therefore walks through
+ * totals that are simply worse than the one below them, which is what the
+ * picker used to offer. These steps are the table's own.
+ *
+ * Techniques are not on that table (Characters p. 230) and have their own.
+ */
+const SKILL_DIFFICULTIES: readonly string[] = ["E", "A", "H", "VH", "W"];
+
+/** A skill's or spell's difficulty, falling back to the one the table shares. */
+function skillDifficulty(system: Record<string, any> | undefined): Difficulty {
+  const given = String(system?.difficulty ?? "");
+  // The steps are the same at every difficulty but a wildcard's, so an entry
+  // with none set still steps rather than stalling.
+  return (SKILL_DIFFICULTIES.includes(given) ? given : "E") as Difficulty;
+}
+
+/** A technique's difficulty; Average is the common one and the safer guess. */
+function techniqueDifficulty(system: Record<string, any> | undefined): TechniqueDifficulty {
+  return String(system?.difficulty ?? "") === "H" ? "H" : "A";
+}
+
+/** Whether an entry's amount is points off a cost table rather than levels. */
+function pricedByTable(item: PlannedItem): boolean {
+  return amountKind(item) === "points";
+}
+
+/** What a point total reaches, and the totals either side of it. */
+export interface PointSteps {
+  /** The total itself, snapped to one that buys something. */
+  points: number;
+  /** The next total up the table. */
+  next: number;
+  /** The total below, or the cheapest one where there is nothing below. */
+  previous: number;
+  /**
+   * What those points reach: a skill's or spell's relative level, or the
+   * levels a technique gains over its default. Null where they reach nothing.
+   */
+  relativeLevel: number | null;
+}
+
+/**
+ * Snaps a point total down to one that actually buys a level, and gives the
+ * steps either side of it.
+ *
+ * Snapping goes down, never up: a total is money already spent, so landing on
+ * the level it reaches spends no more than the player asked for.
+ */
+export function pointSteps(item: PlannedItem, points: number): PointSteps {
+  const wanted = Math.max(0, Math.floor(Number(points) || 0));
+  const system = item.system ?? {};
+
+  if (item.type === "technique") {
+    const difficulty = techniqueDifficulty(system);
+    const cheapest = nextTechniquePoints(0, difficulty);
+    const levels = techniqueLevelsForPoints(wanted, difficulty);
+    const snapped = levels <= 0 ? cheapest : techniquePointCost(levels, difficulty);
+    return {
+      points: snapped,
+      next: nextTechniquePoints(snapped, difficulty),
+      previous: Math.max(cheapest, previousTechniquePoints(snapped, difficulty)),
+      relativeLevel: techniqueLevelsForPoints(snapped, difficulty),
+    };
+  }
+
+  const difficulty = skillDifficulty(system);
+  const cheapest = nextSkillPoints(0, difficulty);
+  const reached = relativeLevelForPoints(wanted, difficulty);
+  const snapped = reached === null
+    ? cheapest
+    : (pointsForRelativeLevel(reached, difficulty) ?? cheapest);
+  return {
+    points: snapped,
+    next: nextSkillPoints(snapped, difficulty),
+    previous: Math.max(cheapest, previousSkillPoints(snapped, difficulty)),
+    relativeLevel: relativeLevelForPoints(snapped, difficulty),
+  };
+}
+
+/**
+ * The amount to take for an entry, snapped where the entry is priced from a
+ * table. Levelled traits are counted in levels and pass through.
+ */
+export function snapAmount(item: PlannedItem, amount: number): number {
+  if (!pricedByTable(item)) return Math.max(1, Math.floor(Number(amount) || 1));
+  return pointSteps(item, amount).points;
+}
+
+/** The step above or below an amount, for the field's spinner. */
+export function steppedAmount(item: PlannedItem, amount: number, direction: 1 | -1): number {
+  if (!pricedByTable(item)) {
+    return Math.max(1, Math.floor(Number(amount) || 1) + direction);
+  }
+  const steps = pointSteps(item, amount);
+  return direction > 0 ? steps.next : steps.previous;
 }

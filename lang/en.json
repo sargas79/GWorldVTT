@@ -881,6 +881,10 @@
       "LoadingHint": "Reading the compendia…",
       "Points": "pts",
       "Cost": "= {points} pts",
+      "SkillLevel": "at {level}",
+      "TechniqueLevel": "at default {level}",
+      "StepUp": "Raise to the next point total that buys a level",
+      "StepDown": "Drop to the previous point total",
       "Unspent": "{points} unspent",
       "Raised": {
         "levels": "{name}: {from} → {to} levels.",

@@ -25,7 +25,10 @@ import {
   customItemData,
   levelCeiling,
   planAddition,
+  pointSteps,
   previewCost,
+  snapAmount,
+  steppedAmount,
   type PickerCustom,
   type PlannedItem,
 } from "../picker-merge.js";
@@ -274,7 +277,10 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
   #row(entry: PickerEntry) {
     const item: PlannedItem = { type: entry.type, name: entry.name, system: entry.system };
     const kind = amountKind(item);
-    const amount = this.#amounts.get(entry.uuid) ?? 1;
+    // Snapped here as well as on the field, so a total that never passed
+    // through the field -- a remembered one, or a default -- is still a total
+    // that buys something.
+    const amount = kind ? snapAmount(item, this.#amounts.get(entry.uuid) ?? 1) : 1;
     const ceiling = kind === "levels" ? levelCeiling(item) : null;
     const cost = kind ? previewCost(item, amount) : null;
     return {
@@ -287,28 +293,96 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
         ? game.i18n.localize("GWORLD.Trait.Levels")
         : game.i18n.localize("GWORLD.Picker.Points"),
       cost: cost === null ? null : game.i18n.format("GWORLD.Picker.Cost", { points: cost }),
+      levelLabel: this.#levelLabel(item, amount),
     };
+  }
+
+  /**
+   * What the chosen points reach, shown beside the cost so the player sees the
+   * level before they take the entry rather than after.
+   */
+  #levelLabel(item: PlannedItem, amount: number): string | null {
+    if (amountKind(item) !== "points") return null;
+    const { relativeLevel } = pointSteps(item, amount);
+    if (relativeLevel === null) return null;
+    const key = item.type === "technique" ? "GWORLD.Picker.TechniqueLevel" : "GWORLD.Picker.SkillLevel";
+    const signed = relativeLevel >= 0 ? `+${relativeLevel}` : String(relativeLevel);
+    return game.i18n.format(key, { level: signed });
+  }
+
+  /** The entry behind a row, in the shape the pricing rules read. */
+  #itemFor(uuid: string): PlannedItem | null {
+    const entry = this.#entries?.find((e) => e.uuid === uuid);
+    return entry ? { type: entry.type, name: entry.name, system: entry.system } : null;
+  }
+
+  /** Writes an amount back to its field and re-prices the row around it. */
+  #setAmount(input: HTMLInputElement, amount: number): void {
+    const uuid = input.dataset.amountFor;
+    if (!uuid) return;
+    this.#amounts.set(uuid, amount);
+    input.value = String(amount);
+    this.#repriceRow(input, amount);
+  }
+
+  /**
+   * Re-prices one row in place. Re-rendering the list would do it too, but it
+   * would also take the caret out of the field being typed into.
+   */
+  #repriceRow(input: HTMLInputElement, amount: number): void {
+    const uuid = input.dataset.amountFor;
+    const item = uuid ? this.#itemFor(uuid) : null;
+    if (!item) return;
+    const row = input.closest(".gp-row");
+
+    const cost = previewCost(item, amount);
+    const costLabel = row?.querySelector<HTMLElement>(".gp-cost");
+    if (costLabel && cost !== null) {
+      costLabel.textContent = game.i18n.format("GWORLD.Picker.Cost", { points: cost });
+    }
+
+    // The level those points reach, kept in step with the cost beside it.
+    const levelLabel = row?.querySelector<HTMLElement>(".gp-level");
+    if (levelLabel) levelLabel.textContent = this.#levelLabel(item, amount) ?? "";
   }
 
   override async _onRender(context: object, options: object): Promise<void> {
     await super._onRender(context, options);
 
     for (const input of this.element.querySelectorAll<HTMLInputElement>("input[data-amount-for]")) {
+      // While typing, price exactly what is typed: snapping mid-keystroke
+      // would fight the player halfway through a number.
       input.addEventListener("input", () => {
         const uuid = input.dataset.amountFor;
         if (!uuid) return;
         const value = Math.max(1, Math.floor(Number(input.value) || 1));
         this.#amounts.set(uuid, value);
-        // Re-price the row in place rather than re-rendering the list, which
-        // would take the caret out of the field being typed into.
-        const entry = this.#entries?.find((e) => e.uuid === uuid);
-        const cost = entry
-          ? previewCost({ type: entry.type, name: entry.name, system: entry.system }, value)
+        this.#repriceRow(input, value);
+      });
+
+      // Once the number is finished with, put it on the table: a total off the
+      // table buys no more than the step below it, so it becomes that step.
+      input.addEventListener("change", () => {
+        const uuid = input.dataset.amountFor;
+        if (!uuid) return;
+        this.#setAmount(input, snapAmount(this.#itemFor(uuid)!, Number(input.value)));
+      });
+    }
+
+    for (const button of this.element.querySelectorAll<HTMLElement>("button[data-step-for]")) {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        const uuid = button.dataset.stepFor;
+        const input = uuid
+          ? this.element.querySelector<HTMLInputElement>(`input[data-amount-for="${CSS.escape(uuid)}"]`)
           : null;
-        const label = input.closest(".gp-row")?.querySelector<HTMLElement>(".gp-cost");
-        if (label && cost !== null) {
-          label.textContent = game.i18n.format("GWORLD.Picker.Cost", { points: cost });
-        }
+        if (!uuid || !input) return;
+        const direction = Number(button.dataset.step) < 0 ? -1 : 1;
+        const item = this.#itemFor(uuid)!;
+        // The step is the table's, not one: 4 points goes to 8, not to 5.
+        const stepped = steppedAmount(item, Number(input.value), direction);
+        const ceiling = amountKind(item) === "levels" ? levelCeiling(item) : null;
+        this.#setAmount(input, ceiling === null ? stepped : Math.min(stepped, ceiling));
       });
     }
 
@@ -352,7 +426,9 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
       data = chosen;
     }
 
-    const amount = this.#amounts.get(uuid) ?? 1;
+    // Snapped once more at the point of taking it: whatever route the number
+    // arrived by, what is spent is a total that buys a level.
+    const amount = snapAmount({ type: data.type, name: data.name, system: data.system }, this.#amounts.get(uuid) ?? 1);
     const plan = planAddition({
       source: data,
       existing: [...(this.#actor.items ?? [])].map((item: any) => ({
