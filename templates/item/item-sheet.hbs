@@ -629,6 +629,10 @@
           <input type="number" name="system.hp" value="{{system.hp}}" step="1" min="0" placeholder="—"
                  {{#unless editable}}disabled{{/unless}} />
         </label>
+        <label data-tooltip="{{localize 'GWORLD.Shield.HardenedHint'}}">{{localize "GWORLD.Shield.Hardened"}}
+          <input type="number" name="system.hardened" value="{{system.hardened}}" step="1" min="0" max="6"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
         <label data-tooltip="{{localize 'GWORLD.Shield.CompositionHint'}}">{{localize "GWORLD.Shield.Composition"}}
           <select name="system.composition" {{#unless editable}}disabled{{/unless}}>
             {{selectOptions choices.shieldCompositions selected=system.composition localize=true}}

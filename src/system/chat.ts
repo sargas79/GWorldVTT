@@ -405,6 +405,7 @@ async function applyFromCard(options: {
         damageType: damage.type,
         armorDivisor: damage.armorDivisor,
         hitLocation: damage.hitLocation,
+        ignoresDr: (damage as any).ignoresDr === true,
       });
       if (shielded) {
         if (shielded.overpenetration <= 0) continue;

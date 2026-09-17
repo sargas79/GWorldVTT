@@ -1977,7 +1977,9 @@
       "Disabled": "The shield is disabled: no Defense Bonus until it is repaired.",
       "FellOff": "The shield is destroyed and falls off the arm.",
       "Composition": "Made of",
-      "CompositionHint": "An iron shield costs five times as much, weighs twice as much and is +3 DR with twice the HP; a plastic riot shield weighs half. Composition never changes the Defense Bonus (Characters p. 287)."
+      "CompositionHint": "An iron shield costs five times as much, weighs twice as much and is +3 DR with twice the HP; a plastic riot shield weighs half. Composition never changes the Defense Bonus (Characters p. 287).",
+      "Hardened": "Hardened",
+      "HardenedHint": "Levels of Hardened on the shield's DR (Characters p. 47): each steps down the armour divisor of a blow the shield takes."
     },
     "TraitCategory": {
       "advantage": "Advantage",
@@ -3474,7 +3476,8 @@
     "ShieldComposition": {
       "wood": "Wood (as the table lists it)",
       "iron": "Iron (TL3+)",
-      "plastic": "Plastic riot shield (TL7+)"
+      "plastic": "Plastic riot shield (TL7+)",
+      "none": "None (no cost, weight, DR or HP change)"
     },
     "Repair": {
       "Action": "Repair",

@@ -1343,6 +1343,7 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
   declare db: number;
   declare dr: number;
   declare hp: number | null;
+  declare hardened: number;
   declare hpLost: number;
   declare composition: ShieldComposition;
   declare listCost: number;
@@ -1374,6 +1375,11 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
        */
       dr: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
       hp: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
+      /**
+       * Levels of Hardened on the shield's own DR (Characters p. 47), stepping
+       * down the armour divisor of a blow the shield takes (since API 1.63.0).
+       */
+      hardened: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0, max: 6 }),
       /** Damage the shield has taken under Damage to Shields (Campaigns p. 484). */
       hpLost: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
       /**

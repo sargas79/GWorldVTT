@@ -167,6 +167,7 @@ describe("obsidian, plastic and what a shield is made of (pp. 275, 287)", () => 
     expect(shieldComposition("iron")).toEqual({ costFactor: 5, weightFactor: 2, drBonus: 3, hpFactor: 2, minTl: 3 });
     expect(shieldComposition("plastic")).toEqual({ costFactor: 1, weightFactor: 0.5, drBonus: 0, hpFactor: 1, minTl: 7 });
     expect(shieldComposition("wood")).toEqual({ costFactor: 1, weightFactor: 1, drBonus: 0, hpFactor: 1, minTl: 0 });
+    expect(shieldComposition("none")).toEqual({ costFactor: 1, weightFactor: 1, drBonus: 0, hpFactor: 1, minTl: 0 });
   });
 });
 

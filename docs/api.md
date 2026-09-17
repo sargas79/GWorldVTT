@@ -566,6 +566,12 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     the skills were worked out from: the character's `derived` data isn't
     written yet while this fires, so `actors.attribute` can't be read here.
 
+System item fields a module's data may set:
+- **Shields** (since 1.63.0): `hardened`, levels of Hardened on the shield's own
+  DR, which step down the armour divisor of a blow the shield takes under
+  Damage to Shields; and a `composition` of `"none"`, for a shield made of
+  nothing the table lists, which changes no cost, weight, DR or HP.
+
 `tools/validate-packs.mjs --src <dir>` accepts documents of module types and
 `system.extensions` data.
 
