@@ -211,3 +211,16 @@ export function coneMayStillCatch(): boolean {
   // target in the area of effect on a miss!"
   return true;
 }
+
+/**
+ * A projectile aimed with one skill and then homing on its own (since API
+ * 1.63.0): the skill the firer rolls first, and the skill level the attack
+ * itself is rolled at, where the mode gives one. Null where the mode has no
+ * aiming roll.
+ */
+export function aimedThenGuided(mode: { aimingSkill?: unknown; guidedSkillLevel?: unknown } | null | undefined): { aimingSkill: string; skillLevel: number | null } | null {
+  const aimingSkill = String(mode?.aimingSkill ?? "").trim();
+  if (!aimingSkill) return null;
+  const level = Math.floor(Number(mode?.guidedSkillLevel) || 0);
+  return { aimingSkill, skillLevel: level > 0 ? level : null };
+}

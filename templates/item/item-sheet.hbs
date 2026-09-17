@@ -1201,6 +1201,10 @@
               <select name="system.rangedModes.{{i}}.guidance" aria-label="{{localize 'GWORLD.Item.Guidance'}}" data-tooltip="{{localize 'GWORLD.Item.GuidanceHint'}}" {{#unless @root.editable}}disabled{{/unless}}>
                 {{selectOptions @root.choices.guidance selected=m.guidance localize=true}}
               </select>
+              <input type="text" name="system.rangedModes.{{i}}.aimingSkill" value="{{m.aimingSkill}}" placeholder="{{localize 'GWORLD.Item.AimingSkill'}}"
+                     aria-label="{{localize 'GWORLD.Item.AimingSkill'}}" data-tooltip="{{localize 'GWORLD.Item.AimingSkillHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.rangedModes.{{i}}.guidedSkillLevel" value="{{m.guidedSkillLevel}}" min="0" step="1" style="width:60px"
+                     aria-label="{{localize 'GWORLD.Item.GuidedSkillLevel'}}" data-tooltip="{{localize 'GWORLD.Item.GuidedSkillLevelHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.AreaAttackHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.areaAttack"
                      {{#if m.areaAttack}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.AreaAttack"}}</label>

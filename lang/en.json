@@ -1441,7 +1441,11 @@
       "EquipmentModifier": "Stated modifier",
       "EquipmentModifierHint": "A modifier these tools give their skills that no grade describes (a small kit at -2). Leave it blank to use the grade.",
       "KineticOnly": "Knockback only",
-      "KineticOnlyHint": "A blow whose whole effect is its shove: knockback as a crushing blow's, blunt trauma where flexible armour stops it, and no other injury."
+      "KineticOnlyHint": "A blow whose whole effect is its shove: knockback as a crushing blow's, blunt trauma where flexible armour stops it, and no other injury.",
+      "AimingSkill": "Aiming skill",
+      "AimingSkillHint": "A skill the firer rolls before the attack, such as a launcher operator's; the attack is only rolled if it succeeds. Blank for none.",
+      "GuidedSkillLevel": "Projectile's skill",
+      "GuidedSkillLevelHint": "The projectile's own skill level, rolled for the attack once it has been aimed. 0 uses the firer's."
     },
     "Gear": {
       "Carried": "Carried",
@@ -1583,7 +1587,8 @@
       "Stabilized": "Stabilized sights or mount",
       "HasTargeting": "Using the vehicle's targeting system",
       "LaserSight": "Laser sight",
-      "LaserSeen": "The target sees the laser dot"
+      "LaserSeen": "The target sees the laser dot",
+      "AimingRoll": "Aiming ({skill})"
     },
     "Malfunction": {
       "Jammed": "The weapon malfunctions",

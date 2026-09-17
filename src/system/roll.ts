@@ -132,6 +132,7 @@ import {
   coneWidth,
   defendsAgainstArea,
   flightPlan,
+  aimedThenGuided,
   guidanceModifiers,
   halvesDamage,
   projectileSpeed,
@@ -1558,9 +1559,27 @@ async function rollAction(
     return { ...into, label: added ? added.label : game.i18n.localize(`GWORLD.HitLocation.${into.hitLocation}`).toLowerCase() };
   })();
 
+  // A projectile aimed with one skill and homing with its own (since API 1.63.0):
+  // the aiming roll comes first, and only on a success is the attack rolled.
+  const storedMode = rolledItem && attackMode && !attackMode.derived
+    ? (attackMode.ranged ? rolledItem.system?.rangedModes : rolledItem.system?.meleeModes)?.[attackMode.index]
+    : null;
+  const guided = rollType === "attack" ? aimedThenGuided(storedMode) : null;
+  if (guided) {
+    const aiming = await rollSuccess({
+      actor,
+      base: aimingLevel(actor, guided.aimingSkill),
+      label: game.i18n.format("GWORLD.Ranged.AimingRoll", { skill: guided.aimingSkill }),
+      kind: "skill",
+      skill: guided.aimingSkill,
+      tags: ["aiming"],
+    });
+    if (!aiming?.success) return null;
+  }
+
   const outcome = await rollSuccess({
     actor,
-    base,
+    base: guided?.skillLevel ?? base,
     label,
     kind: rollKind(rollType),
     // The attribute a skill or attribute roll is based on, as a tag a condition's rolls can name (API 1.42.0).
@@ -3160,4 +3179,17 @@ function outcomeClass(outcome: SuccessRollResult): string {
   if (outcome.criticalSuccess) return "crit-success";
   if (outcome.criticalFailure) return "crit-failure";
   return outcome.success ? "success" : "failure";
+}
+
+/** A skill's level on a character, or its IQ-5 default where they haven't got it, for an aiming roll. */
+function aimingLevel(actor: any, skill: string): number {
+  const wanted = String(skill).toLowerCase().replace(/\/tl\d*/g, "").replace(/\s+/g, " ").trim();
+  for (const item of actor?.items ?? []) {
+    if (item?.type !== "skill") continue;
+    const name = String(item.name ?? "").toLowerCase().replace(/\/tl\d*/g, "").replace(/\s+/g, " ").trim();
+    const level = item.system?.derived?.level;
+    if (name === wanted && typeof level === "number") return level;
+  }
+  const iq = Number(actor?.system?.derived?.attributes?.IQ ?? actor?.system?.attributes?.IQ) || 10;
+  return iq - 5;
 }
