@@ -107,6 +107,11 @@ export const PROCEDURE_HOOKS = Object.freeze({
    * criticalFailure, hpLost, fpLost, hpLostToPoison, symptomsNow, effectMinutes, finished }`.
    */
   poisonCycle: "gworld.poisonCycle",
+  /**
+   * Before a mortal wound check's card is posted (since 1.63.0): `{ actor, traumaMaintenance, minutes, label }`.
+   * Set `minutes` (a day is 1440) and a `label` for care that changes how often the check comes round.
+   */
+  mortalWoundInterval: "gworld.mortalWoundInterval",
 });
 
 /**
