@@ -2366,7 +2366,8 @@
       "temporary": "Temporary — it goes when they are back at full HP",
       "lasting": "Lasting",
       "permanent": "Permanent — the body part is gone or useless",
-      "Months": "{months} months to heal"
+      "Months": "{months} months to heal",
+      "EveryDays": "every {days} day(s)"
     },
     "Air": {
       "Action": "No air",

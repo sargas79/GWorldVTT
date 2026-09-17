@@ -21,7 +21,8 @@ import {
   mortalWoundTarget,
 } from "../rules/mortal-wounds.js";
 import { resolveSuccess } from "../rules/success.js";
-import { successRollModifiers } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, successRollModifiers } from "./procedure-extensions.js";
+import { callCombatHook } from "./combat-extensions.js";
 import { attributeOf, healthRollBonus, healthRollScore } from "./attributes.js";
 
 const DYING_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/dying.hbs`;
@@ -133,14 +134,22 @@ export async function rollMortalWound(options: {
     await setCondition(actor, "mortallyWounded", false);
   }
 
+  // How often the check comes round: a module's care may stretch it (since API 1.63.0).
+  const interval = callCombatHook(PROCEDURE_HOOKS.mortalWoundInterval, {
+    actor, traumaMaintenance, minutes: mortalWoundInterval(traumaMaintenance), label: "",
+  });
+  const minutes = Math.max(1, Math.floor(Number(interval.minutes) || mortalWoundInterval(traumaMaintenance)));
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Dying.MortalWound"),
     ht,
     modifier,
     target,
-    detail: game.i18n.format("GWORLD.Dying.EveryMinutes", {
-      minutes: mortalWoundInterval(traumaMaintenance),
-    }),
+    detail: [
+      minutes % 1440 === 0
+        ? game.i18n.format("GWORLD.Dying.EveryDays", { days: minutes / 1440 })
+        : game.i18n.format("GWORLD.Dying.EveryMinutes", { minutes }),
+      String(interval.label ?? ""),
+    ].filter(Boolean).join(" · "),
     dice: dieResults(roll),
     roll: roll.total,
     outcome: game.i18n.localize(`GWORLD.Dying.${result}`),

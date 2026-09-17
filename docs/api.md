@@ -883,6 +883,9 @@ Two fields a module may read (since 1.62.0):
   so a device that treats on its own uses its figures, and `label` names it on the card. Each roll
   passes through `gworld.successRollModifiers` tagged `firstAid`, `physician`, `surgery`, or
   `mortalWound` (with `traumaMaintenance` when it is), so a module adds its gear or care there.
+  Since 1.63.0, `gworld.mortalWoundInterval` fires before the check's card with
+  `{ actor, traumaMaintenance, minutes, label }`: set `minutes` (1440 for daily checks) and a
+  `label` where the module's care changes how often the check comes round; the card says so.
 - **Poison** (since 1.57.0): `actors.dosePoison(actor, poison, { doublings })` writes a
   dose onto a character as the Poison button does, the delay stretched by size and
   everything moved by the dose; `actors.activePoisons(actor)` lists them,

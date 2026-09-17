@@ -45,6 +45,10 @@ function foundryWith(faces: number[]) {
       if (context.tags.includes("mortalWound")) context.modifiers.push({ label: "Life support", value: 2 });
       if (context.tags.includes("surgery")) context.modifiers.push({ label: "Operating theatre", value: 2 });
     }
+    if (event === PROCEDURE_HOOKS.mortalWoundInterval && context.traumaMaintenance) {
+      context.minutes = 1440;
+      context.label = "Life support";
+    }
     return true;
   };
   globals.Hooks = { call: listen, callAll: listen };
@@ -101,5 +105,8 @@ describe("a module's healing", () => {
     expect(heard[0]?.tags).toEqual(["mortalWound", "traumaMaintenance"]);
     // Physician 12 is better than HT 10; +1 given and +2 from the unit.
     expect(String(cards[0]?.content)).toContain("\"target\":15");
+    // The unit's care makes the check daily (since 1.63.0).
+    expect(String(cards[0]?.content)).toContain("GWORLD.Dying.EveryDays");
+    expect(String(cards[0]?.content)).toContain("Life support");
   });
 });
