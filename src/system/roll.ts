@@ -358,6 +358,11 @@ export interface SuccessRollOptions {
   /** The skill rolled against, for a module's point pools that pay only for some skills. */
   skill?: string;
   /**
+   * The actor being looked for, on a roll to detect somebody (since 1.63.0).
+   * It reaches `gworld.successRollModifiers` and `gworld.detectionModifiers`.
+   */
+  subject?: any;
+  /**
    * What sort of roll this is beyond its kind, for modules' modifiers:
    * `fright`, `knockdown`, `selfControl`, a defense's name... A Fast-Draw or
    * Teaching skill is tagged from its name.
@@ -402,6 +407,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     ...successRollModifiers({
       actor, label, kind, skill: String(options.skill ?? ""), base, tags, modifiers: [...given],
       ...(options.attack ? { attack: options.attack } : {}),
+      ...(options.subject ? { subject: options.subject } : {}),
     }),
   ];
 
@@ -1601,8 +1607,15 @@ async function rollAction(
     base: guided?.skillLevel ?? base,
     label,
     kind: rollKind(rollType),
-    // The attribute a skill or attribute roll is based on, as a tag a condition's rolls can name (API 1.42.0).
-    ...(target.dataset.basedOn ? { tags: [String(target.dataset.basedOn)] } : {}),
+    // The attribute a skill or attribute roll is based on, as a tag a condition's rolls can name (API 1.42.0),
+    // and the sense a Perception roll is made by (API 1.63.0).
+    ...(target.dataset.basedOn || target.dataset.sense
+      ? { tags: [target.dataset.basedOn, target.dataset.sense].filter((t): t is string => Boolean(t)) }
+      : {}),
+    // Who is being looked for: the one token targeted, on a roll to detect (API 1.63.0).
+    ...(rollType !== "attack" && targetedTokens().length === 1 && targetedTokens()[0]?.actor
+      ? { subject: targetedTokens()[0].actor }
+      : {}),
     // The skill rolled, for bonus points only that skill's may pay for.
     ...(target.dataset.rollSkill || rollType === "skill" ? { skill: String(target.dataset.rollSkill ?? rollLabel ?? "") } : {}),
     ...(rollType === "attack" ? { delivery, damageType: target.dataset.damageType ?? "" } : {}),
