@@ -42,6 +42,7 @@ import {
 import type { DamageType } from "../rules/types.js";
 import { attributeOf } from "./attributes.js";
 import { loseAim } from "./aim.js";
+import type { ArmorWear, DamagePool, DamageTransaction } from "./damage-undo.js";
 import { syncHealthConditions } from "./conditions.js";
 import { hasInjuryTolerance } from "../rules/injury-tolerance.js";
 import {
@@ -162,6 +163,11 @@ export interface AppliedDamage {
   current: number;
   max: number;
   consequences: InjuryConsequences;
+  /**
+   * What this application changed, for undoing it. Absent on a result that
+   * only worked the damage out without applying it.
+   */
+  transaction?: DamageTransaction;
   /** Basic damage after a critical multiplied or maximised it. */
   basicDamage: number;
   critical: CriticalHit | null;
@@ -611,20 +617,45 @@ export async function applyDamageToActor(
   // once", and semi-ablative loses its point "regardless of whether the attack
   // penetrates DR" (Characters p. 47). So this comes before the early return
   // for a blow that did no injury -- armour that stopped it is still worn down.
-  await spendAblativeDr(actor, incoming, resolved);
+  const worn = await spendAblativeDr(actor, incoming, resolved);
+
+  // What this application changed, so it can be taken back: the pool, the
+  // armour it wore down, and the aim it spoiled. Recorded before anything is
+  // written, since afterwards the old values are gone.
+  const pool: DamagePool = resolved.costsFatigue ? "fp" : "hp";
+  const aimTurns = Number(actor.system?.aim?.turns ?? 0);
+  const transaction: DamageTransaction = {
+    actorUuid: String(actor.uuid ?? ""),
+    actorName: String(actor.name ?? ""),
+    pool,
+    from: resolved.previous,
+    to: resolved.current,
+    armor: worn,
+    aim: null,
+    at: Date.now(),
+  };
 
   if (resolved.injury === 0 && !resolved.collapsed) {
     callCombatHook(COMBAT_HOOKS.afterDamage, { actor, item, mode, damage: incoming, result: resolved });
-    return resolved;
+    // Armour is worn down even by a blow that did no injury, so the pool it
+    // never touched is recorded as unchanged rather than as a loss.
+    return { ...resolved, transaction: { ...transaction, from: resolved.current } };
   }
 
   const path = resolved.costsFatigue ? "system.fp.value" : "system.hp.value";
   await actor.update({ [path]: resolved.current });
   // "If you are injured while aiming ... you lose your aim."
+  if (aimTurns > 0) {
+    transaction.aim = {
+      turns: aimTurns,
+      target: String(actor.system?.aim?.target ?? ""),
+      bonuses: [...(actor.system?.aim?.bonuses ?? [])],
+    };
+  }
   await loseAim(actor, "injured");
   // And what it did, for a module with something that follows from it.
   callCombatHook(COMBAT_HOOKS.afterDamage, { actor, item, mode, damage: incoming, result: resolved });
-  return resolved;
+  return { ...resolved, transaction };
 }
 
 /**
@@ -636,10 +667,12 @@ export async function applyDamageToActor(
  * the armour: the rolled figure for a Force Field, which meets the blow first,
  * and what got past the field for everything under it.
  */
-async function spendAblativeDr(actor: any, damage: IncomingDamage, resolved: AppliedDamage): Promise<void> {
+async function spendAblativeDr(actor: any, damage: IncomingDamage, resolved: AppliedDamage): Promise<ArmorWear[]> {
   const reachedArmour = resolved.basicDamage;
   const reachedField = reachedArmour + resolved.forceField.stopped;
   const updates: Array<Record<string, unknown>> = [];
+  // What each piece lost, so an undo can put exactly that back.
+  const worn: ArmorWear[] = [];
 
   for (const item of actor?.items ?? []) {
     if (item?.type !== "armor" || item.system?.equipped !== true) continue;
@@ -659,10 +692,13 @@ async function spendAblativeDr(actor: any, damage: IncomingDamage, resolved: App
       basicDamage: field ? reachedField : reachedArmour,
     });
     if (lost <= 0) continue;
-    updates.push({ _id: item.id, "system.drLost": (Number(item.system?.drLost ?? 0) || 0) + lost });
+    const before = Number(item.system?.drLost ?? 0) || 0;
+    updates.push({ _id: item.id, "system.drLost": before + lost });
+    worn.push({ itemId: String(item.id), from: before, to: before + lost });
   }
 
   if (updates.length > 0) await actor.updateEmbeddedDocuments?.("Item", updates);
+  return worn;
 }
 
 /** Injury or fatigue taken off outside a damage card. */

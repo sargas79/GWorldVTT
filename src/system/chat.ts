@@ -13,6 +13,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { applyDamageToActor, takeInjury, type AppliedDamage, type IncomingDamage } from "./damage.js";
+import { isUndoable, undoDamage, type DamageTransaction } from "./damage-undo.js";
 import { HURTING_YOURSELF_DR, hurtingYourself } from "../rules/hurting-yourself.js";
 import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy } from "./weapon-damage.js";
 import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shields.js";
@@ -551,6 +552,12 @@ async function applyFromCard(options: {
     ...(critical ? { rolls: [critical.roll] } : {}),
     flags: {
       [SYSTEM_ID]: {
+        // What this application changed on each target, so it can be taken
+        // back from the card that describes it. Only what actually moved is
+        // kept: a blow that changed nothing has nothing to undo.
+        damageUndo: applied
+          .map((result) => result.transaction)
+          .filter((transaction): transaction is DamageTransaction => isUndoable(transaction)),
         // Whoever this blow knocked about still owes a HT roll, and the card
         // is where they are standing when they remember it.
         knockdown: knockdowns
@@ -1929,11 +1936,76 @@ async function addAfflictionControls(message: any, html: HTMLElement): Promise<v
   root.append(row);
 }
 
+/**
+ * Adds an Undo control for damage this card applied.
+ *
+ * Offered to the GM, and to whoever owns the target, because those are the
+ * people who can already change the sheet by hand -- this only saves them
+ * doing it field by field.
+ *
+ * One card, one undo: the button reverses this application and nothing else,
+ * and refuses where anything it touched has moved since. The refusal names
+ * what moved, so it reads as a decision rather than a failure.
+ */
+async function addDamageUndoControls(message: any, html: HTMLElement): Promise<void> {
+  const entries = message?.getFlag?.(SYSTEM_ID, "damageUndo") as DamageTransaction[] | undefined;
+  if (!Array.isArray(entries) || entries.length === 0) return;
+
+  const root = html.querySelector<HTMLElement>(".gworld-chat");
+  if (!root || root.querySelector("[data-gworld-undo]")) return;
+
+  for (const entry of entries) {
+    const actor: any = await fromUuid(entry.actorUuid).catch(() => null);
+    if (!actor?.isOwner) continue;
+
+    const row = document.createElement("div");
+    row.className = "gc-apply";
+    row.dataset.gworldUndo = entry.actorUuid;
+
+    const who = document.createElement("div");
+    who.className = "gc-who";
+    who.textContent = entry.actorName;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "gc-apply-button";
+    button.textContent = game.i18n.localize("GWORLD.Undo.Damage");
+    button.addEventListener("click", () => {
+      button.disabled = true;
+      void (async () => {
+        const outcome = await undoDamage(entry);
+        if (outcome.ok) {
+          // The pools decide the conditions, so they are brought back into
+          // step with what has just been restored.
+          await syncHealthConditions(actor);
+          button.textContent = game.i18n.localize("GWORLD.Undo.Done");
+          ui.notifications?.info(
+            game.i18n.format("GWORLD.Undo.Undone", { name: outcome.actorName }),
+          );
+          return;
+        }
+        // Refused: say which way, and let them try again once they have
+        // looked, rather than leaving a dead button.
+        ui.notifications?.warn(
+          game.i18n.format(`GWORLD.Undo.Refused.${outcome.reason ?? "poolChanged"}`, {
+            name: outcome.actorName,
+          }),
+        );
+        button.disabled = false;
+      })();
+    });
+
+    row.append(who, button);
+    root.append(row);
+  }
+}
+
 /** Registers the chat hooks. Called once, at init. */
 export function registerChatHooks(): void {
   Hooks.on("renderChatMessageHTML", (message: any, html: HTMLElement) => {
     addApplyControls(message, html);
     void addDefenseControls(message, html);
+    void addDamageUndoControls(message, html);
     void addKnockdownControls(message, html);
     void addDeathCheckControls(message, html);
     void addConsciousnessControls(message, html);

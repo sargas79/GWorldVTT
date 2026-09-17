@@ -847,6 +847,17 @@
         "NoPoints": "no points"
       }
     },
+    "Undo": {
+      "Damage": "Undo damage",
+      "Done": "Undone",
+      "Undone": "Damage to {name} was undone.",
+      "Refused": {
+        "poolChanged": "{name} has changed since the damage was applied, so undoing it would discard that. Set the total by hand instead.",
+        "armorChanged": "{name}'s armour has changed since the damage was applied, so undoing it would discard that.",
+        "armorGone": "The armour that took this blow is no longer on {name}, so the damage cannot be undone.",
+        "actorGone": "{name} can no longer be reached, so the damage cannot be undone."
+      }
+    },
     "Breakdown": {
       "Base": "Base skill",
       "Effective": "Effective skill",
