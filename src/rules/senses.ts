@@ -46,3 +46,22 @@ export function senseScore(sense: Sense, perception: number, traits: SenseTraits
 export function senseScores(perception: number, traits: SenseTraits = {}): SenseScore[] {
   return SENSES.map((sense) => senseScore(sense, perception, traits));
 }
+
+/**
+ * What Telescopic Vision takes off a Vision roll's range penalty (Characters
+ * p. 92): a point a level, or two a level when an Aim maneuver zooms in on the
+ * target, never more than the penalty itself.
+ */
+export function telescopicOffset(rangePenalty: number, levels: number, zoomed: boolean): number {
+  if (!(rangePenalty < 0) || !(levels > 0)) return 0;
+  return Math.min(-rangePenalty, Math.floor(levels) * (zoomed ? 2 : 1));
+}
+
+/**
+ * Telescopic Vision as a telescopic sight: up to +1 Accuracy a level (p. 92),
+ * not added to a scope's; the better of the two counts. None with No Targeting.
+ */
+export function telescopicScope(scopeBonus: number, levels: number, noTargeting: boolean): number {
+  const own = noTargeting ? 0 : Math.max(0, Math.floor(levels));
+  return Math.max(Math.max(0, scopeBonus), own);
+}

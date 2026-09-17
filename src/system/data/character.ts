@@ -105,7 +105,7 @@ import { supportEffect } from "../../rules/accessories.js";
 import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalties.js";
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
-import {
+import { suitedLevel,
   effectiveSkillLevel,
   namedDefaultLevel,
   normalizeSkillName,
@@ -1704,6 +1704,30 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       }
     }
 
+    // Suited up, DX-based skills use the lower of the Environment Suit skill
+    // and their own level (Characters p. 192). A suit worn but untrained is
+    // operated at the skill's DX-5 default.
+    const suitWorn = this.itemsOfType("armor").find((i) => i.system?.equipped && String(i.system?.environmentSuit ?? ""));
+    const environmentSuit = suitWorn
+      ? (() => {
+          const skill = String(suitWorn.system.environmentSuit);
+          return { skill, item: String(suitWorn.name ?? ""), level: this.skillLevelByName(skill) ?? attributeScore("DX") - 5 };
+        })()
+      : null;
+    if (environmentSuit) {
+      for (const item of skillItems) {
+        const derived = (item.system as any)?.derived;
+        if ((item.system as any)?.attribute !== "DX" || typeof derived?.level !== "number") continue;
+        const held = suitedLevel(derived.level, environmentSuit.level);
+        if (held === derived.level) continue;
+        derived.bonusLines = [
+          ...(Array.isArray(derived.bonusLines) ? derived.bonusLines : []),
+          { label: game.i18n.format("GWORLD.Armor.Suited", { skill: environmentSuit.skill, level: environmentSuit.level }), value: held - derived.level, source: "environmentSuit" },
+        ];
+        derived.level = held;
+      }
+    }
+
     // A module may change a level now that every skill's is known: hold one
     // to a ceiling another skill sets, or give it its level at default.
     adjustSkillLevels(this.parent, skillItems, (name) => this.skillLevelByName(name), {
@@ -2998,6 +3022,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         carousing: this.skillLevelByName("Carousing") ?? (attrs.HT ?? 10) - 4,
       },
       traitEffects: traits,
+      // The suit worn that DX and DX-based rolls are held to (Characters p. 192).
+      environmentSuit,
       magic: { ...magic, mana, items: magicItems },
       // Unkillable is not dead at -5xHP; only destruction at -10xHP is the end.
       status: healthStatus(this.hp.value, this.hp.max, { unkillable: traits.unkillable }),
