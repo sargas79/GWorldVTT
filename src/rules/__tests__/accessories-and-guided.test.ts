@@ -177,3 +177,13 @@ describe("area and cone attacks (p. 413)", () => {
     expect(coneMayStillCatch()).toBe(true);
   });
 });
+
+describe("an aiming roll before a guided attack (since API 1.63.0)", () => {
+  it("reads the aiming skill and the projectile's own skill off the mode", async () => {
+    const { aimedThenGuided } = await import("../guided.js");
+    expect(aimedThenGuided({ aimingSkill: "Gunner (Rockets)", guidedSkillLevel: 13 })).toEqual({ aimingSkill: "Gunner (Rockets)", skillLevel: 13 });
+    expect(aimedThenGuided({ aimingSkill: "Gunner (Rockets)" })).toEqual({ aimingSkill: "Gunner (Rockets)", skillLevel: null });
+    expect(aimedThenGuided({ aimingSkill: "  " })).toBeNull();
+    expect(aimedThenGuided(null)).toBeNull();
+  });
+});

@@ -795,6 +795,11 @@ Two fields a module may read (since 1.62.0):
   `soleDr` on the foot. `gworld.armorDr` carries `fromBelow`. Armour spent by
   a blow is its ablative DR, which `items.restoreDr` gives back; the system
   keeps no other hit points for armour.
+- **Aimed, then guided** (since 1.63.0): a ranged mode's `aimingSkill` is a
+  skill the firer rolls first (tagged `aiming`, through
+  `gworld.successRollModifiers`); only on a success is the attack rolled, at
+  the mode's `guidedSkillLevel` where it gives one and the firer's skill
+  otherwise. The attack roll still passes through `gworld.attackModifiers`.
 - **Kinetic-only blows** (since 1.63.0): a mode's `kineticOnly`, and the same
   option on `roll.damage`, makes a blow whose whole effect is its shove:
   knockback worked out as a crushing blow's, blunt trauma where flexible armour

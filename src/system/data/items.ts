@@ -822,6 +822,14 @@ function rangedModeField() {
       choices: ["", "guided", "homing"],
     }),
     /**
+     * A skill the firer rolls before the attack (since API 1.63.0): the aim a
+     * launcher's operator takes before the projectile homes in on its own. The
+     * attack is only rolled if it succeeds. Blank for none.
+     */
+    aimingSkill: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /** The projectile's own skill level, rolled in place of the firer's once aimed (0 for the firer's). */
+    guidedSkillLevel: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+    /**
      * An attack that covers ground rather than striking a point (p. 413), like
      * a flamethrower or a gas cloud. "Active defenses don't protect against an
      * area attack, but victims may dive for cover or retreat out of the area",
