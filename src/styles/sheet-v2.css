@@ -756,11 +756,16 @@
 /* ── list tabs ─────────────────────────────────────────────────────────── */
 
 .gworld.v2 .tab.v2-list-tab { overflow: hidden; }
+/* The list and the detail panel scroll on their own, so the one row has to
+   be the split's height rather than its content's: an auto row grows to the
+   tallest column, the tab clips it, and a long description is cut off with
+   no scrollbar to reach the rest. */
 .gworld.v2 .v2-split {
   flex: 1;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 330px);
+  grid-template-rows: minmax(0, 1fr);
   gap: 14px;
 }
 .gworld.v2 .v2-list-col,
@@ -771,7 +776,16 @@
   min-height: 0;
   overflow-y: auto;
   padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--v2-panel-line) transparent;
 }
+.gworld.v2 .v2-list-col::-webkit-scrollbar,
+.gworld.v2 .v2-detail-col::-webkit-scrollbar { width: 10px; }
+.gworld.v2 .v2-list-col::-webkit-scrollbar-track,
+.gworld.v2 .v2-detail-col::-webkit-scrollbar-track { background: transparent; }
+.gworld.v2 .v2-list-col::-webkit-scrollbar-thumb,
+.gworld.v2 .v2-detail-col::-webkit-scrollbar-thumb { background: var(--v2-panel-line); border-radius: 5px; border: 2px solid transparent; background-clip: padding-box; }
 .gworld.v2 .v2-detail-col { padding-bottom: 4px; }
 .gworld.v2 .v2-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .gworld.v2 .v2-search-wide { flex: 1; max-width: 420px; height: 32px; }
@@ -918,8 +932,23 @@
 
 /* ── detail panels ─────────────────────────────────────────────────────── */
 
-.gworld.v2 .v2-detail { gap: 10px; padding: 0 0 12px; overflow: hidden; }
+/* `clip` rounds the corners as `hidden` did without making the panel a
+   scroll container, so the heading and the buttons can stick to the column
+   that scrolls. */
+.gworld.v2 .v2-detail { gap: 10px; padding: 0 0 12px; overflow: clip; }
 .gworld.v2 .v2-detail > :not(.v2-detail-head) { margin-left: 14px; margin-right: 14px; }
+/* A long panel scrolls under its heading, and its buttons stay in reach. */
+.gworld.v2 .v2-detail-col > .v2-detail > .v2-detail-head { position: sticky; top: 0; z-index: 2; }
+.gworld.v2 .v2-detail-col > .v2-detail > .v2-detail-head.v2-detail-plain { background: var(--v2-panel); }
+.gworld.v2 .v2-detail-col > .v2-detail > .v2-detail-actions.v2-stacked {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-bottom: -12px;
+  padding: 8px 0 12px;
+  background: var(--v2-panel);
+  box-shadow: 0 -8px 8px -8px rgba(0, 0, 0, 0.18);
+}
 .gworld.v2 .v2-detail[hidden] { display: none; }
 /* What a trait is of, written in its panel. */
 .gworld.v2 .v2-box-line input.v2-specialty-input {
@@ -1582,7 +1611,7 @@
   .gworld.v2 .v2-overview-middle { grid-column: 1 / -1; grid-row: 1; }
   /* The detail panel drops under its list, and the tab scrolls as a whole. */
   .gworld.v2 .tab.v2-list-tab { overflow-y: auto; }
-  .gworld.v2 .v2-split { grid-template-columns: minmax(0, 1fr); }
+  .gworld.v2 .v2-split { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
   .gworld.v2 .v2-list-col,
   .gworld.v2 .v2-detail-col { overflow: visible; }
   .gworld.v2 .v2-skill { grid-template-columns: 22px minmax(100px, 1fr) 52px 100px 34px auto; }
