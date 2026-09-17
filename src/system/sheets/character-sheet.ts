@@ -8,6 +8,7 @@
  */
 
 import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
+import { customItemData } from "../picker-merge.js";
 import { techniqueDefaultLabel } from "../item-summary.js";
 import { CharacterBuilder } from "../apps/character-builder.js";
 import { combatStyle } from "../settings.js";
@@ -3177,8 +3178,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // The button under Disadvantages makes a disadvantage: the category is
     // part of what was asked for, not something to set afterwards.
     const category = target.dataset.category;
-    const data: Record<string, unknown> = { name: `New ${label}`, type };
-    if (category) data.system = { category };
+    // The same defaults the picker's custom entries get, from one place: a
+    // quirk is -1 and a perk 1, and building them here as well is how this
+    // button used to make quirks that cost nothing.
+    const data = customItemData({ itemType: type, ...(category ? { category } : {}) }, `New ${label}`);
     await this.actor.createEmbeddedDocuments("Item", [data]);
   }
 

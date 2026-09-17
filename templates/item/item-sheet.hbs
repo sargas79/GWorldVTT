@@ -403,8 +403,13 @@
         {{/each}}
         <div class="ifields">
           <label>{{localize "GWORLD.Trait.SelfControl"}}
+            {{!-- Options are listed, not built from a choices object: None has
+                  to come first, and an object cannot keep it there. --}}
             <select name="system.selfControl" {{#unless editable}}disabled{{/unless}}>
-              {{selectOptions choices.selfControl selected=system.selfControl localize=true}}
+              {{#each selfControlOptions as |option|}}
+                <option value="{{option.value}}" title="{{localize option.hint}}"
+                        {{#if option.selected}}selected{{/if}}>{{localize option.label}}{{#if option.standard}} {{localize "GWORLD.Trait.SelfControlStandard"}}{{/if}}</option>
+              {{/each}}
             </select>
           </label>
         </div>
