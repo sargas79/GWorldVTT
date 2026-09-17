@@ -15,10 +15,17 @@
 
   {{!-- The ledger, so what an entry costs can be weighed against what is
        left without going back to the sheet to look. --}}
-  <div class="gp-ledger {{#if ledger.over}}over{{/if}}">
-    <span><strong>{{ledger.spent}}</strong> / {{ledger.available}} {{localize "GWORLD.Builder.Points"}}</span>
-    <span>{{localize "GWORLD.Picker.Unspent" points=ledger.unspent}}</span>
-  </div>
+  {{#if gearLedger}}
+    <div class="gp-ledger">
+      <span>{{localize "GWORLD.Picker.Carried" carried=gearLedger.carried basicLift=gearLedger.basicLift}}</span>
+      <span>{{localize "GWORLD.Life.Cash"}} <strong>${{gearLedger.money}}</strong></span>
+    </div>
+  {{else}}
+    <div class="gp-ledger {{#if ledger.over}}over{{/if}}">
+      <span><strong>{{ledger.spent}}</strong> / {{ledger.available}} {{localize "GWORLD.Builder.Points"}}</span>
+      <span>{{localize "GWORLD.Picker.Unspent" points=ledger.unspent}}</span>
+    </div>
+  {{/if}}
 
   <ul class="gp-list" aria-busy="{{#if loading}}true{{else}}false{{/if}}">
     {{#if loading}}
