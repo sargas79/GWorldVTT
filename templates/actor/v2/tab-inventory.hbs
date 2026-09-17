@@ -27,10 +27,10 @@
         </label>
         {{#if editable}}
           <span class="v2-toolbar-end">
-            <button type="button" class="v2-button" data-action="browseCompendium" data-item-types="equipment,armor,shield" data-browse-title="GWORLD.Picker.Gear">{{> "gworld.search"}} {{localize "GWORLD.Action.BrowseGear"}}</button>
-            <button type="button" class="v2-button" data-action="createItem" data-item-type="equipment">{{> "gworld.plus"}} {{localize "GWORLD.Action.AddEquipment"}}</button>
-            <button type="button" class="v2-button" data-action="createItem" data-item-type="armor">{{> "gworld.plus"}} {{localize "GWORLD.Action.AddArmor"}}</button>
-            <button type="button" class="v2-button" data-action="createItem" data-item-type="shield">{{> "gworld.plus"}} {{localize "GWORLD.Action.AddShield"}}</button>
+            {{!-- Each opens the list of what the books offer, with an entry of your own at its foot. --}}
+            <button type="button" class="v2-button" data-action="browseCompendium" data-item-types="equipment" data-browse-title="GWORLD.Picker.Equipment" data-custom-type="equipment">{{> "gworld.plus"}} {{localize "GWORLD.Action.AddEquipment"}}</button>
+            <button type="button" class="v2-button" data-action="browseCompendium" data-item-types="armor" data-browse-title="GWORLD.Picker.Armor" data-custom-type="armor">{{> "gworld.plus"}} {{localize "GWORLD.Action.AddArmor"}}</button>
+            <button type="button" class="v2-button" data-action="browseCompendium" data-item-types="shield" data-browse-title="GWORLD.Picker.Shield" data-custom-type="shield">{{> "gworld.plus"}} {{localize "GWORLD.Action.AddShield"}}</button>
           </span>
         {{/if}}
       </div>

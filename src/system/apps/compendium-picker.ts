@@ -112,6 +112,9 @@ export async function collectEntries(
   return entries.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/** The item types that are gear, whose picker shows weight and cash rather than points. */
+const GEAR_TYPES = new Set(["equipment", "armor", "shield"]);
+
 export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) {
   static override DEFAULT_OPTIONS = {
     classes: ["gworld", "gworld-picker"],
@@ -228,6 +231,15 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
       // The ledger rides along here too: what has been spent and what is left
       // is the whole question while choosing, and it should not take a trip
       // back to the sheet to answer.
+      // Gear is paid for in cash and carried, not bought with points: that
+      // ledger is what matters while choosing it.
+      gearLedger: this.#types.every((type) => GEAR_TYPES.has(type))
+        ? {
+            carried: Math.round((Number(this.#actor?.system?.derived?.encumbrance?.carriedWeight) || 0) * 100) / 100,
+            basicLift: Number(this.#actor?.system?.derived?.basicLift) || 0,
+            money: Number(this.#actor?.system?.money) || 0,
+          }
+        : null,
       ledger: {
         spent: points.spent ?? 0,
         available: points.available ?? 0,
