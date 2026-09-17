@@ -1592,7 +1592,10 @@ async function rollAction(
   const storedMode = rolledItem && attackMode && !attackMode.derived
     ? (attackMode.ranged ? rolledItem.system?.rangedModes : rolledItem.system?.meleeModes)?.[attackMode.index]
     : null;
-  const guided = rollType === "attack" ? aimedThenGuided(storedMode) : null;
+  // The row says it where a module's listener set it (since API 1.64.0); the stored mode otherwise.
+  const guided = rollType === "attack"
+    ? aimedThenGuided(target.dataset.aimingSkill ? { aimingSkill: target.dataset.aimingSkill, guidedSkillLevel: target.dataset.guidedSkillLevel } : storedMode)
+    : null;
   if (guided) {
     const aiming = await rollSuccess({
       actor,
