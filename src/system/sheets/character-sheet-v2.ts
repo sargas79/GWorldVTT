@@ -38,7 +38,7 @@ import { traitLevelName } from "../../rules/traits.js";
 import { asSortMode, firstLine, groupRows, selectedKey, sortRows, type SortMode } from "../sheet-v2/list-view.js";
 import { isLevelled, itemImprovement, traitImprovement } from "../sheet-v2/improvements.js";
 import { namedByPlayer } from "../picker-merge.js";
-import { gearStatistics } from "../sheet-v2/gear-statistics.js";
+import { gearStatistics, weaponTablesOf } from "../sheet-v2/gear-statistics.js";
 import { shotsEntryFor } from "../shots-entry.js";
 import { fullLoad } from "../../rules/ammunition.js";
 import { carriedAmmunitionFor, isAmmunition } from "../ammunition.js";
@@ -181,9 +181,14 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       ...(derived.ranged ?? []).map((atk: any) => ({ atk, ranged: true })),
     ].sort((a, b) => byName(a.atk, b.atk));
 
+    const localize = (key: string, data?: Record<string, unknown>) => (data ? game.i18n.format(key, data) : game.i18n.localize(key));
     const attacks = entries.map(({ atk, ranged }) => {
       const key = attackKey(atk, ranged);
       const item = atk.itemId ? actor.items.get(atk.itemId) ?? null : null;
+      // The attack's row of the weapon table, for the preview: the column
+      // heading over each figure. A natural attack has no item behind it.
+      const table = gearStatistics({ type: "equipment", system: item?.system ?? {} }, [{ ...atk, ranged }], localize).tables[0];
+      const strip = table ? { columns: table.columns, cells: table.rows[0] ?? [] } : null;
       const level = Number(atk.skillLevel);
       const hasSkill = atk.skillLevel !== null && atk.skillLevel !== undefined && Number.isFinite(level);
       const preview = hasSkill
@@ -209,6 +214,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         key,
         atk,
         ranged,
+        strip,
         equipped: Boolean(item?.system?.equipped),
         preview,
         chance,
@@ -231,8 +237,20 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const location = selectedKey(locations.map((l: any) => l.key), locationState.selected ?? "torso");
     locationState.selected = location;
 
+    // The weapon tables as a character sheet prints them: every carried
+    // weapon's modes under the book's column headings, a weapon with several
+    // modes as a row of its own with the modes beneath it.
+    const carriedWeapons = [...actor.items].filter((i: any) => ["equipment", "armor", "shield"].includes(i.type) && i.system?.carried !== false
+      && ((i.system?.meleeModes?.length ?? 0) > 0 || (i.system?.rangedModes?.length ?? 0) > 0));
+    const modesOf = (id: string) => entries.filter((e) => e.atk.itemId === id).map((e) => ({ ...e.atk, ranged: e.ranged }));
+    const weaponTables = weaponTablesOf(carriedWeapons.map((item: any) => ({
+      name: String(item.name ?? ""),
+      tables: gearStatistics(item, modesOf(String(item.id)), localize).tables,
+    })));
+
     return {
       attacks: attacks.map((a) => ({ ...a, selected: a.key === selected })),
+      weaponTables,
       selected,
       target: targets.length === 1
         ? { name: String(targets[0]?.name ?? targets[0]?.document?.name ?? targets[0]?.actor?.name ?? ""), count: 1 }

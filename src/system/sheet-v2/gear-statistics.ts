@@ -19,11 +19,24 @@ export interface StatLine {
   value: string;
 }
 
-/** A group of figures: one attack mode, the armour, the vehicle, or the item itself. */
+/** A group of figures: the armour, the shield, the vehicle, the rounds. */
 export interface StatBlock {
   key: string;
   title: string;
   lines: StatLine[];
+}
+
+/**
+ * A weapon table, laid out as the book's and as a character sheet prints
+ * it: one row per attack mode under the table's column headings. Ranged:
+ * Mode, Damage, Acc, Range, RoF, Shots, Lvl, ST, Bulk, Rcl, Notes. Melee:
+ * Mode, Damage, Reach, Parry, Lvl, ST, Notes.
+ */
+export interface WeaponTable {
+  key: "ranged" | "melee";
+  title: string;
+  columns: string[];
+  rows: string[][];
 }
 
 /** Localises a key, formatting it with data when there is any. */
@@ -95,83 +108,132 @@ function damageLine(attack: GearAttack): string {
   return `${attack.damage}${type}${divisor(attack.armorDivisor)}`;
 }
 
-function skillLine(attack: GearAttack): string | null {
-  const name = String(attack.skillName ?? "").trim();
-  if (!name) return null;
-  const level = attack.skillLevel;
-  return level === null || level === undefined || !Number.isFinite(Number(level)) ? name : `${name} ${level}`;
-}
+/** The table's dash for a column the row has nothing in. */
+const DASH = "–";
 
-/** The melee half of the row: Damage, Reach, Parry, ST (p. 271). */
-function meleeBlock(attack: GearAttack, L: Localize, index: number): StatBlock {
+const levelCell = (attack: GearAttack): string => {
+  const level = attack.skillLevel;
+  return level === null || level === undefined || !Number.isFinite(Number(level)) ? DASH : String(level);
+};
+
+/** The ST column: the figure with its marks, † for two hands and R, B or M for how a firearm is braced. */
+const stCell = (attack: GearAttack, mode: Record<string, any>): string => {
+  const minSt = number(attack.minSt);
+  if (minSt === null || minSt <= 0) return DASH;
+  const mount = MOUNT_MARKS[String(mode.mount ?? "")] ?? "";
+  return `${minSt}${stMark(attack)}${mount}`;
+};
+
+/** A melee mode's row: Mode, Damage, Reach, Parry, Lvl, ST, Notes (Characters p. 271). */
+function meleeRow(attack: GearAttack, mode: Record<string, any>, L: Localize): string[] {
   const S = (key: string) => L(`GWORLD.SheetV2.Stat.${key}`);
-  const lines: StatLine[] = [{ label: L("GWORLD.Column.Damage"), value: damageLine(attack) }];
-  if (attack.reach) lines.push({ label: L("GWORLD.Column.Reach"), value: attack.reach });
   const parry = attack.parry === null || attack.parry === undefined
     ? S("NoParry")
     : `${attack.parry}${attack.unbalanced ? "U" : ""}${attack.isFencing ? "F" : ""}`;
-  lines.push({ label: L("GWORLD.Secondary.Parry"), value: parry });
-  const minSt = number(attack.minSt);
-  if (minSt !== null && minSt > 0) lines.push({ label: S("ST"), value: `${minSt}${stMark(attack)}` });
-  const skill = skillLine(attack);
-  if (skill) lines.push({ label: L("GWORLD.Column.Skill"), value: skill });
-  return { key: `melee:${index}`, title: attack.mode || S("Melee"), lines };
+  // The skill is the Lvl column's business; the notes are the table's marks.
+  return [attack.mode || S("Melee"), damageLine(attack), attack.reach || DASH, parry, levelCell(attack), stCell(attack, mode), ""];
 }
 
-/** The ranged row: Damage, Acc, Range, RoF, Shots, ST, Bulk, Rcl (p. 270). */
-function rangedBlock(attack: GearAttack, mode: Record<string, any>, L: Localize, index: number): StatBlock {
+/** A ranged mode's row: Mode, Damage, Acc, Range, RoF, Shots, Lvl, ST, Bulk, Rcl, Notes (Characters p. 270). */
+function rangedRow(attack: GearAttack, mode: Record<string, any>, L: Localize): string[] {
   const S = (key: string) => L(`GWORLD.SheetV2.Stat.${key}`);
-  const lines: StatLine[] = [{ label: L("GWORLD.Column.Damage"), value: damageLine(attack) }];
-
   const accuracy = number(attack.accuracy);
-  if (accuracy !== null) {
-    const scope = number(attack.scopeBonus);
-    lines.push({ label: L("GWORLD.Column.Acc"), value: `${accuracy}${scope ? `+${scope}` : ""}` });
-  }
-  if (attack.range) lines.push({ label: L("GWORLD.Column.Range"), value: attack.range });
-
+  const scope = number(attack.scopeBonus);
+  const acc = accuracy === null ? DASH : `${accuracy}${scope ? `+${scope}` : ""}`;
   const rof = number(attack.rateOfFire);
-  if (rof !== null && rof > 0) {
-    const projectiles = number(attack.projectiles) ?? 1;
-    lines.push({ label: L("GWORLD.Column.RoF"), value: `${rof}${projectiles > 1 ? `×${projectiles}` : ""}` });
-  }
-
-  const capacity = number(attack.shotsCapacity) ?? 0;
-  if (capacity > 0) {
-    const loaded = number(attack.shotsLoaded) ?? 0;
-    const seconds = attack.reloadSeconds;
-    lines.push({
-      label: L("GWORLD.Column.Shots"),
-      value: `${loaded} / ${capacity}${seconds !== null && seconds !== undefined ? ` (${seconds})` : ""}`,
-    });
-  } else if (attack.shots) {
-    lines.push({ label: L("GWORLD.Column.Shots"), value: String(attack.shots) });
-  }
-
-  const minSt = number(attack.minSt);
-  if (minSt !== null && minSt > 0) {
-    const mount = MOUNT_MARKS[String(mode.mount ?? "")] ?? "";
-    lines.push({ label: S("ST"), value: `${minSt}${stMark(attack)}${mount}` });
-  }
-  const weaponSt = number(mode.weaponSt);
-  if (weaponSt !== null && weaponSt > 0) lines.push({ label: S("WeaponSt"), value: String(weaponSt) });
-
+  const projectiles = number(attack.projectiles) ?? 1;
+  const rofCell = rof === null || rof <= 0 ? DASH : `${rof}${projectiles > 1 ? `×${projectiles}` : ""}`;
+  const shots = String(attack.shots ?? "").trim() || DASH;
   const bulk = number(attack.bulk);
-  if (bulk !== null && bulk !== 0) lines.push({ label: S("Bulk"), value: String(bulk) });
   const recoil = number(attack.recoil);
-  if (recoil !== null && recoil > 0) lines.push({ label: S("Rcl"), value: String(recoil) });
-  if (attack.malfunction !== null && attack.malfunction !== undefined) {
-    lines.push({ label: S("Malf"), value: String(attack.malfunction) });
-  }
 
+  const notes: string[] = [];
+  const capacity = number(attack.shotsCapacity) ?? 0;
+  if (capacity > 0) notes.push(S("LoadedNote").replace("{loaded}", String(number(attack.shotsLoaded) ?? 0)).replace("{capacity}", String(capacity)));
   const ammunition = String(attack.ammunition ?? mode.ammunition ?? "");
-  if (ammunition) lines.push({ label: L("GWORLD.Item.Ammunition"), value: L(`GWORLD.Ammunition.${ammunition}`) });
+  if (ammunition) notes.push(L(`GWORLD.Ammunition.${ammunition}`));
+  if (attack.malfunction !== null && attack.malfunction !== undefined) notes.push(`${S("Malf")} ${attack.malfunction}`);
+  const weaponSt = number(mode.weaponSt);
+  if (weaponSt !== null && weaponSt > 0) notes.push(`${S("WeaponSt")} ${weaponSt}`);
   const reloadWeight = number(mode.reloadWeight);
-  if (reloadWeight !== null && reloadWeight > 0) lines.push({ label: S("ReloadWeight"), value: `${figure(reloadWeight)} lb` });
+  if (reloadWeight !== null && reloadWeight > 0) notes.push(`${S("ReloadWeight")} ${figure(reloadWeight)} lb`);
 
-  const skill = skillLine(attack);
-  if (skill) lines.push({ label: L("GWORLD.Column.Skill"), value: skill });
-  return { key: `ranged:${index}`, title: attack.mode || S("Ranged"), lines };
+  return [
+    attack.mode || S("Ranged"),
+    damageLine(attack),
+    acc,
+    attack.range || DASH,
+    rofCell,
+    shots,
+    levelCell(attack),
+    stCell(attack, mode),
+    bulk === null || bulk === 0 ? DASH : String(bulk),
+    recoil === null || recoil <= 0 ? DASH : String(recoil),
+    notes.join("; "),
+  ];
+}
+
+/** One weapon's place in a sheet-wide table: its name, and its rows. */
+export interface WeaponTableGroup {
+  name: string;
+  /** A weapon with one mode is one row, named for the weapon; with several, the name heads the modes. */
+  single: boolean;
+  rows: string[][];
+}
+
+/** A sheet-wide weapon table: the columns, and every carried weapon under them. */
+export interface SheetWeaponTable {
+  key: "ranged" | "melee";
+  title: string;
+  columns: string[];
+  groups: WeaponTableGroup[];
+}
+
+/**
+ * The sheet's weapon tables, as a character sheet prints them: every carried
+ * weapon's modes under one set of column headings, a weapon with one mode as
+ * a row named for the weapon and one with several as a heading over its
+ * modes. Melee first, then ranged; a table nobody's weapon fills is left out.
+ */
+export function weaponTablesOf(items: ReadonlyArray<{ name: string; tables: readonly WeaponTable[] }>): SheetWeaponTable[] {
+  const out: SheetWeaponTable[] = [];
+  for (const key of ["melee", "ranged"] as const) {
+    const groups: WeaponTableGroup[] = [];
+    let columns: string[] = [];
+    let title = "";
+    for (const item of items) {
+      const table = item.tables.find((t) => t.key === key);
+      if (!table || table.rows.length === 0) continue;
+      columns = table.columns;
+      title = table.title;
+      const single = table.rows.length === 1;
+      groups.push({
+        name: item.name,
+        single,
+        rows: single ? [[item.name, ...table.rows[0]!.slice(1)]] : table.rows,
+      });
+    }
+    if (groups.length) out.push({ key, title, columns, groups });
+  }
+  return out;
+}
+
+/** The two weapon tables an item's modes fill, leaving out an empty one. */
+function weaponTables(system: Record<string, any>, attacks: readonly GearAttack[], L: Localize): WeaponTable[] {
+  const S = (key: string) => L(`GWORLD.SheetV2.Stat.${key}`);
+  const C = (key: string) => L(`GWORLD.Column.${key}`);
+  const rangedModes: Array<Record<string, any>> = Array.isArray(system.rangedModes) ? system.rangedModes : [];
+  const meleeModes: Array<Record<string, any>> = Array.isArray(system.meleeModes) ? system.meleeModes : [];
+  const ranged = attacks.filter((a) => a.ranged).map((a, i) => rangedRow(a, rangedModes[a.modeIndex ?? i] ?? {}, L));
+  const melee = attacks.filter((a) => !a.ranged).map((a, i) => meleeRow(a, meleeModes[a.modeIndex ?? i] ?? {}, L));
+  const tables: WeaponTable[] = [];
+  if (melee.length) {
+    tables.push({ key: "melee", title: S("MeleeAttacks"), columns: [S("Mode"), C("Damage"), C("Reach"), L("GWORLD.Secondary.Parry"), S("Lvl"), S("ST"), C("Notes")], rows: melee });
+  }
+  if (ranged.length) {
+    tables.push({ key: "ranged", title: S("RangedAttacks"), columns: [S("Mode"), C("Damage"), C("Acc"), C("Range"), C("RoF"), C("Shots"), S("Lvl"), S("ST"), S("Bulk"), S("Rcl"), C("Notes")], rows: ranged });
+  }
+  return tables;
 }
 
 /** The armour row: DR, what it covers, and the table's marks (pp. 282-285). */
@@ -295,26 +357,19 @@ function generalLines(item: GearItemLike, L: Localize): StatLine[] {
 }
 
 /**
- * The blocks a piece of gear's panel prints: one per attack mode, then the
- * armour, shield or vehicle figures, with the item's own lines apart.
+ * What a piece of gear's panel prints: the weapon tables its modes fill,
+ * one row each; then the armour, shield, vehicle or ammunition figures; and
+ * the item's own lines apart.
  */
-export function gearStatistics(item: GearItemLike, attacks: readonly GearAttack[], L: Localize): { blocks: StatBlock[]; lines: StatLine[] } {
+export function gearStatistics(item: GearItemLike, attacks: readonly GearAttack[], L: Localize): { tables: WeaponTable[]; blocks: StatBlock[]; lines: StatLine[] } {
   const system = item.system ?? {};
   const blocks: StatBlock[] = [];
-
-  attacks.forEach((attack, index) => {
-    if (attack.ranged) {
-      const modes: Array<Record<string, any>> = Array.isArray(system.rangedModes) ? system.rangedModes : [];
-      blocks.push(rangedBlock(attack, modes[attack.modeIndex ?? index] ?? {}, L, index));
-    } else {
-      blocks.push(meleeBlock(attack, L, index));
-    }
-  });
+  const tables = weaponTables(system, attacks, L);
 
   if (item.type === "equipment" && system.category === "ammunition") blocks.push(ammunitionBlock(system, L));
   if (item.type === "armor") blocks.push(armorBlock(system, L));
   if (item.type === "shield") blocks.push(shieldBlock(system, L));
   if (item.type === "equipment" && system.category === "vehicle" && system.vehicle) blocks.push(vehicleBlock(system.vehicle, L));
 
-  return { blocks, lines: generalLines(item, L) };
+  return { tables, blocks, lines: generalLines(item, L) };
 }

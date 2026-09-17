@@ -156,7 +156,8 @@
             <h3>{{item.name}}</h3>
           </header>
           <span class="v2-detail-sub">{{item.typeLabel}} &middot; {{item.groupLabel}}</span>
-          {{!-- The table's row: one block per attack mode, then the armour, shield or vehicle figures. --}}
+          {{!-- The equipment's own figures: armour, shield, vehicle or ammunition. A weapon's
+               attack rows are on the Combat tab, with what it is loaded with. --}}
           {{#each item.stats.blocks as |block|}}
             <div class="v2-box v2-stat-block">
               <h4>{{block.title}}</h4>
@@ -190,9 +191,7 @@
           <div class="v2-detail-actions v2-stacked">
             {{#if @root.editable}}
               {{#if item.loadable}}
-                {{!-- Load from the rounds carried, or buy some that fit (Characters p. 278). --}}
-                <button type="button" class="v2-button v2-button-steel" data-action="loadAmmunition" data-mode-index="{{item.loadModeIndex}}"
-                        data-tooltip="{{#if item.fittingBoxes}}{{localize 'GWORLD.Ammunition.LoadHint' count=item.fittingBoxes}}{{else}}{{localize 'GWORLD.Ammunition.NothingFitsShort'}}{{/if}}">{{localize "GWORLD.Ammunition.Load"}}</button>
+                {{!-- Buying rounds is shopping and stays here; loading them is on the Combat tab. --}}
                 <button type="button" class="v2-button" data-action="buyAmmunition" data-mode-index="{{item.loadModeIndex}}"
                         data-tooltip="{{localize 'GWORLD.Ammunition.BuyHint'}}">{{localize "GWORLD.Ammunition.Buy"}}</button>
               {{/if}}

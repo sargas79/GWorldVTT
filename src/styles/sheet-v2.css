@@ -1066,6 +1066,37 @@
 .gworld.v2 .v2-stat-grid { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 12px; row-gap: 2px; margin: 0 0 8px; padding: 0 10px; font-size: 13.5px; }
 .gworld.v2 .v2-stat-grid dt { margin: 0; opacity: 0.72; white-space: nowrap; }
 .gworld.v2 .v2-stat-grid dd { margin: 0; min-width: 0; overflow-wrap: anywhere; font-family: var(--font-heading); font-size: 15px; }
+/* A weapon table as the book prints it: headings across, one row per mode, wider than
+   the panel and scrolling sideways within it rather than folding. */
+.gworld.v2 .v2-weapon-box .v2-table-wrap { padding: 0 6px 8px; }
+.gworld.v2 .v2-weapon-table { width: 100%; border-collapse: collapse; font-size: 12.5px; white-space: nowrap; }
+.gworld.v2 .v2-weapon-table th,
+.gworld.v2 .v2-weapon-table td { padding: 3px 5px; text-align: right; border-bottom: 1px solid color-mix(in srgb, var(--v2-ink) 12%, transparent); }
+.gworld.v2 .v2-weapon-table th:first-child,
+.gworld.v2 .v2-weapon-table td:first-child,
+.gworld.v2 .v2-weapon-table th:last-child,
+.gworld.v2 .v2-weapon-table td:last-child { text-align: left; }
+.gworld.v2 .v2-weapon-table td:first-child { font-family: var(--font-heading); font-size: 13.5px; }
+.gworld.v2 .v2-weapon-table td:last-child { white-space: normal; min-width: 110px; font-size: 11.5px; opacity: 0.85; }
+.gworld.v2 .v2-weapon-table th { font-family: var(--font-heading); font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.72; border-bottom-width: 2px; }
+.gworld.v2 .v2-weapon-table tbody tr:last-child td { border-bottom: 0; }
+.gworld.v2 .v2-weapons-panel { gap: 6px; }
+.gworld.v2 .v2-weapons-panel .v2-ph + .v2-table-wrap { margin-bottom: 6px; }
+.gworld.v2 .v2-weapons-panel .v2-weapon-table td:first-child { font-size: 14px; }
+.gworld.v2 .v2-weapon-table tr.v2-weapon-head td { font-family: var(--font-heading); font-size: 14px; text-align: left; padding-top: 6px; }
+.gworld.v2 .v2-weapon-table tr.v2-weapon-mode td:first-child { padding-left: 18px; font-size: 13px; opacity: 0.9; }
+.gworld.v2 .v2-weapon-table tr.v2-weapon-mode td:first-child::before { content: "\251C\2500 "; opacity: 0.5; }
+.gworld.v2 .v2-weapon-table tr.v2-weapon-mode:last-child td:first-child::before,
+.gworld.v2 .v2-weapon-table tr.v2-weapon-mode + tr.v2-weapon-head { }
+/* The detail panel's copy: the same figures in cells that wrap, heading over value. */
+.gworld.v2 .v2-weapon-strip { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 2px 10px; padding: 4px 10px 8px; border-top: 1px solid color-mix(in srgb, var(--v2-ink) 12%, transparent); }
+.gworld.v2 .v2-weapon-strip:first-of-type { border-top: 0; }
+.gworld.v2 .v2-weapon-mode-name { flex: 1 0 100%; font-family: var(--font-heading); font-size: 14px; }
+.gworld.v2 .v2-weapon-cell { display: inline-flex; flex-direction: column; align-items: flex-start; }
+.gworld.v2 .v2-weapon-cell small { font-family: var(--font-heading); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.65; line-height: 1.1; }
+.gworld.v2 .v2-weapon-cell b { font-family: var(--font-heading); font-size: 14px; font-weight: 600; white-space: nowrap; }
+.gworld.v2 .v2-weapon-notes { flex: 1 0 100%; font-size: 11.5px; opacity: 0.85; }
+.gworld.v2 .v2-preview-strip { padding: 2px 0 6px; border-top: 0; border-bottom: 1px solid color-mix(in srgb, var(--v2-ink) 12%, transparent); }
 /* A count edited where it is read: a box's rounds in its row and its panel. */
 .gworld.v2 input.v2-gear-qty,
 .gworld.v2 input.v2-inline-number {

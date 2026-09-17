@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { gearStatistics, type GearAttack } from "../sheet-v2/gear-statistics.js";
+import { gearStatistics, weaponTablesOf, type GearAttack } from "../sheet-v2/gear-statistics.js";
 
 /** Labels come back as the key's last segment, so a test reads like the table. */
 const L = (key: string) => key.split(".").pop() ?? key;
 
 const lines = (block: { lines: Array<{ label: string; value: string }> }) =>
   Object.fromEntries(block.lines.map((line) => [line.label, line.value]));
+
+/** A table row keyed by its column heading, the way the book's row reads. */
+const row = (table: { columns: string[]; rows: string[][] }, index = 0) =>
+  Object.fromEntries(table.columns.map((column, i) => [column, table.rows[index]![i]]));
 
 describe("a firearm's row", () => {
   const pistol = {
@@ -27,36 +31,39 @@ describe("a firearm's row", () => {
     minSt: 10, twoHanded: false, bulk: -2, recoil: 2, malfunction: 17, ammunition: "hp",
   };
 
-  it("prints the weapon table's columns from what the sheet worked out", () => {
-    const { blocks } = gearStatistics(pistol, [attack], L);
-    expect(blocks.map((b) => b.title)).toEqual(["Auto Pistol"]);
-    expect(lines(blocks[0]!)).toEqual({
+  it("prints the weapon table's row under the table's columns, as a character sheet does", () => {
+    const { tables, blocks } = gearStatistics({ ...pistol, system: { ...pistol.system, rangedModes: [{ ...pistol.system.rangedModes[0], shots: "15+1(3)" }] } }, [{ ...attack, shots: "15+1(3)" }], L);
+    expect(blocks).toEqual([]);
+    expect(tables.map((t) => t.key)).toEqual(["ranged"]);
+    expect(tables[0]!.columns).toEqual(["Mode", "Damage", "Acc", "Range", "RoF", "Shots", "Lvl", "ST", "Bulk", "Rcl", "Notes"]);
+    expect(row(tables[0]!)).toEqual({
+      Mode: "Auto Pistol",
       Damage: "2d+2 pi+ (0.5)",
       Acc: "2",
       Range: "160 / 1800",
       RoF: "3",
-      Shots: "12 / 15 (3)",
+      Shots: "15+1(3)",
+      Lvl: "8",
       ST: "10",
       Bulk: "-2",
       Rcl: "2",
-      Malf: "17",
-      Ammunition: "hp",
-      ReloadWeight: "0.5 lb",
-      Skill: "Guns (Pistol) 8",
+      Notes: "LoadedNote; hp; Malf 17; ReloadWeight 0.5 lb",
     });
   });
 
-  it("marks a two-handed ST, a scope, a shotgun's projectiles and a bipod", () => {
+  it("marks a two-handed ST, a scope, a shotgun's projectiles and a bipod, and dashes what is not there", () => {
     const rifle = { ...pistol, system: { ...pistol.system, rangedModes: [{ mount: "bipod" }] } };
-    const { blocks } = gearStatistics(rifle, [{
-      ...attack, twoHanded: true, scopeBonus: 2, projectiles: 9, shotsCapacity: 0, shots: "5+1(3i)", ammunition: "", reloadSeconds: null,
+    const { tables } = gearStatistics(rifle, [{
+      ...attack, twoHanded: true, scopeBonus: 2, projectiles: 9, shotsCapacity: 0, shots: "5+1(3i)", ammunition: "", reloadSeconds: null, malfunction: null, recoil: 0, skillLevel: null,
     }], L);
-    const row = lines(blocks[0]!);
-    expect(row.ST).toBe("10†B");
-    expect(row.Acc).toBe("2+2");
-    expect(row.RoF).toBe("3×9");
-    expect(row.Shots).toBe("5+1(3i)");
-    expect(row.Ammunition).toBeUndefined();
+    const cells = row(tables[0]!);
+    expect(cells.ST).toBe("10†B");
+    expect(cells.Acc).toBe("2+2");
+    expect(cells.RoF).toBe("3×9");
+    expect(cells.Shots).toBe("5+1(3i)");
+    expect(cells.Rcl).toBe("–");
+    expect(cells.Lvl).toBe("–");
+    expect(cells.Notes).toBe("");
   });
 
   it("carries the item's own figures apart: TL, the grade, the list price", () => {
@@ -65,17 +72,28 @@ describe("a firearm's row", () => {
   });
 });
 
-describe("a melee weapon's row", () => {
-  it("prints damage, reach, parry and ST with the table's marks", () => {
-    const { blocks } = gearStatistics({ type: "equipment", system: {} }, [
+describe("a melee weapon's rows", () => {
+  it("prints one row per mode: damage, reach, parry, level and ST with the table's marks", () => {
+    const { tables } = gearStatistics({ type: "equipment", system: {} }, [
       { ranged: false, mode: "Swing", skillName: "Broadsword", skillLevel: 12, damage: "1d+2", damageType: "cut", reach: "1", parry: 9, minSt: 10 },
       { ranged: false, mode: "Thrust", skillName: "Broadsword", skillLevel: 12, damage: "1d", damageType: "imp", armorDivisor: 2, reach: "1", parry: 9, unbalanced: true, minSt: 11, twoHanded: true },
       { ranged: false, mode: "Flail", damage: "1d+3", damageType: "cr", reach: "1", parry: null, minSt: 12, twoHanded: true, readiesAfterAttack: true },
     ], L);
-    expect(blocks.map((b) => b.title)).toEqual(["Swing", "Thrust", "Flail"]);
-    expect(lines(blocks[0]!)).toEqual({ Damage: "1d+2 cut", Reach: "1", Parry: "9", ST: "10", Skill: "Broadsword 12" });
-    expect(lines(blocks[1]!)).toMatchObject({ Damage: "1d imp (2)", Parry: "9U", ST: "11†" });
-    expect(lines(blocks[2]!)).toMatchObject({ Parry: "NoParry", ST: "12‡" });
+    expect(tables.map((t) => t.key)).toEqual(["melee"]);
+    expect(tables[0]!.columns).toEqual(["Mode", "Damage", "Reach", "Parry", "Lvl", "ST", "Notes"]);
+    expect(tables[0]!.rows.map((r) => r[0])).toEqual(["Swing", "Thrust", "Flail"]);
+    expect(row(tables[0]!, 0)).toEqual({ Mode: "Swing", Damage: "1d+2 cut", Reach: "1", Parry: "9", Lvl: "12", ST: "10", Notes: "" });
+    expect(row(tables[0]!, 1)).toMatchObject({ Damage: "1d imp (2)", Parry: "9U", ST: "11†" });
+    expect(row(tables[0]!, 2)).toMatchObject({ Parry: "NoParry", ST: "12‡", Lvl: "–", Notes: "" });
+  });
+
+  it("puts a thrown weapon in both tables", () => {
+    const { tables } = gearStatistics({ type: "equipment", system: {} }, [
+      { ranged: false, mode: "Thrust", damage: "1d", damageType: "imp", reach: "C", parry: 8 },
+      { ranged: true, mode: "Thrown", damage: "1d", damageType: "imp", accuracy: 0, range: "9 / 17", rateOfFire: 1, shots: "T(1)" },
+    ], L);
+    expect(tables.map((t) => t.key)).toEqual(["melee", "ranged"]);
+    expect(row(tables[1]!)).toMatchObject({ Mode: "Thrown", Shots: "T(1)", Bulk: "–" });
   });
 });
 
@@ -105,6 +123,40 @@ describe("armour and shields", () => {
   });
 });
 
+/**
+ * The sheet's own weapon table: a weapon with one mode is a row named for
+ * the weapon, one with several heads its modes, as a character sheet prints
+ * them.
+ */
+describe("the sheet's weapon tables", () => {
+  const pistol = gearStatistics({ type: "equipment", system: {} }, [
+    { ranged: true, mode: "attack", damage: "2d", damageType: "pi+", accuracy: 2, range: "150 / 1900", rateOfFire: 3, shots: "15+1(3)", skillLevel: 12, minSt: 9, bulk: -2, recoil: 2 },
+  ], L).tables;
+  const shotgun = gearStatistics({ type: "equipment", system: {} }, [
+    { ranged: true, mode: "Shot", damage: "1d+1", damageType: "pi", accuracy: 3, range: "40 / 800", rateOfFire: 3, projectiles: 9, shots: "7+1(2i)", skillLevel: 13, minSt: 10, twoHanded: true, bulk: -5, recoil: 1 },
+    { ranged: true, mode: "Slug", damage: "5d", damageType: "pi++", accuracy: 4, range: "100 / 1200", rateOfFire: 3, shots: "7+1(2i)", skillLevel: 13, minSt: 10, twoHanded: true, bulk: -5, recoil: 3 },
+  ], L).tables;
+  const sword = gearStatistics({ type: "equipment", system: {} }, [
+    { ranged: false, mode: "Swing", damage: "1d+2", damageType: "cut", reach: "1", parry: 9, skillLevel: 12, minSt: 10 },
+  ], L).tables;
+
+  it("names a single-mode weapon in the Mode column, and heads a multi-mode one over its modes", () => {
+    const tables = weaponTablesOf([{ name: "Auto Pistol, .40", tables: pistol }, { name: "Auto Shotgun, 12G", tables: shotgun }, { name: "Broadsword", tables: sword }]);
+    expect(tables.map((t) => t.key)).toEqual(["melee", "ranged"]);
+    const ranged = tables[1]!;
+    expect(ranged.groups.map((g) => [g.name, g.single, g.rows.length])).toEqual([["Auto Pistol, .40", true, 1], ["Auto Shotgun, 12G", false, 2]]);
+    expect(ranged.groups[0]!.rows[0]![0]).toBe("Auto Pistol, .40");
+    expect(ranged.groups[1]!.rows.map((r) => r[0])).toEqual(["Shot", "Slug"]);
+    expect(ranged.groups[1]!.rows[0]![4]).toBe("3×9");
+    expect(tables[0]!.groups[0]!.rows[0]).toEqual(["Broadsword", "1d+2 cut", "1", "9", "12", "10", ""]);
+  });
+
+  it("leaves out a table no weapon fills", () => {
+    expect(weaponTablesOf([{ name: "Broadsword", tables: sword }]).map((t) => t.key)).toEqual(["melee"]);
+    expect(weaponTablesOf([])).toEqual([]);
+  });
+});
+
 describe("a box of rounds", () => {
   it("prints what a weapon fires it as and what it fits", () => {
     const { blocks } = gearStatistics({ type: "equipment", system: { category: "ammunition", ammunition: { kind: "hp", fits: "9mm" } } }, [], L);
@@ -130,7 +182,8 @@ describe("other gear", () => {
   });
 
   it("leaves out what the item does not have, rather than printing zeros", () => {
-    const { blocks, lines: own } = gearStatistics({ type: "equipment", system: { cost: 5, weight: 1, quality: "good", equipmentQuality: "basic" } }, [], L);
+    const { tables, blocks, lines: own } = gearStatistics({ type: "equipment", system: { cost: 5, weight: 1, quality: "good", equipmentQuality: "basic" } }, [], L);
+    expect(tables).toEqual([]);
     expect(blocks).toEqual([]);
     expect(own).toEqual([]);
   });

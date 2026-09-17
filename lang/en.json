@@ -4260,6 +4260,11 @@
         "ListWeight": "List weight",
         "Ammunition": "Ammunition",
         "FitsAnything": "anything",
+        "MeleeAttacks": "Melee attacks",
+        "RangedAttacks": "Ranged attacks",
+        "Mode": "Mode",
+        "Lvl": "Lvl",
+        "LoadedNote": "{loaded} of {capacity} loaded",
         "CostOfLiving": "Of cost of living"
       },
       "NothingCarried": "Nothing carried yet. Browse the compendium or add an item.",
