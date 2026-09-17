@@ -156,15 +156,19 @@
             <h3>{{item.name}}</h3>
           </header>
           <span class="v2-detail-sub">{{item.typeLabel}} &middot; {{item.groupLabel}}</span>
+          {{!-- The table's row: one block per attack mode, then the armour, shield or vehicle figures. --}}
+          {{#each item.stats.blocks as |block|}}
+            <div class="v2-box v2-stat-block">
+              <h4>{{block.title}}</h4>
+              <dl class="v2-stat-grid">
+                {{#each block.lines as |line|}}<dt>{{line.label}}</dt><dd>{{line.value}}</dd>{{/each}}
+              </dl>
+            </div>
+          {{/each}}
           <ul class="v2-breakdown">
-            {{#each item.attacks as |atk|}}
-              <li><span>{{atk.mode}}{{#if atk.skillName}} ({{atk.skillName}}){{/if}}</span><b>{{#if atk.skillLevel}}{{atk.skillLevel}}{{else}}&mdash;{{/if}}</b></li>
-              <li class="v2-sub"><span>{{atk.damage}} {{atk.damageType}}{{#if atk.ranged}} &middot; Acc {{atk.accuracy}} &middot; {{atk.range}}{{#if atk.recoil}} &middot; Rcl {{atk.recoil}}{{/if}}{{#if atk.bulk}} &middot; Bulk {{atk.bulk}}{{/if}}{{else}} &middot; {{localize "GWORLD.Column.Reach"}} {{atk.reach}} &middot; {{localize "GWORLD.Secondary.Parry"}} {{#if atk.parry}}{{atk.parry}}{{else}}&mdash;{{/if}}{{/if}}</span></li>
-            {{/each}}
-            {{#if item.dr}}<li><span>DR</span><b>{{item.dr}}</b></li><li class="v2-sub"><span>{{item.coverage}}</span></li>{{/if}}
-            {{#if item.db}}<li><span>DB</span><b>{{item.db}}</b></li>{{/if}}
             <li><span>{{localize "GWORLD.Column.Weight"}}</span><b>{{decimal item.weight 1}} lb{{#if (gt item.quantity 1)}} &times; {{item.quantity}}{{/if}}</b></li>
             <li><span>{{localize "GWORLD.Column.Cost"}}</span><b>${{item.cost}}{{#if (gt item.quantity 1)}} &times; {{item.quantity}}{{/if}}</b></li>
+            {{#each item.stats.lines as |line|}}<li><span>{{line.label}}</span><b>{{line.value}}</b></li>{{/each}}
             {{#if item.legality.label}}
               <li><span>{{localize "GWORLD.SheetV2.Legality"}}</span><b class="{{#if item.legality.restricted}}v2-bad{{/if}}">{{item.legality.label}}{{#if item.legality.status}} &middot; {{localize (concat 'GWORLD.Legality.Short.' item.legality.status)}}{{/if}}</b></li>
             {{/if}}

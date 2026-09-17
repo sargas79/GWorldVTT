@@ -38,6 +38,7 @@ import { traitLevelName } from "../../rules/traits.js";
 import { asSortMode, firstLine, groupRows, selectedKey, sortRows, type SortMode } from "../sheet-v2/list-view.js";
 import { isLevelled, itemImprovement, traitImprovement } from "../sheet-v2/improvements.js";
 import { namedByPlayer } from "../picker-merge.js";
+import { gearStatistics } from "../sheet-v2/gear-statistics.js";
 import { lacksSpecialty, traitDisplayName } from "../../rules/traits.js";
 import { successChance } from "../sheet-v2/success-chance.js";
 import { mechanicFallbackLabel, mechanicsOf } from "../sheet-v2/trait-mechanics.js";
@@ -303,6 +304,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         canCarry: item.type === "equipment",
         equippable: item.type !== "equipment" || armed(item),
         attacks: attacksOf(String(item.id)),
+        // The table's row for it: what the book prints and the player looks for.
+        stats: gearStatistics(item, attacksOf(String(item.id)), (key, data) => (data ? game.i18n.format(key, data) : game.i18n.localize(key))),
         dr: item.type === "armor" ? s.dr : null,
         coverage: item.type === "armor"
           ? (locations.length ? locations.map((l) => L(`GWORLD.HitLocation.${l}`)).join(", ") : L("GWORLD.Item.WholeBody"))
