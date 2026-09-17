@@ -533,7 +533,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare maneuver: string;
   declare maneuverOption: string;
   declare evaluateTurns: number;
-  declare aim: { turns: number; braced: boolean };
+  declare aim: { turns: number; braced: boolean; target?: string; bonuses?: Array<{ label: string; value: number; key?: string }> };
   /** One of the Basic Set's options, or a module's `<module>.<key>`. */
   declare allOutAttackOption: string;
   declare allOutDefenseOption: "increased" | "double";
@@ -730,6 +730,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           required: true, nullable: false, integer: true, initial: 0, min: 0,
         }),
         braced: new fields.BooleanField({ initial: false }),
+        /** The token aimed at (since API 1.63.0). */
+        target: new fields.StringField({ required: true, blank: true, initial: "" }),
+        /** A module's bonuses for aiming at that foe (since API 1.63.0), cleared when the aim ends or moves. */
+        bonuses: new fields.ArrayField(new fields.SchemaField({
+          label: new fields.StringField({ required: true, blank: true, initial: "" }),
+          value: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+          key: new fields.StringField({ required: true, blank: true, initial: "" }),
+        })),
       }),
 
       /**

@@ -300,3 +300,14 @@ describe("steered weapons", () => {
     ).toBe(false);
   });
 });
+
+/** Lines a module can find in any language (sargas79/GWorldVTT#483). */
+describe("keyed lines (since API 1.63.0)", () => {
+  it("names the speed/range, Bulk and Accuracy lines, with the situation and the scope's share", () => {
+    const far = rangedModifiers(shot({ range: 20, aimed: true }), rifle);
+    expect(far.find((m) => m.key === "speedRange")?.value).toBe(-6);
+    expect(far.find((m) => m.key === "accuracy")).toMatchObject({ value: 6, scope: 1 });
+    const close = rangedModifiers(shot({ situation: "closeCombat" }), bow);
+    expect(close.find((m) => m.key === "bulk")).toMatchObject({ value: -6, situation: "closeCombat" });
+  });
+});

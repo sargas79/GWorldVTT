@@ -34,7 +34,7 @@ import {
   type ResistedAttack,
   successRollTags,
 } from "./procedure-extensions.js";
-import { aimTurnsOf, loseAim } from "./aim.js";
+import { aimStateOf, aimTargetLines, aimTurnsOf, loseAim } from "./aim.js";
 import { evaluateBonusFor } from "./evaluate.js";
 import { aimBonus } from "../rules/aim.js";
 import {
@@ -157,6 +157,17 @@ export type RollKind = "skill" | "attribute" | "attack" | "defense" | "selfContr
 export interface RollModifier {
   label: string;
   value: number;
+  /**
+   * What the line is, for a module that needs to find it whatever the label
+   * says in the user's language (since 1.63.0): `speedRange`, `bulk`,
+   * `accuracy`, `aim`, `braced`, `aimTarget`. Blank or absent on
+   * lines nobody has named.
+   */
+  key?: string;
+  /** Why a `bulk` line applies: `moveAndAttack` or `closeCombat` (since 1.63.0). */
+  situation?: string;
+  /** On an `accuracy` line, how much of it a scope gives (since 1.63.0). */
+  scope?: number;
 }
 
 /**
@@ -1441,6 +1452,11 @@ async function rollAction(
     rollType === "attack" && isRuleOn("feint") ? await consumeFeint(actor) : 0;
 
   modifiers.push(...positionRollLines(actor, { rollType, ranged: Boolean(ranged) }));
+  // What a module's aid to aiming gives against the foe aimed at (since API 1.63.0).
+  if (rollType === "attack" && ranged) {
+    const aimedAt = targetedTokens().length === 1 ? tokenUuid(targetedTokens()[0]) : "";
+    modifiers.push(...aimTargetLines(aimStateOf(actor), aimTurnsOf(actor), aimedAt));
+  }
   // What Evaluate earned and whether this is Move and Attack, which the hook
   // below is told separately; positionRollLines has put their lines in.
   const evaluated = rollType === "attack" && !ranged ? evaluateBonusFor(actor) : 0;
@@ -1486,6 +1502,9 @@ async function rollAction(
         evaluate: evaluated,
         // Since 1.27.0: the system's extra effort bought for this attack.
         extraEffort: { flurryOfBlows: melee?.flurryOfBlows === true, mightyBlows: melee?.mightyBlows === true },
+        // Since 1.63.0: how the attacker has moved this turn, and the aim they hold.
+        movement: attackerMovement(actor),
+        aim: aimStateOf(actor),
       })
     : null;
   // A module's rules may make this attack impossible here: it isn't rolled.
@@ -2319,6 +2338,7 @@ export function rangedModifiers(
           ? L("SpeedRange")
           : game.i18n.format("GWORLD.Ranged.SpeedRangeUphill", { yards: seenRange }),
       value: speedRange,
+      key: "speedRange",
     });
   }
   if (size !== 0) modifiers.push({ label: L("TargetSize"), value: size });
@@ -2346,7 +2366,7 @@ export function rangedModifiers(
   }
 
   if (situation !== "normal") {
-    modifiers.push({ label: L("Bulk"), value: bulkPenalty(weapon.bulk, situation) });
+    modifiers.push({ label: L("Bulk"), value: bulkPenalty(weapon.bulk, situation), key: "bulk", situation });
   }
 
   // From a vehicle (p. 469). "If the operator fires a handheld weapon ... -2 to
@@ -2385,15 +2405,17 @@ export function rangedModifiers(
     // Aimed on the sheet: Accuracy, the second and third turns, the bracing.
     // Aimed by the checkbox alone: Accuracy, as one turn's aim is worth.
     const aimedFor = deliberatelyAimed ? Math.max(1, weapon.aim?.turns ?? 0) : 1;
+    const scope = scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: aimedFor });
     const aiming = aimBonus({
       turnsAimed: aimedFor,
-      accuracy:
-        weapon.accuracy + scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: aimedFor }),
+      accuracy: weapon.accuracy + scope,
       braced: deliberatelyAimed ? (weapon.aim?.braced ?? false) : false,
     });
-    if (aiming.accuracy !== 0) modifiers.push({ label: L("Accuracy"), value: aiming.accuracy });
-    if (aiming.extraTurns !== 0) modifiers.push({ label: L("AimedLonger"), value: aiming.extraTurns });
-    if (aiming.braced !== 0) modifiers.push({ label: L("Braced"), value: aiming.braced });
+    // The scope's share of the Accuracy rides on the line (since API 1.63.0).
+    const scopeShare = Math.max(0, Math.min(scope, aiming.accuracy));
+    if (aiming.accuracy !== 0) modifiers.push({ label: L("Accuracy"), value: aiming.accuracy, key: "accuracy", ...(scopeShare ? { scope: scopeShare } : {}) });
+    if (aiming.extraTurns !== 0) modifiers.push({ label: L("AimedLonger"), value: aiming.extraTurns, key: "aim" });
+    if (aiming.braced !== 0) modifiers.push({ label: L("Braced"), value: aiming.braced, key: "braced" });
 
     // A targeting system is one more aiming bonus, and a moving vehicle caps
     // the lot: "the combined bonuses from aiming (Accuracy, extra turns of Aim,
@@ -3192,4 +3214,27 @@ function aimingLevel(actor: any, skill: string): number {
   }
   const iq = Number(actor?.system?.derived?.attributes?.IQ ?? actor?.system?.attributes?.IQ) || 10;
   return iq - 5;
+}
+
+/** A token's document UUID, whichever of the placeable or the document it is. */
+function tokenUuid(token: any): string {
+  return String(token?.document?.uuid ?? token?.uuid ?? "");
+}
+
+/**
+ * How the attacker has moved this turn (since API 1.63.0): the maneuver, and
+ * the yards the token's movement history records where the map can say.
+ */
+export function attackerMovement(actor: any): { maneuver: string; yards: number | null } {
+  const maneuver = String(actor?.system?.maneuver ?? "");
+  const token: any = actor?.getActiveTokens?.()?.[0];
+  const history: any[] = token?.document?.movementHistory ?? [];
+  if (!Array.isArray(history) || history.length < 2) return { maneuver, yards: history?.length ? 0 : null };
+  const stage: any = (globalThis as any).canvas;
+  if (!stage?.grid?.measurePath) return { maneuver, yards: null };
+  const distance = Number(stage.grid.measurePath(history.map((p: any) => ({ x: Number(p.x) || 0, y: Number(p.y) || 0 })))?.distance);
+  if (!Number.isFinite(distance)) return { maneuver, yards: null };
+  const units = String(stage.scene?.grid?.units ?? "").trim().toLowerCase();
+  const yards = units === "ft" || units === "feet" || units === "'" ? distance / 3 : units === "m" ? distance * 1.0936 : distance;
+  return { maneuver, yards: Math.round(yards) };
 }
