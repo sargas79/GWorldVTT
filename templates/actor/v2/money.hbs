@@ -1,0 +1,97 @@
+{{!-- The new sheet's money, cost of living and job (Characters pp. 25-27, 265; Campaigns pp. 516-517). --}}
+<section class="v2-money" aria-label="{{localize 'GWORLD.Life.Money'}}">
+  <div class="v2-ph v2-ph-tools">
+    <h2>{{localize "GWORLD.Life.Money"}}</h2>
+    <span class="v2-money-standing">
+      {{localize (concat "GWORLD.Life.Wealth." derived.wealth.level)}}{{#if derived.wealth.multimillionaire}} {{derived.wealth.multimillionaire}}{{/if}}
+      &middot; {{localize "GWORLD.Life.Status"}} {{signed derived.wealth.status}}
+    </span>
+  </div>
+
+  <div class="v2-money-grid">
+    <div class="v2-money-cell v2-money-cash">
+      <label for="{{actor.id}}-v2-cash">{{localize "GWORLD.Life.Cash"}}</label>
+      <div class="v2-money-value">$<input type="number" id="{{actor.id}}-v2-cash" name="system.money" value="{{system.money}}" step="1" {{#unless editable}}disabled{{/unless}}></div>
+      <small>{{localize "GWORLD.Life.StartingWealth"}} ${{derived.wealth.startingWealth}}</small>
+      {{#if editable}}
+        <button type="button" class="v2-button v2-button-small" data-action="adjustCash"
+                data-tooltip="{{localize 'GWORLD.Life.AdjustCashHint'}}">{{localize "GWORLD.Life.AdjustCash"}}</button>
+      {{/if}}
+    </div>
+
+    <div class="v2-money-cell">
+      <span class="v2-money-label">{{localize "GWORLD.Life.GearCost"}}</span>
+      <div class="v2-money-value">${{derived.wealth.gearCost}}</div>
+      <small>{{localize "GWORLD.Life.GearHint"}}</small>
+    </div>
+
+    <div class="v2-money-cell">
+      <label for="{{actor.id}}-v2-traded" data-tooltip="{{localize 'GWORLD.Life.TradedHint'}}">{{localize "GWORLD.Life.TradedPoints"}}</label>
+      <div class="v2-money-value"><input type="number" id="{{actor.id}}-v2-traded" name="system.points.tradedForMoney" value="{{system.points.tradedForMoney}}" step="1" min="0" {{#unless editable}}disabled{{/unless}}> CP</div>
+      <small>{{localize "GWORLD.Life.TradedWorth" amount=derived.wealth.tradedForMoney}}</small>
+      {{#if derived.wealth.signatureGearPoints}}
+        <small data-tooltip="{{localize 'GWORLD.Life.SignatureHint'}}">{{localize "GWORLD.Life.SignatureGear"}}: ${{derived.wealth.signatureGear}}</small>
+      {{/if}}
+    </div>
+
+    <div class="v2-money-cell v2-money-month">
+      <span class="v2-money-label">{{localize "GWORLD.Life.EachMonth"}}</span>
+      <ul class="v2-money-budget">
+        {{#each monthlyBudget.lines as |line|}}
+          <li><span>{{line.label}}</span><b class="{{#if line.good}}v2-good{{else}}v2-bad{{/if}}">{{line.amount}}</b></li>
+        {{/each}}
+        <li class="v2-money-net"><span>{{localize "GWORLD.Life.BudgetNet"}}</span><b class="{{#if (gt 0 monthlyBudget.net)}}v2-bad{{else}}v2-good{{/if}}">{{monthlyBudget.netText}}</b></li>
+      </ul>
+      <small>{{localize "GWORLD.Life.LivingAtStatus" amount=derived.wealth.costOfLiving}}</small>
+      {{#if (and editable rules.jobs)}}
+        <button type="button" class="v2-button v2-button-small" data-action="payLiving">{{localize "GWORLD.Life.Pay"}}</button>
+      {{/if}}
+    </div>
+  </div>
+
+  {{#if rules.jobs}}
+    <div class="v2-job">
+      <h3 class="v2-job-head">{{localize "GWORLD.Life.Job"}}</h3>
+      <div class="v2-job-fields">
+        <label>
+          <span>{{localize "GWORLD.Life.JobTitle"}}</span>
+          <input type="text" name="system.job.title" value="{{system.job.title}}" placeholder="{{localize 'GWORLD.Life.JobTitlePlaceholder'}}" {{#unless editable}}disabled{{/unless}}>
+        </label>
+        <label>
+          <span data-tooltip="{{localize 'GWORLD.Life.JobSkillHint'}}">{{localize "GWORLD.Life.JobSkill"}}</span>
+          <select name="system.job.skill" {{#unless editable}}disabled{{/unless}}>
+            <option value="">{{localize "GWORLD.Life.JobSkillChoose"}}</option>
+            <optgroup label="{{localize 'GWORLD.Life.JobSkillSkills'}}">
+              {{#each jobSkills as |option|}}{{#if (eq option.group "skill")}}<option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>{{/if}}{{/each}}
+            </optgroup>
+            <optgroup label="{{localize 'GWORLD.Life.JobSkillAttributes'}}">
+              {{#each jobSkills as |option|}}{{#if (eq option.group "attribute")}}<option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>{{/if}}{{/each}}
+            </optgroup>
+          </select>
+        </label>
+        <label>
+          <span>{{localize "GWORLD.Life.JobLevel"}}</span>
+          <select name="system.job.level" {{#unless editable}}disabled{{/unless}}>
+            {{#each jobLevels as |level|}}<option value="{{level.key}}" {{#if level.selected}}selected{{/if}}>{{level.label}}</option>{{/each}}
+          </select>
+        </label>
+        <label>
+          <span>{{localize "GWORLD.Life.JobKindLabel"}}</span>
+          <select name="system.job.kind" {{#unless editable}}disabled{{/unless}}>
+            {{#each jobKinds as |kind|}}<option value="{{kind.key}}" {{#if kind.selected}}selected{{/if}}>{{kind.label}}</option>{{/each}}
+          </select>
+        </label>
+        <label class="v2-job-risk">
+          <span data-tooltip="{{localize 'GWORLD.Life.JobRiskHint'}}">{{localize "GWORLD.Life.JobRisk"}}</span>
+          <input type="text" name="system.job.risk" value="{{system.job.risk}}" placeholder="{{localize 'GWORLD.Life.JobRiskPlaceholder'}}" {{#unless editable}}disabled{{/unless}}>
+        </label>
+      </div>
+      <div class="v2-job-foot">
+        <span>{{#if derived.wealth.jobPay}}{{localize "GWORLD.Life.JobPays" amount=derived.wealth.jobPay}}{{else}}{{localize "GWORLD.Life.JobHint" amount=derived.wealth.averagePay}}{{/if}}</span>
+        {{#if editable}}
+          <button type="button" class="v2-button v2-button-gold" data-action="workMonth">{{localize "GWORLD.Life.WorkMonth"}}</button>
+        {{/if}}
+      </div>
+    </div>
+  {{/if}}
+</section>

@@ -46,6 +46,45 @@ async function post(actor: any, context: Record<string, unknown>): Promise<void>
   });
 }
 
+/** The attributes a job can be rolled against instead of a skill. */
+export const JOB_ATTRIBUTES = ["ST", "DX", "IQ", "HT", "Will", "Per"] as const;
+
+/**
+ * What a job is rolled against (Campaigns p. 516): a skill the character has,
+ * or an attribute for work that needs no skill. Null when neither.
+ */
+export function jobRollLevel(actor: any, name: string): number | null {
+  const key = String(name ?? "").trim();
+  if ((JOB_ATTRIBUTES as readonly string[]).includes(key)) {
+    const derived = actor?.system?.derived ?? {};
+    const value = key === "Will" ? derived.will : key === "Per" ? derived.per : derived.attributes?.[key];
+    return typeof value === "number" ? value : null;
+  }
+  return skillLevelOf(actor, key);
+}
+
+/**
+ * Money in or out of the sheet's cash, with a line in the chat saying what
+ * for, so the table can follow where it went.
+ */
+export async function adjustCash(options: { actor: any; amount: number; note: string }): Promise<void> {
+  const { actor } = options;
+  if (!mayChange(actor) || !Number.isFinite(options.amount) || options.amount === 0) return;
+  const before = Number(actor.system?.money) || 0;
+  const after = Math.round((before + options.amount) * 100) / 100;
+  await actor.update({ "system.money": after });
+  await post(actor, {
+    kind: game.i18n.localize("GWORLD.Life.Cash"),
+    detail: options.note || game.i18n.localize(options.amount > 0 ? "GWORLD.Life.CashIn" : "GWORLD.Life.CashOut"),
+    lines: [
+      game.i18n.format("GWORLD.Life.CashChange", { amount: `${options.amount > 0 ? "+" : "-"}$${Math.abs(options.amount)}` }),
+      game.i18n.format("GWORLD.Life.MoneyLeft", { amount: after }),
+    ],
+    good: options.amount > 0,
+    bad: after < 0,
+  });
+}
+
 /** The level of a skill by name, or null when the character lacks it. */
 function skillLevelOf(actor: any, name: string): number | null {
   const wanted = normalizeSkillName(name);
@@ -131,7 +170,7 @@ export async function workAMonth(options: { actor: any; modifier: number }): Pro
 
   const job = actor.system?.job ?? {};
   const pay = Number(actor.system?.derived?.wealth?.jobPay) || 0;
-  const level = skillLevelOf(actor, String(job.skill ?? ""));
+  const level = jobRollLevel(actor, String(job.skill ?? ""));
   if (!job.title || level === null) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.Life.NoJob"));
     return;

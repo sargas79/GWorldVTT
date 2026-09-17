@@ -48,7 +48,16 @@ import {
   hearTheShot,
 } from "../gunplay.js";
 import { rollInfluence, rollReaction } from "../reactions.js";
-import { payCostOfLiving, rollAging, studySkill, workAMonth } from "../life.js";
+import { monthlyPay } from "../../rules/wealth.js";
+import {
+  payCostOfLiving,
+  rollAging,
+  studySkill,
+  workAMonth,
+  adjustCash,
+  jobRollLevel,
+  JOB_ATTRIBUTES,
+} from "../life.js";
 import { trample } from "../trampling.js";
 import { fightOffSwarm } from "../swarms.js";
 import {
@@ -324,6 +333,51 @@ function tacticalPanel(system: any, derived: any) {
 }
 
 /**
+ * What a job can be rolled against (Campaigns p. 516): the character's
+ * skills at their levels, then the attributes. The job's current choice is
+ * kept even when the character no longer has that skill.
+ */
+export function jobSkillOptions(actor: any): Array<{ value: string; label: string; selected: boolean; group: string }> {
+  const current = String(actor?.system?.job?.skill ?? "");
+  const skills = [...(actor?.items ?? [])]
+    .filter((item: any) => item.type === "skill")
+    .map((item: any) => ({ name: String(item.name), level: item.system?.derived?.level }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const options: Array<{ value: string; label: string; selected: boolean; group: string }> = [];
+  for (const skill of skills) {
+    options.push({ value: skill.name, label: typeof skill.level === "number" ? `${skill.name}-${skill.level}` : skill.name, selected: skill.name === current, group: "skill" });
+  }
+  const derived = actor?.system?.derived ?? {};
+  for (const key of JOB_ATTRIBUTES) {
+    const value = key === "Will" ? derived.will : key === "Per" ? derived.per : derived.attributes?.[key];
+    options.push({ value: key, label: typeof value === "number" ? `${key} ${value}` : key, selected: key === current, group: "attribute" });
+  }
+  if (current && !options.some((o) => o.selected)) {
+    options.unshift({ value: current, label: game.i18n.format("GWORLD.Life.JobSkillMissing", { skill: current }), selected: true, group: "skill" });
+  }
+  return options;
+}
+
+/** The month's money in and out (Characters pp. 26, 265; Campaigns p. 517). */
+export function monthlyBudget(wealth: Record<string, any>): { lines: Array<{ label: string; amount: string; good: boolean }>; net: number; netText: string } {
+  const lines: Array<{ label: string; amount: string; good: boolean }> = [];
+  const add = (key: string, value: number, sign: 1 | -1) => {
+    if (!value) return;
+    lines.push({ label: game.i18n.localize(key), amount: `${sign > 0 ? "+" : "-"}$${value}`, good: sign > 0 });
+  };
+  const pay = Number(wealth.jobPay) || 0;
+  const income = Number(wealth.independentIncome) || 0;
+  const living = Number(wealth.costOfLiving) || 0;
+  const debt = Number(wealth.debt) || 0;
+  add("GWORLD.Life.BudgetJob", pay, 1);
+  add("GWORLD.Life.BudgetIncome", income, 1);
+  add("GWORLD.Life.CostOfLiving", living, -1);
+  add("GWORLD.Life.BudgetDebt", debt, -1);
+  const net = pay + income - living - debt;
+  return { lines, net, netText: `${net < 0 ? "-" : "+"}$${Math.abs(net)}` };
+}
+
+/**
  * A trait, with what the sheet needs to show its levels.
  *
  * Levelled means priced per level or from a table -- Acute Hearing at 2 a
@@ -453,6 +507,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       study: GWorldCharacterSheet.#onStudy,
       workMonth: GWorldCharacterSheet.#onWorkMonth,
       payLiving: GWorldCharacterSheet.#onPayLiving,
+      adjustCash: GWorldCharacterSheet.#onAdjustCash,
       agingRoll: GWorldCharacterSheet.#onAgingRoll,
       stayAwake: GWorldCharacterSheet.#onStayAwake,
       sleep: GWorldCharacterSheet.#onSleep,
@@ -1001,12 +1056,20 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         label: game.i18n.localize(`GWORLD.Life.JobKind.${key}`),
         selected: (system.job?.kind ?? "wage") === key,
       })),
-      // The levels of Wealth a job can pay at (Campaigns p. 517).
+      // The levels of Wealth a job can pay at (Campaigns p. 517), with what each pays here.
       jobLevels: (["poor", "struggling", "average", "comfortable", "wealthy", "veryWealthy", "filthyRich"] as const).map((key) => ({
         key,
-        label: game.i18n.localize(`GWORLD.Life.Wealth.${key}`),
+        label: game.i18n.format("GWORLD.Life.JobLevelPays", {
+          level: game.i18n.localize(`GWORLD.Life.Wealth.${key}`),
+          amount: monthlyPay(Number(system.tl) || 0, key),
+        }),
         selected: (system.job?.level ?? "average") === key,
       })),
+      // What the job can be rolled against: the character's skills, at their
+      // levels, then the attributes, for work that needs no skill.
+      jobSkills: jobSkillOptions(this.actor),
+      // The month's money: what comes in and what goes out.
+      monthlyBudget: monthlyBudget(derived.wealth ?? {}),
 
       // "-2 DX, -1 IQ" for the button, or nothing at all when nothing is down.
       penaltiesShowing: (["ST", "DX", "IQ", "HT"] as const)
@@ -3255,13 +3318,66 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   /** A month at the job (Campaigns p. 517). */
   static async #onWorkMonth(this: GWorldCharacterSheet) {
     if (!isRuleOn("jobs")) return;
-    const modifier = await promptForNumber({
-      title: game.i18n.localize("GWORLD.Life.Job"),
-      label: game.i18n.localize("GWORLD.Chat.Modifier"),
-      initial: 0,
+    const job = (this.actor.system as any)?.job ?? {};
+    const level = jobRollLevel(this.actor, String(job.skill ?? ""));
+    if (!job.title || level === null) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Life.NoJob"));
+      return;
+    }
+    const pay = Number((this.actor.system as any)?.derived?.wealth?.jobPay) || 0;
+    const escape = (text: unknown) => foundry.utils.escapeHTML(String(text ?? ""));
+    // What the month is rolled against and pays, before anything is rolled;
+    // the modifier can go below zero, for a hard month.
+    const modifier = await foundry.applications.api.DialogV2.prompt({
+      window: { title: game.i18n.localize("GWORLD.Life.WorkMonth") },
+      content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+        <p class="ihint">${escape(game.i18n.format("GWORLD.Life.WorkSummary", { title: job.title, skill: job.skill, level, amount: pay, kind: game.i18n.localize(`GWORLD.Life.JobKind.${job.kind === "freelance" ? "freelance" : "wage"}`) }))}</p>
+        <label style="display:flex;align-items:center;gap:8px">
+          <span>${escape(game.i18n.localize("GWORLD.Chat.Modifier"))}</span>
+          <input type="number" name="modifier" value="0" step="1" autofocus style="width:80px">
+        </label>
+      </div>`,
+      ok: {
+        label: game.i18n.localize("GWORLD.Life.WorkMonth"),
+        callback: (_event: Event, button: HTMLElement) =>
+          Number(button.closest<HTMLElement>(".application")?.querySelector<HTMLInputElement>('input[name="modifier"]')?.value) || 0,
+      },
+      rejectClose: false,
     });
-    if (modifier === null) return;
-    await workAMonth({ actor: this.actor, modifier });
+    if (modifier === null || modifier === undefined) return;
+    await workAMonth({ actor: this.actor, modifier: Number(modifier) || 0 });
+  }
+
+  /** Money in or out of the cash, with what for (Characters p. 26). */
+  static async #onAdjustCash(this: GWorldCharacterSheet) {
+    const escape = (text: unknown) => foundry.utils.escapeHTML(String(text ?? ""));
+    const asked = await foundry.applications.api.DialogV2.prompt({
+      window: { title: game.i18n.localize("GWORLD.Life.AdjustCash") },
+      content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+        <p class="ihint">${escape(game.i18n.format("GWORLD.Life.CashNow", { amount: Number((this.actor.system as any)?.money) || 0 }))}</p>
+        <label style="display:flex;align-items:center;gap:8px">
+          <span>${escape(game.i18n.localize("GWORLD.Life.CashAmount"))}</span>
+          <input type="number" name="amount" value="0" step="1" autofocus style="width:110px">
+        </label>
+        <label style="display:flex;align-items:center;gap:8px">
+          <span>${escape(game.i18n.localize("GWORLD.Life.CashNote"))}</span>
+          <input type="text" name="note" placeholder="${escape(game.i18n.localize("GWORLD.Life.CashNotePlaceholder"))}" style="flex:1">
+        </label>
+      </div>`,
+      ok: {
+        label: game.i18n.localize("GWORLD.Life.AdjustCash"),
+        callback: (_event: Event, button: HTMLElement) => {
+          const form = button.closest<HTMLElement>(".application");
+          return {
+            amount: Number(form?.querySelector<HTMLInputElement>('input[name="amount"]')?.value) || 0,
+            note: String(form?.querySelector<HTMLInputElement>('input[name="note"]')?.value ?? "").trim(),
+          };
+        },
+      },
+      rejectClose: false,
+    });
+    if (!asked || typeof asked !== "object") return;
+    await adjustCash({ actor: this.actor, ...(asked as { amount: number; note: string }) });
   }
 
   /** The month's cost of living, out of the money on the sheet (Characters p. 265). */

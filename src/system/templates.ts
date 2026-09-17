@@ -128,6 +128,7 @@ const FILE_PARTIALS: Record<string, string> = {
   "gworld.part.gear-carried": `systems/${SYSTEM_ID}/templates/actor/parts/gear-carried.hbs`,
   "gworld.part.gear-encumbrance": `systems/${SYSTEM_ID}/templates/actor/parts/gear-encumbrance.hbs`,
   "gworld.part.gear-money": `systems/${SYSTEM_ID}/templates/actor/parts/gear-money.hbs`,
+  "gworld.v2.money": `systems/${SYSTEM_ID}/templates/actor/v2/money.hbs`,
   "gworld.part.gear-stored": `systems/${SYSTEM_ID}/templates/actor/parts/gear-stored.hbs`,
   "gworld.part.magic-body": `systems/${SYSTEM_ID}/templates/actor/parts/magic-body.hbs`,
   "gworld.part.skills-point-spending": `systems/${SYSTEM_ID}/templates/actor/parts/skills-point-spending.hbs`,
