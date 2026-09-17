@@ -114,6 +114,10 @@ export interface IncomingDamage {
    * injury -- what gets through DR bruises nobody further.
    */
   kineticOnly?: boolean;
+  /** Surge (Characters p. 105): burning damage that does double to anything electrical, for the modules that read it (since API 1.63.0). */
+  surge?: boolean;
+  /** Yards from an explosion's centre, where the blow is one (since API 1.63.0). */
+  blastDistance?: number;
   /** The item the blow was rolled from, where the card knows it. */
   itemUuid?: string;
   /** Where the blow came from, where its roll said (since 1.43.0): "parriedLimb" for the strike after a bare-handed parry. */
