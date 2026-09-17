@@ -22,7 +22,7 @@ import { CompendiumPicker } from "./compendium-picker.js";
 import { clampedLevels, levelCeiling, steppedLevels } from "../advancement.js";
 import { builderTypesFor } from "../data-extensions.js";
 import { customKindKey, namedByPlayer, type PickerCustom } from "../picker-merge.js";
-import { traitLevelName } from "../../rules/traits.js";
+import { lacksSpecialty, traitLevelName } from "../../rules/traits.js";
 import {
   applyTemplateToActor,
   confirmAndRemoveTemplate,
@@ -168,6 +168,10 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     /** A quirk, a perk or a custom trait: the name is the player's to write. */
     nameEditable: boolean;
     namePlaceholder: string;
+    /** A trait the book makes the player specify, and what they have said. */
+    needsSpecialty: boolean;
+    specialty: string;
+    incomplete: boolean;
   }> {
     if (!step.types) return [];
     const types = new Set(step.types);
@@ -199,6 +203,9 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
           levelName: stepper ? traitLevelName(item.system?.levelNames ?? [], levels) ?? "" : "",
           nameEditable: namedByPlayer(item),
           namePlaceholder: namedByPlayer(item) ? namePlaceholderFor(item) : "",
+          needsSpecialty: Boolean(item.system?.needsSpecialty),
+          specialty: String(item.system?.specialty ?? ""),
+          incomplete: lacksSpecialty(item.system ?? {}),
         };
       });
   }
@@ -244,6 +251,8 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       // What is still named by default -- three "New quirk" rows say nothing
       // about the character. Flagged, not refused: the sheet edits all of it.
       unnamed: items.filter((item) => stillDefaultNamed(item)).map((item) => item.name),
+      // A Phobia with nothing feared is not a Phobia yet.
+      unspecified: items.filter((item) => item.type === "trait" && lacksSpecialty(item.system ?? {})).map((item) => item.name),
     };
   }
 
@@ -387,6 +396,18 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
           return;
         }
         void item.update({ name });
+      });
+    }
+
+    // What a trait is of: the behaviour, the group, the weapon. Blank is
+    // allowed, and leaves the row marked as still to be said.
+    for (const input of this.element.querySelectorAll<HTMLInputElement>("input[data-item-specialty]")) {
+      input.addEventListener("change", () => {
+        const item = this.#actor.items?.get(input.dataset.itemSpecialty ?? "");
+        if (!item) return;
+        const specialty = input.value.trim();
+        if (specialty === String(item.system?.specialty ?? "")) return;
+        void item.update({ "system.specialty": specialty });
       });
     }
 

@@ -36,11 +36,11 @@
             <div class="v2-rows" role="listbox" aria-label="{{group.label}}">
               {{#each group.rows as |row|}}
                 <div class="v2-row v2-trait v2-cat-{{row.category}}{{#if (eq row.key @root.v2.traits.selected)}} selected{{/if}}"
-                     data-item-id="{{row.id}}" data-v2-row="traits:{{row.key}}" data-v2-name="{{row.name}}"
+                     data-item-id="{{row.id}}" data-v2-row="traits:{{row.key}}" data-v2-name="{{row.displayName}}"
                      data-action="v2Select" role="option" tabindex="0"
                      aria-selected="{{#if (eq row.key @root.v2.traits.selected)}}true{{else}}false{{/if}}">
                   <span class="v2-row-name">
-                    {{row.name}}{{#if row.levelled}} <span class="v2-levels">{{row.levels}}{{#if row.levelName}} &middot; {{row.levelName}}{{/if}}</span>{{/if}}
+                    {{row.displayName}}{{#if row.lacksSpecialty}} <span class="v2-tag v2-tag-bad" data-tooltip="{{localize 'GWORLD.Trait.SpecialtyHint'}}">{{localize "GWORLD.Trait.Unspecified"}}</span>{{/if}}{{#if row.levelled}} <span class="v2-levels">{{row.levels}}{{#if row.levelName}} &middot; {{row.levelName}}{{/if}}</span>{{/if}}
                     {{#if row.applied}}<span class="v2-tag v2-tag-steel" data-tooltip="{{localize 'GWORLD.Trait.AppliedHint'}}">{{localize "GWORLD.Trait.Applied"}}</span>{{/if}}
                   </span>
                   <span class="v2-row-cp{{#if row.negative}} v2-bad{{/if}}">{{row.points}} CP</span>
@@ -99,7 +99,7 @@
               <input type="text" class="v2-name-input" value="{{row.name}}" placeholder="{{row.namePlaceholder}}"
                      id="{{@root.sheetId}}-{{row.id}}-name" data-item-text="name" aria-label="{{localize 'GWORLD.Item.Name'}}">
             {{else}}
-              <h3>{{row.name}}</h3>
+              <h3>{{row.displayName}}</h3>
             {{/if}}
             <span class="v2-detail-cp{{#if row.negative}} v2-bad{{/if}}">{{row.points}} CP</span>
           </header>
@@ -121,9 +121,21 @@
             </div>
           {{/if}}
 
-          {{#if (or row.levelled row.modifiers.length row.reactionModifier row.selfControl row.weakness)}}
+          {{#if (or row.levelled row.modifiers.length row.reactionModifier row.selfControl row.weakness row.needsSpecialty)}}
             <div class="v2-box">
               <h4>{{localize "GWORLD.SheetV2.Details"}}</h4>
+              {{#if row.needsSpecialty}}
+                {{!-- What the trait is of: the book makes the player say. --}}
+                <div class="v2-box-line">
+                  <span>{{localize "GWORLD.Trait.Specialty"}}</span>
+                  {{#if @root.editable}}
+                    <input type="text" class="v2-specialty-input{{#if row.lacksSpecialty}} v2-missing{{/if}}" value="{{row.specialty}}"
+                           placeholder="{{localize 'GWORLD.Trait.SpecialtyPlaceholder'}}" id="{{@root.sheetId}}-{{row.id}}-specialty"
+                           data-item-text="system.specialty" aria-label="{{localize 'GWORLD.Trait.Specialty'}}">
+                  {{else}}<b>{{#if row.specialty}}{{row.specialty}}{{else}}&mdash;{{/if}}</b>{{/if}}
+                </div>
+                {{#if row.lacksSpecialty}}<p class="v2-note v2-bad">{{localize "GWORLD.Trait.SpecialtyHint"}}</p>{{/if}}
+              {{/if}}
               {{#if row.levelled}}
                 <div class="v2-box-line">
                   <span>{{localize "GWORLD.Trait.Levels"}}</span>

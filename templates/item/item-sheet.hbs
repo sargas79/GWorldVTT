@@ -332,6 +332,17 @@
         </label>
       </div>
       <div class="ifields">
+        <label class="wide">{{localize "GWORLD.Trait.Specialty"}}
+          <input type="text" name="system.specialty" value="{{system.specialty}}"
+                 placeholder="{{localize 'GWORLD.Trait.SpecialtyPlaceholder'}}" {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Trait.NeedsSpecialty"}}
+          <input type="checkbox" name="system.needsSpecialty" {{checked system.needsSpecialty}}
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Trait.SpecialtyFieldHint"}}</p>
+      <div class="ifields">
         <label class="wide">{{localize "GWORLD.Trait.CostTable"}}
           <input type="text" name="system.costTable" value="{{costTableText}}"
                  placeholder="10/20/30/50/75" {{#unless editable}}disabled{{/unless}} />

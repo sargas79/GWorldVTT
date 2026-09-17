@@ -59,6 +59,15 @@ Basic Set's.
    **Configure Settings → Compendium sources** shows the book as one row with
    one switch.
 
+A trait the book makes the player specify -- Compulsive Behavior, Intolerance,
+Phobia, Weapon Master -- carries `needsSpecialty: true`, and the sheet and the
+guided build then ask what it is of and keep the answer in `specialty`, shown
+after the name as the book writes it. The parser sets the flag from GCA's own
+input prompts (`#InputToTag(...)`) and from the Basic Set list in
+`tools/specified-traits.mjs`; a book whose data file carries no prompt for such
+a trait can set the flag on the record by hand, and `validate-packs` checks that
+the Basic Set's names carry it wherever they appear.
+
 A spell record holds statistics only: colleges, class, cost, time, duration,
 the Magery it needs, and a prerequisite line the sheet can parse, such as
 `Magery 1, Create Fire, Shape Fire or Seek Fire`, `6 Air spells`,

@@ -52,6 +52,7 @@ import {
   splitTop,
 } from "./gdf.mjs";
 import { existingIds as existingSpellIds, parseSpells } from "./parse-gdf-spells.mjs";
+import { needsSpecialty } from "./specified-traits.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -578,6 +579,10 @@ function parseTraits(recs, reject, note, source) {
         // Names past the last priced level name levels that cannot be bought.
         levelNames: maxLevels > 0 ? levelNames.slice(0, maxLevels) : levelNames,
         maxLevels,
+        // What the trait is of is the player's to say; the flag says the
+        // book makes them say it.
+        specialty: "",
+        needsSpecialty: needsSpecialty(bare, r.text),
         reactionModifier: 0,
         talentSkills: talentSkillsOf(bare, f, source.groups ?? new Map()),
         ...powerOfRecord(f, source.powerCategory ?? null),

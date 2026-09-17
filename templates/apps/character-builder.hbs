@@ -133,12 +133,20 @@
         </div>
         <ul class="gb-list">
           {{#each items as |item|}}
-            <li class="gb-row" data-item-id="{{item.id}}">
+            <li class="gb-row{{#if item.incomplete}} gb-row-incomplete{{/if}}" data-item-id="{{item.id}}">
               {{#if item.nameEditable}}
                 {{!-- A quirk or a perk is the player's own words, written here. --}}
                 <input type="text" class="gb-name gb-name-input" value="{{item.name}}" placeholder="{{item.namePlaceholder}}"
                        id="{{@root.appId}}-{{item.id}}-name" data-item-name="{{item.id}}"
                        aria-label="{{localize 'GWORLD.Item.Name'}}" />
+              {{else if item.needsSpecialty}}
+                {{!-- A trait the book makes the player specify: the behaviour, the group, the weapon. --}}
+                <span class="gb-name-cell">
+                  <span class="gb-name">{{item.name}}{{#if item.levelName}} <span class="gb-level-name">&middot; {{item.levelName}}</span>{{/if}}</span>
+                  <input type="text" class="gb-specialty" value="{{item.specialty}}" placeholder="{{localize 'GWORLD.Trait.SpecialtyPlaceholder'}}"
+                         id="{{@root.appId}}-{{item.id}}-specialty" data-item-specialty="{{item.id}}"
+                         aria-label="{{localize 'GWORLD.Trait.Specialty'}}" />
+                </span>
               {{else}}
                 <span class="gb-name">{{item.name}}{{#if item.levelName}} <span class="gb-level-name">&middot; {{item.levelName}}</span>{{/if}}</span>
               {{/if}}
@@ -204,6 +212,9 @@
         </div>
         {{#if review.unnamed.length}}
           <p class="gb-incomplete">{{localize "GWORLD.Builder.Review.Unnamed" count=review.unnamed.length}}</p>
+        {{/if}}
+        {{#if review.unspecified.length}}
+          <p class="gb-incomplete">{{localize "GWORLD.Builder.Review.Unspecified" count=review.unspecified.length names=(join review.unspecified ", ")}}</p>
         {{/if}}
         <div class="v2-stat-pair">
           <div class="v2-stat">

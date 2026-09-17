@@ -845,7 +845,8 @@
         "Category": "Category",
         "Chosen": "Chosen",
         "NoPoints": "no points",
-        "Unnamed": "{count} still carry the name they were made with. Say what they are, on their step."
+        "Unnamed": "{count} still carry the name they were made with. Say what they are, on their step.",
+        "Unspecified": "{count} still have to say what they are of: {names}."
       },
       "NamePlaceholder": {
         "quirk": "What the quirk is, in your own words",
@@ -1265,6 +1266,12 @@
       "demon": "The spell fails entirely; a demon or other malign entity appears and attacks the caster."
     },
     "Trait": {
+      "Specialty": "Of what",
+      "SpecialtyPlaceholder": "Say which: the behaviour, group, weapon or target",
+      "SpecialtyHint": "This trait is not complete until it says what it is of.",
+      "SpecialtyFieldHint": "Some traits are not complete until the player says what they are of: Compulsive Behavior (Gambling), Intolerance (Elves), Weapon Master (Katana). It is shown after the name, as the book writes it. Tick the box for a trait that must have one, and the sheet asks.",
+      "NeedsSpecialty": "Must say what it is of",
+      "Unspecified": "of what?",
       "Levels": "levels",
       "Reaction": "reaction",
       "Category": "Category",

@@ -921,6 +921,22 @@
 .gworld.v2 .v2-detail { gap: 10px; padding: 0 0 12px; overflow: hidden; }
 .gworld.v2 .v2-detail > :not(.v2-detail-head) { margin-left: 14px; margin-right: 14px; }
 .gworld.v2 .v2-detail[hidden] { display: none; }
+/* What a trait is of, written in its panel. */
+.gworld.v2 .v2-box-line input.v2-specialty-input {
+  flex: 1;
+  min-width: 0;
+  max-width: 60%;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--v2-panel-line);
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  font-size: 13px;
+}
+.gworld.v2 .v2-box-line input.v2-specialty-input:focus { outline: none; border-color: var(--v2-steel); box-shadow: 0 0 0 1px var(--v2-steel); }
+.gworld.v2 .v2-box-line input.v2-specialty-input.v2-missing { border-color: var(--v2-red, #a33); }
+.gworld.v2 .v2-box-line input.v2-specialty-input::placeholder { color: var(--v2-ink-muted); font-style: italic; }
 /* A name the player writes, in the panel's own heading. */
 .gworld.v2 .v2-detail-head input.v2-name-input {
   flex: 1;
@@ -1751,6 +1767,25 @@
 .gworld.v2.gworld-builder .gb-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-heading); font-size: 16px; }
 .gworld.v2.gworld-builder .gb-detail { font-size: 12px; color: var(--v2-ink-muted); white-space: nowrap; }
 .gworld.v2.gworld-builder .gb-spend { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 12px; color: var(--v2-ink-muted); }
+/* A trait the book makes the player specify: the field sits under the name,
+   and the row is marked until something is said. */
+.gworld.v2.gworld-builder .gb-name-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gworld.v2.gworld-builder input.gb-specialty {
+  width: 100%;
+  max-width: 320px;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--v2-panel-line);
+  border-radius: var(--v2-radius);
+  background: #fbf8f1;
+  color: var(--v2-ink);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+.gworld.v2.gworld-builder input.gb-specialty:focus { outline: none; border-color: var(--v2-steel); box-shadow: 0 0 0 1px var(--v2-steel); }
+.gworld.v2.gworld-builder input.gb-specialty::placeholder { color: var(--v2-ink-muted); font-style: italic; }
+.gworld.v2.gworld-builder .gb-row-incomplete { border-left-color: var(--v2-red, #a33); }
+.gworld.v2.gworld-builder .gb-row-incomplete input.gb-specialty { border-color: var(--v2-red, #a33); }
 /* A name the player writes: a quirk's, a perk's, a custom trait's. */
 .gworld.v2.gworld-builder input.gb-name-input {
   width: 100%;
@@ -1863,3 +1898,6 @@
 .gworld.v2 .v2-job-fields label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--v2-ink-muted); }
 .gworld.v2 .v2-job-fields .v2-job-risk { grid-column: 1 / -1; }
 .gworld.v2 .v2-job-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--v2-ink-muted); }
+
+/* A trait still to say what it is of. */
+.gworld.v2 .v2-tag-bad { border-color: var(--v2-red, #a33); color: var(--v2-red, #a33); }

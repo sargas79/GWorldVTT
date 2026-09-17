@@ -189,6 +189,8 @@ function descriptionFields() {
 export class TraitData extends foundry.abstract.TypeDataModel {
   declare points: number;
   declare category: "advantage" | "disadvantage" | "quirk" | "perk";
+  declare specialty: string;
+  declare needsSpecialty: boolean;
   declare levels: number;
   declare pointsPerLevel: number;
   declare costTable: number[];
@@ -213,6 +215,16 @@ export class TraitData extends foundry.abstract.TypeDataModel {
         initial: "advantage",
         choices: ["advantage", "disadvantage", "quirk", "perk"],
       }),
+      /**
+       * What the trait is of, where the book makes the player say: the
+       * behaviour of a Compulsive Behavior, the group of an Intolerance, the
+       * weapon of a Weapon Master (Characters p. 128 and throughout). Kept
+       * apart from the name so the compendium's name survives, and shown
+       * beside it the way the book writes it: "Compulsive Behavior (Gambling)".
+       */
+      specialty: new fields.StringField({ required: true, blank: true, initial: "" }),
+      /** True for a trait that is incomplete until `specialty` says what it is of. */
+      needsSpecialty: new fields.BooleanField({ required: true, initial: false }),
       /**
        * Enhancements and limitations (Characters pp. 101-102), each a name
        * and a percentage: Reliable +20, Costs Fatigue -40. They scale the

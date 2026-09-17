@@ -13,6 +13,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { basicSetVolume } from "./gdf.mjs";
+import { SPECIFIED_TRAITS } from "./specified-traits.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -209,6 +210,14 @@ function validateItem(entry, file) {
 
   if (entry.type === "trait") {
     check(TRAIT_CATEGORIES.has(sys.category), file, name, `bad category "${sys.category}"`);
+    // A trait the book makes the player specify says so, or the sheet never
+    // asks and a Phobia goes on the character with nothing feared.
+    if (sys.needsSpecialty !== undefined) {
+      check(typeof sys.needsSpecialty === "boolean", file, name, "needsSpecialty must be true or false");
+    }
+    if (SPECIFIED_TRAITS.has(String(name).replace(/\s+\((?:Advantage|Disadvantage)\)$/, ""))) {
+      check(sys.needsSpecialty === true, file, name, "needs a specification, but needsSpecialty is not set");
+    }
     check(Number.isInteger(sys.points), file, name, "points must be an integer");
     check(Number.isInteger(sys.pointsPerLevel), file, name, "pointsPerLevel must be an integer");
     check(
