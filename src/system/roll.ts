@@ -2177,7 +2177,7 @@ export async function promptForRangedAttack(options: {
       </fieldset>`
     : "";
 
-  const RANGED_CONTENT = `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+  const content = `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
       ${field("range", L("Range"), String(options.initialRange ?? 0))}
       ${field("elevation", L("Elevation"), "0")}
       ${field("speed", L("TargetSpeed"), "0")}
@@ -2274,7 +2274,7 @@ export async function promptForRangedAttack(options: {
 
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Title") },
-    content: RANGED_CONTENT,
+    content,
     render: (_event: Event, dialog: any) => {
       const root: HTMLElement = dialog.element ?? dialog;
       // The effective level, kept in step with the fields as they change: the
@@ -3109,34 +3109,34 @@ export async function promptForMeleeAttack(options: {
   });
 
   function readMeleeForm(form: HTMLElement | null) {
-        const num = (name: string) =>
-          Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
-        const ticked = (name: string) =>
-          form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
-        return {
-          addonValues: readAttackOptionValues(form, addonContext),
-          deceptive: num("deceptive"),
-          modifier: num("modifier"),
-          rapid: ticked("rapid"),
-          flurry: ticked("flurry"),
-          mighty: ticked("mighty"),
-          sight: (form?.querySelector<HTMLSelectElement>('select[name="sight"]')?.value ??
-            "clear") as Sight,
-          darkness: num("darkness"),
-          calledShot:
-            form?.querySelector<HTMLSelectElement>('select[name="calledShot"]')?.value ?? UNAIMED,
-          turned: ticked("turned"),
-          ground:
-            Number(form?.querySelector<HTMLSelectElement>('select[name="ground"]')?.value ?? 0) || 0,
-          dual: form?.querySelector<HTMLSelectElement>('select[name="dual"]')?.value ?? "no",
-          charging: ticked("charging"),
-          pullSt: num("pullSt"),
-          lanceSt: num("lanceSt"),
-          lanceYards: num("lanceYards"),
-          jousting: ticked("jousting"),
-          wildSwing: ticked("wildSwing"),
-          stopThrustYards: num("stopThrustYards"),
-        };
+    const num = (name: string) =>
+      Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
+    const ticked = (name: string) =>
+      form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+    return {
+      addonValues: readAttackOptionValues(form, addonContext),
+      deceptive: num("deceptive"),
+      modifier: num("modifier"),
+      rapid: ticked("rapid"),
+      flurry: ticked("flurry"),
+      mighty: ticked("mighty"),
+      sight: (form?.querySelector<HTMLSelectElement>('select[name="sight"]')?.value ??
+        "clear") as Sight,
+      darkness: num("darkness"),
+      calledShot:
+        form?.querySelector<HTMLSelectElement>('select[name="calledShot"]')?.value ?? UNAIMED,
+      turned: ticked("turned"),
+      ground:
+        Number(form?.querySelector<HTMLSelectElement>('select[name="ground"]')?.value ?? 0) || 0,
+      dual: form?.querySelector<HTMLSelectElement>('select[name="dual"]')?.value ?? "no",
+      charging: ticked("charging"),
+      pullSt: num("pullSt"),
+      lanceSt: num("lanceSt"),
+      lanceYards: num("lanceYards"),
+      jousting: ticked("jousting"),
+      wildSwing: ticked("wildSwing"),
+      stopThrustYards: num("stopThrustYards"),
+    };
   }
 
   if (!result || typeof result !== "object") return null;

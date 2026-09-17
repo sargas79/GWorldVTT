@@ -1,5 +1,15 @@
 # Open issues: verification and implementation plan
 
+**Status: implemented.** All seven batches below have been built on
+`claude/open-issues-review-plan-ctvifd`, one commit each, in the order given.
+Two things changed from the plan during the work and are recorded here rather
+than left to the commits: #533's field is stepped by buttons rather than the
+browser's spinner (which can only move by one, and so cannot express a cost
+table), and #526's helper identifies a field by `name` *or* `id`, because the
+builder's fields carry no name -- one there would submit onto the actor on
+every keystroke. #534 ships with one open question, flagged at the end of its
+section.
+
 Written against `main` at v1.26.0 (`256d42f`). Baseline at the time of writing:
 `npm run typecheck`, `npm run lint` and `npm test` (172 files, 2560 tests) all
 pass, so every failure a change below produces is that change's own.
