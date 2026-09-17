@@ -841,6 +841,10 @@
               {{selectOptions choices.equipmentQualities selected=system.equipmentQuality localize=true}}
             </select>
           </label>
+          <label data-tooltip="{{localize 'GWORLD.Item.EquipmentModifierHint'}}">{{localize "GWORLD.Item.EquipmentModifier"}}
+            <input type="number" name="system.equipmentModifier" value="{{system.equipmentModifier}}" step="1" placeholder="—"
+                   {{#unless editable}}disabled{{/unless}} />
+          </label>
           <label class="ifull" data-tooltip="{{localize 'GWORLD.Item.ForSkillsHint'}}">{{localize "GWORLD.Item.ForSkills"}}
             <input type="text" name="system.forSkills" value="{{join system.forSkills ", "}}" placeholder="Surgery, First Aid"
                    {{#unless editable}}disabled{{/unless}} />

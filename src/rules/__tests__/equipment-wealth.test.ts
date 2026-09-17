@@ -7,6 +7,7 @@ import {
   clothingCost,
   equipmentQualityCost,
   equipmentQualityModifier,
+  toolModifier,
   pointsForMoney,
   signatureGearPoints,
   signatureGearValue,
@@ -88,5 +89,14 @@ describe("Equipment Modifiers (Campaigns p. 345)", () => {
     expect(equipmentQualityCost("fine")).toBe(20);
     expect(equipmentQualityCost("best")).toBeNull();
     expect(equipmentQualityCost("improvised")).toBeNull();
+  });
+});
+
+describe("a tool's stated modifier (since API 1.63.0)", () => {
+  it("uses the stated number where there is one, the grade otherwise", () => {
+    expect(toolModifier("basic", -2)).toBe(-2);
+    expect(toolModifier("fine", null)).toBe(2);
+    expect(toolModifier("best", undefined, { tl: 10 })).toBe(5);
+    expect(toolModifier("good", 0)).toBe(0);
   });
 });

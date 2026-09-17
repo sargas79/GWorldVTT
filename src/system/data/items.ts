@@ -1002,6 +1002,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare missedMaintenance: number;
   declare complexity: number;
   declare equipmentQuality: EquipmentQuality;
+  declare equipmentModifier: number | null;
   declare forSkills: string[];
   declare meleeModes: unknown[];
   declare rangedModes: unknown[];
@@ -1048,6 +1049,12 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
         initial: "basic",
         choices: [...EQUIPMENT_QUALITIES],
       }),
+      /**
+       * A stated modifier to the skills in `forSkills`, for a tool no grade
+       * describes (a kit that gives -2). When set it replaces the grade's
+       * modifier; null uses the grade (since API 1.63.0).
+       */
+      equipmentModifier: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null }),
       /**
        * The skills this equipment is the tools of, by name. A skill on this
        * list is rolled at the grade's modifier while the item is carried.

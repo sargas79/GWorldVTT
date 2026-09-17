@@ -286,3 +286,14 @@ export function gearCost(items: ReadonlyArray<{ cost?: number; quantity?: number
   }
   return total;
 }
+
+/**
+ * What a tool gives the skills it serves: a stated number where the item has
+ * one (a kit that gives -2, which no grade does), the grade's modifier otherwise
+ * (since API 1.63.0).
+ */
+export function toolModifier(quality: EquipmentQuality, statedModifier: number | null | undefined, options: { technological?: boolean; tl?: number } = {}): number {
+  return typeof statedModifier === "number" && Number.isFinite(statedModifier)
+    ? Math.trunc(statedModifier)
+    : equipmentQualityModifier(quality, options);
+}
