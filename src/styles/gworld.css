@@ -791,13 +791,14 @@
    content height, so a long template ran off the bottom of the window with
    the Apply button behind it. The wrapper is made to shrink, and the
    options scroll inside it while the buttons stay below. */
-.application.gworld-template-options .window-content > .dialog-content {
+.application.gworld-template-options .window-content > form,
+.application.gworld-template-options .dialog-content {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
-.application.gworld-template-options .window-content > .form-footer { flex: none; }
+.application.gworld-template-options .form-footer { flex: none; }
 .gworld.tpl-options {
   flex: 1 1 auto;
   min-height: 0;
