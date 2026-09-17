@@ -1,0 +1,3925 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+  :root { --font-body: system-ui, sans-serif; --font-heading: Georgia, serif;
+          --color-text:#191813; --color-bg:#f4f1e9; --color-surface:#fff;
+          --color-accent:#782e22; --color-accent-700:#8b3a2c; --color-accent-800:#6b281e;
+          --color-accent-900:#4b1a13; --color-accent-100:#e8d9d5; --color-divider:#c9c7b8;
+          --color-neutral-200:#e5e3d8; --color-neutral-300:#d6d3c4; --color-neutral-500:#9b9884;
+          --color-neutral-700:#6a6857; --color-neutral-800:#4a4838; --color-neutral-900:#2b2a21;
+          --color-danger:#a33; --color-warning:#a33; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#2b2b2b; display:flex; gap:24px; padding:20px; align-items:flex-start;
+         font-family: var(--font-body); }
+  .application { width:700px; height:620px; display:flex; flex-direction:column;
+                 border:1px solid #111; border-radius:5px; overflow:hidden;
+                 box-shadow:0 0 20px rgb(0 0 0 / .5); }
+  .window-header { flex:none; padding:5px 8px; background:#1b1b1b; color:#eee; font-size:12px; }
+  .window-content { flex:1 1 auto; min-height:0; }
+  /**
+ * GWorld sheet styles.
+ *
+ * Ported from the "Industry" design system: steel-blue on a light technical
+ * ground, Barlow Condensed headings over Barlow, square corners, hairline
+ * borders, and "+" registration marks on framed objects.
+ *
+ * Every token is declared on `.gworld` rather than `:root` so the system's
+ * palette cannot leak into Foundry's own chrome, and every component class is
+ * scoped under `.gworld` for the same reason.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap");
+
+.gworld {
+  --color-bg: #f2f2f3;
+  --color-surface: #e9e9ea;
+  --color-text: #1d1f20;
+  --color-accent: #5980a6;
+  --color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+
+  --color-neutral-200: #e7e7ea;
+  --color-neutral-700: #5d5d60;
+  --color-neutral-800: #424244;
+  --color-neutral-900: #2b2b2d;
+
+  --color-accent-100: #eef6ff;
+  --color-accent-700: #416180;
+  --color-accent-800: #2c455d;
+  --color-accent-900: #1d2d3d;
+
+  --color-danger: #8f2f2f;
+
+  --font-heading: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --space-1: 3.4px;
+  --space-2: 6.8px;
+  --space-3: 10.2px;
+  --space-4: 13.6px;
+  --space-6: 20.4px;
+  --space-8: 27.2px;
+}
+
+/* ── shell ─────────────────────────────────────────────────────────────── */
+
+/*
+ * A window can never be taller or wider than the screen showing it.
+ *
+ * Foundry remembers where each sheet was last put, including its size, so a
+ * sheet dragged large on one monitor opens at that size on a smaller one --
+ * with its foot below the bottom of the screen and no way to reach it. The
+ * clamp is on the application rather than on the content because it is the
+ * window that overflows; the tabs inside already scroll.
+ */
+.gworld.application {
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+}
+
+/*
+ * Every tab scrolls inside the window rather than stretching it.
+ *
+ * `flex: 1` alone is not enough in a column: a flex item's automatic minimum
+ * size is its content, so a long tab pushes the window taller instead of
+ * scrolling. It is zero here because the tab is a scroll container, and saying
+ * so explicitly is cheaper than relying on that being remembered.
+ */
+.gworld .tab.ibody { min-height: 0; }
+
+.gworld .window-content {
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.gworld .ind {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.gworld .ind *,
+.gworld .ind *::before,
+.gworld .ind *::after {
+  box-sizing: border-box;
+}
+
+/* The blueprint frame: hairline border plus corner registration marks. */
+.gworld .blueprint {
+  position: relative;
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+}
+.gworld .blueprint > .corner {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  pointer-events: none;
+}
+.gworld .blueprint > .corner::before,
+.gworld .blueprint > .corner::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+}
+.gworld .blueprint > .corner::before {
+  left: 5px;
+  top: 0;
+  width: 1px;
+  height: 100%;
+}
+.gworld .blueprint > .corner::after {
+  top: 5px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+.gworld .blueprint > .corner.tl { top: -6px; left: -6px; }
+.gworld .blueprint > .corner.tr { top: -6px; right: -6px; }
+.gworld .blueprint > .corner.bl { bottom: -6px; left: -6px; }
+.gworld .blueprint > .corner.br { bottom: -6px; right: -6px; }
+
+/* ── persistent header ─────────────────────────────────────────────────── */
+
+/*
+ * The portrait takes the height the name, pools and combat strip give the
+ * header, rather than a thumbnail in its corner. The header is the container,
+ * so the portrait steps down as the sheet window narrows, not as the browser
+ * does.
+ */
+.gworld .ihdr {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  padding: 16px 16px 14px;
+  border-bottom: 1px solid var(--color-divider);
+  flex: none;
+  container-type: inline-size;
+}
+.gworld .iport {
+  width: 148px;
+  aspect-ratio: 1;
+  align-self: start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-divider);
+  overflow: hidden;
+}
+.gworld .iport img { width: 100%; height: 100%; object-fit: cover; object-position: center top; border: 0; }
+@container (max-width: 640px) {
+  .gworld .iport { width: 112px; }
+}
+@container (max-width: 460px) {
+  .gworld .iport { width: 80px; }
+}
+.gworld .ihm { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.gworld .inrow { display: flex; align-items: baseline; gap: 10px; }
+.gworld .iname {
+  font-family: var(--font-heading);
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--color-text);
+  min-width: 0;
+}
+.gworld .imeta {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+  white-space: nowrap;
+}
+.gworld .ipts {
+  margin-left: auto;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+  white-space: nowrap;
+}
+/* Points still to spend are the half of that line anybody is looking for. */
+.gworld .iunspent { color: var(--color-accent); font-weight: 600; }
+
+/* The award control, beside the points it changes. */
+.gworld .iptbtn {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+  color: var(--color-neutral-700);
+  cursor: pointer;
+}
+.gworld .iptbtn:hover { color: var(--color-accent); border-color: var(--color-accent); }
+
+/* Spending past the starting budget: flagged, not forbidden. A GM may allow
+   it, and a character part-way through being built is over and under by turns. */
+.gworld .ipts.over,
+.gworld .ltot .over { color: var(--color-warning, #a33); font-weight: 600; }
+.gworld .ipools { display: flex; gap: 14px; }
+.gworld .ipool { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.gworld .ipt {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .ipv {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--color-text);
+}
+.gworld .itrack { height: 6px; border: 1px solid var(--color-divider); }
+.gworld .ifill { height: 100%; background: var(--color-accent); }
+/* Injury states recolour the pool fill rather than adding new chrome. */
+.gworld .ifill.reeling { background: var(--color-danger); }
+.gworld .ifill.collapsing { background: var(--color-danger); opacity: 0.55; }
+
+.gworld .istrip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border: 1px solid var(--color-divider);
+}
+.gworld .istat {
+  padding: 6px 4px;
+  text-align: center;
+  border-right: 1px solid var(--color-divider);
+}
+.gworld .istat:last-child { border-right: 0; }
+.gworld .isl {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .isv {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+.gworld .isn {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--color-accent-700);
+  min-height: 12px;
+}
+
+/* ── tabs ──────────────────────────────────────────────────────────────── */
+
+.gworld .itabs {
+  display: flex;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--color-divider);
+  flex: none;
+}
+.gworld .itab {
+  padding: 9px 13px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+  text-decoration: none;
+  cursor: pointer;
+}
+.gworld .itab:hover { color: var(--color-accent); }
+.gworld .itab.active { color: #fff; background: var(--color-accent-900); }
+
+/* ── body ──────────────────────────────────────────────────────────────── */
+
+.gworld .ibody {
+  padding: 20px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+.gworld .isec { display: flex; flex-direction: column; gap: 11px; }
+.gworld .ish {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.gworld .ish::after {
+  content: "";
+  flex-grow: 1;
+  height: 1px;
+  background: var(--color-divider);
+}
+.gworld .ish .num { font-size: 10px; letter-spacing: 0.1em; color: var(--color-accent); }
+
+.gworld .g4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.gworld .g3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.gworld .g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+
+/* ── attributes ────────────────────────────────────────────────────────── */
+
+.gworld .attr {
+  position: relative;
+  border: 1px solid var(--color-divider);
+  padding: 10px 11px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.gworld .attr .al {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+/* The halved score a very tired character actually rolls ST against. */
+.gworld .attr .al .tired {
+  margin-left: 4px;
+  font-style: normal;
+  color: var(--color-danger);
+}
+.gworld .attr .av {
+  font-family: var(--font-heading);
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 0.95;
+  color: var(--color-accent-900);
+  background: none;
+  border: 0;
+  padding: 0;
+  width: 100%;
+}
+.gworld .attr .ac {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+}
+
+.gworld .cellgrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--color-divider);
+  border-left: 1px solid var(--color-divider);
+}
+.gworld .cell {
+  padding: 8px 10px;
+  border-right: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  display: flex;
+  flex-direction: column;
+}
+.gworld .cl {
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .cv { font-family: var(--font-heading); font-size: 22px; font-weight: 600; line-height: 1.1; }
+.gworld .cd { font-size: 9.5px; font-family: var(--font-mono); color: var(--color-accent-700); }
+
+.gworld .fld { display: flex; flex-direction: column; gap: 4px; }
+.gworld .fl {
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .fi {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 9px;
+  border: 1px solid var(--color-divider);
+  font-size: 12.5px;
+}
+.gworld .fi select,
+.gworld .fi input {
+  background: none;
+  border: 0;
+  padding: 0;
+  height: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  width: 100%;
+}
+
+/* ── points ledger ─────────────────────────────────────────────────────── */
+
+.gworld .ledger { border: 1px solid var(--color-divider); }
+.gworld .lrow {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 11px;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--color-neutral-200);
+}
+.gworld .lrow:last-child { border-bottom: 0; }
+.gworld .ltot {
+  background: var(--color-accent-900);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+/* The rule between what was spent and what there was to spend: one ledger
+   reads better than two, but the two halves answer different questions. */
+.gworld .lsep { border-top: 2px solid var(--color-accent-900); }
+.gworld .neg { color: var(--color-danger); }
+
+.gworld .inote {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 11px;
+  border-left: 2px solid var(--color-accent);
+  background: var(--color-accent-100);
+  font-size: 11px;
+  color: var(--color-accent-900);
+}
+.gworld .inote.warn { border-left-color: var(--color-danger); }
+
+/* ── tables ────────────────────────────────────────────────────────────── */
+
+/*
+ * Tables state their own colours rather than inheriting them.
+ *
+ * Foundry's core stylesheet paints tables -- a dark header band and a filled
+ * body -- and a table that only sets its borders inherits all of it. That put
+ * grey text on grey rows: the to-hit column and the "to target" links were
+ * nearly unreadable against their own background.
+ */
+.gworld table.gt {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  background: transparent;
+  color: var(--color-text);
+}
+.gworld table.gt thead,
+.gworld table.gt tbody,
+.gworld table.gt tr { background: transparent; }
+.gworld table.gt th {
+  font-family: var(--font-heading);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 400;
+  padding: 0 6px 5px;
+  text-align: left;
+  background: transparent;
+  color: var(--color-neutral-700);
+  border-bottom: 1px solid var(--color-divider);
+}
+.gworld table.gt td {
+  padding: 6px;
+  background: transparent;
+  color: inherit;
+  border-bottom: 1px solid var(--color-neutral-200);
+  vertical-align: baseline;
+}
+
+/*
+ * A whisper of banding, so the eye keeps its place across a wide row without
+ * the stripe becoming a colour in its own right. Eleven hit locations is a
+ * long way to track a number across.
+ */
+.gworld table.gt tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--color-text) 3.5%, transparent);
+}
+.gworld table.gt tbody tr:hover td {
+  background: color-mix(in srgb, var(--color-accent, #1d1f20) 8%, transparent);
+}
+.gworld table.gt td.n { text-align: right; font-variant-numeric: tabular-nums; }
+.gworld table.gt td.c { text-align: center; }
+.gworld table.gt th.n { text-align: right; }
+.gworld table.gt th.c { text-align: center; }
+
+/* A heading row inside the inventory: the kind of gear the rows beneath are. */
+.gworld table.gt tr.ggroup td {
+  padding: 8px 6px 3px;
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+  background: transparent;
+  border-bottom: 1px solid var(--color-divider);
+}
+.gworld table.gt tbody[hidden] { display: none; }
+/* The gear filter sits in the toolbar like the skill search does. */
+.gworld .gfilter { flex-grow: 0; gap: 8px; }
+.gworld .gfilter select {
+  background: none;
+  border: 0;
+  height: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--color-text);
+}
+
+.gworld .wname { font-weight: 500; }
+.gworld .wmode {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .lvl {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-accent-900);
+}
+.gworld .dmg { font-family: var(--font-mono); font-size: 11.5px; }
+.gworld .dt { color: var(--color-accent-700); }
+.gworld .bad { color: var(--color-danger); font-weight: 600; }
+.gworld .dim td,
+.gworld .dim .lvl { color: var(--color-neutral-700); }
+
+.gworld .grph {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding-bottom: 4px;
+}
+.gworld .grph::after {
+  content: "";
+  flex-grow: 1;
+  height: 1px;
+  background: var(--color-divider);
+}
+.gworld .grph .sub {
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--color-neutral-700);
+}
+
+/* ── toolbar ───────────────────────────────────────────────────────────── */
+
+/* Toolbars wrap. A row of actions grows every time a rule is implemented, and
+   a row that cannot wrap puts the last of them off the edge of the sheet. */
+.gworld .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.gworld .srch {
+  flex-grow: 1;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  border: 1px solid var(--color-divider);
+  font-size: 12px;
+  color: var(--color-neutral-700);
+}
+.gworld .srch input {
+  background: none;
+  border: 0;
+  height: 100%;
+  width: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--color-text);
+}
+.gworld .ibtn {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 0;
+}
+.gworld .ibtn:hover { background: var(--color-accent-700); border-color: var(--color-accent-700); }
+/* A button that is a state rather than an action -- mounted, say -- shows
+   whether the state is on rather than merely offering to change it. */
+.gworld .ibtn.on {
+  background: var(--color-accent-900);
+  border-color: var(--color-accent-900);
+}
+/* A button that has to sit in a table cell beside the roll die. */
+.gworld .ibtn.tiny {
+  height: 20px;
+  padding: 0 6px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  vertical-align: middle;
+}
+
+/* ── combat ────────────────────────────────────────────────────────────── */
+
+.gworld .istance { display: flex; gap: 8px; flex-wrap: wrap; }
+.gworld .ichip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 11px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-divider);
+  background: none;
+  color: var(--color-neutral-800);
+  cursor: pointer;
+  border-radius: 0;
+  font-family: inherit;
+}
+.gworld .ichip:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.gworld .ichip.on {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+/* The posture chip holds a select, so the posture can be changed where it is
+   read. The select wears the chip's colours; its dropdown keeps the page's. */
+.gworld .ichip.iposture { padding-right: 6px; cursor: default; }
+.gworld .ichip .ichip-label { opacity: 0.8; }
+.gworld .ichip select {
+  height: 100%;
+  padding: 0 2px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+.gworld .ichip select:disabled { cursor: default; }
+.gworld .ichip select option { color: var(--color-text); text-transform: none; }
+.gworld .ichip.warn {
+  border-color: var(--color-accent-700);
+  color: var(--color-accent-800);
+  background: var(--color-accent-100);
+  cursor: default;
+}
+
+.gworld .idefs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.gworld .idef {
+  position: relative;
+  border: 1px solid var(--color-divider);
+  padding: 11px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gworld .idl {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .idv {
+  font-family: var(--font-heading);
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-accent-900);
+}
+.gworld .idsrc { font-size: 10.5px; color: var(--color-neutral-800); }
+.gworld .idmath {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+  letter-spacing: -0.01em;
+  color: var(--color-accent-700);
+}
+
+.gworld .iarm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.gworld .iac {
+  position: relative;
+  border: 1px solid var(--color-divider);
+  padding: 9px 11px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.gworld .iav { font-family: var(--font-heading); font-size: 24px; font-weight: 600; line-height: 1; }
+
+/* ── traits ────────────────────────────────────────────────────────────── */
+
+.gworld .trait {
+  position: relative;
+  border: 1px solid var(--color-divider);
+  padding: 9px 11px;
+  display: grid;
+  /* name, point cost, and the delete control when the sheet is editable */
+  grid-template-columns: 1fr auto auto;
+  gap: 2px 12px;
+}
+/* Kept quiet until the card is hovered, so a wall of traits is not a wall of bins. */
+.gworld .tdel {
+  align-self: start;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  color: var(--color-neutral-800);
+}
+.gworld .trait:hover .tdel,
+.gworld .tdel:focus-visible { opacity: 1; }
+.gworld .tn { font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.gworld .tp {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: right;
+}
+.gworld .td { grid-column: 1 / -1; font-size: 11.5px; color: var(--color-neutral-800); }
+
+/* A description folded to its first line; the rest opens under it. */
+.gworld .tdfold { min-width: 0; }
+.gworld .tdfold > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  cursor: pointer;
+  list-style: none;
+  min-width: 0;
+}
+.gworld .tdfold > summary::-webkit-details-marker { display: none; }
+.gworld .tdfold > summary::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 120ms ease;
+  margin-right: 2px;
+  color: var(--color-neutral-700);
+}
+.gworld .tdfold[open] > summary::before { transform: rotate(45deg); }
+/* A template's grants, and the options dialog's folding groups. */
+.gworld .tpl-grant-list { margin: 4px 0 0; padding-left: 18px; columns: 2 14em; column-gap: 18px; }
+.gworld .tpl-grant-list li { break-inside: avoid; }
+.gworld details.tpl-fold > summary { display: flex; align-items: baseline; gap: 6px; cursor: pointer; list-style: none; }
+.gworld details.tpl-fold > summary::-webkit-details-marker { display: none; }
+.gworld details.tpl-fold > summary::before {
+  content: ""; flex: 0 0 auto; width: 5px; height: 5px; margin-right: 2px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform 120ms ease;
+}
+.gworld details.tpl-fold[open] > summary::before { transform: rotate(45deg); }
+.gworld details.tpl-fold > summary .gc-mod { margin-left: auto; }
+
+/* The NPC sheet's description fold: the section label, then the first line of
+   the description beside it while closed. */
+.gworld .npcdesc > summary { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.gworld .npcdesc > summary .tdfirst { flex: 1; min-width: 0; }
+.gworld .npcdesc[open] > summary .tdfirst { display: none; }
+.gworld .tdfold > summary:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
+.gworld .tdfold > summary .tdfirst {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gworld .tdfold > summary .tdless {
+  display: none;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .tdfold[open] > summary .tdfirst { display: none; }
+.gworld .tdfold[open] > summary .tdless { display: inline; }
+.gworld .tdfold > .tdfull { margin-top: 4px; }
+.gworld .tdfold > .tdfull > :first-child { margin-top: 0; }
+.gworld .tdfold > .tdfull > :last-child { margin-bottom: 0; }
+
+.gworld .tag {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-divider);
+  color: var(--color-neutral-700);
+}
+.gworld .tag-accent {
+  background: var(--color-accent-100);
+  border-color: var(--color-accent);
+  color: var(--color-accent-800);
+}
+.gworld .tag-danger {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+}
+
+.gworld .meterwrap {
+  border: 1px solid var(--color-divider);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gworld .meter { height: 6px; border: 1px solid var(--color-divider); }
+.gworld .mfill { height: 100%; background: var(--color-accent); }
+.gworld .mfill.over { background: var(--color-danger); }
+
+/* ── encumbrance ───────────────────────────────────────────────────────── */
+
+.gworld .enc {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border: 1px solid var(--color-divider);
+}
+.gworld .encs {
+  padding: 7px 6px;
+  text-align: center;
+  border-right: 1px solid var(--color-divider);
+}
+.gworld .encs:last-child { border-right: 0; }
+.gworld .encs.on { background: var(--color-accent-900); color: #fff; }
+.gworld .encs.on .el,
+.gworld .encs.on .em { color: rgba(255, 255, 255, 0.75); }
+.gworld .el {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld .ev { display: block; font-family: var(--font-heading); font-size: 15px; font-weight: 600; }
+.gworld .em { display: block; font-size: 9px; color: var(--color-neutral-700); }
+
+/* ── prose ─────────────────────────────────────────────────────────────── */
+
+.gworld .prose { font-size: 12.5px; line-height: 1.6; color: var(--color-neutral-900); }
+.gworld .prose p { margin: 0 0 8px; }
+.gworld .box { border: 1px solid var(--color-divider); padding: 10px 12px; }
+.gworld .box.editor { min-height: 120px; }
+
+.gworld .npcline { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; }
+.gworld .npcline b { font-family: var(--font-heading); font-size: 13px; letter-spacing: 0.06em; }
+
+/* The NPC sheet's one root element: the header and the scrolling body inside
+   it lay out exactly as they did when they were the window's own children. */
+.gworld .isheet-npc {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── limited view ──────────────────────────────────────────────────────── */
+
+.gworld .limited {
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: center;
+  text-align: center;
+}
+
+/* ── roll affordances ──────────────────────────────────────────────────── */
+
+.gworld .iroll {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  color: var(--color-accent);
+  cursor: pointer;
+  line-height: 0;
+}
+.gworld [data-action="roll"] { cursor: pointer; }
+.gworld [data-action="roll"]:hover { color: var(--color-accent); }
+.gworld .rollable { cursor: pointer; }
+.gworld .rollable:hover { color: var(--color-accent); }
+
+/* Themed focus, per the design system: never the default browser ring. */
+.gworld :focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.gworld ::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+
+/* ── tab visibility ────────────────────────────────────────────────────── */
+/* Foundry's changeTab toggles .active rather than re-rendering, so every tab
+   part is in the DOM at once and CSS decides which one shows. */
+
+.gworld .window-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.gworld .tab { display: none; }
+.gworld .tab.active { display: flex; }
+
+/* ── chat cards ────────────────────────────────────────────────────────── */
+/* Chat messages render outside the sheet, so the card carries .gworld itself
+   to pick up the tokens. */
+
+.gworld-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-divider);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+}
+.gworld-chat .gc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--color-divider);
+}
+.gworld-chat .gc-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.gworld-chat .gc-target {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+  white-space: nowrap;
+}
+.gworld-chat .gc-mods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 10.5px;
+  color: var(--color-neutral-700);
+}
+.gworld-chat .gc-mod { color: var(--color-accent-700); }
+.gworld-chat .gc-dice { display: flex; align-items: center; gap: 6px; }
+.gworld-chat .gc-die {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--color-divider);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 600;
+}
+.gworld-chat .gc-total {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  margin-left: 4px;
+  color: var(--color-accent-900);
+}
+.gworld-chat .gc-result {
+  padding: 5px 8px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-left: 2px solid var(--color-neutral-700);
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+}
+/* The apply row on a damage card: pick where it landed, then land it. */
+.gworld-chat .gc-apply {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-neutral-300);
+}
+/* A name is a word, not a layout: however long it is, it wraps inside the
+   card rather than pushing the buttons out of it. */
+.gworld-chat .gc-who {
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+}
+.gworld-chat .gc-who .gc-mod { font-weight: 400; margin-left: 6px; }
+.gworld-chat .gc-who .gc-warn { margin-left: 6px; }
+/* A defense that cannot be rolled is still named, so the card reads the same
+   for everyone and says why the button is not there. */
+.gworld-chat .gc-apply-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.gworld-chat .gc-distance {
+  flex: 0 0 auto;
+  width: 56px;
+  font: inherit;
+  font-size: 12px;
+}
+.gworld-chat .gc-location {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+  font-size: 12px;
+}
+.gworld-chat .gc-apply-button {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 3px 10px;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* One target's result, when a blow was applied to several at once. */
+.gworld-chat .gc-applied + .gc-applied {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-neutral-300);
+}
+.gworld-chat .gc-applied-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+}
+
+/* A consequence the GM has to act on before play moves past this blow. */
+.gworld-chat .gc-warn {
+  color: var(--color-neutral-900);
+  font-weight: 600;
+}
+
+.gworld-chat .gc-result.success {
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-100);
+  color: var(--color-accent-900);
+}
+.gworld-chat .gc-result.failure {
+  border-left-color: var(--color-neutral-700);
+  color: var(--color-neutral-800);
+}
+.gworld-chat .gc-result.crit-success {
+  border-left-color: var(--color-accent-900);
+  background: var(--color-accent-900);
+  color: #fff;
+}
+.gworld-chat .gc-result.crit-failure {
+  border-left-color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+}
+/* A Regular Contest's exchanges: who made their roll each time, and the one
+   exchange that ended it. */
+.gworld-chat .gt tr.settled td { background: var(--color-accent-100); }
+.gworld-chat .gt td.made { color: var(--color-accent-900); font-weight: 600; }
+.gworld-chat .gt td.missed { color: var(--color-neutral-700); }
+
+.gworld-chat .gc-foot { font-size: 10.5px; color: var(--color-neutral-700); }
+
+/*
+ * ProseMirror editors.
+ *
+ * Foundry lays the element out as a flex column whose editor-container takes
+ * the remaining height and whose editor-content is absolutely positioned
+ * inside it. Overriding the element to `display: block` -- which this did --
+ * breaks that chain: the container has no height to take, so the writing area
+ * collapses to whatever a min-height props it up to and the text runs out of
+ * the box. The height is set through `--min-height`, which is the variable
+ * Foundry's own rule reads, and the layout is left alone.
+ */
+.gworld prose-mirror {
+  --min-height: 240px;
+  padding: 0;
+}
+
+/*
+ * The pencil that turns a biography into an editor appears on hover only, in
+ * the top corner, which is not a control anybody finds. It is always visible
+ * here, and only dimmed until the pointer is near it.
+ */
+.gworld prose-mirror button.toggle:enabled {
+  display: block;
+  opacity: 0.45;
+  background: var(--color-bg);
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+  width: 26px;
+  height: 26px;
+  transition: opacity 120ms ease;
+}
+.gworld prose-mirror:hover button.toggle:enabled,
+.gworld prose-mirror button.toggle:enabled:focus-visible { opacity: 1; }
+
+.gworld prose-mirror menu { text-transform: none; letter-spacing: normal; }
+
+/* Room to write in, and room to read: the editor is the tallest thing on its
+   tab and should look like somewhere text goes. */
+.gworld .box.editor {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── item sheet ────────────────────────────────────────────────────────── */
+
+/*
+ * The item sheet sizes itself to its content, so the clamp above can cut it
+ * off on a small screen. It scrolls instead: a sheet that is too tall to show
+ * is still a sheet you can read.
+ */
+.gworld .isheet {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.gworld .ihead {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--color-divider);
+}
+.gworld .iimg {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border: 1px solid var(--color-divider);
+  flex: 0 0 auto;
+}
+/*
+ * The editable image is wrapped in a button so it can be reached and activated
+ * from the keyboard; the button itself carries no chrome of its own.
+ */
+.gworld .iimgbtn {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  line-height: 0;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.gworld .iimgbtn:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
+.gworld .ihead-fields { display: flex; flex-direction: column; gap: 3px; flex: 1 1 auto; min-width: 0; }
+.gworld .ihead-fields input[type="text"] { font-family: var(--font-heading); font-size: 16px; font-weight: 600; }
+.gworld .itype {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-800);
+}
+
+.gworld .isbody { display: flex; flex-direction: column; gap: 12px; }
+
+/* Field grid: labels stack above their control so long names do not squeeze it. */
+.gworld .ifields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px 10px;
+}
+.gworld .ifields > label,
+.gworld .ifull {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-800);
+}
+.gworld .ifields > label.icheck,
+.gworld .icheck {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+  color: inherit;
+}
+
+.gworld .isub { display: flex; flex-direction: column; gap: 6px; }
+.gworld .isub-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--color-divider);
+  padding-bottom: 3px;
+}
+
+/* A row of controls that share a line; the delete control sits at its end. */
+.gworld .irow { display: flex; align-items: center; gap: 6px; }
+.gworld .irow > input,
+.gworld .irow > select { flex: 1 1 0; min-width: 0; }
+.gworld .irow.iflags { flex-wrap: wrap; gap: 4px 12px; }
+
+.gworld .imode {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 7px 8px;
+  border: 1px solid var(--color-divider);
+}
+
+.gworld .ichecks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 3px 10px;
+}
+
+.gworld .ihint { font-size: 11.5px; color: var(--color-neutral-800); margin: 0; }
+
+/* A field that needs the whole row: a cost table, or a list of level names. */
+.gworld .ifields > label.wide { grid-column: 1 / -1; }
+.gworld .ifields > label.wide textarea { resize: vertical; font: inherit; }
+
+/* The book's name for the level bought, beside the total it costs. */
+.gworld .ilevel { color: var(--color-neutral-800); font-style: italic; }
+
+/*
+ * Icon-only controls are real buttons so they can be reached and activated from
+ * the keyboard; this strips the button chrome without losing the focus ring.
+ */
+.gworld .iconbtn {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  line-height: 0;
+  cursor: pointer;
+}
+.gworld .iconbtn:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
+/* A trait's delete control is hidden until hover, so keyboard focus must reveal it. */
+.gworld .trait:focus-within .tdel { opacity: 1; }
+
+/*
+ * The running total inside an attack dialog: base, every modifier that will be
+ * applied, and what the roll will actually be made against. Automatic lines are
+ * dimmed so the ones the player can still change stand out.
+ */
+.gworld .gb-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 4px;
+  padding: 6px 8px;
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+  border-left: 2px solid var(--color-accent);
+  border-radius: 3px;
+  font-size: 11.5px;
+}
+.gworld .gb-line { display: flex; justify-content: space-between; gap: 12px; }
+.gworld .gb-line > span:last-child { font-variant-numeric: tabular-nums; }
+.gworld .gb-base { font-weight: 600; }
+.gworld .gb-auto { color: var(--color-neutral-700); }
+.gworld .gb-cap { color: var(--color-danger, #a33); }
+.gworld .gb-effective {
+  margin-top: 3px;
+  padding-top: 3px;
+  border-top: 1px solid var(--color-divider);
+  font-weight: 700;
+  font-size: 12.5px;
+}
+
+/* ── the compendium picker ──────────────────────────────────────────────── */
+
+/*
+ * The window's own ground, so the panel does not sit on a strip of Foundry's
+ * default. Scoped to these two windows: Foundry's compendium windows keep
+ * their own look.
+ */
+.gworld-picker .window-content,
+.gworld-rules .window-content {
+  padding: 0;
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+}
+
+.gworld-picker .gp {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--v2-radius);
+  font-family: var(--font-body);
+}
+/*
+ * The search sits on the dark frame, the way the sheet's header does, so the
+ * window reads as one of the system's rather than a plain dialog.
+ */
+.gworld-picker .gp-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  margin: -8px -8px 0;
+  padding: 8px;
+  background: linear-gradient(180deg, #252a2f, var(--v2-frame));
+  border-bottom: 1px solid var(--v2-frame-line);
+  color: var(--v2-frame-text);
+}
+.gworld-picker .gp-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 3px 6px;
+  background: var(--v2-frame-3);
+  border: 1px solid var(--v2-frame-line);
+  border-radius: var(--v2-radius);
+  font: inherit;
+  color: var(--v2-frame-text);
+}
+.gworld-picker .gp-search input::placeholder { color: var(--v2-frame-muted); }
+.gworld-picker .gp-search input:focus {
+  outline: 2px solid var(--v2-gold);
+  outline-offset: 1px;
+  border-color: var(--v2-gold-deep);
+}
+.gworld-picker .gp-search .gp-count { color: var(--v2-frame-muted); }
+.gworld-picker .gp-count {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-800);
+  white-space: nowrap;
+}
+.gworld-picker .gp-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--v2-panel-line) transparent;
+}
+.gworld-picker .gp-list::-webkit-scrollbar { width: 10px; }
+.gworld-picker .gp-list::-webkit-scrollbar-track { background: transparent; }
+.gworld-picker .gp-list::-webkit-scrollbar-thumb {
+  background: var(--v2-panel-line);
+  border: 2px solid var(--v2-panel);
+  border-radius: 5px;
+}
+.gworld-picker .gp-list::-webkit-scrollbar-thumb:hover { background: var(--v2-panel-3); }
+.gworld-picker .gp-row {
+  display: grid;
+  /* name, statistics, the amount to take, and the button */
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--v2-panel-line);
+}
+/* How much to take, chosen before it is taken: levels of a trait, points in
+   a skill, and what that comes to. */
+.gworld-picker .gp-amount {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 130px;
+  font-size: 10.5px;
+  color: var(--color-neutral-800);
+  white-space: nowrap;
+}
+/*
+ * Points climb a cost table, so the step between two totals is not always one
+ * and the browser's own spinner cannot express it. These buttons step instead,
+ * and the spinner is hidden so there is only one way to do it.
+ */
+.gworld-picker .gp-amount input::-webkit-inner-spin-button,
+.gworld-picker .gp-amount input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.gworld-picker .gp-step {
+  flex: none;
+  width: 1.4em;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--v2-panel-line);
+  border-radius: 3px;
+  font: inherit;
+  line-height: 1.3;
+  color: inherit;
+  cursor: pointer;
+}
+.gworld-picker .gp-step:hover { border-color: var(--v2-steel); color: var(--v2-steel-deep); }
+.gworld-picker .gp-step:focus-visible { outline: 2px solid var(--v2-steel); outline-offset: 1px; }
+/* What those points reach, beside what they cost. */
+.gworld-picker .gp-level { color: var(--v2-ink-muted); font-style: italic; }
+.gworld-picker .gp-amount input {
+  width: 2.6em;
+  appearance: textfield;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px dotted var(--v2-panel-line);
+  font: inherit;
+  color: inherit;
+  text-align: right;
+}
+.gworld-picker .gp-amount input:focus { outline: 2px solid var(--v2-steel); outline-offset: 1px; border-bottom-color: var(--v2-steel); }
+.gworld-picker .gp-cost { color: var(--v2-gold-deep); font-weight: 600; }
+/* The ledger, so what an entry costs can be weighed against what is left. */
+.gworld-picker .gp-ledger {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  font-size: 11px;
+  background: var(--v2-panel-2);
+  border-left: 2px solid var(--v2-gold-deep);
+  border-radius: var(--v2-radius);
+}
+.gworld-picker .gp-ledger.over { color: var(--v2-red); font-weight: 600; }
+/* The compendia take a moment to read; the window says so rather than
+   opening empty. */
+.gworld-picker .gp-loading { display: flex; align-items: center; gap: 8px; }
+.gworld-picker .gp-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--v2-panel-line);
+  border-top-color: var(--v2-steel);
+  border-radius: 50%;
+  animation: gworld-spin 0.8s linear infinite;
+}
+@keyframes gworld-spin { to { transform: rotate(360deg); } }
+.gworld-picker .gp-row:hover { background: color-mix(in srgb, var(--v2-steel) 10%, transparent); }
+/* Keyboard focus anywhere in a row marks the whole row, not just the control. */
+.gworld-picker .gp-row:focus-within { background: color-mix(in srgb, var(--v2-steel) 14%, transparent); }
+/* Already taken this session: still addable, since a character may want two. */
+.gworld-picker .gp-row.added .gp-name { color: var(--v2-ink-muted); font-style: italic; }
+.gworld-picker .gp-name { min-width: 0; overflow-wrap: anywhere; }
+/* Which pack a row came from, shown only when more than one contributes. */
+.gworld-picker .gp-source {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+  margin-left: 4px;
+}
+.gworld-picker .gp-summary {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-accent-700);
+  white-space: nowrap;
+}
+.gworld-picker .gp-add {
+  width: auto;
+  padding: 2px 8px;
+  background: var(--v2-panel-2);
+  border: 1px solid var(--v2-panel-line);
+  border-radius: var(--v2-radius);
+  font-family: var(--font-heading);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--v2-ink);
+  cursor: pointer;
+}
+.gworld-picker .gp-add:hover {
+  background: var(--v2-gold-soft);
+  border-color: var(--v2-gold-deep);
+}
+.gworld-picker .gp-add:focus-visible { outline: 2px solid var(--v2-steel); outline-offset: 1px; }
+.gworld-picker .gp-empty {
+  padding: 12px 6px;
+  color: var(--v2-ink-muted);
+  font-size: 12px;
+}
+
+/* Retreating: an option on any defense against a melee attack, worth more to
+   a Dodge than to most parries. */
+.gworld-chat .gc-retreat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  color: var(--color-neutral-800);
+}
+
+/* Points and levels edited in place: the numbers a character is built out of,
+   so they sit in the table rather than behind another sheet. */
+.gworld input.npts {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px dotted var(--color-neutral-500);
+  font: inherit;
+  color: inherit;
+  text-align: right;
+}
+.gworld input.npts:focus { border-bottom-color: var(--color-accent); outline: none; }
+
+.gworld .tag.taglevels {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.gworld .tag.taglevels input {
+  width: 2.6em;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px dotted currentColor;
+  font: inherit;
+  color: inherit;
+  text-align: right;
+}
+.gworld .tag.taglevels input:focus { outline: none; border-bottom-style: solid; }
+
+/* Stepping skill points along the cost table, rather than one at a time: the
+   totals between the steps buy nothing. */
+.gworld .ptstep {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  justify-content: flex-end;
+}
+.gworld .ptstep button {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  padding: 0;
+  line-height: 1;
+  font-size: 12px;
+  background: none;
+  border: 1px solid var(--color-divider);
+  color: var(--color-neutral-700);
+  cursor: pointer;
+}
+.gworld .ptstep button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent-900, var(--color-text));
+}
+.gworld .ptstep input.npts { width: 2.4em; border-bottom: 0; text-align: center; }
+
+/* ── which rules are we playing ─────────────────────────────────────────── */
+
+.gworld-rules .gr {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 8px;
+  padding: 10px;
+}
+.gworld-rules .gr-intro {
+  margin: 0;
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  color: var(--color-neutral-800);
+}
+.gworld-rules .gr-bulk { display: flex; gap: 6px; flex: 0 0 auto; }
+.gworld-rules .gr-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--v2-panel-line) transparent;
+}
+.gworld-rules .gr-body::-webkit-scrollbar { width: 10px; }
+.gworld-rules .gr-body::-webkit-scrollbar-track { background: transparent; }
+.gworld-rules .gr-body::-webkit-scrollbar-thumb {
+  background: var(--v2-panel-line);
+  border: 2px solid var(--v2-panel);
+  border-radius: 5px;
+}
+.gworld-rules .gr-group h3 {
+  margin: 0 0 4px;
+  font-family: var(--font-heading);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--v2-ink-muted);
+  border-bottom: 1px solid var(--v2-panel-line);
+  padding-bottom: 3px;
+}
+/* A module's group says which module it comes from, so nobody takes an
+   add-on's rules for part of the system. */
+.gworld-rules .gr-group h3 .gr-source {
+  margin-left: 6px;
+  font-family: var(--font-body, inherit);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--color-accent-700);
+}
+.gworld-rules .gr-rule {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 2px;
+  cursor: pointer;
+}
+.gworld-rules .gr-rule:hover { background: color-mix(in srgb, var(--v2-steel) 10%, transparent); }
+.gworld-rules .gr-rule:focus-within { background: color-mix(in srgb, var(--v2-steel) 14%, transparent); }
+.gworld-rules .gr-rule input { flex: 0 0 auto; margin-top: 2px; }
+/* One row per book, its packs indented under it. */
+.gworld-rules .gr-book > .gr-rule { font-weight: 600; }
+.gworld-rules .gr-book .gr-packs { margin-left: 22px; border-left: 1px solid var(--color-divider); }
+.gworld-rules .gr-book .gr-packs .gr-name { font-weight: 400; }
+
+/* A rule's reference page, where a content module provides one: a small book
+   beside the citation, sized as text rather than as Foundry's buttons are. */
+.gworld-rules .gr-name .gr-refpage {
+  display: inline-flex; align-items: center; justify-content: center; vertical-align: baseline;
+  width: auto; height: auto; min-height: 0; padding: 0 3px; margin: 0 0 0 4px;
+  border: none; border-radius: 3px; background: none; box-shadow: none;
+  color: var(--color-accent); cursor: pointer; font-size: 11px; line-height: 1;
+}
+.gworld-rules .gr-name .gr-refpage:hover { color: var(--color-text-emphatic, var(--color-accent)); background: none; }
+.gworld-rules .gr-name .gr-refpage:focus-visible { outline: 1px solid var(--color-accent); outline-offset: 2px; }
+.gworld-rules .gr-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.gworld-rules .gr-name { font-weight: 500; }
+/* The page it comes from, so a ruling can be checked rather than argued. */
+.gworld-rules .gr-ref {
+  margin-left: 6px;
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--color-accent-700);
+  white-space: nowrap;
+}
+.gworld-rules .gr-hint { font-size: 11.5px; color: var(--color-neutral-800); }
+
+/* A rule the system does not read yet. Listed so the page is a map of the
+   whole ruleset, greyed so it does not look like a choice. */
+.gworld-rules .gr-rule.pending { opacity: 0.55; cursor: default; }
+.gworld-rules .gr-rule.pending:hover { background: none; }
+.gworld-rules .gr-pending {
+  margin-left: 6px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+.gworld-rules .gr-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-divider);
+}
+.gworld-rules .gr-dirty { font-size: 11.5px; color: var(--color-warning, #a33); }
+
+/* ── the vehicle sheet (Campaigns pp. 462-469) ─────────────────────────── */
+
+/* The table's columns run past six, so the strip wraps into rows rather than
+   squeezing twelve figures into one line. */
+.gworld .istrip.vwrap {
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+}
+.gworld .istrip.vwrap .istat { border-bottom: 1px solid var(--color-divider); }
+
+.gworld .icrew { display: flex; flex-direction: column; gap: 6px; }
+.gworld .icrewrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--color-divider);
+}
+.gworld .icrewimg {
+  width: 26px;
+  height: 26px;
+  object-fit: cover;
+  border: 1px solid var(--color-divider);
+  cursor: pointer;
+}
+.gworld .icrewname { flex: 1; cursor: pointer; font-weight: 600; }
+.gworld .icrewrow .iconbtn { margin-left: auto; }
+
+.gworld .isheet-vehicle .ipv input { width: 62px; }
+
+/* The picker's own entry, for what the books don't list. */
+.gworld-picker .gp-custom { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border-top: 1px solid var(--color-border-light-2, #ccc); }
+.gworld-picker .gp-custom .gp-add { width: auto; padding: 0 10px; }
+.gworld-picker .gp-custom-hint { font-size: 11px; opacity: 0.8; }
+
+/**
+ * The new character sheet.
+ *
+ * A dark frame -- header, sidebar, the ground between panels -- with cream
+ * panels carrying the content, after the mock-ups: charcoal and cream, amber
+ * for what is selected or ready, steel blue for what can be pressed, red for
+ * harm and for disadvantages.
+ *
+ * Everything is scoped under `.gworld.v2`. The classic sheet's components
+ * (tables, buttons, fields, tags) are reused inside the panels, and they read
+ * the classic tokens, so a panel redefines those tokens for its cream ground
+ * and the frame redefines them for the dark one. A section an add-on module
+ * renders in the classic markup therefore reads correctly wherever it lands.
+ */
+
+/*
+ * The palette is defined on .gworld rather than on .gworld.v2, so the system's
+ * other windows -- the compendium picker, the compendium sources -- can read
+ * the same tokens instead of keeping a second copy of the colours. Defining
+ * them changes nothing on its own; only referring to them does.
+ */
+.gworld {
+  --v2-frame: #1e2226;
+  --v2-frame-2: #272c31;
+  --v2-frame-3: #31373d;
+  --v2-frame-line: #3b4249;
+  --v2-frame-text: #ebe6da;
+  --v2-frame-muted: #b9bec4;
+
+  --v2-panel: #efe9dc;
+  --v2-panel-2: #e4dbc9;
+  --v2-panel-3: #d8cdb6;
+  --v2-panel-line: #cbbfa6;
+  --v2-ink: #24272a;
+  --v2-ink-muted: #625c51;
+
+  --v2-gold: #d9a441;
+  --v2-gold-deep: #a97a22;
+  --v2-gold-soft: #f3e1b4;
+  --v2-steel: #4e7195;
+  --v2-steel-deep: #3a5775;
+  --v2-steel-soft: #cad8e5;
+  --v2-red: #a6433b;
+  --v2-red-soft: #efd3cd;
+  --v2-green: #4f8350;
+  --v2-green-soft: #d6e6d2;
+
+  --v2-radius: 4px;
+  --v2-shadow: 0 1px 0 rgb(0 0 0 / 0.25), 0 2px 8px rgb(0 0 0 / 0.18);
+}
+
+/*
+ * The frame's theme, which stays on the sheet: it points the classic tokens at
+ * the dark ground, and the classic sheet must keep its own.
+ */
+.gworld.v2 {
+  /* The classic tokens, for the frame. */
+  --color-bg: var(--v2-frame);
+  --color-surface: var(--v2-frame-2);
+  --color-text: var(--v2-frame-text);
+  --color-accent: var(--v2-gold);
+  --color-divider: var(--v2-frame-line);
+  --color-neutral-200: var(--v2-frame-3);
+  --color-neutral-700: var(--v2-frame-muted);
+  --color-neutral-800: #c7c2b6;
+  --color-neutral-900: var(--v2-frame-text);
+  --color-accent-100: var(--v2-frame-3);
+  --color-accent-700: #d9b56d;
+  --color-accent-800: var(--v2-gold);
+  --color-accent-900: var(--v2-gold-deep);
+  --color-danger: #d77a70;
+
+  container: v2sheet / inline-size;
+}
+
+/*
+ * A panel's ground is cream, and the classic tokens follow it.
+ *
+ * The compendium picker and the compendium sources join the list rather than
+ * restating the colours: both are the system's own windows, both are built out
+ * of the classic markup, and pointing their tokens here is what makes them
+ * read as part of the same sheet. Foundry's own compendium windows are not
+ * touched -- these are two selectors, not a theme for everything.
+ */
+.gworld.v2 .v2-panel,
+.gworld.v2 .v2-cream,
+.gworld.v2 .window-content > .limited,
+.gworld-picker .gp,
+.gworld-rules .gr {
+  --color-bg: var(--v2-panel);
+  --color-surface: var(--v2-panel-2);
+  --color-text: var(--v2-ink);
+  --color-accent: var(--v2-steel);
+  --color-divider: color-mix(in srgb, var(--v2-ink) 17%, transparent);
+  --color-neutral-200: var(--v2-panel-2);
+  --color-neutral-700: var(--v2-ink-muted);
+  --color-neutral-800: #423e37;
+  --color-neutral-900: #2b2925;
+  --color-accent-100: var(--v2-steel-soft);
+  --color-accent-700: var(--v2-steel-deep);
+  --color-accent-800: #2e4660;
+  --color-accent-900: #22354a;
+  --color-danger: var(--v2-red);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+}
+
+/* ── frame ─────────────────────────────────────────────────────────────── */
+
+.gworld.v2 .window-content {
+  display: grid;
+  grid-template-columns: 172px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: 0;
+  background: var(--v2-frame);
+  color: var(--v2-frame-text);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+.gworld.v2 .window-content > .v2-header { grid-column: 1 / -1; grid-row: 1; }
+.gworld.v2 .window-content > .v2-rail { grid-column: 1; grid-row: 2; }
+.gworld.v2 .window-content > .tab { grid-column: 2; grid-row: 2; min-height: 0; }
+/* A viewer with limited permission sees only the public description, across the whole window. */
+.gworld.v2 .window-content > .limited { grid-column: 1 / -1; grid-row: 1 / -1; background: var(--v2-panel); color: var(--v2-ink); }
+
+.gworld.v2 .blueprint { border-radius: var(--v2-radius); }
+.gworld.v2 .blueprint > .corner { display: none; }
+.gworld.v2 .ish .num { display: none; }
+
+/* ── header ────────────────────────────────────────────────────────────── */
+
+.gworld.v2 .v2-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 18px 12px 14px;
+  background: linear-gradient(180deg, #252a2f, var(--v2-frame));
+  border-bottom: 1px solid var(--v2-frame-line);
+}
+.gworld.v2 .v2-portrait {
+  width: 92px;
+  height: 92px;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--v2-frame-line);
+  background: var(--v2-frame-3);
+}
+.gworld.v2 .v2-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: center top; border: 0; }
+.gworld.v2 .v2-identity { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gworld.v2 .v2-eyebrow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--v2-gold);
+  min-width: 0;
+}
+.gworld.v2 .v2-name {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: uppercase;
+  color: var(--v2-gold);
+  box-shadow: none;
+}
+.gworld.v2 .v2-name:hover:not(:disabled),
+.gworld.v2 .v2-name:focus { border-bottom-color: var(--v2-gold-deep); outline: none; }
+.gworld.v2 .v2-title {
+  margin: 0;
+  border: 0;
+  font-family: var(--font-heading);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--v2-frame-text);
+}
+.gworld.v2 .v2-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--v2-frame-muted);
+}
+.gworld.v2 .v2-link {
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--v2-gold);
+  cursor: pointer;
+}
+
+.gworld.v2 .v2-points {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--v2-frame-line);
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: var(--font-heading);
+  font-size: 19px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: var(--v2-frame-2);
+}
+.gworld.v2 .v2-cp { padding: 6px 12px; color: var(--v2-frame-text); white-space: nowrap; }
+.gworld.v2 .v2-cp-label { color: var(--v2-frame-muted); }
+.gworld.v2 .v2-cp b { font-weight: 600; }
+.gworld.v2 .v2-cp-of { margin-left: 4px; font-size: 14px; color: var(--v2-frame-muted); }
+.gworld.v2 .v2-ready { padding: 6px 12px; white-space: nowrap; border-left: 1px solid var(--v2-frame-line); }
+.gworld.v2 .v2-points-ready .v2-ready { background: #2f3a2c; color: #b5d98f; }
+.gworld.v2 .v2-points-spent .v2-ready { color: var(--v2-frame-muted); }
+.gworld.v2 .v2-points-over { border-color: #8e3a33; }
+.gworld.v2 .v2-points-over .v2-ready { background: #5a2723; color: #ffd2cb; }
+.gworld.v2 .v2-points-award {
+  width: 34px;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--v2-frame-line);
+  border-radius: 0;
+  background: var(--v2-frame-3);
+  color: var(--v2-frame-text);
+  cursor: pointer;
+}
+.gworld.v2 .v2-points-award:hover { background: var(--v2-gold); color: var(--v2-frame); }
+
+/* The guided build, beside the points it spends. */
+.gworld.v2 .v2-header-side { display: flex; align-items: stretch; gap: 8px; }
+.gworld.v2 .v2-header .v2-build-button {
+  height: auto;
+  background: var(--v2-frame-2);
+  border-color: var(--v2-frame-line);
+  color: var(--v2-frame-text);
+  font-size: 16px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.gworld.v2 .v2-header .v2-build-button:hover { background: var(--v2-gold); border-color: var(--v2-gold-deep); color: var(--v2-frame); }
+
+/* ── sidebar ───────────────────────────────────────────────────────────── */
+
+.gworld.v2 .v2-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 0;
+  border-right: 1px solid var(--v2-frame-line);
+  background: var(--v2-frame);
+  overflow-y: auto;
+}
+.gworld.v2 .v2-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 10px 16px;
+  border-left: 3px solid transparent;
+  font-family: var(--font-heading);
+  font-size: 17px;
+  letter-spacing: 0.02em;
+  color: var(--v2-frame-muted);
+  text-decoration: none;
+  cursor: pointer;
+}
+.gworld.v2 .v2-rail-item:hover { color: var(--v2-frame-text); background: var(--v2-frame-2); }
+.gworld.v2 .v2-rail-item.active {
+  color: var(--v2-frame-text);
+  background: var(--v2-frame-3);
+  border-left-color: var(--v2-gold);
+}
+.gworld.v2 .v2-rail-item.active .v2-rail-icon { color: var(--v2-gold); }
+.gworld.v2 .v2-rail-icon { display: inline-flex; flex: none; }
+
+/* ── tabs ──────────────────────────────────────────────────────────────── */
+
+.gworld.v2 .tab.active { display: flex; }
+.gworld.v2 .tab.v2-tab,
+.gworld.v2 .tab.ibody {
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 16px 18px;
+  overflow-y: auto;
+  background: var(--v2-frame);
+}
+/* A classic tab shown inside the new frame reads on a cream ground. */
+.gworld.v2 .tab.ibody {
+  --color-bg: var(--v2-panel);
+  --color-surface: var(--v2-panel-2);
+  --color-text: var(--v2-ink);
+  --color-accent: var(--v2-steel);
+  --color-divider: color-mix(in srgb, var(--v2-ink) 17%, transparent);
+  --color-neutral-700: var(--v2-ink-muted);
+  --color-accent-700: var(--v2-steel-deep);
+  --color-accent-900: #22354a;
+  --color-danger: var(--v2-red);
+  margin: 12px;
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+}
+
+/*
+ * What an add-on module puts on a tab -- a section from its template, or a
+ * list of its item type -- sits on a cream panel of its own, so markup written
+ * for the classic sheet reads the same here.
+ */
+.gworld.v2 .addon-sheet-section,
+.gworld.v2 .addon-section {
+  --color-bg: var(--v2-panel);
+  --color-surface: var(--v2-panel-2);
+  --color-text: var(--v2-ink);
+  --color-accent: var(--v2-steel);
+  --color-divider: color-mix(in srgb, var(--v2-ink) 17%, transparent);
+  --color-neutral-200: var(--v2-panel-2);
+  --color-neutral-700: var(--v2-ink-muted);
+  --color-accent-100: var(--v2-steel-soft);
+  --color-accent-700: var(--v2-steel-deep);
+  --color-accent-900: #22354a;
+  --color-danger: var(--v2-red);
+  padding: 12px 14px;
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  box-shadow: var(--v2-shadow);
+}
+.gworld.v2 .v2-panel .addon-sheet-section,
+.gworld.v2 .v2-panel .addon-section { padding: 0; box-shadow: none; }
+
+/* ── panels ────────────────────────────────────────────────────────────── */
+
+.gworld.v2 .v2-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  border-radius: var(--v2-radius);
+  box-shadow: var(--v2-shadow);
+  min-width: 0;
+}
+/*
+ * A dark panel is a panel too, so it would take the cream panel's dark text
+ * tokens; it takes light ones of its own, or its muted text is dark grey on
+ * charcoal. Cream cards inside it (attack cards, slots, list entries) set
+ * their own colours.
+ */
+.gworld.v2 .v2-panel.v2-panel-dark,
+.gworld.v2 .v2-related {
+  --color-bg: var(--v2-frame-2);
+  --color-surface: var(--v2-frame-3);
+  --color-text: var(--v2-frame-text);
+  --color-divider: var(--v2-frame-line);
+  --color-neutral-700: var(--v2-frame-muted);
+  --color-neutral-800: #d3cfc4;
+  --color-accent-700: #9cc0e2;
+  --color-danger: #f0998f;
+  background: var(--v2-frame-2);
+  color: var(--v2-frame-text);
+  box-shadow: inset 0 0 0 1px var(--v2-frame-line);
+}
+.gworld.v2 .v2-panel-dark .v2-empty,
+.gworld.v2 .v2-panel-dark .v2-note { color: var(--v2-frame-muted); font-size: 13px; }
+.gworld.v2 .v2-ph,
+.gworld.v2 .v2-ph h2 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: inherit;
+}
+.gworld.v2 .v2-ph { padding-bottom: 6px; border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent); }
+.gworld.v2 .v2-panel-dark .v2-ph { color: var(--v2-panel-3); }
+.gworld.v2 .v2-ph-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.gworld.v2 .v2-ph-tools h2 { border: 0; padding: 0; }
+
+.gworld.v2 .v2-empty,
+.gworld.v2 .v2-note { margin: 0; font-size: 12px; color: var(--color-neutral-700); }
+.gworld.v2 .v2-muted { color: var(--color-neutral-700); }
+.gworld.v2 .v2-good { color: var(--v2-green); }
+.gworld.v2 .v2-bad { color: var(--v2-red); }
+.gworld.v2 .v2-panel-dark .v2-bad,
+.gworld.v2 .v2-strip .v2-bad { color: #e48b80; }
+.gworld.v2 .v2-panel-dark .v2-good,
+.gworld.v2 .v2-strip .v2-good { color: #9ccc86; }
+
+/* The search box a list header carries. */
+.gworld.v2 .v2-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  min-width: 140px;
+  height: 28px;
+  border: 1px solid var(--color-divider);
+  border-radius: 4px;
+  background: var(--v2-panel-2);
+  color: var(--v2-ink-muted);
+}
+.gworld.v2 .v2-search input {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font: inherit;
+  color: var(--v2-ink);
+}
+.gworld.v2 .v2-search input:focus { outline: none; }
+.gworld.v2 .v2-search:focus-within { border-color: var(--v2-steel); }
+
+/* ── stats and bars ────────────────────────────────────────────────────── */
+
+.gworld.v2 .v2-stat-label {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: var(--color-neutral-700);
+}
+.gworld.v2 .v2-stat-value {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.gworld.v2 .v2-stat-note { display: block; font-size: 11px; color: var(--color-neutral-700); }
+.gworld.v2 .v2-stat-inline { font-family: var(--font-heading); font-size: 18px; font-weight: 600; }
+.gworld.v2 .v2-stat-pair { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--color-divider); padding-top: 8px; }
+.gworld.v2 .v2-stat-pair > .v2-stat + .v2-stat { padding-left: 12px; border-left: 1px solid var(--color-divider); }
+.gworld.v2 .v2-stat-row { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--color-divider); padding-top: 8px; }
+
+.gworld.v2 .v2-pool { display: flex; flex-direction: column; gap: 4px; }
+.gworld.v2 .v2-pool-head { display: flex; justify-content: space-between; align-items: baseline; }
+.gworld.v2 .v2-pool-name { font-family: var(--font-heading); font-size: 20px; }
+.gworld.v2 .v2-pool-value { display: flex; align-items: baseline; gap: 4px; font-family: var(--font-heading); font-size: 20px; }
+.gworld.v2 .v2-pool-value input {
+  width: 3.2em;
+  height: 26px;
+  padding: 0 2px;
+  text-align: right;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  box-shadow: none;
+}
+.gworld.v2 .v2-pool-value input:hover:not(:disabled),
+.gworld.v2 .v2-pool-value input:focus { border-color: var(--color-divider); background: var(--v2-panel-2); }
+.gworld.v2 .v2-pool-status { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.gworld.v2 .v2-bar {
+  height: 18px;
+  border-radius: 4px;
+  background: var(--v2-panel-3);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--v2-ink) 18%, transparent);
+  overflow: hidden;
+}
+.gworld.v2 .v2-bar > span { display: block; height: 100%; }
+.gworld.v2 .v2-bar-hp > span { background: var(--v2-red); }
+.gworld.v2 .v2-bar-fp > span { background: var(--v2-steel); }
+.gworld.v2 .v2-bar-load { height: 8px; }
+.gworld.v2 .v2-bar-load > span { background: #3d4146; }
+.gworld.v2 .v2-load-3 > span,
+.gworld.v2 .v2-load-4 > span { background: var(--v2-red); }
+.gworld.v2 .v2-load { display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--color-divider); padding-top: 8px; }
+.gworld.v2 .v2-load-head { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-heading); font-size: 18px; }
+.gworld.v2 .v2-load-head span { font-size: 13px; color: var(--color-neutral-700); font-family: var(--font-body); }
+
+/* ── Overview ──────────────────────────────────────────────────────────── */
+
+.gworld.v2 .v2-overview {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.8fr) minmax(0, 1.55fr) minmax(200px, 0.8fr);
+  gap: 14px;
+  align-items: start;
+}
+.gworld.v2 .v2-overview-middle { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.gworld.v2 .v2-attack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.gworld.v2 .v2-attack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 9px;
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.3);
+  border: 2px solid transparent;
+}
+.gworld.v2 .v2-attack.dim { opacity: 0.75; }
+.gworld.v2 .v2-attack.selected { border-color: var(--v2-gold); background: #f6e7c2; }
+.gworld.v2 .v2-attack-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.gworld.v2 .v2-attack-name { font-family: var(--font-heading); font-size: 17px; font-weight: 600; line-height: 1.1; }
+.gworld.v2 .v2-attack-name[data-action] { cursor: pointer; }
+.gworld.v2 .v2-attack-mode { font-family: var(--font-body); font-size: 11px; font-weight: 400; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-attack-damage { font-size: 14px; }
+.gworld.v2 .v2-attack-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  padding-top: 3px;
+  border-top: 1px solid color-mix(in srgb, var(--v2-ink) 14%, transparent);
+  font-size: 12px;
+  color: var(--v2-ink-muted);
+}
+
+.gworld.v2 .v2-badge {
+  flex: none;
+  min-width: 34px;
+  width: auto;
+  height: auto;
+  padding: 2px 8px;
+  border: 0;
+  border-radius: 3px;
+  font-family: var(--font-heading);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  color: #fff;
+  background: var(--v2-steel);
+  cursor: default;
+}
+.gworld.v2 button.v2-badge { cursor: pointer; }
+.gworld.v2 .v2-badge-red { background: var(--v2-red); }
+.gworld.v2 .v2-badge-steel { background: var(--v2-steel); }
+.gworld.v2 .v2-badge-gold { background: var(--v2-gold); color: var(--v2-ink); }
+.gworld.v2 .v2-badge-muted { background: var(--v2-panel-3); color: var(--v2-ink-muted); font-size: 13px; }
+.gworld.v2 button.v2-badge:hover { filter: brightness(1.1); }
+
+.gworld.v2 .v2-skill-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; max-height: 280px; overflow-y: auto; }
+.gworld.v2 .v2-skill-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--v2-ink) 12%, transparent);
+}
+.gworld.v2 .v2-skill-row:hover { background: var(--v2-panel-2); }
+.gworld.v2 .v2-skill-row.pinned { background: color-mix(in srgb, var(--v2-steel-soft) 45%, transparent); }
+.gworld.v2 .v2-skill-name { flex: 1; min-width: 0; font-family: var(--font-heading); font-size: 17px; cursor: pointer; }
+.gworld.v2 .v2-skill-level {
+  width: auto;
+  min-width: 34px;
+  height: auto;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 600;
+  text-align: right;
+  color: var(--v2-ink);
+  cursor: pointer;
+}
+.gworld.v2 .v2-skill-level:hover { color: var(--v2-steel); }
+.gworld.v2 .v2-pin {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: none;
+  color: var(--v2-panel-line);
+  cursor: pointer;
+}
+.gworld.v2 .v2-pin.on { color: var(--v2-gold-deep); }
+.gworld.v2 .v2-pin.on svg { fill: var(--v2-gold); }
+.gworld.v2 .v2-pin:hover { color: var(--v2-gold-deep); }
+
+.gworld.v2 .v2-defense-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.gworld.v2 .v2-dr-row { grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--color-divider); padding-top: 8px; }
+.gworld.v2 .v2-defense { text-align: center; padding: 0 4px; }
+.gworld.v2 .v2-defense + .v2-defense { border-left: 1px solid var(--color-divider); }
+.gworld.v2 .v2-defense-value {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-heading);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: inherit;
+}
+.gworld.v2 button.v2-defense-value { cursor: pointer; }
+.gworld.v2 button.v2-defense-value:hover { color: var(--v2-steel); }
+
+.gworld.v2 .v2-strip { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; }
+.gworld.v2 .v2-strip-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.gworld.v2 .v2-strip-mods { align-items: flex-end; }
+.gworld.v2 .v2-strip-title {
+  margin: 0;
+  border: 0;
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--v2-frame-text);
+}
+.gworld.v2 .v2-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.gworld.v2 .v2-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  height: auto;
+  padding: 3px 12px;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  line-height: 1.3;
+  color: #fff;
+  background: var(--v2-frame-3);
+}
+.gworld.v2 button.v2-chip { cursor: pointer; }
+.gworld.v2 .v2-chip img { width: 16px; height: 16px; border: 0; filter: invert(1); opacity: 0.85; }
+.gworld.v2 .v2-chip em { font-style: normal; font-size: 12px; color: var(--v2-frame-muted); }
+.gworld.v2 .v2-chip-red { background: var(--v2-red); }
+.gworld.v2 .v2-chip-steel { background: var(--v2-steel); }
+.gworld.v2 .v2-chip-dark { background: var(--v2-frame-3); }
+.gworld.v2 .v2-chip-x {
+  width: auto;
+  height: auto;
+  padding: 0 0 0 4px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+.gworld.v2 .v2-add-status {
+  width: auto;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px dashed var(--v2-frame-line);
+  border-radius: 999px;
+  background: var(--v2-frame-2);
+  color: var(--v2-frame-muted);
+  font-family: var(--font-heading);
+  font-size: 14px;
+}
+.gworld.v2 .v2-add-status option { color: var(--v2-ink); background: var(--v2-panel); }
+
+.gworld.v2 .v2-attributes { gap: 16px; }
+
+/* ── buttons, tags and chips ───────────────────────────────────────────── */
+
+.gworld.v2 .v2-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: auto;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--v2-ink) 22%, transparent);
+  border-radius: 4px;
+  background: var(--v2-panel-2);
+  color: var(--v2-ink);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+}
+.gworld.v2 .v2-button:hover { background: var(--v2-panel-3); }
+.gworld.v2 .v2-button:disabled { opacity: 0.5; cursor: default; }
+.gworld.v2 .v2-button-small { height: 24px; padding: 0 8px; font-size: 13px; }
+.gworld.v2 .v2-button-steel { background: var(--v2-steel); border-color: var(--v2-steel-deep); color: #fff; }
+.gworld.v2 .v2-button-steel:hover { background: var(--v2-steel-deep); }
+.gworld.v2 .v2-button-gold { background: var(--v2-gold); border-color: var(--v2-gold-deep); color: var(--v2-ink); }
+.gworld.v2 .v2-button-gold:hover { background: #e7b65b; }
+.gworld.v2 .v2-button-red { background: var(--v2-red); border-color: #843229; color: #fff; }
+.gworld.v2 .v2-button-red:hover { background: #8e362f; }
+.gworld.v2 .v2-button svg { flex: none; }
+/* On the dark frame the plain button reads as a dark one. */
+.gworld.v2 .v2-toolbar .v2-button,
+.gworld.v2 .v2-chip-row .v2-button { background: var(--v2-frame-3); border-color: var(--v2-frame-line); color: var(--v2-frame-text); }
+.gworld.v2 .v2-toolbar .v2-button:hover,
+.gworld.v2 .v2-chip-row .v2-button:hover { background: var(--v2-frame-line); }
+
+.gworld.v2 .v2-tag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 3px;
+  background: var(--v2-panel-3);
+  color: var(--v2-ink-muted);
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+.gworld.v2 .v2-tag-steel { background: var(--v2-steel-soft); color: var(--v2-steel-deep); }
+.gworld.v2 .v2-steel { color: var(--v2-steel); }
+.gworld.v2 .v2-off { display: none !important; }
+
+.gworld.v2 .v2-filter-chip {
+  width: auto;
+  height: 28px;
+  padding: 0 14px;
+  border: 1px solid var(--v2-panel-line);
+  border-radius: 999px;
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  cursor: pointer;
+}
+.gworld.v2 .v2-filter-chip span { font-family: var(--font-body); font-size: 11px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-filter-chip:hover { background: var(--v2-panel-2); }
+.gworld.v2 .v2-filter-chip.active { background: var(--v2-steel); border-color: var(--v2-steel-deep); color: #fff; }
+.gworld.v2 .v2-filter-chip.active span { color: var(--v2-steel-soft); }
+
+/* ── list tabs ─────────────────────────────────────────────────────────── */
+
+.gworld.v2 .tab.v2-list-tab { overflow: hidden; }
+.gworld.v2 .v2-split {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 330px);
+  gap: 14px;
+}
+.gworld.v2 .v2-list-col,
+.gworld.v2 .v2-detail-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.gworld.v2 .v2-detail-col { padding-bottom: 4px; }
+.gworld.v2 .v2-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.gworld.v2 .v2-search-wide { flex: 1; max-width: 420px; height: 32px; }
+.gworld.v2 .v2-select { display: flex; align-items: center; gap: 6px; font-family: var(--font-heading); font-size: 15px; color: var(--v2-frame-muted); }
+.gworld.v2 .v2-select select {
+  width: auto;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--v2-panel-line);
+  border-radius: 4px;
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  font-family: var(--font-heading);
+  font-size: 15px;
+}
+.gworld.v2 .v2-chip-row { gap: 6px; }
+.gworld.v2 .v2-toolbar-end { display: inline-flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+
+.gworld.v2 .v2-groups { display: flex; flex-direction: column; gap: 8px; }
+.gworld.v2 .v2-group {
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  box-shadow: var(--v2-shadow);
+  overflow: hidden;
+  --color-text: var(--v2-ink);
+  --color-divider: color-mix(in srgb, var(--v2-ink) 17%, transparent);
+  --color-neutral-700: var(--v2-ink-muted);
+}
+.gworld.v2 .v2-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  background: var(--v2-panel-2);
+  cursor: pointer;
+  list-style: none;
+}
+.gworld.v2 .v2-group-head::-webkit-details-marker { display: none; }
+.gworld.v2 .v2-group-title { font-family: var(--font-heading); font-size: 18px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.gworld.v2 .v2-group-sub { font-size: 12px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-group-tools { display: inline-flex; gap: 6px; margin-left: auto; }
+.gworld.v2 .v2-chevron { display: inline-flex; margin-left: auto; color: var(--v2-ink-muted); transform: rotate(-90deg); }
+.gworld.v2 .v2-group-tools + .v2-chevron { margin-left: 0; }
+.gworld.v2 .v2-group[open] > summary .v2-chevron { transform: none; }
+.gworld.v2 .v2-group-head:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: -2px; }
+.gworld.v2 .v2-rows { display: flex; flex-direction: column; padding: 4px 6px 6px; }
+
+.gworld.v2 .v2-row {
+  display: grid;
+  align-items: center;
+  column-gap: 10px;
+  min-height: 38px;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-bottom-color: color-mix(in srgb, var(--v2-ink) 11%, transparent);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.gworld.v2 .v2-row:hover { background: color-mix(in srgb, var(--v2-panel-2) 70%, transparent); }
+.gworld.v2 .v2-row.selected { background: #dfe6ec; border-color: var(--v2-steel); box-shadow: inset 3px 0 0 var(--v2-steel); }
+.gworld.v2 .v2-row:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: -2px; }
+.gworld.v2 .v2-row.dim .v2-row-name,
+.gworld.v2 .v2-row.dim .v2-row-level { color: var(--v2-ink-muted); }
+.gworld.v2 .v2-row-name { min-width: 0; font-family: var(--font-heading); font-size: 17px; line-height: 1.15; }
+.gworld.v2 .v2-row-type { font-family: var(--font-heading); font-size: 15px; color: var(--v2-ink-muted); white-space: nowrap; }
+.gworld.v2 .v2-row-points { white-space: nowrap; font-size: 13px; }
+.gworld.v2 .v2-row-level {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-heading);
+  font-size: 21px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--v2-ink);
+  cursor: pointer;
+}
+.gworld.v2 button.v2-row-level:hover { color: var(--v2-steel); }
+.gworld.v2 .v2-row-summary { min-width: 0; font-size: 13px; color: var(--v2-ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gworld.v2 .v2-row-cp { font-family: var(--font-heading); font-size: 16px; font-weight: 600; white-space: nowrap; text-align: right; }
+.gworld.v2 .v2-levels { font-family: var(--font-body); font-size: 12px; color: var(--v2-ink-muted); }
+
+.gworld.v2 .v2-skill { grid-template-columns: 22px minmax(110px, 1.25fr) 58px 104px 36px minmax(0, 1.3fr) auto; }
+.gworld.v2 .v2-trait { grid-template-columns: minmax(120px, 1.1fr) 62px minmax(0, 1.6fr) auto; border-left-width: 4px; }
+
+/* A row's own buttons: roll and delete, with any a module adds between them. */
+.gworld.v2 .v2-row-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 2px; min-width: 54px; }
+.gworld.v2 .v2-row-icon,
+.gworld.v2 .v2-row-actions .addon-row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: auto;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: var(--v2-ink-muted);
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: none;
+}
+.gworld.v2 .v2-row-icon svg { width: 15px; height: 15px; }
+.gworld.v2 .v2-row-icon:hover,
+.gworld.v2 .v2-row-actions .addon-row-action:hover { border-color: var(--v2-panel-line); background: var(--v2-panel); color: var(--v2-steel-deep); }
+.gworld.v2 .v2-row-icon.v2-row-delete:hover { border-color: #d9a39c; background: var(--v2-red-soft); color: var(--v2-red); }
+.gworld.v2 .v2-row-icon:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: 1px; }
+.gworld.v2 .v2-row-cr span { font-family: var(--font-heading); font-size: 13px; }
+/* The level rolls too, and now looks like it. */
+.gworld.v2 button.v2-row-level { border-radius: 4px; }
+.gworld.v2 button.v2-row-level:hover { background: var(--v2-steel-soft); }
+
+/* A trait's category is its stripe: steel for what helps, red for what hinders. */
+.gworld.v2 .v2-trait.v2-cat-advantage { border-left-color: var(--v2-steel); }
+.gworld.v2 .v2-trait.v2-cat-perk { border-left-color: var(--v2-gold); }
+.gworld.v2 .v2-trait.v2-cat-disadvantage { border-left-color: var(--v2-red); }
+.gworld.v2 .v2-trait.v2-cat-quirk { border-left-color: #c9867e; }
+.gworld.v2 .v2-trait.selected { box-shadow: none; background: #e9e0cd; border-top-color: var(--v2-gold); border-right-color: var(--v2-gold); border-bottom-color: var(--v2-gold); }
+
+.gworld.v2 .v2-group-panel { padding: 10px 12px; }
+.gworld.v2 .v2-footnote { margin: 0; font-size: 12px; color: var(--v2-frame-muted); }
+.gworld.v2 .v2-empty-frame { color: var(--v2-frame-muted); }
+
+.gworld.v2 .v2-summary-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+  justify-content: flex-end;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  color: var(--v2-frame-muted);
+}
+.gworld.v2 .v2-summary-bar b { font-weight: 600; }
+.gworld.v2 .v2-summary-bar .v2-steel { color: #8fb3d6; }
+.gworld.v2 .v2-summary-bar .v2-bad { color: #e48b80; }
+.gworld.v2 .v2-summary-total { color: var(--v2-frame-text); }
+
+/* ── detail panels ─────────────────────────────────────────────────────── */
+
+.gworld.v2 .v2-detail { gap: 10px; padding: 0 0 12px; overflow: hidden; }
+.gworld.v2 .v2-detail > :not(.v2-detail-head) { margin-left: 14px; margin-right: 14px; }
+.gworld.v2 .v2-detail[hidden] { display: none; }
+.gworld.v2 .v2-detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 14px 8px;
+}
+.gworld.v2 .v2-detail-head h3 {
+  margin: 0;
+  border: 0;
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: inherit;
+}
+.gworld.v2 .v2-detail-head span { font-size: 12px; white-space: nowrap; }
+.gworld.v2 .v2-detail-plain { color: var(--v2-ink); }
+.gworld.v2 .v2-panel h2,
+.gworld.v2 .v2-panel h3,
+.gworld.v2 .v2-panel h4 { color: inherit; }
+.gworld.v2 .v2-detail-steel { background: var(--v2-steel); color: #fff; }
+.gworld.v2 .v2-detail-steel span { color: var(--v2-steel-soft); }
+.gworld.v2 .v2-detail-plain { padding-top: 14px; }
+.gworld.v2 .v2-detail-cp { font-family: var(--font-heading); font-size: 22px !important; font-weight: 600; }
+.gworld.v2 .v2-detail-stats { display: grid; grid-template-columns: 1fr 1fr; text-align: center; }
+.gworld.v2 .v2-detail-stats > div + div { border-left: 1px solid var(--color-divider); }
+.gworld.v2 .v2-detail-big { display: block; font-family: var(--font-heading); font-size: 38px; font-weight: 600; line-height: 1; }
+.gworld.v2 .v2-breakdown { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-divider); }
+.gworld.v2 .v2-breakdown li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; font-size: 14px; }
+.gworld.v2 .v2-breakdown li b { font-family: var(--font-heading); font-size: 16px; }
+.gworld.v2 .v2-breakdown li em { font-style: normal; font-size: 11px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-prose { font-size: 13.5px; line-height: 1.5; }
+.gworld.v2 .v2-prose p { margin: 0 0 0.6em; }
+.gworld.v2 .v2-prose p:last-child { margin-bottom: 0; }
+.gworld.v2 .v2-prose a.content-link { background: var(--v2-panel-2); border-color: var(--v2-panel-line); color: var(--v2-steel-deep); }
+.gworld.v2 .v2-reference { margin: 0; font-size: 11px; letter-spacing: 0.04em; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-detail-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.gworld.v2 .v2-detail-actions .addon-row-action {
+  width: 28px;
+  height: 28px;
+  border: 1px solid color-mix(in srgb, var(--v2-ink) 22%, transparent);
+  border-radius: 4px;
+  background: var(--v2-panel-2);
+  color: var(--v2-ink);
+}
+.gworld.v2 .v2-cat-badge {
+  align-self: flex-start;
+  padding: 2px 12px;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--v2-steel);
+}
+.gworld.v2 .v2-cat-badge-perk { background: var(--v2-gold-deep); }
+.gworld.v2 .v2-cat-badge-disadvantage,
+.gworld.v2 .v2-cat-badge-quirk { background: var(--v2-red); }
+
+.gworld.v2 .v2-box { border: 1px solid var(--v2-panel-line); border-radius: var(--v2-radius); background: var(--v2-panel-2); overflow: hidden; }
+.gworld.v2 .v2-box h4 {
+  margin: 0;
+  padding: 5px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--v2-panel-line);
+  background: var(--v2-panel-3);
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 600;
+}
+.gworld.v2 .v2-box ul { margin: 6px 0; padding: 0 12px 0 28px; }
+.gworld.v2 .v2-box li { font-size: 14px; }
+.gworld.v2 .v2-box > .v2-note,
+.gworld.v2 .v2-box > .v2-chips { padding: 0 10px 8px; }
+.gworld.v2 .v2-box-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 5px 10px; font-size: 14px; }
+
+.gworld.v2 .v2-improve {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px dashed var(--v2-panel-line);
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel-2);
+}
+.gworld.v2 .v2-improve.over { border-color: var(--v2-red); background: var(--v2-red-soft); }
+.gworld.v2 .v2-improve-text { display: flex; flex-direction: column; font-size: 13px; }
+.gworld.v2 .v2-improve-text strong { font-family: var(--font-heading); font-size: 16px; }
+.gworld.v2 .v2-improve-buttons { display: inline-flex; gap: 4px; }
+
+/* ── Combat ────────────────────────────────────────────────────────────── */
+
+.gworld.v2 .v2-status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  padding: 7px 4px;
+  border: 1px solid var(--v2-frame-line);
+  border-radius: var(--v2-radius);
+  background: var(--v2-frame-2);
+  font-family: var(--font-heading);
+  font-size: 17px;
+  color: var(--v2-frame-muted);
+}
+.gworld.v2 .v2-status-bar > span { padding: 0 14px; }
+.gworld.v2 .v2-status-bar > span + span { border-left: 1px solid var(--v2-frame-line); }
+.gworld.v2 .v2-status-bar b { color: var(--v2-frame-text); font-weight: 600; }
+.gworld.v2 .v2-warn { color: var(--v2-gold) !important; }
+
+.gworld.v2 .v2-maneuver { padding-top: 10px; }
+
+.gworld.v2 .v2-combat-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(260px, 1fr) minmax(250px, 0.95fr);
+  gap: 14px;
+  align-items: start;
+}
+.gworld.v2 .v2-attack-list { display: flex; flex-direction: column; gap: 6px; max-height: 520px; overflow-y: auto; padding-right: 2px; }
+.gworld.v2 .v2-attack[data-v2-row] { cursor: pointer; }
+.gworld.v2 .v2-attack[data-v2-row]:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: 1px; }
+
+.gworld.v2 .v2-preview-col { display: flex; flex-direction: column; min-width: 0; }
+.gworld.v2 .v2-preview[hidden] { display: none; }
+.gworld.v2 .v2-kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; font-size: 14px; }
+.gworld.v2 .v2-kv b { text-align: right; font-weight: 600; }
+.gworld.v2 .v2-preview-main { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: end; }
+.gworld.v2 .v2-effective {
+  padding: 8px 12px;
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel-2);
+  text-align: center;
+}
+.gworld.v2 .v2-dice-chart { display: flex; align-items: flex-end; gap: 2px; height: 86px; }
+.gworld.v2 .v2-bar-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 0; }
+.gworld.v2 .v2-bar-col i { display: block; width: 100%; border-radius: 2px 2px 0 0; background: var(--v2-panel-3); }
+.gworld.v2 .v2-bar-col em { font-style: normal; font-size: 9px; line-height: 1.4; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-outcome-success i { background: var(--v2-steel); }
+.gworld.v2 .v2-outcome-criticalSuccess i { background: var(--v2-gold); }
+.gworld.v2 .v2-outcome-criticalFailure i { background: var(--v2-red); }
+.gworld.v2 .v2-preview-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.gworld.v2 .v2-preview-actions .v2-button-gold { flex: 1 1 100%; height: 32px; font-size: 17px; }
+.gworld.v2 .v2-attack-extras:empty { display: none; }
+
+.gworld.v2 .v2-combat-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.gworld.v2 .v2-locations-body { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; align-items: start; }
+.gworld.v2 .v2-body { width: 100%; height: auto; max-height: 240px; }
+.gworld.v2 .v2-body g { cursor: pointer; }
+.gworld.v2 .v2-body g > * { fill: #4a4f55; stroke: var(--v2-panel); stroke-width: 1.2; }
+.gworld.v2 .v2-body g:hover > * { fill: #626870; }
+.gworld.v2 .v2-body g.v2-body-inner > * { fill: #5b6168; stroke-dasharray: 2 2; }
+.gworld.v2 .v2-body g.selected > * { fill: var(--v2-gold); }
+.gworld.v2 .v2-location-table { width: 100%; margin: 0; border-collapse: collapse; font-size: 13px; background: none; border: 0; }
+.gworld.v2 .v2-location-table thead,
+.gworld.v2 .v2-location-table thead tr { background: none; }
+.gworld.v2 .v2-location-table th { padding: 2px 4px; font-weight: 500; text-align: left; color: var(--v2-ink-muted); background: none; border: 0; text-shadow: none; }
+.gworld.v2 .v2-location-table td { padding: 2px 4px; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--v2-ink) 10%, transparent); }
+.gworld.v2 .v2-location-table tbody tr { cursor: pointer; }
+.gworld.v2 .v2-location-table tbody tr:hover td { background: var(--v2-panel-2); }
+.gworld.v2 .v2-location-table tbody tr.selected td { background: var(--v2-gold-soft); }
+.gworld.v2 .v2-location-table tbody tr:focus-visible { outline: 2px solid var(--v2-gold); }
+
+.gworld.v2 .v2-log-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; }
+.gworld.v2 .v2-log-list li { border-left: 4px solid var(--v2-ink-muted); background: var(--v2-panel-2); border-radius: 2px; }
+.gworld.v2 .v2-log-list li.v2-log-roll { border-left-color: var(--v2-gold); }
+.gworld.v2 .v2-log-list button {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 3px 8px;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-size: 13px;
+  color: var(--v2-ink);
+  cursor: pointer;
+}
+.gworld.v2 .v2-log-list time { font-size: 11px; color: var(--v2-ink-muted); margin-right: 6px; }
+
+.gworld.v2 .v2-drawer-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 14px; }
+
+/* The chat card the combat log points to, briefly. */
+.gworld-flash { outline: 2px solid #d9a441; outline-offset: -2px; transition: outline-color 1.4s ease; }
+
+/* ── Inventory ─────────────────────────────────────────────────────────── */
+
+.gworld.v2 .tab.v2-inventory { gap: 8px; }
+.gworld.v2 .v2-load-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 22px;
+  padding: 6px 14px;
+  border: 1px solid var(--v2-frame-line);
+  border-radius: var(--v2-radius);
+  background: var(--v2-frame-2);
+  font-family: var(--font-heading);
+  font-size: 17px;
+  color: var(--v2-frame-muted);
+}
+.gworld.v2 .v2-load-strip b { color: var(--v2-frame-text); font-weight: 600; }
+.gworld.v2 .v2-load-strip em { font-style: normal; }
+.gworld.v2 .v2-load-money { margin-left: auto; }
+.gworld.v2 .v2-load-pill {
+  padding: 3px 22px;
+  border: 2px solid #6d8fb1;
+  border-radius: 999px;
+  background: #3a5470;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.gworld.v2 .v2-load-pill.heavy { background: #6a5320; border-color: var(--v2-gold); }
+.gworld.v2 .v2-load-pill.over { background: #5a2723; border-color: #b85a50; }
+.gworld.v2 .v2-tiers { display: flex; flex-wrap: wrap; gap: 4px; }
+.gworld.v2 .v2-tier { padding: 1px 10px; border-radius: 999px; background: var(--v2-frame-2); color: var(--v2-frame-muted); font-size: 11.5px; }
+.gworld.v2 .v2-tier b { font-weight: 600; }
+.gworld.v2 .v2-tier.active { background: var(--v2-steel); color: #fff; }
+
+.gworld.v2 .v2-inventory-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.gworld.v2 .v2-inventory-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.gworld.v2 .v2-areas { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+.gworld.v2 .v2-area { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-radius: 3px; background: var(--v2-panel-2); }
+.gworld.v2 .v2-area.empty { opacity: 0.7; }
+.gworld.v2 .v2-area-name { font-family: var(--font-heading); font-size: 15px; font-weight: 600; }
+.gworld.v2 .v2-area-piece {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--v2-ink);
+  cursor: pointer;
+}
+.gworld.v2 .v2-area-piece span { color: var(--v2-ink-muted); }
+.gworld.v2 .v2-area-piece.selected { color: var(--v2-gold-deep); font-weight: 600; }
+
+.gworld.v2 .v2-quick-slots { display: flex; flex-direction: column; gap: 6px; }
+/* A readied item: picture, name over what it weighs, and its buttons on the right. */
+.gworld.v2 .v2-slot {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 10px;
+  padding: 5px 8px;
+  border: 2px solid transparent;
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  cursor: pointer;
+}
+.gworld.v2 .v2-slot.selected { border-color: var(--v2-gold); background: #f6e7c2; }
+.gworld.v2 .v2-slot img { grid-row: 1 / 3; width: 34px; height: 34px; border: 0; }
+.gworld.v2 .v2-slot-name { grid-column: 2; font-family: var(--font-heading); font-size: 16px; font-weight: 600; line-height: 1.1; }
+.gworld.v2 .v2-slot-meta { grid-column: 2; font-size: 12px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-slot-buttons { grid-column: 3; grid-row: 1 / 3; display: inline-flex; gap: 4px; }
+
+/* ── the gear list ─────────────────────────────────────────────────────── */
+
+/* One column grid for the headings and every row, so they line up. */
+.gworld.v2 .v2-gear,
+.gworld.v2 .v2-gear-head { grid-template-columns: 28px minmax(140px, 1fr) 48px 72px 84px 96px; }
+.gworld.v2 .v2-gear-head {
+  display: grid;
+  align-items: end;
+  column-gap: 10px;
+  padding: 0 15px 2px;
+}
+.gworld.v2 .v2-gear-head .v2-sort { width: auto; height: auto; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--v2-frame-muted); text-align: left; }
+.gworld.v2 .v2-gear-head .v2-sort.active { color: var(--v2-frame-text); }
+.gworld.v2 .v2-gear-head .v2-sort:not(.v2-sort-name) { text-align: right; }
+.gworld.v2 .v2-sort:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: 2px; }
+.gworld.v2 .v2-gear-img { width: 26px; height: 26px; border: 0; border-radius: 3px; object-fit: cover; }
+.gworld.v2 .v2-gear-num { font-size: 14px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.gworld.v2 .v2-gear .v2-row-name { font-size: 16px; }
+.gworld.v2 .v2-gear .v2-row-actions { min-width: 0; }
+.gworld.v2 .v2-row-icon.on { color: var(--v2-steel-deep); background: var(--v2-steel-soft); border-color: var(--v2-steel); }
+.gworld.v2 .v2-group.v2-drop-over { box-shadow: 0 0 0 2px var(--v2-gold); }
+.gworld.v2 .v2-group.v2-stored .v2-group-sub { font-size: 11px; }
+.gworld.v2 .v2-inventory .v2-groups .v2-empty { padding: 6px 8px; }
+
+.gworld.v2 .v2-table-wrap { overflow-x: auto; }
+.gworld.v2 .v2-gear-table { width: 100%; margin: 0; border: 0; border-collapse: collapse; background: none; font-size: 13.5px; }
+.gworld.v2 .v2-gear-table thead,
+.gworld.v2 .v2-gear-table thead tr { background: none; }
+.gworld.v2 .v2-gear-table th { padding: 4px 6px; border: 0; border-bottom: 1px solid var(--color-divider); background: none; text-align: left; text-shadow: none; }
+.gworld.v2 .v2-gear-table th.n,
+.gworld.v2 .v2-gear-table td.n { text-align: right; white-space: nowrap; }
+.gworld.v2 .v2-gear-table td.c { text-align: right; white-space: nowrap; }
+.gworld.v2 .v2-gear-table td { padding: 4px 6px; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--v2-ink) 10%, transparent); }
+.gworld.v2 .v2-gear-table tbody tr[data-v2-row] { cursor: pointer; }
+.gworld.v2 .v2-gear-table tbody tr[data-v2-row]:hover td { background: var(--v2-panel-2); }
+.gworld.v2 .v2-gear-table tbody tr.selected td { background: #dfe6ec; }
+.gworld.v2 .v2-gear-table tbody tr.dim td { color: var(--v2-ink-muted); }
+.gworld.v2 .v2-gear-table tr.v2-gear-group td {
+  padding-top: 8px;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--v2-ink-muted);
+  background: none;
+}
+.gworld.v2 .v2-gear-table tbody.v2-drop-over td { background: var(--v2-gold-soft); }
+.gworld.v2 .v2-gear-table .iconbtn { width: 22px; height: 22px; padding: 0; border: 0; background: none; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-sort {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--v2-ink-muted);
+  cursor: pointer;
+}
+.gworld.v2 .v2-sort.active { color: var(--v2-ink); }
+.gworld.v2 .v2-tag-red { background: var(--v2-red-soft); color: var(--v2-red); }
+
+.gworld.v2 .v2-detail-red { background: var(--v2-red); color: #fff; }
+.gworld.v2 .v2-detail-sub { font-size: 13px; color: var(--v2-ink-muted); margin-top: -4px; }
+.gworld.v2 .v2-breakdown li.v2-sub { padding-top: 0; font-size: 12px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-stacked { flex-direction: column; }
+.gworld.v2 .v2-stacked .v2-button { width: 100%; height: 32px; font-size: 16px; }
+
+/* ── Progression ───────────────────────────────────────────────────────── */
+
+.gworld.v2 .tab.v2-progression { gap: 10px; }
+.gworld.v2 .v2-progress-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 0;
+  padding: 8px 6px;
+  border: 1px solid #4a5563;
+  border-radius: 6px;
+  background: #2a3440;
+}
+.gworld.v2 .v2-progress-summary > div { display: flex; flex-direction: column; align-items: center; padding: 0 18px; }
+.gworld.v2 .v2-progress-summary > div + div { border-left: 1px solid #4a5563; }
+.gworld.v2 .v2-progress-summary span { font-family: var(--font-heading); font-size: 14px; color: var(--v2-frame-muted); }
+.gworld.v2 .v2-progress-summary b { font-family: var(--font-heading); font-size: 24px; font-weight: 600; color: var(--v2-frame-text); line-height: 1.1; }
+.gworld.v2 .v2-progress-summary .v2-good { color: #9ccc86; }
+.gworld.v2 .v2-progress-available b { color: var(--v2-gold); }
+.gworld.v2 .v2-progress-summary.over { border-color: #b85a50; background: #3a2826; }
+.gworld.v2 .v2-progress-summary.over .v2-progress-available b,
+.gworld.v2 .v2-progress-summary.over .v2-progress-available span { color: #ff9f93; }
+.gworld.v2 .v2-progress-buttons { flex-direction: row !important; gap: 6px; margin-left: auto; border-left: 0 !important; }
+/* The campaign's terms, editable in the summary bar. */
+.gworld.v2 .v2-campaign-field label { font-family: var(--font-heading); font-size: 14px; color: var(--v2-frame-muted); }
+.gworld.v2 .v2-campaign-field input {
+  width: 3.4em; background: transparent; border: 0; border-bottom: 1px dashed var(--v2-frame-muted);
+  font: inherit; color: inherit; text-align: center; padding: 0;
+}
+.gworld.v2 .v2-campaign-field input:focus-visible { outline: 2px solid var(--v2-frame-muted); outline-offset: 2px; }
+.gworld.v2 .v2-over-note { margin: 0; padding: 6px 12px; border-radius: var(--v2-radius); background: #5a2723; color: #ffd2cb; font-size: 13px; }
+
+.gworld.v2 .v2-progress-grid { display: grid; grid-template-columns: minmax(180px, 0.55fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.gworld.v2 .v2-categories { gap: 6px; background: var(--v2-panel-3); }
+.gworld.v2 .v2-category {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  height: auto;
+  padding: 7px 10px;
+  border: 1px solid var(--v2-panel-line);
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.12);
+}
+.gworld.v2 .v2-category b { font-family: var(--font-heading); font-size: 17px; font-weight: 600; }
+.gworld.v2 .v2-category span { font-size: 13px; color: var(--v2-ink-muted); }
+/* Foundry styles a focused or hovered button too; the chosen category keeps its colours through both. */
+.gworld.v2 .v2-categories button.v2-category.active,
+.gworld.v2 .v2-categories button.v2-category.active:hover,
+.gworld.v2 .v2-categories button.v2-category.active:focus { background: #3a5470; border-color: var(--v2-gold); color: #fff; }
+.gworld.v2 .v2-categories button.v2-category.active span { color: var(--v2-steel-soft); }
+.gworld.v2 .v2-categories button.v2-category:not(.active):focus { background: var(--v2-panel); color: var(--v2-ink); }
+.gworld.v2 .v2-category.quiet { opacity: 0.65; cursor: default; }
+
+.gworld.v2 .v2-segmented { display: inline-flex; align-self: flex-start; border: 1px solid var(--v2-panel-line); border-radius: 4px; overflow: hidden; }
+.gworld.v2 .v2-segmented button {
+  width: auto;
+  height: 28px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 0;
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  cursor: pointer;
+}
+.gworld.v2 .v2-segmented button + button { border-left: 1px solid var(--v2-panel-line); }
+.gworld.v2 .v2-segmented button.active { background: #3a5470; color: #fff; }
+
+.gworld.v2 .v2-improve-list { display: flex; flex-direction: column; gap: 5px; max-height: 420px; overflow-y: auto; padding-right: 2px; }
+/* Name first; the step, points and cost to its right, wrapping under it when the list is narrow. */
+.gworld.v2 .v2-improve-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 12px;
+  padding: 7px 10px;
+  border: 1px solid var(--v2-panel-line);
+  border-left: 4px solid var(--v2-green);
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  cursor: pointer;
+}
+.gworld.v2 .v2-improve-row.over { border-left-color: var(--v2-red); }
+.gworld.v2 .v2-improve-row.selected { background: #efc978; border-color: var(--v2-gold-deep); }
+.gworld.v2 .v2-improve-row:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: 1px; }
+.gworld.v2 .v2-improve-name { flex: 1 1 170px; font-family: var(--font-heading); font-size: 17px; font-weight: 600; min-width: 0; }
+.gworld.v2 .v2-improve-name .v2-tag { white-space: nowrap; }
+.gworld.v2 .v2-improve-step { font-family: var(--font-heading); font-size: 16px; white-space: nowrap; }
+.gworld.v2 .v2-improve-invested { min-width: 48px; font-size: 12px; color: var(--v2-ink-muted); text-align: right; }
+.gworld.v2 .v2-improve-step,
+.gworld.v2 .v2-improve-invested,
+.gworld.v2 .v2-improve-cost { margin-left: auto; }
+.gworld.v2 .v2-improve-step + .v2-improve-invested,
+.gworld.v2 .v2-improve-invested + .v2-improve-cost,
+.gworld.v2 .v2-improve-step + .v2-improve-cost { margin-left: 0; }
+.gworld.v2 .v2-improve-cost { font-family: var(--font-heading); font-size: 16px; white-space: nowrap; }
+
+.gworld.v2 .v2-upgrade { padding: 0 0 14px; }
+.gworld.v2 .v2-upgrade-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 14px;
+  background: #3a5470;
+  color: #fff;
+  text-align: center;
+}
+.gworld.v2 .v2-upgrade.over .v2-upgrade-head { background: #6b2f2a; }
+.gworld.v2 .v2-upgrade-head h3 { margin: 0; border: 0; font-family: var(--font-heading); font-size: 22px; letter-spacing: 0.04em; text-transform: uppercase; color: inherit; }
+.gworld.v2 .v2-upgrade-step { font-family: var(--font-heading); font-size: 34px; font-weight: 600; line-height: 1; }
+.gworld.v2 .v2-upgrade-step i { font-style: normal; font-size: 26px; }
+.gworld.v2 .v2-upgrade-step b { color: var(--v2-gold); }
+.gworld.v2 .v2-upgrade-cost { font-family: var(--font-heading); font-size: 18px; color: var(--v2-steel-soft); }
+.gworld.v2 .v2-upgrade-summary { margin: 0; font-size: 13.5px; }
+.gworld.v2 .v2-upgrade-button { height: 36px; font-size: 18px; }
+.gworld.v2 .v2-upgrade.over .v2-upgrade-button { background: var(--v2-red); border-color: #843229; color: #fff; }
+
+/* ── Journal ───────────────────────────────────────────────────────────── */
+
+.gworld.v2 .v2-journal-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  background: #3a5470;
+}
+.gworld.v2 .v2-pane-button {
+  width: auto;
+  height: 32px;
+  padding: 0 18px;
+  border: 1px solid #6d8fb1;
+  border-radius: 4px;
+  background: #4a6887;
+  color: #eef3f8;
+  font-family: var(--font-heading);
+  font-size: 17px;
+  cursor: pointer;
+}
+.gworld.v2 .v2-pane-button span { font-family: var(--font-body); font-size: 11px; opacity: 0.8; }
+.gworld.v2 .v2-pane-button:hover { background: #56769a; }
+.gworld.v2 .v2-pane-button.active { background: var(--v2-gold-soft); border-color: var(--v2-gold); color: var(--v2-ink); }
+
+.gworld.v2 .v2-journal-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 280px); gap: 14px; align-items: start; }
+.gworld.v2 .v2-journal-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* The character's artwork on the Journal tab. */
+.gworld.v2 .v2-portrait-card { margin: 0; padding: 8px; gap: 8px; }
+.gworld.v2 .v2-portrait-frame {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  max-height: 340px;
+  max-width: 100%;
+  padding: 0;
+  border: 1px solid var(--v2-panel-line);
+  border-radius: var(--v2-radius);
+  overflow: hidden;
+  background: var(--v2-frame-3);
+  cursor: zoom-in;
+}
+.gworld.v2 .v2-portrait-frame img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; border: 0; }
+.gworld.v2 .v2-portrait-frame:hover,
+.gworld.v2 .v2-portrait-frame:focus-visible { border-color: var(--v2-gold); outline: none; box-shadow: 0 0 0 1px var(--v2-gold); }
+.gworld.v2 .v2-portrait-card figcaption { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; margin: 0; color: var(--v2-ink); }
+.gworld.v2 .v2-portrait-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-heading);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--v2-ink);
+}
+.gworld.v2 .v2-journal-pane { display: grid; grid-template-columns: minmax(190px, 0.75fr) minmax(0, 1.5fr); gap: 14px; align-items: start; }
+.gworld.v2 .v2-journal-pane[hidden] { display: none; }
+.gworld.v2 .v2-profile { grid-template-columns: minmax(0, 1fr); }
+.gworld.v2 .v2-journal-list { gap: 6px; }
+.gworld.v2 .v2-journal-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  height: auto;
+  padding: 7px 10px;
+  border: 0;
+  border-left: 4px solid var(--v2-panel-line);
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.gworld.v2 .v2-journal-entry b { font-family: var(--font-heading); font-size: 17px; font-weight: 600; }
+.gworld.v2 .v2-journal-entry span { font-size: 12.5px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-journal-entry.selected { background: #efc978; border-left-color: var(--v2-gold-deep); }
+.gworld.v2 .v2-journal-entry.missing b { color: var(--v2-red); }
+.gworld.v2 .v2-drop-hint { margin: 2px 0 0; font-size: 11.5px; color: var(--v2-frame-muted); }
+
+.gworld.v2 .v2-journal-content { min-width: 0; }
+.gworld.v2 .v2-journal-page { gap: 10px; }
+.gworld.v2 .v2-journal-page[hidden] { display: none; }
+.gworld.v2 .v2-journal-head { display: flex; align-items: center; gap: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--color-divider); }
+.gworld.v2 .v2-journal-head img { width: 40px; height: 40px; border: 0; border-radius: 4px; object-fit: cover; }
+.gworld.v2 .v2-journal-head h2 {
+  flex: 1;
+  margin: 0;
+  border: 0;
+  font-family: var(--font-heading);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: inherit;
+}
+.gworld.v2 .v2-journal-tools { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.gworld.v2 .v2-journal-tools select { width: auto; height: 24px; font-size: 13px; }
+.gworld.v2 .v2-journal-section h3 { margin: 4px 0 4px; border: 0; font-family: var(--font-heading); font-size: 19px; font-weight: 600; color: inherit; }
+.gworld.v2 .v2-journal-section figure { margin: 0; }
+.gworld.v2 .v2-journal-section figure img { max-width: 100%; border: 0; border-radius: var(--v2-radius); }
+.gworld.v2 .v2-journal-section figcaption { font-size: 12px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-journal-section .v2-prose { font-size: 14.5px; }
+.gworld.v2 .v2-journal-welcome p { margin: 0; font-size: 14px; }
+
+.gworld.v2 .v2-related { gap: 6px; background: var(--v2-frame-2); color: var(--v2-frame-text); box-shadow: inset 0 0 0 1px var(--v2-frame-line); }
+.gworld.v2 .v2-related h3 {
+  margin: 6px 0 0;
+  border: 0;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--v2-frame-muted);
+}
+.gworld.v2 .v2-related-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: auto;
+  padding: 6px 8px;
+  border: 0;
+  border-left: 4px solid var(--v2-steel);
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  font-family: var(--font-heading);
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+.gworld.v2 .v2-related-link img { width: 22px; height: 22px; border: 0; border-radius: 50%; object-fit: cover; }
+.gworld.v2 .v2-related-link.v2-kind-quest { border-left-color: var(--v2-gold); }
+.gworld.v2 .v2-related-link.v2-kind-clue { border-left-color: var(--v2-red); }
+.gworld.v2 .v2-related-link.v2-kind-person { border-left-color: var(--v2-green); }
+.gworld.v2 .v2-related-link.v2-kind-place { border-left-color: var(--v2-steel); }
+.gworld.v2 .v2-related-link.v2-kind-note { border-left-color: var(--v2-ink-muted); }
+.gworld.v2 .v2-related-link.missing span { color: var(--v2-red); }
+.gworld.v2 .v2-related .v2-note { color: var(--v2-frame-muted); }
+
+.gworld.v2 .v2-personal-notes prose-mirror,
+.gworld.v2 .v2-profile prose-mirror { min-height: 120px; }
+
+/* A category's ways to buy something new, above its improvements. */
+.gworld.v2 .v2-add-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 7px 10px; border: 1px dashed var(--v2-panel-line); border-radius: var(--v2-radius); background: var(--v2-panel-2); }
+.gworld.v2 .v2-add-bar > span { margin-right: auto; font-family: var(--font-heading); font-size: 15px; font-weight: 600; }
+.gworld.v2 .v2-improve-row.buyoff { border-left-color: var(--v2-red); }
+.gworld.v2 .v2-improve-row.buyoff.selected { background: #efc978; }
+
+/* ── narrow windows ────────────────────────────────────────────────────── */
+
+@container v2sheet (max-width: 980px) {
+  .gworld.v2 .window-content { grid-template-columns: 52px minmax(0, 1fr); }
+  .gworld.v2 .v2-rail-label { display: none; }
+  .gworld.v2 .v2-rail-item { justify-content: center; padding: 10px 0; }
+  .gworld.v2 .v2-overview { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .gworld.v2 .v2-overview-middle { grid-column: 1 / -1; grid-row: 1; }
+  /* The detail panel drops under its list, and the tab scrolls as a whole. */
+  .gworld.v2 .tab.v2-list-tab { overflow-y: auto; }
+  .gworld.v2 .v2-split { grid-template-columns: minmax(0, 1fr); }
+  .gworld.v2 .v2-list-col,
+  .gworld.v2 .v2-detail-col { overflow: visible; }
+  .gworld.v2 .v2-skill { grid-template-columns: 22px minmax(100px, 1fr) 52px 100px 34px auto; }
+  .gworld.v2 .v2-skill .v2-row-summary { display: none; }
+  .gworld.v2 .v2-combat-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .gworld.v2 .v2-combat-side { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+@container v2sheet (max-width: 700px) {
+  .gworld.v2 .v2-overview { grid-template-columns: minmax(0, 1fr); }
+  .gworld.v2 .v2-header { grid-template-columns: auto minmax(0, 1fr); }
+  .gworld.v2 .v2-header-side { grid-column: 1 / -1; justify-self: start; }
+  .gworld.v2 .v2-portrait { width: 64px; height: 64px; }
+  .gworld.v2 .v2-portrait-frame { aspect-ratio: auto; height: 240px; }
+  .gworld.v2 .v2-points { grid-column: 1 / -1; justify-self: start; }
+  .gworld.v2 .v2-strip-mods { align-items: flex-start; }
+  .gworld.v2 .v2-combat-grid,
+  .gworld.v2 .v2-combat-side,
+  .gworld.v2 .v2-inventory-grid,
+  .gworld.v2 .v2-progress-grid,
+  .gworld.v2 .v2-journal-grid,
+  .gworld.v2 .v2-journal-pane { grid-template-columns: minmax(0, 1fr); }
+  .gworld.v2 .v2-progress-buttons { margin-left: 0; }
+  .gworld.v2 .v2-load-money { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gworld.v2 .v2-rail-item,
+  .gworld.v2 .v2-attack,
+  .gworld.v2 .v2-chip { transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease; }
+}
+
+/* ── the guided builder ────────────────────────────────────────────────── */
+
+/*
+ * The builder window takes the sheet's classes for its look, not its layout:
+ * one column, the sheet's header on top, the steps under it, and the step's
+ * panel on the dark frame.
+ */
+/*
+ * A flex column rather than a block, so .gb is sized by the window instead of
+ * by a percentage height that only resolves when the parent has a definite one.
+ */
+.gworld.v2.gworld-builder .window-content { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.gworld.v2.gworld-builder .gb { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; height: 100%; }
+/*
+ * The header, the steps and the footer hold their own height; only the body
+ * gives. Without flex: none they keep the default flex-shrink of 1, so a long
+ * template makes the browser squeeze every sibling in proportion -- the header
+ * ends up shorter than the portrait and title inside it, which then paint
+ * outside its box and over the step options beneath.
+ */
+.gworld.v2.gworld-builder .gb-header { flex: none; grid-template-columns: auto minmax(0, 1fr) auto; padding: 10px 14px; }
+.gworld.v2.gworld-builder .gb-header .v2-portrait { width: 56px; height: 56px; }
+.gworld.v2.gworld-builder .gb-header .v2-title { font-size: 24px; }
+.gworld.v2.gworld-builder .gb-actor { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gworld.v2.gworld-builder .gb-ledgers { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.gworld.v2.gworld-builder .gb-ledgers .v2-points { font-size: 17px; }
+.gworld.v2.gworld-builder .gb-limit {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--v2-frame-muted);
+  white-space: nowrap;
+}
+.gworld.v2.gworld-builder .gb-limit b { color: var(--v2-frame-text); font-weight: 600; }
+.gworld.v2.gworld-builder .gb-limit.over,
+.gworld.v2.gworld-builder .gb-limit.over b { color: #f0998f; }
+
+.gworld.v2.gworld-builder .gb-steps {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--v2-frame-line);
+  background: var(--v2-frame);
+}
+.gworld.v2.gworld-builder .gb-step-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: auto;
+  height: 26px;
+  padding: 0 8px 0 3px;
+  border: 1px solid var(--v2-frame-line);
+  border-radius: 14px;
+  background: var(--v2-frame-2);
+  color: var(--v2-frame-muted);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+.gworld.v2.gworld-builder .gb-step-chip:hover { color: var(--v2-frame-text); background: var(--v2-frame-3); }
+.gworld.v2.gworld-builder .gb-step-number {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--v2-frame-3);
+  font-size: 12px;
+  color: var(--v2-frame-text);
+}
+.gworld.v2.gworld-builder .gb-step-chip.done { color: var(--v2-frame-text); }
+.gworld.v2.gworld-builder .gb-step-chip.done .gb-step-number { background: var(--v2-steel); color: #fff; }
+.gworld.v2.gworld-builder .gb-step-chip.active { border-color: var(--v2-gold); background: var(--v2-gold-soft); color: var(--v2-ink); }
+.gworld.v2.gworld-builder .gb-step-chip.active .gb-step-number { background: var(--v2-gold); color: var(--v2-ink); }
+.gworld.v2.gworld-builder .gb-step-chip:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: 1px; }
+
+.gworld.v2.gworld-builder .gb-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  overflow-y: auto;
+  /* Shown rather than only present, so a long step looks scrollable. */
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--v2-frame-line) transparent;
+  background: var(--v2-frame);
+}
+.gworld.v2.gworld-builder .gb-body::-webkit-scrollbar { width: 10px; }
+.gworld.v2.gworld-builder .gb-body::-webkit-scrollbar-track { background: transparent; }
+.gworld.v2.gworld-builder .gb-body::-webkit-scrollbar-thumb {
+  background: var(--v2-frame-line);
+  border: 2px solid var(--v2-frame);
+  border-radius: 5px;
+}
+.gworld.v2.gworld-builder .gb-body::-webkit-scrollbar-thumb:hover { background: var(--v2-frame-3); }
+.gworld.v2.gworld-builder .gb-hint { margin: 0; font-size: 13.5px; line-height: 1.4; color: var(--v2-frame-muted); }
+
+.gworld.v2.gworld-builder .gb-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.gworld.v2.gworld-builder .gb-field { display: flex; flex-direction: column; gap: 4px; }
+.gworld.v2.gworld-builder .gb-field input,
+.gworld.v2.gworld-builder .gb-attribute input {
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--v2-panel-line);
+  border-radius: var(--v2-radius);
+  background: #fbf8f1;
+  color: var(--v2-ink);
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+}
+.gworld.v2.gworld-builder .gb-field input:focus,
+.gworld.v2.gworld-builder .gb-attribute input:focus,
+.gworld.v2.gworld-builder .gb-spend input:focus { outline: none; border-color: var(--v2-steel); box-shadow: 0 0 0 1px var(--v2-steel); }
+
+.gworld.v2.gworld-builder .gb-attributes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.gworld.v2.gworld-builder .gb-attribute {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel-2);
+}
+.gworld.v2.gworld-builder .gb-attribute input { width: 100%; height: 44px; font-size: 28px; }
+.gworld.v2.gworld-builder .gb-attribute-key { font-family: var(--font-heading); font-size: 18px; font-weight: 600; letter-spacing: 0.06em; color: var(--v2-steel-deep); }
+.gworld.v2.gworld-builder .gb-attribute-name { font-size: 11px; color: var(--v2-ink-muted); text-align: center; }
+
+.gworld.v2.gworld-builder .gb-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.gworld.v2.gworld-builder .gb-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 96px 30px;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 4px 6px 4px 10px;
+  border-left: 4px solid var(--v2-steel);
+  border-bottom: 1px solid color-mix(in srgb, var(--v2-ink) 12%, transparent);
+}
+.gworld.v2.gworld-builder .gb-row:hover { background: var(--v2-panel-2); }
+.gworld.v2.gworld-builder .gb-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-heading); font-size: 16px; }
+.gworld.v2.gworld-builder .gb-detail { font-size: 12px; color: var(--v2-ink-muted); white-space: nowrap; }
+.gworld.v2.gworld-builder .gb-spend { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 12px; color: var(--v2-ink-muted); }
+.gworld.v2.gworld-builder .gb-spend input {
+  width: 3.4em;
+  height: 26px;
+  padding: 0 4px;
+  border: 1px solid var(--v2-panel-line);
+  border-radius: var(--v2-radius);
+  background: #fbf8f1;
+  color: var(--v2-ink);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: right;
+}
+.gworld.v2.gworld-builder .gb-list > .v2-empty { padding: 8px 2px; }
+
+.gworld.v2.gworld-builder .gb-review { display: flex; flex-direction: column; }
+.gworld.v2.gworld-builder .gb-review-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px 80px;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--v2-ink) 12%, transparent);
+}
+.gworld.v2.gworld-builder .gb-review-row > :not(:first-child) { text-align: right; }
+.gworld.v2.gworld-builder .gb-review-row b { font-family: var(--font-heading); font-size: 16px; }
+.gworld.v2.gworld-builder .gb-review-head { font-family: var(--font-heading); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--v2-ink-muted); }
+.gworld.v2.gworld-builder .gb-review-row.dim { color: var(--v2-ink-muted); }
+.gworld.v2.gworld-builder .gb-review .neg,
+.gworld.v2.gworld-builder .v2-stat-value.neg { color: var(--v2-red); }
+.gworld.v2.gworld-builder .v2-stat-value small { font-size: 16px; color: var(--v2-ink-muted); }
+
+.gworld.v2.gworld-builder .gb-foot {
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--v2-frame-line);
+  background: linear-gradient(180deg, var(--v2-frame), #252a2f);
+}
+.gworld.v2.gworld-builder .gb-foot .v2-button:not(.v2-button-gold) { background: var(--v2-frame-3); border-color: var(--v2-frame-line); color: var(--v2-frame-text); }
+.gworld.v2.gworld-builder .gb-foot .v2-button:not(.v2-button-gold):hover:not(:disabled) { background: var(--v2-frame-line); }
+
+/* The sheet narrows its header at 700px; the builder's ledger goes under it then too. */
+@container v2sheet (max-width: 700px) {
+  .gworld.v2.gworld-builder .gb-header { grid-template-columns: auto minmax(0, 1fr); }
+  .gworld.v2.gworld-builder .gb-ledgers { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 12px; }
+}
+@container v2sheet (max-width: 560px) {
+  .gworld.v2.gworld-builder .gb-attributes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gworld.v2.gworld-builder .gb-row { grid-template-columns: minmax(0, 1fr) 90px 30px; }
+  .gworld.v2.gworld-builder .gb-row .gb-detail { display: none; }
+}
+
+/* Money, cost of living and job. */
+.gworld.v2 .v2-money-standing { font-size: 12px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-money-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 8px; }
+.gworld.v2 .v2-money-cell { display: flex; flex-direction: column; gap: 4px; padding: 10px; border: 1px solid var(--color-divider); border-radius: 4px; }
+.gworld.v2 .v2-money-cell label, .gworld.v2 .v2-money-label { font-family: var(--font-heading); font-size: 13px; color: var(--v2-ink-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.gworld.v2 .v2-money-value { font-family: var(--font-heading); font-size: 22px; font-weight: 600; display: flex; align-items: baseline; gap: 2px; }
+.gworld.v2 .v2-money-value input { width: 6em; font: inherit; background: transparent; border: 0; border-bottom: 1px dashed var(--v2-ink-muted); color: inherit; padding: 0; }
+.gworld.v2 .v2-money-value input:focus-visible { outline: 2px solid var(--v2-ink-muted); outline-offset: 2px; }
+.gworld.v2 .v2-money-cell small { font-size: 11px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-money-cell .v2-button { align-self: flex-start; margin-top: auto; }
+.gworld.v2 .v2-money-budget { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.gworld.v2 .v2-money-budget li { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
+.gworld.v2 .v2-money-net { border-top: 1px solid var(--color-divider); padding-top: 2px; font-weight: 600; }
+.gworld.v2 .v2-money .v2-good { color: #3f7a34; }
+.gworld.v2 .v2-money .v2-bad { color: #a2463c; }
+.gworld.v2 .v2-job { margin-top: 12px; }
+.gworld.v2 .v2-job-head { font-family: var(--font-heading); font-size: 14px; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px; }
+.gworld.v2 .v2-job-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+.gworld.v2 .v2-job-fields label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--v2-ink-muted); }
+.gworld.v2 .v2-job-fields .v2-job-risk { grid-column: 1 / -1; }
+.gworld.v2 .v2-job-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--v2-ink-muted); }
+
+  
+</style></head><body>
+  <div class="application gworld v2 gworld-builder">
+    <div class="window-header">TITLE</div>
+    <div class="window-content"><div class="gb">
+  <header class="v2-header gb-header">
+    <div class="v2-portrait">
+      <img src="icons/svg/mystery-man.svg" alt="Hrothgar the Unready">
+    </div>
+    <div class="v2-identity">
+      <div class="v2-eyebrow">
+        <span>Guided build</span>
+        <span aria-hidden="true">&mdash;</span>
+        <span class="gb-actor">Hrothgar the Unready</span>
+      </div>
+      <h1 class="v2-title">Template</h1>
+      <div class="v2-meta"><span>Step 3 / 6</span></div>
+    </div>
+
+    <div class="gb-ledgers">
+      <div class="v2-points v2-points-ready">
+        <span class="v2-cp"><span class="v2-cp-label">CP</span> <b>118</b><span class="v2-cp-of">/ 150</span></span>
+        <span class="v2-ready">
+            +32 ready
+        </span>
+      </div>
+      <div class="gb-limit">
+        Disadvantage Limit
+        <b>-40</b> / -50
+      </div>
+    </div>
+  </header>
+
+  <nav class="gb-steps" aria-label="Build a character">
+      <button type="button" class="gb-step-chip done"
+              data-action="goto" data-step="0" aria-current="false">
+        <span class="gb-step-number">1</span>
+        <span>Template</span>
+      </button>
+      <button type="button" class="gb-step-chip done"
+              data-action="goto" data-step="1" aria-current="false">
+        <span class="gb-step-number">2</span>
+        <span>Template</span>
+      </button>
+      <button type="button" class="gb-step-chip active"
+              data-action="goto" data-step="2" aria-current="step">
+        <span class="gb-step-number">3</span>
+        <span>Template</span>
+      </button>
+      <button type="button" class="gb-step-chip"
+              data-action="goto" data-step="3" aria-current="false">
+        <span class="gb-step-number">4</span>
+        <span>Template</span>
+      </button>
+      <button type="button" class="gb-step-chip"
+              data-action="goto" data-step="4" aria-current="false">
+        <span class="gb-step-number">5</span>
+        <span>Template</span>
+      </button>
+      <button type="button" class="gb-step-chip"
+              data-action="goto" data-step="5" aria-current="false">
+        <span class="gb-step-number">6</span>
+        <span>Template</span>
+      </button>
+  </nav>
+
+  <div class="gb-body">
+    <p class="gb-hint">Optional. A template buys a package of traits in one go; everything after this step customises what it left you.</p>
+
+
+      <section class="v2-panel">
+        <div class="v2-ph-tools">
+          <h2 class="v2-ph">Template</h2>
+          <button type="button" class="v2-button v2-button-small" data-action="applyTemplate">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <path d="M12 5v14"></path><path d="M5 12h14"></path>
+  </svg> Apply a template
+          </button>
+        </div>
+        <ul class="gb-list">
+            <li class="gb-row">
+              <span class="gb-name">Template option 1 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 1 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+            <li class="gb-row">
+              <span class="gb-name">Template option 2 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 2 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+            <li class="gb-row">
+              <span class="gb-name">Template option 3 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 3 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+            <li class="gb-row">
+              <span class="gb-name">Template option 4 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 4 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+            <li class="gb-row">
+              <span class="gb-name">Template option 5 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 5 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+            <li class="gb-row">
+              <span class="gb-name">Template option 6 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 6 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+            <li class="gb-row">
+              <span class="gb-name">Template option 7 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 7 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+            <li class="gb-row">
+              <span class="gb-name">Template option 8 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 8 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+            <li class="gb-row">
+              <span class="gb-name">Template option 9 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 9 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+            <li class="gb-row">
+              <span class="gb-name">Template option 10 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 10 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+            <li class="gb-row">
+              <span class="gb-name">Template option 11 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 11 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+            <li class="gb-row">
+              <span class="gb-name">Template option 12 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 12 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+            <li class="gb-row">
+              <span class="gb-name">Template option 13 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 13 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+            <li class="gb-row">
+              <span class="gb-name">Template option 14 — a long line of the kind a martial-arts style adds</span>
+              <span class="gb-detail">
+                undefined
+                
+                &middot; undefined items granted
+                
+              </span>
+              <span></span>
+              <button type="button" class="v2-row-icon v2-row-delete" data-action="removeTemplate" data-index=""
+                      aria-label="Remove Template option 14 — a long line of the kind a martial-arts style adds"
+                      data-tooltip="Remove">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
+                  </svg>              </button>
+            </li>
+        </ul>
+      </section>
+
+
+
+  </div>
+
+  <footer class="gb-foot">
+    <button type="button" class="v2-button" data-action="back" >
+      Back
+    </button>
+      <button type="button" class="v2-button v2-button-gold" data-action="next">Next</button>
+  </footer>
+</div>
+</div>
+  </div>
+</body></html>

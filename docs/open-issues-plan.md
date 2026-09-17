@@ -55,14 +55,15 @@ missing is not the scroll container but the `flex: none` on its siblings - the
 same defect that causes #527. The two issues are one fix, as triage suspected,
 but for a different reason than triage gave.
 
-**#527 is a flex-shrink overflow, not a z-index problem.** `.gb` is a flex
-column. `.gb-header`, `.gb-steps` and `.gb-foot` never set `flex`, so they keep
-the default `flex-shrink: 1`. When a long template makes `.gb-body` taller than
-the window, the browser distributes the shrinkage across every sibling in
-proportion to its base size, so the header is squeezed below the height its own
-content needs. The 56px portrait and the title then paint outside the header's
-box and over whatever is beneath it. No stacking context is involved, and
-raising a `z-index` would not move anything.
+**#527's mechanism was diagnosed wrongly, and the correction is below.** The
+claim made here first -- that `.gb-header`, `.gb-steps` and `.gb-foot` keep the
+default `flex-shrink: 1` and are squeezed below their own content height -- does
+not hold. Flex items default to `min-height: auto`, which floors them at their
+content size, so the header could not be squeezed that way. Rendering the real
+template against the real stylesheet in Chromium confirms it: at 760x720,
+700x620 and 560x560, the header keeps its full height, its content overflows by
+0px, `.gb-body` scrolls, and Back and Next stay visible -- with the `flex: none`
+and without it, to identical measurements. See "Where #527 actually is" below.
 
 **#531's requested change would be wrong as literally stated.** A new trait is
 already stored with `selfControl: null`, which prices at x1 - the field is
@@ -135,6 +136,12 @@ through `#onCreateItem` with `category: "quirk"` yields -1, and `perk` yields 1.
 
 ## Batch 2 - the builder window (#527, #528)
 
+> **Correction, after rendering it.** What shipped under this heading is sound
+> but is not a fix for #527, and the reasoning first given here was wrong. The
+> builder body already scrolled, before and after; the `flex: none` added to its
+> fixed rows is defensive tidying, and the visible scrollbar is a real but small
+> improvement. #527 remains open in substance. See "Where #527 actually is".
+
 One CSS change in `styles/sheet-v2.css` covers both:
 
 1. Give `.gb-header`, `.gb-steps` and `.gb-foot` `flex: none` so they hold their
@@ -153,6 +160,38 @@ module nor the template may be named in `src`, `templates`, `lang` or
 `packs-src`, and this plan is the only place the name appears.
 
 No unit test - this is layout. The verification is manual at the three widths.
+
+### Where #527 actually is
+
+The builder's "templates" step lists the templates already *applied*
+(`templates/apps/character-builder.hbs`, the `stepId "templates"` block). It has
+no template *options* in it at all. Those live in a separate dialog,
+`chooseTemplateOptions` (`src/system/sheets/character-prompts.ts:2031`), opened
+by the step's Apply button -- and that is what the report is about.
+
+That dialog is a `DialogV2` at a fixed height, `Math.min(760, 85% of the
+window)`, whose content is a plain `<div style="display:flex;flex-direction:
+column">` with no scroll container of its own. Its own comment says a template
+"can offer well over a hundred options", which is why every list folds. Built
+with four groups of twenty-two options expanded, it comes to **1851px of content
+inside a 694px window** -- measured, not estimated.
+
+Whether that actually strands the options depends on how Foundry's own
+`.window-content` handles the overflow in a DialogV2, which cannot be determined
+outside Foundry: `overflow: hidden` there leaves them unreachable, `overflow:
+auto` leaves them merely awkward. That is the one thing to check in a running
+Foundry, and it decides the fix:
+
+- If they are unreachable, give the dialog's content its own bounded scroller --
+  `max-height: calc(min(760px, 85vh) - <chrome>); overflow-y: auto` -- which is
+  correct under either behaviour and does not depend on any ancestor resolving
+  a height.
+- If they are reachable but the header covers them while scrolling, the fix is
+  a sticky header inside that dialog instead.
+
+The same dialog is the better candidate for #528's "content cannot be accessed
+when it exceeds the visible window area", since the builder body demonstrably
+scrolls.
 
 ## Batch 3 - skill points in the picker (#533)
 
