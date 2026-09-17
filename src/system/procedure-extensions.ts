@@ -117,6 +117,14 @@ export const PROCEDURE_HOOKS = Object.freeze({
    * `rads` is mutable; push a label to `sources` to say why it changed.
    */
   radiationDose: "gworld.radiationDose",
+  /**
+   * Before a roll to detect somebody or something (since 1.63.0): a sense roll,
+   * or a detection skill such as Observation, Search or Tracking.
+   * `{ observer, subject, sense, skill, tags, modifiers }`; push to `modifiers`.
+   * `subject` is the actor looked for, or null; `sense` is `vision`, `hearing`,
+   * `tasteSmell`, `touch`, or blank where the roll names none.
+   */
+  detectionModifiers: "gworld.detectionModifiers",
 });
 
 /**
@@ -328,6 +336,8 @@ export interface SuccessRollContext {
   modifiers: ModifierLine[];
   /** For a side of a contest, the actor on the other side (since 1.30.0). */
   opponent?: any;
+  /** The actor looked for, on a roll to detect them (since 1.63.0). */
+  subject?: any;
   /**
    * What the roll is being made against, where it is an attack (since 1.49.0).
    * On a resistance roll this is what the attacker did: a module can read the
@@ -362,6 +372,13 @@ export function successRollTags(options: { kind?: string | undefined; skill?: st
   const skill = String(options.skill ?? "").trim().toLowerCase();
   if (skill.startsWith("fast-draw")) tags.add("fastDraw");
   if (skill === "teaching") tags.add("teaching");
+  // A roll to find something (since 1.63.0): a sense, or a skill whose use is looking.
+  const detectionSkill = DETECTION_SKILLS[skill.replace(/\s*\(.*\)$/, "")];
+  if (detectionSkill !== undefined) {
+    tags.add("detection");
+    if (detectionSkill) tags.add(detectionSkill);
+  }
+  if (SENSE_TAGS.some((sense) => tags.has(sense))) tags.add("detection");
   return [...tags];
 }
 
@@ -374,6 +391,7 @@ export function successRollModifiers(context: SuccessRollContext): ModifierLine[
   const before = context.modifiers.length;
   const ctx: SuccessRollContext = { ...context, tags: [...context.tags], modifiers: [...context.modifiers] };
   ctx.modifiers.push(...conditionModifiers(ctx.actor, ctx.kind, ctx.tags));
+  if (ctx.tags.includes("detection")) ctx.modifiers.push(...detectionModifiers(ctx));
   if (ctx.kind === "defense") {
     for (const defense of ["dodge", "parry", "block"]) {
       if (ctx.tags.includes(defense)) ctx.modifiers.push(...maneuverOptionDefenseLines(ctx.actor, defense));
@@ -849,4 +867,31 @@ export function registerProcedureHooks(setSystemCondition: (actor: any, id: stri
       if (activeConditions(actor).some((c) => c.untilTime !== null)) void expireConditions(actor, { time: worldTime }, setSystemCondition);
     }
   });
+}
+
+/** The four senses a Perception roll is made by (Characters p. 358), as roll tags (since 1.63.0). */
+export const SENSE_TAGS = Object.freeze(["vision", "hearing", "tasteSmell", "touch"] as const);
+
+/** Skills used to find things, and the sense each is made by where it is one. */
+const DETECTION_SKILLS: Record<string, string> = {
+  observation: "vision",
+  search: "",
+  tracking: "",
+};
+
+/**
+ * What `gworld.detectionModifiers` listeners add to a roll to detect somebody
+ * (since 1.63.0). Returns only the added lines.
+ */
+export function detectionModifiers(context: Pick<SuccessRollContext, "actor" | "skill" | "tags"> & { subject?: any }): ModifierLine[] {
+  const sense = SENSE_TAGS.find((s) => context.tags.includes(s)) ?? "";
+  const ctx = callCombatHook(PROCEDURE_HOOKS.detectionModifiers, {
+    observer: context.actor,
+    subject: context.subject ?? null,
+    sense,
+    skill: context.skill,
+    tags: [...context.tags],
+    modifiers: [] as ModifierLine[],
+  });
+  return (Array.isArray(ctx.modifiers) ? ctx.modifiers : []).filter(isLine);
 }

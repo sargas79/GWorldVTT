@@ -795,6 +795,14 @@ Two fields a module may read (since 1.62.0):
   `soleDr` on the foot. `gworld.armorDr` carries `fromBelow`. Armour spent by
   a blow is its ablative DR, which `items.restoreDr` gives back; the system
   keeps no other hit points for armour.
+- **Detection rolls** (since 1.63.0): a sense roll from the sheet is tagged
+  with its sense (`vision`, `hearing`, `tasteSmell`, `touch`) and `detection`,
+  and so are Observation (also `vision`), Search and Tracking rolls; a
+  condition modifier's `rolls` can name any of them. `roll.success` takes an
+  optional `subject`, the actor being looked for (a sheet roll takes the one
+  targeted token's), passed to `gworld.successRollModifiers`. A detection roll
+  also fires `gworld.detectionModifiers` with `{ observer, subject, sense,
+  skill, tags, modifiers }`: push lines for what the subject wears or does.
 - **Keyed attack lines** (since 1.63.0): the system's ranged lines carry a
   `key` a listener can find them by in any language: `speedRange`, `bulk`
   (with `situation` `moveAndAttack` or `closeCombat`), `accuracy` (with

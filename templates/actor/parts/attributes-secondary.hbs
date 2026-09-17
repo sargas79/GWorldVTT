@@ -13,7 +13,7 @@
             <span class="cv">{{sense.score}}</span>
             <span class="iroll rollable" data-action="roll" data-roll-type="attribute"
                   data-roll-label="{{sense.label}}" data-roll-target="{{sense.score}}"
-                  data-based-on="Per">{{> "gworld.die"}}</span>
+                  data-based-on="Per" data-sense="{{sense.key}}">{{> "gworld.die"}}</span>
           </span>
           <span class="cd">= Per{{#if sense.modifier}} {{signed sense.modifier}}{{/if}}</span>
         {{/if}}
