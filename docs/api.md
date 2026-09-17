@@ -838,6 +838,9 @@ Two fields a module may read (since 1.62.0):
   `gworld.successRollModifiers`); only on a success is the attack rolled, at
   the mode's `guidedSkillLevel` where it gives one and the firer's skill
   otherwise. The attack roll still passes through `gworld.attackModifiers`.
+  Since 1.64.0 the ranged row carries `aimingSkill` and `guidedSkillLevel`
+  too, so a `gworld.weaponAttacks` listener can set them on a row; the row's
+  figures win over the stored mode's.
 - **Kinetic-only blows** (since 1.63.0): a mode's `kineticOnly`, and the same
   option on `roll.damage`, makes a blow whose whole effect is its shove:
   knockback worked out as a crushing blow's, blunt trauma where flexible armour

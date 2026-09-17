@@ -185,7 +185,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
   ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, rateOfFire: 1,
-  recoil: 1, bulk: 0, shots: "", projectiles: 1, guidance: "", areaAttack: false, coneMaxWidth: 0, scopeBonus: 0,
+  recoil: 1, bulk: 0, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false,
   ammunition: "", malediction: 0, ignoresDr: false,
 };
@@ -316,6 +316,13 @@ export interface DerivedAttack {
    * A steered weapon reads 1/2D as its speed rather than a damage threshold.
    */
   guidance?: string;
+  /**
+   * A skill rolled before the attack, and the projectile's own skill once aimed
+   * (since API 1.63.0 on a mode, 1.64.0 on the row, so a module's
+   * `gworld.weaponAttacks` listener can set them).
+   */
+  aimingSkill?: string;
+  guidedSkillLevel?: number;
   /** True for an attack that covers ground rather than striking a point (p. 413). */
   areaAttack?: boolean;
   /** A cone's widest, in yards; zero where the table does not say. */
@@ -2310,6 +2317,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           halfDamageRange: Number(range.halfDamage ?? 0) || 0,
           maxRange: Number(range.max ?? 0) || 0,
           guidance: String(mode.guidance ?? ""),
+          aimingSkill: String(mode.aimingSkill ?? ""),
+          guidedSkillLevel: Math.max(0, Math.floor(Number(mode.guidedSkillLevel) || 0)),
           areaAttack: Boolean(mode.areaAttack),
           coneMaxWidth: Number(mode.coneMaxWidth ?? 0) || 0,
           damage: loadedDamage(rangedDamage),
