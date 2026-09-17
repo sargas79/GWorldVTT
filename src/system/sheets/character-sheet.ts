@@ -172,7 +172,7 @@ import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
 import { bindSectionListeners, decorateItemRows, renderSections, runRowAction } from "../sheet-extensions.js";
 import { byName, sortedByName } from "../sort.js";
-import { steppedLevels, steppedPoints, type StepDirection } from "../advancement.js";
+import { clampedLevels, steppedLevels, steppedPoints, type StepDirection } from "../advancement.js";
 import {
   activeConditions,
   attackSequenceFor,
@@ -1192,6 +1192,15 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         const item = this.itemFrom(input);
         const field = input.dataset.itemField;
         if (!item || !field) return;
+
+        // Levels stop where the book stops, typed as well as stepped: the
+        // buttons already refuse to pass the cap, and the box must too.
+        if (field === "system.levels") {
+          const next = clampedLevels(item, input.value);
+          if (next === Number(item.system?.levels ?? 0)) void this.render();
+          else void item.update({ [field]: next });
+          return;
+        }
 
         const value = Math.round(Number(input.value));
         if (!Number.isFinite(value)) {

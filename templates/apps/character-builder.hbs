@@ -133,10 +133,23 @@
         </div>
         <ul class="gb-list">
           {{#each items as |item|}}
-            <li class="gb-row">
-              <span class="gb-name">{{item.name}}</span>
+            <li class="gb-row" data-item-id="{{item.id}}">
+              <span class="gb-name">{{item.name}}{{#if item.levelName}} <span class="gb-level-name">&middot; {{item.levelName}}</span>{{/if}}</span>
               <span class="gb-detail">{{item.detail}}</span>
-              {{#if item.field}}
+              {{#if item.stepper}}
+                {{!-- Levels move one at a time, and stop where the book stops. --}}
+                <span class="gb-spend gb-stepper">
+                  <button type="button" data-action="stepLevels" data-step="down" {{#if item.atFloor}}disabled{{/if}}
+                          aria-label="{{localize 'GWORLD.Trait.OneLess'}}">&minus;</button>
+                  <input type="number" min="0" step="1" value="{{item.value}}"
+                         id="{{@root.appId}}-{{item.id}}-spend"
+                         data-item-id="{{item.id}}" data-item-field="{{item.field}}"
+                         aria-label="{{localize 'GWORLD.Trait.Levels'}}" />
+                  <button type="button" data-action="stepLevels" data-step="up" {{#if item.atCeiling}}disabled{{/if}}
+                          aria-label="{{localize 'GWORLD.Trait.OneMore'}}">+</button>
+                  <span>{{item.unit}}</span>
+                </span>
+              {{else if item.field}}
                 <label class="gb-spend">
                   <input type="number" min="0" step="1" value="{{item.value}}"
                          id="{{@root.appId}}-{{item.id}}-spend"

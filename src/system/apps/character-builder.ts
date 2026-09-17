@@ -19,7 +19,9 @@
 import { SYSTEM_ID } from "../constants.js";
 import { rememberFocus, restoreFocus, type RememberedFocus } from "../focus-memory.js";
 import { CompendiumPicker } from "./compendium-picker.js";
+import { clampedLevels, levelCeiling, steppedLevels } from "../advancement.js";
 import { builderTypesFor } from "../data-extensions.js";
+import { traitLevelName } from "../../rules/traits.js";
 import {
   applyTemplateToActor,
   confirmAndRemoveTemplate,
@@ -102,6 +104,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       next: CharacterBuilder.#onNext,
       browse: CharacterBuilder.#onBrowse,
       deleteItem: CharacterBuilder.#onDeleteItem,
+      stepLevels: CharacterBuilder.#onStepLevels,
       finish: CharacterBuilder.#onFinish,
       applyTemplate: CharacterBuilder.#onApplyTemplate,
       removeTemplate: CharacterBuilder.#onRemoveTemplate,
@@ -150,6 +153,12 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     field: string;
     value: number;
     unit: string;
+    /** A levelled trait steps a level at a time, between the book's limits. */
+    stepper: boolean;
+    atFloor: boolean;
+    atCeiling: boolean;
+    /** The book's name for the level held, where it names them. */
+    levelName: string;
   }> {
     if (!step.types) return [];
     const types = new Set(step.types);
@@ -165,13 +174,20 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       })
       .map((item: any) => {
         const spend = spendableOn(item);
+        const stepper = spend?.unit === "levels";
+        const levels = spend?.value ?? 0;
+        const ceiling = stepper ? levelCeiling(item) : null;
         return {
           id: item.id,
           name: item.name,
           detail: detailFor(item),
           field: spend?.field ?? "",
-          value: spend?.value ?? 0,
+          value: levels,
           unit: spend?.unit ?? "",
+          stepper,
+          atFloor: stepper && levels <= 0,
+          atCeiling: stepper && ceiling !== null && levels >= ceiling,
+          levelName: stepper ? traitLevelName(item.system?.levelNames ?? [], levels) ?? "" : "",
         };
       });
   }
@@ -429,7 +445,13 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     }
   }
 
-  /** Writes a points or levels change straight through to the item. */
+  /**
+   * Writes a points or levels change straight through to the item.
+   *
+   * Levels stop where the book stops, whether they arrive from the buttons or
+   * the box: a figure typed past the cap is brought back to it, and one that
+   * is not a number is put back to what the trait holds.
+   */
   static async #onSpend(
     this: CharacterBuilder,
     _event: Event,
@@ -442,12 +464,39 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     const item = this.#actor.items?.get(id);
     if (!item) return;
 
-    const value = Math.round(Number((target as HTMLInputElement).value));
+    const typed = (target as HTMLInputElement).value;
+    if (field === "system.levels") {
+      const next = clampedLevels(item, typed);
+      if (next === Number(item.system?.levels ?? 0)) {
+        await this.render();
+        return;
+      }
+      await item.update({ [field]: next });
+      return;
+    }
+
+    const value = Math.round(Number(typed));
     if (!Number.isFinite(value)) {
       await this.render();
       return;
     }
     await item.update({ [field]: Math.max(0, value) });
+  }
+
+  /** Moves a levelled trait one level up or down, stopping where the book stops. */
+  static async #onStepLevels(
+    this: CharacterBuilder,
+    _event: Event,
+    target: HTMLElement,
+  ): Promise<void> {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    if (!id) return;
+    const item = this.#actor.items?.get(id);
+    if (!item) return;
+
+    const next = steppedLevels(item, target.dataset.step === "down" ? "down" : "up");
+    if (next === Number(item.system?.levels ?? 0)) return;
+    await item.update({ "system.levels": next });
   }
 
   static async #onDeleteItem(
