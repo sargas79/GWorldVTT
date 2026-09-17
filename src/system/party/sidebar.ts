@@ -86,8 +86,12 @@ export function nestParties(html: HTMLElement): void {
   // Foundry's search hides a row whose name does not match. A member that
   // matches stays visible, so its party's row must too, or the member is
   // hidden inside a hidden row.
+  // The search box belongs to the directory's header, which is not redrawn
+  // with the list, so the listener is added once rather than on every render.
   const search = html.querySelector<HTMLInputElement>("search input");
-  search?.addEventListener("input", () => {
+  if (!search || search.dataset.gworldParty) return;
+  search.dataset.gworldParty = "wired";
+  search.addEventListener("input", () => {
     setTimeout(() => {
       for (const row of html.querySelectorAll<HTMLElement>("li.gworld-party")) {
         const shown = [...row.querySelectorAll<HTMLElement>(".gworld-party-members > li")].some(

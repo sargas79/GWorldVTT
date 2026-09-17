@@ -49,6 +49,15 @@ let index: Map<string, string> | null = null;
 /** What each party's members were when last seen, so a member that left is refreshed too. */
 const lastMembers = new Map<string, string[]>();
 
+function memberUuids(party: any): string[] {
+  return ((party?.system?.members ?? []) as Array<{ uuid: string }>).map((m) => String(m?.uuid ?? ""));
+}
+
+/** Records every party's members as they stand, so the first change after a load knows who left. */
+function rememberMembers(): void {
+  for (const party of worldParties()) lastMembers.set(String(party.id), memberUuids(party));
+}
+
 function buildIndex(): Map<string, string> {
   const map = new Map<string, string>();
   for (const party of worldParties()) {
@@ -130,7 +139,7 @@ export function refreshActor(actor: any): void {
 
 /** Prepares every member again, and anyone who was a member the last time the party was seen. */
 export function refreshMembers(party: any): void {
-  const now = ((party?.system?.members ?? []) as Array<{ uuid: string }>).map((m) => String(m.uuid));
+  const now = memberUuids(party);
   const before = lastMembers.get(String(party?.id)) ?? [];
   lastMembers.set(String(party?.id), now);
   for (const uuid of new Set([...before, ...now])) refreshActor(resolveMember(uuid));
@@ -198,6 +207,10 @@ export function registerPartyHooks(): void {
     if (membersChanged) void ui.actors?.render?.();
     Hooks.callAll(PARTY_CHANGED_HOOK, party, membersOf(party));
   };
+
+  // The members as they stand when the world opens: a member that leaves in
+  // the first change afterwards is prepared again like any other.
+  Hooks.once("ready", rememberMembers);
 
   Hooks.on("createActor", (document: any) => {
     if (isParty(document)) changed(document, true);
