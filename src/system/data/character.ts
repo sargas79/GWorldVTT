@@ -1972,8 +1972,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // A shield is a weapon as well as a defense: bashing with it is an ordinary
     // melee attack (GURPS Basic Set: Characters p. 273). Only an equipped one
     // is on the list, since you cannot hit anyone with a shield in your pack.
+    // What the character has to hand: the gear carried, as the Inventory
+    // tab lists it. A weapon left in storage is not an attack anyone can
+    // make until it is picked up again.
     const armed = [
-      ...this.itemsOfType("equipment"),
+      ...this.itemsOfType("equipment").filter((i) => i.system?.carried !== false),
       ...this.itemsOfType("shield").filter((i) => i.system?.equipped),
       // An advantage that is an attack -- Burning Attack, a power's
       // Pyrokinesis -- is always to hand (Characters p. 61).

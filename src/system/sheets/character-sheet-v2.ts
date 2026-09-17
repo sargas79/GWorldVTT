@@ -237,15 +237,20 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const location = selectedKey(locations.map((l: any) => l.key), locationState.selected ?? "torso");
     locationState.selected = location;
 
-    // The weapon tables as a character sheet prints them: every carried
-    // weapon's modes under the book's column headings, a weapon with several
-    // modes as a row of its own with the modes beneath it.
-    const carriedWeapons = [...actor.items].filter((i: any) => ["equipment", "armor", "shield"].includes(i.type) && i.system?.carried !== false
-      && ((i.system?.meleeModes?.length ?? 0) > 0 || (i.system?.rangedModes?.length ?? 0) > 0));
-    const modesOf = (id: string) => entries.filter((e) => e.atk.itemId === id).map((e) => ({ ...e.atk, ranged: e.ranged }));
-    const weaponTables = weaponTablesOf(carriedWeapons.map((item: any) => ({
-      name: String(item.name ?? ""),
-      tables: gearStatistics(item, modesOf(String(item.id)), localize).tables,
+    // The weapon tables as a character sheet prints them: the same attacks
+    // as the list above -- the weapons carried, a shield in hand, a punch, a
+    // trait that is an attack -- under the book's column headings, a weapon
+    // with several modes as a row of its own with the modes beneath it.
+    const byWeapon = new Map<string, { name: string; item: any; attacks: any[] }>();
+    for (const { atk, ranged } of entries) {
+      const key = atk.itemId ? `item:${atk.itemId}` : `natural:${atk.name}`;
+      const group = byWeapon.get(key) ?? { name: String(atk.name ?? ""), item: atk.itemId ? actor.items.get(atk.itemId) ?? null : null, attacks: [] };
+      group.attacks.push({ ...atk, ranged });
+      byWeapon.set(key, group);
+    }
+    const weaponTables = weaponTablesOf([...byWeapon.values()].map((group) => ({
+      name: group.name,
+      tables: gearStatistics({ type: "equipment", system: group.item?.system ?? {} }, group.attacks, localize).tables,
     })));
 
     return {
