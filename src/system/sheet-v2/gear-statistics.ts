@@ -254,6 +254,21 @@ function vehicleBlock(vehicle: Record<string, any>, L: Localize): StatBlock {
   return { key: "vehicle", title: S("Vehicle"), lines };
 }
 
+/** A box of rounds: what it fits and what a weapon fires it as (Characters p. 278). */
+function ammunitionBlock(system: Record<string, any>, L: Localize): StatBlock {
+  const S = (key: string) => L(`GWORLD.SheetV2.Stat.${key}`);
+  const kind = String(system.ammunition?.kind ?? "");
+  const fits = String(system.ammunition?.fits ?? "").trim();
+  return {
+    key: "ammunition",
+    title: S("Ammunition"),
+    lines: [
+      { label: L("GWORLD.Ammunition.Kind"), value: L(`GWORLD.Ammunition.${kind || "none"}`) },
+      { label: L("GWORLD.Ammunition.Fits"), value: fits || S("FitsAnything") },
+    ],
+  };
+}
+
 /** The item's own figures beside the price: TL, the grade it was bought in, and the list price it was priced from. */
 function generalLines(item: GearItemLike, L: Localize): StatLine[] {
   const S = (key: string) => L(`GWORLD.SheetV2.Stat.${key}`);
@@ -296,6 +311,7 @@ export function gearStatistics(item: GearItemLike, attacks: readonly GearAttack[
     }
   });
 
+  if (item.type === "equipment" && system.category === "ammunition") blocks.push(ammunitionBlock(system, L));
   if (item.type === "armor") blocks.push(armorBlock(system, L));
   if (item.type === "shield") blocks.push(shieldBlock(system, L));
   if (item.type === "equipment" && system.category === "vehicle" && system.vehicle) blocks.push(vehicleBlock(system.vehicle, L));

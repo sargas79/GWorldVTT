@@ -396,6 +396,8 @@ export interface DerivedAttack {
   empty?: boolean;
   /** What it is loaded with, where that changes the shot (pp. 276, 279). */
   ammunition?: AmmunitionType;
+  /** The carried box the loaded rounds came from, and what it has left; null where the weapon was loaded from nowhere in particular. */
+  ammunitionSource?: { id: string; name: string; rounds: number } | null;
   /** Ranged only. */
   accuracy?: number;
   /**
@@ -2356,6 +2358,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           reloadable: shotsCapacity > 0 && shotsLoaded < shotsCapacity,
           empty: shotsCapacity > 0 && shotsLoaded === 0,
           ammunition: (mode.ammunition ?? "") as AmmunitionType,
+          // The box the rounds came from, so the card can say what it has left.
+          ammunitionSource: (() => {
+            const id = String(mode.loadedFrom ?? "");
+            const box = id ? (this.parent as any)?.items?.get(id) ?? null : null;
+            return box ? { id: String(box.id), name: String(box.name ?? ""), rounds: Math.max(0, Math.floor(Number(box.system?.quantity)) || 0) } : null;
+          })(),
           damageRollable: !mode.affliction && !mode.damageSpecial && parseDiceAdds(rangedDamage) !== null,
           reach: "",
           parry: null,

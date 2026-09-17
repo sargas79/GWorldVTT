@@ -42,7 +42,7 @@ const DIFFICULTIES = new Set(["E", "A", "H", "VH", "W"]);
 const DAMAGE_TYPES = new Set([
   "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox",
 ]);
-const EQUIPMENT_CATEGORIES = new Set(["weapon", "tool", "consumable", "vehicle", "misc"]);
+const EQUIPMENT_CATEGORIES = new Set(["weapon", "tool", "ammunition", "consumable", "vehicle", "misc"]);
 const WEAPON_QUALITIES = new Set(["cheap", "good", "fine", "veryFine"]);
 const AMMUNITION_TYPES = new Set(["", "hp", "aphc", "apds", "bodkin", "silver"]);
 const EQUIPMENT_QUALITIES = new Set(["none", "improvised", "basic", "good", "fine", "best"]);

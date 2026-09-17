@@ -11,7 +11,13 @@
     {{#if row.equipped}}<span class="v2-tag v2-tag-steel">{{localize "GWORLD.Item.Equipped"}}</span>{{/if}}
     {{#if row.legality.label}}<span class="v2-tag{{#if row.legality.restricted}} v2-tag-red{{/if}}">{{row.legality.label}}</span>{{/if}}
   </span>
-  <span class="v2-gear-num">{{row.quantity}}</span>
+  {{#if (and @root.editable row.ammunition)}}
+    {{!-- A box of rounds: the count is edited in the row as rounds are bought, found and lost. --}}
+    <input type="number" class="v2-gear-num v2-gear-qty" min="0" step="1" value="{{row.quantity}}" data-item-field="system.quantity"
+           aria-label="{{localize 'GWORLD.Ammunition.Rounds'}}" data-tooltip="{{localize 'GWORLD.Ammunition.RoundsHint'}}">
+  {{else}}
+    <span class="v2-gear-num">{{row.quantity}}</span>
+  {{/if}}
   <span class="v2-gear-num">{{decimal row.weight 1}} lb</span>
   <span class="v2-gear-num">${{row.cost}}</span>
   <span class="v2-row-actions">

@@ -46,6 +46,7 @@ import { rollMortalWound } from "./dying.js";
 import type { Poison } from "../rules/poison.js";
 import { undoKnockdown } from "./knockdown.js";
 import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from "./damage-undo.js";
+import { carriedAmmunitionFor, loadAmmunition } from "./ammunition.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
 import { irradiate, shock } from "./hazards.js";
 import { addArea, listAreas, removeArea } from "./modifier-areas.js";
@@ -74,7 +75,7 @@ import { manaLevel } from "./casting.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.66.0";
+export const API_VERSION = "1.67.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -234,6 +235,24 @@ const actors = {
    */
   undoDamage(transaction: DamageTransaction): Promise<UndoOutcome> {
     return undoDamage(transaction);
+  },
+
+  /**
+   * Loads a ranged weapon from a box of rounds the actor carries (since
+   * 1.67.0): the rounds come off the box, what was in the weapon from
+   * another box goes back to it, and the mode fires the box's kind. True
+   * when something was loaded.
+   */
+  loadAmmunition(actor: any, weaponId: string, modeIndex: number, ammunitionId: string): Promise<boolean> {
+    const weapon = actor?.items?.get(weaponId);
+    const box = actor?.items?.get(ammunitionId);
+    return weapon && box ? loadAmmunition(actor, weapon, Number(modeIndex) || 0, box) : Promise.resolve(false);
+  },
+
+  /** The carried ammunition that fits a weapon and has rounds left (since 1.67.0). */
+  carriedAmmunitionFor(actor: any, weaponId: string, modeIndex = 0): any[] {
+    const weapon = actor?.items?.get(weaponId);
+    return weapon ? carriedAmmunitionFor(actor, weapon, Number(modeIndex) || 0) : [];
   },
 
   /** Whether a damage record still describes something worth undoing (since 1.66.0). */

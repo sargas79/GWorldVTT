@@ -1006,6 +1006,16 @@ Two fields a module may read (since 1.62.0):
 - **Random hit locations** (since 1.43.0): `roll.hitLocation({ actor?, damageType?, arc? })`
   rolls 3d on the table through `gworld.randomHitLocation` and returns `{ hitLocation,
   addonLocation, roll }`.
+- **Ammunition as carried items** (since 1.67.0): equipment filed as `ammunition` is a
+  box of rounds -- `system.ammunition.kind` is what a weapon fires it as (the same list
+  as a ranged mode's `ammunition`), `system.ammunition.fits` what it fits ("9mm", ".40",
+  "12G", "arrow", "bolt", or a weapon's name; blank fits anything), `quantity` the rounds,
+  weight and cost per round. `actors.loadAmmunition(actor, weaponId, modeIndex,
+  ammunitionId)` loads a weapon from a box: the rounds come off it, what was in the weapon
+  from another box goes back to that box, the mode's `ammunition` kind and `loadedFrom`
+  follow, and a Reload draws on the same box until it is empty.
+  `actors.carriedAmmunitionFor(actor, weaponId, modeIndex?)` lists what carried fits. A
+  weapon whose mode names no `loadedFrom` reloads as before, from nowhere in particular.
 - **Undoing damage** (since 1.66.0): `applyDamage` returns a `transaction` on its result
   recording what that application changed -- the pool and its value before and after, each
   ablative armour piece worn down, and an aim it spoiled.

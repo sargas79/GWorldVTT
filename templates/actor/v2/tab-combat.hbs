@@ -110,6 +110,10 @@
             {{#if (and entry.ranged entry.atk.reloadable @root.editable)}}
               <button type="button" class="v2-button" data-action="reloadWeapon" data-mode-index="{{entry.atk.modeIndex}}">{{localize "GWORLD.Reload.Action"}}</button>
             {{/if}}
+            {{#if (and entry.ranged entry.atk.shotsCapacity @root.editable)}}
+              <button type="button" class="v2-button" data-action="loadAmmunition" data-mode-index="{{entry.atk.modeIndex}}"
+                      data-tooltip="{{localize 'GWORLD.Ammunition.LoadFromCarried'}}">{{localize "GWORLD.Ammunition.Load"}}</button>
+            {{/if}}
           </div>
           <div class="v2-attack-extras">{{> "gworld.attackExtras" atk=entry.atk}}</div>
         </article>

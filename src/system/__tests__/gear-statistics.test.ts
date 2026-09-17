@@ -105,6 +105,19 @@ describe("armour and shields", () => {
   });
 });
 
+describe("a box of rounds", () => {
+  it("prints what a weapon fires it as and what it fits", () => {
+    const { blocks } = gearStatistics({ type: "equipment", system: { category: "ammunition", ammunition: { kind: "hp", fits: "9mm" } } }, [], L);
+    expect(blocks.map((b) => b.key)).toEqual(["ammunition"]);
+    expect(lines(blocks[0]!)).toEqual({ Kind: "hp", Fits: "9mm" });
+  });
+
+  it("says an ordinary round fits anything when it names nothing", () => {
+    const { blocks } = gearStatistics({ type: "equipment", system: { category: "ammunition", ammunition: { kind: "", fits: "" } } }, [], L);
+    expect(lines(blocks[0]!)).toEqual({ Kind: "none", Fits: "FitsAnything" });
+  });
+});
+
 describe("other gear", () => {
   it("prints a vehicle's row", () => {
     const { blocks } = gearStatistics({

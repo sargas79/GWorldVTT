@@ -110,7 +110,7 @@ import {
 import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
 import { rollDisarm } from "../disarm.js";
 import { rollStrikeToBreak, weaponTargetsFor } from "../weapon-damage.js";
-import { reloadWeapon } from "../ammunition.js";
+import { buyAmmunition, chooseAndLoad, reloadWeapon } from "../ammunition.js";
 import { clothingCost } from "../../rules/wealth.js";
 import {
   beginGrapple,
@@ -505,6 +505,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       toggleSkillOrder: GWorldCharacterSheet.#onToggleSkillOrder,
       readyWeapon: GWorldCharacterSheet.#onReadyWeapon,
       reloadWeapon: GWorldCharacterSheet.#onReloadWeapon,
+      loadAmmunition: GWorldCharacterSheet.#onLoadAmmunition,
+      buyAmmunition: GWorldCharacterSheet.#onBuyAmmunition,
       regenerate: GWorldCharacterSheet.#onRegenerate,
       study: GWorldCharacterSheet.#onStudy,
       workMonth: GWorldCharacterSheet.#onWorkMonth,
@@ -3336,6 +3338,20 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const item = this.itemFrom(target);
     if (!item) return;
     await reloadWeapon(this.actor, item, Number(target.dataset.modeIndex) || 0);
+  }
+
+  /** Loads a weapon from a box of rounds the character carries (Characters p. 278). */
+  static async #onLoadAmmunition(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.itemFrom(target);
+    if (!item) return;
+    await chooseAndLoad(this.actor, item, Number(target.dataset.modeIndex) || 0);
+  }
+
+  /** Buys a box of rounds that fit the weapon, priced by the book's rule (Characters p. 278). */
+  static async #onBuyAmmunition(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.itemFrom(target);
+    if (!item) return;
+    await buyAmmunition(this.actor, item, Number(target.dataset.modeIndex) || 0);
   }
 
   /**

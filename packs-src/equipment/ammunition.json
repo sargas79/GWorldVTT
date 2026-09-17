@@ -1,0 +1,343 @@
+[
+  {
+    "_id": "c81d410fdc85606c",
+    "name": "Cartridges, .380",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.02,
+      "cost": 0.4,
+      "carried": true,
+      "equipped": false,
+      "tl": "6",
+      "lc": null,
+      "costOfLivingPercent": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 278",
+      "category": "ammunition",
+      "ammunition": {
+        "kind": "",
+        "fits": ".380"
+      },
+      "equipmentQuality": "basic",
+      "forSkills": [],
+      "quality": "good",
+      "material": "",
+      "weaponClass": "",
+      "listCost": 0.4,
+      "hpLost": 0,
+      "meleeModes": [],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "dccce04eec0f2c9e",
+    "name": "Cartridges, 9mm",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.027,
+      "cost": 0.54,
+      "carried": true,
+      "equipped": false,
+      "tl": "6",
+      "lc": null,
+      "costOfLivingPercent": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 278",
+      "category": "ammunition",
+      "ammunition": {
+        "kind": "",
+        "fits": "9mm"
+      },
+      "equipmentQuality": "basic",
+      "forSkills": [],
+      "quality": "good",
+      "material": "",
+      "weaponClass": "",
+      "listCost": 0.54,
+      "hpLost": 0,
+      "meleeModes": [],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "df74dadf8e32edbc",
+    "name": "Cartridges, .40",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.03,
+      "cost": 0.6,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "lc": null,
+      "costOfLivingPercent": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 278",
+      "category": "ammunition",
+      "ammunition": {
+        "kind": "",
+        "fits": ".40"
+      },
+      "equipmentQuality": "basic",
+      "forSkills": [],
+      "quality": "good",
+      "material": "",
+      "weaponClass": "",
+      "listCost": 0.6,
+      "hpLost": 0,
+      "meleeModes": [],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "1c10d4df7fbec3ad",
+    "name": "Cartridges, .44M",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.05,
+      "cost": 1,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "lc": null,
+      "costOfLivingPercent": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 278",
+      "category": "ammunition",
+      "ammunition": {
+        "kind": "",
+        "fits": ".44M"
+      },
+      "equipmentQuality": "basic",
+      "forSkills": [],
+      "quality": "good",
+      "material": "",
+      "weaponClass": "",
+      "listCost": 1,
+      "hpLost": 0,
+      "meleeModes": [],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "4e024b3a5858e0b2",
+    "name": "Cartridges, .45",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.045,
+      "cost": 0.9,
+      "carried": true,
+      "equipped": false,
+      "tl": "6",
+      "lc": null,
+      "costOfLivingPercent": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 278",
+      "category": "ammunition",
+      "ammunition": {
+        "kind": "",
+        "fits": ".45"
+      },
+      "equipmentQuality": "basic",
+      "forSkills": [],
+      "quality": "good",
+      "material": "",
+      "weaponClass": "",
+      "listCost": 0.9,
+      "hpLost": 0,
+      "meleeModes": [],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "6ea98c6ac7acdfd0",
+    "name": "Cartridges, .338",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.1,
+      "cost": 2,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "lc": null,
+      "costOfLivingPercent": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 278",
+      "category": "ammunition",
+      "ammunition": {
+        "kind": "",
+        "fits": ".338"
+      },
+      "equipmentQuality": "basic",
+      "forSkills": [],
+      "quality": "good",
+      "material": "",
+      "weaponClass": "",
+      "listCost": 2,
+      "hpLost": 0,
+      "meleeModes": [],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "097c603f2cc2219c",
+    "name": "Cartridges, 5.56mm",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.027,
+      "cost": 0.54,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "lc": null,
+      "costOfLivingPercent": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 278",
+      "category": "ammunition",
+      "ammunition": {
+        "kind": "",
+        "fits": "5.56mm"
+      },
+      "equipmentQuality": "basic",
+      "forSkills": [],
+      "quality": "good",
+      "material": "",
+      "weaponClass": "",
+      "listCost": 0.54,
+      "hpLost": 0,
+      "meleeModes": [],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "c7a83f6e050c8def",
+    "name": "Cartridges, 7.62mm",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.055,
+      "cost": 1.1,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "lc": null,
+      "costOfLivingPercent": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 278",
+      "category": "ammunition",
+      "ammunition": {
+        "kind": "",
+        "fits": "7.62mm"
+      },
+      "equipmentQuality": "basic",
+      "forSkills": [],
+      "quality": "good",
+      "material": "",
+      "weaponClass": "",
+      "listCost": 1.1,
+      "hpLost": 0,
+      "meleeModes": [],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "c56818eccb8273dc",
+    "name": "Cartridges, 7.62mmS",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.037,
+      "cost": 0.74,
+      "carried": true,
+      "equipped": false,
+      "tl": "7",
+      "lc": null,
+      "costOfLivingPercent": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 278",
+      "category": "ammunition",
+      "ammunition": {
+        "kind": "",
+        "fits": "7.62mmS"
+      },
+      "equipmentQuality": "basic",
+      "forSkills": [],
+      "quality": "good",
+      "material": "",
+      "weaponClass": "",
+      "listCost": 0.74,
+      "hpLost": 0,
+      "meleeModes": [],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "f3e85953bf57d84b",
+    "name": "Shotgun Shells, 10G",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.14,
+      "cost": 2.8,
+      "carried": true,
+      "equipped": false,
+      "tl": "6",
+      "lc": null,
+      "costOfLivingPercent": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 278",
+      "category": "ammunition",
+      "ammunition": {
+        "kind": "",
+        "fits": "10G"
+      },
+      "equipmentQuality": "basic",
+      "forSkills": [],
+      "quality": "good",
+      "material": "",
+      "weaponClass": "",
+      "listCost": 2.8,
+      "hpLost": 0,
+      "meleeModes": [],
+      "rangedModes": []
+    }
+  },
+  {
+    "_id": "f1ceb020bed04ce5",
+    "name": "Shotgun Shells, 12G",
+    "type": "equipment",
+    "system": {
+      "quantity": 1,
+      "weight": 0.1,
+      "cost": 2,
+      "carried": true,
+      "equipped": false,
+      "tl": "6",
+      "lc": null,
+      "costOfLivingPercent": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 278",
+      "category": "ammunition",
+      "ammunition": {
+        "kind": "",
+        "fits": "12G"
+      },
+      "equipmentQuality": "basic",
+      "forSkills": [],
+      "quality": "good",
+      "material": "",
+      "weaponClass": "",
+      "listCost": 2,
+      "hpLost": 0,
+      "meleeModes": [],
+      "rangedModes": []
+    }
+  }
+]

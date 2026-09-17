@@ -852,7 +852,20 @@
               {{selectOptions choices.equipmentCategories selected=system.category localize=true}}
             </select>
           </label>
+          {{#if (eq system.category "ammunition")}}
+            {{!-- A box of rounds: what the weapon fires it as, and what it fits. The rounds are the quantity. --}}
+            <label data-tooltip="{{localize 'GWORLD.Ammunition.KindHint'}}">{{localize "GWORLD.Ammunition.Kind"}}
+              <select name="system.ammunition.kind" {{#unless editable}}disabled{{/unless}}>
+                {{selectOptions choices.ammunition selected=system.ammunition.kind localize=true}}
+              </select>
+            </label>
+            <label data-tooltip="{{localize 'GWORLD.Ammunition.FitsHint'}}">{{localize "GWORLD.Ammunition.Fits"}}
+              <input type="text" name="system.ammunition.fits" value="{{system.ammunition.fits}}" placeholder="9mm, .40, 12G, arrow"
+                     {{#unless editable}}disabled{{/unless}} />
+            </label>
+          {{/if}}
         </div>
+        {{#if (eq system.category "ammunition")}}<p class="ihint">{{localize "GWORLD.Ammunition.ItemHint"}}</p>{{/if}}
         <div class="ifields">
           <label data-tooltip="{{localize 'GWORLD.Item.CostOfLivingHint'}}">{{localize "GWORLD.Item.CostOfLivingPercent"}}
             <input type="number" name="system.costOfLivingPercent" value="{{system.costOfLivingPercent}}" step="1" min="0"

@@ -12,7 +12,7 @@ import {
   traitLevelName,
 } from "../../rules/traits.js";
 import type { Enchantment } from "../../rules/enchanting.js";
-import { AMMUNITION_TYPES } from "../../rules/ammunition.js";
+import { AMMUNITION_TYPES, type AmmunitionType } from "../../rules/ammunition.js";
 import { EQUIPMENT_QUALITIES, type EquipmentQuality } from "../../rules/wealth.js";
 import {
   WEAPON_CLASSES,
@@ -769,6 +769,13 @@ function rangedModeField() {
      */
     loaded: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
     /**
+     * The id of the carried ammunition item the loaded rounds came from,
+     * so a reload draws on the same box and a swap puts them back in it.
+     * Blank for a weapon loaded from nowhere in particular, as before the
+     * rounds were counted.
+     */
+    loadedFrom: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /**
      * The weight of one full reload, in pounds -- the figure after the slash
      * in the table's Weight column (Characters p. 270), which the GCA file
      * does not carry. "Ammo cost is $20 times this weight" (p. 278).
@@ -1032,6 +1039,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare missedMaintenance: number;
   declare complexity: number;
   declare equipmentQuality: EquipmentQuality;
+  declare ammunition: { kind: AmmunitionType; fits: string };
   declare equipmentModifier: number | null;
   declare forSkills: string[];
   declare meleeModes: unknown[];
@@ -1073,6 +1081,18 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
        * quality: this is the difference between a surgeon's crash kit and a
        * handful of leaves and clean mud.
        */
+      /**
+       * What a box of rounds is, for equipment filed as ammunition
+       * (Characters p. 278): the kind the weapon fires it as -- ordinary,
+       * hollow-point, APHC, APDS, bodkin, silver -- and what it fits, written
+       * the way a weapon's name states its calibre ("9mm", ".40", "12G") or
+       * "arrow" / "bolt". The rounds themselves are the item's quantity;
+       * weight and cost are per round.
+       */
+      ammunition: new fields.SchemaField({
+        kind: new fields.StringField({ required: true, nullable: false, blank: true, initial: "", choices: [...AMMUNITION_TYPES] }),
+        fits: new fields.StringField({ required: true, blank: true, initial: "" }),
+      }),
       equipmentQuality: new fields.StringField({
         required: true,
         nullable: false,

@@ -1066,6 +1066,22 @@
 .gworld.v2 .v2-stat-grid { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 12px; row-gap: 2px; margin: 0 0 8px; padding: 0 10px; font-size: 13.5px; }
 .gworld.v2 .v2-stat-grid dt { margin: 0; opacity: 0.72; white-space: nowrap; }
 .gworld.v2 .v2-stat-grid dd { margin: 0; min-width: 0; overflow-wrap: anywhere; font-family: var(--font-heading); font-size: 15px; }
+/* A count edited where it is read: a box's rounds in its row and its panel. */
+.gworld.v2 input.v2-gear-qty,
+.gworld.v2 input.v2-inline-number {
+  width: 4em;
+  height: 24px;
+  padding: 0 4px;
+  border: 1px solid var(--v2-panel-line);
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel);
+  color: var(--v2-ink);
+  font-family: var(--font-heading);
+  font-size: 14px;
+  text-align: right;
+}
+.gworld.v2 input.v2-gear-qty:focus,
+.gworld.v2 input.v2-inline-number:focus { outline: none; border-color: var(--v2-steel); box-shadow: 0 0 0 1px var(--v2-steel); }
 
 .gworld.v2 .v2-improve {
   display: flex;

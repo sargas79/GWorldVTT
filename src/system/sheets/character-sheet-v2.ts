@@ -39,6 +39,9 @@ import { asSortMode, firstLine, groupRows, selectedKey, sortRows, type SortMode 
 import { isLevelled, itemImprovement, traitImprovement } from "../sheet-v2/improvements.js";
 import { namedByPlayer } from "../picker-merge.js";
 import { gearStatistics } from "../sheet-v2/gear-statistics.js";
+import { shotsEntryFor } from "../shots-entry.js";
+import { fullLoad } from "../../rules/ammunition.js";
+import { carriedAmmunitionFor, isAmmunition } from "../ammunition.js";
 import { lacksSpecialty, traitDisplayName } from "../../rules/traits.js";
 import { successChance } from "../sheet-v2/success-chance.js";
 import { mechanicFallbackLabel, mechanicsOf } from "../sheet-v2/trait-mechanics.js";
@@ -278,7 +281,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const sort = asGearSort(this.gearSort.sort);
     const carriedGroups = ((context.gearGroups ?? []) as Array<{ key: string; label: string; rows: any[] }>).map((group) => ({
       ...group,
-      rows: sortGear(group.rows, sort, this.gearSort.descending).map((row) => ({ ...row, img: actor.items.get(row.id)?.img ?? "", canCarry: actor.items.get(row.id)?.type === "equipment" })),
+      rows: sortGear(group.rows, sort, this.gearSort.descending).map((row) => ({ ...row, img: actor.items.get(row.id)?.img ?? "", canCarry: actor.items.get(row.id)?.type === "equipment", ammunition: isAmmunition(actor.items.get(row.id)) })),
     }));
     const stored = sortGear(((context.items?.stored ?? []) as any[]).map((item) => {
       const quantity = Number(item.system?.quantity ?? 1) || 1;
@@ -313,6 +316,20 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         db: item.type === "shield" ? s.db : null,
         legality: legalityNote(s.lc ?? null),
         vehicle: s.category === "vehicle" && isRuleOn("vehicles"),
+        // A weapon with a magazine loads from the rounds carried; a box of
+        // rounds says how many it has left, and that count is edited here.
+        ...(() => {
+          const modes: any[] = Array.isArray(s.rangedModes) ? s.rangedModes : [];
+          const loadModeIndex = isRuleOn("reloading")
+            ? modes.findIndex((mode: any, index: number) => { const entry = shotsEntryFor(item, index, mode); return !entry.thrown && fullLoad(entry) > 0; })
+            : -1;
+          return {
+            loadable: loadModeIndex >= 0,
+            loadModeIndex: Math.max(0, loadModeIndex),
+            fittingBoxes: loadModeIndex >= 0 ? carriedAmmunitionFor(actor, item, loadModeIndex).length : 0,
+            isAmmunition: isAmmunition(item),
+          };
+        })(),
         descriptionHtml: await this.enriched(s.description, item),
         reference: s.reference ?? "",
       };

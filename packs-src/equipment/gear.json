@@ -6113,6 +6113,10 @@
       "description": "",
       "reference": "Basic Set: Characters p. 279",
       "category": "weapon",
+      "ammunition": {
+        "kind": "",
+        "fits": "bolt"
+      },
       "equipmentQuality": "basic",
       "forSkills": [],
       "quality": "good",
@@ -14576,7 +14580,11 @@
       "costOfLivingPercent": 0,
       "description": "",
       "reference": "Basic Set: Characters p. 275",
-      "category": "consumable",
+      "category": "ammunition",
+      "ammunition": {
+        "kind": "",
+        "fits": "arrow"
+      },
       "equipmentQuality": "basic",
       "forSkills": [],
       "quality": "good",
@@ -14603,7 +14611,11 @@
       "costOfLivingPercent": 0,
       "description": "",
       "reference": "Basic Set: Characters p. 276",
-      "category": "consumable",
+      "category": "ammunition",
+      "ammunition": {
+        "kind": "",
+        "fits": "bolt"
+      },
       "equipmentQuality": "basic",
       "forSkills": [],
       "quality": "good",

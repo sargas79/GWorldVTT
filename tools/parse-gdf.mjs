@@ -1957,8 +1957,20 @@ export function weaponClassOf(mods) {
   return "";
 }
 
+/**
+ * What a record of rounds fits, where it is one: arrows fit bows and bolts
+ * crossbows (Characters pp. 275-276). Blank for everything else.
+ */
+function ammunitionFitOf(name) {
+  if (/^arrows?\b/i.test(name)) return "arrow";
+  if (/^(crossbow )?bolts?\b/i.test(name)) return "bolt";
+  return "";
+}
+
 function categoryOf(name, armed) {
   if (armed) return "weapon";
+  // Rounds are carried to be loaded, not merely used up.
+  if (ammunitionFitOf(name)) return "ammunition";
   // A cutting torch's gas bottle is used up; the torch itself is not.
   if (/gas bottle/i.test(name)) return "consumable";
   if (TOOL_NAMES.test(name)) return "tool";
@@ -2210,6 +2222,8 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
         // instead, and that figure is the book's.
         weight: common.weight || displayWeight(r.text),
         category: categoryOf(name, armed),
+        // Only rounds say what they fit; the field's default covers the rest.
+        ...(ammunitionFitOf(name) ? { ammunition: { kind: "", fits: ammunitionFitOf(name) } } : {}),
         equipmentQuality: "basic",
         forSkills: [],
         // The table's price buys good quality (Characters p. 274), and the
