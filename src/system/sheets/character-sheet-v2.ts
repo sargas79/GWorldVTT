@@ -37,6 +37,7 @@ import { weaknessOf } from "../../rules/weakness.js";
 import { traitLevelName } from "../../rules/traits.js";
 import { asSortMode, firstLine, groupRows, selectedKey, sortRows, type SortMode } from "../sheet-v2/list-view.js";
 import { isLevelled, itemImprovement, traitImprovement } from "../sheet-v2/improvements.js";
+import { namedByPlayer } from "../picker-merge.js";
 import { successChance } from "../sheet-v2/success-chance.js";
 import { mechanicFallbackLabel, mechanicsOf } from "../sheet-v2/trait-mechanics.js";
 import { previewAttack } from "../roll.js";
@@ -946,6 +947,9 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         selfControl: system.selfControl ?? null,
         weakness: weaknessOf({ name: String(item.name ?? "") }) !== null,
         applied: isReadTrait(String(item.name ?? ""), system.talentSkills ?? []),
+        // A quirk's or a perk's name is the player's to write in the panel.
+        playerNamed: namedByPlayer(item),
+        namePlaceholder: L(category === "quirk" || category === "perk" ? `GWORLD.Builder.NamePlaceholder.${category}` : "GWORLD.Builder.NamePlaceholder.trait"),
         mechanics,
         summary: firstLine(system.description),
         descriptionHtml: await this.enriched(system.description, item),

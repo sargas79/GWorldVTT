@@ -94,7 +94,13 @@
       {{#each v2.traits.rows as |row|}}
         <article class="v2-panel v2-detail v2-cat-{{row.category}}" data-v2-detail="traits:{{row.key}}" data-item-id="{{row.id}}" {{#unless row.selected}}hidden{{/unless}}>
           <header class="v2-detail-head v2-detail-plain">
-            <h3>{{row.name}}</h3>
+            {{#if (and @root.editable row.playerNamed)}}
+              {{!-- A quirk or a perk is the player's own words, written here. --}}
+              <input type="text" class="v2-name-input" value="{{row.name}}" placeholder="{{row.namePlaceholder}}"
+                     id="{{@root.sheetId}}-{{row.id}}-name" data-item-text="name" aria-label="{{localize 'GWORLD.Item.Name'}}">
+            {{else}}
+              <h3>{{row.name}}</h3>
+            {{/if}}
             <span class="v2-detail-cp{{#if row.negative}} v2-bad{{/if}}">{{row.points}} CP</span>
           </header>
           <span class="v2-cat-badge v2-cat-badge-{{row.category}}">{{row.categoryLabel}}</span>

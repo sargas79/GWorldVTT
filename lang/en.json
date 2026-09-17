@@ -844,7 +844,13 @@
       "Review": {
         "Category": "Category",
         "Chosen": "Chosen",
-        "NoPoints": "no points"
+        "NoPoints": "no points",
+        "Unnamed": "{count} still carry the name they were made with. Say what they are, on their step."
+      },
+      "NamePlaceholder": {
+        "quirk": "What the quirk is, in your own words",
+        "perk": "What the perk is",
+        "trait": "What this trait is"
       }
     },
     "Undo": {

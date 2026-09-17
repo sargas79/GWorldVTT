@@ -8,7 +8,7 @@
  */
 
 import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
-import { customItemData } from "../picker-merge.js";
+import { customItemData, customKindKey } from "../picker-merge.js";
 import { rememberFocus, restoreFocus, type RememberedFocus } from "../focus-memory.js";
 import { techniqueDefaultLabel } from "../item-summary.js";
 import { CharacterBuilder } from "../apps/character-builder.js";
@@ -1210,6 +1210,22 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           return;
         }
         void item.update({ [field]: Math.max(0, value) });
+      });
+    }
+
+    // A name the player writes in the row: a quirk's or a perk's, or a custom
+    // trait's. Blank is not a name, so an emptied field is put back.
+    for (const input of this.element.querySelectorAll<HTMLInputElement>("input[data-item-text]")) {
+      input.addEventListener("change", () => {
+        const item = this.itemFrom(input);
+        const field = input.dataset.itemText;
+        if (!item || !field) return;
+        const value = input.value.trim();
+        if (!value && field === "name") {
+          void this.render();
+          return;
+        }
+        void item.update({ [field]: value });
       });
     }
 
@@ -3213,10 +3229,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // The button under Disadvantages makes a disadvantage: the category is
     // part of what was asked for, not something to set afterwards.
     const category = target.dataset.category;
+    const custom = { itemType: type, ...(category ? { category } : {}) };
+    // Named for what it is -- "New quirk" -- as the picker names its custom
+    // entries, rather than "New Trait" for every category alike.
+    const kind = category ? game.i18n.localize(customKindKey(custom)).toLowerCase() : label;
     // The same defaults the picker's custom entries get, from one place: a
     // quirk is -1 and a perk 1, and building them here as well is how this
     // button used to make quirks that cost nothing.
-    const data = customItemData({ itemType: type, ...(category ? { category } : {}) }, `New ${label}`);
+    const data = customItemData(custom, game.i18n.format("GWORLD.Picker.NewCustom", { kind }));
     await this.actor.createEmbeddedDocuments("Item", [data]);
   }
 

@@ -134,7 +134,14 @@
         <ul class="gb-list">
           {{#each items as |item|}}
             <li class="gb-row" data-item-id="{{item.id}}">
-              <span class="gb-name">{{item.name}}{{#if item.levelName}} <span class="gb-level-name">&middot; {{item.levelName}}</span>{{/if}}</span>
+              {{#if item.nameEditable}}
+                {{!-- A quirk or a perk is the player's own words, written here. --}}
+                <input type="text" class="gb-name gb-name-input" value="{{item.name}}" placeholder="{{item.namePlaceholder}}"
+                       id="{{@root.appId}}-{{item.id}}-name" data-item-name="{{item.id}}"
+                       aria-label="{{localize 'GWORLD.Item.Name'}}" />
+              {{else}}
+                <span class="gb-name">{{item.name}}{{#if item.levelName}} <span class="gb-level-name">&middot; {{item.levelName}}</span>{{/if}}</span>
+              {{/if}}
               <span class="gb-detail">{{item.detail}}</span>
               {{#if item.stepper}}
                 {{!-- Levels move one at a time, and stop where the book stops. --}}
@@ -195,6 +202,9 @@
             </div>
           {{/if}}
         </div>
+        {{#if review.unnamed.length}}
+          <p class="gb-incomplete">{{localize "GWORLD.Builder.Review.Unnamed" count=review.unnamed.length}}</p>
+        {{/if}}
         <div class="v2-stat-pair">
           <div class="v2-stat">
             <span class="v2-stat-label">{{localize "GWORLD.Points.Spent"}}</span>

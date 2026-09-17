@@ -23,6 +23,7 @@ import { sourceCollections } from "../compendium-sources.js";
 import {
   amountKind,
   customItemData,
+  customKindKey,
   existingPoints,
   levelCeiling,
   planAddition,
@@ -257,8 +258,7 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
   #customLabel(): string {
     const custom = this.#custom;
     if (!custom) return "";
-    const key = custom.category ? `GWORLD.Picker.Kind.${custom.category}` : `TYPES.Item.${custom.itemType}`;
-    return game.i18n.localize(key).toLowerCase();
+    return game.i18n.localize(customKindKey(custom)).toLowerCase();
   }
 
   /** Makes a custom entry from the search box: a quirk at -1 point and no levels, anything else blank. */

@@ -921,6 +921,23 @@
 .gworld.v2 .v2-detail { gap: 10px; padding: 0 0 12px; overflow: hidden; }
 .gworld.v2 .v2-detail > :not(.v2-detail-head) { margin-left: 14px; margin-right: 14px; }
 .gworld.v2 .v2-detail[hidden] { display: none; }
+/* A name the player writes, in the panel's own heading. */
+.gworld.v2 .v2-detail-head input.v2-name-input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--v2-radius);
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 600;
+}
+.gworld.v2 .v2-detail-head input.v2-name-input:hover { border-color: var(--v2-panel-line); }
+.gworld.v2 .v2-detail-head input.v2-name-input:focus { outline: none; border-color: var(--v2-steel); box-shadow: 0 0 0 1px var(--v2-steel); }
+.gworld.v2 .v2-detail-head input.v2-name-input::placeholder { color: var(--v2-ink-muted); font-style: italic; font-weight: 400; font-size: 15px; }
 .gworld.v2 .v2-detail-head {
   display: flex;
   justify-content: space-between;
@@ -1734,6 +1751,22 @@
 .gworld.v2.gworld-builder .gb-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-heading); font-size: 16px; }
 .gworld.v2.gworld-builder .gb-detail { font-size: 12px; color: var(--v2-ink-muted); white-space: nowrap; }
 .gworld.v2.gworld-builder .gb-spend { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 12px; color: var(--v2-ink-muted); }
+/* A name the player writes: a quirk's, a perk's, a custom trait's. */
+.gworld.v2.gworld-builder input.gb-name-input {
+  width: 100%;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--v2-radius);
+  background: transparent;
+  color: var(--v2-ink);
+  font-family: var(--font-heading);
+  font-size: 16px;
+}
+.gworld.v2.gworld-builder input.gb-name-input:hover { border-color: var(--v2-panel-line); background: #fbf8f1; }
+.gworld.v2.gworld-builder input.gb-name-input:focus { outline: none; border-color: var(--v2-steel); background: #fbf8f1; box-shadow: 0 0 0 1px var(--v2-steel); }
+.gworld.v2.gworld-builder input.gb-name-input::placeholder { color: var(--v2-ink-muted); font-style: italic; font-weight: 400; }
+.gworld.v2.gworld-builder .gb-incomplete { margin: 10px 0 0; padding: 8px 10px; border-left: 4px solid var(--v2-red, #a33); border-radius: var(--v2-radius); background: var(--v2-panel-2); font-size: 13px; }
 .gworld.v2.gworld-builder .gb-level-name { font-family: var(--font-body); font-size: 12px; color: var(--v2-ink-muted); }
 /* A levelled trait steps a level at a time; the buttons go dim where the book stops. */
 .gworld.v2.gworld-builder .gb-stepper { gap: 2px; }
