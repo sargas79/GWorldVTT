@@ -1,13 +1,24 @@
-{{!-- Shared by both character sheets: the attributes tab's campaign. --}}
+{{!-- Shared by both character sheets: the attributes tab's campaign. A term
+     the party has set is read from it and cannot be typed over. --}}
 <div class="isec">
-  <div class="ish"><span class="num">04</span>{{localize "GWORLD.Section.Campaign"}}</div>
+  <div class="ish">
+    <span class="num">04</span>{{localize "GWORLD.Section.Campaign"}}
+    {{#if derived.campaign.party}}
+      <button type="button" class="ihint campaign-lock" data-action="openParty" style="background: none; border: 0; padding: 0; cursor: pointer"
+              data-tooltip="{{localize 'GWORLD.Party.SetByHint'}}">{{localize "GWORLD.Party.SetBy" party=derived.campaign.party.name}}</button>
+    {{/if}}
+  </div>
   <div class="g4">
     <div class="fld">
       <span class="fl">{{localize "GWORLD.Field.TechLevel"}}</span>
       <div class="fi">
+        {{#if derived.campaign.locked.tl}}
+          <span>{{system.tl}}</span>
+        {{else}}
         <input type="number" name="system.tl" value="{{system.tl}}" step="1" min="0"
                style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
                {{#unless editable}}disabled{{/unless}}>
+        {{/if}}
       </div>
     </div>
     <div class="fld">
@@ -21,17 +32,25 @@
     <div class="fld">
       <span class="fl">{{localize "GWORLD.Field.StartingPoints"}}</span>
       <div class="fi">
+        {{#if derived.campaign.locked.startingPoints}}
+          <span>{{system.points.starting}}</span>
+        {{else}}
         <input type="number" name="system.points.starting" value="{{system.points.starting}}" step="5" min="0"
                style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
                {{#unless editable}}disabled{{/unless}}>
+        {{/if}}
       </div>
     </div>
     <div class="fld">
       <span class="fl">{{localize "GWORLD.Field.DisadvantageLimit"}}</span>
       <div class="fi">
+        {{#if derived.campaign.locked.disadvantageLimit}}
+          <span>{{system.points.disadvantageLimit}}</span>
+        {{else}}
         <input type="number" name="system.points.disadvantageLimit" value="{{system.points.disadvantageLimit}}" step="5" min="0"
                style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
                {{#unless editable}}disabled{{/unless}}>
+        {{/if}}
       </div>
     </div>
   </div>

@@ -37,7 +37,8 @@ export function isParty(actor: any): boolean {
 
 /** Every party in the world, in the sidebar's order. */
 export function worldParties(): any[] {
-  const actors = (game as any)?.actors;
+  // Read off the global so a test without Foundry gets an empty world, not a throw.
+  const actors = (globalThis as any).game?.actors;
   if (!actors) return [];
   return [...actors].filter((a: any) => a?.type === PARTY_TYPE);
 }
@@ -76,7 +77,7 @@ export function partyOf(actor: any): any | null {
   if (!uuid) return null;
   index ??= buildIndex();
   const id = index.get(uuid);
-  return id ? ((game as any).actors?.get?.(id) ?? null) : null;
+  return id ? ((globalThis as any).game?.actors?.get?.(id) ?? null) : null;
 }
 
 /** A world actor by UUID, or null. */

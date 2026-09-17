@@ -25,6 +25,12 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   Point totals and a log of awarded points by session. Steppers for skill and
   trait levels. A guided character build. Templates, racial templates and
   meta-traits that can be removed cleanly, and GM-made templates.
+- **The party:** a Party actor whose members nest under it in the Actors
+  sidebar. Its sheet shows every member's hit points, fatigue, Will,
+  Perception, speed, defenses, DR, load, points and conditions, the best of
+  every skill between them and the languages they share, and holds the
+  campaign's terms -- starting points, disadvantage limit, Tech Level -- which
+  the members' sheets then read from it, beside the world's own settings.
 - **Traits:** the sheet reads and applies over fifty advantages and
   disadvantages, including Combat Reflexes, High Pain Threshold, DR, the
   Talents, Acute Senses and the reaction modifiers. The traits tab marks which

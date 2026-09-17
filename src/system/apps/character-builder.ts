@@ -17,6 +17,7 @@
  */
 
 import { SYSTEM_ID } from "../constants.js";
+import { partyOf } from "../party.js";
 import { rememberFocus, restoreFocus, type RememberedFocus } from "../focus-memory.js";
 import { CompendiumPicker } from "./compendium-picker.js";
 import { clampedLevels, steppedLevels } from "../advancement.js";
@@ -114,6 +115,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       finish: CharacterBuilder.#onFinish,
       applyTemplate: CharacterBuilder.#onApplyTemplate,
       removeTemplate: CharacterBuilder.#onRemoveTemplate,
+      openParty: CharacterBuilder.#onOpenParty,
     },
   };
 
@@ -256,6 +258,11 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     };
   }
 
+  /** Opens the party whose terms the first step reads. */
+  static async #onOpenParty(this: CharacterBuilder) {
+    await partyOf(this.#actor)?.sheet?.render(true);
+  }
+
   override async _prepareContext(): Promise<Record<string, unknown>> {
     const step = this.#current;
     const derived = this.#actor.system?.derived ?? {};
@@ -323,6 +330,8 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       },
       overBudget: points.overBudget ?? false,
       overDisadvantageLimit: (points.disadvantageTotal ?? 0) > (points.disadvantageLimit ?? 0),
+      // Which of the campaign's terms the party has set, and so cannot be typed here.
+      campaign: derived.campaign ?? { party: null, locked: {} },
       review: step.id === "review" ? this.#review() : null,
     };
   }

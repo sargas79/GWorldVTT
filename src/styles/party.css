@@ -163,6 +163,13 @@
   .gworld.party.v2 .party-campaign-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* ── a term set by the party, on the character's own sheets ────────────── */
+
+.gworld.v2 .v2-campaign-lock,
+.gworld .gb-fields .v2-campaign-lock { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--v2-gold); }
+.gworld.v2 .v2-progress-summary .v2-campaign-field .v2-campaign-lock { margin-top: 2px; }
+.gworld .gb-fields .gb-locked { font-family: var(--font-heading); font-size: 20px; font-weight: 600; }
+
 /* ── the sidebar ───────────────────────────────────────────────────────── */
 
 /* A party's row holds its members, as a folder holds its contents. */

@@ -51,21 +51,40 @@
 
     {{#if (eq stepId "points")}}
       <section class="v2-panel">
+        {{!-- A term the party has set is read from it: no field, so nothing is written over it. --}}
+        {{#if campaign.party}}
+          <p class="v2-note">
+            <button type="button" class="v2-link v2-campaign-lock" data-action="openParty"
+                    data-tooltip="{{localize 'GWORLD.Party.SetByHint'}}">{{localize "GWORLD.Party.SetBy" party=campaign.party.name}}</button>
+          </p>
+        {{/if}}
         <div class="gb-fields">
           <label class="gb-field">
             <span class="v2-stat-label">{{localize "GWORLD.Points.Starting"}}</span>
+            {{#if campaign.locked.startingPoints}}
+              <b class="gb-locked">{{system.points.starting}}</b>
+            {{else}}
             <input type="number" step="5" min="0" value="{{system.points.starting}}"
                    id="{{appId}}-starting" data-path="system.points.starting" />
+            {{/if}}
           </label>
           <label class="gb-field">
             <span class="v2-stat-label">{{localize "GWORLD.Section.DisadvantageLimit"}}</span>
+            {{#if campaign.locked.disadvantageLimit}}
+              <b class="gb-locked">{{system.points.disadvantageLimit}}</b>
+            {{else}}
             <input type="number" step="5" min="0" value="{{system.points.disadvantageLimit}}"
                    id="{{appId}}-limit" data-path="system.points.disadvantageLimit" />
+            {{/if}}
           </label>
           <label class="gb-field">
             <span class="v2-stat-label">{{localize "GWORLD.Attribute.TL"}}</span>
+            {{#if campaign.locked.tl}}
+              <b class="gb-locked">{{system.tl}}</b>
+            {{else}}
             <input type="number" step="1" min="0" value="{{system.tl}}"
                    id="{{appId}}-tl" data-path="system.tl" />
+            {{/if}}
           </label>
         </div>
       </section>
