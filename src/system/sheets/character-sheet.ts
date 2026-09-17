@@ -9,6 +9,7 @@
 
 import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
 import { customItemData } from "../picker-merge.js";
+import { rememberFocus, restoreFocus, type RememberedFocus } from "../focus-memory.js";
 import { techniqueDefaultLabel } from "../item-summary.js";
 import { CharacterBuilder } from "../apps/character-builder.js";
 import { combatStyle } from "../settings.js";
@@ -1136,8 +1137,33 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * Wires the skill filter. It is deliberately not a form field — a `name`
    * here would be submitted onto the actor on every keystroke.
    */
+  /**
+   * Where the focus was when this render started.
+   *
+   * The sheet submits on change, so an edited attribute re-renders the sheet
+   * and the render replaces whatever `Tab` has just moved to. Protected rather
+   * than private so the V2 sheet, which extends this one, shares the one copy.
+   */
+  protected focusMemory: RememberedFocus | null = null;
+
+  override async _preRender(context: object, options: object): Promise<void> {
+    await super._preRender(context, options);
+    // Read before the DOM is replaced, and deliberately whatever is focused
+    // now rather than whatever was edited: on `Tab` the browser has already
+    // moved to the next field, and that is the one to land on.
+    this.focusMemory = rememberFocus(this.element, document.activeElement);
+  }
+
   override async _onRender(context: object, options: object): Promise<void> {
     await super._onRender(context, options);
+
+    // Put the caret back where the render took it from, unless the player has
+    // since started typing somewhere else.
+    restoreFocus(this.element, this.focusMemory, {
+      active: document.activeElement,
+      body: document.body,
+    });
+    this.focusMemory = null;
 
     // What add-on modules put on the sheet: their sections' listeners and
     // their buttons on item rows, for whoever owns the character.

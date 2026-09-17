@@ -17,6 +17,7 @@
  */
 
 import { SYSTEM_ID } from "../constants.js";
+import { rememberFocus, restoreFocus, type RememberedFocus } from "../focus-memory.js";
 import { CompendiumPicker } from "./compendium-picker.js";
 import { builderTypesFor } from "../data-extensions.js";
 import {
@@ -314,8 +315,26 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     await super._onClose(options);
   }
 
+  /** Where the focus was when this render started; see focus-memory. */
+  #focusMemory: RememberedFocus | null = null;
+
+  override async _preRender(context: object, options: object): Promise<void> {
+    await super._preRender(context, options);
+    // The attribute fields write straight through to the actor, and the actor
+    // update redraws this window -- taking the focus with it unless it is put
+    // back. On `Tab` the browser has already moved to the next field, which is
+    // the one to land on.
+    this.#focusMemory = rememberFocus(this.element, document.activeElement);
+  }
+
   override async _onRender(context: object, options: object): Promise<void> {
     await super._onRender(context, options);
+
+    restoreFocus(this.element, this.#focusMemory, {
+      active: document.activeElement,
+      body: document.body,
+    });
+    this.#focusMemory = null;
 
     // The number fields write straight through to the actor. There is no
     // submit button because there is nothing to submit: this edits the sheet.

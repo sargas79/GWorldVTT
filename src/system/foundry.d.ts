@@ -151,6 +151,7 @@ declare global {
             _preparePartContext(partId: string, context: object, options: object): Promise<object>;
             _configureRenderParts(options: object): Record<string, unknown>;
             _onFirstRender(context: object, options: object): Promise<void>;
+            _preRender(context: object, options: object): Promise<void>;
             _onRender(context: object, options: object): Promise<void>;
             _onClose(options: object): Promise<void>;
           };
