@@ -8,7 +8,47 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { targetedTokens } from "./targets.js";
 import type { AimLoss } from "../rules/aim.js";
+
+/** A module's bonus for aiming at one foe, such as magnifying optics trained on them (since API 1.63.0). */
+export interface AimTargetBonus {
+  label: string;
+  value: number;
+  key?: string;
+}
+
+/** The aim an actor holds (since API 1.63.0): turns, bracing, whom at, and module bonuses for that foe. */
+export interface AimState {
+  turns: number;
+  braced: boolean;
+  /** The UUID of the token aimed at, blank where nobody was targeted. */
+  target: string;
+  bonuses: AimTargetBonus[];
+}
+
+/** The aim as the actor stores it. */
+export function aimStateOf(actor: any): AimState {
+  const aim = actor?.system?.aim ?? {};
+  return {
+    turns: Math.max(0, Math.floor(Number(aim.turns ?? 0))),
+    braced: aim.braced === true,
+    target: String(aim.target ?? ""),
+    bonuses: (Array.isArray(aim.bonuses) ? aim.bonuses : [])
+      .filter((b: any) => b && Number.isFinite(Number(b.value)) && Number(b.value) !== 0)
+      .map((b: any) => ({ label: String(b.label ?? ""), value: Number(b.value), ...(b.key ? { key: String(b.key) } : {}) })),
+  };
+}
+
+/**
+ * The lines a shot takes from a module's per-target aim bonuses: only while
+ * aiming, and only at the foe the aim was taken at.
+ */
+export function aimTargetLines(aim: AimState, turnsAiming: number, targetUuid: string): Array<{ label: string; value: number; key: string }> {
+  if (!(turnsAiming > 0) || !aim.bonuses.length) return [];
+  if (aim.target && aim.target !== targetUuid) return [];
+  return aim.bonuses.map((b) => ({ label: b.label, value: b.value, key: b.key || "aimTarget" }));
+}
 
 /** Turns spent aiming so far, or 0 for somebody not aiming. */
 export function aimTurnsOf(actor: any): number {
@@ -27,7 +67,7 @@ export async function loseAim(actor: any, reason: AimLoss): Promise<void> {
   const turns = Number(actor.system?.aim?.turns ?? 0);
   if (!(turns > 0)) return;
 
-  await actor.update({ "system.aim.turns": 0 });
+  await actor.update({ "system.aim.turns": 0, "system.aim.target": "", "system.aim.bonuses": [] });
   if (reason !== "moved") {
     ui.notifications?.info(
       game.i18n.format(`GWORLD.Aim.Lost.${reason}`, { name: String(actor.name ?? "") }),
@@ -42,6 +82,16 @@ export async function loseAim(actor: any, reason: AimLoss): Promise<void> {
 export function registerAimTracking(): void {
   Hooks.on("updateActor", (actor: any, changes: any, _options: unknown, userId: string) => {
     if (userId !== game.user?.id) return;
+    // An aim taken at someone new starts afresh: whom it is at, and no bonuses
+    // a module gave for the last foe (since API 1.63.0).
+    const turns = changes?.system?.aim?.turns;
+    if (typeof turns === "number" && turns > 0 && actor?.isOwner) {
+      const targets = targetedTokens();
+      const uuid = targets.length === 1 ? String(targets[0]?.document?.uuid ?? targets[0]?.uuid ?? "") : "";
+      if (uuid !== String(actor.system?.aim?.target ?? "")) {
+        void actor.update({ "system.aim.target": uuid, "system.aim.bonuses": [] });
+      }
+    }
     const maneuver = changes?.system?.maneuver;
     if (typeof maneuver !== "string" || maneuver === "aim") return;
     void loseAim(actor, "moved");

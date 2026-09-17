@@ -795,6 +795,17 @@ Two fields a module may read (since 1.62.0):
   `soleDr` on the foot. `gworld.armorDr` carries `fromBelow`. Armour spent by
   a blow is its ablative DR, which `items.restoreDr` gives back; the system
   keeps no other hit points for armour.
+- **Keyed attack lines** (since 1.63.0): the system's ranged lines carry a
+  `key` a listener can find them by in any language: `speedRange`, `bulk`
+  (with `situation` `moveAndAttack` or `closeCombat`), `accuracy` (with
+  `scope`, the scope's share of it, where a scope counts), `aim` (extra turns) and `braced`.
+  `gworld.attackModifiers` also receives `movement: { maneuver, yards }` (yards
+  from the token's movement history, null where the map can't say) and `aim:
+  { turns, braced, target, bonuses }`. A module aiding an aim at one foe writes
+  `system.aim.bonuses` (`[{ label, value, key? }]`); a ranged attack takes
+  them, keyed `aimTarget` unless given a key, only while aiming and only at
+  `system.aim.target`. Both are cleared when the aim is lost, and when it is
+  taken at a different foe.
 - **Aimed, then guided** (since 1.63.0): a ranged mode's `aimingSkill` is a
   skill the firer rolls first (tagged `aiming`, through
   `gworld.successRollModifiers`); only on a success is the attack rolled, at
