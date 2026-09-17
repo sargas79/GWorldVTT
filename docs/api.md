@@ -795,6 +795,15 @@ Two fields a module may read (since 1.62.0):
   `soleDr` on the foot. `gworld.armorDr` carries `fromBelow`. Armour spent by
   a blow is its ablative DR, which `items.restoreDr` gives back; the system
   keeps no other hit points for armour.
+- **Modifier areas** (since 1.63.0): `areas.add(scene, { id?, label, center,
+  radius, region, lines, expires })` keeps an area on a scene: a circle
+  (`center` in scene pixels, `radius` in yards) or a scene region by id. Each
+  line is `{ label, value, rolls?, applies? }`: `rolls` names roll kinds and
+  tags as a condition modifier's do, and `applies` is `inside` (the roller
+  stands in it), `through` (the line from the roller to the one token
+  targeted, or the roll's `subject`, crosses it) or `both`. `expires` is a
+  world time in seconds. Every success roll takes the lines of the areas that
+  apply. `areas.remove(scene, id)` and `areas.list(scene)`.
 - **Detection rolls** (since 1.63.0): a sense roll from the sheet is tagged
   with its sense (`vision`, `hearing`, `tasteSmell`, `touch`) and `detection`,
   and so are Observation (also `vision`), Search and Tracking rolls; a

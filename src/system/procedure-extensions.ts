@@ -21,6 +21,7 @@
  * roll, the sheet or the turn goes on without it.
  */
 
+import { sceneAreaLines } from "./modifier-areas.js";
 import { SYSTEM_ID } from "./constants.js";
 import {
   callCombatHook,
@@ -392,6 +393,8 @@ export function successRollModifiers(context: SuccessRollContext): ModifierLine[
   const ctx: SuccessRollContext = { ...context, tags: [...context.tags], modifiers: [...context.modifiers] };
   ctx.modifiers.push(...conditionModifiers(ctx.actor, ctx.kind, ctx.tags));
   if (ctx.tags.includes("detection")) ctx.modifiers.push(...detectionModifiers(ctx));
+  // Smoke, fog and the like on the scene (since 1.63.0).
+  ctx.modifiers.push(...sceneAreaLines(ctx));
   if (ctx.kind === "defense") {
     for (const defense of ["dodge", "parry", "block"]) {
       if (ctx.tags.includes(defense)) ctx.modifiers.push(...maneuverOptionDefenseLines(ctx.actor, defense));

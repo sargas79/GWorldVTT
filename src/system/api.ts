@@ -47,6 +47,7 @@ import type { Poison } from "../rules/poison.js";
 import { undoKnockdown } from "./knockdown.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
 import { irradiate, shock } from "./hazards.js";
+import { addArea, listAreas, removeArea } from "./modifier-areas.js";
 import { rollFrightCheck } from "./fright.js";
 import { spendUnspentPoints } from "./bonus-points.js";
 import {
@@ -315,6 +316,8 @@ export interface GWorldApi {
   readonly migration: typeof migrationApi;
   /** Hazards as the GM tool runs them (since 1.63.0): electrical shocks and radiation doses. */
   readonly hazards: typeof hazardsApi;
+  /** Areas on a scene that change rolls made in or through them (since 1.63.0). */
+  readonly areas: typeof areasApi;
   /** The hooks the API fires, by name. */
   readonly hooks: { readonly registerRules: string; readonly ready: string };
   /** Whether this API satisfies a semver range, as a module's manifest would declare it. */
@@ -360,6 +363,9 @@ async function rollHitLocation(options: { actor?: any; damageType?: string | nul
 /** The hazards namespace (since 1.63.0): an electrical shock and a dose of radiation, as the GM tool runs them. */
 const hazardsApi = Object.freeze({ shock, irradiate });
 
+/** The areas namespace (since 1.63.0): smoke, fog, a field that blinds a sense. */
+const areasApi = Object.freeze({ add: addArea, remove: removeArea, list: listAreas });
+
 /** The points namespace: point pools, and from 1.39.0 charging a character's unspent points. */
 const points = Object.freeze({ ...pointsApi, spendUnspent: spendUnspentPoints });
 
@@ -382,6 +388,7 @@ export function createApi(): GWorldApi {
     magic,
     migration: migrationApi,
     hazards: hazardsApi,
+    areas: areasApi,
     chat: chatApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK }),
     satisfies: (range: string) => satisfiesApiRange(API_VERSION, range),
