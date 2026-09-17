@@ -362,3 +362,15 @@ export function previousTechniquePoints(points: number, difficulty: TechniqueDif
   const atLevels = techniquePointCost(levels, difficulty);
   return atLevels < from ? atLevels : techniquePointCost(levels - 1, difficulty);
 }
+
+/** The Environment Suit skills a suit may need (Characters p. 192). */
+export const ENVIRONMENT_SUITS = Object.freeze(["Battlesuit", "Diving Suit", "NBC Suit", "Vacc Suit"] as const);
+
+/**
+ * "When rolling against DX or any DX-based skill while suited up, use the lower
+ * of your Environment Suit skill and your actual skill level" (Characters
+ * p. 192). Null where no worn suit calls for a skill.
+ */
+export function suitedLevel(level: number, suitSkill: number | null): number {
+  return suitSkill === null ? level : Math.min(level, suitSkill);
+}

@@ -403,6 +403,11 @@ export function successRollModifiers(context: SuccessRollContext): ModifierLine[
   if (ctx.tags.includes("detection")) ctx.modifiers.push(...detectionModifiers(ctx));
   // Smoke, fog and the like on the scene (since 1.63.0).
   ctx.modifiers.push(...sceneAreaLines(ctx));
+  // A DX roll while suited up is held to the Environment Suit skill (Characters p. 192).
+  const suit = ctx.actor?.system?.derived?.environmentSuit;
+  if (ctx.kind === "attribute" && ctx.tags.includes("DX") && suit && typeof suit.level === "number" && ctx.base > suit.level) {
+    ctx.modifiers.push({ label: game.i18n.format("GWORLD.Armor.Suited", { skill: String(suit.skill), level: suit.level }), value: suit.level - ctx.base });
+  }
   if (ctx.kind === "defense") {
     for (const defense of ["dodge", "parry", "block"]) {
       if (ctx.tags.includes(defense)) ctx.modifiers.push(...maneuverOptionDefenseLines(ctx.actor, defense));

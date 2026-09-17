@@ -1977,7 +1977,10 @@
       "NoPeripheralHint": "A great helm gives the wearer No Peripheral Vision while worn (Characters p. 283).",
       "BluntTrauma": "blunt trauma",
       "StruckFrom": "Struck from",
-      "FromBelow": "From below"
+      "FromBelow": "From below",
+      "EnvironmentSuit": "Environment Suit skill",
+      "EnvironmentSuitHint": "The skill this suit is operated with. While it is worn, DX and DX-based skills use the lower of that skill and their own level (Characters p. 192).",
+      "Suited": "Suited up ({skill} {level})"
     },
     "Shield": {
       "DB": "Defense Bonus",
@@ -3228,7 +3231,10 @@
       "hearing": "Hearing",
       "tasteSmell": "Taste/Smell",
       "touch": "Touch",
-      "Missing": "no roll"
+      "Missing": "no roll",
+      "Range": "Range ({yards} yd)",
+      "Telescopic": "Telescopic Vision",
+      "TelescopicZoomed": "Telescopic Vision, zoomed in"
     },
     "Attack": {
       "SequenceTarget": "Attack {index} of {count}: target",

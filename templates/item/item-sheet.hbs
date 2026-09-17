@@ -474,6 +474,15 @@
           <input type="number" name="system.soleDr" value="{{system.soleDr}}" step="1" min="0" placeholder="—"
                  {{#unless editable}}disabled{{/unless}} />
         </label>
+        <label data-tooltip="{{localize 'GWORLD.Armor.EnvironmentSuitHint'}}">{{localize "GWORLD.Armor.EnvironmentSuit"}}
+          <select name="system.environmentSuit" {{#unless editable}}disabled{{/unless}}>
+            <option value="" {{#unless system.environmentSuit}}selected{{/unless}}>—</option>
+            <option value="Battlesuit" {{#if (eq system.environmentSuit "Battlesuit")}}selected{{/if}}>Battlesuit</option>
+            <option value="Diving Suit" {{#if (eq system.environmentSuit "Diving Suit")}}selected{{/if}}>Diving Suit</option>
+            <option value="NBC Suit" {{#if (eq system.environmentSuit "NBC Suit")}}selected{{/if}}>NBC Suit</option>
+            <option value="Vacc Suit" {{#if (eq system.environmentSuit "Vacc Suit")}}selected{{/if}}>Vacc Suit</option>
+          </select>
+        </label>
       </div>
       {{!-- What the DR is made of, beyond how much of it there is
             (Characters p. 47). --}}

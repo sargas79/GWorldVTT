@@ -833,6 +833,23 @@ Two fields a module may read (since 1.62.0):
   them, keyed `aimTarget` unless given a key, only while aiming and only at
   `system.aim.target`. Both are cleared when the aim is lost, and when it is
   taken at a different foe.
+- **Telescopic Vision and Vision rolls** (since 1.65.0): a Vision roll from
+  the sheet with one token targeted takes that token's SM (`key` `size`) and
+  the range penalty (`speedRange`), less what `traitEffects.telescopicVision`
+  ignores (`telescopic`): a point a level, two while the roller's Aim is on
+  that token. A module's worn optics that raise `telescopicVision` count here.
+  The trait itself (not optics) also works as a scope on ranged attacks, the
+  better of it and the weapon's scope counting, unless bought with No
+  Targeting.
+- **Attack roll tags** (since 1.65.0): `gworld.attackModifiers` gets `tags`;
+  push to it, and the attack's success roll carries them, so a condition's or
+  an area's lines naming them apply (a seeker's sense, say).
+- **Environment suits** (since 1.65.0): armour's `environmentSuit` names the
+  Environment Suit skill it is operated with (Battlesuit, Diving Suit, NBC
+  Suit, Vacc Suit). While one is worn, DX-based skills are held to that skill
+  (a `bonusLines` entry says so) before `gworld.skillLevels` runs, and a DX
+  attribute roll takes a line down to it. `derived.environmentSuit` is
+  `{ skill, item, level }` or null.
 - **Aimed, then guided** (since 1.63.0): a ranged mode's `aimingSkill` is a
   skill the firer rolls first (tagged `aiming`, through
   `gworld.successRollModifiers`); only on a success is the attack rolled, at

@@ -1201,6 +1201,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare concealable: boolean;
   declare blocksPeripheralVision: boolean;
   declare soleDr: number | null;
+  declare environmentSuit: string;
   declare hardened: number;
   declare drByLocation: Array<{ locations: string[]; dr: number }>;
   declare ablative: "none" | "ablative" | "semiAblative";
@@ -1303,6 +1304,14 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
         integer: true,
         initial: null,
         min: 0,
+      }),
+      /**
+       * The Environment Suit skill the piece is operated with (Characters
+       * p. 192): while it is worn, DX and DX-based skills use the lower of that
+       * skill and their own level. Blank for armour that needs none.
+       */
+      environmentSuit: new fields.StringField({
+        required: true, blank: true, initial: "", choices: ["", "Battlesuit", "Diving Suit", "NBC Suit", "Vacc Suit"],
       }),
       /**
        * Places where the piece gives a different DR from the rest of itself:

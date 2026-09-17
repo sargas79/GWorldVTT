@@ -2103,6 +2103,8 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
           concealable: /concealable as or under clothing/i.test(r.text),
           blocksPeripheralVision: /no peripheral vision/i.test(r.text),
           soleDr: dr.sole ?? null,
+          // The Environment Suit skill a sealed suit is operated with (Characters p. 192).
+          environmentSuit: environmentSuitFor(name),
         },
       });
       continue;
@@ -2417,4 +2419,12 @@ function main() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main();
+}
+
+/** The Environment Suit skill a suit on the armour tables calls for (Characters pp. 192, 285), or blank. */
+function environmentSuitFor(name) {
+  if (/^NBC Suit$/i.test(name)) return "NBC Suit";
+  if (/^(Space Suit|Vacc Suit \(TL ?\d+\)|Space Armor \(TL ?\d+\))$/i.test(name)) return "Vacc Suit";
+  if (/^Battlesuit \(TL ?\d+\)$/i.test(name)) return "Battlesuit";
+  return "";
 }

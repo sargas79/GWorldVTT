@@ -104,7 +104,9 @@ import {
   rangedToHitModifier,
   rapidFireBonus,
   rapidFireHits,
+  speedRangeModifier,
 } from "../rules/ranged.js";
+import { telescopicOffset, telescopicScope } from "../rules/senses.js";
 import {
   REPAIRS,
   clearsItself,
@@ -743,7 +745,8 @@ export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) 
   return {
     damageType: String(dataset.damageType ?? "cr") as DamageType,
     accuracy: n("accuracy"),
-    scopeBonus: n("scopeBonus"),
+    // Telescopic Vision is a scope of its own, the better of the two counting (Characters p. 92).
+    scopeBonus: telescopicScope(n("scopeBonus"), telescopicTraitLevels(actor).levels, telescopicTraitLevels(actor).noTargeting),
     rateOfFire: n("rateOfFire") || 1,
     recoil: n("recoil"),
     bulk: n("bulk"),
@@ -1461,6 +1464,9 @@ async function rollAction(
     rollType === "attack" && isRuleOn("feint") ? await consumeFeint(actor) : 0;
 
   modifiers.push(...positionRollLines(actor, { rollType, ranged: Boolean(ranged) }));
+  // A Vision roll at the one token targeted: its size and range, less what
+  // Telescopic Vision ignores (Characters pp. 92, 358).
+  if (target.dataset.sense === "vision") modifiers.push(...visionRangeLines(actor));
   // What a module's aid to aiming gives against the foe aimed at (since API 1.63.0).
   if (rollType === "attack" && ranged) {
     const aimedAt = targetedTokens().length === 1 ? tokenUuid(targetedTokens()[0]) : "";
@@ -1514,6 +1520,8 @@ async function rollAction(
         // Since 1.63.0: how the attacker has moved this turn, and the aim they hold.
         movement: attackerMovement(actor),
         aim: aimStateOf(actor),
+        // Since 1.65.0: tags for the attack roll, which condition and area lines and modules read.
+        tags: [] as string[],
       })
     : null;
   // A module's rules may make this attack impossible here: it isn't rolled.
@@ -1615,8 +1623,9 @@ async function rollAction(
     kind: rollKind(rollType),
     // The attribute a skill or attribute roll is based on, as a tag a condition's rolls can name (API 1.42.0),
     // and the sense a Perception roll is made by (API 1.63.0).
-    ...(target.dataset.basedOn || target.dataset.sense
-      ? { tags: [target.dataset.basedOn, target.dataset.sense].filter((t): t is string => Boolean(t)) }
+    // Since 1.65.0 an attack's roll also carries the tags a `gworld.attackModifiers` listener added.
+    ...(target.dataset.basedOn || target.dataset.sense || (hooked?.tags ?? []).length
+      ? { tags: [target.dataset.basedOn, target.dataset.sense, ...(hooked?.tags ?? [])].filter((t): t is string => typeof t === "string" && Boolean(t)) }
       : {}),
     // Who is being looked for: the one token targeted, on a roll to detect (API 1.63.0).
     ...(rollType !== "attack" && targetedTokens().length === 1 && targetedTokens()[0]?.actor
@@ -3257,4 +3266,43 @@ export function attackerMovement(actor: any): { maneuver: string; yards: number 
   const units = String(stage.scene?.grid?.units ?? "").trim().toLowerCase();
   const yards = units === "ft" || units === "feet" || units === "'" ? distance / 3 : units === "m" ? distance * 1.0936 : distance;
   return { maneuver, yards: Math.round(yards) };
+}
+
+/** Telescopic Vision's levels among the character's own traits, and whether it was bought with No Targeting. */
+function telescopicTraitLevels(actor: any): { levels: number; noTargeting: boolean } {
+  let levels = 0;
+  let noTargeting = false;
+  for (const item of actor?.items ?? []) {
+    if (item?.type !== "trait" || !/^telescopic vision\b/i.test(String(item.name ?? ""))) continue;
+    levels += Math.max(1, Number(item.system?.levels) || 0);
+    if ((item.system?.modifiers ?? []).some((m: any) => /no targeting/i.test(String(m?.name ?? "")))) noTargeting = true;
+  }
+  return { levels, noTargeting };
+}
+
+/**
+ * The size and range lines on a Vision roll at the one token targeted
+ * (Characters p. 358), and what Telescopic Vision ignores of the range --
+ * twice as much for a character whose Aim is on that token (p. 92). Nothing
+ * where no single token is targeted or the map can't say how far it is.
+ */
+export function visionRangeLines(actor: any): RollModifier[] {
+  const targets = targetedTokens();
+  if (targets.length !== 1) return [];
+  const target = targets[0];
+  const yards = yardsBetween(actor?.getActiveTokens?.()?.[0], target);
+  if (yards === null) return [];
+  const lines: RollModifier[] = [];
+  const sm = Math.round(Number(target?.actor?.system?.sm) || 0);
+  if (sm) lines.push({ label: game.i18n.localize("GWORLD.Ranged.TargetSize"), value: sm, key: "size" });
+  const range = speedRangeModifier(yards);
+  if (range) {
+    lines.push({ label: game.i18n.format("GWORLD.Senses.Range", { yards }), value: range, key: "speedRange" });
+    const levels = Number(actor?.system?.derived?.traitEffects?.telescopicVision) || 0;
+    const aim = aimStateOf(actor);
+    const zoomed = aimTurnsOf(actor) > 0 && aim.target !== "" && aim.target === tokenUuid(target);
+    const offset = telescopicOffset(range, levels, zoomed);
+    if (offset) lines.push({ label: game.i18n.localize(zoomed ? "GWORLD.Senses.TelescopicZoomed" : "GWORLD.Senses.Telescopic"), value: offset, key: "telescopic" });
+  }
+  return lines;
 }
