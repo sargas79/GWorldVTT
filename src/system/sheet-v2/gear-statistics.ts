@@ -211,7 +211,7 @@ function armorBlock(system: Record<string, any>, L: Localize): StatBlock {
 
   const hardened = number(system.hardened);
   if (hardened !== null && hardened > 0) lines.push({ label: S("Hardened"), value: String(hardened) });
-  if (system.ablative) lines.push({ label: S("Ablative"), value: String(system.ablative) });
+  if (system.ablative && system.ablative !== "none") lines.push({ label: S("Ablative"), value: String(system.ablative) });
   if (system.forceField) lines.push({ label: S("ForceField"), value: S("Yes") });
   if (system.environmentSuit) lines.push({ label: S("EnvironmentSuit"), value: String(system.environmentSuit) });
 

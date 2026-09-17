@@ -95,7 +95,7 @@ describe("armour and shields", () => {
   });
 
   it("says whole body where the piece names no location, and a sole's own DR", () => {
-    const { blocks } = gearStatistics({ type: "armor", system: { dr: 2, locations: [], soleDr: 5 } }, [], L);
+    const { blocks } = gearStatistics({ type: "armor", system: { dr: 2, locations: [], soleDr: 5, ablative: "none" } }, [], L);
     expect(lines(blocks[0]!)).toEqual({ DR: "2", Covers: "WholeBody", SoleDr: "5" });
   });
 

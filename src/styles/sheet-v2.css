@@ -1064,7 +1064,7 @@
 .gworld.v2 .v2-box-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 5px 10px; font-size: 14px; }
 /* A table row's columns, read down: heading beside figure, as the book's row would fold. */
 .gworld.v2 .v2-stat-grid { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 12px; row-gap: 2px; margin: 0 0 8px; padding: 0 10px; font-size: 13.5px; }
-.gworld.v2 .v2-stat-grid dt { margin: 0; color: var(--v2-ink-muted); white-space: nowrap; }
+.gworld.v2 .v2-stat-grid dt { margin: 0; opacity: 0.72; white-space: nowrap; }
 .gworld.v2 .v2-stat-grid dd { margin: 0; min-width: 0; overflow-wrap: anywhere; font-family: var(--font-heading); font-size: 15px; }
 
 .gworld.v2 .v2-improve {
