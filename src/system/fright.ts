@@ -54,6 +54,22 @@ export async function rollFrightCheck(options: {
   actor: any;
   modifier: number;
 }): Promise<{ effect: string; total: number } | null> {
+  const result = await rollFrightCheckOutcome(options);
+  return result && !result.success && result.effect ? { effect: result.effect, total: result.total } : null;
+}
+
+/**
+ * A Fright Check with its whole outcome, for a caller that must know the margin:
+ * an affliction resisted with a Fright Check (since API 1.63.0). `tags` and
+ * `attack` reach `gworld.successRollModifiers` beside `fright` and `will`.
+ * Null where no check is made (Unfazeable).
+ */
+export async function rollFrightCheckOutcome(options: {
+  actor: any;
+  modifier: number;
+  tags?: string[];
+  attack?: any;
+}): Promise<{ success: boolean; margin: number; effect: string | null; total: number } | null> {
   const { actor, modifier } = options;
   const traits = traitsOf(actor);
 
@@ -68,7 +84,7 @@ export async function rollFrightCheck(options: {
 
   // What the actor's conditions and the modules add to the check.
   const will = Number(actor?.system?.derived?.will) || 10;
-  const added = successRollModifiers({ actor, label: "Fright Check", kind: "attribute", skill: "", base: will, tags: ["fright", "will"], modifiers: [] });
+  const added = successRollModifiers({ actor, label: "Fright Check", kind: "attribute", skill: "", base: will, tags: ["fright", "will", ...(options.tags ?? [])], modifiers: [], ...(options.attack ? { attack: options.attack } : {}) });
   const target = frightTarget(
     will,
     modifier + added.reduce((total, line) => total + line.value, 0),
@@ -113,11 +129,16 @@ export async function rollFrightCheck(options: {
     rolls: table ? [check, table] : [check],
   });
 
-  return entry ? { effect: entry.effect, total } : null;
+  return { success: outcome.success, margin: outcome.margin, effect: entry?.effect ?? null, total };
 }
 
 /** The individual d6 faces from an evaluated Roll. */
 function dieResults(roll: any): number[] {
   const dice = roll.dice?.[0]?.results ?? [];
   return dice.map((r: { result: number }) => r.result);
+}
+
+/** Whether an affliction's resistance is a Fright Check rather than an attribute (since API 1.63.0). */
+export function isFrightResistance(attribute: string): boolean {
+  return /^fright$/i.test(String(attribute ?? "").trim());
 }
