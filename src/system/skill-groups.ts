@@ -85,6 +85,24 @@ export function groupSkills<T extends GroupableSkill>(
   })).filter((group) => group.rows.length > 0);
 }
 
+/**
+ * The new sheet files its skill rows under sections it folds and filters by
+ * key. By attribute the keys are the attributes themselves; the alphabetical
+ * list is one section under this key. Techniques keep a section of their own
+ * either way, so it is not an attribute's name.
+ */
+export const ALL_SKILLS_SECTION = "skills";
+
+/** The section a skill is filed under: its attribute, or the one shared section of the alphabetical list. */
+export function skillSectionOf(order: SkillOrder, attribute: string): string {
+  return order === "alphabetical" ? ALL_SKILLS_SECTION : attribute;
+}
+
+/** The skill sections in the order they are shown. */
+export function skillSectionOrder(order: SkillOrder): string[] {
+  return order === "alphabetical" ? [ALL_SKILLS_SECTION] : [...SKILL_GROUP_ORDER];
+}
+
 /** The other order, for the button that flips between them. */
 export function otherOrder(order: SkillOrder): SkillOrder {
   return order === "alphabetical" ? "attribute" : "alphabetical";

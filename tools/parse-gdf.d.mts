@@ -60,6 +60,10 @@ export declare function alternatives(
   name: string,
   f: Map<string, string>,
 ): Array<{ name: string; f: Map<string, string> }>;
+/** The self-control number a disadvantage comes with: the book's standard, 12. */
+export const STANDARD_SELF_CONTROL: 12;
+/** Whether a record's `mods(...)` names the Self-Control group. */
+export function takesSelfControlRoll(mods: unknown): boolean;
 export declare function weaponClassOf(mods: string | undefined): "" | "sword" | "cutting" | "crushing" | "firearm" | "bow";
 /** How far an area attack reaches from where it lands, from a `radius()` column. */
 export declare function parseRadius(value: string | undefined): number;

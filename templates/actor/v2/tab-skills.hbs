@@ -16,6 +16,12 @@
             {{#each v2.skills.sorts as |s|}}<option value="{{s.key}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>{{/each}}
           </select>
         </label>
+        {{!-- Attribute sections as the printed sheet has them, or one
+             alphabetical list. The classic sheet's setting, so both follow it. --}}
+        <button type="button" class="v2-button" data-action="toggleSkillOrder"
+                data-tooltip="{{localize 'GWORLD.Settings.SkillOrder.Hint'}}">
+          {{#if v2.skills.alphabetical}}{{localize "GWORLD.Action.OrderByAttribute"}}{{else}}{{localize "GWORLD.Action.OrderByName"}}{{/if}}
+        </button>
       </div>
       <div class="v2-chips v2-chip-row" role="toolbar" aria-label="{{localize 'GWORLD.SheetV2.Filter'}}">
         {{#each v2.skills.chips as |chip|}}
