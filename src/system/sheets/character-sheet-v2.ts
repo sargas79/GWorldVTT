@@ -107,6 +107,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2ShowLink: GWorldCharacterSheetV2.#onShowLink,
       v2ViewPortrait: GWorldCharacterSheetV2.#onViewPortrait,
       v2EditPortrait: GWorldCharacterSheetV2.#onEditPortrait,
+      v2RollPlain: GWorldCharacterSheetV2.#onRollPlain,
     },
   };
 
@@ -1481,6 +1482,20 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     if (!isJournalKind(kind) || !uuid) return;
     this.showJournalPane(kind);
     this.showSelected(`journal-${kind}`, `link:${uuid}`);
+  }
+
+  /**
+   * A plain 3d6 under the character's name, with no target and nothing
+   * judged: the GM asked for one, and will read it themselves.
+   */
+  static async #onRollPlain(this: GWorldCharacterSheetV2) {
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor: this.actor }),
+      flavor: game.i18n.localize("GWORLD.SheetV2.PlainRollFlavor"),
+      rolls: [roll],
+    });
   }
 
   /** Opens the character's portrait full size, where a GM can show it to the players. */

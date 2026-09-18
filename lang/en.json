@@ -4070,6 +4070,9 @@
       "SetByHint": "This is the campaign's figure, set on the party sheet. Change it there."
     },
     "SheetV2": {
+      "PlainRoll": "3d6",
+      "PlainRollHint": "Roll 3d6 with nothing behind it and post the result to chat.",
+      "PlainRollFlavor": "3d6, as asked",
       "SizeModifier": "Size Modifier",
       "Tabs": "Character sheet tabs",
       "Tab": {

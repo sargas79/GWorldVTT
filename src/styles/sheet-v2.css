@@ -257,6 +257,8 @@
   text-transform: uppercase;
 }
 .gworld.v2 .v2-header .v2-build-button:hover { background: var(--v2-gold); border-color: var(--v2-gold-deep); color: var(--v2-frame); }
+.gworld.v2 .v2-header .v2-dice-button { display: inline-flex; align-items: center; gap: 6px; }
+.gworld.v2 .v2-header .v2-dice-button svg { width: 16px; height: 16px; }
 
 /* ── sidebar ───────────────────────────────────────────────────────────── */
 
