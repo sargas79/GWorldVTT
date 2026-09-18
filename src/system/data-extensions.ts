@@ -291,7 +291,7 @@ export function adjustSkillLevels(
 
 /** A bonus line: what it is, what it is worth, and why it was changed if it was. */
 export interface BonusLine {
-  /** For the system's own lines, what the line is: `bonus`, `magic`, `talent`, `tools`. */
+  /** For the system's own lines, what the line is: `bonus`, `magic`, `talent`, `trait`, `tools`. */
   key?: string;
   label: string;
   value: number;
