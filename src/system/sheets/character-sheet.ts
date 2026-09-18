@@ -499,6 +499,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       releaseGrapple: GWorldCharacterSheet.#onRelease,
       stepPoints: GWorldCharacterSheet.#onStepPoints,
       stepLevels: GWorldCharacterSheet.#onStepLevels,
+      stepField: GWorldCharacterSheet.#onStepField,
       editItem: GWorldCharacterSheet.#onEditItem,
       chooseTechniqueSkill: GWorldCharacterSheet.#onChooseTechniqueSkill,
       showSummary: GWorldCharacterSheet.#onShowSummary,
@@ -1815,6 +1816,19 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (next === current) return;
 
     await item.update({ "system.points": next });
+  }
+
+  /**
+   * Steps a number box one notch up or down, within the limits the box
+   * itself states, and then submits it as if typed: the same path a typed
+   * figure takes, so the sheet writes one thing whichever way it moved.
+   */
+  static #onStepField(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const input = target.parentElement?.querySelector<HTMLInputElement>('input[type="number"]');
+    if (!input || input.disabled) return;
+    if (target.dataset.step === "down") input.stepDown();
+    else input.stepUp();
+    input.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
   /**

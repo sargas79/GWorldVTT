@@ -108,10 +108,8 @@
       <div class="fld">
         <span class="fl">{{localize "GWORLD.Field.AimTurns"}}</span>
         <div class="fi">
-          <input type="number" name="system.aim.turns" value="{{system.aim.turns}}"
-                 min="0" max="3" step="1"
-                 style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
-                 {{#unless editable}}disabled{{/unless}}>
+          {{> "gworld.stepper" name="system.aim.turns" value=system.aim.turns min=0 max=3 step=1
+              label=(localize "GWORLD.Field.AimTurns") editable=editable}}
           <span style="font-size: 10px; color: var(--color-accent-700)">Acc {{signed derived.aim.extra}}</span>
         </div>
       </div>
@@ -125,10 +123,8 @@
       <div class="fld">
         <span class="fl">{{localize "GWORLD.Field.EvaluateTurns"}}</span>
         <div class="fi">
-          <input type="number" name="system.evaluateTurns" value="{{system.evaluateTurns}}"
-                 min="0" step="1"
-                 style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
-                 {{#unless editable}}disabled{{/unless}}>
+          {{> "gworld.stepper" name="system.evaluateTurns" value=system.evaluateTurns min=0 max=3 step=1
+              label=(localize "GWORLD.Field.EvaluateTurns") editable=editable}}
           <span style="font-size: 10px; color: var(--color-accent-700)">{{signed derived.evaluateBonus}}</span>
         </div>
       </div>
@@ -146,10 +142,8 @@
       <div class="fld">
         <span class="fl">{{localize "GWORLD.Wait.HexesWatched"}}</span>
         <div class="fi">
-          <input type="number" name="system.wait.hexesWatched" value="{{system.wait.hexesWatched}}"
-                 min="1" step="1"
-                 style="background: none; border: 0; font: inherit; color: inherit; width: 100%"
-                 {{#unless editable}}disabled{{/unless}}>
+          {{> "gworld.stepper" name="system.wait.hexesWatched" value=system.wait.hexesWatched min=1 step=1
+              label=(localize "GWORLD.Wait.HexesWatched") editable=editable}}
           <span style="font-size: 10px; color: var(--color-accent-700)">{{signed waitPenalty}}</span>
         </div>
       </div>

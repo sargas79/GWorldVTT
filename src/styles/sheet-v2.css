@@ -462,6 +462,8 @@
 .gworld.v2 .v2-pool-head { display: flex; justify-content: space-between; align-items: baseline; }
 .gworld.v2 .v2-pool-name { font-family: var(--font-heading); font-size: 20px; }
 .gworld.v2 .v2-pool-value { display: flex; align-items: baseline; gap: 4px; font-family: var(--font-heading); font-size: 20px; }
+.gworld.v2 .v2-pool-value .nstep { align-items: center; }
+.gworld.v2 .v2-pool-value .nstep button { width: 18px; height: 18px; font-size: 13px; border-radius: 3px; }
 .gworld.v2 .v2-pool-value input {
   width: 3.2em;
   height: 26px;
@@ -1320,6 +1322,7 @@
 .gworld.v2 .v2-sort:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: 2px; }
 .gworld.v2 .v2-gear-img { width: 26px; height: 26px; border: 0; border-radius: 3px; object-fit: cover; }
 .gworld.v2 .v2-gear-num { font-size: 14px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.gworld.v2 .nstep.v2-gear-num input.npts { width: 2.4em; font-size: 14px; }
 .gworld.v2 .v2-gear .v2-row-name { font-size: 16px; }
 .gworld.v2 .v2-gear .v2-row-actions { min-width: 0; }
 .gworld.v2 .v2-row-icon.on { color: var(--v2-steel-deep); background: var(--v2-steel-soft); border-color: var(--v2-steel); }
@@ -1398,6 +1401,7 @@
 .gworld.v2 .v2-progress-buttons { flex-direction: row !important; gap: 6px; margin-left: auto; border-left: 0 !important; }
 /* The campaign's terms, editable in the summary bar. */
 .gworld.v2 .v2-campaign-field label { font-family: var(--font-heading); font-size: 14px; color: var(--v2-frame-muted); }
+.gworld.v2 .v2-campaign-field .nstep { vertical-align: middle; }
 .gworld.v2 .v2-campaign-field input {
   width: 3.4em; background: transparent; border: 0; border-bottom: 1px dashed var(--v2-frame-muted);
   font: inherit; color: inherit; text-align: center; padding: 0;

@@ -790,6 +790,10 @@
         "off": "Never"
       }
     },
+    "Stepper": {
+      "Less": "One step down",
+      "More": "One step up"
+    },
     "Builder": {
       "Title": "Build a character",
       "Open": "Guided build",

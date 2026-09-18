@@ -1640,6 +1640,14 @@
   color: var(--color-accent-900, var(--color-text));
 }
 .gworld .ptstep input.npts { width: 2.4em; border-bottom: 0; text-align: center; }
+/* A number stepped as well as typed, wherever a sheet asks for one. */
+.gworld .nstep { gap: 2px; }
+.gworld .nstep input.npts { width: 2.6em; -moz-appearance: textfield; appearance: textfield; }
+.gworld .nstep input.npts::-webkit-outer-spin-button,
+.gworld .nstep input.npts::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.gworld .nstep button:disabled { opacity: 0.4; cursor: default; }
+.gworld .fi .nstep { flex: 1; justify-content: flex-start; }
+.gworld .secstep input.npts { color: var(--color-accent-700); }
 
 /* ── which rules are we playing ─────────────────────────────────────────── */
 
