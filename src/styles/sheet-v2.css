@@ -1144,6 +1144,11 @@
 .gworld.v2 .v2-warn { color: var(--v2-gold) !important; }
 
 .gworld.v2 .v2-maneuver { padding-top: 10px; }
+/* A select alone in a field fills the field, padding included, so the native
+   list and the focus ring line up with the field's own border. */
+.gworld.v2 .fi > select:only-child { width: calc(100% + 18px); margin: 0 -9px; padding: 0 9px; border-radius: 0; }
+.gworld.v2 .fi > select:only-child:focus { outline: none; box-shadow: none; }
+.gworld.v2 .fi:focus-within { border-color: var(--v2-gold); }
 
 .gworld.v2 .v2-combat-grid {
   display: grid;

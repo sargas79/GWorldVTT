@@ -946,6 +946,9 @@
   cursor: pointer;
   line-height: 0;
 }
+/* A sense's die sits in a flex span beside its score, not in a corner: the
+   cell is not positioned, and an absolute die would climb to the window. */
+.gworld .cell .iroll { position: static; }
 .gworld [data-action="roll"] { cursor: pointer; }
 .gworld [data-action="roll"]:hover { color: var(--color-accent); }
 .gworld .rollable { cursor: pointer; }
