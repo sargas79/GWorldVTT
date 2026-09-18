@@ -9,8 +9,8 @@
         <div class="v2-pool-head">
           <span class="v2-pool-name">{{localize "GWORLD.Secondary.HP"}}</span>
           <span class="v2-pool-value">
-            <input type="number" name="system.hp.value" value="{{system.hp.value}}" step="1"
-                   aria-label="{{localize 'GWORLD.SheetV2.CurrentHp'}}" {{#unless editable}}disabled{{/unless}}>
+            {{> "gworld.stepper" name="system.hp.value" value=system.hp.value step=1
+                label=(localize "GWORLD.SheetV2.CurrentHp") editable=editable}}
             <span>/ {{system.hp.max}}</span>
           </span>
         </div>
@@ -21,8 +21,8 @@
         <div class="v2-pool-head">
           <span class="v2-pool-name">{{localize "GWORLD.Secondary.FP"}}</span>
           <span class="v2-pool-value">
-            <input type="number" name="system.fp.value" value="{{system.fp.value}}" step="1"
-                   aria-label="{{localize 'GWORLD.SheetV2.CurrentFp'}}" {{#unless editable}}disabled{{/unless}}>
+            {{> "gworld.stepper" name="system.fp.value" value=system.fp.value step=1
+                label=(localize "GWORLD.SheetV2.CurrentFp") editable=editable}}
             <span>/ {{system.fp.max}}</span>
           </span>
         </div>

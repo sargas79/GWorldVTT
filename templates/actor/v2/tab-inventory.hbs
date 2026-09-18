@@ -173,8 +173,8 @@
             {{#if item.isAmmunition}}
               {{!-- Rounds in the box: bought, found and lost between fights, so edited here. --}}
               <li><span>{{localize "GWORLD.Ammunition.Rounds"}}</span>
-                <b>{{#if @root.editable}}<input type="number" class="v2-inline-number" min="0" step="1" value="{{item.quantity}}" data-item-field="system.quantity"
-                       id="{{@root.sheetId}}-{{item.id}}-rounds" aria-label="{{localize 'GWORLD.Ammunition.Rounds'}}" data-tooltip="{{localize 'GWORLD.Ammunition.RoundsHint'}}">{{else}}{{item.quantity}}{{/if}}</b></li>
+                <b>{{#if @root.editable}}{{> "gworld.stepper" itemField="system.quantity" value=item.quantity min=0 step=1
+                       id=(concat @root.sheetId "-" item.id "-rounds") label=(localize "GWORLD.Ammunition.Rounds") tooltip=(localize "GWORLD.Ammunition.RoundsHint") editable=true}}{{else}}{{item.quantity}}{{/if}}</b></li>
             {{/if}}
             {{#if item.legality.label}}
               <li><span>{{localize "GWORLD.SheetV2.Legality"}}</span><b class="{{#if item.legality.restricted}}v2-bad{{/if}}">{{item.legality.label}}{{#if item.legality.status}} &middot; {{localize (concat 'GWORLD.Legality.Short.' item.legality.status)}}{{/if}}</b></li>

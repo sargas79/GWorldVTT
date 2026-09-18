@@ -27,10 +27,8 @@
         {{#if cell.editable}}
           <span style="display: flex; align-items: baseline; gap: 6px">
             <span class="cv">{{cell.value}}</span>
-            <input type="number" name="system.purchased.{{cell.key}}" value="{{cell.purchased}}"
-                   step="{{cell.step}}" title="{{localize 'GWORLD.Secondary.AdjustHint'}}"
-                   style="width: 46px; background: none; border: 1px solid var(--color-divider); font: inherit; color: var(--color-accent-700)"
-                   {{#unless @root.editable}}disabled{{/unless}}>
+            {{> "gworld.stepper" cls="secstep" name=(concat "system.purchased." cell.key) value=cell.purchased step=cell.step
+                label=(localize "GWORLD.Secondary.AdjustHint") editable=@root.editable}}
           </span>
         {{else}}
           <span class="cv">{{cell.value}}</span>

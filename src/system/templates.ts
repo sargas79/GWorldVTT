@@ -31,6 +31,15 @@ const ICONS: Record<string, string> = {
     <path d="M4 7h16"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>
     <path d="M5 7l1 13h12l1-13"></path><path d="M9 7V4h6v3"></path>
   </svg>`,
+  // A number stepped as well as typed: minus, the box, plus. The box keeps
+  // its own min, max and step, and the buttons move it within them and then
+  // submit it as if typed. Pass `name` for an actor field or `itemField`
+  // for an item's, and `editable` to enable it.
+  "gworld.stepper": `<span class="ptstep nstep{{#if cls}} {{cls}}{{/if}}">
+    <button type="button" data-action="stepField" data-step="down" aria-label="{{localize 'GWORLD.Stepper.Less'}}" {{#unless editable}}disabled{{/unless}}>&minus;</button>
+    <input type="number" class="npts" {{#if itemField}}data-item-field="{{itemField}}"{{else}}name="{{name}}"{{/if}} value="{{value}}"{{#if id}} id="{{id}}"{{/if}} min="{{min}}" max="{{max}}" step="{{step}}"{{#if label}} aria-label="{{label}}" title="{{label}}"{{/if}}{{#if tooltip}} data-tooltip="{{tooltip}}"{{/if}} {{#unless editable}}disabled{{/unless}}>
+    <button type="button" data-action="stepField" data-step="up" aria-label="{{localize 'GWORLD.Stepper.More'}}" {{#unless editable}}disabled{{/unless}}>+</button>
+  </span>`,
   "gworld.lock": `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
     <rect x="4" y="10" width="16" height="10"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
   </svg>`,
