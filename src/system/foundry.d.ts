@@ -401,6 +401,8 @@ declare global {
     readonly total: number;
     readonly dice: Array<{ results: Array<{ result: number; active?: boolean }> }>;
     evaluate(options?: object): Promise<this>;
+    /** Posts the roll as its own chat message, rendered by Foundry (`client/dice/roll.mjs`). */
+    toMessage(messageData?: object, options?: object): Promise<unknown>;
     toJSON(): object;
   }
 

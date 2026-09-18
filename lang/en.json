@@ -4112,6 +4112,9 @@
       "NoModifiers": "Nothing is modifying rolls right now",
       "BasedOn": "{attribute}-based",
       "SortBy": "Sort",
+      "PlainRoll": "3d6",
+      "PlainRollHint": "Roll a plain 3d6, for when the GM asks for one with nothing behind it.",
+      "PlainRollFlavor": "3d6, as asked",
       "Sort": {
         "name": "Name",
         "level": "Level",

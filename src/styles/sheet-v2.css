@@ -247,6 +247,23 @@
 
 /* The guided build, beside the points it spends. */
 .gworld.v2 .v2-header-side { display: flex; align-items: stretch; gap: 8px; }
+/* A plain 3d6, small as a row's CR die, for when the GM asks for one (#552). */
+.gworld.v2 .v2-header .v2-plain-roll {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--v2-frame-line);
+  border-radius: 4px;
+  background: var(--v2-frame-2);
+  color: var(--v2-frame-text);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.gworld.v2 .v2-header .v2-plain-roll:hover { background: var(--v2-gold); border-color: var(--v2-gold-deep); color: var(--v2-frame); }
 .gworld.v2 .v2-header .v2-build-button {
   height: auto;
   background: var(--v2-frame-2);
@@ -680,6 +697,11 @@
 .gworld.v2 .v2-add-status option { color: var(--v2-ink); background: var(--v2-panel); }
 
 .gworld.v2 .v2-attributes { gap: 16px; }
+/* The classic part's sense dice are placed absolutely, at the corner of a
+   cell the classic sheet positions; here no cell is, so they climbed to the
+   window's corner and stacked over the header (#551). Beside the score is
+   where the markup puts them. */
+.gworld.v2 .v2-attributes .iroll[data-sense] { position: static; }
 
 /* ── buttons, tags and chips ───────────────────────────────────────────── */
 

@@ -91,6 +91,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     position: { width: 1120, height: 760 },
     actions: {
       v2PinSkill: GWorldCharacterSheetV2.#onPinSkill,
+      v2PlainRoll: GWorldCharacterSheetV2.#onPlainRoll,
       v2ToggleStatus: GWorldCharacterSheetV2.#onToggleStatus,
       v2Select: GWorldCharacterSheetV2.#onSelect,
       v2Chip: GWorldCharacterSheetV2.#onChip,
@@ -1285,6 +1286,20 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
   }
 
   /* ── actions ─────────────────────────────────────────────────────────── */
+
+  /**
+   * A plain 3d6, for when the GM asks for one with nothing behind it: a
+   * reaction roll the GM reads, a table, a tiebreak (#552). No target, so
+   * nothing is judged; the number is the whole result.
+   */
+  static async #onPlainRoll(this: GWorldCharacterSheetV2) {
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    await roll.toMessage({
+      speaker: ChatMessage.implementation.getSpeaker({ actor: this.actor }),
+      flavor: game.i18n.localize("GWORLD.SheetV2.PlainRollFlavor"),
+    });
+  }
 
   /** Pins a skill to the Overview, or unpins it. */
   static async #onPinSkill(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
