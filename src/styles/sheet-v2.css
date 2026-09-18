@@ -867,12 +867,11 @@
   cursor: pointer;
 }
 .gworld.v2 button.v2-row-level:hover { color: var(--v2-steel); }
-.gworld.v2 .v2-row-summary { min-width: 0; font-size: 13px; color: var(--v2-ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gworld.v2 .v2-row-cp { font-family: var(--font-heading); font-size: 16px; font-weight: 600; white-space: nowrap; text-align: right; }
 .gworld.v2 .v2-levels { font-family: var(--font-body); font-size: 12px; color: var(--v2-ink-muted); }
 
-.gworld.v2 .v2-skill { grid-template-columns: 22px minmax(110px, 1.25fr) 58px 104px 36px minmax(0, 1.3fr) auto; }
-.gworld.v2 .v2-trait { grid-template-columns: minmax(120px, 1.1fr) 62px minmax(0, 1.6fr) auto; border-left-width: 4px; }
+.gworld.v2 .v2-skill { grid-template-columns: 22px minmax(110px, 1fr) 58px 104px 36px auto; }
+.gworld.v2 .v2-trait { grid-template-columns: minmax(120px, 1fr) 62px auto; border-left-width: 4px; }
 
 /* A row's own buttons: roll and delete, with any a module adds between them. */
 .gworld.v2 .v2-row-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 2px; min-width: 54px; }
@@ -1662,7 +1661,6 @@
   .gworld.v2 .v2-list-col,
   .gworld.v2 .v2-detail-col { overflow: visible; }
   .gworld.v2 .v2-skill { grid-template-columns: 22px minmax(100px, 1fr) 52px 100px 34px auto; }
-  .gworld.v2 .v2-skill .v2-row-summary { display: none; }
   .gworld.v2 .v2-combat-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .gworld.v2 .v2-combat-side { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
