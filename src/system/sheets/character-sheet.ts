@@ -1557,6 +1557,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       editable: true,
       cost: secondaryPointCost(key, p[key]),
       lowered: affectsSecondary(key) ? iqPenalty : 0,
+      // Will and Per are rolled against as often as any attribute, so they
+      // carry a die here; the rest are figures, not rolls.
+      basedOn: key === "will" ? "Will" : key === "per" ? "Per" : "",
     });
 
     return [

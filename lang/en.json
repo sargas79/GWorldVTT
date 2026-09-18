@@ -4110,6 +4110,8 @@
       "RollSkill": "Roll {name} at {level}",
       "NoSkills": "No trained skills yet. Add some on the Skills tab.",
       "Defenses": "Defenses",
+      "WillAndSenses": "Will & senses",
+      "RollScore": "Roll {name} at {level}",
       "ShieldDb": "+{db} DB from {name}",
       "Conditions": "Conditions",
       "RemoveCondition": "Take this condition off",

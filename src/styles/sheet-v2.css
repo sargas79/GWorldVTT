@@ -403,10 +403,8 @@
 .gworld.v2 .v2-muted { color: var(--color-neutral-700); }
 .gworld.v2 .v2-good { color: var(--v2-green); }
 .gworld.v2 .v2-bad { color: var(--v2-red); }
-.gworld.v2 .v2-panel-dark .v2-bad,
-.gworld.v2 .v2-strip .v2-bad { color: #e48b80; }
-.gworld.v2 .v2-panel-dark .v2-good,
-.gworld.v2 .v2-strip .v2-good { color: #9ccc86; }
+.gworld.v2 .v2-panel-dark .v2-bad { color: #e48b80; }
+.gworld.v2 .v2-panel-dark .v2-good { color: #9ccc86; }
 
 /* The search box a list header carries. */
 .gworld.v2 .v2-search {
@@ -503,11 +501,20 @@
 
 .gworld.v2 .v2-overview {
   display: grid;
-  grid-template-columns: minmax(210px, 0.8fr) minmax(0, 1.55fr) minmax(200px, 0.8fr);
+  grid-template-columns: minmax(210px, 0.85fr) minmax(0, 1.5fr) minmax(210px, 0.85fr);
   gap: 14px;
-  align-items: start;
+  align-items: stretch;
 }
-.gworld.v2 .v2-overview-middle { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.gworld.v2 .v2-overview-middle,
+.gworld.v2 .v2-overview-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+/*
+ * A column is as tall as the tallest of the three, and the slack goes into one
+ * panel of each -- the one marked to take it, whose rows then spread over the
+ * height -- rather than being left as a block of bare frame under the column.
+ */
+.gworld.v2 .v2-overview-middle > .v2-panel:last-child { flex: 1 1 auto; }
+.gworld.v2 .v2-overview-side > .v2-fills { flex: 1 1 auto; justify-content: space-between; }
+.gworld.v2 .v2-active-skills .v2-skill-list { flex: 1 1 auto; min-height: 0; }
 
 .gworld.v2 .v2-attack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
 .gworld.v2 .v2-attack {
@@ -605,11 +612,19 @@
 .gworld.v2 .v2-pin.on svg { fill: var(--v2-gold); }
 .gworld.v2 .v2-pin:hover { color: var(--v2-gold-deep); }
 
-.gworld.v2 .v2-defense-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.gworld.v2 .v2-dr-row { grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--color-divider); padding-top: 8px; }
-.gworld.v2 .v2-defense { text-align: center; padding: 0 4px; }
-.gworld.v2 .v2-defense + .v2-defense { border-left: 1px solid var(--color-divider); }
-.gworld.v2 .v2-defense-value {
+/* A row of scores read at a glance: the defenses, DR, Will and the senses. */
+.gworld.v2 .v2-score-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.gworld.v2 .v2-dr-row,
+.gworld.v2 .v2-awareness-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.gworld.v2 .v2-dr-row,
+.gworld.v2 .v2-sense-row { border-top: 1px solid var(--color-divider); padding-top: 8px; }
+/* Four senses in a column too narrow for four: two and two. */
+.gworld.v2 .v2-sense-row { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 8px; }
+.gworld.v2 .v2-score { text-align: center; padding: 0 4px; }
+.gworld.v2 .v2-score + .v2-score { border-left: 1px solid var(--color-divider); }
+.gworld.v2 .v2-sense-row .v2-score:nth-child(odd) { border-left: 0; }
+.gworld.v2 .v2-sense-row .v2-score-value { font-size: 22px; }
+.gworld.v2 .v2-score-value {
   display: block;
   width: 100%;
   height: auto;
@@ -622,22 +637,9 @@
   line-height: 1.1;
   color: inherit;
 }
-.gworld.v2 button.v2-defense-value { cursor: pointer; }
-.gworld.v2 button.v2-defense-value:hover { color: var(--v2-steel); }
+.gworld.v2 button.v2-score-value { cursor: pointer; }
+.gworld.v2 button.v2-score-value:hover { color: var(--v2-steel); }
 
-.gworld.v2 .v2-strip { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; }
-.gworld.v2 .v2-strip-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.gworld.v2 .v2-strip-mods { align-items: flex-end; }
-.gworld.v2 .v2-strip-title {
-  margin: 0;
-  border: 0;
-  font-family: var(--font-heading);
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--v2-frame-text);
-}
 .gworld.v2 .v2-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .gworld.v2 .v2-chip {
   display: inline-flex;
@@ -1158,8 +1160,11 @@
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(260px, 1fr) minmax(250px, 0.95fr);
   gap: 14px;
-  align-items: start;
 }
+/* The panels of a stacked column fill it, as on the Overview. */
+.gworld.v2 .v2-combat-side > .v2-panel:last-child,
+.gworld.v2 .v2-inventory-main > .v2-panel:last-child,
+.gworld.v2 .v2-journal-side > .v2-panel:last-child { flex: 1 1 auto; }
 .gworld.v2 .v2-attack-list { display: flex; flex-direction: column; gap: 6px; max-height: 520px; overflow-y: auto; padding-right: 2px; }
 .gworld.v2 .v2-attack[data-v2-row] { cursor: pointer; }
 .gworld.v2 .v2-attack[data-v2-row]:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: 1px; }
@@ -1263,7 +1268,7 @@
 .gworld.v2 .v2-tier b { font-weight: 600; }
 .gworld.v2 .v2-tier.active { background: var(--v2-steel); color: #fff; }
 
-.gworld.v2 .v2-inventory-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.gworld.v2 .v2-inventory-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 12px; }
 .gworld.v2 .v2-inventory-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .gworld.v2 .v2-areas { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
 .gworld.v2 .v2-area { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-radius: 3px; background: var(--v2-panel-2); }
@@ -1409,7 +1414,7 @@
 .gworld.v2 .v2-campaign-field input:focus-visible { outline: 2px solid var(--v2-frame-muted); outline-offset: 2px; }
 .gworld.v2 .v2-over-note { margin: 0; padding: 6px 12px; border-radius: var(--v2-radius); background: #5a2723; color: #ffd2cb; font-size: 13px; }
 
-.gworld.v2 .v2-progress-grid { display: grid; grid-template-columns: minmax(180px, 0.55fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.gworld.v2 .v2-progress-grid { display: grid; grid-template-columns: minmax(180px, 0.55fr) minmax(0, 1fr); gap: 12px; }
 .gworld.v2 .v2-categories { gap: 6px; background: var(--v2-panel-3); }
 .gworld.v2 .v2-category {
   display: flex;
@@ -1528,8 +1533,11 @@
 .gworld.v2 .v2-pane-button:hover { background: #56769a; }
 .gworld.v2 .v2-pane-button.active { background: var(--v2-gold-soft); border-color: var(--v2-gold); color: var(--v2-ink); }
 
-.gworld.v2 .v2-journal-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 280px); gap: 14px; align-items: start; }
+.gworld.v2 .v2-journal-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 280px); gap: 14px; }
+.gworld.v2 .v2-journal-main,
 .gworld.v2 .v2-journal-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+/* The open pane fills the column, so its list and page end level with the portrait beside them. */
+.gworld.v2 .v2-journal-pane { flex: 1 1 auto; }
 
 /* The character's artwork on the Journal tab. */
 .gworld.v2 .v2-portrait-card { margin: 0; padding: 8px; gap: 8px; }
@@ -1562,7 +1570,7 @@
   text-transform: uppercase;
   color: var(--v2-ink);
 }
-.gworld.v2 .v2-journal-pane { display: grid; grid-template-columns: minmax(190px, 0.75fr) minmax(0, 1.5fr); gap: 14px; align-items: start; }
+.gworld.v2 .v2-journal-pane { display: grid; grid-template-columns: minmax(190px, 0.75fr) minmax(0, 1.5fr); gap: 14px; }
 .gworld.v2 .v2-journal-pane[hidden] { display: none; }
 .gworld.v2 .v2-profile { grid-template-columns: minmax(0, 1fr); }
 .gworld.v2 .v2-journal-list { gap: 6px; }
@@ -1588,7 +1596,8 @@
 .gworld.v2 .v2-journal-entry.missing b { color: var(--v2-red); }
 .gworld.v2 .v2-drop-hint { margin: 2px 0 0; font-size: 11.5px; color: var(--v2-frame-muted); }
 
-.gworld.v2 .v2-journal-content { min-width: 0; }
+.gworld.v2 .v2-journal-content { display: flex; flex-direction: column; min-width: 0; }
+.gworld.v2 .v2-journal-content > .v2-panel { flex: 1 1 auto; }
 .gworld.v2 .v2-journal-page { gap: 10px; }
 .gworld.v2 .v2-journal-page[hidden] { display: none; }
 .gworld.v2 .v2-journal-head { display: flex; align-items: center; gap: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--color-divider); }
@@ -1683,7 +1692,6 @@
   .gworld.v2 .v2-portrait { width: 64px; height: 64px; }
   .gworld.v2 .v2-portrait-frame { aspect-ratio: auto; height: 240px; }
   .gworld.v2 .v2-points { grid-column: 1 / -1; justify-self: start; }
-  .gworld.v2 .v2-strip-mods { align-items: flex-start; }
   .gworld.v2 .v2-combat-grid,
   .gworld.v2 .v2-combat-side,
   .gworld.v2 .v2-inventory-grid,
