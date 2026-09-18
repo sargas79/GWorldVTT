@@ -25,6 +25,13 @@
   </div>
 
   <div class="v2-header-side">
+  {{!-- A plain 3d6, for whenever the GM asks for one with nothing behind it:
+       a reaction roll they will read, a random table, a tiebreak. Anyone who
+       can open the sheet may roll it, since a player rolling on request is
+       the point. --}}
+  <button type="button" class="v2-button v2-build-button v2-dice-button" data-action="v2RollPlain"
+          data-tooltip="{{localize "GWORLD.SheetV2.PlainRollHint"}}"
+          aria-label="{{localize "GWORLD.SheetV2.PlainRollHint"}}">{{> "gworld.die"}} {{localize "GWORLD.SheetV2.PlainRoll"}}</button>
   {{#if editable}}
     <button type="button" class="v2-button v2-build-button" data-action="openBuilder"
             data-tooltip="{{localize "GWORLD.Builder.OpenHint"}}">{{> "gworld.v2icon.build"}} {{localize "GWORLD.Builder.Open"}}</button>
