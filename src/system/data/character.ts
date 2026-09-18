@@ -34,7 +34,7 @@ import {
 } from "../../rules/trait-effects.js";
 import { gearEffects, grantedEffectSources } from "../../rules/gear-effects.js";
 import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
-import { talentBonusFor, talentBonuses } from "../../rules/talents.js";
+import { talentBonusFor, talentBonuses, traitSkillBonuses, traitSkillBonusesFor } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
 import { senseScores } from "../../rules/senses.js";
@@ -1556,6 +1556,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     );
     // Talents: a level each to every skill on the talent's list (p. 89).
     const talents = talentBonuses(heldTraits);
+    // The other traits that name their skills -- Appearance to Sex Appeal,
+    // Empathy to Detect Lies, Shyness against the social skills -- each a
+    // line of its own (pp. 21-159).
+    const traitBonuses = traitSkillBonuses(heldTraits);
 
     // The attributes as bought on the sheet, plus what traits add to them.
     // The points ledger bills the bought figure; the trait bills itself.
@@ -1679,6 +1683,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // What the talents add to this skill by name, on top of anything typed
       // into the skill's own bonus field.
       const talentBonus = talentBonusFor(String(item.name ?? ""), talents);
+      const traitLines = traitSkillBonusesFor(String(item.name ?? ""), traitBonuses).map((line) => ({
+        key: "trait", label: line.label, value: line.value, source: "system",
+      }));
       // The tools of this trade, if any are carried (Campaigns p. 345).
       const toolBonus = toolBonuses[String(item.name ?? "").trim()] ?? 0;
       const magicBonus = magicSkillBonus(String(item.name ?? ""), talent);
@@ -1693,6 +1700,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           { key: "bonus", label: "Bonus", value: Number(sys.bonus) || 0, source: "system" },
           { key: "magic", label: "Magery", value: magicBonus, source: "system" },
           { key: "talent", label: "Talent", value: talentBonus, source: "system" },
+          ...traitLines,
           { key: "tools", label: "Equipment", value: toolBonus, source: "system" },
         ] as BonusLine[],
       });

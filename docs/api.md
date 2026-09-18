@@ -522,7 +522,7 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
   - `gworld.prepareDerivedData`, with the actor or item, after the system has
     prepared it.
   - `gworld.skillBonuses`, with `{ actor, item, name, difficulty, lines }`: the
-    system's lines are keyed `bonus`, `magic`, `talent` and `tools`. Push lines
+    system's lines are keyed `bonus`, `magic`, `talent`, `trait` (one per trait that names the skill, labelled with the trait) and `tools`. Push lines
     (`{ label, value, source }`), or change a line's `value` and give its
     `reason`. The skill's level tooltip shows the lines.
   - `gworld.moveModifiers` (since 1.42.0), with `{ actor, move, lines }`, once
