@@ -30,7 +30,7 @@
       {{/if}}
     </div>
 
-    {{!-- The languages between them, with the best speaker and writer of each. --}}
+    {{!-- The languages between them, with everyone who speaks and writes each. --}}
     <div class="v2-panel party-languages">
       <h2 class="v2-ph">{{localize "GWORLD.Party.Languages"}}</h2>
       {{#if languages.length}}
@@ -40,11 +40,15 @@
               <span class="v2-skill-name">{{row.name}}</span>
               <span class="party-language-level">
                 <span class="v2-stat-label">{{localize "GWORLD.Language.Spoken"}}</span>
-                {{#if row.spoken}}{{row.spoken.levelLabel}} <em>{{row.spoken.memberName}}</em>{{else}}<span class="v2-muted">&mdash;</span>{{/if}}
+                {{#if row.spoken.length}}
+                  {{#each row.spoken as |group|}}<span class="party-language-group">{{group.levelLabel}} <em>{{group.names}}</em></span>{{/each}}
+                {{else}}<span class="v2-muted">&mdash;</span>{{/if}}
               </span>
               <span class="party-language-level">
                 <span class="v2-stat-label">{{localize "GWORLD.Language.Written"}}</span>
-                {{#if row.written}}{{row.written.levelLabel}} <em>{{row.written.memberName}}</em>{{else}}<span class="v2-muted">&mdash;</span>{{/if}}
+                {{#if row.written.length}}
+                  {{#each row.written as |group|}}<span class="party-language-group">{{group.levelLabel}} <em>{{group.names}}</em></span>{{/each}}
+                {{else}}<span class="v2-muted">&mdash;</span>{{/if}}
               </span>
             </li>
           {{/each}}

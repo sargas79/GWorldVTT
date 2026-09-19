@@ -286,9 +286,24 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     }));
   }
 
+  /**
+   * The languages between them, with everyone who has each.
+   *
+   * The holders are grouped by how well they have it -- "Native: Ada, Bo" --
+   * because a party of six sharing Common is one line of names, not six rows
+   * of the same level repeated.
+   */
   #languagesContext(members: ResolvedMember[]): Array<Record<string, unknown>> {
-    const level = (holder: { memberName: string; level: string } | null) =>
-      holder ? { ...holder, levelLabel: game.i18n.localize(`GWORLD.Language.${holder.level}`) } : null;
+    const groups = (holders: readonly { memberName: string; level: string }[]) => {
+      const byLevel: Array<{ levelLabel: string; names: string }> = [];
+      for (const holder of holders) {
+        const levelLabel = game.i18n.localize(`GWORLD.Language.${holder.level}`);
+        const last = byLevel[byLevel.length - 1];
+        if (last && last.levelLabel === levelLabel) last.names += `, ${holder.memberName}`;
+        else byLevel.push({ levelLabel, names: holder.memberName });
+      }
+      return byLevel;
+    };
     return partyLanguages(
       members.map((m) => ({
         uuid: m.uuid,
@@ -301,7 +316,12 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
             written: String(item.system?.written ?? "none"),
           })),
       })),
-    ).map((row) => ({ name: row.name, known: row.known, spoken: level(row.spoken), written: level(row.written) }));
+    ).map((row) => ({
+      name: row.name,
+      known: row.known,
+      spoken: groups(row.spoken),
+      written: groups(row.written),
+    }));
   }
 
   /** The world's own settings, as the Campaign tab lets the GM set them. */

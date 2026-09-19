@@ -234,9 +234,16 @@ export interface LanguageHolder {
 
 export interface PartyLanguageRow {
   name: string;
-  /** Whoever speaks it best, or null when nobody speaks it at all. */
-  spoken: LanguageHolder | null;
-  written: LanguageHolder | null;
+  /**
+   * Everyone who speaks it, best first and then by name; empty when nobody
+   * speaks it at all.
+   *
+   * A list rather than the best speaker alone, because the useful answer at
+   * the table is *who* can talk to the innkeeper, not who talks to them best:
+   * four members with native Common are four people who can be sent in.
+   */
+  spoken: LanguageHolder[];
+  written: LanguageHolder[];
   /** How many members know it in any form. */
   known: number;
 }
@@ -250,7 +257,13 @@ function levelAt(rank: number): LanguageLevel {
   return LANGUAGE_LEVELS[rank] ?? "none";
 }
 
-/** Every language anyone knows, with the best speaker and the best writer of it. */
+/** Best level first, and members at the same level in name order. */
+function byLevelThenName(a: LanguageHolder, b: LanguageHolder): number {
+  const difference = languageRank(b.level) - languageRank(a.level);
+  return difference !== 0 ? difference : a.memberName.localeCompare(b.memberName);
+}
+
+/** Every language anyone knows, with everyone who speaks and everyone who writes it. */
 export function partyLanguages(members: readonly MemberLanguagesLike[]): PartyLanguageRow[] {
   const rows = new Map<string, PartyLanguageRow>();
   for (const member of members) {
@@ -260,16 +273,20 @@ export function partyLanguages(members: readonly MemberLanguagesLike[]): PartyLa
       const spokenRank = languageRank(language.spoken);
       const writtenRank = languageRank(language.written);
       if (spokenRank === 0 && writtenRank === 0) continue;
-      const row = rows.get(name) ?? { name, spoken: null, written: null, known: 0 };
+      const row = rows.get(name) ?? { name, spoken: [], written: [], known: 0 };
       row.known += 1;
-      if (spokenRank > 0 && spokenRank > languageRank(row.spoken?.level)) {
-        row.spoken = { uuid: member.uuid, memberName: member.name, level: levelAt(spokenRank) };
+      if (spokenRank > 0) {
+        row.spoken.push({ uuid: member.uuid, memberName: member.name, level: levelAt(spokenRank) });
       }
-      if (writtenRank > 0 && writtenRank > languageRank(row.written?.level)) {
-        row.written = { uuid: member.uuid, memberName: member.name, level: levelAt(writtenRank) };
+      if (writtenRank > 0) {
+        row.written.push({ uuid: member.uuid, memberName: member.name, level: levelAt(writtenRank) });
       }
       rows.set(name, row);
     }
+  }
+  for (const row of rows.values()) {
+    row.spoken.sort(byLevelThenName);
+    row.written.sort(byLevelThenName);
   }
   return [...rows.values()].sort(byName);
 }
