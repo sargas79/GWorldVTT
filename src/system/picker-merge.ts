@@ -42,6 +42,8 @@ export interface PlannedItem {
 export interface ChosenAmount {
   levels?: number;
   points?: number;
+  /** How many of a piece of gear, for a purchase of more than one. */
+  quantity?: number;
 }
 
 export type AdditionPlan =
@@ -156,16 +158,22 @@ export function planAddition(options: {
     return { action: "create", data: { ...data, system } };
   }
 
+  // How many of it: one by default, more when a purchase asked for more.
+  const taken = Math.max(1, Math.floor(chosen.quantity ?? Number(source.system?.quantity ?? 1)));
+
   if (source.type === "equipment" && match) {
     const from = Math.max(0, Math.floor(Number(match.system?.quantity ?? 1)));
-    const each = Math.max(1, Math.floor(Number(source.system?.quantity ?? 1)));
     return {
       action: "update",
       itemId: match.id!,
-      changes: { "system.quantity": from + each },
-      moved: { what: "quantity", from, to: from + each },
+      changes: { "system.quantity": from + taken },
+      moved: { what: "quantity", from, to: from + taken },
     };
   }
+
+  // A purchase of three ropes where the character has none makes one item of
+  // three, not three items of one.
+  if (chosen.quantity !== undefined) system.quantity = taken;
 
   return { action: "create", data: { ...data, system } };
 }

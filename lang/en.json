@@ -3207,6 +3207,23 @@
       "claw": "Claw",
       "striker": "Striker"
     },
+    "Shopping": {
+      "Buy": "Buy",
+      "BuyFor": "Buy ${amount}",
+      "BuyMore": "Buy more",
+      "BuyHint": "Buy it out of the cash on the sheet, with a line in the chat saying what it cost.",
+      "BuyMoreHint": "Buy more of this out of the cash on the sheet. What the character was written up with was paid for out of starting wealth and is not charged again.",
+      "AddHint": "Put it on the sheet without paying for it: starting gear comes out of starting wealth, not out of the cash.",
+      "Title": "Buy {name}",
+      "HowMany": "How many",
+      "Each": "${price} each",
+      "Total": "Total ${total}",
+      "CashNow": "cash ${amount}",
+      "CashAfter": "${amount} left",
+      "Short": "${amount} short",
+      "Note": "Bought {quantity} × {name}",
+      "Bought": "Bought {quantity} × {name} for ${total}."
+    },
     "Life": {
       "Study": "Study",
       "StudyHint": "200 hours of learning make a point: an hour of instruction is an hour, intensive training counts double, self-teaching counts half and work a quarter (Characters pp. 292-293). Hours short of a point are banked on the skill.",

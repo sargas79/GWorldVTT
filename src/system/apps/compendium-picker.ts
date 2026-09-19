@@ -15,6 +15,7 @@
  * the character already has raises what they have rather than adding a copy.
  */
 
+import { buyGear, isGear, unitPrice } from "../shopping.js";
 import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
 import { SYSTEM_ID } from "../constants.js";
 import { summarise } from "../item-summary.js";
@@ -50,6 +51,9 @@ const INDEX_FIELDS = [
   "system.db",
   "system.weight",
   "system.cost",
+  // Clothing is priced off the buyer's Status rather than at a figure of its
+  // own, so the Buy button needs the share to say what it would cost.
+  "system.costOfLivingPercent",
   "system.prerequisite",
   "system.defaultModifier",
   "system.colleges",
@@ -120,6 +124,11 @@ export async function collectEntries(
 /** The item types that are gear, whose picker shows weight and cash rather than points. */
 const GEAR_TYPES = new Set(["equipment", "armor", "shield"]);
 
+/** What an entry costs the character reading the list, for the Buy button to say. */
+function priceLabel(actor: any, entry: PickerEntry): string {
+  return game.i18n.format("GWORLD.Shopping.BuyFor", { amount: unitPrice(actor, { system: entry.system }) });
+}
+
 export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) {
   static override DEFAULT_OPTIONS = {
     classes: ["gworld", "gworld-picker"],
@@ -127,6 +136,7 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     window: { title: "GWORLD.Picker.Title", resizable: true },
     actions: {
       add: CompendiumPicker.#onAdd,
+      buy: CompendiumPicker.#onBuy,
       addCustom: CompendiumPicker.#onAddCustom,
     },
   };
@@ -147,6 +157,8 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
   #amounts = new Map<string, number>();
   /** What a custom entry is made as, when the list doesn't have what is wanted. */
   #custom: PickerCustom | null;
+  /** Whether gear can be bought here, or only written onto the sheet. */
+  #shopping: boolean;
 
   constructor(options: {
     actor: any;
@@ -155,12 +167,20 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     categories?: string[];
     title?: string;
     custom?: PickerCustom;
+    /**
+     * Whether gear rows offer Buy as well as Add. Off while a character is
+     * being written up: the gear a character starts with is bought out of
+     * starting wealth, which the sheet counts as the Gear figure, and paying
+     * for it again out of the cash would charge it twice.
+     */
+    shopping?: boolean;
   }) {
     super({ window: options.title ? { title: options.title } : {} });
     this.#actor = options.actor;
     this.#types = options.types;
     this.#categories = options.categories ?? [];
     this.#custom = options.custom ?? null;
+    this.#shopping = options.shopping !== false;
   }
 
   /** Opens a picker for one actor and set of types. */
@@ -170,6 +190,7 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     categories?: string[];
     title?: string;
     custom?: PickerCustom;
+    shopping?: boolean;
   }): Promise<CompendiumPicker> {
     const app = new CompendiumPicker(options);
     await app.render(true);
@@ -296,6 +317,10 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
         : game.i18n.localize("GWORLD.Picker.Points"),
       cost: cost === null ? null : game.i18n.format("GWORLD.Picker.Cost", { points: cost }),
       levelLabel: this.#levelLabel(item, held + amount),
+      // Gear is paid for in cash, so it is offered both ways: Add for the gear
+      // a character is written up with, which comes out of starting wealth,
+      // and Buy for shopping, which comes out of the money in hand.
+      buy: this.#shopping && isGear(entry.type) && this.#actor?.isOwner ? priceLabel(this.#actor, entry) : null,
     };
   }
 
@@ -425,6 +450,32 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
       search.focus();
       search.setSelectionRange(search.value.length, search.value.length);
     }
+  }
+
+  /**
+   * Buys the entry out of the character's cash (Characters pp. 25-27).
+   *
+   * The same addition Add makes, with the price taken off the money on the
+   * sheet and a line in the chat saying so. The ledger above the list is the
+   * cash, so the re-render shows what is left.
+   */
+  static async #onBuy(this: CompendiumPicker, _event: Event, target: HTMLElement): Promise<void> {
+    const uuid = target.dataset.uuid;
+    if (!uuid) return;
+
+    const source: any = await fromUuid(uuid).catch(() => null);
+    if (!source) {
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Picker.NotFound"));
+      return;
+    }
+
+    const data = source.toObject();
+    delete data._id;
+    const spent = await buyGear({ actor: this.#actor, data });
+    if (spent === null) return;
+
+    this.#added.add(uuid);
+    await this.render();
   }
 
   static async #onAdd(this: CompendiumPicker, _event: Event, target: HTMLElement): Promise<void> {

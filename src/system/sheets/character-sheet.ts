@@ -111,6 +111,7 @@ import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
 import { rollDisarm } from "../disarm.js";
 import { rollStrikeToBreak, weaponTargetsFor } from "../weapon-damage.js";
 import { buyAmmunition, chooseAndLoad, reloadWeapon } from "../ammunition.js";
+import { buyMore } from "../shopping.js";
 import { clothingCost } from "../../rules/wealth.js";
 import {
   beginGrapple,
@@ -510,6 +511,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       reloadWeapon: GWorldCharacterSheet.#onReloadWeapon,
       loadAmmunition: GWorldCharacterSheet.#onLoadAmmunition,
       buyAmmunition: GWorldCharacterSheet.#onBuyAmmunition,
+      buyItem: GWorldCharacterSheet.#onBuyItem,
       regenerate: GWorldCharacterSheet.#onRegenerate,
       study: GWorldCharacterSheet.#onStudy,
       workMonth: GWorldCharacterSheet.#onWorkMonth,
@@ -3377,6 +3379,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const item = this.itemFrom(target);
     if (!item) return;
     await buyAmmunition(this.actor, item, Number(target.dataset.modeIndex) || 0);
+  }
+
+  /**
+   * Buys more of something already carried, out of the cash on the sheet
+   * (Characters pp. 25-27): rations eaten, a rope left behind, arrows shot
+   * away. The gear that was there when the character was written up was paid
+   * for out of starting wealth and is not charged again.
+   */
+  static async #onBuyItem(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.itemFrom(target);
+    if (!item) return;
+    await buyMore(this.actor, item);
   }
 
   /**

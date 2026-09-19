@@ -5,6 +5,7 @@ import {
   SIGNATURE_GEAR_PER_POINT,
   averageStartingWealth,
   clothingCost,
+  purchase,
   equipmentQualityCost,
   equipmentQualityModifier,
   toolModifier,
@@ -98,5 +99,32 @@ describe("a tool's stated modifier (since API 1.63.0)", () => {
     expect(toolModifier("fine", null)).toBe(2);
     expect(toolModifier("best", undefined, { tl: 10 })).toBe(5);
     expect(toolModifier("good", 0)).toBe(0);
+  });
+});
+
+describe("paying for a purchase (Characters pp. 25-27)", () => {
+  it("charges the price for each and says what is left", () => {
+    expect(purchase({ price: 12.5, quantity: 4, money: 100 })).toEqual({
+      quantity: 4,
+      total: 50,
+      moneyAfter: 50,
+      short: 0,
+    });
+  });
+
+  it("keeps to the cent rather than drifting", () => {
+    expect(purchase({ price: 0.1, quantity: 3, money: 1 }).total).toBe(0.3);
+    expect(purchase({ price: 0.1, quantity: 3, money: 1 }).moneyAfter).toBe(0.7);
+  });
+
+  it("says how far short the cash falls, and still lets the GM allow it", () => {
+    const sum = purchase({ price: 400, quantity: 1, money: 250 });
+    expect(sum.moneyAfter).toBe(-150);
+    expect(sum.short).toBe(150);
+  });
+
+  it("buys whole things only, and nothing at all for a nonsense number", () => {
+    expect(purchase({ price: 10, quantity: 2.7, money: 100 }).quantity).toBe(2);
+    expect(purchase({ price: 10, quantity: -3, money: 100 })).toMatchObject({ quantity: 0, total: 0 });
   });
 });

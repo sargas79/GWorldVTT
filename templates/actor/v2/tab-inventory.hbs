@@ -195,6 +195,9 @@
                 <button type="button" class="v2-button" data-action="buyAmmunition" data-mode-index="{{item.loadModeIndex}}"
                         data-tooltip="{{localize 'GWORLD.Ammunition.BuyHint'}}">{{localize "GWORLD.Ammunition.Buy"}}</button>
               {{/if}}
+              {{!-- More of it, paid for out of the cash on the sheet. --}}
+              <button type="button" class="v2-button v2-button-gold" data-action="buyItem"
+                      data-tooltip="{{localize 'GWORLD.Shopping.BuyMoreHint'}}">{{localize "GWORLD.Shopping.BuyMore"}}</button>
               {{#if item.equippable}}
                 <button type="button" class="v2-button v2-button-steel" data-action="toggleEquipped">{{#if item.equipped}}{{localize "GWORLD.SheetV2.Unequip"}}{{else}}{{localize "GWORLD.SheetV2.Equip"}}{{/if}}</button>
               {{/if}}

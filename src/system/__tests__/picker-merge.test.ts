@@ -130,6 +130,18 @@ describe("planAddition", () => {
     expect(plan).toMatchObject({ action: "update", changes: { "system.quantity": 2 } });
   });
 
+  it("buys three ropes as three more of the rope carried, or as one item of three", () => {
+    const more = planAddition({
+      source: rope,
+      existing: [{ id: "r", ...rope }],
+      chosen: { quantity: 3 },
+    });
+    expect(more).toMatchObject({ action: "update", changes: { "system.quantity": 4 } });
+
+    const first = planAddition({ source: rope, existing: [], chosen: { quantity: 3 } });
+    expect(first).toMatchObject({ action: "create", data: { system: { quantity: 3 } } });
+  });
+
   it("adds a flat trait, armour or a language as a fresh copy", () => {
     const again = planAddition({
       source: combatReflexes,
