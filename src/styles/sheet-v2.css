@@ -1844,6 +1844,13 @@
 .gworld.v2.gworld-builder .gb-attribute input { width: 100%; height: 44px; font-size: 28px; }
 .gworld.v2.gworld-builder .gb-attribute-key { font-family: var(--font-heading); font-size: 18px; font-weight: 600; letter-spacing: 0.06em; color: var(--v2-steel-deep); }
 .gworld.v2.gworld-builder .gb-attribute-name { font-size: 11px; color: var(--v2-ink-muted); text-align: center; }
+/* What the character actually has, where a trait or a template moved it:
+   the box above bills the bought figure, this says what is rolled. */
+.gworld.v2.gworld-builder .gb-attribute-total {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  font-size: 11px; font-weight: 600; color: var(--v2-steel-deep); text-align: center;
+}
+.gworld.v2.gworld-builder .gb-attribute-total em { font-style: normal; font-weight: 400; color: var(--v2-ink-muted); }
 
 .gworld.v2.gworld-builder .gb-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
 .gworld.v2.gworld-builder .gb-row {

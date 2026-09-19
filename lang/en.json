@@ -806,6 +806,9 @@
       "BrowseAction": "Browse the compendia",
       "NothingYet": "Nothing chosen yet.",
       "AttributeCost": "Attributes cost",
+      "AttributeTotal": "Total {total}",
+      "FromTraits": "Traits",
+      "FromTemplate": "Template",
       "Heading": {
         "points": "How many points?",
         "attributes": "Attributes",

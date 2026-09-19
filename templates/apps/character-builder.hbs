@@ -132,6 +132,16 @@
                      id="{{@root.appId}}-{{attr.key}}" data-path="system.attributes.{{attr.key}}"
                      aria-label="{{localize (concat "GWORLD.Attribute." attr.key)}}" />
               <span class="gb-attribute-name">{{localize (concat "GWORLD.Attribute." attr.key)}}</span>
+              {{!-- What a trait or a racial template makes of it: the box bills the
+                   bought figure, and this is what the character actually rolls. --}}
+              {{#if attr.raised}}
+                <span class="gb-attribute-total">
+                  {{localize "GWORLD.Builder.AttributeTotal" total=attr.total}}
+                  {{#each attr.sources as |source|}}
+                    <em>{{#if source.labelKey}}{{localize source.label}}{{else}}{{source.label}}{{/if}} {{signed source.value}}</em>
+                  {{/each}}
+                </span>
+              {{/if}}
             </label>
           {{/each}}
         </div>

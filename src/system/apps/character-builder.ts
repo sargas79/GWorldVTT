@@ -22,6 +22,7 @@ import { rememberFocus, restoreFocus, type RememberedFocus } from "../focus-memo
 import { CompendiumPicker } from "./compendium-picker.js";
 import { clampedLevels, steppedLevels } from "../advancement.js";
 import { builderTypesFor } from "../data-extensions.js";
+import { builderAttributeRow, type BuilderAttributeRow } from "../sheet-v2/builder-attributes.js";
 import { customKindKey, levelCeiling, namePlaceholderKey, namedByPlayer, type PickerCustom } from "../picker-merge.js";
 import { lacksSpecialty, traitLevelName } from "../../rules/traits.js";
 import {
@@ -144,6 +145,22 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
 
   get #current(): Step {
     return STEPS[Math.min(this.#step, STEPS.length - 1)]!;
+  }
+
+  /**
+   * One attribute on the Attributes step: what was bought, and what the
+   * character actually has.
+   */
+  #attributeRow(key: (typeof ATTRIBUTES)[number], system: Record<string, any>): BuilderAttributeRow {
+    const derived = system.derived ?? {};
+    return builderAttributeRow({
+      key,
+      bought: system.attributes?.[key],
+      total: derived.attributes?.[key],
+      fromTraits: derived.attributeBonuses?.[key],
+      fromTemplate: system.racial?.[key],
+      moduleLines: derived.extensionBonuses?.attributes ?? [],
+    });
   }
 
   /**
@@ -292,10 +309,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       browseTypes: [...(step.types ?? []), ...(step.types ? builderTypesFor(step.id) : [])].join(","),
       items: this.#itemsForStep(step),
 
-      attributes: ATTRIBUTES.map((key) => ({
-        key,
-        value: system.attributes?.[key] ?? 10,
-      })),
+      attributes: ATTRIBUTES.map((key) => this.#attributeRow(key, system)),
 
       // What this character has already been built from, so the step shows
       // progress rather than offering the same button twice.
