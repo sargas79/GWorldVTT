@@ -342,14 +342,15 @@ declare global {
   };
 
   /**
-   * The active scene's canvas. Only the token layer's selection is declared:
-   * `PlaceablesLayer#controlled` returns the placeables the user has selected,
-   * and a Token placeable carries the actor it represents.
+   * The active scene's canvas. Only the token layer is declared:
+   * `PlaceablesLayer#controlled` returns the placeables the user has selected
+   * and `#placeables` every one drawn, and a Token placeable carries the actor
+   * it represents.
    *
    * Null before a scene is drawn, which is the case in a world with no scenes.
    */
   const canvas: {
-    tokens: { controlled: Array<{ actor: any }> } | null;
+    tokens: { controlled: Array<{ actor: any }>; placeables?: Array<{ actor: any }> } | null;
     [key: string]: any;
   } | null;
 

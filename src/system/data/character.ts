@@ -114,6 +114,7 @@ import { suitedLevel,
   relativeLevelForPoints,
   techniqueLevelsForPoints,
   resolveTechniqueDefaults,
+  rolledSkillName as rolledSkillOf,
 } from "../../rules/skills.js";
 import { musclePoweredRange } from "../../rules/ranged.js";
 import { halvesRapidStrike } from "../../rules/attack-options.js";
@@ -2182,20 +2183,26 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         item.type === "trait" && mode.perLevel ? levelledDamage(damage, levels) : damage;
 
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
-        const found = short(enchantedSkill(weaponSkill(mode.skill, true, mastered)), mode.minSt ?? null);
+        // What this character rolls the mode with: the skill they chose for
+        // it, else the one the weapon names (Characters p. 175). Everything
+        // that reads a skill to decide what the blow does -- the level, the
+        // unarmed bonus, a master's dice, which critical table a fumble is
+        // read on -- reads the one actually rolled.
+        const rolledSkill = rolledSkillOf(mode);
+        const found = short(enchantedSkill(weaponSkill(rolledSkill, true, mastered)), mode.minSt ?? null);
         const skillLevel = found.level;
         const atDefault = found.atDefault;
         // A fist load or a hilt punch hits as hard as the unarmed skill it is
         // struck with makes a punch hit (Characters p. 271, note 3).
         const unarmedBonus = mode.unarmedBonus && mode.damageBase !== "fixed"
           ? weaponUnarmedBonus({
-              skill: String(mode.skill ?? ""),
-              level: this.skillLevelByName(String(mode.skill ?? "")),
+              skill: rolledSkill,
+              level: this.skillLevelByName(rolledSkill),
               dx: attrs.DX + layering,
               st: strikingSt,
             })
           : 0;
-        const meleeMasterPerDie = masterPerDie(mastered, mode.skill);
+        const meleeMasterPerDie = masterPerDie(mastered, rolledSkill);
         const masterDamage = weaponMasterDamage(meleeMasterPerDie, String(mode.damageBase ?? ""), strikingSt, mode.minSt ?? null);
         const meleeBasis = mode.damageSpecial ? SPECIAL : withPuissance(perLevel(mode, resolveDamage(
           strikingSt, mode.damageBase, mode.damageModifier + unarmedBonus + masterDamage, mode.damageFormula, mode.minSt,
@@ -2207,7 +2214,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           modeIndex: index,
           name: item.name,
           mode: mode.name ?? "",
-          skillName: mode.skill ?? "",
+          skillName: rolledSkill,
+          // The skill the weapon itself names, so the picker can offer to put
+          // the row back to it, and the choice standing on this copy.
+          modeSkill: String(mode.skill ?? ""),
+          skillChoice: String(mode.skillChoice ?? ""),
           skillLevel,
           hitModifier: Number(mode.skillModifier ?? 0) || 0,
           atDefault,
@@ -2254,18 +2265,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           isFencing: Boolean(mode.isFencing),
           // Which critical miss table a fumble is read on is decided by the
           // skill: a Karate kick fumbles differently from a dropped axe.
-          unarmed: isUnarmedSkill(mode.skill),
+          unarmed: isUnarmedSkill(rolledSkill),
           stBased: mode.damageBase === "thr" || mode.damageBase === "sw",
           damageBase: String(mode.damageBase ?? ""),
           damageModifier: Number(mode.damageModifier ?? 0) || 0,
           // The skill the bonus is read for, so a pulled blow can work it out
           // again at the lower ST it is struck with.
-          unarmedBonusSkill: mode.unarmedBonus ? String(mode.skill ?? "") : "",
+          unarmedBonusSkill: mode.unarmedBonus ? rolledSkill : "",
           // Weapon Master's bonus per die, so a pulled blow can work it out
           // again on the dice of the lower ST.
           weaponMasterPerDie: masterDamage ? meleeMasterPerDie : 0,
           // Half the Rapid Strike penalty for a master (pp. 93, 99).
-          rapidStrikeHalved: halvedRapidStrike(mastered, mode.skill),
+          rapidStrikeHalved: halvedRapidStrike(mastered, rolledSkill),
           ignoresDr: Boolean(mode.ignoresDr),
           explosive: Boolean(mode.explosive),
           // A second attack that lands with this one (Characters p. 106).
@@ -2302,6 +2313,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       });
 
       (sys.rangedModes ?? []).forEach((mode: any, index: number) => {
+        // As for a melee mode: the skill chosen for it, else the weapon's own.
+        const rolledSkill = rolledSkillOf(mode);
         // Bows and crossbows use their own ST for damage and range; a thrown
         // weapon uses the thrower's, Striking ST included.
         const st = mode.weaponSt ?? strikingSt;
@@ -2310,15 +2323,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // thrower's thrust or swing and to the ST the range is worked from
         // (Characters p. 226). A grenade's fixed damage is not the thrower's.
         const art = throwingArtAttack({
-          ...weaponSkill(mode.skill, false, mastered),
-          skill: String(mode.skill ?? ""),
+          ...weaponSkill(rolledSkill, false, mastered),
+          skill: rolledSkill,
           throwingArt: throwingArtLevel,
           dx: attrs.DX + layering,
         });
         // A Weapon Master's weapon gets its bonus thrown or shot, unless
         // Throwing Art gives one, which is used instead (p. 226).
         const skilledDamage = perDieOfBasicDamage(
-          thrownDamageBonusPerDie({ throwingArt: art.bonus, weaponMaster: masterPerDie(mastered, mode.skill) }),
+          thrownDamageBonusPerDie({ throwingArt: art.bonus, weaponMaster: masterPerDie(mastered, rolledSkill) }),
           String(mode.damageBase ?? ""), st, mode.minSt ?? null,
         );
         // "Thrown weapons, and arrows and bolts, use the rules under Melee
@@ -2376,6 +2389,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           name: item.name,
           mode: mode.name ?? "",
           skillName: art.skill,
+          // The skill the weapon itself names, for the picker to offer, and
+          // the choice standing on this copy.
+          modeSkill: String(mode.skill ?? ""),
+          skillChoice: String(mode.skillChoice ?? ""),
           skillLevel,
           atDefault,
           natural: false,
@@ -3093,11 +3110,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // makes an affliction reach every roll: anything that already reads a
       // lowered DX picks up a coughing fit without being told about
       // afflictions at all.
+      //
+      // Deliberately not fed back into `strikingSt` above: nausea is "-2 to
+      // all attribute and skill rolls", a penalty to the roll rather than a
+      // reduction of ST, so it must not cut the damage a weapon does the way
+      // a real ST reduction would (p. 421).
       attributePenalties: penaltyEffects({
-        ST: this.attributePenalties.ST,
+        ST: this.attributePenalties.ST + afflicted.effect.st,
         DX: this.attributePenalties.DX + afflicted.effect.dx,
         IQ: this.attributePenalties.IQ + afflicted.effect.iq,
-        HT: this.attributePenalties.HT,
+        HT: this.attributePenalties.HT + afflicted.effect.ht,
       }),
       // What is on the token, and what it costs, for the sheet to say so.
       afflictions: {

@@ -115,8 +115,9 @@
 .gworld.party.v2 .party-holder em { font-style: normal; font-weight: 600; color: var(--v2-steel-deep); cursor: help; }
 
 .gworld.party.v2 .party-language-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
-/* The name on its own line, then the best speaker and writer side by side.
-   Each of those wraps: a long member name must never push the row wide. */
+/* The name on its own line, then everyone who speaks it and everyone who
+   writes it side by side. Each of those wraps: a party of six sharing a
+   language must never push the row wide. */
 .gworld.party.v2 .party-language {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -129,6 +130,8 @@
 .gworld.party.v2 .party-language-level { font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
 .gworld.party.v2 .party-language-level .v2-stat-label { display: inline; font-size: 12px; margin-right: 4px; }
 .gworld.party.v2 .party-language-level em { font-style: normal; color: var(--v2-ink-muted); }
+/* One group of holders per level, each on its own line under the label. */
+.gworld.party.v2 .party-language-group { display: block; }
 
 /* ── the campaign ──────────────────────────────────────────────────────── */
 

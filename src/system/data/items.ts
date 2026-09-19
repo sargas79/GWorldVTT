@@ -454,6 +454,17 @@ function meleeModeField() {
     name: new fields.StringField({ required: true, blank: true, initial: "" }),
     /** The skill used, by name, e.g. "Broadsword". */
     skill: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /**
+     * The skill this character rolls the mode with, where they chose one
+     * instead of the skill the weapon names (Characters p. 175).
+     *
+     * Blank is the ordinary case: roll what the weapon says. It is here, on
+     * the embedded copy, rather than on the mode's `skill`, because the
+     * weapon's own skill is what its parry, its class and its table row are
+     * read from -- and because the sword one character rolls with a wildcard
+     * is the same sword another rolls with Broadsword.
+     */
+    skillChoice: new fields.StringField({ required: true, blank: true, initial: "" }),
     /** ST-based damage uses thr or sw; fixed damage ignores ST entirely. */
     damageBase: new fields.StringField({
       required: true,
@@ -657,6 +668,17 @@ function rangedModeField() {
   return new fields.SchemaField({
     name: new fields.StringField({ required: true, blank: true, initial: "" }),
     skill: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /**
+     * The skill this character rolls the mode with, where they chose one
+     * instead of the skill the weapon names (Characters p. 175).
+     *
+     * Blank is the ordinary case: roll what the weapon says. It is here, on
+     * the embedded copy, rather than on the mode's `skill`, because the
+     * weapon's own skill is what its parry, its class and its table row are
+     * read from -- and because the sword one character rolls with a wildcard
+     * is the same sword another rolls with Broadsword.
+     */
+    skillChoice: new fields.StringField({ required: true, blank: true, initial: "" }),
     damageBase: new fields.StringField({
       required: true,
       nullable: false,

@@ -162,7 +162,7 @@
             <div class="v2-box v2-stat-block">
               <h4>{{block.title}}</h4>
               <dl class="v2-stat-grid">
-                {{#each block.lines as |line|}}<dt>{{line.label}}</dt><dd>{{line.value}}</dd>{{/each}}
+                {{#each block.lines as |line|}}<dt>{{line.label}}</dt><dd{{#if line.words}} class="v2-stat-words"{{/if}}>{{line.value}}</dd>{{/each}}
               </dl>
             </div>
           {{/each}}

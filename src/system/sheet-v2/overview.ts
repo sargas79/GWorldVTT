@@ -91,6 +91,17 @@ export interface ContextInput {
   attributePenalties: Partial<Record<"ST" | "DX" | "IQ" | "HT", number>>;
   /** Timed conditions modules put on the character, each with its modifier lines. */
   timed: Array<{ label: string; modifiers: Array<{ label: string; value: number }> }>;
+  /**
+   * The conditions on the token and what they cost (Campaigns pp. 428-429):
+   * the names of what is on them, and the attribute figures the table gives.
+   *
+   * Listed apart from the typed penalties above, because "Nauseated -2" is a
+   * line the player can do something about and "Penalties -2" is not.
+   */
+  afflictions: {
+    names: readonly string[];
+    effect: { dx: number; iq: number; st: number; ht: number; defense: number };
+  };
   /** Attack penalties from traits: Bad Sight, One Eye and the like. */
   attackPenalties: { melee: Array<{ trait: string; value: number }>; ranged: Array<{ trait: string; value: number }> };
   /** Layered armour's DX penalty (Campaigns p. 286), zero or negative. */
@@ -99,8 +110,8 @@ export interface ContextInput {
 
 /**
  * What is modifying this character's rolls right now: posture, load,
- * maneuver, lowered attributes, timed conditions, impairing traits and layered
- * armour. Lines worth nothing are left out.
+ * maneuver, lowered attributes, the conditions on the token, timed conditions,
+ * impairing traits and layered armour. Lines worth nothing are left out.
  */
 export function contextModifiers(input: ContextInput): ContextModifier[] {
   const lines: ContextModifier[] = [];
@@ -113,6 +124,18 @@ export function contextModifiers(input: ContextInput): ContextModifier[] {
   push(`GWORLD.Encumbrance.${input.encumbranceKey}`, true, "Dodge", input.encumbranceDodge);
   if (input.maneuver === "moveAndAttack") push("GWORLD.Maneuver.moveAndAttack", true, "melee", -4);
   for (const key of ["ST", "DX", "IQ", "HT"] as const) push("GWORLD.Penalties.Label", true, key, Number(input.attributePenalties[key]) || 0);
+  // What the token's conditions come to, under the names of the conditions
+  // themselves. The defense figure is theirs alone: an attribute penalty
+  // never touches a defense (p. 421), and nausea's -1 does.
+  if (input.afflictions.names.length > 0) {
+    const named = input.afflictions.names.join(", ");
+    const effect = input.afflictions.effect;
+    push(named, false, "ST", Number(effect.st) || 0);
+    push(named, false, "DX", Number(effect.dx) || 0);
+    push(named, false, "IQ", Number(effect.iq) || 0);
+    push(named, false, "HT", Number(effect.ht) || 0);
+    push(named, false, "defense", Number(effect.defense) || 0);
+  }
   for (const condition of input.timed) {
     for (const m of condition.modifiers) push(`${condition.label}: ${m.label}`, false, "", m.value);
   }

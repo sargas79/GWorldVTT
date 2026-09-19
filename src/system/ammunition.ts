@@ -18,6 +18,7 @@ import { payFor, purchaseNote } from "./shopping.js";
 import {
   AMMUNITION_TYPES,
   ammunitionCost,
+  nearestAmmunitionByCalibre,
   ammunitionEffect,
   ammunitionFits,
   availableAmmunition,
@@ -26,6 +27,7 @@ import {
   fullLoad,
   loadPlan,
   reloadTime,
+  type AmmunitionReference,
   type AmmunitionType,
   type ShotsEntry,
 } from "../rules/ammunition.js";
@@ -203,20 +205,39 @@ export function ammunitionFitFor(item: any): string {
   return calibreTokenOf(weapon.name) || weapon.name;
 }
 
-/** A compendium record of rounds that fit the weapon, where the packs hold one. */
-async function packAmmunitionFor(item: any): Promise<Record<string, any> | null> {
+/**
+ * The rounds the packs carry: those that fit this weapon, and every other
+ * listed box, which is what a weapon with no record of its own is priced from.
+ */
+async function packAmmunitionFor(item: any): Promise<{
+  fitting: Record<string, any> | null;
+  listed: AmmunitionReference[];
+}> {
   const weapon = fitOf(item);
+  const listed: AmmunitionReference[] = [];
+  let fitting: Record<string, any> | null = null;
   for (const pack of game.packs ?? []) {
     if (pack.metadata?.type !== "Item") continue;
-    const index = await pack.getIndex({ fields: ["type", "system.category", "system.ammunition"] });
-    const hit = index.find((entry: any) => entry.type === "equipment" && entry.system?.category === "ammunition"
-      && String(entry.system?.ammunition?.fits ?? "") && ammunitionFits(weapon, String(entry.system.ammunition.fits)));
-    if (hit) {
-      const doc = await pack.getDocument(hit._id);
-      if (doc) return doc.toObject();
+    const index = await pack.getIndex({
+      fields: ["type", "system.category", "system.ammunition", "system.cost", "system.weight"],
+    });
+    for (const entry of index) {
+      if (entry.type !== "equipment" || entry.system?.category !== "ammunition") continue;
+      const fits = String(entry.system?.ammunition?.fits ?? "");
+      if (!fits) continue;
+      listed.push({
+        name: String(entry.name ?? ""),
+        fits,
+        costPerRound: Number(entry.system?.cost) || 0,
+        weightPerRound: Number(entry.system?.weight) || 0,
+      });
+      if (!fitting && ammunitionFits(weapon, fits)) {
+        const doc = await pack.getDocument(entry._id);
+        if (doc) fitting = doc.toObject();
+      }
     }
   }
-  return null;
+  return { fitting, listed };
 }
 
 /**
@@ -242,36 +263,56 @@ export async function buyAmmunition(actor: any, item: any, modeIndex: number): P
   const kinds = availableAmmunition(shape);
   const escape = (text: string) => foundry.utils.escapeHTML(String(text ?? ""));
   const kindOptions = kinds.map((kind) => `<option value="${kind}"${kind === String(mode.ammunition ?? "") ? " selected" : ""}>${escape(A(kind || "none"))}</option>`).join("");
+
+  // What a round of this weighs and costs before the kind's multiplier. The
+  // pack's own record where there is one; else the table's reload weight over
+  // the load; else the listed cartridge nearest in bore, since a weapon whose
+  // reload weight was never filled in -- which is all of them -- would
+  // otherwise be priced at $20 x 0, and buy its ammunition free.
+  const { fitting: record, listed } = await packAmmunitionFor(item);
+  const fits = String(record?.system?.ammunition?.fits ?? "") || ammunitionFitFor(item);
+  const fromReload = capacity > 0 ? (Number(mode.reloadWeight) || 0) / capacity : 0;
+  const comparable = record || fromReload > 0
+    ? null
+    : nearestAmmunitionByCalibre(listed, shape.calibreMm);
+  const roundWeight = record
+    ? Number(record.system?.weight) || 0
+    : fromReload > 0 ? fromReload : comparable?.weightPerRound ?? 0;
+  const basicCost = record
+    ? Number(record.system?.cost) || ammunitionCost(roundWeight)
+    : fromReload > 0 ? ammunitionCost(roundWeight) : comparable?.costPerRound ?? 0;
+
   const asked = await foundry.applications.api.DialogV2.prompt({
     window: { title: A("BuyTitle", { name: String(item.name) }) },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:8px">
       <label style="display:flex;flex-direction:column;gap:4px">${A("Kind")}<select name="kind">${kindOptions}</select></label>
       <label style="display:flex;flex-direction:column;gap:4px">${A("Rounds")}<input type="number" name="rounds" min="1" step="1" value="${Math.max(1, capacity)}"></label>
+      <label style="display:flex;flex-direction:column;gap:4px">${A("CostPerRound")}<input type="number" name="cost" min="0" step="0.01" value="${basicCost}"></label>
+      <p class="ihint" style="margin:0">${escape(comparable
+        ? A("PricedLike", { name: comparable.name })
+        : record ? A("PricedFromRecord", { name: String(record.name) }) : A("PricedFromReload"))}</p>
     </div>`,
     ok: {
       label: A("Buy"),
       callback: (_event: Event, button: HTMLElement) => {
         const root = button.closest<HTMLElement>(".application");
+        const typed = root?.querySelector<HTMLInputElement>('input[name="cost"]')?.value;
         return {
           kind: root?.querySelector<HTMLSelectElement>('select[name="kind"]')?.value ?? "",
           rounds: rounds(root?.querySelector<HTMLInputElement>('input[name="rounds"]')?.value),
+          cost: typed === undefined || typed === "" ? basicCost : Math.max(0, Number(typed) || 0),
         };
       },
     },
     rejectClose: false,
   });
   if (!asked || typeof asked !== "object") return null;
-  const { kind, rounds: count } = asked as { kind: string; rounds: number };
+  const { kind, rounds: count, cost: askedCost } = asked as { kind: string; rounds: number; cost: number };
   if (count <= 0) return null;
 
-  const record = await packAmmunitionFor(item);
-  const fits = String(record?.system?.ammunition?.fits ?? "") || ammunitionFitFor(item);
-  // Per round: the pack's figure, else the table's reload weight over the load.
-  const roundWeight = record ? Number(record.system?.weight) || 0
-    : capacity > 0 ? (Number(mode.reloadWeight) || 0) / capacity : 0;
   const effect = kind ? ammunitionEffect(kind as AmmunitionType, shape) : null;
   const multiplier = effect?.costMultiplier ?? 1;
-  const roundCost = Math.round((record ? Number(record.system?.cost) || ammunitionCost(roundWeight) : ammunitionCost(roundWeight)) * multiplier * 100) / 100;
+  const roundCost = Math.round(askedCost * multiplier * 100) / 100;
   const baseName = record ? String(record.name) : A("RoundsFor", { fits });
   const name = kind ? `${baseName}, ${A(kind).toLowerCase()}` : baseName;
   const lc = effect?.lc ?? null;

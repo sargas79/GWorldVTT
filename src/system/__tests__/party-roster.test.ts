@@ -148,7 +148,7 @@ describe("the best of each skill", () => {
 });
 
 describe("the party's languages", () => {
-  it("names the best speaker and the best writer of each", () => {
+  it("lists every speaker and every writer of each, best first", () => {
     const rows = partyLanguages([
       { uuid: "Actor.a", name: "Ada", languages: [{ name: "Elvish", spoken: "accented", written: "none" }, { name: "Common", spoken: "native", written: "native" }] },
       { uuid: "Actor.b", name: "Bo", languages: [{ name: "Elvish", spoken: "broken", written: "accented" }, { name: "Dwarvish", spoken: "none", written: "none" }] },
@@ -156,14 +156,33 @@ describe("the party's languages", () => {
     expect(rows.map((r) => r.name)).toEqual(["Common", "Elvish"]);
     const elvish = rows[1]!;
     expect(elvish.known).toBe(2);
-    expect(elvish.spoken).toEqual({ uuid: "Actor.a", memberName: "Ada", level: "accented" });
-    expect(elvish.written).toEqual({ uuid: "Actor.b", memberName: "Bo", level: "accented" });
+    expect(elvish.spoken).toEqual([
+      { uuid: "Actor.a", memberName: "Ada", level: "accented" },
+      { uuid: "Actor.b", memberName: "Bo", level: "broken" },
+    ]);
+    expect(elvish.written).toEqual([{ uuid: "Actor.b", memberName: "Bo", level: "accented" }]);
+  });
+
+  // The bug this replaced: the best speaker took the only slot, so three
+  // members with native Common showed one name and the party looked
+  // monolingual.
+  it("names everyone who has it equally well", () => {
+    const row = partyLanguages([
+      { uuid: "Actor.c", name: "Cai", languages: [{ name: "Common", spoken: "native", written: "native" }] },
+      { uuid: "Actor.a", name: "Ada", languages: [{ name: "Common", spoken: "native", written: "none" }] },
+      { uuid: "Actor.b", name: "Bo", languages: [{ name: "Common", spoken: "accented", written: "broken" }] },
+    ])[0]!;
+    expect(row.known).toBe(3);
+    expect(row.spoken.map((h) => `${h.memberName} ${h.level}`)).toEqual([
+      "Ada native", "Cai native", "Bo accented",
+    ]);
+    expect(row.written.map((h) => h.memberName)).toEqual(["Cai", "Bo"]);
   });
 
   it("has no speaker for a language only written", () => {
     const row = partyLanguages([{ uuid: "Actor.a", name: "Ada", languages: [{ name: "Latin", spoken: "none", written: "broken" }] }])[0]!;
-    expect(row.spoken).toBeNull();
-    expect(row.written?.level).toBe("broken");
+    expect(row.spoken).toEqual([]);
+    expect(row.written[0]?.level).toBe("broken");
   });
 });
 

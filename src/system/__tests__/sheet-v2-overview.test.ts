@@ -63,6 +63,7 @@ describe("what is modifying rolls right now", () => {
     encumbranceKey: "none",
     maneuver: "doNothing",
     attributePenalties: {},
+    afflictions: { names: [], effect: { dx: 0, iq: 0, st: 0, ht: 0, defense: 0 } },
     timed: [],
     attackPenalties: { melee: [], ranged: [] },
     layeringPenalty: 0,
@@ -88,6 +89,39 @@ describe("what is modifying rolls right now", () => {
       ["Dodge", -1],
       ["melee", -4],
       ["DX", -2],
+    ]);
+  });
+
+  /**
+   * The conditions on the token, under their own names: "Nauseated -2" is a
+   * line the player can act on where "Penalties -2" is not. The defense
+   * figure is the condition's own, since an attribute penalty never reaches a
+   * defense (Campaigns p. 421).
+   */
+  it("names the conditions on the token and what each costs", () => {
+    const lines = contextModifiers({
+      ...base,
+      afflictions: { names: ["Nauseated"], effect: { dx: -2, iq: -2, st: -2, ht: -2, defense: -1 } },
+    });
+    expect(lines).toEqual([
+      { label: "Nauseated", labelKey: false, appliesTo: "ST", value: -2 },
+      { label: "Nauseated", labelKey: false, appliesTo: "DX", value: -2 },
+      { label: "Nauseated", labelKey: false, appliesTo: "IQ", value: -2 },
+      { label: "Nauseated", labelKey: false, appliesTo: "HT", value: -2 },
+      { label: "Nauseated", labelKey: false, appliesTo: "defense", value: -1 },
+    ]);
+  });
+
+  it("keeps a typed penalty and a condition apart", () => {
+    const lines = contextModifiers({
+      ...base,
+      attributePenalties: { DX: -1 },
+      afflictions: { names: ["Drunk"], effect: { dx: -2, iq: -2, st: 0, ht: 0, defense: 0 } },
+    });
+    expect(lines.map((l) => [l.label, l.appliesTo, l.value])).toEqual([
+      ["GWORLD.Penalties.Label", "DX", -1],
+      ["Drunk", "DX", -2],
+      ["Drunk", "IQ", -2],
     ]);
   });
 

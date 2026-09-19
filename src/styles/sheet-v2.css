@@ -1069,8 +1069,11 @@
 .gworld.v2 .v2-box-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 5px 10px; font-size: 14px; }
 /* A table row's columns, read down: heading beside figure, as the book's row would fold. */
 .gworld.v2 .v2-stat-grid { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 12px; row-gap: 2px; margin: 0 0 8px; padding: 0 10px; font-size: 13.5px; }
-.gworld.v2 .v2-stat-grid dt { margin: 0; opacity: 0.72; white-space: nowrap; }
+.gworld.v2 .v2-stat-grid dt { margin: 0; opacity: 0.85; white-space: nowrap; }
 .gworld.v2 .v2-stat-grid dd { margin: 0; min-width: 0; overflow-wrap: anywhere; font-family: var(--font-heading); font-size: 15px; }
+/* A value that is words rather than a figure: the body face at full contrast,
+   because "Armor-piercing hard core" and "7.62mmS" have to be read, not glanced at. */
+.gworld.v2 .v2-stat-grid dd.v2-stat-words { font-family: inherit; font-size: 13.5px; color: var(--v2-ink); }
 /* A weapon table as the book prints it: headings across, one row per mode, wider than
    the panel and scrolling sideways within it rather than folding. */
 .gworld.v2 .v2-weapon-table { width: 100%; border-collapse: collapse; font-size: 12.5px; white-space: nowrap; }
@@ -1098,6 +1101,12 @@
 .gworld.v2 .v2-weapon-cell b { font-family: var(--font-heading); font-size: 14px; font-weight: 600; white-space: nowrap; }
 .gworld.v2 .v2-weapon-notes { flex: 1 0 100%; font-size: 11.5px; opacity: 0.85; }
 .gworld.v2 .v2-preview-strip { padding: 2px 0 6px; border-top: 0; border-bottom: 1px solid color-mix(in srgb, var(--v2-ink) 12%, transparent); }
+/* Which skill the attack is rolled with: the label beside the select, and the
+   select marked when it is not the skill the weapon itself names. */
+.gworld.v2 .v2-attack-skill { display: flex; align-items: center; gap: 8px; padding: 4px 0 6px; }
+.gworld.v2 .v2-attack-skill .v2-stat-label { flex: 0 0 auto; }
+.gworld.v2 .v2-attack-skill-select { flex: 1 1 auto; min-width: 0; height: 26px; font-size: 13px; }
+.gworld.v2 .v2-attack-skill-select.v2-chosen { border-color: var(--v2-steel); font-weight: 600; }
 /* A count edited where it is read: a box's rounds in its row and its panel. */
 .gworld.v2 input.v2-gear-qty,
 .gworld.v2 input.v2-inline-number {
@@ -1844,6 +1853,13 @@
 .gworld.v2.gworld-builder .gb-attribute input { width: 100%; height: 44px; font-size: 28px; }
 .gworld.v2.gworld-builder .gb-attribute-key { font-family: var(--font-heading); font-size: 18px; font-weight: 600; letter-spacing: 0.06em; color: var(--v2-steel-deep); }
 .gworld.v2.gworld-builder .gb-attribute-name { font-size: 11px; color: var(--v2-ink-muted); text-align: center; }
+/* What the character actually has, where a trait or a template moved it:
+   the box above bills the bought figure, this says what is rolled. */
+.gworld.v2.gworld-builder .gb-attribute-total {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  font-size: 11px; font-weight: 600; color: var(--v2-steel-deep); text-align: center;
+}
+.gworld.v2.gworld-builder .gb-attribute-total em { font-style: normal; font-weight: 400; color: var(--v2-ink-muted); }
 
 .gworld.v2.gworld-builder .gb-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
 .gworld.v2.gworld-builder .gb-row {

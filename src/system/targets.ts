@@ -46,3 +46,16 @@ export function currentTargets(): any[] {
   if (targeted.length > 0) return targeted;
   return [...(canvas?.tokens?.controlled ?? [])];
 }
+
+/**
+ * Whether this user has an actor of their own standing on the scene.
+ *
+ * A control that acts on the user's own character -- applying a blow to the
+ * character who took it -- belongs to everyone who has such a character, and
+ * to nobody else: a player with none would be offered a button that only ever
+ * fails. The GM and whoever rolled the attack are asked separately, since
+ * they may act on somebody else's.
+ */
+export function ownsATokenOnScene(): boolean {
+  return [...(canvas?.tokens?.placeables ?? [])].some((token: any) => token?.actor?.isOwner === true);
+}

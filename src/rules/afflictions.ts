@@ -48,6 +48,16 @@ export interface AfflictionEffect {
    * down, as any temporary penalty does (p. 421).
    */
   iq: number;
+  /**
+   * Penalty to ST and HT rolls, for the conditions written against "all
+   * attribute rolls" rather than against DX and IQ.
+   *
+   * Nausea is the one the table writes that way. It is a penalty to the roll
+   * and not a reduction of the attribute, so it must not reach the damage a
+   * muscle-powered weapon does or anything else ST is looked up for.
+   */
+  st: number;
+  ht: number;
   /** Penalty to self-control rolls, which the book states separately. */
   selfControl: number;
   /** Penalty to active defenses. */
@@ -70,7 +80,7 @@ export interface AfflictionEffect {
 export const INCAPACITATED_DEFENSE = -4;
 
 const NOTHING = {
-  dx: 0, iq: 0, selfControl: 0, defense: 0,
+  dx: 0, iq: 0, st: 0, ht: 0, selfControl: 0, defense: 0,
   helpless: false, fallsDown: false, forbids: [] as readonly string[],
 };
 
@@ -94,8 +104,11 @@ const EFFECTS: Readonly<Record<Affliction, AfflictionEffect>> = {
   drunk: { ...NOTHING, severity: "irritating", dx: -2, iq: -2, selfControl: -4 },
   // "-3 penalty to all DX, IQ, skill, and self-control rolls."
   euphoria: { ...NOTHING, severity: "irritating", dx: -3, iq: -3, selfControl: -3 },
-  // "-2 to all attribute and skill rolls, and -1 to active defenses."
-  nauseated: { ...NOTHING, severity: "irritating", dx: -2, iq: -2, defense: -1 },
+  // "-2 to all attribute and skill rolls, and -1 to active defenses." All
+  // four attributes, which is why this is the one row with a ST and HT
+  // figure: a nauseated character heaves at a stuck door as badly as they
+  // swing a sword.
+  nauseated: { ...NOTHING, severity: "irritating", dx: -2, iq: -2, st: -2, ht: -2, defense: -1 },
   moderatePain: { ...NOTHING, severity: "irritating", dx: -2, iq: -2, selfControl: -2 },
   severePain: { ...NOTHING, severity: "irritating", dx: -4, iq: -4, selfControl: -4 },
   terriblePain: { ...NOTHING, severity: "irritating", dx: -6, iq: -6, selfControl: -6 },

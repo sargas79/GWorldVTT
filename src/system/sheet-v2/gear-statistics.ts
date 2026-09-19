@@ -17,6 +17,14 @@
 export interface StatLine {
   label: string;
   value: string;
+  /**
+   * True where the value is words rather than a figure.
+   *
+   * The panel sets a figure in the condensed display face, which is right for
+   * "DR 4" and wrong for "Armor-piercing hard core" or a calibre like
+   * "7.62mmS", where telling similar letterforms apart is the whole job.
+   */
+  words?: boolean;
 }
 
 /** A group of figures: the armour, the shield, the vehicle, the rounds. */
@@ -325,8 +333,8 @@ function ammunitionBlock(system: Record<string, any>, L: Localize): StatBlock {
     key: "ammunition",
     title: S("Ammunition"),
     lines: [
-      { label: L("GWORLD.Ammunition.Kind"), value: L(`GWORLD.Ammunition.${kind || "none"}`) },
-      { label: L("GWORLD.Ammunition.Fits"), value: fits || S("FitsAnything") },
+      { label: L("GWORLD.Ammunition.Kind"), value: L(`GWORLD.Ammunition.${kind || "none"}`), words: true },
+      { label: L("GWORLD.Ammunition.Fits"), value: fits || S("FitsAnything"), words: true },
     ],
   };
 }

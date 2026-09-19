@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { currentTargets, targetedTokens } from "../targets.js";
+import { currentTargets, ownsATokenOnScene, targetedTokens } from "../targets.js";
 
 const globals = globalThis as Record<string, unknown>;
 
 /** Stands in for the two Foundry globals these functions read. */
-function stub(options: { targeted?: unknown[]; selected?: unknown[] }) {
+function stub(options: { targeted?: unknown[]; selected?: unknown[]; drawn?: unknown[] }) {
   globals.game = { user: { targets: new Set(options.targeted ?? []) } };
-  globals.canvas = { tokens: { controlled: options.selected ?? [] } };
+  globals.canvas = { tokens: { controlled: options.selected ?? [], placeables: options.drawn ?? [] } };
 }
 
 afterEach(() => {
@@ -55,5 +55,28 @@ describe("currentTargets", () => {
     globals.game = { user: { targets: new Set() } };
     globals.canvas = null;
     expect(currentTargets()).toEqual([]);
+  });
+});
+
+/**
+ * Who a control that acts on your own character belongs to. The damage card's
+ * Apply button is the case: the blow comes off the victim's sheet, so their
+ * player is offered it -- and a player with no character on the scene is not.
+ */
+describe("ownsATokenOnScene", () => {
+  it("is true where one of the tokens drawn is the user's own", () => {
+    stub({ drawn: [{ actor: { isOwner: false } }, { actor: { isOwner: true } }] });
+    expect(ownsATokenOnScene()).toBe(true);
+  });
+
+  it("is false where none of them is", () => {
+    stub({ drawn: [{ actor: { isOwner: false } }, { actor: null }, {}] });
+    expect(ownsATokenOnScene()).toBe(false);
+  });
+
+  it("survives a world with no canvas drawn", () => {
+    globals.game = { user: { targets: new Set() } };
+    globals.canvas = null;
+    expect(ownsATokenOnScene()).toBe(false);
   });
 });
