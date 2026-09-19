@@ -18,7 +18,7 @@ import { HURTING_YOURSELF_DR, hurtingYourself } from "../rules/hurting-yourself.
 import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy } from "./weapon-damage.js";
 import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shields.js";
 import { rollDamage, rollSuccess, type AttackWeaponFlag } from "./roll.js";
-import { currentTargets } from "./targets.js";
+import { currentTargets, ownsATokenOnScene } from "./targets.js";
 import { blastAt } from "../rules/explosions.js";
 import { criticalEntry, criticalHitTableFor, isUnarmedSkill } from "../rules/criticals.js";
 import { BLOCKS_PER_TURN, acrobaticDefenseModifier, bareHandedParryModifier, mayTryAcrobatic, blockableAttack, canParryFlail, flailDefenseModifier, masterHalvesParry, multipleParryPenalty, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
@@ -129,6 +129,28 @@ function damageFlag(message: any): DamageFlag | null {
 }
 
 /**
+ * Whether this user has anybody to apply the blow to.
+ *
+ * The GM, and whoever rolled the attack, may apply it to somebody else. So may
+ * the player who was hit -- to themselves. That is who the card is for: the
+ * damage comes off their sheet, and until now the control was drawn for the
+ * attacker and the GM alone, which left the attacker reaching into the
+ * victim's sheet and, at a table where the GM is not attacking, nobody able to
+ * act on the card at all.
+ *
+ * A blow aimed at a weapon (Campaigns p. 483) asks a narrower question: it is
+ * written to the item, so it belongs to whoever owns the weapon.
+ */
+function mayApplyDamage(message: any, flag: DamageFlag): boolean {
+  if (game.user?.isGM === true || message?.isAuthor === true) return true;
+  if (flag.weaponTarget) {
+    const owner: any = fromUuidSync(flag.weaponTarget.actorUuid);
+    return owner?.isOwner === true;
+  }
+  return ownsATokenOnScene();
+}
+
+/**
  * Adds the apply controls to a damage card.
  *
  * They are built here rather than in the card's own template because the card
@@ -139,7 +161,7 @@ function damageFlag(message: any): DamageFlag | null {
 function addApplyControls(message: any, html: HTMLElement): void {
   const flag = damageFlag(message);
   if (!flag) return;
-  if (!game.user?.isGM && !message.isAuthor) return;
+  if (!mayApplyDamage(message, flag)) return;
 
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-apply]")) return;
