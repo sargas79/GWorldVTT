@@ -295,6 +295,31 @@ export function sameSkill(a: string, b: string): boolean {
 }
 
 /**
+ * Whether a name is a wildcard skill (Characters p. 175).
+ *
+ * "Wildcard skills are always written with a '!' after the skill name." That
+ * is the whole test, and it is deliberately all of it: which named skills a
+ * given wildcard stands in for is a book's business, not the system's.
+ */
+export function isWildcardSkill(name: string): boolean {
+  return normalizeSkillName(name).endsWith("!");
+}
+
+/**
+ * The skill an attack is actually rolled with: the one chosen for this
+ * character's copy of the weapon, else the one the weapon names.
+ *
+ * A wildcard covers the skills it is written for, so somebody who bought
+ * Sword! rolls it for a broadsword rather than defaulting at DX-5 -- but only
+ * a book says which weapons a wildcard covers, so the choice is the player's
+ * and this reads it.
+ */
+export function rolledSkillName(mode: { skill?: unknown; skillChoice?: unknown }): string {
+  const chosen = String(mode?.skillChoice ?? "").trim();
+  return chosen || String(mode?.skill ?? "").trim();
+}
+
+/**
  * The next point total that actually buys something (GURPS Lite p. 12).
  *
  * Skill points come in steps -- 1, 2, 4, 8, then four at a time -- and the

@@ -4267,6 +4267,9 @@
         "hyperspectralVision": "Hyperspectral Vision"
       },
       "Attacks": "Attacks",
+      "AttackSkill": "The skill this attack is rolled with",
+      "AttackSkillHint": "Which of this character's skills rolls this attack. A wildcard skill stands in for the skills it covers (Characters p. 175); the weapon keeps its own skill for everyone else who holds it.",
+      "WeaponsOwnSkill": "{name} (the weapon's own)",
       "AttackPreview": "Attack preview",
       "Weapon": "Weapon",
       "Targets": "{count} targets",

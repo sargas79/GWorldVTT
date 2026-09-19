@@ -38,6 +38,7 @@ import { isReadTrait } from "../../rules/trait-effects.js";
 import { weaknessOf } from "../../rules/weakness.js";
 import { traitLevelName } from "../../rules/traits.js";
 import { asSortMode, firstLine, groupRows, selectedKey, sortRows, type SortMode } from "../sheet-v2/list-view.js";
+import { attackSkillOptions, rolledWithChosenSkill, type HeldSkill } from "../sheet-v2/attack-skills.js";
 import { isLevelled, itemImprovement, traitImprovement } from "../sheet-v2/improvements.js";
 import { namePlaceholderKey, namedByPlayer } from "../picker-merge.js";
 import { gearStatistics, weaponTablesOf } from "../sheet-v2/gear-statistics.js";
@@ -185,6 +186,14 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     ].sort((a, b) => byName(a.atk, b.atk));
 
     const localize = (key: string, data?: Record<string, unknown>) => (data ? game.i18n.format(key, data) : game.i18n.localize(key));
+    // The skills this character could roll an attack with, read once for the
+    // pickers: their own, wildcards among them (Characters p. 175).
+    const heldSkills: HeldSkill[] = [...(actor.items ?? [])]
+      .filter((item: any) => item?.type === "skill")
+      .map((item: any) => ({
+        name: String(item.name ?? ""),
+        level: typeof item.system?.derived?.level === "number" ? item.system.derived.level : null,
+      }));
     const attacks = entries.map(({ atk, ranged }) => {
       const key = attackKey(atk, ranged);
       const item = atk.itemId ? actor.items.get(atk.itemId) ?? null : null;
@@ -213,11 +222,29 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
           })
         : null;
       const chance = preview ? successChance(preview.effective) : null;
+      // Which skill this character rolls the attack with. Only a weapon's own
+      // mode can be changed: a punch and a trait's attack have no mode to
+      // write the choice to.
+      const modeSkill = String(atk.modeSkill ?? "");
+      const chosenSkill = String(atk.skillChoice ?? "");
+      const skillPicker = item && modeSkill && Number.isInteger(atk.modeIndex)
+        ? {
+            options: attackSkillOptions({
+              modeSkill,
+              chosen: chosenSkill,
+              skills: heldSkills,
+              format: ({ name, level }) => (level === null ? name : `${name} ${level}`),
+              weaponsOwnLabel: ({ name }) => localize("GWORLD.SheetV2.WeaponsOwnSkill", { name }),
+            }),
+            chosen: rolledWithChosenSkill(modeSkill, chosenSkill),
+          }
+        : null;
       return {
         key,
         atk,
         ranged,
         strip,
+        skillPicker,
         equipped: Boolean(item?.system?.equipped),
         preview,
         chance,
@@ -1194,6 +1221,33 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     this.wireListControls();
     this.wireGearDrag();
     this.wireJournalKinds();
+    this.wireAttackSkills();
+  }
+
+  /**
+   * The skill an attack is rolled with, chosen on the Combat tab.
+   *
+   * Written to this character's own copy of the weapon: the mode keeps the
+   * skill the book gives it -- its parry, its class and its table row are read
+   * from that -- and the choice sits beside it. So the sword a character with
+   * a wildcard rolls with the wildcard is the same sword somebody who learned
+   * Broadsword rolls with Broadsword.
+   */
+  protected wireAttackSkills(): void {
+    for (const select of this.element.querySelectorAll<HTMLSelectElement>("select[data-v2-attack-skill]")) {
+      select.addEventListener("change", () => {
+        const item = this.actor.items.get(select.dataset.v2AttackSkill ?? "");
+        const index = Number(select.dataset.modeIndex);
+        const field = select.dataset.modeKind === "ranged" ? "rangedModes" : "meleeModes";
+        const modes = item?.system?.[field];
+        if (!item || !Array.isArray(modes) || !Number.isInteger(index) || !modes[index]) return;
+        // An array field is written whole: Foundry keeps no path into one
+        // element of it that a programmatic update can rely on.
+        const next = modes.map((mode: any, at: number) =>
+          at === index ? { ...mode, skillChoice: select.value } : { ...mode });
+        void item.update({ [`system.${field}`]: next });
+      });
+    }
   }
 
   /**

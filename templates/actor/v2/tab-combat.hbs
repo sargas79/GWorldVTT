@@ -45,6 +45,28 @@
             {{/if}}
           </div>
 
+          {{!-- Which of this character's skills the attack is rolled with: a wildcard
+               stands in for the skill the weapon names (Characters p. 175), and only
+               a book says which weapons it covers, so the choice is made here. --}}
+          {{#if entry.skillPicker}}
+            <div class="v2-attack-skill">
+              <span class="v2-stat-label">{{localize "GWORLD.Column.Skill"}}</span>
+              {{#if @root.editable}}
+                <select class="v2-attack-skill-select{{#if entry.skillPicker.chosen}} v2-chosen{{/if}}"
+                        data-v2-attack-skill="{{entry.atk.itemId}}" data-mode-index="{{entry.atk.modeIndex}}"
+                        data-mode-kind="{{#if entry.ranged}}ranged{{else}}melee{{/if}}"
+                        aria-label="{{localize 'GWORLD.SheetV2.AttackSkill'}}"
+                        data-tooltip="{{localize 'GWORLD.SheetV2.AttackSkillHint'}}">
+                  {{#each entry.skillPicker.options as |option|}}
+                    <option value="{{option.value}}"{{#if option.selected}} selected{{/if}}>{{option.label}}</option>
+                  {{/each}}
+                </select>
+              {{else}}
+                <b>{{entry.atk.skillName}}</b>
+              {{/if}}
+            </div>
+          {{/if}}
+
           {{!-- The attack's row of the weapon table, heading over figure, and what it is loaded with. --}}
           {{#if entry.strip}}
             <div class="v2-weapon-strip v2-preview-strip">
