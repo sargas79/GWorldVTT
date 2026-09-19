@@ -86,6 +86,11 @@
               </td>
               <td class="c">
                 {{#if @root.editable}}
+                  {{!-- More of it, paid for out of the cash on the sheet. --}}
+                  <button type="button" class="ibtn tiny" data-action="buyItem"
+                          data-tooltip="{{localize 'GWORLD.Shopping.BuyMoreHint'}}">
+                    {{localize "GWORLD.Shopping.BuyMore"}}
+                  </button>
                   <button type="button" class="rollable iconbtn" data-action="deleteItem" title="{{localize 'GWORLD.Action.Delete'}}">
                     {{> "gworld.trash"}}
                   </button>

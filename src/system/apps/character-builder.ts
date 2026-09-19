@@ -496,6 +496,11 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
         ...(step.categories ? { categories: step.categories } : {}),
         ...(step.custom ? { custom: step.custom } : {}),
         title: game.i18n.localize(`GWORLD.Builder.Browse.${step.id}`),
+        // A character being written up buys their gear out of starting
+        // wealth, which the sheet reads as the Gear figure. Buying it out of
+        // the cash as well would charge for it twice, so the builder's list
+        // only adds (Characters pp. 25-27).
+        shopping: false,
       });
     } finally {
       if (button?.isConnected) {

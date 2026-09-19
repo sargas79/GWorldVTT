@@ -276,6 +276,30 @@ export function equipmentQualityCost(quality: EquipmentQuality): number | null {
   }
 }
 
+/**
+ * What a purchase comes to, and what it leaves (Characters pp. 25-27).
+ *
+ * Starting gear is bought out of starting wealth, which is why the sheet
+ * reads what the gear cost against that figure and not against the cash in
+ * hand. Anything bought afterwards is paid for in cash, and this is that
+ * sum: the price times the number of them, what the money comes down to,
+ * and how far short of it the character is. Money is dollars and cents, so
+ * both figures are rounded to the cent rather than left to drift.
+ */
+export function purchase(options: { price: number; quantity: number; money: number }): {
+  quantity: number;
+  total: number;
+  moneyAfter: number;
+  short: number;
+} {
+  const quantity = Math.max(0, Math.floor(Number(options.quantity) || 0));
+  const price = Number.isFinite(options.price) ? Math.max(0, Number(options.price)) : 0;
+  const money = Number.isFinite(options.money) ? Number(options.money) : 0;
+  const total = Math.round(price * quantity * 100) / 100;
+  const moneyAfter = Math.round((money - total) * 100) / 100;
+  return { quantity, total, moneyAfter, short: moneyAfter < 0 ? Math.abs(moneyAfter) : 0 };
+}
+
 /** The cost of what is carried and stored, for reading against starting wealth. */
 export function gearCost(items: ReadonlyArray<{ cost?: number; quantity?: number }>): number {
   let total = 0;

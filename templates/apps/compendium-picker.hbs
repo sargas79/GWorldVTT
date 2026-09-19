@@ -62,9 +62,18 @@
           {{else}}
             <span class="gp-amount"></span>
           {{/if}}
-          <button type="button" class="gp-add" data-action="add" data-uuid="{{entry.uuid}}">
-            {{#if entry.added}}{{localize "GWORLD.Picker.AddAgain"}}{{else}}{{localize "GWORLD.Picker.Add"}}{{/if}}
-          </button>
+          <span class="gp-buttons">
+            {{!-- Gear can be taken two ways: written onto the sheet out of
+                 starting wealth, or bought with the money in hand. --}}
+            {{#if entry.buy}}
+              <button type="button" class="gp-add gp-buy" data-action="buy" data-uuid="{{entry.uuid}}"
+                      data-tooltip="{{localize 'GWORLD.Shopping.BuyHint'}}">{{entry.buy}}</button>
+            {{/if}}
+            <button type="button" class="gp-add" data-action="add" data-uuid="{{entry.uuid}}"
+                    {{#if entry.buy}}data-tooltip="{{localize 'GWORLD.Shopping.AddHint'}}"{{/if}}>
+              {{#if entry.added}}{{localize "GWORLD.Picker.AddAgain"}}{{else}}{{localize "GWORLD.Picker.Add"}}{{/if}}
+            </button>
+          </span>
         </li>
       {{else}}
         <li class="gp-empty">{{localize "GWORLD.Picker.Empty"}}</li>

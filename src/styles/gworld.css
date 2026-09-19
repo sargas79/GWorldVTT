@@ -1564,6 +1564,17 @@
   border-color: var(--v2-gold-deep);
 }
 .gworld-picker .gp-add:focus-visible { outline: 2px solid var(--v2-steel); outline-offset: 1px; }
+/* Add and Buy sit in one column, so a list where only some rows are gear
+   still lines its buttons up. */
+.gworld-picker .gp-buttons { display: inline-flex; gap: 4px; align-items: center; }
+/* Buy spends money, so it is the gold one and says the price. */
+.gworld-picker .gp-buy {
+  border-color: var(--v2-gold-deep);
+  color: var(--v2-gold-deep);
+  font-variant-numeric: tabular-nums;
+}
+/* What a purchase would leave, when the cash will not cover it. */
+.gworld .gworld-short { color: var(--v2-red); font-weight: 600; }
 .gworld-picker .gp-empty {
   padding: 12px 6px;
   color: var(--v2-ink-muted);
