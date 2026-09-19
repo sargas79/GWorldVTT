@@ -102,6 +102,51 @@ export function ammunitionCost(reloadWeightLbs: number): number {
   return Math.round(Math.max(0, reloadWeightLbs) * AMMO_COST_PER_LB * 100) / 100;
 }
 
+/**
+ * A box of rounds as the packs carry it, for pricing one they do not.
+ */
+export interface AmmunitionReference {
+  name: string;
+  /** What it fits, as the record states it: "9mm", ".45", "12G", "arrow". */
+  fits: string;
+  costPerRound: number;
+  weightPerRound: number;
+}
+
+/**
+ * The listed rounds nearest in bore to a weapon the packs have no record for.
+ *
+ * "Assume that ammo cost is $20 times this weight" (Characters p. 278) needs a
+ * weight, and a weapon whose reload weight was never filled in gives none --
+ * which left every gun outside the listed calibres buying its ammunition free.
+ * Rounds of like bore weigh and cost alike, so the nearest listed cartridge is
+ * a figure with a book behind it rather than a zero, and the buyer is told
+ * which record it came from and can change it.
+ *
+ * Returns null where the weapon names no calibre, or where nothing is listed:
+ * there is nothing to reason from, and a guess would be worse than asking.
+ */
+export function nearestAmmunitionByCalibre(
+  records: readonly AmmunitionReference[],
+  calibreMm: number | null,
+): AmmunitionReference | null {
+  if (calibreMm === null || !Number.isFinite(calibreMm)) return null;
+  let best: AmmunitionReference | null = null;
+  let closest = Infinity;
+  for (const record of records) {
+    const bore = calibreOf(record.fits);
+    if (bore === null) continue;
+    const distance = Math.abs(bore - calibreMm);
+    // Ties go to the first listed, so the answer does not depend on pack order
+    // any more than it has to.
+    if (distance < closest) {
+      closest = distance;
+      best = record;
+    }
+  }
+  return best;
+}
+
 // ── kinds of ammunition (Characters pp. 275, 276, 279) ─────────────────────
 
 export const AMMUNITION_TYPES = ["", "hp", "aphc", "apds", "bodkin", "silver"] as const;
@@ -120,8 +165,9 @@ export function stepPiercing(type: DamageType, steps: number): DamageType {
 export function calibreOf(name: string): number | null {
   const mm = /(\d+(?:\.\d+)?)\s*mm/i.exec(name);
   if (mm) return Number(mm[1]);
-  // ".338", ".45", "9mm": a bare decimal is inches.
-  const inch = /(?:^|[\s,])\.(\d{2,3})\b/.exec(name);
+  // ".338", ".45", "9mm": a bare decimal is inches. A letter may follow the
+  // figure -- ".44M" is a Magnum .44 -- and names the cartridge, not the bore.
+  const inch = /(?:^|[\s,])\.(\d{2,3})[A-Za-z]*\b/.exec(name);
   if (inch) return Math.round(Number(`0.${inch[1]}`) * 25.4 * 100) / 100;
   return null;
 }

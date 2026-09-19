@@ -1069,8 +1069,11 @@
 .gworld.v2 .v2-box-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 5px 10px; font-size: 14px; }
 /* A table row's columns, read down: heading beside figure, as the book's row would fold. */
 .gworld.v2 .v2-stat-grid { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 12px; row-gap: 2px; margin: 0 0 8px; padding: 0 10px; font-size: 13.5px; }
-.gworld.v2 .v2-stat-grid dt { margin: 0; opacity: 0.72; white-space: nowrap; }
+.gworld.v2 .v2-stat-grid dt { margin: 0; opacity: 0.85; white-space: nowrap; }
 .gworld.v2 .v2-stat-grid dd { margin: 0; min-width: 0; overflow-wrap: anywhere; font-family: var(--font-heading); font-size: 15px; }
+/* A value that is words rather than a figure: the body face at full contrast,
+   because "Armor-piercing hard core" and "7.62mmS" have to be read, not glanced at. */
+.gworld.v2 .v2-stat-grid dd.v2-stat-words { font-family: inherit; font-size: 13.5px; color: var(--v2-ink); }
 /* A weapon table as the book prints it: headings across, one row per mode, wider than
    the panel and scrolling sideways within it rather than folding. */
 .gworld.v2 .v2-weapon-table { width: 100%; border-collapse: collapse; font-size: 12.5px; white-space: nowrap; }
