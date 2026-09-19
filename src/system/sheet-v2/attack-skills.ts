@@ -14,7 +14,7 @@
  * character's own skills, on this character's copy of the weapon.
  */
 
-import { isWildcardSkill, sameSkill } from "../../rules/skills.js";
+import { sameSkill } from "../../rules/skills.js";
 
 /** A skill the character has, as the picker needs it. */
 export interface HeldSkill {
@@ -95,9 +95,4 @@ export function attackSkillOptions(input: AttackSkillInput): AttackSkillOption[]
 /** Whether the row is being rolled with something other than the weapon's skill. */
 export function rolledWithChosenSkill(modeSkill: string, chosen: string): boolean {
   return chosen.trim() !== "" && !sameSkill(chosen, modeSkill);
-}
-
-/** Whether any of the character's skills is a wildcard, for the picker's hint. */
-export function holdsAWildcard(skills: readonly HeldSkill[]): boolean {
-  return skills.some((skill) => isWildcardSkill(skill.name));
 }

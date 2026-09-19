@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { isWildcardSkill, rolledSkillName } from "../../rules/skills.js";
 import {
   attackSkillOptions,
-  holdsAWildcard,
   rolledWithChosenSkill,
   type HeldSkill,
 } from "../sheet-v2/attack-skills.js";
@@ -33,11 +32,6 @@ describe("a wildcard skill", () => {
     expect(isWildcardSkill("  gun!  ")).toBe(true);
     expect(isWildcardSkill("Broadsword")).toBe(false);
     expect(isWildcardSkill("")).toBe(false);
-  });
-
-  it("is spotted among the skills a character holds", () => {
-    expect(holdsAWildcard(skills)).toBe(true);
-    expect(holdsAWildcard([{ name: "Broadsword", level: 14 }])).toBe(false);
   });
 });
 

@@ -144,7 +144,14 @@ function damageFlag(message: any): DamageFlag | null {
 function mayApplyDamage(message: any, flag: DamageFlag): boolean {
   if (game.user?.isGM === true || message?.isAuthor === true) return true;
   if (flag.weaponTarget) {
-    const owner: any = fromUuidSync(flag.weaponTarget.actorUuid);
+    // Not strict, and caught: a uuid that no longer resolves for this client
+    // must leave the card rendered rather than throw out of the render hook.
+    let owner: any = null;
+    try {
+      owner = fromUuidSync(flag.weaponTarget.actorUuid, { strict: false });
+    } catch {
+      owner = null;
+    }
     return owner?.isOwner === true;
   }
   return ownsATokenOnScene();
