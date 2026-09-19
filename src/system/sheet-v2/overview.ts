@@ -142,3 +142,57 @@ export function loadPercent(carried: unknown, basicLift: unknown): number {
   if (!Number.isFinite(c) || !Number.isFinite(bl) || bl <= 0) return 0;
   return Math.max(0, Math.min(100, Math.round((c / (bl * 10)) * 100)));
 }
+
+// ── Will and Perception ────────────────────────────────────────────────────
+
+/** One score the Overview rolls against: Will, Perception, or one sense. */
+export interface AwarenessRoll {
+  /** "will", "per", or the sense's own key. */
+  key: string;
+  /** The localization key for the row's name. */
+  label: string;
+  /** The attribute the roll is made against, and the tag it carries. */
+  basedOn: "Will" | "Per";
+  /** The sense the Perception roll is made by; empty for Will and plain Per. */
+  sense: string;
+  /** What is rolled against, or null where the sense is missing. */
+  score: number | null;
+  /** What traits moved a sense by, for the row's note. Zero for Will and Per. */
+  modifier: number;
+}
+
+export interface AwarenessInput {
+  will: unknown;
+  per: unknown;
+  /** The senses as `senseScores` worked them out, in the order they are shown. */
+  senses: ReadonlyArray<{ sense: string; score: number | null; modifier: number }>;
+}
+
+/**
+ * What the Overview rolls when the GM asks for a Will or a Perception roll:
+ * the two scores, and then each sense, since "A Sense roll is a Perception
+ * roll" made at the score that sense's traits leave (Characters pp. 35,
+ * 124, 129, 138). A sense the character does not have is listed without a
+ * score, so the row says the sense is gone rather than hiding it.
+ */
+export function awarenessRolls(input: AwarenessInput): AwarenessRoll[] {
+  // A missing sense, and a score the character has not got, are both "no
+  // roll" -- and `Number(null)` is 0, which would read as a score of zero.
+  const score = (value: unknown): number | null => {
+    if (value === null || value === undefined || value === "") return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+  return [
+    { key: "will", label: "GWORLD.Secondary.Will", basedOn: "Will", sense: "", score: score(input.will), modifier: 0 },
+    { key: "per", label: "GWORLD.Secondary.Per", basedOn: "Per", sense: "", score: score(input.per), modifier: 0 },
+    ...input.senses.map((sense) => ({
+      key: sense.sense,
+      label: `GWORLD.Senses.${sense.sense}`,
+      basedOn: "Per" as const,
+      sense: sense.sense,
+      score: score(sense.score),
+      modifier: Number(sense.modifier) || 0,
+    })),
+  ];
+}

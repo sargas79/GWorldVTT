@@ -23,6 +23,7 @@ import { byName } from "../sort.js";
 import type { SheetKind } from "../sheet-tabs.js";
 import {
   activeSkills,
+  awarenessRolls,
   contextModifiers,
   loadPercent,
   pointBadge,
@@ -1130,6 +1131,16 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         pinned,
         bonusLines: skill.item.system?.derived?.bonusLines ?? [],
       })),
+      // The rolls the GM asks a player for by name: Will, Perception, and
+      // Perception by one sense.
+      awareness: (() => {
+        const rows = awarenessRolls({
+          will: derived.will,
+          per: derived.per,
+          senses: (derived.senses ?? []) as Array<{ sense: string; score: number | null; modifier: number }>,
+        }).map((row) => ({ ...row, label: L(row.label), missing: row.score === null }));
+        return { scores: rows.filter((row) => !row.sense), senses: rows.filter((row) => row.sense) };
+      })(),
       dr: OVERVIEW_DR_LOCATIONS.map((key) => {
         const found = locations.find((l) => l.key === key);
         return { key, label: L(`GWORLD.HitLocation.${key}`), dr: found?.dr ?? 0, splits: found?.splits === true };

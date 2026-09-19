@@ -27,6 +27,11 @@
         {{#if cell.editable}}
           <span style="display: flex; align-items: baseline; gap: 6px">
             <span class="cv">{{cell.value}}</span>
+            {{#if cell.basedOn}}
+              <span class="iroll rollable" data-action="roll" data-roll-type="attribute"
+                    data-roll-label="{{cell.label}}" data-roll-target="{{cell.value}}"
+                    data-based-on="{{cell.basedOn}}">{{> "gworld.die"}}</span>
+            {{/if}}
             {{> "gworld.stepper" cls="secstep" name=(concat "system.purchased." cell.key) value=cell.purchased step=cell.step
                 label=(localize "GWORLD.Secondary.AdjustHint") editable=@root.editable}}
           </span>
