@@ -1156,6 +1156,16 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         encumbranceKey: String(derived.encumbrance?.key ?? "none"),
         maneuver: String(system.maneuver ?? ""),
         attributePenalties: system.attributePenalties ?? {},
+        afflictions: {
+          names: ((derived.afflictions?.names ?? []) as string[]).map((key) => L(key)),
+          effect: {
+            dx: Number(derived.afflictions?.effect?.dx ?? 0) || 0,
+            iq: Number(derived.afflictions?.effect?.iq ?? 0) || 0,
+            st: Number(derived.afflictions?.effect?.st ?? 0) || 0,
+            ht: Number(derived.afflictions?.effect?.ht ?? 0) || 0,
+            defense: Number(derived.afflictions?.effect?.defense ?? 0) || 0,
+          },
+        },
         timed: activeConditions(actor).map((c) => ({ label: c.label, modifiers: c.modifiers })),
         attackPenalties: { melee: derived.attackPenalties?.melee ?? [], ranged: derived.attackPenalties?.ranged ?? [] },
         layeringPenalty: Number(derived.armorNotes?.layeringPenalty ?? 0) || 0,

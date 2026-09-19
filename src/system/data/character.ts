@@ -3093,11 +3093,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // makes an affliction reach every roll: anything that already reads a
       // lowered DX picks up a coughing fit without being told about
       // afflictions at all.
+      //
+      // Deliberately not fed back into `strikingSt` above: nausea is "-2 to
+      // all attribute and skill rolls", a penalty to the roll rather than a
+      // reduction of ST, so it must not cut the damage a weapon does the way
+      // a real ST reduction would (p. 421).
       attributePenalties: penaltyEffects({
-        ST: this.attributePenalties.ST,
+        ST: this.attributePenalties.ST + afflicted.effect.st,
         DX: this.attributePenalties.DX + afflicted.effect.dx,
         IQ: this.attributePenalties.IQ + afflicted.effect.iq,
-        HT: this.attributePenalties.HT,
+        HT: this.attributePenalties.HT + afflicted.effect.ht,
       }),
       // What is on the token, and what it costs, for the sheet to say so.
       afflictions: {

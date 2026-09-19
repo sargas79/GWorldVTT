@@ -123,7 +123,7 @@ export function totalAfflictionEffect(
 ): AfflictionEffect {
   const total: AfflictionEffect = {
     severity: "irritating",
-    dx: 0, iq: 0, selfControl: 0, defense: 0,
+    dx: 0, iq: 0, st: 0, ht: 0, selfControl: 0, defense: 0,
     helpless: false, fallsDown: false, forbids: [],
   };
   const forbids = new Set<string>();
@@ -134,6 +134,8 @@ export function totalAfflictionEffect(
     // taking the worst, and two different poisons are two different problems.
     total.dx += effect.dx;
     total.iq += effect.iq;
+    total.st += effect.st;
+    total.ht += effect.ht;
     total.selfControl += effect.selfControl;
     total.defense += effect.defense;
     total.helpless ||= effect.helpless;

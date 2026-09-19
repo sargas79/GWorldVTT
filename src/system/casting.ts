@@ -26,7 +26,7 @@ import { targetedTokens } from "./targets.js";
 import { heldSpell, holdSpell, rollSpellAttack, rollSpellDamage, spellAttackDamage, type HeldSpell } from "./held-spells.js";
 import { deliverSpellAttack, drawEnergy, energySourcesFor, spellAttackFor, type CastingContext, type EnergySourceOption } from "./roll-extensions.js";
 import { postResistCard } from "./spell-resistance.js";
-import { penaltyForRoll } from "../rules/attribute-penalties.js";
+import { penaltyForRoll, penaltyFromEffects } from "../rules/attribute-penalties.js";
 import {
   DISTRACTION_PENALTY,
   MANA_LEVELS,
@@ -232,10 +232,15 @@ function standingModifiers(actor: any, options: {
     });
     if (penalty !== 0) modifiers.push({ label: L("RunningPenalty"), value: penalty });
   }
-  // A lowered IQ lowers every spell with it (Campaigns p. 421).
-  const temporary = actor.system?.attributePenalties
-    ? penaltyForRoll({ penalties: actor.system.attributePenalties, basedOn: "IQ", kind: "skill" })
-    : 0;
+  // A lowered IQ lowers every spell with it (Campaigns p. 421) -- the GM's
+  // typed penalty and the afflictions on the token together, which is what
+  // the derived total holds.
+  const effects = actor.system?.derived?.attributePenalties;
+  const temporary = effects
+    ? penaltyFromEffects({ effects, basedOn: "IQ", kind: "skill" })
+    : actor.system?.attributePenalties
+      ? penaltyForRoll({ penalties: actor.system.attributePenalties, basedOn: "IQ", kind: "skill" })
+      : 0;
   if (temporary !== 0) modifiers.push({ label: game.i18n.localize("GWORLD.Penalties.Label"), value: temporary });
   return modifiers;
 }

@@ -90,7 +90,7 @@ import {
   opportunityFirePenalty,
   dualWeaponAttack,
 } from "../rules/attack-options.js";
-import { penaltyForRoll } from "../rules/attribute-penalties.js";
+import { penaltyForRoll, penaltyFromEffects } from "../rules/attribute-penalties.js";
 import {
   CHARGE_VELOCITY,
   mountedAttack,
@@ -614,7 +614,13 @@ export function standingRollLines(actor: any, options: {
   // the kind of roll rather than applying itself everywhere.
   const knockedDown = temporaryPenalty(actor, options.basedOn, rollKind(rollType));
   if (knockedDown !== 0) {
-    lines.push({ label: game.i18n.localize("GWORLD.Penalties.Label"), value: knockedDown });
+    // One figure on the roll, two different things to be told: a penalty the
+    // GM typed in, and the conditions on the token. A line that says
+    // "Nauseated" is one the player can do something about.
+    const typed = typedPenalty(actor, options.basedOn, rollKind(rollType));
+    const conditions = knockedDown - typed;
+    if (typed !== 0) lines.push({ label: game.i18n.localize("GWORLD.Penalties.Label"), value: typed });
+    if (conditions !== 0) lines.push({ label: afflictionLabel(actor), value: conditions });
   }
 
   // Bad Sight and One Eye each take their own line off an attack
@@ -783,6 +789,12 @@ export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) 
 /**
  * The penalty a lowered attribute puts on this roll (p. 421).
  *
+ * Read from the derived total rather than from the field the GM types into,
+ * because the afflictions on the token are folded into the total and not into
+ * the field: reading the field is what left a nauseated character rolling at
+ * full level while the sheet said -2. The field is the fallback for an actor
+ * whose data has not been prepared.
+ *
  * Returns zero for a roll the rule exempts, and for a button that does not say
  * what it is based on -- an attack rolls against a weapon skill whose attribute
  * is the skill's own business, and guessing at it would be worse than nothing.
@@ -790,14 +802,32 @@ export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) 
 function temporaryPenalty(actor: any, basedOn: string | undefined, kind: RollKind): number {
   if (!basedOn) return 0;
 
+  const against = kind === "defense" ? "activeDefense" : "skill";
+  const effects = actor?.system?.derived?.attributePenalties;
+  if (effects) {
+    return penaltyFromEffects({ effects, basedOn: basedOn as SkillAttribute, kind: against });
+  }
+
+  return typedPenalty(actor, basedOn, kind);
+}
+
+/** The share of that penalty the GM typed onto the sheet, without the conditions. */
+function typedPenalty(actor: any, basedOn: string | undefined, kind: RollKind): number {
+  if (!basedOn) return 0;
   const penalties = actor?.system?.attributePenalties;
   if (!penalties) return 0;
-
   return penaltyForRoll({
     penalties,
     basedOn: basedOn as SkillAttribute,
     kind: kind === "defense" ? "activeDefense" : "skill",
   });
+}
+
+/** The conditions on the token, named, for the line their penalty takes. */
+function afflictionLabel(actor: any): string {
+  const names = (actor?.system?.derived?.afflictions?.names ?? []) as string[];
+  const listed = names.map((key) => game.i18n.localize(key)).filter(Boolean);
+  return listed.length > 0 ? listed.join(", ") : game.i18n.localize("GWORLD.Penalties.Label");
 }
 
 /**

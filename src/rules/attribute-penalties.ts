@@ -96,9 +96,31 @@ export function penaltyForRoll(options: {
   basedOn: SkillAttribute;
   kind: RollAgainst;
 }): number {
+  return penaltyFromEffects({
+    effects: penaltyEffects(options.penalties),
+    basedOn: options.basedOn,
+    kind: options.kind,
+  });
+}
+
+/**
+ * The same, from penalties already worked out.
+ *
+ * What it is for: a character's penalties are the GM's typed figures *plus*
+ * whatever the afflictions on them come to (pp. 428-429), and that total is
+ * reduced once, where it is assembled. Reducing it a second time would be
+ * harmless arithmetic but a dishonest shape -- `PenaltyEffects` is not a set
+ * of attribute penalties, it is what a set of them did -- so the roll reads it
+ * as what it is.
+ */
+export function penaltyFromEffects(options: {
+  effects: PenaltyEffects;
+  basedOn: SkillAttribute;
+  kind: RollAgainst;
+}): number {
   if (!appliesTo(options.kind)) return 0;
 
-  const effects = penaltyEffects(options.penalties);
+  const effects = options.effects;
   switch (options.basedOn) {
     case "ST":
       return effects.strength;
