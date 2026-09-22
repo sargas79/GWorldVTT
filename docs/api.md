@@ -103,13 +103,14 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), and `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0). |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), and `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0). |
 | `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0). |
 | `points`, `magic` | Point pools, energy sources and spell attacks (since 1.4.0), and resistance cards (since 1.9.0). |
 | `migration` | Moving world data from the system into a module (since 1.6.0). |
+| `world` | Facts about the campaign world (since 1.77.0): `controlRating()`. See [The campaign world](#the-campaign-world). |
 
 Since 1.5.0, `combat`, `roll` and `actors` also carry the procedure extension
 points described under [Inside the system's own procedures](#inside-the-systems-own-procedures).
@@ -1369,6 +1370,15 @@ Two fields a module may read (since 1.62.0):
   Since 1.63.0, `gworld.mortalWoundInterval` fires before the check's card with
   `{ actor, traumaMaintenance, minutes, label }`: set `minutes` (1440 for daily checks) and a
   `label` where the module's care changes how often the check comes round; the card says so.
+- **Resuscitation** (since 1.77.0): `actors.resuscitate({ healer, patient, cause?, cpr?, skill?,
+  skillKind?, techLevel?, label?, modifier? })` rolls what the sheet's Resuscitate button rolls
+  (Campaigns p. 425): a Physician/TL7+ roll, or First Aid/TL7+ at -4 (-2 with `cpr` against
+  `drowning` or `asphyxiation`). `cause` is `drowning`, `asphyxiation` or `heartAttack` (the
+  default). Without `skill` the healer's better of Physician and First Aid is used, as the
+  button does; `skill` stands in for it, as the Physician roll unless `skillKind` is
+  `firstAid`, `techLevel` for the skill's TL (below TL7 there is nothing to roll), and `label`
+  names who works on the card. The roll is tagged `resuscitation` and the cause; a success
+  clears unconsciousness and a heart attack.
 - **Poison** (since 1.57.0): `actors.dosePoison(actor, poison, { doublings })` writes a
   dose onto a character as the Poison button does, the delay stretched by size and
   everything moved by the dose; `actors.activePoisons(actor)` lists them,
@@ -1380,6 +1390,19 @@ Two fields a module may read (since 1.62.0):
   names the thresholds of HP lost crossed this cycle (`"1/3"`, `"1/2"`, `"2/3"`), and
   `effectMinutes` is the margin's minutes for a poison that does no damage. What a
   poison does beyond its damage is its module's to apply there.
+- **Treating poison and illness** (since 1.77.0; Campaigns pp. 439, 443):
+  `actors.treatPoison(patient, id, { treatment?, bonus?, skill?, healer?, techLevel?, label?,
+  modifier? })` treats a dose as the sheet's Treat button does. `treatment` is one of the book's
+  (`suckWound`, `induceVomiting`, `medical`, `antidote`), rolled at the treater's First Aid or
+  Physician (`skill`, else `healer`'s better of the two, else the patient's; nobody with either
+  fails), with `bonus` the antidote's own. Leave `treatment` out for a module's own drug or
+  device: its `bonus` stands to the HT rolls to resist, with a roll at `skill` + `modifier` only
+  where `skill` is given. `techLevel` sets the TL medical procedures are given at, and `label`
+  names the treatment on the card. `actors.treatIllness(patient, id, { antibiotics?,
+  drugResistant?, physicianBonus?, bonus?, techLevel?, label? })` does the same for an illness:
+  antibiotics (+3 at TL6+, nothing against a drug-resistant strain), a physician's care bonus and
+  a module's `bonus` add up. Both return the bonus they gave (0 for a failed roll or an unknown
+  dose). Treatments don't pile up: the dose keeps the best one.
 - **Staying conscious** (since 1.43.0): `gworld.afterConsciousnessRoll` follows a roll to
   stay conscious at 0 HP or less with `{ actor, outcome, previousPosture }`; a failure has left
   the actor unconscious and lying down, which `actors.undoKnockdown` takes back.
@@ -1458,6 +1481,18 @@ which party it came from and which terms are locked. `game.gworld.api.party`
 - **`hooks.partyChanged`** (`gworld.partyChanged`) fires with `(party,
   members)` when a party's roster or terms change, after its members have been
   prepared again.
+
+## The campaign world
+
+`game.gworld.api.world` (since 1.77.0) reads facts about the campaign world
+that are world settings rather than anything on an actor:
+
+- **`world.controlRating()`** -- `{ rating, inPlay }`: the campaign's Control
+  Rating (Campaigns pp. 506-507), 0 to 6, as the GM set it in the system
+  settings, and whether the Legality Class rule is on. `rating` is null
+  where the GM left it blank or the rule is off; the Gear tab's legality
+  notes read the same figure. Compare an item's class against it with
+  `rules.legalityUnder(lc, rating)`.
 
 ## Taking over data the system is dropping
 

@@ -499,35 +499,52 @@ export async function resuscitate(options: {
   cause: ResuscitationCause;
   cpr: boolean;
   modifier: number;
+  /** A skill that stands in for the healer's, as a device reviving on its own does (since API 1.77.0). */
+  skill?: number;
+  /** Which skill the stand-in is: Physician, the default, or First Aid at its penalty (since API 1.77.0). */
+  skillKind?: "physician" | "firstAid";
+  /** The TL of the skill, where it isn't the healer's (since API 1.77.0). */
+  techLevel?: number;
+  /** Who works on the patient, as the card names them, where it isn't the healer (since API 1.77.0). */
+  label?: string;
 }): Promise<void> {
   const { healer, patient } = options;
   if (!mayChange(patient)) return;
+  const who = options.label ?? String(healer?.name ?? "");
 
   // "Make a successful Physician/TL7+ roll - or a First Aid/TL7+ roll at -4"
   // (p. 425). A healer whose skill is of an earlier TL has no resuscitation to
   // offer, however good at it they are.
-  const healerTl = Number.parseInt(String(healer?.system?.tl ?? ""), 10) || 0;
+  const healerTl = typeof options.techLevel === "number"
+    ? options.techLevel
+    : Number.parseInt(String(healer?.system?.tl ?? ""), 10) || 0;
   if (!canResuscitate(healerTl)) {
     await post(patient, {
       kind: R("Resuscitate"),
-      detail: F("ResuscitateBy", { healer: String(healer?.name ?? ""), cause: R(`Cause.${options.cause}`) }),
+      detail: F("ResuscitateBy", { healer: who, cause: R(`Cause.${options.cause}`) }),
       lines: [F("ResuscitateNeedsTl", { tl: healerTl })],
     });
     return;
   }
 
-  const physician = skillLevelOf(healer, "Physician");
-  const firstAid = skillLevelOf(healer, "First Aid");
-  const usingPhysician = physician !== null && (firstAid === null || physician >= firstAid);
-  const skill = usingPhysician
-    ? (physician ?? 0)
-    : (firstAid ?? attributeOf(healer, "IQ") - 4);
+  // A stand-in skill is a learned one, never a default.
+  const standIn = typeof options.skill === "number";
+  const physician = standIn ? null : skillLevelOf(healer, "Physician");
+  const firstAid = standIn ? null : skillLevelOf(healer, "First Aid");
+  const usingPhysician = standIn
+    ? options.skillKind !== "firstAid"
+    : physician !== null && (firstAid === null || physician >= firstAid);
+  const skill = standIn
+    ? (options.skill as number)
+    : usingPhysician
+      ? (physician ?? 0)
+      : (firstAid ?? attributeOf(healer, "IQ") - 4);
 
   const situation = resuscitationModifier({
     skill: usingPhysician ? "physician" : "firstAid",
     cause: options.cause,
     cpr: options.cpr,
-    byDefault: !usingPhysician && firstAid === null,
+    byDefault: !standIn && !usingPhysician && firstAid === null,
   });
 
   // What the modules add: a defibrillator, a resuscitator (API 1.76.0,
@@ -550,7 +567,7 @@ export async function resuscitate(options: {
   await post(patient, {
     kind: R("Resuscitate"),
     detail: F("ResuscitateBy", {
-      healer: String(healer?.name ?? ""),
+      healer: who,
       cause: R(`Cause.${options.cause}`),
     }),
     target,
