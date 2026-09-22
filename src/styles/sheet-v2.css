@@ -1085,6 +1085,12 @@
 /* A weapon table as the book prints it: headings across, one row per mode, wider than
    the panel and scrolling sideways within it rather than folding. */
 .gworld.v2 .v2-weapon-table { width: 100%; border-collapse: collapse; font-size: 12.5px; white-space: nowrap; }
+/* Core dresses every table for its own dark chrome: a dark fill, a darker heading band
+   and striped rows, which on the cream panel swallow the sheet's dark ink. The panel is
+   the table's ground, and the heading row's thicker border below is separator enough. */
+.gworld.v2 .v2-weapon-table,
+.gworld.v2 .v2-weapon-table thead,
+.gworld.v2 .v2-weapon-table tbody tr { margin: 0; background: none; border: 0; text-shadow: none; }
 .gworld.v2 .v2-weapon-table th,
 .gworld.v2 .v2-weapon-table td { padding: 3px 5px; text-align: right; border-bottom: 1px solid color-mix(in srgb, var(--v2-ink) 12%, transparent); }
 .gworld.v2 .v2-weapon-table th:first-child,
