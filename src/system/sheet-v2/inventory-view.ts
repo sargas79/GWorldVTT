@@ -1,5 +1,5 @@
 /**
- * How the new sheet's Inventory tab arranges what a character carries:
+ * How the character sheet's Inventory tab arranges what a character carries:
  * armour by the part of the body it covers, what is ready to hand, and the
  * carried and stored lists in the order asked for.
  *

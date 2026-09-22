@@ -1,5 +1,5 @@
 /**
- * The list-with-a-detail-panel the new sheet's tabs share: how rows are
+ * The list-with-a-detail-panel the character sheet's tabs share: how rows are
  * sorted, grouped and filtered, and which one is selected.
  *
  * Name is the default order everywhere. A list may also be sorted by level or

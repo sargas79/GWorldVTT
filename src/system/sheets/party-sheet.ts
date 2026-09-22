@@ -1,7 +1,7 @@
 /**
  * The party sheet: the people a campaign follows, on one page.
  *
- * Three tabs on the new character sheet's frame. Members: each member's
+ * Three tabs on the character sheet's frame. Members: each member's
  * portrait, hit points and fatigue, Will, Perception, speed, defenses, DR,
  * load, points and conditions, as the GM reads them at the table, each
  * rolled from here for that member. Skills: the best of every skill between
@@ -104,7 +104,7 @@ async function promptForMembers(party: any): Promise<string[] | null> {
 
 export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static override DEFAULT_OPTIONS = {
-    // "v2" puts the new character sheet's frame and components on it.
+    // "v2" puts the character sheet's frame and components on it.
     classes: ["gworld", "sheet", "actor", "party", "v2"],
     position: { width: 980, height: 720 },
     window: { resizable: true },

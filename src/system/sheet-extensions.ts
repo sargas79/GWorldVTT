@@ -51,7 +51,7 @@ async function render(template: string, data: object): Promise<string> {
 
 // ── sheet sections ─────────────────────────────────────────────────────────
 
-/** The character sheet's tabs a section can go in: a classic tab's name or the new sheet's. */
+/** The character sheet's tabs a section can go in, or a classic tab's name the sheet folds in. */
 const CHARACTER_TABS = TAB_NAMES;
 
 export interface SheetSectionRegistration {

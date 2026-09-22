@@ -1,16 +1,17 @@
 /**
- * The new character sheet.
+ * The character sheet.
  *
  * A dark frame -- header, sidebar, the ground between panels -- with cream
  * panels carrying the content, after the mock-ups: charcoal and cream, amber
  * for what is selected or ready, steel blue for what can be pressed, red for
  * harm and for disadvantages.
  *
- * Everything is scoped under `.gworld.v2`. The classic sheet's components
- * (tables, buttons, fields, tags) are reused inside the panels, and they read
- * the classic tokens, so a panel redefines those tokens for its cream ground
- * and the frame redefines them for the dark one. A section an add-on module
- * renders in the classic markup therefore reads correctly wherever it lands.
+ * Everything is scoped under `.gworld.v2`. The system's shared components
+ * (tables, buttons, fields, tags, from gworld.css) are reused inside the
+ * panels, and they read the shared tokens, so a panel redefines those tokens
+ * for its cream ground and the frame redefines them for the dark one. A
+ * section an add-on module renders in that markup therefore reads correctly
+ * wherever it lands.
  */
 
 /*
@@ -50,11 +51,11 @@
 }
 
 /*
- * The frame's theme, which stays on the sheet: it points the classic tokens at
- * the dark ground, and the classic sheet must keep its own.
+ * The frame's theme, which stays on the sheet: it points the shared tokens at
+ * the dark ground, and the NPC and vehicle sheets keep their own.
  */
 .gworld.v2 {
-  /* The classic tokens, for the frame. */
+  /* The shared tokens, for the frame. */
   --color-bg: var(--v2-frame);
   --color-surface: var(--v2-frame-2);
   --color-text: var(--v2-frame-text);
@@ -74,11 +75,11 @@
 }
 
 /*
- * A panel's ground is cream, and the classic tokens follow it.
+ * A panel's ground is cream, and the shared tokens follow it.
  *
  * The compendium picker and the compendium sources join the list rather than
  * restating the colours: both are the system's own windows, both are built out
- * of the classic markup, and pointing their tokens here is what makes them
+ * of the shared markup, and pointing their tokens here is what makes them
  * read as part of the same sheet. Foundry's own compendium windows are not
  * touched -- these are two selectors, not a theme for everything.
  */
@@ -298,35 +299,18 @@
 /* ── tabs ──────────────────────────────────────────────────────────────── */
 
 .gworld.v2 .tab.active { display: flex; }
-.gworld.v2 .tab.v2-tab,
-.gworld.v2 .tab.ibody {
+.gworld.v2 .tab.v2-tab {
   flex-direction: column;
   gap: 14px;
   padding: 14px 16px 18px;
   overflow-y: auto;
   background: var(--v2-frame);
 }
-/* A classic tab shown inside the new frame reads on a cream ground. */
-.gworld.v2 .tab.ibody {
-  --color-bg: var(--v2-panel);
-  --color-surface: var(--v2-panel-2);
-  --color-text: var(--v2-ink);
-  --color-accent: var(--v2-steel);
-  --color-divider: color-mix(in srgb, var(--v2-ink) 17%, transparent);
-  --color-neutral-700: var(--v2-ink-muted);
-  --color-accent-700: var(--v2-steel-deep);
-  --color-accent-900: #22354a;
-  --color-danger: var(--v2-red);
-  margin: 12px;
-  border-radius: var(--v2-radius);
-  background: var(--v2-panel);
-  color: var(--v2-ink);
-}
 
 /*
  * What an add-on module puts on a tab -- a section from its template, or a
  * list of its item type -- sits on a cream panel of its own, so markup written
- * for the classic sheet reads the same here.
+ * with the shared components reads the same here.
  */
 .gworld.v2 .addon-sheet-section,
 .gworld.v2 .addon-section {

@@ -1,10 +1,11 @@
 /**
- * The character sheet.
+ * What the character sheet does, apart from how it is laid out.
  *
- * Six tabs behind a persistent header, built on ApplicationV2 with one
- * Handlebars part per tab. Foundry's `changeTab` toggles `.active` on the
- * rendered sections rather than re-rendering, so every part is present in the
- * DOM at once and CSS controls visibility.
+ * Every action -- a roll, a grapple, a hazard, an award -- and the context the
+ * sheet's sections are drawn from. The layout, its tabs and its view state
+ * are GWorldCharacterSheetV2's, which extends this class and is the sheet
+ * that is registered; this one is never opened on its own. It keeps its name
+ * so the `renderGWorldCharacterSheet` hook a module listens to still fires.
  */
 
 import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
@@ -85,7 +86,7 @@ import {
 import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
 import { useTechnique } from "../unarmed-techniques.js";
 import { resolveSuccess as rollOutcome } from "../../rules/success.js";
-import { isStepPostureChange, postureMove, reachablePostures } from "../../rules/posture.js";
+import { isStepPostureChange, reachablePostures } from "../../rules/posture.js";
 import { affectsSecondary } from "../../rules/attribute-penalties.js";
 import { canMoveWhileGrappled } from "../../rules/grappling.js";
 import { rollInvention } from "../invention.js";
@@ -160,7 +161,7 @@ import {
 } from "../held-spells.js";
 import { castFromItem, enchantItem } from "../enchanting.js";
 import { type MagicStyle } from "../../rules/magic.js";
-import { GEAR_GROUPS, gearGroupOf, type GearGroup } from "../gear-groups.js";
+import { GEAR_GROUPS, gearGroupOf } from "../gear-groups.js";
 import { ENCUMBRANCE_TIERS, encumberedMove } from "../../rules/encumbrance.js";
 import {
   BASIC_SPEED_STEP,
@@ -188,12 +189,10 @@ import {
   firstAidRules,
 } from "../procedure-extensions.js";
 import { effectiveCost, effectiveWeight, itemSectionsFor, registeredItemType, runItemTypeAction, tabHasAddonSections } from "../data-extensions.js";
-import { registeredTabsShownOn, type SheetKind } from "../sheet-tabs.js";
+import { registeredTabsShownOn } from "../sheet-tabs.js";
 import { partyOf } from "../party.js";
 import { DRESS_STATES } from "../../rules/cinematic.js";
 import { awardsNewestFirst, nextSessionLabel, type PointAward } from "../../rules/character-points.js";
-import { isReadTrait } from "../../rules/trait-effects.js";
-import { weaknessOf } from "../../rules/weakness.js";
 import { exposeToWeakness } from "../weakness.js";
 import { requestGuidance } from "../bonus-points.js";
 import { activeSpellActionsFor, anyPointPools, registeredPointPools } from "../roll-extensions.js";
@@ -381,39 +380,6 @@ export function monthlyBudget(wealth: Record<string, any>): { lines: Array<{ lab
   return { lines, net, netText: `${net < 0 ? "-" : "+"}$${Math.abs(net)}` };
 }
 
-/**
- * A trait, with what the sheet needs to show its levels.
- *
- * Levelled means priced per level or from a table -- Acute Hearing at 2 a
- * level, Wealth at 10/20/30/50/75. A flat advantage has no levels to buy, and
- * offering a box for them would only invite typing into one that does nothing.
- */
-function withLevels(trait: any, openDescriptions: ReadonlySet<string> = new Set()) {
-  const system = trait.system ?? {};
-  const table: number[] = system.costTable ?? [];
-  const description = summariseDescription(system.description);
-  return {
-    id: trait.id,
-    name: trait.name,
-    system,
-    levelled: Boolean(system.pointsPerLevel) || table.length > 0,
-    levelName: system.levelName ?? null,
-    // The first line, and whether the rest is folded under it. Which folds
-    // are open is remembered on the sheet, since every edit redraws it.
-    description: {
-      ...description,
-      open: openDescriptions.has(String(trait.id)),
-    },
-    // Most traits are the GM's to adjudicate; a couple of dozen say something
-    // exact that this system applies on its own. Which is which is worth a
-    // badge -- a player who buys Combat Reflexes should be able to see that
-    // the +1 is already in their Dodge.
-    applied: isReadTrait(String(trait.name ?? ""), system.talentSkills ?? []),
-    // A Weakness offers exposure to its source from its own row (p. 161).
-    weakness: weaknessOf({ name: String(trait.name ?? "") }) !== null,
-  };
-}
-
 export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static override DEFAULT_OPTIONS = {
     classes: ["gworld", "sheet", "actor", "character"],
@@ -567,14 +533,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     },
   };
 
-  /** Which of the two sheets this is, for where add-on modules' content shows. */
-  protected get sheetKind(): SheetKind {
-    return "classic";
-  }
-
-  /** Which kind of gear the Gear tab is showing, or "" for all of it. */
-  #gearFilter: GearGroup | "" = "";
-
   /**
    * The trait descriptions unfolded on this sheet, by item id. On the sheet
    * rather than the actor: which fold is open is not a fact about the
@@ -660,36 +618,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     return rows.sort(byName);
   }
 
-  static override PARTS = {
-    header: { template: `${TEMPLATE_ROOT}/header.hbs` },
-    nav: { template: `${TEMPLATE_ROOT}/nav.hbs` },
-    attributes: { template: `${TEMPLATE_ROOT}/tab-attributes.hbs`, scrollable: [""] },
-    skills: { template: `${TEMPLATE_ROOT}/tab-skills.hbs`, scrollable: [""] },
-    magic: { template: `${TEMPLATE_ROOT}/tab-magic.hbs`, scrollable: [""] },
-    traits: { template: `${TEMPLATE_ROOT}/tab-traits.hbs`, scrollable: [""] },
-    combat: { template: `${TEMPLATE_ROOT}/tab-combat.hbs`, scrollable: [""] },
-    body: { template: `${TEMPLATE_ROOT}/tab-body.hbs`, scrollable: [""] },
-    gear: { template: `${TEMPLATE_ROOT}/tab-gear.hbs`, scrollable: [""] },
-    description: { template: `${TEMPLATE_ROOT}/tab-description.hbs`, scrollable: [""] },
-  };
-
-  static override TABS = {
-    primary: {
-      initial: "attributes",
-      labelPrefix: "GWORLD.Tab",
-      tabs: [
-        { id: "attributes" },
-        { id: "skills" },
-        { id: "magic" },
-        { id: "traits" },
-        { id: "combat" },
-        { id: "body" },
-        { id: "gear" },
-        { id: "description" },
-      ],
-    },
-  };
-
   /** A limited-permission observer sees only the public description. */
   static LIMITED_PARTS = {
     limited: { template: `${TEMPLATE_ROOT}/limited.hbs` },
@@ -734,7 +662,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // same list that removing an award will write back.
     const stored: PointAward[] = derived.points.awards ?? [];
 
-    const skillOrder = asSkillOrder(game.settings.get(SYSTEM_ID, SKILL_ORDER));
     const appliedTemplates = await this.#appliedTemplateRows(derived.templates ?? []);
 
     return {
@@ -757,7 +684,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // Controls edited in place carry ids built from this, so the redraw
       // that follows every edit can put focus back where it was.
       sheetId: this.id,
-      skillOrderAlphabetical: skillOrder === "alphabetical",
 
       // The input edits the bought figure; what traits and a racial template
       // add is shown beside it, with the score the rest of the sheet actually
@@ -809,10 +735,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           selected: system.posture === key,
         };
       }),
-      // What the posture leaves of Move, dropping fractions: two-thirds
-      // crouching, a third kneeling or crawling, none sitting, a yard lying down.
-      postureMove: postureMove(Number(derived.encumbrance?.move ?? 0) || 0, (system.posture ?? "standing") as Posture),
-      postureMoveShown: (system.posture ?? "standing") !== "standing",
       // "Final effective weight pulled, after all modifiers, cannot exceed
       // 15xBL" (Campaigns p. 353).
       maxDrag: maximumDrag(Number(derived.basicLift) || 0),
@@ -925,7 +847,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // Shown while evaluating, and on the turn after, when the bonus is spent.
       isEvaluating: system.maneuver === "evaluate" || Number(system.evaluateTurns ?? 0) > 0,
       isAiming: system.maneuver === "aim",
-      isWaiting: system.maneuver === "wait",
       // The area covered only matters if opportunity fire is being played.
       showOpportunityFire: system.maneuver === "wait" && isRuleOn("opportunityFire"),
       // What covering that much ground will cost when the shot is finally
@@ -961,8 +882,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         selected: system.allOutDefenseTarget === key,
       })),
 
-      pointsWarning: this.pointsWarning(derived),
-
       // The templates section follows the three trait groups on the same tab,
       // so its number follows theirs rather than being written twice.
       templateSectionNum: "04",
@@ -984,50 +903,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           };
         },
       ),
-
-      // A trait is levelled if it is priced per level or from a table. Only
-      // those get a levels field: a flat 15-point advantage has nothing to
-      // buy, and a box that can only read zero invites being typed into.
-      traitGroups: [
-        {
-          num: "01",
-          label: "GWORLD.Points.Advantages",
-          addLabel: "GWORLD.Action.AddAdvantage",
-          category: "advantage",
-          categories: "advantage,perk",
-          browseTitle: "GWORLD.Picker.Advantages",
-          total: derived.points.advantages,
-          negative: false,
-          traits: items.advantages.map((trait: any) => withLevels(trait, this.#openDescriptions)),
-        },
-        {
-          num: "02",
-          label: "GWORLD.Points.Disadvantages",
-          addLabel: "GWORLD.Action.AddDisadvantage",
-          category: "disadvantage",
-          categories: "disadvantage,quirk",
-          browseTitle: "GWORLD.Picker.Disadvantages",
-          total: derived.points.disadvantages,
-          negative: true,
-          traits: items.disadvantages.map((trait: any) => withLevels(trait, this.#openDescriptions)),
-        },
-        {
-          num: "03",
-          label: "GWORLD.Points.Quirks",
-          addLabel: "GWORLD.Action.AddQuirk",
-          category: "quirk",
-          categories: "quirk",
-          browseTitle: "GWORLD.Picker.Quirks",
-          total: derived.points.quirks,
-          negative: true,
-          traits: items.quirks.map((trait: any) => withLevels(trait, this.#openDescriptions)),
-        },
-      ],
-      disadvantageOverLimit: derived.points.disadvantageTotal > derived.points.disadvantageLimit,
-      // Spending past the budget is not forbidden -- a GM may allow it, and a
-      // character part-way through being built is over and under by turns --
-      // so it is flagged rather than blocked.
-      overBudget: derived.points.overBudget,
 
       // The award log, newest first, which is the order a log is read in.
       // Each row carries its index in the *stored* order, because that is what
@@ -1114,13 +989,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       encumbranceTiers: this.encumbranceTiers(derived),
       gearGroups: this.gearGroups(items),
 
-      skillSummary: {
-        count: items.skillGroups.reduce(
-          (n, g) => n + g.rows.filter((row) => row.trained).length,
-          0,
-        ),
-      },
-
       magic: this.magicPanel(derived, items.spellGroups, system.activeSpells ?? []),
 
       // An NPC is edited here too, and has a few fields a character does not:
@@ -1153,7 +1021,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    *
    * The sheet submits on change, so an edited attribute re-renders the sheet
    * and the render replaces whatever `Tab` has just moved to. Protected rather
-   * than private so the V2 sheet, which extends this one, shares the one copy.
+   * than private so GWorldCharacterSheetV2, which extends this one, shares it.
    */
   protected focusMemory: RememberedFocus | null = null;
 
@@ -1241,26 +1109,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       });
     }
 
-    // The gear filter shows one kind of gear at a time. Not a form field, and
-    // remembered on the sheet rather than the actor: which part of the
-    // inventory someone is looking at is not a fact about the character.
-    const gearFilter = this.element.querySelector<HTMLSelectElement>("select[data-gear-filter]");
-    if (gearFilter) {
-      const applyGearFilter = () => {
-        const wanted = gearFilter.value;
-        for (const group of this.element.querySelectorAll<HTMLElement>("[data-gear-group]")) {
-          group.hidden = wanted !== "" && group.dataset.gearGroup !== wanted;
-        }
-      };
-      gearFilter.addEventListener("change", () => {
-        this.#gearFilter = (GEAR_GROUPS as readonly string[]).includes(gearFilter.value)
-          ? (gearFilter.value as GearGroup)
-          : "";
-        applyGearFilter();
-      });
-      applyGearFilter();
-    }
-
     // The Combat tab's posture chip is a select without a form name, since the
     // Attributes tab already submits system.posture and a form cannot carry
     // the same name twice. It writes the actor directly instead.
@@ -1273,7 +1121,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // The same filter serves the Skills tab and the Magic tab: a hundred
     // spells across two dozen colleges wants finding by name as much as six
     // hundred skills do.
-    this.wireFilter(".gworld-skill-filter", "skills");
     this.wireFilter(".gworld-spell-filter", "magic");
 
     // A long trait description is folded to its first line. Which ones are
@@ -1522,7 +1369,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // The lists of item types add-on modules registered for this tab, under any
     // of the names that show here, and the sections they registered for it,
     // rendered from their templates.
-    const shown = registeredTabsShownOn(this.sheetKind, partId);
+    const shown = registeredTabsShownOn(partId);
     partContext.addonSections = shown.length ? itemSectionsFor(this.actor, shown) : [];
     partContext.addonSheetSections = shown.length
       ? await renderSections("character", shown, this.actor, this)
@@ -1594,32 +1441,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     ];
   }
 
-  /** The advisory line under the points ledger. Warnings never block saving. */
-  protected pointsWarning(derived: any): { text: string; over: boolean } {
-    const { remaining, disadvantageTotal, disadvantageLimit } = derived.points;
-    const parts: string[] = [];
-    let over = false;
-
-    if (remaining > 0) {
-      parts.push(game.i18n.format("GWORLD.Points.Unspent", { points: remaining }));
-    } else if (remaining < 0) {
-      parts.push(game.i18n.format("GWORLD.Points.Over", { points: Math.abs(remaining) }));
-      over = true;
-    } else {
-      parts.push(game.i18n.localize("GWORLD.Points.Exact"));
-    }
-
-    parts.push(
-      game.i18n.format("GWORLD.Points.DisadvantageStanding", {
-        total: disadvantageTotal,
-        limit: disadvantageLimit,
-      }),
-    );
-    if (disadvantageTotal > disadvantageLimit) over = true;
-
-    return { text: parts.join(" "), over };
-  }
-
   /** The five encumbrance tiers with this character's limits and resulting Move. */
   protected encumbranceTiers(derived: any) {
     const bl = derived.basicLift;
@@ -1675,7 +1496,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     return GEAR_GROUPS.map((key) => ({
       key,
       label: `GWORLD.Gear.Group.${key}`,
-      selected: this.#gearFilter === key,
       rows: rows.filter((row) => row.group === key),
     })).filter((group) => group.rows.length > 0);
   }
@@ -1809,7 +1629,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
   /**
    * Moves an item's points one step up or down its cost table, the one place
-   * a stepper on either sheet and the Progression tab's upgrades write from.
+   * a stepper on the sheet and the Progression tab's upgrades write from.
    */
   protected async stepPoints(item: any, direction: StepDirection): Promise<void> {
     const current = Number(item.system?.points ?? 0);

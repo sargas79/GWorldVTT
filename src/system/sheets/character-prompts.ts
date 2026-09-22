@@ -2,9 +2,7 @@
  * The dialogs the character sheet asks its questions through, and the small
  * helpers they share.
  *
- * Moved out of the sheet unchanged so both character sheets use one copy: a
- * fall, a poison or a grapple asks the same thing whichever sheet it was
- * started from.
+ * Kept out of the sheet's own file, which is long enough without them.
  */
 
 import { tacticalOnScene } from "../settings.js";

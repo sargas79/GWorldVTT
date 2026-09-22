@@ -1,7 +1,7 @@
 /**
  * The party sheet, and the party in the Actors sidebar.
  *
- * The sheet wears the new character sheet's frame and components
+ * The sheet wears the character sheet's frame and components
  * (sheet-v2.css); this holds only what that stylesheet lacks: a member's
  * row, the skills and campaign panels, and the sidebar's nesting.
  */

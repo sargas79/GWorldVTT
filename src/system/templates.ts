@@ -43,7 +43,7 @@ const ICONS: Record<string, string> = {
   "gworld.lock": `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
     <rect x="4" y="10" width="16" height="10"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
   </svg>`,
-  // The new character sheet's sidebar, one per tab, and its pin. Lucide
+  // The character sheet's sidebar, one per tab, and its pin. Lucide
   // geometry at the same stroke as the rest.
   "gworld.v2icon.overview": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
     <rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect>
@@ -113,13 +113,13 @@ const FILE_PARTIALS: Record<string, string> = {
   "gworld.addonSections": `systems/${SYSTEM_ID}/templates/actor/addon-sections.hbs`,
   "gworld.addonSheetSections": `systems/${SYSTEM_ID}/templates/actor/addon-sheet-sections.hbs`,
   "gworld.attackExtras": `systems/${SYSTEM_ID}/templates/actor/attack-extras.hbs`,
-  // The new character sheet's own pieces.
+  // The character sheet's own pieces.
   "gworld.v2.attackCard": `systems/${SYSTEM_ID}/templates/actor/v2/attack-card.hbs`,
   "gworld.v2.bodyOutline": `systems/${SYSTEM_ID}/templates/actor/v2/body-outline.hbs`,
   "gworld.v2.gearRow": `systems/${SYSTEM_ID}/templates/actor/v2/gear-row.hbs`,
-  // The classic tabs' sections, one partial each, so both character sheets
-  // draw them from one copy: a section a module's rule reads, or a button a
-  // module decorates, is the same markup on either sheet.
+  // Sections of the character sheet, one partial each: the attack sections
+  // are drawn in more than one place, and a section a module's rule reads,
+  // or a button a module decorates, is markup in a file of its own.
   "gworld.part.attack-melee-affliction": `systems/${SYSTEM_ID}/templates/actor/parts/attack-melee-affliction.hbs`,
   "gworld.part.attack-melee-damage": `systems/${SYSTEM_ID}/templates/actor/parts/attack-melee-damage.hbs`,
   "gworld.part.attack-melee-roll": `systems/${SYSTEM_ID}/templates/actor/parts/attack-melee-roll.hbs`,
@@ -127,36 +127,23 @@ const FILE_PARTIALS: Record<string, string> = {
   "gworld.part.attack-ranged-damage": `systems/${SYSTEM_ID}/templates/actor/parts/attack-ranged-damage.hbs`,
   "gworld.part.attack-ranged-roll": `systems/${SYSTEM_ID}/templates/actor/parts/attack-ranged-roll.hbs`,
   "gworld.part.attributes-basic": `systems/${SYSTEM_ID}/templates/actor/parts/attributes-basic.hbs`,
-  "gworld.part.attributes-campaign": `systems/${SYSTEM_ID}/templates/actor/parts/attributes-campaign.hbs`,
-  "gworld.part.attributes-damage": `systems/${SYSTEM_ID}/templates/actor/parts/attributes-damage.hbs`,
-  "gworld.part.attributes-points": `systems/${SYSTEM_ID}/templates/actor/parts/attributes-points.hbs`,
   "gworld.part.attributes-secondary": `systems/${SYSTEM_ID}/templates/actor/parts/attributes-secondary.hbs`,
   "gworld.part.body-feats": `systems/${SYSTEM_ID}/templates/actor/parts/body-feats.hbs`,
   "gworld.part.body-hazards": `systems/${SYSTEM_ID}/templates/actor/parts/body-hazards.hbs`,
-  "gworld.part.body-locations": `systems/${SYSTEM_ID}/templates/actor/parts/body-locations.hbs`,
   "gworld.part.body-protection": `systems/${SYSTEM_ID}/templates/actor/parts/body-protection.hbs`,
   "gworld.part.body-recovery": `systems/${SYSTEM_ID}/templates/actor/parts/body-recovery.hbs`,
   "gworld.part.combat-actions": `systems/${SYSTEM_ID}/templates/actor/parts/combat-actions.hbs`,
-  "gworld.part.combat-defenses": `systems/${SYSTEM_ID}/templates/actor/parts/combat-defenses.hbs`,
   "gworld.part.combat-maneuver": `systems/${SYSTEM_ID}/templates/actor/parts/combat-maneuver.hbs`,
-  "gworld.part.combat-melee": `systems/${SYSTEM_ID}/templates/actor/parts/combat-melee.hbs`,
   "gworld.part.combat-movement": `systems/${SYSTEM_ID}/templates/actor/parts/combat-movement.hbs`,
-  "gworld.part.combat-ranged": `systems/${SYSTEM_ID}/templates/actor/parts/combat-ranged.hbs`,
   "gworld.part.description-appearance": `systems/${SYSTEM_ID}/templates/actor/parts/description-appearance.hbs`,
   "gworld.part.description-biography": `systems/${SYSTEM_ID}/templates/actor/parts/description-biography.hbs`,
   "gworld.part.description-languages": `systems/${SYSTEM_ID}/templates/actor/parts/description-languages.hbs`,
   "gworld.part.description-notes": `systems/${SYSTEM_ID}/templates/actor/parts/description-notes.hbs`,
   "gworld.part.description-npc": `systems/${SYSTEM_ID}/templates/actor/parts/description-npc.hbs`,
   "gworld.part.description-vitals": `systems/${SYSTEM_ID}/templates/actor/parts/description-vitals.hbs`,
-  "gworld.part.gear-carried": `systems/${SYSTEM_ID}/templates/actor/parts/gear-carried.hbs`,
-  "gworld.part.gear-encumbrance": `systems/${SYSTEM_ID}/templates/actor/parts/gear-encumbrance.hbs`,
-  "gworld.part.gear-money": `systems/${SYSTEM_ID}/templates/actor/parts/gear-money.hbs`,
   "gworld.v2.money": `systems/${SYSTEM_ID}/templates/actor/v2/money.hbs`,
-  "gworld.part.gear-stored": `systems/${SYSTEM_ID}/templates/actor/parts/gear-stored.hbs`,
   "gworld.part.magic-body": `systems/${SYSTEM_ID}/templates/actor/parts/magic-body.hbs`,
   "gworld.part.skills-point-spending": `systems/${SYSTEM_ID}/templates/actor/parts/skills-point-spending.hbs`,
-  "gworld.part.skills-techniques": `systems/${SYSTEM_ID}/templates/actor/parts/skills-techniques.hbs`,
-  "gworld.part.traits-disadvantage-limit": `systems/${SYSTEM_ID}/templates/actor/parts/traits-disadvantage-limit.hbs`,
   "gworld.part.traits-granted": `systems/${SYSTEM_ID}/templates/actor/parts/traits-granted.hbs`,
   "gworld.part.traits-psionics": `systems/${SYSTEM_ID}/templates/actor/parts/traits-psionics.hbs`,
   "gworld.part.traits-templates": `systems/${SYSTEM_ID}/templates/actor/parts/traits-templates.hbs`,

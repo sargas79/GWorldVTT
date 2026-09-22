@@ -634,40 +634,39 @@ one when it is registered, and a module that uses partials loads them with
 
 Sheet markup follows the system's: a section is an `.isec`, a heading
 `.grph`, a list a `table.gt` with `tr[data-item-id]` rows, a button `.ibtn`,
-and a hint `p.ihint`. Both character sheets style that markup, so a section
-written for one reads the same on the other.
+and a hint `p.ihint`. The character sheet styles that markup on panels of its
+own, so a section written with it reads the same wherever it lands.
 
 ### Where a tab name shows
 
-There are two character sheets: the classic one with eight tabs, and the new
-one, whose tabs are Overview, Skills, Traits, Combat, Inventory, Progression,
-Journal and Magic. A section or item type registered against any of these
-names shows on both (since 1.62.0 for the new names):
+The character sheet's tabs are Overview, Skills, Traits, Combat, Inventory,
+Progression, Journal and Magic (the new names since 1.62.0). The classic
+sheet, which had eight tabs of its own, has been removed; its tab names are
+still taken, and show on the tab they were folded into:
 
-| Registered against | Classic sheet | New sheet |
-| --- | --- | --- |
-| `attributes` | Attributes | Overview |
-| `overview` | Attributes | Overview |
-| `progression` | Attributes | Progression |
-| `skills` | Skills | Skills |
-| `magic` | Magic | Magic |
-| `traits` | Traits | Traits |
-| `combat` | Combat | Combat |
-| `body` | Body | Combat, after the combat tab's own |
-| `gear` | Gear | Inventory |
-| `inventory` | Gear | Inventory |
-| `description` | Description | Journal |
-| `journal` | Description | Journal |
+| Registered against | Shows on |
+| --- | --- |
+| `overview`, `attributes` | Overview |
+| `skills` | Skills |
+| `traits` | Traits |
+| `combat` | Combat |
+| `body` | Combat, after the combat tab's own |
+| `inventory`, `gear` | Inventory |
+| `progression` | Progression |
+| `journal`, `description` | Journal |
+| `magic` | Magic |
 
-Row actions go on every element of a sheet that carries `data-item-id` for an
-item of their types: table rows on the classic sheet, and on the new sheet the
-list rows, cards and the detail panel of the selected item.
+Row actions go on every element of the sheet that carries `data-item-id` for
+an item of their types: the list rows, cards and the detail panel of the
+selected item.
 
-The new sheet is the default for characters and for the NPC sheet's full
-sheet; the classic sheet stays registered as "GURPS Character Sheet (classic)".
-On the new sheet, each tab is an `ApplicationV2` part named after the tab, a
-module's sections sit on panels of their own, and the item descriptions a
-module supplies are enriched and shown in full in the detail panels. An NPC's
+The sheet is the one for characters, and the NPC sheet's full sheet. A
+character that was set to the classic sheet opens on it. Each tab is an
+`ApplicationV2` part named after the tab, a module's sections sit on panels of
+their own, and the item descriptions a module supplies are enriched and shown
+in full in the detail panels. The sheet's class, `GWorldCharacterSheetV2`,
+extends `GWorldCharacterSheet`, so a `renderGWorldCharacterSheet` hook still
+fires for it. An NPC's
 `system.details.description` is shown and edited on its Journal tab.
 
 Two fields a module may read (since 1.62.0):

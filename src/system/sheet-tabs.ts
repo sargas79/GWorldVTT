@@ -1,61 +1,40 @@
 /**
- * The character sheet tabs an add-on module can put things on, and where each
+ * The character sheet tabs an add-on module can put things on, and where the
  * sheet shows them.
  *
  * Modules register sheet sections and item types against a tab name. The
- * classic sheet has eight tabs; the new sheet folds them into its own seven
- * and a Magic tab. A module written for either keeps working on both: every
- * name is accepted, and each sheet's part gathers every name that belongs on
- * it.
+ * sheet has eight tabs, and it still takes the names of the classic sheet it
+ * replaced, so a module written for that one keeps working: each tab gathers
+ * every name that belongs on it.
  *
- *   - `attributes` shows on the new sheet's Overview.
- *   - `body` shows on its Combat tab.
+ *   - `attributes` shows on the Overview.
+ *   - `body` shows on the Combat tab.
  *   - `gear` and `inventory` are one place, and so are `description` and
  *     `journal`.
- *   - `overview` and `progression`, which the classic sheet has no tab for,
- *     show on its Attributes tab, where the attributes and the points ledger
- *     are.
  *
- * Kept apart from the sheets so it can be tested without Foundry.
+ * Kept apart from the sheet so it can be tested without Foundry.
  */
 
-/** The classic sheet's tabs, the names the API has always taken. */
-export const CLASSIC_TABS = ["attributes", "skills", "magic", "traits", "combat", "body", "gear", "description"] as const;
+/** The character sheet's tabs. */
+export const SHEET_TAB_IDS = ["overview", "skills", "traits", "combat", "inventory", "progression", "journal", "magic"] as const;
 
-/** The new sheet's tabs. */
-export const NEW_SHEET_TABS = ["overview", "skills", "traits", "combat", "inventory", "progression", "journal", "magic"] as const;
+/** The classic sheet's tab names that are not the sheet's own, still taken from modules. */
+export const FOLDED_TABS = ["attributes", "body", "gear", "description"] as const;
 
 /** Every name a module may register against. */
-export const TAB_NAMES = [
-  ...CLASSIC_TABS,
-  ...NEW_SHEET_TABS.filter((tab) => !(CLASSIC_TABS as readonly string[]).includes(tab)),
-] as unknown as readonly TabName[];
+export const TAB_NAMES: readonly TabName[] = [...SHEET_TAB_IDS, ...FOLDED_TABS];
 
-export type TabName = (typeof CLASSIC_TABS)[number] | (typeof NEW_SHEET_TABS)[number];
+export type TabName = (typeof SHEET_TAB_IDS)[number] | (typeof FOLDED_TABS)[number];
 
-export type SheetKind = "classic" | "new";
-
-const SHOWN_ON: Record<SheetKind, Record<string, readonly TabName[]>> = {
-  classic: {
-    attributes: ["attributes", "overview", "progression"],
-    skills: ["skills"],
-    magic: ["magic"],
-    traits: ["traits"],
-    combat: ["combat"],
-    body: ["body"],
-    gear: ["gear", "inventory"],
-    description: ["description", "journal"],
-  },
-  new: {
-    overview: ["attributes", "overview"],
-    skills: ["skills"],
-    traits: ["traits"],
-    combat: ["combat", "body"],
-    inventory: ["gear", "inventory"],
-    progression: ["progression"],
-    journal: ["description", "journal"],
-    magic: ["magic"],
-  },
+const SHOWN_ON: Record<string, readonly TabName[]> = {
+  overview: ["attributes", "overview"],
+  skills: ["skills"],
+  traits: ["traits"],
+  combat: ["combat", "body"],
+  inventory: ["gear", "inventory"],
+  progression: ["progression"],
+  journal: ["description", "journal"],
+  magic: ["magic"],
 };
 
 /** Whether a name is one a module may register against. */
@@ -64,15 +43,15 @@ export function isTabName(value: unknown): value is TabName {
 }
 
 /**
- * The registration names a sheet's part shows, in the order their contents
- * are listed. Empty for a part that is not a tab, such as the header.
+ * The registration names a sheet part shows, in the order their contents are
+ * listed. Empty for a part that is not a tab, such as the header.
  */
-export function registeredTabsShownOn(sheet: SheetKind, part: string): readonly TabName[] {
-  return SHOWN_ON[sheet][part] ?? [];
+export function registeredTabsShownOn(part: string): readonly TabName[] {
+  return SHOWN_ON[part] ?? [];
 }
 
-/** The part of a sheet that shows what was registered against a name. */
-export function partShowing(sheet: SheetKind, tab: TabName): string {
-  const entry = Object.entries(SHOWN_ON[sheet]).find(([, names]) => names.includes(tab));
+/** The part of the sheet that shows what was registered against a name. */
+export function partShowing(tab: TabName): string {
+  const entry = Object.entries(SHOWN_ON).find(([, names]) => names.includes(tab));
   return entry ? entry[0] : tab;
 }

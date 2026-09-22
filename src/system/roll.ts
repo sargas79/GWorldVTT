@@ -744,8 +744,7 @@ export function previewAttack(actor: any, row: {
 
 /**
  * The weapon a ranged attack is resolved with, read from its row's data: the
- * same object whether the row is a classic sheet's table row or the new
- * sheet's card.
+ * same object wherever the attack's controls are drawn.
  */
 export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) {
   const n = (key: string) => Number(dataset[key]) || 0;
