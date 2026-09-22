@@ -362,6 +362,18 @@
   padding: 0;
   width: 100%;
 }
+/* The bought figure and, when traits or a template raise it, the score. */
+.gworld .attr .avrow { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.gworld .attr .avrow .av { flex: 1 1 0; min-width: 0; }
+.gworld .attr .aeff {
+  flex: 0 0 auto;
+  font-family: var(--font-heading);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 0.95;
+  color: var(--color-accent-700);
+  cursor: help;
+}
 .gworld .attr .ac {
   font-size: 10px;
   letter-spacing: 0.08em;

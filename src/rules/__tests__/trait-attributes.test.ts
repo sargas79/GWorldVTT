@@ -22,6 +22,17 @@ describe("traits that add to the attributes", () => {
     expect(effects.attributes).toEqual({ ST: 2, DX: 1, IQ: 3, HT: 1 });
   });
 
+  it("find the trait when its name carries its level or its modifiers (#585)", () => {
+    const effects = traitEffects([
+      held("Extra ST 2", 2), held("Extra HT (Size, -10%)", 1), held("Extra DX 1 (No Fine Manipulators, -40%)", 1),
+    ]);
+    expect(effects.attributes).toEqual({ ST: 2, DX: 1, IQ: 0, HT: 1 });
+  });
+
+  it("still tell apart a trait whose kind is in its name", () => {
+    expect(traitEffects([held("Enhanced Move (Air)", 1)])).toEqual(noTraitEffects());
+  });
+
   it("count a level for a trait bought without saying how many", () => {
     expect(traitEffects([held("Extra ST")]).attributes.ST).toBe(1);
   });

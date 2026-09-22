@@ -502,6 +502,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       attributes: (["ST", "DX", "IQ", "HT"] as const).map((key) => ({
         key,
         score: Number(system.attributes?.[key] ?? 10),
+        effective: Number(derived.attributes?.[key] ?? system.attributes?.[key] ?? 10),
         cost: (Number(system.attributes?.[key] ?? 10) - 10) * (key === "DX" || key === "IQ" ? 20 : 10),
       })),
       secondaries: ((context.secondaryCells ?? []) as any[])

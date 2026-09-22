@@ -53,7 +53,11 @@
       "HTAbbr": "HT",
       "Will": "Will",
       "Per": "Perception",
-      "FromTraits": "from traits"
+      "FromTraits": "from traits",
+      "FromTemplate": "from template",
+      "Bought": "{key} as bought",
+      "Score": "{key} score {score}",
+      "ScoreHint": "The score the character has and rolls against: the bought figure with what traits, a racial template and modules add"
     },
     "Secondary": {
       "HP": "Hit Points",

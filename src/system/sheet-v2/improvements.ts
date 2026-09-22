@@ -164,8 +164,10 @@ export function languageImprovement(level: unknown, isNative: boolean, unspent: 
 }
 
 /** The next point of an attribute: 10 for ST and HT, 20 for DX and IQ (Characters p. 14). */
-export function attributeImprovement(attribute: Attribute, score: number, unspent: number): Improvement {
-  return priced(score, score + 1, score, score + 1, ATTRIBUTE_COST_PER_LEVEL[attribute], unspent);
+export function attributeImprovement(attribute: Attribute, score: number, unspent: number, effective: number = score): Improvement {
+  // The step buys the bought figure; the score shown is the one the character
+  // has, with what traits and a racial template add (#585).
+  return priced(score, score + 1, effective, effective + 1, ATTRIBUTE_COST_PER_LEVEL[attribute], unspent);
 }
 
 export type SecondaryKey = "hp" | "will" | "per" | "fp" | "basicMove" | "basicSpeed";

@@ -498,11 +498,35 @@ function matchName(name: string): string {
 }
 
 /**
+ * The key a trait's effect is found under, when its name carries more than
+ * the trait's own: a level written into it ("Extra ST 2", as a template
+ * names what it grants) or the modifiers taken with it ("Extra HT (Size,
+ * -10%)"). The whole name is tried first, so a parenthetical that is part of
+ * the trait -- Enhanced Move (Ground) -- still decides; one is only dropped
+ * when no trait of that name comes in kinds of its own.
+ */
+function effectKey(key: string): string {
+  if (TRAIT_EFFECTS[key]) return key;
+  const withoutLevel = (name: string) => name.replace(/\s+\d+$/, "");
+  // Only a list of modifiers, which price themselves in percent, is dropped:
+  // any other parenthetical may be somebody renaming the trait into another.
+  const modifiers = /\s*\([^()]*%[^()]*\)$/;
+  let name = withoutLevel(key);
+  if (TRAIT_EFFECTS[name]) return name;
+  while (modifiers.test(name)) {
+    name = withoutLevel(name.replace(modifiers, ""));
+    const hasKinds = Object.keys(TRAIT_EFFECTS).some((k) => k.startsWith(`${name} (`));
+    if (TRAIT_EFFECTS[name] && !hasKinds) return name;
+  }
+  return key;
+}
+
+/**
  * Whether a named trait is one this system reads at all. A trait carrying its
  * own list of skills is read, whatever it is called.
  */
 export function isReadTrait(name: string, talentSkills: readonly string[] = []): boolean {
-  const key = matchName(name);
+  const key = effectKey(matchName(name));
   return (
     key in TRAIT_EFFECTS ||
     key === RADIATION_TOLERANCE ||
@@ -554,7 +578,7 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
       continue;
     }
 
-    const effect = TRAIT_EFFECTS[key];
+    const effect = TRAIT_EFFECTS[effectKey(key)];
     if (!effect) continue;
 
     // A trait with no levels field is a flat one, and counts once.
