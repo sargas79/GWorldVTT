@@ -459,8 +459,8 @@ export async function updateExtension(document: any, module: string, patch: Reco
 // ── a module's item types ──────────────────────────────────────────────────
 
 /**
- * Where on the character sheet a module's item type is listed: a classic
- * tab's name or the new sheet's (see sheet-tabs.ts for where each shows).
+ * Where on the character sheet a module's item type is listed: one of its
+ * tabs, or a classic tab's name it folds in (see sheet-tabs.ts).
  */
 export const SHEET_TABS = TAB_NAMES;
 export type SheetTab = TabName;

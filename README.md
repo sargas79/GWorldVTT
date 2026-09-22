@@ -21,7 +21,7 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   row. The Combat tab previews an attack's modifiers and chance of success;
   the Progression tab prices every upgrade and flags an overspend without
   blocking it; the Journal tab links Foundry journal entries and shows their
-  text. The classic sheet is still available from the sheet configuration.
+  text.
   Point totals and a log of awarded points by session. Steppers for skill and
   trait levels. A guided character build. Templates, racial templates and
   meta-traits that can be removed cleanly, and GM-made templates.

@@ -186,6 +186,10 @@
             <div class="v2-detail-actions">
               <button type="button" class="v2-button" data-action="controlVehicle">{{> "gworld.die"}} {{localize "GWORLD.Hazard.Control"}}</button>
               <button type="button" class="v2-button" data-action="shotAtVehicle">{{> "gworld.die"}} {{localize "GWORLD.Vehicle.ShotAt"}}</button>
+              {{#if @root.rules.vehicleManeuvers}}
+                <button type="button" class="v2-button" data-action="jumpOutOfVehicle"
+                        data-tooltip="{{localize 'GWORLD.Hazard.JumpOutHint'}}">{{> "gworld.die"}} {{localize "GWORLD.Hazard.JumpOut"}}</button>
+              {{/if}}
             </div>
           {{/if}}
           <div class="v2-detail-actions v2-stacked">

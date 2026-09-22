@@ -41,7 +41,6 @@ import {
   TemplateData,
   TraitData,
 } from "./system/data/items.js";
-import { GWorldCharacterSheet } from "./system/sheets/character-sheet.js";
 import { GWorldCharacterSheetV2 } from "./system/sheets/character-sheet-v2.js";
 import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldGenericItemSheet } from "./system/sheets/generic-item-sheet.js";
@@ -144,18 +143,12 @@ Hooks.once("init", () => {
 
   const { DocumentSheetConfig } = foundry.applications.apps;
   DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.applications.sheets.ActorSheetV2);
-  // The new character sheet is the default; the classic one stays registered,
-  // and any character can be switched to it, and back, from the sheet
-  // configuration. Sheets are registered under their class names, so a world
-  // that already chose the classic sheet for a character keeps it.
+  // A character that was set to the classic sheet, which is gone, opens on
+  // this one: Foundry falls back to the default for a sheet it no longer has.
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheetV2, {
     types: ["character"],
     makeDefault: true,
     label: "GWORLD.Sheet.CharacterV2",
-  });
-  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheet, {
-    types: ["character"],
-    label: "GWORLD.Sheet.Character",
   });
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldNpcSheet, {
     types: ["npc"],
@@ -168,10 +161,6 @@ Hooks.once("init", () => {
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheetV2, {
     types: ["npc"],
     label: "GWORLD.Sheet.NpcFullV2",
-  });
-  DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldCharacterSheet, {
-    types: ["npc"],
-    label: "GWORLD.Sheet.NpcFull",
   });
   // A car in a chase is not a line on a shopping list (Campaigns pp. 462-469).
   DocumentSheetConfig.registerSheet(Actor, SYSTEM_ID, GWorldVehicleSheet, {

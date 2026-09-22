@@ -86,7 +86,7 @@ export function groupSkills<T extends GroupableSkill>(
 }
 
 /**
- * The new sheet files its skill rows under sections it folds and filters by
+ * The character sheet files its skill rows under sections it folds and filters by
  * key. By attribute the keys are the attributes themselves; the alphabetical
  * list is one section under this key. Techniques keep a section of their own
  * either way, so it is not an attribute's name.

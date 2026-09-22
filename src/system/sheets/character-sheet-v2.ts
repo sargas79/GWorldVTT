@@ -1,18 +1,16 @@
 /**
- * The new character sheet.
+ * The character sheet.
  *
  * A sidebar of tabs beside a header that carries the character's name, the tab
  * being read and the point budget, over cream panels on a dark frame. The list
  * tabs pair a list with a panel describing the selected row.
  *
- * It extends the classic sheet rather than replacing it. Every action -- a
- * roll, a grapple, a hazard, an award -- is the classic sheet's own handler,
- * and every section the two share is drawn from one partial, so a rule or a
- * module's button behaves the same on either. What this class adds is the
- * layout, the tabs the classic sheet does not have, and the view state a list
- * with a detail panel needs: which row is selected, which groups are folded,
- * how a list is sorted. That state lives on the sheet, not the actor, and is
- * applied again after every redraw.
+ * Every action -- a roll, a grapple, a hazard, an award -- is a handler on
+ * GWorldCharacterSheet, which this class extends. What this class adds is the
+ * layout, the tabs, and the view state a list with a detail panel needs:
+ * which row is selected, which groups are folded, how a list is sorted. That
+ * state lives on the sheet, not the actor, and is applied again after every
+ * redraw.
  */
 
 import { SYSTEM_ID } from "../constants.js";
@@ -20,7 +18,6 @@ import { setCondition, CONDITIONS } from "../conditions.js";
 import { activeConditions } from "../procedure-extensions.js";
 import { POSTURE_EFFECTS } from "../../rules/posture.js";
 import { byName } from "../sort.js";
-import type { SheetKind } from "../sheet-tabs.js";
 import {
   activeSkills,
   awarenessRolls,
@@ -84,8 +81,8 @@ const V2_ROOT = `systems/${SYSTEM_ID}/templates/actor/v2`;
 const OVERVIEW_DR_LOCATIONS = ["torso", "skull"] as const;
 
 export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
-  // Foundry merges these into the classic sheet's own, so only what differs is
-  // given; the type is the classic sheet's, which a partial does not satisfy.
+  // Foundry merges these into the base class's own, so only what differs is
+  // given; the type is the base class's, which a partial does not satisfy.
   static override DEFAULT_OPTIONS: any = {
     classes: ["v2"],
     // Wide enough for a list beside its detail panel. It narrows: below 900
@@ -142,10 +139,6 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       ],
     },
   };
-
-  protected override get sheetKind(): SheetKind {
-    return "new";
-  }
 
   /* ── context ─────────────────────────────────────────────────────────── */
 
@@ -745,7 +738,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
   /**
    * Links a journal entry, a page, an actor or a scene dropped on the sheet,
    * as the kind of thing the Journal tab is showing where it landed. Items and
-   * everything else are the classic sheet's to handle.
+   * everything else are the base class's to handle.
    */
   async _onDropDocument(event: DragEvent, document: any): Promise<any> {
     const name = String(document?.documentName ?? "");
@@ -867,8 +860,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const state = this.stateOf("skills");
     const sort = asSortMode(state.sort);
     state.sort = sort;
-    // The same client setting the classic sheet reads: attribute sections as
-    // the printed sheet has them, or one alphabetical list.
+    // A client setting: attribute sections as the printed sheet has them, or
+    // one alphabetical list.
     const order = asSkillOrder(game.settings.get(SYSTEM_ID, SKILL_ORDER));
     const pinned = new Set<string>(context.system.pinnedSkills ?? []);
     const scoreOf = (attribute: string): number | null => {

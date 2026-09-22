@@ -1,5 +1,5 @@
 /**
- * What the new character sheet's header and Overview tab show, worked out from
+ * What the character sheet's header and Overview tab show, worked out from
  * the character's data without Foundry, so it can be tested.
  */
 

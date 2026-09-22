@@ -10,7 +10,7 @@
     {{#if v2.combat.status.reeling}}<span class="v2-warn">{{localize "GWORLD.Health.reeling"}}</span>{{/if}}
   </div>
 
-  {{!-- The maneuver, its options and the stance, as the classic Combat tab has them. --}}
+  {{!-- The maneuver, its options and the stance. --}}
   <div class="v2-panel v2-maneuver">
     {{> "gworld.part.combat-maneuver"}}
   </div>
@@ -227,7 +227,7 @@
     {{/if}}
   </div>
 
-  {{!-- Every other action from the classic Combat and Body tabs, in folds. --}}
+  {{!-- Every other combat and body action, in folds. --}}
   {{!-- The weapon tables, as a character sheet prints them: every carried weapon's
        modes under the book's column headings, a weapon with several modes heading them. --}}
   {{#if v2.combat.weaponTables.length}}

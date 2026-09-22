@@ -21,9 +21,7 @@
   },
   "GWORLD": {
     "Sheet": {
-      "Character": "GURPS Character Sheet (classic)",
       "Npc": "GURPS NPC Sheet",
-      "NpcFull": "GURPS NPC Sheet (classic, full)",
       "GenericItem": "GURPS Add-on Item Sheet",
       "Item": "GURPS Item",
       "Vehicle": "Vehicle",
@@ -32,14 +30,7 @@
       "Party": "GURPS Party"
     },
     "Tab": {
-      "attributes": "Attr",
-      "skills": "Skills",
-      "magic": "Magic",
-      "traits": "Traits",
-      "combat": "Combat",
-      "body": "Body",
-      "gear": "Gear",
-      "description": "Desc"
+      "skills": "Skills"
     },
     "Attribute": {
       "TL": "Tech level",
@@ -85,16 +76,11 @@
       "Movement": "Movement",
       "BasicAttributes": "Basic Attributes",
       "Secondary": "Secondary Characteristics",
-      "DamageBearing": "Damage & Bearing",
-      "CharacterPoints": "Character Points",
-      "Based": "Based",
       "Untrained": "Untrained",
       "RolledAtDefault": "rolled at default",
       "DisadvantageLimit": "Disadvantage Limit",
       "Stance": "Stance",
       "ActiveDefenses": "Active Defenses",
-      "MeleeAttacks": "Melee Attacks",
-      "RangedAttacks": "Ranged Attacks",
       "Attacks": "Attacks",
       "Protection": "Protection",
       "SkillsOfNote": "Skills of note",
@@ -103,16 +89,12 @@
       "Languages": "Languages",
       "Biography": "Biography",
       "Notes": "Notes",
-      "Campaign": "Campaign",
       "Techniques": "Techniques",
-      "HitLocations": "Damage Resistance by Location",
       "Maneuver": "Maneuver",
       "Actions": "Actions",
       "PhysicalFeats": "Physical Feats",
       "Recovery": "Recovery",
       "Hazards": "Poison, Illness & Drink",
-      "AllSkills": "All skills",
-      "Alphabetical": "alphabetical",
       "Magery": "Magery",
       "SpellsKnown": "Spells"
     },
@@ -886,7 +868,6 @@
     },
     "Picker": {
       "Title": "Add from the compendia",
-      "Skills": "Add a skill or technique",
       "Advantages": "Add an advantage or perk",
       "Disadvantages": "Add a disadvantage or quirk",
       "Quirks": "Add a quirk",
@@ -905,7 +886,6 @@
       "CustomQuirkHint": "A quirk is -1 point. Type it in the search box, in your own words.",
       "Kind": {"advantage": "Advantage", "perk": "Perk", "disadvantage": "Disadvantage", "quirk": "Quirk"},
       "Spells": "Add a spell",
-      "Gear": "Add gear, armour or a shield",
       "Search": "Search by name",
       "Add": "Add",
       "AddAgain": "Add again",
@@ -998,8 +978,6 @@
       "NoDefault": "No default",
       "BoughtUpFromDefault": "Bought up from its default: the default counts toward the points spent",
       "Trained": "skills trained",
-      "CappedByPrerequisite": "capped by prerequisite",
-      "NoPrerequisite": "No prerequisite",
       "Defaults": "Defaults",
       "FromAttribute": "From attribute",
       "FromSkill": "From skill",
@@ -1535,9 +1513,6 @@
     "Gear": {
       "Carried": "Carried",
       "Stored": "Stored",
-      "Carrying": "carrying",
-      "Show": "Show",
-      "All": "All gear",
       "Category": "Category",
       "CategoryHint": "For the Gear tab to sort by. Anything with an attack is listed as a weapon whatever this says.",
       "Group": {
@@ -1576,9 +1551,6 @@
       "DescriptionHint": "What this creature is. Click to show or hide the rest."
     },
     "Action": {
-      "BrowseSkills": "Browse",
-      "BrowseTraits": "Browse",
-      "BrowseGear": "Browse",
       "AddSkill": "Add Skill",
       "AddAdvantage": "Advantage",
       "AddDisadvantage": "Disadvantage",
@@ -1587,7 +1559,6 @@
       "AddArmor": "Armor",
       "AddShield": "Shield",
       "AddLanguage": "Add Language",
-      "FilterSkills": "Filter skills",
       "Delete": "Delete",
       "New": "New",
       "AddTechnique": "Add Technique",
@@ -1609,12 +1580,8 @@
       "GMOnly": "visible to the GM only",
       "LimitedSheet": "Sheet is limited to you",
       "NoMeleeAttacks": "No melee attacks. Add equipment with an attack mode on the Gear tab.",
-      "NothingCarried": "Nothing carried.",
       "StoredNoEncumbrance": "does not count against encumbrance",
-      "Overloaded": "Carrying more than ten times Basic Lift. This character cannot move under this load.",
-      "Techniques": "bought up from a prerequisite skill",
-      "TargetPenalty": "to target",
-      "HitLocations": "Unaimed blows hit the torso. Eye and Vitals can only be targeted deliberately, and only by impaling, piercing or tight-beam burning attacks."
+      "Overloaded": "Carrying more than ten times Basic Lift. This character cannot move under this load."
     },
     "Health": {
       "healthy": "Healthy",
@@ -3362,13 +3329,10 @@
       "Lame": "Lame {penalty}",
       "LameHint": "Taken off every Melee Weapon and unarmed combat skill, and so off the parry (Characters p. 141)",
       "ImpairedRanged": "Taken off every ranged attack roll (Characters pp. 123, 147)",
-      "AtDefaultHint": "The skill is not on the sheet; this is the book's default for it.",
       "PerTurn": "{count} attacks a turn",
       "ExtraAttackHint": "Extra Attack: one more attack on each Attack maneuver.",
       "ExtraArms": "{count} extra arms",
       "WeaponToHit": "Weapon, to hit",
-      "HitModifier": "{modifier} to hit",
-      "HitModifierHint": "This weapon is used at this modifier to hit with its skill. The parry is unchanged.",
       "FollowUp": "(follow-up)",
       "FollowUpHint": "A follow-up attack (Characters p. 106): it lands only if the attack carrying it hits, and DR has no effect on it once that attack gets through.",
       "Linked": "(linked)",
@@ -3391,8 +3355,6 @@
     },
     "Ready": {
       "Unready": "unready",
-      "UnreadyHint": "Swung and not yet brought back up. A Ready maneuver readies it; until then it neither attacks nor parries.",
-      "AfterAttackHint": "Becomes unready after each attack in these hands: it needs 1.5 times its minimum ST to stay ready.",
       "Action": "Ready",
       "Hint": "Take a Ready maneuver to bring the weapon back up",
       "NowUnready": "{name} is unready until a Ready maneuver."
