@@ -106,8 +106,14 @@ export function canOverpenetrate(options: {
   type: string;
   ranged: boolean;
   tightBeam?: boolean;
+  /**
+   * The weapon's own row refuses it (since API 1.73.0): the book decides by
+   * damage type alone, and a module's projectile that stops in its target
+   * says so here.
+   */
+  refused?: boolean;
 }): boolean {
-  if (!options.ranged) return false;
+  if (!options.ranged || options.refused === true) return false;
   if (options.type === "burn") return options.tightBeam === true;
   return (OVERPENETRATING_TYPES as readonly string[]).includes(options.type);
 }

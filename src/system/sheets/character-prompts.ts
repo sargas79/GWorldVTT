@@ -797,8 +797,17 @@ export async function promptForScatter(weapons: ScatterWeapon[] = []): Promise<{
   return result && typeof result === "object" ? (result as never) : null;
 }
 
+/** A weapon the overpenetration prompt offers, with what it fills in (since API 1.73.0). */
+export interface OverpenetrationWeapon {
+  label: string;
+  damageType: string;
+  armorDivisor: number;
+  /** The row refuses overpenetration whatever its damage type. */
+  refused: boolean;
+}
+
 /** Asks what the shot went through and what is behind it (Campaigns p. 408). */
-export async function promptForOverpenetration(): Promise<{
+export async function promptForOverpenetration(weapons: OverpenetrationWeapon[] = []): Promise<{
   basicDamage: number;
   coverDr: number;
   coverHp: number;
@@ -807,12 +816,35 @@ export async function promptForOverpenetration(): Promise<{
   behindDr: number;
   damageType: string;
   tightBeam: boolean;
+  /** The weapon picked refuses overpenetration (since API 1.73.0). */
+  refused: boolean;
+  /** Its label, blank where none was picked. */
+  weapon: string;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Overpenetration.${key}`);
+  const esc = (text: string) => foundry.utils.escapeHTML(text);
+  const types = ["pi-", "pi", "pi+", "pi++", "imp", "burn", "cr", "cut"];
+
+  // The character's ranged rows, so the type, the divisor and whether the row
+  // refuses to go through come from the weapon rather than from memory.
+  const picker = weapons.length > 0
+    ? `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Weapon")}</span>
+        <select name="weapon" style="max-width:220px">
+          <option value="">&mdash;</option>
+          ${weapons.map((w, i) => `<option value="${i}">${esc(w.label)}</option>`).join("")}
+        </select>
+      </label>`
+    : "";
+  const pickedFrom = (form: HTMLElement | null | undefined) => {
+    const value = form?.querySelector<HTMLSelectElement>('select[name="weapon"]')?.value ?? "";
+    return value === "" ? null : (weapons[Number(value)] ?? null);
+  };
 
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Title") },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      ${picker}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("BasicDamage")}</span>
         <input type="number" name="damage" value="0" min="0" step="1" autofocus style="width:90px">
@@ -820,7 +852,7 @@ export async function promptForOverpenetration(): Promise<{
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("DamageType")}</span>
         <select name="damageType" style="width:120px">
-          ${["pi-", "pi", "pi+", "pi++", "imp", "burn", "cr", "cut"].map((t) => `<option value="${t}">${t}</option>`).join("")}
+          ${types.map((t) => `<option value="${t}">${t}</option>`).join("")}
         </select>
       </label>
       <label style="display:flex;align-items:center;gap:8px">
@@ -868,8 +900,23 @@ export async function promptForOverpenetration(): Promise<{
           behindDr: num("behindDr"),
           damageType: form?.querySelector<HTMLSelectElement>('select[name="damageType"]')?.value ?? "pi",
           tightBeam: form?.querySelector<HTMLInputElement>('input[name="tightBeam"]')?.checked ?? false,
+          refused: pickedFrom(form)?.refused === true,
+          weapon: pickedFrom(form)?.label ?? "",
         };
       },
+    },
+    render: (_event: Event, dialog: any) => {
+      // Choosing a weapon fills in its damage type and armour divisor.
+      const form: HTMLElement | null = dialog?.element ?? dialog ?? null;
+      const select = form?.querySelector<HTMLSelectElement>('select[name="weapon"]');
+      select?.addEventListener("change", () => {
+        const picked = pickedFrom(form);
+        if (!picked) return;
+        const type = form?.querySelector<HTMLSelectElement>('select[name="damageType"]');
+        if (type && types.includes(picked.damageType)) type.value = picked.damageType;
+        const divisor = form?.querySelector<HTMLInputElement>('input[name="divisor"]');
+        if (divisor) divisor.value = String(Math.max(1, picked.armorDivisor || 1));
+      });
     },
     rejectClose: false,
   });

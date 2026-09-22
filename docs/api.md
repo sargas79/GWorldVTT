@@ -436,6 +436,8 @@ and the roll continues.
       `blastPlacement` (`""`, `contact` or `internal`) and `largeArea`, and on
       a ranged row `scatterSquared`. A `followUp` also keeps
       `fragmentationType`, `fragmentationDivisor` and `blastPlacement`.
+    - Since 1.73.0, a ranged row's `noOverpenetration` (false) and `firstHit`
+      (null): see "Wounding" under "Inside the system's own procedures".
     - Since 1.30.0, also `skillName` and `readiesAfterAttack` (whether attacking
       leaves the weapon unready). The context's `skillLevel(name)` reads the
       actor's level in a skill as this preparation worked it out, or null; the
@@ -978,6 +980,52 @@ Two fields a module may read (since 1.62.0):
     `LARGE_AREA_LOCATIONS`; `scatterDistance` takes `squared`. The sheet's
     Scatter action offers the character's explosive and area rows, filling in
     the fragments and the squared miss.
+- **Wounding: injury caps, overpenetration, first hits, gauges, knockdown**
+  (since 1.73.0; Campaigns pp. 408-409, 420-421, Characters p. 279).
+  - *An injury cap.* A `gworld.injury` listener may set `damage.injuryCap`, the
+    most HP (or FP) the blow may cost, and `damage.injuryCapReason`, text for
+    the card. It holds on top of the Basic Set's own cap on a limb or
+    extremity, the lower of the two winning; shock, a major wound and the HP
+    lost follow from what was kept, while crippling (and so dismemberment) and
+    whether the wound bleeds are read from the injury before any cap. The
+    result (`gworld.afterDamage`'s `result`) gains
+    `uncappedInjury`, the injury before the Basic Set's limb cap and the
+    listener's, and `injuryCap`, `{ cap, lost, reason }` where the cap took
+    anything off, else null. The applied card shows it beside the injury; a
+    blow capped at 0 still shows what got through DR. `rules.capInjury(injury,
+    cap)` returns `{ injury, lost }`.
+  - *Overpenetration a row refuses.* A ranged row carries `noOverpenetration`,
+    false; a `gworld.weaponAttacks` listener sets it true for a projectile that
+    never goes through what it hits, whatever its damage type (p. 408 decides
+    by type alone). The sheet's Overpenetration action offers the character's
+    ranged rows, filling in the damage type and armour divisor, and a row that
+    refuses posts that it does not go through. `rules.canOverpenetrate` takes
+    `refused`.
+  - *A first hit with its own line.* A ranged row carries `firstHit`, null; a
+    `gworld.weaponAttacks` listener may set `{ damage, damageType?,
+    armorDivisor?, label? }` (dice text; a blank type or a divisor of 0 is the
+    row's, a blank label reads "first hit") for a multiple-projectile load
+    whose first projectile differs from the rest (p. 409). After an attack
+    from a row with `projectiles` over 1 and a `firstHit`, the first damage
+    roll from that row uses the first-hit line and says so in its label; later
+    rolls use the row's own line, as does any roll after another attack. The
+    sheet shows the line beside the row. `roll.damage` takes `firstHit`
+    (boolean), which the card's flag keeps and `IncomingDamage.firstHit`
+    carries to `gworld.injury` and `gworld.afterDamage`, as it does for a
+    first hit rolled from the sheet. `rules.projectileLine({ line, firstHit,
+    first })` picks the line.
+  - *Gauges.* `rules.calibreOf` reads a shotgun's gauge (`12G`, `10 gauge`,
+    `20 ga`) as its bore in millimetres (Characters p. 279: 12G is 18.53mm), and
+    `.410` as the inch figure it already was; `rules.gaugeBoreMm(gauge)` gives
+    the bore, reading a figure of 100 or more as thousandths of an inch. So a
+    shotgun with no rounds of its own listed is priced from the shells nearest
+    in bore (and a weapon of about 18-20mm may now be priced from 12G shells).
+  - *Knockdown.* The knockdown roll's `gworld.successRollModifiers` context,
+    and `gworld.afterKnockdown`'s, carry `blow`: `{ hitLocation,
+    addonLocation, majorWound }` for the blow whose card called for the roll,
+    or null for a roll with no blow behind it (a card posted before 1.73.0).
+    The Basic Set's own modifiers for the location (-5 face or vitals, -10
+    skull or eye, on a major wound) are already in the card's modifier.
 - **Modifier areas** (since 1.63.0): `areas.add(scene, { id?, label, center,
   radius, region, lines, expires })` keeps an area on a scene: a circle
   (`center` in scene pixels, `radius` in yards) or a scene region by id. Each
@@ -1218,7 +1266,8 @@ Two fields a module may read (since 1.62.0):
   conditions follow the pool, so call `syncHealthConditions` after a successful undo.
 - **Knockdown** (since 1.39.0): `gworld.afterKnockdown` follows a knockdown roll once
   its result is applied, with `{ actor, outcome, result, previousPosture }` (`result` is
-  `{ outcome, stunned, prone, unconscious }`). `actors.undoKnockdown(actor, { posture })`
+  `{ outcome, stunned, prone, unconscious }`; since 1.73.0 also `blow`, where
+  the blow struck: see "Wounding"). `actors.undoKnockdown(actor, { posture })`
   takes it back for a user who owns the actor: no stun, not prone, not unconscious, and
   in `posture`.
 - **Fright Checks** (since 1.39.0): `roll.frightCheck(actor, modifier)` rolls the

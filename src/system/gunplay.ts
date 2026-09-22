@@ -111,7 +111,24 @@ export async function checkOverpenetration(options: {
   /** What the shot does: only a piercing, impaling or tight-beam burning one goes through. */
   damageType: string;
   tightBeam: boolean;
+  /** The weapon's row refuses overpenetration (since API 1.73.0), and what it is called. */
+  refused?: boolean;
+  weapon?: string;
 }): Promise<number> {
+  // A row that says its shot stays in what it hits (since API 1.73.0).
+  if (options.refused === true) {
+    await post(options.actor, {
+      overpenetration: true,
+      basicDamage: options.basicDamage,
+      cannotOverpenetrate: true,
+      refusedBy: options.weapon || options.damageType,
+      damageType: options.damageType,
+      went: false,
+      through: 0,
+    });
+    return 0;
+  }
+
   // "When you inflict piercing, impaling, or tight-beam burning damage with a
   // ranged attack" (p. 408) -- and nothing else. A club through a door is a
   // club stopped by a door, and a flamethrower does not drill through people.

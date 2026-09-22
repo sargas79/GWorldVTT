@@ -14,4 +14,6 @@ data-st-based="{{#if atk.stBased}}1{{/if}}"
 data-fragmentation="{{atk.fragmentation}}"
 data-fragmentation-type="{{atk.fragmentationType}}" data-fragmentation-divisor="{{atk.fragmentationDivisor}}"
 data-fragmentation-linger-every="{{atk.fragmentationLingerEvery}}" data-fragmentation-linger-for="{{atk.fragmentationLingerFor}}"
-data-blast-placement="{{atk.blastPlacement}}" data-large-area="{{#if atk.largeArea}}1{{/if}}"{{/if}}
+data-blast-placement="{{atk.blastPlacement}}" data-large-area="{{#if atk.largeArea}}1{{/if}}"
+{{#if atk.firstHit}}data-first-hit-damage="{{atk.firstHit.damage}}" data-first-hit-damage-type="{{atk.firstHit.damageType}}"
+data-first-hit-armor-divisor="{{atk.firstHit.armorDivisor}}" data-first-hit-label="{{atk.firstHit.label}}"{{/if}}{{/if}}

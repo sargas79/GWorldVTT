@@ -27,6 +27,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { parseDiceAdds } from "../rules/dice.js";
 import {
   MANEUVERS,
   MANEUVER_ORDER,
@@ -152,12 +153,28 @@ export interface WeaponRowEntry {
 /** A fragment's damage type as a row may give it, blank for cutting (since 1.72.0). */
 const FRAGMENT_TYPES: ReadonlySet<string> = new Set(["", "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"]);
 
+/**
+ * A ranged row's line for the first hit of a multiple-projectile shot, as a
+ * listener gave it (since 1.73.0), or null: it needs dice, and a type or
+ * divisor it leaves out is the row's.
+ */
+function firstHitLine(given: any): { damage: string; damageType: string; armorDivisor: number; label: string } | null {
+  if (!given || typeof given !== "object" || typeof given.damage !== "string" || !parseDiceAdds(given.damage.trim())) return null;
+  const divisor = Number(given.armorDivisor);
+  return {
+    damage: given.damage.trim(),
+    damageType: typeof given.damageType === "string" ? given.damageType : "",
+    armorDivisor: divisor > 0 ? divisor : 0,
+    label: typeof given.label === "string" ? given.label : "",
+  };
+}
+
 /** The row fields a listener may change. */
 const WEAPON_ROW_FIELDS = [
   "skillLevel", "damage", "damageType", "armorDivisor", "halfDamageRange", "maxRange", "minRange", "accuracy",
   "malfunction", "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp", "reach", "parry", "twoHanded",
   "feint", "skillName", "readiesAfterAttack", "affliction", "afflictionAttribute", "afflictionModifier",
-  "recoil", "noSprayingFire", "noSuppressionFire",
+  "recoil", "noSprayingFire", "noSuppressionFire", "noOverpenetration", "firstHit",
   "fragmentation", "fragmentationType", "fragmentationDivisor", "fragmentationLingerEvery", "fragmentationLingerFor",
   "blastPlacement", "largeArea", "scatterSquared",
 ] as const;
@@ -220,6 +237,10 @@ export function adjustWeaponAttacks(options: {
       row.recoil = Math.max(0, Math.floor(Number(row.recoil) || 0));
       row.noSprayingFire = row.noSprayingFire === true;
       row.noSuppressionFire = row.noSuppressionFire === true;
+      // Whether the row's shot may go through what it hits, and a line of its
+      // own for a multiple-projectile shot's first hit (since 1.73.0).
+      row.noOverpenetration = row.noOverpenetration === true;
+      row.firstHit = firstHitLine(row.firstHit);
     }
     // Reach is text, Parry a whole number or none, and two-handed a flag (since 1.21.0).
     row.reach = typeof row.reach === "string" ? row.reach : String(row.reach ?? "");

@@ -69,7 +69,8 @@ describe("ammunition (Characters pp. 275, 276, 278-279)", () => {
     expect(calibreOf("Sniper Rifle, .338")).toBeCloseTo(8.59, 1);
     expect(calibreOf("Auto Pistol, 9mm")).toBe(9);
     expect(calibreOf("ATGM, 115mm")).toBe(115);
-    expect(calibreOf("Pump Shotgun, 12G")).toBeNull();
+    expect(calibreOf("Pump Shotgun, 12G")).toBe(18.53);
+    expect(calibreOf("Rifle")).toBeNull();
   });
 
   it("steps piercing up and down the ladder and no further", () => {

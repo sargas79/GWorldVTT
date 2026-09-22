@@ -352,6 +352,22 @@ export interface SuccessRollContext {
    * which the roll itself carries.
    */
   attack?: ResistedAttack;
+  /**
+   * On a knockdown roll, the blow that called for it (since 1.73.0): where it
+   * struck -- the Basic Set's own modifiers turn on it (Campaigns p. 420) --
+   * and whether it was a major wound. Null for a roll made with no blow behind
+   * it.
+   */
+  blow?: KnockdownBlow | null;
+}
+
+/** The blow a knockdown roll is made for (since 1.73.0). */
+export interface KnockdownBlow {
+  /** The Basic Set location struck. */
+  hitLocation: string;
+  /** A module's location struck, as `<module>.<key>`, or null. */
+  addonLocation: string | null;
+  majorWound: boolean;
 }
 
 /** The attack a resistance roll is made against (since 1.49.0). */

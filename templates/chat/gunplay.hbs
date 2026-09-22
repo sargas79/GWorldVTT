@@ -39,7 +39,9 @@
         <span class="gc-mod">{{localize "GWORLD.Overpenetration.CoverDr" dr=cover}}</span>
       {{/unless}}
     </div>
-    {{#if cannotOverpenetrate}}
+    {{#if refusedBy}}
+      <div class="gc-result success">{{localize "GWORLD.Overpenetration.Refused" weapon=refusedBy}}</div>
+    {{else if cannotOverpenetrate}}
       <div class="gc-result success">{{localize "GWORLD.Overpenetration.CannotOverpenetrate" type=damageType}}</div>
     {{else if went}}
       <div class="gc-result crit-failure">
