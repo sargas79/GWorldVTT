@@ -772,6 +772,13 @@ function rangedModeField() {
     halfDamageRange: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
     maxRange: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
     /**
+     * The least distance in yards the weapon can hit at (since API 1.69.0): a
+     * missile or a launched grenade that must fly so far to arm or to come down
+     * on its target (Characters p. 281, note 1). An attack at a target closer
+     * than this is refused. Zero for no minimum.
+     */
+    minRange: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+    /**
      * Muscle-powered weapons list range as a multiple of ST rather than a fixed
      * distance, e.g. x10/x15 (GURPS Lite p. 19).
      */

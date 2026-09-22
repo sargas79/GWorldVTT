@@ -1193,6 +1193,43 @@ const BASIC_SET_RADIUS = new Map([
   ["Molotov Cocktail", 1],
 ]);
 
+/**
+ * The Basic Set's own weapons with a minimum range, in yards, which the book
+ * gives in one note shared by the table (Characters p. 281, note 1) and the
+ * records carry only as that shared note. Their first Range figure is a true
+ * 1/2D, so it stays.
+ */
+const BASIC_SET_MIN_RANGE = new Map([
+  ["Under-Barrel Grenade Launcher, 40mm", 10],
+  ["ATGM, 115mm", 30],
+  ["SAM, 70mm", 200],
+]);
+
+/**
+ * A ranged mode's minimum range, where the record's own notes say plainly
+ * what it is. Two forms are read, and only these:
+ *
+ *   - a note that the first Range figure is the minimum range rather than
+ *     1/2D: that figure becomes the minimum, and the mode has no 1/2D;
+ *   - a note that the minimum range is a stated percentage of the maximum.
+ *
+ * A note naming several weapons, each with its own minimum, does not say
+ * which applies to this record, and is not read. Returns the fields to set on
+ * the mode, or null.
+ */
+export function minimumRangeOf(itemnotes, mode) {
+  const notes = itemnotes ?? "";
+  if (!notes || mode.rangeIsStMultiple) return null;
+  if (/first range figure is (?:the )?minimum range/i.test(notes) && mode.halfDamageRange > 0) {
+    return { minRange: mode.halfDamageRange, halfDamageRange: 0 };
+  }
+  const share = /minimum range is (\d+(?:\.\d+)?)\s*% of (?:the )?maximum range/i.exec(notes);
+  if (share && mode.maxRange > 0) {
+    return { minRange: Math.round(mode.maxRange * Number(share[1])) / 100 };
+  }
+  return null;
+}
+
 
 /**
  * The fragments an explosion throws, in the brackets a table prints beside the
@@ -2346,6 +2383,16 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
           result.mode.areaAttack = true;
         } else if (areaNote(scope.f.get("damtype"))) {
           note(`${name}: damage type says "${(scope.f.get("damtype") ?? "").trim()}"; a radius or a cone's width, and the record does not say which`);
+        }
+
+        // The least distance it can hit at, where the record's notes say so
+        // plainly, or the Basic Set's table does in a note the record shares.
+        const minimum = minimumRangeOf(f.get("itemnotes"), result.mode);
+        const knownMinimum = isSupplement(source) ? 0 : (BASIC_SET_MIN_RANGE.get(name) ?? 0);
+        if (minimum) Object.assign(result.mode, minimum);
+        else if (knownMinimum > 0) result.mode.minRange = knownMinimum;
+        else if (/minimum range/i.test(f.get("itemnotes") ?? "")) {
+          note(`${name}: its notes give a minimum range this reader cannot tie to the record; none is set`);
         }
       }
 

@@ -276,6 +276,12 @@ and the roll continues.
     to `modifiers` for the feinter's roll, or set `refusal` (text) to stop it;
   - Since 1.19.0, a `gworld.attackModifiers` listener may set `refusal` (text): the
     attack isn't rolled, and the user is told why;
+  - Since 1.69.0, `gworld.attackModifiers` also gets `rangeYards`, the range the
+    shot is taken at (null for a melee attack), and `minRange`, the row's
+    minimum range (0 for none). A shot at a target inside the minimum range
+    arrives with `refusal` already set to say so. A listener whose rules allow
+    such a shot at a penalty clears `refusal` (null) and pushes its line to
+    `modifiers`; one that leaves it set lets the refusal stand;
   - Since 1.21.0, `gworld.attackModifiers` also gets:
     - `options`: the attack options chosen in the dialog, by `<module>.<key>`;
     - `deceptive`: the part of `defensePenalty` a Deceptive Attack bought;
@@ -358,7 +364,14 @@ and the roll continues.
   - `gworld.damageModifiers`, `gworld.injury` and `gworld.afterDamage` also get
     `item` (since 1.8.0): the weapon or spell the damage was rolled from, or
     null. The card keeps it as `itemUuid`, and so does `damage`. Since 1.10.0
-    they also get `mode` (`{ index, ranged }`), the mode it was rolled from;
+    they also get `mode` (`{ index, ranged }`), the mode it was rolled from.
+    Since 1.69.0 `gworld.damageModifiers` also gets `distanceYards`, how far the
+    target was, for every row, explosive or not: the range the attack was taken
+    at where the last attack was made from the same row (a ranged attack
+    records it), otherwise the distance on
+    the map to the one targeted token, and null where neither is known.
+    `roll.damage` takes `distanceYards` too; given there, it is what the hook
+    sees, and null says the distance is not known;
   - `gworld.breakageOdds`: set `breakage`. Since 1.25.0 it also gets `weight`, the weight
     the parry counts, which a listener may change, and a listener may set `item`
     to the weapon that breaks;
@@ -371,7 +384,8 @@ and the roll continues.
     - Each of `rows` is `{ kind, mode, row, basis }`. `mode` is the stored mode,
       and `basis` is what the row came from before grade, material and
       ammunition: `st`, `damage`, `damageType`, `armorDivisor`,
-      `halfDamageRange`, `maxRange`, `accuracy`, `malfunction`.
+      `halfDamageRange`, `maxRange`, `minRange` (since 1.69.0), `accuracy`,
+      `malfunction`.
     - Change the row's `skillLevel`, `damage`, `damageType`, `armorDivisor`,
       `halfDamageRange`, `maxRange`, `accuracy`, `malfunction`, `projectiles`,
       `rateOfFire`, `minSt` or `material`.
@@ -381,6 +395,16 @@ and the roll continues.
       follows. The Parry isn't worked out again from a changed `skillLevel`.
     - Since 1.28.0, also `feint`: whether the Combat tab offers a Feint from the
       row. Melee rows start true and ranged rows false, derived modes included;
+    - Since 1.69.0, also `minRange` on a ranged row: the least distance in yards
+      it can hit at, 0 for none, from the mode's own `minRange` (and in `basis`
+      beside the other ranges). The Combat tab shows it beside the range, and an
+      attack at a closer target is refused (see `gworld.attackModifiers`). A
+      ranged mode stores it as `minRange`; the GDF reader sets it where a
+      record's notes say plainly that the first Range figure is the minimum
+      range rather than 1/2D (that figure moves to `minRange` and the mode gets
+      no 1/2D), or that the minimum is a stated percentage of the maximum. A
+      note listing several weapons' minimums is reported, not read. The Basic
+      Set's grenade launcher, ATGM and SAM carry 10, 30 and 200 yards.
     - Since 1.30.0, also `skillName` and `readiesAfterAttack` (whether attacking
       leaves the weapon unready). The context's `skillLevel(name)` reads the
       actor's level in a skill as this preparation worked it out, or null; the

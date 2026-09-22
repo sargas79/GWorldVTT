@@ -180,3 +180,14 @@ export function elevationRange(options: {
   return ground + Math.abs(options.elevationYards);
 }
 
+
+/**
+ * Whether a target stands inside a weapon's minimum range, where the shot
+ * cannot be made: a missile or a launched grenade that has not flown far
+ * enough to arm or to come down on it (Characters p. 281, note 1, gives the
+ * Basic Set's three). A minimum of zero is no minimum.
+ */
+export function insideMinimumRange(rangeYards: number, minRange: number): boolean {
+  if (!(minRange > 0) || !Number.isFinite(rangeYards)) return false;
+  return Math.max(0, rangeYards) < minRange;
+}

@@ -360,6 +360,19 @@ describe("an item's attack rows (#270)", () => {
     expect((rows[1]!.row as any).readiesAfterAttack).toBe(false);
   });
 
+  it("lets a listener set a ranged row's minimum range, kept a distance in yards (since 1.69.0)", async () => {
+    const api = await load();
+    const rows = entries();
+    globals.Hooks = { callAll: (_event: string, context: any) => { context.rows[1].row.minRange = "12.5"; } };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: rows as never, ...helpers } as never);
+    expect((rows[1]!.row as any).minRange).toBe(12.5);
+    expect((rows[0]!.row as any).minRange).toBeUndefined();
+    const none = entries();
+    globals.Hooks = { callAll: (_event: string, context: any) => { context.rows[1].row.minRange = -3; } };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: none as never, ...helpers } as never);
+    expect((none[1]!.row as any).minRange).toBe(0);
+  });
+
   it("puts the rows back as they were when a listener throws", async () => {
     const api = await load();
     const rows = entries();

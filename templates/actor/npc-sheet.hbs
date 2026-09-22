@@ -98,7 +98,7 @@
                 {{#if atk.skillLevel}}<span class="lvl">{{atk.skillLevel}}</span>{{else}}<span class="bad">&mdash;</span>{{/if}}
               </td>
               <td class="dmg">{{atk.damage}} <span class="dt">{{atk.damageType}}</span></td>
-              <td class="c">{{#if atk.range}}{{atk.range}}{{else}}{{atk.reach}}{{/if}}</td>
+              <td class="c">{{#if atk.range}}{{atk.range}}{{#if atk.minRange}} ({{localize "GWORLD.Ranged.MinRangeShort" yards=atk.minRange}}){{/if}}{{else}}{{atk.reach}}{{/if}}</td>
               <td class="c">
                 {{#if atk.skillLevel}}
                   <span class="rollable" data-action="roll" data-roll-type="attack"

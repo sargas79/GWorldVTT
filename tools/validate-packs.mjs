@@ -663,6 +663,13 @@ function validateItem(entry, file) {
       typeof mode.maxRange === "number" && mode.maxRange >= 0,
       file, name, `maximum range ${mode.maxRange} must not be negative`,
     );
+    // A minimum range, written only where the weapon has one, short of its maximum.
+    if (mode.minRange !== undefined) {
+      check(
+        typeof mode.minRange === "number" && mode.minRange > 0 && !(mode.maxRange > 0 && mode.minRange >= mode.maxRange),
+        file, name, `minimum range ${mode.minRange} must be positive and short of the maximum ${mode.maxRange}`,
+      );
+    }
     check(
       typeof mode.halfDamageRange === "number" && mode.halfDamageRange >= 0,
       file, name, `half-damage range ${mode.halfDamageRange} must not be negative`,

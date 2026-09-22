@@ -48,7 +48,7 @@ export type DefenseKey = "dodge" | "parry" | "block";
 
 /** The hooks this module fires, by name. */
 export const COMBAT_HOOKS = Object.freeze({
-  /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset, skillCap, calledShot, targets, refusal }`, mutable. */
+  /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset, skillCap, calledShot, targets, refusal, rangeYards, minRange }`, mutable (`rangeYards` and `minRange` since 1.69.0). */
   attackModifiers: "gworld.attackModifiers",
   /** The defense card's choices for a defender: `{ defender, attack, delivery, damageType, choices, retreat, feverish, acrobatic }`, mutable. */
   defenseChoices: "gworld.defenseChoices",
@@ -58,7 +58,7 @@ export const COMBAT_HOOKS = Object.freeze({
   parryWeapons: "gworld.parryWeapons",
   /** Before a defense roll: `{ defender, defense, attack, modifiers, deception, attacker }`, mutable. */
   defenseModifiers: "gworld.defenseModifiers",
-  /** Before a damage roll: `{ actor, item, mode, label, formula, damageType, modifiers }`, mutable. */
+  /** Before a damage roll: `{ actor, item, mode, label, formula, damageType, modifiers, distanceYards }`, mutable (`distanceYards` since 1.69.0). */
   damageModifiers: "gworld.damageModifiers",
   /** A blow about to be worked out against a target: `{ actor, item, mode, damage }`, the damage mutable. */
   injury: "gworld.injury",
@@ -127,6 +127,8 @@ export interface WeaponRowBasis {
   armorDivisor: number;
   halfDamageRange: number;
   maxRange: number;
+  /** The mode's minimum range in yards, zero for none (since 1.69.0). */
+  minRange: number;
   accuracy: number;
   malfunction: number | null;
 }
@@ -143,8 +145,8 @@ export interface WeaponRowEntry {
 
 /** The row fields a listener may change. */
 const WEAPON_ROW_FIELDS = [
-  "skillLevel", "damage", "damageType", "armorDivisor", "halfDamageRange", "maxRange", "accuracy", "malfunction",
-  "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp", "reach", "parry", "twoHanded",
+  "skillLevel", "damage", "damageType", "armorDivisor", "halfDamageRange", "maxRange", "minRange", "accuracy",
+  "malfunction", "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp", "reach", "parry", "twoHanded",
   "feint", "skillName", "readiesAfterAttack", "affliction", "afflictionAttribute", "afflictionModifier",
 ] as const;
 
@@ -197,7 +199,10 @@ export function adjustWeaponAttacks(options: {
     if (entry.kind === "ranged") {
       const half = Math.max(0, Math.round(Number(row.halfDamageRange) || 0));
       const max = Math.max(0, Math.round(Number(row.maxRange) || 0));
-      Object.assign(row, { halfDamageRange: half, maxRange: max, range: half ? `${half} / ${max}` : String(max) });
+      // The least distance the row can hit at (since 1.69.0), in yards; the
+      // attack is refused inside it. Zero for none.
+      const min = Math.max(0, Number(row.minRange) || 0);
+      Object.assign(row, { halfDamageRange: half, maxRange: max, minRange: min, range: half ? `${half} / ${max}` : String(max) });
     }
     // Reach is text, Parry a whole number or none, and two-handed a flag (since 1.21.0).
     row.reach = typeof row.reach === "string" ? row.reach : String(row.reach ?? "");
