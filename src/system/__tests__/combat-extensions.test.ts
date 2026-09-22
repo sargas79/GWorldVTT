@@ -373,6 +373,14 @@ describe("an item's attack rows (#270)", () => {
     expect((none[1]!.row as any).minRange).toBe(0);
   });
 
+  it("keeps a ranged row's Recoil a whole number and its spray and suppression refusals flags (since 1.70.0)", async () => {
+    const api = await load();
+    const rows = entries();
+    globals.Hooks = { callAll: (_event: string, context: any) => { Object.assign(context.rows[1].row, { recoil: "3.7", noSprayingFire: true, noSuppressionFire: 1 }); } };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: rows as never, ...helpers } as never);
+    expect(rows[1]!.row).toMatchObject({ recoil: 3, noSprayingFire: true, noSuppressionFire: false });
+  });
+
   it("puts the rows back as they were when a listener throws", async () => {
     const api = await load();
     const rows = entries();

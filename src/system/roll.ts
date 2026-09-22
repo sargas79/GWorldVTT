@@ -24,6 +24,8 @@ import { consumeTurnedBlade, recordTurnedBlade } from "./turned-blade.js";
 import { consumePulledBlow, pulledFormula, recordPulledBlow } from "./pulled-blow.js";
 import { isRuleOn } from "./optional-rules.js";
 import { rollBreakdown, signed, type RollBreakdown } from "./roll-breakdown.js";
+import { maySpray, promptForSpray, type SprayShot } from "./spraying-fire.js";
+import { fireSuppression, suppressing } from "./suppression-fire.js";
 import { targetedTokens, withTargets } from "./targets.js";
 import {
   afterSuccessRoll,
@@ -51,6 +53,7 @@ import {
   skillCapLine,
   applyAttackOptions,
   attackOptionFields,
+  attackOptionsFor,
   callCombatHook,
   mergeAttackEffects,
   missFallbackFor,
@@ -104,6 +107,7 @@ import {
   elevationRange,
   insideMinimumRange,
   rangedToHitModifier,
+  attackRateOfFire,
   rapidFireBonus,
   rapidFireHits,
   speedRangeModifier,
@@ -1290,10 +1294,48 @@ export async function handleRollAction(
       if (chosen) picked = [{ actor: chosen.actor, document: chosen.document }];
     }
   }
+  // Suppression Fire takes the whole turn and hoses an area rather than
+  // shooting at anyone (Campaigns p. 409).
+  if (target.dataset.ranged === "1" && suppressing(actor)) {
+    const fired = await fireSuppression(actor, target, rollItemOf(actor, target));
+    if (fired && inCombat) await recordAttackMade(actor);
+    return null;
+  }
+
+  // One burst over several targets (Campaigns p. 409): an attack each, and
+  // one attack of the turn for them all.
+  if (!picked && maySpray(target.dataset, targetedTokens().filter((t: any) => t?.actor).length)) {
+    const plan = await promptForSpray({
+      actor,
+      rateOfFire: Number(target.dataset.rateOfFire) || 1,
+      recoil: Number(target.dataset.recoil) || 1,
+      loaded: target.dataset.loaded === undefined || target.dataset.loaded === "" ? null : Number(target.dataset.loaded) || 0,
+      yardsBetween,
+    });
+    if (plan === null) return null;
+    if (plan !== "single") {
+      let last: SuccessRollResult | null = null;
+      for (const [i, token] of plan.tokens.entries()) {
+        const outcome = await withTargets([token], () => rollAction(actor, event, target, sequence.count > 1 ? place : null, plan.shots[i]!));
+        // An attack called off, or refused, ends the burst there.
+        if (!outcome) break;
+        last = outcome;
+      }
+      if (last && inCombat) await recordAttackMade(actor);
+      return last;
+    }
+  }
+
   const roll = () => rollAction(actor, event, target, sequence.count > 1 ? place : null);
   const outcome = picked ? await withTargets(picked, roll) : await roll();
   if (outcome && inCombat) await recordAttackMade(actor);
   return outcome;
+}
+
+/** The item an attack button belongs to, or null. */
+function rollItemOf(actor: any, target: HTMLElement): any {
+  const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+  return id ? actor?.items?.get?.(id) ?? null : null;
 }
 
 /** Asks which of the scene's tokens one attack of a sequence is aimed at. Null when dismissed. */
@@ -1323,6 +1365,8 @@ async function rollAction(
   target: HTMLElement,
   /** Which attack of the turn's several this is, to say on the card. */
   place: { index: number; count: number } | null,
+  /** This target's share of a Spraying Fire burst, or none (since 1.70.0). */
+  spray: SprayShot | null = null,
 ): Promise<SuccessRollResult | null> {
   const { rollType, rollLabel, rollTarget, ranged } = target.dataset;
   const base = Number(rollTarget);
@@ -1352,11 +1396,15 @@ async function rollAction(
   // The weapon the button belongs to, for the modules' attack options.
   const rolledItemId = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
   const rolledItem = rolledItemId ? actor?.items?.get?.(rolledItemId) ?? null : null;
+  // A target of a spray is shot at its share of the burst, at the Recoil its
+  // place in the sweep gives it.
+  const sprayed = spray ? { ...weapon, recoil: spray.recoil } : weapon;
   const shot = ranged
     ? measured && !aboard
-      ? quickShot(measured, weapon)
+      ? quickShot(measured, sprayed, spray?.shots ?? 1)
       : await promptForRangedAttack({
-          ...weapon,
+          ...sprayed,
+          ...(spray ? { fixedShots: spray.shots } : {}),
           aboard,
           mayFireMounted: mayFireMountedWeapon(actor, aboard),
           initialRange: measured?.rangeYards ?? 0,
@@ -1472,10 +1520,12 @@ async function rollAction(
   if (stance) modifiers.push(...stance.modifiers);
   // A merged effect carries the two fields that may be absent as null, which
   // the effect a listener writes says by leaving them out.
-  const asEffect = ({ criticalSkill, malfunction, ...rest }: NonNullable<typeof stance>) => ({
+  const asEffect = ({ criticalSkill, malfunction, rateOfFire, recoil, ...rest }: NonNullable<typeof stance>) => ({
     ...rest,
     ...(criticalSkill !== null ? { criticalSkill } : {}),
     ...(malfunction !== null ? { malfunction } : {}),
+    ...(rateOfFire !== null ? { rateOfFire } : {}),
+    ...(recoil !== null ? { recoil } : {}),
   });
   const addon = stance && chosenAddon ? mergeAttackEffects([asEffect(chosenAddon), asEffect(stance)]) : (chosenAddon ?? stance);
   if (rollType === "attack") await recordAddonDamage(actor, addon?.damageModifiers ?? []);
@@ -1596,6 +1646,8 @@ async function rollAction(
         // starts out saying so.
         rangeYards: shot ? shot.rangeYards : (null as number | null),
         minRange,
+        // Since 1.70.0: this target's share of a Spraying Fire burst, or null.
+        spraying: spray ? { ...spray } : (null as SprayShot | null),
       })
     : null;
   // A module's rules may make this attack impossible here: it isn't rolled.
@@ -1615,9 +1667,15 @@ async function rollAction(
     // (since 1.50.0): rounds spent, a Malf. of its own, a halved Rate of Fire.
     ...(addon && addon.shots > 0 ? [game.i18n.format("GWORLD.Addon.ExtraShots", { shots: addon.shots })] : []),
     ...(addon && addon.malfunction !== null ? [game.i18n.format("GWORLD.Addon.Malfunction", { number: addon.malfunction })] : []),
-    ...(addon && addon.rateOfFireMultiplier !== 1 && shot?.rateOfFire
+    ...(addon && (addon.rateOfFireMultiplier !== 1 || addon.rateOfFire !== null) && shot?.rateOfFire
       ? [game.i18n.format("GWORLD.Addon.RateOfFire", { rof: shot.rateOfFire })]
       : []),
+    // And a Recoil an option set or added to (since 1.70.0).
+    ...(addon && (addon.recoil !== null || addon.recoilModifier !== 0) && shot
+      ? [game.i18n.format("GWORLD.Addon.Recoil", { recoil: shot.recoil })]
+      : []),
+    // One target of a Spraying Fire burst (Campaigns p. 409).
+    ...(spray ? [game.i18n.format("GWORLD.Spraying.Card", { index: spray.index + 1, count: spray.count, shots: spray.shots, recoil: spray.recoil })] : []),
     ...(addon?.notes ?? []).map((note) => game.i18n.localize(note)),
   ];
   const label = [
@@ -1798,7 +1856,8 @@ async function rollAction(
     const item = id ? actor?.items?.get(id) : null;
     const modeIndex = Number(target.dataset.modeIndex);
     // "shots" on an option is what a setting spends beyond the shells fired.
-    const spent = shot.shellsFired + Math.max(0, Math.floor(Number(shot.addon?.shots) || 0));
+    // So do a spray's shots wasted swinging to this target (Campaigns p. 409).
+    const spent = shot.shellsFired + Math.max(0, Math.floor(Number(shot.addon?.shots) || 0)) + (spray?.wasted ?? 0);
     if (item?.isOwner && Number.isInteger(modeIndex)) await spendShots(item, modeIndex, spent);
   }
 
@@ -1882,6 +1941,18 @@ async function consumeHalfDamage(actor: any): Promise<boolean> {
 const SHOT_RANGE_FLAG = "shotRange";
 
 /** The row a shot's range belongs to: its item's id, or its derived mode's key, and its mode. */
+/**
+ * What a hit from a suppression zone leaves for the damage roll, which is a
+ * separate click on the firer's row (Campaigns p. 409): how far the victim
+ * was, whether that is past 1/2D, and no option's lines or mass of pellets.
+ */
+export async function recordSuppressionShot(actor: any, rowKey: string, rangeYards: number, halfDamageRange: number): Promise<void> {
+  await recordAddonDamage(actor, []);
+  await recordMassShot(actor, null);
+  await recordShotRange(actor, rangeYards, rowKey);
+  await recordHalfDamage(actor, beyondHalfDamage({ rangeYards, halfDamageRange }));
+}
+
 function shotRow(row: HTMLElement | null | undefined): string {
   if (!row) return "";
   return [row.dataset.itemId ?? "", row.dataset.derivedMode ?? "", row.dataset.modeIndex ?? ""].join("|");
@@ -1996,11 +2067,13 @@ export function beyondHalfDamage(options: {
 function quickShot(
   measured: MeasuredShot,
   weapon: Parameters<typeof promptForRangedAttack>[0],
+  /** Shells fired: one, or a target's share of a Spraying Fire burst. */
+  shells = 1,
 ): RangedShot {
   // One shell, however many pellets are in it, and no aim unless the shooter
   // is on an Aim maneuver -- in which case its turns are what they are.
   const pellets = multipleProjectiles({
-    shotsFired: 1,
+    shotsFired: shells,
     projectiles: weapon.projectiles ?? 1,
     recoil: weapon.recoil,
     rangeYards: measured.rangeYards,
@@ -2021,7 +2094,7 @@ function quickShot(
   return {
     modifiers,
     shotsFired: pellets.effectiveShots,
-    shellsFired: 1,
+    shellsFired: shells,
     recoil: pellets.recoil,
     coneMultiplier: pellets.coneMultiplier,
     calledShot: null,
@@ -2143,7 +2216,6 @@ function showRangedBreakdown(
   root: HTMLElement,
   input: RangedInput & { calledShot?: string; addonValues?: Record<string, unknown> },
   options: Parameters<typeof promptForRangedAttack>[0],
-  rateOfFire: number,
 ): void {
   const actor = options.actor;
 
@@ -2157,15 +2229,12 @@ function showRangedBreakdown(
     }),
     input.addonValues ?? {},
   );
-  const effectiveRateOfFire = Math.max(
-    1,
-    Math.floor(rateOfFire * (chosen.rateOfFireMultiplier > 0 ? chosen.rateOfFireMultiplier : 1)),
-  );
-  const shells = Math.min(Math.max(1, Math.floor(input.shots || 1)), effectiveRateOfFire);
+  const fired = optionRateOfFire(options, chosen);
+  const shells = Math.min(Math.max(1, Math.floor(input.shots || 1)), fired.rateOfFire);
   const pellets = multipleProjectiles({
     shotsFired: shells,
     projectiles: options.projectiles ?? 1,
-    recoil: options.recoil,
+    recoil: fired.recoil,
     rangeYards: input.range,
     halfDamageRange: options.halfDamageRange ?? 0,
   });
@@ -2186,6 +2255,40 @@ function showRangedBreakdown(
     { modifiers: automatic, automatic: true },
     { modifiers: fromDialog, automatic: false },
   ]));
+}
+
+/**
+ * The Rate of Fire the ranged dialog offers: the weapon's, held to one where
+ * the rapid-fire rules are off, and to what is left in the weapon.
+ */
+function dialogRateOfFire(options: { rateOfFire: number; loaded?: number | null }): number {
+  const loaded = options.loaded ?? null;
+  return Math.max(1, Math.min(
+    isRuleOn("rapidFire") ? Math.max(1, Math.floor(options.rateOfFire)) : 1,
+    loaded === null ? Infinity : loaded,
+  ));
+}
+
+/**
+ * The Rate of Fire and Recoil a shot is fired at once its options are in:
+ * set, multiplied (Campaigns p. 408) or given more Recoil (since 1.70.0),
+ * never more shots than the weapon has left in it.
+ */
+function optionRateOfFire(
+  options: { rateOfFire: number; recoil: number; loaded?: number | null },
+  chosen: { rateOfFire: number | null; rateOfFireMultiplier: number; recoil: number | null; recoilModifier: number },
+): { rateOfFire: number; recoil: number } {
+  const loaded = options.loaded ?? null;
+  const rapid = isRuleOn("rapidFire");
+  const fired = attackRateOfFire({
+    rateOfFire: rapid ? options.rateOfFire : 1,
+    recoil: options.recoil,
+    setRateOfFire: rapid ? chosen.rateOfFire : null,
+    multiplier: chosen.rateOfFireMultiplier,
+    setRecoil: chosen.recoil,
+    recoilModifier: chosen.recoilModifier,
+  });
+  return { rateOfFire: Math.max(1, Math.min(fired.rateOfFire, loaded === null ? Infinity : loaded)), recoil: fired.recoil };
 }
 
 export async function promptForRangedAttack(options: {
@@ -2222,6 +2325,8 @@ export async function promptForRangedAttack(options: {
   item?: any;
   /** The skill being rolled, for the modules' attack options. */
   effectiveSkill?: number;
+  /** Shots already decided, for one target of a Spraying Fire burst: not asked (since 1.70.0). */
+  fixedShots?: number;
 }): Promise<RangedShot | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   const addonContext = attackContextFor({
@@ -2256,13 +2361,13 @@ export async function promptForRangedAttack(options: {
   // How many shots to fire is decided before the attack roll, and only a
   // weapon that can fire more than one is asked (p. 373) -- and no more than
   // it has left in it.
-  const loaded = options.loaded ?? null;
-  const rateOfFire = Math.max(1, Math.min(
-    isRuleOn("rapidFire") ? Math.max(1, Math.floor(options.rateOfFire)) : 1,
-    loaded === null ? Infinity : loaded,
-  ));
-  const shotsField =
-    rateOfFire > 1 ? field("shots", `${L("Shots")} (1-${rateOfFire})`, "1") : "";
+  const rateOfFire = dialogRateOfFire(options);
+  // An option may raise the Rate of Fire (since 1.70.0), so a weapon that
+  // fires one shot still asks when a module offers one that could.
+  const mayRaise = attackOptionsFor(addonContext).length > 0 && isRuleOn("rapidFire");
+  const shotsField = options.fixedShots
+    ? `<p class="ihint" style="margin:0">${game.i18n.format("GWORLD.Spraying.FixedShots", { shots: options.fixedShots, recoil: options.recoil })}</p>`
+    : rateOfFire > 1 || mayRaise ? field("shots", rateOfFire > 1 ? `${L("Shots")} (1-${rateOfFire})` : L("Shots"), "1") : "";
 
   // Aboard a vehicle, the shot asks what only the table knows: whether it is
   // the vehicle's own weapon, whether the car swerved, and what its sights are.
@@ -2356,7 +2461,7 @@ export async function promptForRangedAttack(options: {
       speed: num("speed"),
       size: num("size"),
       modifier: num("modifier"),
-      shots: rateOfFire > 1 ? num("shots") : 1,
+      shots: options.fixedShots ? options.fixedShots : rateOfFire > 1 || mayRaise ? num("shots") : 1,
       situation: situation as RangedInput["situation"],
       sight,
       darkness: num("darkness"),
@@ -2394,7 +2499,7 @@ export async function promptForRangedAttack(options: {
       // shooter decides whether to aim another second by seeing what it buys.
       const update = () => {
         const form = root.closest<HTMLElement>(".application") ?? root;
-        showRangedBreakdown(root, readForm(form) as Parameters<typeof showRangedBreakdown>[1], options, rateOfFire);
+        showRangedBreakdown(root, readForm(form) as Parameters<typeof showRangedBreakdown>[1], options);
       };
       root.addEventListener("change", update);
       root.addEventListener("input", update);
@@ -2414,18 +2519,19 @@ export async function promptForRangedAttack(options: {
   // (Campaigns p. 408), which the dialog's own field could not know when it
   // was drawn, so the shots asked for are capped by what is left of it.
   const chosenOptions = applyAttackOptions(addonContext, input.addonValues ?? {});
-  const effectiveRateOfFire = Math.max(
-    1,
-    Math.floor(rateOfFire * (chosenOptions.rateOfFireMultiplier > 0 ? chosenOptions.rateOfFireMultiplier : 1)),
-  );
+  const fired = optionRateOfFire(options, chosenOptions);
+  const effectiveRateOfFire = fired.rateOfFire;
   // A weapon cannot fire more shots than its Rate of Fire, nor fewer than one.
-  const shellsFired = Math.min(effectiveRateOfFire, Math.max(1, Math.floor(input.shots || 1)));
+  // A Spraying Fire burst has decided this attack's shots already.
+  const shellsFired = options.fixedShots
+    ? Math.max(1, Math.floor(options.fixedShots))
+    : Math.min(effectiveRateOfFire, Math.max(1, Math.floor(input.shots || 1)));
 
   // Each shell may be several pellets, which count as shots of their own.
   const pellets = multipleProjectiles({
     shotsFired: shellsFired,
     projectiles: options.projectiles ?? 1,
-    recoil: options.recoil,
+    recoil: fired.recoil,
     rangeYards: input.range,
     halfDamageRange: options.halfDamageRange ?? 0,
   });

@@ -48,7 +48,7 @@ export type DefenseKey = "dodge" | "parry" | "block";
 
 /** The hooks this module fires, by name. */
 export const COMBAT_HOOKS = Object.freeze({
-  /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset, skillCap, calledShot, targets, refusal, rangeYards, minRange }`, mutable (`rangeYards` and `minRange` since 1.69.0). */
+  /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset, skillCap, calledShot, targets, refusal, rangeYards, minRange, spraying }`, mutable (`rangeYards` and `minRange` since 1.69.0, `spraying` since 1.70.0). */
   attackModifiers: "gworld.attackModifiers",
   /** The defense card's choices for a defender: `{ defender, attack, delivery, damageType, choices, retreat, feverish, acrobatic }`, mutable. */
   defenseChoices: "gworld.defenseChoices",
@@ -148,6 +148,7 @@ const WEAPON_ROW_FIELDS = [
   "skillLevel", "damage", "damageType", "armorDivisor", "halfDamageRange", "maxRange", "minRange", "accuracy",
   "malfunction", "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp", "reach", "parry", "twoHanded",
   "feint", "skillName", "readiesAfterAttack", "affliction", "afflictionAttribute", "afflictionModifier",
+  "recoil", "noSprayingFire", "noSuppressionFire",
 ] as const;
 
 /**
@@ -203,6 +204,11 @@ export function adjustWeaponAttacks(options: {
       // attack is refused inside it. Zero for none.
       const min = Math.max(0, Number(row.minRange) || 0);
       Object.assign(row, { halfDamageRange: half, maxRange: max, minRange: min, range: half ? `${half} / ${max}` : String(max) });
+      // Recoil a whole number, 0 for none, and whether the row may spray or
+      // suppress its fire (since 1.70.0).
+      row.recoil = Math.max(0, Math.floor(Number(row.recoil) || 0));
+      row.noSprayingFire = row.noSprayingFire === true;
+      row.noSuppressionFire = row.noSuppressionFire === true;
     }
     // Reach is text, Parry a whole number or none, and two-handed a flag (since 1.21.0).
     row.reach = typeof row.reach === "string" ? row.reach : String(row.reach ?? "");
@@ -519,6 +525,20 @@ export interface AttackEffect {
    * setting that halves it (since 1.50.0). Never below one shot.
    */
   rateOfFireMultiplier?: number;
+  /**
+   * The Rate of Fire this attack is fired at in place of the weapon's (since
+   * 1.70.0), above it or below; `rateOfFireMultiplier` then applies to it.
+   * Where several options set one, the highest counts.
+   */
+  rateOfFire?: number;
+  /**
+   * The Recoil this attack's hits are counted with in place of the weapon's
+   * (Campaigns p. 373; since 1.70.0). Where several options set one, the
+   * highest counts.
+   */
+  recoil?: number;
+  /** Added to the Recoil, after `recoil` (since 1.70.0); the sum is never below 1. */
+  recoilModifier?: number;
   /** Anything worth saying on the card. */
   notes?: string[];
 }
@@ -862,7 +882,7 @@ export function readAttackOptionValues(form: ParentNode | null | undefined, cont
 }
 
 /** Merges effects in order. */
-export function mergeAttackEffects(effects: AttackEffect[]): Required<Omit<AttackEffect, "criticalSkill" | "malfunction">> & { criticalSkill: number | null; malfunction: number | null } {
+export function mergeAttackEffects(effects: AttackEffect[]): Required<Omit<AttackEffect, "criticalSkill" | "malfunction" | "rateOfFire" | "recoil">> & { criticalSkill: number | null; malfunction: number | null; rateOfFire: number | null; recoil: number | null } {
   const out = {
     modifiers: [] as ModifierLine[],
     defenseModifiers: [] as Array<ModifierLine & { defenses?: DefenseKey[] }>,
@@ -873,6 +893,9 @@ export function mergeAttackEffects(effects: AttackEffect[]): Required<Omit<Attac
     shots: 0,
     malfunction: null as number | null,
     rateOfFireMultiplier: 1,
+    rateOfFire: null as number | null,
+    recoil: null as number | null,
+    recoilModifier: 0,
     notes: [] as string[],
   };
   for (const effect of effects) {
@@ -894,6 +917,14 @@ export function mergeAttackEffects(effects: AttackEffect[]): Required<Omit<Attac
     if (typeof effect.rateOfFireMultiplier === "number" && effect.rateOfFireMultiplier > 0 && Number.isFinite(effect.rateOfFireMultiplier)) {
       out.rateOfFireMultiplier *= effect.rateOfFireMultiplier;
     }
+    // A Rate of Fire or a Recoil set by two options: the higher is taken.
+    if (typeof effect.rateOfFire === "number" && Number.isFinite(effect.rateOfFire) && effect.rateOfFire >= 1) {
+      out.rateOfFire = Math.max(out.rateOfFire ?? 0, Math.floor(effect.rateOfFire));
+    }
+    if (typeof effect.recoil === "number" && Number.isFinite(effect.recoil) && effect.recoil >= 1) {
+      out.recoil = Math.max(out.recoil ?? 0, Math.floor(effect.recoil));
+    }
+    out.recoilModifier += Math.floor(Number(effect.recoilModifier) || 0);
     out.notes.push(...(effect.notes ?? []).filter((n) => typeof n === "string"));
   }
   return out;

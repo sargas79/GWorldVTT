@@ -14,6 +14,7 @@ import "./styles/vehicle.css";
 
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
+import { registerSuppressionFire } from "./system/suppression-fire.js";
 import { registerFacing } from "./system/facing.js";
 import { registerAimTracking } from "./system/aim.js";
 import { registerSupersededPackHiding } from "./system/compendium-sources.js";
@@ -121,6 +122,7 @@ Hooks.once("init", () => {
   // A damage card is posted before anyone has decided who it hits, so the card
   // grows an apply control when it renders.
   registerChatHooks();
+  registerSuppressionFire();
   registerSupersededPackHiding();
   registerSheetExtensionHooks();
   // Which party an actor is in, the members' refresh when a party changes,

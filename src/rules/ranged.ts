@@ -191,3 +191,128 @@ export function insideMinimumRange(rangeYards: number, minRange: number): boolea
   if (!(minRange > 0) || !Number.isFinite(rangeYards)) return false;
   return Math.max(0, rangeYards) < minRange;
 }
+
+/** The least Rate of Fire that can spray several targets or suppress an area (Campaigns p. 409). */
+export const SPREAD_FIRE_MIN_RATE_OF_FIRE = 5;
+/** The least Rate of Fire that can suppress more than one zone at once (Campaigns p. 409). */
+export const MULTIPLE_ZONES_MIN_RATE_OF_FIRE = 10;
+/** Shots each zone must take when several are suppressed at once (Campaigns p. 409). */
+export const SHOTS_PER_EXTRA_ZONE = 5;
+
+/**
+ * A weapon's Rate of Fire and Recoil for one attack, once the options chosen
+ * for it have had their say: a setting that fixes the Rate of Fire at another
+ * figure (above the weapon's own, or below), one that multiplies it, one that
+ * fixes Recoil, and one that adds to it. Never below one shot or Recoil 1 --
+ * though a weapon recorded with Recoil 0 (muscle-powered) keeps its 0 unless
+ * an option changes it.
+ */
+export function attackRateOfFire(options: {
+  rateOfFire: number;
+  recoil: number;
+  /** A Rate of Fire the attack is fired at in place of the weapon's, or null. */
+  setRateOfFire?: number | null;
+  multiplier?: number;
+  /** A Recoil in place of the weapon's, or null. */
+  setRecoil?: number | null;
+  recoilModifier?: number;
+}): { rateOfFire: number; recoil: number } {
+  const set = Number(options.setRateOfFire);
+  const base = options.setRateOfFire !== null && options.setRateOfFire !== undefined && set >= 1 ? Math.floor(set) : Math.max(1, Math.floor(options.rateOfFire) || 1);
+  const multiplier = Number(options.multiplier);
+  const rateOfFire = Math.max(1, Math.floor(base * (multiplier > 0 && Number.isFinite(multiplier) ? multiplier : 1)));
+  const setRecoil = Number(options.setRecoil);
+  const recoilBase = options.setRecoil !== null && options.setRecoil !== undefined && setRecoil >= 1 ? Math.floor(setRecoil) : Math.max(0, Math.floor(options.recoil) || 0);
+  const added = Math.floor(Number(options.recoilModifier) || 0);
+  const recoil = added === 0 ? recoilBase : Math.max(1, recoilBase + added);
+  return { rateOfFire, recoil };
+}
+
+/** One target of a spray of fire, in the order the burst sweeps across them. */
+export interface SprayTarget {
+  /** Shots aimed at this target. */
+  shots: number;
+  /** Yards from the target before it; ignored for the first. */
+  yardsFromPrevious?: number | undefined;
+}
+
+/**
+ * Spraying Fire (Campaigns p. 409): a burst at RoF 5+ split among several
+ * targets in the same general direction, engaged one after another.
+ *
+ * Each target is its own rapid-fire attack at the shots aimed at it. Swinging
+ * the weapon from one to the next wastes shots -- one a yard between targets
+ * more than a yard apart, two a yard above RoF 16 -- and costs +1 Recoil for
+ * the second target, +2 for the third, and so on. The shots aimed and wasted
+ * together cannot come to more than the Rate of Fire.
+ *
+ * The book's own example: RoF 15, Rcl 2, 5 shots at the first, 4 at the
+ * second 2 yards on (1 wasted) and 2 at the third 4 yards on (3 wasted) is
+ * three attacks: RoF 5 at Rcl 2, RoF 4 at Rcl 3, RoF 2 at Rcl 4.
+ */
+export function sprayingFire(options: {
+  rateOfFire: number;
+  recoil: number;
+  targets: readonly SprayTarget[];
+}): {
+  attacks: Array<{ shots: number; recoil: number; wasted: number }>;
+  /** Every shot the burst uses, aimed and wasted. */
+  shotsUsed: number;
+  /** Why the spray can't be fired as given, or null. */
+  problem: "rateOfFire" | "targets" | "tooManyShots" | "noShots" | null;
+} {
+  const rateOfFire = Math.max(1, Math.floor(options.rateOfFire) || 1);
+  const perYard = rateOfFire > 16 ? 2 : 1;
+  const recoil = Math.max(1, Math.floor(options.recoil) || 1);
+  const attacks = options.targets.map((target, index) => {
+    const yards = index === 0 ? 0 : Math.max(0, Math.round(Number(target.yardsFromPrevious) || 0));
+    return {
+      shots: Math.max(0, Math.floor(Number(target.shots) || 0)),
+      recoil: recoil + index,
+      wasted: yards > 1 ? (yards - 1) * perYard : 0,
+    };
+  });
+  const shotsUsed = attacks.reduce((sum, a) => sum + a.shots + a.wasted, 0);
+  const problem = rateOfFire < SPREAD_FIRE_MIN_RATE_OF_FIRE
+    ? "rateOfFire"
+    : attacks.length < 2
+      ? "targets"
+      : attacks.some((a) => a.shots < 1)
+        ? "noShots"
+        : shotsUsed > rateOfFire
+          ? "tooManyShots"
+          : null;
+  return { attacks, shotsUsed, problem };
+}
+
+/**
+ * Suppression Fire (Campaigns p. 409): the shots fired into each two-yard
+ * zone. One zone takes them all; a weapon of RoF 10+ may suppress several
+ * adjacent zones, at least five shots in each, the shots shared out as
+ * evenly as they go (the first zones taking any left over).
+ */
+export function suppressionZones(options: {
+  rateOfFire: number;
+  shots: number;
+  zones: number;
+}): { shotsPerZone: number[]; problem: "rateOfFire" | "tooManyShots" | "tooManyZones" | null } {
+  const rateOfFire = Math.max(1, Math.floor(options.rateOfFire) || 1);
+  const shots = Math.max(1, Math.floor(options.shots) || 1);
+  const zones = Math.max(1, Math.floor(options.zones) || 1);
+  const share = Array.from({ length: zones }, (_, i) => Math.floor(shots / zones) + (i < shots % zones ? 1 : 0));
+  if (rateOfFire < SPREAD_FIRE_MIN_RATE_OF_FIRE) return { shotsPerZone: share, problem: "rateOfFire" };
+  if (shots > rateOfFire) return { shotsPerZone: share, problem: "tooManyShots" };
+  if (zones > 1 && (rateOfFire < MULTIPLE_ZONES_MIN_RATE_OF_FIRE || shots < zones * SHOTS_PER_EXTRA_ZONE)) {
+    return { shotsPerZone: share, problem: "tooManyZones" };
+  }
+  return { shotsPerZone: share, problem: null };
+}
+
+/**
+ * The most a suppression attack's effective skill may be (Campaigns p. 409):
+ * 6 plus the rapid-fire bonus for the shots in the zone, or 8 plus it for a
+ * weapon on a vehicle or tripod mount.
+ */
+export function suppressionSkillCap(shotsInZone: number, mounted = false): number {
+  return (mounted ? 8 : 6) + rapidFireBonus(shotsInZone);
+}

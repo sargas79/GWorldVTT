@@ -60,7 +60,7 @@ export const MANEUVERS: Record<Maneuver, ManeuverInfo> = {
 };
 
 /** All-Out Attack options (GURPS Basic Set: Campaigns p. 365). */
-export type AllOutAttackOption = "determined" | "double" | "feint" | "strong";
+export type AllOutAttackOption = "determined" | "double" | "feint" | "strong" | "suppression";
 
 /** The to-hit bonus an All-Out Attack option grants, if any. */
 export function allOutAttackBonus(option: AllOutAttackOption, ranged = false): number {

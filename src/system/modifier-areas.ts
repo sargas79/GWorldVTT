@@ -3,7 +3,7 @@
  * or a blinding field, and rolls made in it or through it take its lines.
  */
 
-import { areaLines, circleOf, inCircle, segmentCrossesCircle, type ModifierArea, type Point } from "../rules/modifier-areas.js";
+import { areaLines, circleOf, inShape, segmentCrossesShape, type ModifierArea, type Point } from "../rules/modifier-areas.js";
 import { SYSTEM_ID } from "./constants.js";
 import { targetedTokens } from "./targets.js";
 
@@ -29,6 +29,9 @@ export async function addArea(scene: any, area: Omit<ModifierArea, "id" | "radiu
     label: String(area.label ?? ""),
     center: area.center ? { x: Number(area.center.x) || 0, y: Number(area.center.y) || 0 } : null,
     radius: radius > 0 ? radius * pixelsPerYard(scene) : null,
+    ...(area.from && Number.isFinite(Number(area.from.x)) && Number.isFinite(Number(area.from.y))
+      ? { from: { x: Number(area.from.x), y: Number(area.from.y) } }
+      : {}),
     region: area.region ? String(area.region) : null,
     lines: (area.lines ?? []).map((l) => ({
       label: String(l.label ?? ""),
@@ -52,7 +55,7 @@ export async function removeArea(scene: any, id: string): Promise<void> {
 }
 
 /** Pixels in a yard on this scene's grid. */
-function pixelsPerYard(scene: any): number {
+export function pixelsPerYard(scene: any): number {
   const size = Number(scene?.grid?.size) || 100;
   const distance = Number(scene?.grid?.distance) || 1;
   const units = String(scene?.grid?.units ?? "").trim().toLowerCase();
@@ -60,7 +63,7 @@ function pixelsPerYard(scene: any): number {
   return size / (yardsPerCell || 1);
 }
 
-function centerOf(token: any): Point | null {
+export function centerOf(token: any): Point | null {
   const c = token?.center ?? token?.object?.center;
   return c && Number.isFinite(c.x) && Number.isFinite(c.y) ? { x: c.x, y: c.y } : null;
 }
@@ -73,6 +76,12 @@ function regionContains(scene: any, id: string, point: Point): boolean {
   } catch {
     return false;
   }
+}
+
+/** Whether a point on the scene is in an area: its circle, its band or its region. */
+export function pointInArea(scene: any, area: ModifierArea, point: Point): boolean {
+  if (circleOf(area)) return inShape(point, area);
+  return area.region ? regionContains(scene, area.region, point) : false;
 }
 
 /**
@@ -93,15 +102,10 @@ export function sceneAreaLines(context: { actor: any; kind: string; tags: readon
     kind: context.kind,
     tags: context.tags,
     now: Number(game.time?.worldTime) || 0,
-    inside: (area) => {
-      const circle = circleOf(area);
-      if (circle) return inCircle(from, circle.center, circle.radius);
-      return area.region ? regionContains(scene, area.region, from) : false;
-    },
+    inside: (area) => pointInArea(scene, area, from),
     through: (area) => {
       if (!to) return false;
-      const circle = circleOf(area);
-      if (circle) return segmentCrossesCircle(from, to, circle.center, circle.radius);
+      if (circleOf(area)) return segmentCrossesShape(from, to, area);
       if (!area.region) return false;
       // A region's shape is sampled along the line.
       for (let i = 0; i <= 20; i++) {
