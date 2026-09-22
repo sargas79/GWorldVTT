@@ -341,7 +341,8 @@ export function computeInjury({
     if (cripplingThreshold === null || raw <= cripplingThreshold) {
       return { ...base, injury: raw, excessLost: 0, crippled: false };
     }
-    const capped = Math.floor(cripplingThreshold);
+    // The least whole injury over it, as for a limb (Campaigns p. 421).
+    const capped = Math.floor(cripplingThreshold) + 1;
     return { ...base, injury: capped, excessLost: raw - capped, crippled: true };
   }
 

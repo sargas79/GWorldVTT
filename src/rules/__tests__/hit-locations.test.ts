@@ -175,10 +175,44 @@ describe("crippling", () => {
 
   it("discards injury beyond the crippling threshold", () => {
     // A hand cannot absorb a killing blow: excess is lost, not carried over.
+    // Over 4 cripples a 12 HP hand, so it keeps 5.
     const result = applyCrippling(20, "hand", 12);
-    expect(result.injury).toBe(4);
-    expect(result.excessLost).toBe(16);
+    expect(result.injury).toBe(5);
+    expect(result.excessLost).toBe(15);
     expect(result.crippled).toBe(true);
+  });
+
+  it("keeps the least injury that cripples, not the threshold (Campaigns p. 421, #616)", () => {
+    // "If a man has 10 HP and suffers 9 points of injury to his right arm, he
+    // loses only 6 HP."
+    expect(applyCrippling(9, "arm", 10)).toEqual({ injury: 6, excessLost: 3, crippled: true });
+    // Friedrick, 14 HP, takes 11 to the arm and loses 8 (p. 420).
+    expect(applyCrippling(11, "arm", 14)).toEqual({ injury: 8, excessLost: 3, crippled: true });
+  });
+
+  it("cripples a limb at the first point over HP/2, for even and odd HP (#616)", () => {
+    // Even HP: 10 HP, over 5.
+    expect(applyCrippling(5, "arm", 10)).toEqual({ injury: 5, excessLost: 0, crippled: false });
+    expect(applyCrippling(6, "arm", 10)).toEqual({ injury: 6, excessLost: 0, crippled: true });
+    expect(applyCrippling(7, "leg", 10)).toEqual({ injury: 6, excessLost: 1, crippled: true });
+    // Odd HP: 11 HP, over 5.5.
+    expect(applyCrippling(5, "arm", 11)).toEqual({ injury: 5, excessLost: 0, crippled: false });
+    expect(applyCrippling(6, "arm", 11)).toEqual({ injury: 6, excessLost: 0, crippled: true });
+    expect(applyCrippling(7, "leg", 11)).toEqual({ injury: 6, excessLost: 1, crippled: true });
+  });
+
+  it("cripples an extremity at the first point over HP/3, divisible or not (#616)", () => {
+    // 9 HP: over 3.
+    expect(applyCrippling(3, "hand", 9)).toEqual({ injury: 3, excessLost: 0, crippled: false });
+    expect(applyCrippling(4, "hand", 9)).toEqual({ injury: 4, excessLost: 0, crippled: true });
+    expect(applyCrippling(5, "foot", 9)).toEqual({ injury: 4, excessLost: 1, crippled: true });
+    // 10 HP: over 3.33.
+    expect(applyCrippling(3, "hand", 10)).toEqual({ injury: 3, excessLost: 0, crippled: false });
+    expect(applyCrippling(4, "hand", 10)).toEqual({ injury: 4, excessLost: 0, crippled: true });
+    expect(applyCrippling(8, "foot", 10)).toEqual({ injury: 4, excessLost: 4, crippled: true });
+    // 12 HP: over 4.
+    expect(applyCrippling(4, "hand", 12)).toEqual({ injury: 4, excessLost: 0, crippled: false });
+    expect(applyCrippling(6, "hand", 12)).toEqual({ injury: 5, excessLost: 1, crippled: true });
   });
 
   it("passes through injury that does not reach the threshold", () => {
@@ -209,8 +243,8 @@ describe("the injury pipeline with hit locations", () => {
     });
     expect(result.woundingModifier).toBe(1.5);
     expect(result.crippled).toBe(true);
-    expect(result.injury).toBe(5); // half of 10 HP
-    expect(result.excessLost).toBe(25); // 30 rolled down to 5
+    expect(result.injury).toBe(6); // the least over half of 10 HP
+    expect(result.excessLost).toBe(24); // 30 rolled down to 6
   });
 
   it("leaves location-agnostic calls behaving exactly as before", () => {

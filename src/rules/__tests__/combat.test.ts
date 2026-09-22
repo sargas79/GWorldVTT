@@ -167,6 +167,13 @@ describe("shock and major wounds (GURPS Lite p. 30)", () => {
     expect(isMajorWound(5, 10)).toBe(false); // exactly half is not "greater than"
     expect(isMajorWound(6, 10)).toBe(true);
   });
+
+  it("counts a lesser blow that cripples as a major wound (Campaigns p. 420, #616)", () => {
+    expect(isMajorWound(4, 10, true)).toBe(true);
+    expect(isMajorWound(4, 10, false)).toBe(false);
+    expect(applyInjury(4, 10, 10, {}, { crippled: true }).majorWound).toBe(true);
+    expect(applyInjury(4, 10, 10).majorWound).toBe(false);
+  });
 });
 
 describe("injury thresholds (GURPS Lite p. 29)", () => {

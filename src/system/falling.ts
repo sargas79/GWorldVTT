@@ -96,7 +96,8 @@ export async function rollFall(options: FallOptions): Promise<number | null> {
   const injury = resolved.penetrating > 0 ? resolved.injury + resolved.excessLost : trauma;
 
   const previous = Number(hp.value) || 0;
-  const applied = applyInjury(injury, previous, Number(hp.max) || 0);
+  // A fall that cripples a limb is a major wound, as any blow that does is.
+  const applied = applyInjury(injury, previous, Number(hp.max) || 0, {}, { crippled: resolved.penetrating > 0 && resolved.crippled });
   if (injury > 0) {
     await actor.update({ "system.hp.value": applied.currentHp });
     await syncHealthConditions(actor);

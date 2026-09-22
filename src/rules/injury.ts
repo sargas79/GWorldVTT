@@ -19,9 +19,12 @@ export function shockPenalty(injury: number): number {
 /**
  * A major wound is any single injury greater than half the target's maximum HP
  * (GURPS Lite p. 30). It forces a HT roll to avoid knockdown and stunning.
+ *
+ * With hit locations, a lesser blow that cripples a body part is a major
+ * wound as well (Campaigns pp. 420-421): `crippled` says this one did.
  */
-export function isMajorWound(injury: number, maxHp: number): boolean {
-  return injury > maxHp / 2;
+export function isMajorWound(injury: number, maxHp: number, crippled = false): boolean {
+  return crippled || injury > maxHp / 2;
 }
 
 /**
@@ -111,6 +114,12 @@ export interface InjuryConsequences {
   reeling: boolean;
 }
 
+/** What about the blow itself, beyond its injury, changes what follows. */
+export interface BlowFacts {
+  /** The blow crippled the limb, extremity or eye it struck. */
+  crippled?: boolean;
+}
+
 /**
  * Everything that follows from applying `injury` hit points of damage to a
  * character, given their HP before the blow.
@@ -120,6 +129,7 @@ export function applyInjury(
   previousHp: number,
   maxHp: number,
   traits: DeathTraits = {},
+  blow: BlowFacts = {},
 ): InjuryConsequences & { currentHp: number } {
   const currentHp = previousHp - injury;
   const status = healthStatus(currentHp, maxHp, traits);
@@ -130,7 +140,7 @@ export function applyInjury(
     currentHp,
     status,
     shock: shockPenalty(injury),
-    majorWound: isMajorWound(injury, maxHp),
+    majorWound: isMajorWound(injury, maxHp, blow.crippled === true),
     consciousnessRollRequired: !dead && currentHp <= 0,
     consciousnessRollPenalty: consciousnessRollPenalty(currentHp, maxHp),
     // "You never have to make HT rolls to avoid death."
