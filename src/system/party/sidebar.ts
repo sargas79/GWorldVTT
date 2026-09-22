@@ -134,6 +134,15 @@ function wireDragOut(html: HTMLElement): void {
     const leaving = dragged;
     dragged = null;
     if (!leaving) return;
+    // Only the member whose drag this is: a stale mark left by a drag that
+    // never ended must not take somebody out on an unrelated drop.
+    let data: Record<string, unknown> | null = null;
+    try {
+      data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+    } catch {
+      return;
+    }
+    if (data?.type !== "Actor" || data?.uuid !== leaving.uuid) return;
     // On a party's row: its own drop handler joins that party, which takes
     // the member out of this one; on its own row, nothing changes.
     if ((event.target as HTMLElement | null)?.closest?.("li.gworld-party")) return;
