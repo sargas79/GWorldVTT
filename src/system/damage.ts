@@ -619,11 +619,15 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
   // multiplier", so it is added after the pipeline rather than inside it.
   const beforeCap = blast ? cinematicExplosionInjury(shoved.yards) : kinetic ? trauma : result.injury + trauma;
   // A module's cap on this blow (since API 1.73.0), after the Basic Set's own
-  // on a limb: the lower holds, and everything that follows from the injury --
-  // shock, a major wound, the HP lost -- follows from what was kept.
+  // on a limb: the lower holds, and what follows from the injury -- shock,
+  // the HP lost, a major wound by its size -- follows from what was kept.
   const capped = capInjury(beforeCap, damage.injuryCap);
   const injury = capped.injury;
-  const applied = applyInjury(injury, previous, max, { unkillable: traits.unkillable });
+  // A blow that crippled what it struck is a major wound whatever it cost
+  // (Campaigns p. 420). Crippling is read from the wound before either cap,
+  // so a listener's lower cap leaves the limb crippled and the wound major.
+  const crippled = blast || kinetic ? false : result.crippled;
+  const applied = applyInjury(injury, previous, max, { unkillable: traits.unkillable }, { crippled });
 
   // Two of the critical results change what follows from the injury rather than
   // the injury itself: one doubles shock past its usual floor, and the others
@@ -666,7 +670,7 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
     injuryCap: capped.lost > 0
       ? { cap: Math.max(0, Math.floor(Number(damage.injuryCap))), lost: capped.lost, reason: String(damage.injuryCapReason ?? "") }
       : null,
-    crippled: blast || kinetic ? false : result.crippled,
+    crippled,
     costsFatigue: result.costsFatigue,
     previous,
     current: applied.currentHp,

@@ -241,8 +241,21 @@ export interface LocationInjuryResult {
 }
 
 /**
- * Caps injury to a limb or extremity at its crippling threshold, discarding the
- * excess. Locations that cannot be crippled pass injury through unchanged.
+ * The least whole injury that cripples a part crippled by injury over
+ * `threshold`: one point more than the threshold, rounded down. A limb of a
+ * 10 HP man is crippled by 6 (over 5), and so is one of an 11 HP man (over
+ * 5.5); a hand of a 9 HP man by 4 (over 3).
+ */
+function injuryThatCripples(threshold: number): number {
+  return Math.floor(threshold) + 1;
+}
+
+/**
+ * Caps injury to a limb or extremity at the least injury that cripples it,
+ * discarding the excess: "a blow to a limb or extremity can never cause more
+ * injury than the minimum required to cripple that body part", so a 10 HP
+ * man's arm keeps 6 of a 9-point blow (Campaigns p. 421). Locations that
+ * cannot be crippled pass injury through unchanged.
  */
 export function applyCrippling(
   injury: number,
@@ -256,7 +269,7 @@ export function applyCrippling(
   // An eye blinded is still "a skull hit", so the whole blow counts: nothing
   // past the threshold is lost as it is for a limb (p. 399).
   if (HIT_LOCATIONS[location].cripplingKind === "eye") return { injury, excessLost: 0, crippled: true };
-  const capped = Math.floor(threshold);
+  const capped = injuryThatCripples(threshold);
   return { injury: capped, excessLost: injury - capped, crippled: true };
 }
 

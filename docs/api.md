@@ -1211,9 +1211,13 @@ Two fields a module may read (since 1.62.0):
   - *An injury cap.* A `gworld.injury` listener may set `damage.injuryCap`, the
     most HP (or FP) the blow may cost, and `damage.injuryCapReason`, text for
     the card. It holds on top of the Basic Set's own cap on a limb or
-    extremity, the lower of the two winning; shock, a major wound and the HP
-    lost follow from what was kept, while crippling (and so dismemberment) and
-    whether the wound bleeds are read from the injury before any cap. The
+    extremity, the lower of the two winning; shock, the HP lost and a major
+    wound by its size follow from what was kept, while crippling (and so
+    dismemberment) and whether the wound bleeds are read from the injury
+    before any cap. A blow that cripples is a major wound however little it
+    kept (p. 420). The Basic Set's own cap is the least injury that cripples
+    the part: the first whole point over HP/2 for a limb, over HP/3 for an
+    extremity, or over the threshold `cripplingDivisor` sets (p. 421). The
     result (`gworld.afterDamage`'s `result`) gains
     `uncappedInjury`, the injury before the Basic Set's limb cap and the
     listener's, and `injuryCap`, `{ cap, lost, reason }` where the cap took

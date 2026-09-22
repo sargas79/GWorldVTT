@@ -225,14 +225,16 @@ describe("hit locations", () => {
     // A cut to an arm is x1.5 and cripples above HP/2; the override says x2 and never cripples.
     const plain = computeInjury({ basicDamage: 10, dr: 0, type: "cut", hitLocation: "arm", maxHp: 10 });
     expect(plain.crippled).toBe(true);
-    expect(plain.injury).toBe(5);
+    expect(plain.injury).toBe(6);
     const artery = computeInjury({ basicDamage: 10, dr: 0, type: "cut", hitLocation: "arm", maxHp: 10, woundingOverride: 2, cripplingThreshold: null });
     expect(artery.woundingModifier).toBe(2);
     expect(artery.injury).toBe(20);
     expect(artery.crippled).toBe(false);
-    // A joint that cripples above HP/3.
+    // A joint that cripples above HP/3 keeps the least that cripples it.
     const joint = computeInjury({ basicDamage: 6, dr: 0, type: "cr", hitLocation: "arm", maxHp: 12, cripplingThreshold: 4 });
-    expect(joint).toMatchObject({ injury: 4, excessLost: 2, crippled: true });
+    expect(joint).toMatchObject({ injury: 5, excessLost: 1, crippled: true });
+    const lesser = computeInjury({ basicDamage: 4, dr: 0, type: "cr", hitLocation: "arm", maxHp: 12, cripplingThreshold: 4 });
+    expect(lesser).toMatchObject({ injury: 4, excessLost: 0, crippled: false });
   });
 
   it("lets a random-location hook move a blow to a registered location", async () => {

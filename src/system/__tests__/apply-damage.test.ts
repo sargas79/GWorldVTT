@@ -153,6 +153,47 @@ describe("resolveDamageAgainst", () => {
     expect(result.injury).toBeLessThan(20);
   });
 
+  /**
+   * "Any crippling injury is also a major wound, and requires a HT roll for
+   * knockdown and stunning" (Campaigns p. 421), however little it cost.
+   */
+  describe("a crippling blow (#616)", () => {
+    const cases: Array<[string, number, number, number]> = [
+      // [location, max HP, the least injury that cripples, a blow of that much crushing]
+      ["arm", 10, 6, 6],
+      ["leg", 11, 6, 6],
+      ["hand", 9, 4, 4],
+      ["foot", 10, 4, 4],
+      ["hand", 12, 5, 5],
+    ];
+    for (const [location, maxHp, least] of cases) {
+      it(`cripples a ${location} at ${maxHp} HP with ${least}, and calls for the knockdown roll`, () => {
+        const cripples = resolveDamageAgainst(actor({ hp: maxHp, maxHp }), blow(least, "cr", location));
+        expect(cripples.crippled).toBe(true);
+        expect(cripples.injury).toBe(least);
+        expect(cripples.consequences.majorWound).toBe(true);
+        expect(cripples.knockdown?.required).toBe(true);
+
+        const short = resolveDamageAgainst(actor({ hp: maxHp, maxHp }), blow(least - 1, "cr", location));
+        expect(short.crippled).toBe(false);
+        expect(short.consequences.majorWound).toBe(false);
+        expect(short.knockdown).toBeNull();
+
+        // Anything more is lost past what cripples it.
+        const more = resolveDamageAgainst(actor({ hp: maxHp, maxHp }), blow(least + 3, "cr", location));
+        expect(more.injury).toBe(least);
+        expect(more.excessLost).toBe(3);
+      });
+    }
+
+    it("offers the roll for an extremity crippled well under half HP", () => {
+      // 4 is under half of 10, but cripples a hand.
+      const result = resolveDamageAgainst(actor({ hp: 10, maxHp: 10 }), blow(4, "cr", "hand"));
+      expect(result.injury).toBeLessThanOrEqual(10 / 2);
+      expect(result.knockdown).toEqual({ required: true, modifier: 0 });
+    });
+  });
+
   it("survives an actor with no pools at all rather than writing NaN", () => {
     const result = resolveDamageAgainst({ name: "Empty" }, blow(5, "cr"));
     expect(Number.isFinite(result.current)).toBe(true);

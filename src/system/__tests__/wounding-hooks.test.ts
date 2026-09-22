@@ -42,6 +42,7 @@ describe("an injury cap on a blow", () => {
     // lost (p. 421).
     const limb = resolveDamageAgainst(man(), blow({ hitLocation: "arm" }));
     expect(limb.crippled).toBe(true);
+    expect(limb.injury).toBe(6);
     expect(limb.injury + limb.excessLost).toBe(9);
     expect(limb.uncappedInjury).toBe(9);
     expect(limb.injuryCap).toBeNull();
@@ -51,6 +52,14 @@ describe("an injury cap on a blow", () => {
     expect(capped.crippled).toBe(true);
     expect(capped.uncappedInjury).toBe(9);
     expect(capped.injuryCap).toEqual({ cap: 3, lost: limb.injury - 3, reason: "" });
+    // The limb is crippled all the same, and so the wound is major (p. 420).
+    expect(capped.consequences.majorWound).toBe(true);
+    expect(capped.knockdown?.required).toBe(true);
+
+    // A cap one under the limb's own takes the one point.
+    const justUnder = resolveDamageAgainst(man(), blow({ hitLocation: "arm", injuryCap: 5 }));
+    expect(justUnder.injury).toBe(5);
+    expect(justUnder.injuryCap).toEqual({ cap: 5, lost: 1, reason: "" });
 
     const looser = resolveDamageAgainst(man(), blow({ hitLocation: "arm", injuryCap: 8 }));
     expect(looser.injury).toBe(limb.injury);
