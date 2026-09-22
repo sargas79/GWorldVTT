@@ -86,6 +86,12 @@ export const COMBAT_HOOKS = Object.freeze({
   armorDr: "gworld.armorDr",
   /** Where a ranged mode's capacity and reload time are read (since 1.54.0): `{ actor, item, modeIndex, mode, entry }`, the entry mutable. */
   shotsEntry: "gworld.shotsEntry",
+  /** After an attack that spent shots (since 1.71.0): `{ actor, item, modeIndex, mode, shots, fired, extra, wasted, kind, targets }`. */
+  afterShots: "gworld.afterShots",
+  /** A malfunction rolled on the table (since 1.71.0): `{ actor, item, modeIndex, attackRoll, roll, techLevel, revolver, kind, label, repair, fires, clears, explodes, jams }`, the result mutable. */
+  malfunction: "gworld.malfunction",
+  /** Before an attempt to clear a malfunction (since 1.71.0): `{ actor, item, modeIndex, malfunction, rolls, readyManeuvers, hours, needsBothHands, criticalFailure, modifiers, aids, refusal }`, mutable. */
+  clearMalfunction: "gworld.clearMalfunction",
 });
 
 /** One piece of worn armour as `gworld.armorDr` hands it to a listener. */

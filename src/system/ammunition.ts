@@ -10,6 +10,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { shotsEntryFor } from "./shots-entry.js";
+import { COMBAT_HOOKS, callCombatHook } from "./combat-extensions.js";
 import { normalizeSkillName } from "../rules/skills.js";
 import { isRuleOn } from "./optional-rules.js";
 import { shotsAfterFiring } from "../rules/cinematic.js";
@@ -24,10 +25,13 @@ import {
   availableAmmunition,
   calibreOf,
   crossbowReloadTime,
+  fastDrawHelps,
   fullLoad,
   loadPlan,
   reloadTime,
+  reloadTimeWith,
   type AmmunitionReference,
+  type ReloadAid,
   type AmmunitionType,
   type ShotsEntry,
 } from "../rules/ammunition.js";
@@ -426,13 +430,20 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
     return;
   }
 
+  // What a module's Shots entry offers to help -- an assistant, a loading aid
+  // (since 1.71.0) -- is asked first, since it changes what the skill saves.
+  const aids = entry.aids.length > 0 ? await promptForAids(item, entry.aids) : [];
+  if (aids === null) return;
+
   // Fast-Draw (Ammo) "always shaves at least one second off the reload time"
-  // on a success; a failure drops a round, a critical failure the lot
-  // (Characters pp. 194-195).
-  const fastDraw = await rollFastDrawAmmo(actor, item, plan);
-  let seconds = plan.seconds;
+  // on a success -- more where the entry says so; a failure drops a round, a
+  // critical failure the lot (Characters pp. 194-195).
+  const timing = { entry, seconds: plan.seconds, rounds: plan.loading, aids };
+  const fastDraw = fastDrawHelps(timing)
+    ? await rollFastDrawAmmo(actor, item, reloadTimeWith({ ...timing, fastDraw: true }).saved)
+    : null;
+  const { seconds, saved } = reloadTimeWith({ ...timing, fastDraw: fastDraw?.outcome === "success" });
   let loading = plan.loading;
-  if (fastDraw?.outcome === "success" && seconds !== null) seconds = Math.max(1, seconds - 1);
   if (fastDraw?.outcome === "failure") loading = Math.max(0, loading - 1);
   if (fastDraw?.outcome === "criticalFailure") loading = 0;
   if (source) {
@@ -451,7 +462,8 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
     seconds,
     perShot: plan.perShot,
     loading,
-    fastDraw: fastDraw ? L(`FastDraw.${fastDraw.outcome}`) : "",
+    fastDraw: fastDraw ? L(`FastDraw.${fastDraw.outcome}`, { seconds: saved }) : "",
+    aids: aids.map((aid) => aid.label).join(", "),
     goatsFoot: plan.needsGoatsFoot,
     mustStand: plan.mustStand,
     source: source ? A("Left", { name: String(source.name), rounds: rounds(source.system?.quantity) }) : "",
@@ -479,16 +491,16 @@ const FAST_DRAW_AMMO = "Fast-Draw (Ammo)";
 
 /**
  * Offers the Fast-Draw (Ammo) roll to a character who knows the skill, where
- * a second off would change anything, and makes it. Null where it wasn't
- * made.
+ * the seconds it would save change anything, and makes it. Null where it
+ * wasn't made.
  */
-async function rollFastDrawAmmo(actor: any, item: any, plan: { seconds: number | null; perShot: boolean }): Promise<{ outcome: "success" | "failure" | "criticalFailure" } | null> {
-  if (!actor || plan.seconds === null || plan.seconds <= 1 || plan.perShot) return null;
+async function rollFastDrawAmmo(actor: any, item: any, saves: number): Promise<{ outcome: "success" | "failure" | "criticalFailure" } | null> {
+  if (!actor || saves <= 0) return null;
   const level = skillLevelOf(actor, FAST_DRAW_AMMO);
   if (level === null) return null;
   const wanted = await foundry.applications.api.DialogV2.confirm({
     window: { title: L("Title") },
-    content: `<p>${L("FastDraw.Ask", { name: String(item?.name ?? ""), level })}</p>`,
+    content: `<p>${L("FastDraw.Ask", { name: String(item?.name ?? ""), level, seconds: saves })}</p>`,
     rejectClose: false,
   });
   if (!wanted) return null;
@@ -498,6 +510,30 @@ async function rollFastDrawAmmo(actor: any, item: any, plan: { seconds: number |
   if (!result) return null;
   if (result.criticalFailure) return { outcome: "criticalFailure" };
   return { outcome: result.success ? "success" : "failure" };
+}
+
+/**
+ * Asks which of the aids a module's Shots entry offers are used for this
+ * reload (since 1.71.0). Null where the dialog was dismissed.
+ */
+async function promptForAids(item: any, aids: readonly ReloadAid[]): Promise<ReloadAid[] | null> {
+  const escape = (text: string) => foundry.utils.escapeHTML(String(text ?? ""));
+  const boxes = aids.map((aid, i) => `<label style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" name="aid-${i}"${aid.checked ? " checked" : ""}><span>${escape(aid.label)}</span>
+    </label>`).join("");
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("Title") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px"><p style="margin:0">${escape(L("Aids", { name: String(item?.name ?? "") }))}</p>${boxes}</div>`,
+    ok: {
+      label: L("Action"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        return aids.filter((_aid, i) => form?.querySelector<HTMLInputElement>(`input[name="aid-${i}"]`)?.checked === true);
+      },
+    },
+    rejectClose: false,
+  });
+  return Array.isArray(result) ? (result as ReloadAid[]) : null;
 }
 
 /** Asks how many shots to load, for a weapon loaded one at a time. */
@@ -540,6 +576,60 @@ export async function loadInstantly(item: any, modeIndex: number, shots: number)
   const after = Math.min(capacity, loaded + Math.max(0, Math.floor(Number(shots) || 0)));
   if (after !== loaded) await setLoaded(item, Math.floor(Number(modeIndex)), after);
   return after;
+}
+
+// ── what an attack spent (since 1.71.0) ─────────────────────────────────────
+
+/** How an attack spent its shots. */
+export type ShotsKind = "single" | "rapidFire" | "spraying" | "suppression";
+
+/** What `gworld.afterShots` hands its listeners. */
+export interface AfterShotsContext {
+  actor: any;
+  item: any;
+  modeIndex: number;
+  /** The stored mode, read-only. */
+  mode: any;
+  /** Everything the attack used: `fired` + `extra` + `wasted`. */
+  shots: number;
+  /** Shells fired at the target or targets, or into the zones. */
+  fired: number;
+  /** What an attack option spent beyond them. */
+  extra: number;
+  /** Shots a spray wasted sweeping between targets (Campaigns p. 409). */
+  wasted: number;
+  kind: ShotsKind;
+  /** Targets attacked: one, a spray's count, none for suppression. */
+  targets: number;
+}
+
+/** A spray's attacks, added up as they are made. */
+export interface ShotsTally {
+  fired: number;
+  extra: number;
+  wasted: number;
+  targets: number;
+}
+
+/**
+ * Tells the modules what an attack spent, once, after it is made -- whether or
+ * not the weapon keeps a count, so heat, fouling or wear can be followed
+ * without watching the item. Nothing is said for an attack that spent nothing.
+ */
+export function announceShots(options: Omit<AfterShotsContext, "mode" | "shots">): void {
+  const modeIndex = Math.floor(Number(options.modeIndex));
+  const mode = options.item?.system?.rangedModes?.[modeIndex];
+  if (!options.item || !mode) return;
+  const count = (n: unknown) => Math.max(0, Math.floor(Number(n) || 0));
+  const fired = count(options.fired);
+  const extra = count(options.extra);
+  const wasted = count(options.wasted);
+  const shots = fired + extra + wasted;
+  if (shots <= 0) return;
+  callCombatHook(COMBAT_HOOKS.afterShots, {
+    actor: options.actor ?? null, item: options.item, modeIndex, mode,
+    shots, fired, extra, wasted, kind: options.kind, targets: count(options.targets),
+  } satisfies AfterShotsContext);
 }
 
 /**

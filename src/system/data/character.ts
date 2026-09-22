@@ -90,6 +90,7 @@ import {
   MODULE_KEY, adjustWeaponAttacks, maneuverAllowancesFor, maneuverInfo, maneuverKeys, parryWeaponRows, type WeaponRowEntry,
 } from "../combat-extensions.js";
 import { shotsEntryFor } from "../shots-entry.js";
+import { malfunctionOf } from "../malfunctions.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
   DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleCarriedWeight, moduleTraitEffects, moduleTraitsInPlay, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type CarriedWeightLine, type TraitEffectSource,
@@ -191,7 +192,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
   ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1,
   recoil: 1, bulk: 0, mount: "", noSprayingFire: false, noSuppressionFire: false, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0,
-  malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false,
+  malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false, outOfAction: null,
   ammunition: "", malediction: 0, ignoresDr: false,
 };
 
@@ -401,6 +402,8 @@ export interface DerivedAttack {
   reloadable?: boolean;
   /** True when the count is kept and has reached zero. */
   empty?: boolean;
+  /** What put the weapon out of action (Campaigns p. 407), until it is cleared; null where nothing did (since API 1.71.0). */
+  outOfAction?: { kind: string; label: string } | null;
   /** What it is loaded with, where that changes the shot (pp. 276, 279). */
   ammunition?: AmmunitionType;
   /** The carried box the loaded rounds came from, and what it has left; null where the weapon was loaded from nowhere in particular. */
@@ -2455,6 +2458,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           reloadSeconds: shotsCapacity > 0 ? reloadTime(shotsEntry, shotsCapacity) : null,
           reloadable: shotsCapacity > 0 && shotsLoaded < shotsCapacity,
           empty: shotsCapacity > 0 && shotsLoaded === 0,
+          outOfAction: (() => {
+            const wrong = malfunctionOf(item);
+            return wrong ? { kind: wrong.kind, label: wrong.label } : null;
+          })(),
           ammunition: (mode.ammunition ?? "") as AmmunitionType,
           // The box the rounds came from, so the card can say what it has left.
           ammunitionSource: (() => {

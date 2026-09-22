@@ -32,7 +32,8 @@ import { isRuleOn } from "./optional-rules.js";
 import { targetedTokens, withTargets } from "./targets.js";
 import { addArea, centerOf, listAreas, pixelsPerYard, removeArea } from "./modifier-areas.js";
 import { aimTurnsOf, loseAim } from "./aim.js";
-import { spendShots } from "./ammunition.js";
+import { announceShots, spendShots } from "./ammunition.js";
+import { malfunctionOf } from "./malfunctions.js";
 import { recordCalledShot } from "./called-shot.js";
 import { randomLocationWithHooks, registeredHitLocation, skillCapLine } from "./combat-extensions.js";
 import {
@@ -152,6 +153,12 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
     ui.notifications?.warn(game.i18n.format("GWORLD.Suppression.NeedsRoF", { name: String(data.rollLabel ?? ""), rof: SPREAD_FIRE_MIN_RATE_OF_FIRE }));
     return false;
   }
+  // A weapon out of action fires nothing until it is cleared (since 1.71.0).
+  const outOfAction = malfunctionOf(item);
+  if (outOfAction) {
+    ui.notifications?.warn(game.i18n.format("GWORLD.Malfunction.OutOfAction", { name: String(item?.name ?? ""), kind: outOfAction.label }));
+    return false;
+  }
   const shooterToken = actor?.getActiveTokens?.()?.[0] ?? null;
   const from = centerOf(shooterToken);
   const scene = (globalThis as any).canvas?.scene;
@@ -255,6 +262,7 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
 
   // The rounds go, and so does the aim (Campaigns p. 373).
   if (isRuleOn("reloading") && item?.isOwner && Number.isInteger(Number(data.modeIndex))) await spendShots(item, Number(data.modeIndex), shots);
+  announceShots({ actor, item, modeIndex: Number(data.modeIndex), fired: shots, extra: 0, wasted: 0, kind: "suppression", targets: 0 });
   await loseAim(actor, "fired");
 
   await ChatMessage.implementation.create({

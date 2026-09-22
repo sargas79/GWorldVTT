@@ -104,7 +104,7 @@ Contents:
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
 | `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), and `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0). |
-| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. |
+| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0). |
@@ -516,6 +516,66 @@ and the roll continues.
     listener that throws changes nothing. The Reload button then offers the
     Basic Set's Fast-Draw (Ammo) roll (Characters pp. 194-195) where a second
     off would matter.
+
+    Since 1.71.0 the entry also carries what Fast-Draw (Ammo) saves and what
+    else can help. `fastDrawSeconds` (1) is what a successful roll takes off,
+    0 where the skill doesn't help; `fastDrawPer` is `reload` (the saving is
+    taken once) or `round` (once for each round loaded, which is also what
+    lets the roll be offered for a weapon loaded shot by shot). `aids` is a
+    list of `{ id, label, seconds?, fastDrawSeconds?, checked? }` -- an
+    assistant, a loading aid -- that the Reload button offers as checkboxes
+    before the roll: a ticked aid adds `seconds` to the reload (negative to
+    take them off; per round where the weapon loads shot by shot) and, where
+    it gives `fastDrawSeconds`, replaces the entry's saving. A reload never
+    drops below one second by the skill, or below none by an aid. The rules
+    are `rules.reloadTimeWith({ entry, seconds, rounds, aids, fastDraw })`,
+    which gives `{ seconds, saved }`, and `rules.fastDrawHelps(...)`.
+  - `gworld.afterShots` (since 1.71.0): once after every attack that spent
+    shots, whether or not the weapon keeps a count, with `{ actor, item,
+    modeIndex, mode, shots, fired, extra, wasted, kind, targets }`, read-only.
+    `shots` is the total: `fired` (the shells fired), `extra` (what an attack
+    option spent beyond them) and `wasted` (a spray's shots lost sweeping
+    between targets, Campaigns p. 409). `kind` is `single`, `rapidFire` (more
+    than one shell), `spraying` (fired once for the whole burst, after its
+    last target, with `targets` its count) or `suppression` (`targets` 0).
+    For heat, fouling or wear without watching item updates.
+  - `gworld.malfunction` (since 1.71.0): when an attack roll reached Malf.
+    and the Firearm Malfunction Table was rolled (Campaigns p. 407), before
+    the card is posted, with `{ actor, item, modeIndex, attackRoll, roll,
+    techLevel, revolver, kind, label, repair, fires, clears, explodes, jams }`.
+    `roll` is the table's 3d and `kind` its result (`mechanical`, `misfire`,
+    `stoppage`, `explosion`; an explosion at TL5+ already reads
+    `mechanical`). The result is mutable: set `kind` to another, or to a
+    kind of the module's own, and `label`, `repair` (the card's text on
+    putting it right), `fires` (the shot still goes off), `clears` (a
+    revolver's misfire), `explodes` and `jams` are worked out again for it,
+    except those the listener set itself; a kind of the module's own reads
+    as its name and jams. `kind: null` calls the malfunction off. A result
+    that `jams` puts the weapon out of action (below).
+  - **A weapon out of action** (since 1.71.0): kept as the item's
+    `flags.gworld.malfunction`, `{ kind, label, modeIndex }`; `kind` may also
+    be `destroyed`. While it is set, the weapon's ranged attacks and
+    suppression fire are refused, and the sheet shows the malfunction with a
+    Clear button in place of the shot. `items.malfunction(item)`,
+    `items.setMalfunction(item, { kind, label?, modeIndex? } | null)` and
+    `items.clearMalfunction(actor, item)` read, set and clear it.
+  - `gworld.clearMalfunction` (since 1.71.0): before an attempt to clear a
+    malfunction, with `{ actor, item, modeIndex, malfunction, rolls,
+    readyManeuvers, hours, needsBothHands, criticalFailure, modifiers, aids,
+    refusal }`. `rolls` are the choices, each `{ key, label, level, modifier
+    }`: `armoury` (the character's best Armoury, Small Arms first, else
+    IQ-5) and `weapon` (the mode's weapon skill, IQ-based), at the table's
+    modifiers (Armoury+2 for a misfire, the weapon skill at -4 for a
+    stoppage); a roll with a null `level` isn't offered. `readyManeuvers` (3)
+    or `hours` (1, for a mechanical problem) is what an attempt takes;
+    `criticalFailure` is `mechanical` or `destroyed`. Push lines to
+    `modifiers`; push `{ id, label, modifier?, readyManeuvers?, hours?,
+    checked? }` to `aids` for an assistant or a tool the dialog offers as a
+    checkbox (a ticked aid adds its modifier and replaces the time); set
+    `refusal` to a reason to refuse. A kind of the module's own is cleared as
+    a mechanical problem unless the listener says otherwise. The roll is
+    tagged `clearMalfunction`; a success clears the flag, a failure leaves
+    it, and a critical failure makes it `mechanical` or `destroyed`.
   - `gworld.equipmentFailure` (since 1.10.0): before a thing's equipment
     failure roll (Campaigns p. 485), with `{ actor, item, target, modifiers }`.
     Push lines to `modifiers`; the card shows them.
