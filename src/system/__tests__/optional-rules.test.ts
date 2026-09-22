@@ -56,7 +56,9 @@ describe("the rule catalogue", () => {
       .filter(([, on]) => !on)
       .map(([key]) => key)
       .filter((key) => !OPTIONAL_RULES.cinematic.some((rule) => rule.key === key));
-    expect(off.sort()).toEqual(["bleeding", "damageToShields"]);
+    // Familiarity is not optional in the book, but it is off until a table
+    // keeps the list: with none kept, every weapon would be unfamiliar.
+    expect(off.sort()).toEqual(["bleeding", "damageToShields", "familiarity"]);
   });
 
   /**

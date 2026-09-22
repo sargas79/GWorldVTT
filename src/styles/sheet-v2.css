@@ -1173,6 +1173,7 @@
 .gworld.v2 .v2-attack-skill .v2-stat-label { flex: 0 0 auto; }
 .gworld.v2 .v2-attack-skill-select { flex: 1 1 auto; min-width: 0; height: 26px; font-size: 13px; }
 .gworld.v2 .v2-attack-skill-select.v2-chosen { border-color: var(--v2-steel); font-weight: 600; }
+.gworld.v2 .v2-familiarity .v2-button { margin-left: auto; }
 /* A count edited where it is read: a box's rounds in its row and its panel. */
 .gworld.v2 input.v2-gear-qty,
 .gworld.v2 input.v2-inline-number {

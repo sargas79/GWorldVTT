@@ -768,6 +768,14 @@
           "Name": "Equipment modifiers",
           "Hint": "The tools of a trade are worth something to the roll that uses them: nothing for basic gear, +1 for good, +2 for fine, TL/2 for the best there is, and a penalty for improvising or working bare-handed (Campaigns p. 345)."
         },
+        "techLevelModifiers": {
+          "Name": "Tech-level modifiers",
+          "Hint": "A technological skill used with gear of another tech level takes a penalty: -1 per TL of difference for a DX-based skill such as Guns; by the table for an IQ-based one, steep for gear ahead of the skill (impossible at four TLs) and gentler for older gear. Weapon attacks and the tools carried for a skill take it (Characters p. 168)."
+        },
+        "familiarity": {
+          "Name": "Familiarity",
+          "Hint": "A technological skill takes -2 with an item its user is not familiar with; eight hours of practice make it familiar. A character's familiarities are marked from the attack preview on the Combat tab. Off by default, since until the list is kept every weapon counts as unfamiliar (Characters p. 169)."
+        },
         "vehicleManeuvers": {
           "Name": "Vehicle maneuvers",
           "Hint": "A vehicle moves on its operator’s turn: a Move or Move and Attack puts them in charge, and any other maneuver — or being stunned — leaves it plowing ahead on last turn’s course. Jumping out is a collision at the vehicle’s speed (Campaigns p. 467)."
@@ -1705,6 +1713,17 @@
       "LaserSight": "Laser sight",
       "LaserSeen": "The target sees the laser dot",
       "AimingRoll": "Aiming ({skill})"
+    },
+    "TechLevel": {
+      "Line": "TL{equipment} equipment, TL{skill} skill",
+      "Impossible": "{item} is TL{equipment}: an IQ-based skill learned at TL{skill} cannot use it (Characters p. 168).",
+      "Unfamiliar": "Unfamiliar: {item}",
+      "Familiar": "Familiar",
+      "NotFamiliar": "Unfamiliar",
+      "Familiarity": "Familiarity",
+      "MarkFamiliar": "Mark familiar",
+      "MarkUnfamiliar": "Mark unfamiliar",
+      "FamiliarityHint": "An item a character has had eight hours of practice with is familiar; an unfamiliar one is at -2 to the skill that operates it (Characters p. 169). Familiarity goes by the item's name."
     },
     "Malfunction": {
       "Jammed": "The weapon malfunctions",

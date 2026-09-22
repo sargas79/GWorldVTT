@@ -77,6 +77,18 @@
               </div>
             {{/if}}
 
+            {{!-- Whether this character knows the weapon's make (Characters p. 169): -2 until they do. --}}
+            {{#if entry.familiarity}}
+              <div class="v2-attack-skill v2-familiarity">
+                <span class="v2-stat-label" data-tooltip="{{localize 'GWORLD.TechLevel.FamiliarityHint'}}">{{localize "GWORLD.TechLevel.Familiarity"}}</span>
+                <b class="{{#if entry.familiarity.familiar}}v2-good{{else}}v2-bad{{/if}}">{{#if entry.familiarity.familiar}}{{localize "GWORLD.TechLevel.Familiar"}}{{else}}{{localize "GWORLD.TechLevel.NotFamiliar"}}{{/if}}</b>
+                {{#if @root.editable}}
+                  <button type="button" class="v2-button" data-action="v2ToggleFamiliar"
+                          aria-pressed="{{#if entry.familiarity.familiar}}true{{else}}false{{/if}}">{{#if entry.familiarity.familiar}}{{localize "GWORLD.TechLevel.MarkUnfamiliar"}}{{else}}{{localize "GWORLD.TechLevel.MarkFamiliar"}}{{/if}}</button>
+                {{/if}}
+              </div>
+            {{/if}}
+
             {{!-- The attack's row of the weapon table, heading over figure, and what it is loaded with. --}}
             {{#if entry.strip}}
               <div class="v2-weapon-strip v2-preview-strip">

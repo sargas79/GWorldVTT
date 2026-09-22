@@ -48,6 +48,7 @@ import { agingRollsPerYear, lifespanFrom } from "../../rules/aging.js";
 import { culturallyAdaptable, languagePenalty, type Comprehension } from "../../rules/languages.js";
 import { sleepPeriodFrom } from "../../rules/sleep.js";
 import { radiationRow, remainingDose } from "../../rules/radiation.js";
+import { bestTool, isTechnologicalSkill, parseTechLevel, skillTechLevel, type CarriedTool } from "../../rules/tech-level.js";
 import { baseBlock, baseDodge, baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import {
   materialArmorDivisor,
@@ -641,6 +642,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   };
 
   declare pinnedSkills: string[];
+  declare familiarities: string[];
   declare journalLinks: Array<{ uuid: string; kind: "quest" | "clue" | "person" | "place" | "note" }>;
 
   /**
@@ -1121,6 +1123,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ),
 
       /**
+       * The makes and models this character is familiar with (Characters
+       * p. 169), by item name as typed: a technological skill used with any
+       * other item is at -2 while the familiarity rule is on (since API 1.75.0).
+       */
+      familiarities: new fields.ArrayField(
+        new fields.StringField({ required: true, blank: false }),
+        { required: true, initial: [] },
+      ),
+
+      /**
        * Foundry journal entries and pages that belong to this character's
        * story: quests, clues, people, places and notes. The journal holds the
        * text, with its own permissions; the sheet keeps only the link and what
@@ -1370,22 +1382,24 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
    * with the crash kit and the leaves at once.
    */
 
-  #equipmentBonuses(tl: number): Record<string, number> {
-    const best: Record<string, number> = {};
-    if (!isRuleOn("equipmentModifiers")) return best;
+  #equipmentBonuses(tl: number): Record<string, CarriedTool[]> {
+    const carried: Record<string, CarriedTool[]> = {};
+    if (!isRuleOn("equipmentModifiers")) return carried;
     for (const item of this.itemsOfType("equipment")) {
       const sys = item.system as any;
       if (sys?.carried === false) continue;
       const skills: string[] = Array.isArray(sys?.forSkills) ? sys.forSkills : [];
       if (skills.length === 0) continue;
-      const bonus = toolModifier(String(sys.equipmentQuality ?? "basic") as EquipmentQuality, sys.equipmentModifier, { tl });
+      const quality = toolModifier(String(sys.equipmentQuality ?? "basic") as EquipmentQuality, sys.equipmentModifier, { tl });
+      // Its own TL, weighed against the skill's once that is known (Characters p. 168).
+      const techLevel = parseTechLevel(sys.tl);
       for (const raw of skills) {
         const skill = String(raw ?? "").trim();
         if (!skill) continue;
-        if (best[skill] === undefined || bonus > best[skill]) best[skill] = bonus;
+        (carried[skill] ??= []).push({ quality, techLevel });
       }
     }
-    return best;
+    return carried;
   }
 
   /** What is left of the dose written on the sheet, as of now (Campaigns p. 435). */
@@ -1754,7 +1768,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         key: "trait", label: line.label, value: line.value, source: "system",
       }));
       // The tools of this trade, if any are carried (Campaigns p. 345).
-      const toolBonus = toolBonuses[String(item.name ?? "").trim()] ?? 0;
+      // Of several, the one worth most once its TL is weighed against the
+      // skill's -- for a technological skill, with the tech-level rule on
+      // (Characters p. 168).
+      const skillTL = isRuleOn("techLevelModifiers") && isTechnologicalSkill(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel)
+        ? skillTechLevel(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel, Number(this.tl) || 0)
+        : null;
+      const tool = bestTool(toolBonuses[String(item.name ?? "").trim()] ?? [], { skillTechLevel: skillTL, iqBased: sys.attribute === "IQ" });
+      const toolBonus = tool?.quality ?? 0;
       const magicBonus = magicSkillBonus(String(item.name ?? ""), talent);
       // The bonuses as lines, which add-on modules may add to, or change with
       // a reason (a talent that doesn't reach a wildcard skill, say).
@@ -1769,6 +1790,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           { key: "talent", label: "Talent", value: talentBonus, source: "system" },
           ...traitLines,
           { key: "tools", label: "Equipment", value: toolBonus, source: "system" },
+          { key: "techLevel", label: "Equipment TL", value: tool?.techLevel ?? 0, source: "system" },
         ] as BonusLine[],
       });
       const lineValue = (key: string) => bonusLines.lines.filter((l) => l.key === key).reduce((sum, l) => sum + l.value, 0);
