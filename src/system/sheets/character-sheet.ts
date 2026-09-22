@@ -53,6 +53,7 @@ import {
 } from "../gunplay.js";
 import { rollInfluence, rollReaction } from "../reactions.js";
 import { monthlyPay } from "../../rules/wealth.js";
+import { parseDiceAdds } from "../../rules/dice.js";
 import {
   payCostOfLiving,
   rollAging,
@@ -2469,7 +2470,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onScatter(this: GWorldCharacterSheet) {
     if (!isRuleOn("scatter")) return;
 
-    const asked = await promptForScatter();
+    // The rows a miss can scatter from: anything that goes off or covers an
+    // area, and anything whose miss is always squared (since API 1.72.0).
+    const rows: any[] = [...(this.actor.system?.derived?.ranged ?? []), ...(this.actor.system?.derived?.melee ?? [])];
+    const weapons = rows
+      .filter((row) => row?.explosive || row?.areaAttack || row?.scatterSquared)
+      .map((row) => ({
+        label: [row.name, row.mode].filter(Boolean).join(" "),
+        fragmentationDice: parseDiceAdds(String(row.fragmentation ?? ""))?.dice ?? 0,
+        squared: row.scatterSquared === true,
+      }));
+    const asked = await promptForScatter(weapons);
     if (!asked) return;
 
     await rollScatter({ actor: this.actor, ...asked });

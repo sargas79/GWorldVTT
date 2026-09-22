@@ -19,6 +19,13 @@
         <span class="gc-mod">{{r.location}}</span>
       </div>
 
+      {{#if r.blastNotes.length}}
+        {{!-- A large-area blow's DR, and a blast against or inside them (Campaigns pp. 400, 415). --}}
+        <div class="gc-mods">
+          {{#each r.blastNotes as |note|}}<span class="gc-mod">{{note}}</span>{{/each}}
+        </div>
+      {{/if}}
+
       {{#if r.criticalDamage}}
         <div class="gc-mods">
           <span class="gc-mod">{{localize "GWORLD.Critical.BasicDamage"}} {{r.criticalDamage}}</span>

@@ -27,11 +27,23 @@
     {{localize "GWORLD.Chat.InjuryUnarmored"}} <strong>{{injuryIfUnarmored}}</strong>
   </div>
 
+  {{#if largeArea}}
+    {{!-- Averaged DR and no hit location (Campaigns p. 400). --}}
+    <div class="gc-mods"><span class="gc-mod">{{localize "GWORLD.LargeArea.Label"}}</span></div>
+  {{/if}}
+
   {{#if explosive}}
     <div class="gc-mods">
       <span>{{localize "GWORLD.Chat.Blast" yards=blastRadius}}</span>
       {{#if fragmentation}}
         <span>{{localize "GWORLD.Chat.Fragments" dice=fragmentation yards=fragmentationRadius}}</span>
+        {{#if fragmentLingers}}
+          {{!-- Hot fragments go on burning (Campaigns p. 414). --}}
+          <span class="gc-mod">{{fragmentLingers}}</span>
+        {{/if}}
+      {{/if}}
+      {{#if blastPlacement}}
+        <span class="gc-mod">{{blastPlacement}}</span>
       {{/if}}
       {{#if cinematicBlast}}
         {{!-- The rolled figure buys knockback and nothing else (p. 417). --}}

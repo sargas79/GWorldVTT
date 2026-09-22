@@ -702,19 +702,42 @@ export async function promptForInfection(): Promise<{
   return result && typeof result === "object" ? (result as never) : null;
 }
 
+/** A weapon the scatter prompt offers, with what it fills in (since API 1.72.0). */
+export interface ScatterWeapon {
+  label: string;
+  fragmentationDice: number;
+  /** The row always scatters by the square of the margin. */
+  squared: boolean;
+}
+
 /** Asks how badly the grenade was thrown (Campaigns p. 414). */
-export async function promptForScatter(): Promise<{
+export async function promptForScatter(weapons: ScatterWeapon[] = []): Promise<{
   margin: number;
   distanceYards: number;
   dodged: boolean;
   unseen: boolean;
+  squared: boolean;
   fragmentationDice: number;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Scatter.${key}`);
+  const esc = (text: string) => foundry.utils.escapeHTML(text);
+
+  // The character's explosive and area weapons, so the fragments and whether
+  // the miss is squared come from the row rather than from memory.
+  const picker = weapons.length > 0
+    ? `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Weapon")}</span>
+        <select name="weapon" style="max-width:220px">
+          <option value="">&mdash;</option>
+          ${weapons.map((w, i) => `<option value="${i}">${esc(w.label)}</option>`).join("")}
+        </select>
+      </label>`
+    : "";
 
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Title") },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      ${picker}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Margin")}</span>
         <input type="number" name="margin" value="1" min="0" step="1" autofocus style="width:90px">
@@ -744,14 +767,29 @@ export async function promptForScatter(): Promise<{
           Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
         const ticked = (name: string) =>
           form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
+        const picked = weapons[Number(form?.querySelector<HTMLSelectElement>('select[name="weapon"]')?.value ?? "")];
         return {
           margin: num("margin"),
           distanceYards: num("distance"),
           fragmentationDice: num("fragmentation"),
           dodged: ticked("dodged"),
           unseen: ticked("unseen"),
+          squared: picked?.squared === true,
         };
       },
+    },
+    render: (_event: Event, dialog: any) => {
+      // Choosing a weapon fills in its fragments and ticks the squared miss.
+      const form: HTMLElement | null = dialog?.element ?? dialog ?? null;
+      const select = form?.querySelector<HTMLSelectElement>('select[name="weapon"]');
+      select?.addEventListener("change", () => {
+        const picked = weapons[Number(select.value)];
+        if (!picked) return;
+        const dice = form?.querySelector<HTMLInputElement>('input[name="fragmentation"]');
+        if (dice) dice.value = String(picked.fragmentationDice);
+        const unseen = form?.querySelector<HTMLInputElement>('input[name="unseen"]');
+        if (unseen && picked.squared) unseen.checked = true;
+      });
     },
     rejectClose: false,
   });

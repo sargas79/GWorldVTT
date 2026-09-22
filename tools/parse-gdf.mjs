@@ -1240,23 +1240,26 @@ export function minimumRangeOf(itemnotes, mode) {
  * unclosed ends with the dice and any divisor: "[1d(0.2) burn ex" is 1d of
  * fragments from a burning explosion.
  *
- * Only the dice have a field; the rest is returned as a note, so a book whose
- * fragments differ is told what the mode leaves out.
+ * The dice go in `fragmentation`, and since API 1.72.0 a type other than
+ * cutting in `fragmentationType` and a divisor in `fragmentationDivisor`,
+ * each written only where the bracket gives one. A type the model doesn't know
+ * is kept out and reported in the note.
  */
 const FRAGMENTS = /\[\s*(\d+d(?:\s*[+-]\s*\d+)?)\s*(?:\(\s*(\d+(?:\.\d+)?)\s*\))?(?:\s*([a-z][a-z+-]*)\s*\]|\s*\]|(?=\s|$))/i;
 
 export function fragmentsOf(damtype) {
   const text = damtype ?? "";
   const m = FRAGMENTS.exec(text);
-  if (!m) return { rest: text, dice: "", note: "" };
-  const extras = [
-    ...(m[2] ? [`armour divisor (${m[2]})`] : []),
-    ...(m[3] && m[3].toLowerCase() !== "cut" ? [`damage type ${m[3]}`] : []),
-  ];
+  if (!m) return { rest: text, dice: "", type: "", divisor: 1, note: "" };
+  const written = (m[3] ?? "").toLowerCase();
+  const type = written && written !== "cut" && DAMAGE_TYPES.has(written) ? written : "";
+  const divisor = m[2] ? Number(m[2]) : 1;
   return {
     rest: `${text.slice(0, m.index)} ${text.slice(m.index + m[0].length)}`.replace(/\s+/g, " ").trim(),
     dice: m[1].replace(/\s+/g, ""),
-    note: extras.length ? `fragments carry ${extras.join(" and ")}, which the mode does not hold` : "",
+    type,
+    divisor: divisor > 0 ? divisor : 1,
+    note: written && written !== "cut" && !type ? `fragments carry damage type ${m[3]}, which the mode does not hold` : "",
   };
 }
 
@@ -1350,7 +1353,14 @@ export function parseDamage(damage, damtype) {
   const explosive = Boolean(blast);
   if (fragments.dice && !explosive) return null;
   const fragmentation = fragments.dice;
-  const extras = { surge, ...setModifiers({ incendiary, radiation, doubleKnockback, noKnockback }) };
+  const extras = {
+    surge,
+    ...setModifiers({ incendiary, radiation, doubleKnockback, noKnockback }),
+    // The fragments' own type and divisor, only where the bracket gives them,
+    // so a plain "[2d]" reads as it always has.
+    ...(fragmentation && fragments.type ? { fragmentationType: fragments.type } : {}),
+    ...(fragmentation && fragments.divisor !== 1 ? { fragmentationDivisor: fragments.divisor } : {}),
+  };
 
   if (!DAMAGE_TYPES.has(type)) return null;
   const fragmentNote = fragments.note ? { fragmentNote: fragments.note } : {};
@@ -1667,6 +1677,8 @@ export function linkedLine(mode, followUp, label) {
       : {}),
     ...(mode.explosive ? { explosive: true } : {}),
     ...(mode.fragmentation ? { fragmentation: mode.fragmentation } : {}),
+    ...(mode.fragmentation && mode.fragmentationType ? { fragmentationType: mode.fragmentationType } : {}),
+    ...(mode.fragmentation && mode.fragmentationDivisor ? { fragmentationDivisor: mode.fragmentationDivisor } : {}),
     ...(followUp ? { followUp: true } : {}),
     ...(label ? { label } : {}),
   };
@@ -1760,7 +1772,8 @@ function sameRound(modes) {
   const last = modes[modes.length - 1];
   const key = (m) => JSON.stringify([
     m.damageBase, m.damageModifier, m.damageFormula, m.damageExtraDice, m.damageType,
-    m.armorDivisor, m.explosive, m.fragmentation, m.affliction, m.afflictionAttribute, m.afflictionModifier,
+    m.armorDivisor, m.explosive, m.fragmentation, m.fragmentationType ?? "", m.fragmentationDivisor ?? 1,
+    m.affliction, m.afflictionAttribute, m.afflictionModifier,
   ]);
   const out = [];
   for (let i = modes.length - 1; i >= 0; i--) {

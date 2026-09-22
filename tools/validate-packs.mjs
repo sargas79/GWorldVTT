@@ -629,6 +629,23 @@ function validateItem(entry, file) {
       typeof mode.armorDivisor === "number" && mode.armorDivisor >= 0.1,
       file, name, `armor divisor ${mode.armorDivisor} is out of range`,
     );
+    // The fragments' own type and divisor, and where the blast goes off, each
+    // written only where a mode has one (since API 1.72.0).
+    if (mode.fragmentationType !== undefined) {
+      check(
+        mode.fragmentationType === "" || DAMAGE_TYPES.has(mode.fragmentationType),
+        file, name, `unknown fragment damage type "${mode.fragmentationType}"`,
+      );
+    }
+    if (mode.fragmentationDivisor !== undefined) {
+      check(
+        typeof mode.fragmentationDivisor === "number" && mode.fragmentationDivisor >= 0.1,
+        file, name, `fragment armor divisor ${mode.fragmentationDivisor} is out of range`,
+      );
+    }
+    if (mode.blastPlacement !== undefined) {
+      check(["", "contact", "internal"].includes(mode.blastPlacement), file, name, `bad blast placement "${mode.blastPlacement}"`);
+    }
 
     check(Boolean(mode.skill), file, name, "attack mode names no skill");
   }

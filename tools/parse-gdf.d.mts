@@ -88,6 +88,8 @@ export declare function linkedLine(
   afflictionModifier?: number;
   explosive?: boolean;
   fragmentation?: string;
+  fragmentationType?: string;
+  fragmentationDivisor?: number;
   followUp?: boolean;
   label?: string;
 };
@@ -178,8 +180,12 @@ export declare function techniqueDefaults(
 /** The attribute terms a skill's default adds to rebase the technique ("+ST-DX"), or "" for none. */
 export declare function techniqueRebasing(raw: string | undefined): string;
 
-/** The fragments in a damage type's brackets, before or after the type: the dice, what is left, and a note on anything else inside. */
-export declare function fragmentsOf(damtype: string | undefined): { rest: string; dice: string; note: string };
+/**
+ * The fragments in a damage type's brackets, before or after the type: the dice, what is left, the
+ * fragments' own type ("" for cutting) and divisor (since API 1.72.0), and a note on a type the model
+ * doesn't know.
+ */
+export declare function fragmentsOf(damtype: string | undefined): { rest: string; dice: string; type: string; divisor: number; note: string };
 /** The RoF column: the rate, projectiles per shot, and the marks and second rate where the table has them. */
 export declare function parseRateOfFire(value: string | undefined): {
   rateOfFire: number;

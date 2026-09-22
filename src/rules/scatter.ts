@@ -50,6 +50,12 @@ export function scatterDistance(options: {
   dodged?: boolean;
   /** Flying, underwater, or fired blind with Artillery or Dropping. */
   unseen?: boolean;
+  /**
+   * An attack whose row always scatters by the square (since API 1.72.0): a
+   * weapon only ever fired or dropped at what its user can't see. The same
+   * rule as `unseen`, and like it, not for a dodge.
+   */
+  squared?: boolean;
   /** The die rolled for direction, 1 being the way the attacker faces. */
   directionRoll: number;
 }): Scatter {
@@ -58,7 +64,7 @@ export function scatterDistance(options: {
   // The cap and the squaring are exclusive: the exception's own words are "this
   // does not apply to a dodge", and it replaces the cap rather than joining it.
   const yards =
-    options.unseen && !options.dodged
+    (options.unseen || options.squared) && !options.dodged
       ? margin * margin
       : Math.min(margin, Math.ceil(Math.max(0, options.distanceYards) / 2));
 

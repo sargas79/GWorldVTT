@@ -57,6 +57,8 @@ export async function rollScatter(options: {
   distanceYards: number;
   dodged: boolean;
   unseen: boolean;
+  /** The weapon's miss is always squared (since API 1.72.0). */
+  squared?: boolean;
   /** Dice of fragmentation, for the radius the card reports. */
   fragmentationDice: number;
 }): Promise<void> {
@@ -68,6 +70,7 @@ export async function rollScatter(options: {
     distanceYards: options.distanceYards,
     dodged: options.dodged,
     unseen: options.unseen,
+    squared: options.squared === true,
     directionRoll: direction.total,
   });
 
@@ -78,7 +81,7 @@ export async function rollScatter(options: {
     directions: DIRECTIONS,
     bearing: scatterBearing(scatter.direction),
     onTarget: scatter.yards === 0,
-    squared: options.unseen && !options.dodged,
+    squared: (options.unseen || options.squared === true) && !options.dodged,
     fragmentRadius: fragmentationRadius(options.fragmentationDice),
     fragmentSkillAt: fragmentTarget({
       rangeModifier: 0,

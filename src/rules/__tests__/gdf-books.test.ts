@@ -793,14 +793,35 @@ describe("the fragments beside a damage type", () => {
     expect(parseDamage("6dx3", "[4d-1] cr ex")!.fields.fragmentation).toBe("4d-1");
   });
 
-  it("keeps the dice and notes a divisor or a type the mode cannot hold", () => {
+  // Since API 1.72.0 the mode holds both (sargas79/GWorldVTT#595).
+  it("keeps the fragments' own divisor and type in the mode", () => {
     const divisor = withNote("2d", "[1d(0.2)] burn ex");
-    expect(divisor.fields).toMatchObject({ damageType: "burn", explosive: true, fragmentation: "1d" });
-    expect(divisor.fragmentNote).toMatch(/armour divisor \(0\.2\)/);
+    expect(divisor.fields).toMatchObject({ damageType: "burn", explosive: true, fragmentation: "1d", fragmentationDivisor: 0.2 });
+    expect(divisor.fields.fragmentationType).toBeUndefined();
+    expect(divisor.fragmentNote).toBeUndefined();
 
     const typed = withNote("1d+1", "[1d-1 cr] cr ex");
-    expect(typed.fields).toMatchObject({ damageType: "cr", explosive: true, fragmentation: "1d-1" });
-    expect(typed.fragmentNote).toMatch(/damage type cr/);
+    expect(typed.fields).toMatchObject({ damageType: "cr", explosive: true, fragmentation: "1d-1", fragmentationType: "cr" });
+    expect(typed.fields.fragmentationDivisor).toBeUndefined();
+    expect(typed.fragmentNote).toBeUndefined();
+
+    expect(withNote("2d", "[1d(2) pi] cr ex").fields).toMatchObject({ fragmentationType: "pi", fragmentationDivisor: 2 });
+  });
+
+  it("notes a fragment type the model does not know", () => {
+    const odd = withNote("2d", "[1d zap] cr ex");
+    expect(odd.fields.fragmentation).toBe("1d");
+    expect(odd.fields.fragmentationType).toBeUndefined();
+    expect(odd.fragmentNote).toMatch(/damage type zap/);
+  });
+
+  it("carries the fragments' type and divisor onto a second line", () => {
+    const line = linkedLine(
+      { damageFormula: "2d", damageType: "cr", armorDivisor: 1, explosive: true, fragmentation: "1d", fragmentationType: "burn", fragmentationDivisor: 0.2 },
+      true,
+      "",
+    );
+    expect(line).toMatchObject({ fragmentation: "1d", fragmentationType: "burn", fragmentationDivisor: 0.2 });
   });
 
   it("reads a bracket left unclosed", () => {
@@ -810,12 +831,12 @@ describe("the fragments beside a damage type", () => {
   });
 
   it("says nothing more of fragments that are plain cutting", () => {
-    expect(fragmentsOf("[2d cut] cr ex")).toEqual({ rest: "cr ex", dice: "2d", note: "" });
+    expect(fragmentsOf("[2d cut] cr ex")).toEqual({ rest: "cr ex", dice: "2d", type: "", divisor: 1, note: "" });
     expect(withNote("4d", "[2d] cr ex").fragmentNote).toBeUndefined();
   });
 
   it("finds none in a type without them, or in GCA's own placeholder", () => {
-    expect(fragmentsOf("cr ex")).toEqual({ rest: "cr ex", dice: "", note: "" });
+    expect(fragmentsOf("cr ex")).toEqual({ rest: "cr ex", dice: "", type: "", divisor: 1, note: "" });
     expect(fragmentsOf("[damagetype]").dice).toBe("");
   });
 
@@ -933,13 +954,14 @@ describe("the equipment a data file's modes make", () => {
     ]));
   });
 
-  it("keeps a weapon whose fragments come before the type, noting what they carry", () => {
+  it("keeps a weapon whose fragments come before the type, with their own type", () => {
     const { gear, rejects, notes } = run(
       "Grenade Test, page(XX13), cost(10), weight(1), techlvl(7), damage(1d+1), damtype([1d-1 cr] cr ex), acc(0), rof(1), shots(T(1)), minst(5), skillused(SK:Throwing)",
     );
     expect(rejects).toEqual([]);
-    expect(gear[0]!.system.rangedModes[0]).toMatchObject({ damageType: "cr", explosive: true, fragmentation: "1d-1" });
-    expect(notes.some((n) => /^Grenade Test: attack: fragments carry damage type cr/.test(n))).toBe(true);
+    expect(gear[0]!.system.rangedModes[0]).toMatchObject({ damageType: "cr", explosive: true, fragmentation: "1d-1", fragmentationType: "cr" });
+    // Since API 1.72.0 the mode holds the type, so nothing is left to report.
+    expect(notes.some((n) => /^Grenade Test: attack: fragments carry/.test(n))).toBe(false);
   });
 
   it("reports modes that may be states of one weapon, and keeps them", () => {

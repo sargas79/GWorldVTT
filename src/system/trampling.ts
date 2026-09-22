@@ -111,6 +111,9 @@ export async function trample(options: {
     formula: formatDiceAdds(damage),
     damageType: "cr",
     ...(hooves ? { modifiers: [] } : {}),
+    // A much larger foot is a large-area injury, which the card now applies
+    // rather than only mentions (since API 1.72.0).
+    ...(allowed.largeArea ? { largeArea: true } : {}),
   });
 
   // The two things the rule says beside the numbers: the dodge is all the

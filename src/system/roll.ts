@@ -75,7 +75,10 @@ import {
   halveDamage,
 } from "../rules/damage.js";
 import { formatDiceAdds, maxRoll, parseDiceAdds, toRollFormula } from "../rules/dice.js";
-import { blastRadius, fragmentationRadius } from "../rules/explosions.js";
+import {
+  blastPlacementOf, blastRadius, fragmentationLabel, fragmentationRadius, fragmentationSpec, fragmentationStrikes,
+  type BlastPlacement,
+} from "../rules/explosions.js";
 import { canMalfunction, type Delivery } from "../rules/cinematic.js";
 import { hasInfiniteAmmunition } from "./cinematic.js";
 import {
@@ -1017,6 +1020,17 @@ export interface DamageRollOptions {
   explosive?: boolean;
   /** Fragmentation thrown, as a dice formula -- the "[2d]" in "cr ex [2d]". */
   fragmentation?: string;
+  /** The fragments' damage type, where not cutting (since API 1.72.0). */
+  fragmentationType?: DamageType | "";
+  /** The fragments' own armour divisor, where they have one (since API 1.72.0). */
+  fragmentationDivisor?: number;
+  /** Fragments that go on striking: seconds between and seconds in all, 0 for none (since API 1.72.0). */
+  fragmentationLingerEvery?: number;
+  fragmentationLingerFor?: number;
+  /** Where the blast goes off, which the card offers first when applied (since API 1.72.0). */
+  blastPlacement?: BlastPlacement | "" | null;
+  /** A large-area injury (Campaigns p. 400), which the card ticks when applied (since API 1.72.0). */
+  largeArea?: boolean;
   /** Where the attack that earned this damage was aimed. */
   calledShot?: CalledShot | null;
   /**
@@ -1106,6 +1120,18 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
   const explosive = options.explosive === true && isRuleOn("explosions");
   const cinematicBlast = explosive && isRuleOn("cinematicExplosions");
   const fragments = cinematicBlast ? "" : fragmentation;
+  // Their type, divisor and whether they linger, where the row says (since
+  // API 1.72.0); a bare dice string is cutting, as it always was.
+  const fragmentSpec = explosive && fragments
+    ? fragmentationSpec({
+        fragmentation: fragments,
+        fragmentationType: options.fragmentationType,
+        fragmentationDivisor: options.fragmentationDivisor,
+        fragmentationLingerEvery: options.fragmentationLingerEvery,
+        fragmentationLingerFor: options.fragmentationLingerFor,
+      })
+    : null;
+  const placement = explosive && !cinematicBlast ? blastPlacementOf(options.blastPlacement) : null;
 
   const parsed = parseDiceAdds(formula);
   if (!parsed) {
@@ -1164,10 +1190,17 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     // "In cinematic combat, explosions do no direct damage! Ignore
     // fragmentation, too" (p. 417) -- so a cinematic grenade throws none, and
     // the card does not offer a radius for fragments nobody will roll.
-    fragmentation: fragments,
+    fragmentation: fragmentSpec ? fragmentationLabel(fragmentSpec) : fragments,
     fragmentationRadius: fragments
       ? fragmentationRadius(parseDiceAdds(fragments)?.dice ?? 0)
       : 0,
+    fragmentLingers: fragmentSpec?.linger
+      ? game.i18n.format("GWORLD.Fragments.Lingers", {
+          every: fragmentSpec.linger.every, for: fragmentSpec.linger.for, strikes: fragmentationStrikes(fragmentSpec.linger),
+        })
+      : "",
+    blastPlacement: placement ? game.i18n.localize(`GWORLD.Blast.${placement}`) : "",
+    largeArea: options.largeArea === true,
     cinematicBlast,
   });
 
@@ -1213,6 +1246,11 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           // Who struck bare-handed, and with what, for Hurting Yourself (p. 379).
           ...(options.strikingPart && typeof options.actor?.uuid === "string" ? { strikingPart: options.strikingPart, strikerUuid: options.actor.uuid } : {}),
           explosive,
+          // What the card offers when the blow is applied, and the fragments
+          // it offers to roll (since API 1.72.0).
+          ...(placement ? { blastPlacement: placement } : {}),
+          ...(options.largeArea ? { largeArea: true } : {}),
+          ...(fragmentSpec ? { fragments: fragmentSpec } : {}),
           // The dice, not the rolled total: the blast radius is set by how
           // many dice the attack rolls, whatever they came up -- and a
           // multiplied roll is that many dice again.
@@ -3630,8 +3668,29 @@ export async function handleDamageAction(
     ...(strikingPart(target.dataset.naturalKey ?? "") ? { strikingPart: strikingPart(target.dataset.naturalKey ?? "") } : {}),
     explosive: target.dataset.explosive === "1",
     fragmentation: target.dataset.fragmentation ?? "",
+    ...explosionDataset(target.dataset),
     modifiers,
   });
+}
+
+/**
+ * What a damage button carries about its blast and its fragments beyond the
+ * dice (since API 1.72.0), read off its data attributes; each only where set.
+ */
+export function explosionDataset(dataset: DOMStringMap): Partial<DamageRollOptions> {
+  const number = (value: string | undefined) => (value !== undefined && value !== "" && Number.isFinite(Number(value)) ? Number(value) : undefined);
+  const divisor = number(dataset.fragmentationDivisor);
+  const every = number(dataset.fragmentationLingerEvery);
+  const lasting = number(dataset.fragmentationLingerFor);
+  const placement = blastPlacementOf(dataset.blastPlacement);
+  return {
+    ...(dataset.fragmentationType ? { fragmentationType: dataset.fragmentationType as DamageType } : {}),
+    ...(divisor !== undefined && divisor !== 1 ? { fragmentationDivisor: divisor } : {}),
+    ...(every ? { fragmentationLingerEvery: every } : {}),
+    ...(lasting ? { fragmentationLingerFor: lasting } : {}),
+    ...(placement ? { blastPlacement: placement } : {}),
+    ...(dataset.largeArea === "1" ? { largeArea: true } : {}),
+  };
 }
 
 /** Maps a roll's data-roll-type to the rules the roll should be judged by. */

@@ -19,7 +19,10 @@ import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy 
 import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shields.js";
 import { rollDamage, rollSuccess, type AttackWeaponFlag } from "./roll.js";
 import { currentTargets, ownsATokenOnScene } from "./targets.js";
-import { blastAt } from "../rules/explosions.js";
+import {
+  BLAST_PLACEMENTS, blastAt, blastPlacementOf, contactCoverDr, fragmentationLabel, fragmentationStrikes,
+  type BlastPlacement, type FragmentationSpec,
+} from "../rules/explosions.js";
 import { criticalEntry, criticalHitTableFor, isUnarmedSkill } from "../rules/criticals.js";
 import { BLOCKS_PER_TURN, acrobaticDefenseModifier, bareHandedParryModifier, mayTryAcrobatic, blockableAttack, canParryFlail, flailDefenseModifier, masterHalvesParry, multipleParryPenalty, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
 import { getCombatState, setCombatState } from "./combat-extensions.js";
@@ -120,6 +123,12 @@ interface DamageFlag {
   /** The body part an unarmed blow struck with, and who struck it (Campaigns p. 379). */
   strikingPart?: HitLocation;
   strikerUuid?: string;
+  /** Where the blast went off, as the row has it: the card offers it first (since API 1.72.0). */
+  blastPlacement?: BlastPlacement;
+  /** A large-area injury, as the row has it: the card ticks it (since API 1.72.0). */
+  largeArea?: boolean;
+  /** The fragments thrown, which the card offers to roll (since API 1.72.0). */
+  fragments?: FragmentationSpec;
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -225,6 +234,40 @@ function addApplyControls(message: any, html: HTMLElement): void {
     distance.title = game.i18n.localize("GWORLD.Chat.Distance");
   }
 
+  // Where the blast went off for whoever it lands on (Campaigns p. 415):
+  // beside them, pressed against them, or inside them. The row may say which,
+  // and the GM may say otherwise for this victim.
+  let placement: HTMLSelectElement | null = null;
+  if (flag.explosive && isRuleOn("explosions") && !isRuleOn("cinematicExplosions")) {
+    placement = document.createElement("select");
+    placement.className = "gc-location gc-placement";
+    placement.setAttribute("aria-label", game.i18n.localize("GWORLD.Blast.Placement"));
+    placement.title = game.i18n.localize("GWORLD.Blast.PlacementHint");
+    for (const value of ["", ...BLAST_PLACEMENTS]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = game.i18n.localize(`GWORLD.Blast.${value || "beside"}`);
+      if (value === (flag.blastPlacement ?? "")) option.selected = true;
+      placement.append(option);
+    }
+    // Pressed against or inside the victim is a direct hit: the distance
+    // stops meaning anything.
+    const sync = () => { if (distance) distance.disabled = placement!.value !== ""; };
+    placement.addEventListener("change", sync);
+    sync();
+  }
+
+  // A large-area injury (Campaigns p. 400): the average of the torso's DR and
+  // the least protected location's, and no hit location. The row may say so;
+  // the GM decides for anything else that washes over a whole body.
+  const largeArea = document.createElement("input");
+  largeArea.type = "checkbox";
+  largeArea.checked = flag.largeArea === true;
+  const largeAreaLabel = document.createElement("label");
+  largeAreaLabel.className = "gc-retreat";
+  largeAreaLabel.title = game.i18n.localize("GWORLD.LargeArea.Hint");
+  largeAreaLabel.append(largeArea, document.createTextNode(game.i18n.localize("GWORLD.LargeArea.Label")));
+
   // Armour marked "F" protects against the front alone (Characters p. 282),
   // and only a table playing with facing has arcs to tell apart: in basic
   // combat every blow meets the breastplate.
@@ -285,11 +328,15 @@ function addApplyControls(message: any, html: HTMLElement): void {
       fromBelow: !belowLabel.hidden && below.checked,
       distanceYards: distance ? Math.max(0, Number(distance.value) || 0) : 0,
       critical: critical?.checked ?? false,
+      placement: blastPlacementOf(placement?.value),
+      largeArea: largeArea.checked,
     });
   });
 
   row.append(select);
   if (distance) row.append(distance);
+  if (placement) row.append(placement);
+  row.append(largeAreaLabel);
   row.append(belowLabel);
   if (criticalLabel) row.append(criticalLabel);
   row.append(button);
@@ -356,8 +403,16 @@ async function applyFromCard(options: {
   critical: boolean;
   arc?: Arc | null;
   fromBelow?: boolean;
+  /** Where the blast went off for these victims (since API 1.72.0). */
+  placement?: BlastPlacement | null;
+  /** A large-area injury (since API 1.72.0). */
+  largeArea?: boolean;
 }): Promise<void> {
-  const { flag, hitLocation, distanceYards } = options;
+  const { flag, hitLocation } = options;
+  // A blast against or inside the victim is a direct hit, wherever the
+  // distance field was left.
+  const placement = flag.explosive && !isRuleOn("cinematicExplosions") ? blastPlacementOf(options.placement) : null;
+  const distanceYards = placement ? 0 : options.distanceYards;
   const targets = currentTargets();
   if (targets.length === 0) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.Chat.NoTarget"));
@@ -378,6 +433,8 @@ async function applyFromCard(options: {
         diceOfDamage: flag.diceOfDamage ?? 0,
         armorDivisor: flag.armorDivisor,
         ...(falloff ? { divisorPerYard: Number(falloff.divisorPerYard) || 3 } : {}),
+        ...(placement ? { placement } : {}),
+        ...(flag.maxDamage !== undefined ? { maxDamage: flag.maxDamage } : {}),
       })
     : null;
 
@@ -433,6 +490,11 @@ async function applyFromCard(options: {
     ...(options.arc ? { arc: options.arc } : {}),
     ...(options.fromBelow ? { fromBelow: true } : {}),
     ...(cinematicBlast ? { cinematicBlast: true } : {}),
+    // Against or inside the victim (Campaigns p. 415): the maximum is already
+    // in the figure for a contact blast, and an internal one is worked out at
+    // the vitals, through no DR, at x3.
+    ...(placement ? { blastPlacement: placement } : {}),
+    ...(options.largeArea ? { largeArea: true } : {}),
     // Yards from the blast's centre, for the damage hooks (since API 1.63.0).
     ...(flag.explosive ? { blastDistance: Math.max(0, distanceYards) } : {}),
     ...(flag.surge ? { surge: true } : {}),
@@ -531,7 +593,9 @@ async function applyFromCard(options: {
       : null,
     label: blast && !blast.direct
       ? `${flag.label} - ${game.i18n.format("GWORLD.Chat.Collateral", { yards: distanceYards })}`
-      : flag.label,
+      : placement
+        ? `${flag.label} - ${game.i18n.localize(`GWORLD.Blast.${placement}`)}`
+        : flag.label,
     damageType: flag.damageType,
     results: applied.map((result) => ({
       ...result,
@@ -568,6 +632,9 @@ async function applyFromCard(options: {
       knockbackStun: isRuleOn("knockback") ? result.knockbackStun : null,
       cinematicBlast: result.cinematicBlast,
       collapsed: result.collapsed,
+      // What set the DR a large-area blow met, and what the blast's placement
+      // did (Campaigns pp. 400, 415).
+      blastNotes: blastNotes(result, knockdowns.find((entry) => entry.result === result)?.actor),
       // A critical may have changed what the dice said, which is worth showing
       // beside the injury rather than leaving to be inferred.
       criticalDamage:
@@ -2029,10 +2096,82 @@ async function addDamageUndoControls(message: any, html: HTMLElement): Promise<v
   }
 }
 
+/**
+ * The lines a victim's entry on the applied card gets for a large-area blow
+ * and a blast against or inside them (Campaigns pp. 400, 415).
+ */
+function blastNotes(result: AppliedDamage, actor: any): string[] {
+  const notes: string[] = [];
+  if (result.largeArea) {
+    notes.push(game.i18n.format("GWORLD.LargeArea.Applied", {
+      dr: result.largeArea.dr,
+      location: game.i18n.localize(`GWORLD.HitLocation.${result.largeArea.leastProtected}`),
+    }));
+  }
+  if (result.blastPlacement === "internal") notes.push(game.i18n.localize("GWORLD.Blast.InternalApplied"));
+  if (result.blastPlacement === "contact") {
+    // Whoever lay on it is cover for everyone else: torso DR plus HP.
+    const torsoDr = Number(actor?.system?.derived?.drByLocation?.torso) || 0;
+    const hp = Number(actor?.system?.hp?.max) || 0;
+    notes.push(game.i18n.format("GWORLD.Blast.ContactApplied", { dr: contactCoverDr({ torsoDr, hp }) }));
+  }
+  return notes;
+}
+
+/**
+ * The fragments an explosion threw, offered as a roll of their own on its
+ * damage card (since API 1.72.0): their dice, their type and divisor, and --
+ * for fragments that linger -- how often they strike again.
+ */
+function addFragmentControls(message: any, html: HTMLElement): void {
+  const flag = damageFlag(message);
+  const spec = flag?.fragments;
+  if (!flag || !spec?.dice || !flag.explosive || !isRuleOn("explosions") || isRuleOn("cinematicExplosions")) return;
+  if (!(game.user?.isGM || message?.isAuthor)) return;
+  const root = html.querySelector<HTMLElement>(".gworld-chat");
+  if (!root || root.querySelector("[data-gworld-fragments]")) return;
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "gc-apply-button";
+  button.dataset.gworldFragments = "";
+  button.textContent = game.i18n.format("GWORLD.Fragments.Roll", { fragments: fragmentationLabel(spec) });
+  button.addEventListener("click", () => {
+    const actor = (() => {
+      try {
+        return (ChatMessage as any).implementation?.getSpeakerActor?.(message?.speaker) ?? null;
+      } catch {
+        return null;
+      }
+    })();
+    const strikes = fragmentationStrikes(spec.linger);
+    void rollDamage({
+      actor,
+      label: [
+        game.i18n.format("GWORLD.Fragments.Label", { label: flag.label, fragments: fragmentationLabel(spec) }),
+        ...(spec.linger
+          ? [game.i18n.format("GWORLD.Fragments.Lingers", { every: spec.linger.every, for: spec.linger.for, strikes })]
+          : []),
+      ].join(" \u2014 "),
+      formula: spec.dice,
+      damageType: spec.damageType,
+      armorDivisor: spec.armorDivisor,
+      // Not the weapon's own damage, so not its item: a listener adding to
+      // the weapon's blows has no business adding to its fragments.
+      source: "fragments",
+    });
+  });
+  const row = document.createElement("div");
+  row.className = "gc-apply";
+  row.append(button);
+  root.append(row);
+}
+
 /** Registers the chat hooks. Called once, at init. */
 export function registerChatHooks(): void {
   Hooks.on("renderChatMessageHTML", (message: any, html: HTMLElement) => {
     addApplyControls(message, html);
+    addFragmentControls(message, html);
     void addDefenseControls(message, html);
     void addDamageUndoControls(message, html);
     void addKnockdownControls(message, html);

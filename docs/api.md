@@ -429,6 +429,13 @@ and the roll continues.
       no 1/2D), or that the minimum is a stated percentage of the maximum. A
       note listing several weapons' minimums is reported, not read. The Basic
       Set's grenade launcher, ATGM and SAM carry 10, 30 and 200 yards.
+    - Since 1.72.0, also the blast and its fragments (see "Explosions" under
+      "Inside the system's own procedures"): `fragmentation` (the dice),
+      `fragmentationType` (blank for cutting), `fragmentationDivisor` (1),
+      `fragmentationLingerEvery` and `fragmentationLingerFor` (seconds, 0),
+      `blastPlacement` (`""`, `contact` or `internal`) and `largeArea`, and on
+      a ranged row `scatterSquared`. A `followUp` also keeps
+      `fragmentationType`, `fragmentationDivisor` and `blastPlacement`.
     - Since 1.30.0, also `skillName` and `readiesAfterAttack` (whether attacking
       leaves the weapon unready). The context's `skillLevel(name)` reads the
       actor's level in a skill as this preparation worked it out, or null; the
@@ -922,6 +929,55 @@ Two fields a module may read (since 1.62.0):
   distance alone, say; its reach grows to match. A linked or follow-up line
   carries `radiation` and `surge` as a mode does, and `surge` travels to the
   apply as `IncomingDamage.surge`.
+- **Explosions: placement, typed fragments, large-area injury** (since 1.72.0;
+  Campaigns pp. 400, 414-415).
+  - *Stored on a mode.* A melee or ranged mode (and its `linked` line) keeps,
+    beside `fragmentation`, the fragments' `fragmentationType` (blank for the
+    Basic Set's cutting, or any damage type) and `fragmentationDivisor` (1). A
+    mode also keeps `fragmentationLingerEvery` and `fragmentationLingerFor`,
+    seconds between strikes and seconds in all for fragments that go on
+    hurting (hot fragments: 10 and 60), 0 for none; `blastPlacement`, `""`
+    (beside the target), `contact` or `internal`; and `largeArea`, a blow that
+    is a large-area injury. A ranged mode keeps `scatterSquared`: a miss
+    scatters by the square of the margin, as for an unseen target. All default
+    to what a mode meant before, so existing data needs no migration.
+  - *The GDF reader* writes `fragmentationType` and `fragmentationDivisor`
+    where a bracket gives them (`[1d-1 cr]`, `[1d(0.2)]`), and only there; a
+    type the model doesn't know is still reported. The Basic Set's packs are
+    unchanged.
+  - *Rolling.* `roll.damage` (and the sheet's damage buttons) take
+    `fragmentationType`, `fragmentationDivisor`, `fragmentationLingerEvery`,
+    `fragmentationLingerFor`, `blastPlacement` and `largeArea`. The card prints
+    the fragments as a table does and how often they strike again. Its flag
+    carries `blastPlacement`, `largeArea` and `fragments`, a
+    `FragmentationSpec` `{ dice, damageType, armorDivisor, linger: { every,
+    for } | null }`. An explosive card with fragments has a button that rolls
+    them as their own damage card, with `source: "fragments"` and no item.
+  - *Applying.* An explosive card's apply row offers the placement (the row's
+    first). `contact` is a direct hit for the most the dice could do, against
+    DR as usual; the applied card gives everyone else's cover DR (the victim's
+    torso DR + HP). `internal` is a direct hit on the vitals at x3 through no
+    DR at all: no armour, natural DR, force field or Hardened, and no ablative
+    DR spent. Every card has a *Large area* box (ticked by the row): the blow
+    meets the average of the torso's DR and the lowest DR among the exposed
+    locations against its type, rounded up, and is a torso hit; with a single
+    location exposed it is an ordinary hit there. Trampling by something much
+    larger ticks it.
+  - *`IncomingDamage`* (the damage hooks' `damage`) gains `blastPlacement`,
+    `largeArea` and `exposedLocations` (hit locations; all of
+    `rules.LARGE_AREA_LOCATIONS` when left out). A `gworld.injury` listener may
+    set any of them. `gworld.armorDr` fires once per location a large-area
+    blow looks at, with that `hitLocation`. The result (`gworld.afterDamage`)
+    gains `largeArea` (`{ dr, leastProtected }` or null) and `blastPlacement`.
+  - *Rules:* `blastAt` takes `placement` and `maxDamage` and returns
+    `placement`, `ignoresDr` and `woundingModifier`; `blastPlacementOf`,
+    `BLAST_PLACEMENTS`, `INTERNAL_BLAST_WOUNDING`, `contactCoverDr({ torsoDr,
+    hp })`, `fragmentationSpec(row)`, `fragmentationLabel(spec)`,
+    `fragmentationStrikes(linger)`, `FRAGMENTATION_TYPE`; `largeAreaDr({
+    torsoDr, exposed })`, `largeAreaSingleLocation(exposed)`,
+    `LARGE_AREA_LOCATIONS`; `scatterDistance` takes `squared`. The sheet's
+    Scatter action offers the character's explosive and area rows, filling in
+    the fragments and the squared miss.
 - **Modifier areas** (since 1.63.0): `areas.add(scene, { id?, label, center,
   radius, region, lines, expires })` keeps an area on a scene: a circle
   (`center` in scene pixels, `radius` in yards) or a scene region by id. Each

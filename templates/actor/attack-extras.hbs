@@ -23,6 +23,8 @@
             data-damage-label="{{atk.name}} {{#if second.label}}{{second.label}}{{else}}{{localize 'GWORLD.Attack.FollowUp'}}{{/if}}"
             data-armor-divisor="{{#if second.armorDivisor}}{{second.armorDivisor}}{{else}}1{{/if}}"
             data-explosive="{{#if second.explosive}}1{{/if}}" data-fragmentation="{{second.fragmentation}}"
+            data-fragmentation-type="{{second.fragmentationType}}" data-fragmentation-divisor="{{second.fragmentationDivisor}}"
+            data-blast-placement="{{second.blastPlacement}}"
             data-radiation="{{#if second.radiation}}1{{/if}}" data-surge="{{#if second.surge}}1{{/if}}"
             data-tooltip="{{#if second.followUp}}{{localize 'GWORLD.Attack.FollowUpHint'}}{{else}}{{localize 'GWORLD.Attack.LinkedHint'}}{{/if}}"
             >+{{second.damage}} {{second.damageType}}</span>
