@@ -811,6 +811,14 @@
   --color-divider: color-mix(in srgb, var(--v2-ink) 17%, transparent);
   --color-neutral-700: var(--v2-ink-muted);
 }
+/* A fold standing straight in a tab keeps its own height. A tab is a flex
+   column that scrolls, and `overflow: hidden` -- what rounds a fold's corners
+   -- zeroes the automatic minimum size a flex item would otherwise have, so a
+   tab taller than the window squeezed the Combat tab's folds to nothing. */
+.gworld.v2 .v2-tab > .v2-group { flex: none; }
+/* A lone button closing a profile section keeps its own width: the section is
+   a flex column, which would otherwise stretch it across the panel. */
+.gworld.v2 .v2-profile .isec > .v2-button { align-self: flex-start; }
 .gworld.v2 .v2-group-head {
   display: flex;
   align-items: center;

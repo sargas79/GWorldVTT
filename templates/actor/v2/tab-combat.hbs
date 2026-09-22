@@ -15,6 +15,14 @@
     {{> "gworld.part.combat-maneuver"}}
   </div>
 
+  {{!-- The actions a fight is fought with, straight under the maneuver that
+        chooses one: these buttons are reached for every turn, while everything
+        below is read now and then. --}}
+  <details class="v2-group v2-drawer" data-v2-fold="combat:actions" {{#unless (includes @root.v2.folded "combat:actions")}}open{{/unless}}>
+    <summary class="v2-group-head"><span class="v2-group-title">{{localize "GWORLD.Section.Actions"}}</span><span class="v2-chevron" aria-hidden="true">{{> "gworld.v2icon.chevron"}}</span></summary>
+    <div class="v2-drawer-body">{{> "gworld.part.combat-actions"}}{{> "gworld.part.combat-movement"}}</div>
+  </details>
+
   <div class="v2-combat-grid">
     {{!-- Every attack, selectable; the preview beside it shows the selected one. --}}
     <div class="v2-panel v2-panel-dark v2-readied">
@@ -233,7 +241,6 @@
     {{/if}}
   </div>
 
-  {{!-- Every other combat and body action, in folds. --}}
   {{!-- The weapon tables, as a character sheet prints them: every carried weapon's
        modes under the book's column headings, a weapon with several modes heading them. --}}
   {{#if v2.combat.weaponTables.length}}
@@ -257,10 +264,7 @@
     </div>
   {{/if}}
 
-  <details class="v2-group v2-drawer" data-v2-fold="combat:actions" {{#unless (includes @root.v2.folded "combat:actions")}}open{{/unless}}>
-    <summary class="v2-group-head"><span class="v2-group-title">{{localize "GWORLD.Section.Actions"}}</span><span class="v2-chevron" aria-hidden="true">{{> "gworld.v2icon.chevron"}}</span></summary>
-    <div class="v2-drawer-body">{{> "gworld.part.combat-actions"}}{{> "gworld.part.combat-movement"}}</div>
-  </details>
+  {{!-- Everything else a body does, in folds that start shut. --}}
   <details class="v2-group v2-drawer" data-v2-fold="combat:feats" data-v2-default="closed" {{#if (includes @root.v2.opened "combat:feats")}}open{{/if}}>
     <summary class="v2-group-head"><span class="v2-group-title">{{localize "GWORLD.Section.PhysicalFeats"}}</span><span class="v2-chevron" aria-hidden="true">{{> "gworld.v2icon.chevron"}}</span></summary>
     <div class="v2-drawer-body">{{> "gworld.part.body-feats"}}</div>

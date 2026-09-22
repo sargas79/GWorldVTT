@@ -110,6 +110,7 @@ import {
   templateFromItem,
 } from "../character-templates.js";
 import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
+import { reactionProfile } from "../sheet-v2/reactions.js";
 import { rollDisarm } from "../disarm.js";
 import { rollStrikeToBreak, weaponTargetsFor } from "../weapon-damage.js";
 import { buyAmmunition, chooseAndLoad, reloadWeapon } from "../ammunition.js";
@@ -940,6 +941,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // character's Move after encumbrance, and what each hex costs depends on
       // the direction travelled and the posture held.
       tactical: tacticalPanel(system, derived),
+
+      // What people make of this character before anybody rolls: the social
+      // traits added up, and the conditional ones named. The same sources the
+      // reaction dialog offers.
+      reactionProfile: reactionProfile(derived.reactions ?? []),
 
       // Which rules the table is playing. A control for a rule that is off is
       // not disabled, it is absent: there is nothing to explain about a rule
