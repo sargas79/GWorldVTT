@@ -414,7 +414,62 @@
       "Reach": "reach {yards}",
       "Refused": "{option} can't be used with this defense: {reason}",
       "NoneYet": "None yet.",
-      "NoFields": "This item has nothing else to set."
+      "NoFields": "This item has nothing else to set.",
+      "ExtraShots": "spends {shots} more shots",
+      "Malfunction": "Malf. {number}",
+      "RateOfFire": "RoF {rof}",
+      "Recoil": "Rcl {recoil}"
+    },
+    "Spraying": {
+      "Title": "Spraying Fire",
+      "Intro": "Split one burst of up to {rof} shots over the targets, in the order it sweeps them (Campaigns p. 409). Each gets its own attack at the shots aimed at it, at Rcl {recoil} for the first and +1 more for each target after. Swinging between targets more than a yard apart wastes a shot a yard, two above RoF 16.",
+      "Sweep": "Sweep",
+      "From": "From {name}",
+      "Target": "Target",
+      "Yards": "Yards from last",
+      "Shots": "Shots",
+      "Summary": "{used} of {rof} shots, {wasted} wasted in the sweep.",
+      "TooWide": "The targets spread over {degrees}°; a spray covers 30° at most.",
+      "Fire": "Spray",
+      "Single": "One target",
+      "FixedShots": "{shots} shots at this target, Rcl {recoil} (Spraying Fire).",
+      "Card": "Spraying Fire: target {index} of {count}, {shots} shots, Rcl {recoil}",
+      "Problem": {
+        "rateOfFire": "Spraying Fire needs RoF 5 or more.",
+        "targets": "Spraying Fire needs two targets or more.",
+        "noShots": "Every target needs at least one shot.",
+        "tooManyShots": "That is {used} shots with the sweep, more than RoF {rof}."
+      }
+    },
+    "Suppression": {
+      "Title": "Suppression Fire",
+      "Intro": "Hose a zone two yards across with up to {rof} shots until your next turn (Campaigns p. 409). Anyone who enters it, or the swath a yard either side of your line of fire to it, is attacked. The zone is centred on the targeted token, or on your latest template.",
+      "Zones": "Adjacent zones (5+ shots each)",
+      "Mounted": "Vehicle or tripod mount (cap 8 + rapid-fire bonus)",
+      "Fire": "Suppress",
+      "Card": "Suppression Fire: {weapon}",
+      "Zone": "Zone {index}: {shots} shots, skill at most {cap}",
+      "Explains": "Attacks whoever enters a zone before the firer's next turn, at a random hit location.",
+      "HitsLeft": "{hits} shots can still hit",
+      "AttackButton": "Attack {name}",
+      "AttackTargeted": "Attack the targeted token",
+      "TargetOne": "Target the one token entering the zone.",
+      "End": "End suppression",
+      "Ended": "This suppression has ended.",
+      "NoHitsLeft": "Every shot has hit: this suppression can score no more hits this turn.",
+      "NotYours": "Only the GM or the firer's owner resolves the firer's attacks.",
+      "NoToken": "The firer needs a token on the scene to lay down suppression fire.",
+      "NoZone": "Target one token, or place a template, to say where the zone is.",
+      "NeedsRoF": "{name} can't lay down suppression fire: it needs RoF {rof} or more.",
+      "Cap": "Suppression fire cap ({cap})",
+      "Attack": "Suppression Fire: {weapon} at {name}",
+      "RandomLocation": "Suppression fire: random hit location",
+      "Entered": "{name} entered the zone of {weapon}",
+      "Problem": {
+        "rateOfFire": "Suppression Fire needs RoF 5 or more.",
+        "tooManyShots": "No more than RoF {rof} shots.",
+        "tooManyZones": "Several zones need RoF 10+ and at least {per} shots in each."
+      }
     },
     "Migration": {
       "Progress": "{label}: {done} of {total}",

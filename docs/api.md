@@ -200,6 +200,16 @@ and the roll continues.
     weapon's own and the settings chosen); and `rateOfFireMultiplier`, which
     caps the shots this attack may fire (Campaigns p. 408, `0.5` to halve it,
     and two halvings quarter it). The attack card names each one.
+  - Since 1.70.0, what the setting does to the burst: `rateOfFire`, the Rate
+    of Fire this attack is fired at in place of the weapon's, above it or
+    below (`rateOfFireMultiplier` then applies to it; where two options set
+    one, the higher counts); `recoil`, the Recoil its hits are counted with
+    in place of the weapon's (Campaigns p. 373; the higher of two counts);
+    and `recoilModifier`, added to the Recoil after that, never below 1. The
+    shots asked for are capped by the result and by what is left in the
+    weapon, and the card names the Rate of Fire and Recoil an option changed.
+    A weapon of RoF 1 still asks for its shots where an attack option is
+    offered on it, so an option that raises its Rate of Fire can be used.
 
   `refuse(context)` returns a reason to disable the option. `context.chosen` lists
   the other options chosen.
@@ -276,6 +286,12 @@ and the roll continues.
     to `modifiers` for the feinter's roll, or set `refusal` (text) to stop it;
   - Since 1.19.0, a `gworld.attackModifiers` listener may set `refusal` (text): the
     attack isn't rolled, and the user is told why;
+  - Since 1.70.0, `gworld.attackModifiers` also gets `spraying`: null, or for
+    one target of a Spraying Fire burst (Campaigns p. 409) `{ index, count,
+    shots, recoil, wasted }` -- which target this is (from 0) of how many,
+    the shots aimed at it, the Recoil its place in the sweep gives it, and
+    the shots wasted swinging to it. Each target is its own attack with only
+    that token in `targetTokens`;
   - Since 1.69.0, `gworld.attackModifiers` also gets `rangeYards`, the range the
     shot is taken at (null for a melee attack), and `minRange`, the row's
     minimum range (0 for none). A shot at a target inside the minimum range
@@ -395,6 +411,14 @@ and the roll continues.
       follows. The Parry isn't worked out again from a changed `skillLevel`.
     - Since 1.28.0, also `feint`: whether the Combat tab offers a Feint from the
       row. Melee rows start true and ranged rows false, derived modes included;
+    - Since 1.70.0, a ranged row's `recoil` (a whole number, 0 for a
+      muscle-powered weapon, which counts as 1) is documented as one a
+      listener may change: it is what a burst's hits are counted with. Also
+      `noSprayingFire` and `noSuppressionFire`, both false: set either true
+      and the row isn't offered Spraying Fire, or Suppression Fire is refused
+      from it, whatever its Rate of Fire. The row also carries `mount` (the
+      mode's `""`, `rest`, `bipod` or `mounted`), read-only; `mounted` starts
+      a suppression at the vehicle or tripod cap.
     - Since 1.69.0, also `minRange` on a ranged row: the least distance in yards
       it can hit at, 0 for none, from the mode's own `minRange` (and in `basis`
       beside the other ranges). The Combat tab shows it beside the range, and an
@@ -846,7 +870,28 @@ Two fields a module may read (since 1.62.0):
   stands in it), `through` (the line from the roller to the one token
   targeted, or the roll's `subject`, crosses it) or `both`. `expires` is a
   world time in seconds. Every success roll takes the lines of the areas that
-  apply. `areas.remove(scene, id)` and `areas.list(scene)`.
+  apply. `areas.remove(scene, id)` and `areas.list(scene)`. Since 1.70.0 a
+  circle may also take `from` (scene pixels): the area is then a band, every
+  point within `radius` of the line from `from` to `center`, as a swath of
+  fire from the firer to where they aimed.
+- **Spraying and Suppression Fire** (since 1.70.0, Campaigns p. 409), under
+  the `rapidFire` switch. A ranged attack from a row of RoF 5+ with two or
+  more tokens targeted offers to spray the burst: the targets are put in the
+  order it sweeps them, and each is its own attack (see `spraying` on
+  `gworld.attackModifiers`). All-Out Attack (Suppression Fire) is offered
+  where the character has a row of RoF 5+; an attack from any other row is
+  refused. Firing it posts a card whose `gworld.suppression` flag holds the
+  suppression (`actorUuid`, `tokenUuid`, `sceneId`, `itemId`, `modeIndex`,
+  `weapon`, `base`, `recoil`, `mounted`, `from`, `zones` as `{ center, shots
+  }`, `radius` in yards, `hitsLeft` and `ended`), and the active GM's client
+  keeps each zone as a band area (`areas.list`) with the id
+  `gworld-suppression-<message id>-<n>` and no lines, removed when the
+  firer's next turn starts. A token moving into or through a zone gets a
+  GM-only prompt, and the card lists whoever stands in a zone; their buttons
+  roll the attack, tagged `suppressionFire`, at the normal modifiers with
+  the rapid-fire bonus for the zone's shots, capped at 6 (8 on a vehicle or
+  tripod mount) plus that bonus, and a hit is recorded at a random location
+  (through `gworld.randomHitLocation`) for the damage roll.
 - **Detection rolls** (since 1.63.0): a sense roll from the sheet is tagged
   with its sense (`vision`, `hearing`, `tasteSmell`, `touch`) and `detection`,
   and so are Observation (also `vision`), Search and Tracking rolls; a
