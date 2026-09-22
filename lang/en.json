@@ -53,7 +53,11 @@
       "HTAbbr": "HT",
       "Will": "Will",
       "Per": "Perception",
-      "FromTraits": "from traits"
+      "FromTraits": "from traits",
+      "FromTemplate": "from template",
+      "Bought": "{key} as bought",
+      "Score": "{key} score {score}",
+      "ScoreHint": "The score the character has and rolls against: the bought figure with what traits, a racial template and modules add"
     },
     "Secondary": {
       "HP": "Hit Points",
@@ -992,6 +996,7 @@
       "SpendMore": "Spend the next step of points",
       "SpendLess": "Take back the last step of points",
       "NoDefault": "No default",
+      "BoughtUpFromDefault": "Bought up from its default: the default counts toward the points spent",
       "Trained": "skills trained",
       "CappedByPrerequisite": "capped by prerequisite",
       "NoPrerequisite": "No prerequisite",
@@ -4068,10 +4073,9 @@
       "Open": "Open the sheet",
       "OpenNamed": "Open {name}",
       "Remove": "Leave the party",
-      "MoveUp": "Move up",
-      "MoveDown": "Move down",
       "MissingName": "Missing",
       "Missing": "This actor no longer exists. Take it off the list.",
+      "OnlyGMTakesOut": "Only a GM can take a member out of the party.",
       "AlreadyIn": "{name} is already in {party}.",
       "CannotJoin": "{name} cannot join a party: only characters and NPCs can.",
       "Hp": "HP",

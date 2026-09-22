@@ -89,10 +89,6 @@
 
             <span class="v2-row-actions party-actions">
               {{#if @root.editable}}
-                <button type="button" class="v2-row-icon" data-action="moveMember" data-by="-1"
-                        data-tooltip="{{localize 'GWORLD.Party.MoveUp'}}" aria-label="{{localize 'GWORLD.Party.MoveUp'}}">{{> "gworld.v2icon.arrowUp"}}</button>
-                <button type="button" class="v2-row-icon" data-action="moveMember" data-by="1"
-                        data-tooltip="{{localize 'GWORLD.Party.MoveDown'}}" aria-label="{{localize 'GWORLD.Party.MoveDown'}}">{{> "gworld.v2icon.arrowDown"}}</button>
                 <button type="button" class="v2-row-icon v2-row-delete" data-action="removeMember"
                         data-tooltip="{{localize 'GWORLD.Party.Remove'}}" aria-label="{{localize 'GWORLD.Party.Remove'}}">{{> "gworld.trash"}}</button>
               {{/if}}

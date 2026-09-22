@@ -5,13 +5,18 @@
  * Only the rendered list is changed; the actors' own folders are left alone.
  * Each render of the directory starts from a fresh list, so the nesting is
  * done again each time. Dropping an actor on the party's row puts it in the
- * party.
+ * party; a GM dragging a member out of it, to a folder or anywhere else in
+ * the list, takes it out. The members are listed by name.
  */
 
-import { addMembers, resolveMember, worldParties } from "../party.js";
+import { addMembers, removeMember, resolveMember, worldParties } from "../party.js";
+import { membersByName } from "./roster.js";
 
 /** The parties folded shut, by id. Expanded until somebody folds one. */
 const folded = new Set<string>();
+
+/** The member being dragged out of the party's row, if one is. */
+let dragged: { party: any; uuid: string } | null = null;
 
 /** How long Foundry's search box waits before filtering (its SearchFilter's default delay), plus a little. */
 const SEARCH_SETTLE_MS = 300;
@@ -74,14 +79,27 @@ export function nestParties(html: HTMLElement): void {
 
     const list = document.createElement("ol");
     list.className = "subdirectory plain gworld-party-members";
-    for (const member of (party.system?.members ?? []) as Array<{ uuid: string }>) {
-      const memberRow = rowOf(html, String(member?.uuid ?? ""));
-      if (memberRow && memberRow !== row) list.append(memberRow);
+    const members = ((party.system?.members ?? []) as Array<{ uuid: string }>).map((m) => {
+      const uuid = String(m?.uuid ?? "");
+      return { uuid, actor: resolveMember(uuid) };
+    });
+    for (const member of membersByName(members)) {
+      const memberRow = rowOf(html, member.uuid);
+      if (!memberRow || memberRow === row) continue;
+      memberRow.addEventListener("dragstart", () => {
+        dragged = { party, uuid: member.uuid };
+      });
+      memberRow.addEventListener("dragend", () => {
+        dragged = null;
+      });
+      list.append(memberRow);
     }
     row.append(list);
 
     if (party.isOwner) wireDrop(row, party);
   }
+
+  wireDragOut(html);
 
   // Foundry's search hides a row whose name does not match. A member that
   // matches stays visible, so its party's row must too, or the member is
@@ -101,6 +119,41 @@ export function nestParties(html: HTMLElement): void {
       }
     }, SEARCH_SETTLE_MS);
   });
+}
+
+/**
+ * A member dropped anywhere in the list but a party's row leaves its party,
+ * and Foundry then files it in the folder it was dropped on, if any. Only a GM
+ * can take a member out: anyone else's drop is refused, and the member stays.
+ * The directory's element outlives its renders, so this is wired once.
+ */
+function wireDragOut(html: HTMLElement): void {
+  if (html.dataset.gworldPartyDragOut) return;
+  html.dataset.gworldPartyDragOut = "wired";
+  html.addEventListener("drop", (event) => {
+    const leaving = dragged;
+    dragged = null;
+    if (!leaving) return;
+    // Only the member whose drag this is: a stale mark left by a drag that
+    // never ended must not take somebody out on an unrelated drop.
+    let data: Record<string, unknown> | null = null;
+    try {
+      data = foundry.applications.ux.TextEditor.implementation.getDragEventData(event);
+    } catch {
+      return;
+    }
+    if (data?.type !== "Actor" || data?.uuid !== leaving.uuid) return;
+    // On a party's row: its own drop handler joins that party, which takes
+    // the member out of this one; on its own row, nothing changes.
+    if ((event.target as HTMLElement | null)?.closest?.("li.gworld-party")) return;
+    if (!game.user?.isGM) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      ui.notifications?.warn(game.i18n.localize("GWORLD.Party.OnlyGMTakesOut"));
+      return;
+    }
+    void removeMember(leaving.party, leaving.uuid);
+  }, { capture: true });
 }
 
 export function registerPartySidebar(): void {

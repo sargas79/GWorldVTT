@@ -759,14 +759,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       sheetId: this.id,
       skillOrderAlphabetical: skillOrder === "alphabetical",
 
-      // The input edits the bought figure; what traits add is shown beside it,
-      // with the figure the rest of the sheet actually uses.
+      // The input edits the bought figure; what traits and a racial template
+      // add is shown beside it, with the score the rest of the sheet actually
+      // uses whenever the two differ (#585).
       attributeCards: ATTRIBUTE_KEYS.map((key) => ({
         key,
         label: game.i18n.localize(`GWORLD.Attribute.${key}`),
         value: system.attributes[key],
         effective: derived.attributes?.[key] ?? system.attributes[key],
+        raised: (derived.attributes?.[key] ?? system.attributes[key]) !== system.attributes[key],
         bonus: derived.attributeBonuses?.[key] ?? 0,
+        // What a racial template granted (Characters p. 261), unbilled.
+        racial: Number(system.racial?.[key]) || 0,
         // What add-on modules add, each with its label.
         addonLines: (derived.extensionBonuses?.attributes ?? []).filter((line: { attribute: string }) => line.attribute === key),
         // The score is what the sheet shows and what points were paid for; the

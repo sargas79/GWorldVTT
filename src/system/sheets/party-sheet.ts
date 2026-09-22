@@ -24,10 +24,11 @@ import { CONTROL_RATINGS } from "../../rules/legality.js";
 import { isRuleOn } from "../optional-rules.js";
 import { RulesSettings } from "../apps/rules-settings.js";
 import { CompendiumSourcesSettings } from "../apps/compendium-sources.js";
-import { addMembers, moveMember, partyOf, removeMember, resolveMember } from "../party.js";
+import { addMembers, partyOf, removeMember, resolveMember } from "../party.js";
 import {
   canJoin,
   memberRow,
+  membersByName,
   partyLanguages,
   partySkills,
   termsFrom,
@@ -111,7 +112,6 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     actions: {
       openMember: GWorldPartySheet.#onOpenMember,
       removeMember: GWorldPartySheet.#onRemoveMember,
-      moveMember: GWorldPartySheet.#onMoveMember,
       addMembers: GWorldPartySheet.#onAddMembers,
       addPlayers: GWorldPartySheet.#onAddPlayers,
       roll: GWorldPartySheet.#onRoll,
@@ -150,11 +150,12 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
   /* ── context ─────────────────────────────────────────────────────────── */
 
+  /** The members by name (#584), not in the order they joined. */
   #members(): ResolvedMember[] {
-    return ((this.actor.system?.members ?? []) as Array<{ uuid: string }>).map((m) => {
+    return membersByName(((this.actor.system?.members ?? []) as Array<{ uuid: string }>).map((m) => {
       const uuid = String(m?.uuid ?? "");
       return { uuid, actor: resolveMember(uuid) };
-    });
+    }));
   }
 
   override async _prepareContext(options: object): Promise<Record<string, unknown>> {
@@ -477,11 +478,6 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static async #onRemoveMember(this: GWorldPartySheet, _event: Event, target: HTMLElement) {
     const uuid = target.closest<HTMLElement>("[data-member-uuid]")?.dataset.memberUuid ?? "";
     await removeMember(this.actor, uuid);
-  }
-
-  static async #onMoveMember(this: GWorldPartySheet, _event: Event, target: HTMLElement) {
-    const uuid = target.closest<HTMLElement>("[data-member-uuid]")?.dataset.memberUuid ?? "";
-    await moveMember(this.actor, uuid, target.dataset.by === "-1" ? -1 : 1);
   }
 
   static async #onAddMembers(this: GWorldPartySheet) {

@@ -64,7 +64,7 @@ export interface ImprovementRow {
 
 export interface ProgressionInput {
   unspent: number;
-  attributes: Array<{ key: Attribute; score: number; cost: number }>;
+  attributes: Array<{ key: Attribute; score: number; cost: number; effective?: number }>;
   secondaries: Array<{ key: SecondaryKey; label: string; purchased: number; value: number; cost: number }>;
   items: Array<{ id: string; name: string; type: "skill" | "technique" | "spell"; attributeScore: number | null; item: LevelledItem }>;
   traits: Array<{ id: string; name: string; category: string; points: number; trait: PricedTrait }>;
@@ -80,7 +80,7 @@ export interface ProgressionInput {
 export function improvementRows(input: ProgressionInput): ImprovementRow[] {
   const rows: ImprovementRow[] = [];
   for (const a of input.attributes) {
-    rows.push({ kind: "upgrade", key: `attribute:${a.key}`, category: "attributes", name: a.key, invested: a.cost, owned: true, improve: attributeImprovement(a.key, a.score, input.unspent) });
+    rows.push({ kind: "upgrade", key: `attribute:${a.key}`, category: "attributes", name: a.key, invested: a.cost, owned: true, improve: attributeImprovement(a.key, a.score, input.unspent, a.effective ?? a.score) });
   }
   for (const s of input.secondaries) {
     rows.push({ kind: "upgrade", key: `secondary:${s.key}`, category: "secondaries", name: s.label, invested: s.cost, owned: s.purchased !== 0, improve: secondaryImprovement(s.key, s.purchased, s.value, input.unspent) });

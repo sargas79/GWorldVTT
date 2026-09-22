@@ -5,7 +5,7 @@ import {
   canJoin,
   lockedTerms,
   memberRow,
-  moveMember,
+  membersByName,
   partyLanguages,
   partySkills,
   removeMember,
@@ -32,7 +32,6 @@ describe("the member list", () => {
   it("does not change the list it was given", () => {
     addMembers(list, ["Actor.c"]);
     removeMember(list, "Actor.a");
-    moveMember(list, "Actor.b", -1);
     expect(list).toEqual([{ uuid: "Actor.a" }, { uuid: "Actor.b" }]);
   });
 
@@ -41,12 +40,19 @@ describe("the member list", () => {
     expect(removeMember(list, "Actor.zzz")).toEqual(list);
   });
 
-  it("moves a member a step either way, and not past an end", () => {
-    expect(moveMember(list, "Actor.b", -1)).toEqual([{ uuid: "Actor.b" }, { uuid: "Actor.a" }]);
-    expect(moveMember(list, "Actor.a", 1)).toEqual([{ uuid: "Actor.b" }, { uuid: "Actor.a" }]);
-    expect(moveMember(list, "Actor.a", -1)).toEqual(list);
-    expect(moveMember(list, "Actor.b", 1)).toEqual(list);
-    expect(moveMember(list, "Actor.zzz", 1)).toEqual(list);
+  it("shows the members by name, whatever order they joined in (#584)", () => {
+    const joined = [
+      { uuid: "Actor.z", actor: { name: "Zara" } },
+      { uuid: "Actor.gone", actor: null },
+      { uuid: "Actor.a", actor: { name: "aria" } },
+      { uuid: "Actor.b2", actor: { name: "Borin" } },
+      { uuid: "Actor.c", actor: { name: "Ćelia" } },
+      { uuid: "Actor.b1", actor: { name: "Borin" } },
+    ];
+    expect(membersByName(joined).map((m) => m.uuid)).toEqual([
+      "Actor.a", "Actor.b1", "Actor.b2", "Actor.c", "Actor.z", "Actor.gone",
+    ]);
+    expect(joined[0]!.uuid).toBe("Actor.z");
   });
 });
 

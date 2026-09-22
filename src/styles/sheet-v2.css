@@ -265,6 +265,8 @@
 .gworld.v2 .v2-rail {
   display: flex;
   flex-direction: column;
+  /* Foundry spreads a nav's tabs evenly; the rail lists them from the top. */
+  justify-content: flex-start;
   gap: 2px;
   padding: 12px 0;
   border-right: 1px solid var(--v2-frame-line);
@@ -503,17 +505,21 @@
   display: grid;
   grid-template-columns: minmax(210px, 0.85fr) minmax(0, 1.5fr) minmax(210px, 0.85fr);
   gap: 14px;
-  align-items: stretch;
 }
 .gworld.v2 .v2-overview-middle,
 .gworld.v2 .v2-overview-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 /*
- * A column is as tall as the tallest of the three, and the slack goes into one
- * panel of each -- the one marked to take it, whose rows then spread over the
- * height -- rather than being left as a block of bare frame under the column.
+ * Every page's columns are top-aligned: each ends where its panels do (#587).
+ * Stretching them to the tallest left a short column's last panel as a block
+ * of empty panel, or spread its rows apart, whenever the character had little
+ * in it.
  */
-.gworld.v2 .v2-overview-middle > .v2-panel:last-child { flex: 1 1 auto; }
-.gworld.v2 .v2-overview-side > .v2-fills { flex: 1 1 auto; justify-content: space-between; }
+.gworld.v2 .v2-overview,
+.gworld.v2 .v2-combat-grid,
+.gworld.v2 .v2-inventory-grid,
+.gworld.v2 .v2-progress-grid,
+.gworld.v2 .v2-journal-grid,
+.gworld.v2 .v2-journal-pane { align-items: start; }
 .gworld.v2 .v2-active-skills .v2-skill-list { flex: 1 1 auto; min-height: 0; }
 
 .gworld.v2 .v2-attack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
@@ -873,6 +879,8 @@
   cursor: pointer;
 }
 .gworld.v2 button.v2-row-level:hover { color: var(--v2-steel); }
+/* A skill bought up from its default (Characters p. 173). */
+.gworld.v2 .v2-from-default { margin-left: 1px; font-size: 12px; color: var(--v2-steel); cursor: help; }
 .gworld.v2 .v2-row-cp { font-family: var(--font-heading); font-size: 16px; font-weight: 600; white-space: nowrap; text-align: right; }
 .gworld.v2 .v2-levels { font-family: var(--font-body); font-size: 12px; color: var(--v2-ink-muted); }
 
@@ -1170,10 +1178,6 @@
   grid-template-columns: minmax(220px, 1fr) minmax(260px, 1fr) minmax(250px, 0.95fr);
   gap: 14px;
 }
-/* The panels of a stacked column fill it, as on the Overview. */
-.gworld.v2 .v2-combat-side > .v2-panel:last-child,
-.gworld.v2 .v2-inventory-main > .v2-panel:last-child,
-.gworld.v2 .v2-journal-side > .v2-panel:last-child { flex: 1 1 auto; }
 .gworld.v2 .v2-attack-list { display: flex; flex-direction: column; gap: 6px; max-height: 520px; overflow-y: auto; padding-right: 2px; }
 .gworld.v2 .v2-attack[data-v2-row] { cursor: pointer; }
 .gworld.v2 .v2-attack[data-v2-row]:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: 1px; }
@@ -1691,7 +1695,7 @@
   .gworld.v2 .v2-detail-col { overflow: visible; }
   .gworld.v2 .v2-skill { grid-template-columns: 22px minmax(100px, 1fr) 52px 100px 34px auto; }
   .gworld.v2 .v2-combat-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .gworld.v2 .v2-combat-side { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .gworld.v2 .v2-combat-side { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 }
 
 @container v2sheet (max-width: 700px) {

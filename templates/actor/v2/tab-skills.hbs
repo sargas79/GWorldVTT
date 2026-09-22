@@ -92,7 +92,7 @@
                     <button type="button" class="v2-row-level rollable" data-action="roll" data-roll-type="skill"
                             data-roll-label="{{row.name}}" data-roll-target="{{row.level}}" {{#if row.attribute}}data-based-on="{{row.attribute}}"{{/if}}
                             {{#if row.bonusLines.length}}data-tooltip="{{bonusLines row.bonusLines}}"{{/if}}
-                            aria-label="{{localize 'GWORLD.SheetV2.RollSkill' name=row.name level=row.level}}">{{row.level}}</button>
+                            aria-label="{{localize 'GWORLD.SheetV2.RollSkill' name=row.name level=row.level}}">{{row.level}}{{#if row.boughtUpFromDefault}}<sup class="v2-from-default" data-tooltip="{{localize 'GWORLD.Skill.BoughtUpFromDefault'}}" aria-label="{{localize 'GWORLD.Skill.BoughtUpFromDefault'}}">&uarr;</sup>{{/if}}</button>
                   {{else if row.open}}
                     {{#if @root.editable}}
                       <button type="button" class="v2-badge v2-badge-muted" data-action="chooseTechniqueSkill"

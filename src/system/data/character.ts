@@ -108,10 +108,12 @@ import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalti
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
 import { suitedLevel,
+  defaultCreditPoints,
   effectiveSkillLevel,
   namedDefaultLevel,
   normalizeSkillName,
   relativeLevelForPoints,
+  skillLevel as boughtSkillLevel,
   techniqueLevelsForPoints,
   resolveTechniqueDefaults,
   rolledSkillName as rolledSkillOf,
@@ -1666,6 +1668,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const talent: MagicTalent = { magery: traits.magery, ritualMagery: traits.ritualMagery };
 
     // Pass one: levels that depend only on attributes.
+    const skillBonusTotals = new Map<unknown, number>();
     for (const item of skillItems) {
       const sys = item.system as {
         attribute: SkillAttribute; difficulty: Difficulty; points: number; bonus: number;
@@ -1713,10 +1716,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         bonus: bonusLines.total,
         defaults: attributeDefaults,
       });
+      skillBonusTotals.set(item, bonusLines.total);
+      const credit = resolved?.credit ?? 0;
       sys.derived = {
         level: resolved?.level ?? null,
         fromDefault: resolved?.fromDefault ?? true,
-        relativeLevel: relativeLevelForPoints(sys.points, sys.difficulty),
+        relativeLevel: relativeLevelForPoints(sys.points + credit, sys.difficulty),
+        // What the best default is worth toward buying the skill up
+        // (p. 173), so the next step is priced from it.
+        defaultCredit: attributeDefaults.length
+          ? defaultCreditPoints(Math.max(...attributeDefaults), attributeScore(sys.attribute), sys.difficulty)
+          : 0,
+        boughtUpFromDefault: credit > 0,
         hasDefault: attributeDefaults.length > 0,
         talentBonus: lineValue("talent"),
         toolBonus: lineValue("tools"),
@@ -1739,6 +1750,24 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
       if (!skillDefaults.length) continue;
       const best = Math.max(...skillDefaults);
+      // A skill default is bought up from like any other (p. 173), when it
+      // is worth more than the attribute default already counted.
+      const attr = attributeScore(sys.attribute);
+      const skillCredit = defaultCreditPoints(best, attr, sys.difficulty);
+      if (skillCredit > (sys.derived.defaultCredit ?? 0)) {
+        sys.derived.defaultCredit = skillCredit;
+        const points = Number(sys.points) || 0;
+        const bonus = skillBonusTotals.get(item) ?? 0;
+        const bought = points > 0 ? boughtSkillLevel(attr, points + skillCredit, sys.difficulty, bonus) : null;
+        if (bought !== null && bought >= best && (sys.derived.level === null || bought > sys.derived.level)) {
+          sys.derived.level = bought;
+          sys.derived.fromDefault = false;
+          sys.derived.boughtUpFromDefault = true;
+          sys.derived.relativeLevel = relativeLevelForPoints(points + skillCredit, sys.difficulty);
+          sys.derived.hasDefault = true;
+          continue;
+        }
+      }
       if (sys.derived.level === null || best > sys.derived.level) {
         sys.derived.level = best;
         sys.derived.fromDefault = true;

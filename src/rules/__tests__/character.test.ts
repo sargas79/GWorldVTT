@@ -21,6 +21,7 @@ import {
 import {
   defaultLevel,
   effectiveSkillLevel,
+  defaultCreditPoints,
   namedDefaultLevel,
   pointsForRelativeLevel,
   relativeLevelForPoints,
@@ -172,6 +173,22 @@ describe("skill defaults (GURPS Lite p. 13)", () => {
       defaults: [7, 9],
     });
     expect(result).toEqual({ level: 9, fromDefault: true });
+  });
+
+  it("buys a skill up from a default above the 1-point level (p. 173)", () => {
+    // DX 12, Average: IQ 16-5 = 11 is DX-1, worth the 1 point it would cost,
+    // so the first point spent reaches DX+0.
+    expect(effectiveSkillLevel({ attributeScore: 12, difficulty: "A", points: 1, defaults: [11] }))
+      .toEqual({ level: 12, fromDefault: false, credit: 1 });
+    // A default at DX+0 is worth 2 points: 2 more reach DX+1.
+    expect(effectiveSkillLevel({ attributeScore: 8, difficulty: "A", points: 2, defaults: [8] }))
+      .toEqual({ level: 9, fromDefault: false, credit: 2 });
+  });
+
+  it("gives no credit for a default below the 1-point level", () => {
+    expect(effectiveSkillLevel({ attributeScore: 9, difficulty: "A", points: 1, defaults: [6] }))
+      .toEqual({ level: 8, fromDefault: false });
+    expect(defaultCreditPoints(6, 9, "A")).toBe(0);
   });
 
   it("returns null for an unlearned skill with no default, such as Karate", () => {

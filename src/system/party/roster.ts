@@ -5,7 +5,7 @@
  */
 
 import { pointBadge, poolPercent, type PointBadge } from "../sheet-v2/overview.js";
-import { byName } from "../sort.js";
+import { byName, sortedByNameOf } from "../sort.js";
 
 // ── the member list ────────────────────────────────────────────────────────
 
@@ -37,16 +37,14 @@ export function removeMember(members: readonly MemberEntry[], uuid: string): Mem
   return members.filter((m) => m.uuid !== uuid).map((m) => ({ uuid: m.uuid }));
 }
 
-/** The list with one member moved a step up (-1) or down (+1); unchanged at either end. */
-export function moveMember(members: readonly MemberEntry[], uuid: string, by: -1 | 1): MemberEntry[] {
-  const out = members.map((m) => ({ uuid: m.uuid }));
-  const from = out.findIndex((m) => m.uuid === uuid);
-  const to = from + by;
-  const entry = out[from];
-  if (!entry || to < 0 || to >= out.length) return out;
-  out.splice(from, 1);
-  out.splice(to, 0, entry);
-  return out;
+/**
+ * The members in the order they are shown, in the sidebar and on the sheet
+ * alike: by name, ignoring case and accents, with two of one name kept in a
+ * stable order by UUID. A member whose actor is gone goes last.
+ */
+export function membersByName<T extends { uuid: string; actor: { name?: unknown } | null }>(members: readonly T[]): T[] {
+  const present = sortedByNameOf(members.filter((m) => m.actor), (m) => ({ name: m.actor?.name, id: m.uuid }));
+  return [...present, ...members.filter((m) => !m.actor)];
 }
 
 // ── a member's row ─────────────────────────────────────────────────────────

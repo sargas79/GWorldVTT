@@ -16,7 +16,6 @@ import { SYSTEM_ID } from "./constants.js";
 import {
   addMembers as addToList,
   canJoin,
-  moveMember as moveInList,
   removeMember as removeFromList,
   termsFrom,
   type CampaignTerms,
@@ -184,11 +183,6 @@ export async function addMembers(party: any, actors: readonly any[]): Promise<vo
 export async function removeMember(party: any, uuid: string): Promise<void> {
   if (!party?.isOwner || !uuid) return;
   await party.update({ "system.members": removeFromList(party.system?.members ?? [], uuid) });
-}
-
-export async function moveMember(party: any, uuid: string, by: -1 | 1): Promise<void> {
-  if (!party?.isOwner || !uuid) return;
-  await party.update({ "system.members": moveInList(party.system?.members ?? [], uuid, by) });
 }
 
 /** Wires the index, the members' refresh, a new party's ownership and the sidebar. Called at init. */

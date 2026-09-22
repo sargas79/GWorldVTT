@@ -12,13 +12,20 @@
         </span>
         <span class="al">{{attr.key}}{{#if attr.weakened}}<em class="tired"
               data-tooltip="{{localize "GWORLD.Health.VeryTiredHint"}}">{{attr.rollTarget}}</em>{{/if}}</span>
-        <input class="av" type="number" name="system.attributes.{{attr.key}}" value="{{attr.value}}"
-               {{#unless @root.editable}}disabled{{/unless}}>
+        {{!-- The input is the bought figure, which is what is billed; the score
+             the character has, with what traits and templates add, beside it. --}}
+        <span class="avrow">
+          <input class="av" type="number" name="system.attributes.{{attr.key}}" value="{{attr.value}}"
+                 aria-label="{{localize "GWORLD.Attribute.Bought" key=attr.key}}"
+                 {{#unless @root.editable}}disabled{{/unless}}>
+          {{#if attr.raised}}<span class="aeff" data-tooltip="{{localize "GWORLD.Attribute.ScoreHint"}}"
+                aria-label="{{localize "GWORLD.Attribute.Score" key=attr.key score=attr.effective}}">&rarr; {{attr.effective}}</span>{{/if}}
+        </span>
         <span class="ac">
           {{attr.cost}} pts
-          {{#if attr.bonus}}&middot; {{signed attr.bonus}} {{localize "GWORLD.Attribute.FromTraits"}} = <strong>{{attr.effective}}</strong>{{/if}}
+          {{#if attr.racial}}&middot; {{signed attr.racial}} {{localize "GWORLD.Attribute.FromTemplate"}}{{/if}}
+          {{#if attr.bonus}}&middot; {{signed attr.bonus}} {{localize "GWORLD.Attribute.FromTraits"}}{{/if}}
           {{#each attr.addonLines as |line|}}&middot; <span data-tooltip="{{line.reason}}">{{signed line.value}} {{line.label}}</span>{{/each}}
-          {{#if attr.addonLines.length}}= <strong>{{attr.effective}}</strong>{{/if}}
         </span>
       </div>
     {{/each}}
