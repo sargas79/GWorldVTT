@@ -25,7 +25,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { assertCitesBook, bookPrefix, citesBook, fields, nameOf, records, reference, splitTop } from "./gdf.mjs";
+import { assertCitesBook, bookPrefix, citesBook, fields, nameOf, records, reference, splitTop, unbraceReference } from "./gdf.mjs";
 
 // The citation readers live with the record reader, since every parser
 // needs them; they are re-exported here for the tests that read them off
@@ -181,7 +181,7 @@ export function parseClass(raw) {
  */
 export function parseSkillUsed(raw) {
   for (const entry of splitTop((raw ?? "").replace(/\|/g, ","))) {
-    const m = /^SK:(Innate Attack \([^)]*\))\s*$/.exec(entry.trim());
+    const m = /^SK:(Innate Attack \([^)]*\))\s*$/.exec(unbraceReference(entry));
     if (m) return m[1];
   }
   return "";
@@ -235,8 +235,8 @@ function parseNeedsTree(text) {
     const c = text[i];
     if (c === '"') quoted = !quoted;
     else if (quoted) continue;
-    else if (c === "(") depth++;
-    else if (c === ")") depth--;
+    else if (c === "(" || c === "{") depth++;
+    else if (c === ")" || c === "}") depth--;
     else if ((c === "," || c === "|") && depth === 0) {
       push(i);
       ops.push(c);
@@ -271,7 +271,8 @@ function parseNeedsTree(text) {
  * dropped: every spell needs it, and the sheet says so on its own.
  */
 function leafText(leaf, lookup) {
-  const t = leaf.replace(/^"|"$/g, "").trim();
+  // A braced name keeps its comma: `{SK:Guns (Rifle, Musket)} = 12`.
+  const t = unbraceReference(leaf).replace(/^"|"$/g, "").trim();
   if (!t) return null;
   if (/[%[\]]/.test(t)) return null;
 

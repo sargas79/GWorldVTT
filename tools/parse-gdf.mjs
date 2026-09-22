@@ -50,6 +50,7 @@ import {
   records,
   reference,
   splitTop,
+  unbraceReference,
 } from "./gdf.mjs";
 import { existingIds as existingSpellIds, parseSpells } from "./parse-gdf-spells.mjs";
 import { needsSpecialty } from "./specified-traits.mjs";
@@ -606,7 +607,7 @@ function parseTraits(recs, reject, note, source) {
  * computed from the sheet.
  */
 function parseDefault(entry) {
-  const text = entry.trim();
+  const text = unbraceReference(entry);
   if (!text || isExpression(text) || text.endsWith("!")) return null;
   // `SK:[skill] - 6` is a blank GCA fills from the sheet, not a skill name.
   if (PLACEHOLDER.test(text)) return null;
@@ -799,7 +800,7 @@ function parseSkills(recs, reject, note, source) {
  * not a skill's level.
  */
 export function techniqueDefault(raw) {
-  const def = /"?SK:([^"]+?)::level"?\s*(?:([+-])\s*(\d+))?/.exec(raw ?? "");
+  const def = /[{"]?SK:([^"{}]+?)::level[}"]?\s*(?:([+-])\s*(\d+))?/.exec(raw ?? "");
   if (!def) return null;
   return { prerequisite: def[1].trim(), modifier: def[3] ? Number(`${def[2]}${def[3]}`) : 0 };
 }
@@ -960,7 +961,7 @@ function withoutRebasing(text) {
 export function techniqueDefaults(raw) {
   const out = [];
   for (const entry of splitTop(raw ?? "")) {
-    const text = entry.trim();
+    const text = unbraceReference(entry);
     if (!text) continue;
     // The arithmetic that rebases a technique on an attribute is read out
     // first: the model has no such thing, and it isn't part of the skill's name.
@@ -1497,7 +1498,7 @@ export function parseSkillUsedWithModifier(value) {
 
 function firstSkill(entries) {
   for (const entry of entries) {
-    const text = entry.trim().replace(/^"|"$/g, "").trim();
+    const text = unbraceReference(entry).replace(/^"|"$/g, "").trim();
     // An entry carrying a modifier is a default -- what you fall back to if you
     // lack the real skill -- not the skill the weapon is used with. A shield's
     // list reads "ST:DX-4, SK:Shield (Buckler)-2, SK:Shield (Force)-2,
