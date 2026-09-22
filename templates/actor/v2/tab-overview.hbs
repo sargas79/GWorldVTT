@@ -219,6 +219,8 @@
                         data-sense="{{row.sense}}"
                         aria-label="{{localize 'GWORLD.SheetV2.RollScore' name=row.label level=row.score}}">{{row.score}}</button>
                 {{#if row.modifier}}<span class="v2-stat-note">{{localize "GWORLD.Secondary.PerAbbr"}} {{signed row.modifier}}</span>{{/if}}
+                {{#if row.colorblind}}<span class="v2-stat-note" data-tooltip="{{localize 'GWORLD.Senses.ColorblindHint'}}">{{localize "GWORLD.Senses.Colorblind"}}</span>{{/if}}
+                {{#if row.rangeMultiplier}}<span class="v2-stat-note" data-tooltip="{{localize 'GWORLD.Senses.RangeMultiplierHint'}}">{{localize "GWORLD.Senses.RangeMultiplier" times=row.rangeMultiplier}}</span>{{/if}}
               {{/if}}
             </div>
           {{/each}}

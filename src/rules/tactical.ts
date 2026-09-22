@@ -54,6 +54,38 @@ export function attackArc(
   }
 }
 
+/** Restricted Vision's two levels (Characters p. 151). */
+export type RestrictedVision = "noPeripheral" | "tunnel";
+
+/**
+ * The arc an attack falls in as a defender with Restricted Vision sees it
+ * (Characters p. 151), which is what the defenses turn on.
+ *
+ * No Peripheral Vision: "your 'left' and 'right' hexes become 'back' hexes".
+ * Tunnel Vision: "your only 'front' hex is the one directly ahead of you. The
+ * hexes to either side of this are 'side' hexes ... Everything else is a
+ * 'back' hex". The arc the blow physically came from is not changed by this --
+ * armour that covers the front still covers the front -- so this is kept apart
+ * from `attackArc`.
+ *
+ * `relative` is the attack's direction relative to the facing, where it is
+ * known; without it a front attack stays in front, since which of the three
+ * front hexes it came through cannot be told.
+ */
+export function restrictedArc(
+  seen: { arc: Arc; side: BodySide | null },
+  restricted: RestrictedVision | null | undefined,
+  relative?: HexDirection | null,
+): { arc: Arc; side: BodySide | null } {
+  if (!restricted) return seen;
+  if (seen.arc === "side") return { arc: "back", side: null };
+  if (seen.arc === "front" && restricted === "tunnel") {
+    if (relative === 1) return { arc: "side", side: "right" };
+    if (relative === 5) return { arc: "side", side: "left" };
+  }
+  return seen;
+}
+
 /** What a defender can see around them, which is what the arcs turn on. */
 export interface Vision {
   /** Peripheral Vision (p. 74): defend to the side unpenalised, behind at -2. */

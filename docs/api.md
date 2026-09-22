@@ -670,6 +670,43 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     `"protectedSense.vision"`) and `label` the thing it came from. The Traits
     tab lists them under what the character carries, so an effect nobody paid
     for is never unexplained. A listener that throws changes nothing.
+    Since 1.78.0 the effects also carry the sense and handling traits gear
+    grants or imposes while in use, each read where the system has the roll
+    (Characters pp. 71-151):
+    - `restrictedVision`: `null`, `"noPeripheral"` or `"tunnel"` (Restricted
+      Vision, p. 151); set a worse one only, as the system never loosens it.
+      On a tactical map the defense card reads the side hexes as back hexes
+      (no defense), and with `"tunnel"` the two outer front hexes as side hexes
+      (-2, the usual side-hex limits on parry and block); Peripheral and 360°
+      Vision stop helping. The arc the blow came from, which front-only armour
+      and the `gworld.attackArc` hook read, is unchanged. An armour piece's
+      `blocksPeripheralVision` sets `"noPeripheral"` while worn (under the
+      front-armour switch), and is listed in `sources` as
+      `"restrictedVision.noPeripheral"`. Name a kind the same way.
+      `rules.restrictedArc({ arc, side }, restricted, relative?)` is the same
+      reading, for a module's own arcs.
+    - `noDepthPerception` (p. 145): the attack penalties of One Eye, -1 in
+      melee and -4 on an unaimed ranged attack, under its own name; taken once
+      with One Eye.
+    - `colorblindness` (p. 127): -1 on Artist, Chemistry, Driving, Merchant,
+      Piloting and Tracking, as a line on each skill, and a "no colour" note
+      on the Vision row. What colour a roll turns on stays the GM's.
+    - `nictitatingMembrane` (p. 71), its levels: DR on the eye location alone,
+      a point a level. The system makes no HT roll against eye damage, so the
+      +1 a level to one is there for a module to read.
+    - `parabolicHearing` (p. 72), its levels: the Hearing row notes the range
+      multiplier. `rules.hearingDistanceMultiplier(levels)` is 2^levels, for a
+      module that works out hearing distances (Campaigns p. 358); the system
+      has no distance on a Hearing roll.
+    - `hamFisted` (p. 138), its levels to 2: -3 a level on the fine-work skills
+      High Manual Dexterity lists and on Fast-Draw, as a line on each skill.
+      Levels granted add to the trait's own, to -6.
+    - `noSmellTaste` (p. 146): no Taste/Smell roll, as for Deafness.
+    The system's own traits of those names set them: Restricted Vision (level
+    1 or 2, or the names No Peripheral Vision and Tunnel Vision), No Depth
+    Perception, Colorblindness, Nictitating Membrane, Parabolic Hearing,
+    Ham-Fisted and No Sense of Smell/Taste. `derived.senses` rows may carry
+    `colorblind: true` (vision) and `rangeMultiplier` (hearing).
   - `gworld.traitsInPlay` (since 1.61.0), with `{ actor, traits }`, when a
     character's traits are gathered, before anything is worked out from them.
     Each entry is `{ item, name, inPlay }`: set `inPlay` to false, with a

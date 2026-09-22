@@ -3449,7 +3449,11 @@
       "Missing": "no roll",
       "Range": "Range ({yards} yd)",
       "Telescopic": "Telescopic Vision",
-      "TelescopicZoomed": "Telescopic Vision, zoomed in"
+      "TelescopicZoomed": "Telescopic Vision, zoomed in",
+      "Colorblind": "no colour",
+      "ColorblindHint": "Colorblindness: no colours at all. The GM makes any roll that turns on colour harder (Characters p. 127).",
+      "RangeMultiplier": "×{times} range",
+      "RangeMultiplierHint": "Parabolic Hearing: each level doubles the distance at which a sound is clearly heard (Characters p. 72; Campaigns p. 358)."
     },
     "Attack": {
       "SequenceTarget": "Attack {index} of {count}: target",
@@ -3895,7 +3899,17 @@
         "hearing": "Protected Hearing",
         "tasteSmell": "Protected Smell",
         "touch": "Protected Touch"
-      }
+      },
+      "restrictedVision": {
+        "noPeripheral": "No Peripheral Vision",
+        "tunnel": "Tunnel Vision"
+      },
+      "noDepthPerception": "No Depth Perception",
+      "colorblindness": "Colorblindness",
+      "nictitatingMembrane": "Nictitating Membrane",
+      "parabolicHearing": "Parabolic Hearing",
+      "hamFisted": "Ham-Fisted",
+      "noSmellTaste": "No Sense of Smell/Taste"
     },
     "Malediction": {
       "Label": "{name} (Malediction {level})",
@@ -4363,7 +4377,17 @@
         "filterLungs": "Filter Lungs",
         "radiationTolerance": "Radiation Tolerance",
         "telescopicVision": "Telescopic Vision",
-        "hyperspectralVision": "Hyperspectral Vision"
+        "hyperspectralVision": "Hyperspectral Vision",
+        "restrictedVision": {
+          "noPeripheral": "No Peripheral Vision: side hexes are back hexes",
+          "tunnel": "Tunnel Vision: one front hex, two side hexes"
+        },
+        "noDepthPerception": "No Depth Perception: as One Eye",
+        "colorblindness": "Colorblind",
+        "nictitatingMembrane": "DR on the eyes",
+        "parabolicHearing": "Parabolic Hearing",
+        "hamFisted": "Ham-Fisted",
+        "noSmellTaste": "No Taste or Smell roll"
       },
       "Attacks": "Attacks",
       "AttackSkill": "The skill this attack is rolled with",

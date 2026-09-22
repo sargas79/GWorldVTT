@@ -237,6 +237,9 @@ const SKILL_BONUS_TRAITS: Readonly<Record<string, readonly SkillBonusTrait[]>> =
   // Disadvantages.
   // "-3 on all Teaching rolls" (p. 125).
   callous: [{ skills: ["Teaching"], value: -3 }],
+  // "-1 on most Artist, Chemistry, Driving, Merchant, Piloting, and Tracking
+  // rolls" (p. 127). "Most" is the GM's to trim where colour cannot matter.
+  colorblindness: [{ skills: ["Artist", "Chemistry", "Driving", "Merchant", "Piloting", "Tracking"], value: -1 }],
   // "-3 penalty on any Merchant skill roll" (p. 137).
   gullibility: [{ skills: ["Merchant"], value: -3 }],
   // "For -5 points, the penalty is -3; for -10 points, it is -6" (p. 138).

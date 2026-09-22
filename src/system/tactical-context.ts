@@ -24,9 +24,13 @@ function hasTrait(actor: any, name: string): boolean {
 }
 
 export function visionOf(actor: any): Vision {
+  // Restricted Vision, bought or imposed by a great helm or a mask, narrows
+  // the eyes whatever they could otherwise do (Characters p. 151): the side
+  // and back hexes are unseen, and nothing that sees round corners helps.
+  const restricted = Boolean(actor?.system?.derived?.traitEffects?.restrictedVision);
   return {
-    peripheral: hasTrait(actor, PERIPHERAL),
-    allRound: hasTrait(actor, ALL_ROUND),
+    peripheral: !restricted && hasTrait(actor, PERIPHERAL),
+    allRound: !restricted && hasTrait(actor, ALL_ROUND),
     flexible: hasTrait(actor, FLEXIBLE),
   };
 }

@@ -190,6 +190,40 @@ export interface TraitEffects {
   telescopicVision: number;
   /** Hyperspectral Vision (p. 60): the whole spectrum at once. */
   hyperspectralVision: boolean;
+  /**
+   * Restricted Vision (p. 151). No Peripheral Vision narrows the arc of
+   * vision to the three front hexes, so the side hexes become back hexes and
+   * give no defense; Tunnel Vision leaves one front hex, the two beside it
+   * side hexes, and everything else behind. The worse of the two wins.
+   */
+  restrictedVision: "noPeripheral" | "tunnel" | null;
+  /**
+   * No Depth Perception (p. 145): "The game effects are identical to One
+   * Eye", which is how every attack reads it, under its own name.
+   */
+  noDepthPerception: boolean;
+  /**
+   * Colorblindness (p. 127): no colours at all, and -1 on most Artist,
+   * Chemistry, Driving, Merchant, Piloting and Tracking rolls.
+   */
+  colorblindness: boolean;
+  /**
+   * Nictitating Membrane (p. 71), as its levels: DR 1 a level on the eyes
+   * alone, and +1 a level to HT rolls concerned with eye damage.
+   */
+  nictitatingMembrane: number;
+  /**
+   * Parabolic Hearing (p. 72), as its levels: each doubles the distance at
+   * which a sound can be clearly heard (Campaigns p. 358).
+   */
+  parabolicHearing: number;
+  /**
+   * Ham-Fisted (p. 138), as its levels: -3 a level (to -6) on DX-based fine
+   * work with the skills High Manual Dexterity lists, and on Fast-Draw.
+   */
+  hamFisted: number;
+  /** No Sense of Smell/Taste (p. 146): no Taste or Smell roll at all. */
+  noSmellTaste: boolean;
 }
 
 /** What no traits at all come to, and the shape everything is added onto. */
@@ -251,6 +285,13 @@ export function noTraitEffects(): TraitEffects {
     protectedSense: { vision: false, hearing: false, tasteSmell: false, touch: false },
     telescopicVision: 0,
     hyperspectralVision: false,
+    restrictedVision: null,
+    noDepthPerception: false,
+    colorblindness: false,
+    nictitatingMembrane: 0,
+    parabolicHearing: 0,
+    hamFisted: 0,
+    noSmellTaste: false,
   };
 }
 
@@ -432,6 +473,24 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   deafness: () => ({ deafness: true }),
   blindness: () => ({ blindness: true }),
   "one arm": () => ({ oneArm: true }),
+  "no depth perception": () => ({ noDepthPerception: true }),
+  colorblindness: () => ({ colorblindness: true }),
+  "no sense of smell/taste": () => ({ noSmellTaste: true }),
+  // "For -5 points, the penalty is -3; for -10 points, it is -6" (p. 138).
+  "ham-fisted": (levels) => ({ hamFisted: Math.min(2, levels) }),
+
+  // Restricted Vision (p. 151) comes in two levels, which the compendium
+  // names: No Peripheral Vision and Tunnel Vision. Either name is read too.
+  "restricted vision": (levels) => ({ restrictedVision: levels >= 2 ? "tunnel" : "noPeripheral" }),
+  "restricted vision (no peripheral vision)": () => ({ restrictedVision: "noPeripheral" }),
+  "restricted vision (tunnel vision)": () => ({ restrictedVision: "tunnel" }),
+  "no peripheral vision": () => ({ restrictedVision: "noPeripheral" }),
+  "tunnel vision": () => ({ restrictedVision: "tunnel" }),
+
+  // "Each level of Nictitating Membrane provides your eyes (only) with DR 1"
+  // (p. 71); "Each level of Parabolic Hearing doubles the distance" (p. 72).
+  "nictitating membrane": (levels) => ({ nictitatingMembrane: levels }),
+  "parabolic hearing": (levels) => ({ parabolicHearing: levels }),
 
   // The body sealed against what is outside it. Sealed is the layer (p. 82);
   // it is neither an air supply nor a pressure suit, so the others are bought
@@ -676,6 +735,18 @@ export function addTraitEffects(total: TraitEffects, applied: Partial<TraitEffec
   total.oneArm ||= applied.oneArm ?? false;
   // Two kinds of Lame do not add either: the worse one is the one you have.
   if (applied.lame) total.lame = worseLameness(total.lame, applied.lame);
+  // Nor two restrictions on the eyes: a great helm on a tunnel-visioned
+  // wearer leaves the tunnel.
+  if (applied.restrictedVision === "tunnel" || (applied.restrictedVision === "noPeripheral" && total.restrictedVision === null)) {
+    total.restrictedVision = applied.restrictedVision;
+  }
+  total.noDepthPerception ||= applied.noDepthPerception ?? false;
+  total.colorblindness ||= applied.colorblindness ?? false;
+  total.noSmellTaste ||= applied.noSmellTaste ?? false;
+  total.nictitatingMembrane += applied.nictitatingMembrane ?? 0;
+  total.parabolicHearing += applied.parabolicHearing ?? 0;
+  // Ham-Fisted adds -- clumsy gloves on clumsy hands -- to its own floor of -6.
+  total.hamFisted = Math.min(2, total.hamFisted + (applied.hamFisted ?? 0));
 }
 
 /** The higher of two levels, where null means the talent is absent. */
@@ -765,11 +836,14 @@ export interface ImpairedAttack {
  * Nearsighted is "-2 to skill" when making a melee attack (at range it
  * doubles the distance instead, which the range modifier reads); farsighted
  * is "-3 to DX ... including close combat"; One Eye is "-1 to DX in combat
- * ... and -3 on ranged attacks (unless you Aim first)". Each is listed under
- * its own name, because a roll at -4 should say which things it was.
+ * ... and -3 on ranged attacks (unless you Aim first)". No Depth Perception
+ * (p. 145) is "identical to One Eye", and the two are not taken together, so
+ * a character with both -- one eye behind a visor that flattens the other --
+ * takes the penalty once. Each is listed under its own name, because a roll
+ * at -4 should say which things it was.
  */
 export function impairedAttacks(
-  effects: Pick<TraitEffects, "badSight" | "oneEye">,
+  effects: Pick<TraitEffects, "badSight" | "oneEye"> & Partial<Pick<TraitEffects, "noDepthPerception">>,
   situation: { ranged: boolean; aimed?: boolean; closeCombat?: boolean },
 ): ImpairedAttack[] {
   const out: ImpairedAttack[] = [];
@@ -777,8 +851,11 @@ export function impairedAttacks(
   if (!situation.ranged && effects.badSight === "farsighted" && situation.closeCombat) {
     out.push({ trait: "Bad Sight", value: -3 });
   }
-  if (effects.oneEye) {
-    out.push({ trait: "One Eye", value: situation.ranged && !situation.aimed ? -4 : -1 });
+  if (effects.oneEye || effects.noDepthPerception) {
+    out.push({
+      trait: effects.oneEye ? "One Eye" : "No Depth Perception",
+      value: situation.ranged && !situation.aimed ? -4 : -1,
+    });
   }
   return out;
 }

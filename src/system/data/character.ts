@@ -179,6 +179,12 @@ import type {
 
 const fields = foundry.data.fields;
 
+/**
+ * The traits whose skill lines come from the gathered trait effects rather
+ * than from the trait held, since gear may impose them too (pp. 127, 138).
+ */
+const EFFECT_SKILL_TRAITS = new Set(["ham-fisted", "colorblindness"]);
+
 /** What a derived attack mode's row holds where the module gave nothing. */
 const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
   mode: "", skillName: "", skillLevel: null, hitModifier: 0, atDefault: false, natural: false, unready: false,
@@ -1606,13 +1612,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     // Worn gear grants what the armour table's notes describe in trait terms:
     // a vacc suit and its helmet seal the wearer, a gas mask filters what is
-    // breathed (Characters pp. 285-286). Each names the piece it came from, so
-    // the sheet can say where an effect the character never bought came from.
+    // breathed, a great helm takes away peripheral vision (Characters pp.
+    // 284-286). Each names the piece it came from, so the sheet can say where
+    // an effect the character never bought came from.
     const traitEffectSources: TraitEffectSource[] = [];
+    // The helm's note is read with the rest of the table's coverage notes,
+    // under the same switch as the front-only breastplate.
+    const helmNotes = isRuleOn("frontArmor");
     for (const granted of gearEffects(
       this.itemsOfType("armor").map((item) => ({
         name: String(item.name ?? ""),
         equipped: item.system?.equipped === true,
+        blocksPeripheralVision: helmNotes && item.system?.blocksPeripheralVision === true,
       })),
     )) {
       addTraitEffects(traits, granted.effect);
@@ -1639,7 +1650,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // The other traits that name their skills -- Appearance to Sex Appeal,
     // Empathy to Detect Lies, Shyness against the social skills -- each a
     // line of its own (pp. 21-159).
-    const traitBonuses = traitSkillBonuses(heldTraits);
+    // Ham-Fisted and Colorblindness are read off the gathered effects rather
+    // than the traits held, so clumsy gauntlets or a monochrome visor put the
+    // same line on the same skills as the disadvantage (pp. 127, 138).
+    const traitBonuses = traitSkillBonuses([
+      ...heldTraits.filter((t) => !EFFECT_SKILL_TRAITS.has(t.name.trim().toLowerCase())),
+      ...(traits.hamFisted > 0 ? [{ name: "Ham-Fisted", levels: traits.hamFisted }] : []),
+      ...(traits.colorblindness ? [{ name: "Colorblindness", levels: 1 }] : []),
+    ]);
 
     // The attributes as bought on the sheet, plus what traits add to them.
     // The points ledger bills the bought figure; the trait bills itself.

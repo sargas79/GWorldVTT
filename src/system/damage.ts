@@ -403,8 +403,12 @@ function armourAt(
   // A breastplate marked "F" counts against a blow from the front alone
   // (Characters p. 282), so the arc it came from is read here; the layers
   // are kept apart because blunt trauma only counts what got past the rigid.
-  // Hooves armour the feet and nothing else (Characters p. 42).
-  const naturalDr = traits.damageResistance + (location === "foot" ? traits.footDr : 0);
+  // Hooves armour the feet and nothing else (Characters p. 42), and a
+  // Nictitating Membrane the eyes alone, DR 1 a level (p. 71).
+  const naturalDr =
+    traits.damageResistance +
+    (location === "foot" ? traits.footDr : 0) +
+    (location === "eye" ? Math.max(0, Number(traits.nictitatingMembrane) || 0) : 0);
   // What each piece is worth against this blow, offered to the modules before
   // any of it is added up (since 1.48.0): a listener may double a piece
   // against one kind of attack, refuse it against another, or harden it.
