@@ -1022,6 +1022,48 @@ Two fields a module may read (since 1.62.0):
     (6dx1.41 is 8d+2); `blastAgainstStructure({ damage, dr, hp, damageTaken?,
     failedDisabling? })`, `{ injury, hp, state, rollsToHold, rollsToStand }`
     with `state` a `StructureState`.
+- **Tech-level modifiers and familiarity** (since 1.75.0; Characters
+  pp. 168-169), under the `techLevelModifiers` switch (on by default) and the
+  `familiarity` switch (off by default: until a table keeps the list, every
+  weapon would count as unfamiliar), both in the Equipment group.
+  - *Which rolls.* Only a technological skill takes either line: one whose
+    name has the "/TL" marker or whose `techLevel` is set. The skill's TL is
+    its `techLevel`, else a TL in its name ("Guns/TL7 (Pistol)"), else the
+    character's `system.tl`; a skill rolled at default counts as learned at
+    the character's TL and not IQ-based. An item's TL is its `system.tl` read
+    for its leading number ("8", "11^"); an item without one takes no TL
+    line. A weapon's attack roll (and the V2 sheet's attack preview) takes a
+    line keyed `techLevel` where the weapon's TL differs from the skill's,
+    and one keyed `unfamiliar` (-2) where the character is not familiar with
+    it. An IQ-based skill four or more TLs behind its gear refuses the roll.
+    The roll carries the tags `techLevel` and `unfamiliar` beside the lines,
+    and the `gworld.attackModifiers` context starts with them in its `tags`,
+    so a listener there or on `gworld.successRollModifiers` can find a line
+    by its `key` and change its `value` or `label` (a skill whose description
+    sets another penalty), or push one of its own.
+  - *Tools.* A tool carried for a skill (`forSkills`) is weighed with its TL
+    against a technological skill's: of several, the one worth most after
+    the TL line wins, and one the skill cannot use at all is passed over. The
+    skill's `derived.bonusLines` gains a line keyed `techLevel` beside
+    `tools`, which `gworld.skillBonuses` listeners see and may change.
+  - *Familiarities.* A character keeps `system.familiarities`, a list of item
+    names (compared trimmed and case-blind); familiarity goes by the item's
+    name, so "improved or obsolete versions" and look-alike models are made
+    familiar by listing their names. NPCs keep none and never take the line.
+    The V2 sheet's attack preview marks the weapon familiar or not.
+  - *`roll.equipmentUse(actor, item, skillName)`* returns `{ lines, tags,
+    impossible }` for a module's own roll with an item: `lines` as
+    `{ key, label, value }`, `impossible` a message or null.
+  - *Rules:* `parseTechLevel(value)`, `isTechnologicalSkill(name,
+    techLevel?)`, `skillTechLevel(name, techLevel, personalTechLevel)`,
+    `techLevelModifier({ skillTechLevel, equipmentTechLevel, iqBased })`
+    (null for impossible), `bestTool(tools, { skillTechLevel, iqBased })`
+    with `CarriedTool` (`{ quality, techLevel }`), `familiarityKey(name)`,
+    `isFamiliar(list, name)`, `toggleFamiliarity(list, name)`,
+    `familiarityModifier(list, name)`, `startingFamiliarities(points)` (two
+    per point), `mayRollForFamiliarity(count)` (six or more), and
+    `UNFAMILIAR_PENALTY` (-2), `FAMILIARIZATION_HOURS` (8),
+    `FAMILIARITIES_FOR_SIMILARITY_ROLL` (6).
 - **Wounding: injury caps, overpenetration, first hits, gauges, knockdown**
   (since 1.73.0; Campaigns pp. 408-409, 420-421, Characters p. 279).
   - *An injury cap.* A `gworld.injury` listener may set `damage.injuryCap`, the

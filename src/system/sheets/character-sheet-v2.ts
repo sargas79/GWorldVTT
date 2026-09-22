@@ -74,6 +74,8 @@ import {
   type JournalKind,
 } from "../sheet-v2/journal-links.js";
 import { GWorldCharacterSheet } from "./character-sheet.js";
+import { familiaritiesOf, familiarityApplies } from "../tech-level.js";
+import { isFamiliar, toggleFamiliarity } from "../../rules/tech-level.js";
 
 const V2_ROOT = `systems/${SYSTEM_ID}/templates/actor/v2`;
 
@@ -90,6 +92,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     position: { width: 1120, height: 760 },
     actions: {
       v2PinSkill: GWorldCharacterSheetV2.#onPinSkill,
+      v2ToggleFamiliar: GWorldCharacterSheetV2.#onToggleFamiliar,
       v2ToggleStatus: GWorldCharacterSheetV2.#onToggleStatus,
       v2Select: GWorldCharacterSheetV2.#onSelect,
       v2Chip: GWorldCharacterSheetV2.#onChip,
@@ -200,6 +203,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         ? previewAttack(actor, {
             ranged,
             item,
+            skill: String(atk.skillName ?? ""),
             skillLevel: level,
             hitModifier: atk.hitModifier,
             damageType: atk.damageType,
@@ -232,12 +236,18 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
             chosen: rolledWithChosenSkill(modeSkill, chosenSkill),
           }
         : null;
+      // Whether its user knows this make (Characters p. 169), where the rule
+      // speaks about it: a technological skill, and a weapon with a name.
+      const familiarity = item && familiarityApplies(actor, item, String(atk.skillName ?? ""))
+        ? { familiar: isFamiliar(familiaritiesOf(actor) ?? [], String(item.name ?? "")) }
+        : null;
       return {
         key,
         atk,
         ranged,
         strip,
         skillPicker,
+        familiarity,
         equipped: Boolean(item?.system?.equipped),
         preview,
         chance,
@@ -1359,6 +1369,14 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     if (!id || !this.isEditable) return;
     await this.actor.update({ "system.pinnedSkills": togglePinned(this.actor.system.pinnedSkills ?? [], id) });
+  }
+
+  /** Marks the weapon of an attack familiar to this character, or no longer (Characters p. 169). */
+  static async #onToggleFamiliar(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (!item || !this.isEditable) return;
+    await this.actor.update({ "system.familiarities": toggleFamiliarity(familiaritiesOf(this.actor) ?? [], String(item.name ?? "")) });
   }
 
   /** Shows a list row's detail panel. */

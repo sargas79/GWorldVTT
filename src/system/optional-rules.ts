@@ -157,6 +157,11 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "damageToShields", reference: "Campaigns p. 484", default: false },
     // What the tools of a trade are worth to the roll that uses them.
     { key: "equipmentModifiers", reference: "Campaigns p. 345", default: true },
+    // Gear of another tech level than the skill that uses it (since API 1.75.0).
+    { key: "techLevelModifiers", reference: "Characters p. 168", default: true },
+    // -2 with a make or model the user has not practised with. Off unless a
+    // table wants the list kept: until it is, every weapon would be unfamiliar.
+    { key: "familiarity", reference: "Characters p. 169", default: false },
     // Mending what is broken, and the sand that breaks it.
     { key: "repairs", reference: "Campaigns pp. 484-485", default: true },
   ],

@@ -51,6 +51,7 @@ import { carriedAmmunitionFor, loadAmmunition } from "./ammunition.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
 import { irradiate, shock } from "./hazards.js";
 import { detonateCharge } from "./demolition.js";
+import { equipmentUseLines } from "./tech-level.js";
 import { addArea, listAreas, removeArea } from "./modifier-areas.js";
 import { rollFrightCheck } from "./fright.js";
 import { spendUnspentPoints } from "./bonus-points.js";
@@ -78,7 +79,7 @@ import { PARTY_CHANGED_HOOK, addMembers, campaignTerms, membersOf, partyOf, remo
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.74.0";
+export const API_VERSION = "1.75.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -361,6 +362,11 @@ export interface GWorldApi {
     readonly quickContest: typeof rollQuickContest;
     readonly regularContest: typeof rollRegularContest;
     readonly registerContestResolver: typeof registerContestResolver;
+    /**
+     * The lines using an item with a skill puts on a roll (since 1.75.0): its
+     * TL against the skill's and the familiarity penalty (Characters pp. 168-169).
+     */
+    readonly equipmentUse: typeof equipmentUseLines;
   };
   readonly actors: typeof actors;
   readonly items: typeof items;
@@ -454,7 +460,7 @@ export function createApi(): GWorldApi {
     version: API_VERSION,
     rules,
     registry: Object.freeze({ registerRuleGroup, registerRule, namespacedRuleKey, isAddonRuleKey, isRuleOn, activeRules }),
-    roll: Object.freeze({ hitLocation: rollHitLocation, frightCheck: (actor: any, modifier = 0) => rollFrightCheck({ actor, modifier: Number(modifier) || 0 }), success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver }),
+    roll: Object.freeze({ hitLocation: rollHitLocation, frightCheck: (actor: any, modifier = 0) => rollFrightCheck({ actor, modifier: Number(modifier) || 0 }), success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver, equipmentUse: equipmentUseLines }),
     actors: Object.freeze(actors),
     items: Object.freeze(items),
     combat,

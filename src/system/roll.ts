@@ -37,6 +37,7 @@ import {
   type ResistedAttack,
   successRollTags,
 } from "./procedure-extensions.js";
+import { equipmentUseLines } from "./tech-level.js";
 import { aimStateOf, aimTargetLines, aimTurnsOf, loseAim } from "./aim.js";
 import { evaluateBonusFor } from "./evaluate.js";
 import { aimBonus } from "../rules/aim.js";
@@ -731,6 +732,8 @@ export interface AttackPreview {
 export function previewAttack(actor: any, row: {
   ranged: boolean;
   item?: any;
+  /** The skill the attack is rolled with, for the weapon's tech level and familiarity (since 1.75.0). */
+  skill?: string;
   skillLevel: number;
   hitModifier?: unknown;
   damageType?: string;
@@ -744,6 +747,7 @@ export function previewAttack(actor: any, row: {
     lines.push(...quickShot(measured, weaponFromDataset(actor, row.weapon ?? {})).modifiers);
   }
   lines.push(...standingRollLines(actor, { rollType: "attack", ranged: row.ranged, hitModifier: row.hitModifier, dialogAsked: false }));
+  lines.push(...equipmentUseLines(actor, row.item ?? null, row.skill).lines);
   const stance = maneuverOptionAttackEffect(attackContextFor({
     actor, item: row.item ?? null, ranged: row.ranged, damageType: row.damageType ?? "", reach: row.reach ?? "", effectiveSkill: base,
   }));
@@ -1447,6 +1451,16 @@ async function rollAction(
     ui.notifications?.warn(game.i18n.format("GWORLD.Malfunction.OutOfAction", { name: String(rolledItem?.name ?? ""), kind: outOfAction.label }));
     return null;
   }
+  // The weapon's tech level against the skill's, and whether its user knows
+  // this make (Characters pp. 168-169): lines keyed and tagged `techLevel`
+  // and `unfamiliar`, for a module's listener to find (since 1.75.0). Worked
+  // out before any dialog, which shows them in its effective skill.
+  const equipmentUse = rollType === "attack" ? equipmentUseLines(actor, rolledItem, target.dataset.rollSkill) : null;
+  if (equipmentUse?.impossible) {
+    ui.notifications?.warn(equipmentUse.impossible);
+    return null;
+  }
+  const equipmentShift = (equipmentUse?.lines ?? []).reduce((sum, line) => sum + line.value, 0);
   // A target of a spray is shot at its share of the burst, at the Recoil its
   // place in the sweep gives it.
   const sprayed = spray ? { ...weapon, recoil: spray.recoil } : weapon;
@@ -1461,7 +1475,7 @@ async function rollAction(
           initialRange: measured?.rangeYards ?? 0,
           actor,
           item: rolledItem,
-          effectiveSkill: base,
+          effectiveSkill: base + equipmentShift,
         })
     : null;
   if (ranged && shot === null) return null;
@@ -1482,7 +1496,7 @@ async function rollAction(
     !ranged && rollType === "attack" && (event as MouseEvent).shiftKey;
   const melee = asksAboutMelee
     ? await promptForMeleeAttack({
-        effectiveSkill: base,
+        effectiveSkill: base + equipmentShift,
         damageType: (target.dataset.damageType ?? "cr") as DamageType,
         mounted: actor?.system?.mounted === true && isRuleOn("mountedCombat"),
         dualWeaponTechnique: Number(actor?.system?.derived?.techniques?.dualWeaponAttack) || 0,
@@ -1531,6 +1545,7 @@ async function rollAction(
     wildSwing: melee?.wildSwing === true,
     dialogAsked: Boolean(melee || shot),
   }));
+  if (equipmentUse) modifiers.push(...equipmentUse.lines);
 
   // "You must declare that you are using extra effort and spend the required FP
   // before you make your attack" -- and a fighter who cannot pay does not get
@@ -1699,7 +1714,8 @@ async function rollAction(
         movement: attackerMovement(actor),
         aim: aimStateOf(actor),
         // Since 1.65.0: tags for the attack roll, which condition and area lines and modules read.
-        tags: [] as string[],
+        // Since 1.75.0 `techLevel` and `unfamiliar` where the weapon took those lines.
+        tags: [...(equipmentUse?.tags ?? [])] as string[],
         // Since 1.69.0: how far the shot is, in yards (null for a melee
         // attack), and the weapon's minimum range. Inside it, `refusal`
         // starts out saying so.
