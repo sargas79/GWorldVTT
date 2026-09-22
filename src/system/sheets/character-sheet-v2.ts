@@ -896,6 +896,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         level,
         trained: points > 0,
         rollable: level !== null && (points > 0 || system.derived?.hasDefault === true),
+        boughtUpFromDefault: system.derived?.boughtUpFromDefault === true,
         pinned: pinned.has(String(item.id)),
         descriptionHtml: await this.enriched(system.description, item),
         reference: system.reference ?? "",

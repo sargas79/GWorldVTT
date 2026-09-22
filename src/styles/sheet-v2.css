@@ -873,6 +873,8 @@
   cursor: pointer;
 }
 .gworld.v2 button.v2-row-level:hover { color: var(--v2-steel); }
+/* A skill bought up from its default (Characters p. 173). */
+.gworld.v2 .v2-from-default { margin-left: 1px; font-size: 12px; color: var(--v2-steel); cursor: help; }
 .gworld.v2 .v2-row-cp { font-family: var(--font-heading); font-size: 16px; font-weight: 600; white-space: nowrap; text-align: right; }
 .gworld.v2 .v2-levels { font-family: var(--font-body); font-size: 12px; color: var(--v2-ink-muted); }
 

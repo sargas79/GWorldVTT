@@ -45,7 +45,7 @@ function priced(from: number, to: number, levelFrom: number | null, levelTo: num
 /** What a skill, technique or spell needs to be priced. */
 export interface LevelledItem extends PointedItem {
   system?: PointedItem["system"] & {
-    derived?: { style?: unknown; level?: unknown; relativeLevel?: unknown } | null;
+    derived?: { style?: unknown; level?: unknown; relativeLevel?: unknown; defaultCredit?: unknown } | null;
   } | null;
 }
 
@@ -73,8 +73,11 @@ export function itemImprovement(item: LevelledItem, unspent: number, attributeSc
   } else {
     const difficulty = (item.system?.difficulty ?? "A") as Difficulty;
     const style = String(derived.style ?? "standard");
+    // A skill bought up from its default counts the default's worth too
+    // (Characters p. 173).
+    const credit = Number(derived.defaultCredit ?? 0) || 0;
     // A ritual mage's spell costs a point a level, like a Hard technique.
-    const relTo = item.type === "spell" && style === "ritual" ? null : relativeLevelForPoints(to, difficulty);
+    const relTo = item.type === "spell" && style === "ritual" ? null : relativeLevelForPoints(to + credit, difficulty);
     const relFromValue = derived.relativeLevel;
     const relFrom = relFromValue === null || relFromValue === undefined ? null : Number(relFromValue);
     if (relTo !== null && level !== null && from > 0 && relFrom !== null && Number.isFinite(relFrom)) {

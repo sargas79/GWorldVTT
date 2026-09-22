@@ -549,6 +549,8 @@
   font-weight: 600;
   color: var(--color-accent-900);
 }
+/* A skill bought up from its default (Characters p. 173). */
+.gworld .gw-from-default { margin-left: 2px; font-size: 11px; color: var(--color-accent-700); cursor: help; }
 .gworld .dmg { font-family: var(--font-mono); font-size: 11.5px; }
 .gworld .dt { color: var(--color-accent-700); }
 .gworld .bad { color: var(--color-danger); font-weight: 600; }

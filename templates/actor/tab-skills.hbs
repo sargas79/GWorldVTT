@@ -97,7 +97,7 @@
               <td class="n wmode">{{relativeLabel skill}}</td>
               <td class="n">
                 {{#if row.rollable}}
-                  <span class="lvl"{{#if skill.system.derived.bonusLines.length}} data-tooltip="{{bonusLines skill.system.derived.bonusLines}}"{{/if}}>{{skill.system.derived.level}}</span>
+                  <span class="lvl"{{#if skill.system.derived.bonusLines.length}} data-tooltip="{{bonusLines skill.system.derived.bonusLines}}"{{/if}}>{{skill.system.derived.level}}</span>{{#if skill.system.derived.boughtUpFromDefault}}<sup class="gw-from-default" data-tooltip="{{localize 'GWORLD.Skill.BoughtUpFromDefault'}}" aria-label="{{localize 'GWORLD.Skill.BoughtUpFromDefault'}}">&uarr;</sup>{{/if}}
                 {{else}}
                   <span class="tag tag-danger">{{localize "GWORLD.Skill.NoDefault"}}</span>
                 {{/if}}

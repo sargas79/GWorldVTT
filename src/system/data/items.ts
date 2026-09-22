@@ -369,7 +369,7 @@ export class SkillData extends foundry.abstract.TypeDataModel {
   declare defaults: Array<{ from: "attribute" | "skill"; attribute: SkillAttribute; skill: string; modifier: number }>;
   declare techLevel: string;
   declare studyHours: number;
-  declare derived: { level: number | null; relativeLevel: number | null; fromDefault: boolean };
+  declare derived: { level: number | null; relativeLevel: number | null; fromDefault: boolean; defaultCredit?: number; boughtUpFromDefault?: boolean };
 
   static override defineSchema() {
     return {

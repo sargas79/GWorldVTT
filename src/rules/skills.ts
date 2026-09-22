@@ -238,9 +238,24 @@ export function resolveTechniqueDefaults(options: {
 }
 
 /**
+ * What a default is worth in points when the skill is bought up from it
+ * (Characters p. 173): the cost of the default's level relative to the skill's
+ * controlling attribute. A default no better than the 1-point level is worth
+ * nothing, and the skill is bought from scratch.
+ */
+export function defaultCreditPoints(defaultLevel: number, attributeScore: number, difficulty: Difficulty): number {
+  return pointsForRelativeLevel(defaultLevel - attributeScore, difficulty) ?? 0;
+}
+
+/**
  * The level a character actually rolls against: their trained level if they have
  * one, otherwise the best available default. Returns `null` for skills with no
  * default that the character has not learned.
+ *
+ * Points spent on a skill with a good default buy it up from that default
+ * (Characters p. 173): the default counts as the points its level would cost,
+ * so the next point raises it instead of being swallowed by it. `credit` is
+ * what the default was worth, when it counted.
  */
 export function effectiveSkillLevel(options: {
   attributeScore: number;
@@ -249,19 +264,23 @@ export function effectiveSkillLevel(options: {
   bonus?: number;
   /** Candidate default levels already resolved to absolute numbers. */
   defaults?: number[];
-}): { level: number; fromDefault: boolean } | null {
+}): { level: number; fromDefault: boolean; credit?: number } | null {
+  const bestDefault =
+    options.defaults && options.defaults.length > 0 ? Math.max(...options.defaults) : null;
+  const credit =
+    options.points > 0 && bestDefault !== null
+      ? defaultCreditPoints(bestDefault, options.attributeScore, options.difficulty)
+      : 0;
+
   const trained = skillLevel(
     options.attributeScore,
-    options.points,
+    options.points + credit,
     options.difficulty,
     options.bonus ?? 0,
   );
 
-  const bestDefault =
-    options.defaults && options.defaults.length > 0 ? Math.max(...options.defaults) : null;
-
   if (trained !== null && (bestDefault === null || trained >= bestDefault)) {
-    return { level: trained, fromDefault: false };
+    return credit > 0 ? { level: trained, fromDefault: false, credit } : { level: trained, fromDefault: false };
   }
   if (bestDefault !== null) return { level: bestDefault, fromDefault: true };
   return null;

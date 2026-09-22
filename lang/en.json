@@ -992,6 +992,7 @@
       "SpendMore": "Spend the next step of points",
       "SpendLess": "Take back the last step of points",
       "NoDefault": "No default",
+      "BoughtUpFromDefault": "Bought up from its default: the default counts toward the points spent",
       "Trained": "skills trained",
       "CappedByPrerequisite": "capped by prerequisite",
       "NoPrerequisite": "No prerequisite",
