@@ -37,6 +37,9 @@ import { extensionsField } from "../data-extensions.js";
 
 const fields = foundry.data.fields;
 
+/** A fragment's damage type: blank for the Basic Set's cutting (since API 1.72.0). */
+const FRAGMENT_TYPE_CHOICES = ["", "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"];
+
 /** Fields shared by everything that appears in a character's inventory. */
 function physicalFields() {
   return {
@@ -595,6 +598,34 @@ function meleeModeField() {
      */
     fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
     /**
+     * The fragments' damage type, where it isn't the cutting the Basic Set
+     * gives them (Campaigns p. 414) -- "[1d-1 cr]". Blank for cutting (since
+     * API 1.72.0).
+     */
+    fragmentationType: new fields.StringField({ required: true, blank: true, initial: "", choices: FRAGMENT_TYPE_CHOICES }),
+    /** The fragments' own armour divisor -- "[1d(0.2)]" -- 1 for none (since API 1.72.0). */
+    fragmentationDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0.1 }),
+    /**
+     * Fragments that go on striking -- hot fragments burn every 10 seconds for
+     * a minute (Campaigns p. 414) -- as seconds between strikes and seconds in
+     * all; 0 for fragments that strike once (since API 1.72.0).
+     */
+    fragmentationLingerEvery: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+    fragmentationLingerFor: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+    /**
+     * Where the blast goes off as this mode is used (Campaigns p. 415): blank
+     * beside the target, `contact` pressed against it, `internal` inside it.
+     * The damage card offers it first and the GM may change it (since API
+     * 1.72.0).
+     */
+    blastPlacement: new fields.StringField({ required: true, blank: true, initial: "", choices: ["", "contact", "internal"] }),
+    /**
+     * A large-area injury (Campaigns p. 400): a cone, an area effect, a blast
+     * that washes over the whole body. The damage card ticks it (since API
+     * 1.72.0).
+     */
+    largeArea: new fields.BooleanField({ initial: false }),
+    /**
      * An affliction rather than damage (GURPS Basic Set: Characters p. 35).
      * The target resists with an attribute roll at a penalty -- "HT-4 aff" --
      * and what failing does is the weapon's own business, which the compendium
@@ -642,6 +673,11 @@ function meleeModeField() {
         }),
         explosive: new fields.BooleanField({ initial: false }),
         fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
+        /** The fragments' type and divisor, as on a mode (since API 1.72.0). */
+        fragmentationType: new fields.StringField({ required: true, blank: true, initial: "", choices: FRAGMENT_TYPE_CHOICES }),
+        fragmentationDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0.1 }),
+        /** Where its blast goes off, as on a mode: a follow-up's is often `internal` (since API 1.72.0). */
+        blastPlacement: new fields.StringField({ required: true, blank: true, initial: "", choices: ["", "contact", "internal"] }),
         /** True for a follow-up, false for a linked attack. */
         followUp: new fields.BooleanField({ initial: false }),
         /** Radiation and Surge on the second line, as on a mode (since API 1.63.0). */
@@ -902,6 +938,13 @@ function rangedModeField() {
      */
     areaAttack: new fields.BooleanField({ initial: false }),
     /**
+     * A miss with this mode always scatters by the square of the margin
+     * (Campaigns p. 414), as for a weapon only ever fired or dropped at what
+     * its user can't see -- not only when the target was flying or unseen
+     * (since API 1.72.0).
+     */
+    scatterSquared: new fields.BooleanField({ initial: false }),
+    /**
      * How wide a cone attack is at its widest, in yards (p. 413). The spread
      * is that width over the weapon's Max range; zero means the table does not
      * say, and the cone then spreads a yard per yard. Only read when
@@ -979,6 +1022,34 @@ function rangedModeField() {
      */
     fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
     /**
+     * The fragments' damage type, where it isn't the cutting the Basic Set
+     * gives them (Campaigns p. 414) -- "[1d-1 cr]". Blank for cutting (since
+     * API 1.72.0).
+     */
+    fragmentationType: new fields.StringField({ required: true, blank: true, initial: "", choices: FRAGMENT_TYPE_CHOICES }),
+    /** The fragments' own armour divisor -- "[1d(0.2)]" -- 1 for none (since API 1.72.0). */
+    fragmentationDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0.1 }),
+    /**
+     * Fragments that go on striking -- hot fragments burn every 10 seconds for
+     * a minute (Campaigns p. 414) -- as seconds between strikes and seconds in
+     * all; 0 for fragments that strike once (since API 1.72.0).
+     */
+    fragmentationLingerEvery: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+    fragmentationLingerFor: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+    /**
+     * Where the blast goes off as this mode is used (Campaigns p. 415): blank
+     * beside the target, `contact` pressed against it, `internal` inside it.
+     * The damage card offers it first and the GM may change it (since API
+     * 1.72.0).
+     */
+    blastPlacement: new fields.StringField({ required: true, blank: true, initial: "", choices: ["", "contact", "internal"] }),
+    /**
+     * A large-area injury (Campaigns p. 400): a cone, an area effect, a blast
+     * that washes over the whole body. The damage card ticks it (since API
+     * 1.72.0).
+     */
+    largeArea: new fields.BooleanField({ initial: false }),
+    /**
      * An affliction rather than damage (GURPS Basic Set: Characters p. 35).
      * The target resists with an attribute roll at a penalty -- "HT-4 aff" --
      * and what failing does is the weapon's own business, which the compendium
@@ -1026,6 +1097,11 @@ function rangedModeField() {
         }),
         explosive: new fields.BooleanField({ initial: false }),
         fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
+        /** The fragments' type and divisor, as on a mode (since API 1.72.0). */
+        fragmentationType: new fields.StringField({ required: true, blank: true, initial: "", choices: FRAGMENT_TYPE_CHOICES }),
+        fragmentationDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0.1 }),
+        /** Where its blast goes off, as on a mode: a follow-up's is often `internal` (since API 1.72.0). */
+        blastPlacement: new fields.StringField({ required: true, blank: true, initial: "", choices: ["", "contact", "internal"] }),
         /** True for a follow-up, false for a linked attack. */
         followUp: new fields.BooleanField({ initial: false }),
         /** Radiation and Surge on the second line, as on a mode (since API 1.63.0). */

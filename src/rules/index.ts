@@ -109,7 +109,12 @@ export * from "./attack-options.js";
 export * from "./bonus-points.js";
 export * from "./environment.js";
 // scatter.js already gives the same fragmentation radius.
-export { blastAt, blastRadius, collateralDamage, FRAGMENTATION_SKILL, type BlastEffect } from "./explosions.js";
+export {
+  blastAt, blastRadius, collateralDamage, FRAGMENTATION_SKILL, type BlastEffect,
+  BLAST_PLACEMENTS, INTERNAL_BLAST_WOUNDING, FRAGMENTATION_TYPE, blastPlacementOf, contactCoverDr,
+  fragmentationSpec, fragmentationLabel, fragmentationStrikes, type BlastPlacement, type FragmentationSpec,
+} from "./explosions.js";
+export * from "./large-area.js";
 export * from "./layered-armor.js";
 export * from "./legality.js";
 export * from "./shield-damage.js";

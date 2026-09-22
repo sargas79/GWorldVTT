@@ -1748,7 +1748,8 @@
       "OnTarget": "It landed where it was meant to",
       "Landed": "{yards} yards off, direction {direction} ({bearing}° from your facing)",
       "Squared": "Unseen target: the margin is squared",
-      "Fragments": "Fragments reach {yards} yards, attacking at skill {skill}"
+      "Fragments": "Fragments reach {yards} yards, attacking at skill {skill}",
+      "Weapon": "Weapon"
     },
     "Overpenetration": {
       "Action": "Overpenetration",
@@ -4517,6 +4518,25 @@
       "BuyOffTitle": "Buy off a disadvantage",
       "BuyOffConfirm": "Buy off {name}? It is removed from the character, and the {points} points it gave are spent.",
       "Removed": "removed"
+    },
+    "Blast": {
+      "Placement": "Where it went off",
+      "PlacementHint": "Beside the victim, pressed against them (maximum damage, DR as usual), or inside them (no DR, vitals, x3)",
+      "beside": "Beside",
+      "contact": "Contact",
+      "internal": "Internal",
+      "ContactApplied": "Contact blast: maximum damage. Anyone else in the blast gets cover DR {dr} (torso DR + HP)",
+      "InternalApplied": "Internal blast: DR has no effect; vitals, x3"
+    },
+    "LargeArea": {
+      "Label": "Large area",
+      "Hint": "Large-area injury: DR is the average of the torso's and the least protected exposed location's, and there is no hit location",
+      "Applied": "Large area: DR {dr} (torso and {location})"
+    },
+    "Fragments": {
+      "Roll": "Roll fragments {fragments}",
+      "Label": "{label} fragments {fragments}",
+      "Lingers": "strike every {every} s for {for} s ({strikes} in all)"
     }
   }
 }

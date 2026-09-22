@@ -28,7 +28,9 @@ import {
   type CriticalTable,
 } from "../rules/criticals.js";
 import { computeInjury } from "../rules/damage.js";
-import type { HitLocation } from "../rules/hit-locations.js";
+import { locationDrAgainst, type HitLocation } from "../rules/hit-locations.js";
+import { blastPlacementOf, INTERNAL_BLAST_WOUNDING, type BlastPlacement } from "../rules/explosions.js";
+import { LARGE_AREA_LOCATIONS, largeAreaDr, largeAreaSingleLocation, type LargeAreaDr } from "../rules/large-area.js";
 import { applyInjury, type InjuryConsequences } from "../rules/injury.js";
 import { knockback, type KnockbackResult } from "../rules/maneuvers.js";
 import { knockdownModifier, knockdownRequired } from "../rules/knockdown.js";
@@ -119,6 +121,24 @@ export interface IncomingDamage {
   surge?: boolean;
   /** Yards from an explosion's centre, where the blow is one (since API 1.63.0). */
   blastDistance?: number;
+  /**
+   * Where a blast went off for this victim (since API 1.72.0; Campaigns
+   * p. 415). `contact` is the caller's to have made maximum damage already;
+   * `internal` is worked out here: no DR of any kind, the vitals, x3.
+   */
+  blastPlacement?: BlastPlacement | null;
+  /**
+   * A large-area injury (since API 1.72.0; Campaigns p. 400): DR is the
+   * average of the torso's and the least-protected exposed location's, and
+   * the blow is a torso hit -- unless a single location is exposed, when it is
+   * an ordinary hit there.
+   */
+  largeArea?: boolean;
+  /**
+   * The locations a large-area blow is exposed to (since API 1.72.0). Left
+   * out, all of them, as for a true area effect.
+   */
+  exposedLocations?: HitLocation[];
   /** The item the blow was rolled from, where the card knows it. */
   itemUuid?: string;
   /** Where the blow came from, where its roll said (since 1.43.0): "parriedLimb" for the strike after a bare-handed parry. */
@@ -214,6 +234,10 @@ export interface AppliedDamage {
   knockbackStun: { required: boolean; penalty: number } | null;
   /** True when the injury is the token point a yard of a cinematic blast. */
   cinematicBlast: boolean;
+  /** The DR a large-area blow met and the location that set it, or null (since API 1.72.0). */
+  largeArea: LargeAreaDr | null;
+  /** Where the blast went off for this victim, or null (since API 1.72.0). */
+  blastPlacement: BlastPlacement | null;
   /**
    * True when this blow simply put a mook down (Campaigns p. 417). Nothing
    * about the wound is worth reporting then: "don't bother keeping track of
@@ -284,25 +308,84 @@ export function vulnerabilitiesOf(actor: any): Vulnerability[] {
   return found;
 }
 
-export function resolveDamageAgainst(actor: any, damage: IncomingDamage): AppliedDamage {
+/**
+ * Where a blow is worked out, once a blast's placement and a large-area
+ * injury have had their say (since API 1.72.0). A blast inside the victim is
+ * an attack on the vitals (Campaigns p. 415); a large-area blow is a torso hit
+ * unless a single location was exposed (p. 400). A module's location stands
+ * only for a blow that landed where it was aimed.
+ */
+function placedDamage(damage: IncomingDamage): { damage: IncomingDamage; largeArea: HitLocation[] | null } {
+  if (blastPlacementOf(damage.blastPlacement) === "internal") {
+    return { damage: { ...damage, hitLocation: "vitals", addonLocation: null }, largeArea: null };
+  }
+  if (damage.largeArea !== true) return { damage, largeArea: null };
+  const exposed = damage.exposedLocations?.length ? damage.exposedLocations : [...LARGE_AREA_LOCATIONS];
+  const single = largeAreaSingleLocation(exposed);
+  if (single) {
+    return {
+      damage: { ...damage, hitLocation: single, ...(single === damage.hitLocation ? {} : { addonLocation: null }) },
+      largeArea: null,
+    };
+  }
+  return { damage: { ...damage, hitLocation: "torso", addonLocation: null }, largeArea: exposed };
+}
+
+export function resolveDamageAgainst(actor: any, incoming: IncomingDamage): AppliedDamage {
   const hp = actor?.system?.hp ?? { value: 0, max: 0 };
   const fp = actor?.system?.fp ?? { value: 0, max: 0 };
 
   const traits = traitsOf(actor);
+  const placed = placedDamage(incoming);
+  const damage = placed.damage;
+  // "DR has no effect" on a blast inside its victim (Campaigns p. 415): not
+  // worn armour, not the victim's own, not a field -- and so no Hardened to
+  // step it down either.
+  const internal = blastPlacementOf(damage.blastPlacement) === "internal";
 
+  const worn = wornArmor(actor);
+  const arc = isRuleOn("frontArmor") ? (damage.arc ?? null) : null;
+  const { naturalDr, lines, layers } = armourAt(actor, damage, damage.hitLocation, traits, worn, arc);
+
+  // A large-area blow meets the average of the torso's DR and the least
+  // protected exposed location's, against this attack's own type (p. 400).
+  // The torso's layers stand for the rest -- which of them is rigid and which
+  // flexible, for blunt trauma -- and the average replaces the total.
+  let largeArea: LargeAreaDr | null = null;
+  if (placed.largeArea) {
+    const totalAt = (location: HitLocation) => {
+      const at = location === "torso" ? { naturalDr, layers } : armourAt(actor, damage, location, traits, worn, arc);
+      return at.layers.totalDr + at.naturalDr + locationDrAgainst(location, damage.type);
+    };
+    largeArea = largeAreaDr({
+      torsoDr: totalAt("torso"),
+      exposed: placed.largeArea.map((location) => ({ location, dr: totalAt(location) })),
+    });
+  }
+
+  return resolvePlaced(actor, damage, { hp, fp, traits, internal, naturalDr, lines, layers, largeArea });
+}
+
+/** One location's armour against a blow, after the modules' `gworld.armorDr` listeners. */
+function armourAt(
+  actor: any,
+  damage: IncomingDamage,
+  location: HitLocation,
+  traits: TraitEffects,
+  worn: ArmorPiece[],
+  arc: Arc | null,
+): { naturalDr: number; lines: ArmorDrLine[]; layers: ArmourLayers } {
   // Damage Resistance is the target's own, under whatever they are wearing:
   // "each point of DR stops one point of basic damage", the same as armour.
   // A breastplate marked "F" counts against a blow from the front alone
   // (Characters p. 282), so the arc it came from is read here; the layers
   // are kept apart because blunt trauma only counts what got past the rigid.
   // Hooves armour the feet and nothing else (Characters p. 42).
-  const naturalDr = traits.damageResistance + (damage.hitLocation === "foot" ? traits.footDr : 0);
-  const worn = wornArmor(actor);
-  const arc = isRuleOn("frontArmor") ? (damage.arc ?? null) : null;
+  const naturalDr = traits.damageResistance + (location === "foot" ? traits.footDr : 0);
   // What each piece is worth against this blow, offered to the modules before
   // any of it is added up (since 1.48.0): a listener may double a piece
   // against one kind of attack, refuse it against another, or harden it.
-  const here = new Set(piecesAt(worn, damage.hitLocation));
+  const here = new Set(piecesAt(worn, location));
   const lines: ArmorDrLine[] = worn
     // A Force Field "protects your entire body - including your eyes - as well
     // as anything you are carrying" (Characters p. 47), wherever the blow fell.
@@ -311,7 +394,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
       label: piece.name ?? "",
       // A Force Field covers everything, so it is read at the spot the blow
       // fell whatever its own list says (Characters p. 47).
-      dr: damage.fromBelow === true ? drFromBelow(piece, damage.type, damage.hitLocation) : drAgainst(piece, damage.type, damage.hitLocation),
+      dr: damage.fromBelow === true ? drFromBelow(piece, damage.type, location) : drAgainst(piece, damage.type, location),
       applies: true,
       forceField: piece.forceField === true,
       flexible: piece.flexible === true,
@@ -323,7 +406,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     actor,
     item: damage.itemUuid ? (fromUuidSync(damage.itemUuid) ?? null) : null,
     mode: damage.mode ?? null,
-    hitLocation: damage.hitLocation,
+    hitLocation: location,
     damageType: damage.type,
     basicDamage: damage.basicDamage,
     // Whether the blow ignores DR, which is when a line's againstIgnoresDr is
@@ -337,7 +420,7 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     lines,
   });
 
-  const layers = { rigidDr: 0, flexibleDr: 0, totalDr: 0, fieldDr: 0, hardened: 0, fieldAgainstIgnoring: 0, armourAgainstIgnoring: 0 };
+  const layers: ArmourLayers = { rigidDr: 0, flexibleDr: 0, totalDr: 0, fieldDr: 0, hardened: 0, fieldAgainstIgnoring: 0, armourAgainstIgnoring: 0 };
   for (const line of lines) {
     if (line.applies === false) continue;
     layers.hardened = Math.max(layers.hardened, Math.max(0, Math.floor(Number(line.hardened) || 0)));
@@ -353,7 +436,37 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     }
   }
   layers.totalDr = layers.rigidDr + layers.flexibleDr;
-  const wornDr = layers.totalDr + naturalDr;
+  return { naturalDr, lines, layers };
+}
+
+/** A location's armour, added up by the layer it is in. */
+interface ArmourLayers {
+  rigidDr: number;
+  flexibleDr: number;
+  totalDr: number;
+  fieldDr: number;
+  hardened: number;
+  fieldAgainstIgnoring: number;
+  armourAgainstIgnoring: number;
+}
+
+/** The rest of {@link resolveDamageAgainst}, once the armour it meets is known. */
+function resolvePlaced(actor: any, damage: IncomingDamage, context: {
+  hp: any;
+  fp: any;
+  traits: TraitEffects;
+  internal: boolean;
+  naturalDr: number;
+  lines: ArmorDrLine[];
+  layers: ArmourLayers;
+  largeArea: LargeAreaDr | null;
+}): AppliedDamage {
+  const { hp, fp, traits, internal, naturalDr, lines, largeArea } = context;
+  // Inside the victim, nothing they wear or are stands in the way.
+  const layers: ArmourLayers = internal
+    ? { rigidDr: 0, flexibleDr: 0, totalDr: 0, fieldDr: 0, hardened: 0, fieldAgainstIgnoring: 0, armourAgainstIgnoring: 0 }
+    : context.layers;
+  const wornDr = largeArea ? largeArea.dr : layers.totalDr + naturalDr;
 
   // A blow that found a chink meets half the armour. It is applied to the worn
   // figure rather than inside the pipeline because natural DR is not armour
@@ -364,11 +477,13 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
   // "Each level of Hardened reduces the armor divisor of an attack by one
   // step" (Characters p. 47), and six levels take one that ignores DR right
   // down to none at all.
-  const hardened = hardenedAgainst(
-    Number(damage.armorDivisor ?? 1) || 1,
-    damage.ignoresDr === true,
-    layers.hardened,
-  );
+  const hardened = internal
+    ? { divisor: 1, ignoresDr: true }
+    : hardenedAgainst(
+        Number(damage.armorDivisor ?? 1) || 1,
+        damage.ignoresDr === true,
+        layers.hardened,
+      );
   const armour = hardened.ignoresDr ? 0 : (damage.chink ? chinkDr(wornDr) : wornDr) * drMultiplier;
 
   // A critical can double or triple the blow, or replace the roll with the
@@ -410,6 +525,10 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
     basicDamage,
     dr: armour + (damage.ignoresDr ? 0 : (overrides?.extraDr ?? 0)),
     ...(overrides && overrides.woundingModifier !== null ? { woundingOverride: overrides.woundingModifier } : {}),
+    // A blast inside the victim is an attack on the vitals at x3 (p. 415),
+    // whatever its type; a body whose Injury Tolerance sets the figure still
+    // has the last word.
+    ...(internal ? { woundingOverride: INTERNAL_BLAST_WOUNDING } : {}),
     ...(overrides && overrides.cripplingThreshold !== undefined ? { cripplingThreshold: overrides.cripplingThreshold } : {}),
     type: damage.type,
     // The divisor as Hardened left it, which is 1 where nothing hardened it.
@@ -524,7 +643,9 @@ export function resolveDamageAgainst(actor: any, damage: IncomingDamage): Applie
         ? { required: true, penalty: knockbackStunPenalty(shoved.yards) }
         : null,
     cinematicBlast: blast,
-    naturalDr,
+    largeArea,
+    blastPlacement: blastPlacementOf(damage.blastPlacement),
+    naturalDr: internal ? 0 : naturalDr,
     forceField: { dr: fieldAgainst, stopped: stoppedByField },
     // "Effects that rely on touch ... only affect you if carried by an attack
     // that does enough damage to pierce your DR" (Characters p. 47). Without a
@@ -668,6 +789,8 @@ export async function applyDamageToActor(
  * and what got past the field for everything under it.
  */
 async function spendAblativeDr(actor: any, damage: IncomingDamage, resolved: AppliedDamage): Promise<ArmorWear[]> {
+  // A blast inside its victim met no armour, so it wore none down.
+  if (blastPlacementOf(damage.blastPlacement) === "internal") return [];
   const reachedArmour = resolved.basicDamage;
   const reachedField = reachedArmour + resolved.forceField.stopped;
   const updates: Array<Record<string, unknown>> = [];
@@ -684,7 +807,9 @@ async function spendAblativeDr(actor: any, damage: IncomingDamage, resolved: App
     const field = item.system?.forceField === true;
     const covered: string[] = item.system?.locations ?? [];
     // An empty list is whole-body coverage, and a field covers everything.
-    if (!field && covered.length > 0 && !covered.includes(damage.hitLocation)) continue;
+    // The location is the one the blow was worked out at, which a large-area
+    // blow or a blast inside the victim moved.
+    if (!field && covered.length > 0 && !covered.includes(resolved.hitLocation)) continue;
 
     const lost = ablativeLoss({
       ablative,

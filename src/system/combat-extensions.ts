@@ -149,12 +149,17 @@ export interface WeaponRowEntry {
   basis: WeaponRowBasis;
 }
 
+/** A fragment's damage type as a row may give it, blank for cutting (since 1.72.0). */
+const FRAGMENT_TYPES: ReadonlySet<string> = new Set(["", "burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"]);
+
 /** The row fields a listener may change. */
 const WEAPON_ROW_FIELDS = [
   "skillLevel", "damage", "damageType", "armorDivisor", "halfDamageRange", "maxRange", "minRange", "accuracy",
   "malfunction", "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp", "reach", "parry", "twoHanded",
   "feint", "skillName", "readiesAfterAttack", "affliction", "afflictionAttribute", "afflictionModifier",
   "recoil", "noSprayingFire", "noSuppressionFire",
+  "fragmentation", "fragmentationType", "fragmentationDivisor", "fragmentationLingerEvery", "fragmentationLingerFor",
+  "blastPlacement", "largeArea", "scatterSquared",
 ] as const;
 
 /**
@@ -251,7 +256,19 @@ export function adjustWeaponAttacks(options: {
               }
             : {}),
           ...(typeof follow.fragmentation === "string" && follow.fragmentation.trim()
-            ? { fragmentation: follow.fragmentation.trim() }
+            ? {
+                fragmentation: follow.fragmentation.trim(),
+                // Its fragments' own type and divisor (since 1.72.0).
+                ...(FRAGMENT_TYPES.has(String(follow.fragmentationType ?? "")) && follow.fragmentationType
+                  ? { fragmentationType: String(follow.fragmentationType) }
+                  : {}),
+                ...(Number(follow.fragmentationDivisor) > 0 && Number(follow.fragmentationDivisor) !== 1
+                  ? { fragmentationDivisor: Number(follow.fragmentationDivisor) }
+                  : {}),
+              }
+            : {}),
+          ...(follow.explosive && (follow.blastPlacement === "contact" || follow.blastPlacement === "internal")
+            ? { blastPlacement: follow.blastPlacement }
             : {}),
           ...(follow.followUp ? { followUp: true } : {}),
           ...(follow.label ? { label: String(follow.label) } : {}),
@@ -259,6 +276,17 @@ export function adjustWeaponAttacks(options: {
       : null;
     // Whether the row is an affliction, what resists it and at what (since
     // 1.55.0). A row that is not one resists with nothing.
+    // The blast and its fragments (since 1.72.0): the dice as text, a type
+    // from the table or blank for cutting, a divisor, the seconds they linger,
+    // where the blast goes off, and whether it is a large-area injury.
+    row.fragmentation = typeof row.fragmentation === "string" ? row.fragmentation.trim() : "";
+    row.fragmentationType = FRAGMENT_TYPES.has(String(row.fragmentationType ?? "")) ? String(row.fragmentationType) : "";
+    row.fragmentationDivisor = Number(row.fragmentationDivisor) > 0 ? Number(row.fragmentationDivisor) : 1;
+    row.fragmentationLingerEvery = Math.max(0, Math.floor(Number(row.fragmentationLingerEvery) || 0));
+    row.fragmentationLingerFor = Math.max(0, Math.floor(Number(row.fragmentationLingerFor) || 0));
+    row.blastPlacement = row.blastPlacement === "contact" || row.blastPlacement === "internal" ? row.blastPlacement : "";
+    row.largeArea = row.largeArea === true;
+    if (entry.kind === "ranged") row.scatterSquared = row.scatterSquared === true;
     row.affliction = row.affliction === true;
     row.afflictionAttribute = row.affliction ? String(row.afflictionAttribute ?? "") : "";
     row.afflictionModifier = row.affliction ? Math.floor(Number(row.afflictionModifier) || 0) : 0;

@@ -185,13 +185,14 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
   weight: 0, quality: "good", material: "", resistsBreakage: false, minStPenalty: 0, condition: "sound",
   twoHanded: false, swung: false, reach: "C", parry: null, parryModifier: 0, minSt: null, usable: true,
   unbalanced: false, isFencing: false, unarmed: false, stBased: false, damageBase: "", damageModifier: 0,
-  unarmedBonusSkill: "", weaponMasterPerDie: 0, explosive: false, fragmentation: "", affliction: false, afflictionAttribute: "",
+  unarmedBonusSkill: "", weaponMasterPerDie: 0, explosive: false, fragmentation: "", fragmentationType: "", fragmentationDivisor: 1,
+  fragmentationLingerEvery: 0, fragmentationLingerFor: 0, blastPlacement: "", largeArea: false, affliction: false, afflictionAttribute: "",
   afflictionModifier: 0, feint: true, ignoresDr: false,
   incendiary: false, radiation: false, doubleKnockback: false, noKnockback: false, kineticOnly: false, surge: false,
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
   ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1,
-  recoil: 1, bulk: 0, mount: "", noSprayingFire: false, noSuppressionFire: false, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0,
+  recoil: 1, bulk: 0, mount: "", scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false, outOfAction: null,
   ammunition: "", malediction: 0, ignoresDr: false,
 };
@@ -256,6 +257,10 @@ export interface DerivedAttack {
     afflictionAttribute?: string;
     afflictionModifier?: number;
     fragmentation?: string;
+    /** The fragments' type and divisor, and where the blast goes off (since API 1.72.0). */
+    fragmentationType?: string;
+    fragmentationDivisor?: number;
+    blastPlacement?: string;
     followUp?: boolean;
     /** Carried on a linked line as on a mode (since API 1.63.0). */
     radiation?: boolean;
@@ -295,6 +300,19 @@ export interface DerivedAttack {
   explosive: boolean;
   /** Fragmentation thrown, as a dice formula. Blank when it throws none. */
   fragmentation: string;
+  /** The fragments' damage type, blank for cutting (since API 1.72.0). */
+  fragmentationType?: string;
+  /** The fragments' armour divisor, 1 for none (since API 1.72.0). */
+  fragmentationDivisor?: number;
+  /** Fragments that go on striking: seconds between, seconds in all; 0 for none (since API 1.72.0). */
+  fragmentationLingerEvery?: number;
+  fragmentationLingerFor?: number;
+  /** Where the blast goes off: "", "contact" or "internal" (since API 1.72.0). */
+  blastPlacement?: string;
+  /** A large-area injury (since API 1.72.0). */
+  largeArea?: boolean;
+  /** A miss scatters by the square of the margin (since API 1.72.0). */
+  scatterSquared?: boolean;
   /**
    * False when this weapon cannot be used where the character is standing --
    * a reach-1 weapon while sharing a hex with a foe.
@@ -488,6 +506,27 @@ interface DefenseView {
  * (Characters p. 106). The same shape a module's `gworld.weaponAttacks`
  * listener may set, so the Combat tab and the damage card need know only one.
  */
+/**
+ * What a mode's row carries about its blast and its fragments (Campaigns
+ * pp. 400, 414-415): the dice as always, and since API 1.72.0 their type,
+ * divisor and lingering, where the blast goes off and whether it is a
+ * large-area injury.
+ */
+function blastFields(mode: any): Pick<DerivedAttack,
+  "fragmentation" | "fragmentationType" | "fragmentationDivisor" | "fragmentationLingerEvery" | "fragmentationLingerFor"
+  | "blastPlacement" | "largeArea"> {
+  const divisor = Number(mode.fragmentationDivisor);
+  return {
+    fragmentation: mode.fragmentation ?? "",
+    fragmentationType: String(mode.fragmentationType ?? ""),
+    fragmentationDivisor: Number.isFinite(divisor) && divisor > 0 ? divisor : 1,
+    fragmentationLingerEvery: Math.max(0, Math.floor(Number(mode.fragmentationLingerEvery) || 0)),
+    fragmentationLingerFor: Math.max(0, Math.floor(Number(mode.fragmentationLingerFor) || 0)),
+    blastPlacement: mode.blastPlacement === "contact" || mode.blastPlacement === "internal" ? mode.blastPlacement : "",
+    largeArea: mode.largeArea === true,
+  };
+}
+
 function linkedRow(linked: any): NonNullable<DerivedAttack["followUp"]> {
   return {
     damage: String(linked.damage ?? ""),
@@ -502,6 +541,11 @@ function linkedRow(linked: any): NonNullable<DerivedAttack["followUp"]> {
         }
       : {}),
     ...(linked.fragmentation ? { fragmentation: String(linked.fragmentation) } : {}),
+    ...(linked.fragmentation && linked.fragmentationType ? { fragmentationType: String(linked.fragmentationType) } : {}),
+    ...(linked.fragmentation && Number(linked.fragmentationDivisor) > 0 && Number(linked.fragmentationDivisor) !== 1
+      ? { fragmentationDivisor: Number(linked.fragmentationDivisor) }
+      : {}),
+    ...(linked.explosive && linked.blastPlacement ? { blastPlacement: String(linked.blastPlacement) } : {}),
     ...(linked.followUp ? { followUp: true } : {}),
     ...(linked.radiation ? { radiation: true } : {}),
     ...(linked.surge ? { surge: true } : {}),
@@ -2329,7 +2373,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           noKnockback: Boolean(mode.noKnockback),
           kineticOnly: Boolean(mode.kineticOnly),
           surge: Boolean(mode.surge),
-          fragmentation: mode.fragmentation ?? "",
+          ...blastFields(mode),
           affliction: Boolean(mode.affliction),
           afflictionAttribute: mode.afflictionAttribute ?? "",
           afflictionModifier: Number(mode.afflictionModifier ?? 0),
@@ -2449,6 +2493,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           aimingSkill: String(mode.aimingSkill ?? ""),
           guidedSkillLevel: Math.max(0, Math.floor(Number(mode.guidedSkillLevel) || 0)),
           areaAttack: Boolean(mode.areaAttack),
+          scatterSquared: mode.scatterSquared === true,
           coneMaxWidth: Number(mode.coneMaxWidth ?? 0) || 0,
           damage: loadedDamage(rangedDamage),
           damageType: mode.damageSpecial ? "" : (round?.damageType ?? mode.damageType),
@@ -2520,7 +2565,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           noKnockback: Boolean(mode.noKnockback),
           kineticOnly: Boolean(mode.kineticOnly),
           surge: Boolean(mode.surge),
-          fragmentation: mode.fragmentation ?? "",
+          ...blastFields(mode),
           affliction: Boolean(mode.affliction),
           afflictionAttribute: mode.afflictionAttribute ?? "",
           afflictionModifier: Number(mode.afflictionModifier ?? 0),
