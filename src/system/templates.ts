@@ -93,7 +93,15 @@ const ICONS: Record<string, string> = {
   "gworld.v2icon.campaign": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M5 21V4"></path><path d="M5 4h13l-3 4.5 3 4.5H5"></path>
   </svg>`,
-  "gworld.v2icon.arrowUp": `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  // The vehicle sheet's tabs: who is aboard, and the table's columns.
+  "gworld.v2icon.crew": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 14v7"></path><path d="m10.3 11-6.9-1.6"></path><path d="m13.7 11 6.9-1.6"></path>
+  </svg>`,
+  "gworld.v2icon.specs": `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path>
+    <path d="M2 14h4"></path><path d="M10 8h4"></path><path d="M18 16h4"></path>
+  </svg>`,
+  "gworld.v2icon.arrowUp":`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path>
   </svg>`,
   "gworld.v2icon.arrowDown": `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">

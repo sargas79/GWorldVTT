@@ -1,0 +1,26 @@
+{{!-- The table's columns as fields, for a vehicle the table is writing down
+     itself (Campaigns pp. 462-465). Read-only for anyone who cannot edit. --}}
+<section class="tab v2-tab vehicle-tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+  <div class="v2-panel vehicle-specs">
+    <h2 class="v2-ph">{{localize "GWORLD.Vehicle.Edit"}}</h2>
+    <p class="v2-note">{{localize "GWORLD.Vehicle.SpecsHint"}}</p>
+    <div class="vehicle-fields">
+      {{#each specFields as |f|}}
+        <label class="vehicle-field"{{#if f.hint}} data-tooltip="{{f.hint}}"{{/if}}>
+          <span class="v2-stat-label">{{f.label}}</span>
+          {{#if f.options}}
+            <select name="{{f.name}}" {{#unless @root.editable}}disabled{{/unless}}>
+              {{#each f.options as |o|}}<option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}
+            </select>
+          {{else if f.checkbox}}
+            <input type="checkbox" name="{{f.name}}" {{#if f.value}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}}>
+          {{else}}
+            <input type="{{f.type}}" name="{{f.name}}" value="{{f.value}}"
+                   {{#if f.hasMin}}min="{{f.min}}"{{/if}} {{#if f.step}}step="{{f.step}}"{{/if}}
+                   {{#unless @root.editable}}disabled{{/unless}}>
+          {{/if}}
+        </label>
+      {{/each}}
+    </div>
+  </div>
+</section>

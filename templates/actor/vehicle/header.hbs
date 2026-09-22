@@ -1,0 +1,29 @@
+{{!-- The vehicle's header: what it is, the tab being read, and the line a GM
+     checks it by. Shown on every tab. --}}
+<header class="v2-header">
+  <div class="v2-portrait vehicle-portrait">
+    <img src="{{img}}" alt="{{actor.name}}" data-edit="img"
+         {{#if editable}}data-action="editImage" class="rollable"{{/if}}>
+  </div>
+
+  <div class="v2-identity">
+    <div class="v2-eyebrow">
+      <span>{{localize "GWORLD.Vehicle.Eyebrow"}}</span>
+      <span aria-hidden="true">&mdash;</span>
+      <input class="v2-name" type="text" name="name" value="{{actor.name}}" aria-label="{{localize 'GWORLD.Vehicle.Name'}}"
+             {{#unless editable}}disabled{{/unless}}>
+    </div>
+    <h1 class="v2-title" data-v2-tab-title>{{localize tabLabel}}</h1>
+    <div class="v2-meta">
+      {{#each meta as |m|}}<span>{{m}}</span>{{/each}}
+    </div>
+  </div>
+
+  <div class="v2-header-side">
+    {{#if wrecked}}
+      <span class="v2-badge v2-badge-red vehicle-state">{{localize "GWORLD.Vehicle.Wrecked"}}</span>
+    {{else if battered}}
+      <span class="v2-badge v2-badge-gold vehicle-state">{{localize "GWORLD.Vehicle.Battered"}}</span>
+    {{/if}}
+  </div>
+</header>

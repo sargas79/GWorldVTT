@@ -1,15 +1,17 @@
 /**
- * The vehicle sheet: one pane, no tabs (GURPS Basic Set: Campaigns pp. 462-469).
+ * The vehicle sheet (GURPS Basic Set: Campaigns pp. 462-469), on the character
+ * sheet's frame.
  *
  * Everything a vehicle could do used to hang off a row of somebody's Gear tab:
  * two unlabelled dice and a button, crammed in beside the name, with the
  * statistics readable only by opening the item. A car in a chase deserves
  * better, so it has a sheet of its own.
  *
- * What is on it: the table's own columns, the figures the legend says to work
- * out from them, who is aboard and which of them has the wheel, and the three
- * things that happen to a vehicle in play -- a control roll, a shot at it, and
- * somebody leaving it at speed.
+ * Four tabs. Overview: its hit points and speed, the table's own columns, the
+ * figures the legend says to work out from them, and the things that happen
+ * to a vehicle in play -- a control roll and a shot at it. Crew: who is aboard,
+ * which of them has the wheel, and somebody leaving it at speed. Specs: the
+ * columns as fields. Notes: a line for the table and the description.
  */
 
 import { SYSTEM_ID } from "../constants.js";
@@ -25,6 +27,10 @@ const { ActorSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 
 const TEMPLATE_ROOT = `systems/${SYSTEM_ID}/templates/actor`;
+const VEHICLE_ROOT = `${TEMPLATE_ROOT}/vehicle`;
+
+/** The picture a vehicle shows until somebody gives it one. */
+const DEFAULT_IMAGE = "icons/svg/mystery-man.svg";
 
 const L = (key: string, data?: Record<string, unknown>) =>
   data ? game.i18n.format(`GWORLD.Vehicle.${key}`, data) : game.i18n.localize(`GWORLD.Vehicle.${key}`);
@@ -80,8 +86,10 @@ async function promptForHit(aboard: number): Promise<{
 
 export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static override DEFAULT_OPTIONS = {
-    classes: ["gworld", "sheet", "actor", "vehicle"],
-    position: { width: 560, height: "auto" },
+    // "v2" puts the character sheet's frame and components on it, as the
+    // party sheet does; vehicle.css holds only what a vehicle adds.
+    classes: ["gworld", "sheet", "actor", "vehicle", "v2"],
+    position: { width: 860, height: 640 },
     window: { resizable: true },
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
@@ -97,7 +105,20 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
   };
 
   static override PARTS = {
-    sheet: { template: `${TEMPLATE_ROOT}/vehicle-sheet.hbs`, scrollable: [".ibody"] },
+    header: { template: `${VEHICLE_ROOT}/header.hbs` },
+    nav: { template: `${TEMPLATE_ROOT}/v2/nav.hbs` },
+    overview: { template: `${VEHICLE_ROOT}/tab-overview.hbs`, scrollable: [""] },
+    crew: { template: `${VEHICLE_ROOT}/tab-crew.hbs`, scrollable: [""] },
+    specs: { template: `${VEHICLE_ROOT}/tab-specs.hbs`, scrollable: [""] },
+    journal: { template: `${VEHICLE_ROOT}/tab-journal.hbs`, scrollable: [""] },
+  };
+
+  static override TABS: any = {
+    primary: {
+      initial: "overview",
+      labelPrefix: "GWORLD.Vehicle.Tab",
+      tabs: [{ id: "overview" }, { id: "crew" }, { id: "specs" }, { id: "journal" }],
+    },
   };
 
   static LIMITED_PARTS = {
@@ -137,14 +158,37 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
     const system = actor.system;
     const v = system.vehicle;
     const derived = system.derived ?? {};
+    const tabs = (context.tabs ?? {}) as Record<string, { label?: string }>;
+    const active = this.tabGroups.primary ?? "overview";
+    const occupants = await this.#occupants();
+    const operator = occupants.find((p) => p.operator);
+    const hpMax = Number(system.hp?.max) || 0;
+    const hpValue = Number(system.hp?.value) || 0;
 
     return {
       ...context,
       actor,
       system,
       derived,
+      img: String(actor.img || DEFAULT_IMAGE),
       editable: this.isEditable,
       isOwner: actor.isOwner,
+      tabLabel: tabs[active]?.label ?? "",
+
+      // The header's line: what it is, and what a GM would ask first.
+      meta: [
+        system.tl ? `TL ${system.tl}` : "",
+        L(`Locomotion.${v.locomotion}`),
+        `SM ${v.sm >= 0 ? "+" : ""}${v.sm}`,
+        v.skill ? v.skill : "",
+      ].filter(Boolean),
+
+      hpPercent: hpMax > 0 ? Math.max(0, Math.min(100, Math.round((hpValue / hpMax) * 100))) : 0,
+      // Yards a second, doubled (p. 463), for a table that thinks in mph.
+      speedMph: Math.round((Number(system.speed) || 0) * 2),
+      dodge: derived.dodge ?? null,
+      operatorName: operator ? String(operator.name) : "",
+      specFields: this.#specFields(system),
 
       // The table's own columns, in the order the book prints them, so a GM
       // reading from the page can check the sheet line by line (p. 462).
@@ -167,6 +211,11 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
         { label: L("RangeShort"), value: v.range > 0 ? `${v.range} mi` : NOTHING },
         { label: L("Cost"), value: `$${system.cost}` },
         { label: L("LocationsShort"), value: String(v.locations) || NOTHING },
+        // Only where it means something: a boat's draft, an aircraft's stall.
+        ...(derived.medium === "water" && v.draft > 0
+          ? [{ label: L("Draft"), value: `${v.draft} ft`, hint: L("DraftHint") }]
+          : []),
+        ...(derived.medium === "air" ? [{ label: L("Stall"), value: String(v.stall), hint: L("StallHint") }] : []),
       ],
 
       // What the legend says to work out from those columns (p. 463), which a
@@ -184,38 +233,18 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
           label: L("SafeDeceleration"),
           value: L("YardsPerSecond", { yards: derived.safeDeceleration }),
         },
-        {
-          label: L("Dodge"),
-          // Nobody at the wheel, nobody to swerve (p. 469).
-          value: derived.dodge === null ? NOTHING : String(derived.dodge),
-        },
       ],
 
       // What a tank's numbers come to once the battle is being fought ten to
       // one (p. 470). Null for anything small enough not to need it.
       decadeScale: derived.decadeScale ?? null,
 
-      // Only where it means something: a boat's draft, an aircraft's stall.
-      draft: derived.medium === "water" && v.draft > 0 ? v.draft : null,
-      stall: derived.medium === "air" ? v.stall : null,
-
-      locomotions: LOCOMOTIONS.map((key) => ({
-        key,
-        label: L(`Locomotion.${key}`),
-        selected: v.locomotion === key,
-      })),
-      fragilities: (["", "c", "f", "x"] as const).map((key) => ({
-        key,
-        label: L(`FragilityChoice.${key === "" ? "none" : key}`),
-        selected: v.fragility === key,
-      })),
-
       // Which parts a shot can land on, off the Locations column (p. 554).
       hitLocations: ((derived.locations ?? []) as string[]).map((key) =>
         game.i18n.localize(`GWORLD.Vehicle.Location.${key}`),
       ),
 
-      occupants: await this.#occupants(),
+      occupants,
       seats: derived.seats ?? { crew: 0, passengers: 0 },
       crowded: derived.crowded === true,
       wrecked: derived.wrecked === true,
@@ -231,6 +260,74 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
         { relativeTo: actor, secrets: actor.isOwner },
       ),
     };
+  }
+
+  /** Each part gets its own tab, or every section renders inactive and the body comes up blank. */
+  override async _preparePartContext(partId: string, context: Record<string, any>, options: object): Promise<Record<string, any>> {
+    const partContext = (await super._preparePartContext(partId, context, options)) as Record<string, any>;
+    if (partContext.tabs && partId in partContext.tabs) partContext.tab = partContext.tabs[partId];
+    return partContext;
+  }
+
+  /** The header's title follows the tab, without redrawing the sheet. */
+  override changeTab(tab: string, group: string, options: object = {}): void {
+    super.changeTab(tab, group, options);
+    if (group !== "primary") return;
+    const label = this.element?.querySelector<HTMLElement>(`.v2-rail [data-tab="${tab}"] .v2-rail-label`)?.textContent ?? "";
+    const title = this.element?.querySelector<HTMLElement>("[data-v2-tab-title]");
+    if (title) title.textContent = label;
+  }
+
+  /** The table's columns as fields, in the order the book prints them (pp. 462-465). */
+  #specFields(system: any): Array<Record<string, unknown>> {
+    const v = system.vehicle;
+    const number = (key: string, name: string, value: unknown, extra: { min?: number; step?: number; hint?: string } = {}) => ({
+      label: L(key),
+      name,
+      value,
+      type: "number",
+      min: extra.min ?? null,
+      hasMin: extra.min !== undefined,
+      step: extra.step ?? 1,
+      hint: extra.hint ?? "",
+    });
+    const text = (key: string, name: string, value: unknown, hint = "") => ({ label: L(key), name, value, type: "text", hint });
+    return [
+      number("StHp", "system.vehicle.stHp", v.stHp, { min: 0 }),
+      number("Handling", "system.vehicle.handling", v.handling),
+      number("Stability", "system.vehicle.stability", v.stability, { min: 0 }),
+      number("Ht", "system.vehicle.ht", v.ht, { min: 1 }),
+      {
+        label: L("Fragility"),
+        name: "system.vehicle.fragility",
+        hint: L("FragilityHint"),
+        options: (["", "c", "f", "x"] as const).map((key) => ({
+          key,
+          label: L(`FragilityChoice.${key === "" ? "none" : key}`),
+          selected: v.fragility === key,
+        })),
+      },
+      number("Acceleration", "system.vehicle.acceleration", v.acceleration, { min: 0, step: 0.1 }),
+      number("TopSpeed", "system.vehicle.topSpeed", v.topSpeed, { min: 0, step: 0.1 }),
+      { label: L("RoadBound"), name: "system.vehicle.roadBound", value: v.roadBound === true, checkbox: true, hint: L("RoadBoundHint") },
+      number("LoadedWeight", "system.vehicle.loadedWeight", v.loadedWeight, { min: 0, step: 0.01 }),
+      number("Load", "system.vehicle.load", v.load, { min: 0, step: 0.01 }),
+      number("Sm", "system.vehicle.sm", v.sm),
+      text("Occupants", "system.vehicle.occupants", v.occupants),
+      number("Dr", "system.vehicle.dr", v.dr, { min: 0 }),
+      number("Range", "system.vehicle.range", v.range, { min: 0 }),
+      number("Cost", "system.cost", system.cost, { min: 0 }),
+      text("Locations", "system.vehicle.locations", v.locations, L("LocationsHint")),
+      text("Skill", "system.vehicle.skill", v.skill),
+      {
+        label: L("LocomotionLabel"),
+        name: "system.vehicle.locomotion",
+        options: LOCOMOTIONS.map((key) => ({ key, label: L(`Locomotion.${key}`), selected: v.locomotion === key })),
+      },
+      number("Draft", "system.vehicle.draft", v.draft, { min: 0, step: 0.1, hint: L("DraftHint") }),
+      number("Stall", "system.vehicle.stall", v.stall, { min: 0, hint: L("StallHint") }),
+      { label: "TL", name: "system.tl", value: system.tl, type: "text", hint: "" },
+    ];
   }
 
   /**
