@@ -1,0 +1,105 @@
+{{!-- What a vehicle is in play: how much of it is left and how fast it is
+     going, the table's line, what that line works out to, and the two things
+     that happen to it in a fight (Campaigns pp. 462-469). --}}
+<section class="tab v2-tab vehicle-tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+  <div class="vehicle-overview">
+    <div class="vehicle-side">
+      <div class="v2-panel vehicle-condition">
+        <h2 class="v2-ph">{{localize "GWORLD.Vehicle.Condition"}}</h2>
+        <div class="v2-pool">
+          <div class="v2-pool-head">
+            <span class="v2-pool-name">HP</span>
+            <span class="v2-pool-value">
+              <input type="number" name="system.hp.value" value="{{system.hp.value}}" step="1"
+                     aria-label="{{localize 'GWORLD.Vehicle.CurrentHp'}}" {{#unless editable}}disabled{{/unless}}>
+              <span>/ {{system.hp.max}}</span>
+            </span>
+          </div>
+          <div class="v2-bar v2-bar-hp"><span style="width: {{hpPercent}}%"></span></div>
+          {{#if wrecked}}
+            <span class="v2-pool-status v2-bad">{{localize "GWORLD.Vehicle.Wrecked"}}</span>
+          {{else if battered}}
+            <span class="v2-pool-status v2-bad">{{localize "GWORLD.Vehicle.Battered"}}</span>
+          {{/if}}
+        </div>
+        <div class="v2-stat-pair">
+          <div class="v2-stat">
+            <span class="v2-stat-label">{{localize "GWORLD.Vehicle.Speed"}}</span>
+            <span class="vehicle-speed">
+              <input type="number" name="system.speed" value="{{system.speed}}" min="0" step="1"
+                     aria-label="{{localize 'GWORLD.Vehicle.Speed'}}" {{#unless editable}}disabled{{/unless}}>
+              <span class="v2-stat-note">{{localize "GWORLD.Vehicle.YardsPerSecondShort"}}</span>
+            </span>
+            <span class="v2-stat-note">{{localize "GWORLD.Vehicle.SpeedMph" mph=speedMph}}</span>
+          </div>
+          <div class="v2-stat" data-tooltip="{{localize 'GWORLD.Vehicle.DodgeHint'}}">
+            <span class="v2-stat-label">{{localize "GWORLD.Vehicle.Dodge"}}</span>
+            <span class="v2-stat-value{{#unless dodge}} v2-muted{{/unless}}">{{#if dodge}}{{dodge}}{{else}}&mdash;{{/if}}</span>
+            <span class="v2-stat-note">{{#if operatorName}}{{operatorName}}{{else}}{{localize "GWORLD.Vehicle.NoOperator"}}{{/if}}</span>
+          </div>
+        </div>
+      </div>
+
+      {{#if rules.vehicles}}
+        {{!-- The two things that happen to a vehicle in a fight. --}}
+        <div class="v2-panel vehicle-play">
+          <h2 class="v2-ph">{{localize "GWORLD.Vehicle.InPlay"}}</h2>
+          <div class="vehicle-buttons">
+            <button type="button" class="v2-button v2-button-steel" data-action="controlVehicle"
+                    data-tooltip="{{localize 'GWORLD.Hazard.ControlHint'}}">{{localize "GWORLD.Hazard.Control"}}</button>
+            <button type="button" class="v2-button" data-action="shotAtVehicle"
+                    data-tooltip="{{localize 'GWORLD.Vehicle.ShotAtHint'}}">{{localize "GWORLD.Vehicle.ShotAt"}}</button>
+          </div>
+          {{#if hitLocations.length}}
+            <div>
+              <span class="v2-stat-label">{{localize "GWORLD.Vehicle.HasLocations"}}</span>
+              <div class="v2-chips vehicle-locations">
+                {{#each hitLocations as |l|}}<span class="v2-tag v2-tag-steel">{{l}}</span>{{/each}}
+              </div>
+            </div>
+          {{/if}}
+        </div>
+      {{/if}}
+
+      {{#if decadeScale}}
+        {{!-- Big enough that the battle is better fought ten to one (p. 470). --}}
+        <div class="v2-panel vehicle-scale">
+          <h2 class="v2-ph">{{localize "GWORLD.Vehicle.ScaleTitle"}}</h2>
+          <p class="v2-note">{{localize "GWORLD.Vehicle.DecadeScale" dr=decadeScale.dr hp=decadeScale.hp}}</p>
+          <div class="vehicle-buttons">
+            <button type="button" class="v2-button" data-action="scaleDamage">{{localize "GWORLD.Vehicle.ScaleTitle"}}</button>
+          </div>
+        </div>
+      {{/if}}
+    </div>
+
+    <div class="vehicle-main">
+      {{!-- The table's own columns, read straight off the page (p. 462). --}}
+      <div class="v2-panel vehicle-stats">
+        <h2 class="v2-ph">{{localize "GWORLD.Vehicle.Statistics"}}</h2>
+        <div class="vehicle-stat-grid">
+          {{#each stats as |s|}}
+            <div class="vehicle-stat"{{#if s.hint}} data-tooltip="{{s.hint}}"{{/if}}>
+              <span class="v2-stat-label">{{s.label}}</span>
+              <span class="vehicle-stat-value">{{s.value}}</span>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+
+      {{!-- What the legend says to work out from them (p. 463). --}}
+      <div class="v2-panel vehicle-worked">
+        <h2 class="v2-ph">{{localize "GWORLD.Vehicle.Worked"}}</h2>
+        <dl class="v2-stat-grid vehicle-figures">
+          {{#each figures as |f|}}<dt>{{f.label}}</dt><dd>{{f.value}}</dd>{{/each}}
+        </dl>
+      </div>
+
+      {{#if system.notes}}
+        <div class="v2-panel vehicle-note">
+          <p class="v2-note">{{system.notes}}</p>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</section>

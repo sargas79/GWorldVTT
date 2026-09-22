@@ -10,6 +10,7 @@ import { registerConsciousnessTurns } from "./system/consciousness.js";
 import "./styles/gworld.css";
 import "./styles/sheet-v2.css";
 import "./styles/party.css";
+import "./styles/vehicle.css";
 
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";

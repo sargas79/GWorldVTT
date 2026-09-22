@@ -1,0 +1,164 @@
+/**
+ * The vehicle sheet (Campaigns pp. 462-469).
+ *
+ * It wears the character sheet's frame and components (sheet-v2.css), as the
+ * party sheet does; this holds only what that stylesheet lacks: the overview's
+ * two columns, the table's columns as tiles, the crew's rows and the fields.
+ */
+
+/* ── overview ──────────────────────────────────────────────────────────── */
+
+.gworld.vehicle.v2 .vehicle-overview {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.4fr);
+  gap: 14px;
+  align-items: start;
+}
+.gworld.vehicle.v2 .vehicle-side,
+.gworld.vehicle.v2 .vehicle-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.gworld.vehicle.v2 .vehicle-state { align-self: center; font-size: 15px; padding: 3px 10px; }
+
+.gworld.vehicle.v2 .vehicle-speed { display: flex; align-items: baseline; gap: 4px; }
+/* The speed reads and edits like the hit points above it. */
+.gworld.vehicle.v2 .vehicle-speed input {
+  width: 3.2em;
+  height: 30px;
+  padding: 0 2px;
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 600;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  box-shadow: none;
+}
+.gworld.vehicle.v2 .vehicle-speed input:hover:not(:disabled),
+.gworld.vehicle.v2 .vehicle-speed input:focus { border-color: var(--color-divider); background: var(--v2-panel-2); }
+
+.gworld.vehicle.v2 .vehicle-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.gworld.vehicle.v2 .vehicle-locations { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+
+/* The table's columns run past ten, so they wrap into tiles rather than one line. */
+.gworld.vehicle.v2 .vehicle-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+.gworld.vehicle.v2 .vehicle-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel-2);
+  min-width: 0;
+}
+.gworld.vehicle.v2 .vehicle-stat .v2-stat-label { font-size: 12px; }
+.gworld.vehicle.v2 .vehicle-stat-value {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+/* The worked-out figures sit on cream, where the list's inherited text is not dark. */
+.gworld.vehicle.v2 .vehicle-figures { padding: 0; margin: 0; row-gap: 4px; color: var(--v2-ink); }
+.gworld.vehicle.v2 .vehicle-figures dt { color: var(--v2-ink-muted); opacity: 1; }
+.gworld.vehicle.v2 .vehicle-figures dd { color: var(--v2-ink); }
+
+/* ── crew ──────────────────────────────────────────────────────────────── */
+
+.gworld.vehicle.v2 .vehicle-seats { display: flex; align-items: center; gap: 8px; }
+.gworld.vehicle.v2 .vehicle-roster { display: flex; flex-direction: column; gap: 8px; }
+.gworld.vehicle.v2 .vehicle-occupant {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--v2-radius);
+  background: var(--v2-panel-2);
+}
+.gworld.vehicle.v2 .vehicle-occupant.operator { border-color: var(--v2-steel); box-shadow: inset 3px 0 0 var(--v2-steel); }
+.gworld.vehicle.v2 .vehicle-occupant-portrait {
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 2px solid var(--v2-panel-line);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--v2-panel-3);
+  cursor: pointer;
+  box-shadow: none;
+}
+.gworld.vehicle.v2 .vehicle-occupant-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: center top; border: 0; }
+.gworld.vehicle.v2 .vehicle-occupant-portrait:hover { border-color: var(--v2-gold); }
+.gworld.vehicle.v2 .vehicle-occupant-identity { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+.gworld.vehicle.v2 .vehicle-occupant-name {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font-family: var(--font-heading);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: left;
+  color: var(--v2-ink);
+  cursor: pointer;
+}
+.gworld.vehicle.v2 .vehicle-occupant-name:hover { color: var(--v2-steel); }
+.gworld.vehicle.v2 .vehicle-occupant-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--v2-ink-muted);
+}
+.gworld.vehicle.v2 .vehicle-occupant-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; }
+
+/* ── specs and notes ───────────────────────────────────────────────────── */
+
+.gworld.vehicle.v2 .vehicle-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px 14px;
+}
+.gworld.vehicle.v2 .vehicle-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+/* Fields as the party sheet draws them: cream, not core's dark inputs. */
+.gworld.vehicle.v2 .vehicle-field input[type="number"],
+.gworld.vehicle.v2 .vehicle-field input[type="text"],
+.gworld.vehicle.v2 .vehicle-field select {
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--color-divider);
+  border-radius: 4px;
+  background: var(--v2-panel-2);
+  color: var(--v2-ink);
+  font-family: var(--font-heading);
+  font-size: 17px;
+}
+.gworld.vehicle.v2 .vehicle-field input::placeholder { font-family: var(--font-body); font-size: 12px; color: var(--v2-ink-muted); }
+.gworld.vehicle.v2 .vehicle-field input:disabled,
+.gworld.vehicle.v2 .vehicle-field select:disabled { opacity: 0.7; }
+.gworld.vehicle.v2 .vehicle-field input[type="checkbox"] { align-self: flex-start; margin: 4px 0 0; }
+.gworld.vehicle.v2 .vehicle-description .editor,
+.gworld.vehicle.v2 .vehicle-description .prose { min-height: 220px; }
+
+/* The two columns stack in a narrow window. */
+@container v2sheet (max-width: 640px) {
+  .gworld.vehicle.v2 .vehicle-overview { grid-template-columns: minmax(0, 1fr); }
+  .gworld.vehicle.v2 .vehicle-occupant { grid-template-columns: 46px minmax(0, 1fr); }
+  .gworld.vehicle.v2 .vehicle-occupant-actions { grid-column: 1 / -1; justify-content: flex-start; }
+}

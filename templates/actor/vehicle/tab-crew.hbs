@@ -1,0 +1,58 @@
+{{!-- Who is aboard, and which of them has the wheel (p. 467). --}}
+<section class="tab v2-tab vehicle-tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+  <div class="v2-panel vehicle-crew">
+    <div class="v2-ph v2-ph-tools">
+      <h2>{{localize "GWORLD.Vehicle.Aboard"}}</h2>
+      <span class="vehicle-seats">
+        <span class="v2-note">{{localize "GWORLD.Vehicle.Seats" crew=seats.crew passengers=seats.passengers}}</span>
+        {{#if crowded}}<span class="v2-tag v2-tag-red">{{localize "GWORLD.Vehicle.Crowded"}}</span>{{/if}}
+      </span>
+    </div>
+
+    {{#if occupants.length}}
+      <div class="vehicle-roster">
+        {{#each occupants as |p|}}
+          <div class="vehicle-occupant{{#if p.operator}} operator{{/if}}" data-uuid="{{p.uuid}}">
+            <button type="button" class="vehicle-occupant-portrait" data-action="openOccupant" data-uuid="{{p.uuid}}"
+                    aria-label="{{p.name}}"><img src="{{p.img}}" alt=""></button>
+            <div class="vehicle-occupant-identity">
+              <button type="button" class="vehicle-occupant-name" data-action="openOccupant" data-uuid="{{p.uuid}}">{{p.name}}</button>
+              <span class="vehicle-occupant-sub">
+                {{#if p.operator}}
+                  <span class="v2-tag v2-tag-steel" data-tooltip="{{localize 'GWORLD.Vehicle.OperatorHint'}}">{{localize "GWORLD.Vehicle.Operator"}}</span>
+                {{else}}
+                  {{localize "GWORLD.Vehicle.Passenger"}}
+                {{/if}}
+                {{#if p.hp}}<span>{{p.hp.value}} / {{p.hp.max}} HP</span>{{/if}}
+              </span>
+            </div>
+
+            <div class="vehicle-occupant-actions">
+              {{#if @root.editable}}
+                {{#unless p.operator}}
+                  <button type="button" class="v2-button v2-button-small" data-action="takeTheWheel" data-uuid="{{p.uuid}}"
+                          data-tooltip="{{localize 'GWORLD.Vehicle.TakeTheWheelHint'}}">{{localize "GWORLD.Vehicle.TakeTheWheel"}}</button>
+                {{/unless}}
+                <button type="button" class="v2-button v2-button-small{{#if p.strappedIn}} v2-button-steel{{/if}}"
+                        data-action="toggleStrappedIn" data-uuid="{{p.uuid}}" aria-pressed="{{#if p.strappedIn}}true{{else}}false{{/if}}"
+                        data-tooltip="{{localize 'GWORLD.Vehicle.StrappedInHint'}}">
+                  {{#if p.strappedIn}}{{localize "GWORLD.Vehicle.StrappedIn"}}{{else}}{{localize "GWORLD.Vehicle.Loose"}}{{/if}}
+                </button>
+              {{/if}}
+              {{#if @root.rules.vehicleManeuvers}}
+                <button type="button" class="v2-button v2-button-small" data-action="jumpOut" data-uuid="{{p.uuid}}"
+                        data-tooltip="{{localize 'GWORLD.Hazard.JumpOutHint'}}">{{localize "GWORLD.Hazard.JumpOut"}}</button>
+              {{/if}}
+              {{#if @root.editable}}
+                <button type="button" class="v2-row-icon v2-row-delete" data-action="removeOccupant" data-uuid="{{p.uuid}}"
+                        data-tooltip="{{localize 'GWORLD.Vehicle.Disembark'}}" aria-label="{{localize 'GWORLD.Vehicle.Disembark'}}">{{> "gworld.trash"}}</button>
+              {{/if}}
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <p class="v2-empty">{{localize "GWORLD.Vehicle.NobodyAboard"}}</p>
+    {{/if}}
+  </div>
+</section>

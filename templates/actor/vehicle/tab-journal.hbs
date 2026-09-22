@@ -1,0 +1,19 @@
+{{!-- A line for the table, and the vehicle's own description. --}}
+<section class="tab v2-tab vehicle-tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+  <div class="v2-panel vehicle-notes">
+    <label class="vehicle-field vehicle-field-wide">
+      <span class="v2-stat-label">{{localize "GWORLD.Vehicle.Notes"}}</span>
+      <input type="text" name="system.notes" value="{{system.notes}}" placeholder="{{localize 'GWORLD.Vehicle.NotesHint'}}"
+             {{#unless editable}}disabled{{/unless}}>
+    </label>
+  </div>
+
+  <div class="v2-panel vehicle-description">
+    <h2 class="v2-ph">{{localize "GWORLD.Vehicle.Description"}}</h2>
+    {{#if editable}}
+      <prose-mirror class="box editor prose" name="system.description" value="{{system.description}}" toggled>{{{descriptionHTML}}}</prose-mirror>
+    {{else}}
+      <div class="box prose">{{{descriptionHTML}}}</div>
+    {{/if}}
+  </div>
+</section>

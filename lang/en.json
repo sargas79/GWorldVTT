@@ -3165,7 +3165,24 @@
       "ScaleDamage": "Weapon damage",
       "ScaleRemaining": "HP left at this scale (0 to skip)",
       "ScaledDamage": "{damage} is {scaled} at this scale",
-      "ScaledBack": "{remaining} HP left is {full} HP at full scale"
+      "ScaledBack": "{remaining} HP left is {full} HP at full scale",
+      "Tab": {
+        "overview": "Overview",
+        "crew": "Crew",
+        "specs": "Specs",
+        "journal": "Notes"
+      },
+      "Eyebrow": "Vehicle",
+      "Name": "Vehicle name",
+      "Condition": "Condition",
+      "CurrentHp": "Current hit points",
+      "SpeedMph": "about {mph} mph",
+      "DodgeHint": "The operator's control skill halved, plus Handling (Campaigns p. 469). Nobody at the wheel, no dodge.",
+      "NoOperator": "Nobody at the wheel",
+      "Passenger": "Aboard",
+      "SpecsHint": "The line as the vehicle tables print it (Campaigns pp. 462-465). The Overview works its figures out from these.",
+      "Description": "Description",
+      "NotesHint": "What it is doing here, who owns it, where it is kept"
     },
     "GearCategory": {
       "weapon": "Weapon",
