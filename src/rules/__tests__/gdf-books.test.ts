@@ -26,6 +26,11 @@ import {
   areaNote,
   LINKED_MODE,
   FOLLOW_UP_MODE,
+  fragmentsOf,
+  parseEquipment,
+  parseRateOfFire,
+  placeholderDamage,
+  STATE_MODE,
   parseSkillUsedWithModifier,
   unarmedSkillsIn,
   powerOfRecord,
@@ -768,5 +773,201 @@ describe("takesSelfControlRoll", () => {
 
   it("stamps the book's standard number", () => {
     expect(STANDARD_SELF_CONTROL).toBe(12);
+  });
+});
+
+// Fragments may be written before the damage type as well as after it, and
+// the brackets may say more than the dice (sargas79/GWorldVTT#591).
+describe("the fragments beside a damage type", () => {
+  const withNote = (damage: string, type: string) =>
+    parseDamage(damage, type) as unknown as { fields: Record<string, unknown>; fragmentNote?: string };
+
+  it("reads them after the type, as the Basic Set's file writes them", () => {
+    expect(parseDamage("5d", "cr ex [2d]")!.fields).toMatchObject({ damageType: "cr", explosive: true, fragmentation: "2d" });
+    expect(parseDamage("4d", "cr ex[1d]")!.fields.fragmentation).toBe("1d");
+  });
+
+  it("reads them before the type the same way", () => {
+    expect(parseDamage("4d-1", "[2d] cr ex")).toEqual(parseDamage("4d-1", "cr ex [2d]"));
+    expect(parseDamage("6dx3", "[4d-1] cr ex")!.fields.fragmentation).toBe("4d-1");
+  });
+
+  it("keeps the dice and notes a divisor or a type the mode cannot hold", () => {
+    const divisor = withNote("2d", "[1d(0.2)] burn ex");
+    expect(divisor.fields).toMatchObject({ damageType: "burn", explosive: true, fragmentation: "1d" });
+    expect(divisor.fragmentNote).toMatch(/armour divisor \(0\.2\)/);
+
+    const typed = withNote("1d+1", "[1d-1 cr] cr ex");
+    expect(typed.fields).toMatchObject({ damageType: "cr", explosive: true, fragmentation: "1d-1" });
+    expect(typed.fragmentNote).toMatch(/damage type cr/);
+  });
+
+  it("reads a bracket left unclosed", () => {
+    expect(fragmentsOf("cr ex [1d(0.2)")).toMatchObject({ rest: "cr ex", dice: "1d" });
+    expect(parseDamage("2d", "burn ex [1d(0.2)")!.fields.fragmentation).toBe("1d");
+    expect(parseDamage("2d", "[1d(0.2) burn ex")!.fields).toMatchObject({ damageType: "burn", explosive: true, fragmentation: "1d" });
+  });
+
+  it("says nothing more of fragments that are plain cutting", () => {
+    expect(fragmentsOf("[2d cut] cr ex")).toEqual({ rest: "cr ex", dice: "2d", note: "" });
+    expect(withNote("4d", "[2d] cr ex").fragmentNote).toBeUndefined();
+  });
+
+  it("finds none in a type without them, or in GCA's own placeholder", () => {
+    expect(fragmentsOf("cr ex")).toEqual({ rest: "cr ex", dice: "", note: "" });
+    expect(fragmentsOf("[damagetype]").dice).toBe("");
+  });
+
+  it("does not give fragments to an attack that does not explode", () => {
+    expect(parseDamage("2d", "[1d] cr")).toBeNull();
+  });
+});
+
+// The RoF column's marks and second rate (Characters p. 270).
+describe("parseRateOfFire", () => {
+  it("reads a plain rate as it always has, with nothing extra", () => {
+    expect(parseRateOfFire("3")).toEqual({ rateOfFire: 3, projectiles: 1 });
+    expect(parseRateOfFire("3x9")).toEqual({ rateOfFire: 3, projectiles: 9 });
+    expect(parseRateOfFire("Jet")).toEqual({ rateOfFire: 1, projectiles: 1 });
+    expect(parseRateOfFire(undefined)).toEqual({ rateOfFire: 1, projectiles: 1 });
+  });
+
+  it("keeps the full-auto-only mark", () => {
+    expect(parseRateOfFire("8!")).toEqual({ rateOfFire: 8, projectiles: 1, rateOfFireMark: "!" });
+  });
+
+  it("keeps a book's own mark and a second rate after a slash", () => {
+    expect(parseRateOfFire("9#/7")).toEqual({
+      rateOfFire: 9, projectiles: 1, rateOfFireMark: "#", rateOfFireSecond: 7,
+    });
+    expect(parseRateOfFire("33!/66!")).toEqual({
+      rateOfFire: 33, projectiles: 1, rateOfFireMark: "!", rateOfFireSecond: 66, rateOfFireSecondMark: "!",
+    });
+  });
+});
+
+describe("placeholderDamage", () => {
+  it("names a damage column that states an effect rather than damage", () => {
+    expect(placeholderDamage("Special", "")).toMatch(/names an effect/);
+    expect(placeholderDamage("Smoke (7 yd.)", undefined)).toMatch(/names an effect/);
+    expect(placeholderDamage("", "drug effect")).toMatch(/no damage beside "drug effect"/);
+    expect(placeholderDamage(undefined, "paint splat")).toMatch(/paint splat/);
+  });
+
+  it("leaves real damage, the table's spec., and a blank line alone", () => {
+    expect(placeholderDamage("2d", "cr")).toBe("");
+    expect(placeholderDamage("sw+1", "cut")).toBe("");
+    expect(placeholderDamage("HT-3", "aff")).toBe("");
+    expect(placeholderDamage("", "spcl.")).toBe("");
+    expect(placeholderDamage("", "")).toBe("");
+    // Damage the model cannot read but which is still damage is a reject, not a skip.
+    expect(placeholderDamage("slam+1", "cr")).toBe("");
+  });
+});
+
+describe("the equipment a data file's modes make", () => {
+  const source = {
+    prefix: "XX",
+    book: "Test Book",
+    outDir: join(tmpdir(), "gworld-parser-no-packs"),
+    overlap: () => {},
+    basicIds: new Set<string>(),
+  };
+  const run = (...texts: string[]) => {
+    const rejects: string[] = [];
+    const notes: string[] = [];
+    const out = parseEquipment(
+      texts.map((text) => ({ section: "EQUIPMENT", text })),
+      (what, why) => rejects.push(`${what}: ${why}`),
+      (n) => notes.push(n),
+      source,
+    );
+    return { ...out, rejects, notes };
+  };
+  const ranged = "minst(20M), rangehalfdam(500), rangemax(3000), acc(3), rof(1), shots(1), skillused(SK:Artillery)";
+
+  it("gives a second line written after two modes of the same round to both", () => {
+    const { gear, rejects } = run(
+      "Test Gun, page(XX10), cost(100), weight(10), techlvl(6),"
+      + ` newmode(Indirect fire, damage(6dx5), armordivisor(0.5), damtype(pi++), ${ranged}),`
+      + ` newmode(Direct fire, damage(6dx5), armordivisor(0.5), damtype(pi++), ${ranged}),`
+      + ` newmode(Follow-up, damage(6d), damtype([3d-1] cr ex), ${ranged})`,
+    );
+    expect(rejects).toEqual([]);
+    const modes = gear[0]!.system.rangedModes;
+    expect(modes.map((m: { name: string }) => m.name)).toEqual(["Indirect fire", "Direct fire"]);
+    for (const mode of modes) {
+      expect(mode.linked).toMatchObject({ damage: "6d", explosive: true, fragmentation: "3d-1", followUp: true });
+    }
+    expect(modes[0]!.linked).not.toBe(modes[1]!.linked);
+  });
+
+  it("gives it only to the mode before it when that fires another round", () => {
+    const { gear } = run(
+      "Test Gun, page(XX10), cost(100), weight(10), techlvl(6),"
+      + ` newmode(Shot, damage(1d+1), damtype(pi), ${ranged}),`
+      + ` newmode(Shell, damage(5d), damtype(pi++), ${ranged}),`
+      + ` newmode(Linked, damage(2d), damtype(cr ex), ${ranged})`,
+    );
+    const [shot, shell] = gear[0]!.system.rangedModes;
+    expect(shot!.linked).toBeUndefined();
+    expect(shell!.linked).toMatchObject({ damage: "2d" });
+  });
+
+  it("skips a mode that states no damage and keeps the record", () => {
+    const { gear, rejects, notes } = run(
+      "Smoke Test, page(XX11), cost(10), weight(1), techlvl(6), damage(Smoke (7 yd.)), acc(0), rof(1), shots(T(1)), minst(5), skillused(SK:Throwing)",
+      "Dart Test, page(XX12), cost(10), weight(1), techlvl(8),"
+      + ` newmode(Primary, damage(1d), damtype(pi-), ${ranged}),`
+      + " newmode(Follow-up, damage(), damtype(drug effect), rangehalfdam(45), rangemax(150), skillused(SK:Artillery))",
+    );
+    expect(rejects).toEqual([]);
+    expect(gear.map((g) => g.name)).toEqual(["Smoke Test", "Dart Test"]);
+    expect(gear[0]!.system.rangedModes).toEqual([]);
+    expect(gear[1]!.system.rangedModes).toHaveLength(1);
+    expect(gear[1]!.system.rangedModes[0]!.linked).toBeUndefined();
+    expect(notes).toEqual(expect.arrayContaining([
+      expect.stringMatching(/^Smoke Test: attack: damage "Smoke \(7 yd\.\)" names an effect.*skipped$/),
+      expect.stringMatching(/^Dart Test: Follow-up: no damage beside "drug effect".*skipped$/),
+    ]));
+  });
+
+  it("keeps a weapon whose fragments come before the type, noting what they carry", () => {
+    const { gear, rejects, notes } = run(
+      "Grenade Test, page(XX13), cost(10), weight(1), techlvl(7), damage(1d+1), damtype([1d-1 cr] cr ex), acc(0), rof(1), shots(T(1)), minst(5), skillused(SK:Throwing)",
+    );
+    expect(rejects).toEqual([]);
+    expect(gear[0]!.system.rangedModes[0]).toMatchObject({ damageType: "cr", explosive: true, fragmentation: "1d-1" });
+    expect(notes.some((n) => /^Grenade Test: attack: fragments carry damage type cr/.test(n))).toBe(true);
+  });
+
+  it("reports modes that may be states of one weapon, and keeps them", () => {
+    expect(STATE_MODE.test("Folded Stock")).toBe(true);
+    expect(STATE_MODE.test("Shot; Folded Stock")).toBe(true);
+    expect(STATE_MODE.test("w/o Bipod")).toBe(true);
+    expect(STATE_MODE.test("w/ Bipod")).toBe(true);
+    expect(STATE_MODE.test("Direct fire")).toBe(false);
+    const { gear, notes } = run(
+      "Stock Test, page(XX14), cost(100), weight(5), techlvl(7),"
+      + ` newmode(Standard, damage(3d), damtype(pi), ${ranged}),`
+      + ` newmode(Folded Stock, damage(3d), damtype(pi), ${ranged})`,
+    );
+    expect(gear[0]!.system.rangedModes).toHaveLength(2);
+    expect(notes).toContain('Stock Test: modes "Folded Stock" may be states of one weapon rather than modes; kept as modes');
+  });
+
+  it("keeps the RoF's marks on the mode", () => {
+    const { gear } = run(
+      "Gun Test, page(XX15), cost(100), weight(5), techlvl(8), damage(4d+2), damtype(pi), acc(4), rof(9#/7), rangehalfdam(300), rangemax(3000), shots(45(3)), minst(9), skillused(SK:Guns (Rifle))",
+    );
+    expect(gear[0]!.system.rangedModes[0]).toMatchObject({ rateOfFire: 9, rateOfFireMark: "#", rateOfFireSecond: 7 });
+  });
+
+  it("names the record and both readings when a split DR and the TL disagree", () => {
+    const { armor, rejects } = run("Vest Test, page(XX16), cost(100), weight(5), techlvl(6), dr(6/2), location(torso)");
+    expect(armor).toEqual([]);
+    expect(rejects).toHaveLength(1);
+    expect(rejects[0]).toMatch(/^Vest Test: split DR footnote and TL6 disagree: Vest Test has dr\(6\/2\), the high-tech footnote/);
+    expect(rejects[0]).toMatch(/techlvl\(6\)/);
   });
 });

@@ -648,6 +648,17 @@ function validateItem(entry, file) {
       Number.isInteger(mode.rateOfFire) && mode.rateOfFire >= 1,
       file, name, `rate of fire ${mode.rateOfFire} must be a positive integer`,
     );
+    // The RoF's marks and its second rate, written only where the table has them.
+    if (mode.rateOfFireSecond !== undefined) {
+      check(
+        Number.isInteger(mode.rateOfFireSecond) && mode.rateOfFireSecond >= 1,
+        file, name, `second rate of fire ${mode.rateOfFireSecond} must be a positive integer`,
+      );
+    }
+    for (const key of ["rateOfFireMark", "rateOfFireSecondMark"]) {
+      if (mode[key] === undefined) continue;
+      check(typeof mode[key] === "string" && /^[!#]?$/.test(mode[key]), file, name, `${key} "${mode[key]}" must be "!", "#" or blank`);
+    }
     check(
       typeof mode.maxRange === "number" && mode.maxRange >= 0,
       file, name, `maximum range ${mode.maxRange} must not be negative`,

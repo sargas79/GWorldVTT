@@ -783,6 +783,19 @@ function rangedModeField() {
       initial: 1,
       min: 1,
     }),
+    /**
+     * The mark a table prints after the RoF (GURPS Basic Set: Characters
+     * p. 270): "!" for a weapon that fires only on full auto, whose least RoF
+     * is a quarter of the listed one. A book may define marks of its own,
+     * which are kept as written for it to read. Blank for a plain RoF.
+     */
+    rateOfFireMark: new fields.StringField({ required: true, blank: true, initial: "" }),
+    /**
+     * A second RoF a table prints after a slash, "33!/66!": another setting
+     * of the same weapon, with its own mark. Zero where there is none.
+     */
+    rateOfFireSecond: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+    rateOfFireSecondMark: new fields.StringField({ required: true, blank: true, initial: "" }),
     shots: new fields.StringField({ required: true, blank: true, initial: "" }),
     /**
      * Shots in the weapon now (GURPS Basic Set: Campaigns p. 373). Firing
