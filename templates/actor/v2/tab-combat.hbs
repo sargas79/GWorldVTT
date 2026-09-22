@@ -15,6 +15,14 @@
     {{> "gworld.part.combat-maneuver"}}
   </div>
 
+  {{!-- The actions a fight is fought with, straight under the maneuver that
+        chooses one: these buttons are reached for every turn, while everything
+        below is read now and then. --}}
+  <details class="v2-group v2-drawer" data-v2-fold="combat:actions" {{#unless (includes @root.v2.folded "combat:actions")}}open{{/unless}}>
+    <summary class="v2-group-head"><span class="v2-group-title">{{localize "GWORLD.Section.Actions"}}</span><span class="v2-chevron" aria-hidden="true">{{> "gworld.v2icon.chevron"}}</span></summary>
+    <div class="v2-drawer-body">{{> "gworld.part.combat-actions"}}{{> "gworld.part.combat-movement"}}</div>
+  </details>
+
   <div class="v2-combat-grid">
     {{!-- Every attack, selectable; the preview beside it shows the selected one. --}}
     <div class="v2-panel v2-panel-dark v2-readied">
@@ -226,14 +234,6 @@
       <p class="v2-empty">{{localize "GWORLD.SheetV2.NoLog"}}</p>
     {{/if}}
   </div>
-
-  {{!-- The actions a fight is fought with, above the reference rather than below
-        it: the tables and the other folds are read now and then, these buttons
-        every turn. --}}
-  <details class="v2-group v2-drawer" data-v2-fold="combat:actions" {{#unless (includes @root.v2.folded "combat:actions")}}open{{/unless}}>
-    <summary class="v2-group-head"><span class="v2-group-title">{{localize "GWORLD.Section.Actions"}}</span><span class="v2-chevron" aria-hidden="true">{{> "gworld.v2icon.chevron"}}</span></summary>
-    <div class="v2-drawer-body">{{> "gworld.part.combat-actions"}}{{> "gworld.part.combat-movement"}}</div>
-  </details>
 
   {{!-- The weapon tables, as a character sheet prints them: every carried weapon's
        modes under the book's column headings, a weapon with several modes heading them. --}}
