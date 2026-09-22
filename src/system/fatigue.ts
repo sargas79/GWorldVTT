@@ -14,11 +14,14 @@
 
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { spendFatigue, type FatigueStatus } from "../rules/fatigue.js";
+import { fatigueCost } from "./procedure-extensions.js";
 
 /** What a loss of fatigue cost, once the chart was applied. */
 export interface FatigueApplied {
   fpLost: number;
   hpLost: number;
+  /** What the `gworld.fatigueCost` listeners said changed the cost (since 1.76.0). */
+  sources: string[];
   fp: { previous: number; now: number; max: number };
   hp: { previous: number; now: number; max: number };
   status: FatigueStatus;
@@ -39,6 +42,15 @@ export async function applyFatigue(
      * "apply only to FP lost to exertion, heat, etc." (Characters p. 55).
      */
     exertion?: boolean;
+    /**
+     * What the fatigue is for, which the `gworld.fatigueCost` listeners are
+     * told before it is charged (since 1.76.0). Every system caller names one;
+     * without one the cost is charged as given, which is how a caller that
+     * already asked the listeners avoids asking twice.
+     */
+    reason?: string;
+    /** What else the caller knows, passed to the listeners as `details`. */
+    details?: Record<string, unknown>;
   } = {},
 ): Promise<FatigueApplied> {
   const fp = actor?.system?.fp ?? { value: 0, max: 0 };
@@ -48,10 +60,16 @@ export async function applyFatigue(
   const fpMax = Number(fp.max) || 0;
   const hpMax = Number(hp.max) || 0;
 
+  // A module may change what this costs: a surcharge for the heat, gear that
+  // spares the wearer (API 1.76.0).
+  const costed = options.reason && lost > 0
+    ? fatigueCost({ actor, fp: lost, reason: options.reason, exertion: options.exertion !== false, ...(options.details ? { details: options.details } : {}) })
+    : { fp: lost, sources: [] as string[] };
+
   const spent = spendFatigue({
     currentFp: fpBefore,
     maxFp: fpMax,
-    lost,
+    lost: costed.fp,
     // Very Fit: "you lose FP at only half the normal rate" (Characters p. 55).
     halved:
       options.exertion !== false &&
@@ -77,6 +95,7 @@ export async function applyFatigue(
   return {
     fpLost: spent.fpLost,
     hpLost: spent.hpLost,
+    sources: costed.sources,
     fp: { previous: fpBefore, now: spent.fp, max: fpMax },
     hp: { previous: hpBefore, now: hpBefore - spent.hpLost, max: hpMax },
     status: spent.status,

@@ -85,7 +85,7 @@ export async function rollSuffocation(options: {
 
   // Below 0 FP the points come out of hit points as well, which is how
   // drowning finishes somebody who has already run out of energy (p. 426).
-  const spent = lost > 0 ? await applyFatigue(actor, lost) : null;
+  const spent = lost > 0 ? await applyFatigue(actor, lost, { reason: "suffocation" }) : null;
   const now = spent?.fp.now ?? current;
   await actor.setFlag(SYSTEM_ID, SUFFOCATION_FLAG, after);
   await setCondition(actor, "suffocating", true);

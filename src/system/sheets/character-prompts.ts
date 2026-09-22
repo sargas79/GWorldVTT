@@ -201,7 +201,10 @@ export async function promptForFall(): Promise<{
  * they are one dialog, because "which way is it killing me" is the first
  * question and the rest follows from it.
  */
-export async function promptForWeather(): Promise<{
+export async function promptForWeather(
+  /** What the character's worn gear counts as, where a module says (since API 1.76.0): picked to start with. */
+  worn: { clothing: string; label: string } | null = null,
+): Promise<{
   heat: boolean;
   temperatureF: number;
   clothing: "light" | "winter" | "arctic" | "heatedSuit";
@@ -228,12 +231,14 @@ export async function promptForWeather(): Promise<{
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Clothing")}</span>
         <select name="clothing" style="width:220px">
-          <option value="light">${L("Clothing_light")}</option>
-          <option value="winter">${L("Clothing_winter")}</option>
-          <option value="arctic">${L("Clothing_arctic")}</option>
-          <option value="heatedSuit">${L("Clothing_heatedSuit")}</option>
+          ${["light", "winter", "arctic", "heatedSuit"].map((c) =>
+            `<option value="${c}"${worn?.clothing === c ? " selected" : ""}>${L(`Clothing_${c}`)}</option>`).join("")}
         </select>
       </label>
+      ${worn ? `<p class="ihint" style="margin:0">${game.i18n.format("GWORLD.Weather.WornHint", {
+        clothing: L(`Clothing_${worn.clothing}`),
+        label: foundry.utils.escapeHTML(worn.label),
+      })}</p>` : ""}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Wind")}</span>
         <input type="number" name="wind" value="0" min="0" step="1" style="width:90px">

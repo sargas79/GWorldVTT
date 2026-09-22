@@ -14,6 +14,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { activePoisons, POISON_FLAG, type ActivePoison } from "./poison.js";
 import { healthRollScore } from "./attributes.js";
+import { successRollModifiers } from "./procedure-extensions.js";
 import {
   INFECTION_BASE,
   antibioticsPreventInfection,
@@ -129,7 +130,12 @@ export async function exposeToDisease(options: {
 
   const ht = healthRollScore(actor);
   const contact = contagionModifier(options.exposures);
-  const target = ht + disease.resistanceModifier + contact + (options.modifier ?? 0);
+  // What the actor's conditions and the modules add: a mask, a charm (API 1.76.0).
+  const added = successRollModifiers({
+    actor, label: disease.name, kind: "attribute", skill: "", base: ht,
+    tags: ["disease", "contagion", "HT"], modifiers: [], disease: { ...disease },
+  }).reduce((sum, line) => sum + line.value, 0);
+  const target = ht + disease.resistanceModifier + contact + (options.modifier ?? 0) + added;
 
   const roll = new Roll("3d6");
   await roll.evaluate();
@@ -190,7 +196,12 @@ export async function checkInfection(options: {
   }
 
   const ht = healthRollScore(actor);
-  const target = ht + infectionModifier(options.dirt);
+  // What the actor's conditions and the modules add (API 1.76.0).
+  const added = successRollModifiers({
+    actor, label: game.i18n.localize("GWORLD.Illness.Infection"), kind: "attribute", skill: "", base: ht,
+    tags: ["disease", "infection", "HT"], modifiers: [], disease: { ...diseaseNamed("Infection")! },
+  }).reduce((sum, line) => sum + line.value, 0);
+  const target = ht + infectionModifier(options.dirt) + added;
 
   const roll = new Roll("3d6");
   await roll.evaluate();

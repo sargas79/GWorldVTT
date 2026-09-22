@@ -18,6 +18,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { applyFatigue } from "./fatigue.js";
+import { fatigueCost } from "./procedure-extensions.js";
 import { EXTRA_EFFORT_FP, extraEffortModifier, extraEffortTarget } from "../rules/extra-effort.js";
 import { resolveSuccess } from "../rules/success.js";
 
@@ -40,15 +41,21 @@ export async function spendFatigue(actor: any, points: number, what: string): Pr
   if (points <= 0) return true;
   if (!actor?.isOwner) return false;
 
+  // What the modules make of the price, asked before it is weighed against
+  // what the character has left (API 1.76.0).
+  const cost = fatigueCost({ actor, fp: points, reason: "extraEffort", exertion: true, details: { what } }).fp;
+  if (cost <= 0) return true;
+
   const current = Number(actor.system?.fp?.value);
-  if (!Number.isFinite(current) || current < points) {
+  if (!Number.isFinite(current) || current < cost) {
     ui.notifications?.warn(
-      game.i18n.format("GWORLD.ExtraEffort.NoFatigue", { what, cost: points }),
+      game.i18n.format("GWORLD.ExtraEffort.NoFatigue", { what, cost }),
     );
     return false;
   }
 
-  await applyFatigue(actor, points);
+  // Charged as given: the listeners were asked above.
+  await applyFatigue(actor, cost);
   return true;
 }
 
@@ -105,7 +112,9 @@ export async function rollExtraEffort(options: {
   const outcome = resolveSuccess(roll.total, effective, dice);
 
   // A critical success is the one outcome that costs nothing at all.
-  const cost = outcome.criticalSuccess ? 0 : EXTRA_EFFORT_FP;
+  const cost = outcome.criticalSuccess
+    ? 0
+    : fatigueCost({ actor, fp: EXTRA_EFFORT_FP, reason: "extraEffort", exertion: true, details: { percentIncrease } }).fp;
   if (cost > 0 && actor?.isOwner) {
     // "A critical failure means you lose HP equal to the FP spent on the
     // attempt ... and the task fails automatically!" -- both losses in one

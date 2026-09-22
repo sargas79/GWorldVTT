@@ -216,5 +216,5 @@ export async function withdrawalRoll(options: {
 /** Fatigue a stimulant's crash takes back, applied when the table says it has worn off. */
 export async function stimulantWearsOff(actor: any, fpRestored: number): Promise<void> {
   if (!actor?.isOwner) return;
-  await applyFatigue(actor, stimulantCrash(fpRestored), { exertion: false });
+  await applyFatigue(actor, stimulantCrash(fpRestored), { exertion: false, reason: "drug" });
 }

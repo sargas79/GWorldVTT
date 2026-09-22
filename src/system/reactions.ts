@@ -21,6 +21,7 @@ import {
   type Reaction,
 } from "../rules/reactions.js";
 import { quickContest, resolveSuccess } from "../rules/success.js";
+import { reactionModifiers } from "./procedure-extensions.js";
 
 const REACTION_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/reaction.hbs`;
 
@@ -57,11 +58,20 @@ async function post(
   });
 }
 
+/** The label and sign of a line, as the card lists it. */
+function lineText(line: { label: string; value: number }): string {
+  return `${line.label} ${line.value >= 0 ? "+" : "−"}${Math.abs(line.value)}`;
+}
+
 /**
  * A reaction roll (p. 494).
  *
  * The actor is whoever is being reacted *to* -- the party's face, usually --
  * because that is whose modifiers apply and whose name belongs on the card.
+ * "Many factors can influence a reaction roll" (p. 559), and the ones a module
+ * knows of -- gear, a status, a uniform -- come from the
+ * `gworld.reactionModifiers` listeners (since API 1.76.0), told who reacts
+ * where the roll knows.
  */
 export async function rollReaction(options: {
   actor: any;
@@ -70,13 +80,23 @@ export async function rollReaction(options: {
   worst?: Reaction | null;
   /** Shown openly instead of whispered, for a table that prefers it that way. */
   open?: boolean;
+  /** Whoever is reacting, where there is somebody on the map to name (since API 1.76.0). */
+  reactor?: any;
 }): Promise<Reaction> {
+  const lines = reactionModifiers({
+    actor: options.actor,
+    reactor: options.reactor ?? null,
+    tags: ["reaction"],
+    modifier: options.modifier,
+  });
+  const added = lines.reduce((sum, line) => sum + line.value, 0);
+
   const roll = new Roll("3d6");
   await roll.evaluate();
 
   const result = reactionRoll({
     rolled: roll.total,
-    modifier: options.modifier,
+    modifier: options.modifier + added,
     ...(options.best === undefined ? {} : { best: options.best }),
     ...(options.worst === undefined ? {} : { worst: options.worst }),
   });
@@ -87,7 +107,9 @@ export async function rollReaction(options: {
       reaction: true,
       dice: dieResults(roll),
       rolled: result.rolled,
-      modifier: result.modifier,
+      // The modifier asked for; the modules' lines are listed after it.
+      modifier: options.modifier,
+      lines: lines.map(lineText),
       total: result.total,
       band: label(result.reaction),
       bounded: result.bounded,
@@ -160,12 +182,19 @@ export async function rollInfluence(options: {
   // use the better of the two reactions."
   let fallback: Reaction | null = null;
   if (result.rollsAnyway) {
+    // The modules' reaction modifiers count on this roll as on any other (API 1.76.0).
+    const added = reactionModifiers({
+      actor: options.actor,
+      reactor: options.subject ?? null,
+      tags: ["reaction", "influence", "diplomacy"],
+      modifier: options.reactionModifier ?? 0,
+    }).reduce((sum, line) => sum + line.value, 0);
     const second = new Roll("3d6");
     await second.evaluate();
     rolls.push(second);
     fallback = reactionRoll({
       rolled: second.total,
-      modifier: options.reactionModifier ?? 0,
+      modifier: (options.reactionModifier ?? 0) + added,
     }).reaction;
   }
 

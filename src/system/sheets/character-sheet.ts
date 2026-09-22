@@ -191,6 +191,7 @@ import {
   runGrappleAction,
   triggerManeuverResponse,
   firstAidRules,
+  wornClothing,
 } from "../procedure-extensions.js";
 import { effectiveCost, effectiveWeight, itemSectionsFor, registeredItemType, runItemTypeAction, tabHasAddonSections } from "../data-extensions.js";
 import { registeredTabsShownOn } from "../sheet-tabs.js";
@@ -2531,7 +2532,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const asked = await promptForReaction(this.actor.system?.derived?.reactions ?? []);
     if (!asked) return;
 
-    await rollReaction({ actor: this.actor, ...asked });
+    // Whoever is reacting, where one token is targeted: the modules' reaction
+    // modifiers may turn on who they are (API 1.76.0).
+    const targets = targetedTokens();
+    const reactor = targets.length === 1 ? targets[0]?.actor ?? null : null;
+    await rollReaction({ actor: this.actor, ...asked, ...(reactor ? { reactor } : {}) });
   }
 
   /**
@@ -2730,7 +2735,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onExposure(this: GWorldCharacterSheet) {
     if (!isRuleOn("exposure")) return;
 
-    const asked = await promptForWeather();
+    // A module may say what the character's worn gear is worth against the
+    // cold (API 1.76.0); the GM can still pick otherwise.
+    const asked = await promptForWeather(wornClothing(this.actor));
     if (!asked) return;
 
     await rollExposure({ actor: this.actor, ...asked });

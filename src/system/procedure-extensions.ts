@@ -132,6 +132,21 @@ export const PROCEDURE_HOOKS = Object.freeze({
    * `divisorPerYard` (3 by default) for a blast that falls off differently.
    */
   explosionFalloff: "gworld.explosionFalloff",
+  /**
+   * Before the system charges fatigue (since 1.76.0): `{ actor, fp, reason, exertion,
+   * details, sources }`. `fp` is mutable; push a label to `sources` to say why it changed.
+   */
+  fatigueCost: "gworld.fatigueCost",
+  /**
+   * What somebody is wearing against the cold (since 1.76.0): `{ actor, clothing, label }`.
+   * Set `clothing` to `light`, `winter`, `arctic` or `heatedSuit`, and `label` to the gear.
+   */
+  weatherClothing: "gworld.weatherClothing",
+  /**
+   * Before a reaction roll (since 1.76.0): `{ actor, reactor, tags, modifier, modifiers }`;
+   * push `{ label, value }` to `modifiers`.
+   */
+  reactionModifiers: "gworld.reactionModifiers",
 });
 
 /**
@@ -359,6 +374,27 @@ export interface SuccessRollContext {
    * it.
    */
   blow?: KnockdownBlow | null;
+  /** On a roll against the heat or the cold, what the weather is doing (since 1.76.0). */
+  weather?: WeatherExposure;
+  /**
+   * On a roll to resist catching a disease or a wound's infection (since
+   * 1.76.0): the disease, as the rules module keeps it.
+   */
+  disease?: any;
+  /** On a poison's or an illness's cycle, a copy of the dose (since 1.76.0). */
+  poison?: any;
+  /** On a control roll, the vehicle: a Gear-tab item or a vehicle actor (since 1.76.0). */
+  vehicle?: any;
+}
+
+/** The weather a roll against exposure is made in (since 1.76.0). */
+export interface WeatherExposure {
+  heat: boolean;
+  temperatureF: number;
+  /** `light`, `winter`, `arctic` or `heatedSuit`; it only counts in the cold. */
+  clothing: string;
+  wetClothes: boolean;
+  windMph: number;
 }
 
 /** The blow a knockdown roll is made for (since 1.73.0). */
@@ -436,6 +472,85 @@ export function successRollModifiers(context: SuccessRollContext): ModifierLine[
 /** Tells the listeners how a success roll went. */
 export function afterSuccessRoll(context: Omit<SuccessRollContext, "modifiers" | "base"> & { outcome: unknown }): void {
   callCombatHook(PROCEDURE_HOOKS.afterSuccessRoll, context);
+}
+
+// ── fatigue, clothing and reactions (since 1.76.0) ─────────────────────────
+
+/** Why the system is charging fatigue, for the `gworld.fatigueCost` listeners. */
+export interface FatigueCostContext {
+  actor: any;
+  /** What it costs; the listeners may change it. Never below 0. */
+  fp: number;
+  /**
+   * What it is for: `battle`, `hiking`, `missedSleep`, `exposure`,
+   * `deprivation`, `extraEffort`, `suffocation`, `poison`, `spell`,
+   * `heldSpell`, `enchanting`, `drug`.
+   */
+  reason: string;
+  /** Whether it is exertion, which Fit and Very Fit lighten (Characters p. 55). */
+  exertion: boolean;
+  /** What else the caller knows: a battle's `seconds`, the weather's `heat` and `temperatureF`... */
+  details: Record<string, unknown>;
+  /** Labels a listener pushes to say why the cost changed. */
+  sources: string[];
+}
+
+/**
+ * The fatigue an action costs once the `gworld.fatigueCost` listeners have
+ * had their say: a module's heat surcharge on exertion (Campaigns p. 434), or
+ * a hot day's extra point for a battle (p. 426).
+ */
+export function fatigueCost(options: Omit<FatigueCostContext, "sources" | "details"> & { details?: Record<string, unknown> }): { fp: number; sources: string[] } {
+  const ctx = callCombatHook<FatigueCostContext>(PROCEDURE_HOOKS.fatigueCost, {
+    actor: options.actor,
+    fp: options.fp,
+    reason: options.reason,
+    exertion: options.exertion,
+    details: { ...(options.details ?? {}) },
+    sources: [],
+  });
+  const fp = Number(ctx.fp);
+  return {
+    fp: Number.isFinite(fp) ? Math.max(0, Math.round(fp)) : options.fp,
+    sources: (Array.isArray(ctx.sources) ? ctx.sources : []).filter((s): s is string => typeof s === "string" && s !== ""),
+  };
+}
+
+/** The four classes of clothing against the cold (Campaigns p. 430). */
+const CLOTHING = ["light", "winter", "arctic", "heatedSuit"] as const;
+
+/**
+ * What somebody's worn gear is worth against the cold, as the
+ * `gworld.weatherClothing` listeners say: null where none of them said.
+ */
+export function wornClothing(actor: any): { clothing: (typeof CLOTHING)[number]; label: string } | null {
+  const ctx = callCombatHook(PROCEDURE_HOOKS.weatherClothing, { actor, clothing: null as string | null, label: "" });
+  const clothing = CLOTHING.find((c) => c === ctx.clothing);
+  if (!clothing) return null;
+  return { clothing, label: typeof ctx.label === "string" ? ctx.label : "" };
+}
+
+/** A reaction roll, for the `gworld.reactionModifiers` listeners. */
+export interface ReactionRollContext {
+  /** Whoever is being reacted to. */
+  actor: any;
+  /** Whoever is reacting, where the roll knows (a targeted token's actor), else null. */
+  reactor: any;
+  /** `reaction` for a reaction roll, `influence` and `diplomacy` for Diplomacy's second roll. */
+  tags: string[];
+  /** The modifier the roll was asked with, the GM's and the sheet's together. Read-only. */
+  modifier: number;
+  modifiers: ModifierLine[];
+}
+
+/** The lines the `gworld.reactionModifiers` listeners add to a reaction roll. */
+export function reactionModifiers(context: Omit<ReactionRollContext, "modifiers">): ModifierLine[] {
+  const ctx = callCombatHook<ReactionRollContext>(PROCEDURE_HOOKS.reactionModifiers, {
+    ...context,
+    tags: [...context.tags],
+    modifiers: [],
+  });
+  return (Array.isArray(ctx.modifiers) ? ctx.modifiers : []).filter(isLine).map((line) => ({ label: line.label, value: Math.round(line.value) }));
 }
 
 /** One side of a Quick Contest as `gworld.afterQuickContest` sees it. */

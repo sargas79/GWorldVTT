@@ -27,7 +27,7 @@ import {
 import { dailyMiles, marchingFatiguePerHour, type Terrain, type TravelWeather } from "../rules/hiking.js";
 import { randomHitLocation, type HitLocation } from "../rules/hit-locations.js";
 import { callCombatHook, randomLocationWithHooks } from "./combat-extensions.js";
-import { PROCEDURE_HOOKS } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, successRollModifiers } from "./procedure-extensions.js";
 import { applyInjury } from "../rules/injury.js";
 import {
   protectedDose, radiationEffect, radiationRow, remainingDose,
@@ -181,7 +181,7 @@ export async function stayAwake(options: { actor: any; hoursAwake: number; misse
   }
   const dayHours = wakingDayHours(Number(period) || 8, options.missedSleepHours);
   const lost = stayingUpFatigue({ hoursAwake: options.hoursAwake, dayHours });
-  const pools = await applyFatigue(actor, lost);
+  const pools = await applyFatigue(actor, lost, { reason: "missedSleep" });
 
   const lines: string[] = [];
   lines.push(lost > 0 ? F("StayedUpCost", { fp: pools.fpLost, day: dayHours }) : F("StayedUpFree", { day: dayHours }));
@@ -264,7 +264,7 @@ export async function hike(options: {
     hot: options.hot,
   });
   const hours = Math.max(0, Math.floor(options.hours));
-  const pools = await applyFatigue(actor, perHour * hours);
+  const pools = await applyFatigue(actor, perHour * hours, { reason: "hiking", details: { hours, hot: options.hot } });
 
   const lines = [
     F("Miles", { miles, terrain: H(`Terrain.${options.terrain}`), weather: H(`Weather.${options.weather}`) }),
@@ -657,7 +657,13 @@ export async function controlVehicle(options: {
   // Driving still grabs the wheel.
   const skill = own ?? attributeOf(actor, "DX") - 5;
   const handling = Number(vehicle.handling) || 0;
-  const target = skill + handling + options.modifier;
+  // What the operator's conditions and the modules add: a stabilizer, a
+  // driver's aid (API 1.76.0, tagged "vehicleControl").
+  const added = successRollModifiers({
+    actor, label: H("Control"), kind: "skill", skill: skillName, base: skill,
+    tags: ["vehicleControl"], modifiers: [], vehicle: item,
+  }).reduce((sum, line) => sum + line.value, 0);
+  const target = skill + handling + options.modifier + added;
   const roll = new Roll("3d6");
   await roll.evaluate();
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));

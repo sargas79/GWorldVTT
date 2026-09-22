@@ -2584,6 +2584,9 @@
       "Bore": "Bore it",
       "HeatStroke": "Heat stroke",
       "Surcharge": "While it is this hot, every other exertion costs {fp} FP more",
+      "BySurvival": "HT-based {skill} {level}",
+      "WornClothing": "{clothing}, from {label}",
+      "WornHint": "Worn gear counts as: {clothing} ({label})",
       "Deprivation": "Short rations",
       "DeprivationAction": "Hunger & thirst",
       "DeprivationHint": "A day of missed meals and too little water: a point of fatigue for each",
@@ -3491,7 +3494,8 @@
       "Title": "Battle fatigue",
       "Seconds": "{seconds} seconds of fighting",
       "Charged": "{fp} FP from {names}",
-      "Strained": "{name} (+1 for a weapon above their ST)"
+      "Strained": "{name} (+1 for a weapon above their ST)",
+      "Changed": "{name} ({fp} FP: {sources})"
     },
     "Modifier": {
       "Browse": "Browse the book's",
