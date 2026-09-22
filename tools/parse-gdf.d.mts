@@ -177,3 +177,37 @@ export declare function techniqueDefaults(
 
 /** The attribute terms a skill's default adds to rebase the technique ("+ST-DX"), or "" for none. */
 export declare function techniqueRebasing(raw: string | undefined): string;
+
+/** The fragments in a damage type's brackets, before or after the type: the dice, what is left, and a note on anything else inside. */
+export declare function fragmentsOf(damtype: string | undefined): { rest: string; dice: string; note: string };
+/** The RoF column: the rate, projectiles per shot, and the marks and second rate where the table has them. */
+export declare function parseRateOfFire(value: string | undefined): {
+  rateOfFire: number;
+  projectiles: number;
+  rateOfFireMark?: string;
+  rateOfFireSecond?: number;
+  rateOfFireSecondMark?: string;
+};
+/** Why a mode's damage column states no damage, or "" where it does. */
+export declare function placeholderDamage(damage: string | undefined, damtype: string | undefined): string;
+/** Mode names that describe a state of the weapon: a folded stock, a bipod up or down. */
+export declare const STATE_MODE: RegExp;
+/** The equipment section of a data file, as armour, gear and shields. */
+export declare function parseEquipment(
+  recs: ReadonlyArray<{ section: string; text: string }>,
+  reject: (what: string, why: string) => void,
+  note: (text: string) => void,
+  source?: { prefix: string; book: string; outDir: string; overlap: (...args: unknown[]) => void; basicIds?: Set<string> | null },
+): {
+  armor: ParsedItem[];
+  gear: ParsedItem[];
+  shields: ParsedItem[];
+};
+/** An item the equipment reader writes, with its attack modes. */
+export interface ParsedItem {
+  name: string;
+  system: Record<string, unknown> & {
+    meleeModes: Array<Record<string, unknown> & { name: string }>;
+    rangedModes: Array<Record<string, unknown> & { name: string }>;
+  };
+}

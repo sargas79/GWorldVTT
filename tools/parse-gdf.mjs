@@ -1194,10 +1194,42 @@ const BASIC_SET_RADIUS = new Map([
 ]);
 
 
+/**
+ * The fragments an explosion throws, in the brackets a table prints beside the
+ * damage type (Campaigns p. 414). A data file writes them after the type --
+ * "cr ex [2d]" -- or before it -- "[2d] cr ex" -- and inside them it may say
+ * more than the dice: an armour divisor, "[1d(0.2)]", or a damage type other
+ * than the cutting the Basic Set gives fragments, "[1d-1 cr]". A bracket left
+ * unclosed ends with the dice and any divisor: "[1d(0.2) burn ex" is 1d of
+ * fragments from a burning explosion.
+ *
+ * Only the dice have a field; the rest is returned as a note, so a book whose
+ * fragments differ is told what the mode leaves out.
+ */
+const FRAGMENTS = /\[\s*(\d+d(?:\s*[+-]\s*\d+)?)\s*(?:\(\s*(\d+(?:\.\d+)?)\s*\))?(?:\s*([a-z][a-z+-]*)\s*\]|\s*\]|(?=\s|$))/i;
+
+export function fragmentsOf(damtype) {
+  const text = damtype ?? "";
+  const m = FRAGMENTS.exec(text);
+  if (!m) return { rest: text, dice: "", note: "" };
+  const extras = [
+    ...(m[2] ? [`armour divisor (${m[2]})`] : []),
+    ...(m[3] && m[3].toLowerCase() !== "cut" ? [`damage type ${m[3]}`] : []),
+  ];
+  return {
+    rest: `${text.slice(0, m.index)} ${text.slice(m.index + m[0].length)}`.replace(/\s+/g, " ").trim(),
+    dice: m[1].replace(/\s+/g, ""),
+    note: extras.length ? `fragments carry ${extras.join(" and ")}, which the mode does not hold` : "",
+  };
+}
+
 export function parseDamage(damage, damtype) {
+  // The fragments come out first: their brackets may hold a parenthesised
+  // armour divisor, which the range-note rule below would otherwise eat.
+  const fragments = fragmentsOf(damtype);
   // A range note after the type -- "aff (10 yd.)" on a stun grenade -- is a
   // note, not part of the type.
-  const rawType = (damtype ?? "").replace(/\([^)]*\)/g, "").trim();
+  const rawType = fragments.rest.replace(/\([^)]*\)/g, "").trim();
 
   // "spec." on the table: a net entangles, a lasso catches, a garrote
   // strangles (Characters pp. 272, 276). The mode rolls to hit; what a hit
@@ -1274,14 +1306,17 @@ export function parseDamage(damage, damtype) {
 
   // "cr ex [2d]" is a crushing explosion throwing 2d of fragmentation
   // (GURPS Basic Set: Campaigns p. 414). The type, the blast and the
-  // fragments are three facts written in one column.
-  const blast = /^([a-z+-]+)\s+ex\s*(?:\[\s*(\d+d(?:[+-]\d+)?)\s*\])?$/i.exec(typeText);
+  // fragments are three facts written in one column; the fragments were
+  // lifted out above, and only an explosion throws them.
+  const blast = /^([a-z+-]+)\s+ex$/i.exec(typeText);
   const type = blast ? blast[1].trim() : typeText;
   const explosive = Boolean(blast);
-  const fragmentation = blast?.[2] ?? "";
+  if (fragments.dice && !explosive) return null;
+  const fragmentation = fragments.dice;
   const extras = { surge, ...setModifiers({ incendiary, radiation, doubleKnockback, noKnockback }) };
 
   if (!DAMAGE_TYPES.has(type)) return null;
+  const fragmentNote = fragments.note ? { fragmentNote: fragments.note } : {};
 
   let text = (damage ?? "").trim();
   // The unarmed skills' damage bonus, which GCA works into the formula itself:
@@ -1326,6 +1361,7 @@ export function parseDamage(damage, damtype) {
         ...(unarmedBonus ? { unarmedBonus: true } : {}),
       },
       usesWeaponSt: false,
+      ...fragmentNote,
     };
   }
   // A bow does not care how strong the archer is, only how strong the bow is,
@@ -1347,6 +1383,7 @@ export function parseDamage(damage, damtype) {
         ...extras,
       },
       usesWeaponSt: true,
+      ...fragmentNote,
     };
   }
   // "6dx10" is the notation the heaviest weapons come in: the roll is
@@ -1367,6 +1404,7 @@ export function parseDamage(damage, damtype) {
         ...extras,
       },
       usesWeaponSt: false,
+      ...fragmentNote,
     };
   }
   return null;
@@ -1537,6 +1575,7 @@ function meleeMode(name, f) {
   const used = parseSkillUsedWithModifier(f.get("skillused"));
 
   return {
+    ...(damage.fragmentNote ? { fragmentNote: damage.fragmentNote } : {}),
     mode: {
       name,
       skill: used.skill,
@@ -1625,6 +1664,76 @@ function byUnarmedSkill(mode, skillused) {
   return skills.map((skill) => ({ ...mode, name: `${mode.name} (${skill})`, skill }));
 }
 
+/**
+ * The RoF column (Characters p. 270), which carries more than the number.
+ *
+ * "3x9" is three shots of nine projectiles each. A mark after the number is
+ * kept as written: "!" is a weapon that fires only on full auto, whose least
+ * RoF is a quarter of the listed one, and a book may define marks of its own
+ * ("#"), which the mode keeps for that book to read. A second rate after a
+ * slash -- "9#/7", "33!/66!" -- is a second setting of the same weapon, kept
+ * beside the first with its own mark. Each extra is written only where it is
+ * set, so a weapon with a plain RoF reads as it always has.
+ */
+export function parseRateOfFire(value) {
+  const text = (value ?? "").trim();
+  const first = /^(\d+)\s*([!#])?/.exec(text);
+  const second = /\/\s*(\d+)\s*([!#])?/.exec(text);
+  return {
+    rateOfFire: Math.max(1, number(text, 1)),
+    projectiles: Math.max(1, number((/x(\d+)/i.exec(text) ?? [])[1], 1)),
+    ...(first?.[2] ? { rateOfFireMark: first[2] } : {}),
+    ...(second ? { rateOfFireSecond: Number(second[1]) } : {}),
+    ...(second?.[2] ? { rateOfFireSecondMark: second[2] } : {}),
+  };
+}
+
+/**
+ * Why a mode's damage column states no damage at all, or "" where it does.
+ *
+ * A data file fills the column with a word where the table prints an effect
+ * -- "Special", "Smoke (7 yd.)" -- or leaves it empty beside a type that
+ * names what a hit does instead -- "drug effect", "paint splat". Neither is
+ * damage the model could hold, and neither is a broken record: the weapon's
+ * own rules say what happens.
+ */
+export function placeholderDamage(damage, damtype) {
+  // Whatever the damage reader takes is not a placeholder: an empty column
+  // beside "spcl." is the table's own "spec." (Characters p. 272).
+  if (parseDamage(damage, damtype)) return "";
+  const text = (damage ?? "").trim();
+  const type = (damtype ?? "").trim();
+  if (!text) return type ? `no damage beside "${type}"` : "";
+  const words = text.replace(/\([^)]*\)/g, "").trim();
+  if (!/^[a-z][a-z .]*$/i.test(words)) return "";
+  if (/^(?:sw|thr|spcl\.?)$/i.test(words)) return "";
+  if (RESISTANCE.some((a) => a.toLowerCase() === words.toLowerCase())) return "";
+  return `damage "${text}" names an effect, not damage`;
+}
+
+/** Mode names that describe a state of the weapon: a folded stock, a bipod up or down. */
+export const STATE_MODE = /folded stock|\bw\/o?\s*bipod\b/i;
+
+/**
+ * The modes at the end of a list that fire the same round as the last one:
+ * the same damage, type, divisor and fragments, and no second line of their
+ * own yet. A second line written after them all belongs to each.
+ */
+function sameRound(modes) {
+  const last = modes[modes.length - 1];
+  const key = (m) => JSON.stringify([
+    m.damageBase, m.damageModifier, m.damageFormula, m.damageExtraDice, m.damageType,
+    m.armorDivisor, m.explosive, m.fragmentation, m.affliction, m.afflictionAttribute, m.afflictionModifier,
+  ]);
+  const out = [];
+  for (let i = modes.length - 1; i >= 0; i--) {
+    const mode = modes[i];
+    if (mode.linked || key(mode) !== key(last)) break;
+    out.unshift(mode);
+  }
+  return out.length ? out : [last];
+}
+
 /** A ranged mode, or null with a reason. */
 function rangedMode(name, f, thrown) {
   const damage = parseDamage(f.get("damage"), f.get("damtype"));
@@ -1694,6 +1803,7 @@ function rangedMode(name, f, thrown) {
       ? { warning: "range comes from the Throwing Distance table, not the weapon" }
       : {}),
     ...(assumedSkill ? { skillWarning: "no skill stated; read as Throwing" } : {}),
+    ...(damage.fragmentNote ? { fragmentNote: damage.fragmentNote } : {}),
     mode: {
       name,
       skill,
@@ -1706,8 +1816,7 @@ function rangedMode(name, f, thrown) {
       maxRange: max?.distance ?? 0,
       rangeIsStMultiple: max?.stMultiple ?? false,
       // "3x9" is three shells of nine pellets (Campaigns p. 409).
-      rateOfFire: Math.max(1, number(f.get("rof"), 1)),
-      projectiles: Math.max(1, number((/x(\d+)/i.exec(f.get("rof") ?? "") ?? [])[1], 1)),
+      ...parseRateOfFire(f.get("rof")),
       shots: (f.get("shots") ?? "").trim(),
       // Full when it arrives: the magazine and the chambered round.
       loaded: fullLoad((f.get("shots") ?? "").trim()),
@@ -2110,8 +2219,13 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
       // The figure in the tech level, with a superscience caret left off:
       // "11^" is TL11, and a bare "^" has no figure to compare at all.
       const tl = Number(/\d+/.exec(techLevel(f.get("techlvl")))?.[0] ?? "0");
+      // The reason names the record and both readings, so a book whose file
+      // has it wrong can patch the one that is.
       if (dr.drSplit !== null && dr.lowTech === tl >= 7) {
-        reject(name, `split DR footnote and TL${tl} disagree`);
+        const footnote = dr.lowTech
+          ? "the low-tech footnote (lower DR against crushing only), which is for TL6 and below"
+          : "the high-tech footnote (higher DR against piercing and cutting only), which is for TL7 and up";
+        reject(name, `split DR footnote and TL${tl} disagree: ${name} has dr(${f.get("dr")}), ${footnote}, but techlvl(${f.get("techlvl") ?? ""}); patch whichever is wrong`);
         continue;
       }
 
@@ -2176,6 +2290,18 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
       const blank = (key) => !(scope.f.get(key) ?? "").trim();
       if (blank("damage") && blank("damtype")) { usable = true; continue; }
 
+      // A mode whose damage column names an effect rather than stating any
+      // damage -- "Special", "Smoke (7 yd.)", or nothing beside a type that
+      // says what the hit does -- has nothing for a damage roll to use. The
+      // mode is skipped and the record kept: the weapon is still a thing to
+      // carry, and its other modes still work.
+      const placeholder = placeholderDamage(scope.f.get("damage"), scope.f.get("damtype"));
+      if (placeholder) {
+        note(`${name}: ${scope.name || "attack"}: ${placeholder}; the mode is skipped`);
+        usable = true;
+        continue;
+      }
+
       // A thrown weapon is one you let go of: the table gives it a range in
       // multiples of ST and a shots entry of "T".
       const thrown = /^T/.test(scope.f.get("shots") ?? "");
@@ -2186,16 +2312,22 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
       if (result.error) { reject(name, `${scope.name || "attack"}: ${result.error}`); continue; }
       if (result.warning) note(`${name}: ${result.warning}`);
       if (result.skillWarning) note(`${name}: ${result.skillWarning}`);
+      if (result.fragmentNote) note(`${name}: ${scope.name || "attack"}: ${result.fragmentNote}`);
       usable = true;
 
       // A second line that lands with the attack before it rather than
       // instead of it is folded into that attack, not offered beside it
       // (Characters p. 106). With nothing before it there is nothing to link
       // to, so it stands as a mode of its own.
+      //
+      // A weapon may fire the same round two ways -- indirect and direct
+      // fire, say -- and write the second line once after both. Every mode
+      // just before it that fires the same round gets it.
       const followUp = FOLLOW_UP_MODE.test(scope.name ?? "");
       const into = isMelee ? meleeModes : rangedModes;
       if ((LINKED_MODE.test(scope.name ?? "") || followUp) && into.length > 0) {
-        into[into.length - 1].linked = linkedLine(result.mode, followUp, scope.name.trim());
+        const line = linkedLine(result.mode, followUp, scope.name.trim());
+        for (const mode of sameRound(into)) mode.linked = { ...line };
         continue;
       }
 
@@ -2219,6 +2351,14 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
 
       if (isMelee) meleeModes.push(...byUnarmedSkill(result.mode, scope.f.get("skillused")));
       else rangedModes.push(result.mode);
+    }
+
+    // A stock folded or a bipod down is the same weapon in another state, and
+    // a data file may write it as a mode of its own. Whether that is a mode or
+    // a state is the book's call, so the modes are kept and the pair reported.
+    const states = scopes.map((s) => (s.name ?? "").trim()).filter((n) => STATE_MODE.test(n));
+    if (states.length) {
+      note(`${name}: modes ${states.map((n) => `"${n}"`).join(", ")} may be states of one weapon rather than modes; kept as modes`);
     }
 
     if (!usable) continue;
