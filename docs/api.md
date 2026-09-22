@@ -626,6 +626,15 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
   of `"toxic"`, `"fatigue"` or `"none"`, `dice`, `adds`, `intervalSeconds`,
   `cycles`, and a `reference`). A dose made from it carries
   `source: "<module>.<key>"`.
+- **`registerExplosive({ module, key, label, ref, tl?, available? })`** (since 1.74.0).
+  Adds an explosive to the Relative Explosive Force Table (Campaigns p. 415)
+  as the Demolition tool and `hazards.detonate` know it: `ref` is its force
+  against TNT's 1 (above 0), `tl` its tech level for the list. It is offered
+  after the Basic Set's explosives while `available()` says so, and found by
+  its id, `<module>.<key>`, which the call returns (null for a refused
+  registration). `explosives()` lists what is offered right now, the Basic
+  Set's rows first by their ids (`tnt`, `dynamite`, `c4`, ...), as
+  `{ id, label, ref, tl }` with the labels localized.
 - **`registerTechniqueKind({ module, key, label, derive, cost?, available? })`.**
   A technique whose `system.kind` is `<module>.<key>` gets its level from
   `derive(technique, actor, { levelOf, standard })`, which returns
@@ -980,6 +989,39 @@ Two fields a module may read (since 1.62.0):
     `LARGE_AREA_LOCATIONS`; `scatterDistance` takes `squared`. The sheet's
     Scatter action offers the character's explosive and area rows, filling in
     the fragments and the squared miss.
+- **Demolition** (since 1.74.0; Campaigns pp. 415, 484, 558), under the
+  `explosions` switch.
+  - *The GM's tool.* The token controls have a Demolition button for the GM:
+    an explosive (the Basic Set's table and the registered ones), its weight
+    in pounds, whether it is packed against the target (`contact`) or
+    `nearby` and how far, and optionally a structure: a row of the Structural
+    Damage Table's doors and walls (per hex), or any DR and HP, with the
+    damage it has taken already. It speaks for the one controlled token, if
+    any.
+  - *`hazards.detonate({ explosive?, ref?, weightLbs, placement?,
+    distanceYards?, structure?, actor?, label? })`* does the same without the
+    dialog. `explosive` is an id from `data.explosives()`; `ref` stands in for
+    one on no list. The charge posts an ordinary crushing explosive damage
+    card (`source: "demolition"`, `blastPlacement: "contact"` for a contact
+    charge), which applies to tokens like any other. With `structure: { label?,
+    dr, hp, damageTaken?, failedDisabling?, ht? }` (HT 12 by default) a second
+    card gives what it did to the structure: a contact charge does the most
+    its dice could, a nearby one the collateral share of the roll at
+    `distanceYards` (1); what gets through DR comes off its HP, and at 0 HP or
+    less it rolls HT to hold (or is breached), at -1xHP HT to stay up, and at
+    -5xHP it is blown apart. Resolves to `{ charge, ref, basicDamage,
+    structure }`, `structure` being the `StructureBlast` below with `damage`,
+    `dr`, `maxHp`, `held` and `stands` (null where no roll was made), or null
+    for no structure; the whole is null for no charge.
+  - *Rules:* `RELATIVE_EXPLOSIVE_FORCE` (`{ id, name, tl, ref }` rows) and
+    `explosiveForce(id)`; `chargeMultiplier(weightLbs, ref)`, the n in 6dxn;
+    `explosiveWeightFor(n, ref)`, the pounds a 6dxn blast takes;
+    `chargeDamage(weightLbs, ref)`, `{ multiplier, notation, dice,
+    diceOfDamage }` or null, where `dice` keeps a whole multiplier (6dx2) and
+    lays a fractional one out as dice and adds at 3.5 points to the die
+    (6dx1.41 is 8d+2); `blastAgainstStructure({ damage, dr, hp, damageTaken?,
+    failedDisabling? })`, `{ injury, hp, state, rollsToHold, rollsToStand }`
+    with `state` a `StructureState`.
 - **Wounding: injury caps, overpenetration, first hits, gauges, knockdown**
   (since 1.73.0; Campaigns pp. 408-409, 420-421, Characters p. 279).
   - *An injury cap.* A `gworld.injury` listener may set `damage.injuryCap`, the
