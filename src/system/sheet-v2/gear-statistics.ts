@@ -13,6 +13,8 @@
  * Kept apart from the sheet so it can be tested without Foundry.
  */
 
+import { vehicleDrLabel } from "../../rules/vehicle-combat.js";
+
 /** One figure of the row: its column heading and its value. */
 export interface StatLine {
   label: string;
@@ -316,7 +318,7 @@ function vehicleBlock(vehicle: Record<string, any>, L: Localize): StatBlock {
     { label: S("Load"), value: figure(number(vehicle.load) ?? 0) },
     { label: S("SM"), value: String(number(vehicle.sm) ?? 0) },
     { label: S("Occ"), value: String(vehicle.occupants ?? "") },
-    { label: L("GWORLD.Column.DR"), value: String(number(vehicle.dr) ?? 0) },
+    { label: L("GWORLD.Column.DR"), value: vehicleDrLabel({ dr: number(vehicle.dr) ?? 0, drOther: number(vehicle.drOther) }) },
   ];
   const range = number(vehicle.range);
   if (range !== null && range > 0) lines.push({ label: L("GWORLD.Column.Range"), value: figure(range) });

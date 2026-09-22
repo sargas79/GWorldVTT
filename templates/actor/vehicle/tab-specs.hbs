@@ -23,4 +23,18 @@
       {{/each}}
     </div>
   </div>
+  {{!-- DR by face and location (Campaigns pp. 462, 554-555); empty is the table's figure. --}}
+  <div class="v2-panel vehicle-specs vehicle-dr">
+    <h2 class="v2-ph">{{localize "GWORLD.Vehicle.DrFaces"}}</h2>
+    <p class="v2-note">{{localize "GWORLD.Vehicle.DrFacesHint"}}</p>
+    <div class="vehicle-fields">
+      {{#each drFields as |f|}}
+        <label class="vehicle-field">
+          <span class="v2-stat-label">{{f.label}}</span>
+          <input type="number" name="{{f.name}}" value="{{f.value}}" placeholder="{{f.placeholder}}" min="0" step="1"
+                 {{#unless @root.editable}}disabled{{/unless}}>
+        </label>
+      {{/each}}
+    </div>
+  </div>
 </section>

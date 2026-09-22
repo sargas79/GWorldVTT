@@ -26,7 +26,7 @@ import {
 } from "../rules/fire.js";
 import { dailyMiles, marchingFatiguePerHour, type Terrain, type TravelWeather } from "../rules/hiking.js";
 import { randomHitLocation, type HitLocation } from "../rules/hit-locations.js";
-import { callCombatHook, randomLocationWithHooks } from "./combat-extensions.js";
+import { callCombatHook, COMBAT_HOOKS, randomLocationWithHooks, type VehicleDrLine } from "./combat-extensions.js";
 import { PROCEDURE_HOOKS, successRollModifiers } from "./procedure-extensions.js";
 import { applyInjury } from "../rules/injury.js";
 import {
@@ -39,8 +39,9 @@ import type { DamageType } from "../rules/types.js";
 import { controlRoll, type Locomotion } from "../rules/vehicles.js";
 import {
   crippleThreshold, hitsAPerson, locationsOf, lossOfControl, mediumOf, occupantDamage,
-  occupantHitTarget, OCCUPANT_RISK_DAMAGE, vehicleHitLocation, windowDr,
-  vehicleInjury, vehicleMovement, vehicleWoundingModifier,
+  occupantHitTarget, OCCUPANT_RISK_DAMAGE, passesThrough, vehicleDrAt, vehicleHitLocation,
+  vehicleInjury, vehicleLocationPenalty, vehicleMovement, vehiclePenetration, vehicleWoundingModifier,
+  VEHICLE_HIT_LOCATIONS, type VehicleArc, type VehicleLocation,
 } from "../rules/vehicle-combat.js";
 import { jumpFromVehicle } from "../rules/collisions.js";
 import { isRuleOn } from "./optional-rules.js";
@@ -724,28 +725,54 @@ export async function controlVehicle(options: {
   });
 }
 
+/** Every location the Vehicle Hit Location Table names. */
+const TABLE_LOCATIONS: ReadonlySet<string> = new Set(Object.values(VEHICLE_HIT_LOCATIONS).flatMap((row) => row.locations));
+
 /**
- * Where a shot at a vehicle landed, and who inside it caught something
- * (Campaigns pp. 554-555).
+ * Where a shot at a vehicle landed, what its DR stopped, and who inside it
+ * caught something (Campaigns pp. 462, 554-555).
  *
  * The location is rolled on the vehicle's own table, and only the locations
  * the vehicle actually has are on it -- "if a random location doesn't exist
- * ... treat it as body hit". What it takes to cripple that location is its
- * own share of the vehicle's HP. Then, "whenever five or more points of
- * damage penetrate an occupied location ... roll 3d on the Occupant Hit
- * Table", and whoever was hit takes "1d cutting damage per five full points".
+ * ... treat it as body hit" -- unless the shooter aimed at one. The DR there
+ * is the face the shot came in on, a location's own figure, or half the face
+ * for a window, offered to `gworld.vehicleDr` listeners before it counts
+ * (since 1.79.0). What it takes to cripple that location is its own share of
+ * the vehicle's HP. Then, "whenever five or more points of damage penetrate
+ * an occupied location ... roll 3d on the Occupant Hit Table", and whoever
+ * was hit takes "1d cutting damage per five full points".
  */
 export async function shootAtVehicle(options: {
   /** Whose card this is: the shooter, or the vehicle itself. */
   actor: any;
   /** The vehicle: an item on the Gear tab, or a vehicle actor on the map. */
   vehicle: any;
-  penetrating: number;
+  /**
+   * The shot's basic damage, before DR (since 1.79.0). The vehicle's DR at
+   * the spot is worked out and taken off it.
+   */
+  damage?: number;
+  /** The attack's armour divisor, 1 for none (since 1.79.0). */
+  armorDivisor?: number;
+  /** True for an attack that ignores DR (since 1.79.0). */
+  ignoresDr?: boolean;
+  /**
+   * Damage already through the DR, as the table worked it out: read when
+   * `damage` is not given, and then no DR is read at all.
+   */
+  penetrating?: number;
+  /** The location aimed at, or null to roll for it (since 1.79.0). */
+  location?: VehicleLocation | null;
+  /** The face the shot came in on, or null for the table's figure (since 1.79.0). */
+  arc?: VehicleArc | null;
   occupants: number;
   /** What got through: a bullet and a flamethrower do very different things to a car. */
   damageType: DamageType;
   /** True for a tight-beam burn, which a vital area doubles and a torch does not. */
   tightBeam: boolean;
+  /** The weapon and its attack mode, when known, for `gworld.vehicleDr` (since 1.79.0). */
+  item?: any;
+  mode?: any;
 }): Promise<void> {
   const { actor } = options;
   const item = options.vehicle;
@@ -760,14 +787,22 @@ export async function shootAtVehicle(options: {
   // vehicle's own sheet uses, so the two cannot disagree about one car.
   const powered = hitPoints > 0 && Number(vehicle.acceleration) > 0;
 
-  const locationRoll = new Roll("3d6");
-  await locationRoll.evaluate();
-  rolls.push(locationRoll);
-  const hit = vehicleHitLocation({
-    roll: locationRoll.total,
-    has: locationsOf(String(vehicle.locations ?? "")),
-    powered,
-  });
+  // A shot aimed at a location lands there; anything else is rolled for.
+  const aimed = options.location && TABLE_LOCATIONS.has(options.location) ? options.location : null;
+  let locationRoll: any = null;
+  let hit: { location: VehicleLocation; choices: VehicleLocation[]; penalty: number; fellToBody: boolean };
+  if (aimed) {
+    hit = { location: aimed, choices: [aimed], penalty: vehicleLocationPenalty(aimed), fellToBody: false };
+  } else {
+    locationRoll = new Roll("3d6");
+    await locationRoll.evaluate();
+    rolls.push(locationRoll);
+    hit = vehicleHitLocation({
+      roll: locationRoll.total,
+      has: locationsOf(String(vehicle.locations ?? "")),
+      powered,
+    });
+  }
 
   const lines: string[] = [];
   const name = game.i18n.localize(`GWORLD.Vehicle.Location.${hit.location}`);
@@ -785,16 +820,74 @@ export async function shootAtVehicle(options: {
     }));
   }
 
-  const penetrating = Math.max(0, options.penetrating);
+  const arc = options.arc ?? null;
+  let penetrating: number;
+  if (options.damage !== undefined && options.damage !== null) {
+    // The vehicle's DR where the shot landed, as one line a listener may
+    // double against one kind of attack, refuse, or add to (since 1.79.0).
+    const at = vehicleDrAt(vehicle, hit.location, arc);
+    const drLines: VehicleDrLine[] = at.source === "none"
+      ? []
+      : [{
+          label: game.i18n.localize(`GWORLD.Hazard.VehicleDrSource.${at.source}`),
+          dr: at.dr,
+          applies: true,
+          hardened: 0,
+        }];
+    const armorDivisor = Number(options.armorDivisor) > 0 ? Number(options.armorDivisor) : 1;
+    const basicDamage = Math.max(0, Math.floor(Number(options.damage) || 0));
+    callCombatHook(COMBAT_HOOKS.vehicleDr, {
+      vehicle: item,
+      actor,
+      item: options.item ?? null,
+      mode: options.mode ?? null,
+      location: hit.location,
+      arc,
+      damageType: options.damageType,
+      basicDamage,
+      armorDivisor,
+      ignoresDr: options.ignoresDr === true,
+      tightBeam: options.tightBeam,
+      lines: drLines,
+    });
+    const through = vehiclePenetration({
+      basicDamage,
+      lines: drLines,
+      armorDivisor,
+      ignoresDr: options.ignoresDr === true,
+    });
+    penetrating = through.penetrating;
+    const counted = drLines
+      .filter((line) => line.applies !== false)
+      .map((line) => `${line.label} ${Math.max(0, Math.floor(Number(line.dr) || 0))}${line.reason ? ` (${line.reason})` : ""}`);
+    lines.push(F("VehicleDr", {
+      arc: arc ? game.i18n.localize(`GWORLD.Vehicle.Arc.${arc}`) : game.i18n.localize("GWORLD.Vehicle.Arc.none"),
+      dr: counted.length > 0 ? counted.join(", ") : "0",
+      divisor: options.ignoresDr === true ? H("IgnoresDr") : armorDivisor === 1 ? "" : F("AtDivisor", { divisor: armorDivisor }),
+      effective: through.effectiveDr,
+      damage: basicDamage,
+      penetrating,
+    }));
+  } else {
+    penetrating = Math.max(0, Math.floor(Number(options.penetrating) || 0));
+    // Worked out at the table already; the window's figure is still worth saying.
+    if (hit.location === "largeWindow" || hit.location === "smallWindow") {
+      lines.push(F("WindowDr", { dr: vehicleDrAt(vehicle, hit.location, arc).dr }));
+    }
+  }
+
   // The wound, not the raw damage, is what comes off: a bullet into a car's
   // body is a third of itself, and into its fuel tank three times (pp. 380, 555).
+  // Where the hit passes to a person or an animal, "the vehicle takes no
+  // damage" (p. 555).
   const wound = {
     damageType: options.damageType,
     tightBeam: options.tightBeam,
     location: hit.location,
     powered,
   };
-  const injury = vehicleInjury({ penetrating, ...wound });
+  const struck = passesThrough(hit.location);
+  const injury = struck ? 0 : vehicleInjury({ penetrating, ...wound });
   const threshold = crippleThreshold(hit.location, hitPoints, {
     wheels: countOf(String(vehicle.locations ?? ""), "W"),
     masts: countOf(String(vehicle.locations ?? ""), "M"),
@@ -806,7 +899,7 @@ export async function shootAtVehicle(options: {
         : F("NotCrippled", { location: name, threshold: Math.floor(threshold) }),
     );
   }
-  if (penetrating > 0) {
+  if (penetrating > 0 && !struck) {
     lines.push(F("Wound", {
       penetrating,
       modifier: Math.round(vehicleWoundingModifier(wound) * 100) / 100,
@@ -814,14 +907,12 @@ export async function shootAtVehicle(options: {
     }));
   }
   if (hit.location === "vitalArea") lines.push(H("VitalArea"));
-  if (hit.location === "largeWindow" || hit.location === "smallWindow") {
-    lines.push(F("WindowDr", { dr: windowDr(Number(vehicle.dr) || 0) }));
-  }
   if (hitsAPerson(hit.location)) lines.push(F("HitsAPerson", { location: name }));
+  if (hit.location === "draftAnimal") lines.push(F("HitsAnAnimal", { location: name, damage: penetrating }));
 
   // The people inside, when enough got through to matter and there is anybody
   // in there to matter to. An empty car has no occupant to roll for.
-  if (penetrating >= OCCUPANT_RISK_DAMAGE && !hitsAPerson(hit.location) && options.occupants > 0) {
+  if (penetrating >= OCCUPANT_RISK_DAMAGE && !struck && options.occupants > 0) {
     const target = occupantHitTarget(options.occupants, sm);
     const occupantRoll = new Roll("3d6");
     await occupantRoll.evaluate();
@@ -846,8 +937,7 @@ export async function shootAtVehicle(options: {
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Vehicle.ShotAt"),
     detail: F("ShotAtDetail", { vehicle: String(item.name), damage: penetrating }),
-    dice: dieResults(locationRoll),
-    roll: locationRoll.total,
+    ...(locationRoll ? { dice: dieResults(locationRoll), roll: locationRoll.total } : {}),
     lines,
     bad: penetrating > 0,
     rolls,

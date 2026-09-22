@@ -18,10 +18,11 @@ import { SYSTEM_ID } from "../constants.js";
 import { isRuleOn } from "../optional-rules.js";
 import { controlVehicle, jumpOutOfVehicle, shootAtVehicle } from "../hazards.js";
 import { promptForNumber } from "../roll.js";
+import { promptForVehicleHit } from "./character-prompts.js";
 import { damageAtScale, hitPointsAfterBattle } from "../damage-scale.js";
 import type { DamageScale } from "../../rules/scale.js";
 import { LOCOMOTIONS, leaveSeat } from "../../rules/vehicles.js";
-import type { DamageType } from "../../rules/types.js";
+import { aimableLocations, DR_LOCATIONS, vehicleDrLabel } from "../../rules/vehicle-combat.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -37,52 +38,6 @@ const L = (key: string, data?: Record<string, unknown>) =>
 
 /** An em dash, for a column the table leaves empty. */
 const NOTHING = "—";
-
-/** How much damage got through, and how many people are inside to catch it. */
-async function promptForHit(aboard: number): Promise<{
-  penetrating: number;
-  occupants: number;
-  damageType: DamageType;
-  tightBeam: boolean;
-} | null> {
-  const result = await foundry.applications.api.DialogV2.prompt({
-    window: { title: L("ShotAt") },
-    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
-      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <span>${L("Penetrating")}</span>
-        <input type="number" name="damage" value="0" min="0" step="1" style="width:90px">
-      </label>
-      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <span>${L("DamageType")}</span>
-        <select name="damageType" style="width:120px"><option value="cr">cr</option><option value="cut">cut</option><option value="imp">imp</option><option value="pi-">pi-</option><option value="pi">pi</option><option value="pi+">pi+</option><option value="pi++">pi++</option><option value="burn">burn</option><option value="cor">cor</option><option value="tox">tox</option><option value="fat">fat</option></select>
-      </label>
-      <label style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" name="tightBeam"><span>${L("TightBeam")}</span>
-      </label>
-      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <span>${L("Aboard")}</span>
-        <input type="number" name="occupants" value="${aboard}" min="0" step="1" style="width:90px">
-      </label>
-      <p class="ihint" style="margin:0">${L("ShotAtHint")}</p>
-    </div>`,
-    ok: {
-      label: game.i18n.localize("GWORLD.Chat.Roll"),
-      callback: (_event: Event, button: HTMLElement) => {
-        const form = button.closest<HTMLElement>(".application");
-        const num = (name: string) =>
-          Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
-        return {
-          penetrating: num("damage"),
-          occupants: num("occupants"),
-          damageType: (form?.querySelector<HTMLSelectElement>('select[name="damageType"]')?.value || "cr") as DamageType,
-          tightBeam: form?.querySelector<HTMLInputElement>('input[name="tightBeam"]')?.checked ?? false,
-        };
-      },
-    },
-    rejectClose: false,
-  });
-  return result && typeof result === "object" ? (result as never) : null;
-}
 
 export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static override DEFAULT_OPTIONS = {
@@ -189,6 +144,7 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       dodge: derived.dodge ?? null,
       operatorName: operator ? String(operator.name) : "",
       specFields: this.#specFields(system),
+      drFields: this.#drFields(system),
 
       // The table's own columns, in the order the book prints them, so a GM
       // reading from the page can check the sheet line by line (p. 462).
@@ -207,7 +163,8 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
         { label: L("LoadShort"), value: `${v.load} t` },
         { label: L("Sm"), value: v.sm >= 0 ? `+${v.sm}` : String(v.sm) },
         { label: L("Occ"), value: String(v.occupants) },
-        { label: L("Dr"), value: String(v.dr) },
+        // Both figures where the table splits it, "45/20" (p. 462).
+        { label: L("Dr"), value: vehicleDrLabel(v) },
         { label: L("RangeShort"), value: v.range > 0 ? `${v.range} mi` : NOTHING },
         { label: L("Cost"), value: `$${system.cost}` },
         { label: L("LocationsShort"), value: String(v.locations) || NOTHING },
@@ -314,7 +271,8 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       number("Load", "system.vehicle.load", v.load, { min: 0, step: 0.01 }),
       number("Sm", "system.vehicle.sm", v.sm),
       text("Occupants", "system.vehicle.occupants", v.occupants),
-      number("Dr", "system.vehicle.dr", v.dr, { min: 0 }),
+      // The table's figure, and the front's where it prints two (p. 462).
+      number("DrFront", "system.vehicle.dr", v.dr, { min: 0 }),
       number("Range", "system.vehicle.range", v.range, { min: 0 }),
       number("Cost", "system.cost", system.cost, { min: 0 }),
       text("Locations", "system.vehicle.locations", v.locations, L("LocationsHint")),
@@ -327,6 +285,38 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       number("Draft", "system.vehicle.draft", v.draft, { min: 0, step: 0.1, hint: L("DraftHint") }),
       number("Stall", "system.vehicle.stall", v.stall, { min: 0, hint: L("StallHint") }),
       { label: "TL", name: "system.tl", value: system.tl, type: "text", hint: "" },
+    ];
+  }
+
+  /**
+   * DR by face and location (pp. 462, 554-555): each empty unless the vehicle
+   * gives it, with what an empty one falls back to shown in its place. The
+   * locations are the ones this vehicle has that can carry a DR of their own.
+   */
+  #drFields(system: any): Array<Record<string, unknown>> {
+    const v = system.vehicle;
+    const main = Number(v.dr) || 0;
+    const other = v.drOther ?? main;
+    const field = (label: string, name: string, value: unknown, fallback: number) => ({
+      label,
+      name,
+      value: value ?? "",
+      placeholder: String(fallback),
+    });
+    const has = aimableLocations(system.derived?.locations ?? [], system.derived?.powered === true)
+      .filter((key) => DR_LOCATIONS.includes(key));
+    return [
+      field(L("DrOther"), "system.vehicle.drOther", v.drOther, main),
+      field(L("DrTop"), "system.vehicle.drTop", v.drTop, other),
+      field(L("DrUnderbody"), "system.vehicle.drUnderbody", v.drUnderbody, other),
+      ...has.map((key) =>
+        field(
+          L("DrAt", { location: game.i18n.localize(`GWORLD.Vehicle.Location.${key}`) }),
+          `system.vehicle.drByLocation.${key}`,
+          v.drByLocation?.[key],
+          key === "largeWindow" || key === "smallWindow" ? Math.ceil(main / 2) : main,
+        ),
+      ),
     ];
   }
 
@@ -468,7 +458,11 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
   /** Where a shot landed, and who inside caught something (pp. 554-555). */
   static async #onShotAt(this: GWorldVehicleSheet) {
     if (!isRuleOn("vehicles")) return;
-    const asked = await promptForHit((this.actor.system.crew ?? []).length);
+    const system = this.actor.system;
+    const asked = await promptForVehicleHit({
+      aboard: (system.crew ?? []).length,
+      locations: aimableLocations(system.derived?.locations ?? [], system.derived?.powered === true),
+    });
     if (!asked) return;
     await shootAtVehicle({ actor: this.actor, vehicle: this.actor, ...asked });
   }

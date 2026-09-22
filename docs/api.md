@@ -514,6 +514,39 @@ and the roll continues.
     itself is different, and is the piece's own `drByLocation` (since 1.51.0):
     a list of `{ locations, dr }`, each replacing the piece's figure at those
     locations, split and all.
+  - `gworld.vehicleDr` (since 1.79.0): before a vehicle's DR meets a shot
+    (Campaigns pp. 462, 554-555), with `{ vehicle, actor, item, mode,
+    location, arc, damageType, basicDamage, armorDivisor, ignoresDr,
+    tightBeam, lines }`. `vehicle` is the vehicle actor, or the vehicle item
+    on a Gear tab; `actor` is whose card it is; `item` and `mode` are the
+    weapon and its attack mode when the caller knows them, else null.
+    `location` is the Vehicle Hit Location Table key (`body`, `largeWindow`,
+    `mainTurret`, `vitalArea`, ...); `arc` is `"front"`, `"side"`, `"rear"`,
+    `"top"`, `"underbody"` or null. Each of `lines` is one layer of DR at the
+    spot, `{ label, dr, applies, hardened, reason? }`, all mutable: the
+    system gives one, the vehicle's own DR there (see below), and none where
+    the hit passes through to a rider, an open cabin or a draft animal. Change
+    `dr` to multiply it against one kind of attack, set `applies` false to
+    refuse it, raise `hardened` to step the armour divisor down, or push a
+    line for a layer of your own. The layers that count are added up, the
+    highest `hardened` steps the divisor down, and the rest comes off
+    `basicDamage`. It fires only when the shot's basic damage is given, not
+    for damage entered as already through the DR.
+
+    The DR the system offers comes from the vehicle's statistics
+    (`system.vehicle`, on the vehicle actor and the vehicle equipment item
+    alike). `dr` is the table's figure and the front's; since 1.79.0 there
+    are also `drOther` (the sides and rear, the second figure of a printed
+    `45/20`), `drTop`, `drUnderbody`, and `drByLocation`, one entry per
+    location that can carry its own (`smallWindow`, `weaponMount`,
+    `smallSuperstructure`, `independentTurret`, `track`, `rotor`, `mast`,
+    `wing`, `arm`, `largeSuperstructure`, `mainTurret`, `largeWindow`,
+    `runner`, `wheel`, `vitalArea`). Each is null unless given: an empty
+    `drOther` is `dr`, an empty top or underbody is the sides' figure, an
+    empty window is half its face rounded up, and any other empty location is
+    its face. The rules behind this are in `rules`: `vehicleFaceDr`,
+    `vehicleDrAt`, `vehiclePenetration`, `vehicleDrLabel`, `passesThrough`
+    and `aimableLocations`.
   - `gworld.shotsEntry` (since 1.54.0): wherever a ranged mode's capacity or
     reload time is read -- the Reload button, loading at once, the shots
     ready, the sheet's count -- with `{ actor, item, modeIndex, mode, entry }`.
@@ -965,6 +998,14 @@ Two fields a module may read (since 1.62.0):
   protectionFactor, modifier })` adds a dose of radiation (p. 435). Before a
   dose is added, `gworld.radiationDose` fires with `{ actor, rads,
   protectionFactor, sources }`: change `rads`, and push a label to `sources`.
+  Since 1.79.0 `hazards.shootAtVehicle({ actor, vehicle, damage?,
+  armorDivisor?, ignoresDr?, penetrating?, location?, arc?, occupants,
+  damageType, tightBeam, item?, mode? })` runs a shot at a vehicle as its
+  sheet's Shot at button does: `damage` is basic damage, and the vehicle's DR
+  at the spot (after `gworld.vehicleDr`) comes off it; without `damage`,
+  `penetrating` is taken as already through. `location` aims at a location,
+  or null rolls for one; `arc` picks the face. It posts the card and, for a
+  vehicle actor its user owns, takes the injury off its hit points.
 - **Blows from below** (since 1.63.0): a blow applied with `fromBelow` (a
   checkbox on the damage card when the foot is struck) meets footwear's
   `soleDr` on the foot. `gworld.armorDr` carries `fromBelow`. Armour spent by

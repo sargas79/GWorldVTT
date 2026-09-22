@@ -14,6 +14,7 @@ import {
 import type { Enchantment } from "../../rules/enchanting.js";
 import { AMMUNITION_TYPES, ammunitionFitOfName, type AmmunitionType } from "../../rules/ammunition.js";
 import { EQUIPMENT_QUALITIES, type EquipmentQuality } from "../../rules/wealth.js";
+import { DR_LOCATIONS } from "../../rules/vehicle-combat.js";
 import {
   WEAPON_CLASSES,
   WEAPON_MATERIALS,
@@ -146,6 +147,28 @@ export function vehicleStatFields() {
     /** "The number of occupants ... given as 'crew+passengers'." */
     occupants: new fields.StringField({ required: true, blank: true, initial: "1" }),
     dr: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+    /**
+     * "Some vehicles have different DR on various faces or locations" (p. 462):
+     * the tables print two figures, the front's and the sides' and rear's, and
+     * `dr` is the first. Each of these is empty unless the vehicle gives it,
+     * and an empty one falls back to `dr` (the top and underbody to the
+     * second figure first), so a vehicle with one DR is unchanged.
+     */
+    drOther: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
+    drTop: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
+    drUnderbody: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
+    /**
+     * A location's own DR, replacing the face's where it is given: a turret
+     * thicker than the hull, a window better than half of it (pp. 554-555).
+     */
+    drByLocation: new fields.SchemaField(
+      Object.fromEntries(
+        DR_LOCATIONS.map((key) => [
+          key,
+          new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
+        ]),
+      ),
+    ),
     /** "The travel distance, in miles, before the vehicle runs out of fuel." */
     range: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
     skill: new fields.StringField({ required: true, blank: true, initial: "" }),
