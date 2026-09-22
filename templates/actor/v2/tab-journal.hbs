@@ -86,6 +86,37 @@
         <div class="v2-panel">
           {{> "gworld.part.description-vitals"}}
           {{> "gworld.part.description-appearance"}}
+          {{!-- What people make of that face, before anybody rolls: the social
+                traits the sheet already holds, added up. The conditional ones
+                are listed rather than added, because only the table knows who
+                is in the room. --}}
+          {{#if rules.reactions}}
+            <div class="isec">
+              <div class="ish">{{localize "GWORLD.Reaction.Title"}}</div>
+              {{#if (or reactionProfile.always.length reactionProfile.conditional.length)}}
+                <div class="v2-box">
+                  <div class="v2-box-line"><span>{{localize "GWORLD.Reaction.Everyone"}}</span><b>{{signed reactionProfile.total}}</b></div>
+                  {{#each reactionProfile.always as |source|}}
+                    <div class="v2-box-line"><span>{{source.label}}</span><b>{{signed source.value}}</b></div>
+                  {{/each}}
+                  {{#each reactionProfile.conditional as |source|}}
+                    <div class="v2-box-line"><span>{{source.label}} &middot; <i>{{localize (concat "GWORLD.Reaction.When." source.condition)}}</i></span><b>{{signed source.value}}</b></div>
+                  {{/each}}
+                </div>
+                {{#if reactionProfile.conditional.length}}
+                  <p class="v2-note">{{localize "GWORLD.Reaction.ProfileHint"}}</p>
+                {{/if}}
+              {{else}}
+                <p class="v2-note">{{localize "GWORLD.Reaction.Nothing"}}</p>
+              {{/if}}
+              {{!-- Rolled from here as well as from the Combat tab's actions:
+                    this is where the modifiers are read, so it is where the roll
+                    is wanted. A character with nothing on the sheet still rolls,
+                    at whatever the situation is worth. --}}
+              <button type="button" class="v2-button v2-button-small" data-action="reaction"
+                      data-tooltip="{{localize 'GWORLD.Reaction.Hint'}}">{{localize "GWORLD.Reaction.Action"}}</button>
+            </div>
+          {{/if}}
         </div>
         {{#if npc}}
           <div class="v2-panel">
