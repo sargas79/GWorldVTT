@@ -41,10 +41,13 @@ import { conditionLabel, setCondition } from "./conditions.js";
 import { migrationApi } from "./migration.js";
 import { takeInjury, type InjuryTaken } from "./damage.js";
 import { stopBleeding } from "./bleeding.js";
-import { activePoisons, advancePoison, clearPoison, dosePoison, type ActivePoison } from "./poison.js";
-import { applyFirstAid, attendPatient, operate } from "./recovery.js";
+import { activePoisons, advancePoison, clearPoison, dosePoison, treatIllness, treatPoison, type ActivePoison } from "./poison.js";
+import { applyFirstAid, attendPatient, operate, resuscitate } from "./recovery.js";
 import { rollMortalWound } from "./dying.js";
-import type { Poison } from "../rules/poison.js";
+import type { Poison, Treatment } from "../rules/poison.js";
+import type { ResuscitationCause } from "../rules/medicine.js";
+import type { ControlRating } from "../rules/legality.js";
+import { currentControlRating } from "./legality.js";
 import { undoKnockdown } from "./knockdown.js";
 import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from "./damage-undo.js";
 import { carriedAmmunitionFor, loadAmmunition } from "./ammunition.js";
@@ -79,7 +82,7 @@ import { PARTY_CHANGED_HOOK, addMembers, campaignTerms, membersOf, partyOf, remo
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.76.0";
+export const API_VERSION = "1.77.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -192,6 +195,32 @@ const actors = {
     return advancePoison({ actor, id });
   },
 
+  /**
+   * Treats a dose of poison (Campaigns p. 439, since 1.77.0), as the sheet's Treat button
+   * does. `treatment` is one of the book's (`suckWound`, `induceVomiting`, `medical`,
+   * `antidote`), or left out for a module's own: a drug or device whose `bonus` stands to
+   * the HT rolls to resist, rolled for only where `skill` is given. `skill` stands in for the
+   * treater's First Aid or Physician (the book's treatments fall back to `healer`'s better
+   * of the two, and fail where nobody has either); `techLevel` for the TL medical procedures
+   * are given at; `label` names the treatment on the card. Returns the bonus it gave: 0 for
+   * a failed roll or an unknown dose. The best treatment stands; they don't add.
+   */
+  treatPoison(patient: any, id: string, options: { treatment?: Treatment; bonus?: number; skill?: number | null; healer?: any; techLevel?: number; label?: string; modifier?: number } = {}): Promise<number> {
+    const treatment = options.treatment ?? null;
+    const skillLevel = typeof options.skill === "number" ? options.skill : treatment && treatment !== "antidote" ? bestTreaterSkill(options.healer ?? patient) : null;
+    return treatPoison({ actor: patient, id, treatment, antidoteBonus: options.bonus ?? 0, skillLevel, ...(typeof options.techLevel === "number" ? { techLevel: options.techLevel } : {}), ...(options.label ? { label: options.label } : {}), modifier: options.modifier ?? 0 });
+  },
+
+  /**
+   * Treats an illness (Campaigns p. 443, since 1.77.0), as the sheet does: `antibiotics`
+   * (+3 at TL6+, none against a `drugResistant` strain), a physician's care bonus, and a
+   * module's own `bonus`, which add. `label` names the treatment on the card. Returns the
+   * bonus it gave; the best course of treatment stands.
+   */
+  treatIllness(patient: any, id: string, options: { antibiotics?: boolean; drugResistant?: boolean; physicianBonus?: number; bonus?: number; techLevel?: number; label?: string } = {}): Promise<number> {
+    return treatIllness({ actor: patient, id, antibiotics: options.antibiotics ?? false, drugResistant: options.drugResistant ?? false, physicianBonus: options.physicianBonus ?? 0, bonus: options.bonus ?? 0, ...(typeof options.techLevel === "number" ? { techLevel: options.techLevel } : {}), ...(options.label ? { label: options.label } : {}) });
+  },
+
   /** Takes a dose off a character (since 1.57.0). */
   clearPoison(actor: any, id: string): Promise<void> {
     return clearPoison(actor, id);
@@ -222,6 +251,17 @@ const actors = {
    */
   rollMortalWound(options: { actor: any; physician?: number | null; traumaMaintenance?: boolean; modifier?: number }): Promise<void> {
     return rollMortalWound(options);
+  },
+
+  /**
+   * Resuscitation (Campaigns p. 425, since 1.77.0), as the sheet's button does: a minute's
+   * Physician/TL7+ roll, or First Aid/TL7+ at -4 (-2 with `cpr` against drowning and
+   * asphyxiation). `skill` stands in for the healer's, as `skillKind` (`physician`, the
+   * default, or `firstAid`); `techLevel` for the skill's TL; `label` names who works on the
+   * card. Tagged `resuscitation` and the cause. Success clears unconsciousness and a heart attack.
+   */
+  resuscitate(options: { healer: any; patient: any; cause?: ResuscitationCause; cpr?: boolean; skill?: number; skillKind?: "physician" | "firstAid"; techLevel?: number; label?: string; modifier?: number }): Promise<void> {
+    return resuscitate({ ...options, cause: options.cause ?? "heartAttack", cpr: options.cpr ?? false, modifier: options.modifier ?? 0 });
   },
 
   /** Takes back a knockdown's stun, fall and unconsciousness, and restores a posture (since 1.39.0). */
@@ -275,6 +315,12 @@ const actors = {
     return true;
   },
 };
+
+/** The treater's better of First Aid and Physician, as the sheet's treatment dialog starts at, or null. */
+function bestTreaterSkill(treater: any): number | null {
+  const levels = [actors.skillLevel(treater, "First Aid"), actors.skillLevel(treater, "Physician")].filter((v): v is number => typeof v === "number");
+  return levels.length ? Math.max(...levels) : null;
+}
 
 /** Reads an item's worked-out values. */
 const items = {
@@ -394,6 +440,8 @@ export interface GWorldApi {
   readonly areas: typeof areasApi;
   /** The party an actor is in, its members and the campaign's terms (since 1.68.0). */
   readonly party: typeof partyApi;
+  /** Facts about the campaign world (since 1.77.0): its Control Rating. */
+  readonly world: typeof worldApi;
   /** The hooks the API fires, by name; `partyChanged` since 1.68.0. */
   readonly hooks: { readonly registerRules: string; readonly ready: string; readonly partyChanged: string };
   /** Whether this API satisfies a semver range, as a module's manifest would declare it. */
@@ -454,6 +502,18 @@ const magic = Object.freeze({ ...magicApi, postResistance, manaLevel });
 /** The party namespace (since 1.68.0): which party an actor is in, its members, and the campaign's terms. */
 const partyApi = Object.freeze({ of: partyOf, membersOf, campaignTerms, addMembers, removeMember });
 
+/**
+ * The world namespace (since 1.77.0): the campaign's Control Rating (Campaigns
+ * pp. 506-507), the world setting the Gear tab's legality notes read. `rating`
+ * is 0-6, or null where none is set or the Legality Class rule is off;
+ * `inPlay` is whether that rule is on.
+ */
+const worldApi = Object.freeze({
+  controlRating(): { rating: ControlRating | null; inPlay: boolean } {
+    return { rating: currentControlRating(), inPlay: isRuleOn("legalityClass") };
+  },
+});
+
 /** Builds the frozen API object. */
 export function createApi(): GWorldApi {
   return Object.freeze({
@@ -473,6 +533,7 @@ export function createApi(): GWorldApi {
     areas: areasApi,
     chat: chatApi,
     party: partyApi,
+    world: worldApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: PARTY_CHANGED_HOOK }),
     satisfies: (range: string) => satisfiesApiRange(API_VERSION, range),
   });

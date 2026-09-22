@@ -191,35 +191,49 @@ export async function dosePoison(options: {
 export async function treatPoison(options: {
   actor: any;
   id: string;
-  treatment: Treatment;
-  /** An antidote's bonus, which is the poison's own and not a general rule. */
+  /**
+   * One of the book's treatments, or null for a module's own (since API
+   * 1.77.0): a drug or a device whose bonus is `antidoteBonus`, which rolls
+   * only where `skillLevel` is given.
+   */
+  treatment: Treatment | null;
+  /** An antidote's bonus, which is the poison's own and not a general rule; a module's treatment's. */
   antidoteBonus?: number;
   /**
    * The treater's First Aid or Physician -- Physician alone for medical
    * procedures -- or null where nobody has it. An antidote needs no roll.
    */
   skillLevel?: number | null;
-}): Promise<void> {
+  /** The TL medical procedures are given at, where it isn't the patient's (since API 1.77.0). */
+  techLevel?: number;
+  /** A modifier on the treatment's roll (since API 1.77.0). */
+  modifier?: number;
+  /** What the card calls the treatment, where it isn't the book's name (since API 1.77.0). */
+  label?: string;
+}): Promise<number> {
   const { actor } = options;
-  if (!mayChange(actor)) return;
+  if (!mayChange(actor)) return 0;
 
-  const techLevel = Number(actor.system?.tl) || 3;
+  const treatment = options.treatment;
+  const techLevel = typeof options.techLevel === "number" ? options.techLevel : Number(actor.system?.tl) || 3;
   const bonus =
-    options.treatment === "antidote"
+    treatment === "antidote" || treatment === null
       ? Math.max(0, options.antidoteBonus ?? 0)
-      : treatmentBonus(options.treatment, techLevel);
+      : treatmentBonus(treatment, techLevel);
 
   const doses = activePoisons(actor);
   const dose = doses.find((d) => d.id === options.id);
-  if (!dose) return;
+  if (!dose) return 0;
 
   // Every treatment but an antidote is a skill roll first (p. 439): sucking the
   // wound "requires a First Aid or Physician roll at -2", inducing vomiting
   // "calls for a First Aid or Physician roll", and medical procedures "require
-  // a Physician roll". The bonus is only there if the roll is made.
+  // a Physician roll". The bonus is only there if the roll is made. A module's
+  // own treatment rolls where it says who is giving it.
+  const rolls = treatment === null ? typeof options.skillLevel === "number" : treatment !== "antidote";
   let rolled: { roll: any; target: number; success: boolean } | null = null;
-  if (options.treatment !== "antidote") {
-    const target = (options.skillLevel ?? 0) + treatmentRollModifier(options.treatment);
+  if (rolls) {
+    const target = (options.skillLevel ?? 0) + (treatment ? treatmentRollModifier(treatment) : 0) + (options.modifier ?? 0);
     const roll = new Roll("3d6");
     await roll.evaluate();
     const outcome = resolveSuccess(roll.total, target, dieResults(roll));
@@ -236,7 +250,7 @@ export async function treatPoison(options: {
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Poison.Treated"),
     poison: dose,
-    treatment: game.i18n.localize(`GWORLD.Poison.Treatment_${options.treatment}`),
+    treatment: options.label || (treatment ? game.i18n.localize(`GWORLD.Poison.Treatment_${treatment}`) : game.i18n.localize("GWORLD.Poison.Treatment")),
     bonus: helped ? bonus : 0,
     ...(rolled
       ? {
@@ -250,6 +264,7 @@ export async function treatPoison(options: {
         }
       : {}),
   });
+  return helped ? bonus : 0;
 }
 
 /**
@@ -267,20 +282,26 @@ export async function treatIllness(options: {
   drugResistant: boolean;
   /** The physician's medical-care bonus, as recovery would give it. */
   physicianBonus: number;
-}): Promise<void> {
+  /** A module's own treatment's bonus, which adds to the others (since API 1.77.0). */
+  bonus?: number;
+  /** The TL the drugs are given at, where it isn't the patient's (since API 1.77.0). */
+  techLevel?: number;
+  /** What the card calls the treatment (since API 1.77.0). */
+  label?: string;
+}): Promise<number> {
   const { actor } = options;
-  if (!mayChange(actor)) return;
+  if (!mayChange(actor)) return 0;
 
   const doses = activePoisons(actor);
   const dose = doses.find((d) => d.id === options.id);
-  if (!dose) return;
+  if (!dose) return 0;
 
   const bonus = diseaseTreatmentBonus({
-    techLevel: Number(actor.system?.tl) || 3,
+    techLevel: typeof options.techLevel === "number" ? options.techLevel : Number(actor.system?.tl) || 3,
     antibiotics: options.antibiotics,
     drugResistant: options.drugResistant,
     physicianBonus: options.physicianBonus,
-  });
+  }) + Math.max(0, options.bonus ?? 0);
   dose.treatment = Math.max(dose.treatment, bonus);
   await store(actor, doses);
 
@@ -288,9 +309,10 @@ export async function treatIllness(options: {
     kind: game.i18n.localize("GWORLD.Illness.Treated"),
     illness: true,
     poison: dose,
-    treatment: game.i18n.localize(options.antibiotics ? "GWORLD.Illness.Antibiotics" : "GWORLD.Illness.Care"),
+    treatment: options.label || game.i18n.localize(options.antibiotics ? "GWORLD.Illness.Antibiotics" : "GWORLD.Illness.Care"),
     bonus,
   });
+  return bonus;
 }
 
 /**
