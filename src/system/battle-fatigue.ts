@@ -10,6 +10,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { battleFatigueCost } from "../rules/fatigue.js";
 import { isRuleOn } from "./optional-rules.js";
+import { applyFatigue } from "./fatigue.js";
 
 /** Registers the hook. Called once, at init. */
 export function registerBattleFatigue(): void {
@@ -47,10 +48,16 @@ export async function chargeBattleFatigue(combat: any): Promise<void> {
     // will be... lose one extra FP at the end of any fight that lasts long
     // enough to fatigue you" (Characters p. 270).
     const strained = isRuleOn("minimumSt") && wieldsAboveStrength(actor) ? 1 : 0;
-    await actor.update({ "system.fp.value": current - cost - strained });
-    charged.push(strained
+    // Through the fatigue chart like any other exertion, and past the
+    // `gworld.fatigueCost` listeners: a hot day's extra point is theirs to add
+    // (API 1.76.0).
+    const spent = await applyFatigue(actor, cost + strained, { reason: "battle", details: { seconds: rounds, strained: strained > 0 } });
+    const name = strained
       ? game.i18n.format("GWORLD.BattleFatigue.Strained", { name: String(actor.name ?? "") })
-      : String(actor.name ?? ""));
+      : String(actor.name ?? "");
+    charged.push(spent.sources.length > 0
+      ? game.i18n.format("GWORLD.BattleFatigue.Changed", { name, fp: spent.fpLost, sources: spent.sources.join(", ") })
+      : name);
   }
 
   if (charged.length === 0) return;

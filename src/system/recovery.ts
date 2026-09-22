@@ -530,9 +530,16 @@ export async function resuscitate(options: {
     byDefault: !usingPhysician && firstAid === null,
   });
 
+  // What the modules add: a defibrillator, a resuscitator (API 1.76.0,
+  // tagged "resuscitation" and the cause).
+  const added = successRollModifiers({
+    actor: healer, label: R("Resuscitate"), kind: "skill", skill: usingPhysician ? "Physician" : "First Aid",
+    base: skill, tags: ["resuscitation", options.cause], modifiers: [], opponent: patient,
+  }).reduce((sum, line) => sum + line.value, 0);
+
   const roll = new Roll("3d6");
   await roll.evaluate();
-  const target = skill + situation + options.modifier;
+  const target = skill + situation + options.modifier + added;
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
 
   if (outcome.success) {

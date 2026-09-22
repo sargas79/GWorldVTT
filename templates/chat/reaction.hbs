@@ -13,6 +13,7 @@
     {{else}}
       <span>{{localize "GWORLD.Reaction.Rolled" rolled=rolled}}</span>
       {{#if modifier}}<span class="gc-mod">{{signed modifier}}</span>{{/if}}
+      {{#each lines as |line|}}<span class="gc-mod">{{line}}</span>{{/each}}
       <span class="gc-mod">= {{total}}</span>
     {{/if}}
   </div>

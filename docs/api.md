@@ -888,7 +888,9 @@ Two fields a module may read (since 1.62.0):
   lines to `modifiers`. `tags` holds the kind (`skill`, `attribute`,
   `attack`, `defense`, `contest`) and more: `fastDraw` and `teaching` from the
   skill's name, `fright`, `knockdown`, `bleeding`, and the defense
-  (`dodge`, `parry`, `block`). `gworld.afterSuccessRoll` follows with the
+  (`dodge`, `parry`, `block`); since 1.76.0 also `exposure`, `contagion`,
+  `infection`, `poison`, `illness`, `resuscitation` and `vehicleControl` (see
+  *More rolls through `gworld.successRollModifiers`* below). `gworld.afterSuccessRoll` follows with the
   `outcome`. Since 1.30.0 each side of a contest also gets `opponent`, the
   actor on the other side, and its `tags` say what the contest is: `feint`, or
   `quickContest` with `disarm` for a disarm (tags a Quick Contest's caller
@@ -1064,6 +1066,67 @@ Two fields a module may read (since 1.62.0):
     per point), `mayRollForFamiliarity(count)` (six or more), and
     `UNFAMILIAR_PENALTY` (-2), `FAMILIARIZATION_HOURS` (8),
     `FAMILIARITIES_FOR_SIMILARITY_ROLL` (6).
+- **More rolls through `gworld.successRollModifiers`, fatigue costs, worn
+  clothing and reactions** (since 1.76.0; Campaigns pp. 425-426, 430, 434,
+  438, 443-444, 466, 494, 559). Each roll below now passes through
+  `gworld.successRollModifiers` like the rest, so the actor's timed conditions
+  and a module's listeners reach it; the added lines go into the target.
+  - *Weather exposure* (the Weather button): `kind` `attribute`, tags
+    `exposure`, `heat` or `cold`, and `HT`; where the character's HT-based
+    Survival for the climate -- Survival (Desert) in the heat, Survival
+    (Arctic) in the cold, a bought skill rebased from its attribute to HT --
+    beats their HT roll, that is rolled instead, as the rule says ("whichever
+    is better"), and the roll is `kind` `skill`, `skill` the Survival
+    specialty, tagged `survival` in place of `HT`. The context carries
+    `weather`: `{ heat, temperatureF, clothing, wetClothes, windMph }`. The
+    card lists the Survival roll, worn clothing and the added lines.
+  - *Contagion* (the Illness button): tags `disease`, `contagion`, `HT`, with
+    `disease` (the disease record: `name`, `resistanceModifier`, ...).
+    *Infection* (the wound check): tags `disease`, `infection`, `HT`, with
+    `disease` the Infection record.
+  - *Poison and illness cycles* (`actors.advancePoison` and the sheet): tags
+    `poison` and `HT`, or `disease`, `illness` and `HT` for a caught disease,
+    with `poison`, a copy of the dose (`ActivePoison`). A dose that allows no
+    roll is not asked about.
+  - *Resuscitation*: the healer's roll, `kind` `skill`, `skill` `Physician`
+    or `First Aid`, tags `resuscitation` and the cause (`drowning`,
+    `asphyxiation`, `heartAttack`), `opponent` the patient.
+  - *Vehicle control rolls* (Gear tab and vehicle sheet): the operator's roll,
+    `kind` `skill`, `skill` the vehicle's control skill (blank where it names
+    none), tag `vehicleControl`, with `vehicle` -- the Gear-tab item or the
+    vehicle actor.
+  - *Fatigue costs.* `gworld.fatigueCost` fires wherever the system charges
+    FP, before the fatigue chart and Very Fit's halving, with
+    `{ actor, fp, reason, exertion, details, sources }`. Set `fp` (rounded,
+    never below 0) and push a label to `sources`. `reason` is `battle` (the
+    end of a fight, p. 426; `details.seconds`, `details.strained`), `hiking`
+    (`hours`, `hot`), `missedSleep`, `exposure` (`heat`, `temperatureF`,
+    `heatStroke`), `deprivation` (`mealsMissed`, `hunger`, `thirst`,
+    `climate`), `extraEffort` (a combat option's FP, asked before the cost
+    is weighed against the FP left; `what`), `suffocation`, `poison`
+    (`poison`, `illness`), `spell` (`maintain` for upkeep), `heldSpell`,
+    `enchanting` and `drug`. `exertion` is false for spells, held spells,
+    enchanting and a drug's crash. This is where a module charges the heat's
+    surcharge on exertion and dehydration (p. 434) or a hot day's extra point
+    for a battle (p. 426): the system does not know the day's temperature.
+    Battle fatigue now goes through the fatigue chart like other exertion
+    (Very Fit halves it; past 0 FP it costs HP), and its card names an actor
+    whose cost a listener changed, with the new cost and the `sources`.
+  - *Worn clothing.* `gworld.weatherClothing` fires with
+    `{ actor, clothing: null, label: "" }` when the Weather dialog opens and
+    when `rollExposure` is given no clothing; set `clothing` to `light`,
+    `winter`, `arctic` or `heatedSuit` and `label` to the gear. The dialog
+    starts on that class and says where it came from (the GM can still pick
+    another); with none, `rollExposure` assumes ordinary winter clothing.
+  - *Reactions.* `gworld.reactionModifiers` fires before every reaction roll
+    the system makes -- the sheet's Reaction button, and Diplomacy's second
+    roll on an Influence roll -- with `{ actor, reactor, tags, modifier,
+    modifiers }`. `actor` is who is reacted to, `reactor` who reacts (the one
+    targeted token's actor from the sheet, the Influence roll's subject), or
+    null; `tags` is `reaction`, plus `influence` and `diplomacy` for the second
+    roll; `modifier` the one the roll was asked with, read-only. Push
+    `{ label, value }` to `modifiers`: each is added to the roll and listed on
+    the card.
 - **Wounding: injury caps, overpenetration, first hits, gauges, knockdown**
   (since 1.73.0; Campaigns pp. 408-409, 420-421, Characters p. 279).
   - *An injury cap.* A `gworld.injury` listener may set `damage.injuryCap`, the
