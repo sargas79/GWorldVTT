@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Add Issue to Project
-        uses: actions/add-to-project@v1.0.2
+        uses: actions/add-to-project@v2
         with:
           # A user-owned project lives under /users/<owner>/projects/<number>;
           # an organisation's under /orgs/<owner>/projects/<number>.
