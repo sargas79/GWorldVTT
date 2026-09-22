@@ -139,7 +139,7 @@
     <aside class="v2-detail-col" aria-live="polite">
       {{#each v2.skills.rows as |row|}}
         <article class="v2-panel v2-detail" data-v2-detail="skills:{{row.key}}" data-item-id="{{row.id}}" {{#unless row.selected}}hidden{{/unless}}>
-          <header class="v2-detail-head v2-detail-steel">
+          <header class="v2-detail-head">
             <h3>{{row.name}}</h3>
             <span>{{#if (eq row.kind "skill")}}{{row.attribute}}/{{row.difficulty}}{{else}}{{localize "GWORLD.Section.Techniques"}}{{/if}} &middot; {{row.points}} {{localize "GWORLD.Column.Pts"}}</span>
           </header>

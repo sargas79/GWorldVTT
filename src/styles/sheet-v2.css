@@ -345,52 +345,95 @@
   box-shadow: var(--v2-shadow);
   min-width: 0;
 }
+/* A panel with nothing in it (its partials all empty) is not drawn. */
+.gworld.v2 .v2-panel:not(:has(> *)) { display: none; }
 /*
- * A dark panel is a panel too, so it would take the cream panel's dark text
- * tokens; it takes light ones of its own, or its muted text is dark grey on
- * charcoal. Cream cards inside it (attack cards, slots, list entries) set
- * their own colours.
+ * A card inside a panel -- an attack, a readied item, a journal entry, a
+ * related link -- is set off from the panel by a shade and a line, since
+ * every panel is the same cream.
  */
-.gworld.v2 .v2-panel.v2-panel-dark,
-.gworld.v2 .v2-related {
-  --color-bg: var(--v2-frame-2);
-  --color-surface: var(--v2-frame-3);
-  --color-text: var(--v2-frame-text);
-  --color-divider: var(--v2-frame-line);
-  --color-neutral-700: var(--v2-frame-muted);
-  --color-neutral-800: #d3cfc4;
-  --color-accent-700: #9cc0e2;
-  --color-danger: #f0998f;
-  background: var(--v2-frame-2);
-  color: var(--v2-frame-text);
-  box-shadow: inset 0 0 0 1px var(--v2-frame-line);
+.gworld.v2 .v2-attack,
+.gworld.v2 .v2-slot,
+.gworld.v2 .v2-journal-entry,
+.gworld.v2 .v2-related-link {
+  background: var(--v2-panel-2);
+  box-shadow: inset 0 0 0 1px var(--v2-panel-line);
 }
-.gworld.v2 .v2-panel-dark .v2-empty,
-.gworld.v2 .v2-panel-dark .v2-note { color: var(--v2-frame-muted); font-size: 13px; }
+/*
+ * Headings, the sheet's standard (docs/character-sheet-v2-style.md). There
+ * are four kinds, and each looks the same on every tab:
+ *   1. Panel title  -- .v2-ph; a shared partial's .ish is drawn the same.
+ *   2. Group band   -- .v2-group-head: a list group or drawer, the panel
+ *                      title's type on a band. A partial's .ish heading a
+ *                      panel in a list column is drawn as a band too.
+ *   3. Record title -- .v2-detail-head: the name of what a detail panel shows.
+ *   4. Sub-heading  -- .v2-sh: a part inside a panel.
+ * A title's figures (points, a count, a hint) go beside it in .v2-ph-meta.
+ */
 .gworld.v2 .v2-ph,
-.gworld.v2 .v2-ph h2 {
+.gworld.v2 .v2-ph h2,
+.gworld.v2 .ish,
+.gworld.v2 .v2-group-title {
   margin: 0;
   padding: 0;
   border: 0;
   font-family: var(--font-heading);
   font-size: 17px;
   font-weight: 600;
+  line-height: 1.2;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: inherit;
 }
-.gworld.v2 .v2-ph { padding-bottom: 6px; border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent); }
-.gworld.v2 .v2-panel-dark .v2-ph { color: var(--v2-panel-3); }
-.gworld.v2 .v2-ph-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.gworld.v2 .v2-ph,
+.gworld.v2 .ish {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-divider);
+}
+.gworld.v2 .ish::after { content: none; }
+.gworld.v2 .v2-ph-tools { align-items: center; justify-content: space-between; gap: 10px; }
 .gworld.v2 .v2-ph-tools h2 { border: 0; padding: 0; }
+/* What a title counts or notes, beside it: never a second heading. */
+.gworld.v2 .v2-ph-meta,
+.gworld.v2 .v2-group-sub,
+.gworld.v2 .ish > span:not(.num) {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-neutral-700);
+}
+.gworld.v2 .v2-group-sub.v2-bad { color: var(--v2-red); }
+/* The shared partials write theirs as a span with inline type. */
+.gworld.v2 .ish > span:not(.num)[style] {
+  font-size: 12px !important;
+  letter-spacing: 0 !important;
+  color: var(--color-neutral-700) !important;
+}
+.gworld.v2 .v2-sh,
+.gworld.v2 .v2-drawer-body .ish {
+  margin: 4px 0 0;
+  padding: 0;
+  border: 0;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+}
+/* A drawer's band already names its first section. */
+.gworld.v2 .v2-drawer-body > .isec:first-child > .ish:first-child { display: none; }
 
 .gworld.v2 .v2-empty,
 .gworld.v2 .v2-note { margin: 0; font-size: 12px; color: var(--color-neutral-700); }
 .gworld.v2 .v2-muted { color: var(--color-neutral-700); }
 .gworld.v2 .v2-good { color: var(--v2-green); }
 .gworld.v2 .v2-bad { color: var(--v2-red); }
-.gworld.v2 .v2-panel-dark .v2-bad { color: #e48b80; }
-.gworld.v2 .v2-panel-dark .v2-good { color: #9ccc86; }
 
 /* The search box a list header carries. */
 .gworld.v2 .v2-search {
@@ -493,18 +536,26 @@
 .gworld.v2 .v2-overview-middle,
 .gworld.v2 .v2-overview-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 /*
- * Every page's columns are top-aligned: each ends where its panels do (#587).
- * Stretching them to the tallest left a short column's last panel as a block
- * of empty panel, or spread its rows apart, whenever the character had little
- * in it.
+ * Columns side by side end level, with no bare frame under a short one
+ * (docs/character-sheet-v2-style.md). The last panel of every column grows
+ * to the row's height, and the column that is usually the shorter ends in a
+ * list -- the Overview's skills and modifiers, Combat's log, the Journal's
+ * entries and links, Progression's improvements -- so the slack becomes room
+ * in a list rather than an empty block. A list that scrolls is given a small
+ * basis and grows, so it fills the height its neighbours set instead of
+ * setting it.
  */
 .gworld.v2 .v2-overview,
 .gworld.v2 .v2-combat-grid,
-.gworld.v2 .v2-inventory-grid,
 .gworld.v2 .v2-progress-grid,
 .gworld.v2 .v2-journal-grid,
-.gworld.v2 .v2-journal-pane { align-items: start; }
-.gworld.v2 .v2-active-skills .v2-skill-list { flex: 1 1 auto; min-height: 0; }
+.gworld.v2 .v2-journal-pane { align-items: stretch; }
+.gworld.v2 .v2-overview-middle > .v2-panel:last-child,
+.gworld.v2 .v2-overview-side > .v2-panel:last-child,
+.gworld.v2 .v2-combat-main > .v2-panel:last-child,
+.gworld.v2 .v2-combat-side > .v2-panel:last-child,
+.gworld.v2 .v2-journal-side > .v2-panel:last-child { flex: 1 1 auto; }
+.gworld.v2 .v2-active-skills .v2-skill-list { flex: 1 1 0; min-height: 220px; max-height: none; }
 
 .gworld.v2 .v2-attack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
 .gworld.v2 .v2-attack {
@@ -513,9 +564,7 @@
   gap: 2px;
   padding: 8px 10px 9px;
   border-radius: var(--v2-radius);
-  background: var(--v2-panel);
   color: var(--v2-ink);
-  box-shadow: 0 1px 0 rgb(0 0 0 / 0.3);
   border: 2px solid transparent;
 }
 .gworld.v2 .v2-attack.dim { opacity: 0.75; }
@@ -666,10 +715,10 @@
   width: auto;
   height: 26px;
   padding: 0 8px;
-  border: 1px dashed var(--v2-frame-line);
+  border: 1px dashed var(--v2-panel-line);
   border-radius: 999px;
-  background: var(--v2-frame-2);
-  color: var(--v2-frame-muted);
+  background: var(--v2-panel-2);
+  color: var(--v2-ink-muted);
   font-family: var(--font-heading);
   font-size: 14px;
 }
@@ -783,6 +832,8 @@
 .gworld.v2 .v2-list-col::-webkit-scrollbar-thumb,
 .gworld.v2 .v2-detail-col::-webkit-scrollbar-thumb { background: var(--v2-panel-line); border-radius: 5px; border: 2px solid transparent; background-clip: padding-box; }
 .gworld.v2 .v2-detail-col { padding-bottom: 4px; }
+/* The detail panel is as tall as its column, not a card with frame under it. */
+.gworld.v2 .v2-detail-col > .v2-panel:not([hidden]) { flex: 1 0 auto; }
 .gworld.v2 .v2-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .gworld.v2 .v2-search-wide { flex: 1; max-width: 420px; height: 32px; }
 .gworld.v2 .v2-select { display: flex; align-items: center; gap: 6px; font-family: var(--font-heading); font-size: 15px; color: var(--v2-frame-muted); }
@@ -829,8 +880,18 @@
   list-style: none;
 }
 .gworld.v2 .v2-group-head::-webkit-details-marker { display: none; }
-.gworld.v2 .v2-group-title { font-family: var(--font-heading); font-size: 18px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
-.gworld.v2 .v2-group-sub { font-size: 12px; color: var(--v2-ink-muted); }
+/* A drawer with nothing in it (its rules switched off) is not drawn. */
+.gworld.v2 .v2-drawer:not(:has(.v2-drawer-body > *)) { display: none; }
+/* A partial's section heading a panel in a list column is a band, like the
+   groups above and below it. */
+.gworld.v2 .v2-group-panel { overflow: clip; }
+.gworld.v2 .v2-group-panel .ish {
+  margin: 0 -14px;
+  padding: 7px 12px;
+  border: 0;
+  background: var(--v2-panel-2);
+}
+.gworld.v2 .v2-group-panel > .isec:first-child > .ish:first-child { margin-top: -12px; }
 .gworld.v2 .v2-group-tools { display: inline-flex; gap: 6px; margin-left: auto; }
 .gworld.v2 .v2-chevron { display: inline-flex; margin-left: auto; color: var(--v2-ink-muted); transform: rotate(-90deg); }
 .gworld.v2 .v2-group-tools + .v2-chevron { margin-left: 0; }
@@ -944,7 +1005,6 @@
 .gworld.v2 .v2-detail > :not(.v2-detail-head) { margin-left: 14px; margin-right: 14px; }
 /* A long panel scrolls under its heading, and its buttons stay in reach. */
 .gworld.v2 .v2-detail-col > .v2-detail > .v2-detail-head { position: sticky; top: 0; z-index: 2; }
-.gworld.v2 .v2-detail-col > .v2-detail > .v2-detail-head.v2-detail-plain { background: var(--v2-panel); }
 .gworld.v2 .v2-detail-col > .v2-detail > .v2-detail-actions.v2-stacked {
   position: sticky;
   bottom: 0;
@@ -985,9 +1045,9 @@
   font-size: 20px;
   font-weight: 600;
 }
-.gworld.v2 .v2-detail-head input.v2-name-input:hover { border-color: var(--v2-panel-line); }
-.gworld.v2 .v2-detail-head input.v2-name-input:focus { outline: none; border-color: var(--v2-steel); box-shadow: 0 0 0 1px var(--v2-steel); }
-.gworld.v2 .v2-detail-head input.v2-name-input::placeholder { color: var(--v2-ink-muted); font-style: italic; font-weight: 400; font-size: 15px; }
+.gworld.v2 .v2-detail-head input.v2-name-input:hover { border-color: var(--v2-steel-soft); }
+.gworld.v2 .v2-detail-head input.v2-name-input:focus { outline: none; border-color: var(--v2-gold); box-shadow: 0 0 0 1px var(--v2-gold); }
+.gworld.v2 .v2-detail-head input.v2-name-input::placeholder { color: var(--v2-steel-soft); font-style: italic; font-weight: 400; font-size: 15px; }
 .gworld.v2 .v2-detail-head {
   display: flex;
   justify-content: space-between;
@@ -999,21 +1059,19 @@
   margin: 0;
   border: 0;
   font-family: var(--font-heading);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
-  line-height: 1.05;
-  letter-spacing: 0.02em;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   color: inherit;
 }
-.gworld.v2 .v2-detail-head span { font-size: 12px; white-space: nowrap; }
-.gworld.v2 .v2-detail-plain { color: var(--v2-ink); }
+.gworld.v2 .v2-detail-head > span:not([class]) { font-size: 12px; white-space: nowrap; color: var(--v2-steel-soft); }
 .gworld.v2 .v2-panel h2,
 .gworld.v2 .v2-panel h3,
 .gworld.v2 .v2-panel h4 { color: inherit; }
-.gworld.v2 .v2-detail-steel { background: var(--v2-steel); color: #fff; }
-.gworld.v2 .v2-detail-steel span { color: var(--v2-steel-soft); }
-.gworld.v2 .v2-detail-plain { padding-top: 14px; }
+.gworld.v2 .v2-detail-head { background: var(--v2-steel); color: #fff; }
+.gworld.v2 .v2-detail-head .v2-bad { color: #ffc2ba; }
 .gworld.v2 .v2-detail-cp { font-family: var(--font-heading); font-size: 22px !important; font-weight: 600; }
 .gworld.v2 .v2-detail-stats { display: grid; grid-template-columns: 1fr 1fr; text-align: center; }
 .gworld.v2 .v2-detail-stats > div + div { border-left: 1px solid var(--color-divider); }
@@ -1059,8 +1117,10 @@
   border-bottom: 1px solid var(--v2-panel-line);
   background: var(--v2-panel-3);
   font-family: var(--font-heading);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 .gworld.v2 .v2-box ul { margin: 6px 0; padding: 0 12px 0 28px; }
 .gworld.v2 .v2-box li { font-size: 14px; }
@@ -1173,10 +1233,18 @@
 
 .gworld.v2 .v2-combat-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(260px, 1fr) minmax(250px, 0.95fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(250px, 1fr);
   gap: 14px;
 }
-.gworld.v2 .v2-attack-list { display: flex; flex-direction: column; gap: 6px; max-height: 520px; overflow-y: auto; padding-right: 2px; }
+.gworld.v2 .v2-combat-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.gworld.v2 .v2-attack-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 6px;
+  max-height: 262px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
 .gworld.v2 .v2-attack[data-v2-row] { cursor: pointer; }
 .gworld.v2 .v2-attack[data-v2-row]:focus-visible { outline: 2px solid var(--v2-gold); outline-offset: 1px; }
 
@@ -1220,7 +1288,7 @@
 .gworld.v2 .v2-location-table tbody tr.selected td { background: var(--v2-gold-soft); }
 .gworld.v2 .v2-location-table tbody tr:focus-visible { outline: 2px solid var(--v2-gold); }
 
-.gworld.v2 .v2-log-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; }
+.gworld.v2 .v2-log-list { flex: 1 1 0; min-height: 90px; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; overflow-y: auto; }
 .gworld.v2 .v2-log-list li { border-left: 4px solid var(--v2-ink-muted); background: var(--v2-panel-2); border-radius: 2px; }
 .gworld.v2 .v2-log-list li.v2-log-roll { border-left-color: var(--v2-gold); }
 .gworld.v2 .v2-log-list button {
@@ -1279,7 +1347,9 @@
 .gworld.v2 .v2-tier b { font-weight: 600; }
 .gworld.v2 .v2-tier.active { background: var(--v2-steel); color: #fff; }
 
-.gworld.v2 .v2-inventory-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 12px; }
+/* Readied and equipped stack full width, their cards in rows, so neither is
+   left short beside the other. */
+.gworld.v2 .v2-inventory-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .gworld.v2 .v2-inventory-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .gworld.v2 .v2-areas { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
 .gworld.v2 .v2-area { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-radius: 3px; background: var(--v2-panel-2); }
@@ -1300,7 +1370,7 @@
 .gworld.v2 .v2-area-piece span { color: var(--v2-ink-muted); }
 .gworld.v2 .v2-area-piece.selected { color: var(--v2-gold-deep); font-weight: 600; }
 
-.gworld.v2 .v2-quick-slots { display: flex; flex-direction: column; gap: 6px; }
+.gworld.v2 .v2-quick-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
 /* A readied item: picture, name over what it weighs, and its buttons on the right. */
 .gworld.v2 .v2-slot {
   display: grid;
@@ -1311,7 +1381,6 @@
   padding: 5px 8px;
   border: 2px solid transparent;
   border-radius: var(--v2-radius);
-  background: var(--v2-panel);
   color: var(--v2-ink);
   cursor: pointer;
 }
@@ -1386,7 +1455,6 @@
 .gworld.v2 .v2-sort.active { color: var(--v2-ink); }
 .gworld.v2 .v2-tag-red { background: var(--v2-red-soft); color: var(--v2-red); }
 
-.gworld.v2 .v2-detail-red { background: var(--v2-red); color: #fff; }
 .gworld.v2 .v2-detail-sub { font-size: 13px; color: var(--v2-ink-muted); margin-top: -4px; }
 .gworld.v2 .v2-breakdown li.v2-sub { padding-top: 0; font-size: 12px; color: var(--v2-ink-muted); }
 .gworld.v2 .v2-stacked { flex-direction: column; }
@@ -1426,7 +1494,7 @@
 .gworld.v2 .v2-over-note { margin: 0; padding: 6px 12px; border-radius: var(--v2-radius); background: #5a2723; color: #ffd2cb; font-size: 13px; }
 
 .gworld.v2 .v2-progress-grid { display: grid; grid-template-columns: minmax(180px, 0.55fr) minmax(0, 1fr); gap: 12px; }
-.gworld.v2 .v2-categories { gap: 6px; background: var(--v2-panel-3); }
+.gworld.v2 .v2-categories { gap: 6px; }
 .gworld.v2 .v2-category {
   display: flex;
   flex-direction: column;
@@ -1436,20 +1504,19 @@
   padding: 7px 10px;
   border: 1px solid var(--v2-panel-line);
   border-radius: var(--v2-radius);
-  background: var(--v2-panel);
+  background: var(--v2-panel-2);
   color: var(--v2-ink);
   text-align: left;
   cursor: pointer;
-  box-shadow: 0 1px 0 rgb(0 0 0 / 0.12);
 }
 .gworld.v2 .v2-category b { font-family: var(--font-heading); font-size: 17px; font-weight: 600; }
 .gworld.v2 .v2-category span { font-size: 13px; color: var(--v2-ink-muted); }
 /* Foundry styles a focused or hovered button too; the chosen category keeps its colours through both. */
 .gworld.v2 .v2-categories button.v2-category.active,
 .gworld.v2 .v2-categories button.v2-category.active:hover,
-.gworld.v2 .v2-categories button.v2-category.active:focus { background: #3a5470; border-color: var(--v2-gold); color: #fff; }
+.gworld.v2 .v2-categories button.v2-category.active:focus { background: var(--v2-steel); border-color: var(--v2-gold); color: #fff; }
 .gworld.v2 .v2-categories button.v2-category.active span { color: var(--v2-steel-soft); }
-.gworld.v2 .v2-categories button.v2-category:not(.active):focus { background: var(--v2-panel); color: var(--v2-ink); }
+.gworld.v2 .v2-categories button.v2-category:not(.active):focus { background: var(--v2-panel-2); color: var(--v2-ink); }
 .gworld.v2 .v2-category.quiet { opacity: 0.65; cursor: default; }
 
 .gworld.v2 .v2-segmented { display: inline-flex; align-self: flex-start; border: 1px solid var(--v2-panel-line); border-radius: 4px; overflow: hidden; }
@@ -1468,7 +1535,7 @@
 .gworld.v2 .v2-segmented button + button { border-left: 1px solid var(--v2-panel-line); }
 .gworld.v2 .v2-segmented button.active { background: #3a5470; color: #fff; }
 
-.gworld.v2 .v2-improve-list { display: flex; flex-direction: column; gap: 5px; max-height: 420px; overflow-y: auto; padding-right: 2px; }
+.gworld.v2 .v2-improve-list { flex: 1 1 0; min-height: 220px; display: flex; flex-direction: column; gap: 5px; overflow-y: auto; padding-right: 2px; }
 /* Name first; the step, points and cost to its right, wrapping under it when the list is narrow. */
 .gworld.v2 .v2-improve-row {
   display: flex;
@@ -1504,12 +1571,9 @@
   align-items: center;
   gap: 2px;
   padding: 12px 14px;
-  background: #3a5470;
-  color: #fff;
   text-align: center;
 }
 .gworld.v2 .v2-upgrade.over .v2-upgrade-head { background: #6b2f2a; }
-.gworld.v2 .v2-upgrade-head h3 { margin: 0; border: 0; font-family: var(--font-heading); font-size: 22px; letter-spacing: 0.04em; text-transform: uppercase; color: inherit; }
 .gworld.v2 .v2-upgrade-step { font-family: var(--font-heading); font-size: 34px; font-weight: 600; line-height: 1; }
 .gworld.v2 .v2-upgrade-step i { font-style: normal; font-size: 26px; }
 .gworld.v2 .v2-upgrade-step b { color: var(--v2-gold); }
@@ -1583,7 +1647,12 @@
 }
 .gworld.v2 .v2-journal-pane { display: grid; grid-template-columns: minmax(190px, 0.75fr) minmax(0, 1.5fr); gap: 14px; }
 .gworld.v2 .v2-journal-pane[hidden] { display: none; }
-.gworld.v2 .v2-profile { grid-template-columns: minmax(0, 1fr); }
+.gworld.v2 .v2-profile { display: flex; flex-direction: column; }
+.gworld.v2 .v2-profile[hidden] { display: none; }
+/* The biography runs to the foot of the column, level with the portrait. */
+.gworld.v2 .v2-profile > .v2-panel:last-child { flex: 1 1 auto; }
+.gworld.v2 .v2-profile > .v2-panel:last-child > .isec,
+.gworld.v2 .v2-profile > .v2-panel:last-child prose-mirror { flex: 1 1 auto; }
 .gworld.v2 .v2-journal-list { gap: 6px; }
 .gworld.v2 .v2-journal-entry {
   display: flex;
@@ -1596,7 +1665,6 @@
   border: 0;
   border-left: 4px solid var(--v2-panel-line);
   border-radius: var(--v2-radius);
-  background: var(--v2-panel);
   color: var(--v2-ink);
   text-align: left;
   cursor: pointer;
@@ -1605,44 +1673,24 @@
 .gworld.v2 .v2-journal-entry span { font-size: 12.5px; color: var(--v2-ink-muted); }
 .gworld.v2 .v2-journal-entry.selected { background: #efc978; border-left-color: var(--v2-gold-deep); }
 .gworld.v2 .v2-journal-entry.missing b { color: var(--v2-red); }
-.gworld.v2 .v2-drop-hint { margin: 2px 0 0; font-size: 11.5px; color: var(--v2-frame-muted); }
+.gworld.v2 .v2-drop-hint { margin: 2px 0 0; font-size: 11.5px; color: var(--color-neutral-700); }
 
 .gworld.v2 .v2-journal-content { display: flex; flex-direction: column; min-width: 0; }
 .gworld.v2 .v2-journal-content > .v2-panel { flex: 1 1 auto; }
 .gworld.v2 .v2-journal-page { gap: 10px; }
 .gworld.v2 .v2-journal-page[hidden] { display: none; }
-.gworld.v2 .v2-journal-head { display: flex; align-items: center; gap: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--color-divider); }
-.gworld.v2 .v2-journal-head img { width: 40px; height: 40px; border: 0; border-radius: 4px; object-fit: cover; }
-.gworld.v2 .v2-journal-head h2 {
-  flex: 1;
-  margin: 0;
-  border: 0;
-  font-family: var(--font-heading);
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: inherit;
-}
+.gworld.v2 .v2-journal-page > .v2-journal-head { align-items: center; margin: -12px -14px 0; }
+.gworld.v2 .v2-journal-head img { width: 36px; height: 36px; border: 0; border-radius: 4px; object-fit: cover; }
+.gworld.v2 .v2-journal-head h3 { flex: 1; }
 .gworld.v2 .v2-journal-tools { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .gworld.v2 .v2-journal-tools select { width: auto; height: 24px; font-size: 13px; }
-.gworld.v2 .v2-journal-section h3 { margin: 4px 0 4px; border: 0; font-family: var(--font-heading); font-size: 19px; font-weight: 600; color: inherit; }
 .gworld.v2 .v2-journal-section figure { margin: 0; }
 .gworld.v2 .v2-journal-section figure img { max-width: 100%; border: 0; border-radius: var(--v2-radius); }
 .gworld.v2 .v2-journal-section figcaption { font-size: 12px; color: var(--v2-ink-muted); }
 .gworld.v2 .v2-journal-section .v2-prose { font-size: 14.5px; }
 .gworld.v2 .v2-journal-welcome p { margin: 0; font-size: 14px; }
 
-.gworld.v2 .v2-related { gap: 6px; background: var(--v2-frame-2); color: var(--v2-frame-text); box-shadow: inset 0 0 0 1px var(--v2-frame-line); }
-.gworld.v2 .v2-related h3 {
-  margin: 6px 0 0;
-  border: 0;
-  font-family: var(--font-heading);
-  font-size: 14px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--v2-frame-muted);
-}
+.gworld.v2 .v2-related { gap: 6px; }
 .gworld.v2 .v2-related-link {
   display: flex;
   align-items: center;
@@ -1653,7 +1701,6 @@
   border: 0;
   border-left: 4px solid var(--v2-steel);
   border-radius: var(--v2-radius);
-  background: var(--v2-panel);
   color: var(--v2-ink);
   font-family: var(--font-heading);
   font-size: 16px;
@@ -1667,10 +1714,13 @@
 .gworld.v2 .v2-related-link.v2-kind-place { border-left-color: var(--v2-steel); }
 .gworld.v2 .v2-related-link.v2-kind-note { border-left-color: var(--v2-ink-muted); }
 .gworld.v2 .v2-related-link.missing span { color: var(--v2-red); }
-.gworld.v2 .v2-related .v2-note { color: var(--v2-frame-muted); }
 
 .gworld.v2 .v2-personal-notes prose-mirror,
 .gworld.v2 .v2-profile prose-mirror { min-height: 120px; }
+/* The notes run to the foot of the tab: room to write, not bare frame. */
+.gworld.v2 .v2-personal-notes { flex: 1 0 auto; }
+.gworld.v2 .v2-personal-notes > .isec { flex: 1 1 auto; }
+.gworld.v2 .v2-personal-notes prose-mirror { flex: 1 1 auto; }
 
 /* A category's ways to buy something new, above its improvements. */
 .gworld.v2 .v2-add-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 7px 10px; border: 1px dashed var(--v2-panel-line); border-radius: var(--v2-radius); background: var(--v2-panel-2); }
@@ -1692,8 +1742,6 @@
   .gworld.v2 .v2-list-col,
   .gworld.v2 .v2-detail-col { overflow: visible; }
   .gworld.v2 .v2-skill { grid-template-columns: 22px minmax(100px, 1fr) 52px 100px 34px auto; }
-  .gworld.v2 .v2-combat-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .gworld.v2 .v2-combat-side { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 }
 
 @container v2sheet (max-width: 700px) {
@@ -1704,7 +1752,6 @@
   .gworld.v2 .v2-portrait-frame { aspect-ratio: auto; height: 240px; }
   .gworld.v2 .v2-points { grid-column: 1 / -1; justify-self: start; }
   .gworld.v2 .v2-combat-grid,
-  .gworld.v2 .v2-combat-side,
   .gworld.v2 .v2-inventory-grid,
   .gworld.v2 .v2-progress-grid,
   .gworld.v2 .v2-journal-grid,
@@ -1989,7 +2036,6 @@
 }
 
 /* Money, cost of living and job. */
-.gworld.v2 .v2-money-standing { font-size: 12px; color: var(--v2-ink-muted); }
 .gworld.v2 .v2-money-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 8px; }
 .gworld.v2 .v2-money-cell { display: flex; flex-direction: column; gap: 4px; padding: 10px; border: 1px solid var(--color-divider); border-radius: 4px; }
 .gworld.v2 .v2-money-cell label, .gworld.v2 .v2-money-label { font-family: var(--font-heading); font-size: 13px; color: var(--v2-ink-muted); text-transform: uppercase; letter-spacing: 0.04em; }
@@ -2004,7 +2050,7 @@
 .gworld.v2 .v2-money .v2-good { color: #3f7a34; }
 .gworld.v2 .v2-money .v2-bad { color: #a2463c; }
 .gworld.v2 .v2-job { margin-top: 12px; }
-.gworld.v2 .v2-job-head { font-family: var(--font-heading); font-size: 14px; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px; }
+.gworld.v2 .v2-job > .v2-sh { margin: 0 0 6px; }
 .gworld.v2 .v2-job-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
 .gworld.v2 .v2-job-fields label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--v2-ink-muted); }
 .gworld.v2 .v2-job-fields .v2-job-risk { grid-column: 1 / -1; }

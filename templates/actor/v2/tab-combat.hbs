@@ -24,158 +24,159 @@
   </details>
 
   <div class="v2-combat-grid">
-    {{!-- Every attack, selectable; the preview beside it shows the selected one. --}}
-    <div class="v2-panel v2-panel-dark v2-readied">
-      <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Attacks"}}</h2>
-      {{#if v2.combat.attacks.length}}
-        <div class="v2-attack-list" role="listbox" aria-label="{{localize 'GWORLD.SheetV2.Attacks'}}">
-          {{#each v2.combat.attacks as |entry|}}
-            {{> "gworld.v2.attackCard" atk=entry.atk ranged=entry.ranged key=entry.key list="attacks" selected=entry.selected}}
-          {{/each}}
-        </div>
-      {{else}}
-        <p class="v2-empty">{{localize "GWORLD.SheetV2.NoAttacks"}}</p>
-      {{/if}}
-    </div>
-
-    <div class="v2-preview-col">
-      {{#each v2.combat.attacks as |entry|}}
-        <article class="v2-panel v2-preview" data-v2-detail="attacks:{{entry.key}}"
-                 data-item-id="{{entry.atk.itemId}}" data-mode-index="{{entry.atk.modeIndex}}" data-derived-mode="{{entry.atk.derivedMode}}"
-                 {{#if entry.ranged}}data-ranged="1"{{/if}} {{#unless entry.selected}}hidden{{/unless}}>
-          <h2 class="v2-ph">{{localize "GWORLD.SheetV2.AttackPreview"}}</h2>
-          <div class="v2-kv">
-            <span>{{localize "GWORLD.SheetV2.Weapon"}}</span><b>{{entry.atk.name}}{{#if entry.atk.mode}} &middot; {{entry.atk.mode}}{{/if}}</b>
-            <span>{{localize "GWORLD.Attack.Target"}}</span>
-            <b>{{#if @root.v2.combat.target.name}}{{@root.v2.combat.target.name}}{{else if @root.v2.combat.target.count}}{{localize "GWORLD.SheetV2.Targets" count=@root.v2.combat.target.count}}{{else}}<span class="v2-muted">{{localize "GWORLD.SheetV2.NoTarget"}}</span>{{/if}}</b>
-            {{#if entry.preview.measured}}
-              <span>{{localize "GWORLD.Column.Range"}}</span><b>{{entry.preview.measured.rangeYards}} yd</b>
-            {{/if}}
+    {{!-- The attacks, the selected one's preview, and the defenses against one. --}}
+    <div class="v2-combat-main">
+      {{!-- Every attack, selectable; the preview under it shows the selected one. --}}
+      <div class="v2-panel v2-readied">
+        <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Attacks"}}</h2>
+        {{#if v2.combat.attacks.length}}
+          <div class="v2-attack-list" role="listbox" aria-label="{{localize 'GWORLD.SheetV2.Attacks'}}">
+            {{#each v2.combat.attacks as |entry|}}
+              {{> "gworld.v2.attackCard" atk=entry.atk ranged=entry.ranged key=entry.key list="attacks" selected=entry.selected}}
+            {{/each}}
           </div>
+        {{else}}
+          <p class="v2-empty">{{localize "GWORLD.SheetV2.NoAttacks"}}</p>
+        {{/if}}
+      </div>
 
-          {{!-- Which of this character's skills the attack is rolled with: a wildcard
-               stands in for the skill the weapon names (Characters p. 175), and only
-               a book says which weapons it covers, so the choice is made here. --}}
-          {{#if entry.skillPicker}}
-            <div class="v2-attack-skill">
-              <span class="v2-stat-label">{{localize "GWORLD.Column.Skill"}}</span>
-              {{#if @root.editable}}
-                <select class="v2-attack-skill-select{{#if entry.skillPicker.chosen}} v2-chosen{{/if}}"
-                        data-v2-attack-skill="{{entry.atk.itemId}}" data-mode-index="{{entry.atk.modeIndex}}"
-                        data-mode-kind="{{#if entry.ranged}}ranged{{else}}melee{{/if}}"
-                        aria-label="{{localize 'GWORLD.SheetV2.AttackSkill'}}"
-                        data-tooltip="{{localize 'GWORLD.SheetV2.AttackSkillHint'}}">
-                  {{#each entry.skillPicker.options as |option|}}
-                    <option value="{{option.value}}"{{#if option.selected}} selected{{/if}}>{{option.label}}</option>
-                  {{/each}}
-                </select>
-              {{else}}
-                <b>{{entry.atk.skillName}}</b>
+      <div class="v2-preview-col">
+        {{#each v2.combat.attacks as |entry|}}
+          <article class="v2-panel v2-preview" data-v2-detail="attacks:{{entry.key}}"
+                   data-item-id="{{entry.atk.itemId}}" data-mode-index="{{entry.atk.modeIndex}}" data-derived-mode="{{entry.atk.derivedMode}}"
+                   {{#if entry.ranged}}data-ranged="1"{{/if}} {{#unless entry.selected}}hidden{{/unless}}>
+            <h2 class="v2-ph">{{localize "GWORLD.SheetV2.AttackPreview"}}</h2>
+            <div class="v2-kv">
+              <span>{{localize "GWORLD.SheetV2.Weapon"}}</span><b>{{entry.atk.name}}{{#if entry.atk.mode}} &middot; {{entry.atk.mode}}{{/if}}</b>
+              <span>{{localize "GWORLD.Attack.Target"}}</span>
+              <b>{{#if @root.v2.combat.target.name}}{{@root.v2.combat.target.name}}{{else if @root.v2.combat.target.count}}{{localize "GWORLD.SheetV2.Targets" count=@root.v2.combat.target.count}}{{else}}<span class="v2-muted">{{localize "GWORLD.SheetV2.NoTarget"}}</span>{{/if}}</b>
+              {{#if entry.preview.measured}}
+                <span>{{localize "GWORLD.Column.Range"}}</span><b>{{entry.preview.measured.rangeYards}} yd</b>
               {{/if}}
             </div>
-          {{/if}}
 
-          {{!-- The attack's row of the weapon table, heading over figure, and what it is loaded with. --}}
-          {{#if entry.strip}}
-            <div class="v2-weapon-strip v2-preview-strip">
-              {{#each entry.strip.cells as |cell|}}
-                {{#if @first}}
-                {{else if @last}}
-                  {{#if cell}}<span class="v2-weapon-notes">{{cell}}</span>{{/if}}
+            {{!-- Which of this character's skills the attack is rolled with: a wildcard
+                 stands in for the skill the weapon names (Characters p. 175), and only
+                 a book says which weapons it covers, so the choice is made here. --}}
+            {{#if entry.skillPicker}}
+              <div class="v2-attack-skill">
+                <span class="v2-stat-label">{{localize "GWORLD.Column.Skill"}}</span>
+                {{#if @root.editable}}
+                  <select class="v2-attack-skill-select{{#if entry.skillPicker.chosen}} v2-chosen{{/if}}"
+                          data-v2-attack-skill="{{entry.atk.itemId}}" data-mode-index="{{entry.atk.modeIndex}}"
+                          data-mode-kind="{{#if entry.ranged}}ranged{{else}}melee{{/if}}"
+                          aria-label="{{localize 'GWORLD.SheetV2.AttackSkill'}}"
+                          data-tooltip="{{localize 'GWORLD.SheetV2.AttackSkillHint'}}">
+                    {{#each entry.skillPicker.options as |option|}}
+                      <option value="{{option.value}}"{{#if option.selected}} selected{{/if}}>{{option.label}}</option>
+                    {{/each}}
+                  </select>
                 {{else}}
-                  <span class="v2-weapon-cell"><small>{{lookup entry.strip.columns @index}}</small><b>{{cell}}</b></span>
+                  <b>{{entry.atk.skillName}}</b>
                 {{/if}}
-              {{/each}}
-              {{#if entry.atk.ammunitionSource}}
-                <span class="v2-weapon-notes" data-tooltip="{{localize 'GWORLD.Ammunition.SourceHint'}}">{{localize "GWORLD.Ammunition.Left" name=entry.atk.ammunitionSource.name rounds=entry.atk.ammunitionSource.rounds}}</span>
-              {{/if}}
-            </div>
-          {{/if}}
-
-          {{#if entry.preview}}
-            <div class="v2-preview-main">
-              <div class="v2-effective">
-                <span class="v2-stat-label">{{localize "GWORLD.SheetV2.EffectiveSkill"}}</span>
-                <span class="v2-detail-big">{{entry.preview.effective}}</span>
-                <span class="v2-stat-note">{{entry.chance.success}}% {{localize "GWORLD.SheetV2.SuccessChance"}}</span>
               </div>
-              {{!-- 3d6, each total a bar: what succeeds in steel, what fails in the panel's ground, criticals marked. --}}
-              <div class="v2-dice-chart" role="img" aria-label="{{localize 'GWORLD.SheetV2.ChartLabel' target=entry.preview.effective chance=entry.chance.success}}">
-                {{#each entry.bars as |bar|}}
-                  <span class="v2-bar-col v2-outcome-{{bar.outcome}}" data-tooltip="{{bar.roll}}: {{bar.percent}}%"><i style="height: {{bar.height}}%"></i><em>{{bar.roll}}</em></span>
+            {{/if}}
+
+            {{!-- The attack's row of the weapon table, heading over figure, and what it is loaded with. --}}
+            {{#if entry.strip}}
+              <div class="v2-weapon-strip v2-preview-strip">
+                {{#each entry.strip.cells as |cell|}}
+                  {{#if @first}}
+                  {{else if @last}}
+                    {{#if cell}}<span class="v2-weapon-notes">{{cell}}</span>{{/if}}
+                  {{else}}
+                    <span class="v2-weapon-cell"><small>{{lookup entry.strip.columns @index}}</small><b>{{cell}}</b></span>
+                  {{/if}}
                 {{/each}}
+                {{#if entry.atk.ammunitionSource}}
+                  <span class="v2-weapon-notes" data-tooltip="{{localize 'GWORLD.Ammunition.SourceHint'}}">{{localize "GWORLD.Ammunition.Left" name=entry.atk.ammunitionSource.name rounds=entry.atk.ammunitionSource.rounds}}</span>
+                {{/if}}
               </div>
+            {{/if}}
+
+            {{#if entry.preview}}
+              <div class="v2-preview-main">
+                <div class="v2-effective">
+                  <span class="v2-stat-label">{{localize "GWORLD.SheetV2.EffectiveSkill"}}</span>
+                  <span class="v2-detail-big">{{entry.preview.effective}}</span>
+                  <span class="v2-stat-note">{{entry.chance.success}}% {{localize "GWORLD.SheetV2.SuccessChance"}}</span>
+                </div>
+                {{!-- 3d6, each total a bar: what succeeds in steel, what fails in the panel's ground, criticals marked. --}}
+                <div class="v2-dice-chart" role="img" aria-label="{{localize 'GWORLD.SheetV2.ChartLabel' target=entry.preview.effective chance=entry.chance.success}}">
+                  {{#each entry.bars as |bar|}}
+                    <span class="v2-bar-col v2-outcome-{{bar.outcome}}" data-tooltip="{{bar.roll}}: {{bar.percent}}%"><i style="height: {{bar.height}}%"></i><em>{{bar.roll}}</em></span>
+                  {{/each}}
+                </div>
+              </div>
+
+              <ul class="v2-breakdown">
+                <li><span>{{localize "GWORLD.SheetV2.BaseSkill"}}</span><b>{{entry.preview.base}}</b></li>
+                {{#each entry.preview.lines as |line|}}
+                  <li><span>{{line.label}}</span><b class="{{#if (gt line.value 0)}}v2-good{{else}}v2-bad{{/if}}">{{signed line.value}}</b></li>
+                {{/each}}
+                {{#if entry.preview.cap}}
+                  <li><span>{{localize "GWORLD.SheetV2.SkillCap"}}</span><b>{{entry.preview.cap}}</b></li>
+                {{/if}}
+              </ul>
+              <p class="v2-note">{{localize "GWORLD.SheetV2.PreviewHint"}}</p>
+            {{/if}}
+
+            <div class="v2-preview-actions">
+              {{#if entry.atk.unready}}
+                {{#if @root.editable}}
+                  <button type="button" class="v2-button v2-button-gold" data-action="readyWeapon"
+                          data-tooltip="{{localize 'GWORLD.Ready.Hint'}}">{{localize "GWORLD.Ready.Action"}}</button>
+                {{/if}}
+              {{else if (and entry.ranged entry.atk.outOfAction)}}
+                <span class="v2-bad">{{entry.atk.outOfAction.label}}</span>
+                {{#if @root.editable}}
+                  <button type="button" class="v2-button v2-button-gold" data-action="clearMalfunction"
+                          data-tooltip="{{localize 'GWORLD.Malfunction.ClearHint'}}">{{localize "GWORLD.Malfunction.Clear"}}</button>
+                {{/if}}
+              {{else if entry.atk.empty}}
+                <span class="v2-bad">{{localize "GWORLD.Reload.EmptyHint"}}</span>
+              {{else if entry.preview}}
+                {{#if entry.ranged}}
+                  <button type="button" class="v2-button v2-button-gold rollable" {{> "gworld.part.attack-ranged-roll" atk=entry.atk}}>{{> "gworld.die"}} {{localize "GWORLD.SheetV2.TakeShot"}}</button>
+                {{else if entry.atk.usable}}
+                  <button type="button" class="v2-button v2-button-gold rollable" {{> "gworld.part.attack-melee-roll" atk=entry.atk}}>{{> "gworld.die"}} {{localize "GWORLD.SheetV2.Attack"}}</button>
+                {{/if}}
+              {{/if}}
+              {{#if entry.atk.affliction}}
+                {{#if entry.ranged}}
+                  <button type="button" class="v2-button v2-button-steel rollable" {{> "gworld.part.attack-ranged-affliction" atk=entry.atk}}>{{localize "GWORLD.Affliction.Short"}} {{entry.atk.afflictionAttribute}}{{entry.atk.afflictionModifier}}</button>
+                {{else}}
+                  <button type="button" class="v2-button v2-button-steel rollable" {{> "gworld.part.attack-melee-affliction" atk=entry.atk}}>{{localize "GWORLD.Affliction.Short"}} {{entry.atk.afflictionAttribute}}{{entry.atk.afflictionModifier}}</button>
+                {{/if}}
+              {{else if entry.atk.damageRollable}}
+                {{#if entry.ranged}}
+                  <button type="button" class="v2-button v2-button-steel rollable" {{> "gworld.part.attack-ranged-damage" atk=entry.atk}}>{{localize "GWORLD.SheetV2.Damage"}} {{entry.atk.damage}} {{entry.atk.damageType}}</button>
+                {{else}}
+                  <button type="button" class="v2-button v2-button-steel rollable" {{> "gworld.part.attack-melee-damage" atk=entry.atk}}>{{localize "GWORLD.SheetV2.Damage"}} {{entry.atk.damage}} {{entry.atk.damageType}}</button>
+                {{/if}}
+              {{/if}}
+              {{#if (and @root.rules.feint entry.preview)}}
+                {{#unless (eq entry.atk.feint false)}}
+                  <button type="button" class="v2-button" data-action="feint"
+                          data-roll-label="{{entry.atk.name}}" data-roll-target="{{entry.atk.skillLevel}}"
+                          data-tooltip="{{localize 'GWORLD.Feint.Hint'}}">{{localize "GWORLD.Feint.Action"}}</button>
+                {{/unless}}
+              {{/if}}
+              {{#if (and entry.ranged entry.atk.reloadable @root.editable)}}
+                <button type="button" class="v2-button" data-action="reloadWeapon" data-mode-index="{{entry.atk.modeIndex}}">{{localize "GWORLD.Reload.Action"}}</button>
+              {{/if}}
+              {{#if (and entry.ranged entry.atk.shotsCapacity @root.editable)}}
+                <button type="button" class="v2-button" data-action="loadAmmunition" data-mode-index="{{entry.atk.modeIndex}}"
+                        data-tooltip="{{localize 'GWORLD.Ammunition.LoadFromCarried'}}">{{localize "GWORLD.Ammunition.Load"}}</button>
+              {{/if}}
             </div>
+            <div class="v2-attack-extras">{{> "gworld.attackExtras" atk=entry.atk}}</div>
+          </article>
+        {{else}}
+          <div class="v2-panel v2-preview"><p class="v2-empty">{{localize "GWORLD.SheetV2.NoAttacks"}}</p></div>
+        {{/each}}
+      </div>
 
-            <ul class="v2-breakdown">
-              <li><span>{{localize "GWORLD.SheetV2.BaseSkill"}}</span><b>{{entry.preview.base}}</b></li>
-              {{#each entry.preview.lines as |line|}}
-                <li><span>{{line.label}}</span><b class="{{#if (gt line.value 0)}}v2-good{{else}}v2-bad{{/if}}">{{signed line.value}}</b></li>
-              {{/each}}
-              {{#if entry.preview.cap}}
-                <li><span>{{localize "GWORLD.SheetV2.SkillCap"}}</span><b>{{entry.preview.cap}}</b></li>
-              {{/if}}
-            </ul>
-            <p class="v2-note">{{localize "GWORLD.SheetV2.PreviewHint"}}</p>
-          {{/if}}
-
-          <div class="v2-preview-actions">
-            {{#if entry.atk.unready}}
-              {{#if @root.editable}}
-                <button type="button" class="v2-button v2-button-gold" data-action="readyWeapon"
-                        data-tooltip="{{localize 'GWORLD.Ready.Hint'}}">{{localize "GWORLD.Ready.Action"}}</button>
-              {{/if}}
-            {{else if (and entry.ranged entry.atk.outOfAction)}}
-              <span class="v2-bad">{{entry.atk.outOfAction.label}}</span>
-              {{#if @root.editable}}
-                <button type="button" class="v2-button v2-button-gold" data-action="clearMalfunction"
-                        data-tooltip="{{localize 'GWORLD.Malfunction.ClearHint'}}">{{localize "GWORLD.Malfunction.Clear"}}</button>
-              {{/if}}
-            {{else if entry.atk.empty}}
-              <span class="v2-bad">{{localize "GWORLD.Reload.EmptyHint"}}</span>
-            {{else if entry.preview}}
-              {{#if entry.ranged}}
-                <button type="button" class="v2-button v2-button-gold rollable" {{> "gworld.part.attack-ranged-roll" atk=entry.atk}}>{{> "gworld.die"}} {{localize "GWORLD.SheetV2.TakeShot"}}</button>
-              {{else if entry.atk.usable}}
-                <button type="button" class="v2-button v2-button-gold rollable" {{> "gworld.part.attack-melee-roll" atk=entry.atk}}>{{> "gworld.die"}} {{localize "GWORLD.SheetV2.Attack"}}</button>
-              {{/if}}
-            {{/if}}
-            {{#if entry.atk.affliction}}
-              {{#if entry.ranged}}
-                <button type="button" class="v2-button v2-button-steel rollable" {{> "gworld.part.attack-ranged-affliction" atk=entry.atk}}>{{localize "GWORLD.Affliction.Short"}} {{entry.atk.afflictionAttribute}}{{entry.atk.afflictionModifier}}</button>
-              {{else}}
-                <button type="button" class="v2-button v2-button-steel rollable" {{> "gworld.part.attack-melee-affliction" atk=entry.atk}}>{{localize "GWORLD.Affliction.Short"}} {{entry.atk.afflictionAttribute}}{{entry.atk.afflictionModifier}}</button>
-              {{/if}}
-            {{else if entry.atk.damageRollable}}
-              {{#if entry.ranged}}
-                <button type="button" class="v2-button v2-button-steel rollable" {{> "gworld.part.attack-ranged-damage" atk=entry.atk}}>{{localize "GWORLD.SheetV2.Damage"}} {{entry.atk.damage}} {{entry.atk.damageType}}</button>
-              {{else}}
-                <button type="button" class="v2-button v2-button-steel rollable" {{> "gworld.part.attack-melee-damage" atk=entry.atk}}>{{localize "GWORLD.SheetV2.Damage"}} {{entry.atk.damage}} {{entry.atk.damageType}}</button>
-              {{/if}}
-            {{/if}}
-            {{#if (and @root.rules.feint entry.preview)}}
-              {{#unless (eq entry.atk.feint false)}}
-                <button type="button" class="v2-button" data-action="feint"
-                        data-roll-label="{{entry.atk.name}}" data-roll-target="{{entry.atk.skillLevel}}"
-                        data-tooltip="{{localize 'GWORLD.Feint.Hint'}}">{{localize "GWORLD.Feint.Action"}}</button>
-              {{/unless}}
-            {{/if}}
-            {{#if (and entry.ranged entry.atk.reloadable @root.editable)}}
-              <button type="button" class="v2-button" data-action="reloadWeapon" data-mode-index="{{entry.atk.modeIndex}}">{{localize "GWORLD.Reload.Action"}}</button>
-            {{/if}}
-            {{#if (and entry.ranged entry.atk.shotsCapacity @root.editable)}}
-              <button type="button" class="v2-button" data-action="loadAmmunition" data-mode-index="{{entry.atk.modeIndex}}"
-                      data-tooltip="{{localize 'GWORLD.Ammunition.LoadFromCarried'}}">{{localize "GWORLD.Ammunition.Load"}}</button>
-            {{/if}}
-          </div>
-          <div class="v2-attack-extras">{{> "gworld.attackExtras" atk=entry.atk}}</div>
-        </article>
-      {{else}}
-        <div class="v2-panel v2-preview"><p class="v2-empty">{{localize "GWORLD.SheetV2.NoAttacks"}}</p></div>
-      {{/each}}
-    </div>
-
-    <div class="v2-combat-side">
       {{!-- Active defenses, rolled from here. --}}
       <div class="v2-panel v2-defenses">
         <h2 class="v2-ph">{{localize "GWORLD.SheetV2.ActiveDefenses"}}</h2>
@@ -196,7 +197,9 @@
         </div>
         <p class="v2-note">{{localize "GWORLD.SheetV2.RetreatHint"}}</p>
       </div>
+    </div>
 
+    <div class="v2-combat-side">
       {{!-- Where blows land, and what stops them there. --}}
       <div class="v2-panel v2-locations">
         <h2 class="v2-ph">{{localize "GWORLD.SheetV2.HitLocations"}}</h2>
@@ -216,29 +219,29 @@
           </table>
         </div>
       </div>
+
+      {{!-- This character's recent chat cards, newest first. --}}
+      <div class="v2-panel v2-log">
+        <h2 class="v2-ph">{{localize "GWORLD.SheetV2.CombatLog"}}</h2>
+        {{#if v2.combat.log.length}}
+          <ol class="v2-log-list">
+            {{#each v2.combat.log as |line|}}
+              <li class="v2-log-{{line.kind}}" data-message-id="{{line.id}}">
+                <button type="button" data-action="v2ShowMessage" data-tooltip="{{localize 'GWORLD.SheetV2.ShowInChat'}}">
+                  <time>{{line.time}}</time> {{line.text}}
+                </button>
+              </li>
+            {{/each}}
+          </ol>
+        {{else}}
+          <p class="v2-empty">{{localize "GWORLD.SheetV2.NoLog"}}</p>
+        {{/if}}
+      </div>
     </div>
   </div>
 
   <div class="v2-panel">
     {{> "gworld.part.body-protection"}}
-  </div>
-
-  {{!-- This character's recent chat cards, newest first. --}}
-  <div class="v2-panel v2-log">
-    <h2 class="v2-ph">{{localize "GWORLD.SheetV2.CombatLog"}}</h2>
-    {{#if v2.combat.log.length}}
-      <ol class="v2-log-list">
-        {{#each v2.combat.log as |line|}}
-          <li class="v2-log-{{line.kind}}" data-message-id="{{line.id}}">
-            <button type="button" data-action="v2ShowMessage" data-tooltip="{{localize 'GWORLD.SheetV2.ShowInChat'}}">
-              <time>{{line.time}}</time> {{line.text}}
-            </button>
-          </li>
-        {{/each}}
-      </ol>
-    {{else}}
-      <p class="v2-empty">{{localize "GWORLD.SheetV2.NoLog"}}</p>
-    {{/if}}
   </div>
 
   {{!-- The weapon tables, as a character sheet prints them: every carried weapon's

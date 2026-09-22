@@ -16,7 +16,7 @@
     <div class="v2-journal-main">
       {{#each v2.journal.panes as |pane|}}
         <div class="v2-journal-pane" data-v2-journal-pane="{{pane.kind}}" data-v2-journal-kind="{{pane.kind}}" {{#unless pane.active}}hidden{{/unless}}>
-          <div class="v2-panel v2-panel-dark v2-journal-list">
+          <div class="v2-panel v2-journal-list">
             <h2 class="v2-ph">{{pane.label}}</h2>
             {{#each pane.entries as |entry|}}
               <button type="button" class="v2-journal-entry{{#if entry.selected}} selected{{/if}}{{#if entry.missing}} missing{{/if}}"
@@ -37,9 +37,9 @@
           <div class="v2-journal-content">
             {{#each pane.entries as |entry|}}
               <article class="v2-panel v2-journal-page" data-v2-detail="journal-{{pane.kind}}:{{entry.key}}" data-v2-uuid="{{entry.uuid}}" {{#unless entry.selected}}hidden{{/unless}}>
-                <header class="v2-journal-head">
+                <header class="v2-detail-head v2-journal-head">
                   {{#if entry.img}}<img src="{{entry.img}}" alt="">{{/if}}
-                  <h2>{{entry.name}}</h2>
+                  <h3>{{entry.name}}</h3>
                   <span class="v2-journal-tools">
                     {{#if @root.editable}}
                       <select data-v2-link-kind="{{entry.uuid}}" aria-label="{{localize 'GWORLD.SheetV2.Journal.Kind'}}">
@@ -62,7 +62,7 @@
                 {{else}}
                   {{#each entry.pages as |page|}}
                     <section class="v2-journal-section">
-                      {{#if (and page.showTitle page.name)}}<h3>{{page.name}}</h3>{{/if}}
+                      {{#if (and page.showTitle page.name)}}<h4 class="v2-sh">{{page.name}}</h4>{{/if}}
                       {{#if page.html}}<div class="v2-prose">{{{page.html}}}</div>{{/if}}
                       {{#if page.src}}<figure><img src="{{page.src}}" alt="{{page.caption}}">{{#if page.caption}}<figcaption>{{page.caption}}</figcaption>{{/if}}</figure>{{/if}}
                     </section>
@@ -92,7 +92,7 @@
                 is in the room. --}}
           {{#if rules.reactions}}
             <div class="isec">
-              <div class="ish">{{localize "GWORLD.Reaction.Title"}}</div>
+              <h2 class="v2-ph">{{localize "GWORLD.Reaction.Title"}}</h2>
               {{#if (or reactionProfile.always.length reactionProfile.conditional.length)}}
                 <div class="v2-box">
                   <div class="v2-box-line"><span>{{localize "GWORLD.Reaction.Everyone"}}</span><b>{{signed reactionProfile.total}}</b></div>
@@ -120,11 +120,9 @@
         </div>
         {{#if npc}}
           <div class="v2-panel">
-            <div class="isec">
-              <div class="ish">{{localize "GWORLD.SheetV2.Journal.Description"}}</div>
-              <prose-mirror class="box editor prose" name="system.details.description" value="{{system.details.description}}" toggled
-                            {{#unless editable}}disabled{{/unless}}>{{{v2.journal.npcDescription}}}</prose-mirror>
-            </div>
+            <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Journal.Description"}}</h2>
+            <prose-mirror class="box editor prose" name="system.details.description" value="{{system.details.description}}" toggled
+                          {{#unless editable}}disabled{{/unless}}>{{{v2.journal.npcDescription}}}</prose-mirror>
           </div>
         {{/if}}
         <div class="v2-panel">{{> "gworld.part.description-biography"}}</div>
@@ -151,7 +149,7 @@
         <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Journal.Related"}}</h2>
         {{#each v2.journal.related as |group|}}
           {{#if group.entries.length}}
-            <h3>{{group.label}}</h3>
+            <h3 class="v2-sh">{{group.label}}</h3>
             {{#each group.entries as |entry|}}
               <button type="button" class="v2-related-link v2-kind-{{group.kind}}{{#if entry.missing}} missing{{/if}}" data-action="v2ShowLink"
                       data-v2-journal-kind="{{group.kind}}" data-v2-uuid="{{entry.uuid}}">

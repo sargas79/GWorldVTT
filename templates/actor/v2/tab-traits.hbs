@@ -92,7 +92,7 @@
     <aside class="v2-detail-col" aria-live="polite">
       {{#each v2.traits.rows as |row|}}
         <article class="v2-panel v2-detail v2-cat-{{row.category}}" data-v2-detail="traits:{{row.key}}" data-item-id="{{row.id}}" {{#unless row.selected}}hidden{{/unless}}>
-          <header class="v2-detail-head v2-detail-plain">
+          <header class="v2-detail-head">
             {{#if (and @root.editable row.playerNamed)}}
               {{!-- A quirk or a perk is the player's own words, written here. --}}
               <input type="text" class="v2-name-input" value="{{row.name}}" placeholder="{{row.namePlaceholder}}"
