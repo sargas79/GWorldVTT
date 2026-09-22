@@ -156,10 +156,57 @@ export function fields(text) {
   return out;
 }
 
-/** The record's name: its first comma-separated field, unquoted. */
+/** The record's name: its first comma-separated field, as `nameText` reads it. */
 export function nameOf(record) {
-  const first = splitTop(record.text)[0].trim();
-  return first.startsWith('"') && first.endsWith('"') ? first.slice(1, -1).trim() : first;
+  return nameText(splitTop(record.text)[0]);
+}
+
+/**
+ * Where the brace opening at `open` closes, counting nested braces; -1 if it
+ * never does.
+ */
+function closingBrace(text, open) {
+  let depth = 0;
+  for (let i = open; i < text.length; i++) {
+    if (text[i] === "{") depth++;
+    else if (text[i] === "}" && --depth === 0) return i;
+  }
+  return -1;
+}
+
+/**
+ * A name as a data file writes it, as the compendia print it.
+ *
+ * GCA wraps a name that holds a comma so the comma doesn't end the field, and
+ * does it two ways: in double quotes, `"Revolver, .36"`, or in braces,
+ * `{Revolver, .36}`. One enclosing pair of either is dropped.
+ *
+ * An inch mark written as two apostrophes -- `Rope, 3/8''` -- is kept as
+ * written. The Basic Set's own names spell it that way, and a pack entry's id
+ * is derived from its name, so reading it as `"` would rename those entries
+ * and give them new ids.
+ */
+export function nameText(text) {
+  const t = String(text ?? "").trim();
+  if (t.length >= 2 && t.startsWith('"') && t.endsWith('"')) return t.slice(1, -1).trim();
+  if (t.startsWith("{") && closingBrace(t, 0) === t.length - 1) return t.slice(1, -1).trim();
+  return t;
+}
+
+/**
+ * A reference with the braces around its name dropped.
+ *
+ * A reference to a name with a comma in it is braced the way the name is:
+ * `needs({SK:Guns (Rifle, Musket)})`. The braces may close before the rest
+ * of the entry -- `{SK:Astronomy} = 15` -- so a leading braced group is
+ * unwrapped wherever it ends, and the rest kept.
+ */
+export function unbraceReference(text) {
+  const t = String(text ?? "").trim();
+  if (!t.startsWith("{")) return t;
+  const close = closingBrace(t, 0);
+  if (close < 0) return t;
+  return `${t.slice(1, close).trim()}${t.slice(close + 1)}`.trim();
 }
 
 /** Every `newmode(...)` on a record, in order. Weapons state attacks this way. */

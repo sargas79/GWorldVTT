@@ -45,6 +45,31 @@ import {
   techniqueRebasing,
   traitAttackModes,
 } from "../../../tools/parse-gdf.mjs";
+import { nameOf, records } from "../../../tools/gdf.mjs";
+
+// GCA wraps a name holding a comma in quotes or braces; an inch mark written
+// as two apostrophes is kept, as the Basic Set packs spell it
+// (sargas79/GWorldVTT#626).
+describe("names in braces and doubled inch marks", () => {
+  const nameIn = (line: string) => nameOf(records(`[EQUIPMENT]\n${line}\n`)[0]!);
+
+  it("drops one enclosing pair of braces, as it does quotes", () => {
+    expect(nameIn("{Revolver, .36}, 400, page(B279)")).toBe("Revolver, .36");
+    expect(nameIn('"Revolver, .36", 400, page(B279)')).toBe("Revolver, .36");
+    expect(nameIn("{Revolver, .36} Deluxe, 400, page(B279)")).toBe("{Revolver, .36} Deluxe");
+  });
+
+  it("keeps an inch mark written as two apostrophes", () => {
+    expect(nameIn("\"Rope, 3/8'' (per 10 yards)\", 10, page(B288)")).toBe("Rope, 3/8'' (per 10 yards)");
+    expect(nameIn("{Shell, 0.8''}, 10, page(B279)")).toBe("Shell, 0.8''");
+  });
+
+  it("unwraps a braced name in a reference", () => {
+    expect(parseSkillUsed("{SK:Guns (Rifle, Musket)}, ST:DX-4")).toBe("Guns (Rifle, Musket)");
+    expect(techniqueDefaults("{SK:Guns (Rifle, Musket)::level} - 4")).toEqual([{ from: "skill", skill: "Guns (Rifle, Musket)", modifier: -4 }]);
+    expect(techniqueDefault("{SK:Guns (Rifle, Musket)::level} - 4")).toEqual({ prerequisite: "Guns (Rifle, Musket)", modifier: -4 });
+  });
+});
 
 describe("reference", () => {
   it("cites the book being read, and only that book", () => {

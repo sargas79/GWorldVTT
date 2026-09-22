@@ -206,5 +206,9 @@ describe("the spell parser's readings", () => {
     expect(parseNeeds("((AD:Magery 0 | ST:Magery 0 = 1), AD:Magery = 1 | AD:Empathy)", lookup)).toBe("Magery 1 or Empathy (advantage)");
     expect(parseNeeds("Enchant, 12 Spells, 10 Colleges", { ...lookup, isSpell: () => true })).toBe("Enchant, 12 spells, spells from 10 colleges");
     expect(parseNeeds("", lookup)).toBe("");
+    // A braced name keeps its comma, and its braces may close before a level
+    // (sargas79/GWorldVTT#626).
+    expect(parseNeeds("Sleep, {SK:Lock, Picks} = 15", lookup)).toBe("Sleep, Lock, Picks (skill)");
+    expect(parseNeeds("{SK:Locksmith} | Apportation", lookup)).toBe("Locksmith (skill) or Apportation");
   });
 });
