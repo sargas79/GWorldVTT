@@ -1215,6 +1215,8 @@
                      data-tooltip="{{localize 'GWORLD.Item.HalfDamageRange'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <input type="number" name="system.rangedModes.{{i}}.maxRange" value="{{m.maxRange}}" aria-label="{{localize 'GWORLD.Item.MaxRange'}}" step="1" min="0"
                      data-tooltip="{{localize 'GWORLD.Item.MaxRange'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.rangedModes.{{i}}.minRange" value="{{m.minRange}}" aria-label="{{localize 'GWORLD.Item.MinRange'}}" step="any" min="0"
+                     data-tooltip="{{localize 'GWORLD.Item.MinRangeHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <input type="number" name="system.rangedModes.{{i}}.rateOfFire" value="{{m.rateOfFire}}" aria-label="{{localize 'GWORLD.Column.RoF'}}" step="1" min="1"
                      data-tooltip="{{localize 'GWORLD.Column.RoF'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <input type="text" name="system.rangedModes.{{i}}.shots" value="{{m.shots}}" aria-label="{{localize 'GWORLD.Column.Shots'}}"

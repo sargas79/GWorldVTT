@@ -54,6 +54,7 @@
       {{else}}
         <span>{{localize "GWORLD.Column.Acc"}} {{atk.accuracy}}</span>
         <span>{{localize "GWORLD.Column.Range"}} {{atk.range}}</span>
+        {{#if atk.minRange}}<span data-tooltip="{{localize 'GWORLD.Ranged.MinRangeHint' yards=atk.minRange}}">{{localize "GWORLD.Ranged.MinRangeShort" yards=atk.minRange}}</span>{{/if}}
       {{/if}}
       {{#if atk.shotsCapacity}}<span>{{localize "GWORLD.Column.Shots"}} {{atk.shotsLoaded}}/{{atk.shotsCapacity}}</span>{{else if atk.shots}}<span>{{localize "GWORLD.Column.Shots"}} {{atk.shots}}</span>{{/if}}
       {{!-- What it is loaded with, and the box it came from with what that has left. --}}

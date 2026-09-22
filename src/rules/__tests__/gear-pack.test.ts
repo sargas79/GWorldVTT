@@ -284,3 +284,15 @@ describe("the equipment compendium", () => {
     );
   });
 });
+
+describe("minimum ranges (Characters p. 281, note 1)", () => {
+  it("gives the grenade launcher, the ATGM and the SAM theirs, and keeps each 1/2D", () => {
+    const gear = loadPack("gear.json");
+    const first = (name: string) => gear.find((g) => g.name === name)?.system.rangedModes?.[0];
+    expect(first("Under-Barrel Grenade Launcher, 40mm")).toMatchObject({ minRange: 10, halfDamageRange: 150 });
+    expect(first("ATGM, 115mm")).toMatchObject({ minRange: 30, halfDamageRange: 200 });
+    expect(first("SAM, 70mm")).toMatchObject({ minRange: 200, halfDamageRange: 1000 });
+    const others = gear.flatMap((g) => g.system.rangedModes ?? []).filter((m) => m.minRange !== undefined);
+    expect(others).toHaveLength(3);
+  });
+});

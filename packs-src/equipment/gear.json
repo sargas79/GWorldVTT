@@ -7453,7 +7453,8 @@
           "mount": "bipod",
           "bulk": -10,
           "recoil": 1,
-          "malfunction": 17
+          "malfunction": 17,
+          "minRange": 30
         }
       ]
     }
@@ -7517,7 +7518,8 @@
           "mount": "",
           "bulk": -8,
           "recoil": 1,
-          "malfunction": 17
+          "malfunction": 17,
+          "minRange": 200
         }
       ]
     }
@@ -7710,7 +7712,8 @@
           "mount": "",
           "bulk": 0,
           "recoil": 2,
-          "malfunction": 17
+          "malfunction": 17,
+          "minRange": 10
         }
       ]
     }

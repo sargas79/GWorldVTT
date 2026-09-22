@@ -102,6 +102,7 @@ import { consumeStopThrust, recordStopThrust } from "./stop-thrust.js";
 import type { Posture, SkillAttribute } from "../rules/types.js";
 import {
   elevationRange,
+  insideMinimumRange,
   rangedToHitModifier,
   rapidFireBonus,
   rapidFireHits,
@@ -1058,6 +1059,28 @@ export interface DamageRollOptions {
   strikingPart?: string | null;
   /** Where the blow came from, for the modules' damage hooks (since 1.43.0), e.g. "parriedLimb". */
   source?: string;
+  /**
+   * How far the target was, in yards, for the modules' damage hooks (since
+   * 1.69.0): the range the attack was made at, or else the distance to the one
+   * targeted token. Null where neither is known.
+   */
+  distanceYards?: number | null;
+}
+
+/**
+ * How far the target of a damage roll is, in yards (since API 1.69.0): the
+ * figure the caller gives, or, where it gives none, the distance on the map to
+ * the one targeted token. Null where neither says -- a caller's explicit null
+ * included, and a roll made with no scene.
+ */
+export function damageDistance(actor: any, given: number | null | undefined): number | null {
+  if (given !== undefined && given !== null) return Number.isFinite(Number(given)) ? Math.max(0, Number(given)) : null;
+  if (given === null) return null;
+  try {
+    return measuredShot(actor)?.rangeYards ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -1072,8 +1095,12 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
   // another formula in its place.
   const item = options.item ?? null;
   const mode = options.mode ?? null;
+  // How far away the target was: 1/2D already turns on it (Characters
+  // p. 269), and a module's damage may too, explosive or not (since 1.69.0).
+  const distanceYards = damageDistance(actor, options.distanceYards);
   const hookedDamage = callCombatHook(COMBAT_HOOKS.damageModifiers, {
     actor, item, mode, label, formula: options.formula, damageType, modifiers: [...(options.modifiers ?? [])],
+    distanceYards,
   });
   const replaced = typeof hookedDamage.formula === "string" && hookedDamage.formula !== options.formula && parseDiceAdds(hookedDamage.formula)
     ? hookedDamage.formula
@@ -1340,6 +1367,15 @@ async function rollAction(
     : null;
   if (ranged && shot === null) return null;
 
+  // A weapon with a minimum range cannot hit a target closer than it
+  // (Characters p. 281): the attack is refused, unless a module's
+  // `gworld.attackModifiers` listener clears the refusal and puts its own
+  // penalty in (since 1.69.0).
+  const minRange = ranged ? Math.max(0, Number(target.dataset.minRange) || 0) : 0;
+  const tooClose = shot !== null && insideMinimumRange(shot.rangeYards, minRange)
+    ? game.i18n.format("GWORLD.Ranged.InsideMinRange", { name: rollLabel ?? "", yards: shot.rangeYards, min: minRange })
+    : null;
+
   // A melee attack asks only when asked -- shift-click, as every other roll --
   // but when it does ask, it asks about Deceptive Attack and Rapid Strike too,
   // since both are decided before the roll and both cost skill.
@@ -1476,6 +1512,8 @@ async function rollAction(
     // Pellets striking as one mass are a fact about this shot that the damage
     // roll, a separate click, has to be told.
     await recordMassShot(actor, shot?.coneMultiplier ?? null);
+    // And how far it went, for a module's damage hook.
+    await recordShotRange(actor, shot ? shot.rangeYards : null, shotRow(target.closest<HTMLElement>("[data-item-id]")));
     // So does being past 1/2D, which halves whatever the damage roll comes to.
     await recordHalfDamage(
       actor,
@@ -1538,7 +1576,8 @@ async function rollAction(
         targets: targetedTokens().map((token: any) => token?.actor).filter(Boolean),
         // Since 1.23.0: the tokens themselves, for where the targets stand.
         targetTokens: targetedTokens().filter((token: any) => token?.actor).map((token: any) => token?.document ?? token),
-        refusal: null as string | null,
+        // Set where the target is inside the weapon's minimum range (since 1.69.0).
+        refusal: tooClose as string | null,
         // Since 1.21.0: the options chosen, and what went into the defense
         // penalty and the roll from a Deceptive Attack, a feint and Evaluate.
         options: { ...(melee?.options ?? shot?.options ?? {}) } as Record<string, unknown>,
@@ -1552,11 +1591,17 @@ async function rollAction(
         aim: aimStateOf(actor),
         // Since 1.65.0: tags for the attack roll, which condition and area lines and modules read.
         tags: [] as string[],
+        // Since 1.69.0: how far the shot is, in yards (null for a melee
+        // attack), and the weapon's minimum range. Inside it, `refusal`
+        // starts out saying so.
+        rangeYards: shot ? shot.rangeYards : (null as number | null),
+        minRange,
       })
     : null;
   // A module's rules may make this attack impossible here: it isn't rolled.
-  if (hooked && typeof hooked.refusal === "string" && hooked.refusal.trim()) {
-    ui.notifications?.warn(hooked.refusal.trim());
+  const refusal = hooked ? hooked.refusal : tooClose;
+  if (typeof refusal === "string" && refusal.trim()) {
+    ui.notifications?.warn(refusal.trim());
     return null;
   }
   const defensePenalty = Number(hooked?.defensePenalty ?? (melee?.defensePenalty ?? 0) + feint) || 0;
@@ -1827,6 +1872,34 @@ async function consumeHalfDamage(actor: any): Promise<boolean> {
   const halved = actor?.getFlag?.(SYSTEM_ID, HALF_DAMAGE_FLAG) === true;
   if (halved && actor.isOwner) await actor.unsetFlag(SYSTEM_ID, HALF_DAMAGE_FLAG);
   return halved;
+}
+
+/**
+ * Where the range a shot was taken at is kept for the damage roll, which a
+ * module's damage hook reads (since 1.69.0), with the row it was fired from:
+ * a punch thrown next is not at the range the rifle fired at.
+ */
+const SHOT_RANGE_FLAG = "shotRange";
+
+/** The row a shot's range belongs to: its item's id, or its derived mode's key, and its mode. */
+function shotRow(row: HTMLElement | null | undefined): string {
+  if (!row) return "";
+  return [row.dataset.itemId ?? "", row.dataset.derivedMode ?? "", row.dataset.modeIndex ?? ""].join("|");
+}
+
+async function recordShotRange(actor: any, yards: number | null, row: string): Promise<void> {
+  if (!actor?.isOwner) return;
+  if (yards !== null && Number.isFinite(yards)) await actor.setFlag(SYSTEM_ID, SHOT_RANGE_FLAG, { yards: Math.max(0, yards), row });
+  else if (actor.getFlag?.(SYSTEM_ID, SHOT_RANGE_FLAG) !== undefined) await actor.unsetFlag(SYSTEM_ID, SHOT_RANGE_FLAG);
+}
+
+/** The range recorded for this row's last shot, spent by reading it; null for none or another row's. */
+async function consumeShotRange(actor: any, row: string): Promise<number | null> {
+  const shot = actor?.getFlag?.(SYSTEM_ID, SHOT_RANGE_FLAG);
+  if (shot === undefined || shot === null) return null;
+  if (actor.isOwner) await actor.unsetFlag(SYSTEM_ID, SHOT_RANGE_FLAG);
+  const yards = Number(shot?.yards);
+  return shot?.row === row && Number.isFinite(yards) ? Math.max(0, yards) : null;
 }
 
 /** Where a shot's pellets striking as one mass are kept for the damage roll. */
@@ -3283,8 +3356,10 @@ export async function handleDamageAction(
   const aimed = await consumeCalledShot(actor);
   // Pellets that struck as one mass, recorded by the attack roll.
   const mass = await consumeMassShot(actor);
-  // A target past 1/2D, recorded by the attack roll too.
+  // A target past 1/2D, recorded by the attack roll too, and the range the
+  // shot was taken at.
   const halved = await consumeHalfDamage(actor);
+  const shotRange = await consumeShotRange(actor, shotRow(itemRow));
 
   // A blow struck with the flat of a blade crushes rather than cuts, and one
   // struck with the butt of a spear crushes for a point less.
@@ -3403,6 +3478,8 @@ export async function handleDamageAction(
     ...(aimed ? { calledShot: aimed } : {}),
     ...(mass > 1 ? { massMultiplier: mass } : {}),
     ...(halved ? { halfDamage: true } : {}),
+    // The shot's range where the attack recorded one; the map's otherwise.
+    ...(shotRange !== null ? { distanceYards: shotRange } : {}),
     ...(target.dataset.material ? { material: target.dataset.material } : {}),
     ...(target.dataset.ignoresDr === "1" ? { ignoresDr: true } : {}),
     ...(target.dataset.incendiary === "1" ? { incendiary: true } : {}),

@@ -189,7 +189,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
   incendiary: false, radiation: false, doubleKnockback: false, noKnockback: false, kineticOnly: false, surge: false,
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
-  ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, rateOfFire: 1,
+  ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1,
   recoil: 1, bulk: 0, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false,
   ammunition: "", malediction: 0, ignoresDr: false,
@@ -316,6 +316,8 @@ export interface DerivedAttack {
   halfDamageRange?: number;
   /** The Max range in yards, which is how far a steered projectile can fly. Ranged only. */
   maxRange?: number;
+  /** The least distance in yards the attack can be made at, zero for none (since API 1.69.0). Ranged only. */
+  minRange?: number;
   /**
    * How the projectile steers, blank for one that does not (Campaigns p. 412).
    * A steered weapon reads 1/2D as its speed rather than a damage threshold.
@@ -2335,6 +2337,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             armorDivisor: Number(mode.armorDivisor ?? 1) || 1,
             halfDamageRange: 0,
             maxRange: 0,
+            minRange: 0,
             accuracy: 0,
             malfunction: null,
           },
@@ -2430,6 +2433,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           projectiles: Math.max(1, Number(mode.projectiles ?? 1)),
           halfDamageRange: Number(range.halfDamage ?? 0) || 0,
           maxRange: Number(range.max ?? 0) || 0,
+          // Where the weapon cannot hit at all yet: a round that has not armed
+          // or come down. Not stretched with the range, which it is not part of.
+          minRange: Math.max(0, Number(mode.minRange ?? 0) || 0),
           guidance: String(mode.guidance ?? ""),
           aimingSkill: String(mode.aimingSkill ?? ""),
           guidedSkillLevel: Math.max(0, Math.floor(Number(mode.guidedSkillLevel) || 0)),
@@ -2516,6 +2522,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             armorDivisor: Number(mode.armorDivisor ?? 1) || 1,
             halfDamageRange: Number(rangedBasisRange.halfDamage ?? 0) || 0,
             maxRange: Number(rangedBasisRange.max ?? 0) || 0,
+            minRange: Math.max(0, Number(mode.minRange ?? 0) || 0),
             accuracy: Number(mode.accuracy ?? 0) || 0,
             malfunction: typeof mode.malfunction === "number" ? mode.malfunction : null,
           },

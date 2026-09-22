@@ -22,6 +22,7 @@ import {
   techLevel,
   traitCategoryOf,
   linkedLine,
+  minimumRangeOf,
   parseRadius,
   areaNote,
   LINKED_MODE,
@@ -961,6 +962,34 @@ describe("the equipment a data file's modes make", () => {
       "Gun Test, page(XX15), cost(100), weight(5), techlvl(8), damage(4d+2), damtype(pi), acc(4), rof(9#/7), rangehalfdam(300), rangemax(3000), shots(45(3)), minst(9), skillused(SK:Guns (Rifle))",
     );
     expect(gear[0]!.system.rangedModes[0]).toMatchObject({ rateOfFire: 9, rateOfFireMark: "#", rateOfFireSecond: 7 });
+  });
+
+  it("reads a minimum range only where the record's notes say plainly what it is", () => {
+    const launcher = { halfDamageRange: 30, maxRange: 440 };
+    expect(minimumRangeOf("{First Range figure is minimum range, not 1/2D.}", launcher)).toEqual({ minRange: 30, halfDamageRange: 0 });
+    expect(minimumRangeOf("{Minimum range is 25% of maximum range.},{Requires crew.}", { halfDamageRange: 55, maxRange: 70 })).toEqual({ minRange: 17.5 });
+    // A note naming several weapons' minimums does not say which is this one's.
+    expect(minimumRangeOf("{Has a minimum range: 10 yards for one launcher, 30 for another.}", launcher)).toBeNull();
+    expect(minimumRangeOf(undefined, launcher)).toBeNull();
+    expect(minimumRangeOf("{First Range figure is minimum range, not 1/2D.}", { ...launcher, rangeIsStMultiple: true })).toBeNull();
+  });
+
+  it("moves the first Range figure to the minimum on every ranged mode, and reports a note it cannot tie", () => {
+    const notes = "itemnotes({First Range figure is minimum range, not 1/2D.})";
+    const { gear } = run(
+      `Launcher Test, page(XX17), cost(100), weight(5), techlvl(7), ${notes},`
+      + " newmode(Primary, damage(4d), armordivisor(10), damtype(cr ex), rangehalfdam(35), rangemax(2200), acc(2), rof(1), shots(1(3)), skillused(SK:Guns (Grenade Launcher))),"
+      + " newmode(Linked, damage(4d+1), damtype([2d] cr ex), rangehalfdam(35), rangemax(2200), skillused(SK:Guns (Grenade Launcher)))",
+    );
+    expect(gear[0]!.system.rangedModes).toHaveLength(1);
+    expect(gear[0]!.system.rangedModes[0]).toMatchObject({ minRange: 35, halfDamageRange: 0, maxRange: 2200 });
+
+    const listed = run(
+      "Missile Test, page(XX18), cost(100), weight(5), techlvl(7), itemnotes({Missile has a minimum range: 30 for one; 70 for another.}),"
+      + ` damage(6dx8), damtype(cr ex), ${ranged}`,
+    );
+    expect(listed.gear[0]!.system.rangedModes[0]!.minRange).toBeUndefined();
+    expect(listed.notes).toContain("Missile Test: its notes give a minimum range this reader cannot tie to the record; none is set");
   });
 
   it("names the record and both readings when a split DR and the TL disagree", () => {

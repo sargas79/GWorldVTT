@@ -211,3 +211,8 @@ export interface ParsedItem {
     rangedModes: Array<Record<string, unknown> & { name: string }>;
   };
 }
+/** A ranged mode's minimum range where the record's notes state it plainly, as the fields to set on the mode, or null. */
+export declare function minimumRangeOf(
+  itemnotes: string | undefined,
+  mode: { halfDamageRange: number; maxRange: number; rangeIsStMultiple?: boolean },
+): { minRange: number; halfDamageRange?: number } | null;
