@@ -1007,6 +1007,10 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         modifiers: (system.modifiers ?? []).map((m: any) => String(m?.name ?? "")),
       }).map((m) => {
         const key = `GWORLD.SheetV2.Effect.${m.path}`;
+        // An effect that is one of several kinds may name each kind itself:
+        // "Tunnel Vision" rather than "Restricted vision tunnel".
+        const kind = typeof m.value === "string" ? `${key}.${m.value}` : "";
+        if (kind && game.i18n.has(kind)) return { label: L(kind), value: null, numeric: false };
         return { label: game.i18n.has(key) ? L(key) : mechanicFallbackLabel(m.path), value: m.value, numeric: typeof m.value === "number" };
       });
       return {
@@ -1169,7 +1173,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         const rows = awarenessRolls({
           will: derived.will,
           per: derived.per,
-          senses: (derived.senses ?? []) as Array<{ sense: string; score: number | null; modifier: number }>,
+          senses: (derived.senses ?? []) as Array<{ sense: string; score: number | null; modifier: number; colorblind?: boolean; rangeMultiplier?: number }>,
         }).map((row) => ({ ...row, label: L(row.label), missing: row.score === null }));
         return { scores: rows.filter((row) => !row.sense), senses: rows.filter((row) => row.sense) };
       })(),

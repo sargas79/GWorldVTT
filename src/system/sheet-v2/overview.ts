@@ -182,13 +182,17 @@ export interface AwarenessRoll {
   score: number | null;
   /** What traits moved a sense by, for the row's note. Zero for Will and Per. */
   modifier: number;
+  /** Vision seen without colour (Colorblindness, Characters p. 127). */
+  colorblind?: boolean;
+  /** Hearing's distances multiplied (Parabolic Hearing, Characters p. 72). */
+  rangeMultiplier?: number;
 }
 
 export interface AwarenessInput {
   will: unknown;
   per: unknown;
   /** The senses as `senseScores` worked them out, in the order they are shown. */
-  senses: ReadonlyArray<{ sense: string; score: number | null; modifier: number }>;
+  senses: ReadonlyArray<{ sense: string; score: number | null; modifier: number; colorblind?: boolean; rangeMultiplier?: number }>;
 }
 
 /**
@@ -216,6 +220,8 @@ export function awarenessRolls(input: AwarenessInput): AwarenessRoll[] {
       sense: sense.sense,
       score: score(sense.score),
       modifier: Number(sense.modifier) || 0,
+      ...(sense.colorblind ? { colorblind: true } : {}),
+      ...(Number(sense.rangeMultiplier) > 1 ? { rangeMultiplier: Number(sense.rangeMultiplier) } : {}),
     })),
   ];
 }

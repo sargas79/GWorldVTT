@@ -36,7 +36,7 @@ import { EXTRA_EFFORT_FP, FEVERISH_DEFENSE_BONUS } from "../rules/extra-effort.j
 import { spendFatigue } from "./extra-effort.js";
 import { isRuleOn } from "./optional-rules.js";
 import { combatStyle } from "./settings.js";
-import { arcDefense, attackArc, retreatBonus, type Arc } from "../rules/tactical.js";
+import { arcDefense, attackArc, hexDirection, restrictedArc, retreatBonus, type Arc } from "../rules/tactical.js";
 import { attackDirection, facingOf } from "./hex.js";
 import { tacticalOnScene } from "./settings.js";
 import { handednessOf, visionOf } from "./tactical-context.js";
@@ -1465,14 +1465,25 @@ async function tacticalArc(
   if (from === null) return null;
 
   // A module may say the attack counts as coming from another arc (since 1.38.0).
-  const { arc, side } = hookedAttackArc({ defender, attacker: attackerToken.actor ?? null, ...attackArc(facingOf(defenderToken, gridType), from) });
+  const facing = facingOf(defenderToken, gridType);
+  const measured = attackArc(facing, from);
+  const { arc, side } = hookedAttackArc({ defender, attacker: attackerToken.actor ?? null, ...measured });
+  // Restricted Vision (Characters p. 151) turns side hexes into back ones, and
+  // Tunnel Vision two of the front hexes into sides, for what the defender can
+  // do about the blow -- not for where it landed, which stays the arc above.
+  // Which front hex it came through is only known while no module moved it.
+  const seen = restrictedArc(
+    { arc, side },
+    defender?.system?.derived?.traitEffects?.restrictedVision ?? null,
+    arc === measured.arc ? hexDirection(from - facing) : null,
+  );
   // A shield is held in the off hand, so a two-handed weapon means no shield;
   // what matters for the parry is whether the weapon is held in one hand.
   return {
     arc,
     ...arcDefense({
-      arc,
-      side,
+      arc: seen.arc,
+      side: seen.side,
       vision: visionOf(defender),
       hands: handednessOf(defender),
       oneHandedWeapon: true,

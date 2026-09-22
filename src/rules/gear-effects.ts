@@ -18,6 +18,12 @@ import type { TraitEffects } from "./trait-effects.js";
 export interface WornGear {
   name: string;
   equipped: boolean;
+  /**
+   * The armour's own "no peripheral vision" field: a great helm (note [4],
+   * Characters p. 284), barding (p. 286), or headgear before TL9 carrying
+   * note [7] (p. 285).
+   */
+  blocksPeripheralVision?: boolean;
 }
 
 /** One thing a piece of gear grants, and the piece it came from. */
@@ -74,8 +80,8 @@ export function gearEffects(gear: readonly WornGear[]): GearEffect[] {
   // Note [7], which the gas mask and the vacc and space helmets carry:
   // "Provides Filter Lungs, Protected Smell, and Protected Vision - but before
   // TL9, it also gives the No Peripheral Vision disadvantage." The last of
-  // those is the armour's own field, already set on the two pre-TL9 pieces,
-  // so what is left is what is granted here -- suit or no suit.
+  // those is the armour's own field, already set on the two pre-TL9 pieces
+  // and read below, so what is left is what is granted here -- suit or no suit.
   const headgear = worn(gear, SEALING_HEADGEAR);
   if (headgear) {
     granted.push({
@@ -87,18 +93,28 @@ export function gearEffects(gear: readonly WornGear[]): GearEffect[] {
     });
   }
 
+  // Any piece whose field says it blocks the corners of the eyes imposes No
+  // Peripheral Vision (p. 151) while it is worn, whatever it is called.
+  for (const piece of gear) {
+    if (piece.equipped && piece.blocksPeripheralVision) {
+      granted.push({ source: piece.name, effect: { restrictedVision: "noPeripheral" } });
+    }
+  }
+
   return granted;
 }
 
 /**
  * What one piece of granted gear should be shown as, effect by effect. A flag
- * names itself; a sense-by-sense effect names the sense it turned on.
+ * names itself; a sense-by-sense effect names the sense it turned on; an
+ * effect that is one of several kinds names the kind ("restrictedVision.tunnel").
  */
 export function grantedEffectSources(granted: GearEffect): Array<{ effect: string; label: string; value?: number }> {
   const lines: Array<{ effect: string; label: string; value?: number }> = [];
   for (const [effect, value] of Object.entries(granted.effect)) {
     if (value === true) lines.push({ effect, label: granted.source });
     else if (typeof value === "number" && value !== 0) lines.push({ effect, label: granted.source, value });
+    else if (typeof value === "string" && value) lines.push({ effect: `${effect}.${value}`, label: granted.source });
     else if (value && typeof value === "object") {
       for (const [sense, on] of Object.entries(value as Record<string, unknown>)) {
         if (on === true) lines.push({ effect: `${effect}.${sense}`, label: granted.source });
