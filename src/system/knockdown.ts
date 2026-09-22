@@ -19,7 +19,7 @@ import {
 } from "../rules/knockdown.js";
 import { resolveSuccess } from "../rules/success.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
-import { PROCEDURE_HOOKS, successRollModifiers } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, successRollModifiers, type KnockdownBlow } from "./procedure-extensions.js";
 import { callCombatHook } from "./combat-extensions.js";
 
 const KNOCKDOWN_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/knockdown.hbs`;
@@ -39,8 +39,11 @@ function dieResults(roll: any): number[] {
 export async function rollKnockdown(options: {
   actor: any;
   modifier: number;
+  /** The blow that called for the roll, where one did (since API 1.73.0). */
+  blow?: KnockdownBlow | null;
 }): Promise<KnockdownResult | null> {
   const { actor, modifier } = options;
+  const blow = options.blow ?? null;
   if (!actor?.isOwner) {
     ui.notifications?.warn(
       game.i18n.format("GWORLD.Chat.CannotApply", { names: String(actor?.name ?? "") }),
@@ -52,7 +55,9 @@ export async function rollKnockdown(options: {
   // rolled from elsewhere reads it here so it is never left out.
   const ht = attributeOf(actor, "HT");
   // What the actor's conditions and the modules add to the roll.
-  const added = successRollModifiers({ actor, label: "Knockdown", kind: "attribute", skill: "", base: ht, tags: ["knockdown", "HT"], modifiers: [] })
+  // Where the blow landed goes with it, since a listener's modifier may turn
+  // on it as the Basic Set's own do (since 1.73.0).
+  const added = successRollModifiers({ actor, label: "Knockdown", kind: "attribute", skill: "", base: ht, tags: ["knockdown", "HT"], modifiers: [], blow })
     .reduce((total, line) => total + line.value, 0);
   const roll = new Roll("3d6");
   await roll.evaluate();
@@ -72,6 +77,7 @@ export async function rollKnockdown(options: {
     outcome,
     result: { outcome: result.outcome, stunned: result.stunned, prone: result.prone, unconscious: result.unconscious },
     previousPosture,
+    blow,
   });
 
   const content = await foundry.applications.handlebars.renderTemplate(KNOCKDOWN_TEMPLATE, {

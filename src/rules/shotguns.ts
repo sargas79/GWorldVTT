@@ -57,3 +57,37 @@ export function multipleProjectiles(options: {
     coneMultiplier: close ? Math.ceil(projectiles / 2) : null,
   };
 }
+
+/** A damage line: dice, type and armour divisor. */
+export interface ProjectileLine {
+  damage: string;
+  damageType: string;
+  armorDivisor: number;
+}
+
+/**
+ * The line a hit from a multiple-projectile shot is rolled with (since API
+ * 1.73.0).
+ *
+ * The Basic Set's pellets are all alike, and every hit uses the weapon's one
+ * line. A load whose first projectile differs from the rest -- one heavy ball
+ * ahead of the shot, say -- gives that one its own line, used for the first
+ * hit of the shot and never again; anything it leaves blank is the weapon's.
+ */
+export function projectileLine(options: {
+  line: ProjectileLine;
+  firstHit: Partial<ProjectileLine> | null | undefined;
+  first: boolean;
+}): ProjectileLine & { firstHit: boolean } {
+  const own = options.firstHit;
+  if (!options.first || !own || typeof own.damage !== "string" || !own.damage.trim()) {
+    return { ...options.line, firstHit: false };
+  }
+  const divisor = Number(own.armorDivisor);
+  return {
+    damage: own.damage.trim(),
+    damageType: typeof own.damageType === "string" && own.damageType ? own.damageType : options.line.damageType,
+    armorDivisor: divisor > 0 ? divisor : options.line.armorDivisor,
+    firstHit: true,
+  };
+}

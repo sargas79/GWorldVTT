@@ -353,3 +353,21 @@ export function computeInjury({
 
   return { ...base, injury: raw, excessLost: 0, crippled: false };
 }
+
+/**
+ * A blow's injury held to a cap a module set (since API 1.73.0).
+ *
+ * The Basic Set caps a limb or extremity at what cripples it (Campaigns
+ * p. 421), which {@link computeInjury} already does; this is the same kind of
+ * limit set per blow, from outside. What was lost to it is kept apart, so the
+ * uncapped figure is still there for whatever reads the wound rather than the
+ * hit points it cost -- bleeding, say. No cap, or one that is not a number,
+ * leaves the injury alone; a negative one is none at all.
+ */
+export function capInjury(injury: number, cap: number | null | undefined): { injury: number; lost: number } {
+  const whole = Math.max(0, Math.floor(injury));
+  if (cap === null || cap === undefined || !Number.isFinite(Number(cap))) return { injury: whole, lost: 0 };
+  const limit = Math.max(0, Math.floor(Number(cap)));
+  const kept = Math.min(whole, limit);
+  return { injury: kept, lost: whole - kept };
+}

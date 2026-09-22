@@ -2501,7 +2501,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onOverpenetration(this: GWorldCharacterSheet) {
     if (!isRuleOn("overpenetration")) return;
 
-    const asked = await promptForOverpenetration();
+    // The character's ranged rows, each with whether it refuses to go through
+    // (since API 1.73.0).
+    const weapons = [...(this.actor.system?.derived?.ranged ?? [])]
+      .filter((row: any) => row && !row.affliction)
+      .map((row: any) => ({
+        label: [row.name, row.mode].filter(Boolean).join(" "),
+        damageType: String(row.damageType ?? ""),
+        armorDivisor: Number(row.armorDivisor) || 1,
+        refused: row.noOverpenetration === true,
+      }));
+    const asked = await promptForOverpenetration(weapons);
     if (!asked) return;
 
     await checkOverpenetration({ actor: this.actor, ...asked });

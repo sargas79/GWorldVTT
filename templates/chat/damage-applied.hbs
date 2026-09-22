@@ -80,6 +80,7 @@
         <div class="gc-mods">
           {{#if r.hasShock}}<span class="gc-mod">{{localize "GWORLD.Chat.Shock"}} {{r.shock}}</span>{{/if}}
           {{#if r.crippled}}<span class="gc-warn">{{localize "GWORLD.Chat.Crippled"}}</span>{{/if}}
+          {{#if r.injuryCapNote}}<span class="gc-mod">{{r.injuryCapNote}}</span>{{/if}}
           {{#if r.majorWound}}
             <span class="gc-warn">
               {{localize "GWORLD.Chat.MajorWound"}} {{r.knockdownModifier}}

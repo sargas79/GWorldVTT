@@ -27,7 +27,7 @@ import {
   type CriticalEntry,
   type CriticalTable,
 } from "../rules/criticals.js";
-import { computeInjury } from "../rules/damage.js";
+import { capInjury, computeInjury } from "../rules/damage.js";
 import { locationDrAgainst, type HitLocation } from "../rules/hit-locations.js";
 import { blastPlacementOf, INTERNAL_BLAST_WOUNDING, type BlastPlacement } from "../rules/explosions.js";
 import { LARGE_AREA_LOCATIONS, largeAreaDr, largeAreaSingleLocation, type LargeAreaDr } from "../rules/large-area.js";
@@ -139,6 +139,18 @@ export interface IncomingDamage {
    * out, all of them, as for a true area effect.
    */
   exposedLocations?: HitLocation[];
+  /**
+   * The most injury this blow may do (since API 1.73.0), for a
+   * `gworld.injury` listener to set: HP (or FP) lost past it are not taken.
+   * It comes on top of the Basic Set's own cap on a limb or extremity
+   * (Campaigns p. 421), the lower of the two holding; the result keeps the
+   * uncapped figure. Null or left out, none.
+   */
+  injuryCap?: number | null;
+  /** Why the injury was capped, shown beside it on the applied card (since API 1.73.0). */
+  injuryCapReason?: string;
+  /** The first hit of a multiple-projectile shot, rolled with its own line (since API 1.73.0). */
+  firstHit?: boolean;
   /** The item the blow was rolled from, where the card knows it. */
   itemUuid?: string;
   /** Where the blow came from, where its roll said (since 1.43.0): "parriedLimb" for the strike after a bare-handed parry. */
@@ -176,6 +188,17 @@ export interface AppliedDamage {
   bluntTrauma: number;
   /** Injury discarded because it exceeded a limb's crippling threshold. */
   excessLost: number;
+  /**
+   * The injury before any cap (since API 1.73.0): the Basic Set's on a limb
+   * or extremity, and a listener's `injuryCap`. What the wound was, as against
+   * what it cost -- for bleeding, or anything else read off the wound.
+   */
+  uncappedInjury: number;
+  /**
+   * A listener's cap on this blow, where it took anything off (since API
+   * 1.73.0): the cap, the injury it kept from being taken, and why.
+   */
+  injuryCap: { cap: number; lost: number; reason: string } | null;
   crippled: boolean;
   /** True when the loss came off Fatigue Points rather than Hit Points. */
   costsFatigue: boolean;
@@ -590,7 +613,12 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
   const blast = damage.cinematicBlast === true;
   // Blunt trauma "is actual injury, not basic damage. There is no wounding
   // multiplier", so it is added after the pipeline rather than inside it.
-  const injury = blast ? cinematicExplosionInjury(shoved.yards) : kinetic ? trauma : result.injury + trauma;
+  const beforeCap = blast ? cinematicExplosionInjury(shoved.yards) : kinetic ? trauma : result.injury + trauma;
+  // A module's cap on this blow (since API 1.73.0), after the Basic Set's own
+  // on a limb: the lower holds, and everything that follows from the injury --
+  // shock, a major wound, the HP lost -- follows from what was kept.
+  const capped = capInjury(beforeCap, damage.injuryCap);
+  const injury = capped.injury;
   const applied = applyInjury(injury, previous, max, { unkillable: traits.unkillable });
 
   // Two of the critical results change what follows from the injury rather than
@@ -627,6 +655,13 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
     // happened.
     bluntTrauma: blast ? 0 : trauma,
     excessLost: blast || kinetic ? 0 : result.excessLost,
+    // What the wound was before either cap: the Basic Set's limb limit and a
+    // listener's. Crippling was read from it, as the book reads dismemberment
+    // from the injury before its limit (p. 421).
+    uncappedInjury: beforeCap + (blast || kinetic ? 0 : result.excessLost),
+    injuryCap: capped.lost > 0
+      ? { cap: Math.max(0, Math.floor(Number(damage.injuryCap))), lost: capped.lost, reason: String(damage.injuryCapReason ?? "") }
+      : null,
     crippled: blast || kinetic ? false : result.crippled,
     costsFatigue: result.costsFatigue,
     previous,

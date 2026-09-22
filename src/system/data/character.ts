@@ -192,7 +192,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
   ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1,
-  recoil: 1, bulk: 0, mount: "", scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0,
+  recoil: 1, bulk: 0, mount: "", scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false, outOfAction: null,
   ammunition: "", malediction: 0, ignoresDr: false,
 };
@@ -461,6 +461,14 @@ export interface DerivedAttack {
   noSprayingFire?: boolean;
   /** Set by a module where the row can't lay down suppression fire (since API 1.70.0). */
   noSuppressionFire?: boolean;
+  /** Set by a module where the row's shot never goes through what it hits (since API 1.73.0). */
+  noOverpenetration?: boolean;
+  /**
+   * Set by a module for a multiple-projectile shot whose first hit is rolled
+   * with its own line (since API 1.73.0): its dice, and a type and divisor
+   * (blank and 0 for the row's), with a label for the card.
+   */
+  firstHit?: { damage: string; damageType: string; armorDivisor: number; label: string } | null;
   /** Bulk, the penalty for firing on the move or in close combat. */
   bulk?: number;
   shots?: string;
@@ -2541,6 +2549,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           // module's `gworld.weaponAttacks` listener may refuse (since API 1.70.0).
           noSprayingFire: false,
           noSuppressionFire: false,
+          // Whether the shot may go through, and the first hit's own line,
+          // which a module's listener sets (since API 1.73.0).
+          noOverpenetration: false,
+          firstHit: null,
           // "+1 to Malf." for a fine firearm, -1 for a cheap one (Campaigns p. 407).
           malfunction: qualityMalfunction(mode.malfunction ?? null, quality),
           shots: mode.shots ?? "",

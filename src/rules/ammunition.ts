@@ -256,8 +256,32 @@ export function calibreOf(name: string): number | null {
   // figure -- ".44M" is a Magnum .44 -- and names the cartridge, not the bore.
   const inch = /(?:^|[\s,])\.(\d{2,3})[A-Za-z]*\b/.exec(name);
   if (inch) return Math.round(Number(`0.${inch[1]}`) * 25.4 * 100) / 100;
+  // "10G", "12 gauge": a shotgun named by its gauge (Characters p. 279).
+  const gauge = /(?:^|[\s,(])(\d{1,3})\s*(?:G|[Gg]a\.?|[Gg]auge)(?![A-Za-z])/.exec(name);
+  if (gauge) return gaugeBoreMm(Number(gauge[1]));
   return null;
 }
+
+/**
+ * The bore of a shotgun of this gauge, in millimetres.
+ *
+ * A gauge counts how many lead balls as wide as the bore make up a pound
+ * (Characters p. 279), so the bore is the diameter of a lead ball weighing a
+ * pound over the gauge: 18.53mm for 12G, 19.69mm for 10G. A figure of 100 or
+ * more is not a gauge at all but thousandths of an inch -- a "410 gauge" is a
+ * .410 bore.
+ */
+export function gaugeBoreMm(gauge: number): number | null {
+  if (!Number.isFinite(gauge) || gauge <= 0) return null;
+  if (gauge >= 100) return Math.round((gauge / 1000) * 25.4 * 100) / 100;
+  const ballCm3 = POUND_GRAMS / LEAD_G_PER_CM3 / gauge;
+  const diameterMm = Math.cbrt((6 * ballCm3) / Math.PI) * 10;
+  return Math.round(diameterMm * 100) / 100;
+}
+
+/** Grams to the pound, and lead's density in g/cm³, for {@link gaugeBoreMm}. */
+const POUND_GRAMS = 453.59237;
+const LEAD_G_PER_CM3 = 11.34;
 
 /** The threshold below which armour-piercing rounds lose a piercing step: "below 20mm (.80)". */
 export const SMALL_CALIBRE_MM = 20;

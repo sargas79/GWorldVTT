@@ -1682,6 +1682,9 @@
       "QuickShotHint": "Click: shoot at the range measured to the targeted token. Shift-click: every option.",
       "Measured": "range measured: {yards} yd",
       "MinRangeShort": "Min {yards}",
+      "FirstHit": "first hit",
+      "FirstHitTag": "First hit {damage} {type}",
+      "FirstHitHint": "The first projectile of a shot has its own line: the first damage roll after an attack uses it, the rest the row's.",
       "MinRangeHint": "Can't hit a target closer than {yards} yards.",
       "InsideMinRange": "{name}: the target is {yards} yd away, inside the minimum range of {min} yd.",
       "AimedLonger": "aimed longer",
@@ -1771,7 +1774,9 @@
       "Stopped": "It stops in the cover",
       "DamageType": "Damage type",
       "TightBeam": "Tight-beam burn",
-      "CannotOverpenetrate": "{type} does not overpenetrate: only piercing, impaling and tight-beam burning damage goes through"
+      "CannotOverpenetrate": "{type} does not overpenetrate: only piercing, impaling and tight-beam burning damage goes through",
+      "Refused": "{weapon} does not overpenetrate",
+      "Weapon": "Weapon"
     },
     "Splash": {
       "Action": "Splash in the face",
@@ -1920,6 +1925,8 @@
       "Stopped": "Stopped by DR {dr}.",
       "Shock": "Shock",
       "Crippled": "Crippled",
+      "InjuryCapped": "Capped at {cap}: {lost} not taken",
+      "InjuryCappedWhy": "Capped at {cap} ({reason}): {lost} not taken",
       "MajorWound": "Major wound — HT roll to avoid knockdown and stunning",
       "ConsciousnessRoll": "HT roll to stay conscious, at",
       "DeathCheck": "HT roll to avoid death",

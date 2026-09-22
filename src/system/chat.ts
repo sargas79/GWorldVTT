@@ -129,6 +129,8 @@ interface DamageFlag {
   largeArea?: boolean;
   /** The fragments thrown, which the card offers to roll (since API 1.72.0). */
   fragments?: FragmentationSpec;
+  /** The first hit of a multiple-projectile shot, rolled with its own line (since API 1.73.0). */
+  firstHit?: boolean;
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -479,6 +481,7 @@ async function applyFromCard(options: {
     ...(flag.itemUuid ? { itemUuid: flag.itemUuid } : {}),
     ...(flag.mode ? { mode: flag.mode } : {}),
     ...(flag.source ? { source: flag.source } : {}),
+    ...(flag.firstHit ? { firstHit: true } : {}),
     // The maximum belongs to the dice as rolled, so it is only the maximum for
     // someone the blast struck directly: collateral damage has already been
     // scaled down by distance, and pairing it with the undiminished maximum
@@ -601,7 +604,8 @@ async function applyFromCard(options: {
       ...result,
       // Handlebars cannot compare, so anything the card branches on is decided
       // here where the rules are in view.
-      stopped: result.injury === 0,
+      // A blow a listener capped at nothing got through all the same.
+      stopped: result.injury === 0 && !result.injuryCap,
       // What a Force Field took off before the armour under it, and whether a
       // touch effect got through it (Characters p. 47).
       forceFieldStopped: result.forceField?.stopped ?? 0,
@@ -639,6 +643,12 @@ async function applyFromCard(options: {
       // beside the injury rather than leaving to be inferred.
       criticalDamage:
         result.critical && result.basicDamage !== damage.basicDamage ? result.basicDamage : null,
+      // A module's cap on the blow, and what it kept from being taken (since API 1.73.0).
+      injuryCapNote: result.injuryCap
+        ? game.i18n.format(result.injuryCap.reason ? "GWORLD.Chat.InjuryCappedWhy" : "GWORLD.Chat.InjuryCapped", {
+            cap: result.injuryCap.cap, lost: result.injuryCap.lost, reason: result.injuryCap.reason,
+          })
+        : "",
     })),
   });
 
@@ -662,6 +672,10 @@ async function applyFromCard(options: {
             uuid: String(entry.actor.uuid ?? ""),
             name: String(entry.actor.name ?? ""),
             modifier: entry.result.knockdown!.modifier,
+            // Where it struck, for the roll's listeners (since API 1.73.0).
+            hitLocation: entry.result.hitLocation,
+            addonLocation: entry.result.addonLocation,
+            majorWound: entry.result.consequences.majorWound === true,
           })),
         // At 0 HP or less, a roll to stay conscious (Campaigns p. 419). In a
         // combat the start of each turn offers it instead.
@@ -1806,6 +1820,10 @@ interface KnockdownFlag {
   uuid: string;
   name: string;
   modifier: number;
+  /** Where the blow struck and whether it was a major wound (since API 1.73.0); absent on older cards. */
+  hitLocation?: string;
+  addonLocation?: string | null;
+  majorWound?: boolean;
 }
 
 /**
@@ -1842,7 +1860,13 @@ async function addKnockdownControls(message: any, html: HTMLElement): Promise<vo
       : `${game.i18n.localize("GWORLD.Knockdown.Roll")} ${entry.modifier > 0 ? "+" : ""}${entry.modifier}`;
     button.addEventListener("click", () => {
       button.disabled = true;
-      void rollKnockdown({ actor, modifier: entry.modifier });
+      void rollKnockdown({
+        actor,
+        modifier: entry.modifier,
+        ...(entry.hitLocation
+          ? { blow: { hitLocation: entry.hitLocation, addonLocation: entry.addonLocation ?? null, majorWound: entry.majorWound === true } }
+          : {}),
+      });
     });
 
     row.append(who, button);

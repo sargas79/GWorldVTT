@@ -44,7 +44,7 @@ import {
   scopeBonus,
   laserSight,
 } from "../rules/accessories.js";
-import { multipleProjectiles } from "../rules/shotguns.js";
+import { multipleProjectiles, projectileLine } from "../rules/shotguns.js";
 import {
   canAttempt, isCriticalFailure, isCriticalSuccess, resolveDefense, resolveSuccess, type SuccessRollResult,
 } from "../rules/success.js";
@@ -1069,6 +1069,8 @@ export interface DamageRollOptions {
   strikingPart?: string | null;
   /** Where the blow came from, for the modules' damage hooks (since 1.43.0), e.g. "parriedLimb". */
   source?: string;
+  /** The first hit of a multiple-projectile shot, rolled with its own line (since API 1.73.0). */
+  firstHit?: boolean;
   /**
    * How far the target was, in yards, for the modules' damage hooks (since
    * 1.69.0): the range the attack was made at, or else the distance to the one
@@ -1242,6 +1244,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
           ...(mode ? { mode } : {}),
           ...(options.source ? { source: String(options.source) } : {}),
+          ...(options.firstHit ? { firstHit: true } : {}),
           ...(options.weaponTarget ? { weaponTarget: options.weaponTarget } : {}),
           // Who struck bare-handed, and with what, for Hurting Yourself (p. 379).
           ...(options.strikingPart && typeof options.actor?.uuid === "string" ? { strikingPart: options.strikingPart, strikerUuid: options.actor.uuid } : {}),
@@ -1610,6 +1613,14 @@ async function rollAction(
     // Pellets striking as one mass are a fact about this shot that the damage
     // roll, a separate click, has to be told.
     await recordMassShot(actor, shot?.coneMultiplier ?? null);
+    // And that the next damage roll from this row is the first hit of a shot
+    // whose first projectile has its own line (since API 1.73.0).
+    await recordFirstHit(
+      actor,
+      shot && target.dataset.firstHit === "1" && Number(target.dataset.projectiles) > 1
+        ? shotRow(target.closest<HTMLElement>("[data-item-id]"))
+        : null,
+    );
     // And how far it went, for a module's damage hook.
     await recordShotRange(actor, shot ? shot.rangeYards : null, shotRow(target.closest<HTMLElement>("[data-item-id]")));
     // So does being past 1/2D, which halves whatever the damage roll comes to.
@@ -2018,6 +2029,7 @@ const SHOT_RANGE_FLAG = "shotRange";
 export async function recordSuppressionShot(actor: any, rowKey: string, rangeYards: number, halfDamageRange: number): Promise<void> {
   await recordAddonDamage(actor, []);
   await recordMassShot(actor, null);
+  await recordFirstHit(actor, null);
   await recordShotRange(actor, rangeYards, rowKey);
   await recordHalfDamage(actor, beyondHalfDamage({ rangeYards, halfDamageRange }));
 }
@@ -2058,6 +2070,26 @@ async function consumeMassShot(actor: any): Promise<number> {
   const multiplier = Number(actor?.getFlag?.(SYSTEM_ID, MASS_SHOT_FLAG) ?? 1);
   if (multiplier > 1 && actor.isOwner) await actor.unsetFlag(SYSTEM_ID, MASS_SHOT_FLAG);
   return multiplier > 1 ? multiplier : 1;
+}
+
+/**
+ * Where a shot whose first hit has a line of its own is remembered for the
+ * damage roll (since API 1.73.0), with the row it was fired from.
+ */
+const FIRST_HIT_FLAG = "firstHit";
+
+async function recordFirstHit(actor: any, row: string | null): Promise<void> {
+  if (!actor?.isOwner) return;
+  if (row !== null) await actor.setFlag(SYSTEM_ID, FIRST_HIT_FLAG, row);
+  else if (actor.getFlag?.(SYSTEM_ID, FIRST_HIT_FLAG) !== undefined) await actor.unsetFlag(SYSTEM_ID, FIRST_HIT_FLAG);
+}
+
+/** Whether this row's next damage roll is its shot's first hit, spent by reading it. */
+async function consumeFirstHit(actor: any, row: string): Promise<boolean> {
+  const pending = actor?.getFlag?.(SYSTEM_ID, FIRST_HIT_FLAG);
+  if (pending !== row) return false;
+  if (actor.isOwner) await actor.unsetFlag(SYSTEM_ID, FIRST_HIT_FLAG);
+  return true;
 }
 
 /** What the map knows about a shot: how far, and at what size. */
@@ -3511,11 +3543,31 @@ export async function handleDamageAction(
   event: Event,
   target: HTMLElement,
 ): Promise<void> {
-  const { damageFormula, damageType, damageLabel, armorDivisor } = target.dataset;
-  if (!damageFormula || !damageType) return;
+  const { damageLabel } = target.dataset;
+  if (!target.dataset.damageFormula || !target.dataset.damageType) return;
   // The row the damage was rolled from names the weapon, which a module's
   // hooks may want to know.
   const itemRow = target.closest<HTMLElement>("[data-item-id]");
+  // The first hit of a multiple-projectile shot whose first projectile has a
+  // line of its own (since API 1.73.0): the first damage roll from the row
+  // after the attack uses it, and every roll after that the row's own.
+  const first = target.dataset.firstHitDamage ? await consumeFirstHit(actor, shotRow(itemRow)) : false;
+  const line = projectileLine({
+    line: {
+      damage: target.dataset.damageFormula,
+      damageType: target.dataset.damageType,
+      armorDivisor: Number(target.dataset.armorDivisor) || 1,
+    },
+    firstHit: {
+      damage: target.dataset.firstHitDamage ?? "",
+      damageType: target.dataset.firstHitDamageType ?? "",
+      armorDivisor: Number(target.dataset.firstHitArmorDivisor) || 0,
+    },
+    first,
+  });
+  const damageFormula = line.damage;
+  const damageType = line.damageType;
+  const armorDivisor = line.armorDivisor;
   const itemId = itemRow?.dataset.itemId;
   const item = itemId ? (actor?.items?.get?.(itemId) ?? null) : null;
   const modeIndex = Number(itemRow?.dataset.modeIndex);
@@ -3639,6 +3691,7 @@ export async function handleDamageAction(
     actor,
     label: [
       damageLabel ?? "Damage",
+      ...(line.firstHit ? [target.dataset.firstHitLabel || game.i18n.localize("GWORLD.Ranged.FirstHit")] : []),
       ...(pulled ? [game.i18n.format("GWORLD.Subdue.PulledTo", { st: pulledSt })] : []),
       ...(couched
         ? [game.i18n.format(couched.maxDamage ? "GWORLD.Mounted.JoustingLabel" : "GWORLD.Mounted.LanceLabel", {
@@ -3650,6 +3703,7 @@ export async function handleDamageAction(
     formula: struck ? formatDiceAdds(struck.damage) : baseFormula,
     damageType: struck ? struck.type : couched ? couched.type : (damageType as DamageType),
     armorDivisor: Number(armorDivisor) || 1,
+    ...(line.firstHit ? { firstHit: true } : {}),
     ...(aimed ? { calledShot: aimed } : {}),
     ...(mass > 1 ? { massMultiplier: mass } : {}),
     ...(halved ? { halfDamage: true } : {}),

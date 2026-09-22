@@ -38,17 +38,22 @@ describe("pricing a weapon the packs list no rounds for", () => {
     expect(nearestAmmunitionByCalibre(listed, 9.14)?.name).toBe("Cartridges, 9mm");
     // A .41 derringer: 10.41mm, nearer the .380 (9.65mm) than the .45.
     expect(nearestAmmunitionByCalibre(listed, 10.41)?.name).toBe("Cartridges, .380");
-    // A .80 musket: 20.32mm, and the widest bore listed is the .45.
-    expect(nearestAmmunitionByCalibre(listed, 20.32)?.name).toBe("Cartridges, .45");
+    // A .80 musket: 20.32mm, and the widest bore listed is the 12G shell's
+    // 18.53mm (since API 1.73.0, when gauges began to be read as bores).
+    expect(nearestAmmunitionByCalibre(listed, 20.32)?.name).toBe("Shotgun Shells, 12G");
+    expect(nearestAmmunitionByCalibre(listed.filter((r) => r.fits !== "12G"), 20.32)?.name).toBe("Cartridges, .45");
   });
 
-  /**
-   * A shotgun's gauge is not a bore diameter and arrows have none at all, so
-   * neither is offered as a comparable: the figures would mean nothing.
-   */
-  it("ignores anything with no bore to compare, such as gauges and arrows", () => {
-    const noBore = listed.filter((r) => r.fits === "arrow" || r.fits === "12G");
+  /** Arrows have no bore at all, so they are not offered as a comparable. */
+  it("ignores anything with no bore to compare, such as arrows", () => {
+    const noBore = listed.filter((r) => r.fits === "arrow");
     expect(nearestAmmunitionByCalibre(noBore, 9)).toBeNull();
+  });
+
+  /** A gauge is read as the bore it names (Characters p. 279; since API 1.73.0). */
+  it("compares a shotgun by the bore its gauge names", () => {
+    // A 10G shotgun (19.69mm) with no shells of its own listed takes the 12G's.
+    expect(nearestAmmunitionByCalibre(listed, 19.69)?.name).toBe("Shotgun Shells, 12G");
   });
 
   /** ".44M" is a Magnum .44: the letter names the cartridge, not the bore. */
