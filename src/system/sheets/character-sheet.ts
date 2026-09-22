@@ -54,6 +54,7 @@ import {
 import { rollInfluence, rollReaction } from "../reactions.js";
 import { monthlyPay } from "../../rules/wealth.js";
 import { parseDiceAdds } from "../../rules/dice.js";
+import { aimableLocations, locationsOf } from "../../rules/vehicle-combat.js";
 import {
   payCostOfLiving,
   rollAging,
@@ -3681,7 +3682,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!isRuleOn("vehicles")) return;
     const item = this.itemFrom(target);
     if (!item) return;
-    const asked = await promptForVehicleHit();
+    const vehicle = item.system?.vehicle ?? {};
+    const powered = Number(vehicle.stHp) > 0 && Number(vehicle.acceleration) > 0;
+    const asked = await promptForVehicleHit({ aboard: 1, locations: aimableLocations(locationsOf(String(vehicle.locations ?? "")), powered) });
     if (!asked) return;
     await shootAtVehicle({ actor: this.actor, vehicle: item, ...asked });
   }

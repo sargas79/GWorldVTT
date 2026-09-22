@@ -14,6 +14,7 @@ import type { Locomotion } from "./vehicles.js";
 import type { DamageType } from "./types.js";
 import { woundingModifierAt } from "./hit-locations.js";
 import { noInjuryTolerance, toleratedWoundingModifier } from "./injury-tolerance.js";
+import { shieldDrAgainst } from "./shield-damage.js";
 
 // ── losing control (p. 469) ─────────────────────────────────────────────
 
@@ -254,6 +255,33 @@ export function vehicleHitLocation(options: {
 }
 
 /**
+ * The locations a shot could be aimed at on this vehicle, in the table's
+ * order: the body, whatever its Locations entry lists, and the vital area of
+ * a powered one (p. 554).
+ */
+export function aimableLocations(has: readonly string[], powered: boolean): VehicleLocation[] {
+  const out: VehicleLocation[] = [];
+  for (const row of Object.values(VEHICLE_HIT_LOCATIONS)) {
+    for (const location of row.locations) {
+      if (out.includes(location)) continue;
+      if (location === "body" || (location === "vitalArea" ? powered : has.includes(location))) out.push(location);
+    }
+  }
+  return out;
+}
+
+/**
+ * The penalty for aiming at a location deliberately, before the vehicle's SM
+ * (p. 554): the figure in parentheses on the row it is on.
+ */
+export function vehicleLocationPenalty(location: VehicleLocation): number {
+  for (const row of Object.values(VEHICLE_HIT_LOCATIONS)) {
+    if (row.locations.includes(location)) return row.penalty;
+  }
+  return 0;
+}
+
+/**
  * What it takes to cripple a location, as a share of the vehicle's HP
  * (pp. 554-555), and what is lost when it goes. Null for the locations a
  * hit passes through to a person or an animal instead.
@@ -356,6 +384,139 @@ export function vehicleInjury(options: {
 /** "A closed window gives half the vehicle's DR (round up)" (p. 555). */
 export function windowDr(vehicleDr: number): number {
   return Math.ceil(Math.max(0, vehicleDr) / 2);
+}
+
+// ── DR by face and location (pp. 462, 554-555) ──────────────────────────
+
+/**
+ * The side of a vehicle a shot came in on. The tables split DR by face --
+ * "for ground vehicles, this is usually the front DR and the average of side
+ * and rear DR" (p. 462) -- and a shot from above or below meets the top or
+ * the underbody.
+ */
+export type VehicleArc = "front" | "side" | "rear" | "top" | "underbody";
+
+export const VEHICLE_ARCS: readonly VehicleArc[] = ["front", "side", "rear", "top", "underbody"];
+
+/**
+ * The locations whose hit the vehicle's DR does not stand in front of: the
+ * person or the animal there is struck instead, and "the vehicle takes no
+ * damage, and its DR doesn't protect" them (p. 555).
+ */
+export function passesThrough(location: VehicleLocation): boolean {
+  return hitsAPerson(location) || location === "draftAnimal";
+}
+
+/**
+ * The locations a vehicle may give a DR of its own. The body is the faces'
+ * figure by definition, and the ones a hit passes through have none.
+ */
+export const DR_LOCATIONS: readonly VehicleLocation[] = [
+  "smallWindow", "weaponMount", "smallSuperstructure", "independentTurret",
+  "track", "rotor", "mast", "wing", "arm", "largeSuperstructure", "mainTurret",
+  "largeWindow", "runner", "wheel", "vitalArea",
+];
+
+/**
+ * A vehicle's DR as its statistics give it. `dr` is the table's figure, and
+ * the front's when the table splits it; everything else is optional, and a
+ * vehicle that gives none of it has one DR all round (p. 462).
+ */
+export interface VehicleDrFigures {
+  dr: number;
+  /** The second figure of a split like "45/20": the sides and rear. */
+  drOther?: number | null;
+  drTop?: number | null;
+  drUnderbody?: number | null;
+  /** A location that has a DR of its own, replacing the face's there. */
+  drByLocation?: Partial<Record<VehicleLocation, number | null | undefined>> | null;
+}
+
+/** Where a vehicle's DR at a spot came from, for the card to say. */
+export type VehicleDrSource = "location" | "window" | "face" | "none";
+
+function given(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : null;
+}
+
+/**
+ * The DR of one face (p. 462). The table's one figure is the front's; a
+ * vehicle that gives a second has it on the sides and rear. The top and the
+ * underbody are the second figure unless given their own, since the table
+ * lists only "the two most important DR scores" and the front is the one
+ * built to take fire. No arc at all reads the table's figure.
+ */
+export function vehicleFaceDr(figures: VehicleDrFigures, arc: VehicleArc | null): number {
+  const main = Math.max(0, Math.floor(Number(figures.dr) || 0));
+  const other = given(figures.drOther) ?? main;
+  switch (arc) {
+    case "side":
+    case "rear":
+      return other;
+    case "top":
+      return given(figures.drTop) ?? other;
+    case "underbody":
+      return given(figures.drUnderbody) ?? other;
+    default:
+      return main;
+  }
+}
+
+/**
+ * The vehicle's DR where a shot landed (pp. 462, 554-555): nothing where the
+ * hit passes through to a person or an animal, a location's own figure where
+ * it has one, half the face's for a closed window ("round up"), and the
+ * face's everywhere else.
+ */
+export function vehicleDrAt(
+  figures: VehicleDrFigures,
+  location: VehicleLocation,
+  arc: VehicleArc | null,
+): { dr: number; source: VehicleDrSource } {
+  if (passesThrough(location)) return { dr: 0, source: "none" };
+  const own = given(figures.drByLocation?.[location]);
+  if (own !== null) return { dr: own, source: "location" };
+  const face = vehicleFaceDr(figures, arc);
+  if (location === "largeWindow" || location === "smallWindow") return { dr: windowDr(face), source: "window" };
+  return { dr: face, source: "face" };
+}
+
+/**
+ * What gets through a vehicle's DR (p. 378, as for anybody): the layers that
+ * count are added up, the highest Hardened among them steps the armour
+ * divisor down (Characters p. 47), the divisor divides what is left, and the
+ * rest comes off the basic damage.
+ */
+export function vehiclePenetration(options: {
+  basicDamage: number;
+  lines: ReadonlyArray<{ dr: number; applies: boolean; hardened?: number }>;
+  armorDivisor: number;
+  ignoresDr?: boolean;
+}): { dr: number; effectiveDr: number; penetrating: number } {
+  let dr = 0;
+  let hardened = 0;
+  for (const line of options.lines) {
+    if (line.applies === false) continue;
+    dr += Math.max(0, Math.floor(Number(line.dr) || 0));
+    hardened = Math.max(hardened, Math.max(0, Math.floor(Number(line.hardened) || 0)));
+  }
+  const effectiveDr = shieldDrAgainst({
+    dr,
+    armorDivisor: Number(options.armorDivisor) > 0 ? Number(options.armorDivisor) : 1,
+    ignoresDr: options.ignoresDr === true,
+    hardened,
+  });
+  const basic = Math.max(0, Math.floor(Number(options.basicDamage) || 0));
+  return { dr, effectiveDr, penetrating: Math.max(0, basic - effectiveDr) };
+}
+
+/** The DR as the tables print it:"45/20" for a split, "45" for one figure. */
+export function vehicleDrLabel(figures: VehicleDrFigures): string {
+  const main = Math.max(0, Math.floor(Number(figures.dr) || 0));
+  const other = given(figures.drOther);
+  return other === null || other === main ? String(main) : `${main}/${other}`;
 }
 
 // ── the Occupant Hit Table (p. 555) ─────────────────────────────────────

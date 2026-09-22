@@ -20,6 +20,7 @@ import type { ResuscitationCause } from "../../rules/medicine.js";
 import type { Limbs } from "../../rules/entangling.js";
 import type { CollisionAngle } from "../../rules/collisions.js";
 import type { DamageType } from "../../rules/types.js";
+import { VEHICLE_ARCS, type VehicleArc, type VehicleLocation } from "../../rules/vehicle-combat.js";
 import { culturePenalty, languagePenalty, type Comprehension } from "../../rules/languages.js";
 import type { StudyMethod } from "../../rules/study.js";
 import {
@@ -1824,28 +1825,69 @@ export async function promptForFightingOffSwarm(): Promise<{ weaponDamage: numbe
   );
 }
 
-/** Asks how much got through the vehicle, and how many are aboard (pp. 554-555). */
-export async function promptForVehicleHit(): Promise<{
-  penetrating: number;
+/** The armour divisors the vehicle prompt offers, in the order a table reaches for them. */
+const VEHICLE_DIVISORS: readonly string[] = ["1", "2", "3", "5", "10", "100", "0.5", "0.2", "0.1", "ignores"];
+
+/**
+ * Asks what hit the vehicle, where, from which side, and how many are aboard
+ * (pp. 462, 554-555). The damage is basic damage by default, and the
+ * vehicle's DR at the spot comes off it; a table that has already worked out
+ * what got through can say so instead.
+ */
+export async function promptForVehicleHit(options: {
+  /** How many are aboard, to start the field at. */
+  aboard?: number;
+  /** The locations this vehicle has, to offer as an aimed shot. */
+  locations?: readonly string[];
+} = {}): Promise<{
+  damage?: number;
+  penetrating?: number;
+  armorDivisor: number;
+  ignoresDr: boolean;
+  location: VehicleLocation | null;
+  arc: VehicleArc | null;
   occupants: number;
   damageType: DamageType;
   tightBeam: boolean;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Vehicle.${key}`);
   const types: Array<[string, string]> = VEHICLE_DAMAGE_TYPES.map((t) => [t, t]);
+  const divisors: Array<[string, string]> = VEHICLE_DIVISORS.map((d) => [
+    d,
+    d === "1" ? L("DivisorNone") : d === "ignores" ? L("DivisorIgnores") : `(${d})`,
+  ]);
+  const locations: Array<[string, string]> = [["", L("RandomLocation")]].concat(
+    (options.locations ?? []).map((key) => [key, L(`Location.${key}`)] as [string, string]),
+  ) as Array<[string, string]>;
+  const arcs: Array<[string, string]> = [["", L("Arc.none")]].concat(
+    VEHICLE_ARCS.map((arc) => [arc, L(`Arc.${arc}`)] as [string, string]),
+  ) as Array<[string, string]>;
   return hazardPrompt(
     L("ShotAt"),
-    hazardField("damage", L("Penetrating"), 0, 'min="0"') +
+    hazardField("damage", L("ShotDamage"), 0, 'min="0"') +
+      hazardSelect("damageIs", L("DamageIs"), [["basic", L("DamageIsBasic")], ["penetrating", L("DamageIsPenetrating")]]) +
+      hazardSelect("divisor", L("ArmorDivisor"), divisors) +
       hazardSelect("damageType", L("DamageType"), types) +
       hazardCheck("tightBeam", L("TightBeam")) +
-      hazardField("occupants", L("Aboard"), 1, 'min="0"') +
+      hazardSelect("location", L("AimedAt"), locations) +
+      hazardSelect("arc", L("ArcLabel"), arcs) +
+      hazardField("occupants", L("Aboard"), Math.max(0, Math.floor(options.aboard ?? 1)), 'min="0"') +
       `<p class="ihint" style="margin:0">${L("ShotAtHint")}</p>`,
-    (form) => ({
-      penetrating: num(form, "damage"),
-      occupants: num(form, "occupants"),
-      damageType: (str(form, "damageType") || "cr") as DamageType,
-      tightBeam: ticked(form, "tightBeam"),
-    }),
+    (form) => {
+      const amount = Math.max(0, num(form, "damage"));
+      const divisor = str(form, "divisor");
+      const alreadyThrough = str(form, "damageIs") === "penetrating";
+      return {
+        ...(alreadyThrough ? { penetrating: amount } : { damage: amount }),
+        armorDivisor: divisor === "ignores" ? 1 : Number(divisor) || 1,
+        ignoresDr: divisor === "ignores",
+        location: (str(form, "location") || null) as VehicleLocation | null,
+        arc: (str(form, "arc") || null) as VehicleArc | null,
+        occupants: num(form, "occupants"),
+        damageType: (str(form, "damageType") || "cr") as DamageType,
+        tightBeam: ticked(form, "tightBeam"),
+      };
+    },
   );
 }
 

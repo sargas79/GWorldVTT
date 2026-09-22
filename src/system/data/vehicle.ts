@@ -21,7 +21,7 @@ import {
   cargoCapacity, cruisingSpeedMph, curbWeight, endurance, occupants,
   safeDecelerationPerTurn, type Locomotion,
 } from "../../rules/vehicles.js";
-import { locationsOf, mediumOf } from "../../rules/vehicle-combat.js";
+import { locationsOf, mediumOf, type VehicleLocation } from "../../rules/vehicle-combat.js";
 import { scaleScore, vehicleDodge } from "../../rules/scale.js";
 import { normalizeSkillName } from "../../rules/skills.js";
 import { afterPrepare, extensionsField } from "../data-extensions.js";
@@ -61,6 +61,8 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
     fragility: "" | "c" | "f" | "x";
     acceleration: number; topSpeed: number; loadedWeight: number; load: number;
     sm: number; occupants: string; dr: number; range: number; skill: string;
+    drOther: number | null; drTop: number | null; drUnderbody: number | null;
+    drByLocation: Partial<Record<VehicleLocation, number | null>>;
     locations: string; locomotion: Locomotion; roadBound: boolean;
     draft: number; stall: number;
   };

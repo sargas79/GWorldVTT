@@ -93,6 +93,8 @@ export const COMBAT_HOOKS = Object.freeze({
   malfunction: "gworld.malfunction",
   /** Before an attempt to clear a malfunction (since 1.71.0): `{ actor, item, modeIndex, malfunction, rolls, readyManeuvers, hours, needsBothHands, criticalFailure, modifiers, aids, refusal }`, mutable. */
   clearMalfunction: "gworld.clearMalfunction",
+  /** Before a vehicle's DR meets a shot (since 1.79.0): `{ vehicle, actor, item, mode, location, arc, damageType, basicDamage, armorDivisor, ignoresDr, tightBeam, lines }`, the lines mutable. */
+  vehicleDr: "gworld.vehicleDr",
 });
 
 /** One piece of worn armour as `gworld.armorDr` hands it to a listener. */
@@ -122,6 +124,20 @@ export interface ArmorDrLine {
    * read the piece's own data. Absent on a line a listener added itself.
    */
   itemId?: string;
+}
+
+/** One layer of a vehicle's DR as `gworld.vehicleDr` hands it to a listener (since 1.79.0). */
+export interface VehicleDrLine {
+  /** What the layer is called. */
+  label: string;
+  /** The DR it offers against this shot, which a listener may change. */
+  dr: number;
+  /** Whether it counts at all: set false to refuse it against this attack. */
+  applies: boolean;
+  /** Levels of Hardened, which step the attack's armour divisor down. */
+  hardened: number;
+  /** Why a listener changed it, shown beside the figure. */
+  reason?: string;
 }
 
 // ── an item's attack rows ──────────────────────────────────────────────────
