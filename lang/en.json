@@ -4538,6 +4538,57 @@
       "ContactApplied": "Contact blast: maximum damage. Anyone else in the blast gets cover DR {dr} (torso DR + HP)",
       "InternalApplied": "Internal blast: DR has no effect; vitals, x3"
     },
+    "Demolition": {
+      "Title": "Demolition",
+      "Hint": "A charge does 6d times the square root of (weight in lbs x 4 x REF), crushing explosion (Campaigns p. 415). Packed against a door or wall it does the most its dice could; nearby, the collateral share at that distance. Walls are per hex (p. 558).",
+      "Detonate": "Detonate",
+      "ExplosiveLabel": "Explosive",
+      "ExplosiveOption": "{label} (REF {ref})",
+      "Weight": "Weight (lbs)",
+      "Placement": "Placed",
+      "Placements": {
+        "contact": "In contact (packed against it)",
+        "nearby": "Nearby"
+      },
+      "Distance": "Distance from the structure (yards)",
+      "Target": "Against",
+      "NoStructure": "Nothing in particular",
+      "CustomStructure": "A structure (DR and HP below)",
+      "StructureOption": "{name}: DR {dr}, HP {hp}",
+      "CustomDr": "Its DR",
+      "CustomHp": "Its HP",
+      "DamageTaken": "Damage it has taken already",
+      "Structure": "Structure",
+      "NoCharge": "A charge needs a weight and an explosive (or a REF above 0).",
+      "OfRef": "explosive at REF {ref}",
+      "ChargeLabel": "{weight} lb of {explosive} ({notation})",
+      "AgainstContact": "Contact: {damage} damage, the most the dice could do, against DR {dr}",
+      "AgainstNearby": "{distance} yd away: {damage} damage against DR {dr}",
+      "Injury": "{injury} HP of damage; {hp} HP, now at {now}",
+      "Roll": "Rolled {roll} against HT {ht}",
+      "State": {
+        "standing": "It holds",
+        "breached": "Breached: a hole is blown through it",
+        "failing": "At -1xHP or worse, and still standing for now",
+        "collapsed": "Blown apart"
+      },
+      "Explosive": {
+        "serpentinePowder": "Serpentine Powder",
+        "ammoniumNitrate": "Ammonium Nitrate",
+        "blackPowderEarly": "Black Powder (1600-1850)",
+        "blackPowder": "Black Powder (1850-1890)",
+        "fuelFertilizer": "Diesel Fuel/Nitrate Fertilizer",
+        "dynamite": "Dynamite",
+        "tnt": "TNT",
+        "amatol": "Amatol",
+        "nitroglycerine": "Nitroglycerine",
+        "tetryl": "Tetryl",
+        "compositionB": "Composition B",
+        "c4": "C4 Plastic Explosive",
+        "octanitrocubane": "Octanitrocubane",
+        "metallicHydrogen": "Stabilized Metallic Hydrogen"
+      }
+    },
     "LargeArea": {
       "Label": "Large area",
       "Hint": "Large-area injury: DR is the average of the torso's and the least protected exposed location's, and there is no hit location",

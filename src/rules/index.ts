@@ -114,6 +114,7 @@ export {
   BLAST_PLACEMENTS, INTERNAL_BLAST_WOUNDING, FRAGMENTATION_TYPE, blastPlacementOf, contactCoverDr,
   fragmentationSpec, fragmentationLabel, fragmentationStrikes, type BlastPlacement, type FragmentationSpec,
 } from "./explosions.js";
+export * from "./demolition.js";
 export * from "./large-area.js";
 export * from "./layered-armor.js";
 export * from "./legality.js";

@@ -48,6 +48,7 @@ import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldGenericItemSheet } from "./system/sheets/generic-item-sheet.js";
 import { setGenericSheetRegistrar } from "./system/data-extensions.js";
 import { registerSheetExtensionHooks } from "./system/sheet-extensions.js";
+import { registerDemolitionTool } from "./system/demolition.js";
 import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
 import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
 import { READY_HOOK, createApi, warnIncompatibleModules } from "./system/api.js";
@@ -125,6 +126,8 @@ Hooks.once("init", () => {
   registerSuppressionFire();
   registerSupersededPackHiding();
   registerSheetExtensionHooks();
+  // The GM's Demolition tool: a charge set off against a door or a wall (p. 415).
+  registerDemolitionTool();
   // Which party an actor is in, the members' refresh when a party changes,
   // and the party's members nested under it in the sidebar.
   registerPartyHooks();

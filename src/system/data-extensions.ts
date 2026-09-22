@@ -19,6 +19,7 @@
  */
 
 import { registerPoison } from "./poison-registry.js";
+import { offeredExplosives, registerExplosive } from "./explosive-registry.js";
 import { TAB_NAMES, type TabName } from "./sheet-tabs.js";
 
 
@@ -793,6 +794,9 @@ export function afterPrepare(document: any): void {
 /** What the API exposes. */
 export const dataApi = Object.freeze({
   registerPoison,
+  // Explosives for the Relative Explosive Force Table, and the table as offered (since 1.74.0).
+  registerExplosive,
+  explosives: offeredExplosives,
   registerDataExtension,
   getExtension,
   updateExtension,
