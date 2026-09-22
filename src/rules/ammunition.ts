@@ -29,12 +29,49 @@ export interface ShotsEntry {
   /** "T" means the weapon is thrown: "to 'reload,' pick it up or ready a new weapon!" */
   thrown: boolean;
   text: string;
+  /**
+   * Seconds a successful Fast-Draw (Ammo) roll takes off the reload
+   * (Characters pp. 194-195): "a successful roll always shaves at least one
+   * second off the reload time", so 1 unless a module says more, and 0 where
+   * the skill doesn't help (since API 1.71.0).
+   */
+  fastDrawSeconds: number;
+  /** Whether that saving is for the whole reload or for each round loaded (since API 1.71.0). */
+  fastDrawPer: "reload" | "round";
+  /** What the Reload button offers to tick: an assistant, a loading aid (since API 1.71.0). None in the Basic Set. */
+  aids: ReloadAid[];
 }
+
+/**
+ * Something that changes a reload when it is used, which the Reload button
+ * offers as a choice (since API 1.71.0). The Basic Set has none; a module
+ * adds them through the Shots entry.
+ */
+export interface ReloadAid {
+  id: string;
+  label: string;
+  /**
+   * Seconds it adds to the reload, or takes off it where negative, counted as
+   * the entry's own time is: for the reload, or for each round where the
+   * weapon loads shot by shot.
+   */
+  seconds?: number;
+  /** What a successful Fast-Draw (Ammo) roll saves with it, in place of the entry's own. */
+  fastDrawSeconds?: number;
+  /** Whether it starts ticked. */
+  checked?: boolean;
+}
+
+/** "Always shaves at least one second off the reload time" (Characters p. 194). */
+export const FAST_DRAW_AMMO_SECONDS = 1;
 
 /** Reads a Shots entry: "30+1(3)", "6(3i)", "1(20)", "T(1)", "1(-)", "10". */
 export function parseShots(text: string | undefined): ShotsEntry {
   const raw = (text ?? "").trim();
-  const none: ShotsEntry = { capacity: null, chambered: false, reloadSeconds: null, perShot: false, thrown: false, text: raw };
+  const none: ShotsEntry = {
+    capacity: null, chambered: false, reloadSeconds: null, perShot: false, thrown: false, text: raw,
+    fastDrawSeconds: FAST_DRAW_AMMO_SECONDS, fastDrawPer: "reload", aids: [],
+  };
   if (!raw) return none;
   const m = /^(T|\d+)(\+1)?\s*(?:\((\d+|-)?\s*(i)?\s*\))?$/i.exec(raw.replace(/spcl\.?/i, "-"));
   if (!m) return none;
@@ -46,6 +83,9 @@ export function parseShots(text: string | undefined): ShotsEntry {
     perShot: Boolean(m[4]),
     thrown,
     text: raw,
+    fastDrawSeconds: FAST_DRAW_AMMO_SECONDS,
+    fastDrawPer: "reload",
+    aids: [],
   };
 }
 
@@ -63,6 +103,53 @@ export function reloadTime(entry: ShotsEntry, shotsToLoad: number): number | nul
   if (entry.reloadSeconds === null) return null;
   if (!entry.perShot) return entry.reloadSeconds;
   return entry.reloadSeconds * Math.max(0, Math.floor(shotsToLoad));
+}
+
+/**
+ * A reload's time once the aids ticked and a Fast-Draw (Ammo) roll have had
+ * their say (Characters pp. 194-195; since API 1.71.0).
+ *
+ * `seconds` is the reload as the table and the user's ST make it, for the
+ * rounds being loaded. Each aid adds its own seconds -- per round where the
+ * weapon loads shot by shot -- and the last aid that says what Fast-Draw
+ * saves with it overrides the entry's figure. A success then takes that
+ * saving off, once or for each round loaded. A reload never drops below one
+ * second by the skill, nor below nothing by an aid.
+ */
+export function reloadTimeWith(options: {
+  entry: Pick<ShotsEntry, "perShot" | "fastDrawSeconds" | "fastDrawPer">;
+  seconds: number | null;
+  rounds: number;
+  aids?: readonly ReloadAid[];
+  fastDraw?: boolean;
+}): { seconds: number | null; saved: number } {
+  if (options.seconds === null) return { seconds: null, saved: 0 };
+  const rounds = Math.max(0, Math.floor(options.rounds) || 0);
+  const aids = options.aids ?? [];
+  const count = (n: unknown) => (Number.isFinite(Number(n)) ? Number(n) : 0);
+  const aided = Math.max(0, options.seconds + aids.reduce((sum, aid) => sum + count(aid.seconds) * (options.entry.perShot ? rounds : 1), 0));
+  const perSaving = aids.reduce<number>((figure, aid) => (aid.fastDrawSeconds === undefined ? figure : count(aid.fastDrawSeconds)), count(options.entry.fastDrawSeconds));
+  const saving = Math.max(0, perSaving) * (options.entry.fastDrawPer === "round" ? rounds : 1);
+  if (!options.fastDraw || saving <= 0) return { seconds: aided, saved: 0 };
+  const after = Math.max(Math.min(1, aided), aided - saving);
+  return { seconds: after, saved: aided - after };
+}
+
+/**
+ * Whether a Fast-Draw (Ammo) roll is worth offering: there is a reload time,
+ * more than a second of it, and something the skill would save. A weapon that
+ * loads shot by shot saves only where the entry says the saving is per round.
+ */
+export function fastDrawHelps(options: {
+  entry: Pick<ShotsEntry, "perShot" | "fastDrawSeconds" | "fastDrawPer">;
+  seconds: number | null;
+  rounds: number;
+  aids?: readonly ReloadAid[];
+}): boolean {
+  if (options.entry.perShot && options.entry.fastDrawPer !== "round") return false;
+  const without = reloadTimeWith({ ...options, fastDraw: false }).seconds;
+  const withIt = reloadTimeWith({ ...options, fastDraw: true }).seconds;
+  return without !== null && without > 1 && withIt !== null && withIt < without;
 }
 
 /**

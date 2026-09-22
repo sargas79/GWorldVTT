@@ -142,3 +142,50 @@ export const EXPLOSION_DAMAGE = { dice: 1, adds: 2, type: "cr ex", fragmentation
 export function clearsItself(kind: Malfunction, revolver: boolean): boolean {
   return kind === "misfire" && revolver;
 }
+
+// ── clearing one (p. 407) ─────────────────────────────────────────────────
+
+/** A roll that clears a malfunction: Armoury, or the weapon skill based on IQ. */
+export interface ClearingRoll {
+  skill: "armoury" | "weapon";
+  modifier: number;
+}
+
+/**
+ * The rolls each kind may be cleared with (p. 407): an Armoury roll, or an
+ * IQ-based roll against the weapon's own skill, each at the repair's modifier.
+ */
+export function clearingRolls(kind: Malfunction): ClearingRoll[] {
+  const repair = REPAIRS[kind];
+  return [
+    { skill: "armoury", modifier: repair.armouryModifier },
+    { skill: "weapon", modifier: repair.weaponSkillModifier },
+  ];
+}
+
+/** What an attempt to clear a malfunction came to. */
+export type ClearingResult = "cleared" | "notYet" | "mechanical" | "destroyed";
+
+/**
+ * What an attempt comes to (p. 407): "A success fixes the weapon. Failure
+ * means it isn't fixed yet, but you can try again", and a critical failure
+ * makes a misfire or stoppage a mechanical problem, and destroys a weapon
+ * already that far gone.
+ */
+export function clearingResult(
+  outcome: { success: boolean; criticalFailure: boolean },
+  criticalFailure: Repair["criticalFailure"],
+): ClearingResult {
+  if (outcome.success) return "cleared";
+  if (outcome.criticalFailure) return criticalFailure;
+  return "notYet";
+}
+
+/**
+ * A skill rolled against another attribute (Characters p. 172): the same
+ * level relative to the attribute, which is what "IQ-based weapon skill"
+ * means for a gun's DX-based skill.
+ */
+export function basedOnAnother(level: number, attribute: number, other: number): number {
+  return level - attribute + other;
+}

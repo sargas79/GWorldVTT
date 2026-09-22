@@ -113,6 +113,7 @@ import { INFLUENCE_SKILLS } from "../../rules/reactions.js";
 import { rollDisarm } from "../disarm.js";
 import { rollStrikeToBreak, weaponTargetsFor } from "../weapon-damage.js";
 import { buyAmmunition, chooseAndLoad, reloadWeapon } from "../ammunition.js";
+import { clearMalfunction } from "../malfunctions.js";
 import { buyMore } from "../shopping.js";
 import { clothingCost } from "../../rules/wealth.js";
 import {
@@ -476,6 +477,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       toggleSkillOrder: GWorldCharacterSheet.#onToggleSkillOrder,
       readyWeapon: GWorldCharacterSheet.#onReadyWeapon,
       reloadWeapon: GWorldCharacterSheet.#onReloadWeapon,
+      clearMalfunction: GWorldCharacterSheet.#onClearMalfunction,
       loadAmmunition: GWorldCharacterSheet.#onLoadAmmunition,
       buyAmmunition: GWorldCharacterSheet.#onBuyAmmunition,
       buyItem: GWorldCharacterSheet.#onBuyItem,
@@ -3195,6 +3197,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const item = this.itemFrom(target);
     if (!item) return;
     await reloadWeapon(this.actor, item, Number(target.dataset.modeIndex) || 0);
+  }
+
+  /** Tries to clear a weapon's malfunction (Campaigns p. 407). */
+  static async #onClearMalfunction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.itemFrom(target);
+    if (!item) return;
+    await clearMalfunction(this.actor, item);
   }
 
   /** Loads a weapon from a box of rounds the character carries (Characters p. 278). */

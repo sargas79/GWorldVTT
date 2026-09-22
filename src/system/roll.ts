@@ -114,8 +114,6 @@ import {
 } from "../rules/ranged.js";
 import { telescopicOffset, telescopicScope } from "../rules/senses.js";
 import {
-  REPAIRS,
-  clearsItself,
   malfunctionFor,
   malfunctioned,
   mayExplode,
@@ -128,7 +126,8 @@ import { effectiveLevelDifference } from "../rules/unarmed-techniques.js";
 import { turnedBlade } from "../rules/subduing.js";
 import { coverShot, struckCover, type CoverApproach } from "../rules/cover.js";
 import { breakWeapon } from "./weapon-damage.js";
-import { shotsReady, spendShots } from "./ammunition.js";
+import { announceShots, shotsReady, spendShots, type ShotsTally } from "./ammunition.js";
+import { malfunctionOf, malfunctionWithHooks, setMalfunction, type MalfunctionReport } from "./malfunctions.js";
 import { strikingPart } from "../rules/hurting-yourself.js";
 import type { DamageType } from "../rules/types.js";
 
@@ -320,7 +319,14 @@ export interface SuccessRollOptions {
    * The weapon's Malf., and what it takes to put right if the roll reaches it
    * (GURPS Basic Set: Campaigns p. 407).
    */
-  malfunction?: { number: number; techLevel: number; revolver: boolean } | null;
+  malfunction?: {
+    number: number;
+    techLevel: number;
+    revolver: boolean;
+    /** The weapon and mode fired, for `gworld.malfunction` and to put it out of action (since 1.71.0). */
+    item?: any;
+    modeIndex?: number;
+  } | null;
   /**
    * The defender may dodge or block but not parry: a Missile spell
    * (Characters p. 241). Recorded on the message for the defense card.
@@ -475,7 +481,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     isRuleOn("malfunctions") &&
     canMalfunction(hasInfiniteAmmunition(actor)) &&
     options.malfunction
-      ? await rollMalfunction(roll.total, options.malfunction)
+      ? await rollMalfunction(roll.total, options.malfunction, actor)
       : null;
 
   const content = await foundry.applications.handlebars.renderTemplate(CHAT_TEMPLATE, {
@@ -843,16 +849,9 @@ function afflictionLabel(actor: any): string {
  */
 async function rollMalfunction(
   attackRoll: number,
-  weapon: { number: number; techLevel: number; revolver: boolean },
-): Promise<{
-  roll: any;
-  kind: Malfunction;
-  label: string;
-  repair: string;
-  fires: boolean;
-  clears: boolean;
-  explodes: boolean;
-} | null> {
+  weapon: NonNullable<SuccessRollOptions["malfunction"]>,
+  actor: any,
+): Promise<(MalfunctionReport & { roll: any }) | null> {
   if (!malfunctioned({ roll: attackRoll, malfunctionNumber: weapon.number })) return null;
 
   const roll = new Roll("3d6");
@@ -864,24 +863,17 @@ async function rollMalfunction(
   const kind: Malfunction =
     rolled === "explosion" && !mayExplode(weapon.techLevel) ? "mechanical" : rolled;
 
-  const repair = REPAIRS[kind];
-  const clears = clearsItself(kind, weapon.revolver);
-
-  return {
-    roll,
-    kind,
-    label: game.i18n.localize(`GWORLD.Malfunction.${kind}`),
-    repair: clears
-      ? game.i18n.localize("GWORLD.Malfunction.Revolver")
-      : repair.hours > 0
-        ? game.i18n.format("GWORLD.Malfunction.Hours", { hours: repair.hours })
-        : game.i18n.format("GWORLD.Malfunction.Ready", { ready: repair.readyManeuvers }),
-    // "The weapon fires one shot, then jams. (Treat the fired shot as a normal
-    // attack.)"
-    fires: kind === "stoppage",
-    clears,
-    explodes: kind === "explosion",
-  };
+  // The modules may read the result and replace it (since 1.71.0); one that
+  // says there was no malfunction after all leaves the shot as it was.
+  const modeIndex = Number.isInteger(weapon.modeIndex) ? weapon.modeIndex! : null;
+  const report = malfunctionWithHooks({
+    actor, item: weapon.item ?? null, modeIndex, attackRoll, roll: roll.total,
+    techLevel: weapon.techLevel, revolver: weapon.revolver, kind,
+  });
+  if (!report) return null;
+  // A weapon left out of action stays so until it is cleared.
+  if (report.jams && weapon.item?.isOwner) await setMalfunction(weapon.item, { kind: report.kind, label: report.label, modeIndex: modeIndex ?? 0 });
+  return { ...report, roll };
 }
 
 /**
@@ -1315,11 +1307,20 @@ export async function handleRollAction(
     if (plan === null) return null;
     if (plan !== "single") {
       let last: SuccessRollResult | null = null;
+      const tally: ShotsTally = { fired: 0, extra: 0, wasted: 0, targets: 0 };
       for (const [i, token] of plan.tokens.entries()) {
-        const outcome = await withTargets([token], () => rollAction(actor, event, target, sequence.count > 1 ? place : null, plan.shots[i]!));
+        const outcome = await withTargets([token], () => rollAction(actor, event, target, sequence.count > 1 ? place : null, plan.shots[i]!, tally));
         // An attack called off, or refused, ends the burst there.
         if (!outcome) break;
         last = outcome;
+      }
+      // The whole burst, once: what it fired at each target and what the
+      // sweep between them wasted (since 1.71.0).
+      if (tally.targets > 0) {
+        announceShots({
+          actor, item: rollItemOf(actor, target), modeIndex: Number(target.dataset.modeIndex),
+          fired: tally.fired, extra: tally.extra, wasted: tally.wasted, kind: "spraying", targets: tally.targets,
+        });
       }
       if (last && inCombat) await recordAttackMade(actor);
       return last;
@@ -1367,6 +1368,8 @@ async function rollAction(
   place: { index: number; count: number } | null,
   /** This target's share of a Spraying Fire burst, or none (since 1.70.0). */
   spray: SprayShot | null = null,
+  /** What a spray's attacks spent between them, announced once the burst is over (since 1.71.0). */
+  tally: ShotsTally | null = null,
 ): Promise<SuccessRollResult | null> {
   const { rollType, rollLabel, rollTarget, ranged } = target.dataset;
   const base = Number(rollTarget);
@@ -1396,6 +1399,13 @@ async function rollAction(
   // The weapon the button belongs to, for the modules' attack options.
   const rolledItemId = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
   const rolledItem = rolledItemId ? actor?.items?.get?.(rolledItemId) ?? null : null;
+  // A weapon out of action from a malfunction fires nothing until it is
+  // cleared (Campaigns p. 407; since 1.71.0).
+  const outOfAction = rollType === "attack" && ranged ? malfunctionOf(rolledItem) : null;
+  if (outOfAction) {
+    ui.notifications?.warn(game.i18n.format("GWORLD.Malfunction.OutOfAction", { name: String(rolledItem?.name ?? ""), kind: outOfAction.label }));
+    return null;
+  }
   // A target of a spray is shot at its share of the burst, at the Recoil its
   // place in the sweep gives it.
   const sprayed = spray ? { ...weapon, recoil: spray.recoil } : weapon;
@@ -1794,8 +1804,11 @@ async function rollAction(
             number: Math.min(
               ...[malfunctionNumber, addon?.malfunction].filter((n): n is number => typeof n === "number" && n > 0),
             ),
-            techLevel: Number(actor?.system?.tl) || 3,
+            // The weapon's own TL where it says one; else the wielder's.
+            techLevel: Number(rolledItem?.system?.tl) || Number(actor?.system?.tl) || 3,
             revolver: target.dataset.revolver === "1",
+            ...(rolledItem ? { item: rolledItem } : {}),
+            ...(Number.isInteger(Number(target.dataset.modeIndex)) && target.dataset.modeIndex !== "" ? { modeIndex: Number(target.dataset.modeIndex) } : {}),
           },
         }
       : {}),
@@ -1859,6 +1872,24 @@ async function rollAction(
     // So do a spray's shots wasted swinging to this target (Campaigns p. 409).
     const spent = shot.shellsFired + Math.max(0, Math.floor(Number(shot.addon?.shots) || 0)) + (spray?.wasted ?? 0);
     if (item?.isOwner && Number.isInteger(modeIndex)) await spendShots(item, modeIndex, spent);
+  }
+  // What the attack spent, for the modules (since 1.71.0): once for the
+  // attack, or -- for one target of a spray -- added to the burst's tally,
+  // which is announced once the burst is over.
+  if (rollType === "attack" && ranged && shot) {
+    const extra = Math.max(0, Math.floor(Number(shot.addon?.shots) || 0));
+    const wasted = spray?.wasted ?? 0;
+    if (tally) {
+      tally.fired += shot.shellsFired;
+      tally.extra += extra;
+      tally.wasted += wasted;
+      tally.targets += 1;
+    } else {
+      announceShots({
+        actor, item: rolledItem, modeIndex: Number(target.dataset.modeIndex),
+        fired: shot.shellsFired, extra, wasted: 0, kind: shot.shellsFired > 1 ? "rapidFire" : "single", targets: 1,
+      });
+    }
   }
 
   // A fumble that broke the weapon (Campaigns p. 556) is applied to it.

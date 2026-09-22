@@ -117,6 +117,12 @@
                 <button type="button" class="v2-button v2-button-gold" data-action="readyWeapon"
                         data-tooltip="{{localize 'GWORLD.Ready.Hint'}}">{{localize "GWORLD.Ready.Action"}}</button>
               {{/if}}
+            {{else if (and entry.ranged entry.atk.outOfAction)}}
+              <span class="v2-bad">{{entry.atk.outOfAction.label}}</span>
+              {{#if @root.editable}}
+                <button type="button" class="v2-button v2-button-gold" data-action="clearMalfunction"
+                        data-tooltip="{{localize 'GWORLD.Malfunction.ClearHint'}}">{{localize "GWORLD.Malfunction.Clear"}}</button>
+              {{/if}}
             {{else if entry.atk.empty}}
               <span class="v2-bad">{{localize "GWORLD.Reload.EmptyHint"}}</span>
             {{else if entry.preview}}

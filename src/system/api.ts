@@ -31,6 +31,7 @@ import { normalizeSkillName } from "../rules/skills.js";
 import { incompatibleModules, satisfiesApiRange } from "./api-version.js";
 import { combatApi } from "./combat-extensions.js";
 import { loadInstantly } from "./ammunition.js";
+import { clearMalfunction, malfunctionOf, setMalfunction } from "./malfunctions.js";
 import { registerSlam } from "./slam.js";
 import { beginGrapple, endGrapple, grappleOf, grapplesOf, updateGrapple } from "./grappling.js";
 import { dataApi } from "./data-extensions.js";
@@ -76,7 +77,7 @@ import { PARTY_CHANGED_HOOK, addMembers, campaignTerms, membersOf, partyOf, remo
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.70.0";
+export const API_VERSION = "1.71.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -287,6 +288,34 @@ const items = {
    */
   load(item: any, modeIndex: number, shots: number): Promise<number | null> {
     return loadInstantly(item, modeIndex, shots);
+  },
+
+  /**
+   * What put a weapon out of action (since 1.71.0): `{ kind, label,
+   * modeIndex }`, or null where nothing did. `kind` is one of the Firearm
+   * Malfunction Table's (`mechanical`, `misfire`, `stoppage`, `explosion`),
+   * a module's own, or `destroyed`.
+   */
+  malfunction(item: any): { kind: string; label: string; modeIndex: number } | null {
+    return malfunctionOf(item);
+  },
+
+  /**
+   * Puts a weapon out of action with `{ kind, label?, modeIndex? }`, or back
+   * in it with null (since 1.71.0), with no roll and no card. False where the
+   * user doesn't own the item.
+   */
+  setMalfunction(item: any, malfunction: { kind: string; label?: string; modeIndex?: number } | null): Promise<boolean> {
+    return setMalfunction(item, malfunction);
+  },
+
+  /**
+   * Tries to clear a weapon's malfunction as its sheet button does (since
+   * 1.71.0): the dialog, the roll and the card. Resolves to `cleared`,
+   * `notYet`, `mechanical` or `destroyed`, or null where nothing was tried.
+   */
+  clearMalfunction(actor: any, item: any): Promise<"cleared" | "notYet" | "mechanical" | "destroyed" | null> {
+    return clearMalfunction(actor, item);
   },
 
   /**

@@ -9,7 +9,7 @@
  * instead. Everything that reads capacity or reload time reads it from here.
  */
 
-import { parseShots, type ShotsEntry } from "../rules/ammunition.js";
+import { parseShots, type ReloadAid, type ShotsEntry } from "../rules/ammunition.js";
 import { COMBAT_HOOKS, callCombatHook } from "./combat-extensions.js";
 
 /** What `gworld.shotsEntry` hands its listeners. */
@@ -55,5 +55,27 @@ export function shotsEntryFor(item: any, modeIndex: number, mode: any = item?.sy
     reloadSeconds: reloadSeconds === null && asked.reloadSeconds !== null ? table.reloadSeconds : reloadSeconds,
     chambered: typeof asked.chambered === "boolean" ? asked.chambered : table.chambered,
     perShot: typeof asked.perShot === "boolean" ? asked.perShot : table.perShot,
+    // What Fast-Draw (Ammo) saves, and the aids the Reload button offers (since 1.71.0).
+    fastDrawSeconds: countOrNull(asked.fastDrawSeconds) ?? table.fastDrawSeconds,
+    fastDrawPer: asked.fastDrawPer === "round" ? "round" : "reload",
+    aids: reloadAids(asked.aids),
   };
+}
+
+/** The aids a listener wrote, each with an id and a label; anything else is dropped. */
+function reloadAids(value: unknown): ReloadAid[] {
+  if (!Array.isArray(value)) return [];
+  const number = (n: unknown) => (n === undefined || n === null || !Number.isFinite(Number(n)) ? undefined : Number(n));
+  return value.flatMap((aid: any) => {
+    if (!aid || typeof aid.id !== "string" || !aid.id || typeof aid.label !== "string") return [];
+    const seconds = number(aid.seconds);
+    const fastDrawSeconds = number(aid.fastDrawSeconds);
+    return [{
+      id: aid.id,
+      label: aid.label,
+      ...(seconds !== undefined ? { seconds: Math.round(seconds) } : {}),
+      ...(fastDrawSeconds !== undefined ? { fastDrawSeconds: Math.max(0, Math.floor(fastDrawSeconds)) } : {}),
+      checked: aid.checked === true,
+    }];
+  });
 }

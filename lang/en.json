@@ -1713,7 +1713,28 @@
       "Ready": "{ready} Ready maneuvers and both hands",
       "Revolver": "A revolver: the next shot fires normally",
       "FiredFirst": "The shot went off before it jammed",
-      "Exploded": "It blows up: 1d+2 cr ex [2d] to the gunner"
+      "Exploded": "It blows up: 1d+2 cr ex [2d] to the gunner",
+      "destroyed": "Destroyed",
+      "Destroyed": "The weapon is destroyed: it can't be cleared.",
+      "OutOfAction": "{name} is out of action ({kind}): clear it before firing.",
+      "Clear": "Clear",
+      "ClearHint": "Try to put the weapon right (Campaigns p. 407)",
+      "ClearTitle": "Clearing {name}",
+      "ClearIntro": "{name}: {kind}. Each attempt: {time}.",
+      "BothHands": "Both hands must be free.",
+      "AttemptReady": "{ready} Ready maneuvers",
+      "AttemptHours": "{hours} h of work",
+      "Roll": "Roll",
+      "Armoury": "Armoury",
+      "WeaponSkill": "{skill}, IQ-based",
+      "Other": "Other modifier",
+      "NoRoll": "Nobody here can clear {name}: no Armoury and no weapon skill.",
+      "Result": {
+        "cleared": "{name} is working again.",
+        "notYet": "{name} isn't fixed yet; try again.",
+        "mechanical": "Critical failure: {name} now has a mechanical or electrical problem.",
+        "destroyed": "Critical failure: {name} is destroyed."
+      }
     },
     "Scatter": {
       "Action": "Scatter",
@@ -3668,10 +3689,11 @@
       "Empty": "{name} is empty.",
       "EmptyShort": "empty",
       "EmptyHint": "Nothing left in it: reload before firing.",
+      "Aids": "What helps reload {name}?",
       "FastDraw": {
-        "Ask": "Roll Fast-Draw (Ammo) at {level} to reload {name} a second faster? A failure drops a round, a critical failure the whole load (Characters p. 195).",
+        "Ask": "Roll Fast-Draw (Ammo) at {level} to reload {name} faster, saving {seconds} s? A failure drops a round, a critical failure the whole load (Characters p. 195).",
         "Label": "Fast-Draw (Ammo)",
-        "success": "Fast-Draw (Ammo): a second faster",
+        "success": "Fast-Draw (Ammo): {seconds} s faster",
         "failure": "Fast-Draw (Ammo) failed: a round dropped",
         "criticalFailure": "Fast-Draw (Ammo) critically failed: the whole load dropped"
       }
