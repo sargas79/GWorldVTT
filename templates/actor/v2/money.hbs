@@ -2,7 +2,7 @@
 <section class="v2-money" aria-label="{{localize 'GWORLD.Life.Money'}}">
   <div class="v2-ph v2-ph-tools">
     <h2>{{localize "GWORLD.Life.Money"}}</h2>
-    <span class="v2-money-standing">
+    <span class="v2-ph-meta v2-money-standing">
       {{localize (concat "GWORLD.Life.Wealth." derived.wealth.level)}}{{#if derived.wealth.multimillionaire}} {{derived.wealth.multimillionaire}}{{/if}}
       &middot; {{localize "GWORLD.Life.Status"}} {{signed derived.wealth.status}}
     </span>
@@ -51,7 +51,7 @@
 
   {{#if rules.jobs}}
     <div class="v2-job">
-      <h3 class="v2-job-head">{{localize "GWORLD.Life.Job"}}</h3>
+      <h3 class="v2-sh">{{localize "GWORLD.Life.Job"}}</h3>
       <div class="v2-job-fields">
         <label>
           <span>{{localize "GWORLD.Life.JobTitle"}}</span>

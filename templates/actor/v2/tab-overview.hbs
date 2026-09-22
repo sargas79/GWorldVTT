@@ -1,12 +1,12 @@
 <section class="tab v2-tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
   {{> "gworld.addonSheetSections" sections=addonSheetSections.start}}
 
-  {{!-- Three columns that each carry several panels, so they end together
-       rather than one running on far past the others. --}}
+  {{!-- Three columns that end level: each column's last panel is a list, which
+       takes the slack (docs/character-sheet-v2-style.md). --}}
   <div class="v2-overview">
     <div class="v2-overview-side">
       {{!-- Vitals: what is left of the character, and what they can still do. --}}
-      <div class="v2-panel v2-fills v2-vitals">
+      <div class="v2-panel v2-vitals">
         <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Vitals"}}</h2>
         <div class="v2-pool">
           <div class="v2-pool-head">
@@ -59,7 +59,7 @@
       </div>
 
       {{!-- What is on the character right now, and how it comes off again. --}}
-      <div class="v2-panel v2-panel-dark v2-conditions">
+      <div class="v2-panel v2-conditions">
         <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Conditions"}}</h2>
         <div class="v2-chips">
           {{#each v2.statuses.active as |status|}}
@@ -87,11 +87,23 @@
           {{/if}}
         </div>
       </div>
+
+      {{!-- What is modifying this character's rolls right now. --}}
+      <div class="v2-panel v2-mods">
+        <h2 class="v2-ph">{{localize "GWORLD.SheetV2.ContextModifiers"}}</h2>
+        <div class="v2-chips">
+          {{#each v2.contextModifiers as |m|}}
+            <span class="v2-chip v2-chip-dark">{{m.label}}{{#if m.appliesTo}} <em>{{m.appliesTo}}</em>{{/if}} <b class="{{#if (gt m.value 0)}}v2-good{{else}}v2-bad{{/if}}">{{signed m.value}}</b></span>
+          {{else}}
+            <span class="v2-muted">{{localize "GWORLD.SheetV2.NoModifiers"}}</span>
+          {{/each}}
+        </div>
+      </div>
     </div>
 
     <div class="v2-overview-middle">
       {{!-- The character's attacks, each rolled from its card. --}}
-      <div class="v2-panel v2-panel-dark v2-actions">
+      <div class="v2-panel v2-actions">
         <h2 class="v2-ph">{{localize "GWORLD.SheetV2.CurrentActions"}}</h2>
         {{#if v2.attacks.length}}
           <div class="v2-attack-grid">
@@ -178,7 +190,7 @@
 
       {{!-- The rolls a GM asks for by name: Will, Perception, and Perception
            by one sense, which is that roll made at the sense's own score. --}}
-      <div class="v2-panel v2-fills v2-awareness">
+      <div class="v2-panel v2-awareness">
         <h2 class="v2-ph">{{localize "GWORLD.SheetV2.WillAndSenses"}}</h2>
         <div class="v2-score-row v2-awareness-row">
           {{#each v2.awareness.scores as |row|}}
@@ -209,18 +221,6 @@
                 {{#if row.modifier}}<span class="v2-stat-note">{{localize "GWORLD.Secondary.PerAbbr"}} {{signed row.modifier}}</span>{{/if}}
               {{/if}}
             </div>
-          {{/each}}
-        </div>
-      </div>
-
-      {{!-- What is modifying this character's rolls right now. --}}
-      <div class="v2-panel v2-panel-dark v2-mods">
-        <h2 class="v2-ph">{{localize "GWORLD.SheetV2.ContextModifiers"}}</h2>
-        <div class="v2-chips">
-          {{#each v2.contextModifiers as |m|}}
-            <span class="v2-chip v2-chip-dark">{{m.label}}{{#if m.appliesTo}} <em>{{m.appliesTo}}</em>{{/if}} <b class="{{#if (gt m.value 0)}}v2-good{{else}}v2-bad{{/if}}">{{signed m.value}}</b></span>
-          {{else}}
-            <span class="v2-muted">{{localize "GWORLD.SheetV2.NoModifiers"}}</span>
           {{/each}}
         </div>
       </div>

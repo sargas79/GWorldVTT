@@ -168,7 +168,7 @@
     <aside class="v2-detail-col" aria-live="polite">
       {{#each v2.progression.rows as |row|}}
         <article class="v2-panel v2-detail v2-upgrade{{#if row.improve.overspends}} over{{/if}}" data-v2-detail="progression:{{row.key}}" {{#unless row.selected}}hidden{{/unless}}>
-          <header class="v2-upgrade-head">
+          <header class="v2-detail-head v2-upgrade-head">
             <h3>{{row.name}}</h3>
             <span class="v2-upgrade-step">
               {{#if row.stepFrom}}{{row.stepFrom}} <i>&rarr;</i> <b>{{row.stepTo}}</b>{{else if row.improve.levelTo}}{{row.improve.levelFrom}} <i>&rarr;</i> <b>{{row.improve.levelTo}}</b>{{else}}{{row.improve.from}} <i>&rarr;</i> <b>{{row.improve.to}}</b>{{/if}}

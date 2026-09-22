@@ -89,7 +89,7 @@
 
       <div class="v2-inventory-grid">
         {{!-- What is ready to hand. --}}
-        <div class="v2-panel v2-panel-dark v2-readied-items">
+        <div class="v2-panel v2-readied-items">
           <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Readied"}}</h2>
           {{#if v2.inventory.readied.length}}
             <div class="v2-quick-slots">
@@ -152,7 +152,7 @@
     <aside class="v2-detail-col" aria-live="polite">
       {{#each v2.inventory.details as |item|}}
         <article class="v2-panel v2-detail v2-item-detail" data-v2-detail="inventory:{{item.key}}" data-item-id="{{item.id}}" {{#unless item.selected}}hidden{{/unless}}>
-          <header class="v2-detail-head v2-detail-red">
+          <header class="v2-detail-head">
             <h3>{{item.name}}</h3>
           </header>
           <span class="v2-detail-sub">{{item.typeLabel}} &middot; {{item.groupLabel}}</span>

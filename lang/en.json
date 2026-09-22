@@ -4432,7 +4432,7 @@
       "Available": "Available",
       "OverBudgetHint": "This character has spent {points} CP more than they have. Nothing is blocked; the GM decides whether it stands.",
       "OverBudgetNotice": "{name} is now {points} CP over budget.",
-      "AdvancementCategories": "Advancement categories",
+      "AdvancementCategories": "Categories",
       "AllImprovements": "All improvements",
       "Improvements": "Improvements",
       "SearchImprovements": "Search improvements",
