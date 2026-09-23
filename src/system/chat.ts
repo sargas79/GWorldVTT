@@ -688,6 +688,10 @@ async function applyFromCard(options: {
             cap: result.injuryCap.cap, lost: result.injuryCap.lost, reason: result.injuryCap.reason,
           })
         : "",
+      // The Vulnerability that multiplied what got through, a trait's or worn gear's (since API 1.106.0).
+      vulnerabilityNote: result.vulnerability
+        ? game.i18n.format("GWORLD.Chat.Vulnerable", { multiplier: result.vulnerability.multiplier, label: result.vulnerability.label })
+        : "",
     })),
   });
 
