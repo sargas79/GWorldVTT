@@ -22,6 +22,7 @@ import {
   drowningRollDue,
 } from "../rules/suffocation.js";
 import { resolveSuccess } from "../rules/success.js";
+import { successRollModifiers } from "./procedure-extensions.js";
 
 const SUFFOCATION_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/suffocation.hbs`;
 
@@ -67,7 +68,15 @@ export async function rollSuffocation(options: {
     lost = seconds;
   } else {
     // One Swimming roll per five seconds of the span, each failure a point.
-    const swimming = Number(actor.system?.derived?.feats?.swimming?.skill) || 6;
+    // The rolls pass through gworld.successRollModifiers, tagged `swimming`
+    // and `drowning`, so the actor's conditions and a module's gear (a life
+    // jacket) reach them (since API 1.103.0).
+    const base = Number(actor.system?.derived?.feats?.swimming?.skill) || 6;
+    const added = successRollModifiers({
+      actor, label: game.i18n.localize("GWORLD.Air.Drowning"), kind: "skill", skill: "Swimming", base,
+      tags: ["swimming", "drowning"], modifiers: [],
+    });
+    const swimming = base + added.reduce((sum, line) => sum + line.value, 0);
     let attempts = 0;
     for (let second = before + 1; second <= after; second += 1) {
       if (drowningRollDue(second)) attempts += 1;

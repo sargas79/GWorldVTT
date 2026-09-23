@@ -232,6 +232,19 @@ export function climbingModifier(climbKey: string, encumbranceLevel = 0): number
   return (climb(climbKey)?.modifier ?? 0) - Math.max(0, encumbranceLevel);
 }
 
+/**
+ * What encumbrance costs a skill roll that says so, or 0 (since API 1.103.0).
+ *
+ * Stealth: "a penalty equal to your encumbrance level" (Characters p. 222).
+ * Climbing takes the same off its own dialog, and Swimming its doubled
+ * penalty in its own; neither is a plain skill roll from the sheet.
+ */
+export function skillEncumbrancePenalty(skillName: string, encumbranceLevel = 0): number {
+  const name = String(skillName ?? "").replace(/\s*\(.*\)$/, "").replace(/\/TL\d+.*$/i, "").trim().toLowerCase();
+  const level = Math.max(0, Math.floor(Number(encumbranceLevel) || 0));
+  return name === "stealth" && level > 0 ? -level : 0;
+}
+
 /** Minutes between Climbing rolls: one to start, then one every five minutes. */
 export const CLIMB_ROLL_MINUTES = 5;
 

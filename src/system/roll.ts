@@ -8,6 +8,7 @@
  */
 
 import { outcomeStep } from "../rules/bonus-points.js";
+import { skillEncumbrancePenalty } from "../rules/physical.js";
 import { isCombatRoll, spendingInPlay } from "./bonus-points.js";
 import { SYSTEM_ID } from "./constants.js";
 import { consumeMightyBlows, recordMightyBlows, spendFatigue } from "./extra-effort.js";
@@ -1758,6 +1759,12 @@ async function rollAction(
     rollType === "attack" && isRuleOn("feint") ? await consumeFeint(actor) : 0;
 
   modifiers.push(...positionRollLines(actor, { rollType, ranged: Boolean(ranged) }));
+  // Stealth's penalty for encumbrance (Characters p. 222), keyed so gear can
+  // lighten it (since API 1.103.0).
+  if (rollType === "skill") {
+    const burden = skillEncumbrancePenalty(String(target.dataset.rollSkill ?? rollLabel ?? ""), Number(actor?.system?.derived?.encumbrance?.level) || 0);
+    if (burden !== 0) modifiers.push({ label: game.i18n.localize("GWORLD.Field.Encumbrance"), value: burden, key: "encumbrance" });
+  }
   // A Vision roll at the one token targeted: its size and range, less what
   // Telescopic Vision ignores (Characters pp. 92, 358).
   if (target.dataset.sense === "vision") modifiers.push(...visionRangeLines(actor));

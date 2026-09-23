@@ -1891,7 +1891,9 @@
       "Settled": "Settled without a contest",
       "DiplomacySaved": "Diplomacy's second roll was better: {band}",
       "DiplomacyTried": "Diplomacy also rolled {band}",
-      "OneTarget": "Target exactly one token to influence"
+      "OneTarget": "Target exactly one token to influence",
+      "InfluenceSkills": "Influence skills",
+      "OtherSkills": "Other skills (GM's call, -1 to -10 if inappropriate)"
     },
     "Mounted": {
       "Action": "Mounted",
