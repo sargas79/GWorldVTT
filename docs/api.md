@@ -635,7 +635,7 @@ and the roll continues.
     `runner`, `wheel`, `vitalArea`). Each is null unless given: an empty
     `drOther` is `dr`, an empty top or underbody is the sides' figure, an
     empty window is half its face rounded up, and any other empty location is
-    its face. Since 1.91.0 a location may give its own faces too:
+    its face. Since 1.92.0 a location may give its own faces too:
     `drByLocationOther` (its sides and rear) and `drByLocationTop`, keyed as
     `drByLocation` and null unless given, and with them `drByLocation` is the
     location's front -- a turret's front, sides and top. A location's top
@@ -646,11 +646,11 @@ and the roll continues.
     armoured against the front: empty is every arc, and from any other arc
     the location has what it would without its own figures. No arc at all
     counts as the front. The rules behind this are in `rules`:
-    `vehicleFaceDr`, `vehicleLocationDr` (since 1.91.0), `vehicleDrAt`,
+    `vehicleFaceDr`, `vehicleLocationDr` (since 1.92.0), `vehicleDrAt`,
     `vehiclePenetration`, `vehicleDrLabel`, `passesThrough` and
     `aimableLocations`.
 
-    Two more of the vehicle's statistics changed shape in 1.91.0, both
+    Two more of the vehicle's statistics changed shape in 1.92.0, both
     without a migration. `fragility` holds every code beside HT, not one:
     any of `c`, `f` and `x`, each at most once (`"fx"`); read it with
     `rules.fragilityCodes`, which gives them in that order. And a vehicle may
