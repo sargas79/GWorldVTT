@@ -21,8 +21,8 @@ import { promptForNumber } from "../roll.js";
 import { promptForVehicleHit } from "./character-prompts.js";
 import { damageAtScale, hitPointsAfterBattle } from "../damage-scale.js";
 import type { DamageScale } from "../../rules/scale.js";
-import { LOCOMOTIONS, leaveSeat } from "../../rules/vehicles.js";
-import { aimableLocations, DR_LOCATIONS, vehicleDrLabel } from "../../rules/vehicle-combat.js";
+import { FRAGILITY_CODES, LOCOMOTIONS, activeMove, fragilityCodes, leaveSeat, vehicleMoves } from "../../rules/vehicles.js";
+import { aimableLocations, DR_LOCATIONS, VEHICLE_ARCS, vehicleDrLabel } from "../../rules/vehicle-combat.js";
 import { reportRefusedDrop } from "./drop-errors.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -134,7 +134,7 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       // The header's line: what it is, and what a GM would ask first.
       meta: [
         system.tl ? `TL ${system.tl}` : "",
-        L(`Locomotion.${v.locomotion}`),
+        L(`Locomotion.${activeMove(v).locomotion}`),
         `SM ${v.sm >= 0 ? "+" : ""}${v.sm}`,
         v.skill ? v.skill : "",
       ].filter(Boolean),
@@ -146,6 +146,7 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       operatorName: operator ? String(operator.name) : "",
       specFields: this.#specFields(system),
       drFields: this.#drFields(system),
+      drLocations: this.#drLocations(system),
 
       // The table's own columns, in the order the book prints them, so a GM
       // reading from the page can check the sheet line by line (p. 462).
@@ -155,11 +156,12 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
           label: L("HandlingStability"),
           value: `${v.handling >= 0 ? "+" : ""}${v.handling}/${v.stability}`,
         },
-        { label: L("Ht"), value: v.fragility ? `${v.ht}${v.fragility}` : String(v.ht) },
-        {
-          label: L("Move"),
-          value: `${v.acceleration}/${v.topSpeed}${v.roadBound ? "*" : ""}`,
-        },
+        { label: L("Ht"), value: `${v.ht}${fragilityCodes(v.fragility).join("")}` },
+        // Each Move it has, the second named by the way it moves (pp. 462-465).
+        ...vehicleMoves(v).map((move, index) => ({
+          label: index === 0 ? L("Move") : L("SecondMove", { locomotion: L(`Locomotion.${move.locomotion}`) }),
+          value: `${move.acceleration}/${move.topSpeed}${index === 0 && v.roadBound ? "*" : ""}`,
+        })),
         { label: L("LoadedWeightShort"), value: `${v.loadedWeight} t` },
         { label: L("LoadShort"), value: `${v.load} t` },
         { label: L("Sm"), value: v.sm >= 0 ? `+${v.sm}` : String(v.sm) },
@@ -256,13 +258,14 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       number("Stability", "system.vehicle.stability", v.stability, { min: 0 }),
       number("Ht", "system.vehicle.ht", v.ht, { min: 1 }),
       {
+        // As many codes as the HT column gives: "fx" burns and blows up.
         label: L("Fragility"),
-        name: "system.vehicle.fragility",
         hint: L("FragilityHint"),
-        options: (["", "c", "f", "x"] as const).map((key) => ({
-          key,
-          label: L(`FragilityChoice.${key === "" ? "none" : key}`),
-          selected: v.fragility === key,
+        checks: FRAGILITY_CODES.map((key) => ({
+          name: "system.vehicle.fragility",
+          value: key,
+          label: L(`FragilityChoice.${key}`),
+          checked: fragilityCodes(v.fragility).includes(key),
         })),
       },
       number("Acceleration", "system.vehicle.acceleration", v.acceleration, { min: 0, step: 0.1 }),
@@ -283,6 +286,26 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
         name: "system.vehicle.locomotion",
         options: LOCOMOTIONS.map((key) => ({ key, label: L(`Locomotion.${key}`), selected: v.locomotion === key })),
       },
+      // A second way it moves with a Move of its own: an amphibian's water Move.
+      {
+        label: L("SecondLocomotion"),
+        name: "system.vehicle.secondLocomotion",
+        hint: L("SecondLocomotionHint"),
+        options: (["", ...LOCOMOTIONS] as const).map((key) => ({
+          key,
+          label: key === "" ? L("SecondLocomotionNone") : L(`Locomotion.${key}`),
+          selected: v.secondLocomotion === key,
+        })),
+      },
+      number("SecondAcceleration", "system.vehicle.secondAcceleration", v.secondAcceleration, { min: 0, step: 0.1 }),
+      number("SecondTopSpeed", "system.vehicle.secondTopSpeed", v.secondTopSpeed, { min: 0, step: 0.1 }),
+      {
+        label: L("SecondMoveInUse"),
+        name: "system.vehicle.secondMoveInUse",
+        value: v.secondMoveInUse === true,
+        checkbox: true,
+        hint: L("SecondMoveInUseHint"),
+      },
       number("Draft", "system.vehicle.draft", v.draft, { min: 0, step: 0.1, hint: L("DraftHint") }),
       number("Stall", "system.vehicle.stall", v.stall, { min: 0, hint: L("StallHint") }),
       { label: "TL", name: "system.tl", value: system.tl, type: "text", hint: "" },
@@ -290,9 +313,8 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
   }
 
   /**
-   * DR by face and location (pp. 462, 554-555): each empty unless the vehicle
-   * gives it, with what an empty one falls back to shown in its place. The
-   * locations are the ones this vehicle has that can carry a DR of their own.
+   * DR by face (p. 462): each empty unless the vehicle gives it, with what an
+   * empty one falls back to shown in its place.
    */
   #drFields(system: any): Array<Record<string, unknown>> {
     const v = system.vehicle;
@@ -304,21 +326,76 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       value: value ?? "",
       placeholder: String(fallback),
     });
-    const has = aimableLocations(system.derived?.locations ?? [], system.derived?.powered === true)
-      .filter((key) => DR_LOCATIONS.includes(key));
     return [
       field(L("DrOther"), "system.vehicle.drOther", v.drOther, main),
       field(L("DrTop"), "system.vehicle.drTop", v.drTop, other),
       field(L("DrUnderbody"), "system.vehicle.drUnderbody", v.drUnderbody, other),
-      ...has.map((key) =>
-        field(
-          L("DrAt", { location: game.i18n.localize(`GWORLD.Vehicle.Location.${key}`) }),
-          `system.vehicle.drByLocation.${key}`,
-          v.drByLocation?.[key],
-          key === "largeWindow" || key === "smallWindow" ? Math.ceil(main / 2) : main,
-        ),
-      ),
     ];
+  }
+
+  /**
+   * DR by location (pp. 462, 554-555), a row for each location this vehicle
+   * has that can carry a DR of its own: the location's front (all round
+   * unless its sides are given), its sides and rear, its top, and the arcs
+   * it covers where that is fewer than all of them. Each figure is empty
+   * unless given, with what an empty one falls back to shown in its place.
+   */
+  #drLocations(system: any): Array<Record<string, unknown>> {
+    const v = system.vehicle;
+    const main = Number(v.dr) || 0;
+    const has = aimableLocations(system.derived?.locations ?? [], system.derived?.powered === true)
+      .filter((key) => DR_LOCATIONS.includes(key));
+    return has.map((key) => {
+      const face = key === "largeWindow" || key === "smallWindow" ? Math.ceil(main / 2) : main;
+      const front = v.drByLocation?.[key] ?? null;
+      const other = v.drByLocationOther?.[key] ?? null;
+      const arcs: string[] = v.drByLocationArcs?.[key] ?? [];
+      return {
+        key,
+        label: game.i18n.localize(`GWORLD.Vehicle.Location.${key}`),
+        // Front, sides and rear, top.
+        faces: [
+          { name: `system.vehicle.drByLocation.${key}`, value: front ?? "", placeholder: String(face) },
+          { name: `system.vehicle.drByLocationOther.${key}`, value: other ?? "", placeholder: String(front ?? face) },
+          {
+            name: `system.vehicle.drByLocationTop.${key}`,
+            value: v.drByLocationTop?.[key] ?? "",
+            placeholder: String(other ?? front ?? face),
+          },
+        ],
+        arcsName: `system.vehicle.drByLocationArcs.${key}`,
+        arcs: VEHICLE_ARCS.map((arc) => ({
+          key: arc,
+          label: game.i18n.localize(`GWORLD.Vehicle.Arc.${arc}`),
+          checked: arcs.includes(arc),
+        })),
+      };
+    });
+  }
+
+  /**
+   * Fields the sheet edits as checkboxes sharing one name. A form submits
+   * nothing for such a group when no box is ticked, so unticking the last one
+   * would leave the old value in place; each group the form carries is
+   * supplied empty instead; where the boxes do come through, an unticked one
+   * is a null in its place, and is dropped. The fragility codes are kept as
+   * one string, "fx".
+   */
+  override _processFormData(event: SubmitEvent | null, form: HTMLFormElement, formData: any): object {
+    const data = super._processFormData(event, form, formData) as Record<string, any>;
+    const vehicle = data.system?.vehicle;
+    if (!vehicle || typeof vehicle !== "object") return data;
+    const ticked = (value: unknown): string[] =>
+      (Array.isArray(value) ? value : [value]).filter((v): v is string => typeof v === "string" && v !== "");
+    if (form.querySelector('input[type="checkbox"][name="system.vehicle.fragility"]')) {
+      vehicle.fragility = fragilityCodes(ticked(vehicle.fragility).join("")).join("");
+    }
+    for (const key of DR_LOCATIONS) {
+      if (!form.querySelector(`input[type="checkbox"][name="system.vehicle.drByLocationArcs.${key}"]`)) continue;
+      vehicle.drByLocationArcs ??= {};
+      vehicle.drByLocationArcs[key] = ticked(vehicle.drByLocationArcs[key]);
+    }
+    return data;
   }
 
   /**

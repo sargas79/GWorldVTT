@@ -475,8 +475,21 @@ export interface VehicleDrFigures {
   drOther?: number | null;
   drTop?: number | null;
   drUnderbody?: number | null;
-  /** A location that has a DR of its own, replacing the face's there. */
+  /**
+   * A location that has a DR of its own, replacing the face's there: all
+   * round, or the front's where the location gives its faces their own.
+   */
   drByLocation?: Partial<Record<VehicleLocation, number | null | undefined>> | null;
+  /** A location's own DR on its sides and rear: a turret thinner there than in front. */
+  drByLocationOther?: Partial<Record<VehicleLocation, number | null | undefined>> | null;
+  /** A location's own DR on top. */
+  drByLocationTop?: Partial<Record<VehicleLocation, number | null | undefined>> | null;
+  /**
+   * The arcs a location's own DR covers, where it covers only some: a canopy
+   * armoured against the front. Empty or missing is every arc; from any
+   * other, the location has what it would have had without its own figures.
+   */
+  drByLocationArcs?: Partial<Record<VehicleLocation, readonly string[] | null | undefined>> | null;
 }
 
 /** Where a vehicle's DR at a spot came from, for the card to say. */
@@ -512,10 +525,39 @@ export function vehicleFaceDr(figures: VehicleDrFigures, arc: VehicleArc | null)
 }
 
 /**
+ * A location's own DR from one arc, or null where it has none there (pp. 462,
+ * 554-555). It reads its figures as the vehicle reads its faces: the first is
+ * the front's, and all round unless a second is given; the sides and rear
+ * take the second; the top its own, else the second; the underbody the
+ * second. Armour that covers the location from some arcs only is not there
+ * from the rest. No arc at all is the front.
+ */
+export function vehicleLocationDr(
+  figures: VehicleDrFigures,
+  location: VehicleLocation,
+  arc: VehicleArc | null,
+): number | null {
+  const arcs = figures.drByLocationArcs?.[location];
+  if (arcs && arcs.length > 0 && !arcs.includes(arc ?? "front")) return null;
+  const main = given(figures.drByLocation?.[location]);
+  const other = given(figures.drByLocationOther?.[location]);
+  switch (arc) {
+    case "side":
+    case "rear":
+    case "underbody":
+      return other ?? main;
+    case "top":
+      return given(figures.drByLocationTop?.[location]) ?? other ?? main;
+    default:
+      return main;
+  }
+}
+
+/**
  * The vehicle's DR where a shot landed (pp. 462, 554-555): nothing where the
  * hit passes through to a person or an animal, a location's own figure where
- * it has one, half the face's for a closed window ("round up"), and the
- * face's everywhere else.
+ * it has one from that arc, half the face's for a closed window ("round
+ * up"), and the face's everywhere else.
  */
 export function vehicleDrAt(
   figures: VehicleDrFigures,
@@ -523,7 +565,7 @@ export function vehicleDrAt(
   arc: VehicleArc | null,
 ): { dr: number; source: VehicleDrSource } {
   if (passesThrough(location)) return { dr: 0, source: "none" };
-  const own = given(figures.drByLocation?.[location]);
+  const own = vehicleLocationDr(figures, location, arc);
   if (own !== null) return { dr: own, source: "location" };
   const face = vehicleFaceDr(figures, arc);
   if (location === "largeWindow" || location === "smallWindow") return { dr: windowDr(face), source: "window" };

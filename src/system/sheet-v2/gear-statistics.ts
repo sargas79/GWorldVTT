@@ -14,6 +14,7 @@
  */
 
 import { vehicleDrLabel } from "../../rules/vehicle-combat.js";
+import { fragilityCodes, vehicleMoves } from "../../rules/vehicles.js";
 
 /** One figure of the row: its column heading and its value. */
 export interface StatLine {
@@ -316,8 +317,19 @@ function vehicleBlock(vehicle: Record<string, any>, L: Localize): StatBlock {
   const lines: StatLine[] = [
     { label: S("StHp"), value: String(number(vehicle.stHp) ?? 0) },
     { label: S("HndSr"), value: `${number(vehicle.handling) ?? 0}/${number(vehicle.stability) ?? 0}` },
-    { label: S("HT"), value: `${number(vehicle.ht) ?? 0}${vehicle.fragility ? String(vehicle.fragility) : ""}` },
-    { label: S("Move"), value: `${figure(number(vehicle.acceleration) ?? 0)}/${figure(number(vehicle.topSpeed) ?? 0)}` },
+    { label: S("HT"), value: `${number(vehicle.ht) ?? 0}${fragilityCodes(vehicle.fragility).join("")}` },
+    // Each Move it has; an amphibian's second is named by the way it moves.
+    ...vehicleMoves({
+      locomotion: vehicle.locomotion,
+      acceleration: number(vehicle.acceleration) ?? 0,
+      topSpeed: number(vehicle.topSpeed) ?? 0,
+      secondLocomotion: vehicle.secondLocomotion,
+      secondAcceleration: number(vehicle.secondAcceleration),
+      secondTopSpeed: number(vehicle.secondTopSpeed),
+    }).map((move, index) => ({
+      label: index === 0 ? S("Move") : L("GWORLD.Vehicle.SecondMove", { locomotion: L(`GWORLD.Vehicle.Locomotion.${move.locomotion}`) }),
+      value: `${figure(move.acceleration)}/${figure(move.topSpeed)}`,
+    })),
     { label: S("LWt"), value: figure(number(vehicle.loadedWeight) ?? 0) },
     { label: S("Load"), value: figure(number(vehicle.load) ?? 0) },
     { label: S("SM"), value: String(number(vehicle.sm) ?? 0) },

@@ -181,6 +181,14 @@ describe("other gear", () => {
     });
   });
 
+  it("prints each Move and every fragility code of an amphibian (#634)", () => {
+    const { blocks } = gearStatistics({
+      type: "equipment",
+      system: { category: "vehicle", vehicle: { stHp: 30, handling: 0, stability: 3, ht: 10, fragility: "xf", locomotion: "wheels", acceleration: 3, topSpeed: 25, secondLocomotion: "water", secondAcceleration: 1, secondTopSpeed: 4, loadedWeight: 2, load: 0.5, sm: 3, occupants: "1+4", dr: 4 } },
+    }, [], L);
+    expect(lines(blocks[0]!)).toMatchObject({ HT: "10fx", Move: "3/25", SecondMove: "1/4" });
+  });
+
   it("leaves out what the item does not have, rather than printing zeros", () => {
     const { tables, blocks, lines: own } = gearStatistics({ type: "equipment", system: { cost: 5, weight: 1, quality: "good", equipmentQuality: "basic" } }, [], L);
     expect(tables).toEqual([]);

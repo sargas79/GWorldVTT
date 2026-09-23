@@ -10,7 +10,7 @@
  */
 
 import { mediumOf, mayUseVehicleSystem, type VehicleMedium } from "../rules/vehicle-combat.js";
-import type { Locomotion } from "../rules/vehicles.js";
+import { activeMove } from "../rules/vehicles.js";
 
 /** The vehicle a character is aboard, and their place in it. */
 export interface Aboard {
@@ -46,7 +46,8 @@ export function vehicleAboard(actor: any, vehicles: Iterable<any> = allVehicles(
     const seat = (vehicle.system?.crew ?? []).find((s: { uuid: string }) => s.uuid === uuid);
     if (!seat) continue;
     const stats = vehicle.system?.vehicle ?? {};
-    const medium = mediumOf(String(stats.locomotion ?? "ground") as Locomotion);
+    // The way it is moving now, for a vehicle that moves two ways.
+    const medium = mediumOf(activeMove(stats).locomotion);
     return {
       vehicle,
       name: String(vehicle.name ?? ""),

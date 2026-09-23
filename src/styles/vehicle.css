@@ -153,6 +153,29 @@
 .gworld.vehicle.v2 .vehicle-field input:disabled,
 .gworld.vehicle.v2 .vehicle-field select:disabled { opacity: 0.7; }
 .gworld.vehicle.v2 .vehicle-field input[type="checkbox"] { align-self: flex-start; margin: 4px 0 0; }
+/* A set of codes or arcs, each its own box. */
+.gworld.vehicle.v2 .vehicle-checks { display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.gworld.vehicle.v2 .vehicle-check { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; white-space: nowrap; }
+.gworld.vehicle.v2 .vehicle-check input[type="checkbox"] { margin: 0; }
+/* A location's own DR: one row a location, its faces and the arcs it covers. */
+.gworld.vehicle.v2 .vehicle-dr-locations { width: 100%; margin-top: 6px; border: none; border-collapse: collapse; background: transparent; }
+.gworld.vehicle.v2 .vehicle-dr-locations thead,
+.gworld.vehicle.v2 .vehicle-dr-locations tr { background: transparent; color: var(--v2-ink); text-shadow: none; border: none; }
+.gworld.vehicle.v2 .vehicle-dr-locations th,
+.gworld.vehicle.v2 .vehicle-dr-locations td { padding: 3px 6px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--color-divider); }
+.gworld.vehicle.v2 .vehicle-dr-locations thead th { font-size: 11px; text-transform: uppercase; color: var(--v2-ink-muted); }
+.gworld.vehicle.v2 .vehicle-dr-locations input[type="number"] {
+  width: 64px;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--color-divider);
+  border-radius: 4px;
+  background: var(--v2-panel-2);
+  color: var(--v2-ink);
+  font-family: var(--font-heading);
+  font-size: 15px;
+}
+.gworld.vehicle.v2 .vehicle-dr-locations input::placeholder { font-family: var(--font-body); font-size: 12px; color: var(--v2-ink-muted); }
 .gworld.vehicle.v2 .vehicle-description .editor,
 .gworld.vehicle.v2 .vehicle-description .prose { min-height: 220px; }
 
