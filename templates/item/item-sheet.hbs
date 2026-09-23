@@ -1243,6 +1243,11 @@
                        {{#if m.offMount}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                   {{localize "GWORLD.Item.OffMount"}}</label>
               {{/if}}
+              {{#if m.scopeBonus}}
+                <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.ScopeFixedHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.scopeFixed"
+                       {{#if m.scopeFixed}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                  {{localize "GWORLD.Item.ScopeFixed"}}</label>
+              {{/if}}
             </div>
             <div class="irow">
               <select name="system.rangedModes.{{i}}.guidance" aria-label="{{localize 'GWORLD.Item.Guidance'}}" data-tooltip="{{localize 'GWORLD.Item.GuidanceHint'}}" {{#unless @root.editable}}disabled{{/unless}}>

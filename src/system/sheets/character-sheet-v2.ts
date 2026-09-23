@@ -210,7 +210,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
             reach: atk.reach,
             weapon: ranged
               ? {
-                  damageType: atk.damageType, accuracy: atk.accuracy, scopeBonus: atk.scopeBonus, rateOfFire: atk.rateOfFire,
+                  damageType: atk.damageType, accuracy: atk.accuracy, scopeBonus: atk.scopeBonus, scopeFixed: atk.scopeFixed ? "1" : "", rateOfFire: atk.rateOfFire,
                   recoil: atk.recoil, bulk: atk.bulk, projectiles: atk.projectiles, halfDamageRange: atk.halfDamageRange,
                   guidance: atk.guidance, maxRange: atk.maxRange, areaAttack: atk.areaAttack ? "1" : "",
                   coneMaxWidth: atk.coneMaxWidth, loaded: atk.shotsCapacity ? atk.shotsLoaded : "",

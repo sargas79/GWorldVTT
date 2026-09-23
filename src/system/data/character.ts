@@ -199,7 +199,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
   ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1,
-  recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0,
+  recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0, scopeFixed: false,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false, outOfAction: null,
   ammunition: "", malediction: 0, ignoresDr: false,
 };
@@ -448,6 +448,8 @@ export interface DerivedAttack {
   malfunction?: number | null;
   /** A built-in scope's bonus, which the table lists separately as in "7+2". */
   scopeBonus?: number;
+  /** True for a fixed-power scope (Campaigns p. 411; since API 1.86.0). */
+  scopeFixed?: boolean;
   range?: string;
   /** Which Malediction the attack is (Characters p. 106), or 0 for an ordinary one. */
   malediction?: number;
@@ -2589,6 +2591,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           // "+1 to Acc" for a fine firearm, "-1 Acc" for a cheap thrown weapon.
           accuracy: (mode.accuracy ?? 0) + qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown)),
           scopeBonus: mode.scopeBonus ?? 0,
+          scopeFixed: mode.scopeFixed === true,
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
           malediction,
           ignoresDr: malediction > 0 || Boolean(mode.ignoresDr),
