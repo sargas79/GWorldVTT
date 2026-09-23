@@ -216,3 +216,11 @@
 #actors .gworld-party-members:empty { display: none; }
 #actors .directory-item.gworld-party.gworld-party-folded > .gworld-party-members { display: none; }
 #actors .directory-item.gworld-party.gworld-party-over { box-shadow: inset 0 0 0 2px #d9a441; }
+/* A pinned party leads the list, above the folders. */
+#actors .directory-item.gworld-party > .gworld-party-pin {
+  flex: none;
+  align-self: center;
+  margin-left: 4px;
+  font-size: 11px;
+  opacity: 0.7;
+}

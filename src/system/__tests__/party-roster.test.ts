@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   addMembers,
   canJoin,
+  isPinned,
   lockedTerms,
   memberRow,
   membersByName,
@@ -202,5 +203,16 @@ describe("the campaign's terms", () => {
   it("locks only what is set", () => {
     expect(lockedTerms({ tl: 8, startingPoints: null, disadvantageLimit: 50 })).toEqual({ tl: true, startingPoints: false, disadvantageLimit: true });
     expect(lockedTerms(null)).toEqual({ tl: false, startingPoints: false, disadvantageLimit: false });
+  });
+});
+
+describe("pinning a party to the top of the sidebar", () => {
+  it("is pinned only by the system's flag set true", () => {
+    expect(isPinned({ flags: { gworld: { pinned: true } } })).toBe(true);
+    expect(isPinned({ flags: { gworld: { pinned: false } } })).toBe(false);
+    expect(isPinned({ flags: { gworld: {} } })).toBe(false);
+    expect(isPinned({ flags: { other: { pinned: true } } })).toBe(false);
+    expect(isPinned({})).toBe(false);
+    expect(isPinned(null)).toBe(false);
   });
 });

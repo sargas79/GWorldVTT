@@ -15,6 +15,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import {
   addMembers as addToList,
+  PINNED_FLAG,
   canJoin,
   removeMember as removeFromList,
   termsFrom,
@@ -214,6 +215,9 @@ export function registerPartyHooks(): void {
     const members = diff?.system?.members !== undefined;
     const campaign = diff?.system?.campaign !== undefined;
     if (members || campaign) changed(document, members);
+    // Foundry redraws the directory for a name, sort or folder, not a flag:
+    // pinning or unpinning the party has to ask, on every client.
+    else if (PINNED_FLAG in (diff?.flags?.[SYSTEM_ID] ?? {})) void ui.actors?.render?.();
   });
   Hooks.on("deleteActor", (document: any) => {
     if (!isParty(document)) return;

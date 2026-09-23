@@ -7,10 +7,15 @@
  * done again each time. Dropping an actor on the party's row puts it in the
  * party; a GM dragging a member out of it, to a folder or anywhere else in
  * the list, takes it out. The members are listed by name.
+ *
+ * A party can be pinned from its row's context menu: its row then leads the
+ * list, above the folders, wherever the party is filed. The pin is a flag on
+ * the party, so everyone sees the same list.
  */
 
 import { addMembers, removeMember, resolveMember, worldParties } from "../party.js";
-import { membersByName } from "./roster.js";
+import { SYSTEM_ID } from "../constants.js";
+import { PINNED_FLAG, isPinned, membersByName } from "./roster.js";
 
 /** The parties folded shut, by id. Expanded until somebody folds one. */
 const folded = new Set<string>();
@@ -99,6 +104,7 @@ export function nestParties(html: HTMLElement): void {
     if (party.isOwner) wireDrop(row, party);
   }
 
+  pinToTop(html, parties);
   wireDragOut(html);
 
   // Foundry's search hides a row whose name does not match. A member that
@@ -119,6 +125,57 @@ export function nestParties(html: HTMLElement): void {
       }
     }, SEARCH_SETTLE_MS);
   });
+}
+
+/**
+ * Moves each pinned party's row to the head of the list, above the folders,
+ * keeping the order the pinned parties were listed in.
+ */
+function pinToTop(html: HTMLElement, parties: readonly any[]): void {
+  const list = html.querySelector<HTMLElement>("ol.directory-list");
+  if (!list) return;
+  const rows = parties
+    .filter((party) => isPinned(party))
+    .map((party) => rowOf(html, String(party.uuid)))
+    .filter((row): row is HTMLElement => row !== null)
+    .sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+  for (const row of rows.reverse()) {
+    row.classList.add("gworld-party-pinned");
+    const pin = document.createElement("i");
+    pin.className = "fa-solid fa-thumbtack gworld-party-pin";
+    pin.dataset.tooltip = game.i18n.localize("GWORLD.Party.Pinned");
+    row.querySelector(".entry-name")?.after(pin);
+    list.prepend(row);
+  }
+}
+
+/** The party a directory row's context menu was opened on, if it is one. */
+function partyOfRow(li: HTMLElement): any {
+  const id = li.closest<HTMLElement>("[data-entry-id]")?.dataset.entryId;
+  const actor = id ? game.actors?.get(id) : null;
+  return actor?.type === "party" ? actor : null;
+}
+
+/** "Pin to the top" and "Unpin" on a party's row, for whoever may change the party. */
+function addPinOptions(options: any[]): void {
+  const pinnable = (li: HTMLElement, pinned: boolean) => {
+    const party = partyOfRow(li);
+    return Boolean(party?.isOwner) && isPinned(party) === pinned;
+  };
+  options.push(
+    {
+      label: "GWORLD.Party.Pin",
+      icon: "fa-solid fa-thumbtack",
+      visible: (li: HTMLElement) => pinnable(li, false),
+      onClick: (_event: Event, li: HTMLElement) => partyOfRow(li)?.setFlag(SYSTEM_ID, PINNED_FLAG, true),
+    },
+    {
+      label: "GWORLD.Party.Unpin",
+      icon: "fa-solid fa-thumbtack-slash",
+      visible: (li: HTMLElement) => pinnable(li, true),
+      onClick: (_event: Event, li: HTMLElement) => partyOfRow(li)?.unsetFlag(SYSTEM_ID, PINNED_FLAG),
+    },
+  );
 }
 
 /**
@@ -158,4 +215,5 @@ function wireDragOut(html: HTMLElement): void {
 
 export function registerPartySidebar(): void {
   Hooks.on("renderActorDirectory", (_app: unknown, html: HTMLElement) => nestParties(html));
+  Hooks.on("getActorContextOptions", (_app: unknown, options: any[]) => addPinOptions(options));
 }
