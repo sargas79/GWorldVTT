@@ -635,9 +635,33 @@ and the roll continues.
     `runner`, `wheel`, `vitalArea`). Each is null unless given: an empty
     `drOther` is `dr`, an empty top or underbody is the sides' figure, an
     empty window is half its face rounded up, and any other empty location is
-    its face. The rules behind this are in `rules`: `vehicleFaceDr`,
-    `vehicleDrAt`, `vehiclePenetration`, `vehicleDrLabel`, `passesThrough`
-    and `aimableLocations`.
+    its face. Since 1.92.0 a location may give its own faces too:
+    `drByLocationOther` (its sides and rear) and `drByLocationTop`, keyed as
+    `drByLocation` and null unless given, and with them `drByLocation` is the
+    location's front -- a turret's front, sides and top. A location's top
+    falls back to its sides, its sides and underbody to its front, and a face
+    it gives nothing for to the vehicle's. `drByLocationArcs`, keyed the same
+    way, is the arcs (`"front"`, `"side"`, `"rear"`, `"top"`, `"underbody"`)
+    a location's own DR covers, for armour on one side only, a canopy
+    armoured against the front: empty is every arc, and from any other arc
+    the location has what it would without its own figures. No arc at all
+    counts as the front. The rules behind this are in `rules`:
+    `vehicleFaceDr`, `vehicleLocationDr` (since 1.92.0), `vehicleDrAt`,
+    `vehiclePenetration`, `vehicleDrLabel`, `passesThrough` and
+    `aimableLocations`.
+
+    Two more of the vehicle's statistics changed shape in 1.92.0, both
+    without a migration. `fragility` holds every code beside HT, not one:
+    any of `c`, `f` and `x`, each at most once (`"fx"`); read it with
+    `rules.fragilityCodes`, which gives them in that order. And a vehicle may
+    move a second way with a Move of its own, an amphibian's water Move:
+    `secondLocomotion` (blank for none), `secondAcceleration`,
+    `secondTopSpeed`, and `secondMoveInUse`, true while it moves that way.
+    `rules.vehicleMoves` lists its Moves, the first first, and
+    `rules.activeMove` gives the one in use `{ locomotion, acceleration,
+    topSpeed }`, which is what the control roll, cruising speed, braking and
+    a jump from it read. A vehicle actor's `derived` has `moves`, `move` and
+    `fragility` (the codes as a list).
   - `gworld.shotsEntry` (since 1.54.0): wherever a ranged mode's capacity or
     reload time is read -- the Reload button, loading at once, the shots
     ready, the sheet's count -- with `{ actor, item, modeIndex, mode, entry }`.

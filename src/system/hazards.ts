@@ -36,7 +36,7 @@ import { normalizeSkillName } from "../rules/skills.js";
 import { dozingOff, sleepRecovery, stayingUpFatigue, wakingDayHours } from "../rules/sleep.js";
 import { resolveSuccess } from "../rules/success.js";
 import type { DamageType } from "../rules/types.js";
-import { controlRoll, type Locomotion } from "../rules/vehicles.js";
+import { activeMove, controlRoll, vehicleMoves } from "../rules/vehicles.js";
 import {
   crippleThreshold, hitsAPerson, locationsOf, lossOfControl, mediumOf, occupantDamage,
   occupantHitTarget, OCCUPANT_RISK_DAMAGE, passesThrough, vehicleDrAt, vehicleHitLocation,
@@ -633,7 +633,7 @@ export async function jumpOutOfVehicle(options: {
 
   // "If the vehicle is flying, add falling damage" -- which is the falling
   // card's own business, and how far it fell is the table's to say.
-  const flying = mediumOf(String(vehicle.locomotion ?? "wheels") as Locomotion) === "air";
+  const flying = mediumOf(activeMove(vehicle).locomotion) === "air";
   await post(actor, {
     kind: H("JumpOut"),
     detail: F("JumpedFrom", { vehicle: String(item.name), speed }),
@@ -705,14 +705,16 @@ export async function controlVehicle(options: {
   lines.push(H(`ControlResult.${result}`));
   if (result !== "ok") {
     // What losing control actually does depends on what the thing moves
-    // through (Campaigns p. 469).
-    const medium = mediumOf(String(vehicle.locomotion ?? "wheels") as Locomotion);
+    // through (Campaigns p. 469) -- the way it is moving now, for one that
+    // moves two ways.
+    const move = activeMove(vehicle);
+    const medium = mediumOf(move.locomotion);
     const lost = lossOfControl({
       medium,
       stabilityRating,
       margin: Math.abs(outcome.margin),
       criticalFailure: outcome.criticalFailure,
-      velocity: Number(vehicle.topSpeed) || 0,
+      velocity: move.topSpeed,
     });
     lines.push(H(`LostControl.${lost.result}`));
     if (lost.altitudeLost > 0) lines.push(F("AltitudeLost", { yards: lost.altitudeLost }));
@@ -798,7 +800,7 @@ export async function shootAtVehicle(options: {
   // "A powered vehicle (anything with a ST attribute) has vital areas", and is
   // Unliving where an unpowered one is Homogenous (p. 555). The same test the
   // vehicle's own sheet uses, so the two cannot disagree about one car.
-  const powered = hitPoints > 0 && Number(vehicle.acceleration) > 0;
+  const powered = hitPoints > 0 && vehicleMoves(vehicle).some((move) => move.acceleration > 0);
 
   // A shot aimed at a location lands there; anything else is rolled for.
   const aimed = options.location && TABLE_LOCATIONS.has(options.location) ? options.location : null;

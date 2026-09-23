@@ -14,7 +14,8 @@ import {
 import type { Enchantment } from "../../rules/enchanting.js";
 import { AMMUNITION_TYPES, ammunitionFitOfName, type AmmunitionType } from "../../rules/ammunition.js";
 import { EQUIPMENT_QUALITIES, type EquipmentQuality } from "../../rules/wealth.js";
-import { DR_LOCATIONS } from "../../rules/vehicle-combat.js";
+import { DR_LOCATIONS, VEHICLE_ARCS } from "../../rules/vehicle-combat.js";
+import { LOCOMOTIONS, isFragilityEntry } from "../../rules/vehicles.js";
 import {
   WEAPON_CLASSES,
   WEAPON_MATERIALS,
@@ -117,6 +118,11 @@ function physicalFields() {
  * Both read the same columns, so both are given the same fields rather than
  * one copying the other and drifting.
  */
+/** One field per location that can carry a DR of its own. */
+function byDrLocation(field: () => any) {
+  return new fields.SchemaField(Object.fromEntries(DR_LOCATIONS.map((key) => [key, field()])));
+}
+
 export function vehicleStatFields() {
   return {
     /**
@@ -130,12 +136,13 @@ export function vehicleStatFields() {
     /** "A measure of reliability and ruggedness." */
     ht: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 10, min: 1 }),
     /**
-     * How fragile it is, from the code beside HT: "c" for Combustible, "f"
-     * for Flammable, "x" for Explosive. Blank for a vehicle that is none.
+     * How fragile it is, from the codes beside HT: "c" for Combustible, "f"
+     * for Flammable, "x" for Explosive, as many as the column gives ("fx" for
+     * one that burns and blows up). Blank for a vehicle that is none.
      */
     fragility: new fields.StringField({
       required: true, nullable: false, blank: true, initial: "",
-      choices: ["", "c", "f", "x"],
+      validate: (value: unknown) => isFragilityEntry(value),
     }),
     /** "The first number is Acceleration and the second is Top Speed, in yards/second." */
     acceleration: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0 }),
@@ -162,13 +169,26 @@ export function vehicleStatFields() {
      * A location's own DR, replacing the face's where it is given: a turret
      * thicker than the hull, a window better than half of it (pp. 554-555).
      */
-    drByLocation: new fields.SchemaField(
-      Object.fromEntries(
-        DR_LOCATIONS.map((key) => [
-          key,
-          new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
-        ]),
-      ),
+    drByLocation: byDrLocation(() =>
+      new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
+    ),
+    /**
+     * A location's own faces, where it gives them: a turret's sides and rear,
+     * and its top, each empty unless given. With these, `drByLocation` is the
+     * location's front (pp. 462, 554-555).
+     */
+    drByLocationOther: byDrLocation(() =>
+      new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
+    ),
+    drByLocationTop: byDrLocation(() =>
+      new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
+    ),
+    /**
+     * The arcs a location's own DR covers, for armour on one side only: a
+     * canopy armoured against the front. Empty is every arc.
+     */
+    drByLocationArcs: byDrLocation(() =>
+      new fields.ArrayField(new fields.StringField({ required: true, blank: false, choices: [...VEHICLE_ARCS] })),
     ),
     /** "The travel distance, in miles, before the vehicle runs out of fuel." */
     range: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
@@ -181,9 +201,21 @@ export function vehicleStatFields() {
     locations: new fields.StringField({ required: true, blank: true, initial: "" }),
     locomotion: new fields.StringField({
       required: true, nullable: false, initial: "wheels",
-      choices: ["wheels", "tracks", "legs", "runners", "water", "air"],
+      choices: [...LOCOMOTIONS],
     }),
     roadBound: new fields.BooleanField({ initial: false }),
+    /**
+     * A second way it moves, with a Move of its own: an amphibious vehicle's
+     * water Move beside its land Move. Blank for a vehicle that moves one way.
+     */
+    secondLocomotion: new fields.StringField({
+      required: true, nullable: false, blank: true, initial: "",
+      choices: ["", ...LOCOMOTIONS],
+    }),
+    secondAcceleration: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+    secondTopSpeed: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+    /** True while it moves its second way, which is then the Move the rules read. */
+    secondMoveInUse: new fields.BooleanField({ initial: false }),
     /**
      * "For a watercraft, the minimum depth of water, in feet, it can safely
      * operate in." Zero for anything that is not a boat.
@@ -1210,7 +1242,9 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
     acceleration: number; topSpeed: number; loadedWeight: number; load: number;
     sm: number; occupants: string; dr: number; range: number; skill: string; locations: string;
     locomotion: "wheels" | "tracks" | "legs" | "runners" | "water" | "air"; roadBound: boolean;
-    fragility: "" | "c" | "f" | "x"; draft: number; stall: number;
+    fragility: string; draft: number; stall: number;
+    secondLocomotion: "" | "wheels" | "tracks" | "legs" | "runners" | "water" | "air";
+    secondAcceleration: number; secondTopSpeed: number; secondMoveInUse: boolean;
   };
 
   static override defineSchema() {

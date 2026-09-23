@@ -6,6 +6,17 @@
     <p class="v2-note">{{localize "GWORLD.Vehicle.SpecsHint"}}</p>
     <div class="vehicle-fields">
       {{#each specFields as |f|}}
+        {{#if f.checks}}
+          {{!-- A set of codes, each its own box: a label cannot hold labels. --}}
+          <div class="vehicle-field"{{#if f.hint}} data-tooltip="{{f.hint}}"{{/if}}>
+            <span class="v2-stat-label">{{f.label}}</span>
+            <span class="vehicle-checks">
+              {{#each f.checks as |c|}}
+                <label class="vehicle-check"><input type="checkbox" name="{{c.name}}" value="{{c.value}}" {{#if c.checked}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}}> {{c.label}}</label>
+              {{/each}}
+            </span>
+          </div>
+        {{else}}
         <label class="vehicle-field"{{#if f.hint}} data-tooltip="{{f.hint}}"{{/if}}>
           <span class="v2-stat-label">{{f.label}}</span>
           {{#if f.options}}
@@ -20,6 +31,7 @@
                    {{#unless @root.editable}}disabled{{/unless}}>
           {{/if}}
         </label>
+        {{/if}}
       {{/each}}
     </div>
   </div>
@@ -36,5 +48,38 @@
         </label>
       {{/each}}
     </div>
+    {{#if drLocations.length}}
+      {{!-- A location's own DR, by face, and the arcs it covers where it covers only some. --}}
+      <h3 class="v2-ph">{{localize "GWORLD.Vehicle.DrLocations"}}</h3>
+      <p class="v2-note">{{localize "GWORLD.Vehicle.DrLocationsHint"}}</p>
+      <table class="vehicle-dr-locations">
+        <thead>
+          <tr>
+            <th>{{localize "GWORLD.Vehicle.DrLocationColumn"}}</th>
+            <th>{{localize "GWORLD.Vehicle.DrLocationFront"}}</th>
+            <th>{{localize "GWORLD.Vehicle.DrLocationOther"}}</th>
+            <th>{{localize "GWORLD.Vehicle.DrLocationTop"}}</th>
+            <th>{{localize "GWORLD.Vehicle.DrLocationArcs"}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each drLocations as |row|}}
+            <tr>
+              <th scope="row">{{row.label}}</th>
+              {{#each row.faces as |f|}}
+                <td><input type="number" name="{{f.name}}" value="{{f.value}}" placeholder="{{f.placeholder}}" min="0" step="1"
+                           {{#unless @root.editable}}disabled{{/unless}}></td>
+              {{/each}}
+              <td class="vehicle-checks">
+                {{#each row.arcs as |arc|}}
+                  <label class="vehicle-check"><input type="checkbox" name="{{row.arcsName}}" value="{{arc.key}}" {{#if arc.checked}}checked{{/if}}
+                         {{#unless @root.editable}}disabled{{/unless}}> {{arc.label}}</label>
+                {{/each}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{/if}}
   </div>
 </section>

@@ -18,8 +18,8 @@
 
 import { vehicleStatFields } from "./items.js";
 import {
-  cargoCapacity, cruisingSpeedMph, curbWeight, endurance, occupants,
-  safeDecelerationPerTurn, type Locomotion,
+  activeMove, cargoCapacity, cruisingSpeedMph, curbWeight, endurance, fragilityCodes,
+  occupants, safeDecelerationPerTurn, vehicleMoves, type Locomotion,
 } from "../../rules/vehicles.js";
 import { locationsOf, mediumOf, type VehicleLocation } from "../../rules/vehicle-combat.js";
 import { scaleScore, vehicleDodge } from "../../rules/scale.js";
@@ -58,12 +58,17 @@ function controlSkillOf(driver: any, skillName: string): number | null {
 export class VehicleData extends foundry.abstract.TypeDataModel {
   declare vehicle: {
     stHp: number; handling: number; stability: number; ht: number;
-    fragility: "" | "c" | "f" | "x";
+    fragility: string;
     acceleration: number; topSpeed: number; loadedWeight: number; load: number;
     sm: number; occupants: string; dr: number; range: number; skill: string;
     drOther: number | null; drTop: number | null; drUnderbody: number | null;
     drByLocation: Partial<Record<VehicleLocation, number | null>>;
+    drByLocationOther: Partial<Record<VehicleLocation, number | null>>;
+    drByLocationTop: Partial<Record<VehicleLocation, number | null>>;
+    drByLocationArcs: Partial<Record<VehicleLocation, string[]>>;
     locations: string; locomotion: Locomotion; roadBound: boolean;
+    secondLocomotion: "" | Locomotion; secondAcceleration: number; secondTopSpeed: number;
+    secondMoveInUse: boolean;
     draft: number; stall: number;
   };
   declare hp: { value: number; max: number };
@@ -157,7 +162,10 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
     const v = this.vehicle;
     this.hp.max = v.stHp;
 
-    const locomotion = v.locomotion;
+    // The rules read the Move it is using now: an amphibian in the water
+    // cruises, brakes and loses control as a boat does.
+    const move = activeMove(v);
+    const locomotion = move.locomotion;
     const seats = occupants(v.occupants);
     const aboard = this.crew.length;
     // Cruising speed on the ground a vehicle is built for: a paved road for
@@ -166,8 +174,8 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
     // the figure the endurance is worked out from, and the one a table wants
     // when it asks how long the drive takes.
     const cruising = cruisingSpeedMph({
-      topSpeed: v.topSpeed,
-      acceleration: v.acceleration,
+      topSpeed: move.topSpeed,
+      acceleration: move.acceleration,
       locomotion,
       roadBound: v.roadBound,
       onRoad: v.roadBound,
@@ -201,7 +209,12 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
           : null,
       medium: mediumOf(locomotion),
       // Top Speed in yards a second, doubled: "double this to get mph".
-      topSpeedMph: Math.round(v.topSpeed * 2 * 10) / 10,
+      topSpeedMph: Math.round(move.topSpeed * 2 * 10) / 10,
+      /** Every way it moves, its first Move first, and the one in use now. */
+      moves: vehicleMoves(v),
+      move,
+      /** The codes beside HT, each on its own: ["f", "x"] for "fx". */
+      fragility: fragilityCodes(v.fragility),
       cruisingSpeedMph: cruising,
       endurance: endurance({ rangeMiles: v.range, cruisingSpeedMph: cruising }),
       safeDeceleration: safeDecelerationPerTurn({ locomotion, handling: v.handling }),
@@ -214,7 +227,7 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
       // The locations a shot can land on, read off the Locations column.
       locations: locationsOf(v.locations),
       /** "A powered vehicle (anything with a ST attribute) has vital areas." */
-      powered: v.stHp > 0 && v.acceleration > 0,
+      powered: v.stHp > 0 && vehicleMoves(v).some((m) => m.acceleration > 0),
       /** Wrecked at zero, as any object is. */
       wrecked: this.hp.value <= 0,
       /** Below a third of its hit points, which is when things start failing. */

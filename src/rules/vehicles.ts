@@ -34,6 +34,83 @@ export const LOCOMOTIONS = ["wheels", "tracks", "legs", "runners", "water", "air
 
 export type Locomotion = (typeof LOCOMOTIONS)[number];
 
+/** One way a vehicle moves: its locomotion and the Move it has that way. */
+export interface VehicleMove {
+  locomotion: Locomotion;
+  acceleration: number;
+  topSpeed: number;
+}
+
+/**
+ * The statistics a vehicle's Move is read from. The second Move is for a
+ * vehicle that moves two ways with a Move for each -- an amphibious one
+ * swims at one speed and drives at another (pp. 462-465) -- and is empty
+ * unless the vehicle has one.
+ */
+export interface VehicleMoveFigures {
+  locomotion: Locomotion | string;
+  acceleration: number;
+  topSpeed: number;
+  secondLocomotion?: Locomotion | string | null;
+  secondAcceleration?: number | null;
+  secondTopSpeed?: number | null;
+  /** True while it is moving its second way: the amphibian in the water. */
+  secondMoveInUse?: boolean | null;
+}
+
+function isLocomotion(value: unknown): value is Locomotion {
+  return (LOCOMOTIONS as readonly unknown[]).includes(value);
+}
+
+/** Every way a vehicle moves, its first Move first. */
+export function vehicleMoves(figures: VehicleMoveFigures): VehicleMove[] {
+  const first: VehicleMove = {
+    locomotion: isLocomotion(figures.locomotion) ? figures.locomotion : "wheels",
+    acceleration: Math.max(0, Number(figures.acceleration) || 0),
+    topSpeed: Math.max(0, Number(figures.topSpeed) || 0),
+  };
+  if (!isLocomotion(figures.secondLocomotion)) return [first];
+  return [
+    first,
+    {
+      locomotion: figures.secondLocomotion,
+      acceleration: Math.max(0, Number(figures.secondAcceleration) || 0),
+      topSpeed: Math.max(0, Number(figures.secondTopSpeed) || 0),
+    },
+  ];
+}
+
+/**
+ * The Move a vehicle is using now: its second where it has one and is moving
+ * that way, its first otherwise. What losing control does, how fast it
+ * cruises and how hard it may brake all follow the way it is moving.
+ */
+export function activeMove(figures: VehicleMoveFigures): VehicleMove {
+  const moves = vehicleMoves(figures);
+  return figures.secondMoveInUse === true && moves[1] ? moves[1] : moves[0]!;
+}
+
+/**
+ * The codes the HT column may carry (p. 463): "c" Combustible, "f"
+ * Flammable, "x" Explosive -- more than one where the vehicle is more than
+ * one of them, as "fx".
+ */
+export const FRAGILITY_CODES = ["c", "f", "x"] as const;
+
+export type FragilityCode = (typeof FRAGILITY_CODES)[number];
+
+/** Whether an entry is a set of those codes, each at most once, or blank. */
+export function isFragilityEntry(entry: unknown): boolean {
+  if (typeof entry !== "string") return false;
+  return /^[cfx]*$/.test(entry) && new Set(entry).size === entry.length;
+}
+
+/** The codes in an entry, in the table's order: "xf" and "fx" are both ["f", "x"]. */
+export function fragilityCodes(entry: unknown): FragilityCode[] {
+  const text = String(entry ?? "");
+  return FRAGILITY_CODES.filter((code) => text.includes(code));
+}
+
 /**
  * Cruising speed in mph, from Top Speed in yards a second (p. 466).
  *
