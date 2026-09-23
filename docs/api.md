@@ -614,7 +614,11 @@ and the roll continues.
     p. 46; Hooves on the foot; a Nictitating Membrane on the eye). A natural
     line carries `traitId`, the trait item's id, where the actor's trait
     items account for the whole figure (one line per trait); otherwise it is
-    one line with the figure and no `traitId`. It is mutable like the rest:
+    one line with the figure and no `traitId`. On the eye, Damage Resistance
+    is a line only where the trait carries a Force Field modifier or a
+    Partial one naming the eyes, since by default natural DR leaves the eyes
+    bare (Characters pp. 46-47); a listener that means to protect them anyway
+    pushes a line of its own. It is mutable like the rest:
     change `dr`, set `applies` false, raise `hardened` (the advantage's
     Hardened) or set `forceField` (its Force Field, which then meets the blow
     first); `againstIgnoresDr` works as for a piece. A natural line still

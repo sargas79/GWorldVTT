@@ -37,6 +37,7 @@ import { knockdownModifier, knockdownRequired } from "../rules/knockdown.js";
 import { chinkDr } from "../rules/melee-situations.js";
 import { woundBleeds } from "../rules/bleeding.js";
 import {
+  damageResistanceAtEyes,
   noTraitEffects,
   shockAfterTraits,
   traitEffects,
@@ -503,17 +504,34 @@ function naturalDrLines(actor: any, traits: TraitEffects, location: HitLocation)
     if (total <= 0) continue;
     const natural = { applies: true, forceField: false, flexible: false, hardened: 0, source: "natural" as const };
     const each = held
-      .map((item) => ({
-        item,
-        dr: traitEffects([{
+      .map((item) => {
+        const trait = {
           name: String(item.name ?? ""),
           levels: Number(item.system?.levels ?? 0),
           specialty: String(item.system?.specialty ?? ""),
           modifiers: ((item.system?.modifiers ?? []) as Array<{ name?: string }>).map((m) => String(m?.name ?? "")),
-        }])[kind.key],
-      }))
+        };
+        return { item, trait, dr: traitEffects([trait])[kind.key] };
+      })
       .filter((entry) => entry.dr > 0);
-    if (each.length > 0 && each.reduce((sum, entry) => sum + entry.dr, 0) === total) {
+    const accounted = each.length > 0 && each.reduce((sum, entry) => sum + entry.dr, 0) === total;
+    // Damage Resistance leaves the eyes bare unless it was bought to cover
+    // them (Characters p. 46): only a trait taken as a Force Field or Partial
+    // for the eyes reaches them. Where the traits don't account for the
+    // figure, what does reach them is at most that figure.
+    if (kind.key === "damageResistance" && location === "eye") {
+      if (accounted) {
+        for (const { item, trait, dr } of each) {
+          if (damageResistanceAtEyes([trait]) <= 0) continue;
+          lines.push({ label: String(item.name ?? kind.label), dr, ...natural, ...(item.id ? { traitId: String(item.id) } : {}) });
+        }
+      } else {
+        const dr = Math.min(total, damageResistanceAtEyes(each.map((entry) => entry.trait)));
+        if (dr > 0) lines.push({ label: kind.label, dr, ...natural });
+      }
+      continue;
+    }
+    if (accounted) {
       for (const { item, dr } of each) {
         lines.push({ label: String(item.name ?? kind.label), dr, ...natural, ...(item.id ? { traitId: String(item.id) } : {}) });
       }
