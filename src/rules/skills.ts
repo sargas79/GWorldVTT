@@ -296,15 +296,17 @@ export function effectiveSkillLevel(options: {
  * Architecture defaults from "Engineer (Civil)". The marker is notation about
  * the skill, not part of its name, so matching has to see through it.
  *
- * Case and surrounding space go too, so that a hand-typed skill still matches
- * one dragged in from the compendium.
+ * Case and spacing go too, around a specialty's brackets as well, so that a
+ * hand-typed skill still matches one dragged in from the compendium. The
+ * specialty stays part of the name: different specialties never match.
  */
 export function normalizeSkillName(name: string): string {
-  return name
+  return String(name ?? "")
+    .replace(/\/TL[\d^]*/gi, "")
+    .replace(/\s*\(\s*/g, " (")
+    .replace(/\s*\)/g, ")")
     .trim()
-    .replace(/\/TL[\d^]*/i, "")
     .replace(/\s+/g, " ")
-    .trim()
     .toLowerCase();
 }
 

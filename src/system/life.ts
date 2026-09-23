@@ -14,7 +14,7 @@ import { attributeOf } from "./attributes.js";
 import { AGED_ATTRIBUTES, agingModifier, agingRoll, diesOfAge } from "../rules/aging.js";
 import { CRITICAL_RAISE, jobRoll, type JobKind } from "../rules/jobs.js";
 import { setCondition } from "./conditions.js";
-import { normalizeSkillName } from "../rules/skills.js";
+import { skillLevelOf } from "./skill-level.js";
 import { resolveSuccess } from "../rules/success.js";
 import { studyPoints, type StudyMethod } from "../rules/study.js";
 
@@ -83,18 +83,6 @@ export async function adjustCash(options: { actor: any; amount: number; note: st
     good: options.amount > 0,
     bad: after < 0,
   });
-}
-
-/** The level of a skill by name, or null when the character lacks it. */
-function skillLevelOf(actor: any, name: string): number | null {
-  const wanted = normalizeSkillName(name);
-  for (const item of actor?.items ?? []) {
-    if (item.type !== "skill") continue;
-    if (normalizeSkillName(String(item.name)) !== wanted) continue;
-    const level = item.system?.derived?.level;
-    return typeof level === "number" ? level : null;
-  }
-  return null;
 }
 
 /**

@@ -39,6 +39,7 @@ import {
   type ResuscitationCause,
   canResuscitate,
 } from "../rules/medicine.js";
+import { skillLevelOf } from "./skill-level.js";
 
 const RECOVERY_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/recovery.hbs`;
 
@@ -75,18 +76,6 @@ function dieResults(roll: any): number[] {
 const R = (key: string) => game.i18n.localize(`GWORLD.Recovery.${key}`);
 const F = (key: string, data: Record<string, unknown>) =>
   game.i18n.format(`GWORLD.Recovery.${key}`, data);
-
-/** The level of a skill by name, or null where the healer lacks it. */
-function skillLevelOf(actor: any, name: string): number | null {
-  const wanted = name.trim().toLowerCase();
-  for (const item of actor?.items ?? []) {
-    if (item.type !== "skill") continue;
-    if (String(item.name ?? "").trim().toLowerCase() !== wanted) continue;
-    const level = Number(item.system?.derived?.level);
-    return Number.isFinite(level) ? level : null;
-  }
-  return null;
-}
 
 /** Posts one recovery card. */
 async function post(actor: any, context: Record<string, unknown>): Promise<void> {

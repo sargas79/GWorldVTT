@@ -11,6 +11,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { isRuleOn } from "./optional-rules.js";
 import { resolveSuccess } from "../rules/success.js";
+import { normalizeSkillName } from "../rules/skills.js";
 import {
   REPAIR_HOURS,
   equipmentFailureTarget,
@@ -46,17 +47,23 @@ export function damageState(item: any): { hp: number; hpLost: number; cost: numb
 
 /** The skills the book names for putting things right (p. 484). */
 export const REPAIR_SKILLS = [
-  "Armoury", "Armoury/TL", "Electrician", "Electronics Repair", "Machinist", "Mechanic", "Smith",
+  "Armoury", "Electrician", "Electronics Repair", "Machinist", "Mechanic", "Smith",
 ] as const;
 
-/** The best repair skill on the sheet, or null where there is none. */
+/**
+ * The best repair skill on the sheet, or null where there is none. The book
+ * names the skills without their "/TL" or specialty -- which specialty fits
+ * the job is the GM's call -- so any specialty of one counts, "Armoury/TL
+ * (Body Armor)" as much as "Electrician/TL".
+ */
 export function repairSkillOf(actor: any): { name: string; level: number } | null {
+  const wanted = REPAIR_SKILLS.map((skill) => normalizeSkillName(skill));
   let best: { name: string; level: number } | null = null;
   for (const item of actor?.items ?? []) {
     if (item.type !== "skill") continue;
     const name = String(item.name ?? "");
-    const bare = name.replace(/\/TL\d*/i, "").trim();
-    if (!(REPAIR_SKILLS as readonly string[]).some((s) => s.replace("/TL", "") === bare)) continue;
+    const bare = normalizeSkillName(name).replace(/\s*\(.*\)$/, "");
+    if (!wanted.includes(bare)) continue;
     const level = Number(item.system?.derived?.level);
     if (!Number.isFinite(level)) continue;
     if (!best || level > best.level) best = { name, level };

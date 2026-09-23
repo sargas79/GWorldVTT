@@ -33,7 +33,7 @@ import { applyInjury } from "../rules/injury.js";
 import {
   protectedDose, radiationEffect, radiationRow, remainingDose,
 } from "../rules/radiation.js";
-import { normalizeSkillName } from "../rules/skills.js";
+import { skillLevelOf } from "./skill-level.js";
 import { dozingOff, sleepRecovery, stayingUpFatigue, wakingDayHours } from "../rules/sleep.js";
 import { resolveSuccess } from "../rules/success.js";
 import type { DamageType } from "../rules/types.js";
@@ -119,18 +119,6 @@ function traitLevels(actor: any, name: string): number {
     return Math.max(1, Math.floor(Number(item.system?.levels ?? 1)) || 1);
   }
   return 0;
-}
-
-/** The level of a skill by name, or null when the character lacks it. */
-function skillLevelOf(actor: any, name: string): number | null {
-  const wanted = normalizeSkillName(name);
-  for (const item of actor?.items ?? []) {
-    if (item.type !== "skill") continue;
-    if (normalizeSkillName(String(item.name)) !== wanted) continue;
-    const level = item.system?.derived?.level;
-    return typeof level === "number" ? level : null;
-  }
-  return null;
 }
 
 /** Injury from a roll of damage, through the worn armour at a random location. */
