@@ -245,7 +245,7 @@ describe("applying a blow", () => {
   });
 });
 
-describe("the Size and Speed/Range Table (GURPS Lite p. 27)", () => {
+describe("the Size and Speed/Range Table (Campaigns p. 550)", () => {
   it("puts a man 8 yards away at -4, rounding up to the 10-yard row", () => {
     expect(speedRangeModifier(8)).toBe(-4);
   });
@@ -257,6 +257,36 @@ describe("the Size and Speed/Range Table (GURPS Lite p. 27)", () => {
   it("costs nothing at point-blank range", () => {
     expect(speedRangeModifier(2)).toBe(0);
     expect(speedRangeModifier(0)).toBe(0);
+  });
+
+  it("puts the passing missile's 1,005 yards at -17, per the table's example", () => {
+    expect(speedRangeModifier(1005)).toBe(-17);
+  });
+
+  it("keeps the 1.5/2/3/5/7/10 steps in every decade past 1,000 yards", () => {
+    const rows: Array<[number, number]> = [
+      [1000, -16], [1500, -17], [2000, -18], [3000, -19], [5000, -20], [7000, -21], [10000, -22],
+      [15000, -23], [20000, -24], [30000, -25], [50000, -26], [70000, -27], [100000, -28],
+      [150000, -29], [200000, -30],
+    ];
+    for (const [yards, modifier] of rows) expect(speedRangeModifier(yards)).toBe(modifier);
+  });
+
+  it("takes the higher row between two rows in the far decades", () => {
+    expect(speedRangeModifier(1001)).toBe(-17);
+    expect(speedRangeModifier(1501)).toBe(-18);
+    expect(speedRangeModifier(4000)).toBe(-20);
+    expect(speedRangeModifier(7001)).toBe(-22);
+    expect(speedRangeModifier(10001)).toBe(-23);
+  });
+
+  it("carries the progression on past the printed rows, at miles scale", () => {
+    // 100 miles is 176,000 yards (the 200,000 row); 1,000 miles is 1,760,000
+    // yards (the 2,000,000 row).
+    expect(speedRangeModifier(176_000)).toBe(-30);
+    expect(speedRangeModifier(300_000)).toBe(-31);
+    expect(speedRangeModifier(1_760_000)).toBe(-36);
+    expect(speedRangeModifier(10_000_000)).toBe(-40);
   });
 
   it("adds target speed to range before looking up the modifier", () => {
