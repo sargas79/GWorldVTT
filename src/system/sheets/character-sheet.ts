@@ -196,7 +196,7 @@ import {
 } from "../procedure-extensions.js";
 import { effectiveCost, effectiveWeight, itemSectionsFor, registeredItemType, runItemTypeAction, tabHasAddonSections } from "../data-extensions.js";
 import { registeredTabsShownOn } from "../sheet-tabs.js";
-import { partyOf } from "../party.js";
+import { openCampaignTerms } from "../campaign.js";
 import { DRESS_STATES } from "../../rules/cinematic.js";
 import { awardsNewestFirst, nextSessionLabel, type PointAward } from "../../rules/character-points.js";
 import { exposeToWeakness } from "../weakness.js";
@@ -412,7 +412,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       browseCompendium: GWorldCharacterSheet.#onBrowseCompendium,
       openBuilder: GWorldCharacterSheet.#onOpenBuilder,
       awardPoints: GWorldCharacterSheet.#onAwardPoints,
-      openParty: GWorldCharacterSheet.#onOpenParty,
+      openCampaign: GWorldCharacterSheet.#onOpenCampaign,
       deleteAward: GWorldCharacterSheet.#onDeleteAward,
       slam: GWorldCharacterSheet.#onSlam,
       shove: GWorldCharacterSheet.#onShove,
@@ -1689,9 +1689,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     await handleRollAction(this.actor, event, target);
   }
 
-  /** Opens the party whose terms this character reads. */
-  static async #onOpenParty(this: GWorldCharacterSheet) {
-    await partyOf(this.actor)?.sheet?.render(true);
+  /** Opens where the campaign's terms are set: the settings for the GM, the party for a player. */
+  static async #onOpenCampaign(this: GWorldCharacterSheet) {
+    await openCampaignTerms(this.actor);
   }
 
   /** Rolls an attack mode's damage and posts it to chat. */

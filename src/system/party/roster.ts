@@ -302,7 +302,7 @@ export function partyLanguages(members: readonly MemberLanguagesLike[]): PartyLa
 
 // ── the campaign's terms ───────────────────────────────────────────────────
 
-/** The campaign's terms as the party stores them: null is "not set". */
+/** The campaign's terms as the world stores them: null is "not set". */
 export interface CampaignTerms {
   tl: number | null;
   startingPoints: number | null;
@@ -321,7 +321,7 @@ export function termsFrom(stored: Partial<Record<CampaignTermKey, unknown>> | nu
   return { tl: read("tl"), startingPoints: read("startingPoints"), disadvantageLimit: read("disadvantageLimit") };
 }
 
-/** Which of the terms a party has set, and so locks on its members' sheets. */
+/** Which of the terms the GM has set, and so locks on the characters' sheets. */
 export function lockedTerms(terms: CampaignTerms | null): Record<CampaignTermKey, boolean> {
   return {
     tl: terms?.tl !== null && terms?.tl !== undefined,

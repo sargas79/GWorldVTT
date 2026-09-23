@@ -59,7 +59,8 @@ export function hasMigrated(module: string, step: string): boolean {
   return Boolean(records()[module]?.[step]);
 }
 
-async function record(module: string, step: string): Promise<void> {
+/** Records that a module's step has run in this world. */
+export async function recordMigration(module: string, step: string): Promise<void> {
   const all = foundry.utils.deepClone(records());
   all[module] = { ...(all[module] ?? {}), [step]: { at: Date.now() } };
   await game.settings.set(SYSTEM_ID, MIGRATIONS_KEY, all);
@@ -179,7 +180,7 @@ export async function migrateItemType(options: {
     entries.push({ save, change: { _id: item.id, type: options.toType, system: replace(system ?? {}) } });
   }
   const result = await saveEach(entries, game.i18n.format("GWORLD.Migration.ItemType", { from: options.fromType, to: options.toType }));
-  if (result.failed === 0) await record(options.module, step);
+  if (result.failed === 0) await recordMigration(options.module, step);
   return { skipped: false, ...result };
 }
 
@@ -224,7 +225,7 @@ export async function moveFields(options: {
     if (Object.keys(change).length > 1) entries.push({ save, change });
   }
   const result = await saveEach(entries, game.i18n.format("GWORLD.Migration.Fields", { document: options.documentName }));
-  if (result.failed === 0) await record(options.module, step);
+  if (result.failed === 0) await recordMigration(options.module, step);
   return { skipped: false, ...result };
 }
 
@@ -250,7 +251,7 @@ export async function moveRuleState(options: { module: string; step?: string; fr
     changed = 1;
   }
   if (changed) await game.settings.set(SYSTEM_ID, OPTIONAL_RULES_KEY, stored);
-  await record(options.module, step);
+  await recordMigration(options.module, step);
   return { skipped: false, changed, failed: 0 };
 }
 

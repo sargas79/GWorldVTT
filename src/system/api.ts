@@ -76,13 +76,14 @@ import { REGISTER_RULES_HOOK, isAddonRuleKey, namespacedRuleKey, registerRule, r
 import { rollDamage, rollSuccess } from "./roll.js";
 import { postResistance } from "./spell-resistance.js";
 import { manaLevel } from "./casting.js";
-import { PARTY_CHANGED_HOOK, addMembers, campaignTerms, membersOf, partyOf, removeMember } from "./party.js";
+import { PARTY_CHANGED_HOOK, addMembers, membersOf, partyOf, removeMember } from "./party.js";
+import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from "./campaign.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.81.0";
+export const API_VERSION = "1.82.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -440,10 +441,10 @@ export interface GWorldApi {
   readonly areas: typeof areasApi;
   /** The party an actor is in, its members and the campaign's terms (since 1.68.0). */
   readonly party: typeof partyApi;
-  /** Facts about the campaign world (since 1.77.0): its Control Rating. */
+  /** Facts about the campaign world (since 1.77.0): its Control Rating, and its terms since 1.82.0. */
   readonly world: typeof worldApi;
-  /** The hooks the API fires, by name; `partyChanged` since 1.68.0. */
-  readonly hooks: { readonly registerRules: string; readonly ready: string; readonly partyChanged: string };
+  /** The hooks the API fires, by name; `partyChanged` since 1.68.0, `campaignChanged` since 1.82.0. */
+  readonly hooks: { readonly registerRules: string; readonly ready: string; readonly partyChanged: string; readonly campaignChanged: string };
   /** Whether this API satisfies a semver range, as a module's manifest would declare it. */
   readonly satisfies: (range: string) => boolean;
 }
@@ -500,8 +501,13 @@ const points = Object.freeze({ ...pointsApi, spendUnspent: spendUnspentPoints })
 /** The magic namespace: energy sources and spell attacks, and from 1.9.0 resistance cards. */
 const magic = Object.freeze({ ...magicApi, postResistance, manaLevel });
 
-/** The party namespace (since 1.68.0): which party an actor is in, its members, and the campaign's terms. */
-const partyApi = Object.freeze({ of: partyOf, membersOf, campaignTerms, addMembers, removeMember });
+/**
+ * The party namespace (since 1.68.0): which party an actor is in and its
+ * members. `campaignTerms` is kept for modules written against it; since
+ * 1.82.0 the terms are world settings (`world.campaignTerms`), and it gives
+ * them for any player character, with its party or null.
+ */
+const partyApi = Object.freeze({ of: partyOf, membersOf, campaignTerms: actorCampaignTerms, addMembers, removeMember });
 
 /**
  * The world namespace (since 1.77.0): the campaign's Control Rating (Campaigns
@@ -513,6 +519,11 @@ const worldApi = Object.freeze({
   controlRating(): { rating: ControlRating | null; inPlay: boolean } {
     return { rating: currentControlRating(), inPlay: isRuleOn("legalityClass") };
   },
+  /**
+   * The campaign's terms (since 1.82.0): starting points, disadvantage limit
+   * and Tech Level as the GM set them for the world, null where left blank.
+   */
+  campaignTerms: worldCampaignTerms,
 });
 
 /** Builds the frozen API object. */
@@ -535,7 +546,7 @@ export function createApi(): GWorldApi {
     chat: chatApi,
     party: partyApi,
     world: worldApi,
-    hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: PARTY_CHANGED_HOOK }),
+    hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: PARTY_CHANGED_HOOK, campaignChanged: CAMPAIGN_CHANGED_HOOK }),
     satisfies: (range: string) => satisfiesApiRange(API_VERSION, range),
   });
 }

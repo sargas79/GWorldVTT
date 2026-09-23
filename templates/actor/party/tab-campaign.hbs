@@ -1,29 +1,27 @@
 <section class="tab v2-tab party-tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
   <div class="party-campaign-grid">
-    {{!-- The terms the characters were made on. Blank means each keeps its own. --}}
+    {{!-- The terms every player character is made on, world settings the GM
+         sets here or on the settings page (#642). Blank means each keeps its own. --}}
     <div class="v2-panel party-creation">
       <h2 class="v2-ph">{{localize "GWORLD.Party.Creation"}}</h2>
       <p class="v2-note">{{localize "GWORLD.Party.CreationHint"}}</p>
       <div class="party-fields">
         <label class="party-field">
           <span class="v2-stat-label">{{localize "GWORLD.Field.StartingPoints"}}</span>
-          <input type="number" name="system.campaign.startingPoints" value="{{campaign.startingPoints}}" step="5" min="0"
-                 placeholder="{{localize 'GWORLD.Party.Unset'}}" {{#unless editable}}disabled{{/unless}}>
+          <input type="number" data-campaign-term="startingPoints" value="{{campaign.startingPoints}}" step="5" min="0"
+                 placeholder="{{localize 'GWORLD.Party.Unset'}}" {{#unless campaign.editable}}disabled{{/unless}}>
         </label>
         <label class="party-field">
           <span class="v2-stat-label" data-tooltip="{{localize 'GWORLD.Hint.DisadvantageLimit'}}">{{localize "GWORLD.Field.DisadvantageLimit"}}</span>
-          <input type="number" name="system.campaign.disadvantageLimit" value="{{campaign.disadvantageLimit}}" step="5" min="0"
-                 placeholder="{{localize 'GWORLD.Party.Unset'}}" {{#unless editable}}disabled{{/unless}}>
+          <input type="number" data-campaign-term="disadvantageLimit" value="{{campaign.disadvantageLimit}}" step="5" min="0"
+                 placeholder="{{localize 'GWORLD.Party.Unset'}}" {{#unless campaign.editable}}disabled{{/unless}}>
         </label>
         <label class="party-field">
           <span class="v2-stat-label">{{localize "GWORLD.Field.TechLevel"}}</span>
-          <input type="number" name="system.campaign.tl" value="{{campaign.tl}}" step="1" min="0"
-                 placeholder="{{localize 'GWORLD.Party.Unset'}}" {{#unless editable}}disabled{{/unless}}>
+          <input type="number" data-campaign-term="tl" value="{{campaign.tl}}" step="1" min="0"
+                 placeholder="{{localize 'GWORLD.Party.Unset'}}" {{#unless campaign.editable}}disabled{{/unless}}>
         </label>
       </div>
-      {{#if campaign.affected}}
-        <p class="v2-note">{{localize "GWORLD.Party.AffectedMembers" names=campaign.affected}}</p>
-      {{/if}}
     </div>
 
     {{!-- The world's own settings, which only a GM can write. --}}

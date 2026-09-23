@@ -1558,26 +1558,27 @@ Two fields a module may read (since 1.62.0):
 
 ## The party
 
-A `party` actor lists the characters a campaign follows and holds the terms
-the campaign was set on: the starting points, the disadvantage limit and the
-Tech Level. A term the GM has set on the party replaces the member's own
-during preparation -- `actor.system.tl` and `actor.system.points.starting`
-already read the party's figure, and `actor.system.derived.campaign` says
-which party it came from and which terms are locked. `game.gworld.api.party`
-(since 1.68.0):
+A `party` actor lists the characters a campaign follows. The terms the
+campaign was set on -- the starting points, the disadvantage limit and the
+Tech Level -- were kept on the party until 1.82.0; they are now world settings
+(see `world.campaignTerms` below), so a character keeps them whether or not it
+is in a party. `game.gworld.api.party` (since 1.68.0):
 
 - **`party.of(actor)`** -- the party the actor is in, or null. A token's actor
   is looked up by its world actor.
 - **`party.membersOf(party)`** -- the member actors that still exist, in the
   party's order.
-- **`party.campaignTerms(actor)`** -- `{ party: { id, uuid, name }, tl,
-  startingPoints, disadvantageLimit }` for an actor in a party, each term
-  null where the GM left it blank; null for an actor in no party.
+- **`party.campaignTerms(actor)`** -- `{ party, tl, startingPoints,
+  disadvantageLimit }`, each term null where the GM left it blank. Since
+  1.82.0 the terms are the world's and reach every player character: `party`
+  is `{ id, uuid, name }` or null for a character in no party, and the result
+  is null only for an actor the terms don't bind (an NPC, a vehicle). Kept for
+  modules written against 1.68.0; prefer `world.campaignTerms()`.
 - **`party.addMembers(party, actors)`** and **`party.removeMember(party, uuid)`**
   -- change the roster, for a user who owns the party. Only characters and
   NPCs join, and an actor is in one party at a time.
 - **`hooks.partyChanged`** (`gworld.partyChanged`) fires with `(party,
-  members)` when a party's roster or terms change, after its members have been
+  members)` when a party's roster changes, after its members have been
   prepared again.
 
 ## The campaign world
@@ -1591,6 +1592,17 @@ that are world settings rather than anything on an actor:
   where the GM left it blank or the rule is off; the Gear tab's legality
   notes read the same figure. Compare an item's class against it with
   `rules.legalityUnder(lc, rating)`.
+- **`world.campaignTerms()`** (since 1.82.0) -- `{ tl, startingPoints,
+  disadvantageLimit }`: the terms every player character is made on
+  (Characters pp. 10-11, 22), as the GM set them in the system settings or on
+  a party's Campaign tab, each null where left blank. A term that is set
+  replaces a player character's own during preparation -- `actor.system.tl`,
+  `actor.system.points.starting` and `actor.system.points.disadvantageLimit`
+  already read it, and `actor.system.derived.campaign.locked` says which terms
+  are set. NPCs keep their own.
+- **`hooks.campaignChanged`** (`gworld.campaignChanged`) fires with the terms
+  when the GM changes one, after every player character has been prepared
+  again.
 
 ## Taking over data the system is dropping
 

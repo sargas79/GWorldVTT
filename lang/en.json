@@ -4243,16 +4243,30 @@
       "Languages": "Languages",
       "NoLanguages": "No languages recorded on anyone.",
       "Creation": "Character creation",
-      "CreationHint": "The terms every member was made on (Characters pp. 10-11, 22). Set here, a figure replaces the one on each member's sheet and cannot be changed there; left blank, each member keeps its own.",
+      "CreationHint": "The terms every player character in the world is made on (Characters pp. 10-11, 22), in this party or not. Set here or on the settings page, a figure replaces the one on each character's sheet and cannot be changed there; left blank, each character keeps its own. Only the GM changes them.",
       "Unset": "as on each sheet",
-      "AffectedMembers": "Applies to {names}.",
       "World": "The world",
       "WorldHint": "Foundry's settings for this world, the same ones as on the settings page.",
       "SceneMana": "this scene: {level}",
       "RuleOff": "rule off",
-      "Notes": "Notes",
-      "SetBy": "Set by {party}",
-      "SetByHint": "This is the campaign's figure, set on the party sheet. Change it there."
+      "Notes": "Notes"
+    },
+    "Campaign": {
+      "startingPoints": {
+        "Name": "Campaign starting points",
+        "Hint": "The points every player character starts with (Characters p. 10). Blank: each character keeps its own. Set here, it replaces the figure on every player character's sheet, in a party or not."
+      },
+      "disadvantageLimit": {
+        "Name": "Campaign disadvantage limit",
+        "Hint": "The most points a player character may take in disadvantages (Characters p. 11). Blank: each character keeps its own."
+      },
+      "tl": {
+        "Name": "Campaign Tech Level",
+        "Hint": "The campaign's Tech Level (Characters p. 22), every player character's TL unless left blank."
+      },
+      "SetBy": "Set for the campaign",
+      "SetByHint": "This is the campaign's figure, which the GM sets for the whole world.",
+      "Migrated": "The campaign's starting points, disadvantage limit and Tech Level are now world settings. Your parties had different figures, so {party}'s were kept. Check them on the settings page."
     },
     "SheetV2": {
       "PlainRoll": "3d6",

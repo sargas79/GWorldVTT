@@ -57,6 +57,7 @@ import { registerProcedureHooks } from "./system/procedure-extensions.js";
 import { configureDeprecatedData, registerMigrationSettings, warnUncoveredData } from "./system/migration.js";
 import { closeRuleRegistration, openRuleRegistration, registerRule, registerRuleGroup } from "./system/rule-registry.js";
 import { registerSettings } from "./system/settings.js";
+import { migratePartyCampaignTerms } from "./system/campaign.js";
 import { loadFilePartials, registerTemplateHelpers } from "./system/templates.js";
 
 export { SYSTEM_ID };
@@ -225,6 +226,8 @@ Hooks.once("ready", () => {
   // the system is about to stop defining, and no active module takes over.
   warnUncoveredData();
   warnIncompatibleModules();
+  // The campaign's terms, kept on a party before #642, into the world settings.
+  void migratePartyCampaignTerms();
   Hooks.callAll(READY_HOOK, api);
 });
 

@@ -2,12 +2,9 @@
  * The Party Actor data model.
  *
  * A party is the people a campaign follows, kept together so the GM can see
- * them at once, and the terms the campaign was set on: the starting points
- * and the disadvantage limit (GURPS Basic Set: Characters pp. 10-11) and the
- * Tech Level (Characters p. 22). Each is a fact about the campaign rather than
- * about any one character, so it is set once here; a member's sheet reads it
- * from here rather than asking the player to copy it in. A term left blank is
- * not set, and each member keeps its own figure.
+ * them at once. The terms the campaign was set on -- starting points,
+ * disadvantage limit, Tech Level -- are world settings (campaign.ts), so a
+ * character keeps them whether or not it is in a party (#642).
  *
  * Membership is a list of actor UUIDs, as a vehicle's crew is, in the order
  * the GM arranged them.
@@ -28,12 +25,14 @@ export interface ResolvedMember {
 export class PartyData extends foundry.abstract.TypeDataModel {
   declare description: string;
   declare members: MemberEntry[];
+  /** @deprecated The terms before #642; read only by the migration. */
   declare campaign: CampaignTerms;
   declare derived: { members: ResolvedMember[]; count: number; missing: number };
 
   static override defineSchema() {
-    // Blank is "not set", which is why these are nullable with no default: a
-    // new party changes nothing on anyone's sheet until the GM types a figure.
+    // The terms a party held before #642. Nothing reads them but the
+    // migration that copies them into the world settings; kept so a world
+    // updating from an earlier version still has them to copy.
     const term = () => new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 });
     return {
       /** Fields add-on modules keep on the party, one object per module. */
