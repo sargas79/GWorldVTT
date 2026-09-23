@@ -668,6 +668,8 @@ async function vehicleFragileLines(options: {
   hitPoints: number;
   location: VehicleLocation;
   damageType: DamageType;
+  /** An explosion, which sets things alight as a burning attack does. */
+  explosive: boolean;
   rolls: any[];
 }): Promise<string[]> {
   const kinds = fragileKindsOf(options.item);
@@ -687,7 +689,7 @@ async function vehicleFragileLines(options: {
     kinds,
     injury: options.injury,
     majorWound,
-    burningOrExplosive: options.damageType === "burn",
+    burningOrExplosive: options.damageType === "burn" || options.explosive,
     vitals: options.location === "vitalArea",
   });
   let alight = ignition.kind === "alight";
@@ -963,6 +965,8 @@ export async function shootAtVehicle(options: {
   damageType: DamageType;
   /** True for a tight-beam burn, which a vital area doubles and a torch does not. */
   tightBeam: boolean;
+  /** True for an explosion, which sets a Combustible or Flammable vehicle alight as fire does (since 1.93.0). */
+  explosive?: boolean;
   /** The weapon and its attack mode, when known, for `gworld.vehicleDr` (since 1.79.0). */
   item?: any;
   mode?: any;
@@ -1132,7 +1136,8 @@ export async function shootAtVehicle(options: {
   // taken, since blowing up sets them to -10×HP whatever the shot did.
   if (!struck) {
     lines.push(...(await vehicleFragileLines({
-      item, vehicle, injury, hitPoints, location: hit.location, damageType: options.damageType, rolls,
+      item, vehicle, injury, hitPoints, location: hit.location, damageType: options.damageType,
+      explosive: options.explosive === true, rolls,
     })));
   }
 

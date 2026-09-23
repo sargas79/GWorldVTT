@@ -1183,7 +1183,8 @@ Two fields a module may read (since 1.62.0):
   alight; a Brittle one is destroyed on any failed death check; an Unnatural
   one fails it outright. A vehicle shot at catches fire, or rolls against
   its HT not to, and an Explosive one rolls HT on a major wound and blows
-  up on a critical failure. Being alight is the new `burning` condition,
+  up on a critical failure; `shootAtVehicle` takes `explosive` (since
+  1.93.0) for an explosion, which sets things alight as fire does. Being alight is the new `burning` condition,
   also set when a blow of burning damage catches the clothes (Campaigns p.
   434). `hazards.fragileCatchesFire({ actor, automatic, modifier })`,
   `hazards.fragileExplodes({ actor, cause })` (6d×(HP/10) crushing, HP to

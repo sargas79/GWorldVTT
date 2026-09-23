@@ -63,6 +63,17 @@ describe("a Fragile vehicle shot at", () => {
     expect(toggleStatusEffect).toHaveBeenCalledWith("burning", { active: true });
   });
 
+  it("catches fire from an explosion as from a burn, and not from a plain crushing blow", async () => {
+    stubFoundry(3);
+    const blast = car("c");
+    await shootAtVehicle({ actor: null, vehicle: blast.vehicle, damage: 20, location: "body", arc: null, occupants: 0, damageType: "cr", tightBeam: false, explosive: true });
+    expect(blast.toggleStatusEffect).toHaveBeenCalledWith("burning", { active: true });
+
+    const club = car("c");
+    await shootAtVehicle({ actor: null, vehicle: club.vehicle, damage: 20, location: "body", arc: null, occupants: 0, damageType: "cr", tightBeam: false });
+    expect(club.toggleStatusEffect).not.toHaveBeenCalled();
+  });
+
   it("blows up an Explosive vehicle on a critical failure of its major wound's HT roll", async () => {
     // Every die a 6: 18 on HT 10 is a critical failure.
     const cards = stubFoundry(6);

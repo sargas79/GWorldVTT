@@ -24,7 +24,7 @@ import { resolveSuccess } from "../rules/success.js";
 import { PROCEDURE_HOOKS, successRollModifiers } from "./procedure-extensions.js";
 import { callCombatHook } from "./combat-extensions.js";
 import { attributeOf, healthRollBonus, healthRollScore } from "./attributes.js";
-import { hasCondition } from "./conditions.js";
+import { hasCondition, syncHealthConditions } from "./conditions.js";
 import { fragileExplodes } from "./hazards.js";
 import { failsDeathChecks, fragileDeathCheck, fragileExplosion } from "../rules/fragile.js";
 
@@ -69,11 +69,20 @@ export async function rollDeathCheck(options: { actor: any }): Promise<void> {
   // Hard to Kill, and Fit's bonus to every HT roll with it (pp. 55, 58).
   const bonus = traitsOf(actor).survival + healthRollBonus(actor);
   const fragile = traitsOf(actor).fragile ?? [];
+  // Brittle: "should you fail any HT roll to avoid death, you are instantly
+  // destroyed ... and instantly go to -10×HP" (Characters p. 136).
+  const shatter = async () => {
+    await actor.update({ "system.hp.value": fragileExplosion(Number(actor.system?.hp?.max) || 0).hpAfter });
+    await syncHealthConditions(actor);
+    await setCondition(actor, "dead", true);
+  };
 
   // Unnatural: "You automatically fail the HT roll to stay alive if reduced
   // to -HP or below" (Characters p. 137) -- so there is no roll to make.
   if (failsDeathChecks(fragile)) {
-    await setCondition(actor, "dead", true);
+    // An automatic failure is a failure: a Brittle skeleton shatters too.
+    if (fragile.includes("brittle")) await shatter();
+    else await setCondition(actor, "dead", true);
     await post(actor, {
       kind: game.i18n.localize("GWORLD.Dying.DeathCheck"),
       ht,
@@ -98,9 +107,7 @@ export async function rollDeathCheck(options: { actor: any }): Promise<void> {
   if (fragileResult === "explodes") {
     await fragileExplodes({ actor, cause: game.i18n.localize("GWORLD.Hazard.FragileExplosiveDeath") });
   } else if (fragileResult === "destroyed") {
-    // "You are instantly destroyed ... and instantly go to -10×HP."
-    await actor.update({ "system.hp.value": fragileExplosion(Number(actor.system?.hp?.max) || 0).hpAfter });
-    await setCondition(actor, "dead", true);
+    await shatter();
   } else if (result === "dead") {
     await setCondition(actor, "dead", true);
   } else if (result === "mortallyWounded") {
