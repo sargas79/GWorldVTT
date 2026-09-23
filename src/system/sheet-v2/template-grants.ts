@@ -53,6 +53,12 @@ export interface TemplateGrants {
   lines: TemplateGrantLine[];
   /** What the template came to on this character: every priced part added up. */
   total: number;
+  /**
+   * The same, with a character template's scores priced from the human
+   * average rather than from what the character had before -- what the
+   * template's own stated cost prices them at (p. 258).
+   */
+  asWritten: number;
 }
 
 /** The parts of an applied-template record this reads. */
@@ -104,6 +110,7 @@ function modifierPrice(key: string, levels: number): number | null {
 export function templateGrants(record: AppliedTemplateRecord, itemOf: ItemLookup): TemplateGrants {
   const lines: TemplateGrantLine[] = [];
   let total = 0;
+  let asWritten = 0;
 
   // A character template's scores, bought at the ordinary rate.
   const written = record.written ?? {};
@@ -116,6 +123,7 @@ export function templateGrants(record: AppliedTemplateRecord, itemOf: ItemLookup
       const cost = attributePointCost(key as Attribute, now) - attributePointCost(key as Attribute, before);
       lines.push({ kind: "attribute", key, score: now, cost });
       total += cost;
+      asWritten += attributePointCost(key as Attribute, now) - cost;
     } else if (where === "purchased" && SECONDARIES.has(key)) {
       const added = now - number(previous[path]);
       if (!added) continue;
@@ -158,5 +166,5 @@ export function templateGrants(record: AppliedTemplateRecord, itemOf: ItemLookup
     total += cost;
   }
 
-  return { lines, total };
+  return { lines, total, asWritten: asWritten + total };
 }

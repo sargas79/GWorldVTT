@@ -566,7 +566,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * -- the scores it set or granted, and the items it added or raised that are
    * still on the sheet -- and what it all came to (#631).
    */
-  #templateGrants(record: any): { lines: string[]; total: number } {
+  #templateGrants(record: any): { lines: string[]; total: number; asWritten: number } {
     const label = (key: string) => {
       const known: Record<string, string> = { hp: "HP", fp: "FP", will: "Will", per: "Per", basicSpeed: "Basic Speed", basicMove: "Basic Move", sm: "SM" };
       return known[key] ?? key;
@@ -606,7 +606,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           return `${line.name ?? ""}${price}`;
       }
     });
-    return { lines, total: grants.total };
+    return { lines, total: grants.total, asWritten: grants.asWritten };
   }
 
   /** What the traits tab shows for each applied template, its description included. */
@@ -627,15 +627,19 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       }
       const key = `template:${index}:${uuid}`;
       const grants = this.#templateGrants(record);
-      // What the template says it costs, beside what it came to here, so the
-      // two can be checked against each other.
+      // What the template says it costs, beside what it came to, so the two
+      // can be checked against each other. A character template taken on top
+      // of another is combined with it (p. 259) and was never going to cost
+      // what it says on its own, so it is not compared.
       const statedCost = uuid ? this.#templateStatedCosts.get(uuid) ?? null : null;
+      const stacked = record?.kind === "character" &&
+        applied.slice(0, index).some((earlier) => earlier?.kind === "character");
       rows.push({
         ...record,
         index,
         grants: grants.lines,
         total: grants.total,
-        statedCost: statedCost !== null && statedCost !== grants.total ? statedCost : null,
+        statedCost: statedCost !== null && !stacked && statedCost !== grants.asWritten ? statedCost : null,
         reference: String(record?.reference ?? "") || (uuid ? this.#templateReferences.get(uuid) ?? "" : ""),
         descriptionHtml: html,
         descriptionKey: key,
@@ -726,6 +730,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       derived,
       items,
       appliedTemplates,
+      // What the templates came to, row by row, for the section's heading.
+      templatesTotal: appliedTemplates.reduce((sum: number, row: any) => sum + (Number(row.total) || 0), 0),
       torsoDr: torso ?? null,
       editable: this.isEditable,
       limited: actor.limited,

@@ -4,9 +4,9 @@
 <div class="isec">
   <div class="ish">
     <span class="num">{{templateSectionNum}}</span>{{localize "GWORLD.Template.Title"}}
-    {{#if derived.points.templates}}
+    {{#if appliedTemplates.length}}
       <span style="font-family: var(--font-body); font-size: 11px; letter-spacing: .04em; text-transform: none; color: var(--color-neutral-700)">
-        {{derived.points.templates}} pts
+        {{templatesTotal}} pts
       </span>
     {{/if}}
   </div>

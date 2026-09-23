@@ -53,6 +53,17 @@ describe("what an applied template gave, with prices (#631)", () => {
     expect(grants.total).toBe(25);
   });
 
+  it("prices the scores from 10 for the check against the stated cost", () => {
+    // ST 12 bought by hand, then a template with ST 11: it lowered ST, which
+    // refunds 10 here, but the template itself prices ST 11 at 10.
+    const grants = templateGrants(
+      { kind: "character", written: { "attributes.ST": 11 }, previous: { "attributes.ST": 12 }, itemIds: ["guns"] },
+      itemOf,
+    );
+    expect(grants.total).toBe(-6);
+    expect(grants.asWritten).toBe(14);
+  });
+
   it("prices each racial modifier when the list prices make up the racial cost (p. 261)", () => {
     // Vampire: ST+6, HP+4, Per+3 -- 60 + 8 + 15 = 83.
     const grants = templateGrants(
