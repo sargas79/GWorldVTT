@@ -25,8 +25,6 @@ import {
 } from "../rules/repairs.js";
 import { weaponFacts } from "./weapon-damage.js";
 import { equipmentFailureModifiers } from "./combat-extensions.js";
-import { objectHealth } from "../rules/objects.js";
-import { weaponObjectKind } from "../rules/breakage.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/repair.hbs`;
 
@@ -153,7 +151,8 @@ export async function exposureCheck(options: {
   const facts = weaponFacts(item);
   // "Most machines and similar artifacts in good repair are HT 10. Swords,
   // tables, shields, and other solid, Homogenous objects are HT 12."
-  const health = objectHealth(weaponObjectKind(facts.firearm));
+  // A module may make the thing sturdier or frailer (`gworld.objectStats`).
+  const health = facts.ht;
   // Missed maintenance wears down "machines and similar artifacts", and "this
   // rule does not apply to items without moving parts" (p. 485): a sword left
   // uncleaned is a dirty sword, not a failing one.

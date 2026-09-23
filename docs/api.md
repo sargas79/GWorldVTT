@@ -104,7 +104,7 @@ Contents:
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
 | `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), and `recoveryHold(actor, id)` (since 1.89.0). |
-| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. |
+| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0). |
@@ -860,6 +860,23 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     level. Since 1.58.0 `attributes` holds the ST, DX, IQ, HT, Will and Per
     the skills were worked out from: the character's `derived` data isn't
     written yet while this fires, so `actors.attribute` can't be read here.
+  - `gworld.objectStats` (since 1.90.0), with `{ item, actor, kind, dr, hp,
+    ht, notes }`, wherever a weapon's or shield's DR, HP and HT as an object
+    are worked out (Campaigns pp. 483-484). `kind` is `"unliving"` (a gun,
+    HT 10) or `"homogenous"` (a sword or shield, HT 12); `dr` and `hp` are
+    the book's figures from the item's material and weight, or a shield's own
+    DR and HP fields; `actor` is the owner, or null. Change `dr`, `hp` and
+    `ht` to make a piece of gear tougher or frailer -- a rugged gun, a cheap
+    one, a reinforced case -- and push strings to `notes` to say why; the
+    item sheet shows them under its object figures. Each figure is rounded
+    and kept at 0 or more, and one that isn't a finite number is ignored.
+    Everything reads the result: breakage and the weapon's condition,
+    striking at a weapon and the damage it takes, damage to shields, a
+    shield's DB once disabled, the exposure roll under the repair rules, and
+    the item sheet and the gear's stat block. It fires often (every
+    preparation of a character with the item), so keep listeners cheap and
+    free of side effects. A listener that throws changes nothing.
+    `items.objectStats(item)` returns the same figures.
 
 System item fields a module's data may set:
 - **Shields** (since 1.63.0): `hardened`, levels of Hardened on the shield's own

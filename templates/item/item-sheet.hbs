@@ -618,6 +618,9 @@
           <label>{{localize "GWORLD.Secondary.HP"}}
             <input type="number" value="{{weapon.facts.hp}}" disabled />
           </label>
+          <label>{{localize "GWORLD.Attribute.HT"}}
+            <input type="number" value="{{weapon.facts.ht}}" disabled />
+          </label>
           <label data-tooltip="{{localize 'GWORLD.Item.HpLostHint'}}">{{localize "GWORLD.Item.HpLost"}}
             <input type="number" name="system.hpLost" value="{{system.hpLost}}" step="1" min="0"
                    {{#unless editable}}disabled{{/unless}} />
@@ -633,6 +636,9 @@
         {{#if weapon.mustRollInUse}}
           <p class="ihint warn">{{localize "GWORLD.Item.MustRollInUse"}}</p>
         {{/if}}
+        {{#each weapon.facts.objectNotes as |note|}}
+          <p class="ihint">{{note}}</p>
+        {{/each}}
       </div>
     {{/if}}
 

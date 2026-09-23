@@ -64,6 +64,7 @@ import {
 } from "../../rules/weapon-quality.js";
 import { layeringAt, layeringPenalty } from "../../rules/layered-armor.js";
 import { shieldGivesDb, shieldState } from "../../rules/shield-damage.js";
+import { objectStats } from "../object-stats.js";
 import {
   ammunitionEffect,
   calibreOf,
@@ -77,7 +78,6 @@ import {
   resistsBreakage,
   unarmedAttackWeight,
   weaponCondition,
-  weaponHitPoints,
   weaponState,
   type WeaponCondition,
 } from "../../rules/breakage.js";
@@ -2093,7 +2093,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const shieldItem = this.itemsOfType("shield").find((i) => i.system?.equipped) ?? null;
     // "If the shield is disabled or destroyed, it no longer provides its DB,
     // but it still encumbers you until dropped" (Campaigns p. 484).
-    const shieldHp = shieldItem ? Number(shieldItem.system?.hp ?? 0) || 0 : 0;
+    const shieldHp = shieldItem ? objectStats(shieldItem).hp : 0;
     const shieldBroken =
       isRuleOn("damageToShields") && shieldHp > 0 &&
       !shieldGivesDb(shieldState(Number(shieldItem?.system?.hpLost ?? 0) || 0, shieldHp));
@@ -2268,7 +2268,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         })) as WeaponClass;
       const firearm = weaponClass === "firearm";
       const weight = effectiveWeight(item);
-      const objectHp = item.type === "shield" ? Number((sys as any).hp ?? 0) || 0 : weaponHitPoints(weight, firearm);
+      const objectHp = item.type === "trait"
+        ? 0
+        : objectStats(item, { material, skill: skillsOf[0] ?? "", firearm, weight }).hp;
       const hpLost = Number((sys as any).hpLost ?? 0) || 0;
       const condition: WeaponCondition =
         isRuleOn("weaponBreakage") && objectHp > 0 ? weaponCondition(weaponState(hpLost, objectHp)) : "sound";
