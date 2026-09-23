@@ -46,29 +46,52 @@ describe("dice helpers", () => {
   });
 });
 
-describe("Size Modifier lookups (GURPS Lite p. 27)", () => {
+describe("Size Modifier lookups (Campaigns p. 550)", () => {
   it("puts a human-sized target at SM 0", () => {
     expect(sizeModifier(2)).toBe(0);
   });
 
-  it("penalises targets smaller than a yard", () => {
+  it("penalises targets smaller than two yards, row by row", () => {
+    expect(sizeModifier(1.5)).toBe(-1);
     expect(sizeModifier(1)).toBe(-2);
+    expect(sizeModifier(2 / 3)).toBe(-3);
+    expect(sizeModifier(0.5)).toBe(-4);
     expect(sizeModifier(1 / 3)).toBe(-5);
+    expect(sizeModifier(8 / 36)).toBe(-6);
+    expect(sizeModifier(1 / 36)).toBe(-11);
+    expect(sizeModifier(1 / 180)).toBe(-15);
   });
 
-  it("rewards large targets", () => {
+  it("takes the next-highest size between two rows", () => {
+    expect(sizeModifier(0.9)).toBe(-2);
+    expect(sizeModifier(4)).toBe(2);
+    expect(sizeModifier(1200)).toBe(17);
+  });
+
+  it("rewards large targets, with the giant's 4 yards at SM +2", () => {
+    expect(sizeModifier(4)).toBe(2);
     expect(sizeModifier(10)).toBe(4);
     expect(sizeModifier(100)).toBe(10);
   });
 
-  it("keeps extending past the printed table", () => {
-    expect(sizeModifier(10000)).toBe(22);
-    expect(speedRangeModifier(10000)).toBe(-22);
+  it("keeps the 1.5/2/3/5/7/10 steps in every decade past 1,000 yards", () => {
+    const rows: Array<[number, number]> = [
+      [1000, 16], [1500, 17], [2000, 18], [3000, 19], [5000, 20], [7000, 21], [10000, 22],
+      [15000, 23], [70000, 27], [200000, 30], [2_000_000, 36],
+    ];
+    for (const [yards, size] of rows) {
+      expect(sizeModifier(yards)).toBe(size);
+      expect(speedRangeModifier(yards)).toBe(-size);
+    }
   });
 
-  it("floors degenerate sizes at the bottom row", () => {
-    expect(sizeModifier(0)).toBe(-5);
-    expect(sizeModifier(-4)).toBe(-5);
+  it("keeps losing 6 per factor of ten below the smallest printed row", () => {
+    expect(sizeModifier(1 / 1800)).toBe(-21);
+  });
+
+  it("floors degenerate sizes at the bottom printed row", () => {
+    expect(sizeModifier(0)).toBe(-15);
+    expect(sizeModifier(-4)).toBe(-15);
   });
 });
 
