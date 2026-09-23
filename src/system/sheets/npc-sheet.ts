@@ -14,6 +14,7 @@ import { GWorldCharacterSheetV2 } from "./character-sheet-v2.js";
 import type { SwarmProtection } from "../../rules/swarms.js";
 import type { Attribute } from "../../rules/types.js";
 import { summariseDescription } from "../description-summary.js";
+import { reportRefusedDrop } from "./drop-errors.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -226,5 +227,10 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     const item = id ? this.actor.items.get(id) : null;
     if (item) await castSpell(this.actor, item);
+  }
+
+  /** A drop that fails says why, rather than doing nothing. */
+  override async _onDrop(event: DragEvent): Promise<void> {
+    await reportRefusedDrop(event, () => super._onDrop(event));
   }
 }

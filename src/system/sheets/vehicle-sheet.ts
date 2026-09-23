@@ -23,6 +23,7 @@ import { damageAtScale, hitPointsAfterBattle } from "../damage-scale.js";
 import type { DamageScale } from "../../rules/scale.js";
 import { LOCOMOTIONS, leaveSeat } from "../../rules/vehicles.js";
 import { aimableLocations, DR_LOCATIONS, vehicleDrLabel } from "../../rules/vehicle-combat.js";
+import { reportRefusedDrop } from "./drop-errors.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -492,5 +493,10 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
     const seat = (this.actor.system.crew ?? []).find((s: { operator: boolean }) => s.operator);
     if (!seat) return null;
     return fromUuid(seat.uuid).catch(() => null);
+  }
+
+  /** A drop that fails says why, rather than doing nothing. */
+  override async _onDrop(event: DragEvent): Promise<void> {
+    await reportRefusedDrop(event, () => super._onDrop(event));
   }
 }

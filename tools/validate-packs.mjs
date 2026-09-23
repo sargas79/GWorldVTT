@@ -12,6 +12,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { splitDrOmitsCrushing, splitDrProblems } from "./armor-split.mjs";
 import { basicSetVolume } from "./gdf.mjs";
 import { SPECIFIED_TRAITS } from "./specified-traits.mjs";
 
@@ -427,28 +428,11 @@ function validateItem(entry, file) {
       check(HIT_LOCATIONS.has(loc), file, name, `unknown hit location "${loc}"`);
     }
 
-    // Split DR is only meaningful as a pair: a second figure with nothing saying
-    // when it applies would silently never be used, and a list of damage types
-    // with no second figure would promise protection that does not exist.
-    const split = sys.drSplit ?? null;
+    // The data model asks the same of every armour document, so a record
+    // this lets through can always be put on a character.
+    for (const problem of splitDrProblems(sys)) check(false, file, name, problem);
+    check(!splitDrOmitsCrushing(sys), file, name, "split DR must apply to crushing");
     const against = sys.drSplitAppliesTo ?? [];
-    check(
-      (split === null) === (against.length === 0),
-      file, name, "split DR needs both a second figure and the damage it applies to",
-    );
-    if (split !== null) {
-      check(
-        Number.isInteger(split) && split >= 0 && split <= sys.dr,
-        file, name, `split DR ${split} must be a non-negative integer no greater than ${sys.dr}`,
-      );
-      // Both of the Basic Set's tables agree that crushing takes the lower
-      // figure, so a split there that omits it has been read from the wrong
-      // footnote. Other books need not agree: a helmet may be at its best
-      // against crushing blows.
-      if (/^Basic Set\b/.test(String(sys.reference ?? "")) || !sys.reference) {
-        check(against.includes("cr"), file, name, "split DR must apply to crushing");
-      }
-    }
     for (const t of against) {
       check(DAMAGE_TYPES.has(t), file, name, `unknown damage type "${t}" in split DR`);
     }
