@@ -1676,6 +1676,7 @@
     },
     "Ranged": {
       "NotEnoughShots": "{name} needs {needed} shots for that and has {ready}.",
+      "BurstTooShort": "{name} fires at least {min} shots at a time, in steps of {step}, and can fire only {rof} now.",
       "Title": "Ranged attack",
       "Range": "Range (yards)",
       "TargetSpeed": "Target speed (yards/second)",

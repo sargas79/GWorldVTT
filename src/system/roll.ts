@@ -112,6 +112,7 @@ import {
   insideMinimumRange,
   rangedToHitModifier,
   attackRateOfFire,
+  burstShots,
   rapidFireBonus,
   rapidFireHits,
   speedRangeModifier,
@@ -1723,6 +1724,10 @@ async function rollAction(
         minRange,
         // Since 1.70.0: this target's share of a Spraying Fire burst, or null.
         spraying: spray ? { ...spray } : (null as SprayShot | null),
+        // Since 1.83.0: the shells this attack fires (null for a melee
+        // attack), and what an option spends beyond them. Read-only.
+        shots: shot ? shot.shellsFired : (null as number | null),
+        extraShots: shot ? Math.max(0, Math.floor(Number(shot.addon?.shots) || 0)) : 0,
       })
     : null;
   // A module's rules may make this attack impossible here: it isn't rolled.
@@ -1902,6 +1907,9 @@ async function rollAction(
         }
       : {}),
   });
+  // An attack that could not be attempted -- effective skill below 3 -- was
+  // never made: it spends no shots and no aim (since 1.83.0).
+  if (outcome === null) return null;
 
   // A shot at a random location behind cover (p. 407): "For shots that hit a
   // location that is only half exposed, roll 1d: on a roll of 4-6, the shot
@@ -2249,7 +2257,7 @@ interface RangedShot {
 }
 
 /** The context a module's attack option is shown and applied with. */
-function attackContextFor(options: {
+export function attackContextFor(options: {
   actor?: any;
   item?: any;
   ranged: boolean;
@@ -2347,7 +2355,11 @@ function showRangedBreakdown(
     input.addonValues ?? {},
   );
   const fired = optionRateOfFire(options, chosen);
-  const shells = Math.min(Math.max(1, Math.floor(input.shots || 1)), fired.rateOfFire);
+  // Held to an option's minimum burst and step, as the shot will be; a burst
+  // the Rate of Fire can't reach is shown at its most, and refused on Roll.
+  const shells = options.fixedShots
+    ? Math.max(1, Math.floor(options.fixedShots))
+    : optionShots(input.shots || 1, fired.rateOfFire, chosen) ?? fired.rateOfFire;
   const pellets = multipleProjectiles({
     shotsFired: shells,
     projectiles: options.projectiles ?? 1,
@@ -2391,7 +2403,7 @@ function dialogRateOfFire(options: { rateOfFire: number; loaded?: number | null 
  * set, multiplied (Campaigns p. 408) or given more Recoil (since 1.70.0),
  * never more shots than the weapon has left in it.
  */
-function optionRateOfFire(
+export function optionRateOfFire(
   options: { rateOfFire: number; recoil: number; loaded?: number | null },
   chosen: { rateOfFire: number | null; rateOfFireMultiplier: number; recoil: number | null; recoilModifier: number },
 ): { rateOfFire: number; recoil: number } {
@@ -2406,6 +2418,24 @@ function optionRateOfFire(
     recoilModifier: chosen.recoilModifier,
   });
   return { rateOfFire: Math.max(1, Math.min(fired.rateOfFire, loaded === null ? Infinity : loaded)), recoil: fired.recoil };
+}
+
+/**
+ * The shots a burst fires once its options are in (since 1.83.0): what was
+ * asked for, held to the Rate of Fire and to an option's minimum and step.
+ * Null where the Rate of Fire can't reach them. Without the rapid-fire
+ * rules there are no bursts to hold to, and one shot is fired.
+ */
+export function optionShots(asked: number, rateOfFire: number, chosen: { minShots: number; shotsStep: number }): number | null {
+  if (!isRuleOn("rapidFire")) return burstShots({ asked, rateOfFire });
+  return burstShots({ asked, rateOfFire, minShots: chosen.minShots, step: chosen.shotsStep });
+}
+
+/** The warning for a burst its Rate of Fire can't fire (since 1.83.0). */
+export function burstTooShort(name: string, rateOfFire: number, chosen: { minShots: number; shotsStep: number }): string {
+  return game.i18n.format("GWORLD.Ranged.BurstTooShort", {
+    name, min: Math.max(1, chosen.minShots), step: Math.max(1, chosen.shotsStep), rof: rateOfFire,
+  });
 }
 
 export async function promptForRangedAttack(options: {
@@ -2638,11 +2668,17 @@ export async function promptForRangedAttack(options: {
   const chosenOptions = applyAttackOptions(addonContext, input.addonValues ?? {});
   const fired = optionRateOfFire(options, chosenOptions);
   const effectiveRateOfFire = fired.rateOfFire;
-  // A weapon cannot fire more shots than its Rate of Fire, nor fewer than one.
-  // A Spraying Fire burst has decided this attack's shots already.
-  const shellsFired = options.fixedShots
+  // A weapon cannot fire more shots than its Rate of Fire, nor fewer than one
+  // -- nor fewer than an option's minimum burst, or between its steps (since
+  // 1.83.0). A Spraying Fire burst has decided this attack's shots already.
+  const burst = options.fixedShots
     ? Math.max(1, Math.floor(options.fixedShots))
-    : Math.min(effectiveRateOfFire, Math.max(1, Math.floor(input.shots || 1)));
+    : optionShots(input.shots || 1, effectiveRateOfFire, chosenOptions);
+  if (burst === null) {
+    ui.notifications?.warn(burstTooShort(String(options.item?.name ?? ""), effectiveRateOfFire, chosenOptions));
+    return null;
+  }
+  const shellsFired = burst;
 
   // Each shell may be several pellets, which count as shots of their own.
   const pellets = multipleProjectiles({
