@@ -40,6 +40,42 @@ export interface ShotsEntry {
   fastDrawPer: "reload" | "round";
   /** What the Reload button offers to tick: an assistant, a loading aid (since API 1.71.0). None in the Basic Set. */
   aids: ReloadAid[];
+  /**
+   * Seconds for each round loaded, on top of `reloadSeconds` taken once
+   * (since API 1.88.0). 0 in the Basic Set; above it, the Reload button asks
+   * how many rounds to load, as it does for a weapon loaded shot by shot.
+   */
+  perRoundSeconds: number;
+  /**
+   * The roll the Reload button makes in place of Fast-Draw (Ammo), or null
+   * for the skill itself (since API 1.88.0).
+   */
+  fastDrawRoll: ReloadRoll | null;
+  /** Rolls the load needs before it goes in (since API 1.88.0). None in the Basic Set. */
+  requiredRolls: ReloadRequiredRoll[];
+}
+
+/**
+ * A roll the Reload button makes (since API 1.88.0): against `level` where it
+ * is given, or else the character's level in `skill`; `label` names it on the
+ * dialog and the card.
+ */
+export interface ReloadRoll {
+  skill?: string;
+  level?: number;
+  label?: string;
+}
+
+/**
+ * A roll the load needs to go in (since API 1.88.0). On a failure the load is
+ * lost where `onFail` is `abort` (the default) -- the time is spent and
+ * nothing goes in -- and goes in all the same where it is `continue`, the
+ * card saying the roll failed. A character with no level to roll against
+ * fails it.
+ */
+export interface ReloadRequiredRoll extends ReloadRoll {
+  label: string;
+  onFail?: "abort" | "continue";
 }
 
 /**
@@ -60,6 +96,16 @@ export interface ReloadAid {
   fastDrawSeconds?: number;
   /** Whether it starts ticked. */
   checked?: boolean;
+  /**
+   * Aids sharing a group are used one at a time: ticking one unticks the
+   * others, and only the first of them counts (since API 1.88.0).
+   */
+  exclusiveGroup?: string;
+  /**
+   * What the reload's time is multiplied by once every aid's seconds are
+   * added, rounded up (since API 1.88.0): 0.5 halves it.
+   */
+  multiplier?: number;
 }
 
 /** "Always shaves at least one second off the reload time" (Characters p. 194). */
@@ -71,6 +117,7 @@ export function parseShots(text: string | undefined): ShotsEntry {
   const none: ShotsEntry = {
     capacity: null, chambered: false, reloadSeconds: null, perShot: false, thrown: false, text: raw,
     fastDrawSeconds: FAST_DRAW_AMMO_SECONDS, fastDrawPer: "reload", aids: [],
+    perRoundSeconds: 0, fastDrawRoll: null, requiredRolls: [],
   };
   if (!raw) return none;
   const m = /^(T|\d+)(\+1)?\s*(?:\((\d+|-)?\s*(i)?\s*\))?$/i.exec(raw.replace(/spcl\.?/i, "-"));
@@ -86,6 +133,9 @@ export function parseShots(text: string | undefined): ShotsEntry {
     fastDrawSeconds: FAST_DRAW_AMMO_SECONDS,
     fastDrawPer: "reload",
     aids: [],
+    perRoundSeconds: 0,
+    fastDrawRoll: null,
+    requiredRolls: [],
   };
 }
 
@@ -97,12 +147,36 @@ export function fullLoad(entry: ShotsEntry): number {
 
 /**
  * How long a reload takes (Campaigns p. 373): the parenthetical figure, for
- * all the shots at once or -- with an "i" -- for each shot loaded.
+ * all the shots at once or -- with an "i" -- for each shot loaded; plus a
+ * module's time for each round (since API 1.88.0).
  */
-export function reloadTime(entry: ShotsEntry, shotsToLoad: number): number | null {
+export function reloadTime(entry: Pick<ShotsEntry, "reloadSeconds" | "perShot"> & { perRoundSeconds?: number }, shotsToLoad: number): number | null {
   if (entry.reloadSeconds === null) return null;
-  if (!entry.perShot) return entry.reloadSeconds;
-  return entry.reloadSeconds * Math.max(0, Math.floor(shotsToLoad));
+  const shots = Math.max(0, Math.floor(shotsToLoad));
+  const perRound = Math.max(0, Number(entry.perRoundSeconds) || 0) * shots;
+  return (entry.perShot ? entry.reloadSeconds * shots : entry.reloadSeconds) + perRound;
+}
+
+/**
+ * Whether a reload's time turns on how many rounds go in, so the Reload
+ * button asks (since API 1.88.0): loaded shot by shot, or with a time per round.
+ */
+export function loadsByTheRound(entry: Pick<ShotsEntry, "perShot"> & { perRoundSeconds?: number }): boolean {
+  return entry.perShot || (Number(entry.perRoundSeconds) || 0) > 0;
+}
+
+/**
+ * The ticked aids that count (since API 1.88.0): of those sharing an
+ * `exclusiveGroup`, only the first.
+ */
+export function usableAids(aids: readonly ReloadAid[]): ReloadAid[] {
+  const groups = new Set<string>();
+  return aids.filter((aid) => {
+    if (!aid.exclusiveGroup) return true;
+    if (groups.has(aid.exclusiveGroup)) return false;
+    groups.add(aid.exclusiveGroup);
+    return true;
+  });
 }
 
 /**
@@ -111,8 +185,10 @@ export function reloadTime(entry: ShotsEntry, shotsToLoad: number): number | nul
  *
  * `seconds` is the reload as the table and the user's ST make it, for the
  * rounds being loaded. Each aid adds its own seconds -- per round where the
- * weapon loads shot by shot -- and the last aid that says what Fast-Draw
- * saves with it overrides the entry's figure. A success then takes that
+ * weapon loads shot by shot -- then every aid's `multiplier` scales the sum,
+ * rounded up (since 1.88.0), and the last aid that says what Fast-Draw
+ * saves with it overrides the entry's figure. Of aids sharing an exclusive
+ * group only the first counts. A success then takes that
  * saving off, once or for each round loaded. A reload never drops below one
  * second by the skill, nor below nothing by an aid.
  */
@@ -125,9 +201,12 @@ export function reloadTimeWith(options: {
 }): { seconds: number | null; saved: number } {
   if (options.seconds === null) return { seconds: null, saved: 0 };
   const rounds = Math.max(0, Math.floor(options.rounds) || 0);
-  const aids = options.aids ?? [];
+  const aids = usableAids(options.aids ?? []);
   const count = (n: unknown) => (Number.isFinite(Number(n)) ? Number(n) : 0);
-  const aided = Math.max(0, options.seconds + aids.reduce((sum, aid) => sum + count(aid.seconds) * (options.entry.perShot ? rounds : 1), 0));
+  const added = Math.max(0, options.seconds + aids.reduce((sum, aid) => sum + count(aid.seconds) * (options.entry.perShot ? rounds : 1), 0));
+  const factor = aids.reduce((product, aid) => (aid.multiplier === undefined ? product : product * Math.max(0, Number.isFinite(Number(aid.multiplier)) ? Number(aid.multiplier) : 1)), 1);
+  // A hair of tolerance, so that 0.1 x 30 is 3 and not 4.
+  const aided = factor === 1 ? added : Math.ceil(added * factor - 1e-9);
   const perSaving = aids.reduce<number>((figure, aid) => (aid.fastDrawSeconds === undefined ? figure : count(aid.fastDrawSeconds)), count(options.entry.fastDrawSeconds));
   const saving = Math.max(0, perSaving) * (options.entry.fastDrawPer === "round" ? rounds : 1);
   if (!options.fastDraw || saving <= 0) return { seconds: aided, saved: 0 };

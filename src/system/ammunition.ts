@@ -28,10 +28,14 @@ import {
   fastDrawHelps,
   fullLoad,
   loadPlan,
+  loadsByTheRound,
   reloadTime,
   reloadTimeWith,
+  usableAids,
   type AmmunitionReference,
   type ReloadAid,
+  type ReloadRequiredRoll,
+  type ReloadRoll,
   type AmmunitionType,
   type ShotsEntry,
 } from "../rules/ammunition.js";
@@ -140,7 +144,7 @@ export async function loadAmmunition(actor: any, item: any, modeIndex: number, b
   await setLoaded(item, modeIndex, plan.loaded, { loadedFrom: box.id, ammunition: kind });
   if (actor?.isOwner && actor.system?.maneuver !== undefined) await actor.update({ "system.maneuver": "ready" });
 
-  const seconds = reloadTime(entry, entry.perShot ? plan.take : capacity);
+  const seconds = reloadTime(entry, loadsByTheRound(entry) ? plan.take : capacity);
   const content = await foundry.applications.handlebars.renderTemplate(CARD_TEMPLATE, {
     name: String(item.name),
     loaded: plan.loaded,
@@ -370,7 +374,7 @@ export function reloadPlan(actor: any, item: any, modeIndex: number, shotsToLoad
   const capacity = fullLoad(entry);
   const loaded = Math.max(0, Number(mode.loaded ?? 0) || 0);
   const loading = Math.max(0, Math.min(capacity - loaded, shotsToLoad ?? capacity - loaded));
-  const base = reloadTime(entry, entry.perShot ? loading : capacity);
+  const base = reloadTime(entry, loadsByTheRound(entry) ? loading : capacity);
 
   // "Crossbows and ST": the bow's own ST against the user's (p. 270).
   const crossbow = /crossbow|prodd/i.test(String(mode.skill ?? "")) || /crossbow|prodd/i.test(String(item?.name ?? ""));
@@ -405,7 +409,7 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
   }
 
   let shotsToLoad = capacity - loaded;
-  if (entry.perShot) {
+  if (loadsByTheRound(entry)) {
     const asked = await promptForShots(capacity - loaded);
     if (asked === null) return;
     shotsToLoad = asked;
@@ -432,18 +436,31 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
 
   // What a module's Shots entry offers to help -- an assistant, a loading aid
   // (since 1.71.0) -- is asked first, since it changes what the skill saves.
-  const aids = entry.aids.length > 0 ? await promptForAids(item, entry.aids) : [];
-  if (aids === null) return;
+  const ticked = entry.aids.length > 0 ? await promptForAids(item, entry.aids) : [];
+  if (ticked === null) return;
+  const aids = usableAids(ticked);
+
+  // The rolls a module says the load needs (since 1.88.0), made before the
+  // skill is offered: one failed that aborts spends the time and loads nothing.
+  const required: string[] = [];
+  let aborted = false;
+  for (const roll of entry.requiredRolls) {
+    const outcome = await rollForReload(actor, roll);
+    const failed = outcome !== "success";
+    const abort = failed && roll.onFail !== "continue";
+    required.push(L(`Required.${abort ? "abort" : failed ? "failure" : "success"}`, { label: roll.label }));
+    if (abort) { aborted = true; break; }
+  }
 
   // Fast-Draw (Ammo) "always shaves at least one second off the reload time"
   // on a success -- more where the entry says so; a failure drops a round, a
   // critical failure the lot (Characters pp. 194-195).
   const timing = { entry, seconds: plan.seconds, rounds: plan.loading, aids };
-  const fastDraw = fastDrawHelps(timing)
-    ? await rollFastDrawAmmo(actor, item, reloadTimeWith({ ...timing, fastDraw: true }).saved)
+  const fastDraw = !aborted && fastDrawHelps(timing)
+    ? await rollFastDrawAmmo(actor, item, reloadTimeWith({ ...timing, fastDraw: true }).saved, entry.fastDrawRoll)
     : null;
   const { seconds, saved } = reloadTimeWith({ ...timing, fastDraw: fastDraw?.outcome === "success" });
-  let loading = plan.loading;
+  let loading = aborted ? 0 : plan.loading;
   if (fastDraw?.outcome === "failure") loading = Math.max(0, loading - 1);
   if (fastDraw?.outcome === "criticalFailure") loading = 0;
   if (source) {
@@ -462,7 +479,8 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
     seconds,
     perShot: plan.perShot,
     loading,
-    fastDraw: fastDraw ? L(`FastDraw.${fastDraw.outcome}`, { seconds: saved }) : "",
+    fastDraw: fastDraw ? L(`FastDraw.${fastDraw.label ? "Other." : ""}${fastDraw.outcome}`, { seconds: saved, label: fastDraw.label }) : "",
+    required,
     aids: aids.map((aid) => aid.label).join(", "),
     goatsFoot: plan.needsGoatsFoot,
     mustStand: plan.mustStand,
@@ -492,24 +510,48 @@ const FAST_DRAW_AMMO = "Fast-Draw (Ammo)";
 /**
  * Offers the Fast-Draw (Ammo) roll to a character who knows the skill, where
  * the seconds it would save change anything, and makes it. Null where it
- * wasn't made.
+ * wasn't made. A module's Shots entry may name another roll in its place --
+ * a skill, a level, or both (since 1.88.0).
  */
-async function rollFastDrawAmmo(actor: any, item: any, saves: number): Promise<{ outcome: "success" | "failure" | "criticalFailure" } | null> {
+async function rollFastDrawAmmo(
+  actor: any,
+  item: any,
+  saves: number,
+  instead: ReloadRoll | null = null,
+): Promise<{ outcome: "success" | "failure" | "criticalFailure"; label?: string } | null> {
   if (!actor || saves <= 0) return null;
-  const level = skillLevelOf(actor, FAST_DRAW_AMMO);
+  const skill = instead?.skill ?? FAST_DRAW_AMMO;
+  const level = instead?.level ?? skillLevelOf(actor, skill);
   if (level === null) return null;
+  const label = instead ? instead.label ?? skill : undefined;
   const wanted = await foundry.applications.api.DialogV2.confirm({
     window: { title: L("Title") },
-    content: `<p>${L("FastDraw.Ask", { name: String(item?.name ?? ""), level, seconds: saves })}</p>`,
+    content: `<p>${label === undefined
+      ? L("FastDraw.Ask", { name: String(item?.name ?? ""), level, seconds: saves })
+      : L("FastDraw.Other.Ask", { name: String(item?.name ?? ""), level, seconds: saves, label: foundry.utils.escapeHTML(label) })}</p>`,
     rejectClose: false,
   });
   if (!wanted) return null;
   // The roll module reaches this one, so it is loaded when the roll is made.
   const { rollSuccess } = await import("./roll.js");
-  const result = await rollSuccess({ actor, base: level, label: L("FastDraw.Label"), skill: FAST_DRAW_AMMO });
+  const result = await rollSuccess({ actor, base: level, label: label ?? L("FastDraw.Label"), skill });
   if (!result) return null;
-  if (result.criticalFailure) return { outcome: "criticalFailure" };
-  return { outcome: result.success ? "success" : "failure" };
+  const outcome = result.criticalFailure ? "criticalFailure" : result.success ? "success" : "failure";
+  return label === undefined ? { outcome } : { outcome, label };
+}
+
+/**
+ * Makes a roll a module's Shots entry says the load needs (since 1.88.0),
+ * against its level or the character's in its skill. Without either it
+ * fails; one too low to attempt fails as well.
+ */
+async function rollForReload(actor: any, roll: ReloadRequiredRoll): Promise<"success" | "failure"> {
+  const skill = roll.skill ?? "";
+  const level = roll.level ?? (skill ? skillLevelOf(actor, skill) : null);
+  if (!actor || level === null) return "failure";
+  const { rollSuccess } = await import("./roll.js");
+  const result = await rollSuccess({ actor, base: level, label: roll.label, ...(skill ? { skill } : {}) });
+  return result?.success ? "success" : "failure";
 }
 
 /**
@@ -519,11 +561,23 @@ async function rollFastDrawAmmo(actor: any, item: any, saves: number): Promise<{
 async function promptForAids(item: any, aids: readonly ReloadAid[]): Promise<ReloadAid[] | null> {
   const escape = (text: string) => foundry.utils.escapeHTML(String(text ?? ""));
   const boxes = aids.map((aid, i) => `<label style="display:flex;align-items:center;gap:8px">
-      <input type="checkbox" name="aid-${i}"${aid.checked ? " checked" : ""}><span>${escape(aid.label)}</span>
+      <input type="checkbox" name="aid-${i}"${aid.checked && usableAids(aids.filter((other) => other.checked)).includes(aid) ? " checked" : ""}${aid.exclusiveGroup ? ` data-group="${escape(aid.exclusiveGroup)}"` : ""}><span>${escape(aid.label)}</span>
     </label>`).join("");
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Title") },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px"><p style="margin:0">${escape(L("Aids", { name: String(item?.name ?? "") }))}</p>${boxes}</div>`,
+    // Aids sharing a group are used one at a time (since 1.88.0).
+    render: (_event: Event, dialog: any) => {
+      const root: HTMLElement = dialog.element ?? dialog;
+      root.addEventListener("change", (event: Event) => {
+        const box = event.target as HTMLInputElement | null;
+        const group = box?.dataset?.group;
+        if (!box?.checked || !group) return;
+        root.querySelectorAll<HTMLInputElement>("input[data-group]").forEach((other) => {
+          if (other !== box && other.dataset.group === group) other.checked = false;
+        });
+      });
+    },
     ok: {
       label: L("Action"),
       callback: (_event: Event, button: HTMLElement) => {
