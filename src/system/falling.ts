@@ -32,6 +32,8 @@ export interface FallOptions {
   surface: LandingSurface;
   /** An Acrobatics roll landed it properly, taking five yards off. */
   controlled: boolean;
+  /** Lines added to the damage rolled, a module's (since API 1.104.0): a harness, a cushioned suit. */
+  modifiers?: Array<{ label: string; value: number }>;
 }
 
 /**
@@ -73,8 +75,11 @@ export async function rollFall(options: FallOptions): Promise<number | null> {
   const landed = randomLocationWithHooks(locationRoll.total, randomHitLocation(locationRoll.total).location, actor, { damageType: "cr" });
   const hitLocation: HitLocation = landed.hitLocation;
 
+  const lines = (options.modifiers ?? [])
+    .filter((line) => typeof line?.label === "string" && Number.isFinite(Number(line.value)) && Number(line.value) !== 0)
+    .map((line) => ({ label: line.label, value: Math.round(Number(line.value)), text: `${Number(line.value) > 0 ? "+" : "-"}${Math.abs(Math.round(Number(line.value)))}` }));
   const damage: IncomingDamage = {
-    basicDamage: Math.max(0, roll.total),
+    basicDamage: Math.max(0, roll.total + lines.reduce((sum, line) => sum + line.value, 0)),
     type: "cr",
     armorDivisor: 1,
     hitLocation,
@@ -111,6 +116,8 @@ export async function rollFall(options: FallOptions): Promise<number | null> {
     surface: game.i18n.localize(`GWORLD.Fall.Surface.${surface}`),
     formula,
     rolled: roll.total,
+    modifiers: lines,
+    basicDamage: damage.basicDamage,
     location: game.i18n.localize(`GWORLD.HitLocation.${hitLocation}`),
     dr: resolved.effectiveDr,
     stopped: resolved.penetrating === 0,

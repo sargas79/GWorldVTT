@@ -19,7 +19,9 @@ import {
 } from "../rules/knockdown.js";
 import { resolveSuccess } from "../rules/success.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
-import { PROCEDURE_HOOKS, recoveryHold, successRollModifiers, type KnockdownBlow } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, activeConditions, applyCondition, patchCondition, recoveryHold, successRollModifiers, type KnockdownBlow } from "./procedure-extensions.js";
+import { conditionLabel } from "./conditions.js";
+import { surpriseKind, surpriseRecoveryBonus, type SurpriseKind } from "../rules/surprise.js";
 import { callCombatHook } from "./combat-extensions.js";
 import { traitsOf } from "./damage.js";
 import { fragileExplodes } from "./hazards.js";
@@ -161,8 +163,12 @@ export async function rollStunRecovery(options: {
   actor: any;
   mental?: boolean;
 }): Promise<boolean> {
-  const { actor, mental = false } = options;
+  const { actor } = options;
   if (!actor?.isOwner) return false;
+  // A stun applied as a mental one -- surprise (Campaigns pp. 393, 420) --
+  // snaps out with IQ unless the caller says which (since API 1.104.0).
+  const stun = activeConditions(actor).find((c) => c.id === "stunned");
+  const mental = options.mental ?? stun?.recovery === "IQ";
   // A stun that is held -- a current still flowing, and the seconds after it
   // (p. 432) -- gives no roll until the hold ends (since API 1.89.0).
   if (!refuseWhileHeld(actor, "stunned")) return false;
@@ -170,10 +176,20 @@ export async function rollStunRecovery(options: {
   const attribute = mental ? "IQ" : "HT";
   // A HT roll reads Fit; the IQ roll for mental stun does not.
   const score = mental ? attributeOf(actor, attribute) : healthRollScore(actor);
+  // Surprise's own bonuses (p. 393): +6 with Combat Reflexes, and with
+  // partial surprise a point for each turn already spent stunned.
+  const surprised = mental
+    ? surpriseRecoveryBonus({
+        partial: stun?.surprise?.partial === true,
+        tries: Number(stun?.surprise?.tries) || 0,
+        combatReflexes: traitsOf(actor).activeDefense > 0,
+      })
+    : 0;
+  const given = surprised !== 0 ? [{ label: game.i18n.localize("GWORLD.Surprise.Bonus"), value: surprised }] : [];
   // Conditions and modules may make recovery harder or easier (since API 1.63.0, tagged "stunRecovery").
-  const modifier = successRollModifiers({
+  const modifier = surprised + successRollModifiers({
     actor, label: game.i18n.localize("GWORLD.Knockdown.recovered"), kind: "attribute", skill: attribute,
-    base: score, tags: ["stunRecovery", attribute, ...(mental ? ["mental"] : [])], modifiers: [],
+    base: score, tags: ["stunRecovery", attribute, ...(mental ? ["mental"] : [])], modifiers: [...given],
   }).reduce((sum, line) => sum + line.value, 0);
   const target = score + modifier;
 
@@ -185,6 +201,8 @@ export async function rollStunRecovery(options: {
   if (recovered) {
     await actor.update({ "system.conditions.stunned": false });
     await setCondition(actor, "stunned", false);
+  } else if (stun?.surprise) {
+    await patchCondition(actor, "stunned", { surprise: { ...stun.surprise, tries: (Number(stun.surprise.tries) || 0) + 1 } });
   }
 
   const content = await foundry.applications.handlebars.renderTemplate(KNOCKDOWN_TEMPLATE, {
@@ -226,4 +244,48 @@ export function refuseWhileHeld(actor: any, id: string): boolean {
     ? game.i18n.format("GWORLD.Knockdown.HeldUntilRemoved", { name: String(actor?.name ?? "") })
     : game.i18n.format("GWORLD.Knockdown.HeldFor", { name: String(actor?.name ?? ""), seconds: Math.ceil(held.until - now) }));
   return false;
+}
+
+/** What `surprise` did. */
+export interface SurpriseResult {
+  kind: SurpriseKind;
+  /** The seconds a total surprise freezes the defender before any IQ roll; 0 for partial. */
+  freezeSeconds: number;
+}
+
+/**
+ * Takes a defender by surprise (Campaigns p. 393; since API 1.104.0): they are
+ * mentally stunned, recovered with IQ (p. 420). Total surprise freezes them
+ * for 1d seconds first, the recovery rolls held till then; Combat Reflexes
+ * never freezes and treats total surprise as partial. Null for a user who
+ * can't change the actor.
+ */
+export async function surprise(actor: any, options: { total?: boolean } = {}): Promise<SurpriseResult | null> {
+  if (!actor?.isOwner) return null;
+  const kind = surpriseKind(options.total === true, traitsOf(actor).activeDefense > 0);
+  let freezeSeconds = 0;
+  const rolls: any[] = [];
+  if (kind === "total") {
+    const die = new Roll("1d6");
+    await die.evaluate();
+    rolls.push(die);
+    freezeSeconds = Number(die.total) || 1;
+  }
+  const id = await applyCondition(
+    actor,
+    { key: "stunned", recovery: "IQ", ...(freezeSeconds > 0 ? { holdRecovery: { seconds: freezeSeconds } } : {}) },
+    { setSystemCondition: setCondition, systemConditionLabel: conditionLabel },
+  );
+  if (!id) return null;
+  await actor.update({ "system.conditions.stunned": true });
+  await patchCondition(actor, "stunned", { surprise: { partial: kind === "partial", tries: 0 } });
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${foundry.utils.escapeHTML(String(actor.name ?? ""))}</span>
+      <span class="gc-target">${game.i18n.localize(`GWORLD.Surprise.${kind}`)}</span></div>
+      <div class="gc-result">${game.i18n.format(kind === "total" ? "GWORLD.Surprise.Frozen" : "GWORLD.Surprise.Stunned", { seconds: freezeSeconds })}</div></div>`,
+    rolls,
+  });
+  return { kind, freezeSeconds };
 }

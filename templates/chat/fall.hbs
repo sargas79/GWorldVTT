@@ -13,6 +13,8 @@
 
   <div class="gc-mods">
     <span>{{formula}} = <strong>{{rolled}}</strong></span>
+    {{#each modifiers}}<span class="gc-mod">{{this.text}} {{this.label}}</span>{{/each}}
+    {{#if modifiers.length}}<span class="gc-mod">= {{basicDamage}}</span>{{/if}}
     <span class="gc-mod">{{location}}</span>
     <span class="gc-mod">{{localize "GWORLD.Chat.DrSubtracted"}} {{dr}}</span>
   </div>

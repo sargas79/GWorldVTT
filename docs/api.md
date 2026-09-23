@@ -103,7 +103,7 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0). |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0). |
 | `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
@@ -897,6 +897,14 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     encumbrance, reeling and very tired are applied: push `{ label, multiplier?, value? }`.
     Move becomes the multipliers' product times Move, rounded down, plus the values, never
     below 0; the derived data keeps the lines as `moveLines`.
+    Since 1.104.0 it is also called for water Move (Campaigns p. 354: swim fins,
+    a life jacket), once the aquatic and nudity changes are in, with `medium`
+    in the context: `ground` for Move, `water` for `derived.feats.swimming.move`
+    (whose lines are kept as `feats.swimming.moveLines`). A line counts only on
+    the call for its own `medium` -- give water lines `medium: "water"`; a
+    line with none is a ground line, so listeners written before 1.104.0 never
+    change water Move. The system keeps no air Move, so `air` is never asked
+    yet.
   - Since 1.42.0, a skill or attribute rolled from the sheet is tagged with the attribute
     it's based on (`ST`, `DX`, `IQ`, `HT`, `Will`, `Per`), so a condition's `rolls` can name it.
   - `gworld.traitEffects` (since 1.47.0), with `{ actor, effects, sources }`,
@@ -1254,6 +1262,20 @@ Two fields a module may read (since 1.62.0):
   `gworld.afflictionEffect` with the check's margin and `frightEffect`, the
   table's entry. `rollFrightCheckOutcome` returns `{ success, margin, effect,
   total }`.
+- **Falling** (since 1.104.0, Campaigns pp. 430-431): `hazards.fall(actor, {
+  yards, onto?, controlled?, modifiers? })` runs the falling procedure the
+  sheet's Fall button runs -- the damage roll, a random hit location, armour
+  as flexible, excess injury off HP, the card -- for a module's pit, a
+  collapse or a trap. `onto` is `hard` (default) or `soft`; `controlled` a
+  landing an Acrobatics roll made (five yards off); `modifiers` are `{ label,
+  value }` lines added to the damage rolled, shown on the card. Resolves to
+  the injury taken (0 for no fall at all), or null for a user who can't
+  change the actor.
+- **How a disease is caught** (since 1.104.0, Campaigns pp. 442-443): the
+  Illness dialog's own disease ("Custom") asks its vector -- contact,
+  respiratory, digestive or blood -- rather than always passing it on by
+  contact, so the `Disease` the rolls and `gworld.successRollModifiers`
+  listeners see carries the one chosen.
 - **Hazards** (since 1.63.0): `hazards.shock({ actor, kind, modifier, continuous,
   formula, metalArmor })` runs an electrical shock as the GM tool does
   (Campaigns pp. 432-433): `kind` is `nonlethal`, `lethal` or `localized`,
@@ -1946,6 +1968,30 @@ Two fields a module may read (since 1.62.0):
   - It returns the condition's id. `actors.removeCondition(actor, id)` takes it
     off, and `actors.conditions(actor)` lists them. The Combat tab shows them
     too.
+  - *Mental stun* (since 1.104.0, Campaigns pp. 393, 420): `{ key: "stunned",
+    recovery: "IQ" }` applies a stun recovered with IQ rather than HT ("you're
+    not hurt - you're confused"); the entry keeps `recovery: "IQ"`, and the
+    sheet's Shake off stun rolls IQ for it by itself (shift-click still forces
+    IQ for any stun). `recovery` means nothing on another condition.
+  - *Surprise* (since 1.104.0, Campaigns p. 393):
+    `actors.surprise(actor, { total? })` mentally stuns a character taken by
+    surprise and posts a card. Total surprise rolls 1d and holds the recovery
+    rolls for that many seconds of world time (the freeze); Combat Reflexes
+    never freezes and treats it as partial. Resolves to `{ kind: "total" |
+    "partial", freezeSeconds }`, or null for a user who can't change the
+    actor. The IQ recovery roll then gets +6 with Combat Reflexes, and with
+    partial surprise +1 for each roll already failed (a line "Recovering from
+    surprise", which `gworld.successRollModifiers` listeners see among the
+    `stunRecovery` roll's `modifiers`). The entry keeps `surprise: { partial,
+    tries }`. `rules.surpriseKind(total, combatReflexes)`,
+    `rules.surpriseRecoveryBonus({ partial, tries, combatReflexes })` and
+    `SURPRISE_COMBAT_REFLEXES_BONUS` give the arithmetic.
+- **Restoring FP** (since 1.104.0, Campaigns p. 427): `actors.restoreFatigue(actor,
+  fp, { reason? })` gives FP back outside rest -- a drug, energy lent, a
+  module's meal -- never above the actor's FP (and not at all past it),
+  from below zero as well. Resolves to `{ from, to, max, reason }`, or null for
+  a user who can't change the actor or an `fp` that isn't a positive number.
+  Waking an unconscious character is left to the rules that do it.
 - **Injury:** `actors.applyInjury(actor, { amount, fatigue?, label? })` (since
   1.8.0) takes HP, or FP with `fatigue: true`, off an actor with no DR and no
   card, for a module's own effects. Reeling and dead follow from the new total,

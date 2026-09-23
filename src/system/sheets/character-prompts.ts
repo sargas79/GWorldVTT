@@ -608,6 +608,12 @@ export async function promptForDisease(): Promise<{
         <input type="text" name="name" value="" style="width:200px">
       </label>
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("Vector")}</span>
+        <select name="vector" style="width:200px">
+          ${(["contact", "respiratory", "digestive", "blood"] as const).map((v) => `<option value="${v}">${L(`Vector_${v}`)}</option>`).join("")}
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Virulence")}</span>
         <input type="number" name="virulence" value="-2" step="1" style="width:90px">
       </label>
@@ -645,7 +651,8 @@ export async function promptForDisease(): Promise<{
         return {
           disease: {
             name: field("name") || game.i18n.localize("GWORLD.Illness.Title"),
-            vector: "contact",
+            // How it is caught (p. 442), which a module's rule may turn on (since API 1.104.0).
+            vector: (["contact", "respiratory", "digestive", "blood"].includes(chosen("vector")) ? chosen("vector") : "contact") as Disease["vector"],
             resistanceModifier: Number(field("virulence")) || 0,
             delaySeconds: Number(field("delay")) || 0,
             dice: 0,

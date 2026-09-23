@@ -101,3 +101,29 @@ export async function applyFatigue(
     status: spent.status,
   };
 }
+
+/** What `restoreFatigue` gave back. */
+export interface FatigueRestored {
+  /** FP before and after, and the most there are. */
+  from: number;
+  to: number;
+  max: number;
+  reason: string;
+}
+
+/**
+ * Gives an actor FP back outside rest (Campaigns p. 427; since API 1.104.0):
+ * a drug, a meal of the module's, energy lent. Never above the FP the actor
+ * has. Waking someone who reached positive FP is left to the rules that do it,
+ * as losing FP leaves it. Null for a user who can't change the actor or an
+ * amount that isn't a positive number.
+ */
+export async function restoreFatigue(actor: any, fp: number, options: { reason?: string } = {}): Promise<FatigueRestored | null> {
+  const amount = Math.floor(Number(fp));
+  if (!actor?.isOwner || !Number.isFinite(amount) || amount <= 0) return null;
+  const current = Number(actor.system?.fp?.value) || 0;
+  const max = Number(actor.system?.fp?.max) || 0;
+  const to = current >= max ? current : Math.min(max, current + amount);
+  if (to !== current) await actor.update({ "system.fp.value": to });
+  return { from: current, to, max, reason: String(options.reason ?? "") };
+}
