@@ -1474,6 +1474,35 @@ Two fields a module may read (since 1.62.0):
     per point), `mayRollForFamiliarity(count)` (six or more), and
     `UNFAMILIAR_PENALTY` (-2), `FAMILIARIZATION_HOURS` (8),
     `FAMILIARITIES_FOR_SIMILARITY_ROLL` (6).
+- **Rolls gear can reach and tell apart** (since 1.103.0):
+  - *Swimming while drowning* (Campaigns pp. 351, 436). The five-second
+    Swimming rolls a drowning character makes (the Air tool's "drowning")
+    pass through `gworld.successRollModifiers` once per span, `kind`
+    `skill`, `skill` `Swimming`, tagged `swimming` and `drowning`; the added
+    lines go into every roll of the span.
+  - *Climbing* (Campaigns p. 349). The sheet's Climb roll carries `skill`
+    `Climbing` and the tags `climbing` and `climb-<kind>` (`climb-tree`,
+    `climb-mountain`, `climb-stoneWall`, `climb-modernBuilding`,
+    `climb-ropeUp`, `climb-ropeDown`, `climb-ropeDownRigged`). The climb's
+    own modifier is a line keyed `climbKind`, and the encumbrance level
+    (where there is any) a separate line keyed `encumbrance`; a listener can
+    find either among `modifiers` and change its `value` (climbing gear
+    cancelling the rope or building penalty).
+  - *Stealth and encumbrance* (Characters p. 222). A Stealth roll from the
+    sheet takes a penalty equal to the encumbrance level, as a line keyed
+    `encumbrance` that a listener may lighten. `rules.skillEncumbrancePenalty(
+    skillName, level)` gives it (0 for any other skill).
+  - *Influence skills* (Campaigns p. 359; Merchant, Characters p. 209). The
+    Influence dialog offers the book's six, then the modules' Influence
+    skills, then, in a group of their own, every other skill the character
+    has: the GM may allow one "in certain situations", at -1 to -10 for an
+    inappropriate one, which is the dialog's modifier to set.
+    `social.registerInfluenceSkill({ module, key, skill, applies?, level? })`
+    adds a skill to the first group and returns its `<module>.<key>` (null,
+    with a console warning, where it is malformed or taken). `applies(actor)`
+    limits it to some characters; `level(actor)` gives the level, else the
+    character's skill of that name is used and the skill isn't offered to one
+    who hasn't it. The roll is the usual Influence contest (`skill` the name).
 - **More rolls through `gworld.successRollModifiers`, fatigue costs, worn
   clothing and reactions** (since 1.76.0; Campaigns pp. 425-426, 430, 434,
   438, 443-444, 466, 494, 559). Each roll below now passes through

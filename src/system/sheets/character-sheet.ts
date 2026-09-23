@@ -194,8 +194,10 @@ import {
   runGrappleAction,
   triggerManeuverResponse,
   firstAidRules,
+  registeredInfluenceSkills,
   wornClothing,
 } from "../procedure-extensions.js";
+import { normalizeSkillName } from "../../rules/skills.js";
 import { effectiveCost, effectiveWeight, itemSectionsFor, registeredItemType, runItemTypeAction, tabHasAddonSections } from "../data-extensions.js";
 import { registeredTabsShownOn } from "../sheet-tabs.js";
 import { openCampaignTerms } from "../campaign.js";
@@ -2050,15 +2052,24 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const feats = this.actor.system?.derived?.feats;
     const encumbrance = Number(this.actor.system?.derived?.encumbrance?.level) || 0;
 
+    // The climb's own modifier and the encumbrance come as lines keyed
+    // `climbKind` and `encumbrance`, and the roll is tagged `climbing` and
+    // `climb-<kind>`, so gear can find and change them (since API 1.103.0).
     await rollSuccess({
       actor: this.actor,
       base: numberOr(feats?.climbing?.skill, 5),
       label: `${game.i18n.localize("GWORLD.Feats.Climbing")} — ${game.i18n.localize(`GWORLD.Feats.Climb.${chosen}`)} (${speeds})`,
+      skill: "Climbing",
+      tags: ["climbing", `climb-${chosen}`],
       modifiers: [
         {
-          label: game.i18n.localize("GWORLD.Feats.ClimbKind"),
-          value: climbingModifier(chosen, encumbrance),
+          label: game.i18n.localize(`GWORLD.Feats.Climb.${chosen}`),
+          value: climbingModifier(chosen, 0),
+          key: "climbKind",
         },
+        ...(encumbrance > 0
+          ? [{ label: game.i18n.localize("GWORLD.Field.Encumbrance"), value: -encumbrance, key: "encumbrance" }]
+          : []),
       ],
     });
   }
@@ -2659,10 +2670,31 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
     // Every Influence skill, whether or not it was bought: an unbought one
     // defaults, and which default applies is the skill's own business.
-    const skills = INFLUENCE_SKILLS.map((name) => ({
+    const skills: Array<{ name: string; level: number; group: "influence" | "other" }> = INFLUENCE_SKILLS.map((name) => ({
       name,
       level: this.actor.system?.derived?.influence?.[name] ?? 4,
+      group: "influence" as const,
     }));
+    // A module's Influence skills, and any other skill the character has,
+    // which the GM may allow "in certain situations" -- Law before a judge --
+    // at -1 to -10 for an inappropriate one, which is the modifier's to say
+    // (p. 359; since API 1.103.0).
+    const listed = new Set(skills.map((s) => normalizeSkillName(s.name)));
+    const levelOf = (name: string) => {
+      const found = this.actor.items.find((i: any) => i.type === "skill" && normalizeSkillName(String(i.name ?? "")) === normalizeSkillName(name));
+      const level = found?.system?.derived?.level;
+      return typeof level === "number" ? level : null;
+    };
+    for (const entry of registeredInfluenceSkills(this.actor, levelOf)) {
+      if (listed.has(normalizeSkillName(entry.name))) continue;
+      listed.add(normalizeSkillName(entry.name));
+      skills.push({ name: entry.name, level: entry.level, group: "influence" });
+    }
+    const others = this.actor.items
+      .filter((i: any) => i.type === "skill" && typeof i.system?.derived?.level === "number" && !listed.has(normalizeSkillName(String(i.name ?? ""))))
+      .map((i: any) => ({ name: String(i.name), level: Number(i.system.derived.level), group: "other" as const }))
+      .sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name));
+    skills.push(...others);
 
     const asked = await promptForInfluence(skills, socialBackgroundOf(this.actor));
     if (!asked) return;

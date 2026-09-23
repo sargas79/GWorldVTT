@@ -70,6 +70,7 @@ import {
   recoveryHold,
   registerContestResolver,
   registerDerivedAttackMode,
+  registerInfluenceSkill,
   registerGrappleAction,
   registerManeuverOption,
   removeCondition,
@@ -90,7 +91,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.102.0";
+export const API_VERSION = "1.103.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -530,6 +531,8 @@ export interface GWorldApi {
   readonly party: typeof partyApi;
   /** Facts about the campaign world (since 1.77.0): its Control Rating, and its terms since 1.82.0. */
   readonly world: typeof worldApi;
+  /** Social rolls (since 1.103.0): the skills the Influence roll offers. */
+  readonly social: typeof socialApi;
   /** The hooks the API fires, by name; `partyChanged` since 1.68.0, `campaignChanged` since 1.82.0. */
   readonly hooks: { readonly registerRules: string; readonly ready: string; readonly partyChanged: string; readonly campaignChanged: string };
   /** Whether this API satisfies a semver range, as a module's manifest would declare it. */
@@ -588,6 +591,9 @@ const hazardsApi = Object.freeze({
   shock, irradiate, detonate: detonateCharge, shootAtVehicle,
   fragileKinds: fragileKindsOf, fragileCatchesFire, fragileExplodes, brittleLimb: rollBrittleLimb,
 });
+
+/** The social namespace (since 1.103.0): a module's Influence skills (Campaigns p. 359). */
+const socialApi = Object.freeze({ registerInfluenceSkill });
 
 /**
  * The areas namespace (since 1.63.0): smoke, fog, a field that blinds a sense.
@@ -652,6 +658,7 @@ export function createApi(): GWorldApi {
     chat: chatApi,
     party: partyApi,
     world: worldApi,
+    social: socialApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: PARTY_CHANGED_HOOK, campaignChanged: CAMPAIGN_CHANGED_HOOK }),
     satisfies: (range: string) => satisfiesApiRange(API_VERSION, range),
   });

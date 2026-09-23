@@ -779,6 +779,56 @@ export function derivedAttackRows(
   return rows;
 }
 
+// ── Influence skills (since 1.103.0) ───────────────────────────────────────
+
+/** A skill a module offers as an Influence skill (Campaigns p. 359), as `social.registerInfluenceSkill` takes it. */
+export interface InfluenceSkillRegistration {
+  module: string;
+  key: string;
+  /** The skill's name, as the character's skill is called. */
+  skill: string;
+  /** Whether it is offered to this actor; left out, to everyone. */
+  applies?: (actor: any) => boolean;
+  /** The actor's level in it; left out, their skill's level, and not offered where they haven't it. */
+  level?: (actor: any) => number | null;
+}
+
+const influenceSkills: Array<{ id: string; skill: string; applies: (actor: any) => boolean; level: ((actor: any) => number | null) | null }> = [];
+
+/** Registers a skill the Influence dialog offers beside the book's six. Returns its `<module>.<key>`, or null. */
+export function registerInfluenceSkill(registration: InfluenceSkillRegistration): string | null {
+  const r = registration ?? ({} as InfluenceSkillRegistration);
+  const id = `${r.module}.${r.key}`;
+  const what = `influence skill ${id}`;
+  const bad = validNames(r.module, r.key, r.skill);
+  if (bad) return refuse(what, bad);
+  if (influenceSkills.some((s) => s.id === id)) return refuse(what, "that key is already registered");
+  influenceSkills.push({
+    id,
+    skill: r.skill.trim(),
+    applies: typeof r.applies === "function" ? r.applies : () => true,
+    level: typeof r.level === "function" ? r.level : null,
+  });
+  return id;
+}
+
+/**
+ * The modules' Influence skills offered to this actor, at their levels:
+ * `{ id, name, level }`. One with no level for the actor is left out.
+ */
+export function registeredInfluenceSkills(actor: any, skillLevel: (name: string) => number | null): Array<{ id: string; name: string; level: number }> {
+  const out: Array<{ id: string; name: string; level: number }> = [];
+  for (const entry of influenceSkills) {
+    if (!safely(`influence skill ${entry.id}`, () => entry.applies(actor) === true, false)) continue;
+    const level = entry.level
+      ? safely(`influence skill ${entry.id}`, () => entry.level!(actor), null)
+      : skillLevel(entry.skill);
+    if (typeof level !== "number" || !Number.isFinite(level)) continue;
+    out.push({ id: entry.id, name: entry.skill, level: Math.floor(level) });
+  }
+  return out;
+}
+
 // ── grapple actions ────────────────────────────────────────────────────────
 
 export interface GrappleActionRegistration {

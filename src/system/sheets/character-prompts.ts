@@ -1939,7 +1939,7 @@ export function socialBackgroundPenalty(form: HTMLElement | null, background: So
 
 /** Asks which Influence skill is being tried, and how (Campaigns p. 359). */
 export async function promptForInfluence(
-  skills: Array<{ name: string; level: number }>,
+  skills: Array<{ name: string; level: number; group?: "influence" | "other" }>,
   background: SocialBackground | null = null,
 ): Promise<{
   skill: string;
@@ -1950,9 +1950,16 @@ export async function promptForInfluence(
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Reaction.${key}`);
 
-  const options = skills
-    .map((skill) => `<option value="${skill.name}">${skill.name} ${skill.level}</option>`)
+  // The Influence skills first, then any other skill the GM may allow (since API 1.103.0).
+  const esc = (text: string) => foundry.utils.escapeHTML(String(text ?? ""));
+  const optionsOf = (group: "influence" | "other") => skills
+    .filter((skill) => (skill.group ?? "influence") === group)
+    .map((skill) => `<option value="${esc(skill.name)}">${esc(skill.name)} ${skill.level}</option>`)
     .join("");
+  const others = optionsOf("other");
+  const options = others
+    ? `<optgroup label="${esc(L("InfluenceSkills"))}">${optionsOf("influence")}</optgroup><optgroup label="${esc(L("OtherSkills"))}">${others}</optgroup>`
+    : optionsOf("influence");
 
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Influence") },
