@@ -9,7 +9,7 @@
  * give a weapon its DR and HP from its weight and what it is made of.
  */
 
-import { objectHitPoints, objectState, type ObjectKind, type ObjectState } from "./objects.js";
+import { objectHealth, objectHitPoints, objectState, type ObjectKind, type ObjectState } from "./objects.js";
 import { breakageModifier, type WeaponMaterial, type WeaponQuality } from "./weapon-quality.js";
 
 // ── parrying heavy weapons (p. 376) ────────────────────────────────────────
@@ -168,6 +168,68 @@ export function weaponDr(options: { material: WeaponMaterial; skill: string; fir
 /** A weapon's HP from its weight (p. 483), by whether it is a machine or solid. */
 export function weaponHitPoints(weightLbs: number, firearm: boolean): number {
   return objectHitPoints(weightLbs, weaponObjectKind(firearm));
+}
+
+/** What a weapon or shield is as an object: how damage treats it, and its DR, HP and HT. */
+export interface ObjectStats {
+  kind: ObjectKind;
+  dr: number;
+  hp: number;
+  ht: number;
+}
+
+/**
+ * A weapon's or shield's DR, HP and HT as an object (p. 483).
+ *
+ * A weapon's come from what it is made of and what it weighs, and its HT from
+ * whether it is a machine (HT 10) or solid (HT 12). A shield's DR and HP are
+ * its own (Characters p. 287), and "ordinary shields are Homogenous, with HT
+ * 12" (p. 484).
+ */
+export function weaponObjectStats(options: {
+  material: WeaponMaterial;
+  skill: string;
+  firearm: boolean;
+  weightLbs: number;
+  /** A shield's own DR and HP, in place of a weapon's. */
+  shield?: { dr: number; hp: number };
+}): ObjectStats {
+  if (options.shield) {
+    return { kind: "homogenous", dr: Math.max(0, options.shield.dr), hp: Math.max(0, options.shield.hp), ht: objectHealth("homogenous") };
+  }
+  const kind = weaponObjectKind(options.firearm);
+  return {
+    kind,
+    dr: weaponDr(options),
+    hp: weaponHitPoints(options.weightLbs, options.firearm),
+    ht: objectHealth(kind),
+  };
+}
+
+/**
+ * The stats once a module has had its say: "the GM may alter these values
+ * for unusually frail or tough objects", and "cheap, temperamental, or poorly
+ * maintained items get -1 to -3 to HT; well-made or rugged ones get +1 or +2"
+ * (p. 483). Each of DR, HP and HT a module set to a finite number is kept,
+ * rounded and no lower than 0; anything else falls back to what the book gives.
+ * Notes are kept where they are non-empty strings.
+ */
+export function settleObjectStats(
+  base: ObjectStats,
+  proposed: { dr?: unknown; hp?: unknown; ht?: unknown; notes?: unknown },
+): ObjectStats & { notes: string[] } {
+  const pick = (value: unknown, fallback: number): number =>
+    typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.round(value)) : fallback;
+  const notes = Array.isArray(proposed.notes)
+    ? proposed.notes.filter((n): n is string => typeof n === "string" && n.trim() !== "").map((n) => n.trim())
+    : [];
+  return {
+    kind: base.kind,
+    dr: pick(proposed.dr, base.dr),
+    hp: pick(proposed.hp, base.hp),
+    ht: pick(proposed.ht, base.ht),
+    notes,
+  };
 }
 
 /** What state a weapon is in after the damage it has taken. */

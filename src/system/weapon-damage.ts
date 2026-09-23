@@ -22,8 +22,6 @@ import {
   resistsBreakage,
   strikeAtWeaponPenalty,
   weaponCondition,
-  weaponDr,
-  weaponHitPoints,
   weaponObjectKind,
   weaponState,
   type BrokenWeaponKind,
@@ -32,7 +30,6 @@ import {
 import {
   breakageQuality,
   outranks,
-  weaponClassOf,
   type WeaponClass,
   type WeaponMaterial,
   type WeaponQuality,
@@ -40,6 +37,7 @@ import {
 import { toleratedWoundingModifier, noInjuryTolerance } from "../rules/injury-tolerance.js";
 import type { DamageType } from "../rules/types.js";
 import { COMBAT_HOOKS, callCombatHook } from "./combat-extensions.js";
+import { objectStats, weaponMakeOf } from "./object-stats.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/weapon-damage.hbs`;
 
@@ -55,6 +53,10 @@ export interface WeaponFacts {
   weight: number;
   dr: number;
   hp: number;
+  /** Its HT as an object (since API 1.90.0). */
+  ht: number;
+  /** What modules said about its DR, HP and HT (since API 1.90.0). */
+  objectNotes: string[];
   hpLost: number;
   condition: WeaponCondition;
   brokenKind: BrokenWeaponKind;
@@ -64,28 +66,11 @@ export interface WeaponFacts {
 /** Reads the facts off an equipment or shield item. */
 export function weaponFacts(item: any): WeaponFacts {
   const sys = item?.system ?? {};
-  const melee: any[] = sys.meleeModes ?? [];
-  const ranged: any[] = sys.rangedModes ?? [];
-  const modes = [...melee, ...ranged];
-  const skills = modes.map((m) => String(m.skill ?? ""));
-  const types = modes.map((m) => String(m.damageType ?? "")) as DamageType[];
+  const make = weaponMakeOf(item);
+  const { melee, ranged, skills, types, material, weaponClass, firearm, weight, skill } = make;
   const quality = (isRuleOn("weaponQuality") ? String(sys.quality ?? "good") : "good") as WeaponQuality;
-  const material = String(sys.material ?? "") as WeaponMaterial;
-  const weaponClass = (String(sys.weaponClass ?? "") ||
-    weaponClassOf({
-      skills,
-      damageTypes: types,
-      hasMalfunction: ranged.some((m) => m.malfunction),
-      isFencing: melee.some((m) => m.isFencing),
-    })) as WeaponClass;
-  const firearm = weaponClass === "firearm";
-  const weight = Number(sys.weight ?? 0) || 0;
-  const skill = skills[0] ?? "";
-  // A shield's DR and HP are the table's own (Characters p. 287); a weapon's
-  // come from its weight and what it is made of (Campaigns p. 483).
-  const isShield = item?.type === "shield";
-  const hp = isShield ? Number(sys.hp ?? 0) || 0 : weaponHitPoints(weight, firearm);
-  const dr = isShield ? Number(sys.dr ?? 0) || 0 : weaponDr({ material, skill, firearm });
+  const stats = objectStats(item, make);
+  const { dr, hp, ht } = stats;
   const hpLost = Number(sys.hpLost ?? 0) || 0;
   return {
     name: String(item?.name ?? ""),
@@ -98,6 +83,8 @@ export function weaponFacts(item: any): WeaponFacts {
     weight,
     dr,
     hp,
+    ht,
+    objectNotes: stats.notes,
     hpLost,
     condition: hp > 0 ? weaponCondition(weaponState(hpLost, hp)) : "sound",
     brokenKind: brokenWeaponKindFor({ skill, weightLbs: weight, ranged: melee.length === 0 && ranged.length > 0 }),

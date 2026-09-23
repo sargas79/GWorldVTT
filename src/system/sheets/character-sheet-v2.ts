@@ -39,6 +39,7 @@ import { attackSkillOptions, rolledWithChosenSkill, type HeldSkill } from "../sh
 import { isLevelled, itemImprovement, traitImprovement } from "../sheet-v2/improvements.js";
 import { namePlaceholderKey, namedByPlayer } from "../picker-merge.js";
 import { gearStatistics, weaponTablesOf } from "../sheet-v2/gear-statistics.js";
+import { objectStats } from "../object-stats.js";
 import { shotsEntryFor } from "../shots-entry.js";
 import { fullLoad } from "../../rules/ammunition.js";
 import { isAmmunition } from "../ammunition.js";
@@ -371,7 +372,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         canCarry: item.type === "equipment",
         equippable: item.type !== "equipment" || armed(item),
         // The equipment's own figures: what the book prints and the player looks for.
-        stats: gearStatistics(item, attacks, localize),
+        stats: gearStatistics({ type: item.type, system: item.system, objectStats: item.type === "shield" ? objectStats(item) : null }, attacks, localize),
         legality: legalityNote(s.lc ?? null),
         vehicle: s.category === "vehicle" && isRuleOn("vehicles"),
         loadable: loadModeIndex >= 0,

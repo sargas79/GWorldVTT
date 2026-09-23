@@ -21,6 +21,7 @@ import {
   strikeShield,
 } from "../rules/shield-damage.js";
 import type { DamageType } from "../rules/types.js";
+import { objectStats } from "./object-stats.js";
 import type { HitLocation } from "../rules/hit-locations.js";
 
 const FLAG = "shieldTookIt";
@@ -50,7 +51,7 @@ export async function noteShieldTookIt(defender: any, options: {
   const shield = equippedShield(defender);
   if (!shield) return false;
   const db = Number(shield.system?.db ?? 0) || 0;
-  const hp = Number(shield.system?.hp ?? 0) || 0;
+  const hp = objectStats(shield).hp;
   if (hp <= 0) return false;
   if (!shieldTookTheBlow({ succeeded: options.succeeded, margin: options.margin, defenseBonus: db })) return false;
   await defender.setFlag(SYSTEM_ID, FLAG, shield.id);
@@ -94,8 +95,8 @@ export async function applyDamageToShield(
   damage: { basicDamage: number; damageType: DamageType; armorDivisor: number; hitLocation: HitLocation; ignoresDr?: boolean },
 ): Promise<ShieldOutcome | null> {
   if (!shield?.isOwner) return null;
-  const dr = Number(shield.system?.dr ?? 0) || 0;
-  const hp = Number(shield.system?.hp ?? 0) || 0;
+  // Its DR and HP as an object, once modules have had their say.
+  const { dr, hp } = objectStats(shield);
   // The divisor works on the shield's DR as it does on anyone's, after the shield's Hardened.
   const effectiveDr = shieldDrAgainst({ dr, armorDivisor: damage.armorDivisor, ignoresDr: damage.ignoresDr === true, hardened: Number(shield.system?.hardened ?? 0) || 0 });
   const hit = strikeShield({ basicDamage: damage.basicDamage, dr: effectiveDr, hp });

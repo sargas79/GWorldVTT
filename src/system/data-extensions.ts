@@ -50,6 +50,8 @@ export const DATA_HOOKS = Object.freeze({
   carriedWeight: "gworld.carriedWeight",
   /** When a character's traits are gathered (since 1.61.0): `{ actor, traits }`, each entry's `inPlay` and `reason` mutable. */
   traitsInPlay: "gworld.traitsInPlay",
+  /** Wherever a weapon's or shield's DR, HP and HT as an object are read (since 1.90.0): `{ item, actor, kind, dr, hp, ht, notes }`, `dr`, `hp`, `ht` and `notes` mutable. */
+  objectStats: "gworld.objectStats",
 });
 
 /** A trait as `gworld.traitsInPlay` hands it to a listener. */

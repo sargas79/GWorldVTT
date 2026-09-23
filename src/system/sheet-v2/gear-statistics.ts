@@ -92,6 +92,8 @@ export interface GearAttack {
 export interface GearItemLike {
   type: string;
   system?: Record<string, any> | null;
+  /** A shield's DR and HP as an object, once modules have had their say; its own fields where absent. */
+  objectStats?: { dr: number; hp: number } | null;
 }
 
 const number = (value: unknown): number | null => {
@@ -293,12 +295,12 @@ function armorBlock(system: Record<string, any>, L: Localize): StatBlock {
 }
 
 /** The shield row: DB, DR and HP (Characters p. 287; Campaigns p. 484). */
-function shieldBlock(system: Record<string, any>, L: Localize): StatBlock {
+function shieldBlock(system: Record<string, any>, L: Localize, stats?: { dr: number; hp: number } | null): StatBlock {
   const S = (key: string) => L(`GWORLD.SheetV2.Stat.${key}`);
   const lines: StatLine[] = [{ label: S("DB"), value: String(number(system.db) ?? 0) }];
-  const dr = number(system.dr);
+  const dr = stats ? stats.dr : number(system.dr);
   if (dr !== null && dr > 0) lines.push({ label: L("GWORLD.Column.DR"), value: String(dr) });
-  const hp = number(system.hp);
+  const hp = stats ? stats.hp : number(system.hp);
   if (hp !== null && hp > 0) {
     const lost = number(system.hpLost) ?? 0;
     lines.push({ label: S("HP"), value: lost > 0 ? `${hp - lost} / ${hp}` : String(hp) });
@@ -380,7 +382,7 @@ export function gearStatistics(item: GearItemLike, attacks: readonly GearAttack[
 
   if (item.type === "equipment" && system.category === "ammunition") blocks.push(ammunitionBlock(system, L));
   if (item.type === "armor") blocks.push(armorBlock(system, L));
-  if (item.type === "shield") blocks.push(shieldBlock(system, L));
+  if (item.type === "shield") blocks.push(shieldBlock(system, L, item.objectStats));
   if (item.type === "equipment" && system.category === "vehicle" && system.vehicle) blocks.push(vehicleBlock(system.vehicle, L));
 
   return { tables, blocks, lines: generalLines(item, L) };

@@ -80,12 +80,13 @@ import { postResistance } from "./spell-resistance.js";
 import { manaLevel } from "./casting.js";
 import { PARTY_CHANGED_HOOK, addMembers, membersOf, partyOf, removeMember } from "./party.js";
 import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from "./campaign.js";
+import { objectStats, type ItemObjectStats } from "./object-stats.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.89.0";
+export const API_VERSION = "1.90.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -399,6 +400,16 @@ const items = {
    */
   clearMalfunction(actor: any, item: any): Promise<"cleared" | "notYet" | "mechanical" | "destroyed" | null> {
     return clearMalfunction(actor, item);
+  },
+
+  /**
+   * A weapon's or shield's DR, HP and HT as an object (since 1.90.0):
+   * `{ kind, dr, hp, ht, notes }`, `kind` being `unliving` or `homogenous`,
+   * once `gworld.objectStats` listeners have had their say. The figures
+   * breakage, striking at the item, shield damage and repairs use.
+   */
+  objectStats(item: any): ItemObjectStats {
+    return objectStats(item);
   },
 
   /**
