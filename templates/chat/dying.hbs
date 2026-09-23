@@ -13,10 +13,13 @@
     {{#if detail}}<span class="gc-mod">{{detail}}</span>{{/if}}
   </div>
 
+  {{!-- No dice where no roll was made: Unnatural fails it outright. --}}
+  {{#if dice}}
   <div class="gc-dice">
     {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
     <span class="gc-total">{{roll}}</span>
   </div>
+  {{/if}}
 
   <div class="gc-result {{#if fatal}}crit-failure{{else if bad}}failure{{else}}success{{/if}}">
     {{outcome}}

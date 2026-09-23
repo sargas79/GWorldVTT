@@ -24,6 +24,9 @@ import { resolveSuccess } from "../rules/success.js";
 import { PROCEDURE_HOOKS, successRollModifiers } from "./procedure-extensions.js";
 import { callCombatHook } from "./combat-extensions.js";
 import { attributeOf, healthRollBonus, healthRollScore } from "./attributes.js";
+import { hasCondition } from "./conditions.js";
+import { fragileExplodes } from "./hazards.js";
+import { failsDeathChecks, fragileDeathCheck, fragileExplosion } from "../rules/fragile.js";
 
 const DYING_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/dying.hbs`;
 
@@ -65,13 +68,40 @@ export async function rollDeathCheck(options: { actor: any }): Promise<void> {
   const ht = attributeOf(actor, "HT");
   // Hard to Kill, and Fit's bonus to every HT roll with it (pp. 55, 58).
   const bonus = traitsOf(actor).survival + healthRollBonus(actor);
+  const fragile = traitsOf(actor).fragile ?? [];
+
+  // Unnatural: "You automatically fail the HT roll to stay alive if reduced
+  // to -HP or below" (Characters p. 137) -- so there is no roll to make.
+  if (failsDeathChecks(fragile)) {
+    await setCondition(actor, "dead", true);
+    await post(actor, {
+      kind: game.i18n.localize("GWORLD.Dying.DeathCheck"),
+      ht,
+      modifier: bonus,
+      modifierLabel: game.i18n.localize("GWORLD.Dying.HardToKill"),
+      target: ht + bonus,
+      outcome: game.i18n.localize("GWORLD.Dying.Unnatural"),
+      bad: true,
+      fatal: true,
+    });
+    return;
+  }
 
   const roll = new Roll("3d6");
   await roll.evaluate();
   const outcome = resolveSuccess(roll.total, ht + bonus, dieResults(roll));
   const result = deathCheck(outcome);
+  // Brittle shatters, Explosive goes up, and Flammable alight goes up on a
+  // critical failure (Characters pp. 136-137).
+  const fragileResult = fragileDeathCheck({ kinds: fragile, roll: outcome, burning: hasCondition(actor, "burning") });
 
-  if (result === "dead") {
+  if (fragileResult === "explodes") {
+    await fragileExplodes({ actor, cause: game.i18n.localize("GWORLD.Hazard.FragileExplosiveDeath") });
+  } else if (fragileResult === "destroyed") {
+    // "You are instantly destroyed ... and instantly go to -10×HP."
+    await actor.update({ "system.hp.value": fragileExplosion(Number(actor.system?.hp?.max) || 0).hpAfter });
+    await setCondition(actor, "dead", true);
+  } else if (result === "dead") {
     await setCondition(actor, "dead", true);
   } else if (result === "mortallyWounded") {
     // "you are instantly incapacitated" -- and stay that way even if they pull
@@ -88,9 +118,9 @@ export async function rollDeathCheck(options: { actor: any }): Promise<void> {
     target: ht + bonus,
     dice: dieResults(roll),
     roll: roll.total,
-    outcome: game.i18n.localize(`GWORLD.Dying.${result}`),
+    outcome: game.i18n.localize(`GWORLD.Dying.${fragileResult ?? result}`),
     bad: result !== "survived",
-    fatal: result === "dead",
+    fatal: result === "dead" || fragileResult !== null,
     rolls: [roll],
   });
 }

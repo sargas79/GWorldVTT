@@ -105,6 +105,7 @@ export * from "./swarms.js";
 export * from "./trampling.js";
 export * from "./unarmed-techniques.js";
 export * from "./vehicle-combat.js";
+export * from "./fragile.js";
 export * from "./attack-options.js";
 export * from "./bonus-points.js";
 export * from "./environment.js";

@@ -42,6 +42,8 @@ export const CONDITIONS: readonly ConditionDefinition[] = [
   // Caught in a net, a bolas or a lariat (Campaigns pp. 410-411).
   { id: "entangled", label: "GWORLD.Condition.Entangled", img: "icons/svg/net.svg" },
   { id: "suffocating", label: "GWORLD.Condition.Suffocating", img: "icons/svg/silenced.svg" },
+  // On fire (Campaigns pp. 433-434): clothes alight, or a Fragile body (Characters p. 136).
+  { id: "burning", label: "GWORLD.Condition.Burning", img: "icons/svg/fire.svg" },
   {
     id: "mortallyWounded",
     label: "GWORLD.Condition.MortallyWounded",

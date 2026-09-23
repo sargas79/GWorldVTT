@@ -1168,6 +1168,29 @@ Two fields a module may read (since 1.62.0):
   `penetrating` is taken as already through. `location` aims at a location,
   or null rolls for one; `arc` picks the face. It posts the card and, for a
   vehicle actor its user owns, takes the injury off its hit points.
+- **Fragile** (since 1.93.0; Characters pp. 136-137): the disadvantage's
+  five kinds now do what the book says. A character's are
+  `traitEffects.fragile`, a list of `"brittle"`, `"combustible"`,
+  `"explosive"`, `"flammable"` and `"unnatural"`, read off "Fragile (Kind)"
+  or plain Fragile with the kind as its specialty or a modifier. A
+  vehicle's are its HT codes (`c`, `f`, `x`; Campaigns p. 463).
+  `hazards.fragileKinds(actorOrVehicle)` reads either. After a blow, a
+  Combustible or Flammable character catches fire, or the damage card offers
+  the HT roll not to; a crippled Brittle limb breaks off, with a roll for
+  whether it comes away whole. An Explosive character explodes on a critical
+  failure of the knockdown roll for a major wound, and on a death check
+  failed by 3 or more; a Flammable one does on a critical failure while
+  alight; a Brittle one is destroyed on any failed death check; an Unnatural
+  one fails it outright. A vehicle shot at catches fire, or rolls against
+  its HT not to, and an Explosive one rolls HT on a major wound and blows
+  up on a critical failure. Being alight is the new `burning` condition,
+  also set when a blow of burning damage catches the clothes (Campaigns p.
+  434). `hazards.fragileCatchesFire({ actor, automatic, modifier })`,
+  `hazards.fragileExplodes({ actor, cause })` (6d×(HP/10) crushing, HP to
+  -10×HP) and `hazards.brittleLimb({ actor, location })` run those cards;
+  the rules are in `rules`: `fragileIgnition`, `explodesOnMajorWound`,
+  `fragileDeathCheck`, `failsDeathChecks`, `fragileExplosion`,
+  `brittleLimb`, `fragileFromVehicleCodes` and `fragileKindsIn`.
 - **Blows from below** (since 1.63.0): a blow applied with `fromBelow` (a
   checkbox on the damage card when the foot is struck) meets footwear's
   `soleDr` on the foot. `gworld.armorDr` carries `fromBelow`. Armour spent by

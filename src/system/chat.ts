@@ -12,7 +12,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
-import { applyDamageToActor, takeInjury, type AppliedDamage, type IncomingDamage } from "./damage.js";
+import { applyDamageToActor, takeInjury, traitsOf, type AppliedDamage, type IncomingDamage } from "./damage.js";
 import { isUndoable, undoDamage, type DamageTransaction } from "./damage-undo.js";
 import { HURTING_YOURSELF_DR, hurtingYourself } from "../rules/hurting-yourself.js";
 import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy } from "./weapon-damage.js";
@@ -31,7 +31,8 @@ import { PROCEDURE_HOOKS, afterSuccessRoll, successRollTags } from "./procedure-
 import { addConsciousnessControls, consciousnessEntries } from "./consciousness.js";
 import { rollDeathCheck } from "./dying.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
-import { catchFire, irradiate } from "./hazards.js";
+import { catchFire, fragileCatchesFire, irradiate, rollBrittleLimb } from "./hazards.js";
+import { fragileIgnition } from "../rules/fragile.js";
 import { EXTRA_EFFORT_FP, FEVERISH_DEFENSE_BONUS } from "../rules/extra-effort.js";
 import { spendFatigue } from "./extra-effort.js";
 import { isRuleOn } from "./optional-rules.js";
@@ -40,7 +41,7 @@ import { arcDefense, attackArc, hexDirection, restrictedArc, retreatBonus, type 
 import { attackDirection, facingOf } from "./hex.js";
 import { tacticalOnScene } from "./settings.js";
 import { handednessOf, visionOf } from "./tactical-context.js";
-import { HIT_LOCATION_ORDER, type HitLocation } from "../rules/hit-locations.js";
+import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../rules/hit-locations.js";
 import { defenseChoices, type DefenseChoice, type DefenseKey } from "./defense-choices.js";
 import { loseAim } from "./aim.js";
 import { blockingSpellsOf, castBlockingSpell } from "./casting.js";
@@ -506,6 +507,8 @@ async function applyFromCard(options: {
   const applied: AppliedDamage[] = [];
   const refused: string[] = [];
   const knockdowns: Array<{ actor: any; result: AppliedDamage }> = [];
+  // The rolls a Fragile body owes after the blow (Characters p. 136).
+  const fragileRolls: FragileFlag[] = [];
 
   // One blow lands once. Two tokens can share an actor -- a linked token
   // dragged onto the scene twice -- and applying to each in turn would take the
@@ -573,6 +576,24 @@ async function applyFromCard(options: {
       }
       // Remembered so the knockdown control on the card knows whose roll it is.
       knockdowns.push({ actor, result });
+      // A Fragile body may catch fire or lose a limb to the blow (Characters p. 136).
+      const fragile = result.costsFatigue ? [] : traitsOf(actor).fragile ?? [];
+      if (fragile.length > 0) {
+        const ignition = fragileIgnition({
+          kinds: fragile,
+          injury: result.injury,
+          majorWound: result.consequences.majorWound === true,
+          burningOrExplosive: incoming.type === "burn" || flag.explosive === true || flag.incendiary === true,
+          vitals: result.hitLocation === "vitals",
+        });
+        const who = { uuid: String(actor.uuid ?? ""), name: String(actor.name ?? "") };
+        if (ignition.kind === "alight") await fragileCatchesFire({ actor, automatic: true, modifier: 0 });
+        else if (ignition.kind === "roll") fragileRolls.push({ ...who, roll: "ignite", modifier: ignition.modifier });
+        const crippling = HIT_LOCATIONS[result.hitLocation]?.cripplingKind;
+        if (fragile.includes("brittle") && result.crippled && (crippling === "limb" || crippling === "extremity")) {
+          fragileRolls.push({ ...who, roll: "brittle", location: result.hitLocation });
+        }
+      }
       // A bare-handed blow into hard DR hurts the hand that struck it (p. 379).
       if (flag.strikingPart && flag.strikerUuid) await hurtStriker(flag, actor, result, incoming.basicDamage);
     } else refused.push(String(actor.name ?? ""));
@@ -684,6 +705,9 @@ async function applyFromCard(options: {
           required: entry.result.consequences.consciousnessRollRequired === true,
           penalty: entry.result.consequences.consciousnessRollPenalty,
         }))),
+        // The HT rolls a Fragile body owes: to keep from catching fire, and
+        // for a Brittle limb that broke off (Characters p. 136).
+        fragile: fragileRolls,
         // A blow that took somebody past a multiple of their HP owes a roll
         // against death, which is the other roll this card used only to name.
         deathCheck: knockdowns
@@ -1885,6 +1909,62 @@ async function addKnockdownControls(message: any, html: HTMLElement): Promise<vo
   }
 }
 
+/** A HT roll a Fragile body owes after a blow. */
+interface FragileFlag {
+  uuid: string;
+  name: string;
+  roll: "ignite" | "brittle";
+  /** The ignition roll's modifier: -3 for fire, -3 for the vitals. */
+  modifier?: number;
+  /** The Brittle limb that broke off. */
+  location?: string;
+}
+
+/**
+ * Adds the HT rolls a Fragile body owes (Characters p. 136): not to catch
+ * fire, and whether a Brittle limb that broke off comes away whole. The
+ * victim's to make, as the knockdown roll is.
+ */
+async function addFragileControls(message: any, html: HTMLElement): Promise<void> {
+  const entries = message?.getFlag?.(SYSTEM_ID, "fragile") as FragileFlag[] | undefined;
+  if (!Array.isArray(entries) || entries.length === 0) return;
+
+  const root = html.querySelector<HTMLElement>(".gworld-chat");
+  if (!root || root.querySelector("[data-gworld-fragile]")) return;
+
+  for (const entry of entries) {
+    const actor: any = await fromUuid(entry.uuid).catch(() => null);
+    if (!actor?.isOwner) continue;
+
+    const row = document.createElement("div");
+    row.className = "gc-apply";
+    row.dataset.gworldFragile = entry.uuid;
+
+    const who = document.createElement("div");
+    who.className = "gc-who";
+    who.textContent = entry.name;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "gc-apply-button";
+    const modifier = Number(entry.modifier) || 0;
+    button.textContent = entry.roll === "brittle"
+      ? game.i18n.format("GWORLD.Hazard.BrittleRoll", {
+          location: game.i18n.localize(`GWORLD.HitLocation.${entry.location ?? "torso"}`),
+        })
+      : `${game.i18n.localize("GWORLD.Hazard.FragileIgnitionButton")}${modifier === 0 ? "" : ` ${modifier > 0 ? "+" : ""}${modifier}`}`;
+    button.addEventListener("click", () => {
+      button.disabled = true;
+      void (entry.roll === "brittle"
+        ? rollBrittleLimb({ actor, location: String(entry.location ?? "torso") })
+        : fragileCatchesFire({ actor, automatic: false, modifier }));
+    });
+
+    row.append(who, button);
+    root.append(row);
+  }
+}
+
 /**
  * Adds a death check control for everyone the blow calls one for.
  *
@@ -2211,6 +2291,7 @@ export function registerChatHooks(): void {
     void addDamageUndoControls(message, html);
     void addKnockdownControls(message, html);
     void addDeathCheckControls(message, html);
+    void addFragileControls(message, html);
     void addConsciousnessControls(message, html);
     void addResistControls(message, html);
     void addFleshWoundControls(message, html);
