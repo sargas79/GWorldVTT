@@ -8,6 +8,7 @@
  * so the `renderGWorldCharacterSheet` hook a module listens to still fires.
  */
 
+import { clearZenShot, rollZenSkill, zenSkillsOf } from "../zen.js";
 import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
 import { customItemData, customKindKey } from "../picker-merge.js";
 import { rememberFocus, restoreFocus, type RememberedFocus } from "../focus-memory.js";
@@ -419,6 +420,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       maneuverResponse: GWorldCharacterSheet.#onManeuverResponse,
       grappleAction: GWorldCharacterSheet.#onGrappleAction,
       removeTimedCondition: GWorldCharacterSheet.#onRemoveTimedCondition,
+      rollZen: GWorldCharacterSheet.#onRollZen,
+      clearZen: GWorldCharacterSheet.#onClearZen,
       browseCompendium: GWorldCharacterSheet.#onBrowseCompendium,
       openBuilder: GWorldCharacterSheet.#onOpenBuilder,
       awardPoints: GWorldCharacterSheet.#onAwardPoints,
@@ -923,6 +926,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // Shown while evaluating, and on the turn after, when the bonus is spent.
       isEvaluating: system.maneuver === "evaluate" || Number(system.evaluateTurns ?? 0) > 0,
       isAiming: system.maneuver === "aim",
+      // Shown while concentrating, and on the turn after, when a zen skill is rolled.
+      isConcentrating: system.maneuver === "concentrate" || Number(system.concentrateTurns ?? 0) > 0,
+      // The zen skills known (Characters p. 228): each rolled from here, at
+      // what the turns concentrated give it, and said to be ready once it succeeds.
+      zenSkills: zenSkillsOf(this.actor).map((zen) => ({
+        id: zen.id, skill: zen.skill, level: zen.level, modifier: zen.modifier, ready: zen.ready, covers: zen.covers.join(", "),
+      })),
       // The area covered only matters if opportunity fire is being played.
       showOpportunityFire: system.maneuver === "wait" && isRuleOn("opportunityFire"),
       // What covering that much ground will cost when the shot is finally
@@ -3259,6 +3269,14 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   }
 
   /** Takes a timed condition off before it runs out. */
+  static async #onRollZen(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    await rollZenSkill(this.actor, target.dataset.zenId ?? "zenArchery");
+  }
+
+  static async #onClearZen(this: GWorldCharacterSheet) {
+    await clearZenShot(this.actor);
+  }
+
   static async #onRemoveTimedCondition(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const id = target.dataset.conditionId;
     if (id) await removeCondition(this.actor, id, { setSystemCondition: setCondition });

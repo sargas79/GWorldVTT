@@ -19,6 +19,7 @@ import { registerFacing } from "./system/facing.js";
 import { registerAimTracking } from "./system/aim.js";
 import { registerSupersededPackHiding } from "./system/compendium-sources.js";
 import { registerEvaluateTracking } from "./system/evaluate.js";
+import { registerConcentrateTracking } from "./system/zen.js";
 import { registerBattleFatigue } from "./system/battle-fatigue.js";
 import { loadSkillCatalog } from "./system/skill-catalog.js";
 import { setCondition, registerConditions, registerPostureSync } from "./system/conditions.js";
@@ -141,6 +142,7 @@ Hooks.once("init", () => {
   // ran on costs everyone in it a point of fatigue when the tracker closes.
   registerAimTracking();
   registerEvaluateTracking();
+  registerConcentrateTracking();
   registerBattleFatigue();
   // What a module keeps per combatant runs out at the turn, round or combat
   // boundary it asked for.

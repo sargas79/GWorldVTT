@@ -39,6 +39,7 @@ import {
 } from "./procedure-extensions.js";
 import { equipmentUseLines } from "./tech-level.js";
 import { aimStateOf, aimTargetLines, aimTurnsOf, loseAim } from "./aim.js";
+import { clearZenShot, zenLine, zenShotFor, type ZenShot } from "./zen.js";
 import { evaluateBonusFor } from "./evaluate.js";
 import { aimBonus } from "../rules/aim.js";
 import {
@@ -181,8 +182,9 @@ export interface RollModifier {
    * What the line is, for a module that needs to find it whatever the label
    * says in the user's language (since 1.63.0): `speedRange`, `bulk`,
    * `accuracy`, `aim`, `braced`, `aimTarget`; since 1.86.0 `darkness`
-   * and `laser`; since 1.87.0 `movingPlatform`. Blank or absent on lines
-   * nobody has named.
+   * and `laser`; since 1.87.0 `movingPlatform`; since 1.91.0 `size` on a
+   * ranged attack, and `zen`, a zen skill's line (with `zen`, the skill's id).
+   * Blank or absent on lines nobody has named.
    */
   key?: string;
   /** Why a `bulk` line applies: `moveAndAttack` or `closeCombat` (since 1.63.0). */
@@ -204,6 +206,8 @@ export interface RollModifier {
   medium?: string;
   ride?: string;
   mounting?: string;
+  /** On a `zen` line, the zen skill's id: `zenArchery`, or a module's `<module>.<key>` (since 1.91.0). */
+  zen?: string;
 }
 
 /**
@@ -1700,6 +1704,10 @@ async function rollAction(
   // below is told separately; positionRollLines has put their lines in.
   const evaluated = rollType === "attack" && !ranged ? evaluateBonusFor(actor) : 0;
   const movingMelee = rollType === "attack" && !ranged && actor?.system?.maneuver === "moveAndAttack";
+  // A zen skill's success waiting for this shot (Characters p. 228; since
+  // 1.91.0): the attack is tagged `zen`, and its line is worked out once the
+  // listeners have had their say about the size and range lines.
+  const zenShot = rollType === "attack" && ranged && shot ? zenShotFor(actor, String(target.dataset.rollSkill ?? "")) : null;
 
   // A module may add to the attack roll and to what the defender faces, with
   // what each line is for.
@@ -1747,7 +1755,7 @@ async function rollAction(
         aim: aimStateOf(actor),
         // Since 1.65.0: tags for the attack roll, which condition and area lines and modules read.
         // Since 1.75.0 `techLevel` and `unfamiliar` where the weapon took those lines.
-        tags: [...(equipmentUse?.tags ?? [])] as string[],
+        tags: [...(equipmentUse?.tags ?? []), ...(zenShot ? ["zen"] : [])] as string[],
         // Since 1.69.0: how far the shot is, in yards (null for a melee
         // attack), and the weapon's minimum range. Inside it, `refusal`
         // starts out saying so.
@@ -1766,6 +1774,9 @@ async function rollAction(
         laser: shot
           ? { on: shot.laser?.on === true, targetSees: shot.laser?.targetSees === true, dodgeBonus: shot.dodgeBonus ?? 0 }
           : (null as { on: boolean; targetSees: boolean; dodgeBonus: number } | null),
+        // Since 1.91.0: a zen skill's success this shot spends, `{ id, skill }`,
+        // or null. Set it to null and the shot takes no `zen` line.
+        zen: zenShot ? { ...zenShot } : (null as ZenShot | null),
       })
     : null;
   // A module's rules may make this attack impossible here: it isn't rolled.
@@ -1774,6 +1785,10 @@ async function rollAction(
     ui.notifications?.warn(refusal.trim());
     return null;
   }
+  // What the zen skill gives back of the size and range penalties, from the
+  // lines as the listeners left them.
+  const zenApplied = hooked?.zen && typeof hooked.zen.id === "string" ? zenLine(hooked.zen, modifiers) : null;
+  if (zenApplied) modifiers.push(zenApplied);
   const defensePenalty = Number(hooked?.defensePenalty ?? (melee?.defensePenalty ?? 0) + feint) || 0;
   // What the laser dot gives the target's Dodge, after the listeners (since 1.86.0).
   const laserDodge = hooked?.laser
@@ -1952,6 +1967,8 @@ async function rollAction(
   // An attack that could not be attempted -- effective skill below 3 -- was
   // never made: it spends no shots and no aim (since 1.83.0).
   if (outcome === null) return null;
+  // The shot spends the zen skill's success, whatever became of it.
+  if (zenShot) await clearZenShot(actor);
 
   // A shot at a random location behind cover (p. 407): "For shots that hit a
   // location that is only half exposed, roll 1d: on a roll of 4-6, the shot
@@ -2975,7 +2992,8 @@ export function rangedModifiers(
       key: "speedRange",
     });
   }
-  if (size !== 0) modifiers.push({ label: L("TargetSize"), value: size });
+  // Keyed `size` (since 1.91.0), which a zen skill reads with `speedRange`.
+  if (size !== 0) modifiers.push({ label: L("TargetSize"), value: size, key: "size" });
 
   // "Base visibility modifiers on the projectile's homing sense, not on your
   // senses" -- so the firer's dark and the firer's smoke stop counting, and

@@ -49,7 +49,7 @@ export type DefenseKey = "dodge" | "parry" | "block";
 
 /** The hooks this module fires, by name. */
 export const COMBAT_HOOKS = Object.freeze({
-  /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset, skillCap, calledShot, targets, refusal, rangeYards, minRange, spraying, laser }`, mutable (`rangeYards` and `minRange` since 1.69.0, `spraying` since 1.70.0, `laser` since 1.86.0). */
+  /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset, skillCap, calledShot, targets, refusal, rangeYards, minRange, spraying, laser, zen }`, mutable (`rangeYards` and `minRange` since 1.69.0, `spraying` since 1.70.0, `laser` since 1.86.0, `zen` since 1.91.0). */
   attackModifiers: "gworld.attackModifiers",
   /** The defense card's choices for a defender: `{ defender, attack, delivery, damageType, choices, retreat, feverish, acrobatic }`, mutable. */
   defenseChoices: "gworld.defenseChoices",

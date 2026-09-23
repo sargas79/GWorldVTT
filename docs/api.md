@@ -262,6 +262,37 @@ and the roll continues.
   - `shockKnockdown`: any shock calls for a knockdown roll;
   - `majorWoundKnockdown`: a major wound's knockdown penalty in place of the
     parent's.
+- **`registerZenSkill({ module, key, skill, covers, available? })`** (since 1.91.0).
+  A skill of Zen Archery's shape (Characters p. 228) for other weapons,
+  stored as `<module>.<key>`. `skill` is its name as the sheet has it;
+  `covers` lists the weapon skills it is used with, a name covering its
+  specialties ("Guns" covers "Guns/TL8 (Pistol)"). The system's own is
+  `zenArchery`, Zen Archery for Bow. A character who knows the skill gets a
+  Roll button for it on the Combat tab's maneuver panel, at -10 on the
+  instant and -5, -4, -3, -2, -1 and 0 after 1, 2, 4, 8, 16 and 32 turns of
+  Concentrate (`system.concentrateTurns`, moved on at the end of each turn in
+  combat: one more after a Concentrate, back to 0 after anything else; the
+  table can correct it). The roll is a skill roll tagged `zen` and `IQ`, its
+  concentration line keyed `zenConcentration`. A success waits on the actor
+  until the next attack rolled with a skill it covers; a failure, or that
+  shot, spends it. The shot is tagged `zen`, `gworld.attackModifiers` gets
+  `zen: { id, skill }` (null on any other shot; set it to null and the shot
+  takes no line), and after the listeners the shot takes a line keyed `zen`
+  (carrying `zen`, the skill's id) worth two-thirds of the penalties in its
+  `size` and `speedRange` lines: they are added up, divided by three and
+  rounded down, so -7 leaves -2. A bonus for a large target is not a penalty
+  and is left alone. Knowing the skill is the only gate, as with the
+  system's other cinematic skills; `available(actor)` can add one, such as a
+  module's switch. Also on `combat`:
+  - `zenSkills(actor)`: the zen skills the actor knows and may use, each
+    `{ id, skill, covers, available, level, modifier, ready }`, `modifier`
+    being what the turns concentrated give the roll and `ready` whether its
+    success is waiting;
+  - `rollZenSkill(actor, id = "zenArchery")`: rolls it as the button does;
+    returns `{ success }`, or null where no roll was made (unknown skill, not
+    known, not the user's actor);
+  - `zenShot(actor)`: the success waiting, `{ id, skill }`, or null;
+  - `clearZenShot(actor)`: drops it.
 - **State:** `getCombatState(actor, module, key)` and
   `setCombatState(actor, module, key, value, "turn" | "round" | "combat")`,
   cleared at that boundary. `getWeaponState(item, module)` and
@@ -1435,6 +1466,8 @@ Two fields a module may read (since 1.62.0):
   There is no line where the eyes left no penalty, or where the dialog set no
   darkness; total darkness is the sight select's, not this line's. And
   `laser`, the laser sight's +1 (see `laser` under `gworld.attackModifiers`).
+  Since 1.91.0 also `size`, the target's size modifier on a ranged attack
+  (as on a Vision roll), and `zen`, a zen skill's line (see `registerZenSkill`).
   Since 1.87.0 also `movingPlatform`, the penalty for attacking from a moving
   vehicle or mount (Campaigns p. 548), which carries `platform` (`vehicle` or
   `mount`), `medium` (`ground`, `air` or `water`), `ride` (`smooth`, `rough`
