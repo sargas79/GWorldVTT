@@ -48,7 +48,7 @@ import { agingRollsPerYear, lifespanFrom } from "../../rules/aging.js";
 import { culturallyAdaptable, languagePenalty, type Comprehension } from "../../rules/languages.js";
 import { sleepPeriodFrom } from "../../rules/sleep.js";
 import { radiationRow, remainingDose } from "../../rules/radiation.js";
-import { bestTool, isTechnologicalSkill, parseTechLevel, skillTechLevel, type CarriedTool } from "../../rules/tech-level.js";
+import { bestTool, isTechnologicalSkill, parseTechLevel, skillTechLevel, toolSkillKey, type CarriedTool } from "../../rules/tech-level.js";
 import { baseBlock, baseDodge, baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import {
   materialArmorDivisor,
@@ -1390,8 +1390,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
   /**
    * What the tools carried are worth to the skills they serve (Campaigns
-   * p. 345), by skill name. The best grade carried wins: nobody operates
-   * with the crash kit and the leaves at once.
+   * p. 345), by skill name as `toolSkillKey` writes it, so a tool written
+   * without the "/TL" serves the skill that has it. The best grade carried
+   * wins: nobody operates with the crash kit and the leaves at once.
    */
 
   #equipmentBonuses(tl: number): Record<string, CarriedTool[]> {
@@ -1406,7 +1407,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // Its own TL, weighed against the skill's once that is known (Characters p. 168).
       const techLevel = parseTechLevel(sys.tl);
       for (const raw of skills) {
-        const skill = String(raw ?? "").trim();
+        const skill = toolSkillKey(String(raw ?? ""));
         if (!skill) continue;
         (carried[skill] ??= []).push({ quality, techLevel });
       }
@@ -1798,7 +1799,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const skillTL = isRuleOn("techLevelModifiers") && isTechnologicalSkill(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel)
         ? skillTechLevel(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel, Number(this.tl) || 0)
         : null;
-      const tool = bestTool(toolBonuses[String(item.name ?? "").trim()] ?? [], { skillTechLevel: skillTL, iqBased: sys.attribute === "IQ" });
+      const tool = bestTool(toolBonuses[toolSkillKey(String(item.name ?? ""))] ?? [], { skillTechLevel: skillTL, iqBased: sys.attribute === "IQ" });
       const toolBonus = tool?.quality ?? 0;
       const magicBonus = magicSkillBonus(String(item.name ?? ""), talent);
       // The bonuses as lines, which add-on modules may add to, or change with

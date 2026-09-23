@@ -111,6 +111,29 @@ export function mayRollForFamiliarity(familiaritiesWithSkill: number): boolean {
   return familiaritiesWithSkill >= FAMILIARITIES_FOR_SIMILARITY_ROLL;
 }
 
+/**
+ * How a tool's skill and a skill's name are compared, so that a tool written
+ * for "First Aid" serves "First Aid/TL" and one for "Electronics Operation
+ * (Security)" serves "Electronics Operation/TL8 (Security)": the "/TL"
+ * marker and any TL after it dropped, spaces collapsed, lower case. The
+ * specialty stays part of the key, so different specialties never match.
+ */
+export function toolSkillKey(name: string): string {
+  return String(name ?? "")
+    .replace(/\/TL[\d^]*/gi, "")
+    .replace(/\s*\(\s*/g, " (")
+    .replace(/\s*\)/g, ")")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+/** Whether a tool carried for `toolSkill` serves the skill named `skillName`, compared as `toolSkillKey` writes them. */
+export function toolServesSkill(toolSkill: string, skillName: string): boolean {
+  const key = toolSkillKey(toolSkill);
+  return key !== "" && key === toolSkillKey(skillName);
+}
+
 /** A tool carried for a skill: what its grade is worth, and its TL where it states one. */
 export interface CarriedTool {
   quality: number;
