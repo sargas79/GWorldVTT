@@ -105,7 +105,7 @@ import {
   automaticSkillBonus,
 } from "../../rules/reactions.js";
 import { mountedDefensePenalty } from "../../rules/mounted.js";
-import { supportEffect } from "../../rules/accessories.js";
+import { supportEffect, supportOf, type Support } from "../../rules/accessories.js";
 import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalties.js";
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
@@ -199,7 +199,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
   ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1,
-  recoil: 1, bulk: 0, mount: "", scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0,
+  recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false, outOfAction: null,
   ammunition: "", malediction: 0, ignoresDr: false,
 };
@@ -470,6 +470,8 @@ export interface DerivedAttack {
   recoil?: number;
   /** How the weapon is supported: "", "rest", "bipod" or "mounted" (a vehicle or tripod mount). */
   mount?: string;
+  /** An "M" weapon taken off its mount, whose listed ST then counts (Characters p. 270; since API 1.84.0). */
+  offMount?: boolean;
   /** Set by a module where the row can't spray its fire over several targets (since API 1.70.0). */
   noSprayingFire?: boolean;
   /** Set by a module where the row can't lay down suppression fire (since API 1.70.0). */
@@ -2295,18 +2297,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // (Campaigns p. 411): a bipod under a prone shooter cuts the ST
       // requirement to two thirds, and a mount lifts it entirely. The field
       // recording which was already on every ranged mode and had never been
-      // read by anything.
-      const supported = (minSt: number | null, mount: string) =>
-        supportEffect({
-          support: mount === "mounted" ? "tripod" : mount === "bipod" ? "bipod" : "hands",
-          minimumSt: minSt,
-          prone: this.posture === "lying",
-        }).minimumSt;
+      // read by anything. An "M" weapon's ST counts only off its mount
+      // (Characters p. 270), and the skill and the row's shown penalty are
+      // one figure.
+      const supported = (minSt: number | null, support: Support) =>
+        supportEffect({ support, minimumSt: minSt, prone: this.posture === "lying" }).minimumSt;
       const lacking = isRuleOn("minimumSt")
-        ? (minSt: number | null, mount = "") => minStPenalty(attrs.ST, supported(minSt, mount))
+        ? (minSt: number | null, support: Support = "hands") => minStPenalty(attrs.ST, supported(minSt, support))
         : () => 0;
-      const short = (found: { level: number | null; atDefault: boolean }, minSt: number | null) =>
-        found.level === null ? found : { ...found, level: found.level + lacking(minSt) };
+      const short = (found: { level: number | null; atDefault: boolean }, penalty: number) =>
+        found.level === null ? found : { ...found, level: found.level + penalty };
       const withPuissance = (damage: string): string => {
         if (!magic.puissance) return damage;
         const parsed = parseDiceAdds(damage);
@@ -2329,7 +2329,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // unarmed bonus, a master's dice, which critical table a fumble is
         // read on -- reads the one actually rolled.
         const rolledSkill = rolledSkillOf(mode);
-        const found = short(enchantedSkill(weaponSkill(rolledSkill, true, mastered)), mode.minSt ?? null);
+        const found = short(enchantedSkill(weaponSkill(rolledSkill, true, mastered)), lacking(mode.minSt ?? null));
         const skillLevel = found.level;
         const atDefault = found.atDefault;
         // A fist load or a hilt punch hits as hard as the unarmed skill it is
@@ -2517,7 +2517,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         const shotsEntry = shotsEntryFor(item, index, mode);
         const shotsCapacity = isRuleOn("reloading") && !shotsEntry.thrown ? fullLoad(shotsEntry) : 0;
         const shotsLoaded = shotsCapacity > 0 ? Math.min(shotsCapacity, Math.max(0, Number(mode.loaded ?? 0) || 0)) : 0;
-        const foundRanged = short(enchantedSkill(art), mode.minSt ?? null);
+        const offMount = mode.mount === "mounted" && Boolean(mode.offMount);
+        const rangedStPenalty = lacking(mode.minSt ?? null, supportOf(String(mode.mount ?? ""), offMount));
+        const foundRanged = short(enchantedSkill(art), rangedStPenalty);
         const skillLevel = foundRanged.level;
         const atDefault = foundRanged.atDefault;
 
@@ -2580,7 +2582,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           quality,
           material,
           resistsBreakage: resists,
-          minStPenalty: lacking(mode.minSt ?? null, String(mode.mount ?? "")),
+          minStPenalty: rangedStPenalty,
           condition,
           twoHanded: Boolean(mode.twoHanded),
           swung: mode.damageBase === "sw",
@@ -2594,6 +2596,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           recoil: mode.recoil ?? 0,
           bulk: mode.bulk ?? 0,
           mount: String(mode.mount ?? ""),
+          // An "M" weapon taken off its mount, which its ST then counts for (p. 270).
+          offMount,
           // Whether the row may spray or suppress (Campaigns p. 409), which a
           // module's `gworld.weaponAttacks` listener may refuse (since API 1.70.0).
           noSprayingFire: false,

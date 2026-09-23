@@ -10,7 +10,9 @@ import {
   scopeBonus,
   silencerModifier,
   supportEffect,
+  supportOf,
 } from "../accessories.js";
+import { minStPenalty } from "../weapon-quality.js";
 import {
   accuracyApplies,
   areaDamageFallsOff,
@@ -42,6 +44,29 @@ describe("bipods and tripods (Campaigns p. 411)", () => {
     // and "cannot move or step on any turn he fires."
     expect(supportEffect({ support: "tripod", minimumSt: 20, prone: false }))
       .toEqual({ minimumSt: null, braced: true, rooted: true });
+  });
+
+  it("reads what holds the weapon up from the mark after its ST (Characters p. 270)", () => {
+    // An "M" weapon is on its mount unless it has been taken off.
+    expect(supportOf("mounted")).toBe("tripod");
+    expect(supportOf("mounted", false)).toBe("tripod");
+    expect(supportOf("mounted", true)).toBe("hands");
+    expect(supportOf("bipod")).toBe("bipod");
+    // A musket rest braces a shot but leaves the ST alone; off-mount means
+    // nothing to a weapon that has no mount.
+    expect(supportOf("rest")).toBe("hands");
+    expect(supportOf("", true)).toBe("hands");
+    expect(supportOf("bipod", true)).toBe("bipod");
+  });
+
+  it("ignores an M weapon's ST on its mount and counts it off the mount", () => {
+    // A 17M mortar at ST 10: nothing on the mount, -7 off it.
+    const penalty = (offMount: boolean) =>
+      minStPenalty(10, supportEffect({ support: supportOf("mounted", offMount), minimumSt: 17, prone: false }).minimumSt);
+    expect(penalty(false)).toBe(0);
+    expect(penalty(true)).toBe(-7);
+    // Lying down behind it doesn't turn an unmounted "M" weapon into a bipod.
+    expect(supportEffect({ support: supportOf("mounted", true), minimumSt: 17, prone: true }).minimumSt).toBe(17);
   });
 
   it("counts the Ready maneuvers each takes", () => {

@@ -947,6 +947,13 @@ function rangedModeField() {
       choices: ["", "rest", "bipod", "mounted"],
     }),
     /**
+     * An "M" weapon taken off its mount (Characters p. 270): its listed ST,
+     * ignored while it sits on the mount, counts again. Taking it off or
+     * putting it back takes three Ready maneuvers. Meaningless for any other
+     * mark.
+     */
+    offMount: new fields.BooleanField({ initial: false }),
+    /**
      * How the projectile finds its way (GURPS Basic Set: Campaigns p. 412).
      * "guided" is flown by the firer, who must Concentrate each turn and keep
      * the target in sight; "homing" steers itself and asks nothing of him once
