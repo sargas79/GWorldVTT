@@ -17,6 +17,7 @@ import {
   woundingModifierAt,
   type AttackQualifiers,
   type HitLocation,
+  type LimbCounts,
 } from "./hit-locations.js";
 import type { DamageType, DiceAdds } from "./types.js";
 
@@ -227,6 +228,11 @@ export interface InjuryInput {
   hitLocation?: HitLocation;
   /** Maximum HP, needed only to cap injury to a crippled limb. */
   maxHp?: number;
+  /**
+   * The target's arms and legs, where it has more than two: each then
+   * cripples on less (Campaigns p. 421). Omitted, a body has two of each.
+   */
+  limbs?: LimbCounts;
   /** Tight-beam burning and similar qualifiers that change targeting rules. */
   qualifiers?: AttackQualifiers;
   /**
@@ -284,6 +290,7 @@ export function computeInjury({
   armorDivisor = 1,
   hitLocation,
   maxHp,
+  limbs,
   qualifiers = {},
   critical,
   tolerance,
@@ -348,7 +355,7 @@ export function computeInjury({
 
   // Injury past what cripples a limb is lost rather than carried to the body.
   if (location && maxHp !== undefined) {
-    const { injury, excessLost, crippled } = applyCrippling(raw, location, maxHp);
+    const { injury, excessLost, crippled } = applyCrippling(raw, location, maxHp, limbs);
     return { ...base, injury, excessLost, crippled };
   }
 

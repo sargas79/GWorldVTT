@@ -163,4 +163,16 @@ describe("reading a character's Magery (Characters pp. 66-67, 242)", () => {
     expect(traitEffects([held("Magic Resistance", 3)]).magicResistance).toBe(3);
     expect(traitEffects([]).magicResistance).toBe(0);
   });
+
+  /** Extra Legs is priced by how many legs there are (p. 54); a limb is crippled more easily with more (p. 421). */
+  it("reads Extra Legs as the legs beyond two", () => {
+    expect(traitEffects([held("Extra Legs (3 Legs)")]).extraLegs).toBe(1);
+    expect(traitEffects([held("Extra Legs (4 Legs)")]).extraLegs).toBe(2);
+    expect(traitEffects([held("Extra Legs (Four Legs)")]).extraLegs).toBe(2);
+    expect(traitEffects([held("Extra Legs (6 Legs)")]).extraLegs).toBe(4);
+    // Seven or more is read as the fewest it can be.
+    expect(traitEffects([held("Extra Legs (7+ Legs)")]).extraLegs).toBe(5);
+    expect(traitEffects([held("Extra Legs (4 Legs) (Cannot Kick, -50%)")]).extraLegs).toBe(2);
+    expect(traitEffects([]).extraLegs).toBe(0);
+  });
 });

@@ -705,7 +705,8 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     (Night Vision, Infravision, Hyperspectral and Telescopic Vision, Acute and
     Protected senses), Sealed, Vacuum Support, Pressure Support, Doesn't
     Breathe, Filter Lungs, Radiation Tolerance, Temperature Tolerance, Extra
-    Arms or Extra Attack. Push `{ effect, label, value? }` to `sources` to say
+    Arms or Extra Attack, and since 1.81.0 `extraLegs` (legs beyond two, read
+    from the Extra Legs kinds, 7+ as seven). Push `{ effect, label, value? }` to `sources` to say
     what granted each one: `effect` is the field's path (`"sealed"`,
     `"protectedSense.vision"`) and `label` the thing it came from. The Traits
     tab lists them under what the character carries, so an effect nobody paid
@@ -1224,7 +1225,15 @@ Two fields a module may read (since 1.62.0):
     before any cap. A blow that cripples is a major wound however little it
     kept (p. 420). The Basic Set's own cap is the least injury that cripples
     the part: the first whole point over HP/2 for a limb, over HP/3 for an
-    extremity, or over the threshold `cripplingDivisor` sets (p. 421). The
+    extremity, or over the threshold `cripplingDivisor` sets (p. 421). Since
+    1.81.0 a body with more than two arms or legs has each cripple over
+    HP/(number of them), and each hand or foot over HP/(1.5 x number of
+    them), counting `traitEffects.extraArms` and `extraLegs` (p. 421); a
+    registered location's `cripplingDivisor` is its own and is not changed.
+    `rules.cripplingThreshold(location, maxHp, limbs?)`,
+    `rules.applyCrippling(injury, location, maxHp, limbs?)` and
+    `rules.computeInjury({ ..., limbs })` take the same `{ arms?, legs? }`,
+    two of each where omitted. The
     result (`gworld.afterDamage`'s `result`) gains
     `uncappedInjury`, the injury before the Basic Set's limb cap and the
     listener's, and `injuryCap`, `{ cap, lost, reason }` where the cap took

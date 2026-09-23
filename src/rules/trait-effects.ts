@@ -82,6 +82,8 @@ export interface TraitEffects {
   extraAttacks: number;
   /** Extra Arms (p. 53): arms beyond the usual two. */
   extraArms: number;
+  /** Extra Legs (p. 54): legs beyond the usual two. */
+  extraLegs: number;
   /** Regeneration (p. 80), as the level bought: 1 slow to 5 extreme, 0 for none. */
   regeneration: number;
   /** Unkillable (p. 95), as its level: 0 for the mortal. */
@@ -252,6 +254,7 @@ export function noTraitEffects(): TraitEffects {
     armSt: 0,
     extraAttacks: 0,
     extraArms: 0,
+    extraLegs: 0,
     regeneration: 0,
     unkillable: 0,
     injuryTolerance: noInjuryTolerance(),
@@ -405,6 +408,14 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   // One more attack a turn per level (p. 53), and more arms to hold things in.
   "extra attack": (levels) => ({ extraAttacks: levels }),
   "extra arms": (levels) => ({ extraArms: levels }),
+  // Extra Legs is bought by how many legs there are (p. 54). Seven or more
+  // is one price, and is read as seven: the fewest it can be.
+  "extra legs (3 legs)": () => ({ extraLegs: 1 }),
+  "extra legs (4 legs)": () => ({ extraLegs: 2 }),
+  "extra legs (four legs)": () => ({ extraLegs: 2 }),
+  "extra legs (5 legs)": () => ({ extraLegs: 3 }),
+  "extra legs (6 legs)": () => ({ extraLegs: 4 }),
+  "extra legs (7+ legs)": () => ({ extraLegs: 5 }),
 
   // Regeneration's levels are its rates -- Slow, Regular, Fast, Very Fast,
   // Extreme -- and Unkillable's are how far past death it goes (pp. 80, 95).
@@ -674,6 +685,7 @@ export function addTraitEffects(total: TraitEffects, applied: Partial<TraitEffec
   total.armSt += applied.armSt ?? 0;
   total.extraAttacks += applied.extraAttacks ?? 0;
   total.extraArms += applied.extraArms ?? 0;
+  total.extraLegs += applied.extraLegs ?? 0;
   // Two Regenerations or two Unkillables do not add: the better one holds.
   total.regeneration = Math.max(total.regeneration, applied.regeneration ?? 0);
   total.unkillable = Math.max(total.unkillable, applied.unkillable ?? 0);
