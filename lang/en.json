@@ -1458,6 +1458,8 @@
       "Readied": "readied",
       "Stowed": "stowed",
       "WholeBody": "whole body",
+      "DropRefused": "Nothing was added: {reason}",
+      "DropRefusedNamed": "{name} could not be added: {reason}",
       "FrontShieldSide": "front / shield side",
       "NoArmor": "no armor",
       "NoShield": "no shield",

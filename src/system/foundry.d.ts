@@ -172,6 +172,12 @@ declare global {
         class ActorSheetV2 extends foundry.applications.api.DocumentSheetV2 {
           readonly actor: any;
           /**
+           * Handles anything dropped on the sheet: resolves the dropped
+           * document, then hands it to the handler for its kind. Verified
+           * against `client/applications/sheets/actor-sheet.mjs`.
+           */
+          _onDrop(event: DragEvent): Promise<void>;
+          /**
            * Handles one dropped Item. The default creates it on the actor;
            * returning a nullish value means nothing was created. Verified
            * against `client/applications/sheets/actor-sheet.mjs`.

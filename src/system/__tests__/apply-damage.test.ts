@@ -114,6 +114,28 @@ describe("resolveDamageAgainst", () => {
     expect(resolveDamageAgainst(mailed(), blow(8, "cr")).penetrating).toBe(6);
   });
 
+  /**
+   * Armour at its best against blows: the higher figure is for crushing only,
+   * and every other kind of damage meets the lower one.
+   */
+  it("uses the higher DR against crushing when the split leaves crushing out", () => {
+    const helmed = () =>
+      actor({
+        armor: [
+          {
+            dr: 4,
+            drSplit: 2,
+            drSplitAppliesTo: ["burn", "cor", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
+            locations: ["skull"],
+          },
+        ],
+      });
+
+    expect(resolveDamageAgainst(helmed(), blow(8, "cr", "skull")).wornDr).toBe(4);
+    expect(resolveDamageAgainst(helmed(), blow(8, "cut", "skull")).wornDr).toBe(2);
+    expect(resolveDamageAgainst(helmed(), blow(8, "pi", "skull")).wornDr).toBe(2);
+  });
+
   it("adds the location's own DR without double-counting worn armour", () => {
     const own = locationDrAgainst("skull", "cr");
     const helmed = actor({ armor: [{ dr: 4, locations: ["skull"] }] });

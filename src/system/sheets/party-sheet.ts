@@ -35,6 +35,7 @@ import {
   type MemberRow,
   type PartySkillRow,
 } from "../party/roster.js";
+import { reportRefusedDrop } from "./drop-errors.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -518,5 +519,10 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static async #onOpenSources(this: GWorldPartySheet) {
     if (!game.user?.isGM) return;
     await new CompendiumSourcesSettings().render({ force: true });
+  }
+
+  /** A drop that fails says why, rather than doing nothing. */
+  override async _onDrop(event: DragEvent): Promise<void> {
+    await reportRefusedDrop(event, () => super._onDrop(event));
   }
 }

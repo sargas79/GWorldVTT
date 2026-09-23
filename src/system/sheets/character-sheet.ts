@@ -284,6 +284,7 @@ import {
   toCard,
   describeModes,
 } from "./character-prompts.js";
+import { reportRefusedDrop } from "./drop-errors.js";
 export { chooseTemplateOptions, pickTemplateItem } from "./character-prompts.js";
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -3728,6 +3729,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   protected itemFrom(target: HTMLElement) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     return id ? this.actor.items.get(id) : null;
+  }
+
+  /** A drop that fails says why, rather than doing nothing. */
+  override async _onDrop(event: DragEvent): Promise<void> {
+    await reportRefusedDrop(event, () => super._onDrop(event));
   }
 }
 
