@@ -121,6 +121,7 @@ Hooks.once("init", () => {
   // The posture on the sheet and the prone icon on the token are one fact
   // written in two places, so changing either changes both.
   registerPostureSync();
+  // So are the sheet's Stunned box and the stunned icon.
   registerStunSync();
 
   // A damage card is posted before anyone has decided who it hits, so the card
