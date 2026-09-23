@@ -104,7 +104,7 @@ Contents:
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
 | `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0). |
-| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. |
+| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0). |
@@ -548,6 +548,13 @@ and the roll continues.
       `fragmentationType`, `fragmentationDivisor` and `blastPlacement`.
     - Since 1.73.0, a ranged row's `noOverpenetration` (false) and `firstHit`
       (null): see "Wounding" under "Inside the system's own procedures".
+    - Since 1.105.0, a melee row carries `pick`: true for a pick, whose blow
+      may stick in a foe it penetrates (Campaigns p. 405; see *A weapon stuck
+      in a foe*). It starts from the mode's own `pick`, and a listener may set
+      it on any melee row, a derived mode's included, to mark a module's own
+      weapons; a ranged row never has it. The row also carries `stuck`, the
+      weapon's state in a foe or null, which the system sets after listeners
+      have run.
     - Since 1.30.0, also `skillName` and `readiesAfterAttack` (whether attacking
       leaves the weapon unready). The context's `skillLevel(name)` reads the
       actor's level in a skill as this preparation worked it out, or null; the
@@ -827,6 +834,36 @@ and the roll continues.
     a mechanical problem unless the listener says otherwise. The roll is
     tagged `clearMalfunction`; a success clears the flag, a failure leaves
     it, and a critical failure makes it `mechanical` or `destroyed`.
+  - **A weapon stuck in a foe** (since 1.105.0; Campaigns p. 405): a melee
+    mode's `pick` (a boolean on the stored mode, and on the row) marks a
+    swing/impaling weapon that may get stuck. The GDF reader sets it where a
+    mode's own note says it "may get stuck"; the Basic Set's pick, warhammer,
+    halberd (swing/impaling) and scythe (swing/impaling) carry it. The damage
+    card carries `pick` from the row (and `roll.damage` takes `pick: true`),
+    and when a pick's blow is applied and it penetrated DR and did injury,
+    the weapon is stuck: kept as the item's `flags.gworld.stuck`, `{ uuid,
+    name, forGood, held, modeIndex }` -- the victim, whether a critical
+    failure stuck it for good, whether the wielder still holds it, and the
+    mode that struck. While it is set every row of the weapon has `stuck`,
+    and the weapon neither attacks, parries nor readies; the sheet shows it
+    with **Pull free (ST)** (a Ready maneuver and a ST roll tagged `ST` and
+    `stuckWeapon`: a success frees it, unready where the row
+    `readiesAfterAttack`; a failure leaves it; a critical failure makes it
+    `forGood`) and **Let go** (free: `held` false, the weapon stays in the
+    foe), and a weapon let go of shows **Retrieve**, which clears the flag.
+    Letting go before moving isn't enforced. Switched by the `picks` rule
+    (Combat, on by default). `items.stuck(item)`, `items.setStuck(item, {
+    uuid?, name?, forGood?, held?, modeIndex? } | null)`,
+    `items.freeStuck(actor, item)` (resolves to `freed`, `stuck`,
+    `stuckForGood` or null) and `items.letGoOfStuck(actor, item)` read, set
+    and end it.
+  - `gworld.weaponStuck` (since 1.105.0): after a melee blow from an item is
+    applied, before the weapon is left stuck, with `{ attacker, item, mode,
+    target, result, pick, stuck }`. `result` is `{ injury, penetrating,
+    hitLocation }`; `stuck` is the book's answer (a pick's blow that
+    penetrated and did injury). Set `stuck` to make a blow stick that
+    wouldn't, or to keep one from sticking. Not called while the `picks`
+    rule is off.
   - `gworld.equipmentFailure` (since 1.10.0): before a thing's equipment
     failure roll (Campaigns p. 485), with `{ actor, item, target, modifiers }`.
     Push lines to `modifiers`; the card shows them.
@@ -1239,13 +1276,28 @@ Two fields a module may read (since 1.62.0):
     go into the two targets and onto the card. Diplomacy's second reaction
     roll still goes through `gworld.reactionModifiers`.
 - **Resistance rolls** (since 1.49.0): the roll an affliction forces
-  (Characters p. 36; the afflictions of Campaigns pp. 428-429) is tagged
+  (Characters p. 35; the afflictions of Campaigns pp. 428-429) is tagged
   `resist` and `affliction`, and carries `attack`:
   `{ attacker, item, mode, distanceYards, halfDamageRange, dr, drCounted }`.
   A cone or area attack makes the same roll, so the same tags and the same
   `attack` reach it. `dr` is what the victim's worn armour was worth at the
-  location struck: an affliction is not damage and none of it is subtracted,
-  but a module with a rule that reads armour can.
+  location struck: an affliction is not damage and none of it is subtracted.
+- **DR on an affliction's resistance roll** (since 1.105.0): the Basic Set
+  gives the victim a bonus equal to his DR (Characters p. 35), so the
+  attribute roll gets a line keyed `afflictionDr`: worn armour, the victim's
+  own DR, a Force Field and the location's own at the spot, after
+  `gworld.armorDr` listeners and Hardened, divided by the attack's armour
+  divisor (a divisor below 1 multiplies it, as the stun gun's (0.5) does).
+  There is no line where DR does nothing against the attack: a row with
+  `ignoresDr` (a cosmic divisor, a Malediction) or a follow-up line. The
+  book lists five more modifiers that take the bonus away -- Blood Agent,
+  Contact Agent, Cosmic, Respiratory Agent and Sense-Based -- which no row
+  carries, so a module whose attack has one finds the `afflictionDr` line
+  in `gworld.successRollModifiers` (tags `resist`, `affliction`) and removes
+  it. `attack.drBonus` is the bonus given, and `attack.drCounted` now says
+  whether there was one. The rolls to recover from the effect never get it
+  ("DR has no effect on this roll"). An affliction resisted with a Fright
+  Check gets no line; `attack.drBonus` is there for a module that wants one.
 - **An affliction's effect** (since 1.49.0): `gworld.afflictionEffect` fires
   when a resistance roll fails, with
   `{ actor, attacker, item, mode, label, margin, effects }`. Push a

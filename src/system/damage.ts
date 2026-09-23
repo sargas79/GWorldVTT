@@ -396,6 +396,44 @@ export function resolveDamageAgainst(actor: any, incoming: IncomingDamage): Appl
   return resolvePlaced(actor, damage, { hp, fp, traits, internal, naturalDr, lines, layers, largeArea });
 }
 
+/**
+ * The DR an attack meets at a spot without doing any damage (since API
+ * 1.105.0): what an affliction's resistance roll adds (Characters p. 35).
+ *
+ * It is read the way a blow's is -- worn armour, the target's own DR, a Force
+ * Field and the location's own, after the modules' `gworld.armorDr` listeners
+ * -- and Hardened steps the attack's divisor down as it would a blow's. The
+ * figure comes back undivided, with the divisor and whether the attack ignores
+ * DR as Hardened left them, for the caller to apply; an attack that ignores DR
+ * meets none.
+ */
+export function drMetByAttack(actor: any, attack: {
+  hitLocation: HitLocation;
+  damageType: DamageType;
+  armorDivisor: number;
+  ignoresDr?: boolean;
+  itemUuid?: string;
+  mode?: { index: number; ranged: boolean; derived?: string } | null;
+}): { dr: number; armorDivisor: number; ignoresDr: boolean } {
+  const damage: IncomingDamage = {
+    basicDamage: 0,
+    type: attack.damageType,
+    armorDivisor: attack.armorDivisor > 0 ? attack.armorDivisor : 1,
+    hitLocation: attack.hitLocation,
+    ...(attack.ignoresDr ? { ignoresDr: true } : {}),
+    ...(attack.itemUuid ? { itemUuid: attack.itemUuid } : {}),
+    ...(attack.mode ? { mode: attack.mode } : {}),
+  };
+  const { naturalDr, layers } = armourAt(actor, damage, attack.hitLocation, traitsOf(actor), wornArmor(actor), null);
+  const hardened = hardenedAgainst(damage.armorDivisor, attack.ignoresDr === true, layers.hardened);
+  if (hardened.ignoresDr) return { dr: 0, armorDivisor: 1, ignoresDr: true };
+  return {
+    dr: layers.totalDr + naturalDr + layers.fieldDr + locationDrAgainst(attack.hitLocation, attack.damageType),
+    armorDivisor: hardened.divisor,
+    ignoresDr: false,
+  };
+}
+
 /** One location's armour against a blow, after the modules' `gworld.armorDr` listeners. */
 function armourAt(
   actor: any,

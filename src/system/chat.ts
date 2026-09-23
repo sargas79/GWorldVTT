@@ -75,6 +75,7 @@ import { defendWithoutSight } from "../rules/visibility.js";
 import { occupantMayDodge } from "../rules/scale.js";
 import { afflictionsOf, type Affliction } from "../rules/afflictions.js";
 import type { DamageType } from "../rules/types.js";
+import { afterPickBlow } from "./picks.js";
 
 const APPLIED_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-applied.hbs`;
 
@@ -117,6 +118,8 @@ interface DamageFlag {
   surge?: boolean;
   /** A tight-beam burn (Campaigns p. 399; since API 1.97.0). */
   tightBeam?: boolean;
+  /** A pick's blow, which may stick in its victim (Campaigns p. 405; since API 1.105.0). */
+  pick?: boolean;
   /** The item the damage was rolled from. */
   itemUuid?: string;
   /** Where the blow came from (since 1.43.0). */
@@ -601,6 +604,16 @@ async function applyFromCard(options: {
       }
       // A bare-handed blow into hard DR hurts the hand that struck it (p. 379).
       if (flag.strikingPart && flag.strikerUuid) await hurtStriker(flag, actor, result, incoming.basicDamage);
+      // A pick's blow that got through may leave it in the victim (p. 405).
+      if (flag.itemUuid && !flag.mode?.ranged) {
+        await afterPickBlow({
+          item: fromUuidSync(flag.itemUuid) ?? null,
+          mode: flag.mode ?? null,
+          target: actor,
+          pick: flag.pick === true,
+          result: { injury: result.injury, penetrating: result.penetrating, hitLocation: result.hitLocation },
+        });
+      }
     } else refused.push(String(actor.name ?? ""));
   }
 

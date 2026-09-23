@@ -186,7 +186,8 @@ export interface RollModifier {
    * says in the user's language (since 1.63.0): `speedRange`, `bulk`,
    * `accuracy`, `aim`, `braced`, `aimTarget`; since 1.86.0 `darkness`
    * and `laser`; since 1.87.0 `movingPlatform`; since 1.91.0 `size` on a
-   * ranged attack, and `zen`, a zen skill's line (with `zen`, the skill's id).
+   * ranged attack, and `zen`, a zen skill's line (with `zen`, the skill's id);
+   * since 1.105.0 `afflictionDr`, the DR bonus to an affliction's resistance roll.
    * Blank or absent on lines nobody has named.
    */
   key?: string;
@@ -1150,6 +1151,12 @@ export interface DamageRollOptions {
    * and a tenth of its damage toward setting clothes alight. Travels on the card.
    */
   tightBeam?: boolean;
+  /**
+   * A pick's blow (Campaigns p. 405; since API 1.105.0): applied, one that
+   * penetrates DR and does damage leaves the weapon stuck in its victim.
+   * Travels on the card.
+   */
+  pick?: boolean;
   /** The item the blow comes from, for a module's hooks; its UUID travels on the card. */
   item?: any;
   /** Which of the item's modes it was rolled from. */
@@ -1331,6 +1338,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(options.kineticOnly ? { kineticOnly: true } : {}),
           ...(options.surge ? { surge: true } : {}),
           ...(options.tightBeam && damageType === "burn" ? { tightBeam: true } : {}),
+          ...(options.pick ? { pick: true } : {}),
           ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
           ...(mode ? { mode } : {}),
           ...(options.source ? { source: String(options.source) } : {}),
@@ -4077,6 +4085,7 @@ export async function handleDamageAction(
     ...(target.dataset.kineticOnly === "1" ? { kineticOnly: true } : {}),
     ...(target.dataset.surge === "1" ? { surge: true } : {}),
     ...(target.dataset.tightBeam === "1" ? { tightBeam: true } : {}),
+    ...(target.dataset.pick === "1" ? { pick: true } : {}),
     ...(item ? { item } : {}),
     ...(mode ? { mode } : {}),
     ...(strikingPart(target.dataset.naturalKey ?? "") ? { strikingPart: strikingPart(target.dataset.naturalKey ?? "") } : {}),

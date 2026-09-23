@@ -93,6 +93,7 @@ import {
 } from "../combat-extensions.js";
 import { shotsEntryFor } from "../shots-entry.js";
 import { malfunctionOf } from "../malfunctions.js";
+import { stuckWeaponOf } from "../picks.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
   DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleCarriedWeight, moduleTraitEffects, moduleTraitsInPlay, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type CarriedWeightLine, type TraitEffectSource,
@@ -195,7 +196,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
   unbalanced: false, isFencing: false, unarmed: false, stBased: false, damageBase: "", damageModifier: 0,
   unarmedBonusSkill: "", weaponMasterPerDie: 0, explosive: false, fragmentation: "", fragmentationType: "", fragmentationDivisor: 1,
   fragmentationLingerEvery: 0, fragmentationLingerFor: 0, blastPlacement: "", largeArea: false, affliction: false, afflictionAttribute: "",
-  afflictionModifier: 0, feint: true, ignoresDr: false,
+  afflictionModifier: 0, feint: true, ignoresDr: false, pick: false, stuck: null,
   incendiary: false, radiation: false, doubleKnockback: false, noKnockback: false, kineticOnly: false, surge: false,
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
@@ -400,6 +401,17 @@ export interface DerivedAttack {
   unbalanced: boolean;
   /** A fencing weapon, marked "F", which defends by its own rules. */
   isFencing: boolean;
+  /**
+   * A pick (Campaigns p. 405; since API 1.105.0): a blow that penetrates DR
+   * and does damage may leave it stuck in the foe. Melee rows only.
+   */
+  pick?: boolean;
+  /**
+   * The weapon stuck in a foe, where it is (Campaigns p. 405; since API
+   * 1.105.0): it can't attack, parry or be readied until it is freed, let go
+   * of, or retrieved. Null for every weapon in hand.
+   */
+  stuck?: { uuid: string; name: string; forGood: boolean; held: boolean; modeIndex: number } | null;
   /**
    * The weapon's weight, which decides whether a parry can meet it and
    * whether the parrying weapon breaks (Campaigns p. 376). A punch weighs a
@@ -2443,6 +2455,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             !wrecked,
           unbalanced: Boolean(mode.unbalanced),
           isFencing: Boolean(mode.isFencing),
+          pick: Boolean(mode.pick),
           // Which critical miss table a fumble is read on is decided by the
           // skill: a Karate kick fumbles differently from a dropped axe.
           unarmed: isUnarmedSkill(rolledSkill),
@@ -2929,6 +2942,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       row.reloadable = false;
       row.outOfAction = stored.outOfAction ?? null;
     }
+    // A weapon stuck in a foe (Campaigns p. 405) can't be used whichever of
+    // its rows is picked up, a module's included (since API 1.105.0).
+    for (const row of [...melee, ...ranged]) {
+      const owned = row.itemId ? ((this.parent as any)?.items?.get?.(row.itemId) ?? null) : null;
+      row.stuck = owned ? stuckWeaponOf(owned) : null;
+    }
     // A punch, a bite or a module's row is no Weapon Master's weapon, but
     // Trained By A Master halves its Rapid Strike by its skill (p. 93).
     for (const row of melee) {
@@ -3006,7 +3025,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // An unready weapon is not in a position to parry either. A module may
     // leave out another weapon, or let an unbalanced one back in.
     const bestParry = bestParryOption(
-      parryWeaponRows(this.parent, melee.filter((atk) => atk.usable && !atk.unready), Boolean(this.conditions.attackedThisTurn)),
+      parryWeaponRows(this.parent, melee.filter((atk) => atk.usable && !atk.unready && !atk.stuck), Boolean(this.conditions.attackedThisTurn)),
     );
     const parryResult =
       parryAvailable && bestParry && bestParry.skillLevel !== null
@@ -3023,7 +3042,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // The best bare-handed parry, worked out the same way, for a module that
     // offers it beside a weapon's (API 1.43.0).
     const bestBareParry = bestParryOption(
-      parryWeaponRows(this.parent, melee.filter((atk) => atk.usable && !atk.unready && atk.natural), Boolean(this.conditions.attackedThisTurn)),
+      parryWeaponRows(this.parent, melee.filter((atk) => atk.usable && !atk.unready && !atk.stuck && atk.natural), Boolean(this.conditions.attackedThisTurn)),
     );
     const bareParryResult =
       parryAvailable && bestBareParry && bestBareParry.skillLevel !== null

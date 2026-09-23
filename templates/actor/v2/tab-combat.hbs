@@ -134,7 +134,23 @@
             {{/if}}
 
             <div class="v2-preview-actions">
-              {{#if entry.atk.unready}}
+              {{#if entry.atk.stuck}}
+                {{!-- Stuck in a foe (Campaigns p. 405): pull it free with a Ready and a ST roll, or let go of it. --}}
+                <span class="v2-bad">{{#if entry.atk.stuck.held}}{{#if entry.atk.stuck.forGood}}{{localize "GWORLD.Pick.StuckForGood" foe=entry.atk.stuck.name}}{{else}}{{localize "GWORLD.Pick.StuckIn" foe=entry.atk.stuck.name}}{{/if}}{{else}}{{localize "GWORLD.Pick.LeftIn" foe=entry.atk.stuck.name}}{{/if}}</span>
+                {{#if @root.editable}}
+                  {{#if entry.atk.stuck.held}}
+                    {{#unless entry.atk.stuck.forGood}}
+                      <button type="button" class="v2-button v2-button-gold" data-action="freeStuckWeapon"
+                              data-tooltip="{{localize 'GWORLD.Pick.FreeHint'}}">{{localize "GWORLD.Pick.Free"}}</button>
+                    {{/unless}}
+                    <button type="button" class="v2-button" data-action="letGoOfStuckWeapon"
+                            data-tooltip="{{localize 'GWORLD.Pick.LetGoButtonHint'}}">{{localize "GWORLD.Pick.LetGoButton"}}</button>
+                  {{else}}
+                    <button type="button" class="v2-button" data-action="retrieveStuckWeapon"
+                            data-tooltip="{{localize 'GWORLD.Pick.RetrieveHint'}}">{{localize "GWORLD.Pick.Retrieve"}}</button>
+                  {{/if}}
+                {{/if}}
+              {{else if entry.atk.unready}}
                 {{#if @root.editable}}
                   <button type="button" class="v2-button v2-button-gold" data-action="readyWeapon"
                           data-tooltip="{{localize 'GWORLD.Ready.Hint'}}">{{localize "GWORLD.Ready.Action"}}</button>

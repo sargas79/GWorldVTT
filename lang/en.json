@@ -227,6 +227,7 @@
     "Affliction": {
       "Short": "aff",
       "Label": "{label} — resist with {resist}",
+      "DrBonus": "DR",
       "NoTarget": "Target the people it is being used on first.",
       "Resisted": "resisted",
       "Struck": "{name}: {affliction}",
@@ -721,6 +722,10 @@
         "trampling": {
           "Name": "Trampling",
           "Hint": "Somebody much larger walks over you: a melee attack a dodge is the only answer to."
+        },
+        "picks": {
+          "Name": "Picks",
+          "Hint": "A pick's blow that penetrates DR and does damage sticks in the foe: let go of it, or take a Ready maneuver and roll ST to pull it free."
         },
         "swarms": {
           "Name": "Swarms",
@@ -1496,6 +1501,8 @@
       "DefaultModifier": "Modifier",
       "EditImage": "Change item image",
       "UnreadyAfterAttack": "Unready after attack",
+      "Pick": "Pick",
+      "PickHint": "A swing/impaling blow that may get stuck in a foe it penetrates (Campaigns p. 405).",
       "PerLevel": "Per level",
       "PerLevelHint": "Damage per level of the trait: 1d at three levels rolls 3d (Characters p. 61).",
       "Malediction": "Malediction",
@@ -3614,6 +3621,29 @@
         "fired": "{name} fires; the aim is spent.",
         "other": "{name} loses the aim: {reason}.",
         "plain": "{name} loses the aim."
+      }
+    },
+    "Pick": {
+      "Title": "Stuck weapon: {name}",
+      "Short": "stuck",
+      "Stuck": "{name} is stuck in {foe}. Let go of it (a free action), or take a Ready maneuver and roll ST to pull it free.",
+      "StuckIn": "Stuck in {foe}: it can't attack, parry or be readied, and moving means letting go.",
+      "LeftIn": "Left in {foe} until somebody retrieves it.",
+      "StuckForGood": "Stuck in {foe} for good: let go of it, and retrieve it from the fallen foe after the battle.",
+      "Free": "Pull free (ST)",
+      "FreeHint": "Take a Ready maneuver and roll ST to pull the weapon free.",
+      "FreeLabel": "Pulling {name} free of {foe}",
+      "LetGoButton": "Let go",
+      "LetGoButtonHint": "Let go of the weapon, a free action. It stays in the foe.",
+      "LetGo": "{name} is let go of, and stays in {foe}.",
+      "Retrieve": "Retrieve",
+      "RetrieveHint": "Take the weapon back out of the foe it was left in, once the fight allows.",
+      "ForGoodHint": "{name} is stuck for good: let go of it, and retrieve it from the fallen foe after the battle.",
+      "LetGoHint": "{name} was let go of; retrieve it from the foe first.",
+      "Result": {
+        "freed": "{name} comes free of {foe}.",
+        "stuck": "{name} is still stuck in {foe}.",
+        "stuckForGood": "{name} is stuck in {foe} for good, to be retrieved from the fallen foe after the battle."
       }
     },
     "Ready": {

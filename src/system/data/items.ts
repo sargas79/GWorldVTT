@@ -685,6 +685,12 @@ function meleeModeField() {
      */
     isFencing: new fields.BooleanField({ initial: false }),
     /**
+     * A pick (GURPS Basic Set: Campaigns p. 405): a swing/impaling blow that
+     * may get stuck in a foe it penetrates. The table marks these with a note
+     * rather than a column, so it is its own fact (since API 1.105.0).
+     */
+    pick: new fields.BooleanField({ initial: false }),
+    /**
      * An explosive attack, marked "ex" after its damage type (GURPS Basic Set:
      * Campaigns p. 414). It does its listed damage to whoever it struck and
      * collateral damage to everyone within twice its dice in yards.

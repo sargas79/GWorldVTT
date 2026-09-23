@@ -1142,6 +1142,9 @@
               <label class="icheck"><input type="checkbox" name="system.meleeModes.{{i}}.isFlail"
                      {{#if m.isFlail}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.Flail"}}</label>
+              <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.PickHint'}}"><input type="checkbox" name="system.meleeModes.{{i}}.pick"
+                     {{#if m.pick}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                {{localize "GWORLD.Item.Pick"}}</label>
               <label class="icheck"><input type="checkbox" name="system.meleeModes.{{i}}.unreadyAfterAttack"
                      {{#if m.unreadyAfterAttack}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.UnreadyAfterAttack"}}</label>

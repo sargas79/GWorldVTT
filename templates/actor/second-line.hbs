@@ -9,6 +9,7 @@
         data-resist-modifier="{{second.afflictionModifier}}"
         data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}"
         data-damage-type="{{second.damageType}}"
+        data-armor-divisor="{{second.armorDivisor}}" data-follow-up="{{#if second.followUp}}1{{/if}}"
         data-half-damage-range="{{atk.halfDamageRange}}"
         data-area-attack="{{#if atk.areaAttack}}1{{/if}}"
         data-affliction-label="{{atk.name}} {{#if second.label}}{{second.label}}{{else if second.followUp}}{{localize 'GWORLD.Attack.FollowUp'}}{{else}}{{localize 'GWORLD.Attack.Linked'}}{{/if}}"

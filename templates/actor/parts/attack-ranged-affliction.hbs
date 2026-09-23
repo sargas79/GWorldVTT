@@ -7,4 +7,6 @@ data-area-attack="{{#if atk.areaAttack}}1{{/if}}"
 {{!-- What forced the roll, for the modules that read it. --}}
 data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}" data-mode-ranged="1" data-derived-mode="{{atk.derivedMode}}"
 data-damage-type="{{atk.damageType}}"
+{{!-- What the victim's DR is worth to the roll: the divisor divides it, and an attack that ignores DR leaves none (Characters p. 35). --}}
+data-armor-divisor="{{atk.armorDivisor}}" data-ignores-dr="{{#if atk.ignoresDr}}1{{/if}}"
 data-affliction-label="{{atk.name}} {{atk.mode}}"
