@@ -53,7 +53,9 @@ import { undoKnockdown } from "./knockdown.js";
 import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from "./damage-undo.js";
 import { carriedAmmunitionFor, loadAmmunition } from "./ammunition.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
-import { irradiate, shock, shootAtVehicle } from "./hazards.js";
+import {
+  fragileCatchesFire, fragileExplodes, fragileKindsOf, irradiate, rollBrittleLimb, shock, shootAtVehicle,
+} from "./hazards.js";
 import { detonateCharge } from "./demolition.js";
 import { equipmentUseLines } from "./tech-level.js";
 import { addArea, listAreas, removeArea, tokensInArea } from "./modifier-areas.js";
@@ -87,7 +89,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.92.0";
+export const API_VERSION = "1.93.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -541,9 +543,12 @@ async function rollHitLocation(options: { actor?: any; damageType?: string | nul
 /**
  * The hazards namespace (since 1.63.0): an electrical shock and a dose of
  * radiation, as the GM tool runs them, from 1.74.0 a demolition charge, and
- * from 1.79.0 a shot at a vehicle.
+ * from 1.79.0 a shot at a vehicle, and from 1.93.0 what Fragile does.
  */
-const hazardsApi = Object.freeze({ shock, irradiate, detonate: detonateCharge, shootAtVehicle });
+const hazardsApi = Object.freeze({
+  shock, irradiate, detonate: detonateCharge, shootAtVehicle,
+  fragileKinds: fragileKindsOf, fragileCatchesFire, fragileExplodes, brittleLimb: rollBrittleLimb,
+});
 
 /**
  * The areas namespace (since 1.63.0): smoke, fog, a field that blinds a sense.

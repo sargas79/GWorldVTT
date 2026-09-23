@@ -1605,6 +1605,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const heldTraits = traitsInPlay.inPlay.map((item: any) => ({
       name: String(item.name ?? ""),
       levels: Number(item.system?.levels ?? 0),
+      // The kind of a trait that comes in kinds by specialty: Fragile's.
+      specialty: String(item.system?.specialty ?? ""),
       // Injury Tolerance keeps its kind in its modifiers, and Temperature
       // Tolerance which side of the thermometer it was bought for.
       modifiers: ((item.system?.modifiers ?? []) as Array<{ name?: string }>).map((m) =>
@@ -1626,7 +1628,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // disadvantage the character suffers again (since 1.63.0).
     for (const restored of traitsInPlay.restored) {
       heldTraits.push({
-        name: restored.name, levels: Number(restored.levels ?? 0) || 0, modifiers: [], reactionModifier: 0,
+        name: restored.name, levels: Number(restored.levels ?? 0) || 0, specialty: "", modifiers: [], reactionModifier: 0,
         talentSkills: [], masteredWeapons: [], power: "", powerTalent: false, maxLevels: 0,
       });
     }

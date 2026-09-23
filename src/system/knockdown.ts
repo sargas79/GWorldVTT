@@ -21,6 +21,9 @@ import { resolveSuccess } from "../rules/success.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { PROCEDURE_HOOKS, recoveryHold, successRollModifiers, type KnockdownBlow } from "./procedure-extensions.js";
 import { callCombatHook } from "./combat-extensions.js";
+import { traitsOf } from "./damage.js";
+import { fragileExplodes } from "./hazards.js";
+import { explodesOnMajorWound } from "../rules/fragile.js";
 
 const KNOCKDOWN_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/knockdown.hbs`;
 
@@ -99,6 +102,13 @@ export async function rollKnockdown(options: {
     content,
     rolls: [roll],
   });
+
+  // Explosive: "On any critical failure on the HT roll for a major wound, you
+  // explode!" (Characters p. 137). A card from before 1.73.0 does not say
+  // whether the blow was a major wound; most knockdown rolls come from one.
+  if (blow?.majorWound !== false && explodesOnMajorWound(traitsOf(actor).fragile ?? [], outcome)) {
+    await fragileExplodes({ actor, cause: game.i18n.localize("GWORLD.Hazard.FragileExplosiveWound") });
+  }
 
   return result;
 }

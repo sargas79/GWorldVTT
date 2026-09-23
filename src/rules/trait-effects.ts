@@ -22,6 +22,7 @@ import { injuryToleranceFrom, noInjuryTolerance, type InjuryTolerance } from "./
 import { radiationToleranceFrom } from "./radiation.js";
 import { isTalent } from "./talents.js";
 import { isSocialTrait } from "./social.js";
+import { fragileKindsIn, unionOfFragile, type FragileKind } from "./fragile.js";
 
 /** What a character's traits do to the rolls this system makes. */
 export interface TraitEffects {
@@ -163,6 +164,11 @@ export interface TraitEffects {
    */
   temperatureTolerance: { coldF: number; heatF: number };
   /**
+   * The kinds of Fragile (pp. 136-137): Brittle, Combustible, Explosive,
+   * Flammable, Unnatural. Empty for a body that is none of them.
+   */
+  fragile: FragileKind[];
+  /**
    * Sealed (p. 82): "encased in a gas- and liquid-impermeable layer", so
    * waterproof and immune to anything corrosive or toxic that has to touch
    * skin. It is not an air supply and not a pressure suit on its own.
@@ -279,6 +285,7 @@ export function noTraitEffects(): TraitEffects {
     lame: null,
     oneArm: false,
     temperatureTolerance: { coldF: 0, heatF: 0 },
+    fragile: [],
     sealed: false,
     vacuumSupport: false,
     pressureSupport: 0,
@@ -307,6 +314,8 @@ export interface HeldTrait {
    * module reads; Injury Tolerance's kind is one that does.
    */
   modifiers?: readonly string[];
+  /** The specialty the trait was taken with, where it needs one: Fragile's kind. */
+  specialty?: string;
 }
 
 type EffectOf = (levels: number) => Partial<TraitEffects>;
@@ -534,6 +543,8 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
  * how the sheet says which side; without one the ten is split five and five.
  */
 const TEMPERATURE_TOLERANCE = /^temperature tolerance\b/;
+/** Fragile, of any kind (pp. 136-137). */
+const FRAGILE = /^fragile\b/;
 const DEGREES_PER_LEVEL = 10;
 
 function temperatureTolerance(trait: HeldTrait): { coldF: number; heatF: number } {
@@ -600,6 +611,7 @@ export function isReadTrait(name: string, talentSkills: readonly string[] = []):
   return (
     key in TRAIT_EFFECTS ||
     key === RADIATION_TOLERANCE ||
+    FRAGILE.test(key) ||
     INJURY_TOLERANCE.test(key) ||
     TEMPERATURE_TOLERANCE.test(key) ||
     isTalent(key, talentSkills) ||
@@ -639,6 +651,14 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
         total.radiationTolerance,
         radiationToleranceFrom([{ name: trait.name, levels: trait.levels ?? 0 }]),
       );
+      continue;
+    }
+    if (FRAGILE.test(key)) {
+      // The kind is in the name -- "Fragile (Combustible)" -- or, for the
+      // plain trait, its specialty or modifiers (p. 136).
+      addTraitEffects(total, {
+        fragile: fragileKindsIn([trait.name, trait.specialty ?? "", ...(trait.modifiers ?? [])]),
+      });
       continue;
     }
     if (TEMPERATURE_TOLERANCE.test(key)) {
@@ -727,6 +747,8 @@ export function addTraitEffects(total: TraitEffects, applied: Partial<TraitEffec
   total.infravision ||= applied.infravision ?? false;
   total.hyperspectralVision ||= applied.hyperspectralVision ?? false;
   total.telescopicVision += applied.telescopicVision ?? 0;
+  // Two kinds of Fragile are both had: Explosive and Flammable "often occur together".
+  total.fragile = unionOfFragile(total.fragile, applied.fragile ?? []);
   total.sealed ||= applied.sealed ?? false;
   total.vacuumSupport ||= applied.vacuumSupport ?? false;
   total.doesntBreathe ||= applied.doesntBreathe ?? false;

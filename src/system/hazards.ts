@@ -13,7 +13,7 @@ import { holdBreathSeconds, type Exertion } from "../rules/suffocation.js";
 import { SYSTEM_ID } from "./constants.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { conditionLabel, setCondition, syncHealthConditions } from "./conditions.js";
-import { resolveDamageAgainst, type IncomingDamage } from "./damage.js";
+import { resolveDamageAgainst, traitsOf, type IncomingDamage } from "./damage.js";
 import { applyFatigue } from "./fatigue.js";
 import { loseAim } from "./aim.js";
 import { collisionDamage, collisionVelocity, overrunDamage, type CollisionAngle } from "../rules/collisions.js";
@@ -36,7 +36,11 @@ import { normalizeSkillName } from "../rules/skills.js";
 import { dozingOff, sleepRecovery, stayingUpFatigue, wakingDayHours } from "../rules/sleep.js";
 import { resolveSuccess } from "../rules/success.js";
 import type { DamageType } from "../rules/types.js";
-import { activeMove, controlRoll, vehicleMoves } from "../rules/vehicles.js";
+import { activeMove, controlRoll, fragilityCodes, vehicleMoves } from "../rules/vehicles.js";
+import {
+  brittleLimb, explodesOnMajorWound, fragileExplosion, fragileFromVehicleCodes, fragileIgnition,
+  FRAGILE_BURNING, FRAGILE_ROLLING_SECONDS, type FragileKind,
+} from "../rules/fragile.js";
 import {
   crippleThreshold, hitsAPerson, locationsOf, lossOfControl, mediumOf, occupantDamage,
   occupantHitTarget, OCCUPANT_RISK_DAMAGE, passesThrough, vehicleDrAt, vehicleHitLocation,
@@ -531,6 +535,8 @@ export async function catchFire(options: { actor: any; basicBurningDamage: numbe
   // "Remember to divide damage from tight-beam burning attacks by 10".
   const basic = options.tightBeam ? options.basicBurningDamage / 10 : options.basicBurningDamage;
   const burning = catchingFire(basic);
+  // On fire is on fire, whatever caught (p. 433).
+  if (burning) await setCondition(actor, "burning", true);
   await post(actor, {
     kind: H("Fire"),
     detail: F("BlowOfBurning", { damage: options.basicBurningDamage }),
@@ -542,6 +548,180 @@ export async function catchFire(options: { actor: any; basicBurningDamage: numbe
       : [H("NotAlight")],
     bad: burning !== null,
   });
+}
+
+// ── Fragile (Characters pp. 136-137) ────────────────────────────────────
+
+/**
+ * The kinds of Fragile a thing has: a character's from their traits, a
+ * vehicle's -- the actor or the Gear-tab item -- from the codes beside its HT
+ * (Campaigns p. 463).
+ */
+export function fragileKindsOf(subject: any): FragileKind[] {
+  const vehicle = subject?.system?.vehicle;
+  if (vehicle) return fragileFromVehicleCodes(fragilityCodes(vehicle.fragility));
+  return traitsOf(subject).fragile ?? [];
+}
+
+/** The lines a body set alight gets: what it costs a second, and how it goes out. */
+function alightLines(): string[] {
+  return [
+    F("FragileBurning", { formula: formatDiceAdds(FRAGILE_BURNING) }),
+    F("FragilePutOut", { seconds: FRAGILE_ROLLING_SECONDS }),
+  ];
+}
+
+/**
+ * A Combustible or Flammable body caught by a blow (p. 136): alight outright,
+ * or a HT roll at the modifier `fragileIgnition` gave to avoid it.
+ */
+export async function fragileCatchesFire(options: { actor: any; automatic: boolean; modifier: number }): Promise<void> {
+  const { actor } = options;
+  if (!mayChange(actor)) return;
+  if (options.automatic) {
+    await setCondition(actor, "burning", true);
+    await post(actor, { kind: H("Fragile"), detail: H("FragileAlight"), lines: alightLines(), bad: true });
+    return;
+  }
+  const target = healthRollScore(actor) + options.modifier;
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+  if (!outcome.success) await setCondition(actor, "burning", true);
+  await post(actor, {
+    kind: H("Fragile"),
+    detail: F("FragileIgnitionRoll", { modifier: options.modifier >= 0 ? `+${options.modifier}` : String(options.modifier) }),
+    target,
+    dice: dieResults(roll),
+    roll: roll.total,
+    lines: outcome.success ? [H("FragileNotAlight")] : [H("FragileAlight"), ...alightLines()],
+    good: outcome.success,
+    bad: !outcome.success,
+    rolls: [roll],
+  });
+}
+
+/**
+ * An Explosive body going up (p. 137): "a 6d×(HP/10) crushing explosion. The
+ * blast instantly reduces you to -10×HP, regardless of the damage it
+ * inflicts." The blast is for whoever stands near to take; the body is gone.
+ */
+export async function fragileExplodes(options: { actor: any; cause: string }): Promise<void> {
+  const { actor } = options;
+  if (!mayChange(actor)) return;
+  const vehicle = actor.system?.vehicle;
+  const hitPoints = vehicle ? Number(vehicle.stHp) || 0 : Number(actor.system?.hp?.max) || 0;
+  const blast = fragileExplosion(hitPoints);
+  const multiplier = Math.round(blast.multiplier * 10) / 10;
+  if (actor.documentName === "Actor") {
+    await actor.update({ "system.hp.value": blast.hpAfter });
+    await syncHealthConditions(actor);
+    await setCondition(actor, "dead", true);
+  }
+  await post(actor, {
+    kind: H("Fragile"),
+    detail: options.cause,
+    lines: [
+      F("FragileExplodes", { dice: blast.dice, multiplier }),
+      F("FragileDestroyed", { hp: blast.hpAfter }),
+    ],
+    bad: true,
+  });
+}
+
+/**
+ * A Brittle limb crippled (p. 136): "it breaks off. If you can make a HT
+ * roll, it falls off in one piece; otherwise, it shatters or liquefies
+ * irrecoverably."
+ */
+export async function rollBrittleLimb(options: { actor: any; location: string }): Promise<void> {
+  const { actor } = options;
+  if (!mayChange(actor)) return;
+  const target = healthRollScore(actor);
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+  const location = game.i18n.localize(`GWORLD.HitLocation.${options.location}`);
+  await post(actor, {
+    kind: H("Fragile"),
+    detail: F("BrittleBreaksOff", { location }),
+    target,
+    dice: dieResults(roll),
+    roll: roll.total,
+    lines: [F(`Brittle.${brittleLimb(outcome)}`, { location })],
+    good: outcome.success,
+    bad: !outcome.success,
+    rolls: [roll],
+  });
+}
+
+/**
+ * What Fragile adds to a hit on a vehicle (pp. 136-137; Campaigns p. 463),
+ * as lines for the card: whether it caught fire, and whether an Explosive one
+ * went up on the HT roll its major wound calls for. The vehicle's HT is what
+ * it rolls against; a vehicle actor is set alight, or wrecked outright.
+ */
+async function vehicleFragileLines(options: {
+  item: any;
+  vehicle: any;
+  injury: number;
+  hitPoints: number;
+  location: VehicleLocation;
+  damageType: DamageType;
+  /** An explosion, which sets things alight as a burning attack does. */
+  explosive: boolean;
+  rolls: any[];
+}): Promise<string[]> {
+  const kinds = fragileKindsOf(options.item);
+  if (kinds.length === 0 || options.injury <= 0) return [];
+  const lines: string[] = [];
+  const ht = Number(options.vehicle.ht) || 10;
+  const majorWound = options.injury > options.hitPoints / 2;
+  const isActor = options.item?.documentName === "Actor";
+  const htRoll = async (target: number) => {
+    const roll = new Roll("3d6");
+    await roll.evaluate();
+    options.rolls.push(roll);
+    return { roll, outcome: resolveSuccess(roll.total, target, dieResults(roll)) };
+  };
+
+  const ignition = fragileIgnition({
+    kinds,
+    injury: options.injury,
+    majorWound,
+    burningOrExplosive: options.damageType === "burn" || options.explosive,
+    vitals: options.location === "vitalArea",
+  });
+  let alight = ignition.kind === "alight";
+  if (ignition.kind === "roll") {
+    const { roll, outcome } = await htRoll(ht + ignition.modifier);
+    alight = !outcome.success;
+    lines.push(F("VehicleIgnitionRoll", { target: ht + ignition.modifier, roll: roll.total }));
+  }
+  if (alight) {
+    lines.push(H("FragileAlight"), ...alightLines());
+    if (isActor && options.item.isOwner) await setCondition(options.item, "burning", true);
+  } else if (ignition.kind === "roll") {
+    lines.push(H("FragileNotAlight"));
+  }
+
+  // "On any critical failure on the HT roll for a major wound, you explode!"
+  if (majorWound && kinds.includes("explosive")) {
+    const { roll, outcome } = await htRoll(ht);
+    lines.push(F("VehicleMajorWoundRoll", { target: ht, roll: roll.total }));
+    if (explodesOnMajorWound(kinds, outcome)) {
+      const blast = fragileExplosion(options.hitPoints);
+      lines.push(
+        F("FragileExplodes", { dice: blast.dice, multiplier: Math.round(blast.multiplier * 10) / 10 }),
+        F("FragileDestroyed", { hp: blast.hpAfter }),
+      );
+      if (isActor && options.item.isOwner) {
+        await options.item.update({ "system.hp.value": blast.hpAfter });
+        await setCondition(options.item, "dead", true);
+      }
+    }
+  }
+  return lines;
 }
 
 // ── radiation (pp. 435-436) ─────────────────────────────────────────────
@@ -785,6 +965,8 @@ export async function shootAtVehicle(options: {
   damageType: DamageType;
   /** True for a tight-beam burn, which a vital area doubles and a torch does not. */
   tightBeam: boolean;
+  /** True for an explosion, which sets a Combustible or Flammable vehicle alight as fire does (since 1.93.0). */
+  explosive?: boolean;
   /** The weapon and its attack mode, when known, for `gworld.vehicleDr` (since 1.79.0). */
   item?: any;
   mode?: any;
@@ -947,6 +1129,16 @@ export async function shootAtVehicle(options: {
     const before = Number(item.system?.hp?.value) || 0;
     await item.update({ "system.hp.value": before - injury });
     lines.push(F("VehicleHp", { previous: before, now: before - injury, max: hitPoints }));
+  }
+
+  // A Combustible, Flammable or Explosive vehicle may catch fire or go up
+  // (Campaigns p. 463; Characters pp. 136-137) -- after its hit points are
+  // taken, since blowing up sets them to -10×HP whatever the shot did.
+  if (!struck) {
+    lines.push(...(await vehicleFragileLines({
+      item, vehicle, injury, hitPoints, location: hit.location, damageType: options.damageType,
+      explosive: options.explosive === true, rolls,
+    })));
   }
 
   await post(actor, {
