@@ -3,7 +3,8 @@
  * or a blinding field, and rolls made in it or through it take its lines.
  */
 
-import { areaLines, hasShape, inShape, segmentCrossesShape, type Cone, type ModifierArea, type Point } from "../rules/modifier-areas.js";
+import { areaLines, hasShape, inShape, segmentCrossesShape, type AreaLight, type Cone, type ModifierArea, type Point } from "../rules/modifier-areas.js";
+import { LIT_DARKNESS, TOTAL_DARKNESS } from "../rules/visibility.js";
 import { SYSTEM_ID } from "./constants.js";
 import { targetedTokens } from "./targets.js";
 
@@ -55,14 +56,46 @@ export function coneFrom(input: ConeInput | null | undefined, apex: Point | null
 }
 
 /**
+ * A module's light as it gives it (since 1.102.0): its radius in yards (left
+ * out, the area's own), the darkness it leaves at most (3, as a torch does,
+ * left out) and the kind of light only some can see it is, if any.
+ */
+export interface LightInput {
+  radius?: number | null;
+  darknessCap?: number | null;
+  litFor?: string | null;
+}
+
+const LIGHT_KIND = /^[A-Za-z0-9][A-Za-z0-9_-]*\.[A-Za-z0-9][A-Za-z0-9_-]*$/;
+
+/** A module's light in scene pixels, or null where it has no centre or no radius. */
+export function lightFrom(input: LightInput | null | undefined, center: Point | null, areaRadiusYards: number, pixelsPerYard: number): AreaLight | null {
+  if (!input || !center) return null;
+  const given = Number(input.radius);
+  const yards = given > 0 ? given : areaRadiusYards > 0 ? areaRadiusYards : 0;
+  if (!(yards > 0)) return null;
+  const cap = Number(input.darknessCap);
+  return {
+    radius: yards * pixelsPerYard,
+    darknessCap: input.darknessCap === null || input.darknessCap === undefined || !Number.isFinite(cap)
+      ? LIT_DARKNESS
+      : Math.max(0, Math.min(TOTAL_DARKNESS, Math.round(cap))),
+    litFor: typeof input.litFor === "string" && LIGHT_KIND.test(input.litFor) ? input.litFor : null,
+  };
+}
+
+/**
  * Adds an area to a scene, or replaces the one with the same id. `radius` is
  * in yards, turned into pixels by the scene's grid; so are a cone's length and
- * width. Returns the id, or null where this user can't change the scene or a
- * cone has no direction or length.
+ * width, and a light's radius. Returns the id, or null where this user can't
+ * change the scene, a cone has no direction or length, or a light has no
+ * centre or radius.
  */
 export async function addArea(
   scene: any,
-  area: Omit<ModifierArea, "id" | "radius" | "cone"> & { id?: string; radius?: number | null; cone?: ConeInput | null },
+  area: Omit<ModifierArea, "id" | "radius" | "cone" | "light" | "lines"> & {
+    id?: string; radius?: number | null; cone?: ConeInput | null; light?: LightInput | null; lines?: ModifierArea["lines"];
+  },
 ): Promise<string | null> {
   if (!scene?.isOwner && !game.user?.isGM) return null;
   const id = String(area.id || foundry.utils.randomID());
@@ -70,6 +103,9 @@ export async function addArea(
   const cone = area.cone ? coneFrom(area.cone, center, pixelsPerYard(scene)) : null;
   if (area.cone && !cone) return null;
   const radius = Number(area.radius);
+  // A light a module keeps on the scene, for darknessAt (since 1.102.0).
+  const light = area.light ? lightFrom(area.light, center, radius, pixelsPerYard(scene)) : null;
+  if (area.light && !light) return null;
   const entry: ModifierArea = {
     id,
     label: String(area.label ?? ""),
@@ -87,6 +123,7 @@ export async function addArea(
       applies: l.applies === "inside" || l.applies === "through" ? l.applies : "both",
     })),
     expires: typeof area.expires === "number" && Number.isFinite(area.expires) ? area.expires : null,
+    ...(light ? { light } : {}),
   };
   const areas = listAreas(scene).filter((a) => a.id !== id);
   await scene.setFlag(SYSTEM_ID, FLAG, [...areas, entry]);

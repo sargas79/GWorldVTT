@@ -10,9 +10,9 @@
  * it. `rules.darknessFromLighting` turns that into the book's 0-10.
  */
 
-import { darknessFromLighting, darknessPenaltyFor, TOTAL_DARKNESS, type Lighting } from "../rules/visibility.js";
+import { darknessFromLighting, darknessPenaltyFor, LIT_DARKNESS, TOTAL_DARKNESS, type Lighting } from "../rules/visibility.js";
 import { SYSTEM_ID } from "./constants.js";
-import { centerOf } from "./modifier-areas.js";
+import { centerOf, listAreas } from "./modifier-areas.js";
 import { eyesOf } from "./roll.js";
 
 /**
@@ -95,12 +95,38 @@ export async function setLitFor(light: any, id: string | null): Promise<boolean>
  * there is no observer, or no module has registered its kind.
  */
 export function lightCountsFor(light: any, observer: any | null): boolean {
-  const id = litForOf(light);
+  return kindCountsFor(litForOf(light), observer, lightDocumentOf(light));
+}
+
+/** Whether a kind of light only some can see counts for an observer; no kind counts for everyone. */
+function kindCountsFor(id: string | null, observer: any | null, light: any): boolean {
   if (!id) return true;
   if (!observer) return false;
   const test = litForTests.get(id);
   if (!test) return false;
-  return safely(() => test(observer, lightDocumentOf(light)) === true, false);
+  return safely(() => test(observer, light) === true, false);
+}
+
+/**
+ * The modules' lights kept on a scene's areas that reach a spot and count for
+ * the observer (since API 1.102.0): their ids, and the least darkness any of
+ * them leaves. An area past its `expires` gives no light. A light only some
+ * can see is tested with the area, as `areas.list` gives it, for the light.
+ */
+function areaLightsAt(scene: any, point: DarknessPoint, observer: any | null): { ids: string[]; cap: number } | null {
+  const now = Number((globalThis as any).game?.time?.worldTime) || 0;
+  const ids: string[] = [];
+  let cap = TOTAL_DARKNESS;
+  for (const area of listAreas(scene)) {
+    const light = area.light;
+    if (!light || !area.center || !(Number(light.radius) > 0)) continue;
+    if (typeof area.expires === "number" && area.expires <= now) continue;
+    if (Math.hypot(point.x - area.center.x, point.y - area.center.y) > light.radius) continue;
+    if (!kindCountsFor(light.litFor ?? null, observer, area)) continue;
+    ids.push(area.id);
+    cap = Math.min(cap, Math.max(0, Number(light.darknessCap) || 0));
+  }
+  return ids.length ? { ids, cap } : null;
 }
 
 /** A spot on a scene in pixels, with its elevation where it has one. */
@@ -124,6 +150,8 @@ export interface DarknessReading {
   penalty: number;
   /** The lighting it was read from: the level (0-1) and what lit the spot. */
   lighting: Required<Lighting>;
+  /** The ids of the areas whose module lights reached the spot and counted (since API 1.102.0). */
+  lightAreas: string[];
 }
 
 /** A token (placeable or document) or a point, as the spot to read. */
@@ -201,12 +229,17 @@ export function darknessAt(scene: any, at: any, options: { observer?: any } = {}
   const point = spotOf(target, at);
   if (!point) return null;
   const lighting = lightingAt(target, point, options.observer ?? null);
-  const darkness = darknessFromLighting(lighting);
+  // A module's light on the scene's areas (since API 1.102.0) lightens the
+  // spot as a light source does, to its own cap; no light gets into
+  // unnatural darkness.
+  const areaLight = lighting.unnaturalDarkness ? null : areaLightsAt(target, point, options.observer ?? null);
+  const darkness = areaLight ? Math.min(darknessFromLighting(lighting), areaLight.cap) : darknessFromLighting(lighting);
   const eyes = options.observer ? eyesOf(options.observer) : {};
   return {
     darkness,
     total: darkness >= TOTAL_DARKNESS,
     penalty: darknessPenaltyFor(darkness, eyes),
-    lighting,
+    lighting: areaLight && areaLight.cap <= LIT_DARKNESS ? { ...lighting, inLight: true } : lighting,
+    lightAreas: areaLight?.ids ?? [],
   };
 }

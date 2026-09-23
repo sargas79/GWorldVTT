@@ -17,7 +17,9 @@
 
 import { normalizeSkillName } from "../rules/skills.js";
 import {
+  familiarityKey,
   familiarityModifier,
+  isFamiliar,
   isTechnologicalSkill,
   parseTechLevel,
   skillTechLevel,
@@ -69,6 +71,33 @@ export function toolFor(actor: any, skillName: string | undefined): any {
 export function familiaritiesOf(actor: any): string[] | null {
   const list = actor?.system?.familiarities;
   return Array.isArray(list) ? list.map((entry: unknown) => String(entry ?? "")) : null;
+}
+
+/**
+ * Whether the actor is familiar with an item of this name (Characters p. 169;
+ * since API 1.102.0), or null for an actor that keeps no familiarities.
+ */
+export function familiarWith(actor: any, name: string): boolean | null {
+  const list = familiaritiesOf(actor);
+  return list === null ? null : isFamiliar(list, String(name ?? ""));
+}
+
+/**
+ * Makes an actor familiar with an item of this name, or no longer (since API
+ * 1.102.0): any equipment, a vehicle included, goes by its name. Resolves to
+ * whether the actor is familiar with it now, or null for an actor that keeps
+ * no familiarities, a user who can't change it, or an empty name.
+ */
+export async function setFamiliar(actor: any, name: string, familiar: boolean): Promise<boolean | null> {
+  const list = familiaritiesOf(actor);
+  const key = familiarityKey(String(name ?? ""));
+  if (list === null || !key || !actor?.isOwner) return null;
+  const wanted = familiar !== false;
+  if (isFamiliar(list, String(name)) !== wanted) {
+    const next = wanted ? [...list, String(name).trim()] : list.filter((entry) => familiarityKey(entry) !== key);
+    await actor.update({ "system.familiarities": next });
+  }
+  return wanted;
 }
 
 /**

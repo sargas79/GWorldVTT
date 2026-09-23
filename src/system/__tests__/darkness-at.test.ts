@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createApi } from "../api.js";
 import { darknessAt, lightCountsFor, litForOf, registerLitFor, setLitFor } from "../darkness.js";
+import { lightFrom } from "../modifier-areas.js";
 import { darknessFromLighting, darknessPenaltyFor, LIT_DARKNESS } from "../../rules/visibility.js";
 
 /** Reading the darkness at a token or a point (sargas79/GWorldVTT#673). */
@@ -82,6 +83,7 @@ describe("darknessAt", () => {
       total: false,
       penalty: -6,
       lighting: { level: 0.6, daylight: false, inLight: false, unnaturalDarkness: false },
+      lightAreas: [],
     });
   });
 
@@ -193,5 +195,56 @@ describe("lights only some can see", () => {
     expect(api.areas.registerLitFor).toBe(registerLitFor);
     expect(api.areas.setLitFor).toBe(setLitFor);
     expect(api.areas.litFor).toBe(litForOf);
+  });
+});
+
+describe("a module's light on an area (sargas79/GWorldVTT#693)", () => {
+  /** A drawn scene in total darkness with these areas kept on it. */
+  const withAreas = (areas: any[]) => {
+    const scene: any = drawnScene({ level: 1 });
+    scene.flags = { gworld: { modifierAreas: areas } };
+    return scene;
+  };
+  const lantern = (light: Record<string, unknown>, extra: Record<string, unknown> = {}) =>
+    ({ id: "lantern", label: "Lantern", center: { x: 0, y: 0 }, radius: null, lines: [], light: { radius: 500, darknessCap: 3, litFor: null, ...light }, ...extra });
+
+  it("turns total darkness to 3 within its radius, and leaves it alone beyond", () => {
+    const scene = withAreas([lantern({})]);
+    expect(darknessAt(scene, { x: 300, y: 0 })).toMatchObject({ darkness: 3, penalty: -3, lighting: { inLight: true }, lightAreas: ["lantern"] });
+    expect(darknessAt(scene, { x: 600, y: 0 })).toMatchObject({ darkness: 10, lightAreas: [] });
+  });
+
+  it("leaves at most its own cap, the least of the lights that reach", () => {
+    const scene = withAreas([lantern({ darknessCap: 5 }), { ...lantern({ darknessCap: 7 }), id: "candle" }]);
+    expect(darknessAt(scene, { x: 100, y: 0 })).toMatchObject({ darkness: 5, lighting: { inLight: false }, lightAreas: ["lantern", "candle"] });
+  });
+
+  it("gives no light once it has expired, or into unnatural darkness", () => {
+    (globalThis as any).game = { time: { worldTime: 100 } };
+    try {
+      expect(darknessAt(withAreas([lantern({}, { expires: 50 })]), { x: 0, y: 0 })?.darkness).toBe(10);
+      expect(darknessAt(withAreas([lantern({}, { expires: 150 })]), { x: 0, y: 0 })?.darkness).toBe(3);
+    } finally {
+      delete (globalThis as any).game;
+    }
+    const dark: any = drawnScene({ level: 1, darknessSources: [() => true] });
+    dark.flags = { gworld: { modifierAreas: [lantern({})] } };
+    expect(darknessAt(dark, { x: 0, y: 0 })?.darkness).toBe(10);
+  });
+
+  it("counts a light only some can see only for those its kind's test passes", () => {
+    registerLitFor({ module: "test-mod", key: "lantern-uv", test: (observer, light) => observer?.gear === "goggles" && light?.id === "lantern" });
+    const scene = withAreas([lantern({ litFor: "test-mod.lantern-uv" })]);
+    expect(darknessAt(scene, { x: 0, y: 0 }, { observer: { gear: "goggles", system: {} } })?.darkness).toBe(3);
+    expect(darknessAt(scene, { x: 0, y: 0 }, { observer: { system: {} } })?.darkness).toBe(10);
+    expect(darknessAt(scene, { x: 0, y: 0 })?.darkness).toBe(10);
+  });
+
+  it("is read from yards, the area's radius standing in for its own", () => {
+    expect(lightFrom({}, { x: 0, y: 0 }, 4, 100)).toEqual({ radius: 400, darknessCap: 3, litFor: null });
+    expect(lightFrom({ radius: 10, darknessCap: 12, litFor: "a.b" }, { x: 0, y: 0 }, 0, 50)).toEqual({ radius: 500, darknessCap: 10, litFor: "a.b" });
+    expect(lightFrom({ radius: 2, litFor: "not a kind" }, { x: 0, y: 0 }, 0, 100)?.litFor).toBeNull();
+    expect(lightFrom({}, { x: 0, y: 0 }, 0, 100)).toBeNull();
+    expect(lightFrom({ radius: 5 }, null, 0, 100)).toBeNull();
   });
 });

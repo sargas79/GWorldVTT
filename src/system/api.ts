@@ -57,7 +57,7 @@ import {
   fragileCatchesFire, fragileExplodes, fragileKindsOf, irradiate, rollBrittleLimb, shock, shootAtVehicle,
 } from "./hazards.js";
 import { detonateCharge } from "./demolition.js";
-import { equipmentUseLines } from "./tech-level.js";
+import { equipmentUseLines, familiarWith, setFamiliar } from "./tech-level.js";
 import { addArea, listAreas, removeArea, tokensInArea } from "./modifier-areas.js";
 import { darknessAt, litForOf, registerLitFor, setLitFor } from "./darkness.js";
 import { rollFrightCheck } from "./fright.js";
@@ -90,7 +90,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.101.0";
+export const API_VERSION = "1.102.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -343,6 +343,21 @@ const actors = {
   loseAim(actor: any, reason = ""): Promise<boolean> {
     return loseAim(actor, String(reason ?? ""));
   },
+
+  /**
+   * Makes a character familiar with an item of this name (Characters p. 169;
+   * since 1.102.0), or no longer: a weapon, a tool, a vehicle. Resolves to
+   * whether they are familiar with it now, or null for an actor that keeps no
+   * familiarities, a user who can't change it, or an empty name.
+   */
+  setFamiliar(actor: any, name: string, familiar = true): Promise<boolean | null> {
+    return setFamiliar(actor, String(name ?? ""), familiar !== false);
+  },
+
+  /** Whether a character is familiar with an item of this name (since 1.102.0), or null for one that keeps no familiarities. */
+  isFamiliar(actor: any, name: string): boolean | null {
+    return familiarWith(actor, String(name ?? ""));
+  },
 };
 
 /** The treater's better of First Aid and Physician, as the sheet's treatment dialog starts at, or null. */
@@ -578,7 +593,8 @@ const hazardsApi = Object.freeze({
  * The areas namespace (since 1.63.0): smoke, fog, a field that blinds a sense.
  * Cones, and `standsIn` for the tokens standing in an area, since 1.89.0;
  * `darknessAt`, the darkness at a token or a point, since 1.96.0; lights only
- * some can see (`registerLitFor`, `setLitFor`, `litFor`) since 1.100.0.
+ * some can see (`registerLitFor`, `setLitFor`, `litFor`) since 1.100.0; a
+ * module's own light on an area (`add`'s `light`) since 1.102.0.
  */
 const areasApi = Object.freeze({
   add: addArea, remove: removeArea, list: listAreas, standsIn: tokensInArea, darknessAt,

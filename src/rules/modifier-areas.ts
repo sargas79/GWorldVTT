@@ -47,6 +47,20 @@ export interface ModifierArea {
   lines: AreaLine[];
   /** The world time, in seconds, it goes at; null for never. */
   expires?: number | null;
+  /**
+   * A light a module keeps here (since 1.102.0; Campaigns p. 394): a lantern
+   * or a flare that is no light source on the canvas. Centred on `center`,
+   * `radius` in scene pixels; the darkness within it is at most `darknessCap`.
+   * `litFor` names the kind of light only some can see, or null for everyone.
+   */
+  light?: AreaLight | null;
+}
+
+/** A module's light as an area keeps it. */
+export interface AreaLight {
+  radius: number;
+  darknessCap: number;
+  litFor: string | null;
 }
 
 /** A cone as an area keeps it, in scene pixels and degrees. */
