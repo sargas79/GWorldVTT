@@ -634,6 +634,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare maneuver: string;
   declare maneuverOption: string;
   declare evaluateTurns: number;
+  declare concentrateTurns: number;
   declare aim: { turns: number; braced: boolean; target?: string; bonuses?: Array<{ label: string; value: number; key?: string }> };
   /** One of the Basic Set's options, or a module's `<module>.<key>`. */
   declare allOutAttackOption: string;
@@ -828,6 +829,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
       /** Consecutive Evaluate maneuvers taken, which accumulate +1 each to +3. */
       evaluateTurns: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 0, min: 0,
+      }),
+
+      /**
+       * Unbroken Concentrate maneuvers taken (since API 1.91.0), which a zen
+       * skill's roll reads (Characters p. 228). The end of each turn in
+       * combat moves it on, and any other maneuver starts it again.
+       */
+      concentrateTurns: new fields.NumberField({
         required: true, nullable: false, integer: true, initial: 0, min: 0,
       }),
 

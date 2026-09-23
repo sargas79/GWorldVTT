@@ -129,6 +129,35 @@
         </div>
       </div>
     {{/if}}
+    {{#if isConcentrating}}
+      {{!-- Unbroken turns of Concentrate: the end of each turn in combat
+           moves them on, and the table may correct them. --}}
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.Field.ConcentrateTurns"}}</span>
+        <div class="fi">
+          {{> "gworld.stepper" name="system.concentrateTurns" value=system.concentrateTurns min=0 step=1
+              label=(localize "GWORLD.Field.ConcentrateTurns") editable=editable}}
+        </div>
+      </div>
+    {{/if}}
+    {{#each zenSkills as |z|}}
+      {{!-- A zen skill (Characters p. 228): rolled at what the turns
+           concentrated give it; a success waits for the next shot it covers. --}}
+      <div class="fld wide zen-skill" data-zen-id="{{z.id}}">
+        <span class="fl">{{z.skill}}-{{z.level}}</span>
+        <div class="fi" style="display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center">
+          <button type="button" class="ibtn tiny" data-action="rollZen" data-zen-id="{{z.id}}"
+                  data-tooltip="{{localize 'GWORLD.Zen.RollHint' covers=z.covers}}"
+                  {{#unless @root.editable}}disabled{{/unless}}>{{localize "GWORLD.Zen.Roll"}} {{signed z.modifier}}</button>
+          {{#if z.ready}}
+            <span class="tag" data-tooltip="{{localize 'GWORLD.Zen.ReadyHint' covers=z.covers}}">{{localize "GWORLD.Zen.ReadyTag"}}
+              {{#if @root.editable}}<button type="button" class="iconbtn" data-action="clearZen"
+                      aria-label="{{localize 'GWORLD.Action.Delete'}}">&times;</button>{{/if}}
+            </span>
+          {{/if}}
+        </div>
+      </div>
+    {{/each}}
     {{#if showOpportunityFire}}
       <div class="fld wide">
         <span class="fl">{{localize "GWORLD.Wait.Trigger"}}</span>

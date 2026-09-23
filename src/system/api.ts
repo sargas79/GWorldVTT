@@ -30,6 +30,7 @@ import * as rules from "../rules/index.js";
 import { normalizeSkillName } from "../rules/skills.js";
 import { incompatibleModules, satisfiesApiRange } from "./api-version.js";
 import { combatApi } from "./combat-extensions.js";
+import { clearZenShot, pendingZenShot, registerZenSkill, rollZenSkill, zenSkillsOf } from "./zen.js";
 import { loadInstantly, refundShots } from "./ammunition.js";
 import { clearMalfunction, malfunctionOf, setMalfunction } from "./malfunctions.js";
 import { registerSlam } from "./slam.js";
@@ -86,7 +87,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.90.0";
+export const API_VERSION = "1.91.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -514,6 +515,13 @@ const combat = Object.freeze({
   beginGrapple,
   endGrapple,
   attackSequence: attackSequenceFor,
+  // A skill of Zen Archery's shape for other weapons, rolling one, and the
+  // success waiting for its shot (since 1.91.0; Characters p. 228).
+  registerZenSkill,
+  zenSkills: zenSkillsOf,
+  rollZenSkill,
+  zenShot: pendingZenShot,
+  clearZenShot,
   hooks: Object.freeze({ ...combatApi.hooks, ...PROCEDURE_HOOKS }),
 });
 

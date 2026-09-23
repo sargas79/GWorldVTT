@@ -156,6 +156,7 @@
       "DisadvantageLimit": "Disadv. Limit",
       "Maneuver": "This Turn",
       "EvaluateTurns": "Turns Evaluating",
+      "ConcentrateTurns": "Turns Concentrating",
       "Defenses": "Defenses",
       "PostureHint": "Change posture. Lying down, a character crawls, kneels or sits up first, then stands.",
       "AimTurns": "Turns aimed",
@@ -3544,6 +3545,16 @@
       "TurnLeft": "Turn selected tokens left",
       "TurnRight": "Turn selected tokens right",
       "TurnHint": "One hex side on a hex map, one diagonal on a square map."
+    },
+    "Zen": {
+      "Roll": "Roll",
+      "RollHint": "Roll at what the turns concentrated give it; a success eases the next shot with {covers}",
+      "Concentrated": "Concentrated {turns} turn(s)",
+      "Instant": "Used instantly",
+      "Ready": "{name}: {skill} succeeded; the next shot with {weapons} divides its size and range penalties by three.",
+      "ReadyTag": "Ready",
+      "ReadyHint": "The next shot with {covers} divides its size and range penalties by three",
+      "Line": "{skill} (size and range /3)"
     },
     "Aim": {
       "Lost": {
