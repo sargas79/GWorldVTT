@@ -6,6 +6,7 @@
 
 import { pointBadge, poolPercent, type PointBadge } from "../sheet-v2/overview.js";
 import { byName, sortedByNameOf } from "../sort.js";
+import { SYSTEM_ID } from "../constants.js";
 
 // ── the member list ────────────────────────────────────────────────────────
 
@@ -35,6 +36,16 @@ export function addMembers(members: readonly MemberEntry[], uuids: readonly stri
 
 export function removeMember(members: readonly MemberEntry[], uuid: string): MemberEntry[] {
   return members.filter((m) => m.uuid !== uuid).map((m) => ({ uuid: m.uuid }));
+}
+
+// ── the sidebar ────────────────────────────────────────────────────────────
+
+/** The flag, under the system's scope, that pins a party to the top of the Actors sidebar. */
+export const PINNED_FLAG = "pinned";
+
+/** Whether a party is pinned to the top of the Actors sidebar. */
+export function isPinned(party: { flags?: Record<string, Record<string, unknown> | undefined> } | null | undefined): boolean {
+  return party?.flags?.[SYSTEM_ID]?.[PINNED_FLAG] === true;
 }
 
 /**
