@@ -103,7 +103,7 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), and `recoveryHold(actor, id)` (since 1.89.0). |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0). |
 | `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
@@ -594,6 +594,20 @@ and the roll continues.
     - `damageAt(entry, st)` and `rangeAt(entry, st)` work a mode out at another
       ST, and `addToDamage(formula, bonus)` adds to a dice formula. The range
       text and whether the damage can be rolled follow the figures;
+  - `gworld.unarmedAttacks` (since 1.102.0): a character's punch and kick
+    (Characters p. 271) once they are worked out, so worn gear -- boots, brass
+    knuckles, a gauntlet -- can change them. The context is
+    `gworld.weaponAttacks`' with `item: null`: `{ actor, item, rows, damageAt,
+    rangeAt, addToDamage, skillLevel }`, the rows mutable in the same fields
+    and made whole the same way. Each entry's `mode` is read-only `{
+    naturalKey, skillName, unarmed: true }` (`naturalKey` `punch` or `kick`,
+    also on the row), `basis.damage` the blow before any listener, and
+    `damageAt(entry, st)` the same blow at another striking ST. Look for the
+    gear on `actor.items` (worn, equipped). A creature whose unarmed attacks
+    come from its traits alone (horizontal, legless or handless) has no punch
+    or kick, and the hook isn't called for it; a beast's bite, claws and
+    strikers don't pass through it. It is a hook of its own so that
+    `gworld.weaponAttacks` listeners never see a null item.
   - `gworld.armorDr` (since 1.48.0): before a blow's DR is added up, with
     `{ actor, item, mode, hitLocation, damageType, basicDamage, lines }`. Each
     of `lines` is one piece of worn armour reaching the spot:
@@ -1439,6 +1453,14 @@ Two fields a module may read (since 1.62.0):
     name, so "improved or obsolete versions" and look-alike models are made
     familiar by listing their names. NPCs keep none and never take the line.
     The V2 sheet's attack preview marks the weapon familiar or not.
+    Since 1.102.0 the Gear tab's detail panel marks any equipment (a vehicle
+    included) familiar or not, with a button to toggle it, where the
+    `familiarity` rule is on; and `actors.setFamiliar(actor, name, familiar =
+    true)` makes a character familiar with an item of that name, or no
+    longer, resolving to whether they are familiar now (null for an actor that
+    keeps no familiarities, a user who can't change it, or an empty name).
+    `actors.isFamiliar(actor, name)` reads it (null for an actor that keeps
+    none).
   - *`roll.equipmentUse(actor, item, skillName)`* returns `{ lines, tags,
     impossible }` for a module's own roll with an item: `lines` as
     `{ key, label, value }`, `impossible` a message or null.
@@ -1655,6 +1677,28 @@ Two fields a module may read (since 1.62.0):
       Unmarked lights count for everyone, as before. Foundry still draws a
       marked light for every viewer; what anyone's token sees on the canvas
       is Foundry's vision, not this.
+  - *A module's light* (since 1.102.0, Campaigns p. 394: a torch or flashlight
+    turns total darkness to -3, within its range). A lantern or a flare a
+    module keeps, which is no light source on the canvas, is an area with a
+    `light`: `areas.add(scene, { center, light: { radius?, darknessCap?,
+    litFor? }, lines? })`. `radius` is in yards (left out, the area's own
+    `radius`); `darknessCap` is the darkness it leaves at most, 0-10 (3, the
+    book's torch, left out; 0 is as good as daylight); `litFor` a kind of light
+    only some can see, `<module>.<key>` as `areas.registerLitFor` returns it
+    (left out, everyone sees it). `add` returns null for a light with no
+    `center` or no radius. `lines` may be left out for a light that is only a
+    light. `areas.list` gives it as `light: { radius, darknessCap, litFor }`,
+    the radius in scene pixels.
+    - `darknessAt` takes the least `darknessCap` of the lights whose circle
+      holds the spot and that count for the `observer` (a `litFor` light is
+      tested with the area, as `areas.list` gives it, in place of a light
+      document; never with no observer), and leaves the darkness no higher.
+      No light gets into unnatural darkness, and an area past its `expires`
+      gives none.
+    - The reading gains `lightAreas`, the ids of the areas whose lights
+      counted (empty for none); `lighting.inLight` is set where one of them
+      leaves 3 or less.
+    - The canvas draws nothing for it, and Foundry's vision doesn't see it.
 - **Spraying and Suppression Fire** (since 1.70.0, Campaigns p. 409), under
   the `rapidFire` switch. A ranged attack from a row of RoF 5+ with two or
   more tokens targeted offers to spray the burst: the targets are put in the

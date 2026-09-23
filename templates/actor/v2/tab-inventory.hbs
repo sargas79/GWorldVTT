@@ -176,6 +176,13 @@
                 <b>{{#if @root.editable}}{{> "gworld.stepper" itemField="system.quantity" value=item.quantity min=0 step=1
                        id=(concat @root.sheetId "-" item.id "-rounds") label=(localize "GWORLD.Ammunition.Rounds") tooltip=(localize "GWORLD.Ammunition.RoundsHint") editable=true}}{{else}}{{item.quantity}}{{/if}}</b></li>
             {{/if}}
+            {{#if item.familiarity}}
+              {{!-- Whether this character knows the make (Characters p. 169): -2 to operate it until they do. --}}
+              <li class="v2-familiarity"><span data-tooltip="{{localize 'GWORLD.TechLevel.FamiliarityHint'}}">{{localize "GWORLD.TechLevel.Familiarity"}}</span>
+                <b class="{{#if item.familiarity.familiar}}v2-good{{else}}v2-bad{{/if}}">{{#if item.familiarity.familiar}}{{localize "GWORLD.TechLevel.Familiar"}}{{else}}{{localize "GWORLD.TechLevel.NotFamiliar"}}{{/if}}{{#if @root.editable}}
+                  <button type="button" class="v2-button v2-button-small" data-action="v2ToggleFamiliar"
+                          aria-pressed="{{#if item.familiarity.familiar}}true{{else}}false{{/if}}">{{#if item.familiarity.familiar}}{{localize "GWORLD.TechLevel.MarkUnfamiliar"}}{{else}}{{localize "GWORLD.TechLevel.MarkFamiliar"}}{{/if}}</button>{{/if}}</b></li>
+            {{/if}}
             {{#if item.legality.label}}
               <li><span>{{localize "GWORLD.SheetV2.Legality"}}</span><b class="{{#if item.legality.restricted}}v2-bad{{/if}}">{{item.legality.label}}{{#if item.legality.status}} &middot; {{localize (concat 'GWORLD.Legality.Short.' item.legality.status)}}{{/if}}</b></li>
             {{/if}}

@@ -376,6 +376,11 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         stats: gearStatistics({ type: item.type, system: item.system, objectStats: item.type === "shield" ? objectStats(item) : null }, attacks, localize),
         legality: legalityNote(legalityClassOf(item)),
         vehicle: s.category === "vehicle" && isRuleOn("vehicles"),
+        // Whether the character knows this make (Characters p. 169), for any
+        // equipment, vehicles included, where the rule is on (since API 1.102.0).
+        familiarity: item.type === "equipment" && isRuleOn("familiarity") && familiaritiesOf(actor) !== null
+          ? { familiar: isFamiliar(familiaritiesOf(actor) ?? [], String(item.name ?? "")) }
+          : null,
         loadable: loadModeIndex >= 0,
         loadModeIndex: Math.max(0, loadModeIndex),
         // A box of rounds says how many it has left, and that count is edited here.

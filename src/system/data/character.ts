@@ -89,7 +89,7 @@ import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
 import { evaluateBonus, takesEvaluateBonus } from "../../rules/maneuvers.js";
 import {
-  MODULE_KEY, adjustWeaponAttacks, maneuverAllowancesFor, maneuverInfo, maneuverKeys, parryWeaponRows, type WeaponRowEntry,
+  COMBAT_HOOKS, MODULE_KEY, adjustWeaponAttacks, maneuverAllowancesFor, maneuverInfo, maneuverKeys, parryWeaponRows, type WeaponRowEntry,
 } from "../combat-extensions.js";
 import { shotsEntryFor } from "../shots-entry.js";
 import { malfunctionOf } from "../malfunctions.js";
@@ -2739,8 +2739,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const beast = beastTraitsFrom(heldTraits.map((t) => t.name));
     const unarmedIsItsOwn =
       beast.horizontal === true || beast.legless === true || beast.handless === true;
-    for (const attack of unarmedIsItsOwn ? [] : naturalAttacks({
-      st: strikingSt,
+    const unarmedInput = (st: number) => ({
+      st,
       // A punch and a kick are DX-based like any weapon skill, so an extra
       // layer of armour costs them the same -1 (Characters p. 286).
       dx: attrs.DX + layering,
@@ -2749,8 +2749,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         ...(this.skillLevelByName("Boxing") !== null ? { Boxing: this.skillLevelByName("Boxing")! } : {}),
         ...(this.skillLevelByName("Karate") !== null ? { Karate: this.skillLevelByName("Karate")! } : {}),
       },
-    })) {
-      melee.push({
+    });
+    // The punch and kick, for the modules' gear to change (API 1.102.0):
+    // boots, brass knuckles, a spiked gauntlet (Characters p. 271).
+    const unarmedRows: WeaponRowEntry[] = [];
+    for (const attack of unarmedIsItsOwn ? [] : naturalAttacks(unarmedInput(strikingSt))) {
+      const damage = formatDiceAdds(attack.damage);
+      const unarmedRow: DerivedAttack = {
         itemId: "",
         modeIndex: 0,
         name: game.i18n.localize(`GWORLD.Natural.${attack.key}`),
@@ -2793,8 +2798,36 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         affliction: false,
         afflictionAttribute: "",
         afflictionModifier: 0,
+      };
+      melee.push(unarmedRow);
+      unarmedRows.push({
+        kind: "melee",
+        mode: Object.freeze({ naturalKey: attack.key, skillName: attack.skillName, unarmed: true }),
+        row: unarmedRow,
+        basis: {
+          st: strikingSt, damage, damageType: "cr", armorDivisor: 1,
+          halfDamageRange: 0, maxRange: 0, minRange: 0, accuracy: 0, malfunction: null,
+        },
       });
     }
+    adjustWeaponAttacks({
+      actor: this.parent,
+      item: null,
+      rows: unarmedRows,
+      hook: COMBAT_HOOKS.unarmedAttacks,
+      // The same blow at another ST: a module's striking ST for a kick, say.
+      damageAt: (entry, st) => {
+        const again = naturalAttacks(unarmedInput(st)).find((attack) => attack.key === entry.mode.naturalKey);
+        return again ? formatDiceAdds(again.damage) : String(entry.basis.damage);
+      },
+      rangeAt: () => ({ halfDamageRange: 0, maxRange: 0 }),
+      addToDamage: (formula, bonus) => {
+        const parsed = parseDiceAdds(formula);
+        return parsed && bonus ? formatDiceAdds(addModifier(parsed, bonus)) : formula;
+      },
+      isRollable: (entry) => !entry.row.affliction && parseDiceAdds(String(entry.row.damage ?? "")) !== null,
+      skillLevel: (name) => this.skillLevelByName(name),
+    });
 
     // A beast's bite, claws and strikers (Campaigns p. 460), read off the
     // traits it carries; nothing for a character with none of them.

@@ -71,6 +71,8 @@ export const COMBAT_HOOKS = Object.freeze({
   randomHitLocation: "gworld.randomHitLocation",
   /** An item's attack rows once worked out: `{ actor, item, rows, damageAt, rangeAt, addToDamage }`, the rows mutable. */
   weaponAttacks: "gworld.weaponAttacks",
+  /** A character's punch and kick once worked out (since 1.102.0): `{ actor, item: null, rows, damageAt, rangeAt, addToDamage }`, the rows mutable. */
+  unarmedAttacks: "gworld.unarmedAttacks",
   /** Before an equipment failure roll: `{ actor, item, target, modifiers }`; push lines to `modifiers`. */
   equipmentFailure: "gworld.equipmentFailure",
   /** A character's maneuver allowances as their data is prepared: `{ actor, maneuver, option, movement, defense }`, the allowances mutable. */
@@ -273,6 +275,8 @@ export function adjustWeaponAttacks(options: {
   isRollable: (entry: WeaponRowEntry) => boolean;
   /** The actor's level in a skill as this preparation worked it out, or null (since 1.30.0). */
   skillLevel?: (name: string) => number | null;
+  /** The hook called: `gworld.weaponAttacks`, or `gworld.unarmedAttacks` for the punch and kick (since 1.102.0). */
+  hook?: string;
 }): void {
   if (options.rows.length === 0) return;
   for (const entry of options.rows) {
@@ -284,8 +288,9 @@ export function adjustWeaponAttacks(options: {
   }
   const before = options.rows.map((entry) => Object.fromEntries(WEAPON_ROW_FIELDS.map((key) => [key, entry.row[key]])));
   const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
+  const hook = options.hook ?? COMBAT_HOOKS.weaponAttacks;
   try {
-    hooks?.callAll?.(COMBAT_HOOKS.weaponAttacks, {
+    hooks?.callAll?.(hook, {
       actor: options.actor,
       item: options.item,
       rows: options.rows,
@@ -295,7 +300,7 @@ export function adjustWeaponAttacks(options: {
       skillLevel: options.skillLevel ?? (() => null),
     });
   } catch (error) {
-    console.warn(`gworld | a ${COMBAT_HOOKS.weaponAttacks} listener failed`, error);
+    console.warn(`gworld | a ${hook} listener failed`, error);
     options.rows.forEach((entry, index) => Object.assign(entry.row, before[index]));
     return;
   }
