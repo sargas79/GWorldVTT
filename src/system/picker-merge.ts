@@ -216,11 +216,18 @@ export function namePlaceholderKey(category: unknown): string {
 }
 
 /** The data for a custom entry. */
-export function customItemData(custom: PickerCustom, name: string): Record<string, unknown> {
+export function customItemData(
+  custom: PickerCustom,
+  name: string,
+  options: { firstLanguage?: boolean } = {},
+): Record<string, unknown> {
   const system: Record<string, unknown> = {};
   if (custom.category) system.category = custom.category;
   if (custom.itemType === "trait" && custom.category === "quirk") Object.assign(system, { points: -1, levels: 0, pointsPerLevel: 0 });
   if (custom.itemType === "trait" && custom.category === "perk") Object.assign(system, { points: 1, levels: 0, pointsPerLevel: 0 });
+  // A character's first language is the one they grew up speaking, which
+  // costs nothing (Characters p. 23); charging 6 for it was #635.
+  if (custom.itemType === "language" && options.firstLanguage) system.isNative = true;
   return { name, type: custom.itemType, system };
 }
 

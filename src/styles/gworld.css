@@ -461,6 +461,25 @@
 .gworld table.gt tbody[hidden] { display: none; }
 
 .gworld .wname { font-weight: 500; }
+.gworld .wname[data-action] { cursor: pointer; }
+/* A language's row is edited in place: its name, whether it is native, and
+   its two levels (#635). */
+.gworld table.gt .langname { display: flex; align-items: center; gap: 8px; }
+.gworld table.gt td.langactions { white-space: nowrap; }
+.gworld table.gt td.langactions .iconbtn { display: inline-flex; vertical-align: middle; }
+.gworld table.gt .langinput { flex: 1 1 auto; min-width: 0; }
+.gworld table.gt .langnative {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+  white-space: nowrap;
+}
+.gworld table.gt td.n select { width: auto; }
 .gworld .wmode {
   font-size: 10px;
   letter-spacing: 0.08em;

@@ -15,15 +15,46 @@
       <tbody>
         {{#each items.languages as |lang|}}
           <tr data-item-id="{{lang.id}}">
-            <td>
-              <span class="wname" data-action="editItem">{{lang.name}}</span>
-              {{#if lang.system.isNative}}<span class="tag">{{localize "GWORLD.Language.Native"}}</span>{{/if}}
-            </td>
-            <td class="n">{{localize (concat "GWORLD.Language." lang.system.spoken)}}</td>
-            <td class="n">{{localize (concat "GWORLD.Language." lang.system.written)}}</td>
+            {{!-- Named, levelled and made native in the row itself (#635): the
+                 language's own sheet is still a click away, for its notes. --}}
+            {{#if @root.editable}}
+              <td>
+                <div class="langname">
+                <input type="text" class="langinput" value="{{lang.name}}" id="{{@root.sheetId}}-{{lang.id}}-name"
+                       data-item-text="name" aria-label="{{localize 'GWORLD.Column.Language'}}">
+                <label class="langnative" data-tooltip="{{localize 'GWORLD.Language.IsNative'}}">
+                  <input type="checkbox" id="{{@root.sheetId}}-{{lang.id}}-native" data-item-flag="system.isNative"
+                         {{#if lang.system.isNative}}checked{{/if}}>
+                  {{localize "GWORLD.Language.Native"}}
+                </label>
+                </div>
+              </td>
+              <td class="n">
+                <select id="{{@root.sheetId}}-{{lang.id}}-spoken" data-item-choice="system.spoken"
+                        aria-label="{{localize 'GWORLD.Language.Spoken'}}">
+                  {{selectOptions @root.comprehensionLevels selected=lang.system.spoken localize=true}}
+                </select>
+              </td>
+              <td class="n">
+                <select id="{{@root.sheetId}}-{{lang.id}}-written" data-item-choice="system.written"
+                        aria-label="{{localize 'GWORLD.Language.Written'}}">
+                  {{selectOptions @root.comprehensionLevels selected=lang.system.written localize=true}}
+                </select>
+              </td>
+            {{else}}
+              <td>
+                <span class="wname" data-action="editItem">{{lang.name}}</span>
+                {{#if lang.system.isNative}}<span class="tag">{{localize "GWORLD.Language.Native"}}</span>{{/if}}
+              </td>
+              <td class="n">{{localize (concat "GWORLD.Language." lang.system.spoken)}}</td>
+              <td class="n">{{localize (concat "GWORLD.Language." lang.system.written)}}</td>
+            {{/if}}
             <td class="n">{{lang.system.totalPoints}}</td>
-            <td class="c">
+            <td class="c langactions">
               {{#if @root.editable}}
+                <button type="button" class="rollable iconbtn" data-action="editItem"
+                        title="{{localize 'GWORLD.Language.Open'}}"
+                        aria-label="{{localize 'GWORLD.Language.Open'}}">{{> "gworld.info"}}</button>
                 <button type="button" class="rollable iconbtn" data-action="deleteItem"
                         title="{{localize 'GWORLD.Action.Delete'}}"
                         aria-label="{{localize 'GWORLD.Action.Delete'}}">{{> "gworld.trash"}}</button>

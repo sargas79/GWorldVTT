@@ -730,6 +730,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       derived,
       items,
       appliedTemplates,
+      // The levels a language is known at, for its row's two selects (p. 24).
+      comprehensionLevels: Object.fromEntries(
+        ["none", "broken", "accented", "native"].map((level) => [level, `GWORLD.Language.${level}`]),
+      ),
       // What the templates came to, row by row, for the section's heading.
       templatesTotal: appliedTemplates.reduce((sum: number, row: any) => sum + (Number(row.total) || 0), 0),
       torsoDr: torso ?? null,
@@ -1165,8 +1169,25 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       });
     }
 
-    // A name the player writes in the row: a quirk's or a perk's, or a custom
-    // trait's. Blank is not a name, so an emptied field is put back.
+    // A language's levels, and whether it is the native one, set in its row
+    // rather than on its own sheet (#635).
+    for (const select of this.element.querySelectorAll<HTMLSelectElement>("select[data-item-choice]")) {
+      select.addEventListener("change", () => {
+        const item = this.itemFrom(select);
+        const field = select.dataset.itemChoice;
+        if (item && field) void item.update({ [field]: select.value });
+      });
+    }
+    for (const box of this.element.querySelectorAll<HTMLInputElement>("input[data-item-flag]")) {
+      box.addEventListener("change", () => {
+        const item = this.itemFrom(box);
+        const field = box.dataset.itemFlag;
+        if (item && field) void item.update({ [field]: box.checked });
+      });
+    }
+
+    // A name the player writes in the row: a quirk's or a perk's, a custom
+    // trait's, or a language's. Blank is not a name, so an emptied field is put back.
     for (const input of this.element.querySelectorAll<HTMLInputElement>("input[data-item-text]")) {
       input.addEventListener("change", () => {
         const item = this.itemFrom(input);
@@ -3187,7 +3208,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // The same defaults the picker's custom entries get, from one place: a
     // quirk is -1 and a perk 1, and building them here as well is how this
     // button used to make quirks that cost nothing.
-    const data = customItemData(custom, game.i18n.format("GWORLD.Picker.NewCustom", { kind }));
+    const firstLanguage = type === "language" && !this.actor.items.some((item: any) => item.type === "language");
+    const name = firstLanguage
+      ? game.i18n.localize("GWORLD.Language.FirstName")
+      : game.i18n.format("GWORLD.Picker.NewCustom", { kind });
+    const data = customItemData(custom, name, { firstLanguage });
     await this.actor.createEmbeddedDocuments("Item", [data]);
   }
 
