@@ -329,7 +329,9 @@ export function stepPiercing(type: DamageType, steps: number): DamageType {
 
 /** The calibre a firearm's name states, in millimetres, or null where it does not. */
 export function calibreOf(name: string): number | null {
-  const mm = /(\d+(?:\.\d+)?)\s*mm/i.exec(name);
+  // "7.62x51mm", "9x19mm": a cartridge named bore by case length. The first
+  // figure is the bore; the second, the one the "mm" follows, is the case.
+  const mm = /(?<![\d.])(\d+(?:\.\d+)?)\s*(?:[x×]\s*\d+(?:\.\d+)?\s*)?mm/i.exec(name);
   if (mm) return Number(mm[1]);
   // ".338", ".45", "9mm": a bare decimal is inches. A letter may follow the
   // figure -- ".44M" is a Magnum .44 -- and names the cartridge, not the bore.

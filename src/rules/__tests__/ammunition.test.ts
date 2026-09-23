@@ -73,6 +73,25 @@ describe("ammunition (Characters pp. 275, 276, 278-279)", () => {
     expect(calibreOf("Rifle")).toBeNull();
   });
 
+  it("reads the bore, not the case length, off a bore-by-case name", () => {
+    expect(calibreOf("Battle Rifle, 7.62x51mm")).toBe(7.62);
+    expect(calibreOf("Assault Rifle, 5.56x45mm")).toBe(5.56);
+    expect(calibreOf("Auto Pistol, 9x19mm")).toBe(9);
+    expect(calibreOf("Anti-Materiel Rifle, 12.7x99mm")).toBe(12.7);
+    expect(calibreOf("Battle Rifle, 7.62 x 51 mm")).toBe(7.62);
+    expect(calibreOf("Assault Rifle, 7.62×39mm")).toBe(7.62);
+    expect(calibreOf("Machine Gun, 7.62x54mmR")).toBe(7.62);
+    // Inch calibres and gauges read as before.
+    expect(calibreOf("Auto Pistol, .45 ACP")).toBe(11.43);
+    expect(calibreOf("Pump Shotgun, 12G")).toBe(18.53);
+  });
+
+  it("APHC degrades the wound of a bore-by-case rifle round below 20mm", () => {
+    for (const name of ["Battle Rifle, 7.62x51mm", "Assault Rifle, 5.56x45mm", "Anti-Materiel Rifle, 12.7x99mm"]) {
+      expect(ammunitionEffect("aphc", { ...rifle, calibreMm: calibreOf(name) }).damageType).toBe("pi-");
+    }
+  });
+
   it("steps piercing up and down the ladder and no further", () => {
     expect(stepPiercing("pi", 1)).toBe("pi+");
     expect(stepPiercing("pi++", 1)).toBe("pi++");
