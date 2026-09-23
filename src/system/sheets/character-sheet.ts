@@ -285,6 +285,8 @@ import {
   describeModes,
 } from "./character-prompts.js";
 import { reportRefusedDrop } from "./drop-errors.js";
+import { templateGrants } from "../sheet-v2/template-grants.js";
+import { boughtForScore } from "../sheet-v2/builder-attributes.js";
 export { chooseTemplateOptions, pickTemplateItem } from "./character-prompts.js";
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -557,44 +559,54 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    */
   #templateDescriptions = new Map<string, string>();
   #templateReferences = new Map<string, string>();
+  #templateStatedCosts = new Map<string, number | null>();
 
   /**
-   * What an applied template gave the character, as lines: the scores it set
-   * or granted, and the items it added or raised that are still on the sheet.
+   * What an applied template gave the character, as lines each with its price
+   * -- the scores it set or granted, and the items it added or raised that are
+   * still on the sheet -- and what it all came to (#631).
    */
-  #templateGrants(record: any): string[] {
-    const lines: string[] = [];
+  #templateGrants(record: any): { lines: string[]; total: number; asWritten: number } {
     const label = (key: string) => {
-      const [, field] = key.includes(".") ? key.split(".") : ["", key];
-      const name = field ?? key;
       const known: Record<string, string> = { hp: "HP", fp: "FP", will: "Will", per: "Per", basicSpeed: "Basic Speed", basicMove: "Basic Move", sm: "SM" };
-      return known[name] ?? name;
+      return known[key] ?? key;
     };
+    const signed = (n: number) => `${n > 0 ? "+" : ""}${n}`;
     // Stored as paths ("attributes.ST"), which Foundry keeps nested.
-    const written = foundry.utils.flattenObject(record?.written ?? {}) as Record<string, number>;
-    const previous = foundry.utils.flattenObject(record?.previous ?? {}) as Record<string, number>;
-    for (const [key, value] of Object.entries(written)) {
-      if (key.startsWith("attributes.")) lines.push(`${label(key)} ${value}`);
-      else if (key.startsWith("purchased.")) {
-        const added = (Number(value) || 0) - (Number(previous[key]) || 0);
-        if (added) lines.push(`${label(key)} ${added > 0 ? "+" : ""}${added}`);
+    const grants = templateGrants(
+      {
+        ...record,
+        written: foundry.utils.flattenObject(record?.written ?? {}),
+        previous: foundry.utils.flattenObject(record?.previous ?? {}),
+      },
+      (id) => {
+        const item = this.actor.items.get(id);
+        if (!item) return undefined;
+        const system = item.system ?? {};
+        return {
+          name: String(item.name),
+          total: system.totalPoints ?? system.points,
+          points: system.points,
+          levels: system.levels,
+          pointsPerLevel: system.pointsPerLevel,
+        };
+      },
+    );
+    const lines = grants.lines.map((line) => {
+      const price = line.cost === null ? "" : ` [${line.cost}]`;
+      switch (line.kind) {
+        case "attribute":
+        case "secondary":
+          return `${label(line.key ?? "")} ${line.score ?? signed(line.change ?? 0)}${price}`;
+        case "modifiers":
+          return `${game.i18n.localize("GWORLD.Template.ModifiersLine")}${price}`;
+        case "raised":
+          return `${game.i18n.format("GWORLD.Template.RaisedLine", { name: line.name ?? "" })}${price}`;
+        default:
+          return `${line.name ?? ""}${price}`;
       }
-    }
-    for (const [key, value] of Object.entries(record?.granted ?? {})) {
-      const n = Number(value) || 0;
-      if (n) lines.push(`${label(key)} ${n > 0 ? "+" : ""}${n}`);
-    }
-    for (const id of record?.itemIds ?? []) {
-      const item = this.actor.items.get(id);
-      if (!item) continue;
-      const points = Number(item.system?.points);
-      lines.push(Number.isFinite(points) && item.system?.points !== undefined ? `${item.name} [${points}]` : String(item.name));
-    }
-    for (const raised of record?.raised ?? []) {
-      const item = this.actor.items.get(raised.id);
-      if (item) lines.push(game.i18n.format("GWORLD.Template.RaisedLine", { name: item.name }));
-    }
-    return lines;
+    });
+    return { lines, total: grants.total, asWritten: grants.asWritten };
   }
 
   /** What the traits tab shows for each applied template, its description included. */
@@ -608,14 +620,26 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           const document = await fromUuid(uuid).catch(() => null);
           this.#templateDescriptions.set(uuid, String((document as any)?.system?.description ?? ""));
           this.#templateReferences.set(uuid, String((document as any)?.system?.reference ?? ""));
+          const stated = Number((document as any)?.system?.statedCost);
+          this.#templateStatedCosts.set(uuid, document && Number.isFinite(stated) ? stated : null);
         }
         html = this.#templateDescriptions.get(uuid) ?? "";
       }
       const key = `template:${index}:${uuid}`;
+      const grants = this.#templateGrants(record);
+      // What the template says it costs, beside what it came to, so the two
+      // can be checked against each other. A character template taken on top
+      // of another is combined with it (p. 259) and was never going to cost
+      // what it says on its own, so it is not compared.
+      const statedCost = uuid ? this.#templateStatedCosts.get(uuid) ?? null : null;
+      const stacked = record?.kind === "character" &&
+        applied.slice(0, index).some((earlier) => earlier?.kind === "character");
       rows.push({
         ...record,
         index,
-        grants: this.#templateGrants(record),
+        grants: grants.lines,
+        total: grants.total,
+        statedCost: statedCost !== null && !stacked && statedCost !== grants.asWritten ? statedCost : null,
         reference: String(record?.reference ?? "") || (uuid ? this.#templateReferences.get(uuid) ?? "" : ""),
         descriptionHtml: html,
         descriptionKey: key,
@@ -639,6 +663,33 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // nothing.
     if (!isRuleOn("magic") && !tabHasAddonSections(this.actor, "magic")) delete parts.magic;
     return parts;
+  }
+
+  /**
+   * The attribute boxes carry the score the character has, under
+   * `attributeScore.<KEY>`; what is stored is the bought figure, which moves
+   * by as much as the score was moved (#631).
+   */
+  override _processFormData(event: Event | null, form: HTMLFormElement, formData: object): object {
+    const data = super._processFormData(event, form, formData) as Record<string, any>;
+    const scores = data.attributeScore;
+    delete data.attributeScore;
+    if (scores && typeof scores === "object") {
+      const system = this.actor.system;
+      for (const key of ATTRIBUTE_KEYS) {
+        if (!(key in scores)) continue;
+        const bought = boughtForScore({
+          entered: scores[key],
+          bought: system.attributes?.[key],
+          score: system.derived?.attributes?.[key],
+        });
+        if (bought === null) continue;
+        data.system ??= {};
+        data.system.attributes ??= {};
+        data.system.attributes[key] = bought;
+      }
+    }
+    return data;
   }
 
   override _prepareTabs(group: string): Record<string, any> {
@@ -679,6 +730,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       derived,
       items,
       appliedTemplates,
+      // What the templates came to, row by row, for the section's heading.
+      templatesTotal: appliedTemplates.reduce((sum: number, row: any) => sum + (Number(row.total) || 0), 0),
       torsoDr: torso ?? null,
       editable: this.isEditable,
       limited: actor.limited,
@@ -693,9 +746,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // that follows every edit can put focus back where it was.
       sheetId: this.id,
 
-      // The input edits the bought figure; what traits and a racial template
-      // add is shown beside it, with the score the rest of the sheet actually
-      // uses whenever the two differ (#585).
+      // The box shows the score the character has; the bought figure the
+      // ledger bills, and what traits and a racial template add, are the
+      // breakdown beneath it (#585, #631). Typing a score moves the bought
+      // figure by the same amount -- see _processFormData.
       attributeCards: ATTRIBUTE_KEYS.map((key) => ({
         key,
         label: game.i18n.localize(`GWORLD.Attribute.${key}`),
