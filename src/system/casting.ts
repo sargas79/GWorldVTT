@@ -18,6 +18,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { everyActor } from "./every-actor.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { applyFatigue } from "./fatigue.js";
 import { isRuleOn } from "./optional-rules.js";
@@ -174,8 +175,8 @@ export async function promptForMana(): Promise<void> {
     if (isManaLevel(chosen.scene)) await scene.setFlag(SYSTEM_ID, MANA_SCENE_FLAG, chosen.scene);
     else if (own !== null) await scene.unsetFlag(SYSTEM_ID, MANA_SCENE_FLAG);
   }
-  // Every open sheet says what the mana is; tell them it changed.
-  for (const actor of (game as any).actors ?? []) {
+  // Every open sheet says what the mana is, an unlinked token's too; tell them it changed.
+  for (const actor of everyActor()) {
     if (actor.sheet?.rendered) actor.sheet.render();
   }
 }

@@ -20,6 +20,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { everyActor } from "./every-actor.js";
 import { OPTIONAL_RULES_KEY } from "./optional-rules.js";
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
@@ -95,7 +96,24 @@ function progress(label: string, done: number, total: number): void {
   }
 }
 
-/** Every place an Item can live that a GM can change: the world, actors, and unlocked compendia. */
+/**
+ * The actors of unlinked tokens. Each is its token's own copy of a directory
+ * actor, and what it holds of its own is saved in the token's delta: the rest
+ * is read from the directory actor, and migrated with it.
+ */
+function tokenActors(): any[] {
+  return everyActor().filter((actor) => actor?.isToken && actor.token?.delta);
+}
+
+/** What an unlinked token's delta holds of its own over its directory actor. */
+function deltaSource(actor: any): { system?: Record<string, unknown>; items?: Array<{ _id?: string; _tombstone?: boolean }> } {
+  return actor?.token?.delta?._source ?? {};
+}
+
+/**
+ * Every place an Item can live that a GM can change: the world, actors,
+ * unlinked tokens' own items, and unlocked compendia.
+ */
 async function itemsEverywhere(): Promise<Array<{ item: any; save: (changes: object[]) => Promise<unknown> }>> {
   const found: Array<{ item: any; save: (changes: object[]) => Promise<unknown> }> = [];
   for (const item of (game as any).items ?? []) {
@@ -103,6 +121,15 @@ async function itemsEverywhere(): Promise<Array<{ item: any; save: (changes: obj
   }
   for (const actor of (game as any).actors ?? []) {
     for (const item of actor.items ?? []) found.push({ item, save: (changes) => actor.updateEmbeddedDocuments("Item", changes) });
+  }
+  // Only the items a token holds of its own: one it inherits is the directory
+  // actor's, and writing it through the token would copy it into the delta.
+  for (const actor of tokenActors()) {
+    for (const source of deltaSource(actor).items ?? []) {
+      if (!source?._id || source._tombstone) continue;
+      const item = actor.items?.get?.(source._id);
+      if (item) found.push({ item, save: (changes) => actor.updateEmbeddedDocuments("Item", changes) });
+    }
   }
   for (const pack of (game as any).packs ?? []) {
     if (pack.locked) continue;
@@ -117,13 +144,32 @@ async function itemsEverywhere(): Promise<Array<{ item: any; save: (changes: obj
   return found;
 }
 
-/** Every Actor a GM can change: the world's and unlocked compendia's. */
-async function actorsEverywhere(): Promise<Array<{ actor: any; save: (changes: object[]) => Promise<unknown> }>> {
-  const found: Array<{ actor: any; save: (changes: object[]) => Promise<unknown> }> = [];
-  for (const actor of (game as any).actors ?? []) found.push({ actor, save: (changes) => (Actor as any).updateDocuments(changes) });
+/**
+ * Every Actor a GM can change: the world's, unlinked tokens', and unlocked
+ * compendia's, each with the system data it holds of its own.
+ */
+async function actorsEverywhere(): Promise<Array<{ actor: any; system: Record<string, unknown>; save: (changes: object[]) => Promise<unknown> }>> {
+  const found: Array<{ actor: any; system: Record<string, unknown>; save: (changes: object[]) => Promise<unknown> }> = [];
+  for (const actor of (game as any).actors ?? []) found.push({ actor, system: actor._source?.system ?? {}, save: (changes) => (Actor as any).updateDocuments(changes) });
+  // A token's copy is read from its delta, so only fields it overrides are
+  // written to it; the rest it inherits from the directory actor, migrated above.
+  for (const actor of tokenActors()) {
+    found.push({
+      actor,
+      system: deltaSource(actor).system ?? {},
+      save: async (changes) => {
+        // The id is the directory actor's; the token's copy is updated through its token.
+        for (const change of changes as Array<Record<string, unknown>>) {
+          const own = { ...change };
+          delete own._id;
+          await actor.update(own);
+        }
+      },
+    });
+  }
   for (const pack of (game as any).packs ?? []) {
     if (pack.locked || pack.documentName !== "Actor") continue;
-    for (const actor of await pack.getDocuments()) found.push({ actor, save: (changes) => (Actor as any).updateDocuments(changes, { pack: pack.collection }) });
+    for (const actor of await pack.getDocuments()) found.push({ actor, system: actor._source?.system ?? {}, save: (changes) => (Actor as any).updateDocuments(changes, { pack: pack.collection }) });
   }
   return found;
 }
@@ -209,14 +255,14 @@ export async function moveFields(options: {
   }
   if (hasMigrated(options.module, step)) return { ...none, skipped: true };
   const documents = options.documentName === "Item"
-    ? (await itemsEverywhere()).map((e) => ({ document: e.item, save: e.save }))
-    : (await actorsEverywhere()).map((e) => ({ document: e.actor, save: e.save }));
+    ? (await itemsEverywhere()).map((e) => ({ document: e.item, system: e.item._source?.system ?? {}, save: e.save }))
+    : (await actorsEverywhere()).map((e) => ({ document: e.actor, system: e.system, save: e.save }));
   const entries: Array<{ save: (changes: object[]) => Promise<unknown>; change: object }> = [];
-  for (const { document, save } of documents) {
+  for (const { document, system, save } of documents) {
     if (options.types !== "*" && !options.types.includes(document.type)) continue;
     const change: Record<string, unknown> = { _id: document.id };
     for (const [from, to] of Object.entries(options.fields)) {
-      let value = foundry.utils.getProperty(document._source?.system ?? {}, from);
+      let value = foundry.utils.getProperty(system, from);
       if (value === undefined) continue;
       if (options.map) value = options.map(foundry.utils.deepClone(value), from, document);
       if (value === undefined) continue;
@@ -384,7 +430,8 @@ export function warnUncoveredData(): void {
     entries,
     {
       items: withInvalid((game as any).items),
-      actors: withInvalid((game as any).actors),
+      // An unlinked token's copy can hold data of its own the directory actor doesn't.
+      actors: [...withInvalid((game as any).actors), ...tokenActors()],
       storedRules: (safeSetting(OPTIONAL_RULES_KEY) ?? {}) as Record<string, unknown>,
     },
     [...(((game as any).modules as Map<string, any> | undefined)?.values() ?? [])],
