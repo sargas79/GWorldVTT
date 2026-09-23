@@ -1238,6 +1238,11 @@
               <select name="system.rangedModes.{{i}}.mount" aria-label="{{localize 'GWORLD.Item.Mount'}}" data-tooltip="{{localize 'GWORLD.Item.MountHint'}}" {{#unless @root.editable}}disabled{{/unless}}>
                 {{selectOptions @root.choices.mounts selected=m.mount localize=true}}
               </select>
+              {{#if (eq m.mount "mounted")}}
+                <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.OffMountHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.offMount"
+                       {{#if m.offMount}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                  {{localize "GWORLD.Item.OffMount"}}</label>
+              {{/if}}
             </div>
             <div class="irow">
               <select name="system.rangedModes.{{i}}.guidance" aria-label="{{localize 'GWORLD.Item.Guidance'}}" data-tooltip="{{localize 'GWORLD.Item.GuidanceHint'}}" {{#unless @root.editable}}disabled{{/unless}}>

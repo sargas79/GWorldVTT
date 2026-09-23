@@ -444,6 +444,14 @@ and the roll continues.
       from it, whatever its Rate of Fire. The row also carries `mount` (the
       mode's `""`, `rest`, `bipod` or `mounted`), read-only; `mounted` starts
       a suppression at the vehicle or tripod cap.
+    - Since 1.84.0, a ranged row also carries `offMount`, read-only: true for a
+      `mounted` ("M") weapon whose mode has been taken off its mount (the
+      mode's `offMount`, false by default). On the mount the weapon's ST is
+      ignored, so the row's `skillLevel` carries no ST penalty and its
+      `minStPenalty` is 0; off it, both carry -1 per point of ST lacking
+      (Characters p. 270). A row's `minStPenalty` is always the penalty its
+      `skillLevel` already includes. An off-mount weapon also starts a
+      suppression at the handheld cap.
     - Since 1.69.0, also `minRange` on a ranged row: the least distance in yards
       it can hit at, 0 for none, from the mode's own `minRange` (and in `basis`
       beside the other ranges). The Combat tab shows it beside the range, and an

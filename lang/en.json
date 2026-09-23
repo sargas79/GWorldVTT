@@ -1526,6 +1526,8 @@
       "MalfunctionHint": "The attack roll at or above which the weapon jams (Campaigns p. 407). Leave blank for a weapon that never does.",
       "Mount": "Mount",
       "MountHint": "The mark after the ST: a musket rest braces an aimed standing shot, a bipod braces a prone one at two-thirds the ST, a mounted weapon ignores ST and Bulk on its mount (Characters p. 270).",
+      "OffMount": "Off its mount",
+      "OffMountHint": "The weapon has been taken off its mount, so its listed ST counts: -1 to skill per point you lack. On the mount the ST is ignored. Taking it off or putting it back takes three Ready maneuvers (Characters p. 270).",
       "Thrown": "Thrown",
       "ThrownHint": "A weapon you let go of, whose range comes off your ST.",
       "StMultiple": "Range × ST",

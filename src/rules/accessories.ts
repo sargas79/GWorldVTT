@@ -55,6 +55,22 @@ export function supportEffect(options: {
   return { minimumSt: st, braced: false, rooted: false };
 }
 
+/**
+ * What holds a weapon up, read from the mark after its ST (Characters p. 270).
+ *
+ * "M" is a weapon usually fired from a vehicle mount, a gun carriage or a
+ * tripod: its listed ST is ignored on the mount and counts only once it is
+ * taken off, so it is on its mount unless it is said to be off. "B" is a
+ * bipod, which does its work only for a prone shooter (see `supportEffect`).
+ * "R", a musket rest, braces a shot but leaves the ST as it is, as does no
+ * mark at all.
+ */
+export function supportOf(mark: string, offMount = false): Support {
+  if (mark === "mounted") return offMount ? "hands" : "tripod";
+  if (mark === "bipod") return "bipod";
+  return "hands";
+}
+
 /** "Removing a weapon from its mount, or reattaching it, requires three Ready maneuvers." */
 export const MOUNT_READY_MANEUVERS = 3;
 

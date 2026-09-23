@@ -225,7 +225,7 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
     accuracy: weapon.accuracy + scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: turnsAimed }),
     braced: weapon.aim.braced,
   });
-  const mountedByDefault = data.mount === "mounted";
+  const mountedByDefault = data.mount === "mounted" && data.offMount !== "1";
   const field = (name: string, label: string, value: number, extra = "") => `
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${label}</span><input type="number" name="${name}" value="${value}" min="1" step="1" style="width:90px"${extra}>
