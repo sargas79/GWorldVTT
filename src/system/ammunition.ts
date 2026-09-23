@@ -677,6 +677,11 @@ export interface AfterShotsContext {
   kind: ShotsKind;
   /** Targets attacked: one, a spray's count, none for suppression. */
   targets: number;
+  /**
+   * The derived attack mode fired, where a module's row spent the stored
+   * mode's rounds (since 1.101.0); null for the stored mode's own row.
+   */
+  derivedMode: string | null;
 }
 
 /** A spray's attacks, added up as they are made. */
@@ -692,7 +697,7 @@ export interface ShotsTally {
  * not the weapon keeps a count, so heat, fouling or wear can be followed
  * without watching the item. Nothing is said for an attack that spent nothing.
  */
-export function announceShots(options: Omit<AfterShotsContext, "mode" | "shots">): void {
+export function announceShots(options: Omit<AfterShotsContext, "mode" | "shots" | "derivedMode"> & { derivedMode?: string | null }): void {
   const modeIndex = Math.floor(Number(options.modeIndex));
   const mode = options.item?.system?.rangedModes?.[modeIndex];
   if (!options.item || !mode) return;
@@ -705,7 +710,36 @@ export function announceShots(options: Omit<AfterShotsContext, "mode" | "shots">
   callCombatHook(COMBAT_HOOKS.afterShots, {
     actor: options.actor ?? null, item: options.item, modeIndex, mode,
     shots, fired, extra, wasted, kind: options.kind, targets: count(options.targets),
+    derivedMode: options.derivedMode ? String(options.derivedMode) : null,
   } satisfies AfterShotsContext);
+}
+
+/** Where an attack row's shots come from: a stored mode, and the rounds each shot takes. */
+export interface ShotsSource {
+  /** The stored ranged mode whose count the attack spends; not an integer where there is none. */
+  modeIndex: number;
+  /** The rounds each shot of the row takes off it: 1 but for a derived row that says otherwise. */
+  perShot: number;
+  /** The derived attack mode fired, or null for a stored mode's own row. */
+  derivedMode: string | null;
+}
+
+/**
+ * Which stored mode an attack spends (since 1.101.0). A stored mode's row
+ * spends its own count; a module's derived row spends nothing unless it names
+ * the stored mode whose rounds it fires (`spendsFrom`), and then
+ * `roundsPerShot` of them for each shot.
+ */
+export function shotsSourceOf(button: { dataset: Record<string, string | undefined>; closest?: (selector: string) => any } | null): ShotsSource {
+  const data = button?.dataset ?? {};
+  const derived = String(data.derivedMode ?? button?.closest?.("[data-derived-mode]")?.dataset?.derivedMode ?? "") || null;
+  const from = data.spendsFrom === undefined || data.spendsFrom === "" ? NaN : Number(data.spendsFrom);
+  if (derived && Number.isInteger(from) && from >= 0) {
+    return { modeIndex: from, perShot: Math.max(1, Math.floor(Number(data.roundsPerShot) || 1)), derivedMode: derived };
+  }
+  // A derived row that names no stored mode spends nothing.
+  if (derived) return { modeIndex: NaN, perShot: 1, derivedMode: derived };
+  return { modeIndex: data.modeIndex === undefined || data.modeIndex === "" ? NaN : Number(data.modeIndex), perShot: 1, derivedMode: null };
 }
 
 /**

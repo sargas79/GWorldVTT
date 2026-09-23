@@ -1,7 +1,7 @@
 {{!-- What an attack roll reads. Shared by the attack cards and the Combat tab, so a roll made from either carries the same data. --}}
 data-action="roll" data-roll-type="attack" data-roll-skill="{{atk.skillName}}"
 data-tooltip="{{localize 'GWORLD.Ranged.QuickShotHint'}}"
-data-mode-index="{{atk.modeIndex}}"
+data-mode-index="{{atk.modeIndex}}" data-spends-from="{{atk.spendsFrom}}" data-rounds-per-shot="{{atk.roundsPerShot}}"
 data-loaded="{{#if atk.shotsCapacity}}{{atk.shotsLoaded}}{{/if}}"
 data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
 data-damage-type="{{atk.damageType}}" data-tight-beam="{{#if atk.tightBeam}}1{{/if}}"

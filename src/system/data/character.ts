@@ -202,7 +202,7 @@ const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
   ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1, fullAutoOnly: false, tightBeam: false,
   recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0, scopeFixed: false,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false, outOfAction: null,
-  ammunition: "", malediction: 0, ignoresDr: false,
+  ammunition: "", malediction: 0, ignoresDr: false, spendsFrom: null, roundsPerShot: 1,
 };
 
 function attributeField(label: string) {
@@ -436,6 +436,15 @@ export interface DerivedAttack {
   empty?: boolean;
   /** What put the weapon out of action (Campaigns p. 407), until it is cleared; null where nothing did (since API 1.71.0). */
   outOfAction?: { kind: string; label: string } | null;
+  /**
+   * A module's derived ranged row that fires the weapon's own rounds: the
+   * stored mode whose count it spends, and the rounds each shot takes
+   * (since API 1.101.0). Null, and 1, for every other row.
+   */
+  spendsFrom?: number | null;
+  roundsPerShot?: number;
+  /** The `<module>.<key>` of the derived attack mode a module's row came from. */
+  derivedMode?: string;
   /** What it is loaded with, where that changes the shot (pp. 276, 279). */
   ammunition?: AmmunitionType;
   /** The carried box the loaded rounds came from, and what it has left; null where the weapon was loaded from nowhere in particular. */
@@ -2859,6 +2868,30 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     };
     melee.push(...(derivedAttackRows("melee", weapons, this.parent, helpers, DERIVED_MELEE_DEFAULTS) as unknown as DerivedAttack[]));
     ranged.push(...(derivedAttackRows("ranged", weapons, this.parent, helpers, DERIVED_RANGED_DEFAULTS) as unknown as DerivedAttack[]));
+    // A derived ranged row that fires the weapon's own rounds counts and
+    // spends the stored mode it names (API 1.101.0): its shots are that
+    // mode's, in whole shots of the row, and it is empty when they are.
+    for (const row of ranged) {
+      if (!row.derivedMode) continue;
+      const from = Number(row.spendsFrom);
+      const stored = row.itemId && row.spendsFrom !== null && Number.isInteger(from) && from >= 0
+        ? ranged.find((other) => !other.derivedMode && other.itemId === row.itemId && other.modeIndex === from)
+        : undefined;
+      if (!stored) {
+        row.spendsFrom = null;
+        row.roundsPerShot = 1;
+        continue;
+      }
+      const per = Math.max(1, Math.floor(Number(row.roundsPerShot) || 1));
+      const capacity = Number(stored.shotsCapacity ?? 0) || 0;
+      row.spendsFrom = from;
+      row.roundsPerShot = per;
+      row.shotsCapacity = Math.floor(capacity / per);
+      row.shotsLoaded = Math.floor((Number(stored.shotsLoaded ?? 0) || 0) / per);
+      row.empty = capacity > 0 && row.shotsLoaded === 0;
+      row.reloadable = false;
+      row.outOfAction = stored.outOfAction ?? null;
+    }
     // A punch, a bite or a module's row is no Weapon Master's weapon, but
     // Trained By A Master halves its Rapid Strike by its skill (p. 93).
     for (const row of melee) {

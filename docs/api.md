@@ -771,6 +771,11 @@ and the roll continues.
     than one shell), `spraying` (fired once for the whole burst, after its
     last target, with `targets` its count) or `suppression` (`targets` 0).
     For heat, fouling or wear without watching item updates.
+    Since 1.101.0 it also carries `derivedMode`: the `<module>.<key>` of the
+    derived attack mode fired, where a module's row spent a stored mode's
+    rounds (see `combat.registerDerivedAttackMode`), and null otherwise;
+    `modeIndex` and `mode` are then the stored mode's, and `fired` and
+    `wasted` count its rounds.
   - `gworld.malfunction` (since 1.71.0): when an attack roll reached Malf.
     and the Firearm Malfunction Table was rolled (Campaigns p. 407), before
     the card is posted, with `{ actor, item, modeIndex, attackRoll, roll,
@@ -1785,6 +1790,26 @@ Two fields a module may read (since 1.62.0):
   per character, and the row has no item; the attack and damage hooks still get its
   `mode` with `derived`. Set `naturalKey` on the row (`punch`,
   `kick`, `bite`, `claw`) for what strikes, which Hurting Yourself reads.
+
+  Since 1.101.0 a ranged row that fires the weapon's own rounds -- the same
+  round fired another way, a setting of the weapon -- spends them. The row
+  returned by `mode` sets `spendsFrom`, the index of the item's stored ranged
+  mode whose count it uses, and optionally `roundsPerShot` (default 1), the
+  rounds each shot of the row takes. The row then:
+  - shows that mode's count in its own shots (`shotsLoaded` and
+    `shotsCapacity` are the stored mode's divided by `roundsPerShot`, rounded
+    down), reads as empty when it can't fire a shot, and is out of action
+    when the weapon is; reloading is done from the stored mode's row;
+  - caps a burst at the shots it has, refuses an attack whose rounds (and an
+    attack option's `shots`) the stored mode hasn't got, and takes them off
+    that mode through the same path as the stored mode's own attacks,
+    Infinite Ammunition and shared magazines included, for single shots,
+    bursts, sprays and suppression fire;
+  - fires `gworld.afterShots` with the stored mode's `modeIndex` and
+    `derivedMode` set.
+
+  A `spendsFrom` that names no stored ranged mode of the item, or a self
+  mode, is ignored, and the row spends nothing, as before.
 - **`combat.registerSlam({ module, key, label, kind, available?, prepare })`** (since
   1.31.0). Another way to slam (`kind: "slam"`) or shove (`"shove"`), offered in
   the Slam or Shove dialog beside the system's own when `available(actor)` says so.
