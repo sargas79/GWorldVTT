@@ -56,6 +56,42 @@ describe("the add-on API", () => {
     expect(await api.items.restoreDr(piece(4, { type: "equipment" }), 1)).toBeNull();
   });
 
+  it("wears armour's DR down for good, never below none (since 1.99.0)", async () => {
+    const api = createApi();
+    const piece = (system: Record<string, unknown>, extra: Record<string, unknown> = {}) => {
+      const item = {
+        id: "vest", type: "armor", isOwner: true, system: { dr: 6, drLost: 0, locations: [], ...system } as Record<string, any>,
+        update: vi.fn(async (change: Record<string, number>) => { item.system.drLost = change["system.drLost"]!; }),
+        ...extra,
+      };
+      return item;
+    };
+    const vest = piece({ locations: ["torso", "vitals"] });
+    expect(await api.items.wearDr(vest, 2, { location: "torso", reason: "Acid" }))
+      .toEqual({ itemId: "vest", from: 0, to: 2, location: "torso", reason: "Acid" });
+    expect(vest.system.drLost).toBe(2);
+    // No further than the DR it has.
+    expect(await api.items.wearDr(vest, 10)).toEqual({ itemId: "vest", from: 2, to: 6, location: "", reason: "" });
+    vest.update.mockClear();
+    expect((await api.items.wearDr(vest, 1))?.to).toBe(6);
+    expect(vest.update).not.toHaveBeenCalled();
+    // restoreDr gives back what wearDr took.
+    expect(await api.items.restoreDr(vest, 6)).toBe(0);
+
+    // A place the piece doesn't cover wears nothing; a field covers everything.
+    expect(await api.items.wearDr(vest, 1, { location: "skull" })).toBeNull();
+    const field = piece({ locations: ["torso"], forceField: true });
+    expect((await api.items.wearDr(field, 1, { location: "skull" }))?.to).toBe(1);
+    // A place the piece armours differently wears to its own figure.
+    const suit = piece({ dr: 4, drByLocation: [{ locations: ["torso"], dr: 8 }] });
+    expect((await api.items.wearDr(suit, 20, { location: "torso" }))?.to).toBe(8);
+
+    expect(await api.items.wearDr(piece({}), 0)).toBeNull();
+    expect((await api.items.wearDr(piece({}), 1.9))?.to).toBe(1);
+    expect(await api.items.wearDr(piece({}, { isOwner: false }), 1)).toBeNull();
+    expect(await api.items.wearDr(piece({}, { type: "equipment" }), 1)).toBeNull();
+  });
+
   it("is frozen, so a module can't swap out part of it", () => {
     const api = createApi();
     expect(Object.isFrozen(api)).toBe(true);

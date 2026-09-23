@@ -40,7 +40,7 @@ import { chatApi, sheetsApi } from "./sheet-extensions.js";
 import { magicApi, pointsApi } from "./roll-extensions.js";
 import { conditionLabel, setCondition } from "./conditions.js";
 import { migrationApi } from "./migration.js";
-import { takeInjury, type InjuryTaken } from "./damage.js";
+import { takeInjury, wearDr, type DrWorn, type InjuryTaken } from "./damage.js";
 import { stopBleeding } from "./bleeding.js";
 import { activePoisons, advancePoison, clearPoison, dosePoison, treatIllness, treatPoison, type ActivePoison } from "./poison.js";
 import { applyFirstAid, attendPatient, operate, resuscitate } from "./recovery.js";
@@ -90,7 +90,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.98.0";
+export const API_VERSION = "1.99.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -437,6 +437,20 @@ const items = {
     const next = Math.max(0, lost - restored);
     if (next !== lost) await item.update({ "system.drLost": next });
     return next;
+  },
+
+  /**
+   * Wears `amount` points of DR off a piece of armour for good (since
+   * 1.99.0; Characters p. 47), for a corrosive, a fire or a rule of the
+   * module's: `drLost` goes up as ablative spending raises it, never past the
+   * piece's DR -- at `location` where one is given, anywhere on it otherwise.
+   * Returns `{ itemId, from, to, location, reason }` (`from`/`to` the lost DR
+   * before and after), or null for an item that isn't armour, a user who
+   * doesn't own it, an amount that isn't positive, or a location the piece
+   * doesn't cover.
+   */
+  wearDr(item: any, amount: number, options: { location?: string; reason?: string } = {}): Promise<DrWorn | null> {
+    return wearDr(item, amount, options);
   },
 };
 

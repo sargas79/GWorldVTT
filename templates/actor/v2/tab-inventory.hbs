@@ -123,7 +123,7 @@
                 <span class="v2-area-name">{{area.label}}</span>
                 {{#each area.pieces as |piece|}}
                   <button type="button" class="v2-area-piece" data-item-id="{{piece.id}}" data-v2-row="inventory:item:{{piece.id}}" data-action="v2Select">
-                    {{piece.name}} <span>(DR {{piece.dr}})</span>
+                    {{piece.name}} <span>({{#if piece.drLost}}{{localize "GWORLD.SheetV2.DrLeft" dr=piece.dr lost=piece.drLost}}{{else}}DR {{piece.dr}}{{/if}})</span>
                   </button>
                 {{else}}
                   <span class="v2-muted">{{localize "GWORLD.SheetV2.Nothing"}}</span>

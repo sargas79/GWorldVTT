@@ -34,6 +34,7 @@ import { isOpenTechniqueData } from "../open-techniques.js";
 import { isReadTrait } from "../../rules/trait-effects.js";
 import { weaknessOf } from "../../rules/weakness.js";
 import { traitLevelName } from "../../rules/traits.js";
+import { remainingDr } from "../../rules/armor.js";
 import { asSortMode, firstLine, groupRows, selectedKey, sortRows, type SortMode } from "../sheet-v2/list-view.js";
 import { attackSkillOptions, rolledWithChosenSkill, type HeldSkill } from "../sheet-v2/attack-skills.js";
 import { isLevelled, itemImprovement, traitImprovement } from "../sheet-v2/improvements.js";
@@ -401,7 +402,9 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const areas = armorByArea(physical.filter((i: any) => i.type === "armor").map((item: any) => ({
       id: String(item.id),
       name: String(item.name ?? ""),
-      dr: Number(item.system?.dr ?? 0) || 0,
+      // What is left of it, after anything that wore it away (Characters p. 47).
+      dr: remainingDr(Number(item.system?.dr ?? 0) || 0, Number(item.system?.drLost ?? 0) || 0),
+      drLost: Math.max(0, Math.floor(Number(item.system?.drLost ?? 0) || 0)),
       locations: (item.system?.locations ?? []) as string[],
       equipped: Boolean(item.system?.equipped),
     }))).map((area) => ({ ...area, label: L(`GWORLD.SheetV2.Area.${area.key}`) }));
