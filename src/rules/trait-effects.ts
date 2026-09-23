@@ -681,6 +681,29 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
   return total;
 }
 
+/** The modifiers that take Damage Resistance over the eyes: Force Field, or Partial naming them. */
+const COVERS_EYES: readonly RegExp[] = [/\bforce field\b/, /\bpartial\b.*\beyes?\b/];
+
+/**
+ * How much of a character's Damage Resistance reaches the eyes.
+ *
+ * By default natural DR "does not protect your eyes" (Characters p. 46). A
+ * Force Field protects the whole body, the eyes included (p. 47), and DR
+ * bought Partial for the eyes protects them and nothing else. The modifier is
+ * read from the trait's modifiers, or from its name where the sheet wrote it
+ * there ("Damage Resistance (Force Field, +20%)").
+ */
+export function damageResistanceAtEyes(traits: readonly HeldTrait[]): number {
+  let dr = 0;
+  for (const trait of traits) {
+    const own = traitEffects([trait]).damageResistance;
+    if (own <= 0) continue;
+    const said = [trait.name, ...(trait.modifiers ?? [])].map((s) => s.toLowerCase());
+    if (said.some((s) => COVERS_EYES.some((re) => re.test(s)))) dr += own;
+  }
+  return dr;
+}
+
 /**
  * Adds one trait's effects onto a running total.
  *

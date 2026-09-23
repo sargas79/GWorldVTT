@@ -26,6 +26,7 @@ import { lockedTerms, type CampaignTermKey } from "../party/roster.js";
 import {
   addTraitEffects,
   afterSuperJump,
+  damageResistanceAtEyes,
   impairedAttacks,
   lameCombatPenalty,
   lameMove,
@@ -2079,14 +2080,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // The Damage Resistance advantage is armour the character is: it covers
     // everything, which is what an empty location list means here, and it goes
     // in with the rest so the sheet shows the DR the damage pipeline will
-    // actually subtract.
+    // actually subtract. It leaves the eyes bare unless it was bought to cover
+    // them (Characters p. 46), so only the part taken as a Force Field or
+    // Partial for the eyes is counted there.
     if (traits.damageResistance > 0) {
       worn.push({
         dr: traits.damageResistance,
         drSplit: null,
         drSplitAppliesTo: [],
-        locations: [],
+        locations: HIT_LOCATION_ORDER.filter((loc) => loc !== "eye"),
       });
+      const atEyes = Math.min(traits.damageResistance, damageResistanceAtEyes(heldTraits));
+      if (atEyes > 0) worn.push({ dr: atEyes, drSplit: null, drSplitAppliesTo: [], locations: ["eye"] });
     }
 
     // Armour written "4/2" stops one kind of attack better than another, and two

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   afterSuperJump,
+  damageResistanceAtEyes,
   isReadTrait,
   noTraitEffects,
   readTraitNames,
@@ -174,5 +175,28 @@ describe("reading a character's Magery (Characters pp. 66-67, 242)", () => {
     expect(traitEffects([held("Extra Legs (7+ Legs)")]).extraLegs).toBe(5);
     expect(traitEffects([held("Extra Legs (4 Legs) (Cannot Kick, -50%)")]).extraLegs).toBe(2);
     expect(traitEffects([]).extraLegs).toBe(0);
+  });
+});
+
+describe("Damage Resistance over the eyes (Characters pp. 46-47)", () => {
+  it("gives the eyes none of plain Damage Resistance", () => {
+    expect(damageResistanceAtEyes([{ name: "Damage Resistance", levels: 3 }])).toBe(0);
+    expect(damageResistanceAtEyes([{ name: "Damage Resistance", levels: 3, modifiers: ["Partial (Skull only)"] }])).toBe(0);
+  });
+
+  it("gives them a Force Field's, from a modifier or from the name", () => {
+    expect(damageResistanceAtEyes([{ name: "Damage Resistance", levels: 3, modifiers: ["Force Field"] }])).toBe(3);
+    expect(damageResistanceAtEyes([{ name: "Damage Resistance (Force Field, +20%)", levels: 4 }])).toBe(4);
+  });
+
+  it("gives them DR bought Partial for the eyes, and only that trait's", () => {
+    expect(damageResistanceAtEyes([
+      { name: "Damage Resistance", levels: 2, modifiers: ["Partial (Eyes only)"] },
+      { name: "Damage Resistance", levels: 5 },
+    ])).toBe(2);
+  });
+
+  it("reads nothing from a trait that isn't Damage Resistance", () => {
+    expect(damageResistanceAtEyes([{ name: "Nictitating Membrane", levels: 1, modifiers: ["Force Field"] }])).toBe(0);
   });
 });

@@ -228,10 +228,13 @@ describe("gworld.armorDr", () => {
 /** The target's own DR as lines of the same hook (since 1.98.0). */
 describe("gworld.armorDr natural DR", () => {
   /** A character with DR from a trait, the traits' total as the data model derives it, and armour over it. */
-  function hide(options: { traitDr: number; derivedDr?: number; armourDr?: number; hooves?: boolean }) {
+  function hide(options: { traitDr: number; derivedDr?: number; armourDr?: number; hooves?: boolean; modifiers?: string[] }) {
     const actor = character(30, 30) as any;
     const items: unknown[] = [
-      { id: "trait1", type: "trait", name: "Damage Resistance", system: { levels: options.traitDr } },
+      {
+        id: "trait1", type: "trait", name: "Damage Resistance",
+        system: { levels: options.traitDr, modifiers: (options.modifiers ?? []).map((name) => ({ name, value: 0 })) },
+      },
     ];
     if (options.hooves) items.push({ id: "trait2", type: "trait", name: "Hooves", system: { levels: 0 } });
     if (options.armourDr) {
@@ -311,6 +314,57 @@ describe("gworld.armorDr natural DR", () => {
     await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso" } as never);
     expect(labels).toEqual([["Damage Resistance", "Hooves"], ["Damage Resistance"]]);
     expect(foot?.naturalDr).toBe(3);
+  });
+
+  // By default natural DR leaves the eyes bare (Characters p. 46).
+  it("leaves the eye bare of Damage Resistance bought without eye coverage", async () => {
+    const actor = hide({ traitDr: 3 });
+    let seen: Line[] = [];
+    listen((context) => { seen = structuredClone(context.lines); });
+    const eye = await applyDamageToActor(actor, { basicDamage: 5, type: "imp", armorDivisor: 1, hitLocation: "eye" } as never);
+    expect(seen).toEqual([]);
+    expect(eye?.naturalDr).toBe(0);
+    expect(eye?.effectiveDr).toBe(0);
+    expect(eye?.penetrating).toBe(5);
+    // The skull next to it keeps the DR.
+    const skull = await applyDamageToActor(actor, { basicDamage: 5, type: "imp", armorDivisor: 1, hitLocation: "skull" } as never);
+    expect(skull?.naturalDr).toBe(3);
+  });
+
+  it("leaves the eye bare where the traits don't account for the figure", async () => {
+    const actor = hide({ traitDr: 3, derivedDr: 5 });
+    const eye = await applyDamageToActor(actor, { basicDamage: 5, type: "imp", armorDivisor: 1, hitLocation: "eye" } as never);
+    expect(eye?.naturalDr).toBe(0);
+  });
+
+  // A Force Field protects the whole body, the eyes included (p. 47).
+  it("covers the eye with Damage Resistance taken as a Force Field", async () => {
+    const actor = hide({ traitDr: 3, modifiers: ["Force Field"] });
+    let seen: Line[] = [];
+    listen((context) => { seen = structuredClone(context.lines); });
+    const eye = await applyDamageToActor(actor, { basicDamage: 5, type: "imp", armorDivisor: 1, hitLocation: "eye" } as never);
+    expect(seen).toEqual([
+      { label: "Damage Resistance", dr: 3, applies: true, forceField: false, flexible: false, hardened: 0, source: "natural", traitId: "trait1" },
+    ]);
+    expect(eye?.naturalDr).toBe(3);
+    expect(eye?.penetrating).toBe(2);
+  });
+
+  it("covers the eye with Damage Resistance bought Partial for the eyes", async () => {
+    const actor = hide({ traitDr: 2, modifiers: ["Partial (Eyes only)"] });
+    const eye = await applyDamageToActor(actor, { basicDamage: 5, type: "imp", armorDivisor: 1, hitLocation: "eye" } as never);
+    expect(eye?.naturalDr).toBe(2);
+  });
+
+  it("still gives a Nictitating Membrane's DR to the eye", async () => {
+    const actor = hide({ traitDr: 3 });
+    actor.items.push({ id: "trait3", type: "trait", name: "Nictitating Membrane", system: { levels: 1 } });
+    actor.system.derived.traitEffects.nictitatingMembrane = 1;
+    let labels: string[] = [];
+    listen((context) => { labels = context.lines.map((line) => (line as { label?: string }).label ?? ""); });
+    const eye = await applyDamageToActor(actor, { basicDamage: 5, type: "imp", armorDivisor: 1, hitLocation: "eye" } as never);
+    expect(labels).toEqual(["Nictitating Membrane"]);
+    expect(eye?.naturalDr).toBe(1);
   });
 
   it("sends a natural line a listener made a field before the armour", async () => {
