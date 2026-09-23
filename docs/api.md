@@ -1618,7 +1618,8 @@ Two fields a module may read (since 1.62.0):
       `rules.darknessPenaltyFor(darkness, eyes)` -- -1 to -9 after Night
       Vision (Dark Vision and Infravision ignore it), -10 in total darkness
       unless the eyes see in it, 0 for none. `observer` is the actor whose
-      eyes those are; left out, nobody's.
+      eyes those are, and (since 1.100.0) whom the lights only some can see
+      are tested against; left out, nobody's.
     - `lighting` is `{ level, daylight, inLight, unnaturalDarkness }`, what
       the reading came from.
 
@@ -1626,6 +1627,29 @@ Two fields a module may read (since 1.62.0):
     darkness level and global light, no light sources, no regions. The attack
     dialog's darkness field is still the table's to fill in; its `darkness`
     line is unchanged.
+  - *Lights only some can see* (since 1.100.0, Campaigns p. 394: a light
+    turns total darkness to -3 for whoever can see it). A light seen only by
+    some viewers -- a lamp in a spectrum only certain eyes or gear perceive --
+    is a kind a module registers, and a mark on the light:
+    - `areas.registerLitFor({ module, key, test })` registers the kind, and
+      returns its id `<module>.<key>` (null, with a console warning, where
+      the registration is malformed or the id is taken). `test(observer,
+      light)` gets the observing actor and the light's document (an
+      AmbientLight, or a Token for its own light) and returns true where that
+      observer sees it. Register during `gworld.ready` or earlier.
+    - `areas.setLitFor(light, id | null)` marks an AmbientLight or a Token
+      (placeable or document) as that kind, in the system's `litFor` flag, or
+      with null clears the mark. It resolves to true where the mark was
+      written; false for anything that isn't a light or a token, a user who
+      may not change it, or an id that isn't `<module>.<key>`.
+      `areas.litFor(light)` reads the mark back, null for none.
+    - A marked light counts in `darknessAt` (its `lighting.inLight`, and so
+      the darkness and the penalty) only where its kind's test passes for the
+      `observer`: never with no observer, and never where no module has
+      registered the kind (a mark left behind by a module no longer active).
+      Unmarked lights count for everyone, as before. Foundry still draws a
+      marked light for every viewer; what anyone's token sees on the canvas
+      is Foundry's vision, not this.
 - **Spraying and Suppression Fire** (since 1.70.0, Campaigns p. 409), under
   the `rapidFire` switch. A ranged attack from a row of RoF 5+ with two or
   more tokens targeted offers to spray the burst: the targets are put in the

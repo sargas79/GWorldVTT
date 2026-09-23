@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createApi } from "../api.js";
-import { darknessAt } from "../darkness.js";
+import { darknessAt, lightCountsFor, litForOf, registerLitFor, setLitFor } from "../darkness.js";
 import { darknessFromLighting, darknessPenaltyFor, LIT_DARKNESS } from "../../rules/visibility.js";
 
 /** Reading the darkness at a token or a point (sargas79/GWorldVTT#673). */
@@ -45,6 +45,8 @@ function drawnScene(options: {
   level?: number;
   regionLevel?: (p: any) => number | null;
   lights?: Array<(p: any) => boolean>;
+  /** Lights with the placeable they belong to, for the lights only some can see. */
+  sources?: Array<{ test: (p: any) => boolean; object: any }>;
   darknessSources?: Array<(p: any) => boolean>;
   global?: { enabled: boolean; bright: boolean; min?: number; max?: number };
 }) {
@@ -63,7 +65,8 @@ function drawnScene(options: {
       getDarknessLevel: (p: any) => options.regionLevel?.(p) ?? scene.environment.darknessLevel,
       testInsideLight: (p: any, opts: any) => {
         if (globalLightSource.active && opts?.condition?.(globalLightSource) !== false) return true;
-        return (options.lights ?? []).some((test) => test(p));
+        if ((options.lights ?? []).some((test) => test(p))) return true;
+        return (options.sources ?? []).some((source) => opts?.condition?.(source) !== false && source.test(p));
       },
       testInsideDarkness: (p: any) => (options.darknessSources ?? []).some((test) => test(p)),
     },
@@ -122,5 +125,73 @@ describe("darknessAt", () => {
     drawnScene({ level: 0 });
     expect(darknessAt(null, { x: "here" })).toBeNull();
     expect(createApi().areas.darknessAt).toBe(darknessAt);
+  });
+});
+
+/** Lights only some viewers can see (sargas79/GWorldVTT#687). */
+describe("lights only some can see", () => {
+  /** A light placeable whose document carries the mark, as Foundry's flags hold it. */
+  const lamp = (litFor?: string) => {
+    const document: any = { documentName: "AmbientLight", isOwner: true, flags: litFor ? { gworld: { litFor } } : {} };
+    document.update = async (change: Record<string, unknown>) => {
+      for (const [path, value] of Object.entries(change)) {
+        if (path === "flags.gworld.-=litFor") delete document.flags.gworld?.litFor;
+        else if (path === "flags.gworld.litFor") document.flags.gworld = { ...(document.flags.gworld ?? {}), litFor: value };
+      }
+    };
+    return { document };
+  };
+  const goggles = { name: "wearer", gear: "goggles" };
+  const bare = { name: "bare" };
+
+  it("registers a kind of light with its test, once, under <module>.<key>", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(registerLitFor({ module: "test-mod", key: "infrared", test: (observer) => observer?.gear === "goggles" })).toBe("test-mod.infrared");
+    expect(registerLitFor({ module: "test-mod", key: "infrared", test: () => true })).toBeNull();
+    expect(registerLitFor({ module: "", key: "x", test: () => true })).toBeNull();
+    expect(registerLitFor({ module: "test-mod", key: "none" } as any)).toBeNull();
+    expect(warn).toHaveBeenCalledTimes(3);
+  });
+
+  it("counts a marked light only for the observers its test passes", () => {
+    expect(lightCountsFor(lamp().document, null)).toBe(true);
+    const infrared = lamp("test-mod.infrared");
+    expect(lightCountsFor(infrared, goggles)).toBe(true);
+    expect(lightCountsFor(infrared, bare)).toBe(false);
+    // Nobody's eyes, or a kind no module registered: it counts for nobody.
+    expect(lightCountsFor(infrared, null)).toBe(false);
+    expect(lightCountsFor(lamp("gone-mod.uv"), goggles)).toBe(false);
+  });
+
+  it("lights the spot in darknessAt only for an observer who sees the light", () => {
+    const scene = drawnScene({ level: 1, sources: [{ test: (p) => p.x < 500, object: lamp("test-mod.infrared") }] });
+    const wearer = { ...goggles, system: { derived: { vision: {} } } };
+    expect(darknessAt(scene, { x: 100, y: 0 }, { observer: wearer })).toMatchObject({ darkness: 3, penalty: -3, lighting: { inLight: true } });
+    expect(darknessAt(scene, { x: 100, y: 0 }, { observer: { ...bare, system: {} } })).toMatchObject({ darkness: 10, total: true });
+    expect(darknessAt(scene, { x: 100, y: 0 })).toMatchObject({ darkness: 10 });
+    // An ordinary light beside it still lights the spot for everyone.
+    const lit = drawnScene({ level: 1, sources: [{ test: () => true, object: lamp() }] });
+    expect(darknessAt(lit, { x: 100, y: 0 })?.darkness).toBe(3);
+  });
+
+  it("marks and unmarks a light or a token, for a user who may change it", async () => {
+    const light = lamp();
+    expect(await setLitFor(light, "test-mod.infrared")).toBe(true);
+    expect(litForOf(light)).toBe("test-mod.infrared");
+    expect(await setLitFor(light.document, null)).toBe(true);
+    expect(litForOf(light)).toBeNull();
+    expect(await setLitFor(light, "not an id")).toBe(false);
+    expect(await setLitFor(light, "a.b.c")).toBe(false);
+    expect(await setLitFor({ document: { ...light.document, isOwner: false } }, "test-mod.infrared")).toBe(false);
+    expect(await setLitFor({ documentName: "Tile", isOwner: true }, "test-mod.infrared")).toBe(false);
+    const token = { documentName: "Token", isOwner: true, flags: { gworld: { litFor: "test-mod.infrared" } } };
+    expect(litForOf(token)).toBe("test-mod.infrared");
+  });
+
+  it("is on the API under areas", () => {
+    const api = createApi();
+    expect(api.areas.registerLitFor).toBe(registerLitFor);
+    expect(api.areas.setLitFor).toBe(setLitFor);
+    expect(api.areas.litFor).toBe(litForOf);
   });
 });
