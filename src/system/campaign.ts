@@ -13,6 +13,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { everyActor } from "./every-actor.js";
 import { hasMigrated, recordMigration } from "./migration.js";
 import { partyOf, refreshActor, worldParties } from "./party.js";
 import { CAMPAIGN_TERM_KEYS, termsFrom, type CampaignTermKey, type CampaignTerms } from "./party/roster.js";
@@ -95,7 +96,8 @@ function refreshAll(): void {
   if (refreshTimer) clearTimeout(refreshTimer);
   refreshTimer = setTimeout(() => {
     refreshTimer = null;
-    for (const actor of game.actors ?? []) {
+    // An unlinked token's character is its own copy, so it is prepared again too.
+    for (const actor of everyActor()) {
       if (boundByCampaign(actor.type)) refreshActor(actor);
     }
     for (const party of worldParties()) {
