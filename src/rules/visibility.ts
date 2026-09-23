@@ -63,6 +63,48 @@ export function darknessPenalty(darkness: number, eyes: VisionTraits = {}): numb
   return left === 0 ? 0 : -left;
 }
 
+/** The darkness a light in line of sight leaves, at worst (p. 394). */
+export const LIT_DARKNESS = 3;
+
+/** What lights a spot on a map, as the table's lighting has it. */
+export interface Lighting {
+  /** How dark the map is there, 0 (day) to 1 (black night). */
+  level: number;
+  /** The whole map is lit, as by daylight. */
+  daylight?: boolean;
+  /** A torch, a lamp or a flashlight reaches the spot. */
+  inLight?: boolean;
+  /** Darkness no light gets into (a darkness spell's, say) covers the spot. */
+  unnaturalDarkness?: boolean;
+}
+
+/**
+ * The darkness at a spot, 0 to 10, from how the map is lit there (p. 394).
+ *
+ * The map's own darkness counts a tenth of the scale per tenth of the way to
+ * black night, 1 being total darkness. "Any such light within line of sight
+ * reduces the penalty from -10 (total darkness) to -3", so a spot a light
+ * reaches is never darker than 3; daylight leaves none. Darkness no light
+ * gets into is total, whatever else lights the spot.
+ */
+export function darknessFromLighting(lighting: Lighting): number {
+  if (lighting.unnaturalDarkness) return TOTAL_DARKNESS;
+  if (lighting.daylight) return 0;
+  const level = Number(lighting.level);
+  const base = Number.isFinite(level) ? Math.max(0, Math.min(TOTAL_DARKNESS, Math.round(level * TOTAL_DARKNESS))) : 0;
+  return lighting.inLight ? Math.min(base, LIT_DARKNESS) : base;
+}
+
+/**
+ * What a darkness costs these eyes (p. 394): the partial darkness's -1 to
+ * -9 after Night Vision and the like, and in total darkness -10, or nothing
+ * for eyes that see in it.
+ */
+export function darknessPenaltyFor(darkness: number, eyes: VisionTraits = {}): number {
+  if (Math.floor(darkness) >= TOTAL_DARKNESS) return seesInTotalDarkness(eyes) ? 0 : -TOTAL_DARKNESS;
+  return darknessPenalty(darkness, eyes);
+}
+
 /** Whether these eyes see a foe in total darkness as though it were day. */
 export function seesInTotalDarkness(eyes: VisionTraits): boolean {
   return Boolean(eyes.darkVision || eyes.infravision);
