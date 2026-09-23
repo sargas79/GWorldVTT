@@ -136,7 +136,15 @@ import { malfunctionOf, malfunctionWithHooks, setMalfunction, type MalfunctionRe
 import { strikingPart } from "../rules/hurting-yourself.js";
 import type { DamageType } from "../rules/types.js";
 
-import { cappedAimBonus, targetingSystemBonus, unexpectedDodgePenalty } from "../rules/vehicle-combat.js";
+import {
+  cappedAimBonus,
+  movingPlatformPenalty,
+  targetingSystemBonus,
+  unexpectedDodgePenalty,
+  type PlatformMounting,
+  type RideRoughness,
+  type VehicleMedium,
+} from "../rules/vehicle-combat.js";
 import {
   accuracyApplies,
   areaDamageFallsOff,
@@ -173,7 +181,8 @@ export interface RollModifier {
    * What the line is, for a module that needs to find it whatever the label
    * says in the user's language (since 1.63.0): `speedRange`, `bulk`,
    * `accuracy`, `aim`, `braced`, `aimTarget`; since 1.86.0 `darkness`
-   * and `laser`. Blank or absent on lines nobody has named.
+   * and `laser`; since 1.87.0 `movingPlatform`. Blank or absent on lines
+   * nobody has named.
    */
   key?: string;
   /** Why a `bulk` line applies: `moveAndAttack` or `closeCombat` (since 1.63.0). */
@@ -185,6 +194,16 @@ export interface RollModifier {
    * anything off it (since 1.86.0).
    */
   darkness?: number;
+  /**
+   * On a `movingPlatform` line (since 1.87.0): `vehicle` or `mount`, the
+   * medium (`ground`, `air`, `water`), the ride (`smooth`, `rough`,
+   * `offRoad`) and how the weapon is held (`handheld`, `openMount`,
+   * `fixedMount`, `stabilized`).
+   */
+  platform?: "vehicle" | "mount";
+  medium?: string;
+  ride?: string;
+  mounting?: string;
 }
 
 /**
@@ -1449,6 +1468,9 @@ async function rollAction(
   // whether it is the car's own gun are things no map can say (p. 469). The
   // range is still measured, so the field starts at the right figure.
   const aboard = ranged ? vehicleAboard(actor) : null;
+  // A rider asks too: whether the mount moved, and over what, is the
+  // table's to say (pp. 397, 548; since 1.87.0).
+  const riding = Boolean(ranged) && !aboard && actor?.system?.mounted === true && isRuleOn("mountedCombat");
   const measured = ranged && !(event as MouseEvent).shiftKey ? measuredShot(actor) : null;
   // The weapon the button belongs to, for the modules' attack options.
   const rolledItemId = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
@@ -1474,12 +1496,13 @@ async function rollAction(
   // place in the sweep gives it.
   const sprayed = spray ? { ...weapon, recoil: spray.recoil } : weapon;
   const shot = ranged
-    ? measured && !aboard
+    ? measured && !aboard && !riding
       ? quickShot(measured, sprayed, spray?.shots ?? 1)
       : await promptForRangedAttack({
           ...sprayed,
           ...(spray ? { fixedShots: spray.shots } : {}),
           aboard,
+          riding,
           mayFireMounted: mayFireMountedWeapon(actor, aboard),
           initialRange: measured?.rangeYards ?? 0,
           actor,
@@ -2487,6 +2510,8 @@ export async function promptForRangedAttack(options: {
   loaded?: number | null;
   /** The vehicle the shooter is aboard, if any, and whether they may fire its weapons. */
   aboard?: Aboard | null;
+  /** True for a rider in the saddle, who is asked whether the mount moved (since 1.87.0). */
+  riding?: boolean;
   mayFireMounted?: boolean;
   /** A range already measured off the map, to start the field at. */
   initialRange?: number;
@@ -2562,6 +2587,25 @@ export async function promptForRangedAttack(options: {
         <label style="display:flex;align-items:center;gap:8px">
           <input type="checkbox" name="targetingSystem"><span>${L("HasTargeting")}</span>
         </label>
+        ${aboard.moving ? `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>${L("WeaponMount")}</span>
+          <select name="vehicleMounting" style="width:150px">
+            <option value="fixedMount">${L("FixedMount")}</option>
+            <option value="openMount">${L("OpenMount")}</option>
+          </select>
+        </label>
+        ${rideField(aboard.medium)}` : ""}
+      </fieldset>`
+    : "";
+  // In the saddle: whether the mount moved more than a step, and over what
+  // (pp. 397, 548).
+  const mountFields = !aboard && options.riding
+    ? `<fieldset style="border:1px solid var(--color-border-light-2,#999);padding:4px 8px">
+        <legend>${L("FromSaddle")}</legend>
+        <label style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" name="mountMoved"><span>${L("MountMoved")}</span>
+        </label>
+        ${rideField("ground")}
       </fieldset>`
     : "";
 
@@ -2602,6 +2646,7 @@ export async function promptForRangedAttack(options: {
         <input type="checkbox" name="laserSeen"><span>${L("LaserSeen")}</span>
       </label>
       ${vehicleFields}
+      ${mountFields}
       ${attackOptionFields(addonContext)}
       <div data-roll-breakdown></div>
     </div>`;
@@ -2655,6 +2700,16 @@ export async function promptForRangedAttack(options: {
             targetingTl: form?.querySelector<HTMLInputElement>('input[name="targetingSystem"]')?.checked
               ? aboard.techLevel
               : 0,
+            medium: aboard.medium,
+            ride: readRide(form),
+            weaponMount: (form?.querySelector<HTMLSelectElement>('select[name="vehicleMounting"]')?.value ??
+              "fixedMount") as "fixedMount" | "openMount",
+          }
+        : null,
+      mount: !aboard && options.riding
+        ? {
+            moving: form?.querySelector<HTMLInputElement>('input[name="mountMoved"]')?.checked ?? false,
+            ride: readRide(form),
           }
         : null,
     };
@@ -2766,6 +2821,8 @@ interface RangedInput {
   aimed: boolean;
   /** Set when the shooter is aboard a vehicle (Campaigns pp. 467-469). */
   vehicle?: VehicleShot | null;
+  /** Set when the shooter is in the saddle (Campaigns pp. 396-397; since 1.87.0). */
+  mount?: MountShot | null;
   /** A laser sight in use, and whether the target has seen its dot (p. 411). */
   laser?: { on: boolean; targetSees: boolean } | null;
 }
@@ -2784,6 +2841,51 @@ export interface VehicleShot {
   stabilized: boolean;
   /** The vehicle's TL where it has a targeting system, or 0. */
   targetingTl: number;
+  /** Ground, air or water: the row of the moving-platform penalty (since 1.87.0). */
+  medium?: VehicleMedium;
+  /** How rough the ride is (since 1.87.0); a good road or calm water where not given. */
+  ride?: RideRoughness;
+  /** What the vehicle's own weapon sits on, when it is not stabilized (since 1.87.0). */
+  weaponMount?: "fixedMount" | "openMount";
+}
+
+/** What firing from the saddle adds to a shot (since 1.87.0). */
+export interface MountShot {
+  /** True where the mount moved more than a step this turn (p. 397). */
+  moving: boolean;
+  /** How rough the ground is. */
+  ride: RideRoughness;
+}
+
+/** The select asking how rough the ride is, worded for ground or water (p. 548). */
+function rideField(medium: VehicleMedium): string {
+  if (medium !== "ground" && medium !== "water") return "";
+  const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
+  const options = medium === "water"
+    ? [["smooth", L("RideCalm")], ["rough", L("RideRoughWater")]]
+    : [["smooth", L("RideGoodRoad")], ["rough", L("RideBadRoad")], ["offRoad", L("RideOffRoad")]];
+  return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>${L("Ride")}</span>
+          <select name="ride" style="width:150px">
+            ${options.map(([value, label]) => `<option value="${value}">${label}</option>`).join("")}
+          </select>
+        </label>`;
+}
+
+function readRide(form: HTMLElement | null): RideRoughness {
+  const value = form?.querySelector<HTMLSelectElement>('select[name="ride"]')?.value ?? "smooth";
+  return value === "rough" || value === "offRoad" ? value : "smooth";
+}
+
+/**
+ * How the weapon is held on a moving platform, for the table (p. 548): a
+ * rider's weapon is in the hand; a vehicle's own weapon sits in a stabilized
+ * turret or mount, or on whatever mount the shooter says.
+ */
+function platformMounting(vehicle: VehicleShot): PlatformMounting {
+  if (vehicle.kind !== "mounted") return "handheld";
+  if (vehicle.stabilized) return "stabilized";
+  return vehicle.weaponMount ?? "fixedMount";
 }
 
 /**
@@ -2919,6 +3021,32 @@ export function rangedModifiers(
     if (thrown !== 0) modifiers.push({ label: L("VehicleDodged"), value: thrown });
   }
 
+  // Attacking from a moving vehicle or mount (p. 548): "the penalty depends
+  // on how rough the ride is and whether you're using a weapon mount or a
+  // handheld weapon" (p. 469). Keyed `movingPlatform`, for a module that
+  // eases or replaces it (since 1.87.0).
+  const platform = vehicle?.moving
+    ? { platform: "vehicle" as const, medium: vehicle.medium ?? (vehicle.flying ? "air" : "ground"), ride: vehicle.ride ?? "smooth", mounting: platformMounting(vehicle) }
+    : input.mount?.moving
+      ? { platform: "mount" as const, medium: "ground" as VehicleMedium, ride: input.mount.ride, mounting: "handheld" as PlatformMounting }
+      : null;
+  if (platform) {
+    const rough = movingPlatformPenalty(platform);
+    if (rough !== 0) {
+      modifiers.push({
+        label: L(platform.platform === "vehicle" ? "MovingVehicle" : "MovingMount"),
+        value: rough,
+        key: "movingPlatform",
+        ...platform,
+      });
+    }
+  }
+  // "If the mount moves more than a step, you suffer the same penalties that
+  // you would if firing from a moving vehicle: you can't benefit from extra
+  // turns of Aim, or from telescopic scopes and other targeting systems"
+  // (p. 397).
+  const mountMoving = input.mount?.moving === true;
+
   // A Move and Attack loses the benefit of having aimed, whatever was ticked,
   // and so does anyone covering more than a single hex: "you cannot claim any
   // of the bonuses listed for the Aim maneuver ... Exception: if you watch a
@@ -2937,9 +3065,9 @@ export function rangedModifiers(
     // Aimed on the sheet: Accuracy, the second and third turns, the bracing.
     // Aimed by the checkbox alone: Accuracy, as one turn's aim is worth.
     const aimedFor = deliberatelyAimed ? Math.max(1, weapon.aim?.turns ?? 0) : 1;
-    const scope = scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: aimedFor, fixed: weapon.scopeFixed === true });
+    const scope = mountMoving ? 0 : scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: aimedFor, fixed: weapon.scopeFixed === true });
     const aiming = aimBonus({
-      turnsAimed: aimedFor,
+      turnsAimed: mountMoving ? Math.min(1, aimedFor) : aimedFor,
       accuracy: weapon.accuracy + scope,
       braced: deliberatelyAimed ? (weapon.aim?.braced ?? false) : false,
     });

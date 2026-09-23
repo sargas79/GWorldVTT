@@ -9,7 +9,7 @@
  * at TL7.
  */
 
-import { mediumOf, mayUseVehicleSystem } from "../rules/vehicle-combat.js";
+import { mediumOf, mayUseVehicleSystem, type VehicleMedium } from "../rules/vehicle-combat.js";
 import type { Locomotion } from "../rules/vehicles.js";
 
 /** The vehicle a character is aboard, and their place in it. */
@@ -23,6 +23,8 @@ export interface Aboard {
   stabilityRating: number;
   /** True for anything in the air, where an unexpected swerve costs double. */
   flying: boolean;
+  /** Ground, air or water, which picks the row of the moving-platform penalty (p. 548). */
+  medium: VehicleMedium;
   /** True while it is going anywhere at all. */
   moving: boolean;
   /** Its tech level, which is what a targeting system is worth. */
@@ -44,12 +46,14 @@ export function vehicleAboard(actor: any, vehicles: Iterable<any> = allVehicles(
     const seat = (vehicle.system?.crew ?? []).find((s: { uuid: string }) => s.uuid === uuid);
     if (!seat) continue;
     const stats = vehicle.system?.vehicle ?? {};
+    const medium = mediumOf(String(stats.locomotion ?? "ground") as Locomotion);
     return {
       vehicle,
       name: String(vehicle.name ?? ""),
       operator: seat.operator === true,
       stabilityRating: Number(stats.stability) || 0,
-      flying: mediumOf(String(stats.locomotion ?? "ground") as Locomotion) === "air",
+      flying: medium === "air",
+      medium,
       moving: (Number(vehicle.system?.speed) || 0) > 0,
       techLevel: Number.parseInt(String(vehicle.system?.tl ?? ""), 10) || 0,
     };

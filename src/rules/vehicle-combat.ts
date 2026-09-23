@@ -158,6 +158,53 @@ export function cappedAimBonus(options: {
   return Math.min(options.bonus, Math.max(0, options.stabilityRating));
 }
 
+/**
+ * How rough the ride is, for the moving-platform penalty (p. 548): a ground
+ * vehicle's good road, bad road or off-road; a water vehicle's calm or rough
+ * water ("smooth" and "rough", with "offRoad" counted as rough). An air
+ * vehicle takes no account of it.
+ */
+export type RideRoughness = "smooth" | "rough" | "offRoad";
+
+/**
+ * How the weapon is held on the platform (p. 548): in the hand, on an
+ * external open mount, on a fixed mount, hardpoint or carriage, or in a
+ * stabilized turret or stabilized open mount.
+ */
+export type PlatformMounting = "handheld" | "openMount" | "fixedMount" | "stabilized";
+
+/** The column of the table each mounting reads, worst first. */
+const MOUNTING_STEP: Readonly<Record<PlatformMounting, number>> = {
+  handheld: 3,
+  openMount: 2,
+  fixedMount: 1,
+  stabilized: 0,
+};
+
+/**
+ * The penalty for attacking from a moving vehicle or mount (p. 548; p. 469
+ * sends the shooter there). "The penalty depends on how rough the ride is and
+ * whether you're using a weapon mount or a handheld weapon": in the air and on
+ * a good road a hand weapon takes -1 and anything mounted nothing; a bad road
+ * or calm water runs from 0 (stabilized) to -3 (in the hand); off-road or
+ * rough water from -1 to -4. A space vehicle takes nothing. A moving animal
+ * is ridden over ground, and reads the ground rows.
+ */
+export function movingPlatformPenalty(options: {
+  medium: VehicleMedium;
+  ride: RideRoughness;
+  mounting: PlatformMounting;
+}): number {
+  const step = MOUNTING_STEP[options.mounting] ?? MOUNTING_STEP.handheld;
+  if (options.medium === "spaceOrUnderwater") return 0;
+  if (options.medium === "air") return options.mounting === "handheld" ? -1 : 0;
+  // Calm water reads as a bad road, rough water as off-road.
+  const smooth = options.ride === "smooth";
+  if (options.medium === "ground" && smooth) return options.mounting === "handheld" ? -1 : 0;
+  const rough = options.medium === "water" ? !smooth : options.ride === "offRoad";
+  return 0 - (step + (rough ? 1 : 0));
+}
+
 /** "If the vehicle dodged and you aren't the operator, you have an extra -2 to hit, or -4 if flying." */
 export function unexpectedDodgePenalty(options: { dodged: boolean; operator: boolean; flying?: boolean }): number {
   if (!options.dodged || options.operator) return 0;

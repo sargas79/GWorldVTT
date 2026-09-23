@@ -56,23 +56,32 @@ export function aimTurnsOf(actor: any): number {
   return Math.max(0, Math.floor(Number(actor.system?.aim?.turns ?? 0)));
 }
 
+/** The reasons the system has its own words for. */
+const KNOWN_LOSSES: readonly AimLoss[] = ["injured", "defended", "fired", "moved"];
+
 /**
- * Drops the aim, saying why, for an actor this user may change.
+ * Drops the aim, saying why, for an actor this user may change. True where
+ * there was an aim to lose.
  *
  * Quiet when there was no aim to lose: most people hit in a fight were not
- * aiming, and a note about it every time would be noise.
+ * aiming, and a note about it every time would be noise. A reason the system
+ * doesn't know -- a module's own, since API 1.87.0 -- is shown as given.
  */
-export async function loseAim(actor: any, reason: AimLoss): Promise<void> {
-  if (!actor?.isOwner) return;
+export async function loseAim(actor: any, reason: AimLoss | string): Promise<boolean> {
+  if (!actor?.isOwner) return false;
   const turns = Number(actor.system?.aim?.turns ?? 0);
-  if (!(turns > 0)) return;
+  if (!(turns > 0)) return false;
 
   await actor.update({ "system.aim.turns": 0, "system.aim.target": "", "system.aim.bonuses": [] });
-  if (reason !== "moved") {
-    ui.notifications?.info(
-      game.i18n.format(`GWORLD.Aim.Lost.${reason}`, { name: String(actor.name ?? "") }),
-    );
-  }
+  if (reason === "moved") return true;
+  const name = String(actor.name ?? "");
+  const text = (KNOWN_LOSSES as readonly string[]).includes(reason)
+    ? game.i18n.format(`GWORLD.Aim.Lost.${reason}`, { name })
+    : reason
+      ? game.i18n.format("GWORLD.Aim.Lost.other", { name, reason: String(reason) })
+      : game.i18n.format("GWORLD.Aim.Lost.plain", { name });
+  ui.notifications?.info(text);
+  return true;
 }
 
 /**

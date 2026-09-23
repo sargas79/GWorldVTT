@@ -1721,6 +1721,19 @@
       "VehicleDodgedBox": "The vehicle dodged this turn",
       "Stabilized": "Stabilized sights or mount",
       "HasTargeting": "Using the vehicle's targeting system",
+      "WeaponMount": "Its own weapon sits on",
+      "FixedMount": "Fixed mount",
+      "OpenMount": "Open mount",
+      "Ride": "The ride",
+      "RideGoodRoad": "Good road",
+      "RideBadRoad": "Bad road",
+      "RideOffRoad": "Off-road",
+      "RideCalm": "Calm water",
+      "RideRoughWater": "Rough water",
+      "FromSaddle": "From the saddle",
+      "MountMoved": "The mount moved more than a step this turn",
+      "MovingVehicle": "Moving vehicle",
+      "MovingMount": "Moving mount",
       "LaserSight": "Laser sight",
       "LaserSeen": "The target sees the laser dot",
       "AimingRoll": "Aiming ({skill})"
@@ -3531,7 +3544,9 @@
       "Lost": {
         "injured": "{name} was hit and loses the aim.",
         "defended": "{name} had to defend and loses the aim.",
-        "fired": "{name} fires; the aim is spent."
+        "fired": "{name} fires; the aim is spent.",
+        "other": "{name} loses the aim: {reason}.",
+        "plain": "{name} loses the aim."
       }
     },
     "Ready": {

@@ -230,6 +230,42 @@ describe("from a vehicle", () => {
   it("adds nothing when the shooter is not aboard anything", () => {
     expect(rangedModifiers(shot({ vehicle: null }), carbine)).toEqual([]);
   });
+
+  /** Attacking from a moving vehicle (Campaigns p. 548; since 1.87.0). */
+  it("takes a keyed movingPlatform line by the ride and the mounting", () => {
+    const line = (over = {}) => rangedModifiers(shot({ vehicle: aboard(over) }), carbine).find((m) => m.key === "movingPlatform");
+    expect(line()).toMatchObject({ value: -1, platform: "vehicle", medium: "ground", ride: "smooth", mounting: "handheld" });
+    expect(line({ medium: "ground", ride: "offRoad" })?.value).toBe(-4);
+    expect(line({ medium: "water", ride: "rough", kind: "mounted", weaponMount: "openMount" })?.value).toBe(-3);
+    expect(line({ medium: "ground", ride: "rough", kind: "mounted" })).toMatchObject({ value: -1, mounting: "fixedMount" });
+    expect(line({ medium: "ground", ride: "rough", kind: "mounted", stabilized: true })).toBeUndefined();
+    expect(line({ medium: "air", flying: true, kind: "mounted" })).toBeUndefined();
+    // A vehicle standing still is not a moving platform.
+    expect(line({ moving: false, ride: "offRoad" })).toBeUndefined();
+  });
+});
+
+/** Attacking from a moving mount (Campaigns pp. 397, 548; since 1.87.0). */
+describe("from the saddle", () => {
+  const bow = { accuracy: 2, scopeBonus: 2, bulk: -6, aim: { turns: 3, braced: false } };
+
+  it("takes the ground rows for a weapon in the hand, keyed movingPlatform", () => {
+    const line = (ride: "smooth" | "rough" | "offRoad") =>
+      rangedModifiers(shot({ mount: { moving: true, ride } }), bow).find((m) => m.key === "movingPlatform");
+    expect(line("smooth")).toMatchObject({ value: -1, platform: "mount", medium: "ground", mounting: "handheld" });
+    expect(line("rough")?.value).toBe(-3);
+    expect(line("offRoad")?.value).toBe(-4);
+  });
+
+  it("loses the extra turns of Aim and the scope while the mount moves", () => {
+    const moving = rangedModifiers(shot({ aimed: true, mount: { moving: true, ride: "smooth" } }), bow);
+    expect(moving.find((m) => m.key === "accuracy")?.value).toBe(2);
+    expect(moving.find((m) => m.key === "aim")).toBeUndefined();
+    const still = rangedModifiers(shot({ aimed: true, mount: { moving: false, ride: "smooth" } }), bow);
+    expect(still.find((m) => m.key === "accuracy")?.value).toBe(4);
+    expect(still.find((m) => m.key === "aim")?.value).toBe(2);
+    expect(still.find((m) => m.key === "movingPlatform")).toBeUndefined();
+  });
 });
 
 /** A laser sight (GURPS Basic Set: Campaigns p. 411). */
