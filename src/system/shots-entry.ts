@@ -9,7 +9,7 @@
  * instead. Everything that reads capacity or reload time reads it from here.
  */
 
-import { parseShots, type ReloadAid, type ShotsEntry } from "../rules/ammunition.js";
+import { parseShots, type ReloadAid, type ReloadRequiredRoll, type ReloadRoll, type ShotsEntry } from "../rules/ammunition.js";
 import { COMBAT_HOOKS, callCombatHook } from "./combat-extensions.js";
 
 /** What `gworld.shotsEntry` hands its listeners. */
@@ -59,6 +59,30 @@ export function shotsEntryFor(item: any, modeIndex: number, mode: any = item?.sy
     fastDrawSeconds: countOrNull(asked.fastDrawSeconds) ?? table.fastDrawSeconds,
     fastDrawPer: asked.fastDrawPer === "round" ? "round" : "reload",
     aids: reloadAids(asked.aids),
+    // A time per round on top of the fixed one, the roll in place of
+    // Fast-Draw (Ammo), and the rolls the load needs (since 1.88.0).
+    perRoundSeconds: countOrNull(asked.perRoundSeconds) ?? table.perRoundSeconds,
+    fastDrawRoll: reloadRoll(asked.fastDrawRoll),
+    requiredRolls: Array.isArray(asked.requiredRolls)
+      ? asked.requiredRolls.flatMap((roll: any): ReloadRequiredRoll[] => {
+        const read = reloadRoll(roll);
+        if (!read || typeof roll.label !== "string" || !roll.label) return [];
+        return [{ ...read, label: roll.label, onFail: roll.onFail === "continue" ? "continue" : "abort" }];
+      })
+      : [],
+  };
+}
+
+/** A roll a listener wrote: a skill's name, a level, or both; anything else is null. */
+function reloadRoll(value: any): ReloadRoll | null {
+  if (!value || typeof value !== "object") return null;
+  const skill = typeof value.skill === "string" && value.skill.trim() ? value.skill.trim() : undefined;
+  const level = value.level === undefined || value.level === null || !Number.isFinite(Number(value.level)) ? undefined : Math.floor(Number(value.level));
+  if (skill === undefined && level === undefined) return null;
+  return {
+    ...(skill !== undefined ? { skill } : {}),
+    ...(level !== undefined ? { level } : {}),
+    ...(typeof value.label === "string" && value.label ? { label: value.label } : {}),
   };
 }
 
@@ -70,11 +94,15 @@ function reloadAids(value: unknown): ReloadAid[] {
     if (!aid || typeof aid.id !== "string" || !aid.id || typeof aid.label !== "string") return [];
     const seconds = number(aid.seconds);
     const fastDrawSeconds = number(aid.fastDrawSeconds);
+    const multiplier = number(aid.multiplier);
     return [{
       id: aid.id,
       label: aid.label,
       ...(seconds !== undefined ? { seconds: Math.round(seconds) } : {}),
       ...(fastDrawSeconds !== undefined ? { fastDrawSeconds: Math.max(0, Math.floor(fastDrawSeconds)) } : {}),
+      // Used one at a time with the others in its group, and a factor on the time (since 1.88.0).
+      ...(typeof aid.exclusiveGroup === "string" && aid.exclusiveGroup ? { exclusiveGroup: aid.exclusiveGroup } : {}),
+      ...(multiplier !== undefined ? { multiplier: Math.max(0, multiplier) } : {}),
       checked: aid.checked === true,
     }];
   });

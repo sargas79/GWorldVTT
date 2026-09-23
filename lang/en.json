@@ -3794,7 +3794,18 @@
         "Label": "Fast-Draw (Ammo)",
         "success": "Fast-Draw (Ammo): {seconds} s faster",
         "failure": "Fast-Draw (Ammo) failed: a round dropped",
-        "criticalFailure": "Fast-Draw (Ammo) critically failed: the whole load dropped"
+        "criticalFailure": "Fast-Draw (Ammo) critically failed: the whole load dropped",
+        "Other": {
+          "Ask": "Roll {label} at {level} to reload {name} faster, saving {seconds} s? A failure drops a round, a critical failure the whole load.",
+          "success": "{label}: {seconds} s faster",
+          "failure": "{label} failed: a round dropped",
+          "criticalFailure": "{label} critically failed: the whole load dropped"
+        }
+      },
+      "Required": {
+        "success": "{label}: made",
+        "failure": "{label} failed",
+        "abort": "{label} failed: nothing loaded"
       }
     },
     "EquipmentQuality": {

@@ -633,6 +633,30 @@ and the roll continues.
     drops below one second by the skill, or below none by an aid. The rules
     are `rules.reloadTimeWith({ entry, seconds, rounds, aids, fastDraw })`,
     which gives `{ seconds, saved }`, and `rules.fastDrawHelps(...)`.
+
+    Since 1.88.0 the entry also says how the load is timed and rolled for.
+    `perRoundSeconds` (0) is a time for each round loaded on top of
+    `reloadSeconds`, taken once; above 0 the Reload button asks how many
+    rounds to load, as it does for a weapon loaded shot by shot
+    (`rules.loadsByTheRound(entry)`), and `rules.reloadTime(entry, rounds)`
+    counts it. `fastDrawRoll` (null) is `{ skill?, level?, label? }`, the roll
+    the Reload button offers in place of Fast-Draw (Ammo): against `level`
+    where it is given, or else the character's level in `skill`; `label`
+    names it on the dialog and card (the skill's name where absent). Its
+    success, failure and critical failure count as the skill's do, and a
+    character with no level is offered no roll. `requiredRolls` ([]) is a
+    list of `{ skill?, level?, label, onFail? }` the load needs, rolled in
+    order once the aids are chosen and before the skill is offered: on a
+    failure with `onFail: "abort"` (the default) the time is spent -- the
+    Ready maneuver and the card -- and nothing goes in; with `"continue"` the
+    load goes in and the card says the roll failed. A roll with no `level`
+    and a skill the character lacks fails. Each aid may also carry
+    `exclusiveGroup`, a string: aids sharing one are used one at a time (the
+    dialog unticks the others, and `rules.usableAids(aids)` keeps only the
+    first ticked), and `multiplier`, which scales the reload's time after
+    every aid's seconds are added, rounded up (`0.5` halves it; several
+    multiply together), before a Fast-Draw saving is taken off. Loading from
+    a chosen box of rounds counts `perRoundSeconds` but makes no rolls.
   - `gworld.afterShots` (since 1.71.0): once after every attack that spent
     shots, whether or not the weapon keeps a count, with `{ actor, item,
     modeIndex, mode, shots, fired, extra, wasted, kind, targets }`, read-only.
