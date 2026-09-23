@@ -21,7 +21,7 @@ import {
   type Reaction,
 } from "../rules/reactions.js";
 import { quickContest, resolveSuccess } from "../rules/success.js";
-import { reactionModifiers } from "./procedure-extensions.js";
+import { reactionModifiers, successRollModifiers } from "./procedure-extensions.js";
 
 const REACTION_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/reaction.hbs`;
 
@@ -128,6 +128,12 @@ export async function rollReaction(options: {
  * reaction either way -- and Diplomacy's second chance rolled here rather than
  * left to remember, since forgetting it is what makes Diplomacy look worse than
  * it is.
+ *
+ * Since API 1.95.0 both sides pass through `gworld.successRollModifiers` as
+ * the sides of any Quick Contest do, tagged `contest`, `quickContest` and
+ * `influence`, each with the other as `opponent`: the influencer's side with
+ * `skill` the Influence skill, the subject's with `skill` blank and the tag
+ * `will`. Their lines go into the two targets and onto the card.
  */
 export async function rollInfluence(options: {
   actor: any;
@@ -142,7 +148,21 @@ export async function rollInfluence(options: {
   const will = Number(options.subject?.system?.derived?.will) || 10;
   // "+1 per level to Influence rolls" (Characters p. 41).
   const charisma = Number(options.actor?.system?.derived?.charismaInfluence) || 0;
-  const skill = options.skillLevel + options.modifier + charisma;
+  const given = options.skillLevel + options.modifier + charisma;
+  // What the sides' conditions and the modules add: an interpreter's earpiece,
+  // a drug that saps the will (since API 1.95.0).
+  const contestLabel = game.i18n.localize("GWORLD.Reaction.Influence");
+  const tags = ["contest", "quickContest", "influence"];
+  const mine = successRollModifiers({
+    actor: options.actor, label: contestLabel, kind: "contest", skill: String(options.skill), base: given,
+    tags: [...tags], modifiers: [], opponent: options.subject ?? null,
+  }).filter((line) => line.value !== 0);
+  const theirs = successRollModifiers({
+    actor: options.subject, label: contestLabel, kind: "contest", skill: "", base: will,
+    tags: [...tags, "will"], modifiers: [], opponent: options.actor ?? null,
+  }).filter((line) => line.value !== 0);
+  const skill = given + mine.reduce((sum, line) => sum + line.value, 0);
+  const resisted = will + theirs.reduce((sum, line) => sum + line.value, 0);
 
   // Some subjects settle it before the dice: Slave Mentality loses outright,
   // Unfazeable cannot be intimidated, and the Indomitable cannot be swayed.
@@ -157,15 +177,15 @@ export async function rollInfluence(options: {
   let won: boolean;
 
   if (settled === null) {
-    const mine = new Roll("3d6");
-    const theirs = new Roll("3d6");
-    await mine.evaluate();
-    await theirs.evaluate();
-    rolls.push(mine, theirs);
+    const ours = new Roll("3d6");
+    const against = new Roll("3d6");
+    await ours.evaluate();
+    await against.evaluate();
+    rolls.push(ours, against);
 
     const contest = quickContest(
-      resolveSuccess(mine.total, skill, dieResults(mine)),
-      resolveSuccess(theirs.total, will, dieResults(theirs)),
+      resolveSuccess(ours.total, skill, dieResults(ours)),
+      resolveSuccess(against.total, resisted, dieResults(against)),
     );
     won = contest.outcome === "first";
   } else {
@@ -208,7 +228,10 @@ export async function rollInfluence(options: {
       skill: String(options.skill),
       subject: String(options.subject?.name ?? ""),
       target: skill,
-      will,
+      will: resisted,
+      // The listeners' lines on each side (since API 1.95.0).
+      lines: mine.map(lineText),
+      willLines: theirs.map(lineText),
       settled: settled !== null,
       won,
       band: label(better),

@@ -52,6 +52,8 @@ export const DATA_HOOKS = Object.freeze({
   traitsInPlay: "gworld.traitsInPlay",
   /** Wherever a weapon's or shield's DR, HP and HT as an object are read (since 1.90.0): `{ item, actor, kind, dr, hp, ht, notes }`, `dr`, `hp`, `ht` and `notes` mutable. */
   objectStats: "gworld.objectStats",
+  /** Wherever an item's Legality Class is read (since 1.95.0): `{ item, actor, lc }`, `lc` (0-4 or null) mutable. */
+  legalityClass: "gworld.legalityClass",
 });
 
 /** A trait as `gworld.traitsInPlay` hands it to a listener. */

@@ -11,7 +11,8 @@
  */
 
 import { HIRED_RATE_PER_HOUR, hiredTechnicianSkill } from "../../rules/repairs.js";
-import { isLegalityClass, licenseCost } from "../../rules/legality.js";
+import { licenseCost } from "../../rules/legality.js";
+import { legalityClassOf } from "../legality.js";
 import { objectState, rollsToKeepWorking } from "../../rules/objects.js";
 import { parseCostTable, parseLevelNames, selfControlChoices } from "../../rules/traits.js";
 import { isWeaponMaster } from "../../rules/weapon-master.js";
@@ -254,7 +255,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     // "1d x 10% of the price of the item itself" -- so from a tenth to
     // six-tenths of the price, and the die is the GM's to roll.
     const price = Number((item.system as any)?.cost) || 0;
-    context.license = price > 0 && isLegalityClass((item.system as any)?.lc)
+    context.license = price > 0 && legalityClassOf(item) !== null
       ? { low: licenseCost(price, 1), high: licenseCost(price, 6) }
       : null;
 

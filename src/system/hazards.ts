@@ -28,6 +28,7 @@ import { dailyMiles, marchingFatiguePerHour, type Terrain, type TravelWeather } 
 import { randomHitLocation, type HitLocation } from "../rules/hit-locations.js";
 import { callCombatHook, COMBAT_HOOKS, randomLocationWithHooks, type VehicleDrLine } from "./combat-extensions.js";
 import { PROCEDURE_HOOKS, applyCondition, successRollModifiers } from "./procedure-extensions.js";
+import { equipmentUseLines } from "./tech-level.js";
 import { applyInjury } from "../rules/injury.js";
 import {
   protectedDose, radiationEffect, radiationRow, remainingDose,
@@ -851,13 +852,25 @@ export async function controlVehicle(options: {
   // Driving still grabs the wheel.
   const skill = own ?? attributeOf(actor, "DX") - 5;
   const handling = Number(vehicle.handling) || 0;
+  // A vehicle of another TL than the operator's skill, or a make they don't
+  // know (Characters pp. 168-169; since API 1.95.0): the lines any roll with
+  // the vehicle as its item takes, keyed and tagged `techLevel` and
+  // `unfamiliar`.
+  const use = equipmentUseLines(actor, item, skillName);
+  if (use.impossible) {
+    ui.notifications?.warn(use.impossible);
+    return;
+  }
+  const given = use.lines.map((line) => ({ key: line.key, label: line.label, value: line.value }));
   // What the operator's conditions and the modules add: a stabilizer, a
   // driver's aid (API 1.76.0, tagged "vehicleControl").
   const added = successRollModifiers({
     actor, label: H("Control"), kind: "skill", skill: skillName, base: skill,
-    tags: ["vehicleControl"], modifiers: [], vehicle: item,
-  }).reduce((sum, line) => sum + line.value, 0);
-  const target = skill + handling + options.modifier + added;
+    tags: ["vehicleControl", ...use.tags], modifiers: [...given], vehicle: item, item,
+  });
+  // The TL lines as the listeners left them, and what they added.
+  const lines = [...given, ...added].filter((line) => line.value !== 0);
+  const target = skill + handling + options.modifier + lines.reduce((sum, line) => sum + line.value, 0);
   const roll = new Roll("3d6");
   await roll.evaluate();
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
@@ -874,15 +887,15 @@ export async function controlVehicle(options: {
   // maneuver, or is stunned or otherwise incapacitated, his vehicle plows
   // ahead with the same speed and course it had on the previous turn"
   // (Campaigns p. 467).
-  const lines: string[] = [];
+  const notes: string[] = lines.map((line) => `${line.label} ${line.value >= 0 ? "+" : "−"}${Math.abs(line.value)}`);
   if (isRuleOn("vehicleManeuvers")) {
     const movement = vehicleMovement({
       maneuver: String(actor.system?.maneuver ?? ""),
       incapacitated: actor.system?.conditions?.stunned === true,
     });
-    lines.push(H(`Movement.${movement}`));
+    notes.push(H(`Movement.${movement}`));
   }
-  lines.push(H(`ControlResult.${result}`));
+  notes.push(H(`ControlResult.${result}`));
   if (result !== "ok") {
     // What losing control actually does depends on what the thing moves
     // through (Campaigns p. 469) -- the way it is moving now, for one that
@@ -896,14 +909,14 @@ export async function controlVehicle(options: {
       criticalFailure: outcome.criticalFailure,
       velocity: move.topSpeed,
     });
-    lines.push(H(`LostControl.${lost.result}`));
-    if (lost.altitudeLost > 0) lines.push(F("AltitudeLost", { yards: lost.altitudeLost }));
-    if (lost.decelerated > 0) lines.push(F("Decelerated", { yards: lost.decelerated }));
-    if (lost.skidYards > 0) lines.push(F("SkidYards", { yards: lost.skidYards }));
+    notes.push(H(`LostControl.${lost.result}`));
+    if (lost.altitudeLost > 0) notes.push(F("AltitudeLost", { yards: lost.altitudeLost }));
+    if (lost.decelerated > 0) notes.push(F("Decelerated", { yards: lost.decelerated }));
+    if (lost.skidYards > 0) notes.push(F("SkidYards", { yards: lost.skidYards }));
     // "A failed control roll always erases any accumulated bonuses for Aim
     // maneuvers, and gives a penalty equal to the margin of failure to any
     // attack from the vehicle until the operator's next turn."
-    lines.push(F("AttacksFrom", { penalty: -Math.abs(outcome.margin) }));
+    notes.push(F("AttacksFrom", { penalty: -Math.abs(outcome.margin) }));
     await loseAim(actor, "moved");
   }
 
@@ -913,7 +926,7 @@ export async function controlVehicle(options: {
     target,
     dice: dieResults(roll),
     roll: roll.total,
-    lines,
+    lines: notes,
     good: result === "ok",
     bad: result === "major" || result === "disaster",
     rolls: [roll],

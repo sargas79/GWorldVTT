@@ -47,8 +47,8 @@ import { applyFirstAid, attendPatient, operate, resuscitate } from "./recovery.j
 import { rollMortalWound } from "./dying.js";
 import type { Poison, Treatment } from "../rules/poison.js";
 import type { ResuscitationCause } from "../rules/medicine.js";
-import type { ControlRating } from "../rules/legality.js";
-import { currentControlRating } from "./legality.js";
+import type { ControlRating, LegalityClass } from "../rules/legality.js";
+import { currentControlRating, legalityClassOf } from "./legality.js";
 import { undoKnockdown } from "./knockdown.js";
 import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from "./damage-undo.js";
 import { carriedAmmunitionFor, loadAmmunition } from "./ammunition.js";
@@ -89,7 +89,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.94.0";
+export const API_VERSION = "1.95.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -413,6 +413,15 @@ const items = {
    */
   objectStats(item: any): ItemObjectStats {
     return objectStats(item);
+  },
+
+  /**
+   * An item's Legality Class, 0-4, or null for none (since 1.95.0): its
+   * stored `lc` once `gworld.legalityClass` listeners have had their say, as
+   * the Gear tab and the item sheet read it.
+   */
+  legalityClass(item: any): LegalityClass | null {
+    return legalityClassOf(item);
   },
 
   /**

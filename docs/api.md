@@ -104,7 +104,7 @@ Contents:
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
 | `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), and `recoveryHold(actor, id)` (since 1.89.0). |
-| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. |
+| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0). |
@@ -954,6 +954,16 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     preparation of a character with the item), so keep listeners cheap and
     free of side effects. A listener that throws changes nothing.
     `items.objectStats(item)` returns the same figures.
+  - `gworld.legalityClass` (since 1.95.0), with `{ item, actor, lc }`,
+    wherever the system reads an item's Legality Class (Characters p. 267,
+    Campaigns p. 507): the Gear tab's legality note and the item sheet's
+    license cost. `lc` starts as the item's stored `system.lc` (0-4, or null
+    for none); set it to change what the item counts as -- an antique whose
+    class rose with its age, a weapon disguised as something harmless -- or
+    to null to take its class away. Anything but 0-4 counts as null; a
+    listener that throws changes nothing. `actor` is the owner, or null. It
+    fires every time a sheet is drawn, so keep listeners cheap.
+    `items.legalityClass(item)` returns the same class.
 
 System item fields a module's data may set:
 - **Shields** (since 1.63.0): `hardened`, levels of Hardened on the shield's own
@@ -1145,6 +1155,34 @@ Two fields a module may read (since 1.62.0):
   actor on the other side, and its `tags` say what the contest is: `feint`, or
   `quickContest` with `disarm` for a disarm (tags a Quick Contest's caller
   passes reach the contest resolvers too).
+- **The item behind a roll, secret rolls, influence contests** (since
+  1.95.0):
+  - *`item`.* The `gworld.successRollModifiers` and `gworld.afterSuccessRoll`
+    contexts carry `item`, the item the roll is made with, where there is
+    one: the weapon of an attack from the sheet, the tool the character's
+    preparation picked for a skill roll (the carried item with `forSkills`
+    worth most once its TL is weighed; the skill's `derived.toolItemId`
+    names it), the vehicle of a control roll, or the `item` a module's
+    caller passed to `roll.success`. A listener can find the roll's
+    `techLevel` and `unfamiliar` lines (see *Tech level and familiarity*)
+    among `modifiers` and change them for that item. A skill roll's tool
+    lines are part of the skill's level (its `derived.bonusLines`), not the
+    roll's.
+  - *`roll.success` options.* `item` passes the item as above. `rollMode`
+    sets who sees the card: one of Foundry's message modes (`public`, `gm`,
+    `blind`, `self`) or the older roll-mode names (`publicroll`, `gmroll`,
+    `blindroll`, `selfroll`); an unknown mode is ignored. `secret: true`
+    makes a secret roll (Campaigns p. 494), the `blind` mode: the GMs see
+    the card and whoever rolled does not. `rollMode` wins over `secret`.
+    Left out, the card is posted openly, as before.
+  - *Influence rolls* (Campaigns p. 359): both sides of the Quick Contest
+    pass through `gworld.successRollModifiers`, `kind` `contest`, tagged
+    `contest`, `quickContest` and `influence`, each with the other side as
+    `opponent`. The influencer's side has `skill` the Influence skill and
+    `base` the skill with the roll's modifier and Charisma; the subject's
+    side has `skill` blank, `base` their Will, and the tag `will`. The lines
+    go into the two targets and onto the card. Diplomacy's second reaction
+    roll still goes through `gworld.reactionModifiers`.
 - **Resistance rolls** (since 1.49.0): the roll an affliction forces
   (Characters p. 36; the afflictions of Campaigns pp. 428-429) is tagged
   `resist` and `affliction`, and carries `attack`:
@@ -1347,7 +1385,7 @@ Two fields a module may read (since 1.62.0):
     techLevel?)`, `skillTechLevel(name, techLevel, personalTechLevel)`,
     `techLevelModifier({ skillTechLevel, equipmentTechLevel, iqBased })`
     (null for impossible), `bestTool(tools, { skillTechLevel, iqBased })`
-    with `CarriedTool` (`{ quality, techLevel }`), `familiarityKey(name)`,
+    with `CarriedTool` (`{ quality, techLevel, id? }`; since 1.95.0 the best one keeps its `id`), `familiarityKey(name)`,
     `isFamiliar(list, name)`, `toggleFamiliarity(list, name)`,
     `familiarityModifier(list, name)`, `startingFamiliarities(points)` (two
     per point), `mayRollForFamiliarity(count)` (six or more), and
@@ -1381,7 +1419,12 @@ Two fields a module may read (since 1.62.0):
   - *Vehicle control rolls* (Gear tab and vehicle sheet): the operator's roll,
     `kind` `skill`, `skill` the vehicle's control skill (blank where it names
     none), tag `vehicleControl`, with `vehicle` -- the Gear-tab item or the
-    vehicle actor.
+    vehicle actor. Since 1.95.0 the roll also takes the vehicle's
+    `techLevel` and `unfamiliar` lines, as `roll.equipmentUse(actor,
+    vehicle, skill)` gives them (Characters p. 168), already in `modifiers`
+    with their tags, and carries the vehicle as `item` too; a vehicle four
+    or more TLs ahead of an IQ-based control skill refuses the roll. The
+    card lists the lines.
   - *Fatigue costs.* `gworld.fatigueCost` fires wherever the system charges
     FP, before the fatigue chart and Very Fit's halving, with
     `{ actor, fp, reason, exertion, details, sources }`. Set `fp` (rounded,

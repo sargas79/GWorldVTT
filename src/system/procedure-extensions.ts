@@ -386,6 +386,13 @@ export interface SuccessRollContext {
   poison?: any;
   /** On a control roll, the vehicle: a Gear-tab item or a vehicle actor (since 1.76.0). */
   vehicle?: any;
+  /**
+   * The item the roll is made with, where there is one (since 1.95.0): the
+   * weapon of an attack, the tool carried for a skill, the vehicle of a
+   * control roll, or what a module's caller passed. Its `techLevel` and
+   * `unfamiliar` lines are among `modifiers` where it took them.
+   */
+  item?: any;
 }
 
 /** The weather a roll against exposure is made in (since 1.76.0). */
