@@ -43,6 +43,15 @@ describe("a custom entry from the picker", () => {
     });
   });
 
+  it("makes a character's first language their free native one (#635)", () => {
+    expect(customItemData({ itemType: "language" }, "Native language", { firstLanguage: true })).toEqual({
+      name: "Native language",
+      type: "language",
+      system: { isNative: true },
+    });
+    expect(customItemData({ itemType: "language" }, "New Language")).toEqual({ name: "New Language", type: "language", system: {} });
+  });
+
   it("makes a perk a 1 point advantage, and anything else blank", () => {
     expect(customItemData({ itemType: "trait", category: "perk" }, "Fur")).toMatchObject({ system: { category: "perk", points: 1 } });
     expect(customItemData({ itemType: "skill" }, "Basket Weaving")).toEqual({ name: "Basket Weaving", type: "skill", system: {} });

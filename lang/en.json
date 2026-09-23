@@ -1453,7 +1453,9 @@
       "Spoken": "Spoken",
       "Written": "Written",
       "IsNative": "Native language (free)",
-      "NativeHint": "Point cost:"
+      "NativeHint": "Point cost:",
+      "Open": "Open the language's sheet",
+      "FirstName": "Native language"
     },
     "Item": {
       "Equipped": "equipped",
@@ -1645,7 +1647,7 @@
     "Hint": {
       "OverBudget": "Spent past the starting budget.",
       "DisadvantageLimit": "A rule of thumb, not a hard cap. Disadvantages and quirks both count.",
-      "Languages": "Accented is -1 to skills that depend on language. One native language is free.",
+      "Languages": "Accented is -1 to skills that depend on language. One native language is free: tick Native on it.",
       "GMOnly": "visible to the GM only",
       "LimitedSheet": "Sheet is limited to you",
       "NoMeleeAttacks": "No melee attacks. Add equipment with an attack mode on the Gear tab.",
