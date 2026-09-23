@@ -59,6 +59,7 @@ import {
 import { detonateCharge } from "./demolition.js";
 import { equipmentUseLines } from "./tech-level.js";
 import { addArea, listAreas, removeArea, tokensInArea } from "./modifier-areas.js";
+import { darknessAt } from "./darkness.js";
 import { rollFrightCheck } from "./fright.js";
 import { spendUnspentPoints } from "./bonus-points.js";
 import {
@@ -89,7 +90,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.95.0";
+export const API_VERSION = "1.96.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -561,9 +562,10 @@ const hazardsApi = Object.freeze({
 
 /**
  * The areas namespace (since 1.63.0): smoke, fog, a field that blinds a sense.
- * Cones, and `standsIn` for the tokens standing in an area, since 1.89.0.
+ * Cones, and `standsIn` for the tokens standing in an area, since 1.89.0;
+ * `darknessAt`, the darkness at a token or a point, since 1.96.0.
  */
-const areasApi = Object.freeze({ add: addArea, remove: removeArea, list: listAreas, standsIn: tokensInArea });
+const areasApi = Object.freeze({ add: addArea, remove: removeArea, list: listAreas, standsIn: tokensInArea, darknessAt });
 
 /** The points namespace: point pools, and from 1.39.0 charging a character's unspent points. */
 const points = Object.freeze({ ...pointsApi, spendUnspent: spendUnspentPoints });

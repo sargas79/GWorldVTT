@@ -1542,6 +1542,34 @@ Two fields a module may read (since 1.62.0):
   - *Who stands in it* (since 1.89.0): `areas.standsIn(scene, idOrArea)`
     returns the token documents on the scene whose centre lies in an area --
     circle, band, cone or region -- by its id or as `areas.list` gives it.
+  - *Darkness* (since 1.96.0, Campaigns p. 394): `areas.darknessAt(scene,
+    tokenOrPoint, { observer? })` reads the darkness at a token (placeable or
+    document; its centre and elevation) or a point (`{ x, y, elevation? }` in
+    scene pixels) from the scene's lighting, for a light source, a sense roll
+    or a sensor. `scene` may be null: the token's own scene, else the one
+    drawn. It returns null for a spot it can't place, else `{ darkness,
+    total, penalty, lighting }`:
+    - `darkness` is 0 (none) to 10 (total), as
+      `rules.darknessFromLighting(lighting)` works it out: the darkness level
+      at the spot (a darkness region's own, else the scene's; Foundry's 0-1)
+      counts a point per tenth; a light that reaches the spot (a light
+      source, or the scene's global light when not bright) leaves at most 3,
+      as the book's torch does; the scene's bright global light, where it is
+      on at that darkness level, leaves 0; a darkness source makes it 10.
+    - `total` is `darkness` 10, where the foe is unseen rather than
+      penalised (see the sight select of the attack dialog).
+    - `penalty` is what it costs a Vision roll or an attack:
+      `rules.darknessPenaltyFor(darkness, eyes)` -- -1 to -9 after Night
+      Vision (Dark Vision and Infravision ignore it), -10 in total darkness
+      unless the eyes see in it, 0 for none. `observer` is the actor whose
+      eyes those are; left out, nobody's.
+    - `lighting` is `{ level, daylight, inLight, unnaturalDarkness }`, what
+      the reading came from.
+
+    A scene not drawn on the canvas is read from its settings alone: its
+    darkness level and global light, no light sources, no regions. The attack
+    dialog's darkness field is still the table's to fill in; its `darkness`
+    line is unchanged.
 - **Spraying and Suppression Fire** (since 1.70.0, Campaigns p. 409), under
   the `rapidFire` switch. A ranged attack from a row of RoF 5+ with two or
   more tokens targeted offers to spray the burst: the targets are put in the
