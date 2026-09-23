@@ -1197,14 +1197,40 @@ const BASIC_SET_RADIUS = new Map([
 /**
  * The Basic Set's own weapons with a minimum range, in yards, which the book
  * gives in one note shared by the table (Characters p. 281, note 1) and the
- * records carry only as that shared note. Their first Range figure is a true
- * 1/2D, so it stays.
+ * records carry only as that shared note. Their first Range figure is not the
+ * minimum, so it stays.
  */
 const BASIC_SET_MIN_RANGE = new Map([
   ["Under-Barrel Grenade Launcher, 40mm", 10],
   ["ATGM, 115mm", 30],
   ["SAM, 70mm", 200],
 ]);
+
+/**
+ * How a missile finds its way, where the record's own notes name the rule the
+ * way GCA's data files do: "Guided attack (see p. B412)" or "Homing attack
+ * (see p. B413)", the latter perhaps with the sense it homes on in brackets
+ * (Campaigns pp. 412-413). Either makes the first Range figure the missile's
+ * speed rather than 1/2D.
+ *
+ * A homing note may also say what the firer rolls to aim ("Firer rolls
+ * against X to aim", "Gunner uses X to aim") and the missile's own skill
+ * ("at the missile's skill of N"); those are read where they are there.
+ * Anything worded otherwise is not read. Returns the fields to set on a
+ * ranged mode, or null.
+ */
+export function guidanceOf(itemnotes) {
+  const text = (itemnotes ?? "").replace(/\s+/g, " ");
+  if (/\bGuided attack \(see p\. ?B412\)/i.test(text)) return { guidance: "guided" };
+  if (!/\bHoming(?: \([^()]*\))? attack \(see p\. ?B413\)/i.test(text)) return null;
+  const aim = /\b(?:Firer rolls against|Gunner uses) ([A-Z][^.,;]*?\)?) to aim\b/.exec(text);
+  const skill = /\bat the missile's skill of (\d+)\b/i.exec(text);
+  return {
+    guidance: "homing",
+    ...(aim ? { aimingSkill: aim[1].trim() } : {}),
+    ...(skill ? { guidedSkillLevel: Number(skill[1]) } : {}),
+  };
+}
 
 /**
  * A ranged mode's minimum range, where the record's own notes say plainly
@@ -1766,8 +1792,10 @@ export const STATE_MODE = /folded stock|\bw\/o?\s*bipod\b/i;
 
 /**
  * The modes at the end of a list that fire the same round as the last one:
- * the same damage, type, divisor and fragments, and no second line of their
- * own yet. A second line written after them all belongs to each.
+ * the same damage, type, divisor and fragments, and the same second lines so
+ * far. A second line written after them all belongs to each; a mode that
+ * already has a line the last one lacks is another attack's, and stops the
+ * run.
  */
 function sameRound(modes) {
   const last = modes[modes.length - 1];
@@ -1775,14 +1803,45 @@ function sameRound(modes) {
     m.damageBase, m.damageModifier, m.damageFormula, m.damageExtraDice, m.damageType,
     m.armorDivisor, m.explosive, m.fragmentation, m.fragmentationType ?? "", m.fragmentationDivisor ?? 1,
     m.affliction, m.afflictionAttribute, m.afflictionModifier,
+    m.linked ?? null, m.linkedAlso ?? null,
   ]);
   const out = [];
   for (let i = modes.length - 1; i >= 0; i--) {
     const mode = modes[i];
-    if (mode.linked || key(mode) !== key(last)) break;
+    if (key(mode) !== key(last)) break;
     out.unshift(mode);
   }
-  return out.length ? out : [last];
+  return out;
+}
+
+/**
+ * Folds a second line into a mode, or says it did not fit.
+ *
+ * A mode holds one line of each kind (Characters p. 269: "linked or
+ * follow-up effects, noted on a second line"): the first in `linked`, as
+ * it always has, and one of the other kind in `linkedAlso`. A third, or a
+ * second of the same kind, is not written over the one already there.
+ */
+export function addSecondLine(mode, line) {
+  if (!mode.linked) {
+    mode.linked = { ...line };
+    return true;
+  }
+  if (!mode.linkedAlso && Boolean(mode.linked.followUp) !== Boolean(line.followUp)) {
+    mode.linkedAlso = { ...line };
+    return true;
+  }
+  return false;
+}
+
+/**
+ * A built-in scope written as a field of its own, `scopeacc(1)`, rather than
+ * in the Acc figure as the tables print it, "5+1" (Characters p. 269). Only a
+ * whole number is read; anything else is no scope.
+ */
+export function scopeAccOf(value) {
+  const m = /^\+?(\d+)$/.exec((value ?? "").trim());
+  return m ? Number(m[1]) : 0;
 }
 
 /** A ranged mode, or null with a reason. */
@@ -1862,7 +1921,7 @@ function rangedMode(name, f, thrown) {
       armorDivisor: divisor === undefined ? 1 : Number(divisor),
       ...(cosmic ? { ignoresDr: true } : {}),
       accuracy: Number(acc[1]),
-      scopeBonus: acc[2] ? Number(acc[2]) : 0,
+      scopeBonus: acc[2] ? Number(acc[2]) : scopeAccOf(f.get("scopeacc")),
       halfDamageRange: half?.distance ?? 0,
       maxRange: max?.distance ?? 0,
       rangeIsStMultiple: max?.stMultiple ?? false,
@@ -2378,7 +2437,10 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
       const into = isMelee ? meleeModes : rangedModes;
       if ((LINKED_MODE.test(scope.name ?? "") || followUp) && into.length > 0) {
         const line = linkedLine(result.mode, followUp, scope.name.trim());
-        for (const mode of sameRound(into)) mode.linked = { ...line };
+        const refused = sameRound(into).filter((mode) => !addSecondLine(mode, line));
+        if (refused.length > 0) {
+          note(`${name}: ${scope.name.trim()}: ${refused.map((m) => m.name).join(", ")} already ${refused.length > 1 ? "have" : "has"} a ${followUp ? "follow-up" : "linked"} line; this one is not kept`);
+        }
         continue;
       }
 
@@ -2408,6 +2470,10 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
         else if (/minimum range/i.test(f.get("itemnotes") ?? "")) {
           note(`${name}: its notes give a minimum range this reader cannot tie to the record; none is set`);
         }
+
+        // A guided or homing missile, where the notes name the rule.
+        const guidance = guidanceOf(f.get("itemnotes"));
+        if (guidance) Object.assign(result.mode, guidance);
       }
 
       if (isMelee) meleeModes.push(...byUnarmedSkill(result.mode, scope.f.get("skillused")));

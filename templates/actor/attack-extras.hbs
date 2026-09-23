@@ -1,36 +1,8 @@
-{{!-- What an attack row carries beyond its damage: a follow-up attack to roll
-     after the first, and notes for effects the GM adjudicates. --}}
-{{#if atk.followUp}}
-  {{!-- A second attack that lands with this one (Characters p. 106), not
-        instead of it. Its own tooltip says which of the two it is. --}}
-  {{#with atk.followUp as |second|}}
-    {{#if second.affliction}}
-      {{!-- A linked affliction is resisted, not rolled for damage: the
-            electrolaser's shot burns and shocks on the one attack. --}}
-      <span class="tag rollable" data-action="affliction"
-            data-resist="{{second.afflictionAttribute}}"
-            data-resist-modifier="{{second.afflictionModifier}}"
-            data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}"
-            data-damage-type="{{second.damageType}}"
-            data-half-damage-range="{{atk.halfDamageRange}}"
-            data-area-attack="{{#if atk.areaAttack}}1{{/if}}"
-            data-affliction-label="{{atk.name}} {{#if second.label}}{{second.label}}{{else}}{{localize 'GWORLD.Attack.Linked'}}{{/if}}"
-            data-tooltip="{{#if second.followUp}}{{localize 'GWORLD.Attack.FollowUpHint'}}{{else}}{{localize 'GWORLD.Attack.LinkedHint'}}{{/if}}"
-            >{{second.afflictionAttribute}}{{second.afflictionModifier}}{{#unless (eq second.armorDivisor 1)}} ({{second.armorDivisor}}){{/unless}} {{localize "GWORLD.Affliction.Short"}}</span>
-    {{else}}
-      <span class="tag rollable" data-action="rollDamage"
-            data-damage-formula="{{second.damage}}" data-damage-type="{{second.damageType}}"
-            data-damage-label="{{atk.name}} {{#if second.label}}{{second.label}}{{else}}{{localize 'GWORLD.Attack.FollowUp'}}{{/if}}"
-            data-armor-divisor="{{#if second.armorDivisor}}{{second.armorDivisor}}{{else}}1{{/if}}"
-            data-explosive="{{#if second.explosive}}1{{/if}}" data-fragmentation="{{second.fragmentation}}"
-            data-fragmentation-type="{{second.fragmentationType}}" data-fragmentation-divisor="{{second.fragmentationDivisor}}"
-            data-blast-placement="{{second.blastPlacement}}"
-            data-radiation="{{#if second.radiation}}1{{/if}}" data-surge="{{#if second.surge}}1{{/if}}"
-            data-tooltip="{{#if second.followUp}}{{localize 'GWORLD.Attack.FollowUpHint'}}{{else}}{{localize 'GWORLD.Attack.LinkedHint'}}{{/if}}"
-            >+{{second.damage}} {{second.damageType}}</span>
-    {{/if}}
-  {{/with}}
-{{/if}}
+{{!-- What an attack row carries beyond its damage: a follow-up or linked
+     attack that lands with this one (Characters p. 106) -- both, where the
+     weapon has both (p. 269) -- and notes for effects the GM adjudicates. --}}
+{{#if atk.followUp}}{{> "gworld.secondLine" atk=atk second=atk.followUp}}{{/if}}
+{{#if atk.followUpAlso}}{{> "gworld.secondLine" atk=atk second=atk.followUpAlso}}{{/if}}
 {{!-- A multiple-projectile shot whose first hit has its own line: the row's
      damage button rolls it for the first hit after an attack. --}}
 {{#if atk.firstHit}}<span class="tag" data-tooltip="{{localize 'GWORLD.Ranged.FirstHitHint'}}">{{localize "GWORLD.Ranged.FirstHitTag" damage=atk.firstHit.damage type=(either atk.firstHit.damageType atk.damageType)}}</span>{{/if}}

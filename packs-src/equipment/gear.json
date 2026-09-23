@@ -5436,7 +5436,7 @@
           "surge": false,
           "armorDivisor": 3,
           "accuracy": 6,
-          "scopeBonus": 0,
+          "scopeBonus": 1,
           "halfDamageRange": 700,
           "maxRange": 2900,
           "rangeIsStMultiple": false,
@@ -6780,7 +6780,7 @@
           "surge": false,
           "armorDivisor": 0.2,
           "accuracy": 5,
-          "scopeBonus": 0,
+          "scopeBonus": 1,
           "halfDamageRange": 45,
           "maxRange": 145,
           "rangeIsStMultiple": false,
@@ -6908,7 +6908,7 @@
           "surge": false,
           "armorDivisor": 1,
           "accuracy": 4,
-          "scopeBonus": 0,
+          "scopeBonus": 2,
           "halfDamageRange": 700,
           "maxRange": 4000,
           "rangeIsStMultiple": false,
@@ -7008,7 +7008,7 @@
           "surge": false,
           "armorDivisor": 3,
           "accuracy": 7,
-          "scopeBonus": 0,
+          "scopeBonus": 2,
           "halfDamageRange": 1200,
           "maxRange": 4800,
           "rangeIsStMultiple": false,
@@ -7454,7 +7454,8 @@
           "bulk": -10,
           "recoil": 1,
           "malfunction": 17,
-          "minRange": 30
+          "minRange": 30,
+          "guidance": "guided"
         }
       ]
     }
@@ -7519,7 +7520,10 @@
           "bulk": -8,
           "recoil": 1,
           "malfunction": 17,
-          "minRange": 200
+          "minRange": 200,
+          "guidance": "homing",
+          "aimingSkill": "Artillery (Guided Missile)",
+          "guidedSkillLevel": 10
         }
       ]
     }
@@ -7824,7 +7828,7 @@
           "surge": false,
           "armorDivisor": 10,
           "accuracy": 3,
-          "scopeBonus": 0,
+          "scopeBonus": 1,
           "halfDamageRange": 300,
           "maxRange": 1000,
           "rangeIsStMultiple": false,
@@ -8512,7 +8516,7 @@
           "surge": false,
           "armorDivisor": 1,
           "accuracy": 8,
-          "scopeBonus": 0,
+          "scopeBonus": 1,
           "halfDamageRange": 160,
           "maxRange": 470,
           "rangeIsStMultiple": false,

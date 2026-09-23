@@ -273,6 +273,12 @@ export interface DerivedAttack {
     radiation?: boolean;
     surge?: boolean;
   } | null;
+  /**
+   * A second line of the other kind, where the mode has both a follow-up and
+   * a linked attack (Characters p. 269), in the same shape as `followUp`.
+   * Null unless `followUp` is set (since API 1.80.0).
+   */
+  followUpAlso?: DerivedAttack["followUp"];
   /** Effects that need the GM, as tags on the row. */
   notes?: Array<{ label: string; hint: string }>;
   itemId: string;
@@ -2413,6 +2419,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           explosive: Boolean(mode.explosive),
           // A second attack that lands with this one (Characters p. 106).
           ...(mode.linked ? { followUp: linkedRow(mode.linked) } : {}),
+          ...(mode.linked && mode.linkedAlso ? { followUpAlso: linkedRow(mode.linkedAlso) } : {}),
           // The damage modifiers of Characters pp. 104-105 that change what
           // the blow does rather than how much of it lands.
           incendiary: Boolean(mode.incendiary),
@@ -2609,6 +2616,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           explosive: Boolean(mode.explosive),
           // A second attack that lands with this one (Characters p. 106).
           ...(mode.linked ? { followUp: linkedRow(mode.linked) } : {}),
+          ...(mode.linked && mode.linkedAlso ? { followUpAlso: linkedRow(mode.linkedAlso) } : {}),
           // The damage modifiers of Characters pp. 104-105 that change what
           // the blow does rather than how much of it lands.
           incendiary: Boolean(mode.incendiary),

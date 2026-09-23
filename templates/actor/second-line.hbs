@@ -1,0 +1,28 @@
+{{!-- One second line of an attack row (Characters p. 106): an attack that
+     lands with the row's own rather than instead of it. Its tooltip says
+     which of the two kinds it is. Takes `atk` and `second`. --}}
+{{#if second.affliction}}
+  {{!-- A linked affliction is resisted, not rolled for damage: the
+        electrolaser's shot burns and shocks on the one attack. --}}
+  <span class="tag rollable" data-action="affliction"
+        data-resist="{{second.afflictionAttribute}}"
+        data-resist-modifier="{{second.afflictionModifier}}"
+        data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}"
+        data-damage-type="{{second.damageType}}"
+        data-half-damage-range="{{atk.halfDamageRange}}"
+        data-area-attack="{{#if atk.areaAttack}}1{{/if}}"
+        data-affliction-label="{{atk.name}} {{#if second.label}}{{second.label}}{{else if second.followUp}}{{localize 'GWORLD.Attack.FollowUp'}}{{else}}{{localize 'GWORLD.Attack.Linked'}}{{/if}}"
+        data-tooltip="{{#if second.followUp}}{{localize 'GWORLD.Attack.FollowUpHint'}}{{else}}{{localize 'GWORLD.Attack.LinkedHint'}}{{/if}}"
+        >{{second.afflictionAttribute}}{{second.afflictionModifier}}{{#unless (eq second.armorDivisor 1)}} ({{second.armorDivisor}}){{/unless}} {{localize "GWORLD.Affliction.Short"}}</span>
+{{else}}
+  <span class="tag rollable" data-action="rollDamage"
+        data-damage-formula="{{second.damage}}" data-damage-type="{{second.damageType}}"
+        data-damage-label="{{atk.name}} {{#if second.label}}{{second.label}}{{else if second.followUp}}{{localize 'GWORLD.Attack.FollowUp'}}{{else}}{{localize 'GWORLD.Attack.Linked'}}{{/if}}"
+        data-armor-divisor="{{#if second.armorDivisor}}{{second.armorDivisor}}{{else}}1{{/if}}"
+        data-explosive="{{#if second.explosive}}1{{/if}}" data-fragmentation="{{second.fragmentation}}"
+        data-fragmentation-type="{{second.fragmentationType}}" data-fragmentation-divisor="{{second.fragmentationDivisor}}"
+        data-blast-placement="{{second.blastPlacement}}"
+        data-radiation="{{#if second.radiation}}1{{/if}}" data-surge="{{#if second.surge}}1{{/if}}"
+        data-tooltip="{{#if second.followUp}}{{localize 'GWORLD.Attack.FollowUpHint'}}{{else}}{{localize 'GWORLD.Attack.LinkedHint'}}{{/if}}"
+        >+{{second.damage}} {{second.damageType}}</span>
+{{/if}}

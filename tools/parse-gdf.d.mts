@@ -222,3 +222,11 @@ export declare function minimumRangeOf(
   itemnotes: string | undefined,
   mode: { halfDamageRange: number; maxRange: number; rangeIsStMultiple?: boolean },
 ): { minRange: number; halfDamageRange?: number } | null;
+/** How a missile finds its way, where the record's notes name the rule (Campaigns pp. 412-413), as the fields to set on a ranged mode, or null. */
+export declare function guidanceOf(
+  itemnotes: string | undefined,
+): { guidance: "guided" | "homing"; aimingSkill?: string; guidedSkillLevel?: number } | null;
+/** A built-in scope written as `scopeacc(n)` (Characters p. 269), or 0 for none. */
+export declare function scopeAccOf(value: string | undefined): number;
+/** Folds a second line into a mode: into `linked`, or `linkedAlso` where `linked` holds the other kind. False where it does not fit. */
+export declare function addSecondLine(mode: Record<string, unknown>, line: Record<string, unknown>): boolean;
