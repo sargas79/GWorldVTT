@@ -562,6 +562,8 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
     armorDivisor: hardened.divisor,
     hitLocation: damage.hitLocation,
     maxHp: Number(hp.max) || 0,
+    // More than two arms or legs, and each cripples on less (p. 421).
+    limbs: { arms: 2 + traits.extraArms, legs: 2 + traits.extraLegs },
     // Halving or ignoring DR is the critical's doing and belongs inside the
     // pipeline, because the tables halve what is left after the armour divisor.
     ...(critical ? { critical } : {}),

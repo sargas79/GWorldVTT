@@ -217,16 +217,35 @@ export function woundingModifierAt(
 }
 
 /**
+ * How many arms and legs a body has, where it may have more than the usual
+ * two (Extra Arms, Extra Legs: Characters pp. 53-54). A hand goes with each
+ * arm and a foot with each leg. Omitted or under two counts as two.
+ */
+export interface LimbCounts {
+  arms?: number;
+  legs?: number;
+}
+
+/** How many of the kind of limb or extremity struck the body has, at least two. */
+function limbsOfKind(location: HitLocation, limbs: LimbCounts): number {
+  const count = location === "arm" || location === "hand" ? limbs.arms : location === "leg" || location === "foot" ? limbs.legs : undefined;
+  return Math.max(2, Math.floor(Number(count) || 0));
+}
+
+/**
  * Injury beyond what is needed to cripple a limb is lost, so a hand cannot
  * absorb a killing blow (GURPS Basic Set: Campaigns p. 399).
  *
  * Returns the threshold above which the location is crippled, or null when the
- * location cannot be crippled.
+ * location cannot be crippled. A body with more than two of a limb has each
+ * cripple over HP/(number of them), and each of more than two extremities
+ * over HP/(1.5 x number of them): four arms cripple over HP/4, four feet over
+ * HP/6 (Campaigns p. 421). With two, that is HP/2 and HP/3.
  */
-export function cripplingThreshold(location: HitLocation, maxHp: number): number | null {
+export function cripplingThreshold(location: HitLocation, maxHp: number, limbs: LimbCounts = {}): number | null {
   const kind = HIT_LOCATIONS[location].cripplingKind;
-  if (kind === "limb") return maxHp / 2;
-  if (kind === "extremity") return maxHp / 3;
+  if (kind === "limb") return maxHp / limbsOfKind(location, limbs);
+  if (kind === "extremity") return maxHp / (1.5 * limbsOfKind(location, limbs));
   // "Injury over HP/10 blinds the eye" (Campaigns p. 399).
   if (kind === "eye") return maxHp / 10;
   return null;
@@ -261,8 +280,9 @@ export function applyCrippling(
   injury: number,
   location: HitLocation,
   maxHp: number,
+  limbs: LimbCounts = {},
 ): LocationInjuryResult {
-  const threshold = cripplingThreshold(location, maxHp);
+  const threshold = cripplingThreshold(location, maxHp, limbs);
   if (threshold === null || injury <= threshold) {
     return { injury, excessLost: 0, crippled: false };
   }

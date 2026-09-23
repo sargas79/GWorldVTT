@@ -221,6 +221,56 @@ describe("crippling", () => {
   });
 });
 
+/**
+ * "If you have more than two of a particular limb ... a crippling blow is
+ * injury over HP/(number of limbs of that kind)", and of an extremity over
+ * HP/(1.5 x number of extremities of that kind) (Campaigns p. 421).
+ */
+describe("crippling extra limbs (#624)", () => {
+  it("cripples one of four arms over HP/4, and one of four feet over HP/6", () => {
+    expect(cripplingThreshold("arm", 12, { arms: 4 })).toBe(3);
+    expect(cripplingThreshold("hand", 12, { arms: 4 })).toBe(2);
+    expect(cripplingThreshold("leg", 12, { legs: 4 })).toBe(3);
+    expect(cripplingThreshold("foot", 12, { legs: 4 })).toBe(2);
+  });
+
+  it("cripples at the first point over the lower threshold, and loses the rest", () => {
+    // Four arms, 12 HP: over 3.
+    expect(applyCrippling(3, "arm", 12, { arms: 4 })).toEqual({ injury: 3, excessLost: 0, crippled: false });
+    expect(applyCrippling(4, "arm", 12, { arms: 4 })).toEqual({ injury: 4, excessLost: 0, crippled: true });
+    expect(applyCrippling(9, "arm", 12, { arms: 4 })).toEqual({ injury: 4, excessLost: 5, crippled: true });
+    // Four feet, 12 HP: over 2.
+    expect(applyCrippling(2, "foot", 12, { legs: 4 })).toEqual({ injury: 2, excessLost: 0, crippled: false });
+    expect(applyCrippling(6, "foot", 12, { legs: 4 })).toEqual({ injury: 3, excessLost: 3, crippled: true });
+  });
+
+  it("works where HP does not divide by the count", () => {
+    // Three arms, 10 HP: an arm over 3.33, a hand over 10/4.5 = 2.22.
+    expect(applyCrippling(3, "arm", 10, { arms: 3 })).toEqual({ injury: 3, excessLost: 0, crippled: false });
+    expect(applyCrippling(4, "arm", 10, { arms: 3 })).toEqual({ injury: 4, excessLost: 0, crippled: true });
+    expect(applyCrippling(2, "hand", 10, { arms: 3 })).toEqual({ injury: 2, excessLost: 0, crippled: false });
+    expect(applyCrippling(5, "hand", 10, { arms: 3 })).toEqual({ injury: 3, excessLost: 2, crippled: true });
+  });
+
+  it("reads arms for arms and hands and legs for legs and feet, and never fewer than two", () => {
+    expect(cripplingThreshold("arm", 12, { legs: 6 })).toBe(6);
+    expect(cripplingThreshold("foot", 12, { arms: 6 })).toBe(4);
+    expect(cripplingThreshold("arm", 12, { arms: 1 })).toBe(6);
+    expect(cripplingThreshold("hand", 12, { arms: 2 })).toBe(4);
+    // The eye and the torso are not limbs.
+    expect(cripplingThreshold("eye", 30, { arms: 6, legs: 6 })).toBe(3);
+    expect(cripplingThreshold("torso", 12, { arms: 6 })).toBeNull();
+  });
+
+  it("is what computeInjury caps a blow at", () => {
+    const result = computeInjury({ basicDamage: 6, dr: 0, type: "cr", hitLocation: "leg", maxHp: 12, limbs: { legs: 6 } });
+    // Six legs, 12 HP: over 2.
+    expect(result.crippled).toBe(true);
+    expect(result.injury).toBe(3);
+    expect(result.excessLost).toBe(3);
+  });
+});
+
 describe("the injury pipeline with hit locations", () => {
   it("adds the skull's extra DR before subtracting", () => {
     // DR 2 armor plus the skull's own DR 2 stops 4 points.

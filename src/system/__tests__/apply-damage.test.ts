@@ -14,6 +14,9 @@ function actor(options: {
   maxHp?: number;
   fp?: number;
   maxFp?: number;
+  /** Arms and legs beyond two, as the derived trait effects carry them. */
+  extraArms?: number;
+  extraLegs?: number;
   armor?: Array<{
     dr: number;
     drSplit?: number | null;
@@ -26,10 +29,14 @@ function actor(options: {
     drLost?: number;
   }>;
 }) {
-  const { hp = 10, maxHp = 10, fp = 10, maxFp = 10, armor = [] } = options;
+  const { hp = 10, maxHp = 10, fp = 10, maxFp = 10, armor = [], extraArms = 0, extraLegs = 0 } = options;
   return {
     name: "Target",
-    system: { hp: { value: hp, max: maxHp }, fp: { value: fp, max: maxFp } },
+    system: {
+      hp: { value: hp, max: maxHp },
+      fp: { value: fp, max: maxFp },
+      ...(extraArms || extraLegs ? { derived: { traitEffects: { extraArms, extraLegs } } } : {}),
+    },
     items: armor.map((piece) => ({
       type: "armor",
       system: {
@@ -213,6 +220,41 @@ describe("resolveDamageAgainst", () => {
       const result = resolveDamageAgainst(actor({ hp: 10, maxHp: 10 }), blow(4, "cr", "hand"));
       expect(result.injury).toBeLessThanOrEqual(10 / 2);
       expect(result.knockdown).toEqual({ required: true, modifier: 0 });
+    });
+  });
+
+  /** Each of more than two arms or legs cripples on less (Campaigns p. 421). */
+  describe("a body with extra limbs (#624)", () => {
+    it("cripples one of four arms over HP/4, a major wound with the knockdown roll", () => {
+      // 12 HP, four arms: over 3 cripples an arm; two arms would need 7.
+      const cripples = resolveDamageAgainst(actor({ hp: 12, maxHp: 12, extraArms: 2 }), blow(4, "cr", "arm"));
+      expect(cripples.crippled).toBe(true);
+      expect(cripples.injury).toBe(4);
+      expect(cripples.consequences.majorWound).toBe(true);
+      expect(cripples.knockdown?.required).toBe(true);
+
+      const short = resolveDamageAgainst(actor({ hp: 12, maxHp: 12, extraArms: 2 }), blow(3, "cr", "arm"));
+      expect(short.crippled).toBe(false);
+      expect(short.knockdown).toBeNull();
+
+      const more = resolveDamageAgainst(actor({ hp: 12, maxHp: 12, extraArms: 2 }), blow(9, "cr", "arm"));
+      expect(more.injury).toBe(4);
+      expect(more.excessLost).toBe(5);
+    });
+
+    it("cripples one of four feet over HP/6, and leaves the arms alone", () => {
+      const foot = resolveDamageAgainst(actor({ hp: 12, maxHp: 12, extraLegs: 2 }), blow(6, "cr", "foot"));
+      expect(foot.crippled).toBe(true);
+      expect(foot.injury).toBe(3);
+      // Four legs, but two arms: an arm still needs over 6.
+      const arm = resolveDamageAgainst(actor({ hp: 12, maxHp: 12, extraLegs: 2 }), blow(6, "cr", "arm"));
+      expect(arm.crippled).toBe(false);
+    });
+
+    it("keeps HP/2 and HP/3 for a body with two of each", () => {
+      const arm = resolveDamageAgainst(actor({ hp: 12, maxHp: 12 }), blow(6, "cr", "arm"));
+      expect(arm.crippled).toBe(false);
+      expect(resolveDamageAgainst(actor({ hp: 12, maxHp: 12 }), blow(5, "cr", "hand")).crippled).toBe(true);
     });
   });
 
