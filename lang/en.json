@@ -4564,6 +4564,7 @@
         "feet": "Feet"
       },
       "Nothing": "Nothing worn",
+      "DrLeft": "DR {dr}, {lost} lost",
       "Readied": "Readied and to hand",
       "NothingReady": "Nothing ready. Equip a weapon or carry a consumable.",
       "Unequip": "Unequip",

@@ -161,6 +161,31 @@ export function remainingDr(dr: number, drLost: number | undefined): number {
   return Math.max(0, Math.floor(dr) - Math.max(0, Math.floor(drLost ?? 0)));
 }
 
+/**
+ * A piece's lost DR after something outside a blow wears `amount` more of it
+ * away for good (Characters p. 47) -- a corrosive, a fire, a module's own rule.
+ * It stops where the piece has no DR left: at `location` where one is given
+ * (the place's own figure where the piece armours it differently), otherwise
+ * at the most DR the piece has anywhere, so every place reads 0 at worst.
+ */
+export function drLostAfterWear(options: {
+  dr: number;
+  drByLocation?: ArmorPiece["drByLocation"];
+  drLost: number | undefined;
+  amount: number;
+  location?: HitLocation;
+}): number {
+  const piece = { dr: options.dr, drByLocation: options.drByLocation } as ArmorPiece;
+  const at = baseDrAt(piece, options.location);
+  const most = options.location !== undefined
+    ? at ?? Math.max(0, Math.floor(options.dr))
+    : Math.max(0, Math.floor(options.dr), ...(options.drByLocation ?? []).map((e) => Math.floor(e.dr)));
+  const lost = Math.max(0, Math.floor(options.drLost ?? 0));
+  const amount = Math.max(0, Math.floor(options.amount));
+  // Never takes back what is already gone, even where it was worn past this cap.
+  return Math.max(lost, Math.min(most, lost + amount));
+}
+
 /** The DR one piece offers against one kind of damage. */
 export function drAgainst(piece: ArmorPiece, type: DamageType, location?: HitLocation): number {
   // A place the piece armours differently from the rest of itself gives its

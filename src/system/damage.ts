@@ -17,7 +17,7 @@
 import { parseVulnerability, vulnerabilityMultiplier, type Vulnerability } from "../rules/vulnerability.js";
 import { type ArmorPiece } from "../rules/armor.js";
 import { bluntTraumaInjury } from "../rules/layered-armor.js";
-import { ablativeLoss, drAgainst, drFromBelow, hardenedAgainst, remainingDr } from "../rules/armor.js";
+import { ablativeLoss, drAgainst, drFromBelow, hardenedAgainst, remainingDr, drLostAfterWear } from "../rules/armor.js";
 import { criticalDr } from "../rules/criticals.js";
 import type { Arc } from "../rules/tactical.js";
 import { isRuleOn } from "./optional-rules.js";
@@ -947,6 +947,52 @@ async function spendAblativeDr(actor: any, damage: IncomingDamage, resolved: App
 
   if (updates.length > 0) await actor.updateEmbeddedDocuments?.("Item", updates);
   return worn;
+}
+
+/** DR worn off one piece outside a blow, as `items.wearDr` reports it. */
+export interface DrWorn extends ArmorWear {
+  /** The place it was worn at, or "" for the piece as a whole. */
+  location: string;
+  /** What wore it, as the caller gave it. */
+  reason: string;
+}
+
+/**
+ * Wears DR off a piece of armour for good (Characters p. 47) for something
+ * other than a blow -- a corrosive, a fire, a module's own rule. The loss goes
+ * into the same lost-DR count ablative spending adds to, so every figure that
+ * reads the piece's DR (the damage pipeline, the sheet) sees it, and what
+ * `restoreDr` gives back. It never takes the piece below 0 DR: at `location`
+ * where one is given, anywhere on it otherwise.
+ *
+ * Null for an item that isn't armour, a user who doesn't own it, an amount
+ * that isn't a positive number, or a location the piece doesn't cover.
+ */
+export async function wearDr(
+  item: any,
+  amount: number,
+  options: { location?: string; reason?: string } = {},
+): Promise<DrWorn | null> {
+  const points = Math.floor(Number(amount));
+  if (item?.type !== "armor" || !item.isOwner || !(points > 0)) return null;
+  const location = String(options?.location ?? "");
+  const covered: string[] = item.system?.locations ?? [];
+  // An empty list is whole-body coverage, and a field covers everything.
+  if (location && item.system?.forceField !== true && covered.length > 0 && !covered.includes(location)) return null;
+
+  const from = Math.max(0, Math.floor(Number(item.system?.drLost) || 0));
+  const to = drLostAfterWear({
+    dr: Number(item.system?.dr ?? 0) || 0,
+    drByLocation: ((item.system?.drByLocation ?? []) as Array<{ locations?: string[]; dr?: number }>).map((e) => ({
+      locations: (e?.locations ?? []) as HitLocation[],
+      dr: Number(e?.dr ?? 0) || 0,
+    })),
+    drLost: from,
+    amount: points,
+    ...(location ? { location: location as HitLocation } : {}),
+  });
+  if (to !== from) await item.update({ "system.drLost": to });
+  return { itemId: String(item.id ?? ""), from, to, location, reason: String(options?.reason ?? "") };
 }
 
 /** Injury or fatigue taken off outside a damage card. */

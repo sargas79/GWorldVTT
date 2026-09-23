@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ARMOR_DIVISOR_STEPS, ablativeLoss, drAgainst, hardenedAgainst, remainingDr, wornDrAt } from "../armor.js";
+import { ARMOR_DIVISOR_STEPS, ablativeLoss, drAgainst, drLostAfterWear, hardenedAgainst, remainingDr, wornDrAt } from "../armor.js";
 import { armorLayers } from "../layered-armor.js";
 import { splitSummary } from "../armor.js";
 import type { ArmorPiece } from "../armor.js";
@@ -79,6 +79,22 @@ describe("Ablative and semi-ablative DR (Characters p. 47)", () => {
     expect(remainingDr(10, 4)).toBe(6);
     expect(remainingDr(10, 40)).toBe(0);
     expect(drAgainst(piece({ dr: 10, ablative: "ablative", drLost: 4 }), "cr")).toBe(6);
+  });
+
+  it("wears DR away outside a blow, never past what the piece has", () => {
+    expect(drLostAfterWear({ dr: 6, drLost: 0, amount: 2 })).toBe(2);
+    expect(drLostAfterWear({ dr: 6, drLost: 5, amount: 3 })).toBe(6);
+    expect(drLostAfterWear({ dr: 6, drLost: 1, amount: 0 })).toBe(1);
+    expect(drLostAfterWear({ dr: 6, drLost: 1, amount: -4 })).toBe(1);
+    // Already worn past its DR: nothing is given back.
+    expect(drLostAfterWear({ dr: 6, drLost: 9, amount: 1 })).toBe(9);
+  });
+
+  it("wears to the DR at a location, or to the most the piece has anywhere", () => {
+    const suit = { dr: 4, drByLocation: [{ locations: ["torso" as const], dr: 8 }] };
+    expect(drLostAfterWear({ ...suit, drLost: 0, amount: 20, location: "torso" })).toBe(8);
+    expect(drLostAfterWear({ ...suit, drLost: 0, amount: 20, location: "arm" })).toBe(4);
+    expect(drLostAfterWear({ ...suit, drLost: 0, amount: 20 })).toBe(8);
   });
 
   it("spends the lower figure of a split DR where the split applies", () => {
