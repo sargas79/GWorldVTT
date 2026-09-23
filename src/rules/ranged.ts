@@ -252,6 +252,17 @@ export function burstShots(options: {
   return Math.max(least, Math.floor(asked / step) * step);
 }
 
+/**
+ * The fewest shots a weapon may fire in one attack for the mark after its
+ * Rate of Fire: a weapon marked "!" fires only on full auto, at no less than
+ * a quarter of its listed RoF, rounded up (Characters p. 270). One for any
+ * other mark, or none.
+ */
+export function fullAutoMinimum(rateOfFire: number, mark: string): number {
+  if (String(mark ?? "").trim() !== "!") return 1;
+  return Math.max(1, Math.ceil(Math.max(1, Math.floor(Number(rateOfFire) || 1)) / 4));
+}
+
 /** One target of a spray of fire, in the order the burst sweeps across them. */
 export interface SprayTarget {
   /** Shots aimed at this target. */

@@ -142,6 +142,44 @@ export function registerPostureSync(): void {
   Hooks.on("deleteActiveEffect", fromEffect(false));
 }
 
+/**
+ * Keeps the sheet's Stunned box and the token's stunned icon one state
+ * (since API 1.94.0).
+ *
+ * The sheet reads the box -- it is what offers "Shake off stun" -- and a stun
+ * set on the token alone, from the token HUD or a module's `applyCondition`,
+ * left the box clear and the button missing until somebody ticked it by hand.
+ * Either now moves the other, as posture and prone do. Only the client that
+ * made the change acts on it.
+ */
+export function registerStunSync(): void {
+  Hooks.on("updateActor", (actor: any, changes: any, _options: unknown, userId: string) => {
+    if (userId !== game.user?.id) return;
+    const stunned = changes?.system?.conditions?.stunned;
+    if (typeof stunned !== "boolean") return;
+    void setCondition(actor, "stunned", stunned);
+  });
+
+  const fromEffect = (active: boolean) => (effect: any, _options: unknown, userId: string) => {
+    if (userId !== game.user?.id) return;
+    if (!effect?.statuses?.has?.("stunned")) return;
+    void syncStunBox(effect.parent, active);
+  };
+  Hooks.on("createActiveEffect", fromEffect(true));
+  Hooks.on("deleteActiveEffect", fromEffect(false));
+}
+
+/**
+ * Sets the sheet's Stunned box to match the token, for an actor that has one.
+ * A stun icon deleted while another effect still carries it leaves the box set.
+ */
+export async function syncStunBox(actor: any, active: boolean): Promise<void> {
+  if (!actor?.isOwner || typeof actor.system?.conditions?.stunned !== "boolean") return;
+  const stunned = active || hasCondition(actor, "stunned");
+  if (actor.system.conditions.stunned === stunned) return;
+  await actor.update({ "system.conditions.stunned": stunned });
+}
+
 /** A condition's name, localized, or null for an id that isn't one of the system's. */
 export function conditionLabel(id: string): string | null {
   const condition = CONDITIONS.find((c) => c.id === id);

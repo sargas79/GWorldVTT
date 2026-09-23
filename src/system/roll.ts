@@ -56,6 +56,7 @@ import {
   applyAttackOptions,
   attackOptionFields,
   attackOptionsFor,
+  requiredAttackOptions,
   callCombatHook,
   mergeAttackEffects,
   missFallbackFor,
@@ -114,6 +115,7 @@ import {
   rangedToHitModifier,
   attackRateOfFire,
   burstShots,
+  fullAutoMinimum,
   rapidFireBonus,
   rapidFireHits,
   speedRangeModifier,
@@ -804,6 +806,8 @@ export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) 
     // p. 411) -- where it is the scope that counts, not the trait.
     scopeFixed: dataset.scopeFixed === "1" && n("scopeBonus") >= telescopicScope(n("scopeBonus"), telescopicTraitLevels(actor).levels, telescopicTraitLevels(actor).noTargeting),
     rateOfFire: n("rateOfFire") || 1,
+    // A RoF marked "!" fires only on full auto (Characters p. 270; since 1.94.0).
+    fullAutoOnly: dataset.fullAutoOnly === "1",
     recoil: n("recoil"),
     bulk: n("bulk"),
     // A shotgun's pellets, and the range inside which they strike as one.
@@ -1379,6 +1383,7 @@ export async function handleRollAction(
       rateOfFire: Number(target.dataset.rateOfFire) || 1,
       recoil: Number(target.dataset.recoil) || 1,
       loaded: target.dataset.loaded === undefined || target.dataset.loaded === "" ? null : Number(target.dataset.loaded) || 0,
+      minShots: fullAutoMinimum(Number(target.dataset.rateOfFire) || 1, target.dataset.fullAutoOnly === "1" ? "!" : ""),
       yardsBetween,
     });
     if (plan === null) return null;
@@ -1496,12 +1501,19 @@ async function rollAction(
     return null;
   }
   const equipmentShift = (equipmentUse?.lines ?? []).reduce((sum, line) => sum + line.value, 0);
+  // An option a module says the attack must not go without -- a weapon's only
+  // burst -- opens the dialog on a plain click too, where rolling past it
+  // would fire as if it weren't there (since 1.94.0).
+  const mustAsk = rollType === "attack" && requiredAttackOptions(attackContextFor({
+    actor, item: rolledItem, ranged: Boolean(ranged), damageType: String(target.dataset.damageType ?? ""),
+    reach: target.dataset.reach ?? "", effectiveSkill: base + equipmentShift,
+  })).length > 0;
   // A target of a spray is shot at its share of the burst, at the Recoil its
   // place in the sweep gives it.
   const sprayed = spray ? { ...weapon, recoil: spray.recoil } : weapon;
   const shot = ranged
-    ? measured && !aboard && !riding
-      ? quickShot(measured, sprayed, spray?.shots ?? 1)
+    ? measured && !aboard && !riding && !mustAsk
+      ? quickShot(measured, sprayed, spray?.shots ?? null)
       : await promptForRangedAttack({
           ...sprayed,
           ...(spray ? { fixedShots: spray.shots } : {}),
@@ -1529,7 +1541,7 @@ async function rollAction(
   // but when it does ask, it asks about Deceptive Attack and Rapid Strike too,
   // since both are decided before the roll and both cost skill.
   const asksAboutMelee =
-    !ranged && rollType === "attack" && (event as MouseEvent).shiftKey;
+    !ranged && rollType === "attack" && ((event as MouseEvent).shiftKey || mustAsk);
   const melee = asksAboutMelee
     ? await promptForMeleeAttack({
         effectiveSkill: base + equipmentShift,
@@ -2252,9 +2264,15 @@ function quickShot(
   measured: MeasuredShot,
   weapon: Parameters<typeof promptForRangedAttack>[0],
   /** Shells fired: one, or a target's share of a Spraying Fire burst. */
-  shells = 1,
+  shells: number | null = null,
 ): RangedShot {
-  // One shell, however many pellets are in it, and no aim unless the shooter
+  // One shell, or a "!" weapon's least burst: a quarter of its RoF, or what
+  // is left in it (Characters p. 270; since 1.94.0). A spray's share is its own.
+  if (shells === null) {
+    const most = Math.max(1, Math.min(weapon.rateOfFire || 1, weapon.loaded ?? Infinity));
+    shells = optionShots(1, most, { minShots: 0, shotsStep: 1 }, weapon) ?? 1;
+  }
+  // The shells, however many pellets are in each, and no aim unless the shooter
   // is on an Aim maneuver -- in which case its turns are what they are.
   const pellets = multipleProjectiles({
     shotsFired: shells,
@@ -2420,7 +2438,7 @@ function showRangedBreakdown(
   // the Rate of Fire can't reach is shown at its most, and refused on Roll.
   const shells = options.fixedShots
     ? Math.max(1, Math.floor(options.fixedShots))
-    : optionShots(input.shots || 1, fired.rateOfFire, chosen) ?? fired.rateOfFire;
+    : optionShots(input.shots || 1, fired.rateOfFire, chosen, options) ?? fired.rateOfFire;
   const pellets = multipleProjectiles({
     shotsFired: shells,
     projectiles: options.projectiles ?? 1,
@@ -2487,15 +2505,52 @@ export function optionRateOfFire(
  * Null where the Rate of Fire can't reach them. Without the rapid-fire
  * rules there are no bursts to hold to, and one shot is fired.
  */
-export function optionShots(asked: number, rateOfFire: number, chosen: { minShots: number; shotsStep: number }): number | null {
+export function optionShots(
+  asked: number,
+  rateOfFire: number,
+  chosen: { minShots: number; shotsStep: number },
+  weapon?: FullAutoWeapon | null,
+): number | null {
   if (!isRuleOn("rapidFire")) return burstShots({ asked, rateOfFire });
-  return burstShots({ asked, rateOfFire, minShots: chosen.minShots, step: chosen.shotsStep });
+  const held = burstLimits(chosen, rateOfFire, weapon);
+  return burstShots({ asked, rateOfFire, minShots: held.minShots, step: held.shotsStep });
+}
+
+/** What a weapon's row says about full auto, for {@link burstLimits}. */
+export interface FullAutoWeapon {
+  /** The listed Rate of Fire, before any option or what is left in the weapon. */
+  rateOfFire?: number;
+  fullAutoOnly?: boolean;
+}
+
+/**
+ * An option's minimum burst and step, with a "!" weapon's own least burst
+ * folded in: a quarter of its listed RoF, rounded up (Characters p. 270;
+ * since 1.94.0). The weapon's minimum never asks for more than the Rate of
+ * Fire it has now -- one with fewer rounds left than that fires what it has --
+ * where an option's minimum still refuses a burst it can't reach.
+ */
+export function burstLimits(
+  chosen: { minShots: number; shotsStep: number },
+  rateOfFire: number,
+  weapon?: FullAutoWeapon | null,
+): { minShots: number; shotsStep: number } {
+  const own = weapon?.fullAutoOnly
+    ? Math.min(fullAutoMinimum(Number(weapon.rateOfFire) || rateOfFire, "!"), Math.max(1, Math.floor(rateOfFire) || 1))
+    : 0;
+  return { minShots: Math.max(Number(chosen.minShots) || 0, own), shotsStep: chosen.shotsStep };
 }
 
 /** The warning for a burst its Rate of Fire can't fire (since 1.83.0). */
-export function burstTooShort(name: string, rateOfFire: number, chosen: { minShots: number; shotsStep: number }): string {
+export function burstTooShort(
+  name: string,
+  rateOfFire: number,
+  chosen: { minShots: number; shotsStep: number },
+  weapon?: FullAutoWeapon | null,
+): string {
+  const held = burstLimits(chosen, rateOfFire, weapon);
   return game.i18n.format("GWORLD.Ranged.BurstTooShort", {
-    name, min: Math.max(1, chosen.minShots), step: Math.max(1, chosen.shotsStep), rof: rateOfFire,
+    name, min: Math.max(1, held.minShots), step: Math.max(1, held.shotsStep), rof: rateOfFire,
   });
 }
 
@@ -2507,6 +2562,8 @@ export async function promptForRangedAttack(options: {
   /** True for a fixed-power scope, which gives nothing short of its bonus in seconds of Aim. */
   scopeFixed?: boolean;
   rateOfFire: number;
+  /** A RoF marked "!": fired only on full auto, a quarter of the RoF at least (Characters p. 270; since 1.94.0). */
+  fullAutoOnly?: boolean;
   recoil: number;
   bulk: number;
   /**
@@ -2577,9 +2634,11 @@ export async function promptForRangedAttack(options: {
   // An option may raise the Rate of Fire (since 1.70.0), so a weapon that
   // fires one shot still asks when a module offers one that could.
   const mayRaise = attackOptionsFor(addonContext).length > 0 && isRuleOn("rapidFire");
+  // A "!" weapon's field starts at its least burst (Characters p. 270; since 1.94.0).
+  const leastShots = optionShots(1, rateOfFire, { minShots: 0, shotsStep: 1 }, options) ?? 1;
   const shotsField = options.fixedShots
     ? `<p class="ihint" style="margin:0">${game.i18n.format("GWORLD.Spraying.FixedShots", { shots: options.fixedShots, recoil: options.recoil })}</p>`
-    : rateOfFire > 1 || mayRaise ? field("shots", rateOfFire > 1 ? `${L("Shots")} (1-${rateOfFire})` : L("Shots"), "1") : "";
+    : rateOfFire > 1 || mayRaise ? field("shots", rateOfFire > 1 ? `${L("Shots")} (${leastShots}-${rateOfFire})` : L("Shots"), String(leastShots)) : "";
 
   // Aboard a vehicle, the shot asks what only the table knows: whether it is
   // the vehicle's own weapon, whether the car swerved, and what its sights are.
@@ -2768,9 +2827,9 @@ export async function promptForRangedAttack(options: {
   // 1.83.0). A Spraying Fire burst has decided this attack's shots already.
   const burst = options.fixedShots
     ? Math.max(1, Math.floor(options.fixedShots))
-    : optionShots(input.shots || 1, effectiveRateOfFire, chosenOptions);
+    : optionShots(input.shots || 1, effectiveRateOfFire, chosenOptions, options);
   if (burst === null) {
-    ui.notifications?.warn(burstTooShort(String(options.item?.name ?? ""), effectiveRateOfFire, chosenOptions));
+    ui.notifications?.warn(burstTooShort(String(options.item?.name ?? ""), effectiveRateOfFire, chosenOptions, options));
     return null;
   }
   const shellsFired = burst;

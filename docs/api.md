@@ -187,7 +187,7 @@ and the roll continues.
   Offered in the maneuver picker with the given movement (`none`, `step`,
   `half`, `full`) and defense allowance (`any`, `none`, `dodgeAndBlockOnly`).
   A choice made with it is stored in `system.maneuverOption`.
-- **`registerAttackOption({ module, key, label, attack?, input?, available?, refuse?, apply })`.**
+- **`registerAttackOption({ module, key, label, attack?, input?, available?, refuse?, apply, required? })`.**
   Shown in the attack dialog as a checkbox, number or select. `apply(context, value)`
   returns an effect:
   - `modifiers`: lines on the attack roll;
@@ -226,6 +226,24 @@ and the roll continues.
     (on each attack from the zones) apply. A row whose own RoF is under 5
     but that has attack options on offer can choose Suppression Fire, and
     the dialog refuses a burst the options chosen leave short of RoF 5.
+  - Since 1.94.0, a weapon whose RoF is marked "!" (the mode's
+    `rateOfFireMark`; the row's `fullAutoOnly`) fires at least a quarter of
+    its listed RoF, rounded up (Characters p. 270), through the same
+    `minShots`: the higher of the weapon's and the options' counts. The
+    weapon's own minimum never asks for more than it can fire now, so one
+    with fewer rounds left fires what it has; an option's minimum still
+    refuses. It holds on a plain click (the measured shot fires the least
+    burst), in the dialog (whose Shots field starts there), in Suppression
+    Fire, and in Spraying Fire, where the whole burst, sweep included, must
+    reach it. `rules.fullAutoMinimum(rateOfFire, mark)` gives the count (1
+    for any mark but "!").
+
+  Since 1.94.0, `required`: `true`, or a function of the attack context
+  returning true, for an option the attack must not go without, such as a
+  weapon's only burst. Where a required option is offered and not refused, a
+  plain click on the attack opens the attack dialog (ranged or melee) instead
+  of rolling past it, and a required checkbox starts ticked. The player may
+  still untick it. A function that throws counts as not required.
 
   `refuse(context)` returns a reason to disable the option. `context.chosen` lists
   the other options chosen.
@@ -504,6 +522,10 @@ and the roll continues.
       (Characters p. 270). A row's `minStPenalty` is always the penalty its
       `skillLevel` already includes. An off-mount weapon also starts a
       suppression at the handheld cap.
+    - Since 1.94.0, a ranged row carries `fullAutoOnly`: true where the mode's
+      RoF is marked "!" (Characters p. 270). A listener may set it, true or
+      false; the attack then holds the burst to a quarter of the row's
+      `rateOfFire` at least (see `registerAttackOption`).
     - Since 1.69.0, also `minRange` on a ranged row: the least distance in yards
       it can hit at, 0 for none, from the mode's own `minRange` (and in `basis`
       beside the other ranges). The Combat tab shows it beside the range, and an
@@ -1668,6 +1690,10 @@ Two fields a module may read (since 1.62.0):
     condition's recovery is held now: `{ until }` (null while it lasts), or
     null where the roll may be made. Taking a system condition off the token
     by any means drops its entry, hold and all.
+  - Since 1.94.0, the stun on the token and the sheet's Stunned box
+    (`system.conditions.stunned`) are one state: `{ key: "stunned" }` ticks
+    the box, so the sheet offers "Shake off stun", and removing it clears the
+    box. The token HUD and the box move each other the same way.
   - It returns the condition's id. `actors.removeCondition(actor, id)` takes it
     off, and `actors.conditions(actor)` lists them. The Combat tab shows them
     too.

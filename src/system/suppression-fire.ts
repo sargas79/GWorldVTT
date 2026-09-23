@@ -290,9 +290,9 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
     ui.notifications?.warn(game.i18n.format("GWORLD.Suppression.NeedsRoF", { name: String(data.rollLabel ?? ""), rof: SPREAD_FIRE_MIN_RATE_OF_FIRE }));
     return false;
   }
-  const burst = optionShots(chosen.shots, fired.rateOfFire, chosen.effect);
+  const burst = optionShots(chosen.shots, fired.rateOfFire, chosen.effect, weapon);
   if (burst === null) {
-    ui.notifications?.warn(burstTooShort(String(item?.name ?? data.rollLabel ?? ""), fired.rateOfFire, chosen.effect));
+    ui.notifications?.warn(burstTooShort(String(item?.name ?? data.rollLabel ?? ""), fired.rateOfFire, chosen.effect, weapon));
     return false;
   }
   const split = suppressionZones({ rateOfFire: fired.rateOfFire, shots: burst, zones: chosen.zones });
