@@ -32,7 +32,7 @@ import { isRuleOn } from "./optional-rules.js";
 import { targetedTokens, withTargets } from "./targets.js";
 import { addArea, centerOf, listAreas, pixelsPerYard, removeArea } from "./modifier-areas.js";
 import { aimTurnsOf, loseAim } from "./aim.js";
-import { announceShots, shotsReady, spendShots } from "./ammunition.js";
+import { announceShots, shotsReady, shotsSourceOf, spendShots } from "./ammunition.js";
 import { malfunctionOf } from "./malfunctions.js";
 import { recordCalledShot } from "./called-shot.js";
 import {
@@ -303,10 +303,13 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
   const shots = split.shotsPerZone.reduce((s, n) => s + n, 0);
   // What an option spends beyond the shots fired, which the weapon must have.
   const extra = chosen.effect.shots;
-  const modeIndex = Number(data.modeIndex);
+  // A module's derived row spends the stored mode it fires from (since 1.101.0).
+  const source = shotsSourceOf(button);
+  const modeIndex = source.modeIndex;
+  const rounds = shots * source.perShot;
   const ready = isRuleOn("reloading") && Number.isInteger(modeIndex) ? shotsReady(item, modeIndex) : null;
-  if (ready !== null && shots + extra > ready) {
-    ui.notifications?.warn(game.i18n.format("GWORLD.Ranged.NotEnoughShots", { name: String(item?.name ?? ""), needed: shots + extra, ready }));
+  if (ready !== null && rounds + extra > ready) {
+    ui.notifications?.warn(game.i18n.format("GWORLD.Ranged.NotEnoughShots", { name: String(item?.name ?? ""), needed: rounds + extra, ready }));
     return false;
   }
   // And the FP an option costs, paid before the shots go.
@@ -349,8 +352,8 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
   };
 
   // The rounds go, and so does the aim (Campaigns p. 373).
-  if (isRuleOn("reloading") && item?.isOwner && Number.isInteger(modeIndex)) await spendShots(item, modeIndex, shots + extra);
-  announceShots({ actor, item, modeIndex, fired: shots, extra, wasted: 0, kind: "suppression", targets: 0 });
+  if (isRuleOn("reloading") && item?.isOwner && Number.isInteger(modeIndex)) await spendShots(item, modeIndex, rounds + extra);
+  announceShots({ actor, item, modeIndex, fired: rounds, extra, wasted: 0, kind: "suppression", targets: 0, derivedMode: source.derivedMode });
   await loseAim(actor, "fired");
 
   await ChatMessage.implementation.create({

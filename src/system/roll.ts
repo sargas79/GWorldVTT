@@ -134,7 +134,7 @@ import { effectiveLevelDifference } from "../rules/unarmed-techniques.js";
 import { turnedBlade } from "../rules/subduing.js";
 import { coverShot, struckCover, type CoverApproach } from "../rules/cover.js";
 import { breakWeapon } from "./weapon-damage.js";
-import { announceShots, shotsReady, spendShots, type ShotsTally } from "./ammunition.js";
+import { announceShots, shotsReady, shotsSourceOf, spendShots, type ShotsTally } from "./ammunition.js";
 import { malfunctionOf, malfunctionWithHooks, setMalfunction, type MalfunctionReport } from "./malfunctions.js";
 import { strikingPart } from "../rules/hurting-yourself.js";
 import type { DamageType } from "../rules/types.js";
@@ -1448,9 +1448,11 @@ export async function handleRollAction(
       // The whole burst, once: what it fired at each target and what the
       // sweep between them wasted (since 1.71.0).
       if (tally.targets > 0) {
+        const source = shotsSourceOf(target);
         announceShots({
-          actor, item: rollItemOf(actor, target), modeIndex: Number(target.dataset.modeIndex),
-          fired: tally.fired, extra: tally.extra, wasted: tally.wasted, kind: "spraying", targets: tally.targets,
+          actor, item: rollItemOf(actor, target), modeIndex: source.modeIndex,
+          fired: tally.fired * source.perShot, extra: tally.extra, wasted: tally.wasted * source.perShot, kind: "spraying", targets: tally.targets,
+          derivedMode: source.derivedMode,
         });
       }
       if (last && inCombat) await recordAttackMade(actor);
@@ -1697,15 +1699,18 @@ async function rollAction(
   // (since 1.50.0). Refused rather than fired, because a weapon cannot use
   // rounds it has not got, and the cost is not visible until the option is
   // chosen.
+  // A derived row that fires several of the stored mode's rounds a shot
+  // needs them too (since 1.101.0).
   if (rollType === "attack" && ranged && shot && isRuleOn("reloading")) {
     const extra = Math.max(0, Math.floor(Number(shot.addon?.shots) || 0));
-    const modeIndex = Number(target.dataset.modeIndex);
-    const ready = extra > 0 && Number.isInteger(modeIndex) ? shotsReady(rolledItem, modeIndex) : null;
-    if (ready !== null && shot.shellsFired + extra > ready) {
+    const source = shotsSourceOf(target);
+    const needed = shot.shellsFired * source.perShot + extra;
+    const ready = (extra > 0 || source.perShot > 1) && Number.isInteger(source.modeIndex) ? shotsReady(rolledItem, source.modeIndex) : null;
+    if (ready !== null && needed > ready) {
       ui.notifications?.warn(
         game.i18n.format("GWORLD.Ranged.NotEnoughShots", {
           name: String(rolledItem?.name ?? ""),
-          needed: shot.shellsFired + extra,
+          needed,
           ready,
         }),
       );
@@ -2064,15 +2069,16 @@ async function rollAction(
     await recordCalledShot(actor, { hitLocation: missedInto?.hitLocation ?? "torso", chink: false, ...(missedInto?.addonLocation ? { addonLocation: missedInto.addonLocation } : {}) });
   }
 
-  // The shells fired come off the weapon's count (Campaigns p. 373).
+  // The shells fired come off the weapon's count (Campaigns p. 373) -- for a
+  // module's derived row, off the stored mode it fires from (since 1.101.0).
+  const shotsSource = shotsSourceOf(target);
   if (rollType === "attack" && ranged && shot && isRuleOn("reloading")) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     const item = id ? actor?.items?.get(id) : null;
-    const modeIndex = Number(target.dataset.modeIndex);
     // "shots" on an option is what a setting spends beyond the shells fired.
     // So do a spray's shots wasted swinging to this target (Campaigns p. 409).
-    const spent = shot.shellsFired + Math.max(0, Math.floor(Number(shot.addon?.shots) || 0)) + (spray?.wasted ?? 0);
-    if (item?.isOwner && Number.isInteger(modeIndex)) await spendShots(item, modeIndex, spent);
+    const spent = (shot.shellsFired + (spray?.wasted ?? 0)) * shotsSource.perShot + Math.max(0, Math.floor(Number(shot.addon?.shots) || 0));
+    if (item?.isOwner && Number.isInteger(shotsSource.modeIndex)) await spendShots(item, shotsSource.modeIndex, spent);
   }
   // What the attack spent, for the modules (since 1.71.0): once for the
   // attack, or -- for one target of a spray -- added to the burst's tally,
@@ -2087,8 +2093,9 @@ async function rollAction(
       tally.targets += 1;
     } else {
       announceShots({
-        actor, item: rolledItem, modeIndex: Number(target.dataset.modeIndex),
-        fired: shot.shellsFired, extra, wasted: 0, kind: shot.shellsFired > 1 ? "rapidFire" : "single", targets: 1,
+        actor, item: rolledItem, modeIndex: shotsSource.modeIndex,
+        fired: shot.shellsFired * shotsSource.perShot, extra, wasted: 0, kind: shot.shellsFired > 1 ? "rapidFire" : "single", targets: 1,
+        derivedMode: shotsSource.derivedMode,
       });
     }
   }

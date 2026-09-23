@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../optional-rules.js", () => ({ isRuleOn: () => true }));
 
-import { announceShots } from "../ammunition.js";
+import { announceShots, shotsSourceOf } from "../ammunition.js";
 import { clearingAttempt, clearingProcedure, malfunctionOf, malfunctionWithHooks } from "../malfunctions.js";
 import { shotsEntryFor } from "../shots-entry.js";
 
@@ -116,6 +116,37 @@ describe("gworld.afterShots (sargas79/GWorldVTT#594)", () => {
     announceShots({ actor, item, modeIndex: 0, fired: 0, extra: 0, wasted: 0, kind: "single", targets: 1 });
     announceShots({ actor, item, modeIndex: 4, fired: 1, extra: 0, wasted: 0, kind: "single", targets: 1 });
     expect(seen).toHaveLength(0);
+  });
+});
+
+describe("derived rows spend the stored mode's shots (sargas79/GWorldVTT#694)", () => {
+  const button = (data: Record<string, string>, row: Record<string, string> = {}) => ({
+    dataset: data,
+    closest: (selector: string) => (selector === "[data-derived-mode]" ? { dataset: row } : null),
+  });
+
+  it("spends a stored mode's own count, one round a shot", () => {
+    expect(shotsSourceOf(button({ modeIndex: "1", spendsFrom: "" }, { derivedMode: "" }))).toEqual({ modeIndex: 1, perShot: 1, derivedMode: null });
+  });
+
+  it("spends the stored mode a derived row names, at its rounds a shot", () => {
+    expect(shotsSourceOf(button({ modeIndex: "-1", spendsFrom: "0", roundsPerShot: "3" }, { derivedMode: "mod.burst" }))).toEqual({ modeIndex: 0, perShot: 3, derivedMode: "mod.burst" });
+    expect(shotsSourceOf(button({ modeIndex: "-1", spendsFrom: "0", roundsPerShot: "" }, { derivedMode: "mod.burst" }))).toEqual({ modeIndex: 0, perShot: 1, derivedMode: "mod.burst" });
+  });
+
+  it("spends nothing for a derived row that names no stored mode", () => {
+    const source = shotsSourceOf(button({ modeIndex: "-1", spendsFrom: "" }, { derivedMode: "mod.zap" }));
+    expect(Number.isInteger(source.modeIndex)).toBe(false);
+    expect(source.derivedMode).toBe("mod.zap");
+  });
+
+  it("names the derived mode to gworld.afterShots, with the stored mode", () => {
+    const seen: any[] = [];
+    listen("gworld.afterShots", (context) => seen.push(context));
+    const { item, actor } = rifle();
+    announceShots({ actor, item, modeIndex: 0, fired: 3, extra: 0, wasted: 0, kind: "single", targets: 1, derivedMode: "mod.burst" });
+    announceShots({ actor, item, modeIndex: 0, fired: 1, extra: 0, wasted: 0, kind: "single", targets: 1 });
+    expect(seen.map((c) => [c.derivedMode, c.fired, c.mode])).toEqual([["mod.burst", 3, item.system.rangedModes[0]], [null, 1, item.system.rangedModes[0]]]);
   });
 });
 

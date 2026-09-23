@@ -715,6 +715,9 @@ export interface DerivedAttackModeRegistration {
    * `helpers.rows(item)` gives copies of the item's own rows, after the
    * `gworld.weaponAttacks` listeners, and `helpers.damage(base, modifier)`
    * thrust (`"thr"`) or swing (`"sw"`) damage at the actor's striking ST.
+   * Since 1.101.0 a ranged row that fires the weapon's own rounds sets
+   * `spendsFrom` (the stored ranged mode's index) and `roundsPerShot` (1 if
+   * left out): the row shows that mode's count and each shot spends from it.
    */
   mode: (item: any, actor: any, helpers: DerivedModeHelpers) => Record<string, unknown> | null;
 }
