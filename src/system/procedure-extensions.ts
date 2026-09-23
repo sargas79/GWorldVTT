@@ -428,8 +428,17 @@ export interface ResistedAttack {
   halfDamageRange: number;
   /** The target's DR at the location struck, where the attack met any. */
   dr: number;
-  /** Whether that DR counted at all: false for an attack that got past it. */
+  /**
+   * Whether DR counted at all: since 1.105.0, whether the roll got a DR bonus
+   * (Characters p. 35), false for an attack that got past it.
+   */
   drCounted: boolean;
+  /**
+   * The bonus the victim's DR gave the roll, as its `afflictionDr` line has it:
+   * worn and natural DR at the spot, after the attack's armour divisor; 0 for
+   * an attack DR does nothing against (since 1.105.0).
+   */
+  drBonus?: number;
   /** For an area attack, yards from its centre (since 1.63.0); absent otherwise. */
   distance?: number;
 }

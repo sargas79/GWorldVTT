@@ -10,7 +10,10 @@
     <span class="v2-attack-name">
       {{atk.name}}{{#if atk.mode}} <span class="v2-attack-mode">{{atk.mode}}</span>{{/if}}
     </span>
-    {{#if atk.unready}}
+    {{#if atk.stuck}}
+      {{!-- Stuck in a foe (Campaigns p. 405): no attack, no parry, no Ready until it comes out. --}}
+      <span class="v2-badge v2-badge-muted" data-tooltip="{{#if atk.stuck.held}}{{localize 'GWORLD.Pick.StuckIn' foe=atk.stuck.name}}{{else}}{{localize 'GWORLD.Pick.LeftIn' foe=atk.stuck.name}}{{/if}}">{{localize "GWORLD.Pick.Short"}}</span>
+    {{else if atk.unready}}
       {{#if @root.editable}}
         <button type="button" class="v2-badge v2-badge-muted" data-action="readyWeapon"
                 data-tooltip="{{localize 'GWORLD.Ready.Hint'}}">{{localize "GWORLD.Ready.Action"}}</button>

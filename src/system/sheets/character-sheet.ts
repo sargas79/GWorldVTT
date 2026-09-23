@@ -118,6 +118,7 @@ import { rollDisarm } from "../disarm.js";
 import { rollStrikeToBreak, weaponTargetsFor } from "../weapon-damage.js";
 import { buyAmmunition, chooseAndLoad, reloadWeapon } from "../ammunition.js";
 import { clearMalfunction } from "../malfunctions.js";
+import { freeStuckWeapon, letGoOfStuckWeapon, setStuckWeapon } from "../picks.js";
 import { buyMore } from "../shopping.js";
 import { clothingCost } from "../../rules/wealth.js";
 import {
@@ -135,7 +136,8 @@ import { grappleSizeBonus } from "../../rules/size.js";
 import { rollStunRecovery } from "../knockdown.js";
 import { applyFirstAid, regenerate, restForADay, restForFatigue, tryToWake } from "../recovery.js";
 import { isFrightResistance, rollFrightCheck, rollFrightCheckOutcome } from "../fright.js";
-import { traitsOf, wornArmor } from "../damage.js";
+import { drMetByAttack, traitsOf, wornArmor } from "../damage.js";
+import { afflictionDrBonus } from "../../rules/affliction-resistance.js";
 import { applyAfflictionEffects } from "../afflictions.js";
 import { feintDefenseScore, recordFeint } from "../feint.js";
 import { facingChangeAtEndOfMove, facingChangeCost, hexMovementCost } from "../../rules/tactical.js";
@@ -500,6 +502,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       readyWeapon: GWorldCharacterSheet.#onReadyWeapon,
       reloadWeapon: GWorldCharacterSheet.#onReloadWeapon,
       clearMalfunction: GWorldCharacterSheet.#onClearMalfunction,
+      freeStuckWeapon: GWorldCharacterSheet.#onFreeStuckWeapon,
+      letGoOfStuckWeapon: GWorldCharacterSheet.#onLetGoOfStuckWeapon,
+      retrieveStuckWeapon: GWorldCharacterSheet.#onRetrieveStuckWeapon,
       loadAmmunition: GWorldCharacterSheet.#onLoadAmmunition,
       buyAmmunition: GWorldCharacterSheet.#onBuyAmmunition,
       buyItem: GWorldCharacterSheet.#onBuyItem,
@@ -3078,9 +3083,22 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       const fromCentre = centre ? yardsBetween(centre, token) : null;
       const distance = fromCentre === null ? {} : { distance: fromCentre };
       // What the victim's armour was worth against the attack that forced the
-      // roll. An affliction is not damage, so none of it is subtracted here:
-      // it is told to the modules, which may have a rule that reads it.
+      // roll. An affliction is not damage, so none of it is subtracted here.
       const drHere = wornDrAt(wornArmor(victim), hitLocation, damageType);
+      // "The victim gets a bonus equal to his DR" -- worn and his own, as the
+      // attack's armour divisor leaves it -- unless DR does nothing against
+      // the attack: a cosmic divisor, a Malediction, or a follow-up (p. 35;
+      // since API 1.105.0). The other modifiers that get past DR are named
+      // nowhere on the row, and a module drops the line for them.
+      const met = drMetByAttack(victim, {
+        hitLocation,
+        damageType,
+        armorDivisor: Number(target.dataset.armorDivisor) || 1,
+        ignoresDr: target.dataset.ignoresDr === "1" || target.dataset.followUp === "1",
+        ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
+        mode,
+      });
+      const drBonus = afflictionDrBonus(met);
 
       // An affliction resisted with a Fright Check rather than an attribute (since API 1.63.0).
       if (isFrightResistance(attribute)) {
@@ -3088,7 +3106,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           actor: victim,
           modifier,
           tags: ["resist", "affliction"],
-          attack: { attacker: this.actor, item, mode, distanceYards: yards, halfDamageRange, dr: drHere, drCounted: drHere > 0, ...distance },
+          attack: { attacker: this.actor, item, mode, distanceYards: yards, halfDamageRange, dr: drHere, drCounted: drBonus > 0, drBonus, ...distance },
         });
         if (fright && !fright.success) {
           await applyAfflictionEffects({ actor: victim, attacker: this.actor, item, mode, label, margin: fright.margin, frightEffect: fright.effect, ...distance });
@@ -3114,11 +3132,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           distanceYards: yards,
           halfDamageRange,
           dr: drHere,
-          drCounted: drHere > 0,
+          drCounted: drBonus > 0,
+          drBonus,
           ...distance,
         },
         modifiers: [
           ...(modifier === 0 ? [] : [{ label: game.i18n.localize("GWORLD.Affliction.Short"), value: modifier }]),
+          ...(drBonus > 0 ? [{ key: "afflictionDr", label: game.i18n.localize("GWORLD.Affliction.DrBonus"), value: drBonus }] : []),
           // "Those that require a HT roll to resist are resisted at +3" past 1/2D.
           ...(beyondHalfDamage({ rangeYards: yardsBetween(shooter, token) ?? 0, halfDamageRange })
             ? [{ label: game.i18n.localize("GWORLD.Affliction.PastHalfDamage"), value: 3 }]
@@ -3368,6 +3388,24 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!item) return;
     await item.update({ "system.unready": false });
     await this.actor.update({ "system.maneuver": "ready" });
+  }
+
+  /** Tries to pull a stuck weapon free: a Ready maneuver and a ST roll (Campaigns p. 405). */
+  static async #onFreeStuckWeapon(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.itemFrom(target);
+    if (item) await freeStuckWeapon(this.actor, item);
+  }
+
+  /** Lets go of a stuck weapon, a free action; it stays in the foe (Campaigns p. 405). */
+  static async #onLetGoOfStuckWeapon(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.itemFrom(target);
+    if (item) await letGoOfStuckWeapon(this.actor, item);
+  }
+
+  /** Takes a weapon back out of the foe it was left in, once the fight allows (Campaigns p. 405). */
+  static async #onRetrieveStuckWeapon(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const item = this.itemFrom(target);
+    if (item) await setStuckWeapon(item, null);
   }
 
   /** Reloads a ranged weapon, for the Ready maneuvers its column lists (Campaigns p. 373). */

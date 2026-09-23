@@ -1253,6 +1253,26 @@ export function guidanceOf(itemnotes) {
 }
 
 /**
+ * Whether a mode's note marks it a pick (Campaigns p. 405): "May get stuck",
+ * the note the Basic Set's table gives the swing/impaling weapons that may get
+ * stuck in a foe. Nothing else is read as one.
+ */
+export function pickOf(note) {
+  return /\bmay get stuck\b/i.test(note ?? "");
+}
+
+/**
+ * A record's itemnotes split into one note per declared mode -- GCA writes
+ * them "{} | {May get stuck...} | {}" -- with the braces taken off. Empty
+ * where the record has none.
+ */
+export function itemNotesByMode(itemnotes) {
+  const text = (itemnotes ?? "").trim();
+  if (!text) return [];
+  return splitPipes(text).map((part) => part.replace(/^\{([\s\S]*)\}$/, "$1").trim());
+}
+
+/**
  * A ranged mode's minimum range, where the record's own notes say plainly
  * what it is. Two forms are read, and only these:
  *
@@ -2405,9 +2425,12 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
     // the book gives it a name -- a longbow's "Barbed-head".
     const declared = modes(r.text);
     const single = (f.get("mode") ?? "").includes("|") ? "" : (f.get("mode") ?? "").trim();
+    // Each scope knows which declared mode it came from, so the record's
+    // notes -- one per mode -- can be read against it.
     const scopes = declared.length > 0
-      ? declared.flatMap((m) => alternatives(splitTop(m)[0].trim(), fields(m)))
-      : alternatives(single, f);
+      ? declared.flatMap((m, index) => alternatives(splitTop(m)[0].trim(), fields(m)).map((scope) => ({ ...scope, index })))
+      : alternatives(single, f).map((scope) => ({ ...scope, index: -1 }));
+    const notesByMode = declared.length > 0 ? itemNotesByMode(f.get("itemnotes")) : [];
 
     const meleeModes = [];
     const rangedModes = [];
@@ -2508,6 +2531,19 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
       } else {
         // A melee blow is never a beam.
         delete result.mode.tightBeam;
+      }
+
+      // A pick, where the record's note for this mode says it may get stuck
+      // (Campaigns p. 405). Notes that don't line up with the modes say
+      // nothing about any one of them, and are reported rather than read.
+      if (isMelee) {
+        const modeNote = scope.index < 0
+          ? (scope.f.get("itemnotes") ?? "")
+          : notesByMode.length === declared.length ? (notesByMode[scope.index] ?? "") : "";
+        if (pickOf(modeNote)) result.mode.pick = true;
+        else if (scope.index >= 0 && notesByMode.length !== declared.length && pickOf(f.get("itemnotes"))) {
+          note(`${name}: ${scope.name || "attack"}: its notes say a mode may get stuck, and do not say which; pick is not set`);
+        }
       }
 
       if (isMelee) meleeModes.push(...byUnarmedSkill(result.mode, scope.f.get("skillused")));

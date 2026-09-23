@@ -224,6 +224,10 @@ export declare function minimumRangeOf(
   itemnotes: string | undefined,
   mode: { halfDamageRange: number; maxRange: number; rangeIsStMultiple?: boolean },
 ): { minRange: number; halfDamageRange?: number } | null;
+/** Whether a mode's note marks it a pick, "May get stuck" (Campaigns p. 405). */
+export declare function pickOf(note: string | undefined): boolean;
+/** A record's itemnotes as one note per declared mode, braces off; empty where it has none. */
+export declare function itemNotesByMode(itemnotes: string | undefined): string[];
 /** How a missile finds its way, where the record's notes name the rule (Campaigns pp. 412-413), as the fields to set on a ranged mode, or null. */
 export declare function guidanceOf(
   itemnotes: string | undefined,

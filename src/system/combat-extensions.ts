@@ -97,6 +97,8 @@ export const COMBAT_HOOKS = Object.freeze({
   clearMalfunction: "gworld.clearMalfunction",
   /** Before a vehicle's DR meets a shot (since 1.79.0): `{ vehicle, actor, item, mode, location, arc, damageType, basicDamage, armorDivisor, ignoresDr, tightBeam, lines }`, the lines mutable. */
   vehicleDr: "gworld.vehicleDr",
+  /** A blow that may leave the weapon stuck in its victim (since 1.105.0): `{ attacker, item, mode, target, result, pick, stuck }`, `stuck` mutable. */
+  weaponStuck: "gworld.weaponStuck",
 });
 
 /** One piece of worn armour as `gworld.armorDr` hands it to a listener. */
@@ -346,6 +348,9 @@ export function adjustWeaponAttacks(options: {
     // The skill a row names, and whether attacking leaves it unready (since 1.30.0).
     row.skillName = typeof row.skillName === "string" ? row.skillName : String(row.skillName ?? "");
     row.readiesAfterAttack = row.readiesAfterAttack === true;
+    // A pick, whose blow may stick in the foe it penetrates (Campaigns
+    // p. 405; since 1.105.0). A melee row's alone.
+    row.pick = entry.kind === "melee" && row.pick === true;
     row.notes = (Array.isArray(row.notes) ? row.notes : [])
       .filter((n: any) => typeof n?.label === "string" && n.label.trim())
       .map((n: any) => ({ label: String(n.label), hint: String(n.hint ?? "") }));

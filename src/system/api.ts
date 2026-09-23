@@ -33,6 +33,7 @@ import { combatApi } from "./combat-extensions.js";
 import { clearZenShot, pendingZenShot, registerZenSkill, rollZenSkill, zenSkillsOf } from "./zen.js";
 import { loadInstantly, refundShots } from "./ammunition.js";
 import { clearMalfunction, malfunctionOf, setMalfunction } from "./malfunctions.js";
+import { freeStuckWeapon, letGoOfStuckWeapon, setStuckWeapon, stuckWeaponOf } from "./picks.js";
 import { registerSlam } from "./slam.js";
 import { beginGrapple, endGrapple, grappleOf, grapplesOf, updateGrapple } from "./grappling.js";
 import { dataApi } from "./data-extensions.js";
@@ -94,7 +95,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.104.0";
+export const API_VERSION = "1.105.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -441,6 +442,39 @@ const items = {
    */
   clearMalfunction(actor: any, item: any): Promise<"cleared" | "notYet" | "mechanical" | "destroyed" | null> {
     return clearMalfunction(actor, item);
+  },
+
+  /**
+   * The foe a weapon is stuck in (since 1.105.0; Campaigns p. 405): `{ uuid,
+   * name, forGood, held, modeIndex }`, or null for a weapon in hand. `forGood`
+   * after a critical failure pulling it free; `held` false once let go of.
+   */
+  stuck(item: any): { uuid: string; name: string; forGood: boolean; held: boolean; modeIndex: number } | null {
+    return stuckWeaponOf(item);
+  },
+
+  /**
+   * Leaves a weapon stuck in a foe with `{ uuid?, name?, forGood?, held?,
+   * modeIndex? }`, or frees it with null (since 1.105.0), with no roll and no
+   * card. False where the user doesn't own the item.
+   */
+  setStuck(item: any, stuck: { uuid?: string; name?: string; forGood?: boolean; held?: boolean; modeIndex?: number } | null): Promise<boolean> {
+    return setStuckWeapon(item, stuck);
+  },
+
+  /**
+   * Tries to pull a stuck weapon free as its sheet button does (since
+   * 1.105.0): a Ready maneuver, a ST roll tagged `stuckWeapon`, and the card.
+   * Resolves to `freed`, `stuck` or `stuckForGood`, or null where nothing was
+   * tried.
+   */
+  freeStuck(actor: any, item: any): Promise<"freed" | "stuck" | "stuckForGood" | null> {
+    return freeStuckWeapon(actor, item);
+  },
+
+  /** Lets go of a stuck weapon, a free action; it stays in the foe (since 1.105.0). False where nothing was let go of. */
+  letGoOfStuck(actor: any, item: any): Promise<boolean> {
+    return letGoOfStuckWeapon(actor, item);
   },
 
   /**

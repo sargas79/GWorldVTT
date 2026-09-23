@@ -951,6 +951,30 @@ describe("the equipment a data file's modes make", () => {
     expect(modes[0]!.linked).not.toBe(modes[1]!.linked);
   });
 
+  it("marks a pick where the mode's own note says it may get stuck (Campaigns p. 405)", () => {
+    const melee = "reach(1), parry(0U), minst(12), skillused(SK:Axe/Mace)";
+    const { gear, notes } = run(
+      `Test Pick, page(XX10), cost(70), weight(3), techlvl(3), damage(sw+1), damtype(imp), ${melee}, itemnotes({May get stuck; see Picks (p. B405).})`,
+      "Test Polearm, page(XX10), cost(150), weight(12), techlvl(3),"
+      + ` newmode(Swing/cut, damage(sw+5), damtype(cut), ${melee}),`
+      + ` newmode(Swing/imp, damage(sw+4), damtype(imp), ${melee}),`
+      + ` newmode(Thrust, damage(thr+3), damtype(imp), ${melee}),`
+      + " itemnotes({} | {May get stuck; see Picks (p. B405).} | {})",
+      // A note that doesn't line up with the modes names none of them.
+      "Test Hook, page(XX10), cost(50), weight(4), techlvl(3),"
+      + ` newmode(Swing, damage(sw), damtype(cut), ${melee}),`
+      + ` newmode(Hook, damage(sw), damtype(imp), ${melee}),`
+      + " itemnotes({May get stuck.})",
+      `Test Axe, page(XX10), cost(50), weight(4), techlvl(0), damage(sw+2), damtype(cut), ${melee}`,
+    );
+    const modes = (name: string) => gear.find((g) => g.name === name)!.system.meleeModes.map((m) => m.pick === true);
+    expect(modes("Test Pick")).toEqual([true]);
+    expect(modes("Test Polearm")).toEqual([false, true, false]);
+    expect(modes("Test Hook")).toEqual([false, false]);
+    expect(notes.some((n) => n.startsWith("Test Hook") && /may get stuck/.test(n))).toBe(true);
+    expect(modes("Test Axe")).toEqual([false]);
+  });
+
   it("gives it only to the mode before it when that fires another round", () => {
     const { gear } = run(
       "Test Gun, page(XX10), cost(100), weight(10), techlvl(6),"
