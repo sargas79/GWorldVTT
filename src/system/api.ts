@@ -49,7 +49,10 @@ import type { Poison, Treatment } from "../rules/poison.js";
 import type { ResuscitationCause } from "../rules/medicine.js";
 import type { ControlRating, LegalityClass } from "../rules/legality.js";
 import { currentControlRating, legalityClassOf } from "./legality.js";
-import { undoKnockdown } from "./knockdown.js";
+import { surprise, undoKnockdown } from "./knockdown.js";
+import { rollFall } from "./falling.js";
+import { restoreFatigue } from "./fatigue.js";
+import type { LandingSurface } from "../rules/falling.js";
 import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from "./damage-undo.js";
 import { carriedAmmunitionFor, loadAmmunition } from "./ammunition.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
@@ -91,7 +94,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.103.0";
+export const API_VERSION = "1.104.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -185,6 +188,24 @@ const actors = {
    */
   applyInjury(actor: any, options: { amount: number; fatigue?: boolean; label?: string }): Promise<InjuryTaken | null> {
     return takeInjury(actor, options);
+  },
+
+  /**
+   * Gives FP back outside rest (Campaigns p. 427; since 1.104.0), never above
+   * the actor's FP: `{ from, to, max, reason }`, or null for a user who can't
+   * change the actor or an amount that isn't a positive number.
+   */
+  restoreFatigue(actor: any, fp: number, options: { reason?: string } = {}) {
+    return restoreFatigue(actor, fp, options);
+  },
+
+  /**
+   * Takes a character by surprise (Campaigns p. 393; since 1.104.0): mentally
+   * stunned, recovered with IQ; total surprise freezes them for 1d seconds
+   * first. Resolves to `{ kind, freezeSeconds }`, or null.
+   */
+  surprise(actor: any, options: { total?: boolean } = {}) {
+    return surprise(actor, options);
   },
 
   /** Ends an actor's bleeding and clears the condition (since 1.36.0), for a user who owns it. */
@@ -588,6 +609,19 @@ async function rollHitLocation(options: { actor?: any; damageType?: string | nul
  * from 1.79.0 a shot at a vehicle, and from 1.93.0 what Fragile does.
  */
 const hazardsApi = Object.freeze({
+  /**
+   * Drops a character as the sheet's Fall button does (Campaigns pp. 430-431;
+   * since 1.104.0): `yards` fallen, `onto` `hard` (default) or `soft`,
+   * `controlled` for a landing an Acrobatics roll made, and `modifiers` lines
+   * added to the damage rolled. Resolves to the injury taken, or null.
+   */
+  fall(actor: any, options: { yards: number; onto?: LandingSurface; controlled?: boolean; modifiers?: Array<{ label: string; value: number }> }) {
+    const o = options ?? ({} as { yards: number });
+    return rollFall({
+      actor, yardsFallen: Math.max(0, Number(o.yards) || 0), surface: o.onto === "soft" ? "soft" : "hard",
+      controlled: o.controlled === true, ...(Array.isArray(o.modifiers) ? { modifiers: o.modifiers } : {}),
+    });
+  },
   shock, irradiate, detonate: detonateCharge, shootAtVehicle,
   fragileKinds: fragileKindsOf, fragileCatchesFire, fragileExplodes, brittleLimb: rollBrittleLimb,
 });

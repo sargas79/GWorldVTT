@@ -2984,7 +2984,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * hurt -- asks IQ instead, which is what shift-clicking gets.
    */
   static async #onShakeOffStun(this: GWorldCharacterSheet, event: Event) {
-    await rollStunRecovery({ actor: this.actor, mental: (event as MouseEvent).shiftKey });
+    // A stun applied as a mental one rolls IQ of itself (since API 1.104.0).
+    await rollStunRecovery({ actor: this.actor, ...((event as MouseEvent).shiftKey ? { mental: true } : {}) });
   }
 
   /** Tries to come round (Campaigns p. 423). */

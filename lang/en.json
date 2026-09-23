@@ -2474,6 +2474,13 @@
       "ResuscitateNeedsTl": "Resuscitation needs Physician or First Aid of TL7 or later; this healer's is TL{tl}",
       "StillBleeding": "{patient} is bandaged, but still bleeding"
     },
+    "Surprise": {
+      "total": "Total surprise",
+      "partial": "Partial surprise",
+      "Frozen": "Frozen for {seconds} seconds: Do Nothing, then an IQ roll each turn to snap out of the mental stun",
+      "Stunned": "Mentally stunned: an IQ roll each turn to snap out of it, a point easier each turn after the first",
+      "Bonus": "Recovering from surprise"
+    },
     "Knockdown": {
       "Title": "Knockdown and stunning",
       "RecoveryTitle": "Shaking off stun",
@@ -2763,6 +2770,11 @@
       "Clean": "The wound stays clean",
       "WentBad": "The wound is infected",
       "Virulence": "HT modifier (virulence)",
+      "Vector": "How it is caught",
+      "Vector_contact": "Contact",
+      "Vector_respiratory": "Breathed in",
+      "Vector_digestive": "Eaten or drunk",
+      "Vector_blood": "Through the blood",
       "Damage": "Damage per cycle",
       "Interval": "Seconds between cycles",
       "Cycles": "Cycles",

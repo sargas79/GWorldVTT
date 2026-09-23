@@ -1257,12 +1257,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       lift: liftCapacities(basicLift),
       running: { sprint: sprintMove(move), paced: pacedMove(move) },
       swimming: {
-        // "+2 water Move" for wearing nothing at all (Campaigns p. 417).
-        move:
-          waterMove(move, traits.aquatic) +
-          (isRuleOn("bulletproofNudity")
-            ? nudityMoveBonus(this.dress?.state ?? "clothed").water
-            : 0),
+        // "+2 water Move" for wearing nothing at all (Campaigns p. 417); and
+        // what the modules' gear does to it, swim fins or a life jacket
+        // (Campaigns p. 354; API 1.104.0).
+        ...(() => {
+          const moved = moduleMove(this.parent, waterMove(move, traits.aquatic) +
+            (isRuleOn("bulletproofNudity")
+              ? nudityMoveBonus(this.dress?.state ?? "clothed").water
+              : 0), "water");
+          return { move: moved.move, moveLines: moved.lines };
+        })(),
         // "Swimming defaults to HT-4", and Climbing to DX-5: someone who never
         // learned either can still try.
         skill: this.skillLevelByName("Swimming") ?? (attrs.HT ?? 10) - 4,

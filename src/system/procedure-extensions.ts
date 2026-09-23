@@ -899,6 +899,12 @@ export interface ConditionApplication {
    * stun kept on while a current still flows, then for its seconds after.
    */
   holdRecovery?: true | { seconds?: number; until?: number };
+  /**
+   * For the system's `stunned`: what snaps out of it (since 1.104.0). `IQ`
+   * makes it a mental stun (Campaigns p. 420), recovered with IQ; `HT`, the
+   * default, the ordinary kind.
+   */
+  recovery?: "HT" | "IQ";
 }
 
 /** A timed condition as the actor carries it. */
@@ -916,6 +922,10 @@ export interface StoredCondition {
   system: boolean;
   /** Recovery rolls withheld (since 1.89.0): to a world time, or null until it is removed. */
   recoveryHeld?: { until: number | null };
+  /** A mental stun, recovered with IQ (since 1.104.0). */
+  recovery?: "IQ";
+  /** The surprise behind a mental stun: partial or not, and the IQ rolls failed so far (since 1.104.0). */
+  surprise?: { partial: boolean; tries: number };
 }
 
 /** How this module reaches the system's token conditions, handed in so it needn't import them. */
@@ -982,6 +992,7 @@ export async function applyCondition(
     untilTime: Number.isFinite(seconds) && seconds > 0 ? now + seconds : null,
     system,
     ...(recoveryHeld ? { recoveryHeld } : {}),
+    ...(system && a.key === "stunned" && a.recovery === "IQ" ? { recovery: "IQ" as const } : {}),
   };
   const others = activeConditions(actor).filter((c) => c.id !== id);
   await actor.setFlag(SYSTEM_ID, CONDITIONS_FLAG, [...others, entry]);
@@ -1022,6 +1033,14 @@ export async function forgetSystemCondition(actor: any, id: string): Promise<voi
   const current = activeConditions(actor);
   if (!current.some((c) => c.id === id && c.system)) return;
   await actor.setFlag(SYSTEM_ID, CONDITIONS_FLAG, current.filter((c) => !(c.id === id && c.system)));
+}
+
+/** Changes what an actor's timed condition keeps (since 1.104.0); nothing where it has none by that id. */
+export async function patchCondition(actor: any, id: string, patch: Partial<Pick<StoredCondition, "recovery" | "surprise">>): Promise<void> {
+  if (!actor?.isOwner) return;
+  const current = activeConditions(actor);
+  if (!current.some((c) => c.id === id)) return;
+  await actor.setFlag(SYSTEM_ID, CONDITIONS_FLAG, current.map((c) => (c.id === id ? { ...c, ...patch } : c)));
 }
 
 /** Removes a condition by the id `applyCondition` returned. */
