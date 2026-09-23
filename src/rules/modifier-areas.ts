@@ -34,11 +34,27 @@ export interface ModifierArea {
    * it was fired to where it was aimed. Scene pixels.
    */
   from?: Point | null;
+  /**
+   * Or a cone (since 1.89.0, Campaigns p. 413) with its apex at `center`:
+   * `direction` in degrees clockwise from the scene's +x (east), as Foundry
+   * measures a template; `length` its reach, `width` its width at the far end
+   * and `base` its width at the apex, all in scene pixels. It widens evenly by
+   * `width / length` along its length, never narrower than `base`.
+   */
+  cone?: Cone | null;
   /** Or a region on the scene, by id. */
   region?: string | null;
   lines: AreaLine[];
   /** The world time, in seconds, it goes at; null for never. */
   expires?: number | null;
+}
+
+/** A cone as an area keeps it, in scene pixels and degrees. */
+export interface Cone {
+  direction: number;
+  length: number;
+  width: number;
+  base: number;
 }
 
 /** Whether a point lies in a circle. */
@@ -78,6 +94,67 @@ export function segmentCrossesBand(a: Point, b: Point, c: Point, d: Point, radiu
   const d4 = cross(a, b, d);
   if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
   return Math.min(distanceToSegment(a, c, d), distanceToSegment(b, c, d), distanceToSegment(c, a, b), distanceToSegment(d, a, b)) <= radius;
+}
+
+/**
+ * A cone's width at a distance from its apex (p. 413): one yard (`base`) at
+ * the apex, spreading at its end width over its length -- out at 60 yards,
+ * one that is 5 wide at 100 is 3 wide -- and never below `base`.
+ */
+export function coneWidthAt(cone: Cone, distance: number): number {
+  return Math.max(cone.base, (distance * cone.width) / cone.length);
+}
+
+/** Whether a point lies in a cone with its apex at `apex`. */
+export function inCone(point: Point, apex: Point, cone: Cone): boolean {
+  const rad = (cone.direction * Math.PI) / 180;
+  const ux = Math.cos(rad);
+  const uy = Math.sin(rad);
+  const dx = point.x - apex.x;
+  const dy = point.y - apex.y;
+  const along = dx * ux + dy * uy;
+  if (along < 0 || along > cone.length) return false;
+  return Math.abs(dx * -uy + dy * ux) <= coneWidthAt(cone, along) / 2;
+}
+
+/** A cone's outline, apex side first: six corners, the two at the kink where it starts to spread. */
+export function coneOutline(apex: Point, cone: Cone): Point[] {
+  const rad = (cone.direction * Math.PI) / 180;
+  const u = { x: Math.cos(rad), y: Math.sin(rad) };
+  const n = { x: -u.y, y: u.x };
+  const at = (along: number, side: number) => ({ x: apex.x + u.x * along + n.x * side, y: apex.y + u.y * along + n.y * side });
+  const kink = Math.min(cone.length, (cone.base * cone.length) / (cone.width || cone.base));
+  const half = cone.base / 2;
+  const end = coneWidthAt(cone, cone.length) / 2;
+  return [at(0, -half), at(kink, -half), at(cone.length, -end), at(cone.length, end), at(kink, half), at(0, half)];
+}
+
+/** Whether the segment from `a` to `b` crosses a cone: an end in it, or an edge of it crossed. */
+export function segmentCrossesCone(a: Point, b: Point, apex: Point, cone: Cone): boolean {
+  if (inCone(a, apex, cone) || inCone(b, apex, cone)) return true;
+  const outline = coneOutline(apex, cone);
+  const cross = (p: Point, q: Point, r: Point) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+  return outline.some((c, i) => {
+    const d = outline[(i + 1) % outline.length]!;
+    const d1 = cross(c, d, a);
+    const d2 = cross(c, d, b);
+    const d3 = cross(a, b, c);
+    const d4 = cross(a, b, d);
+    return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+  });
+}
+
+/** An area's cone, where it has a usable one, with its apex (since 1.89.0). */
+export function coneOf(area: ModifierArea): { apex: Point; cone: Cone } | null {
+  const c = area.center;
+  const k = area.cone;
+  if (!c || !k || !Number.isFinite(c.x) || !Number.isFinite(c.y)) return null;
+  const direction = Number(k.direction);
+  const length = Number(k.length);
+  const width = Number(k.width);
+  const base = Number(k.base);
+  if (!Number.isFinite(direction) || !(length > 0) || !(width > 0) || !(base > 0)) return null;
+  return { apex: { x: c.x, y: c.y }, cone: { direction, length, width, base } };
 }
 
 /** Whether a line applies to a roll of this kind with these tags. */
@@ -121,6 +198,7 @@ export function areaLines(options: {
 
 /** A circle's centre point, where a module gave a usable one, and where a band starts (since 1.70.0). */
 export function circleOf(area: ModifierArea): { center: Point; radius: number; from: Point | null } | null {
+  if (area.cone) return null;
   const c = area.center;
   const r = Number(area.radius);
   if (!c || !Number.isFinite(c.x) || !Number.isFinite(c.y) || !(r > 0)) return null;
@@ -129,15 +207,24 @@ export function circleOf(area: ModifierArea): { center: Point; radius: number; f
   return { center: { x: c.x, y: c.y }, radius: r, from };
 }
 
-/** Whether a point is in an area drawn as a circle or a band; false for a region. */
+/** Whether an area is drawn on the scene itself, as a circle, a band or a cone, rather than a region. */
+export function hasShape(area: ModifierArea): boolean {
+  return coneOf(area) !== null || circleOf(area) !== null;
+}
+
+/** Whether a point is in an area drawn as a circle, a band or a cone; false for a region. */
 export function inShape(point: Point, area: ModifierArea): boolean {
+  const cone = coneOf(area);
+  if (cone) return inCone(point, cone.apex, cone.cone);
   const circle = circleOf(area);
   if (!circle) return false;
   return circle.from ? inBand(point, circle.from, circle.center, circle.radius) : inCircle(point, circle.center, circle.radius);
 }
 
-/** Whether the segment from `a` to `b` crosses an area drawn as a circle or a band. */
+/** Whether the segment from `a` to `b` crosses an area drawn as a circle, a band or a cone. */
 export function segmentCrossesShape(a: Point, b: Point, area: ModifierArea): boolean {
+  const cone = coneOf(area);
+  if (cone) return segmentCrossesCone(a, b, cone.apex, cone.cone);
   const circle = circleOf(area);
   if (!circle) return false;
   return circle.from ? segmentCrossesBand(a, b, circle.from, circle.center, circle.radius) : segmentCrossesCircle(a, b, circle.center, circle.radius);

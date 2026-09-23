@@ -1736,7 +1736,7 @@ export async function promptForCollision(): Promise<{
 }
 
 export async function promptForShock(): Promise<{
-  kind: "nonlethal" | "lethal" | "localized"; modifier: number; continuous: boolean; formula: string; metalArmor: boolean;
+  kind: "nonlethal" | "lethal" | "localized"; modifier: number; continuous: boolean; contactSeconds: number; formula: string; metalArmor: boolean;
 } | null> {
   const kinds: Array<[string, string]> = (["nonlethal", "lethal", "localized"] as const).map((k) => [k, HZ(`ShockKind.${k}`)]);
   return hazardPrompt(
@@ -1744,6 +1744,7 @@ export async function promptForShock(): Promise<{
     hazardSelect("kind", HZ("ShockKindLabel"), kinds) +
       hazardField("modifier", HZ("ShockModifier"), 0) +
       hazardCheck("continuous", HZ("Continuous")) +
+      hazardField("contact", HZ("ShockContactSeconds"), 0) +
       `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${HZ("ShockFormula")}</span>
         <input type="text" name="formula" value="1d-3" style="width:90px">
@@ -1754,6 +1755,7 @@ export async function promptForShock(): Promise<{
       kind: (str(form, "kind") || "nonlethal") as "nonlethal" | "lethal" | "localized",
       modifier: num(form, "modifier"),
       continuous: ticked(form, "continuous"),
+      contactSeconds: Math.max(0, num(form, "contact")),
       formula: str(form, "formula"),
       metalArmor: ticked(form, "metal"),
     }),

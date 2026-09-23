@@ -12,7 +12,7 @@
 import { holdBreathSeconds, type Exertion } from "../rules/suffocation.js";
 import { SYSTEM_ID } from "./constants.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
-import { setCondition, syncHealthConditions } from "./conditions.js";
+import { conditionLabel, setCondition, syncHealthConditions } from "./conditions.js";
 import { resolveDamageAgainst, type IncomingDamage } from "./damage.js";
 import { applyFatigue } from "./fatigue.js";
 import { loseAim } from "./aim.js";
@@ -27,7 +27,7 @@ import {
 import { dailyMiles, marchingFatiguePerHour, type Terrain, type TravelWeather } from "../rules/hiking.js";
 import { randomHitLocation, type HitLocation } from "../rules/hit-locations.js";
 import { callCombatHook, COMBAT_HOOKS, randomLocationWithHooks, type VehicleDrLine } from "./combat-extensions.js";
-import { PROCEDURE_HOOKS, successRollModifiers } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, applyCondition, successRollModifiers } from "./procedure-extensions.js";
 import { applyInjury } from "../rules/injury.js";
 import {
   protectedDose, radiationEffect, radiationRow, remainingDose,
@@ -353,11 +353,21 @@ export async function shock(options: {
   formula: string;
   /** Wearing metal armour, which "provides only DR 1". */
   metalArmor: boolean;
+  /**
+   * Seconds the victim stays in contact after this roll (since 1.89.0): a
+   * continuous or lethal shock holds its stun or unconsciousness that much
+   * longer before the rolls to recover. Left out or 0: the current has stopped.
+   */
+  contactSeconds?: number;
 }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
 
   const ht = attributeOf(actor, "HT");
+  const contact = Math.max(0, Math.floor(Number(options.contactSeconds) || 0));
+  // No recovery roll while the condition is held (since 1.89.0).
+  const hold = (key: string, seconds: number) =>
+    applyCondition(actor, { key, holdRecovery: { seconds } }, { setSystemCondition: setCondition, systemConditionLabel: conditionLabel });
   const rolls: any[] = [];
   const lines: string[] = [];
   let injuryModifier = 0;
@@ -395,7 +405,8 @@ export async function shock(options: {
   if (options.kind === "lethal") {
     const result = lethalShock({ success: outcome.success, criticalFailure: outcome.criticalFailure, margin: outcome.margin, ht });
     if (result.unconscious) {
-      await setCondition(actor, "unconscious", true);
+      // Out while the current flows, and (20 - HT) minutes after.
+      await hold("unconscious", contact + result.unconsciousMinutes * 60);
       lines.push(F("ShockOut", { minutes: result.unconsciousMinutes, dazed: result.dazedMinutes }));
       bad = true;
     } else {
@@ -407,9 +418,11 @@ export async function shock(options: {
       ? localizedShock({ success: outcome.success })
       : nonlethalShock({ success: outcome.success, ht, continuous: options.continuous });
     if (result.stunned) {
+      // Stunned while the current flows, and its seconds after (p. 432).
+      const seconds = result.stunSeconds + (options.kind === "nonlethal" && options.continuous ? contact : 0);
       await actor.update({ "system.conditions.stunned": true });
-      await setCondition(actor, "stunned", true);
-      lines.push(F("ShockStunned", { seconds: result.stunSeconds }));
+      await hold("stunned", seconds);
+      lines.push(F("ShockStunned", { seconds }));
       bad = true;
     } else {
       lines.push(H("ShockHeld"));

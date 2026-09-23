@@ -978,6 +978,8 @@
       "TurnsLeft": "{turns} turns",
       "UntilRound": "until round {round}",
       "SecondsLeft": "{seconds} s",
+      "RecoveryHeld": "no recovery roll yet",
+      "RecoveryHeldFor": "no recovery roll for {seconds} s",
       "AllOutDefense": "All-Out Defense",
       "Stunned": "Stunned",
       "BlindToAttacker": "Blind to attacker",
@@ -2477,7 +2479,9 @@
       "recovered": "Shakes it off and can act normally",
       "stillStunned": "Still stunned — Do Nothing, and roll again next turn",
       "Shake": "Shake off stun",
-      "ShakeHint": "HT to recover from stun at the end of your turn; shift-click for mental stun"
+      "ShakeHint": "HT to recover from stun at the end of your turn; shift-click for mental stun",
+      "HeldFor": "{name} can't roll to recover yet: {seconds} more second(s)",
+      "HeldUntilRemoved": "{name} can't roll to recover while the cause lasts"
     },
     "Bleeding": {
       "Action": "Bleeding check",
@@ -2897,6 +2901,7 @@
       },
       "ShockModifier": "HT modifier for the strength",
       "Continuous": "Continuous (stun gun, fence), not a jolt",
+      "ShockContactSeconds": "Seconds still in contact (0: the current has stopped)",
       "ShockFormula": "Burning damage",
       "MetalArmor": "In metal armour (DR 1 only)",
       "ShockDamage": "{formula} = {rolled} burning, DR {dr}: {injury} HP, {previous} → {now}",

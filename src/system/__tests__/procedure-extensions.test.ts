@@ -239,6 +239,32 @@ describe("conditions", () => {
     expect(api.expiringConditions(conditions, { round: 3 }).ended.map((c) => c.id)).toEqual(["round"]);
     expect(api.expiringConditions(conditions, { time: 1060 }).ended.map((c) => c.id)).toEqual(["time"]);
   });
+
+  /** A stun held while a current flows, then its seconds after (sargas79/GWorldVTT#653). */
+  it("withholds recovery rolls for some seconds, to a world time, or until removed", async () => {
+    const api = await load();
+    const target = actor();
+    const h = hooks(["stunned", "unconscious"]);
+    await api.applyCondition(target, { key: "stunned", holdRecovery: { seconds: 7 } }, h);
+    expect(api.activeConditions(target)[0]).toEqual(expect.objectContaining({ id: "stunned", untilTime: null, recoveryHeld: { until: 1007 } }));
+    expect(api.recoveryHold(target, "stunned", 1006)).toEqual({ until: 1007 });
+    expect(api.recoveryHold(target, "stunned", 1007)).toBeNull();
+    expect(api.recoveryHold(target, "unconscious", 1000)).toBeNull();
+
+    await api.applyCondition(target, { key: "stunned", holdRecovery: true }, h);
+    expect(api.recoveryHold(target, "stunned", 99999)).toEqual({ until: null });
+    await api.applyCondition(target, { key: "stunned", holdRecovery: { until: 1030 } }, h);
+    expect(api.recoveryHold(target, "stunned", 1020)).toEqual({ until: 1030 });
+    // Applied again without it, or with a time already past: rolls at once.
+    await api.applyCondition(target, { key: "stunned", holdRecovery: { until: 900 } }, h);
+    expect(api.recoveryHold(target, "stunned", 1000)).toBeNull();
+    expect(api.activeConditions(target)[0]).not.toHaveProperty("recoveryHeld");
+
+    await api.applyCondition(target, { key: "stunned", holdRecovery: true }, h);
+    await api.forgetSystemCondition(target, "stunned");
+    expect(api.recoveryHold(target, "stunned", 1000)).toBeNull();
+    expect(api.activeConditions(target)).toEqual([]);
+  });
 });
 
 describe("bleeding and technique defaults", () => {
