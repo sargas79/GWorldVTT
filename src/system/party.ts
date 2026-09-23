@@ -1,5 +1,5 @@
 /**
- * Which party an actor is in, and what its campaign says.
+ * Which party an actor is in.
  *
  * A party lists its members; a character does not name its party. So the
  * question "which party is this character in?" is answered from an index
@@ -8,8 +8,9 @@
  * actors are constructed, before any of them is prepared -- so a character's
  * first preparation already finds its party.
  *
- * When a party's members or terms change, every member is prepared again and
- * its open windows redrawn, because their sheets read the party's terms.
+ * When a party's members change, every member is prepared again and its open
+ * windows redrawn, because their sheets name the party. The campaign's terms
+ * are world settings (campaign.ts), not the party's.
  */
 
 import { SYSTEM_ID } from "./constants.js";
@@ -18,14 +19,12 @@ import {
   PINNED_FLAG,
   canJoin,
   removeMember as removeFromList,
-  termsFrom,
-  type CampaignTerms,
 } from "./party/roster.js";
 import { registerPartySidebar } from "./party/sidebar.js";
 
 export const PARTY_TYPE = "party";
 
-/** Fired with the party and its members whenever a party's membership or terms change. */
+/** Fired with the party and its members whenever a party's membership changes. */
 export const PARTY_CHANGED_HOOK = "gworld.partyChanged";
 
 const L = (key: string, data?: Record<string, unknown>) =>
@@ -105,24 +104,6 @@ export function membersOf(party: any): any[] {
     .filter((actor) => actor !== null);
 }
 
-/** The campaign's terms as they reach one actor, with the party they come from. */
-export interface ActorCampaignTerms extends CampaignTerms {
-  party: { id: string; uuid: string; name: string };
-}
-
-/**
- * The terms of the party an actor is in, nulls kept for what the GM left
- * blank; null for an actor in no party.
- */
-export function campaignTerms(actor: any): ActorCampaignTerms | null {
-  const party = partyOf(actor);
-  if (!party) return null;
-  return {
-    party: { id: String(party.id), uuid: String(party.uuid), name: String(party.name ?? "") },
-    ...termsFrom(party.system?.campaign),
-  };
-}
-
 /** Prepares an actor again and redraws every window showing it: its sheet, the guided build. */
 export function refreshActor(actor: any): void {
   if (!actor) return;
@@ -194,12 +175,12 @@ export function registerPartyHooks(): void {
     document.updateSource({ ownership: { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER } });
   });
 
-  const changed = (party: any, membersChanged: boolean) => {
+  const changed = (party: any) => {
     invalidatePartyIndex();
     refreshMembers(party);
     // The directory redraws itself only for a name, an image, ownership, a
     // sort or a folder; a member joining is none of those.
-    if (membersChanged) void ui.actors?.render?.();
+    void ui.actors?.render?.();
     Hooks.callAll(PARTY_CHANGED_HOOK, party, membersOf(party));
   };
 
@@ -208,13 +189,11 @@ export function registerPartyHooks(): void {
   Hooks.once("ready", rememberMembers);
 
   Hooks.on("createActor", (document: any) => {
-    if (isParty(document)) changed(document, true);
+    if (isParty(document)) changed(document);
   });
   Hooks.on("updateActor", (document: any, diff: any) => {
     if (!isParty(document)) return;
-    const members = diff?.system?.members !== undefined;
-    const campaign = diff?.system?.campaign !== undefined;
-    if (members || campaign) changed(document, members);
+    if (diff?.system?.members !== undefined) changed(document);
     // Foundry redraws the directory for a name, sort or folder, not a flag:
     // pinning or unpinning the party has to ask, on every client.
     else if (PINNED_FLAG in (diff?.flags?.[SYSTEM_ID] ?? {})) void ui.actors?.render?.();

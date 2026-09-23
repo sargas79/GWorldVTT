@@ -51,11 +51,11 @@
 
     {{#if (eq stepId "points")}}
       <section class="v2-panel">
-        {{!-- A term the party has set is read from it: no field, so nothing is written over it. --}}
-        {{#if campaign.party}}
+        {{!-- A term the GM has set for the world is read from there: no field, so nothing is written over it. --}}
+        {{#if campaign.anyLocked}}
           <p class="v2-note">
-            <button type="button" class="v2-link v2-campaign-lock" data-action="openParty"
-                    data-tooltip="{{localize 'GWORLD.Party.SetByHint'}}">{{localize "GWORLD.Party.SetBy" party=campaign.party.name}}</button>
+            <button type="button" class="v2-link v2-campaign-lock" data-action="openCampaign"
+                    data-tooltip="{{localize 'GWORLD.Campaign.SetByHint'}}">{{localize "GWORLD.Campaign.SetBy"}}</button>
           </p>
         {{/if}}
         <div class="gb-fields">

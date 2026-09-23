@@ -25,13 +25,14 @@ import { isRuleOn } from "../optional-rules.js";
 import { RulesSettings } from "../apps/rules-settings.js";
 import { CompendiumSourcesSettings } from "../apps/compendium-sources.js";
 import { addMembers, partyOf, removeMember, resolveMember } from "../party.js";
+import { setCampaignTerm, worldCampaignTerms } from "../campaign.js";
+import { CAMPAIGN_TERM_KEYS, type CampaignTermKey } from "../party/roster.js";
 import {
   canJoin,
   memberRow,
   membersByName,
   partyLanguages,
   partySkills,
-  termsFrom,
   type MemberRow,
   type PartySkillRow,
 } from "../party/roster.js";
@@ -167,7 +168,7 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const active = this.tabGroups.primary ?? "members";
     const members = this.#members();
     const present = members.filter((m) => m.actor !== null);
-    const terms = termsFrom(system.campaign);
+    const terms = worldCampaignTerms();
     const isGM = game.user?.isGM === true;
 
     const termChips: Array<{ label: string; value: string }> = [];
@@ -189,10 +190,8 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       members: members.map((m) => this.#memberContext(m)),
       skills: this.#skillsContext(present),
       languages: this.#languagesContext(present),
-      campaign: {
-        ...terms,
-        affected: present.map((m) => String(m.actor.name ?? "")).join(", "),
-      },
+      // The world's terms, not the party's (#642): only the GM changes them.
+      campaign: { ...terms, editable: isGM },
       // World settings need a GM to write, so the panel is the GM's.
       world: isGM ? this.#worldContext() : null,
       descriptionHTML: await foundry.applications.ux.TextEditor.implementation.enrichHTML(
@@ -381,6 +380,17 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         const value = Number(input.value);
         if (!member?.isOwner || !Number.isFinite(value)) return;
         void member.update({ [String(input.dataset.memberField)]: Math.trunc(value) });
+      });
+    }
+
+    // One of the campaign's terms, a world setting: blank clears it.
+    for (const input of root.querySelectorAll<HTMLInputElement>("input[data-campaign-term]")) {
+      input.addEventListener("change", (event) => {
+        event.stopPropagation();
+        const key = String(input.dataset.campaignTerm) as CampaignTermKey;
+        if (!game.user?.isGM || !CAMPAIGN_TERM_KEYS.includes(key)) return;
+        const value = input.value.trim() === "" ? null : Number(input.value);
+        void setCampaignTerm(key, value !== null && Number.isFinite(value) ? value : null);
       });
     }
 

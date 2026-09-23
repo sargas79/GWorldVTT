@@ -17,7 +17,7 @@
  */
 
 import { SYSTEM_ID } from "../constants.js";
-import { partyOf } from "../party.js";
+import { openCampaignTerms } from "../campaign.js";
 import { rememberFocus, restoreFocus, type RememberedFocus } from "../focus-memory.js";
 import { CompendiumPicker } from "./compendium-picker.js";
 import { clampedLevels, steppedLevels } from "../advancement.js";
@@ -116,7 +116,7 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       finish: CharacterBuilder.#onFinish,
       applyTemplate: CharacterBuilder.#onApplyTemplate,
       removeTemplate: CharacterBuilder.#onRemoveTemplate,
-      openParty: CharacterBuilder.#onOpenParty,
+      openCampaign: CharacterBuilder.#onOpenCampaign,
     },
   };
 
@@ -275,9 +275,9 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
     };
   }
 
-  /** Opens the party whose terms the first step reads. */
-  static async #onOpenParty(this: CharacterBuilder) {
-    await partyOf(this.#actor)?.sheet?.render(true);
+  /** Opens where the campaign's terms the first step reads are set. */
+  static async #onOpenCampaign(this: CharacterBuilder) {
+    await openCampaignTerms(this.#actor);
   }
 
   override async _prepareContext(): Promise<Record<string, unknown>> {
@@ -344,8 +344,11 @@ export class CharacterBuilder extends HandlebarsApplicationMixin(ApplicationV2) 
       },
       overBudget: points.overBudget ?? false,
       overDisadvantageLimit: (points.disadvantageTotal ?? 0) > (points.disadvantageLimit ?? 0),
-      // Which of the campaign's terms the party has set, and so cannot be typed here.
-      campaign: derived.campaign ?? { party: null, locked: {} },
+      // Which of the campaign's terms the GM has set, and so cannot be typed here.
+      campaign: {
+        ...(derived.campaign ?? { party: null, locked: {} }),
+        anyLocked: Object.values(derived.campaign?.locked ?? {}).some(Boolean),
+      },
       review: step.id === "review" ? this.#review() : null,
     };
   }

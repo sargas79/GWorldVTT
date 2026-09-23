@@ -14,6 +14,7 @@ import { COMPENDIUM_SOURCES_KEY } from "./compendium-sources.js";
 import { OPTIONAL_RULES_KEY, defaultRuleState } from "./optional-rules.js";
 import { MANA_LEVEL_KEY } from "./casting.js";
 import { CONTROL_RATING_KEY } from "./legality.js";
+import { registerCampaignSettings } from "./campaign.js";
 import { MANA_LEVELS } from "../rules/casting.js";
 import { CONTROL_RATINGS } from "../rules/legality.js";
 
@@ -77,6 +78,10 @@ export function registerSettings(): void {
       }
     },
   });
+
+  // The terms every player character is made on: starting points,
+  // disadvantage limit, Tech Level. The GM's, for the whole world (#642).
+  registerCampaignSettings();
 
   game.settings.registerMenu(SYSTEM_ID, "rules", {
     name: "GWORLD.Rules.Title",
