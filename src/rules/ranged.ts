@@ -228,6 +228,30 @@ export function attackRateOfFire(options: {
   return { rateOfFire, recoil };
 }
 
+/**
+ * The shots one attack fires, from what the shooter asked for: at least one
+ * and at most the Rate of Fire, and -- where an option holds the weapon to
+ * whole bursts, as a "!" weapon fires only on full auto (Characters p. 270)
+ * -- at least `minShots` and a whole number of `step`s. A count between steps
+ * comes down to the one below, never under the minimum. Null where no count
+ * the Rate of Fire allows meets them: the attack can't be fired as asked.
+ */
+export function burstShots(options: {
+  asked: number;
+  rateOfFire: number;
+  minShots?: number;
+  step?: number;
+}): number | null {
+  const most = Math.max(1, Math.floor(Number(options.rateOfFire) || 1));
+  const step = Math.max(1, Math.floor(Number(options.step) || 1));
+  // The least count that is a whole number of steps and meets the minimum.
+  const least = Math.ceil(Math.max(1, Math.floor(Number(options.minShots) || 1)) / step) * step;
+  const top = Math.floor(most / step) * step;
+  if (least > top) return null;
+  const asked = Math.min(top, Math.max(least, Math.floor(Number(options.asked) || 1)));
+  return Math.max(least, Math.floor(asked / step) * step);
+}
+
 /** One target of a spray of fire, in the order the burst sweeps across them. */
 export interface SprayTarget {
   /** Shots aimed at this target. */

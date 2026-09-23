@@ -30,7 +30,7 @@ import * as rules from "../rules/index.js";
 import { normalizeSkillName } from "../rules/skills.js";
 import { incompatibleModules, satisfiesApiRange } from "./api-version.js";
 import { combatApi } from "./combat-extensions.js";
-import { loadInstantly } from "./ammunition.js";
+import { loadInstantly, refundShots } from "./ammunition.js";
 import { clearMalfunction, malfunctionOf, setMalfunction } from "./malfunctions.js";
 import { registerSlam } from "./slam.js";
 import { beginGrapple, endGrapple, grappleOf, grapplesOf, updateGrapple } from "./grappling.js";
@@ -83,7 +83,7 @@ import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from ".
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.82.0";
+export const API_VERSION = "1.83.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -337,6 +337,17 @@ const items = {
    */
   load(item: any, modeIndex: number, shots: number): Promise<number | null> {
     return loadInstantly(item, modeIndex, shots);
+  },
+
+  /**
+   * Gives a ranged mode back `shots` an attack took (since 1.83.0), for a
+   * rule that says the attack fired nothing after all: up to its capacity,
+   * across a shared magazine, and nothing where Infinite Ammunition kept the
+   * count. Returns the new count, or null where the mode keeps no count or
+   * the user doesn't own the item.
+   */
+  refundShots(item: any, modeIndex: number, shots: number): Promise<number | null> {
+    return refundShots(item, modeIndex, shots);
   },
 
   /**

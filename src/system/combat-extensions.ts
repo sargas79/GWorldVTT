@@ -624,6 +624,20 @@ export interface AttackEffect {
   recoil?: number;
   /** Added to the Recoil, after `recoil` (since 1.70.0); the sum is never below 1. */
   recoilModifier?: number;
+  /**
+   * The fewest shots this attack may fire (since 1.83.0): a weapon held to
+   * whole bursts, as a "!" weapon fires only on full auto (Characters
+   * p. 270). The shots asked for are raised to it; where the Rate of Fire
+   * can't reach it, the attack is refused. Where several options set one,
+   * the highest counts.
+   */
+  minShots?: number;
+  /**
+   * The shots this attack fires come in steps of this many (since 1.83.0):
+   * a count between steps comes down to the one below, never under
+   * `minShots`. Where several options set one, the highest counts.
+   */
+  shotsStep?: number;
   /** Anything worth saying on the card. */
   notes?: string[];
 }
@@ -981,6 +995,8 @@ export function mergeAttackEffects(effects: AttackEffect[]): Required<Omit<Attac
     rateOfFire: null as number | null,
     recoil: null as number | null,
     recoilModifier: 0,
+    minShots: 0,
+    shotsStep: 1,
     notes: [] as string[],
   };
   for (const effect of effects) {
@@ -1010,9 +1026,30 @@ export function mergeAttackEffects(effects: AttackEffect[]): Required<Omit<Attac
       out.recoil = Math.max(out.recoil ?? 0, Math.floor(effect.recoil));
     }
     out.recoilModifier += Math.floor(Number(effect.recoilModifier) || 0);
+    // A minimum burst or a step set by two options: the higher is taken.
+    if (typeof effect.minShots === "number" && Number.isFinite(effect.minShots) && effect.minShots >= 1) {
+      out.minShots = Math.max(out.minShots, Math.floor(effect.minShots));
+    }
+    if (typeof effect.shotsStep === "number" && Number.isFinite(effect.shotsStep) && effect.shotsStep >= 1) {
+      out.shotsStep = Math.max(out.shotsStep, Math.floor(effect.shotsStep));
+    }
     out.notes.push(...(effect.notes ?? []).filter((n) => typeof n === "string"));
   }
   return out;
+}
+
+/**
+ * A merged effect as an effect again, to be merged with others: the parts it
+ * carries as null are the ones an effect says by leaving them out.
+ */
+export function asAttackEffect({ criticalSkill, malfunction, rateOfFire, recoil, ...rest }: ReturnType<typeof mergeAttackEffects>): AttackEffect {
+  return {
+    ...rest,
+    ...(criticalSkill !== null ? { criticalSkill } : {}),
+    ...(malfunction !== null ? { malfunction } : {}),
+    ...(rateOfFire !== null ? { rateOfFire } : {}),
+    ...(recoil !== null ? { recoil } : {}),
+  };
 }
 
 function isLine(line: unknown): line is ModifierLine {

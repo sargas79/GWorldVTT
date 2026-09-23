@@ -578,6 +578,28 @@ export async function loadInstantly(item: any, modeIndex: number, shots: number)
   return after;
 }
 
+/**
+ * Gives a ranged mode back shots an attack took (since 1.83.0) -- for a
+ * module's rule that says an attack fired nothing after all. Never above the
+ * mode's capacity, and nothing where Infinite Ammunition kept the count from
+ * going down. Shared magazines hold as ever. Returns the new count, or null
+ * where the mode keeps none or the user can't change it.
+ */
+export async function refundShots(item: any, modeIndex: number, shots: number): Promise<number | null> {
+  if (!item?.isOwner || !isRuleOn("reloading")) return null;
+  const index = Math.floor(Number(modeIndex));
+  const found = modeOf(item, index);
+  if (!found) return null;
+  const { mode, entry } = found;
+  const capacity = fullLoad(entry);
+  if (entry.thrown || capacity <= 0) return null;
+  const loaded = Math.max(0, Number(mode.loaded ?? 0) || 0);
+  if (hasInfiniteAmmunition((item as { actor?: any }).actor ?? null)) return loaded;
+  const after = Math.min(capacity, loaded + Math.max(0, Math.floor(Number(shots) || 0)));
+  if (after !== loaded) await setLoaded(item, index, after);
+  return after;
+}
+
 // ── what an attack spent (since 1.71.0) ─────────────────────────────────────
 
 /** How an attack spent its shots. */

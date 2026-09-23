@@ -104,7 +104,7 @@ Contents:
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
 | `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), and `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0). |
-| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. |
+| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0). |
@@ -211,6 +211,21 @@ and the roll continues.
     weapon, and the card names the Rate of Fire and Recoil an option changed.
     A weapon of RoF 1 still asks for its shots where an attack option is
     offered on it, so an option that raises its Rate of Fire can be used.
+  - Since 1.83.0, how the burst is counted: `minShots`, the fewest shots the
+    attack may fire (a weapon held to whole bursts, as a "!" weapon fires
+    only on full auto, Characters p. 270), and `shotsStep`, the step its
+    shots come in. Where two options set one, the higher counts. The shots
+    asked for are raised to the minimum and brought down to a whole number
+    of steps (never under the minimum); where the Rate of Fire, after the
+    options and what is left in the weapon, can't reach them, the attack is
+    refused with a warning. Both apply only with the rapid-fire rules on.
+    The Suppression Fire dialog now offers the ranged attack options too:
+    their Rate of Fire (with the maneuver's options) is the one Suppression
+    Fire needs 5+ of (Campaigns p. 409), and their Recoil, `minShots`,
+    `shotsStep`, `shots` (spent with the burst), `fatigue` and `modifiers`
+    (on each attack from the zones) apply. A row whose own RoF is under 5
+    but that has attack options on offer can choose Suppression Fire, and
+    the dialog refuses a burst the options chosen leave short of RoF 5.
 
   `refuse(context)` returns a reason to disable the option. `context.chosen` lists
   the other options chosen.
@@ -287,6 +302,15 @@ and the roll continues.
     to `modifiers` for the feinter's roll, or set `refusal` (text) to stop it;
   - Since 1.19.0, a `gworld.attackModifiers` listener may set `refusal` (text): the
     attack isn't rolled, and the user is told why;
+  - Since 1.83.0, `gworld.attackModifiers` also gets `shots`, the shells the
+    attack fires (after an option's minimum and step; null for a melee
+    attack), and `extraShots`, what the attack options spend beyond them,
+    both read-only. An attack that isn't rolled -- refused by a listener,
+    or because its effective skill is below 3 -- spends
+    no shots, loses no aim and fires no `gworld.afterShots`; before 1.83.0
+    one refused for skill below 3 still took its shots off the weapon. A
+    rule that decides after the roll that nothing was fired gives the
+    rounds back with `items.refundShots`;
   - Since 1.70.0, `gworld.attackModifiers` also gets `spraying`: null, or for
     one target of a Spraying Fire burst (Campaigns p. 409) `{ index, count,
     shots, recoil, wasted }` -- which target this is (from 0) of how many,

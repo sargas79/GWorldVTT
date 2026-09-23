@@ -32,12 +32,29 @@ import { isRuleOn } from "./optional-rules.js";
 import { targetedTokens, withTargets } from "./targets.js";
 import { addArea, centerOf, listAreas, pixelsPerYard, removeArea } from "./modifier-areas.js";
 import { aimTurnsOf, loseAim } from "./aim.js";
-import { announceShots, spendShots } from "./ammunition.js";
+import { announceShots, shotsReady, spendShots } from "./ammunition.js";
 import { malfunctionOf } from "./malfunctions.js";
 import { recordCalledShot } from "./called-shot.js";
-import { randomLocationWithHooks, registeredHitLocation, skillCapLine } from "./combat-extensions.js";
 import {
+  applyAttackOptions,
+  asAttackEffect as effectFields,
+  attackOptionFields,
+  attackOptionsFor,
+  mergeAttackEffects,
+  randomLocationWithHooks,
+  readAttackOptionValues,
+  registeredHitLocation,
+  skillCapLine,
+} from "./combat-extensions.js";
+import { maneuverOptionAttackEffect } from "./procedure-extensions.js";
+import { spendFatigue } from "./extra-effort.js";
+import type { ModifierLine } from "./combat-extensions.js";
+import {
+  attackContextFor,
+  burstTooShort,
   eyesOf,
+  optionRateOfFire,
+  optionShots,
   rangedModifiers,
   recordSuppressionShot,
   rollSuccess,
@@ -64,6 +81,8 @@ export interface SuppressionRecord {
   damageType: string;
   recoil: number;
   mounted: boolean;
+  /** Lines the modules' options put on each attack from the zones (since 1.83.0). */
+  modifiers?: ModifierLine[];
   halfDamageRange: number;
   /** What the shot's own modifiers are worked out from. */
   shooting: {
@@ -95,6 +114,18 @@ export function suppressing(actor: any): boolean {
 /** Whether a row may lay down suppression fire. */
 export function maySuppress(row: { rateOfFire?: unknown; noSuppressionFire?: unknown }): boolean {
   return Number(row.rateOfFire) >= SPREAD_FIRE_MIN_RATE_OF_FIRE && row.noSuppressionFire !== true && row.noSuppressionFire !== "1";
+}
+
+/**
+ * Whether a row may lay down suppression fire, or may once a module's attack
+ * option raises its Rate of Fire (since 1.83.0): the options' RoF is only
+ * known when they are chosen, so a row with any on offer is let through to
+ * the dialog, which refuses a burst still short of RoF 5.
+ */
+export function mayRaiseToSuppress(actor: any, item: any, row: { rateOfFire?: unknown; noSuppressionFire?: unknown }): boolean {
+  if (maySuppress(row)) return true;
+  if (row.noSuppressionFire === true || row.noSuppressionFire === "1" || !isRuleOn("rapidFire")) return false;
+  return attackOptionsFor(attackContextFor({ actor, item, ranged: true, damageType: "", effectiveSkill: 0 })).length > 0;
 }
 
 function esc(text: string): string {
@@ -149,7 +180,14 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
   const L = (key: string) => game.i18n.localize(`GWORLD.Suppression.${key}`);
   const data = button.dataset;
   const row = button.closest<HTMLElement>("[data-item-id]");
-  if (!maySuppress({ rateOfFire: data.rateOfFire, noSuppressionFire: data.noSuppressionFire })) {
+  // The modules' options on this attack, and on the shooter's maneuver: one
+  // may raise the Rate of Fire to what suppression needs (since 1.83.0).
+  const weapon = weaponFromDataset(actor, { ...data });
+  const addonContext = attackContextFor({
+    actor, item, ranged: true, damageType: weapon.damageType, effectiveSkill: Number(data.rollTarget) || 0,
+  });
+  const stance = maneuverOptionAttackEffect(addonContext);
+  if (!mayRaiseToSuppress(actor, item, { rateOfFire: optionRateOfFire(weapon, stance).rateOfFire, noSuppressionFire: data.noSuppressionFire })) {
     ui.notifications?.warn(game.i18n.format("GWORLD.Suppression.NeedsRoF", { name: String(data.rollLabel ?? ""), rof: SPREAD_FIRE_MIN_RATE_OF_FIRE }));
     return false;
   }
@@ -173,10 +211,11 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
     return false;
   }
 
-  const weapon = weaponFromDataset(actor, { ...data });
-  const loaded = weapon.loaded;
-  const rateOfFire = Math.max(1, Math.min(Math.floor(weapon.rateOfFire), loaded ?? Infinity));
-  if (rateOfFire < SPREAD_FIRE_MIN_RATE_OF_FIRE) {
+  // The Rate of Fire before the dialog's options, which may raise it: the
+  // weapon's, as the maneuver's options leave it, capped by what is loaded.
+  const offered = attackOptionsFor(addonContext).length > 0;
+  const rateOfFire = optionRateOfFire(weapon, stance).rateOfFire;
+  if (rateOfFire < SPREAD_FIRE_MIN_RATE_OF_FIRE && !offered) {
     ui.notifications?.warn(game.i18n.format("GWORLD.Suppression.NeedsRoF", { name: String(data.rollLabel ?? ""), rof: SPREAD_FIRE_MIN_RATE_OF_FIRE }));
     return false;
   }
@@ -191,10 +230,13 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${label}</span><input type="number" name="${name}" value="${value}" min="1" step="1" style="width:90px"${extra}>
       </label>`;
+  // With options offered the Rate of Fire is only known once they are
+  // chosen, so the shots aren't capped in the field but after the dialog.
+  const shotsLabel = (rof: number) => `${game.i18n.localize("GWORLD.Ranged.Shots")} (1-${rof})`;
   const content = `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
-      <p style="margin:0">${game.i18n.format("GWORLD.Suppression.Intro", { rof: rateOfFire })}</p>
-      ${field("shots", `${game.i18n.localize("GWORLD.Ranged.Shots")} (1-${rateOfFire})`, rateOfFire, ` max="${rateOfFire}"`)}
-      ${rateOfFire >= MULTIPLE_ZONES_MIN_RATE_OF_FIRE ? field("zones", L("Zones"), 1) : ""}
+      <p style="margin:0" data-suppression-intro>${game.i18n.format("GWORLD.Suppression.Intro", { rof: rateOfFire })}</p>
+      ${field("shots", `<span data-suppression-shots>${shotsLabel(rateOfFire)}</span>`, rateOfFire, offered ? "" : ` max="${rateOfFire}"`)}
+      ${rateOfFire >= MULTIPLE_ZONES_MIN_RATE_OF_FIRE || offered ? field("zones", L("Zones"), 1) : ""}
       <label style="display:flex;align-items:center;gap:8px">
         <input type="checkbox" name="mounted" ${mountedByDefault ? "checked" : ""}><span>${L("Mounted")}</span>
       </label>
@@ -202,29 +244,71 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
         <input type="checkbox" name="aimed" ${turnsAimed > 0 ? "checked" : ""}>
         <span>${game.i18n.localize("GWORLD.Ranged.Aimed")} (+${turnsAimed > 0 ? aiming.total : weapon.accuracy})</span>
       </label>
+      ${attackOptionFields(addonContext)}
     </div>`;
+  // What the options chosen come to, beside the maneuver's.
+  const effectOf = (form: ParentNode | null) => mergeAttackEffects([
+    effectFields(stance),
+    effectFields(applyAttackOptions(addonContext, readAttackOptionValues(form, addonContext))),
+  ]);
   const answer = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Title") },
     content,
+    render: (_event: Event, dialog: any) => {
+      const root: HTMLElement = dialog.element ?? dialog;
+      if (!offered) return;
+      // The Rate of Fire the options chosen give, kept in step with them.
+      const update = () => {
+        const rof = optionRateOfFire(weapon, effectOf(root)).rateOfFire;
+        const intro = root.querySelector<HTMLElement>("[data-suppression-intro]");
+        if (intro) intro.textContent = game.i18n.format("GWORLD.Suppression.Intro", { rof });
+        const label = root.querySelector<HTMLElement>("[data-suppression-shots]");
+        if (label) label.textContent = shotsLabel(rof);
+      };
+      root.addEventListener("change", update);
+      update();
+    },
     ok: {
       label: L("Fire"),
       callback: (_event: Event, b: HTMLElement) => {
         const form = b.closest<HTMLElement>(".application");
         const n = (name: string, fallback: number) => Number(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value) || fallback;
         const box = (name: string) => form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
-        return { shots: n("shots", rateOfFire), zones: n("zones", 1), mounted: box("mounted"), aimed: box("aimed") };
+        return { shots: n("shots", rateOfFire), zones: n("zones", 1), mounted: box("mounted"), aimed: box("aimed"), effect: effectOf(form) };
       },
     },
     rejectClose: false,
   });
   if (!answer || typeof answer !== "object") return false;
-  const chosen = answer as { shots: number; zones: number; mounted: boolean; aimed: boolean };
-  const split = suppressionZones({ rateOfFire, shots: chosen.shots, zones: chosen.zones });
+  const chosen = answer as { shots: number; zones: number; mounted: boolean; aimed: boolean; effect: ReturnType<typeof mergeAttackEffects> };
+  // The Rate of Fire the options give is the one suppression needs 5+ of
+  // (Campaigns p. 409), and the shots are held to their burst (since 1.83.0).
+  const fired = optionRateOfFire(weapon, chosen.effect);
+  if (fired.rateOfFire < SPREAD_FIRE_MIN_RATE_OF_FIRE) {
+    ui.notifications?.warn(game.i18n.format("GWORLD.Suppression.NeedsRoF", { name: String(data.rollLabel ?? ""), rof: SPREAD_FIRE_MIN_RATE_OF_FIRE }));
+    return false;
+  }
+  const burst = optionShots(chosen.shots, fired.rateOfFire, chosen.effect);
+  if (burst === null) {
+    ui.notifications?.warn(burstTooShort(String(item?.name ?? data.rollLabel ?? ""), fired.rateOfFire, chosen.effect));
+    return false;
+  }
+  const split = suppressionZones({ rateOfFire: fired.rateOfFire, shots: burst, zones: chosen.zones });
   if (split.problem) {
-    ui.notifications?.warn(game.i18n.format(`GWORLD.Suppression.Problem.${split.problem}`, { rof: rateOfFire, per: 5 }));
+    ui.notifications?.warn(game.i18n.format(`GWORLD.Suppression.Problem.${split.problem}`, { rof: fired.rateOfFire, per: 5 }));
     return false;
   }
   const shots = split.shotsPerZone.reduce((s, n) => s + n, 0);
+  // What an option spends beyond the shots fired, which the weapon must have.
+  const extra = chosen.effect.shots;
+  const modeIndex = Number(data.modeIndex);
+  const ready = isRuleOn("reloading") && Number.isInteger(modeIndex) ? shotsReady(item, modeIndex) : null;
+  if (ready !== null && shots + extra > ready) {
+    ui.notifications?.warn(game.i18n.format("GWORLD.Ranged.NotEnoughShots", { name: String(item?.name ?? ""), needed: shots + extra, ready }));
+    return false;
+  }
+  // And the FP an option costs, paid before the shots go.
+  if (chosen.effect.fatigue > 0 && !(await spendFatigue(actor, chosen.effect.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title")))) return false;
 
   const radius = ZONE_RADIUS_YARDS;
   const widthPx = 2 * radius * pixelsPerYard(scene);
@@ -239,8 +323,9 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
     weapon: String(data.rollLabel ?? ""),
     base: Number(data.rollTarget) || 0,
     damageType: String(data.damageType ?? ""),
-    recoil: Math.max(1, Math.floor(weapon.recoil) || 1),
+    recoil: Math.max(1, Math.floor(fired.recoil) || 1),
     mounted: chosen.mounted,
+    modifiers: chosen.effect.modifiers,
     halfDamageRange: weapon.halfDamageRange,
     shooting: {
       accuracy: weapon.accuracy,
@@ -261,8 +346,8 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
   };
 
   // The rounds go, and so does the aim (Campaigns p. 373).
-  if (isRuleOn("reloading") && item?.isOwner && Number.isInteger(Number(data.modeIndex))) await spendShots(item, Number(data.modeIndex), shots);
-  announceShots({ actor, item, modeIndex: Number(data.modeIndex), fired: shots, extra: 0, wasted: 0, kind: "suppression", targets: 0 });
+  if (isRuleOn("reloading") && item?.isOwner && Number.isInteger(modeIndex)) await spendShots(item, modeIndex, shots + extra);
+  announceShots({ actor, item, modeIndex, fired: shots, extra, wasted: 0, kind: "suppression", targets: 0 });
   await loseAim(actor, "fired");
 
   await ChatMessage.implementation.create({
@@ -381,6 +466,7 @@ export async function attackFromZone(message: any, tokenDoc: any, zoneIndex: num
     { ...record.shooting, eyes: eyesOf(firer), watching: null },
   );
   modifiers.push(...standingRollLines(firer, { rollType: "attack", ranged: true, dialogAsked: true }));
+  modifiers.push(...(record.modifiers ?? []));
   const cap = suppressionSkillCap(zone.shots, record.mounted);
   const capped = skillCapLine(record.base, modifiers, cap, game.i18n.format("GWORLD.Suppression.Cap", { cap }));
   if (capped) modifiers.push(capped);

@@ -15,7 +15,7 @@ import { techniqueDefaultLabel } from "../item-summary.js";
 import { CharacterBuilder } from "../apps/character-builder.js";
 import { combatStyle } from "../settings.js";
 import { activeRules, isRuleOn } from "../optional-rules.js";
-import { maySuppress } from "../suppression-fire.js";
+import { mayRaiseToSuppress } from "../suppression-fire.js";
 import { legalityNote } from "../legality.js";
 import {
   OPPORTUNITY_LINE_PENALTY,
@@ -935,10 +935,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       }),
       aoaOptions: [
         ...(["determined", "double", "feint", "strong", "suppression"] as const)
-          // Suppression Fire wants a weapon of RoF 5+ (Campaigns p. 409); it
+          // Suppression Fire wants a weapon of RoF 5+ (Campaigns p. 409), or one
+          // a module's attack option may raise to it (since 1.83.0); it
           // stays listed where it is already chosen.
           .filter((key) => key !== "suppression" || system.allOutAttackOption === "suppression" ||
-            (isRuleOn("rapidFire") && (system.derived?.ranged ?? []).some((row: any) => maySuppress(row))))
+            (isRuleOn("rapidFire") && (system.derived?.ranged ?? []).some((row: any) => mayRaiseToSuppress(actor, actor.items?.get?.(row.itemId) ?? null, row))))
           .map((key) => ({
             key,
             label: `GWORLD.Maneuver.AllOutAttackOption.${key}`,
