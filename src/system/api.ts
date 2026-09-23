@@ -71,6 +71,7 @@ import {
   type ConditionApplication,
 } from "./procedure-extensions.js";
 import { rollQuickContest, rollRegularContest } from "./contest.js";
+import { loseAim } from "./aim.js";
 import { activeRules, isRuleOn } from "./optional-rules.js";
 import { REGISTER_RULES_HOOK, isAddonRuleKey, namespacedRuleKey, registerRule, registerRuleGroup } from "./rule-registry.js";
 import { rollDamage, rollSuccess } from "./roll.js";
@@ -83,7 +84,7 @@ import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from ".
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.86.0";
+export const API_VERSION = "1.87.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -314,6 +315,17 @@ const actors = {
     if (!actor?.isOwner || !postures.includes(posture)) return false;
     if (actor.system?.posture !== posture) await actor.update({ "system.posture": posture });
     return true;
+  },
+
+  /**
+   * Ends an actor's aim (Campaigns p. 364; since 1.87.0), for a rule of a
+   * module's that spoils it: the turns, the target and the per-target bonuses
+   * are cleared and the usual note is shown. `reason` is one of the system's
+   * (`injured`, `defended`, `fired`, `moved`, the last silent) or the module's
+   * own words, shown as given. True where there was an aim to lose.
+   */
+  loseAim(actor: any, reason = ""): Promise<boolean> {
+    return loseAim(actor, String(reason ?? ""));
   },
 };
 

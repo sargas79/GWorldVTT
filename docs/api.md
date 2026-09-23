@@ -103,7 +103,7 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), and `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0). |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), and `loseAim(actor, reason)` (since 1.87.0). |
 | `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
@@ -1374,6 +1374,20 @@ Two fields a module may read (since 1.62.0):
   There is no line where the eyes left no penalty, or where the dialog set no
   darkness; total darkness is the sight select's, not this line's. And
   `laser`, the laser sight's +1 (see `laser` under `gworld.attackModifiers`).
+  Since 1.87.0 also `movingPlatform`, the penalty for attacking from a moving
+  vehicle or mount (Campaigns p. 548), which carries `platform` (`vehicle` or
+  `mount`), `medium` (`ground`, `air` or `water`), `ride` (`smooth`, `rough`
+  or `offRoad`: a good road, a bad road or off-road; calm or rough water) and
+  `mounting` (`handheld`, `openMount`, `fixedMount` or `stabilized`). A
+  shooter is aboard a vehicle when they are in its `crew`, and it is moving
+  while its `system.speed` is above 0; a rider is in the saddle while their
+  `system.mounted` is true (the Mounted Combat rule on), and the attack
+  dialog asks whether the mount moved more than a step. Both always open the
+  dialog, which asks how rough the ride is and, for the vehicle's own weapon,
+  what it sits on. There is no line where the table gives 0. A module's
+  saddle, stabilizing gear or riding skill changes the `value` (or removes the
+  line). While a mount moves, the shot also gets no extra turns of Aim
+  (`aim`) and no scope (p. 397).
   `gworld.attackModifiers` also receives `movement: { maneuver, yards }` (yards
   from the token's movement history, null where the map can't say) and `aim:
   { turns, braced, target, bonuses }`. A module aiding an aim at one foe writes
@@ -1381,6 +1395,13 @@ Two fields a module may read (since 1.62.0):
   them, keyed `aimTarget` unless given a key, only while aiming and only at
   `system.aim.target`. Both are cleared when the aim is lost, and when it is
   taken at a different foe.
+- **Ending an aim** (since 1.87.0): `actors.loseAim(actor, reason)` ends an
+  actor's aim (Campaigns p. 364) for a rule that spoils it: the turns, the
+  target and `system.aim.bonuses` are cleared, and the usual note is shown.
+  `reason` is one of the system's (`injured`, `defended`, `fired`; `moved`
+  shows nothing) or the module's own words, shown as given ("Archer loses the
+  aim: the mount bolted."). Returns true where there was an aim to lose;
+  false, doing nothing, where there wasn't or the user doesn't own the actor.
 - **Telescopic Vision and Vision rolls** (since 1.65.0): a Vision roll from
   the sheet with one token targeted takes that token's SM (`key` `size`) and
   the range penalty (`speedRange`), less what `traitEffects.telescopicVision`

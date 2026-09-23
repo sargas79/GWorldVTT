@@ -11,7 +11,7 @@ import { mayUseVehicleSystem, vehicleMovement } from "../vehicle-combat.js";
 import { jumpFromVehicle } from "../collisions.js";
 import { TONS_PER_PERSON, cargoCapacity, curbWeight, endurance, leaveSeat } from "../vehicles.js";
 import {
-  cappedAimBonus, crippleThreshold, locationsOf, lossOfControl, mediumOf, occupantDamage,
+  cappedAimBonus, crippleThreshold, movingPlatformPenalty, locationsOf, lossOfControl, mediumOf, occupantDamage,
   occupantHitTarget, targetingSystemBonus, unexpectedDodgePenalty, vehicleHitLocation,
   vehicleInjury, vitalAreaModifier, windowDr,
 } from "../vehicle-combat.js";
@@ -105,6 +105,20 @@ describe("losing control of a vehicle", () => {
 });
 
 describe("shooting from a vehicle", () => {
+  /** The Ranged Attack Modifiers table, attacking from a moving vehicle or mount (Campaigns p. 548). */
+  it("takes the moving-platform penalty by the ride and the mounting", () => {
+    const row = (medium: "ground" | "air" | "water" | "spaceOrUnderwater", ride: "smooth" | "rough" | "offRoad") =>
+      (["stabilized", "fixedMount", "openMount", "handheld"] as const).map((mounting) => movingPlatformPenalty({ medium, ride, mounting }));
+    expect(row("air", "offRoad")).toEqual([0, 0, 0, -1]);
+    expect(row("ground", "smooth")).toEqual([0, 0, 0, -1]);
+    expect(row("ground", "rough")).toEqual([0, -1, -2, -3]);
+    expect(row("ground", "offRoad")).toEqual([-1, -2, -3, -4]);
+    expect(row("water", "smooth")).toEqual([0, -1, -2, -3]);
+    expect(row("water", "rough")).toEqual([-1, -2, -3, -4]);
+    expect(row("water", "offRoad")).toEqual([-1, -2, -3, -4]);
+    expect(row("spaceOrUnderwater", "rough")).toEqual([0, 0, 0, 0]);
+  });
+
   it("caps the aiming bonuses at the Stability Rating unless stabilized", () => {
     expect(cappedAimBonus({ bonus: 6, stabilityRating: 3 })).toBe(3);
     expect(cappedAimBonus({ bonus: 2, stabilityRating: 3 })).toBe(2);
