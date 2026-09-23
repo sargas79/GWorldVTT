@@ -144,7 +144,7 @@ describe("gworld.armorDr", () => {
     };
     await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso" } as never);
     expect(seen).toEqual([
-      { label: "Plate", dr: 6, applies: true, forceField: false, flexible: false, hardened: 0, itemId: "armor1" },
+      { label: "Plate", dr: 6, applies: true, forceField: false, flexible: false, hardened: 0, itemId: "armor1", source: "armor" },
     ]);
   });
 
@@ -222,6 +222,104 @@ describe("gworld.armorDr", () => {
     // DR 12 against a (5) divisor is 2; hardened once the divisor is a (3), so 4.
     const result = await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 5, hitLocation: "torso" } as never);
     expect(result?.effectiveDr).toBe(4);
+  });
+});
+
+/** The target's own DR as lines of the same hook (since 1.98.0). */
+describe("gworld.armorDr natural DR", () => {
+  /** A character with DR from a trait, the traits' total as the data model derives it, and armour over it. */
+  function hide(options: { traitDr: number; derivedDr?: number; armourDr?: number; hooves?: boolean }) {
+    const actor = character(30, 30) as any;
+    const items: unknown[] = [
+      { id: "trait1", type: "trait", name: "Damage Resistance", system: { levels: options.traitDr } },
+    ];
+    if (options.hooves) items.push({ id: "trait2", type: "trait", name: "Hooves", system: { levels: 0 } });
+    if (options.armourDr) {
+      items.push({
+        id: "armor1", type: "armor", name: "Plate",
+        system: {
+          dr: options.armourDr, drSplit: null, drSplitAppliesTo: [], locations: ["torso", "foot"],
+          flexible: false, frontOnly: false, concealable: false, equipped: true,
+          hardened: 0, ablative: "none", drLost: 0, forceField: false,
+        },
+      });
+    }
+    actor.items = items;
+    actor.system.derived.traitEffects = { damageResistance: options.derivedDr ?? options.traitDr, footDr: options.hooves ? 1 : 0 };
+    return actor;
+  }
+
+  type Line = { dr: number; applies: boolean; source?: string; reason?: string };
+  const listen = (fn: (context: { lines: Line[]; damageType?: string }) => void) => {
+    globals.Hooks = { callAll: (event: string, context: { lines: Line[] }) => { if (event === "gworld.armorDr") fn(context); } };
+  };
+
+  it("hands the trait's DR over as a line of its own, after the armour", async () => {
+    const actor = hide({ traitDr: 3, armourDr: 4 });
+    let seen: unknown = null;
+    listen((context) => { seen = structuredClone(context.lines); });
+    const result = await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso" } as never);
+    expect(seen).toEqual([
+      { label: "Plate", dr: 4, applies: true, forceField: false, flexible: false, hardened: 0, itemId: "armor1", source: "armor" },
+      { label: "Damage Resistance", dr: 3, applies: true, forceField: false, flexible: false, hardened: 0, source: "natural", traitId: "trait1" },
+    ]);
+    // Counted once: 4 worn and 3 natural.
+    expect(result?.effectiveDr).toBe(7);
+    expect(result?.naturalDr).toBe(3);
+    expect(result?.penetrating).toBe(3);
+  });
+
+  it("lets a listener divide all DR against one attack, the natural with the worn", async () => {
+    const actor = hide({ traitDr: 10, armourDr: 15 });
+    listen((context) => {
+      if (context.damageType !== "burn") return;
+      for (const line of context.lines) line.dr = Math.floor(line.dr / 5);
+    });
+    const burning = await applyDamageToActor(actor, { basicDamage: 12, type: "burn", armorDivisor: 1, hitLocation: "torso" } as never);
+    expect(burning?.effectiveDr).toBe(5);
+    expect(burning?.naturalDr).toBe(2);
+    expect(burning?.penetrating).toBe(7);
+    const crushing = await applyDamageToActor(actor, { basicDamage: 30, type: "cr", armorDivisor: 1, hitLocation: "torso" } as never);
+    expect(crushing?.effectiveDr).toBe(25);
+  });
+
+  it("lets a listener refuse the natural DR, which then isn't a refused piece", async () => {
+    const actor = hide({ traitDr: 3, armourDr: 4 });
+    listen((context) => { for (const line of context.lines) if (line.source === "natural") line.applies = false; });
+    const result = await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso" } as never);
+    expect(result?.effectiveDr).toBe(4);
+    expect(result?.naturalDr).toBe(0);
+    expect(result?.refusedPieces).toEqual([]);
+  });
+
+  it("gives one line without a trait where the traits don't account for the figure", async () => {
+    const actor = hide({ traitDr: 3, derivedDr: 5 });
+    let seen: Line[] = [];
+    listen((context) => { seen = structuredClone(context.lines); });
+    const result = await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso" } as never);
+    expect(seen).toEqual([
+      { label: "Damage Resistance", dr: 5, applies: true, forceField: false, flexible: false, hardened: 0, source: "natural" },
+    ]);
+    expect(result?.effectiveDr).toBe(5);
+  });
+
+  it("adds Hooves' line on the foot alone", async () => {
+    const actor = hide({ traitDr: 2, hooves: true });
+    const labels: string[][] = [];
+    listen((context) => { labels.push(context.lines.map((line) => (line as { label?: string }).label ?? "")); });
+    const foot = await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "foot" } as never);
+    await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso" } as never);
+    expect(labels).toEqual([["Damage Resistance", "Hooves"], ["Damage Resistance"]]);
+    expect(foot?.naturalDr).toBe(3);
+  });
+
+  it("sends a natural line a listener made a field before the armour", async () => {
+    const actor = hide({ traitDr: 4, armourDr: 2 });
+    listen((context) => { for (const line of context.lines) if (line.source === "natural") (line as { forceField?: boolean }).forceField = true; });
+    const result = await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso" } as never);
+    expect(result?.forceField).toEqual({ dr: 4, stopped: 4 });
+    expect(result?.naturalDr).toBe(0);
+    expect(result?.penetrating).toBe(4);
   });
 });
 

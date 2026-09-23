@@ -39,6 +39,7 @@ import { woundBleeds } from "../rules/bleeding.js";
 import {
   noTraitEffects,
   shockAfterTraits,
+  traitEffects,
   type TraitEffects,
 } from "../rules/trait-effects.js";
 import type { DamageType } from "../rules/types.js";
@@ -408,17 +409,11 @@ function armourAt(
   // A breastplate marked "F" counts against a blow from the front alone
   // (Characters p. 282), so the arc it came from is read here; the layers
   // are kept apart because blunt trauma only counts what got past the rigid.
-  // Hooves armour the feet and nothing else (Characters p. 42), and a
-  // Nictitating Membrane the eyes alone, DR 1 a level (p. 71).
-  const naturalDr =
-    traits.damageResistance +
-    (location === "foot" ? traits.footDr : 0) +
-    (location === "eye" ? Math.max(0, Number(traits.nictitatingMembrane) || 0) : 0);
   // What each piece is worth against this blow, offered to the modules before
   // any of it is added up (since 1.48.0): a listener may double a piece
   // against one kind of attack, refuse it against another, or harden it.
   const here = new Set(piecesAt(worn, location));
-  const lines: ArmorDrLine[] = worn
+  const worns: ArmorDrLine[] = worn
     // A Force Field "protects your entire body - including your eyes - as well
     // as anything you are carrying" (Characters p. 47), wherever the blow fell.
     .filter((piece) => (piece.forceField === true || here.has(piece)) && protectsAgainst(piece, arc))
@@ -433,7 +428,13 @@ function armourAt(
       hardened: Math.max(0, Math.floor(piece.hardened ?? 0)),
       // Which item the line is, so a listener can read the piece's own data (since 1.56.0).
       ...(piece.id ? { itemId: piece.id } : {}),
+      source: "armor" as const,
     }));
+  // The target's own DR goes in beside the armour (since 1.98.0), so a rule
+  // that divides or refuses "DR" for one blow -- burning liquid, which most DR
+  // stops at a fifth (Campaigns p. 411) -- reaches all of it, not just what
+  // is worn.
+  const lines: ArmorDrLine[] = [...worns, ...naturalDrLines(actor, traits, location)];
   callCombatHook(COMBAT_HOOKS.armorDr, {
     actor,
     item: damage.itemUuid ? (fromUuidSync(damage.itemUuid) ?? null) : null,
@@ -453,11 +454,16 @@ function armourAt(
   });
 
   const layers: ArmourLayers = { rigidDr: 0, flexibleDr: 0, totalDr: 0, fieldDr: 0, hardened: 0, fieldAgainstIgnoring: 0, armourAgainstIgnoring: 0 };
+  let naturalDr = 0;
   for (const line of lines) {
     if (line.applies === false) continue;
     layers.hardened = Math.max(layers.hardened, Math.max(0, Math.floor(Number(line.hardened) || 0)));
     const dr = Math.max(0, Math.floor(Number(line.dr) || 0));
+    // Natural DR is under whatever is worn, and counted apart from it: a chink
+    // and blunt trauma read the two differently. A listener that makes it a
+    // field (the advantage's Force Field, Characters p. 47) sends it first.
     if (line.forceField) layers.fieldDr += dr;
+    else if (line.source === "natural") naturalDr += dr;
     else if (line.flexible) layers.flexibleDr += dr;
     else layers.rigidDr += dr;
     // The part a listener says still stands against an attack that ignores DR.
@@ -469,6 +475,53 @@ function armourAt(
   }
   layers.totalDr = layers.rigidDr + layers.flexibleDr;
   return { naturalDr, lines, layers };
+}
+
+/** The traits that give natural DR, the spot each covers, and its name for a line. */
+const NATURAL_DR: ReadonlyArray<{ key: "damageResistance" | "footDr" | "nictitatingMembrane"; at: HitLocation | null; label: string }> = [
+  { key: "damageResistance", at: null, label: "Damage Resistance" },
+  // Hooves armour the feet and nothing else (Characters p. 42).
+  { key: "footDr", at: "foot", label: "Hooves" },
+  // A Nictitating Membrane the eyes alone, DR 1 a level (p. 71).
+  { key: "nictitatingMembrane", at: "eye", label: "Nictitating Membrane" },
+];
+
+/**
+ * The target's own DR at a spot, as `gworld.armorDr` lines (since 1.98.0).
+ *
+ * The figure is the one the traits add up to, which a module or worn gear may
+ * have added to. Where the trait items on the actor account for all of it,
+ * each is a line of its own naming the trait; where they don't, the figure is
+ * one line with no trait, so nothing is counted twice or lost.
+ */
+function naturalDrLines(actor: any, traits: TraitEffects, location: HitLocation): ArmorDrLine[] {
+  const held: any[] = [...(actor?.items ?? [])].filter((item) => item?.type === "trait");
+  const lines: ArmorDrLine[] = [];
+  for (const kind of NATURAL_DR) {
+    if (kind.at !== null && kind.at !== location) continue;
+    const total = Math.max(0, Math.floor(Number(traits[kind.key]) || 0));
+    if (total <= 0) continue;
+    const natural = { applies: true, forceField: false, flexible: false, hardened: 0, source: "natural" as const };
+    const each = held
+      .map((item) => ({
+        item,
+        dr: traitEffects([{
+          name: String(item.name ?? ""),
+          levels: Number(item.system?.levels ?? 0),
+          specialty: String(item.system?.specialty ?? ""),
+          modifiers: ((item.system?.modifiers ?? []) as Array<{ name?: string }>).map((m) => String(m?.name ?? "")),
+        }])[kind.key],
+      }))
+      .filter((entry) => entry.dr > 0);
+    if (each.length > 0 && each.reduce((sum, entry) => sum + entry.dr, 0) === total) {
+      for (const { item, dr } of each) {
+        lines.push({ label: String(item.name ?? kind.label), dr, ...natural, ...(item.id ? { traitId: String(item.id) } : {}) });
+      }
+    } else {
+      lines.push({ label: kind.label, dr: total, ...natural });
+    }
+  }
+  return lines;
 }
 
 /** A location's armour, added up by the layer it is in. */

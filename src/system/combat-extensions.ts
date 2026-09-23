@@ -83,7 +83,7 @@ export const COMBAT_HOOKS = Object.freeze({
   weaponTargets: "gworld.weaponTargets",
   /** An unarmed blow applied to a target (since 1.32.0): `{ attacker, target, part, hitLocation, addonLocation, dr, basicDamage, minimumDr, applies }`, mutable. */
   hurtingYourself: "gworld.hurtingYourself",
-  /** Before a blow's DR is added up (since 1.48.0): `{ actor, item, mode, hitLocation, damageType, basicDamage, ignoresDr, arc, lines }`, the lines mutable (`ignoresDr` since 1.55.0, `arc` since 1.56.0). */
+  /** Before a blow's DR is added up (since 1.48.0): `{ actor, item, mode, hitLocation, damageType, basicDamage, ignoresDr, arc, lines }`, the lines mutable (`ignoresDr` since 1.55.0, `arc` since 1.56.0, natural DR as lines since 1.98.0). */
   armorDr: "gworld.armorDr",
   /** Where a ranged mode's capacity and reload time are read (since 1.54.0): `{ actor, item, modeIndex, mode, entry }`, the entry mutable. */
   shotsEntry: "gworld.shotsEntry",
@@ -124,7 +124,23 @@ export interface ArmorDrLine {
    * read the piece's own data. Absent on a line a listener added itself.
    */
   itemId?: string;
+  /**
+   * What the line is (since 1.98.0): `"armor"` for a worn piece, `"natural"`
+   * for DR the target has of its own -- the Damage Resistance advantage, or
+   * the DR a trait gives one spot (Hooves on the feet, a Nictitating Membrane
+   * on the eyes). A line a listener adds without one counts as armour.
+   */
+  source?: ArmorDrSource;
+  /**
+   * The id of the trait a natural line comes from (since 1.98.0), where the
+   * figure can be traced to one trait on the actor. Absent on a worn piece,
+   * and on a natural line whose DR comes from more than the traits alone.
+   */
+  traitId?: string;
 }
+
+/** What a `gworld.armorDr` line is: worn armour, or the target's own DR (since 1.98.0). */
+export type ArmorDrSource = "armor" | "natural";
 
 /** One layer of a vehicle's DR as `gworld.vehicleDr` hands it to a listener (since 1.79.0). */
 export interface VehicleDrLine {
