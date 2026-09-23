@@ -198,7 +198,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
   incendiary: false, radiation: false, doubleKnockback: false, noKnockback: false, kineticOnly: false, surge: false,
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
-  ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1, fullAutoOnly: false,
+  ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1, fullAutoOnly: false, tightBeam: false,
   recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0, scopeFixed: false,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false, outOfAction: null,
   ammunition: "", malediction: 0, ignoresDr: false,
@@ -470,6 +470,8 @@ export interface DerivedAttack {
   rateOfFire?: number;
   /** A RoF marked "!": the weapon fires only on full auto, a quarter of its RoF at least (Characters p. 270; since API 1.94.0). */
   fullAutoOnly?: boolean;
+  /** A tight-beam burning attack (Campaigns p. 399; since API 1.97.0): true only on a burning ranged row. */
+  tightBeam?: boolean;
   /** Recoil, which decides how many of a burst's shots hit. */
   recoil?: number;
   /** How the weapon is supported: "", "rest", "bipod" or "mounted" (a vehicle or tripod mount). */
@@ -2616,6 +2618,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           rateOfFire: mode.rateOfFire ?? 1,
           // "!": full auto only, at a quarter of the RoF or more (p. 270; since API 1.94.0).
           fullAutoOnly: String(mode.rateOfFireMark ?? "").trim() === "!",
+          // A laser rather than a torch (Campaigns p. 399; since API 1.97.0).
+          tightBeam: mode.tightBeam === true && mode.damageType === "burn",
           recoil: mode.recoil ?? 0,
           bulk: mode.bulk ?? 0,
           mount: String(mode.mount ?? ""),

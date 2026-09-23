@@ -35,6 +35,8 @@ export interface ParsedDamage {
     damageExtraDice: number;
     damageSpecial: boolean;
     surge: boolean;
+    /** A burn whose damage type says "tbb": tight-beam (Campaigns p. 399). Written only where set. */
+    tightBeam?: boolean;
     affliction: boolean;
     afflictionAttribute: string;
     afflictionModifier: number;

@@ -526,6 +526,9 @@ and the roll continues.
       RoF is marked "!" (Characters p. 270). A listener may set it, true or
       false; the attack then holds the burst to a quarter of the row's
       `rateOfFire` at least (see `registerAttackOption`).
+    - Since 1.97.0, a ranged row carries `tightBeam`: true where the mode is
+      a tight-beam burn (see *Tight-beam burning* below). A listener may set
+      it; it only stays true on a row whose `damageType` is `burn`.
     - Since 1.69.0, also `minRange` on a ranged row: the least distance in yards
       it can hit at, 0 for none, from the mode's own `minRange` (and in `basis`
       beside the other ranges). The Combat tab shows it beside the range, and an
@@ -1267,6 +1270,33 @@ Two fields a module may read (since 1.62.0):
   distance alone, say; its reach grows to match. A linked or follow-up line
   carries `radiation` and `surge` as a mode does, and `surge` travels to the
   apply as `IncomingDamage.surge`.
+- **Tight-beam burning** (since 1.97.0; Campaigns pp. 399, 408, 433-434): a
+  ranged burn that isn't a jet, cone, area, explosion or follow-up -- a laser,
+  not a flamethrower.
+  - *Stored on a mode.* A ranged mode keeps `tightBeam` (false by default),
+    read only on a burn. The GDF reader sets it where a record's damage type
+    carries `tbb` beside `burn` ("burn tbb", in any order with the other
+    modifiers; never on an explosion), and on the Basic Set's own beam
+    weapons (Characters p. 280), whose record says only "burn". It infers
+    nothing else. `validate-packs` checks it is a boolean, and true only on a
+    burn that is neither an area nor an explosion.
+  - *On the row and the roll.* The ranged row carries `tightBeam` (see
+    `gworld.weaponAttacks`), and so do its attack and damage buttons. The
+    attack dialog's called-shot select then offers the eye and the vitals, as
+    it does the chinks.
+  - *On the card and the apply.* `roll.damage` takes `tightBeam`, and the
+    damage card keeps it (only for `burn`). The apply passes it as
+    `IncomingDamage.tightBeam`, which the damage hooks see, and the injury is
+    worked out with it: x2 in the vitals, where another burn wounds at x1.
+    An incendiary tight beam counts a tenth of its basic damage toward
+    setting clothes alight.
+  - *Overpenetration.* The Overpenetration tool fills in a picked row's
+    `tightBeam`. A tight-beam burn may overpenetrate where another burn may
+    not.
+  - *Rules:* `canTarget(location, type, { tightBeam })`,
+    `woundingModifierAt(type, location, { tightBeam })`,
+    `canOverpenetrate({ type, ranged, tightBeam })` and
+    `canTargetChinks(type, tightBeam)`, as before.
 - **Explosions: placement, typed fragments, large-area injury** (since 1.72.0;
   Campaigns pp. 400, 414-415).
   - *Stored on a mode.* A melee or ranged mode (and its `linked` line) keeps,

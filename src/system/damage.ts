@@ -119,6 +119,11 @@ export interface IncomingDamage {
   kineticOnly?: boolean;
   /** Surge (Characters p. 105): burning damage that does double to anything electrical, for the modules that read it (since API 1.63.0). */
   surge?: boolean;
+  /**
+   * A tight-beam burn (Campaigns p. 399; since API 1.97.0): a laser rather
+   * than a torch, which wounds at x2 in the vitals.
+   */
+  tightBeam?: boolean;
   /** Yards from an explosion's centre, where the blow is one (since API 1.63.0). */
   blastDistance?: number;
   /**
@@ -558,6 +563,8 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
     ...(internal ? { woundingOverride: INTERNAL_BLAST_WOUNDING } : {}),
     ...(overrides && overrides.cripplingThreshold !== undefined ? { cripplingThreshold: overrides.cripplingThreshold } : {}),
     type: damage.type,
+    // A tight-beam burn wounds at x2 in the vitals (Campaigns p. 399).
+    ...(damage.tightBeam === true ? { qualifiers: { tightBeam: true } } : {}),
     // The divisor as Hardened left it, which is 1 where nothing hardened it.
     armorDivisor: hardened.divisor,
     hitLocation: damage.hitLocation,

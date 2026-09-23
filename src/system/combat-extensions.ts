@@ -231,7 +231,7 @@ function secondLine(follow: any): any {
 /** The row fields a listener may change. */
 const WEAPON_ROW_FIELDS = [
   "skillLevel", "damage", "damageType", "armorDivisor", "halfDamageRange", "maxRange", "minRange", "accuracy",
-  "malfunction", "projectiles", "rateOfFire", "fullAutoOnly", "minSt", "material", "holy", "notes", "followUp", "followUpAlso", "reach", "parry", "twoHanded",
+  "malfunction", "projectiles", "rateOfFire", "fullAutoOnly", "tightBeam", "minSt", "material", "holy", "notes", "followUp", "followUpAlso", "reach", "parry", "twoHanded",
   "feint", "skillName", "readiesAfterAttack", "affliction", "afflictionAttribute", "afflictionModifier",
   "recoil", "noSprayingFire", "noSuppressionFire", "noOverpenetration", "firstHit",
   "fragmentation", "fragmentationType", "fragmentationDivisor", "fragmentationLingerEvery", "fragmentationLingerFor",
@@ -299,6 +299,8 @@ export function adjustWeaponAttacks(options: {
       row.noSuppressionFire = row.noSuppressionFire === true;
       // Full auto only, as a RoF marked "!" (Characters p. 270; since 1.94.0).
       row.fullAutoOnly = row.fullAutoOnly === true;
+      // A tight-beam burn (Campaigns p. 399; since 1.97.0): only a burning row is one.
+      row.tightBeam = row.tightBeam === true && row.damageType === "burn";
       // Whether the row's shot may go through what it hits, and a line of its
       // own for a multiple-projectile shot's first hit (since 1.73.0).
       row.noOverpenetration = row.noOverpenetration === true;

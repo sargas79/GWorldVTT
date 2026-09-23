@@ -2609,6 +2609,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         damageType: String(row.damageType ?? ""),
         armorDivisor: Number(row.armorDivisor) || 1,
         refused: row.noOverpenetration === true,
+        tightBeam: row.tightBeam === true,
       }));
     const asked = await promptForOverpenetration(weapons);
     if (!asked) return;

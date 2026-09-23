@@ -1207,6 +1207,26 @@ const BASIC_SET_MIN_RANGE = new Map([
 ]);
 
 /**
+ * The Basic Set's own tight-beam burning weapons (Campaigns p. 399: "a laser
+ * is a tight-beam burning attack"), which the GCA file writes as plain
+ * "burn": every beam weapon of the Ultra-Tech Firearm Table (Characters
+ * p. 280), none of them a jet, cone, area, explosion or follow-up. Only their
+ * burning modes are marked -- an omni-blaster's stun setting is not a burn.
+ */
+const BASIC_SET_TIGHT_BEAM = new Set([
+  "Electrolaser Pistol",
+  "Laser Pistol",
+  "Blaster Pistol",
+  "Omni-Blaster Pistol",
+  "Electrolaser Carbine",
+  "Laser Sniper Rifle",
+  "Laser Rifle",
+  "Blaster Rifle",
+  "Omni-Blaster Rifle",
+  "Heavy Blaster",
+]);
+
+/**
  * How a missile finds its way, where the record's own notes name the rule the
  * way GCA's data files do: "Guided attack (see p. B412)" or "Homing attack
  * (see p. B413)", the latter perhaps with the sense it homes on in brackets
@@ -1359,6 +1379,8 @@ export function parseDamage(damage, damtype) {
   //   rad  Radiation: rads as well as damage (p. 105).
   //   dkb  Double knockback (p. 104).
   //   nkb  No knockback at all (p. 105).
+  //   tbb  Tight-beam burning (Campaigns p. 399): a laser, not a torch. Only
+  //        a data file that writes it says so; nothing is inferred.
   let typeText = rawType.replace(/[†*‡]/g, " ").trim();
   const modifier = (word) => {
     const found = new RegExp(`(?:^|\\s)${word}(?=\\s|$)`, "i").test(typeText);
@@ -1370,6 +1392,7 @@ export function parseDamage(damage, damtype) {
   const radiation = modifier("rad");
   const doubleKnockback = modifier("dkb");
   const noKnockback = modifier("nkb");
+  const tightBeam = modifier("tbb");
 
   // "cr ex [2d]" is a crushing explosion throwing 2d of fragmentation
   // (GURPS Basic Set: Campaigns p. 414). The type, the blast and the
@@ -1383,6 +1406,8 @@ export function parseDamage(damage, damtype) {
   const extras = {
     surge,
     ...setModifiers({ incendiary, radiation, doubleKnockback, noKnockback }),
+    // Only a burn is a tight-beam burn, and never an explosion's.
+    ...(tightBeam && typeText.toLowerCase() === "burn" ? { tightBeam: true } : {}),
     // The fragments' own type and divisor, only where the bracket gives them,
     // so a plain "[2d]" reads as it always has.
     ...(fragmentation && fragments.type ? { fragmentationType: fragments.type } : {}),
@@ -2474,6 +2499,15 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
         // A guided or homing missile, where the notes name the rule.
         const guidance = guidanceOf(f.get("itemnotes"));
         if (guidance) Object.assign(result.mode, guidance);
+
+        // A tight beam the Basic Set's table is made of, where the record
+        // only says "burn" (Campaigns p. 399).
+        if (!isSupplement(source) && BASIC_SET_TIGHT_BEAM.has(name) && result.mode.damageType === "burn" && !result.mode.areaAttack) {
+          result.mode.tightBeam = true;
+        }
+      } else {
+        // A melee blow is never a beam.
+        delete result.mode.tightBeam;
       }
 
       if (isMelee) meleeModes.push(...byUnarmedSkill(result.mode, scope.f.get("skillused")));

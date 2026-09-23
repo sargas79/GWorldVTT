@@ -8233,6 +8233,7 @@
           "bulk": -2,
           "recoil": 1,
           "malfunction": null,
+          "tightBeam": true,
           "linked": {
             "damage": "HT-4",
             "damageType": "cr",
@@ -8305,7 +8306,8 @@
           "mount": "",
           "bulk": -2,
           "recoil": 1,
-          "malfunction": 17
+          "malfunction": 17,
+          "tightBeam": true
         }
       ]
     }
@@ -8369,7 +8371,8 @@
           "mount": "",
           "bulk": -2,
           "recoil": 1,
-          "malfunction": 17
+          "malfunction": 17,
+          "tightBeam": true
         }
       ]
     }
@@ -8433,7 +8436,8 @@
           "mount": "",
           "bulk": -2,
           "recoil": 1,
-          "malfunction": 17
+          "malfunction": 17,
+          "tightBeam": true
         },
         {
           "name": "stun",
@@ -8534,6 +8538,7 @@
           "bulk": -4,
           "recoil": 1,
           "malfunction": null,
+          "tightBeam": true,
           "linked": {
             "damage": "HT-4",
             "damageType": "cr",
@@ -8606,7 +8611,8 @@
           "mount": "",
           "bulk": -8,
           "recoil": 1,
-          "malfunction": 17
+          "malfunction": 17,
+          "tightBeam": true
         }
       ]
     }
@@ -8670,7 +8676,8 @@
           "mount": "",
           "bulk": -4,
           "recoil": 1,
-          "malfunction": 17
+          "malfunction": 17,
+          "tightBeam": true
         }
       ]
     }
@@ -8734,7 +8741,8 @@
           "mount": "",
           "bulk": -4,
           "recoil": 1,
-          "malfunction": 17
+          "malfunction": 17,
+          "tightBeam": true
         }
       ]
     }
@@ -8798,7 +8806,8 @@
           "mount": "",
           "bulk": -4,
           "recoil": 1,
-          "malfunction": 17
+          "malfunction": 17,
+          "tightBeam": true
         },
         {
           "name": "stun",
@@ -8898,7 +8907,8 @@
           "mount": "",
           "bulk": -6,
           "recoil": 1,
-          "malfunction": 17
+          "malfunction": 17,
+          "tightBeam": true
         }
       ]
     }
