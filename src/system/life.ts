@@ -65,14 +65,16 @@ export function jobRollLevel(actor: any, name: string): number | null {
 
 /**
  * Money in or out of the sheet's cash, with a line in the chat saying what
- * for, so the table can follow where it went.
+ * for, so the table can follow where it went. `chat: false` moves the money
+ * and says nothing, for a purchase the sheet already shows.
  */
-export async function adjustCash(options: { actor: any; amount: number; note: string }): Promise<void> {
+export async function adjustCash(options: { actor: any; amount: number; note?: string; chat?: boolean }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor) || !Number.isFinite(options.amount) || options.amount === 0) return;
   const before = Number(actor.system?.money) || 0;
   const after = Math.round((before + options.amount) * 100) / 100;
   await actor.update({ "system.money": after });
+  if (options.chat === false) return;
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Life.Cash"),
     detail: options.note || game.i18n.localize(options.amount > 0 ? "GWORLD.Life.CashIn" : "GWORLD.Life.CashOut"),

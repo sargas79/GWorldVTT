@@ -3440,7 +3440,7 @@
       "Buy": "Buy",
       "BuyFor": "Buy ${amount}",
       "BuyMore": "Buy more",
-      "BuyHint": "Buy it out of the cash on the sheet, with a line in the chat saying what it cost.",
+      "BuyHint": "Buy it out of the cash on the sheet.",
       "BuyMoreHint": "Buy more of this out of the cash on the sheet. What the character was written up with was paid for out of starting wealth and is not charged again.",
       "AddHint": "Put it on the sheet without paying for it: starting gear comes out of starting wealth, not out of the cash.",
       "Title": "Buy {name}",
@@ -3450,7 +3450,6 @@
       "CashNow": "cash ${amount}",
       "CashAfter": "${amount} left",
       "Short": "${amount} short",
-      "Note": "Bought {quantity} × {name}",
       "Bought": "Bought {quantity} × {name} for ${total}."
     },
     "Life": {

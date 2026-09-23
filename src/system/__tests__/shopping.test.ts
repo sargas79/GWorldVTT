@@ -75,9 +75,8 @@ describe("buying gear out of the cash (Characters pp. 25-27)", () => {
     expect(actor.system.money).toBe(70);
     expect(actor.made).toHaveLength(1);
     expect(actor.made[0]).toMatchObject({ name: "Rope, 3/8\"", img: "rope.webp", system: { quantity: 3 } });
-    // The money moved, so the table can see where it went.
-    expect(cards).toHaveLength(1);
-    expect(String(cards[0].content)).toContain("Rope");
+    // A purchase is not news for the chat: the sheet shows it.
+    expect(cards).toHaveLength(0);
   });
 
   it("makes more rope of the rope already carried rather than a second entry", async () => {
@@ -122,13 +121,14 @@ describe("buying gear out of the cash (Characters pp. 25-27)", () => {
 
 describe("buying more of what is already carried", () => {
   it("raises that item's own count and pays for the difference", async () => {
-    foundryStub();
+    const { cards } = foundryStub();
     const actor = shopper(100, [{ id: "r", ...rope, system: { ...rope.system, quantity: 2 } }]);
     const spent = await buyMore(actor, actor.items.get("r"), 4);
 
     expect(spent).toBe(40);
     expect(actor.items.get("r")!.system.quantity).toBe(6);
     expect(actor.system.money).toBe(60);
+    expect(cards).toHaveLength(0);
   });
 
   it("buys more of a suit of armour rather than a second suit", async () => {
