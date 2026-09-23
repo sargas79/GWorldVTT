@@ -9,6 +9,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { DATA_HOOKS } from "./data-extensions.js";
 import { isRuleOn } from "./optional-rules.js";
 import {
   CONTROL_RATINGS,
@@ -17,6 +18,7 @@ import {
   legalityUnder,
   type ControlRating,
   type Legality,
+  type LegalityClass,
 } from "../rules/legality.js";
 
 /** The world setting: the campaign's Control Rating, or blank for none set. */
@@ -35,6 +37,27 @@ export function currentControlRating(): ControlRating | null {
   return stored !== "" && (CONTROL_RATINGS as readonly number[]).includes(value)
     ? (value as ControlRating)
     : null;
+}
+
+/**
+ * An item's Legality Class as the system reads it (since API 1.95.0): its
+ * stored `lc`, once the `gworld.legalityClass` listeners have had their say --
+ * an antique whose class rose with its age, a weapon disguised as something
+ * else (Characters p. 267, Campaigns p. 507). Null for an item with no class,
+ * and for one a listener set to anything but 0-4. A listener that throws
+ * changes nothing.
+ */
+export function legalityClassOf(item: any): LegalityClass | null {
+  const stored = item?.system?.lc;
+  const context = { item, actor: item?.actor ?? null, lc: isLegalityClass(stored) ? stored : null as number | null };
+  const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
+  try {
+    hooks?.callAll?.(DATA_HOOKS.legalityClass, context);
+  } catch (error) {
+    console.warn(`gworld | a ${DATA_HOOKS.legalityClass} listener failed`, error);
+    return isLegalityClass(stored) ? stored : null;
+  }
+  return isLegalityClass(context.lc) ? context.lc : null;
 }
 
 /** What the Gear tab says about one item's legality. */

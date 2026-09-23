@@ -56,6 +56,15 @@ function skillItem(actor: any, skillName: string): any {
   return [...(actor?.items ?? [])].find((item: any) => item?.type === "skill" && normalizeSkillName(String(item.name ?? "")) === wanted) ?? null;
 }
 
+/**
+ * The tool a skill is rolled with: the carried item the character's
+ * preparation picked for it (Campaigns p. 345), or null for none.
+ */
+export function toolFor(actor: any, skillName: string | undefined): any {
+  const id = skillItem(actor, String(skillName ?? ""))?.system?.derived?.toolItemId;
+  return typeof id === "string" && id ? actor?.items?.get?.(id) ?? null : null;
+}
+
 /** The actor's familiarities, or null for an actor that keeps none (an NPC). */
 export function familiaritiesOf(actor: any): string[] | null {
   const list = actor?.system?.familiarities;

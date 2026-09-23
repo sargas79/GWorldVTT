@@ -51,7 +51,7 @@ import { targetedTokens } from "../targets.js";
 import { combatLog } from "../sheet-v2/combat-log.js";
 import { effectiveCost, effectiveWeight } from "../data-extensions.js";
 import { gearGroupOf } from "../gear-groups.js";
-import { legalityNote } from "../legality.js";
+import { legalityClassOf, legalityNote } from "../legality.js";
 import { isRuleOn } from "../optional-rules.js";
 import { armorByArea, asGearSort, readiedItems, sortGear, type GearSort } from "../sheet-v2/inventory-view.js";
 import {
@@ -373,7 +373,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         equippable: item.type !== "equipment" || armed(item),
         // The equipment's own figures: what the book prints and the player looks for.
         stats: gearStatistics({ type: item.type, system: item.system, objectStats: item.type === "shield" ? objectStats(item) : null }, attacks, localize),
-        legality: legalityNote(s.lc ?? null),
+        legality: legalityNote(legalityClassOf(item)),
         vehicle: s.category === "vehicle" && isRuleOn("vehicles"),
         loadable: loadModeIndex >= 0,
         loadModeIndex: Math.max(0, loadModeIndex),

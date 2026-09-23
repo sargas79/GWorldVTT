@@ -1425,7 +1425,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       for (const raw of skills) {
         const skill = toolSkillKey(String(raw ?? ""));
         if (!skill) continue;
-        (carried[skill] ??= []).push({ quality, techLevel });
+        (carried[skill] ??= []).push({ quality, techLevel, ...(item.id ? { id: String(item.id) } : {}) });
       }
     }
     return carried;
@@ -1860,6 +1860,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         hasDefault: attributeDefaults.length > 0,
         talentBonus: lineValue("talent"),
         toolBonus: lineValue("tools"),
+        // The tool that bonus came from, for the roll to name (since API 1.95.0).
+        toolItemId: tool?.id ?? null,
         bonusLines: bonusLines.lines.filter((l) => l.value !== 0 || l.reason),
       };
     }

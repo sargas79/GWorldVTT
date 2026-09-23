@@ -37,7 +37,7 @@ import {
   type ResistedAttack,
   successRollTags,
 } from "./procedure-extensions.js";
-import { equipmentUseLines } from "./tech-level.js";
+import { equipmentUseLines, toolFor } from "./tech-level.js";
 import { aimStateOf, aimTargetLines, aimTurnsOf, loseAim } from "./aim.js";
 import { clearZenShot, zenLine, zenShotFor, type ZenShot } from "./zen.js";
 import { evaluateBonusFor } from "./evaluate.js";
@@ -423,6 +423,44 @@ export interface SuccessRollOptions {
    * can read the weapon and the range a resistance roll was forced by.
    */
   attack?: ResistedAttack;
+  /**
+   * The item the roll is made with (since 1.95.0): a weapon, a tool, a
+   * vehicle. It reaches `gworld.successRollModifiers` and
+   * `gworld.afterSuccessRoll` as `item`.
+   */
+  item?: any;
+  /**
+   * Who sees the card (since 1.95.0): one of Foundry's message modes
+   * (`public`, `gm`, `blind`, `self`) or the older roll-mode names
+   * (`publicroll`, `gmroll`, `blindroll`, `selfroll`). Left out, the card is
+   * posted openly, as before.
+   */
+  rollMode?: string;
+  /**
+   * A roll the GM makes in secret (Campaigns p. 494; since 1.95.0): the card
+   * goes to the GMs only, and not to whoever rolled -- the `blind` mode. A
+   * `rollMode` given beside it wins.
+   */
+  secret?: boolean;
+}
+
+/** The older roll-mode names, as Foundry's message modes. */
+const LEGACY_ROLL_MODES: Readonly<Record<string, string>> = Object.freeze({
+  publicroll: "public", gmroll: "gm", blindroll: "blind", selfroll: "self",
+});
+
+/**
+ * The message mode a success roll's card is posted in, or null for the
+ * system's usual open card: a known `rollMode`, else `blind` for a secret roll.
+ */
+export function successRollMessageMode(options: { rollMode?: unknown; secret?: unknown }): string | null {
+  const known = (globalThis as { CONFIG?: { ChatMessage?: { modes?: Record<string, unknown> } } }).CONFIG?.ChatMessage?.modes
+    ?? { public: {}, gm: {}, blind: {}, self: {} };
+  if (typeof options.rollMode === "string" && options.rollMode) {
+    const mode = LEGACY_ROLL_MODES[options.rollMode] ?? options.rollMode;
+    if (mode in known) return mode;
+  }
+  return options.secret === true ? "blind" : null;
 }
 
 /** A critical miss, with what the table said and whether the weapon resisted. */
@@ -457,6 +495,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
       actor, label, kind, skill: String(options.skill ?? ""), base, tags, modifiers: [...given],
       ...(options.attack ? { attack: options.attack } : {}),
       ...(options.subject ? { subject: options.subject } : {}),
+      ...(options.item ? { item: options.item } : {}),
     }),
   ];
 
@@ -574,6 +613,8 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
       }
     : null;
 
+  // A secret roll, or one a module asked to be whispered (since 1.95.0).
+  const messageMode = successRollMessageMode(options);
   await ChatMessage.implementation.create({
     speaker: ChatMessage.implementation.getSpeaker({ actor }),
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
@@ -614,9 +655,9 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
           )),
         }
       : {}),
-  });
+  }, messageMode ? { messageMode } : {});
 
-  afterSuccessRoll({ actor, label, kind, skill: String(options.skill ?? ""), tags, outcome });
+  afterSuccessRoll({ actor, label, kind, skill: String(options.skill ?? ""), tags, outcome, ...(options.item ? { item: options.item } : {}) });
 
   // What the fumble did to the weapon travels back to whoever rolled, who
   // knows which item it was and can break it.
@@ -1898,11 +1939,19 @@ async function rollAction(
     if (!aiming?.success) return null;
   }
 
+  // The item the roll is made with, for the listeners (since 1.95.0): the
+  // weapon of an attack, the tool the preparation picked for a skill.
+  const rollingWith = rollType === "attack"
+    ? rolledItem
+    : rollType === "skill"
+      ? toolFor(actor, String(target.dataset.rollSkill ?? rollLabel ?? ""))
+      : null;
   const outcome = await rollSuccess({
     actor,
     base: guided?.skillLevel ?? base,
     label,
     kind: rollKind(rollType),
+    ...(rollingWith ? { item: rollingWith } : {}),
     // The attribute a skill or attribute roll is based on, as a tag a condition's rolls can name (API 1.42.0),
     // and the sense a Perception roll is made by (API 1.63.0).
     // Since 1.65.0 an attack's roll also carries the tags a `gworld.attackModifiers` listener added.

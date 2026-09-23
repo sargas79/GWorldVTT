@@ -9,6 +9,8 @@
   <div class="gc-mods">
     {{#if influence}}
       <span>{{skill}} {{localize "GWORLD.Reaction.Against"}} {{subject}}</span>
+      {{#each lines as |line|}}<span class="gc-mod">{{line}}</span>{{/each}}
+      {{#each willLines as |line|}}<span class="gc-mod">{{../subject}}: {{line}}</span>{{/each}}
       <span class="gc-mod">{{localize "GWORLD.Chat.Target"}} {{target}} {{localize "GWORLD.Reaction.VsWill"}} {{will}}</span>
     {{else}}
       <span>{{localize "GWORLD.Reaction.Rolled" rolled=rolled}}</span>

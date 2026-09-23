@@ -138,6 +138,8 @@ export function toolServesSkill(toolSkill: string, skillName: string): boolean {
 export interface CarriedTool {
   quality: number;
   techLevel: number | null;
+  /** Which item it is, handed back with the best tool (since API 1.95.0). */
+  id?: string;
 }
 
 /**
@@ -145,16 +147,16 @@ export interface CarriedTool {
  * most once its TL is weighed against the skill's, a tool the skill cannot
  * use at all being passed over. `skillTechLevel` null (a skill not marked
  * /TL) weighs no TL. Returns the grade's modifier and the TL line, or null
- * for no usable tool.
+ * for no usable tool, with the tool's `id` where it had one.
  */
-export function bestTool(tools: ReadonlyArray<CarriedTool>, options: { skillTechLevel: number | null; iqBased: boolean }): { quality: number; techLevel: number } | null {
-  let best: { quality: number; techLevel: number } | null = null;
+export function bestTool(tools: ReadonlyArray<CarriedTool>, options: { skillTechLevel: number | null; iqBased: boolean }): { quality: number; techLevel: number; id?: string } | null {
+  let best: { quality: number; techLevel: number; id?: string } | null = null;
   for (const tool of tools) {
     const techLevel = options.skillTechLevel === null || tool.techLevel === null
       ? 0
       : techLevelModifier({ skillTechLevel: options.skillTechLevel, equipmentTechLevel: tool.techLevel, iqBased: options.iqBased });
     if (techLevel === null) continue;
-    if (best === null || tool.quality + techLevel > best.quality + best.techLevel) best = { quality: tool.quality, techLevel };
+    if (best === null || tool.quality + techLevel > best.quality + best.techLevel) best = { quality: tool.quality, techLevel, ...(tool.id ? { id: tool.id } : {}) };
   }
   return best;
 }
