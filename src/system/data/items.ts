@@ -475,6 +475,48 @@ export class SkillData extends foundry.abstract.TypeDataModel {
   }
 }
 
+/**
+ * A second line of an attack: an attack that lands with the mode's own
+ * rather than instead of it (Characters p. 106), which the weapon tables note
+ * on a line of its own (p. 269). Null for none.
+ */
+function secondLineField() {
+  return new fields.SchemaField(
+    {
+      /** A dice formula, or the attribute and penalty where it is an affliction. */
+      damage: new fields.StringField({ required: true, blank: true, initial: "" }),
+      damageType: new fields.StringField({
+        required: true,
+        nullable: false,
+        initial: "cr",
+        choices: ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
+      }),
+      armorDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0.1 }),
+      /** True where the second line is a resistance roll rather than damage. */
+      affliction: new fields.BooleanField({ initial: false }),
+      afflictionAttribute: new fields.StringField({ required: true, blank: true, initial: "" }),
+      afflictionModifier: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 0, max: 0,
+      }),
+      explosive: new fields.BooleanField({ initial: false }),
+      fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
+      /** The fragments' type and divisor, as on a mode (since API 1.72.0). */
+      fragmentationType: new fields.StringField({ required: true, blank: true, initial: "", choices: FRAGMENT_TYPE_CHOICES }),
+      fragmentationDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0.1 }),
+      /** Where its blast goes off, as on a mode: a follow-up's is often `internal` (since API 1.72.0). */
+      blastPlacement: new fields.StringField({ required: true, blank: true, initial: "", choices: ["", "contact", "internal"] }),
+      /** True for a follow-up, false for a linked attack. */
+      followUp: new fields.BooleanField({ initial: false }),
+      /** Radiation and Surge on the second line, as on a mode (since API 1.63.0). */
+      radiation: new fields.BooleanField({ initial: false }),
+      surge: new fields.BooleanField({ initial: false }),
+      /** What the book calls it, where it calls it anything. */
+      label: new fields.StringField({ required: true, blank: true, initial: "" }),
+    },
+    { required: false, nullable: true, initial: null },
+  );
+}
+
 /** A single way of attacking with a weapon in melee (GURPS Lite p. 20). */
 function meleeModeField() {
   return new fields.SchemaField({
@@ -678,40 +720,14 @@ function meleeModeField() {
      *
      * Null for a mode that is only itself, which is nearly all of them.
      */
-    linked: new fields.SchemaField(
-      {
-        /** A dice formula, or the attribute and penalty where it is an affliction. */
-        damage: new fields.StringField({ required: true, blank: true, initial: "" }),
-        damageType: new fields.StringField({
-          required: true,
-          nullable: false,
-          initial: "cr",
-          choices: ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
-        }),
-        armorDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0.1 }),
-        /** True where the second line is a resistance roll rather than damage. */
-        affliction: new fields.BooleanField({ initial: false }),
-        afflictionAttribute: new fields.StringField({ required: true, blank: true, initial: "" }),
-        afflictionModifier: new fields.NumberField({
-          required: true, nullable: false, integer: true, initial: 0, max: 0,
-        }),
-        explosive: new fields.BooleanField({ initial: false }),
-        fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
-        /** The fragments' type and divisor, as on a mode (since API 1.72.0). */
-        fragmentationType: new fields.StringField({ required: true, blank: true, initial: "", choices: FRAGMENT_TYPE_CHOICES }),
-        fragmentationDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0.1 }),
-        /** Where its blast goes off, as on a mode: a follow-up's is often `internal` (since API 1.72.0). */
-        blastPlacement: new fields.StringField({ required: true, blank: true, initial: "", choices: ["", "contact", "internal"] }),
-        /** True for a follow-up, false for a linked attack. */
-        followUp: new fields.BooleanField({ initial: false }),
-        /** Radiation and Surge on the second line, as on a mode (since API 1.63.0). */
-        radiation: new fields.BooleanField({ initial: false }),
-        surge: new fields.BooleanField({ initial: false }),
-        /** What the book calls it, where it calls it anything. */
-        label: new fields.StringField({ required: true, blank: true, initial: "" }),
-      },
-      { required: false, nullable: true, initial: null },
-    ),
+    linked: secondLineField(),
+    /**
+     * A second such line, of the other kind: a weapon may have both a
+     * follow-up and a linked attack, each noted on a line of its own
+     * (Characters p. 269). Null unless `linked` is set and this is its
+     * opposite, which is nearly always (since API 1.80.0).
+     */
+    linkedAlso: secondLineField(),
     /** The weapon becomes unready after each attack unless ST is high enough. */
     unreadyAfterAttack: new fields.BooleanField({ initial: false }),
     /**
@@ -1102,40 +1118,14 @@ function rangedModeField() {
      *
      * Null for a mode that is only itself, which is nearly all of them.
      */
-    linked: new fields.SchemaField(
-      {
-        /** A dice formula, or the attribute and penalty where it is an affliction. */
-        damage: new fields.StringField({ required: true, blank: true, initial: "" }),
-        damageType: new fields.StringField({
-          required: true,
-          nullable: false,
-          initial: "cr",
-          choices: ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
-        }),
-        armorDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0.1 }),
-        /** True where the second line is a resistance roll rather than damage. */
-        affliction: new fields.BooleanField({ initial: false }),
-        afflictionAttribute: new fields.StringField({ required: true, blank: true, initial: "" }),
-        afflictionModifier: new fields.NumberField({
-          required: true, nullable: false, integer: true, initial: 0, max: 0,
-        }),
-        explosive: new fields.BooleanField({ initial: false }),
-        fragmentation: new fields.StringField({ required: true, blank: true, initial: "" }),
-        /** The fragments' type and divisor, as on a mode (since API 1.72.0). */
-        fragmentationType: new fields.StringField({ required: true, blank: true, initial: "", choices: FRAGMENT_TYPE_CHOICES }),
-        fragmentationDivisor: new fields.NumberField({ required: true, nullable: false, initial: 1, min: 0.1 }),
-        /** Where its blast goes off, as on a mode: a follow-up's is often `internal` (since API 1.72.0). */
-        blastPlacement: new fields.StringField({ required: true, blank: true, initial: "", choices: ["", "contact", "internal"] }),
-        /** True for a follow-up, false for a linked attack. */
-        followUp: new fields.BooleanField({ initial: false }),
-        /** Radiation and Surge on the second line, as on a mode (since API 1.63.0). */
-        radiation: new fields.BooleanField({ initial: false }),
-        surge: new fields.BooleanField({ initial: false }),
-        /** What the book calls it, where it calls it anything. */
-        label: new fields.StringField({ required: true, blank: true, initial: "" }),
-      },
-      { required: false, nullable: true, initial: null },
-    ),
+    linked: secondLineField(),
+    /**
+     * A second such line, of the other kind: a weapon may have both a
+     * follow-up and a linked attack, each noted on a line of its own
+     * (Characters p. 269). Null unless `linked` is set and this is its
+     * opposite, which is nearly always (since API 1.80.0).
+     */
+    linkedAlso: secondLineField(),
     /** Damage per level of the trait carrying this mode (Characters p. 61). */
     perLevel: new fields.BooleanField({ initial: false }),
     /**

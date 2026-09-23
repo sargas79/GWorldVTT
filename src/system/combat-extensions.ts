@@ -185,10 +185,53 @@ function firstHitLine(given: any): { damage: string; damageType: string; armorDi
   };
 }
 
+/**
+ * A row's second line (Characters p. 106) in the shape the Combat tab and the
+ * damage card read, or null. An affliction's resistance roll is the one case
+ * where the second line is not damage.
+ */
+function secondLine(follow: any): any {
+  return follow && typeof follow.damage === "string" && follow.damage.trim()
+    ? {
+        damage: follow.damage,
+        damageType: String(follow.damageType ?? "cr"),
+        explosive: Boolean(follow.explosive),
+        armorDivisor: Number(follow.armorDivisor) > 0 ? Number(follow.armorDivisor) : 1,
+        ...(follow.affliction
+          ? {
+              affliction: true,
+              afflictionAttribute: String(follow.afflictionAttribute ?? ""),
+              afflictionModifier: Math.min(0, Math.floor(Number(follow.afflictionModifier) || 0)),
+            }
+          : {}),
+        ...(typeof follow.fragmentation === "string" && follow.fragmentation.trim()
+          ? {
+              fragmentation: follow.fragmentation.trim(),
+              // Its fragments' own type and divisor (since 1.72.0).
+              ...(FRAGMENT_TYPES.has(String(follow.fragmentationType ?? "")) && follow.fragmentationType
+                ? { fragmentationType: String(follow.fragmentationType) }
+                : {}),
+              ...(Number(follow.fragmentationDivisor) > 0 && Number(follow.fragmentationDivisor) !== 1
+                ? { fragmentationDivisor: Number(follow.fragmentationDivisor) }
+                : {}),
+            }
+          : {}),
+        ...(follow.explosive && (follow.blastPlacement === "contact" || follow.blastPlacement === "internal")
+          ? { blastPlacement: follow.blastPlacement }
+          : {}),
+        ...(follow.followUp ? { followUp: true } : {}),
+        // Radiation and Surge, which a mode's own line carries (since 1.63.0).
+        ...(follow.radiation ? { radiation: true } : {}),
+        ...(follow.surge ? { surge: true } : {}),
+        ...(follow.label ? { label: String(follow.label) } : {}),
+      }
+    : null;
+}
+
 /** The row fields a listener may change. */
 const WEAPON_ROW_FIELDS = [
   "skillLevel", "damage", "damageType", "armorDivisor", "halfDamageRange", "maxRange", "minRange", "accuracy",
-  "malfunction", "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp", "reach", "parry", "twoHanded",
+  "malfunction", "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp", "followUpAlso", "reach", "parry", "twoHanded",
   "feint", "skillName", "readiesAfterAttack", "affliction", "afflictionAttribute", "afflictionModifier",
   "recoil", "noSprayingFire", "noSuppressionFire", "noOverpenetration", "firstHit",
   "fragmentation", "fragmentationType", "fragmentationDivisor", "fragmentationLingerEvery", "fragmentationLingerFor",
@@ -219,6 +262,7 @@ export function adjustWeaponAttacks(options: {
   for (const entry of options.rows) {
     if (!Array.isArray(entry.row.notes)) entry.row.notes = [];
     if (entry.row.followUp === undefined) entry.row.followUp = null;
+    if (entry.row.followUpAlso === undefined) entry.row.followUpAlso = null;
     // Whether the row offers a Feint (since 1.28.0): melee rows do, ranged ones don't.
     if (typeof entry.row.feint !== "boolean") entry.row.feint = entry.kind === "melee";
   }
@@ -275,42 +319,12 @@ export function adjustWeaponAttacks(options: {
     row.notes = (Array.isArray(row.notes) ? row.notes : [])
       .filter((n: any) => typeof n?.label === "string" && n.label.trim())
       .map((n: any) => ({ label: String(n.label), hint: String(n.hint ?? "") }));
-    const follow = row.followUp;
     // A second attack that lands with this one (Characters p. 106), kept in
-    // the shape the Combat tab and the damage card read. An affliction's
-    // resistance roll is the one case where the second line is not damage.
-    row.followUp = follow && typeof follow.damage === "string" && follow.damage.trim()
-      ? {
-          damage: follow.damage,
-          damageType: String(follow.damageType ?? "cr"),
-          explosive: Boolean(follow.explosive),
-          armorDivisor: Number(follow.armorDivisor) > 0 ? Number(follow.armorDivisor) : 1,
-          ...(follow.affliction
-            ? {
-                affliction: true,
-                afflictionAttribute: String(follow.afflictionAttribute ?? ""),
-                afflictionModifier: Math.min(0, Math.floor(Number(follow.afflictionModifier) || 0)),
-              }
-            : {}),
-          ...(typeof follow.fragmentation === "string" && follow.fragmentation.trim()
-            ? {
-                fragmentation: follow.fragmentation.trim(),
-                // Its fragments' own type and divisor (since 1.72.0).
-                ...(FRAGMENT_TYPES.has(String(follow.fragmentationType ?? "")) && follow.fragmentationType
-                  ? { fragmentationType: String(follow.fragmentationType) }
-                  : {}),
-                ...(Number(follow.fragmentationDivisor) > 0 && Number(follow.fragmentationDivisor) !== 1
-                  ? { fragmentationDivisor: Number(follow.fragmentationDivisor) }
-                  : {}),
-              }
-            : {}),
-          ...(follow.explosive && (follow.blastPlacement === "contact" || follow.blastPlacement === "internal")
-            ? { blastPlacement: follow.blastPlacement }
-            : {}),
-          ...(follow.followUp ? { followUp: true } : {}),
-          ...(follow.label ? { label: String(follow.label) } : {}),
-        }
-      : null;
+    // the shape the Combat tab reads, and a second of the other kind where the
+    // weapon has both (since 1.80.0). One without the other moves up.
+    row.followUp = secondLine(row.followUp);
+    row.followUpAlso = secondLine(row.followUpAlso);
+    if (!row.followUp) [row.followUp, row.followUpAlso] = [row.followUpAlso, null];
     // Whether the row is an affliction, what resists it and at what (since
     // 1.55.0). A row that is not one resists with nothing.
     // The blast and its fragments (since 1.72.0): the dice as text, a type

@@ -475,6 +475,13 @@ and the roll continues.
       affliction back into the damage it carried; whether the tab offers a damage
       roll or a resistance roll follows the row, not the stored mode. A row's
       `followUp` is its linked attack, and setting it null drops that attack.
+    - Since 1.80.0, also `followUpAlso` (null): a second line of the other
+      kind, in the same shape as `followUp`, where the weapon has both a
+      follow-up and a linked attack (Characters p. 269). The Combat tab offers
+      each as a roll of its own. A mode stores it as `linkedAlso` beside its
+      `linked`, set only where `linked` holds the other kind; existing data
+      needs no migration. Setting `followUp` null while `followUpAlso` is set
+      moves the second line up into its place.
     - `damageAt(entry, st)` and `rangeAt(entry, st)` work a mode out at another
       ST, and `addToDamage(formula, bonus)` adds to a dice formula. The range
       text and whether the damage can be rolled follow the figures;

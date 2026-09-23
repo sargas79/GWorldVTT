@@ -121,6 +121,7 @@ const FILE_PARTIALS: Record<string, string> = {
   "gworld.addonSections": `systems/${SYSTEM_ID}/templates/actor/addon-sections.hbs`,
   "gworld.addonSheetSections": `systems/${SYSTEM_ID}/templates/actor/addon-sheet-sections.hbs`,
   "gworld.attackExtras": `systems/${SYSTEM_ID}/templates/actor/attack-extras.hbs`,
+  "gworld.secondLine": `systems/${SYSTEM_ID}/templates/actor/second-line.hbs`,
   // The character sheet's own pieces.
   "gworld.v2.attackCard": `systems/${SYSTEM_ID}/templates/actor/v2/attack-card.hbs`,
   "gworld.v2.bodyOutline": `systems/${SYSTEM_ID}/templates/actor/v2/body-outline.hbs`,

@@ -23,6 +23,8 @@ import {
   traitCategoryOf,
   linkedLine,
   minimumRangeOf,
+  guidanceOf,
+  scopeAccOf,
   parseRadius,
   areaNote,
   LINKED_MODE,
@@ -961,6 +963,57 @@ describe("the equipment a data file's modes make", () => {
     expect(shell!.linked).toMatchObject({ damage: "2d" });
   });
 
+  it("keeps a follow-up and a linked line on every mode of the round (Characters p. 269)", () => {
+    const { gear, rejects, notes } = run(
+      "Missile Test, page(XX10), cost(100), weight(10), techlvl(8),"
+      + ` newmode(w/o Bipod, damage(6dx3), armordivisor(10), damtype(cr ex), ${ranged}),`
+      + ` newmode(w/ Bipod, damage(6dx3), armordivisor(10), damtype(cr ex), ${ranged}),`
+      + ` newmode(Follow-up, damage(6dx11), armordivisor(10), damtype(cr ex), ${ranged}),`
+      + ` newmode(Linked, damage(7dx4), damtype(cr ex), ${ranged})`,
+    );
+    expect(rejects).toEqual([]);
+    const modes = gear[0]!.system.rangedModes;
+    expect(modes).toHaveLength(2);
+    for (const mode of modes) {
+      expect(mode.linked).toMatchObject({ damage: "6dx11", followUp: true, label: "Follow-up" });
+      expect(mode.linkedAlso).toMatchObject({ damage: "7dx4", label: "Linked" });
+      expect((mode.linkedAlso as { followUp?: boolean }).followUp).toBeUndefined();
+    }
+    expect(notes.some((n) => /not kept/.test(n))).toBe(false);
+  });
+
+  it("does not write a second line of the same kind over the first, and says so", () => {
+    const { gear, notes } = run(
+      "Double Test, page(XX10), cost(100), weight(10), techlvl(8),"
+      + ` newmode(Shot, damage(3d), damtype(pi), ${ranged}),`
+      + ` newmode(Linked, damage(1d), damtype(burn), ${ranged}),`
+      + ` newmode(Linked, damage(2d), damtype(cr), ${ranged})`,
+    );
+    const [shot] = gear[0]!.system.rangedModes;
+    expect(shot!.linked).toMatchObject({ damage: "1d", damageType: "burn" });
+    expect(shot!.linkedAlso).toBeUndefined();
+    expect(notes).toContain("Double Test: Linked: Shot already has a linked line; this one is not kept");
+  });
+
+  it("reads a scope written as scopeacc() when the Acc has none of its own (Characters p. 269)", () => {
+    expect(scopeAccOf("2")).toBe(2);
+    expect(scopeAccOf("+1")).toBe(1);
+    expect(scopeAccOf("")).toBe(0);
+    expect(scopeAccOf(undefined)).toBe(0);
+    expect(scopeAccOf("owner::scopeacc")).toBe(0);
+    const { gear } = run(
+      "Scope Test, page(XX10), cost(100), weight(5), techlvl(9), damage(4d), damtype(pi-), acc(6), scopeacc(1), rangehalfdam(700), rangemax(2900), rof(16), shots(80(3)), minst(9), skillused(SK:Guns (Rifle))",
+      "Two Scope Test, page(XX11), cost(100), weight(5), techlvl(9),"
+      + " newmode(Rifle, damage(6d), damtype(pi), acc(4), scopeacc(2), rangehalfdam(700), rangemax(4000), rof(15), shots(25(3)), minst(10), skillused(SK:Guns (Rifle))),"
+      + " newmode(Written, damage(6d), damtype(pi), acc(4+3), scopeacc(2), rangehalfdam(700), rangemax(4000), rof(15), shots(25(3)), minst(10), skillused(SK:Guns (Rifle)))",
+    );
+    expect(gear[0]!.system.rangedModes[0]).toMatchObject({ accuracy: 6, scopeBonus: 1 });
+    const [rifle, written] = gear[1]!.system.rangedModes;
+    expect(rifle).toMatchObject({ accuracy: 4, scopeBonus: 2 });
+    // The Acc's own "+3" is what the table prints, and wins.
+    expect(written).toMatchObject({ accuracy: 4, scopeBonus: 3 });
+  });
+
   it("skips a mode that states no damage and keeps the record", () => {
     const { gear, rejects, notes } = run(
       "Smoke Test, page(XX11), cost(10), weight(1), techlvl(6), damage(Smoke (7 yd.)), acc(0), rof(1), shots(T(1)), minst(5), skillused(SK:Throwing)",
@@ -1019,6 +1072,22 @@ describe("the equipment a data file's modes make", () => {
     expect(minimumRangeOf("{Has a minimum range: 10 yards for one launcher, 30 for another.}", launcher)).toBeNull();
     expect(minimumRangeOf(undefined, launcher)).toBeNull();
     expect(minimumRangeOf("{First Range figure is minimum range, not 1/2D.}", { ...launcher, rangeIsStMultiple: true })).toBeNull();
+  });
+
+  it("reads a guided or homing missile from notes naming the rule (Campaigns pp. 412-413)", () => {
+    expect(guidanceOf("{Guided attack (see p. B412). Gunner uses Artillery (Guided Missile) to attack.}")).toEqual({ guidance: "guided" });
+    expect(guidanceOf("{Homing attack (see p. B413). Gunner uses Artillery (Guided Missile) to aim.}"))
+      .toEqual({ guidance: "homing", aimingSkill: "Artillery (Guided Missile)" });
+    expect(guidanceOf("{Homing (Hyperspectral Vision) attack (see p. B413), at the missile's skill of 10. Firer rolls against Artillery (Guided Missile) to aim. On a success, the missile gets its Acc bonus.}"))
+      .toEqual({ guidance: "homing", aimingSkill: "Artillery (Guided Missile)", guidedSkillLevel: 10 });
+    // Only the notes' own wording is read, not a mention in passing.
+    expect(guidanceOf("{Can be fitted with a homing seeker.}")).toBeNull();
+    expect(guidanceOf(undefined)).toBeNull();
+    const { gear } = run(
+      "Missile Test, page(XX18), cost(100), weight(5), techlvl(8), damage(6dx3), damtype(cr ex), acc(7), rangehalfdam(1000), rangemax(8800), rof(1), shots(1(20)), minst(10), skillused(SK:Artillery (Guided Missile)),"
+      + " itemnotes({Homing (Hyperspectral Vision) attack (see p. B413), at the missile's skill of 10. Firer rolls against Artillery (Guided Missile) to aim.})",
+    );
+    expect(gear[0]!.system.rangedModes[0]).toMatchObject({ guidance: "homing", aimingSkill: "Artillery (Guided Missile)", guidedSkillLevel: 10 });
   });
 
   it("moves the first Range figure to the minimum on every ranged mode, and reports a note it cannot tie", () => {

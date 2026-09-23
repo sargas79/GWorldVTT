@@ -297,6 +297,26 @@ describe("an item's attack rows (#270)", () => {
     expect(rows[1]!.row).toMatchObject({ damage: "1d+2", accuracy: 3, halfDamageRange: 21, maxRange: 28, range: "21 / 28", notes: [], followUp: { damage: "1d-1", damageType: "cr", explosive: true } });
   });
 
+  it("keeps a second line of the other kind beside the first, and moves it up when the first goes (since 1.80.0)", async () => {
+    const api = await load();
+    const rows = entries() as Array<{ row: any }>;
+    Object.assign(rows[1]!.row, {
+      followUp: { damage: "6dx11", damageType: "cr", explosive: true, followUp: true, label: "Follow-up" },
+      followUpAlso: { damage: "7dx4", damageType: "cr", explosive: true, radiation: true, label: "Linked" },
+    });
+    globals.Hooks = { callAll: () => {} };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: rows as never, ...helpers } as never);
+    expect(rows[0]!.row).toMatchObject({ followUp: null, followUpAlso: null });
+    expect(rows[1]!.row.followUp).toMatchObject({ damage: "6dx11", followUp: true, label: "Follow-up" });
+    // Radiation and Surge travel on a second line as on a mode (since 1.63.0).
+    expect(rows[1]!.row.followUpAlso).toMatchObject({ damage: "7dx4", radiation: true, label: "Linked" });
+
+    globals.Hooks = { callAll: (_event: string, context: any) => { context.rows[1].row.followUp = null; } };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: rows as never, ...helpers } as never);
+    expect(rows[1]!.row.followUp).toMatchObject({ damage: "7dx4", label: "Linked" });
+    expect(rows[1]!.row.followUpAlso).toBeNull();
+  });
+
   it("lets a listener change a row's reach, Parry and hands (since 1.21.0), kept to their shapes", async () => {
     const api = await load();
     const rows = entries();
