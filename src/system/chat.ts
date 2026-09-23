@@ -115,6 +115,8 @@ interface DamageFlag {
   kineticOnly?: boolean;
   /** Surge (Characters p. 105): burning damage that does double to anything electrical, for the modules that read it (since API 1.63.0). */
   surge?: boolean;
+  /** A tight-beam burn (Campaigns p. 399; since API 1.97.0). */
+  tightBeam?: boolean;
   /** The item the damage was rolled from. */
   itemUuid?: string;
   /** Where the blow came from (since 1.43.0). */
@@ -479,6 +481,8 @@ async function applyFromCard(options: {
     ...(flag.noKnockback ? { noKnockback: true } : {}),
     ...(flag.kineticOnly ? { kineticOnly: true } : {}),
     ...(flag.surge ? { surge: true } : {}),
+    // A laser rather than a torch: x2 at the vitals (Campaigns p. 399).
+    ...(flag.tightBeam && flag.damageType === "burn" ? { tightBeam: true } : {}),
     ...(flag.itemUuid ? { itemUuid: flag.itemUuid } : {}),
     ...(flag.mode ? { mode: flag.mode } : {}),
     ...(flag.source ? { source: flag.source } : {}),
@@ -572,7 +576,8 @@ async function applyFromCard(options: {
       // incendiary damage with burning for what it takes to set things alight.
       // The clothes are the volatile material a victim is wearing.
       if (flag.incendiary) {
-        await catchFire({ actor, basicBurningDamage: incoming.basicDamage, tightBeam: false });
+        // A tight-beam burn counts a tenth of its damage (p. 434).
+        await catchFire({ actor, basicBurningDamage: incoming.basicDamage, tightBeam: incoming.tightBeam === true });
       }
       // Remembered so the knockdown control on the card knows whose roll it is.
       knockdowns.push({ actor, result });

@@ -58,7 +58,8 @@ export function shotOptions(type: DamageType, tightBeam = false, actor?: any): S
   const options: ShotOption[] = [];
 
   for (const location of HIT_LOCATION_ORDER) {
-    if (!canTarget(location, type, {})) continue;
+    // A tight-beam burn may be aimed at the eye and the vitals (Campaigns p. 399).
+    if (!canTarget(location, type, { tightBeam })) continue;
 
     const info = HIT_LOCATIONS[location];
     options.push({

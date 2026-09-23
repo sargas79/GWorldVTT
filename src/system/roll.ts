@@ -849,6 +849,8 @@ export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) 
     rateOfFire: n("rateOfFire") || 1,
     // A RoF marked "!" fires only on full auto (Characters p. 270; since 1.94.0).
     fullAutoOnly: dataset.fullAutoOnly === "1",
+    // A tight-beam burn, which may be aimed at the eye and vitals (Campaigns p. 399; since 1.97.0).
+    tightBeam: dataset.tightBeam === "1",
     recoil: n("recoil"),
     bulk: n("bulk"),
     // A shotgun's pellets, and the range inside which they strike as one.
@@ -1142,6 +1144,11 @@ export interface DamageRollOptions {
   kineticOnly?: boolean;
   /** Surge (Characters p. 105): burning damage that does double to anything electrical, for the modules that read it (since API 1.63.0). */
   surge?: boolean;
+  /**
+   * A tight-beam burn (Campaigns p. 399; since API 1.97.0): x2 at the vitals,
+   * and a tenth of its damage toward setting clothes alight. Travels on the card.
+   */
+  tightBeam?: boolean;
   /** The item the blow comes from, for a module's hooks; its UUID travels on the card. */
   item?: any;
   /** Which of the item's modes it was rolled from. */
@@ -1322,6 +1329,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(options.noKnockback ? { noKnockback: true } : {}),
           ...(options.kineticOnly ? { kineticOnly: true } : {}),
           ...(options.surge ? { surge: true } : {}),
+          ...(options.tightBeam && damageType === "burn" ? { tightBeam: true } : {}),
           ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
           ...(mode ? { mode } : {}),
           ...(options.source ? { source: String(options.source) } : {}),
@@ -2497,7 +2505,7 @@ function showRangedBreakdown(
   });
 
   const fromDialog = rangedModifiers({ ...input, shots: pellets.effectiveShots }, options);
-  const called = calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, false, actor);
+  const called = calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, options.tightBeam === true, actor);
   if (called.modifier) fromDialog.push(called.modifier);
   fromDialog.push(...chosen.modifiers);
 
@@ -2613,6 +2621,8 @@ export async function promptForRangedAttack(options: {
   rateOfFire: number;
   /** A RoF marked "!": fired only on full auto, a quarter of the RoF at least (Characters p. 270; since 1.94.0). */
   fullAutoOnly?: boolean;
+  /** A tight-beam burn, which the called-shot select lets at the eye and vitals (Campaigns p. 399; since 1.97.0). */
+  tightBeam?: boolean;
   recoil: number;
   bulk: number;
   /**
@@ -2740,7 +2750,7 @@ export async function promptForRangedAttack(options: {
       ${field("speed", L("TargetSpeed"), "0")}
       ${field("size", L("TargetSize"), "0")}
       ${shotsField}
-      ${calledShotField(options.damageType, false, options.actor)}
+      ${calledShotField(options.damageType, options.tightBeam === true, options.actor)}
       ${sightField()}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Cover.Label")}</span>
@@ -2892,7 +2902,7 @@ export async function promptForRangedAttack(options: {
     halfDamageRange: options.halfDamageRange ?? 0,
   });
 
-  const aimed = calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, false, options.actor);
+  const aimed = calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, options.tightBeam === true, options.actor);
   const modifiers = rangedModifiers({ ...input, shots: pellets.effectiveShots }, options);
   if (aimed.modifier) modifiers.push(aimed.modifier);
   const addon = chosenOptions;
@@ -4052,6 +4062,7 @@ export async function handleDamageAction(
     ...(target.dataset.noKnockback === "1" ? { noKnockback: true } : {}),
     ...(target.dataset.kineticOnly === "1" ? { kineticOnly: true } : {}),
     ...(target.dataset.surge === "1" ? { surge: true } : {}),
+    ...(target.dataset.tightBeam === "1" ? { tightBeam: true } : {}),
     ...(item ? { item } : {}),
     ...(mode ? { mode } : {}),
     ...(strikingPart(target.dataset.naturalKey ?? "") ? { strikingPart: strikingPart(target.dataset.naturalKey ?? "") } : {}),

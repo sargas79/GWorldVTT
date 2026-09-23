@@ -660,6 +660,13 @@ function validateItem(entry, file) {
       if (mode[key] === undefined) continue;
       check(typeof mode[key] === "string" && /^[!#]?$/.test(mode[key]), file, name, `${key} "${mode[key]}" must be "!", "#" or blank`);
     }
+    // A tight beam is a burn that isn't an area (Campaigns p. 399), written only where set.
+    if (mode.tightBeam !== undefined) {
+      check(
+        typeof mode.tightBeam === "boolean" && (!mode.tightBeam || (mode.damageType === "burn" && !mode.areaAttack && !mode.explosive)),
+        file, name, `tightBeam must be a boolean, and true only on a burn that is not an area or an explosion`,
+      );
+    }
     check(
       typeof mode.maxRange === "number" && mode.maxRange >= 0,
       file, name, `maximum range ${mode.maxRange} must not be negative`,

@@ -912,6 +912,15 @@ function rangedModeField() {
      */
     rateOfFireMark: new fields.StringField({ required: true, blank: true, initial: "" }),
     /**
+     * A tight-beam burning attack (GURPS Basic Set: Campaigns p. 399; since
+     * API 1.97.0): a ranged burn that isn't a jet, cone, area, explosion or
+     * follow-up -- a laser, not a flamethrower. It may be aimed at the eye
+     * and the vitals (x2 there), may overpenetrate (p. 408), and counts a
+     * tenth of its damage toward setting things alight (pp. 433-434). Only
+     * read on a burning mode.
+     */
+    tightBeam: new fields.BooleanField({ initial: false }),
+    /**
      * A second RoF a table prints after a slash, "33!/66!": another setting
      * of the same weapon, with its own mark. Zero where there is none.
      */

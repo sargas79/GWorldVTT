@@ -810,6 +810,8 @@ export interface OverpenetrationWeapon {
   armorDivisor: number;
   /** The row refuses overpenetration whatever its damage type. */
   refused: boolean;
+  /** A tight-beam burn, which goes through where another burn doesn't (Campaigns p. 408; since API 1.97.0). */
+  tightBeam?: boolean;
 }
 
 /** Asks what the shot went through and what is behind it (Campaigns p. 408). */
@@ -922,6 +924,8 @@ export async function promptForOverpenetration(weapons: OverpenetrationWeapon[] 
         if (type && types.includes(picked.damageType)) type.value = picked.damageType;
         const divisor = form?.querySelector<HTMLInputElement>('input[name="divisor"]');
         if (divisor) divisor.value = String(Math.max(1, picked.armorDivisor || 1));
+        const beam = form?.querySelector<HTMLInputElement>('input[name="tightBeam"]');
+        if (beam) beam.checked = picked.tightBeam === true;
       });
     },
     rejectClose: false,
