@@ -11,6 +11,8 @@ import {
   startingFamiliarities,
   techLevelModifier,
   toggleFamiliarity,
+  toolServesSkill,
+  toolSkillKey,
   UNFAMILIAR_PENALTY,
 } from "../tech-level.js";
 
@@ -96,5 +98,43 @@ describe("bestTool", () => {
     expect(bestTool([{ quality: 1, techLevel: 12 }], { skillTechLevel: 8, iqBased: true })).toBeNull();
     expect(bestTool([{ quality: 1, techLevel: 12 }], { skillTechLevel: null, iqBased: true })).toEqual({ quality: 1, techLevel: 0 });
     expect(bestTool([], { skillTechLevel: 8, iqBased: false })).toBeNull();
+  });
+});
+
+describe("toolServesSkill", () => {
+  it("matches the exact name", () => {
+    expect(toolServesSkill("First Aid/TL", "First Aid/TL")).toBe(true);
+    expect(toolServesSkill("Lockpicking/TL", "Lockpicking/TL")).toBe(true);
+  });
+
+  it("matches a name written without the /TL", () => {
+    expect(toolServesSkill("First Aid", "First Aid/TL")).toBe(true);
+    expect(toolServesSkill("First Aid/TL", "First Aid")).toBe(true);
+  });
+
+  it("matches a name written with a TL number", () => {
+    expect(toolServesSkill("First Aid/TL8", "First Aid/TL")).toBe(true);
+    expect(toolServesSkill("First Aid", "First Aid/TL8")).toBe(true);
+    expect(toolServesSkill("First Aid/TL7", "First Aid/TL8")).toBe(true);
+  });
+
+  it("matches a specialty with or without the /TL, in any case", () => {
+    expect(toolServesSkill("Electronics Operation (Security)", "Electronics Operation/TL (Security)")).toBe(true);
+    expect(toolServesSkill("Electronics Operation/TL8 (Security)", "Electronics Operation/TL (Security)")).toBe(true);
+    expect(toolServesSkill("electronics operation (security)", "Electronics Operation/TL (Security)")).toBe(true);
+    expect(toolServesSkill("Electronics Operation(Security)", "Electronics Operation/TL ( Security )")).toBe(true);
+  });
+
+  it("never matches across specialties, or a specialty with its bare skill", () => {
+    expect(toolServesSkill("Electronics Operation (Security)", "Electronics Operation/TL (Medical)")).toBe(false);
+    expect(toolServesSkill("Electronics Operation", "Electronics Operation/TL (Security)")).toBe(false);
+    expect(toolServesSkill("Electronics Operation (Security)", "Electronics Repair/TL (Security)")).toBe(false);
+    expect(toolServesSkill("First Aid", "Physician/TL")).toBe(false);
+    expect(toolServesSkill("", "First Aid/TL")).toBe(false);
+  });
+
+  it("writes one key for every spelling", () => {
+    expect(toolSkillKey("  Electronics Operation/TL8  (Security) ")).toBe("electronics operation (security)");
+    expect(toolSkillKey("Guns/TL^ (Pistol)")).toBe("guns (pistol)");
   });
 });
