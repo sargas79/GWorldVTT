@@ -24,6 +24,7 @@ import { resolveSuccess } from "../rules/success.js";
 import { successRollModifiers } from "./procedure-extensions.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
+import { refuseWhileHeld } from "./knockdown.js";
 import {
   ANESTHESIA_TL,
   RESUSCITATION_MINUTES,
@@ -330,6 +331,9 @@ export async function applyFirstAid(options: {
  */
 export async function tryToWake(options: { actor: any }): Promise<boolean> {
   const { actor } = options;
+  // Out for a set time first -- a current still flowing, and the minutes after
+  // it (p. 432) -- with no roll until the hold ends (since API 1.89.0).
+  if (!refuseWhileHeld(actor, "unconscious")) return false;
 
   const hp = actor?.system?.hp ?? { value: 0, max: 0 };
   const waking = wakingFrom(Number(hp.value) || 0, Number(hp.max) || 0);

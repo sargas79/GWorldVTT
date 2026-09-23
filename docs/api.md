@@ -103,7 +103,7 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), and `loseAim(actor, reason)` (since 1.87.0). |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), and `recoveryHold(actor, id)` (since 1.89.0). |
 | `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
@@ -1079,7 +1079,12 @@ Two fields a module may read (since 1.62.0):
   formula, metalArmor })` runs an electrical shock as the GM tool does
   (Campaigns pp. 432-433): `kind` is `nonlethal`, `lethal` or `localized`,
   `formula` the burning damage for a lethal or localized one, and `metalArmor`
-  holds metallic armour to DR 1. `hazards.irradiate({ actor, rads,
+  holds metallic armour to DR 1. Since 1.89.0 it also takes `contactSeconds`,
+  the seconds the victim stays in contact after the roll (0 or left out: the
+  current has stopped), and holds the recovery rolls with `holdRecovery`: a
+  stun for its second, or for the contact plus (20 - HT) seconds after a
+  continuous shock; unconsciousness from a lethal one for the contact plus
+  its (20 - HT) minutes. `hazards.irradiate({ actor, rads,
   protectionFactor, modifier })` adds a dose of radiation (p. 435). Before a
   dose is added, `gworld.radiationDose` fires with `{ actor, rads,
   protectionFactor, sources }`: change `rads`, and push a label to `sources`.
@@ -1361,6 +1366,21 @@ Two fields a module may read (since 1.62.0):
   circle may also take `from` (scene pixels): the area is then a band, every
   point within `radius` of the line from `from` to `center`, as a swath of
   fire from the firer to where they aimed.
+  - *Cones* (since 1.89.0, Campaigns p. 413): `cone: { direction?, toward?,
+    length?, width? }` in place of `radius` makes the area a cone with its
+    apex at `center`. `direction` is in degrees clockwise from the scene's +x
+    (east), as Foundry measures a template, or `toward` (scene pixels) aims it
+    at a point, as the line from the attacker to the target point. `length` is
+    its reach in yards (left out with `toward`: to that point) and `width` its
+    width at the far end in yards (left out: one yard per yard of length). It
+    is a yard wide at the apex and widens evenly to `width`, never narrower
+    than a yard. `add` returns null for a cone with no direction or length.
+    `areas.list` gives it as `cone: { direction, length, width, base }` in
+    scene pixels and degrees, `base` being the yard at the apex; `from` and
+    `radius` are not kept beside it.
+  - *Who stands in it* (since 1.89.0): `areas.standsIn(scene, idOrArea)`
+    returns the token documents on the scene whose centre lies in an area --
+    circle, band, cone or region -- by its id or as `areas.list` gives it.
 - **Spraying and Suppression Fire** (since 1.70.0, Campaigns p. 409), under
   the `rapidFire` switch. A ranged attack from a row of RoF 5+ with two or
   more tokens targeted offers to spray the burst: the targets are put in the
@@ -1539,6 +1559,17 @@ Two fields a module may read (since 1.62.0):
     line to kinds or tags of roll.
   - `duration` is `{ turns }` of the actor's own, `{ rounds }` of the combat, or
     `{ seconds }` of world time. The GM's client ends it when that runs out.
+  - `holdRecovery` (since 1.89.0) withholds the rolls to recover from it:
+    `true` until the condition is removed or applied again without it,
+    `{ seconds }` of world time from now, or `{ until }` a world time in
+    seconds. The system's stun recovery roll (`stunned`) and its roll to wake
+    (`unconscious`) are refused while held, with a notice of how long is left.
+    A victim kept stunned while a current still flows (Campaigns p. 432) is
+    `{ key: "stunned", holdRecovery: true }`, applied again with `{ seconds }`
+    once the contact ends. `actors.recoveryHold(actor, id)` says whether a
+    condition's recovery is held now: `{ until }` (null while it lasts), or
+    null where the roll may be made. Taking a system condition off the token
+    by any means drops its entry, hold and all.
   - It returns the condition's id. `actors.removeCondition(actor, id)` takes it
     off, and `actors.conditions(actor)` lists them. The Combat tab shows them
     too.

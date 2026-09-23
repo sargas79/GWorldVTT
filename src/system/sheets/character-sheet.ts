@@ -182,6 +182,7 @@ import { byName, sortedByName } from "../sort.js";
 import { clampedLevels, steppedLevels, steppedPoints, type StepDirection } from "../advancement.js";
 import {
   activeConditions,
+  recoveryHold,
   attackSequenceFor,
   chooseManeuverOption,
   feintResultRecorded,
@@ -387,6 +388,15 @@ export function monthlyBudget(wealth: Record<string, any>): { lines: Array<{ lab
   add("GWORLD.Life.BudgetDebt", debt, -1);
   const net = pay + income - living - debt;
   return { lines, net, netText: `${net < 0 ? "-" : "+"}$${Math.abs(net)}` };
+}
+
+/** How long a condition's recovery rolls are held, for its chip (since API 1.89.0); blank where they are not. */
+function heldFor(actor: any, id: string): string {
+  const held = recoveryHold(actor, id);
+  if (!held) return "";
+  if (held.until === null) return game.i18n.localize("GWORLD.Condition.RecoveryHeld");
+  const seconds = Math.max(0, Math.ceil(held.until - (Number((game as any).time?.worldTime) || 0)));
+  return game.i18n.format("GWORLD.Condition.RecoveryHeldFor", { seconds });
 }
 
 export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
@@ -855,7 +865,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
             ? game.i18n.format("GWORLD.Condition.UntilRound", { round: c.untilRound })
             : c.untilTime !== null
               ? game.i18n.format("GWORLD.Condition.SecondsLeft", { seconds: Math.max(0, Math.round(c.untilTime - (Number((game as any).time?.worldTime) || 0))) })
-              : "",
+              : heldFor(actor, c.id),
       })),
       // The choice a module's maneuver asks for, where it asks for one.
       maneuverOptions: (registeredManeuvers().find((m) => m.key === system.maneuver)?.options ?? []).map((o) => ({

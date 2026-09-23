@@ -19,7 +19,7 @@ import {
 } from "../rules/knockdown.js";
 import { resolveSuccess } from "../rules/success.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
-import { PROCEDURE_HOOKS, successRollModifiers, type KnockdownBlow } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, recoveryHold, successRollModifiers, type KnockdownBlow } from "./procedure-extensions.js";
 import { callCombatHook } from "./combat-extensions.js";
 
 const KNOCKDOWN_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/knockdown.hbs`;
@@ -153,6 +153,9 @@ export async function rollStunRecovery(options: {
 }): Promise<boolean> {
   const { actor, mental = false } = options;
   if (!actor?.isOwner) return false;
+  // A stun that is held -- a current still flowing, and the seconds after it
+  // (p. 432) -- gives no roll until the hold ends (since API 1.89.0).
+  if (!refuseWhileHeld(actor, "stunned")) return false;
 
   const attribute = mental ? "IQ" : "HT";
   // A HT roll reads Fit; the IQ roll for mental stun does not.
@@ -199,4 +202,18 @@ export async function rollStunRecovery(options: {
   });
 
   return recovered;
+}
+
+/**
+ * Whether a recovery roll may be made from a condition now; says why not
+ * where its recovery is held (since API 1.89.0).
+ */
+export function refuseWhileHeld(actor: any, id: string): boolean {
+  const held = recoveryHold(actor, id);
+  if (!held) return true;
+  const now = Number(game.time?.worldTime) || 0;
+  ui.notifications?.warn(held.until === null
+    ? game.i18n.format("GWORLD.Knockdown.HeldUntilRemoved", { name: String(actor?.name ?? "") })
+    : game.i18n.format("GWORLD.Knockdown.HeldFor", { name: String(actor?.name ?? ""), seconds: Math.ceil(held.until - now) }));
+  return false;
 }

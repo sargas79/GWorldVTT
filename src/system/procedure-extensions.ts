@@ -832,6 +832,13 @@ export interface ConditionApplication {
   effects?: { modifiers?: ConditionModifier[] };
   /** How long it lasts. Left out: until removed. */
   duration?: { turns?: number; rounds?: number; seconds?: number };
+  /**
+   * Withholds the rolls to recover from it (since 1.89.0): `true` until the
+   * condition is removed or applied again without it, `{ seconds }` for that
+   * much world time from now, or `{ until }` to a world time in seconds. A
+   * stun kept on while a current still flows, then for its seconds after.
+   */
+  holdRecovery?: true | { seconds?: number; until?: number };
 }
 
 /** A timed condition as the actor carries it. */
@@ -847,6 +854,8 @@ export interface StoredCondition {
   untilTime: number | null;
   /** Whether it is one of the system's token conditions, set alongside. */
   system: boolean;
+  /** Recovery rolls withheld (since 1.89.0): to a world time, or null until it is removed. */
+  recoveryHeld?: { until: number | null };
 }
 
 /** How this module reaches the system's token conditions, handed in so it needn't import them. */
@@ -900,6 +909,8 @@ export async function applyCondition(
   const turns = Number(a.duration?.turns);
   const rounds = Number(a.duration?.rounds);
   const seconds = Number(a.duration?.seconds);
+  const now = Number((game as any).time?.worldTime) || 0;
+  const recoveryHeld = heldRecovery(a.holdRecovery, now);
   const entry: StoredCondition = {
     id,
     label: String(a.label ?? systemLabel ?? a.key),
@@ -908,13 +919,49 @@ export async function applyCondition(
       .map((m) => ({ label: m.label, value: m.value, ...(Array.isArray(m.rolls) ? { rolls: m.rolls.map(String) } : {}) })),
     turnsLeft: Number.isFinite(turns) && turns > 0 ? Math.floor(turns) : null,
     untilRound: Number.isFinite(rounds) && rounds > 0 && combat?.started ? Number(combat.round) + Math.floor(rounds) : null,
-    untilTime: Number.isFinite(seconds) && seconds > 0 ? (Number((game as any).time?.worldTime) || 0) + seconds : null,
+    untilTime: Number.isFinite(seconds) && seconds > 0 ? now + seconds : null,
     system,
+    ...(recoveryHeld ? { recoveryHeld } : {}),
   };
   const others = activeConditions(actor).filter((c) => c.id !== id);
   await actor.setFlag(SYSTEM_ID, CONDITIONS_FLAG, [...others, entry]);
   if (system) await hooks.setSystemCondition(actor, a.key, true);
   return id;
+}
+
+/** A `holdRecovery` as it is kept, or null for none (or a time already past). */
+export function heldRecovery(hold: ConditionApplication["holdRecovery"], now: number): { until: number | null } | null {
+  if (hold === true) return { until: null };
+  if (!hold || typeof hold !== "object") return null;
+  const until = Number(hold.until);
+  if (Number.isFinite(until)) return until > now ? { until } : null;
+  const seconds = Number(hold.seconds);
+  return Number.isFinite(seconds) && seconds > 0 ? { until: now + seconds } : null;
+}
+
+/**
+ * Whether the rolls to recover from a condition are withheld at this world
+ * time (since 1.89.0): `{ until }`, the world time they may begin (null while
+ * it lasts), or null where they may be rolled.
+ */
+export function recoveryHold(actor: any, id: string, now = Number((game as any)?.time?.worldTime) || 0): { until: number | null } | null {
+  const held = activeConditions(actor).find((c) => c.id === id)?.recoveryHeld;
+  if (!held || typeof held !== "object") return null;
+  if (held.until === null) return { until: null };
+  const until = Number(held.until);
+  return Number.isFinite(until) && now < until ? { until } : null;
+}
+
+/**
+ * Drops the timed entry of a system condition whose token status is gone, so
+ * a stun ended by a recovery roll or from the token leaves no hold behind for
+ * the next one (since 1.89.0).
+ */
+export async function forgetSystemCondition(actor: any, id: string): Promise<void> {
+  if (!actor?.isOwner) return;
+  const current = activeConditions(actor);
+  if (!current.some((c) => c.id === id && c.system)) return;
+  await actor.setFlag(SYSTEM_ID, CONDITIONS_FLAG, current.filter((c) => !(c.id === id && c.system)));
 }
 
 /** Removes a condition by the id `applyCondition` returned. */
@@ -1007,6 +1054,15 @@ export function registerProcedureHooks(setSystemCondition: (actor: any, id: stri
     const round = Number(combat?.round) || 0;
     for (const combatant of combat?.combatants ?? []) {
       void expireConditions(combatant.actor, { round, ownTurnStarted: combatant.id === combat?.combatant?.id }, setSystemCondition);
+    }
+  });
+  // A system condition taken off the token takes its timed entry with it.
+  Hooks.on("deleteActiveEffect", (effect: any, _options: unknown, userId: string) => {
+    if (userId !== game.user?.id) return;
+    const actor = effect?.parent;
+    for (const id of effect?.statuses ?? []) {
+      if (actor?.statuses?.has?.(id)) continue;
+      void forgetSystemCondition(actor, String(id));
     }
   });
   Hooks.on("updateWorldTime", (worldTime: number) => {

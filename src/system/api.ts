@@ -55,7 +55,7 @@ import { randomLocationWithHooks } from "./combat-extensions.js";
 import { irradiate, shock, shootAtVehicle } from "./hazards.js";
 import { detonateCharge } from "./demolition.js";
 import { equipmentUseLines } from "./tech-level.js";
-import { addArea, listAreas, removeArea } from "./modifier-areas.js";
+import { addArea, listAreas, removeArea, tokensInArea } from "./modifier-areas.js";
 import { rollFrightCheck } from "./fright.js";
 import { spendUnspentPoints } from "./bonus-points.js";
 import {
@@ -63,6 +63,7 @@ import {
   activeConditions,
   applyCondition,
   attackSequenceFor,
+  recoveryHold,
   registerContestResolver,
   registerDerivedAttackMode,
   registerGrappleAction,
@@ -84,7 +85,7 @@ import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from ".
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.88.0";
+export const API_VERSION = "1.89.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -148,6 +149,16 @@ const actors = {
    */
   applyCondition(actor: any, application: ConditionApplication): Promise<string | null> {
     return applyCondition(actor, application, { setSystemCondition: setCondition, systemConditionLabel: conditionLabel });
+  },
+
+  /**
+   * Whether the rolls to recover from a condition are withheld now (since
+   * 1.89.0), as `applyCondition`'s `holdRecovery` holds them: `{ until }`, the
+   * world time they may begin, or null while the condition lasts; null where
+   * they may be rolled.
+   */
+  recoveryHold(actor: any, id: string): { until: number | null } | null {
+    return recoveryHold(actor, id);
   },
 
   /** Removes a condition by the id `applyCondition` returned (since 1.5.0). */
@@ -515,8 +526,11 @@ async function rollHitLocation(options: { actor?: any; damageType?: string | nul
  */
 const hazardsApi = Object.freeze({ shock, irradiate, detonate: detonateCharge, shootAtVehicle });
 
-/** The areas namespace (since 1.63.0): smoke, fog, a field that blinds a sense. */
-const areasApi = Object.freeze({ add: addArea, remove: removeArea, list: listAreas });
+/**
+ * The areas namespace (since 1.63.0): smoke, fog, a field that blinds a sense.
+ * Cones, and `standsIn` for the tokens standing in an area, since 1.89.0.
+ */
+const areasApi = Object.freeze({ add: addArea, remove: removeArea, list: listAreas, standsIn: tokensInArea });
 
 /** The points namespace: point pools, and from 1.39.0 charging a character's unspent points. */
 const points = Object.freeze({ ...pointsApi, spendUnspent: spendUnspentPoints });
