@@ -22,10 +22,11 @@
         {{/if}}
       </span>
       <span class="cd">
-        {{#if applied.attributeCost}}
-          {{localize "GWORLD.Template.Billed" points=applied.attributeCost}} &middot;
+        {{localize "GWORLD.Template.Total" points=applied.total}}
+        {{#if applied.statedCost includeZero=true}}
+          ({{localize "GWORLD.Template.StatedCostNote" points=applied.statedCost}})
         {{/if}}
-        {{localize "GWORLD.Template.Granted" count=applied.itemIds.length}}
+        &middot; {{localize "GWORLD.Template.Granted" count=applied.itemIds.length}}
         {{#if applied.reference}}
           &middot; <span class="ref" data-tooltip="{{localize "GWORLD.Template.ReferenceHint"}}">{{applied.reference}}</span>
         {{/if}}

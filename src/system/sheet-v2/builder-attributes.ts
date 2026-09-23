@@ -76,3 +76,19 @@ export function builderAttributeRow(input: BuilderAttributeInput): BuilderAttrib
 
   return { key: input.key, value, total, raised: total !== value, sources };
 }
+
+/**
+ * The bought figure behind a score typed into the sheet (#631).
+ *
+ * The character sheet's attribute box shows the score the character has, and
+ * the ledger bills what was bought; whatever traits, a racial template and
+ * modules add stays what it was, so the bought figure moves by exactly what
+ * the score was moved by.
+ */
+export function boughtForScore(options: { entered: unknown; bought: unknown; score: unknown }): number | null {
+  const entered = Number(options.entered);
+  if (options.entered === "" || options.entered === null || !Number.isFinite(entered)) return null;
+  const bought = figure(options.bought, 10);
+  const score = figure(options.score, bought);
+  return entered - (score - bought);
+}

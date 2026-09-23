@@ -46,9 +46,9 @@
       "Per": "Perception",
       "FromTraits": "from traits",
       "FromTemplate": "from template",
-      "Bought": "{key} as bought",
-      "Score": "{key} score {score}",
-      "ScoreHint": "The score the character has and rolls against: the bought figure with what traits, a racial template and modules add"
+      "ScoreInput": "{key} score",
+      "BoughtLine": "{value} bought",
+      "ScoreHint": "The score the character has and rolls against: the bought figure with what traits, a racial template and modules add. Changing it changes what was bought."
     },
     "Secondary": {
       "HP": "Hit Points",
@@ -1434,7 +1434,9 @@
       "PickedPoints": "{value} pts picked",
       "NoneFound": "No templates anywhere. Make one as an Item of type Template.",
       "Choose": "Which template",
-      "Billed": "{points} pts billed",
+      "Total": "{points} pts",
+      "StatedCostNote": "the template lists {points}",
+      "ModifiersLine": "Attribute modifiers",
       "Granted": "{count} items granted",
       "PickCount": "Pick {count}.",
       "PickPoints": "Take {points} points' worth.",
