@@ -49,7 +49,7 @@ export type DefenseKey = "dodge" | "parry" | "block";
 
 /** The hooks this module fires, by name. */
 export const COMBAT_HOOKS = Object.freeze({
-  /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset, skillCap, calledShot, targets, refusal, rangeYards, minRange, spraying }`, mutable (`rangeYards` and `minRange` since 1.69.0, `spraying` since 1.70.0). */
+  /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset, skillCap, calledShot, targets, refusal, rangeYards, minRange, spraying, laser }`, mutable (`rangeYards` and `minRange` since 1.69.0, `spraying` since 1.70.0, `laser` since 1.86.0). */
   attackModifiers: "gworld.attackModifiers",
   /** The defense card's choices for a defender: `{ defender, attack, delivery, damageType, choices, retreat, feverish, acrobatic }`, mutable. */
   defenseChoices: "gworld.defenseChoices",
@@ -235,7 +235,7 @@ const WEAPON_ROW_FIELDS = [
   "feint", "skillName", "readiesAfterAttack", "affliction", "afflictionAttribute", "afflictionModifier",
   "recoil", "noSprayingFire", "noSuppressionFire", "noOverpenetration", "firstHit",
   "fragmentation", "fragmentationType", "fragmentationDivisor", "fragmentationLingerEvery", "fragmentationLingerFor",
-  "blastPlacement", "largeArea", "scatterSquared",
+  "blastPlacement", "largeArea", "scatterSquared", "bulk", "scopeBonus", "scopeFixed",
 ] as const;
 
 /**
@@ -301,6 +301,11 @@ export function adjustWeaponAttacks(options: {
       // own for a multiple-projectile shot's first hit (since 1.73.0).
       row.noOverpenetration = row.noOverpenetration === true;
       row.firstHit = firstHitLine(row.firstHit);
+      // Bulk a whole number, 0 or less; the scope's bonus a whole number, 0
+      // or more, and whether it is fixed-power (since 1.86.0).
+      row.bulk = Math.min(0, Math.round(Number(row.bulk) || 0));
+      row.scopeBonus = Math.max(0, Math.floor(Number(row.scopeBonus) || 0));
+      row.scopeFixed = row.scopeBonus > 0 && row.scopeFixed === true;
     }
     // Reach is text, Parry a whole number or none, and two-handed a flag (since 1.21.0).
     row.reach = typeof row.reach === "string" ? row.reach : String(row.reach ?? "");

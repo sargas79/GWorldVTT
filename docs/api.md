@@ -311,6 +311,16 @@ and the roll continues.
     one refused for skill below 3 still took its shots off the weapon. A
     rule that decides after the roll that nothing was fired gives the
     rounds back with `items.refundShots`;
+  - Since 1.86.0, `gworld.attackModifiers` also gets `laser`: null for a melee
+    attack, and for a ranged one `{ on, targetSees, dodgeBonus }` -- whether
+    the laser sight was switched on in the dialog (false for a shot rolled
+    without one), whether the target saw the dot, and what that gives the
+    target's Dodge against this attack (1 while the dot is within the
+    weapon's 1/2D and seen, 0 otherwise; Campaigns p. 411). `on` and
+    `targetSees` are read-only; a listener may set `dodgeBonus` (a whole
+    number, 0 or more), for a dot the target can't see or a sight with a
+    range of its own. The sight's +1 to hit is in `modifiers`, keyed `laser`:
+    remove it or set its value to limit the sight by range or colour;
   - Since 1.70.0, `gworld.attackModifiers` also gets `spraying`: null, or for
     one target of a Spraying Fire burst (Campaigns p. 409) `{ index, count,
     shots, recoil, wasted }` -- which target this is (from 0) of how many,
@@ -444,6 +454,17 @@ and the roll continues.
       from it, whatever its Rate of Fire. The row also carries `mount` (the
       mode's `""`, `rest`, `bipod` or `mounted`), read-only; `mounted` starts
       a suppression at the vehicle or tripod cap.
+    - Since 1.86.0, also a ranged row's `bulk` (a whole number, 0 or less),
+      `scopeBonus` (a whole number, 0 or more) and `scopeFixed` (false; true
+      for a fixed-power scope, dropped where `scopeBonus` is 0). The attack
+      reads all three from the row: Bulk on a Move and Attack, in close
+      combat and when driving, and the scope when aimed. A variable-power
+      scope gives a point less per second of Aim short of its bonus; a
+      fixed-power one gives nothing until the shooter has aimed for as many
+      seconds as the bonus (Campaigns p. 411). The Combat tab shows the row's
+      figures ("Acc 5+2", Bulk), and notes a fixed-power scope. A ranged mode
+      stores `scopeFixed` beside `scopeBonus` (false by default; the item
+      sheet offers it once the mode has a scope).
     - Since 1.84.0, a ranged row also carries `offMount`, read-only: true for a
       `mounted` ("M") weapon whose mode has been taken off its mount (the
       mode's `offMount`, false by default). On the mount the weapon's ST is
@@ -1346,6 +1367,13 @@ Two fields a module may read (since 1.62.0):
   `key` a listener can find them by in any language: `speedRange`, `bulk`
   (with `situation` `moveAndAttack` or `closeCombat`), `accuracy` (with
   `scope`, the scope's share of it, where a scope counts), `aim` (extra turns) and `braced`.
+  Since 1.86.0 also `darkness`, the darkness penalty (Campaigns p. 394) on a
+  ranged or melee attack, with `darkness`, the darkness itself (1 to 9) before
+  the attacker's eyes took anything off it; the line's `value` is the penalty
+  after them. A module's light or sight changes the `value` (never above 0).
+  There is no line where the eyes left no penalty, or where the dialog set no
+  darkness; total darkness is the sight select's, not this line's. And
+  `laser`, the laser sight's +1 (see `laser` under `gworld.attackModifiers`).
   `gworld.attackModifiers` also receives `movement: { maneuver, yards }` (yards
   from the token's movement history, null where the map can't say) and `aim:
   { turns, braced, target, bonuses }`. A module aiding an aim at one foe writes

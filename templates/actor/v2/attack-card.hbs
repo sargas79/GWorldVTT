@@ -52,7 +52,7 @@
       {{#if atk.malediction}}
         <span>{{localize "GWORLD.Malediction.Short" level=atk.malediction}}</span>
       {{else}}
-        <span>{{localize "GWORLD.Column.Acc"}} {{atk.accuracy}}</span>
+        <span>{{localize "GWORLD.Column.Acc"}} {{atk.accuracy}}{{#if atk.scopeBonus}}+{{atk.scopeBonus}}{{/if}}</span>
         <span>{{localize "GWORLD.Column.Range"}} {{atk.range}}</span>
         {{#if atk.minRange}}<span data-tooltip="{{localize 'GWORLD.Ranged.MinRangeHint' yards=atk.minRange}}">{{localize "GWORLD.Ranged.MinRangeShort" yards=atk.minRange}}</span>{{/if}}
       {{/if}}

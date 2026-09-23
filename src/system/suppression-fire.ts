@@ -88,6 +88,8 @@ export interface SuppressionRecord {
   shooting: {
     accuracy: number;
     scopeBonus: number;
+    /** A fixed-power scope (since API 1.86.0). */
+    scopeFixed?: boolean;
     bulk: number;
     guidance: string;
     halfDamageRange: number;
@@ -222,7 +224,7 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
   const turnsAimed = aimTurnsOf(actor);
   const aiming = aimBonus({
     turnsAimed,
-    accuracy: weapon.accuracy + scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: turnsAimed }),
+    accuracy: weapon.accuracy + scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: turnsAimed, fixed: weapon.scopeFixed }),
     braced: weapon.aim.braced,
   });
   const mountedByDefault = data.mount === "mounted" && data.offMount !== "1";
@@ -330,6 +332,7 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
     shooting: {
       accuracy: weapon.accuracy,
       scopeBonus: weapon.scopeBonus,
+      scopeFixed: weapon.scopeFixed,
       bulk: weapon.bulk,
       guidance: weapon.guidance,
       halfDamageRange: weapon.halfDamageRange,

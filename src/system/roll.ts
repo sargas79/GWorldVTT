@@ -124,7 +124,7 @@ import {
   mayExplode,
   type Malfunction,
 } from "../rules/malfunctions.js";
-import { attackWithoutSight, darknessPenalty, type Sight, type VisionTraits } from "../rules/visibility.js";
+import { TOTAL_DARKNESS, attackWithoutSight, darknessPenalty, type Sight, type VisionTraits } from "../rules/visibility.js";
 import { impairedAttacks } from "../rules/trait-effects.js";
 import { levelDifference } from "../rules/melee-situations.js";
 import { effectiveLevelDifference } from "../rules/unarmed-techniques.js";
@@ -172,14 +172,19 @@ export interface RollModifier {
   /**
    * What the line is, for a module that needs to find it whatever the label
    * says in the user's language (since 1.63.0): `speedRange`, `bulk`,
-   * `accuracy`, `aim`, `braced`, `aimTarget`. Blank or absent on
-   * lines nobody has named.
+   * `accuracy`, `aim`, `braced`, `aimTarget`; since 1.86.0 `darkness`
+   * and `laser`. Blank or absent on lines nobody has named.
    */
   key?: string;
   /** Why a `bulk` line applies: `moveAndAttack` or `closeCombat` (since 1.63.0). */
   situation?: string;
   /** On an `accuracy` line, how much of it a scope gives (since 1.63.0). */
   scope?: number;
+  /**
+   * On a `darkness` line, the darkness itself, 1 to 9, before the eyes took
+   * anything off it (since 1.86.0).
+   */
+  darkness?: number;
 }
 
 /**
@@ -772,6 +777,9 @@ export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) 
     accuracy: n("accuracy"),
     // Telescopic Vision is a scope of its own, the better of the two counting (Characters p. 92).
     scopeBonus: telescopicScope(n("scopeBonus"), telescopicTraitLevels(actor).levels, telescopicTraitLevels(actor).noTargeting),
+    // A fixed-power scope needs its full bonus in seconds of Aim (Campaigns
+    // p. 411) -- where it is the scope that counts, not the trait.
+    scopeFixed: dataset.scopeFixed === "1" && n("scopeBonus") >= telescopicScope(n("scopeBonus"), telescopicTraitLevels(actor).levels, telescopicTraitLevels(actor).noTargeting),
     rateOfFire: n("rateOfFire") || 1,
     recoil: n("recoil"),
     bulk: n("bulk"),
@@ -1728,6 +1736,13 @@ async function rollAction(
         // attack), and what an option spends beyond them. Read-only.
         shots: shot ? shot.shellsFired : (null as number | null),
         extraShots: shot ? Math.max(0, Math.floor(Number(shot.addon?.shots) || 0)) : 0,
+        // Since 1.86.0: the laser sight (null for a melee attack) -- whether
+        // it is on, whether the target saw the dot, and what that gives the
+        // target's Dodge, which a listener may change. Its to-hit line is in
+        // `modifiers`, keyed `laser`.
+        laser: shot
+          ? { on: shot.laser?.on === true, targetSees: shot.laser?.targetSees === true, dodgeBonus: shot.dodgeBonus ?? 0 }
+          : (null as { on: boolean; targetSees: boolean; dodgeBonus: number } | null),
       })
     : null;
   // A module's rules may make this attack impossible here: it isn't rolled.
@@ -1737,6 +1752,10 @@ async function rollAction(
     return null;
   }
   const defensePenalty = Number(hooked?.defensePenalty ?? (melee?.defensePenalty ?? 0) + feint) || 0;
+  // What the laser dot gives the target's Dodge, after the listeners (since 1.86.0).
+  const laserDodge = hooked?.laser
+    ? Math.max(0, Math.floor(Number(hooked.laser.dodgeBonus) || 0))
+    : (shot?.dodgeBonus ?? 0);
 
   // A shot taken at a measured range says so on the card, where the number
   // came from being the one thing a player will want to check -- and so does
@@ -1888,7 +1907,7 @@ async function rollAction(
     ...(shot && shot.shotsFired > 1
       ? { rapidFire: { shotsFired: shot.shotsFired, recoil: shot.recoil } }
       : {}),
-    ...(shot?.dodgeBonus ? { dodgeBonus: shot.dodgeBonus } : {}),
+    ...(laserDodge ? { dodgeBonus: laserDodge } : {}),
     // Where an aimed blow that misses by 1 lands instead (p. 552).
     ...(missedInto ? { missFallback: missedInto.label, missFallbackShot: { hitLocation: missedInto.hitLocation, addonLocation: missedInto.addonLocation } } : {}),
     ...(aimedShot ? { calledShot: { hitLocation: aimedShot.hitLocation, addonLocation: aimedShot.addonLocation ?? null } } : {}),
@@ -2247,6 +2266,8 @@ interface RangedShot {
   cover?: CoverApproach | "none";
   /** +1 to the target's Dodge where they have seen a laser dot within its range. */
   dodgeBonus?: number;
+  /** The laser sight as the dialog left it: on, and whether the target saw the dot (p. 411). */
+  laser?: { on: boolean; targetSees: boolean } | null;
   /** What the modules' attack options chosen in the dialog add up to. */
   addon?: ReturnType<typeof applyAttackOptions>;
   /**
@@ -2443,6 +2464,8 @@ export async function promptForRangedAttack(options: {
   damageType: DamageType;
   accuracy: number;
   scopeBonus: number;
+  /** True for a fixed-power scope, which gives nothing short of its bonus in seconds of Aim. */
+  scopeFixed?: boolean;
   rateOfFire: number;
   recoil: number;
   bulk: number;
@@ -2487,7 +2510,7 @@ export async function promptForRangedAttack(options: {
   // reduces your bonus by a like amount" (Campaigns p. 411). A +6 scope after
   // one second of aiming is worth +1, not +6, which is what this used to give.
   const turnsAimed = options.aim?.turns ?? 0;
-  const scope = scopeBonus({ bonus: options.scopeBonus, secondsAimed: turnsAimed });
+  const scope = scopeBonus({ bonus: options.scopeBonus, secondsAimed: turnsAimed, fixed: options.scopeFixed === true });
   const aiming = aimBonus({
     turnsAimed,
     accuracy: options.accuracy + scope,
@@ -2707,6 +2730,7 @@ export async function promptForRangedAttack(options: {
     calledShot: aimed.shot,
     rangeYards: input.range,
     cover: input.cover ?? "none",
+    laser: { on: input.laser?.on === true, targetSees: input.laser?.targetSees === true },
     // "But if the target can see it, he gets +1 to Dodge!"
     dodgeBonus: input.laser?.on
       ? laserSight({
@@ -2774,6 +2798,8 @@ export function rangedModifiers(
   weapon: {
     accuracy: number;
     scopeBonus: number;
+    /** A fixed-power scope (Campaigns p. 411; since API 1.86.0). */
+    scopeFixed?: boolean;
     bulk: number;
     /** A laser, which the slope does not affect at all. */
     beamWeapon?: boolean;
@@ -2911,7 +2937,7 @@ export function rangedModifiers(
     // Aimed on the sheet: Accuracy, the second and third turns, the bracing.
     // Aimed by the checkbox alone: Accuracy, as one turn's aim is worth.
     const aimedFor = deliberatelyAimed ? Math.max(1, weapon.aim?.turns ?? 0) : 1;
-    const scope = scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: aimedFor });
+    const scope = scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: aimedFor, fixed: weapon.scopeFixed === true });
     const aiming = aimBonus({
       turnsAimed: aimedFor,
       accuracy: weapon.accuracy + scope,
@@ -2951,7 +2977,7 @@ export function rangedModifiers(
   // (p. 411). Beyond that the dot is too dispersed to see.
   if (input.laser?.on) {
     const dot = laserSight({ rangeYards: effectiveRange, halfDamageRange: weapon.halfDamageRange ?? 0 });
-    if (dot.toHit !== 0) modifiers.push({ label: L("LaserSight"), value: dot.toHit });
+    if (dot.toHit !== 0) modifiers.push({ label: L("LaserSight"), value: dot.toHit, key: "laser" });
   }
 
   const rapidFire = rapidFireBonus(input.shots ?? 1);
@@ -3102,11 +3128,14 @@ function sightModifier(sight: Sight, lightSource: boolean, eyes: Eyes = {}): Rol
 }
 
 /** What the darkness costs after the eyes, as a modifier line. */
-function darknessModifier(darkness: number, eyes: Eyes = {}): RollModifier | null {
+export function darknessModifier(darkness: number, eyes: Eyes = {}): RollModifier | null {
   if (eyes.blindness) return null;
   const value = darknessPenalty(darkness, eyes);
   if (value === 0) return null;
-  return { label: game.i18n.localize("GWORLD.Sight.Darkness"), value };
+  // Keyed, with the darkness as it was, so a module's light or sight can take
+  // points off it (since API 1.86.0).
+  const raw = Math.max(0, Math.min(TOTAL_DARKNESS - 1, Math.floor(darkness)));
+  return { label: game.i18n.localize("GWORLD.Sight.Darkness"), value, key: "darkness", darkness: raw };
 }
 
 /**

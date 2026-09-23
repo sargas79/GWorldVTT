@@ -845,6 +845,12 @@ function rangedModeField() {
       integer: true,
       initial: 0,
     }),
+    /**
+     * A fixed-power scope, which gives nothing until the shooter has aimed for
+     * as many seconds as its bonus; scopes are variable-power, losing a point
+     * a second short, unless noted (Campaigns p. 411; since API 1.86.0).
+     */
+    scopeFixed: new fields.BooleanField({ initial: false }),
     halfDamageRange: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
     maxRange: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
     /**

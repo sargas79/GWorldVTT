@@ -1527,6 +1527,8 @@
       "Mount": "Mount",
       "MountHint": "The mark after the ST: a musket rest braces an aimed standing shot, a bipod braces a prone one at two-thirds the ST, a mounted weapon ignores ST and Bulk on its mount (Characters p. 270).",
       "OffMount": "Off its mount",
+      "ScopeFixed": "Fixed-power scope",
+      "ScopeFixedHint": "The scope gives its bonus only after you have aimed for at least as many seconds as the bonus. Without this, it is variable-power: aiming for fewer seconds gives a point less per second short (Campaigns p. 411).",
       "OffMountHint": "The weapon has been taken off its mount, so its listed ST counts: -1 to skill per point you lack. On the mount the ST is ignored. Taking it off or putting it back takes three Ready maneuvers (Characters p. 270).",
       "Thrown": "Thrown",
       "ThrownHint": "A weapon you let go of, whose range comes off your ST.",
@@ -4540,6 +4542,7 @@
         "Mode": "Mode",
         "Lvl": "Lvl",
         "LoadedNote": "{loaded} of {capacity} loaded",
+        "FixedScope": "Fixed-power scope",
         "CostOfLiving": "Of cost of living"
       },
       "NothingCarried": "Nothing carried yet. Browse the compendium or add an item.",

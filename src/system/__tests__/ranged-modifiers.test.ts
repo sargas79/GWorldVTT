@@ -79,6 +79,15 @@ describe("rangedModifiers", () => {
     expect(valueOf(rangedModifiers(shot({ aimed: true }), rifle), "Accuracy")).toBe(6);
   });
 
+  /** "With a fixed-power scope, you must Aim for at least as many seconds as the scope's bonus." */
+  it("gives nothing for a fixed-power scope short of its bonus in seconds of aim (since 1.86.0)", () => {
+    const fixed = { ...rifle, scopeFixed: true };
+    expect(valueOf(rangedModifiers(shot({ aimed: true }), fixed), "Accuracy")).toBe(5);
+    const twoSeconds = { ...fixed, aim: { turns: 2, braced: false } };
+    const mods = rangedModifiers(shot({ aimed: true }), twoSeconds);
+    expect(mods.find((m) => m.key === "accuracy")).toMatchObject({ value: 7, scope: 2 });
+  });
+
   it("keeps a situational modifier alongside the rest", () => {
     const mods = rangedModifiers(shot({ range: 20, aimed: true, modifier: -2 }), bow);
     expect(total(mods)).toBe(-6 + 2 - 2);
@@ -240,6 +249,27 @@ describe("laser sight", () => {
   it("is nothing when switched off", () => {
     const mods = rangedModifiers(shot({ range: 20, laser: { on: false, targetSees: false } }), pistol);
     expect(valueOf(mods, "LaserSight")).toBeUndefined();
+  });
+
+  it("is keyed laser, for a module to find (since 1.86.0)", () => {
+    const mods = rangedModifiers(shot({ range: 20, laser: { on: true, targetSees: false } }), pistol);
+    expect(mods.find((m) => m.key === "laser")).toMatchObject({ value: 1 });
+  });
+});
+
+/** Darkness short of total (GURPS Basic Set: Campaigns p. 394). */
+describe("darkness", () => {
+  const pistol = { accuracy: 2, scopeBonus: 0, bulk: -2 };
+
+  it("is keyed darkness and carries the darkness before the eyes (since 1.86.0)", () => {
+    const mods = rangedModifiers(shot({ darkness: 5 }), pistol);
+    expect(mods.find((m) => m.key === "darkness")).toMatchObject({ value: -5, darkness: 5 });
+    const nightVision = rangedModifiers(shot({ darkness: 5 }), { ...pistol, eyes: { nightVision: 3 } });
+    expect(nightVision.find((m) => m.key === "darkness")).toMatchObject({ value: -2, darkness: 5 });
+  });
+
+  it("is no line at all where there is no darkness", () => {
+    expect(rangedModifiers(shot({ darkness: 0 }), pistol).find((m) => m.key === "darkness")).toBeUndefined();
   });
 });
 

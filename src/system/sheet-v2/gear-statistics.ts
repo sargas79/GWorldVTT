@@ -74,6 +74,7 @@ export interface GearAttack {
   readiesAfterAttack?: boolean;
   accuracy?: number;
   scopeBonus?: number;
+  scopeFixed?: boolean;
   range?: string;
   rateOfFire?: number;
   projectiles?: number;
@@ -159,6 +160,7 @@ function rangedRow(attack: GearAttack, mode: Record<string, any>, L: Localize): 
 
   const notes: string[] = [];
   const capacity = number(attack.shotsCapacity) ?? 0;
+  if (scope && attack.scopeFixed) notes.push(S("FixedScope"));
   if (capacity > 0) notes.push(S("LoadedNote").replace("{loaded}", String(number(attack.shotsLoaded) ?? 0)).replace("{capacity}", String(capacity)));
   const ammunition = String(attack.ammunition ?? mode.ammunition ?? "");
   if (ammunition) notes.push(L(`GWORLD.Ammunition.${ammunition}`));

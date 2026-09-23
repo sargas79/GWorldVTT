@@ -403,6 +403,18 @@ describe("an item's attack rows (#270)", () => {
     expect(rows[1]!.row).toMatchObject({ recoil: 3, noSprayingFire: true, noSuppressionFire: false });
   });
 
+  it("lets a listener set a ranged row's Bulk and scope, kept in shape (since 1.86.0)", async () => {
+    const api = await load();
+    const rows = entries();
+    globals.Hooks = { callAll: (_event: string, context: any) => { Object.assign(context.rows[1].row, { bulk: "-3.6", scopeBonus: "2.5", scopeFixed: true }); } };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: rows as never, ...helpers } as never);
+    expect(rows[1]!.row).toMatchObject({ bulk: -4, scopeBonus: 2, scopeFixed: true });
+    const odd = entries();
+    globals.Hooks = { callAll: (_event: string, context: any) => { Object.assign(context.rows[1].row, { bulk: 2, scopeBonus: -1, scopeFixed: true }); } };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: odd as never, ...helpers } as never);
+    expect(odd[1]!.row).toMatchObject({ bulk: 0, scopeBonus: 0, scopeFixed: false });
+  });
+
   it("puts the rows back as they were when a listener throws", async () => {
     const api = await load();
     const rows = entries();
