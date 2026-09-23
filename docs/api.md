@@ -597,13 +597,34 @@ and the roll continues.
   - `gworld.armorDr` (since 1.48.0): before a blow's DR is added up, with
     `{ actor, item, mode, hitLocation, damageType, basicDamage, lines }`. Each
     of `lines` is one piece of worn armour reaching the spot:
-    `{ label, dr, applies, forceField, flexible, hardened, reason? }`, all
-    mutable. Change `dr` to double a piece against one kind of attack, set
+    `{ label, dr, applies, forceField, flexible, hardened, reason?, source?,
+    traitId? }`, all mutable. Change `dr` to double a piece against one kind of attack, set
     `applies` to false to refuse it against another, raise `hardened` to step
     the attack's armour divisor down, or set `forceField` so the piece meets
     the blow before the rest. A listener may also spend a pool of its own: the
     lines say what the piece was worth, and the result carries what got
-    through. The actor's own natural DR is not a line; it is added after.
+    through. Before 1.98.0 the actor's own natural DR was not a line; it
+    was added after.
+
+    Since 1.98.0 the actor's own DR is in `lines` too, after the worn pieces,
+    so a rule that divides or refuses "DR" as a whole for one attack reaches
+    all of it -- burning liquid that most DR stops at a fifth (Campaigns p.
+    411), say. Every line carries `source`: `"armor"` for a worn piece,
+    `"natural"` for DR the actor has of its own (Damage Resistance, Characters
+    p. 46; Hooves on the foot; a Nictitating Membrane on the eye). A natural
+    line carries `traitId`, the trait item's id, where the actor's trait
+    items account for the whole figure (one line per trait); otherwise it is
+    one line with the figure and no `traitId`. It is mutable like the rest:
+    change `dr`, set `applies` false, raise `hardened` (the advantage's
+    Hardened) or set `forceField` (its Force Field, which then meets the blow
+    first); `againstIgnoresDr` works as for a piece. A natural line still
+    counts as natural DR -- under the armour, not a piece a chink halves or
+    blunt trauma reads as flexible -- and what counted is the result's
+    `naturalDr`. Nothing else adds it, so it is never counted twice. A line a
+    listener adds without `source` counts as armour. A listener that changes
+    every line without looking at `source` now changes natural DR as well;
+    one meant for worn pieces alone should skip `source === "natural"` (or
+    read `itemId`, which natural lines never carry).
 
     Since 1.55.0 the context also carries `ignoresDr`, true for an attack that
     ignores DR, against which every piece usually counts for nothing. A line's
