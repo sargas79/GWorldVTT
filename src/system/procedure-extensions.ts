@@ -23,6 +23,7 @@
 
 import { sceneAreaLines } from "./modifier-areas.js";
 import { SYSTEM_ID } from "./constants.js";
+import { everyActor } from "./every-actor.js";
 import {
   callCombatHook,
   getCombatState,
@@ -1010,7 +1011,8 @@ export function registerProcedureHooks(setSystemCondition: (actor: any, id: stri
   });
   Hooks.on("updateWorldTime", (worldTime: number) => {
     if (!game.user?.isGM) return;
-    for (const actor of (game as any).actors ?? []) {
+    // The synthetic actors of unlinked tokens too, whose conditions `game.actors` never sees.
+    for (const actor of everyActor()) {
       if (activeConditions(actor).some((c) => c.untilTime !== null)) void expireConditions(actor, { time: worldTime }, setSystemCondition);
     }
   });
