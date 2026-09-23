@@ -198,7 +198,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
   incendiary: false, radiation: false, doubleKnockback: false, noKnockback: false, kineticOnly: false, surge: false,
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
-  ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1,
+  ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1, fullAutoOnly: false,
   recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0, scopeFixed: false,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false, outOfAction: null,
   ammunition: "", malediction: 0, ignoresDr: false,
@@ -468,6 +468,8 @@ export interface DerivedAttack {
   /** Surge (Characters p. 105): burning damage that does double to anything electrical, for the modules that read it (since API 1.63.0). */
   surge?: boolean;
   rateOfFire?: number;
+  /** A RoF marked "!": the weapon fires only on full auto, a quarter of its RoF at least (Characters p. 270; since API 1.94.0). */
+  fullAutoOnly?: boolean;
   /** Recoil, which decides how many of a burst's shots hit. */
   recoil?: number;
   /** How the weapon is supported: "", "rest", "bipod" or "mounted" (a vehicle or tripod mount). */
@@ -2610,6 +2612,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           malediction,
           ignoresDr: malediction > 0 || Boolean(mode.ignoresDr),
           rateOfFire: mode.rateOfFire ?? 1,
+          // "!": full auto only, at a quarter of the RoF or more (p. 270; since API 1.94.0).
+          fullAutoOnly: String(mode.rateOfFireMark ?? "").trim() === "!",
           recoil: mode.recoil ?? 0,
           bulk: mode.bulk ?? 0,
           mount: String(mode.mount ?? ""),

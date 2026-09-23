@@ -439,7 +439,8 @@
         "rateOfFire": "Spraying Fire needs RoF 5 or more.",
         "targets": "Spraying Fire needs two targets or more.",
         "noShots": "Every target needs at least one shot.",
-        "tooManyShots": "That is {used} shots with the sweep, more than RoF {rof}."
+        "tooManyShots": "That is {used} shots with the sweep, more than RoF {rof}.",
+        "tooFewShots": "That is {used} shots with the sweep; this weapon fires only on full auto, {min} shots at least."
       }
     },
     "Suppression": {

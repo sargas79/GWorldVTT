@@ -85,6 +85,8 @@ export async function promptForSpray(options: {
   rateOfFire: number;
   recoil: number;
   loaded: number | null;
+  /** The fewest shots the burst may use, sweep included: a "!" weapon's (Characters p. 270; since 1.94.0). */
+  minShots?: number;
   yardsBetween: (from: any, to: any) => number | null;
 }): Promise<SprayPlan | "single" | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Spraying.${key}`);
@@ -185,6 +187,11 @@ export async function promptForSpray(options: {
   }
   if (plan.problem) {
     ui.notifications?.warn(game.i18n.format(`GWORLD.Spraying.Problem.${plan.problem}`, { rof: rateOfFire, used: plan.shotsUsed }));
+    return null;
+  }
+  const least = Math.min(rateOfFire, Math.max(1, Math.floor(Number(options.minShots) || 1)));
+  if (plan.shotsUsed < least) {
+    ui.notifications?.warn(game.i18n.format("GWORLD.Spraying.Problem.tooFewShots", { used: plan.shotsUsed, min: least }));
     return null;
   }
   return {

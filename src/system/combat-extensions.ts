@@ -231,7 +231,7 @@ function secondLine(follow: any): any {
 /** The row fields a listener may change. */
 const WEAPON_ROW_FIELDS = [
   "skillLevel", "damage", "damageType", "armorDivisor", "halfDamageRange", "maxRange", "minRange", "accuracy",
-  "malfunction", "projectiles", "rateOfFire", "minSt", "material", "holy", "notes", "followUp", "followUpAlso", "reach", "parry", "twoHanded",
+  "malfunction", "projectiles", "rateOfFire", "fullAutoOnly", "minSt", "material", "holy", "notes", "followUp", "followUpAlso", "reach", "parry", "twoHanded",
   "feint", "skillName", "readiesAfterAttack", "affliction", "afflictionAttribute", "afflictionModifier",
   "recoil", "noSprayingFire", "noSuppressionFire", "noOverpenetration", "firstHit",
   "fragmentation", "fragmentationType", "fragmentationDivisor", "fragmentationLingerEvery", "fragmentationLingerFor",
@@ -297,6 +297,8 @@ export function adjustWeaponAttacks(options: {
       row.recoil = Math.max(0, Math.floor(Number(row.recoil) || 0));
       row.noSprayingFire = row.noSprayingFire === true;
       row.noSuppressionFire = row.noSuppressionFire === true;
+      // Full auto only, as a RoF marked "!" (Characters p. 270; since 1.94.0).
+      row.fullAutoOnly = row.fullAutoOnly === true;
       // Whether the row's shot may go through what it hits, and a line of its
       // own for a multiple-projectile shot's first hit (since 1.73.0).
       row.noOverpenetration = row.noOverpenetration === true;
@@ -666,6 +668,13 @@ export interface AttackOptionRegistration {
   refuse?: (context: AttackContext) => string | null;
   /** What choosing it does. `value` is true, a number, or the selected value. */
   apply: (context: AttackContext, value: unknown) => AttackEffect | null;
+  /**
+   * An option the attack must not go without, such as a weapon's only burst
+   * (since 1.94.0): where it is offered and not refused, a plain click opens
+   * the attack dialog instead of rolling past it, and a checkbox starts
+   * ticked. `true`, or a function of the attack that says so.
+   */
+  required?: boolean | ((context: AttackContext) => boolean);
 }
 
 export interface ExtraEffortRegistration {
@@ -692,6 +701,8 @@ interface AddonAttackOption {
   apply: (context: AttackContext, value: unknown) => AttackEffect | null;
   /** FP, for an extra-effort option. */
   fp: number;
+  /** Whether the attack must ask about it (since 1.94.0). */
+  required: (context: AttackContext) => boolean;
 }
 
 const attackOptions = new Map<string, AddonAttackOption>();
@@ -715,6 +726,7 @@ export function registerAttackOption(registration: AttackOptionRegistration): st
     refuse: typeof r.refuse === "function" ? r.refuse : () => null,
     apply: r.apply,
     fp: 0,
+    required: typeof r.required === "function" ? r.required : r.required === true ? () => true : () => false,
   });
   return key;
 }
@@ -892,7 +904,7 @@ export function registerExtraEffort(registration: ExtraEffortRegistration): stri
   if (r.kind === "offense") {
     attackOptions.set(key, {
       key, module: r.module, label, attack: "any", input: { type: "checkbox" },
-      available, refuse: refusal, fp: r.fp,
+      available, refuse: refusal, fp: r.fp, required: () => false,
       apply: (context) => {
         const effect = (r.apply(context) ?? {}) as AttackEffect;
         return { ...effect, fatigue: (effect.fatigue ?? 0) + r.fp };
@@ -934,6 +946,23 @@ export function attackOptionsFor(context: AttackContext): AddonAttackOption[] {
   });
 }
 
+/**
+ * The options offered on this attack that it must ask about (since 1.94.0):
+ * required, and not refused. A plain click opens the dialog where there are any.
+ */
+export function requiredAttackOptions(context: AttackContext): AddonAttackOption[] {
+  return attackOptionsFor(context).filter((option) => isRequired(option, context));
+}
+
+function isRequired(option: AddonAttackOption, context: AttackContext): boolean {
+  try {
+    return option.required(context) === true && !option.refuse(context);
+  } catch (error) {
+    console.warn(`gworld | attack option ${option.key} failed its required check`, error);
+    return false;
+  }
+}
+
 /** The dialog controls for the registered attack options. Names are `addon:<key>`. */
 export function attackOptionFields(context: AttackContext): string {
   return attackOptionsFor(context)
@@ -960,8 +989,10 @@ export function attackOptionFields(context: AttackContext): string {
         return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px" data-addon-option="${option.key}">
           <span>${label}</span><select name="${name}" style="width:150px"${disabled}>${choices}</select></label>`;
       }
+      // A required checkbox starts ticked (since 1.94.0).
+      const ticked = !why && isRequired(option, context) ? " checked" : "";
       return `<label style="display:flex;align-items:center;gap:8px" data-addon-option="${option.key}">
-        <input type="checkbox" name="${name}"${disabled}><span>${label}</span></label>`;
+        <input type="checkbox" name="${name}"${ticked}${disabled}><span>${label}</span></label>`;
     })
     .join("");
 }

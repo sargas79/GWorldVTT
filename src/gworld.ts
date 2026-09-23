@@ -22,7 +22,7 @@ import { registerEvaluateTracking } from "./system/evaluate.js";
 import { registerConcentrateTracking } from "./system/zen.js";
 import { registerBattleFatigue } from "./system/battle-fatigue.js";
 import { loadSkillCatalog } from "./system/skill-catalog.js";
-import { setCondition, registerConditions, registerPostureSync } from "./system/conditions.js";
+import { setCondition, registerConditions, registerPostureSync, registerStunSync } from "./system/conditions.js";
 import { GWorldCombat } from "./system/combat.js";
 import { SYSTEM_ID } from "./system/constants.js";
 import { CharacterData } from "./system/data/character.js";
@@ -121,6 +121,8 @@ Hooks.once("init", () => {
   // The posture on the sheet and the prone icon on the token are one fact
   // written in two places, so changing either changes both.
   registerPostureSync();
+  // So are the sheet's Stunned box and the stunned icon.
+  registerStunSync();
 
   // A damage card is posted before anyone has decided who it hits, so the card
   // grows an apply control when it renders.
