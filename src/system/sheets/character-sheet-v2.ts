@@ -50,6 +50,7 @@ import { mechanicFallbackLabel, mechanicsOf } from "../sheet-v2/trait-mechanics.
 import { previewAttack } from "../roll.js";
 import { targetedTokens } from "../targets.js";
 import { combatLog } from "../sheet-v2/combat-log.js";
+import { locationDrTooltip } from "../sheet-v2/location-dr.js";
 import { effectiveCost, effectiveWeight } from "../data-extensions.js";
 import { gearGroupOf } from "../gear-groups.js";
 import { legalityClassOf, legalityNote } from "../legality.js";
@@ -267,6 +268,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const locations = (derived.hitLocations ?? []).map((loc: any) => ({
       ...loc,
       label: L(`GWORLD.HitLocation.${loc.key}`),
+      // What the figure is made of, after the modules' armorDr listeners.
+      drTooltip: locationDrTooltip(loc, (key, data) => game.i18n.format(key, data), (text) => foundry.utils.escapeHTML(text)),
     }));
     const locationState = this.stateOf("locations");
     const location = selectedKey(locations.map((l: any) => l.key), locationState.selected ?? "torso");

@@ -240,7 +240,7 @@
                 <tr data-v2-location="{{loc.key}}" data-action="v2Location" class="{{#if loc.selected}}selected{{/if}}" tabindex="0">
                   <td>{{loc.label}}</td>
                   <td>{{#if loc.toHit}}{{loc.toHit}}{{else}}&mdash;{{/if}}</td>
-                  <td><b>{{loc.dr}}</b>{{#if loc.splits}}{{#each loc.exceptions as |ex|}}<span class="v2-muted" data-tooltip="{{#each ex.types as |t|}}{{localize (concat 'GWORLD.DamageType.' t)}}{{#unless @last}}, {{/unless}}{{/each}}">/{{ex.dr}}</span>{{/each}}{{/if}}</td>
+                  <td><b{{#if loc.drTooltip}} data-tooltip="{{loc.drTooltip}}"{{/if}}>{{loc.dr}}</b>{{#if loc.splits}}{{#each loc.exceptions as |ex|}}<span class="v2-muted" data-tooltip="{{#each ex.types as |t|}}{{localize (concat 'GWORLD.DamageType.' t)}}{{#unless @last}}, {{/unless}}{{/each}}">/{{ex.dr}}</span>{{/each}}{{/if}}</td>
                 </tr>
               {{/each}}
             </tbody>
