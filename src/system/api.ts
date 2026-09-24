@@ -45,7 +45,7 @@ import { takeInjury, wearDr, type DrWorn, type InjuryTaken } from "./damage.js";
 import { equipmentFailure, type EquipmentFailureResult } from "./repairs.js";
 import { stopBleeding } from "./bleeding.js";
 import { activePoisons, advancePoison, clearPoison, dosePoison, treatIllness, treatPoison, type ActivePoison } from "./poison.js";
-import { applyFirstAid, attendPatient, operate, resuscitate } from "./recovery.js";
+import { attendPatient, giveFirstAid, operate, resuscitate } from "./recovery.js";
 import { rollMortalWound } from "./dying.js";
 import type { Poison, Treatment } from "../rules/poison.js";
 import type { ResuscitationCause } from "../rules/medicine.js";
@@ -97,6 +97,7 @@ import { manaLevel } from "./casting.js";
 import { PARTY_CHANGED_HOOK, addMembers, membersOf, partyOf, removeMember } from "./party.js";
 import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from "./campaign.js";
 import { objectStats, type ItemObjectStats } from "./object-stats.js";
+import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
@@ -354,10 +355,12 @@ const actors = {
   /**
    * First Aid on a patient (Campaigns p. 424, since 1.60.0), as the sheet's button does.
    * `skill` and `techLevel` stand in for the healer's, for a device that treats on its own;
-   * `label` names who treats on the card. Returns the HP it moved.
+   * `label` names who treats on the card. Returns the HP it moved. Since 1.122.0 it runs
+   * the button's whole attempt, so `gworld.firstAid` hears it: a listener may refuse it
+   * (0) or change its tech level, and a success stops the bleeding unless one says not.
    */
   firstAid(options: { healer: any; patient: any; skill?: number; techLevel?: number; label?: string; modifier?: number }): Promise<number> {
-    return applyFirstAid({ ...options, modifier: options.modifier ?? 0 });
+    return giveFirstAid({ ...options, modifier: options.modifier ?? 0 });
   },
 
   /** A physician's rounds on a patient (p. 424, since 1.60.0); the roll is tagged `physician`. */
@@ -612,6 +615,17 @@ const items = {
    */
   wearDr(item: any, amount: number, options: { location?: string; reason?: string } = {}): Promise<DrWorn | null> {
     return wearDr(item, amount, options);
+  },
+
+  /**
+   * Adds `delta` to a stack of an item, or takes it off with a negative one
+   * (since 1.123.0), for a module that makes, finds or uses up consumables.
+   * Never below 0; weight and cost are per unit, so the totals follow.
+   * Resolves to `{ from, to, reason }`, or null for an item with no
+   * quantity, a user who doesn't own it, or a delta that isn't a number.
+   */
+  changeQuantity(item: any, delta: number, options: { reason?: string } = {}): Promise<QuantityChanged | null> {
+    return changeQuantity(item, delta, options);
   },
 
   /**
