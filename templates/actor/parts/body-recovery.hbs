@@ -55,6 +55,7 @@
       {{!-- A part crippled for a while, until it heals (Campaigns p. 422). --}}
       <span class="ichip warn">
         {{localize "GWORLD.Chat.Crippled"}}: {{part.label}} &middot; {{part.duration}}{{#if part.heals}} &middot; {{part.heals}}{{/if}}
+        {{#if part.undecided}}<a data-action="cripplingDuration" data-id="{{part.id}}" data-tooltip="{{localize 'GWORLD.Crippled.Settle'}}">{{localize 'GWORLD.Crippled.Roll'}}</a>{{/if}}
         <a data-action="healCrippled" data-id="{{part.id}}" data-tooltip="{{localize 'GWORLD.Crippled.Heal'}}">&times;</a>
       </span>
     {{/each}}

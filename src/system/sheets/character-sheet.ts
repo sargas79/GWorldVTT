@@ -37,7 +37,7 @@ import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
-import { crippledParts, healCrippled } from "../crippling.js";
+import { crippledPartName, crippledParts, healCrippled } from "../crippling.js";
 import { catchBreath, rollSuffocation } from "../suffocation.js";
 import {
   applyDeprivation,
@@ -178,7 +178,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
-import { allOutAttackOptionsFor, feintModifiers, registeredHitLocation, registeredManeuvers } from "../combat-extensions.js";
+import { allOutAttackOptionsFor, feintModifiers, registeredManeuvers } from "../combat-extensions.js";
 import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
 import { bindSectionListeners, decorateItemRows, renderSections, runRowAction } from "../sheet-extensions.js";
@@ -924,12 +924,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           })),
       ).map((u) => ({ ...u, powerLabel: game.i18n.localize(`GWORLD.Psi.Power.${u.power}`) })),
       // Parts crippled for a while (Campaigns p. 422; API 1.114.0), healed ones left out.
+      // A part waiting on the p. 422 roll has a button for it, and a temporary
+      // one no injury caused doesn't promise to go at full HP (API 1.129.0).
       crippled: crippledParts(this.actor).map((part) => ({
         id: part.id,
-        label: part.label || (registeredHitLocation(part.location)
-          ? game.i18n.localize(registeredHitLocation(part.location)!.label)
-          : game.i18n.localize(`GWORLD.HitLocation.${part.location}`)),
-        duration: game.i18n.localize(`GWORLD.Dying.${part.duration}`),
+        label: part.label || crippledPartName(part.location),
+        duration: game.i18n.localize(
+          part.duration === "undecided" ? "GWORLD.Crippled.Undecided"
+            : part.duration === "temporary" && !part.injury ? "GWORLD.Crippled.TemporaryNoInjury"
+              : `GWORLD.Dying.${part.duration}`,
+        ),
+        undecided: part.duration === "undecided",
         heals: part.healsAt !== null
           ? game.i18n.format("GWORLD.Crippled.HealsIn", { days: Math.max(0, Math.ceil((part.healsAt - (Number(game.time?.worldTime) || 0)) / 86400)) })
           : "",
@@ -2981,7 +2986,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (id) await healCrippled(this.actor, id);
   }
 
-  static async #onCripplingDuration(this: GWorldCharacterSheet) {
+  static async #onCripplingDuration(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const tl = await promptForNumber({
       title: game.i18n.localize("GWORLD.Dying.Crippling"),
       label: game.i18n.localize("GWORLD.Dying.TreatedAt"),
@@ -2989,7 +2994,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (tl === null) return;
 
-    await rollCripplingDuration({ actor: this.actor, treatedAtTl: tl > 0 ? tl : null });
+    // From an undecided part's chip, the roll settles that part.
+    const part = target?.dataset?.id;
+    await rollCripplingDuration({ actor: this.actor, treatedAtTl: tl > 0 ? tl : null, ...(part ? { part } : {}) });
   }
 
   /**

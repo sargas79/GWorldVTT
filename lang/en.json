@@ -4130,7 +4130,9 @@
     "hardOfHearing": "Hard of Hearing",
     "deafness": "Deafness",
     "blindness": "Blindness",
-    "accustomedToBlindness": "Used to being blind"
+    "accustomedToBlindness": "Used to being blind",
+    "oneEye": "One Eye",
+    "oneArm": "One Arm"
     },
     "Malediction": {
       "Label": "{name} (Malediction {level})",
@@ -4166,7 +4168,11 @@
     },
     "Crippled": {
       "HealsIn": "heals in {days} days",
-      "Heal": "Healed: take it off"
+      "Heal": "Healed: take it off",
+      "Undecided": "How long is not yet known",
+      "TemporaryNoInjury": "Temporary — no injury caused it, so full HP doesn't end it",
+      "Settle": "Roll HT to see how long it lasts (Campaigns p. 422)",
+      "Roll": "roll HT"
     },
     "Towing": {
       "Title": "Towing",
