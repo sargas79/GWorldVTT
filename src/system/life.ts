@@ -17,6 +17,8 @@ import { setCondition } from "./conditions.js";
 import { skillLevelOf } from "./skill-level.js";
 import { resolveSuccess } from "../rules/success.js";
 import { studyPoints, type StudyMethod } from "../rules/study.js";
+import { callCombatHook } from "./combat-extensions.js";
+import { PROCEDURE_HOOKS } from "./procedure-extensions.js";
 
 const LIFE_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/life.hbs`;
 
@@ -87,6 +89,38 @@ export async function adjustCash(options: { actor: any; amount: number; note?: s
   });
 }
 
+/** What a `gworld.studyModifiers` listener is handed (since API 1.133.0). */
+export interface StudyModifiers {
+  actor: any;
+  skill: any;
+  method: StudyMethod;
+  /** The hours of the clock spent, to read. */
+  hours: number;
+  /** The share of `hours` that counts: 1, or what a listener set. */
+  multiplier: number;
+  /** Strings for the card. */
+  lines: string[];
+}
+
+/**
+ * The hours a stretch of study counts for once the modules have had their say
+ * (since API 1.133.0). The method's rate is the book's; what else speeds or
+ * slows the learning -- training aids, a trait, a campaign's rule -- is the
+ * GM's call (pp. 292-293), so a module makes it through the multiplier. A
+ * multiplier that isn't a number of 0 or more counts as 1, and the product is
+ * kept to hundredths so the hours banked read cleanly.
+ */
+export function studyHoursCounted(context: StudyModifiers): { hours: number; multiplier: number; lines: string[] } {
+  const asked = callCombatHook<StudyModifiers>(PROCEDURE_HOOKS.studyModifiers, context);
+  const raw = asked.multiplier as unknown;
+  const n = Number(raw);
+  const multiplier = raw !== null && raw !== "" && Number.isFinite(n) && n >= 0 ? n : 1;
+  const hours = Math.round(Math.max(0, context.hours) * multiplier * 100) / 100;
+  const lines = (Array.isArray(asked.lines) ? asked.lines : [])
+    .filter((line): line is string => typeof line === "string" && line.trim() !== "");
+  return { hours, multiplier, lines };
+}
+
 /**
  * Studies a skill for a stretch of hours (Characters p. 292).
  *
@@ -105,8 +139,16 @@ export async function studySkill(options: {
   const skill = actor.items?.get(options.skillId);
   if (!skill || skill.type !== "skill") return 0;
 
-  const result = studyPoints({
+  const counted = studyHoursCounted({
+    actor,
+    skill,
+    method: options.method,
     hours: options.hours,
+    multiplier: 1,
+    lines: [],
+  });
+  const result = studyPoints({
+    hours: counted.hours,
     method: options.method,
     banked: Number(skill.system?.studyHours) || 0,
   });
@@ -135,6 +177,10 @@ export async function studySkill(options: {
       method: game.i18n.localize(`GWORLD.Life.Method.${options.method}`),
     }),
     lines: [
+      // The card says what the hours were worth when a module changed it,
+      // so the table can see why the points don't match the clock.
+      ...(counted.multiplier !== 1 ? [game.i18n.format("GWORLD.Life.StudyCounted", { hours: counted.hours })] : []),
+      ...counted.lines,
       result.points > 0
         ? game.i18n.format("GWORLD.Life.PointsEarned", { points: result.points })
         : game.i18n.localize("GWORLD.Life.NoPointYet"),

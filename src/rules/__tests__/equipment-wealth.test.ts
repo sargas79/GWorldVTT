@@ -9,6 +9,7 @@ import {
   equipmentQualityCost,
   equipmentQualityModifier,
   toolModifier,
+  skillEquipmentModifier,
   pointsForMoney,
   signatureGearPoints,
   signatureGearValue,
@@ -99,6 +100,29 @@ describe("a tool's stated modifier (since API 1.63.0)", () => {
     expect(toolModifier("fine", null)).toBe(2);
     expect(toolModifier("best", undefined, { tl: 10 })).toBe(5);
     expect(toolModifier("good", 0)).toBe(0);
+  });
+});
+
+describe("a skill's equipment line, with no tool carried (since API 1.135.0)", () => {
+  it("takes the picked tool's grade where there is one", () => {
+    expect(skillEquipmentModifier({ quality: 1 }, { needsEquipment: true, technological: true })).toBe(1);
+    expect(skillEquipmentModifier({ quality: -2 }, { needsEquipment: false, technological: false })).toBe(-2);
+  });
+
+  it("takes the no-equipment figure where the skill needs equipment and none serves it (Campaigns p. 345)", () => {
+    expect(skillEquipmentModifier(null, { needsEquipment: true, technological: true })).toBe(-10);
+    expect(skillEquipmentModifier(null, { needsEquipment: true, technological: false })).toBe(-5);
+  });
+
+  it("reads improvised gear as better than none", () => {
+    const none = skillEquipmentModifier(null, { needsEquipment: true, technological: false });
+    const improvised = skillEquipmentModifier({ quality: toolModifier("improvised", null) }, { needsEquipment: true, technological: false });
+    expect(improvised).toBeGreaterThan(none);
+  });
+
+  it("gives nothing where the skill doesn't need equipment", () => {
+    expect(skillEquipmentModifier(null, { needsEquipment: false, technological: true })).toBe(0);
+    expect(skillEquipmentModifier(undefined, { needsEquipment: false, technological: false })).toBe(0);
   });
 });
 

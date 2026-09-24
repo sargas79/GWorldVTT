@@ -21,7 +21,9 @@ import {
   cargoCapacity, cruisingSpeedMph, curbWeight, endurance, fragilityCodes,
   occupants, safeDecelerationPerTurn, vehicleMoves, type Locomotion,
 } from "../../rules/vehicles.js";
-import { locationsOf, mediumOf, type VehicleLocation } from "../../rules/vehicle-combat.js";
+import {
+  MOVE_CRIPPLING_LOCATIONS, locationsOf, mediumOf, type MoveCripplingLocation, type VehicleLocation,
+} from "../../rules/vehicle-combat.js";
 import { scaleScore, vehicleDodge } from "../../rules/scale.js";
 import { normalizeSkillName } from "../../rules/skills.js";
 import { afterPrepare, extensionsField } from "../data-extensions.js";
@@ -74,6 +76,7 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
   };
   declare hp: { value: number; max: number };
   declare speed: number;
+  declare crippled: Record<MoveCripplingLocation, number>;
   declare crew: Occupant[];
   declare tl: string;
   declare cost: number;
@@ -115,6 +118,21 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
        * this rather than for Top Speed.
        */
       speed: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+
+      /**
+       * How many of each part that changes how it moves are crippled now
+       * (p. 555): wheels, tracks, runners, rotors, wings and masts. A hit that
+       * cripples one counts it here, and the GM sets it by hand for a flat
+       * tyre or a repair. Kept on the vehicle rather than worked out from
+       * its hit points, because a crippled wheel stays crippled however much
+       * of the body is patched (since API 1.134.0).
+       */
+      crippled: new fields.SchemaField(
+        Object.fromEntries(MOVE_CRIPPLING_LOCATIONS.map((location) => [
+          location,
+          new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+        ])),
+      ),
 
       /**
        * Who is aboard, by actor UUID, and which of them has the wheel. The

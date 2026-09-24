@@ -21,6 +21,7 @@ import { SYSTEM_ID } from "../constants.js";
 import { summarise } from "../item-summary.js";
 import { addonItemSummary, pickerIndexFields } from "../data-extensions.js";
 import { sourceCollections } from "../compendium-sources.js";
+import { listPage } from "../list-page.js";
 import {
   amountKind,
   customItemData,
@@ -138,6 +139,7 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
       add: CompendiumPicker.#onAdd,
       buy: CompendiumPicker.#onBuy,
       addCustom: CompendiumPicker.#onAddCustom,
+      page: CompendiumPicker.#onPage,
     },
   };
 
@@ -151,6 +153,12 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
   #entries: PickerEntry[] | null = null;
   #loading: Promise<void> | null = null;
   #query = "";
+  /**
+   * The page of the list shown, from 0. Kept while entries are added, so a
+   * player taking several traits from the third page stays on it; a new
+   * search starts again from the first.
+   */
+  #page = 0;
   /** Names added during this session, so the list can show what has been taken. */
   #added = new Set<string>();
   /** The amount typed beside each row, kept across re-renders. */
@@ -227,10 +235,11 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     const all = this.#entries ?? [];
     const matching = query ? all.filter((entry) => entry.search.includes(query)) : all;
 
-    // A list of 1,764 rows is slow to render and useless to read. The cap is
-    // generous enough that a real search is never truncated, and the count
-    // below says when it has been.
-    const shown = matching.slice(0, 200);
+    // A list of 1,764 rows is slow to render and useless to read, so it is
+    // shown a page at a time, with every page a button press away.
+    const paging = listPage(matching.length, this.#page);
+    this.#page = paging.page;
+    const shown = matching.slice(paging.start, paging.end);
 
     const points = this.#actor?.system?.derived?.points ?? {};
     const sources = new Set(all.map((entry) => entry.source));
@@ -253,7 +262,18 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
           }
         : null,
       total: matching.length,
-      truncated: matching.length > shown.length,
+      paging: paging.pages > 1
+        ? {
+            label: game.i18n.format("GWORLD.Picker.Range", {
+              from: paging.start + 1,
+              to: paging.end,
+              total: matching.length,
+            }),
+            page: game.i18n.format("GWORLD.Picker.Page", { page: paging.page + 1, pages: paging.pages }),
+            first: paging.page === 0,
+            last: paging.page === paging.pages - 1,
+          }
+        : null,
       // The ledger rides along here too: what has been spent and what is left
       // is the whole question while choosing, and it should not take a trip
       // back to the sheet to answer.
@@ -292,7 +312,16 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     await this.#actor.createEmbeddedDocuments("Item", [customItemData(custom, name)]);
     ui.notifications?.info(game.i18n.format("GWORLD.Picker.Added", { name }));
     this.#query = "";
+    this.#page = 0;
     await this.render();
+  }
+
+  /** Moves to the previous or next page, and back to the top of the list. */
+  static async #onPage(this: CompendiumPicker, _event: Event, target: HTMLElement): Promise<void> {
+    this.#page += Number(target.dataset.page) < 0 ? -1 : 1;
+    await this.render();
+    const list = this.element.querySelector<HTMLElement>(".gp-list");
+    if (list) list.scrollTop = 0;
   }
 
   /** One row, with the amount field it needs and what that amount costs. */
@@ -441,6 +470,7 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
 
     search.addEventListener("input", () => {
       this.#query = search.value;
+      this.#page = 0;
       void this.render();
     });
 

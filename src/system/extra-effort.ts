@@ -18,7 +18,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { applyFatigue } from "./fatigue.js";
-import { fatigueCost } from "./procedure-extensions.js";
+import { afterFatigue, fatigueCost } from "./procedure-extensions.js";
 import { EXTRA_EFFORT_FP, extraEffortModifier, extraEffortTarget } from "../rules/extra-effort.js";
 import { resolveSuccess } from "../rules/success.js";
 
@@ -43,7 +43,8 @@ export async function spendFatigue(actor: any, points: number, what: string): Pr
 
   // What the modules make of the price, asked before it is weighed against
   // what the character has left (API 1.76.0).
-  const cost = fatigueCost({ actor, fp: points, reason: "extraEffort", exertion: true, details: { what } }).fp;
+  const costed = fatigueCost({ actor, fp: points, reason: "extraEffort", exertion: true, details: { what } });
+  const cost = costed.fp;
   if (cost <= 0) return true;
 
   const current = Number(actor.system?.fp?.value);
@@ -54,8 +55,9 @@ export async function spendFatigue(actor: any, points: number, what: string): Pr
     return false;
   }
 
-  // Charged as given: the listeners were asked above.
-  await applyFatigue(actor, cost);
+  // Charged as given: the listeners were asked above. The reason still goes
+  // along, for the `gworld.afterFatigue` listeners (API 1.138.0).
+  await applyFatigue(actor, cost, { reason: "extraEffort", details: { what }, costed: { sources: costed.sources } });
   return true;
 }
 
@@ -112,17 +114,32 @@ export async function rollExtraEffort(options: {
   const outcome = resolveSuccess(roll.total, effective, dice);
 
   // A critical success is the one outcome that costs nothing at all.
-  const cost = outcome.criticalSuccess
-    ? 0
-    : fatigueCost({ actor, fp: EXTRA_EFFORT_FP, reason: "extraEffort", exertion: true, details: { percentIncrease } }).fp;
+  const costed = outcome.criticalSuccess
+    ? { fp: 0, sources: [] as string[] }
+    : fatigueCost({ actor, fp: EXTRA_EFFORT_FP, reason: "extraEffort", exertion: true, details: { percentIncrease } });
+  const cost = costed.fp;
   if (cost > 0 && actor?.isOwner) {
     // "A critical failure means you lose HP equal to the FP spent on the
     // attempt ... and the task fails automatically!" -- both losses in one
     // write, so the sheet moves once.
+    const fpBefore = Number(fp.value) || 0;
     const hp = Number(actor.system?.hp?.value) || 0;
+    const hpLost = outcome.criticalFailure ? cost : 0;
     await actor.update({
-      "system.fp.value": (Number(fp.value) || 0) - cost,
-      ...(outcome.criticalFailure ? { "system.hp.value": hp - cost } : {}),
+      "system.fp.value": fpBefore - cost,
+      ...(hpLost > 0 ? { "system.hp.value": hp - hpLost } : {}),
+    });
+    // Paid outside the chart, but paid all the same (API 1.138.0).
+    afterFatigue({
+      actor,
+      reason: "extraEffort",
+      details: { percentIncrease },
+      exertion: true,
+      fpLost: cost,
+      hpLost,
+      fp: { previous: fpBefore, now: fpBefore - cost, max: Number(fp.max) || 0 },
+      hp: { previous: hp, now: hp - hpLost, max: Number(actor.system?.hp?.max) || 0 },
+      sources: costed.sources,
     });
   }
 

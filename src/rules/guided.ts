@@ -147,9 +147,47 @@ export function accuracyApplies(options: {
   guidance: Guidance;
   aimed: boolean;
   secondsInFlight: number;
+  /**
+   * True where a homing weapon's seeker has locked on to the target (since
+   * API 1.128.0). A lock-on gives the weapon its Acc, as if it had aimed; it
+   * means nothing to a guided weapon, which has no seeker, or to an ordinary
+   * shell.
+   */
+  lockedOn?: boolean;
 }): boolean {
   if (options.guidance === "none") return options.aimed;
+  if (options.guidance === "homing" && options.lockedOn === true) return true;
   return options.aimed || options.secondsInFlight > 1;
+}
+
+/**
+ * How many rolls a semi-active homing weapon asks of whoever holds the spot
+ * on its target (since API 1.128.0).
+ *
+ * A semi-active seeker homes on a spot someone else keeps on the target, a
+ * laser dot or a radar beam, and it only finds the target while that spot
+ * stays there: one roll for each turn the weapon is in the air, and it misses
+ * on the first one failed. The turn it is launched counts, so a weapon that
+ * arrives at once still asks for one. A weapon that crashes before it
+ * arrives asks for none, since it was never going to hit.
+ */
+export function designationRolls(options: {
+  semiActive: boolean;
+  secondsInFlight: number;
+  falls: boolean;
+}): number {
+  if (!options.semiActive || options.falls) return 0;
+  return Math.max(1, Math.ceil(Number(options.secondsInFlight) || 0));
+}
+
+/**
+ * Whether the spot was held for the whole flight (since API 1.128.0): every
+ * roll made, and every one a success. A roll that could not be attempted
+ * counts as a failure.
+ */
+export function designationHeld(rolls: ReadonlyArray<{ success?: boolean } | null | undefined>, needed: number): boolean {
+  if (rolls.length < needed) return false;
+  return rolls.slice(0, needed).every((roll) => roll?.success === true);
 }
 
 // ── area and cone attacks (p. 413) ──────────────────────────────────────────

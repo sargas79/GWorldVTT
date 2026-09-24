@@ -136,6 +136,16 @@ export function coldModifier(options: {
 export const SWELTERING_F = 80;
 
 /**
+ * Whether the day counts as hot for someone (pp. 426, 434): hot enough that
+ * an active human starts rolling against it. The Fatigue Costs table's "hot
+ * day" gives no figure of its own, and this is the one the heat rules use.
+ * Temperature Tolerance on the hot side raises it by its degrees.
+ */
+export function isHotDay(temperatureF: number, toleranceF = 0): boolean {
+  return Number.isFinite(temperatureF) && temperatureF - Math.max(0, toleranceF) > SWELTERING_F;
+}
+
+/**
  * The modifier to the roll against the heat (p. 434).
  *
  * "A penalty equal to your encumbrance level (-1 for Light, -2 for Medium, and

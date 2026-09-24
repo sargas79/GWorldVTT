@@ -11,6 +11,7 @@ import { SYSTEM_ID } from "./constants.js";
 import { battleFatigueCost } from "../rules/fatigue.js";
 import { isRuleOn } from "./optional-rules.js";
 import { applyFatigue } from "./fatigue.js";
+import { dayWeather } from "./weather.js";
 
 /** Registers the hook. Called once, at init. */
 export function registerBattleFatigue(): void {
@@ -50,8 +51,13 @@ export async function chargeBattleFatigue(combat: any): Promise<void> {
     const strained = isRuleOn("minimumSt") && wieldsAboveStrength(actor) ? 1 : 0;
     // Through the fatigue chart like any other exertion, and past the
     // `gworld.fatigueCost` listeners: a hot day's extra point is theirs to add
-    // (API 1.76.0).
-    const spent = await applyFatigue(actor, cost + strained, { reason: "battle", details: { seconds: rounds, strained: strained > 0 } });
+    // (API 1.76.0), off the day's temperature as the GM set it, and whether
+    // it is hot for this fighter (API 1.138.0).
+    const weather = dayWeather(actor);
+    const spent = await applyFatigue(actor, cost + strained, {
+      reason: "battle",
+      details: { seconds: rounds, strained: strained > 0, temperatureF: weather.temperatureF, hot: weather.hot },
+    });
     const name = strained
       ? game.i18n.format("GWORLD.BattleFatigue.Strained", { name: String(actor.name ?? "") })
       : String(actor.name ?? "");
