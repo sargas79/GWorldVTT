@@ -110,7 +110,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.142.0";
+export const API_VERSION = "1.143.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -718,10 +718,12 @@ const items = {
   /**
    * Leaves a weapon unready, or readies it with false (since 1.136.0), with
    * no roll and no card: `system.unready`, as a swing that unreadies it sets.
-   * Made through the active GM's client where the user doesn't own the item,
-   * for a user who owns the `attacker` named. Returns `{ itemId, unready,
-   * reason }`, or null for anything but equipment on an actor, a user who
-   * owns neither the item's holder nor the attacker, or no GM connected.
+   * Made through the active GM's client where the user doesn't own the item:
+   * for a GM, the owner of the item's holder, or (since 1.143.0) the owner of
+   * the `attacker` named who left it unready by a disarm they just won, whose
+   * Quick Contest card is passed as `contest` (once per card). Returns
+   * `{ itemId, unready, reason }`, or null for anything but equipment on an
+   * actor, a user with no say over the change, or no GM connected.
    */
   setUnready(item: any, unready: boolean, options: HeldWeaponOptions = {}): Promise<UnreadyChanged | null> {
     return setWeaponUnready(item, unready, options);
@@ -731,10 +733,12 @@ const items = {
    * Knocks a weapon or shield out of its holder's hands (since 1.136.0), as a
    * won disarm does, with no roll and no card: no longer carried or equipped,
    * so on no attack list, until somebody picks it up by carrying it again.
-   * Made through the active GM's client where the user doesn't own the item,
-   * for a user who owns the `attacker` named. Returns `{ itemId, reason }`, or
-   * null for anything but equipment or a shield on an actor, a user who owns
-   * neither the item's holder nor the attacker, or no GM connected.
+   * Made through the active GM's client where the user doesn't own the item:
+   * for a GM, the owner of the item's holder, or (since 1.143.0) the owner of
+   * the `attacker` named who won the disarm whose Quick Contest card is
+   * passed as `contest` (once per card). Returns `{ itemId, reason }`, or null
+   * for anything but equipment or a shield on an actor, a user with no say
+   * over the change, or no GM connected.
    */
   knockAway(item: any, options: HeldWeaponOptions = {}): Promise<KnockedAway | null> {
     return knockWeaponAway(item, options);
