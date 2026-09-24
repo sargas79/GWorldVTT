@@ -1491,6 +1491,48 @@ Two fields a module may read (since 1.62.0):
   - The system doesn't apply what a crippled part does (Effects of Crippling
     Injury, p. 421). A module applies those, as it would to any crippled
     limb.
+- **Vehicle hooks** (since 1.115.0):
+  - *Figures while a state lasts* (Campaigns p. 555: crippled wheels,
+    tracks or rotors): `gworld.vehicleStats` is called wherever the system
+    reads a vehicle's Handling, Stability or Move. That covers the vehicle
+    actor's derived data (its Dodge, safe deceleration, top speed and
+    cruising speed), control rolls and losing control, and the Stability
+    Rating a passenger's shot is held to. The context is `{ vehicle,
+    handling, stability, acceleration, topSpeed, move, lines }`:
+    - `vehicle` is the actor, or the item on a Gear tab.
+    - The four figures are mutable. `acceleration` and `topSpeed` belong
+      to the Move in use (`move`).
+    - Push `{ label, stat?, value? }` to `lines` to say why.
+    The stored figures are left alone. A listener that throws changes
+    nothing. A figure that isn't a number stays as it was, and Stability,
+    acceleration and top speed never go below 0. The vehicle's
+    `derived.stats` holds the result `{ handling, stability, acceleration,
+    topSpeed, move, lines }`, and its sheet shows the changed Hnd/SR with
+    the lines as a tooltip.
+  - *Put on the road*: the vehicle actor made from a vehicle item now
+    takes the item's `system.extensions` and its flags in every scope
+    except `core` and the system's own.
+  - *Why a control roll is made* (Campaigns p. 466): `hazards.controlVehicle({
+    actor, vehicle, modifier?, reason? })` runs a control roll as the
+    sheet's Control button does. `reason` is a tag of the caller's, such as
+    `hardBraking`, a hazard's name or a maneuver's. It joins the roll's
+    tags (`vehicleControl` and the rest) in `gworld.successRollModifiers`,
+    and the context carries it as `reason`. The sheet's own rolls give
+    none.
+  - *After a shot at a vehicle*: `gworld.afterVehicleHit` is called once
+    `hazards.shootAtVehicle` (or the sheet's Shot at) has worked out and
+    posted the hit. The context is `{ vehicle, actor, item, mode, location,
+    arc, damageType, penetrating, injury, crippled, passedThrough,
+    occupantHit }`:
+    - `injury` is the HP the vehicle lost after the location's wounding
+      modifier.
+    - `crippled` says whether the location was crippled.
+    - `passedThrough` is true where the hit passed to a person or animal.
+    - `occupantHit` is `{ dice }` of cutting damage for an occupant struck,
+      or null.
+    Follow-on effects go here rather than in `gworld.vehicleDr`.
+    `shootAtVehicle` now resolves to the same object (without `vehicle`,
+    `actor`, `item` and `mode`), or null where there was no vehicle.
 - **An affliction's effect** (since 1.49.0): `gworld.afflictionEffect` fires
   when a resistance roll fails, with
   `{ actor, attacker, item, mode, label, margin, effects }`. Push a

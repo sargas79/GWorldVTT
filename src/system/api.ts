@@ -64,7 +64,7 @@ import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from
 import { carriedAmmunitionFor, loadAmmunition } from "./ammunition.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
 import {
-  fragileCatchesFire, fragileExplodes, fragileKindsOf, irradiate, rollBrittleLimb, shock, shootAtVehicle,
+  fragileCatchesFire, fragileExplodes, fragileKindsOf, irradiate, rollBrittleLimb, shock, shootAtVehicle, controlVehicle,
 } from "./hazards.js";
 import { detonateCharge } from "./demolition.js";
 import { equipmentUseLines, familiarWith, setFamiliar } from "./tech-level.js";
@@ -101,7 +101,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.114.0";
+export const API_VERSION = "1.115.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -744,6 +744,8 @@ const hazardsApi = Object.freeze({
     });
   },
   shock, irradiate, detonate: detonateCharge, shootAtVehicle,
+  // A vehicle control roll, with why it is made (since 1.115.0; Campaigns p. 466).
+  controlVehicle: (options: { actor: any; vehicle: any; modifier?: number; reason?: string }) => controlVehicle({ ...options, modifier: Number(options?.modifier) || 0 }),
   fragileKinds: fragileKindsOf, fragileCatchesFire, fragileExplodes, brittleLimb: rollBrittleLimb,
 });
 
