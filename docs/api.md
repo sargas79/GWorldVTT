@@ -438,6 +438,11 @@ and the roll continues.
     also gets `calledShot` (`{ hitLocation, addonLocation }`, or null) and
     `retreating`. In `gworld.defenseChoices`, set
     `blockAgain` true to allow a block after the one a turn allows;
+  - Since 1.111.0, `gworld.attackModifiers` also gets `unarmed`: `punch` or
+    `kick` for the character's bare-handed blows (the rows' `naturalKey`,
+    Characters p. 271), whose `item` and `mode` are null, and null for any
+    other attack. A rule about a restrained or crippled limb can refuse the
+    one and allow the other (set `refusal`);
   - Since 1.18.0, `gworld.attackModifiers` also gets `calledShot`, the location the
     blow is aimed at as `{ hitLocation, addonLocation }` or null, and `targets`,
     the actors of the targeted tokens; since 1.23.0 also `targetTokens`, their
@@ -1292,6 +1297,10 @@ Two fields a module may read (since 1.62.0):
     makes a secret roll (Campaigns p. 494), the `blind` mode: the GMs see
     the card and whoever rolled does not. `rollMode` wins over `secret`.
     Left out, the card is posted openly, as before.
+  - *Secret contests* (since 1.111.0): `roll.quickContest` and
+    `roll.regularContest` take the same `rollMode` and `secret`, read the
+    same way, so a contest the GM rolls in secret (Campaigns p. 494) goes
+    to the GMs alone. Left out, the card is posted openly, as before.
   - *Influence rolls* (Campaigns p. 359): both sides of the Quick Contest
     pass through `gworld.successRollModifiers`, `kind` `contest`, tagged
     `contest`, `quickContest` and `influence`, each with the other side as

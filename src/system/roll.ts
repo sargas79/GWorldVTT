@@ -1877,6 +1877,10 @@ async function rollAction(
         skillCap: movingMelee || melee?.wildSwing ? WILD_SWING_SKILL_CAP : (null as number | null),
         // Since 1.40.0: whether this is a Wild Swing.
         wildSwing: melee?.wildSwing === true,
+        // Since 1.111.0: a punch or a kick (Characters p. 271), or null for
+        // any other attack, so a rule about a restrained or crippled limb can
+        // refuse the one and allow the other.
+        unarmed: unarmedBlow(target.dataset.naturalKey),
         // Where the blow is aimed, and at whom.
         calledShot: (() => {
           const aimedAt = melee?.calledShot ?? shot?.calledShot ?? null;
@@ -4267,6 +4271,11 @@ function outcomeClass(outcome: SuccessRollResult): string {
   if (outcome.criticalSuccess) return "crit-success";
   if (outcome.criticalFailure) return "crit-failure";
   return outcome.success ? "success" : "failure";
+}
+
+/** A punch or a kick, read off the row's natural key, or null for anything else. */
+export function unarmedBlow(naturalKey: unknown): "punch" | "kick" | null {
+  return naturalKey === "punch" || naturalKey === "kick" ? naturalKey : null;
 }
 
 /** A skill's level on a character, or its IQ-5 default where they haven't got it, for an aiming roll. */
