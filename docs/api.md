@@ -1082,6 +1082,31 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
   line. With no test registered, no skill takes it. The call returns
   `<module>.<key>`, or null for a refused registration.
   `needsEquipment(skill, actor)` asks the registered tests.
+- **`registerToolGrade({ module, key, grade })`** (since 1.145.0).
+  Says what a carried item is good for, skill by skill: a kit good for one
+  task can be improvised for another, or serve the next specialty over.
+  Character preparation asks `grade(item, skill, actor)` for every carried
+  equipment item (whether or not its `forSkills` names the skill) and every
+  skill, and the first grader with a say wins, in the order registered. The
+  answer is:
+  - null or undefined: no say. The item serves the skills its `forSkills`
+    names, at its own `equipmentQuality` and `equipmentModifier`.
+  - `false`: the item doesn't serve this skill, even if `forSkills` names it.
+  - a grade (`"none"`, `"improvised"`, `"basic"`, `"good"`, `"fine"`,
+    `"best"`), or `{ quality?, modifier? }`: the item serves this skill at
+    that grade. `quality` left out is the item's own; `modifier` is a stated
+    figure that takes the grade's place (whole numbers), as an item's
+    `equipmentModifier` does. The item's own `equipmentModifier` isn't used.
+
+  Whatever the answer, the grade is read for the skill being rolled
+  (Campaigns p. 345): improvised gear is -5 for a technological skill and -2
+  for any other, and the best grade is +TL/2 at the character's TL. The
+  item's TL is weighed against a technological skill's as for any tool
+  (Characters p. 168; see *Tech-level modifiers and familiarity*), and the
+  one worth most wins. A grader that throws, or answers anything else, is
+  warned about and passed over. The call returns `<module>.<key>`, or null
+  for a refused registration. `toolGrade(item, skill, actor)` asks the
+  registered graders, as `{ quality?, modifier? }`, `false` or null.
 - **Hooks:**
   - `gworld.prepareDerivedData`, with the actor or item, after the system has
     prepared it.
@@ -1094,6 +1119,8 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     `derived.toolItemId` records it), or null where no carried tool serves the
     skill. A listener can grade one item differently for different skills,
     good for one and improvised for another, by changing those lines' values.
+    Since 1.145.0 `registerToolGrade` does that before the tool is picked,
+    so the grade takes part in choosing among several tools.
   - `gworld.moveModifiers` (since 1.42.0), with `{ actor, move, lines }`, once
     encumbrance, reeling and very tired are applied: push `{ label, multiplier?, value? }`.
     Move becomes the multipliers' product times Move, rounded down, plus the values, never
@@ -2216,6 +2243,10 @@ Two fields a module may read (since 1.62.0):
     Since 1.135.0 those listeners are handed the picked item as `tool`, and
     a skill a `registerNeedsEquipment` test marks, with no tool serving it,
     takes the no-equipment figure on its `tools` line.
+    Since 1.145.0 each tool's grade is read for the skill it is used with, so
+    an improvised tool is -5 for a technological skill and -2 for another
+    (before, -2 for both), and `registerToolGrade` says what an item is good
+    for per skill.
   - *Familiarities.* A character keeps `system.familiarities`, a list of item
     names (compared trimmed and case-blind); familiarity goes by the item's
     name, so "improved or obsolete versions" and look-alike models are made
@@ -2236,7 +2267,11 @@ Two fields a module may read (since 1.62.0):
     techLevel?)`, `skillTechLevel(name, techLevel, personalTechLevel)`,
     `techLevelModifier({ skillTechLevel, equipmentTechLevel, iqBased })`
     (null for impossible), `bestTool(tools, { skillTechLevel, iqBased })`
-    with `CarriedTool` (`{ quality, techLevel, id? }`; since 1.95.0 the best one keeps its `id`), `familiarityKey(name)`,
+    with `CarriedTool` (`{ quality, techLevel, id? }`; since 1.95.0 the best one keeps its `id`),
+    `toolsForSkill(tools, { technological, tl })` (since 1.145.0), which
+    turns `ToolOnHand` records (`{ quality, modifier?, techLevel, id? }`,
+    `quality` a grade) into `CarriedTool`s with each grade read for one
+    skill, `familiarityKey(name)`,
     `isFamiliar(list, name)`, `toggleFamiliarity(list, name)`,
     `familiarityModifier(list, name)`, `startingFamiliarities(points)` (two
     per point), `mayRollForFamiliarity(count)` (six or more), and

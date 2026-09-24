@@ -10,10 +10,12 @@ import {
   equipmentQualityModifier,
   toolModifier,
   skillEquipmentModifier,
+  toolsForSkill,
   pointsForMoney,
   signatureGearPoints,
   signatureGearValue,
 } from "../wealth.js";
+import { bestTool } from "../tech-level.js";
 
 describe("trading points for money (Characters p. 26)", () => {
   it("gives 10% of the campaign's average starting wealth a point", () => {
@@ -123,6 +125,39 @@ describe("a skill's equipment line, with no tool carried (since API 1.135.0)", (
   it("gives nothing where the skill doesn't need equipment", () => {
     expect(skillEquipmentModifier(null, { needsEquipment: false, technological: true })).toBe(0);
     expect(skillEquipmentModifier(undefined, { needsEquipment: false, technological: false })).toBe(0);
+  });
+});
+
+describe("a tool graded for the skill it is used with (since API 1.145.0)", () => {
+  it("reads improvised gear as -5 for a technological skill and -2 for another (Campaigns p. 345)", () => {
+    const kit = [{ quality: "improvised" as const, techLevel: null, id: "kit" }];
+    expect(toolsForSkill(kit, { technological: true, tl: 8 })).toEqual([{ quality: -5, techLevel: null, id: "kit" }]);
+    expect(toolsForSkill(kit, { technological: false, tl: 8 })).toEqual([{ quality: -2, techLevel: null, id: "kit" }]);
+    // The same item, the skill's line once picked.
+    const technological = bestTool(toolsForSkill(kit, { technological: true, tl: 8 }), { skillTechLevel: 8, iqBased: true });
+    expect(skillEquipmentModifier(technological, { needsEquipment: true, technological: true })).toBe(-5);
+    const other = bestTool(toolsForSkill(kit, { technological: false, tl: 8 }), { skillTechLevel: null, iqBased: false });
+    expect(skillEquipmentModifier(other, { needsEquipment: true, technological: false })).toBe(-2);
+  });
+
+  it("keeps a stated modifier, and reads the best grade against the character's TL", () => {
+    expect(toolsForSkill([{ quality: "improvised", modifier: -1, techLevel: 8 }], { technological: true, tl: 8 })[0]!.quality).toBe(-1);
+    expect(toolsForSkill([{ quality: "best", techLevel: 8 }], { technological: true, tl: 10 })[0]!.quality).toBe(5);
+    expect(toolsForSkill([{ quality: "good", modifier: null, techLevel: 8 }], { technological: false, tl: 8 })[0]!.quality).toBe(1);
+  });
+
+  it("leaves a tool of another TL to be weighed against the skill's (Characters p. 168)", () => {
+    // A TL7 kit for a TL8 skill: -1 for the TL behind, beside its grade.
+    const older = toolsForSkill([{ quality: "good", techLevel: 7, id: "old" }], { technological: true, tl: 8 });
+    expect(bestTool(older, { skillTechLevel: 8, iqBased: true })).toEqual({ quality: 1, techLevel: -1, id: "old" });
+    // Of an improvised kit at the skill's TL and a basic one a TL behind, the basic one is worth more.
+    const both = toolsForSkill([
+      { quality: "improvised", techLevel: 8, id: "improvised" },
+      { quality: "basic", techLevel: 7, id: "basic" },
+    ], { technological: true, tl: 8 });
+    expect(bestTool(both, { skillTechLevel: 8, iqBased: true })?.id).toBe("basic");
+    // Four TLs ahead of an IQ-based skill, it can't be used at all.
+    expect(bestTool(toolsForSkill([{ quality: "fine", techLevel: 12 }], { technological: true, tl: 8 }), { skillTechLevel: 8, iqBased: true })).toBeNull();
   });
 });
 

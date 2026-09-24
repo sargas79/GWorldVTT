@@ -41,16 +41,16 @@ import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
 import { senseScores } from "../../rules/senses.js";
 import {
-  clothingCost, costOfLiving, gearCost, skillEquipmentModifier, toolModifier, monthlyIncomeFromTraits, monthlyPay,
+  clothingCost, costOfLiving, gearCost, skillEquipmentModifier, toolsForSkill, monthlyIncomeFromTraits, monthlyPay,
   pointsForMoney, signatureGearPoints, signatureGearValue, startingWealth, statusFrom, wealthFrom,
-  type EquipmentQuality,
+  type EquipmentQuality, type ToolOnHand,
   type WealthLevel,
 } from "../../rules/wealth.js";
 import { agingRollsPerYear, lifespanFrom } from "../../rules/aging.js";
 import { culturallyAdaptable, languagePenalty, type Comprehension } from "../../rules/languages.js";
 import { sleepPeriodFrom } from "../../rules/sleep.js";
 import { radiationRow, remainingDose } from "../../rules/radiation.js";
-import { bestTool, isTechnologicalSkill, parseTechLevel, skillTechLevel, toolSkillKey, type CarriedTool } from "../../rules/tech-level.js";
+import { bestTool, isTechnologicalSkill, parseTechLevel, skillTechLevel, toolSkillKey } from "../../rules/tech-level.js";
 import { baseBlock, baseDodge, baseParry, bestParryOption, block, dodge, parry } from "../../rules/defenses.js";
 import {
   materialArmorDivisor,
@@ -100,7 +100,7 @@ import { malfunctionOf } from "../malfunctions.js";
 import { stuckWeaponOf } from "../picks.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
-  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleCarriedWeight, moduleTraitEffects, moduleTraitsInPlay, needsEquipment, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type CarriedWeightLine, type TraitEffectSource,
+  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleCarriedWeight, moduleTraitEffects, moduleTraitsInPlay, hasToolGraders, needsEquipment, registeredTechniqueKind, toolGrade, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type CarriedWeightLine, type TraitEffectSource,
 } from "../data-extensions.js";
 import { perDieOfBasicDamage, swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
@@ -1457,30 +1457,54 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   }
 
   /**
-   * What the tools carried are worth to the skills they serve (Campaigns
-   * p. 345), by skill name as `toolSkillKey` writes it, so a tool written
-   * without the "/TL" serves the skill that has it. The best grade carried
-   * wins: nobody operates with the crash kit and the leaves at once.
+   * The tools carried (Campaigns p. 345), each once, with the skills its
+   * `forSkills` names as `toolSkillKey` writes them, so a tool written
+   * without the "/TL" serves the skill that has it. Its grade is not read
+   * here: what "improvised" is worth depends on the skill it is used for,
+   * which `#toolsFor` knows (since API 1.145.0). Carried equipment that names
+   * no skill is kept too, for a module's grader to say what it is good for.
    */
-
-  #equipmentBonuses(tl: number): Record<string, CarriedTool[]> {
-    const carried: Record<string, CarriedTool[]> = {};
+  #toolsCarried(): Array<{ item: any; tool: ToolOnHand; skills: Set<string> }> {
+    const carried: Array<{ item: any; tool: ToolOnHand; skills: Set<string> }> = [];
     if (!isRuleOn("equipmentModifiers")) return carried;
     for (const item of this.itemsOfType("equipment")) {
       const sys = item.system as any;
       if (sys?.carried === false) continue;
-      const skills: string[] = Array.isArray(sys?.forSkills) ? sys.forSkills : [];
-      if (skills.length === 0) continue;
-      const quality = toolModifier(String(sys.equipmentQuality ?? "basic") as EquipmentQuality, sys.equipmentModifier, { tl });
-      // Its own TL, weighed against the skill's once that is known (Characters p. 168).
-      const techLevel = parseTechLevel(sys.tl);
-      for (const raw of skills) {
-        const skill = toolSkillKey(String(raw ?? ""));
-        if (!skill) continue;
-        (carried[skill] ??= []).push({ quality, techLevel, ...(item.id ? { id: String(item.id) } : {}) });
-      }
+      const names: string[] = Array.isArray(sys?.forSkills) ? sys.forSkills : [];
+      const skills = new Set(names.map((raw) => toolSkillKey(String(raw ?? ""))).filter(Boolean));
+      const stated = sys.equipmentModifier;
+      carried.push({
+        item,
+        tool: {
+          quality: String(sys.equipmentQuality ?? "basic") as EquipmentQuality,
+          modifier: typeof stated === "number" ? stated : null,
+          // Its own TL, weighed against the skill's once that is known (Characters p. 168).
+          techLevel: parseTechLevel(sys.tl),
+          ...(item.id ? { id: String(item.id) } : {}),
+        },
+        skills,
+      });
     }
     return carried;
+  }
+
+  /**
+   * The tools on hand for one skill: those whose `forSkills` names it, at
+   * their own grade, unless a module's grader says otherwise for this skill
+   * (since API 1.145.0): that an item serves it at another grade, serves it
+   * though it isn't named for it, or doesn't serve it at all.
+   */
+  #toolsFor(carried: ReadonlyArray<{ item: any; tool: ToolOnHand; skills: Set<string> }>, skill: any): ToolOnHand[] {
+    const key = toolSkillKey(String(skill.name ?? ""));
+    const tools: ToolOnHand[] = [];
+    const asking = hasToolGraders();
+    for (const { item, tool, skills } of carried) {
+      const answer = asking ? toolGrade(item, skill, this.parent) : null;
+      if (answer === false) continue;
+      if (answer) tools.push({ ...tool, quality: answer.quality ?? tool.quality, modifier: answer.modifier ?? null });
+      else if (skills.has(key)) tools.push(tool);
+    }
+    return tools;
   }
 
   /** What is left of the dose written on the sheet, as of now (Campaigns p. 435). */
@@ -1852,7 +1876,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // "The quality of your equipment modifies your skill rolls for tasks
     // that normally require equipment" (Campaigns p. 345): what is carried,
     // by the skill it is the tools of.
-    const toolBonuses = this.#equipmentBonuses(Number(this.tl) || 0);
+    const toolsCarried = this.#toolsCarried();
     // The items those tools are, so a listener is handed the one picked.
     const equipmentById = new Map(this.itemsOfType("equipment").filter((i) => i.id).map((i) => [String(i.id), i]));
     const equipmentRuleOn = isRuleOn("equipmentModifiers");
@@ -1893,7 +1917,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const skillTL = isRuleOn("techLevelModifiers") && technological
         ? skillTechLevel(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel, Number(this.tl) || 0)
         : null;
-      const tool = bestTool(toolBonuses[toolSkillKey(String(item.name ?? ""))] ?? [], { skillTechLevel: skillTL, iqBased: sys.attribute === "IQ" });
+      // Each tool's grade read for this skill, so improvised gear is -5 for
+      // a technological skill and -2 for another (since API 1.145.0).
+      const onHand = toolsForSkill(this.#toolsFor(toolsCarried, item), { technological, tl: Number(this.tl) || 0 });
+      const tool = bestTool(onHand, { skillTechLevel: skillTL, iqBased: sys.attribute === "IQ" });
       // With nothing carried that serves it, a skill a module says needs
       // equipment takes the no-equipment figure, so that improvised gear
       // reads better than none (since API 1.135.0). Only asked where it
