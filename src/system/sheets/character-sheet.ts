@@ -3706,13 +3706,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onAttendPatient(this: GWorldCharacterSheet) {
     const patient = onePatient();
     if (!patient) return;
-    const modifier = await promptForNumber({
-      title: game.i18n.localize("GWORLD.Recovery.Attend"),
-      label: game.i18n.localize("GWORLD.Chat.Modifier"),
-      initial: 0,
+    // gworld.physicianRounds hears the button as it hears actors.attendPatient
+    // (API 1.142.0); the modifier is asked for only once no listener refuses.
+    await attendPatient({
+      healer: this.actor,
+      patient,
+      modifier: () => promptForNumber({
+        title: game.i18n.localize("GWORLD.Recovery.Attend"),
+        label: game.i18n.localize("GWORLD.Chat.Modifier"),
+        initial: 0,
+      }),
     });
-    if (modifier === null) return;
-    await attendPatient({ healer: this.actor, patient, modifier });
   }
 
   /** An operation (Campaigns p. 424). */

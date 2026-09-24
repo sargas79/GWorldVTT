@@ -1593,6 +1593,13 @@ Two fields a module may read (since 1.62.0):
     the sheet's First Aid (and, since 1.122.0, `actors.firstAid`) then uses
     the First Aid Table's row for that TL:
     the HP restored, and the time it takes.
+  - *The tech level of a physician's rounds* (since 1.142.0; Campaigns
+    p. 424): `gworld.physicianRounds` gets `techLevel` too, the TL of the
+    healer's Physician skill to start with, and a listener may set another
+    in the same way. Rounds at another TL than the skill's take the
+    Tech-Level Modifiers table's penalty (Characters p. 168), with the
+    optional rule on, as a line keyed `techLevel` on the roll (see
+    *Physician's rounds*).
   - *Dirt in a wound* (Campaigns p. 444): the infection roll's
     `gworld.successRollModifiers` context (tags `disease`, `infection`,
     `HT`) has the dirt's modifier as a line keyed `woundDirt`. It is always
@@ -2917,7 +2924,7 @@ Two fields a module may read (since 1.62.0):
 - **Bleeding:** `gworld.bleedingSchedule` gets `{ actor, intervalSeconds, modifier }`
   before a bleeding roll, and may change either.
 - **Healing** (since 1.60.0): `actors.firstAid({ healer, patient, skill?, techLevel?, label?, modifier? })`,
-  `actors.attendPatient({ healer, patient, skill?, label?, modifier? })`, `actors.operate({ surgeon,
+  `actors.attendPatient({ healer, patient, skill?, techLevel?, label?, modifier? })`, `actors.operate({ surgeon,
   patient, skill?, techLevel?, anesthetic?, repairingCrippled?, equipmentQuality?, label?, modifier? })`
   and `actors.rollMortalWound({ actor, physician?, traumaMaintenance?, modifier? })` roll what the
   sheet's buttons roll (Campaigns pp. 423-425). `skill` and `techLevel` stand in for the healer's own,
@@ -2928,6 +2935,10 @@ Two fields a module may read (since 1.62.0):
   first, with `techLevel` starting at the one given (or the healer's), so a listener may refuse
   it (it resolves to 0 and warns, as the button does) or move it to another TL, and a success
   stops the patient's bleeding unless a listener set `stopsBleeding: false`.
+  Since 1.142.0, `actors.attendPatient` and the sheet's Attend button fire
+  `gworld.physicianRounds` first (see *Physician's rounds*), and `techLevel` (new then) is the TL
+  of the healer's Physician skill, or of the `skill` given; without it, the TL recorded for the
+  healer's Physician skill, or written into its name, else the healer's own.
   Since 1.63.0, `gworld.mortalWoundInterval` fires before the check's card with
   `{ actor, traumaMaintenance, minutes, label }`: set `minutes` (1440 for daily checks) and a
   `label` where the module's care changes how often the check comes round; the card says so.
@@ -3015,6 +3026,20 @@ Two fields a module may read (since 1.62.0):
   `stopsBleeding: false` so success doesn't stop the patient's bleeding. The roll
   itself adds `gworld.successRollModifiers` lines, tagged `firstAid`, with the
   patient as `opponent`. `actors.stopBleeding(actor)` ends an actor's bleeding.
+- **Physician's rounds** (since 1.142.0): `gworld.physicianRounds` gets `{ healer,
+  patient, refusal, techLevel, lines }` before a physician's rounds (Campaigns p. 424),
+  from the sheet's Attend button and from `actors.attendPatient`, before the
+  button asks for a modifier. Set `refusal` (text) to stop them; the user is warned
+  and nothing is rolled. `techLevel` starts at the TL of the healer's Physician
+  skill (or the `techLevel` the caller gave); set another for a doctor working
+  without the supplies of their own TL. Where it differs from the skill's, the
+  card says "Treating at TL*n*" and, with the `techLevelModifiers` optional
+  rule on, the roll takes the Tech-Level Modifiers table's penalty for an
+  IQ-based skill (Characters p. 168) as a `gworld.successRollModifiers` line
+  keyed `techLevel`, the roll tagged `techLevel` as well as `physician`, so a
+  listener there may change or remove it. A TL four or more ahead of the
+  skill can't be worked at: the user is warned and nothing is rolled. Push
+  text to `lines` and the card shows it.
 - **Technique defaults:** `gworld.techniqueDefaults` gets `{ actor, item, defaults }`;
   push `{ from, skill, modifier }` to offer another default. The best one is
   used.

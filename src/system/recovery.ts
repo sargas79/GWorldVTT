@@ -21,7 +21,7 @@ import {
   wakingFrom,
 } from "../rules/recovery.js";
 import { resolveSuccess, type SuccessRollResult } from "../rules/success.js";
-import { afterSuccessRoll, firstAidRules, successRollModifiers } from "./procedure-extensions.js";
+import { afterSuccessRoll, firstAidRules, physicianRoundsRules, successRollLines, successRollModifiers } from "./procedure-extensions.js";
 import { stopBleeding } from "./bleeding.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
@@ -41,6 +41,9 @@ import {
   canResuscitate,
 } from "../rules/medicine.js";
 import { skillLevelOf } from "./skill-level.js";
+import { normalizeSkillName } from "../rules/skills.js";
+import { parseTechLevel, skillTechLevel, techLevelModifier } from "../rules/tech-level.js";
+import { isRuleOn } from "./optional-rules.js";
 
 const RECOVERY_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/recovery.hbs`;
 
@@ -416,24 +419,68 @@ export async function tryToWake(options: { actor: any }): Promise<boolean> {
 export async function attendPatient(options: {
   healer: any;
   patient: any;
-  modifier: number;
+  /**
+   * A number, or a question to ask once no listener has refused, which may
+   * be cancelled (null), as the sheet's button asks it (since 1.142.0).
+   */
+  modifier: number | (() => Promise<number | null>);
   /** A Physician skill that stands in for the healer's (since 1.60.0). */
   skill?: number;
+  /** The TL that skill was learned at, where it isn't the healer's (since 1.142.0). */
+  techLevel?: number;
   /** Who attends, as the card names them (since 1.60.0). */
   label?: string;
 }): Promise<void> {
   const { healer, patient } = options;
   if (!mayChange(patient)) return;
 
+  const physician = physicianSkillItem(healer);
   const skill = typeof options.skill === "number" ? options.skill : (skillLevelOf(healer, "Physician") ?? attributeOf(healer, "IQ") - 5);
-  // What the modules add: care, gear, a medical bed (API 1.60.0, tagged "physician").
-  const added = successRollModifiers({
+  // Physician is a technological skill (Characters p. 168), learned at the TL
+  // the caller gives, else at the one recorded for it, else at the healer's own.
+  const personal = parseTechLevel(healer?.system?.tl) ?? 3;
+  const skillTl = typeof options.techLevel === "number" && Number.isFinite(options.techLevel)
+    ? Math.max(0, Math.floor(options.techLevel))
+    : physician
+      ? skillTechLevel(String(physician.name ?? ""), physician.system?.techLevel, personal)
+      : personal;
+
+  // A listener may refuse the rounds, or move them to another tech level --
+  // a doctor without the supplies of their own TL -- and add lines to the
+  // card (API 1.142.0). They go first, so a refusal comes before anybody is
+  // asked for a modifier.
+  const rules = physicianRoundsRules(healer, patient, skillTl);
+  if (rules.refusal) {
+    ui.notifications?.warn(rules.refusal);
+    return;
+  }
+
+  // Working at another TL than the skill's is the Tech-Level Modifiers
+  // table's business (Characters p. 168), as it is for any gear: a line keyed
+  // and tagged `techLevel`, which a listener may change or take out.
+  const given: Array<{ key: string; label: string; value: number }> = [];
+  if (rules.techLevel !== skillTl && isRuleOn("techLevelModifiers")) {
+    const value = techLevelModifier({ skillTechLevel: skillTl, equipmentTechLevel: rules.techLevel, iqBased: (physician?.system?.attribute ?? "IQ") === "IQ" });
+    if (value === null) {
+      ui.notifications?.warn(F("AttendBeyondTl", { tl: rules.techLevel, skill: skillTl }));
+      return;
+    }
+    if (value !== 0) given.push({ key: "techLevel", label: game.i18n.format("GWORLD.TechLevel.Line", { equipment: rules.techLevel, skill: skillTl }), value });
+  }
+
+  const modifier = typeof options.modifier === "function" ? await options.modifier() : options.modifier;
+  if (modifier === null) return;
+
+  // What the modules add: care, gear, a medical bed (API 1.60.0, tagged "physician"),
+  // with the TL line as they left it.
+  const added = successRollLines({
     actor: healer, label: R("Attend"), kind: "skill", skill: "Physician",
-    base: skill, tags: ["physician"], modifiers: [], opponent: patient,
+    base: skill, tags: ["physician", ...given.map((line) => line.key)], modifiers: [...given], opponent: patient,
   }).reduce((sum, line) => sum + line.value, 0);
+  const target = skill + modifier + added;
   const roll = new Roll("3d6");
   await roll.evaluate();
-  const outcome = resolveSuccess(roll.total, skill + options.modifier + added, dieResults(roll));
+  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
   const result = cureResult(outcome);
   const moved = cureHitPoints(result);
 
@@ -446,10 +493,12 @@ export async function attendPatient(options: {
   await post(patient, {
     kind: R("Attend"),
     detail: F("AttendBy", { healer: options.label ?? String(healer?.name ?? ""), skill }),
-    target: skill + options.modifier + added,
+    target,
     dice: dieResults(roll),
     roll: roll.total,
     lines: [
+      ...(rules.techLevel !== skillTl ? [F("AttendAtTl", { tl: rules.techLevel })] : []),
+      ...rules.lines,
       R(`Cure.${result}`),
       ...(moved !== 0 ? [F("CureHp", { hp: Math.abs(moved), previous, now })] : []),
       // "Anyone under the care of a competent physician gets +1 on all rolls
@@ -460,6 +509,12 @@ export async function attendPatient(options: {
     bad: moved < 0,
     rolls: [roll],
   });
+}
+
+/** The healer's Physician skill item, compared through the "/TL" marker, or null. */
+function physicianSkillItem(healer: any): any {
+  const wanted = normalizeSkillName("Physician");
+  return [...(healer?.items ?? [])].find((item: any) => item?.type === "skill" && normalizeSkillName(String(item.name ?? "")) === wanted) ?? null;
 }
 
 /**
