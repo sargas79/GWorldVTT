@@ -1331,6 +1331,7 @@
       "demon": "The spell fails entirely; a demon or other malign entity appears and attacks the caster."
     },
     "Trait": {
+      "GmOnly": "Only the GM can change a character's traits.",
       "Specialty": "Of what",
       "SpecialtyPlaceholder": "Say which: the behaviour, group, weapon or target",
       "SpecialtyHint": "This trait is not complete until it says what it is of.",

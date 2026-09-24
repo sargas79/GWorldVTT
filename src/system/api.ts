@@ -53,6 +53,7 @@ import { currentControlRating, legalityClassOf } from "./legality.js";
 import { surprise, undoKnockdown } from "./knockdown.js";
 import { rollFall } from "./falling.js";
 import { restoreFatigue, spendFatigueFor } from "./fatigue.js";
+import { changeTrait, type TraitChanged } from "./trait-change.js";
 import { bind, bindingOf, breakFreeFromBinding, unbind, type BindingBroken } from "./entangling.js";
 import type { LandingSurface } from "../rules/falling.js";
 import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from "./damage-undo.js";
@@ -96,7 +97,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.111.0";
+export const API_VERSION = "1.112.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -235,6 +236,16 @@ const actors = {
     return bindingOf(actor);
   },
 
+  /**
+   * Changes one of a character's traits, GM only (since 1.112.0): `level`
+   * sets its levels within its cap, `replaceWith` swaps it for another trait
+   * (a compendium name, or item data). Found by `id` or `name`. Resolves to
+   * `{ itemId, from, to, replaced }`, or null.
+   */
+  changeTrait(actor: any, options: { id?: string; name?: string; level?: number; replaceWith?: string | Record<string, any> }): Promise<TraitChanged | null> {
+    return changeTrait(actor, options);
+  },
+
   /** One attempt to break free of a Binding (since 1.107.0): "free", "held", or null. */
   breakFree(actor: any): Promise<"free" | "held" | null> {
     return breakFreeFromBinding(actor);
@@ -312,8 +323,14 @@ const actors = {
     return attendPatient({ ...options, modifier: options.modifier ?? 0 });
   },
 
-  /** An operation (p. 424, since 1.60.0); the roll is tagged `surgery`. */
-  operate(options: { surgeon: any; patient: any; skill?: number; techLevel?: number; anesthetic?: boolean; repairingCrippled?: boolean; equipmentQuality?: number; label?: string; modifier?: number }): Promise<void> {
+  /**
+   * An operation (p. 424, since 1.60.0); the roll is tagged `surgery`. Since
+   * 1.112.0 it resolves to the outcome -- `{ success, margin,
+   * criticalSuccess, criticalFailure, roll, target, techLevel, ... }` -- or
+   * null where the user can't change the patient, and fires
+   * `gworld.afterSuccessRoll` tagged `surgery`.
+   */
+  operate(options: { surgeon: any; patient: any; skill?: number; techLevel?: number; anesthetic?: boolean; repairingCrippled?: boolean; equipmentQuality?: number; label?: string; modifier?: number }): ReturnType<typeof operate> {
     return operate({ ...options, anesthetic: options.anesthetic ?? true, repairingCrippled: options.repairingCrippled ?? false, equipmentQuality: options.equipmentQuality ?? 0, modifier: options.modifier ?? 0 });
   },
 
