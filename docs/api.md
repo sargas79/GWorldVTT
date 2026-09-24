@@ -2739,8 +2739,9 @@ Two fields a module may read (since 1.62.0):
     asked for: the attacker winning for `knockAway`, the foe winning by less
     than 3 or tying for `setUnready(item, true)`. Readying a weapon is never
     a disarm's to do. Each card gets one change through; the same card sent
-    again is refused. So owning a character is no longer enough to have any
-    foe's weapon knocked away. The system's own disarm passes its contest's
+    again is refused. So owning a character is no longer enough on its own,
+    and a card can't be reused or borrowed from somebody else's disarm. The
+    system's own disarm passes its contest's
     card; a module's own disarm rolls its contest through `roll.quickContest`
     with the tag `disarm`, the attacker first and the foe's weapon as the
     second side's `item`, and passes the `messageId` it gets back. A GM
@@ -2749,9 +2750,11 @@ Two fields a module may read (since 1.62.0):
     `CONFIG.queries` handler, which the server takes from the sender's own
     connection; a user id in the request isn't read. A caller who could not
     get through (no say of their own, and no attacker they own with a
-    contest) gets null without the GM being asked. The card is only as
-    trustworthy as the rolls in the chat log: it stops a bare API call or
-    query, not a user forging a card, which stays in the log for the GM to
+    contest) gets null without the GM being asked. What this doesn't stop:
+    every roll in Foundry is made on the roller's own client, so the GM's
+    client can't tell a contest rolled at invented scores (a
+    `roll.quickContest` call with any `base`) from a real one. Such a card
+    still passes; it stays in the chat log, scores and all, for the GM to
     see.
 - **`roll.registerContestResolver({ module, key, label, applies, resolve })`.**
   For the Quick Contests the system offers, the first resolver whose

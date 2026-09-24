@@ -17,7 +17,11 @@
  * card of the Quick Contest tagged `disarm` that the sender rolled in the
  * last few minutes, whose attacker they own, whose foe's side is this weapon,
  * and whose result is this change. Each card gets through once. Owning a
- * character is no longer enough to knock away any foe's weapon.
+ * character is no longer enough on its own. The scores on the card are the
+ * roller's to set, as every roll in Foundry is made on the roller's client,
+ * so a contest rolled at invented scores still passes -- in plain sight in
+ * the chat log. Its effective scores aren't capped here: they carry every
+ * module's modifiers and resolvers, which the GM's client can't re-derive.
  *
  * A weapon knocked away leaves the foe's hands: it stops being carried, so
  * it is on no attack list and weighs nothing, until somebody ticks it carried
