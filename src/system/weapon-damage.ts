@@ -37,6 +37,8 @@ import {
 import { toleratedWoundingModifier, noInjuryTolerance } from "../rules/injury-tolerance.js";
 import type { DamageType } from "../rules/types.js";
 import { COMBAT_HOOKS, callCombatHook } from "./combat-extensions.js";
+import { facingAgainstTarget } from "./attack-arc.js";
+import { targetedTokens } from "./targets.js";
 import { objectStats, weaponMakeOf } from "./object-stats.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/weapon-damage.hbs`;
@@ -277,7 +279,11 @@ export interface WeaponTarget {
  */
 export function weaponTargetsFor(actor: any, foe: any): WeaponTarget[] {
   const targets: WeaponTarget[] = weaponsInHand(foe).map((w) => ({ ...w, canDisarm: true, noParry: false, noDefenseBonus: false, disarmPenaltyForAll: false }));
-  const hooked = callCombatHook(COMBAT_HOOKS.weaponTargets, { actor, foe, targets });
+  // Where the blow comes from, read as a called shot reads it (since API
+  // 1.137.0): some of what a foe carries can't be reached from every side.
+  // Only for the one token targeted, which is the foe a strike is made at.
+  const facing = targetedTokens()[0]?.actor === foe ? facingAgainstTarget(actor) : null;
+  const hooked = callCombatHook(COMBAT_HOOKS.weaponTargets, { actor, foe, targets, arc: facing?.arc ?? null, side: facing?.side ?? null });
   const out = new Map<string, WeaponTarget>();
   for (const t of Array.isArray(hooked.targets) ? hooked.targets : []) {
     const id = String(t?.id ?? "");

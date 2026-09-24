@@ -166,7 +166,7 @@ import {
 import { WILD_SWING_SKILL_CAP, allOutAttackBonus, stopThrustBonus, strongAttackDamageBonus, wildSwingPenalty, type AllOutAttackOption } from "../rules/maneuvers.js";
 import { flailKind, type FlailKind } from "../rules/defenses.js";
 import { canTargetFromArc, missByOneHitsTorso } from "../rules/hit-locations.js";
-import { arcAgainstTarget } from "./attack-arc.js";
+import { facingAgainstTarget } from "./attack-arc.js";
 import { POSTURE_EFFECTS } from "../rules/posture.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
@@ -1761,7 +1761,9 @@ async function rollAction(
   // the option, so the roll is abandoned rather than made on a promise.
   // The eye can be aimed at only from the front or sides (Campaigns p. 552).
   const aimedShot = rollType === "attack" ? (melee?.calledShot ?? shot?.calledShot ?? null) : null;
-  const aimedArc = aimedShot ? arcAgainstTarget(actor) : null;
+  // Read for every attack, since `gworld.attackModifiers` hands it on too.
+  const facing = rollType === "attack" ? facingAgainstTarget(actor) : null;
+  const aimedArc = aimedShot ? (facing?.arc ?? null) : null;
   if (aimedShot && (!canTargetFromArc(aimedShot.hitLocation, aimedArc) || !registeredLocationAllowsArc(aimedShot.addonLocation, aimedArc))) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.CalledShot.NotFromBehind"));
     return null;
@@ -1965,6 +1967,11 @@ async function rollAction(
         // Since 1.91.0: a zen skill's success this shot spends, `{ id, skill }`,
         // or null. Set it to null and the shot takes no `zen` line.
         zen: zenShot ? { ...zenShot } : (null as ZenShot | null),
+        // Since 1.137.0: the arc the blow comes at the one target from, and
+        // which side for a side attack, as the called shot read it. Null
+        // outside tactical combat or without a single target. Read-only.
+        arc: facing?.arc ?? null,
+        side: facing?.side ?? null,
       })
     : null;
   // A module's rules may make this attack impossible here: it isn't rolled.
