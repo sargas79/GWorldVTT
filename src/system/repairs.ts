@@ -155,6 +155,11 @@ export interface EquipmentFailureResult {
   margin: number;
   /** Whether the thing's hit points were marked down to what the result calls for. */
   applied: boolean;
+  /**
+   * A critical failure a `gworld.equipmentFailure` listener made an ordinary
+   * failure (since API 1.127.0): `outcome` is then `failure`.
+   */
+  downgraded: boolean;
 }
 
 /**
@@ -188,13 +193,20 @@ async function rollEquipmentFailure(options: {
   /** Lines the card shows beside the hook's: the module's own modifier. */
   lines: ModifierLine[];
   failureModifiers: ModifierLine[];
+  /** A listener's downgrade of a critical failure: null for none, or the card's line ("" for the system's). */
+  downgrade: string | null;
   title: string;
   apply: boolean;
 }): Promise<EquipmentFailureResult> {
   const { actor, item, target } = options;
   const roll = new Roll("3d6");
   await roll.evaluate();
-  const outcome = resolveSuccess(roll.total, target, faces(roll));
+  const rolled = resolveSuccess(roll.total, target, faces(roll));
+  // Something between the thing and the harm -- protection in the circuit,
+  // say -- can make a critical failure an ordinary one before the thing is
+  // marked down, so it needs a minor repair rather than a major one.
+  const downgraded = rolled.criticalFailure && options.downgrade !== null;
+  const outcome = downgraded ? { ...rolled, criticalFailure: false } : rolled;
   const result = exposureOutcome({ success: outcome.success, criticalFailure: outcome.criticalFailure });
 
   // A thing that has failed cannot work until it is mended, and the state
@@ -220,6 +232,7 @@ async function rollEquipmentFailure(options: {
     roll: roll.total,
     outcome,
     result: L(`Exposure.${result}`),
+    downgraded: downgraded ? options.downgrade || L("Downgraded") : null,
     failed: result !== "works",
   });
   await ChatMessage.implementation.create({
@@ -236,6 +249,7 @@ async function rollEquipmentFailure(options: {
     roll: roll.total,
     margin: outcome.margin,
     applied: marks,
+    downgraded,
   };
 }
 
@@ -268,6 +282,7 @@ export async function exposureCheck(options: {
     hp,
     lines: [],
     failureModifiers: failure.modifiers,
+    downgrade: failure.downgrade,
     title: L("ExposureTitle", { name: String(item.name) }),
     apply: true,
   });
@@ -303,6 +318,7 @@ export async function equipmentFailure(options: {
     hp,
     lines: [{ label: label ?? L("FailureModifier"), value: modifier }],
     failureModifiers: failure.modifiers,
+    downgrade: failure.downgrade,
     title: L("FailureTitle", { name: String(item.name), label: label ?? L("FailureLabel") }),
     apply: options.apply !== false,
   });

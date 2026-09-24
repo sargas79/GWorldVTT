@@ -92,6 +92,10 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     // so they are optional" -- the book's own words, and the reason this one
     // starts switched off.
     { key: "bleeding", reference: "Campaigns p. 420", default: false },
+    // Big adds rolled as dice, 1d+9 as 3d+2. The book heads it "Optional
+    // Rule", and switching it on changes figures every player already knows
+    // from their sheet, so it starts switched off.
+    { key: "modifyingDiceAdds", reference: "Characters p. 269", default: false },
   ],
   rolls: [
     { key: "regularContests", reference: "Campaigns p. 349", default: true },

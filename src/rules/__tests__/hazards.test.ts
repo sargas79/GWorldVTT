@@ -109,6 +109,11 @@ describe("electricity", () => {
     expect(shockHeartAttack({ success: false, margin: 2, criticalFailure: true, heartAttackMargin: 10 })).toBe(false);
     expect(shockHeartAttack({ success: true, margin: 3, heartAttackMargin: 0 })).toBe(false);
   });
+
+  it("counts a critical failure only where told to (API 1.127.0)", () => {
+    expect(lethalShock({ success: false, criticalFailure: true, margin: 2, ht: 11, heartAttackOnCritical: false }).heartAttack).toBe(false);
+    expect(lethalShock({ success: false, criticalFailure: true, margin: 5, ht: 11, heartAttackOnCritical: false }).heartAttack).toBe(true);
+  });
 });
 
 describe("fire", () => {

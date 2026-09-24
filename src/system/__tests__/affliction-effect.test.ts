@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { applyAfflictionEffects } from "../afflictions.js";
+import { afflictionLocation, applyAfflictionEffects } from "../afflictions.js";
+import { consumeCalledShot, peekCalledShot } from "../called-shot.js";
 import { successRollModifiers } from "../procedure-extensions.js";
 
 const globals = globalThis as Record<string, unknown>;
@@ -132,5 +133,63 @@ describe("the attack a resistance roll is made against (since 1.49.0)", () => {
       tags: ["resist", "affliction"],
       attack: { distanceYards: 12, halfDamageRange: 5, dr: 6, drCounted: true },
     });
+  });
+});
+
+describe("where the attack behind an affliction struck (since 1.130.0)", () => {
+  it("is where the attack was aimed", () => {
+    expect(afflictionLocation({ hitLocations: true, area: false, shot: { hitLocation: "face", chink: false } })).toEqual({
+      hitLocation: "face",
+      addonLocation: null,
+    });
+  });
+
+  it("carries a module's location beside its parent", () => {
+    const shot = { hitLocation: "torso" as const, chink: false, addonLocation: "mod.tail" };
+    expect(afflictionLocation({ hitLocations: true, area: false, shot })).toEqual({ hitLocation: "torso", addonLocation: "mod.tail" });
+  });
+
+  it("is the torso for a blow nobody aimed", () => {
+    expect(afflictionLocation({ hitLocations: true, area: false, shot: null })).toEqual({ hitLocation: "torso", addonLocation: null });
+  });
+
+  it("is nowhere for an area or a cone, or without hit locations", () => {
+    const shot = { hitLocation: "eye" as const, chink: false };
+    expect(afflictionLocation({ hitLocations: true, area: true, shot })).toBeNull();
+    expect(afflictionLocation({ hitLocations: false, area: false, shot })).toBeNull();
+  });
+
+  it("reaches the gworld.afflictionEffect listener", async () => {
+    const target = victim();
+    let seen: Record<string, unknown> | null = null;
+    globals.Hooks = {
+      callAll: (event: string, context: Record<string, unknown>) => {
+        if (event === "gworld.afflictionEffect") seen = { ...context };
+      },
+    };
+    await applyAfflictionEffects({ actor: target, ...attack, hitLocation: "eye", addonLocation: null });
+    expect(seen).toMatchObject({ hitLocation: "eye", addonLocation: null });
+  });
+
+  it("is null to the listener where the caller names none", async () => {
+    const target = victim();
+    let seen: Record<string, unknown> | null = null;
+    globals.Hooks = {
+      callAll: (event: string, context: Record<string, unknown>) => {
+        if (event === "gworld.afflictionEffect") seen = { ...context };
+      },
+    };
+    await applyAfflictionEffects({ actor: target, ...attack });
+    expect(seen).toMatchObject({ hitLocation: null, addonLocation: null });
+  });
+
+  it("reads the called shot without spending it, so the damage roll still finds it", async () => {
+    const attacker = victim();
+    (attacker as unknown as { unsetFlag: unknown }).unsetFlag = vi.fn(async () => undefined);
+    await attacker.setFlag("gworld", "calledShot", { hitLocation: "face", chink: false });
+    expect(peekCalledShot(attacker)).toEqual({ hitLocation: "face", chink: false });
+    expect(peekCalledShot(attacker)).toEqual({ hitLocation: "face", chink: false });
+    expect(await consumeCalledShot(attacker)).toEqual({ hitLocation: "face", chink: false });
+    expect(peekCalledShot({})).toBeNull();
   });
 });

@@ -1030,6 +1030,14 @@ function rangedModeField() {
     /** The projectile's own skill level, rolled in place of the firer's once aimed (0 for the firer's). */
     guidedSkillLevel: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
     /**
+     * A homing weapon that homes on a spot someone else keeps on the target
+     * (since API 1.128.0), rather than on the target itself. It only hits
+     * while the spot is held: a roll for each turn of flight, by the firer
+     * unless a module names someone else. Meaningless unless `guidance` is
+     * "homing".
+     */
+    semiActive: new fields.BooleanField({ initial: false }),
+    /**
      * An attack that covers ground rather than striking a point (p. 413), like
      * a flamethrower or a gas cloud. "Active defenses don't protect against an
      * area attack, but victims may dive for cover or retreat out of the area",
