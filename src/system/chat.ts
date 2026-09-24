@@ -37,6 +37,7 @@ import { EXTRA_EFFORT_FP, FEVERISH_DEFENSE_BONUS } from "../rules/extra-effort.j
 import { spendFatigue } from "./extra-effort.js";
 import { isRuleOn } from "./optional-rules.js";
 import { combatStyle } from "./settings.js";
+import { RulesSettings } from "./apps/rules-settings.js";
 import { arcDefense, attackArc, hexDirection, restrictedArc, retreatBonus, type Arc } from "../rules/tactical.js";
 import { attackDirection, facingOf } from "./hex.js";
 import { tacticalOnScene } from "./settings.js";
@@ -2329,5 +2330,20 @@ export function registerChatHooks(): void {
     void addAfflictionControls(message, html);
     void addBuySuccessControls(message, html);
     void addGuidanceControls(message, html);
+    addRulesLinks(html);
   });
+}
+
+/**
+ * A card line a rule wrote -- "Adds rolled as dice" -- opens the rules page,
+ * which a player reads and only the GM can change: the answer to why the dice
+ * are not the ones on the sheet's stored damage.
+ */
+function addRulesLinks(html: HTMLElement): void {
+  for (const link of html.querySelectorAll<HTMLElement>("[data-gworld-open-rules]")) {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      void RulesSettings.open();
+    });
+  }
 }

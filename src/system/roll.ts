@@ -24,7 +24,7 @@ import {
 import { consumeTurnedBlade, recordTurnedBlade } from "./turned-blade.js";
 import { consumePulledBlow, pulledFormula, recordPulledBlow } from "./pulled-blow.js";
 import { isRuleOn } from "./optional-rules.js";
-import { normalizeDamage } from "./modifying-dice.js";
+import { normalizeDamage, rolledDice } from "./modifying-dice.js";
 import { rollBreakdown, signed, type RollBreakdown } from "./roll-breakdown.js";
 import { maySpray, promptForSpray, type SprayShot } from "./spraying-fire.js";
 import { fireSuppression, suppressing } from "./suppression-fire.js";
@@ -1411,6 +1411,10 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
   // bonuses were counted from the dice before conversion, as they should be.
   const modified = normalizeDamage(formatDiceAdds(summed));
   const rolled = modified.converted ? (parseDiceAdds(modified.normalized) ?? summed) : summed;
+  // An explosion reaches as far as the dice it rolls: counted after the rule,
+  // since 2d+5 rolled as 3d+1 is three dice of damage (see rolledDice), and a
+  // multiplied roll is that many dice again.
+  const blastDice = rolled.dice * (rolled.multiplier ?? 1);
   const roll = new Roll(toRollFormula(rolled));
   await roll.evaluate();
 
@@ -1453,13 +1457,13 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     explosive,
     // "if an explosion does 6dx2 damage, everyone within 24 yards is
     // vulnerable" -- twelve dice, not six. The multiplier counts.
-    blastRadius: explosive ? blastRadius(parsed.dice * (parsed.multiplier ?? 1)) : 0,
+    blastRadius: explosive ? blastRadius(blastDice) : 0,
     // "In cinematic combat, explosions do no direct damage! Ignore
     // fragmentation, too" (p. 417) -- so a cinematic grenade throws none, and
     // the card does not offer a radius for fragments nobody will roll.
     fragmentation: fragmentSpec ? fragmentationLabel(fragmentSpec) : fragments,
     fragmentationRadius: fragments
-      ? fragmentationRadius(parseDiceAdds(fragments)?.dice ?? 0)
+      ? fragmentationRadius(rolledDice(fragments))
       : 0,
     fragmentLingers: fragmentSpec?.linger
       ? game.i18n.format("GWORLD.Fragments.Lingers", {
@@ -1529,8 +1533,9 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(fragmentSpec ? { fragments: fragmentSpec } : {}),
           // The dice, not the rolled total: the blast radius is set by how
           // many dice the attack rolls, whatever they came up -- and a
-          // multiplied roll is that many dice again.
-          diceOfDamage: parsed.dice * (parsed.multiplier ?? 1),
+          // multiplied roll is that many dice again. The dice rolled, after
+          // Modifying Dice + Adds, as the card's radius counts them.
+          diceOfDamage: blastDice,
         },
       },
     },
