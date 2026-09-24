@@ -104,7 +104,7 @@ Contents:
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
 | `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0), and `bind(actor, options)`, `unbind(actor)`, `binding(actor)` and `breakFree(actor)` (since 1.107.0; see *Binding*), and `spendFatigue(actor, fp, options)` (since 1.109.0; see *Medical hooks*), and `changeTrait(actor, options)` (since 1.112.0; `operate` also resolves to its outcome since then), and `tow(actor, options)` and `stopTowing(actor)` (since 1.113.0; see *Towing and the wheelchair*), and `cripple(actor, location, options)`, `crippled(actor)` and `healCrippled(actor, which)` (since 1.114.0; see *Crippled parts*). |
-| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). `equipmentFailure({ actor?, item, modifier?, label?, apply? })` (since 1.118.0) rolls an equipment failure roll for a thing (see *Equipment failure rolls*). |
+| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). `equipmentFailure({ actor?, item, modifier?, label?, apply? })` (since 1.118.0) rolls an equipment failure roll for a thing (see *Equipment failure rolls*). `setUnready(item, unready, { reason? })` and `knockAway(item, { reason? })` (since 1.136.0) leave a weapon unready or knock it out of its holder's hands, through the GM's client where the user doesn't own it (see *Disarms*). |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0). |
@@ -1325,7 +1325,11 @@ Two fields a module may read (since 1.62.0):
   `outcome`. Since 1.30.0 each side of a contest also gets `opponent`, the
   actor on the other side, and its `tags` say what the contest is: `feint`, or
   `quickContest` with `disarm` for a disarm (tags a Quick Contest's caller
-  passes reach the contest resolvers too).
+  passes reach the contest resolvers too). Since 1.136.0 a side of
+  `roll.quickContest` may name its `item`, which that side's context carries
+  as a success roll's does, and the contest resolvers and
+  `gworld.afterQuickContest` see it on the side too; a disarm names both
+  weapons (see *Disarms*).
 - **The item behind a roll, secret rolls, influence contests** (since
   1.95.0):
   - *`item`.* The `gworld.successRollModifiers` and `gworld.afterSuccessRoll`
@@ -2279,7 +2283,32 @@ Two fields a module may read (since 1.62.0):
   marginOfVictory }`. Each side is `{ actor, base, effective, outcome }`, where
   `outcome` is its success roll's result; the contest's `outcome` is `"first"`,
   `"second"` or `"tie"`. The Evade contest is tagged `evade`, with the mover
-  first and the foe second.
+  first and the foe second. Since 1.136.0 each side also has `item`, the item
+  its caller named, or null.
+- **Disarms** (since 1.136.0; Campaigns pp. 400-401). The Quick Contest that
+  follows a strike at a weapon names the weapons on both sides: the attacker's
+  side carries the weapon struck with as `item` (none for an unarmed strike),
+  and the foe's the weapon struck at, so a `gworld.successRollModifiers`
+  listener can tell which one is being held on to. The foe rolls their skill
+  with that weapon, the best of its melee rows, or DX for a missile weapon or
+  a thing with no melee row. The attacker strikes with their best weapon skill
+  whose weapon is ready and not stuck. Then the result is applied to the
+  foe's weapon: a weapon knocked away is no longer carried or equipped (and
+  not unready), so it is on no attack list and counts for no weight until
+  somebody picks it up by carrying it again; one kept but not by 3 or more is
+  left `system.unready`, for a Ready maneuver to bring back up. Where the
+  user doesn't own the foe the change is made on the active GM's client,
+  through the Foundry user query `gworld.heldWeapon`; with no GM connected
+  nothing is changed and the user is told. Then `gworld.afterDisarm` fires
+  with `{ actor, foe, item, result }`: `item` the weapon struck at, or null
+  where none was named, and `result` `{ disarmed, unready, attackerDisarmed }`.
+  `items.setUnready(item, unready, { reason? })` and `items.knockAway(item, {
+  reason? })` make the same changes for a module's own disarm or snatch, with
+  no roll and no card, through the GM in the same way. They return `{ itemId,
+  unready, reason }` and `{ itemId, reason }`, `reason` as given, for the
+  module's own card, or null: for anything but equipment on an actor
+  (`setUnready`), anything but equipment or a shield on an actor
+  (`knockAway`), or where neither the user nor a GM connected may change it.
 - **`roll.registerContestResolver({ module, key, label, applies, resolve })`.**
   For the Quick Contests the system offers, the first resolver whose
   `applies(context)` takes the contest returns the `{ base, note }` either side

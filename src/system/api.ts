@@ -33,6 +33,7 @@ import { combatApi } from "./combat-extensions.js";
 import { clearZenShot, pendingZenShot, registerZenSkill, rollZenSkill, zenSkillsOf } from "./zen.js";
 import { loadInstantly, refundShots } from "./ammunition.js";
 import { clearMalfunction, malfunctionOf, setMalfunction } from "./malfunctions.js";
+import { knockWeaponAway, setWeaponUnready, type KnockedAway, type UnreadyChanged } from "./held-weapons.js";
 import { freeStuckWeapon, letGoOfStuckWeapon, setStuckWeapon, stuckWeaponOf } from "./picks.js";
 import { registerSlam } from "./slam.js";
 import { beginGrapple, endGrapple, grappleOf, grapplesOf, updateGrapple } from "./grappling.js";
@@ -102,7 +103,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.120.0";
+export const API_VERSION = "1.136.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -624,6 +625,30 @@ const items = {
    */
   equipmentFailure(options: { actor?: any; item: any; modifier?: number; label?: string; apply?: boolean }): Promise<EquipmentFailureResult | null> {
     return equipmentFailure(options);
+  },
+
+  /**
+   * Leaves a weapon unready, or readies it with false (since 1.136.0), with
+   * no roll and no card: `system.unready`, as a swing that unreadies it sets.
+   * Made through the active GM's client where the user doesn't own the item.
+   * Returns `{ itemId, unready, reason }`, or null for anything but equipment
+   * on an actor, or where neither the user nor a GM connected may change it.
+   */
+  setUnready(item: any, unready: boolean, options: { reason?: string } = {}): Promise<UnreadyChanged | null> {
+    return setWeaponUnready(item, unready, options);
+  },
+
+  /**
+   * Knocks a weapon or shield out of its holder's hands (since 1.136.0), as a
+   * won disarm does, with no roll and no card: no longer carried or equipped,
+   * so on no attack list, until somebody picks it up by carrying it again.
+   * Made through the active GM's client where the user doesn't own the item.
+   * Returns `{ itemId, reason }`, or null for anything but equipment or a
+   * shield on an actor, or where neither the user nor a GM connected may
+   * change it.
+   */
+  knockAway(item: any, options: { reason?: string } = {}): Promise<KnockedAway | null> {
+    return knockWeaponAway(item, options);
   },
 };
 

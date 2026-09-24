@@ -7,6 +7,7 @@
  */
 
 import { registerConsciousnessTurns } from "./system/consciousness.js";
+import { registerHeldWeaponQuery } from "./system/held-weapons.js";
 import "./styles/gworld.css";
 import "./styles/sheet-v2.css";
 import "./styles/party.css";
@@ -151,6 +152,9 @@ Hooks.once("init", () => {
   registerCombatStateHooks();
   registerProcedureHooks(setCondition);
   registerConsciousnessTurns();
+  // A disarm changes the foe's weapon, which a player rarely owns, so the
+  // GM's client makes the change when asked.
+  registerHeldWeaponQuery();
 
   const { DocumentSheetConfig } = foundry.applications.apps;
   DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.applications.sheets.ActorSheetV2);

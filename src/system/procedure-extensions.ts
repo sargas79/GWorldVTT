@@ -90,6 +90,12 @@ export const PROCEDURE_HOOKS = Object.freeze({
   afterQuickContest: "gworld.afterQuickContest",
   /** Once a knockdown roll is applied (since 1.39.0): `{ actor, outcome, result, previousPosture }`. */
   afterKnockdown: "gworld.afterKnockdown",
+  /**
+   * Once a disarm's Quick Contest is applied (since 1.136.0): `{ actor, foe,
+   * item, result }`, `item` the foe's weapon struck at (or null) and `result`
+   * `{ disarmed, unready, attackerDisarmed }`.
+   */
+  afterDisarm: "gworld.afterDisarm",
   /** After a roll to stay conscious (since 1.43.0): `{ actor, outcome, previousPosture }`. */
   afterConsciousnessRoll: "gworld.afterConsciousnessRoll",
   /** When a combat starts: `(combat)`. */
@@ -609,6 +615,8 @@ export interface QuickContestSideResult {
   base: number;
   effective: number;
   outcome: unknown;
+  /** The item the side rolled with, or null (since 1.136.0). */
+  item?: any;
 }
 
 /** Tells the listeners who won a Quick Contest (since 1.37.0). */
@@ -626,8 +634,9 @@ export function afterQuickContest(context: {
 /** What a contest resolver can see. */
 export interface ContestResolverContext {
   label: string;
-  first: { actor: any; base: number; note?: string };
-  second: { actor: any; base: number; note?: string };
+  /** Each side's `item`, where the caller named one (since 1.136.0). */
+  first: { actor: any; base: number; note?: string; item?: any };
+  second: { actor: any; base: number; note?: string; item?: any };
   tags: string[];
 }
 
