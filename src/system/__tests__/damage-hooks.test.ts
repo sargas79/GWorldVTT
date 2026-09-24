@@ -157,6 +157,16 @@ describe("gworld.armorDr", () => {
     expect(arcs).toEqual(["back", null]);
   });
 
+  it("says what the blow was, as its roll did: a slam, or none (since 1.139.0)", async () => {
+    const { actor } = armoured({ dr: 6 });
+    const sources: unknown[] = [];
+    globals.Hooks = { callAll: (event: string, context: { source?: unknown }) => { if (event === "gworld.armorDr") sources.push(context.source); } };
+    await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso", source: "slam" } as never);
+    await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso", source: "slammed" } as never);
+    await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso" } as never);
+    expect(sources).toEqual(["slam", "slammed", null]);
+  });
+
   it("knows how the blow was aimed: the called shot, a chink, the module's location and the options (since 1.108.0)", async () => {
     const { actor } = armoured({ dr: 6 });
     const seen: any[] = [];

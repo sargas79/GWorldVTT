@@ -178,9 +178,9 @@
                 {{/if}}
               {{else if entry.atk.damageRollable}}
                 {{#if entry.ranged}}
-                  <button type="button" class="v2-button v2-button-steel rollable" {{> "gworld.part.attack-ranged-damage" atk=entry.atk}}>{{localize "GWORLD.SheetV2.Damage"}} {{entry.atk.damage}} {{entry.atk.damageType}}</button>
+                  <button type="button" class="v2-button v2-button-steel rollable" {{> "gworld.part.attack-ranged-damage" atk=entry.atk}}>{{localize "GWORLD.SheetV2.Damage"}} {{shownDamage entry.atk.damage}} {{entry.atk.damageType}}</button>
                 {{else}}
-                  <button type="button" class="v2-button v2-button-steel rollable" {{> "gworld.part.attack-melee-damage" atk=entry.atk}}>{{localize "GWORLD.SheetV2.Damage"}} {{entry.atk.damage}} {{entry.atk.damageType}}</button>
+                  <button type="button" class="v2-button v2-button-steel rollable" {{> "gworld.part.attack-melee-damage" atk=entry.atk}}>{{localize "GWORLD.SheetV2.Damage"}} {{shownDamage entry.atk.damage}} {{entry.atk.damageType}}</button>
                 {{/if}}
               {{/if}}
               {{#if (and @root.rules.feint entry.preview)}}

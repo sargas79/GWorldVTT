@@ -1276,6 +1276,11 @@
                      aria-label="{{localize 'GWORLD.Item.AimingSkill'}}" data-tooltip="{{localize 'GWORLD.Item.AimingSkillHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <input type="number" name="system.rangedModes.{{i}}.guidedSkillLevel" value="{{m.guidedSkillLevel}}" min="0" step="1" style="width:60px"
                      aria-label="{{localize 'GWORLD.Item.GuidedSkillLevel'}}" data-tooltip="{{localize 'GWORLD.Item.GuidedSkillLevelHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              {{#if (eq m.guidance "homing")}}
+                <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.SemiActiveHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.semiActive"
+                       {{#if m.semiActive}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
+                  {{localize "GWORLD.Item.SemiActive"}}</label>
+              {{/if}}
               <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.AreaAttackHint'}}"><input type="checkbox" name="system.rangedModes.{{i}}.areaAttack"
                      {{#if m.areaAttack}}checked{{/if}} {{#unless @root.editable}}disabled{{/unless}} />
                 {{localize "GWORLD.Item.AreaAttack"}}</label>

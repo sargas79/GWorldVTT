@@ -321,3 +321,19 @@ export function toolModifier(quality: EquipmentQuality, statedModifier: number |
     ? Math.trunc(statedModifier)
     : equipmentQualityModifier(quality, options);
 }
+
+/**
+ * What a skill's `tools` line comes to (Campaigns p. 345): the grade of the
+ * tool it is used with, where one is carried; the no-equipment figure where
+ * none is and the task needs equipment (-10 for a technological skill, -5
+ * otherwise); nothing where it doesn't. Without the second case a skill
+ * used with improvised gear would read worse than one used with nothing at
+ * all (since API 1.135.0).
+ */
+export function skillEquipmentModifier(
+  tool: { quality: number } | null | undefined,
+  options: { needsEquipment: boolean; technological: boolean },
+): number {
+  if (tool) return tool.quality;
+  return options.needsEquipment ? equipmentQualityModifier("none", { technological: options.technological }) : 0;
+}

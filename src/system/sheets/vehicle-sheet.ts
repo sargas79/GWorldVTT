@@ -22,7 +22,9 @@ import { promptForVehicleHit } from "./character-prompts.js";
 import { damageAtScale, hitPointsAfterBattle } from "../damage-scale.js";
 import type { DamageScale } from "../../rules/scale.js";
 import { FRAGILITY_CODES, LOCOMOTIONS, activeMove, fragilityCodes, leaveSeat, vehicleMoves } from "../../rules/vehicles.js";
-import { aimableLocations, DR_LOCATIONS, VEHICLE_ARCS, vehicleDrLabel } from "../../rules/vehicle-combat.js";
+import {
+  aimableLocations, DR_LOCATIONS, MOVE_CRIPPLING_LOCATIONS, VEHICLE_ARCS, vehicleDrLabel,
+} from "../../rules/vehicle-combat.js";
 import { reportRefusedDrop } from "./drop-errors.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -39,6 +41,17 @@ const L = (key: string, data?: Record<string, unknown>) =>
 
 /** An em dash, for a column the table leaves empty. */
 const NOTHING = "—";
+
+/**
+ * The Hnd/SR tooltip: the lines that say why, less those a Move gave, which
+ * the Move itself shows.
+ */
+function handlingHint(lines: unknown): { hint?: string } {
+  const said = ((Array.isArray(lines) ? lines : []) as Array<{ label: string; stat?: string }>)
+    .filter((line) => line.stat !== "acceleration" && line.stat !== "topSpeed")
+    .map((line) => line.label);
+  return said.length ? { hint: said.join("; ") } : {};
+}
 
 export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static override DEFAULT_OPTIONS = {
@@ -156,14 +169,26 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
           label: L("HandlingStability"),
           // As the rules read them now, where a module's state changed them (API 1.115.0).
           value: `${(derived.stats?.handling ?? v.handling) >= 0 ? "+" : ""}${derived.stats?.handling ?? v.handling}/${derived.stats?.stability ?? v.stability}`,
-          ...(derived.stats?.lines?.length ? { hint: derived.stats.lines.map((line: { label: string }) => line.label).join("; ") } : {}),
+          ...handlingHint(derived.stats?.lines),
         },
         { label: L("Ht"), value: `${v.ht}${fragilityCodes(v.fragility).join("")}` },
         // Each Move it has, the second named by the way it moves (pp. 462-465).
-        ...vehicleMoves(v).map((move, index) => ({
-          label: index === 0 ? L("Move") : L("SecondMove", { locomotion: L(`Locomotion.${move.locomotion}`) }),
-          value: `${move.acceleration}/${move.topSpeed}${index === 0 && v.roadBound ? "*" : ""}`,
-        })),
+        // The one in use as the rules read it now, with what changed it --
+        // a crippled wheel, a module's state -- as its tooltip (API 1.134.0).
+        ...vehicleMoves(v).map((move, index, moves) => {
+          const inUse = index === (v.secondMoveInUse === true && moves[1] ? 1 : 0);
+          const now = inUse && derived.stats?.move ? derived.stats.move : move;
+          const why = inUse
+            ? ((derived.stats?.lines ?? []) as Array<{ label: string; stat?: string }>)
+                .filter((line) => line.stat === "acceleration" || line.stat === "topSpeed")
+                .map((line) => line.label)
+            : [];
+          return {
+            label: index === 0 ? L("Move") : L("SecondMove", { locomotion: L(`Locomotion.${move.locomotion}`) }),
+            value: `${now.acceleration}/${now.topSpeed}${index === 0 && v.roadBound ? "*" : ""}`,
+            ...(why.length ? { hint: why.join("; ") } : {}),
+          };
+        }),
         { label: L("LoadedWeightShort"), value: `${v.loadedWeight} t` },
         { label: L("LoadShort"), value: `${v.load} t` },
         { label: L("Sm"), value: v.sm >= 0 ? `+${v.sm}` : String(v.sm) },
@@ -209,6 +234,15 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       occupants,
       seats: derived.seats ?? { crew: 0, passengers: 0 },
       crowded: derived.crowded === true,
+      // The parts it has that a hit can cripple and that change how it
+      // moves, each with how many are crippled now (p. 555; API 1.134.0).
+      crippledParts: MOVE_CRIPPLING_LOCATIONS
+        .filter((location) => ((derived.locations ?? []) as string[]).includes(location) || Number(system.crippled?.[location]) > 0)
+        .map((location) => ({
+          name: `system.crippled.${location}`,
+          label: game.i18n.localize(`GWORLD.Vehicle.Location.${location}`),
+          value: Number(system.crippled?.[location]) || 0,
+        })),
       wrecked: derived.wrecked === true,
       battered: derived.battered === true,
 

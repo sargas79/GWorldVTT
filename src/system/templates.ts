@@ -6,6 +6,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { shownDamage } from "./modifying-dice.js";
 
 declare const Handlebars: {
   registerHelper(name: string, fn: (...args: any[]) => unknown): void;
@@ -183,6 +184,14 @@ export function registerTemplateHelpers(): void {
     // Whole numbers of pounds read better without trailing zeroes.
     return p === 1 && Number.isInteger(v) ? String(v) : v.toFixed(p);
   });
+
+  /**
+   * A damage formula as the table rolls it: with Modifying Dice + Adds on,
+   * 1d+9 shows as 3d+2 (Characters p. 269). For what is shown only -- the
+   * data attribute a damage roll reads keeps the formula as worked out, since
+   * the roll converts once its own bonuses are in.
+   */
+  Handlebars.registerHelper("shownDamage", (formula: unknown) => shownDamage(formula));
 
   /** A signed number, for reaction and skill modifiers. */
   Handlebars.registerHelper("signed", (value: number) => {

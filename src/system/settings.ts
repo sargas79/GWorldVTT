@@ -15,6 +15,7 @@ import { OPTIONAL_RULES_KEY, defaultRuleState } from "./optional-rules.js";
 import { MANA_LEVEL_KEY } from "./casting.js";
 import { CONTROL_RATING_KEY } from "./legality.js";
 import { registerCampaignSettings } from "./campaign.js";
+import { registerTemperatureSetting } from "./weather.js";
 import { MANA_LEVELS } from "../rules/casting.js";
 import { CONTROL_RATINGS } from "../rules/legality.js";
 
@@ -42,6 +43,15 @@ export function registerSettings(): void {
     config: false,
     type: Object,
     default: defaultRuleState(),
+    // The rules page redraws the GM's own windows when it saves; this is for
+    // everyone else's. A sheet reads the rules as it draws -- Modifying Dice +
+    // Adds changes every damage figure on it -- so an open one is redrawn.
+    onChange: () => {
+      for (const app of ((foundry.applications as any).instances as Map<number, unknown>).values()) {
+        const name = (app as any).document?.documentName;
+        if ((name === "Actor" || name === "Item") && (app as any).rendered) (app as any).render();
+      }
+    },
   });
 
   // "Magic will work only if the mana level of the game world or specific
@@ -78,6 +88,10 @@ export function registerSettings(): void {
       }
     },
   });
+
+  // The day's temperature (Campaigns pp. 426, 434): what makes a hot day, for
+  // the fatigue a march or a battle costs. Blank where the GM hasn't said.
+  registerTemperatureSetting();
 
   // The terms every player character is made on: starting points,
   // disadvantage limit, Tech Level. The GM's, for the whole world (#642).

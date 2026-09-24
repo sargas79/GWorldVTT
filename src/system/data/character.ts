@@ -33,13 +33,15 @@ import {
   type TraitEffects,
 } from "../../rules/trait-effects.js";
 import { gearEffects, grantedEffectSources } from "../../rules/gear-effects.js";
+import { crippledEffects } from "../../rules/hit-locations.js";
+import { crippledPartName, crippledParts } from "../crippling.js";
 import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
 import { talentBonusFor, talentBonuses, traitSkillBonuses, traitSkillBonusesFor } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
 import { senseScores } from "../../rules/senses.js";
 import {
-  clothingCost, costOfLiving, gearCost, toolModifier, monthlyIncomeFromTraits, monthlyPay,
+  clothingCost, costOfLiving, gearCost, skillEquipmentModifier, toolModifier, monthlyIncomeFromTraits, monthlyPay,
   pointsForMoney, signatureGearPoints, signatureGearValue, startingWealth, statusFrom, wealthFrom,
   type EquipmentQuality,
   type WealthLevel,
@@ -98,7 +100,7 @@ import { malfunctionOf } from "../malfunctions.js";
 import { stuckWeaponOf } from "../picks.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
-  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleCarriedWeight, moduleTraitEffects, moduleTraitsInPlay, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type CarriedWeightLine, type TraitEffectSource,
+  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleCarriedWeight, moduleTraitEffects, moduleTraitsInPlay, needsEquipment, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type CarriedWeightLine, type TraitEffectSource,
 } from "../data-extensions.js";
 import { perDieOfBasicDamage, swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
@@ -204,7 +206,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
   ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1, fullAutoOnly: false, tightBeam: false,
-  recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0, scopeFixed: false,
+  recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, semiActive: false, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0, scopeFixed: false,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false, outOfAction: null,
   ammunition: "", malediction: 0, ignoresDr: false, spendsFrom: null, roundsPerShot: 1,
 };
@@ -367,6 +369,11 @@ export interface DerivedAttack {
    */
   aimingSkill?: string;
   guidedSkillLevel?: number;
+  /**
+   * A homing weapon that homes on a spot someone holds on the target (since
+   * API 1.128.0), which a `gworld.weaponAttacks` listener may set on a row.
+   */
+  semiActive?: boolean;
   /** True for an attack that covers ground rather than striking a point (p. 413). */
   areaAttack?: boolean;
   /** A cone's widest, in yards; zero where the table does not say. */
@@ -1701,6 +1708,25 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       traitEffectSources.push(...grantedEffectSources(granted));
     }
 
+    // A crippled eye, arm or hand works as the disadvantage the book points
+    // to (Campaigns p. 421; since API 1.129.0), whatever crippled it, so a
+    // module that records one needn't impose the penalty as well. Read after
+    // the character's own traits, because One Eye and a crippled other eye is
+    // blindness. The eyes and the hands are read apart, so the Traits tab
+    // names the parts behind each effect and no other.
+    const crippled = crippledParts(this.parent);
+    const ownEyes = traits.oneEye ? 1 : 2;
+    for (const group of [["eye"], ["arm", "hand"]]) {
+      const parts = crippled.filter((part) => group.includes(part.location));
+      const effect = crippledEffects(parts.map((part) => part.location), ownEyes);
+      if (Object.keys(effect).length === 0) continue;
+      addTraitEffects(traits, effect);
+      traitEffectSources.push(...grantedEffectSources({
+        source: parts.map((part) => part.label || crippledPartName(part.location)).join(", "),
+        effect,
+      }));
+    }
+
     // Then the modules, which see what the character's own traits and gear
     // already came to (since 1.47.0).
     traitEffectSources.push(...moduleTraitEffects(this.parent, traits).sources);
@@ -1827,6 +1853,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // that normally require equipment" (Campaigns p. 345): what is carried,
     // by the skill it is the tools of.
     const toolBonuses = this.#equipmentBonuses(Number(this.tl) || 0);
+    // The items those tools are, so a listener is handed the one picked.
+    const equipmentById = new Map(this.itemsOfType("equipment").filter((i) => i.id).map((i) => [String(i.id), i]));
+    const equipmentRuleOn = isRuleOn("equipmentModifiers");
 
     const skillItems = this.itemsOfType("skill");
 
@@ -1860,11 +1889,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // Of several, the one worth most once its TL is weighed against the
       // skill's -- for a technological skill, with the tech-level rule on
       // (Characters p. 168).
-      const skillTL = isRuleOn("techLevelModifiers") && isTechnologicalSkill(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel)
+      const technological = isTechnologicalSkill(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel);
+      const skillTL = isRuleOn("techLevelModifiers") && technological
         ? skillTechLevel(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel, Number(this.tl) || 0)
         : null;
       const tool = bestTool(toolBonuses[toolSkillKey(String(item.name ?? ""))] ?? [], { skillTechLevel: skillTL, iqBased: sys.attribute === "IQ" });
-      const toolBonus = tool?.quality ?? 0;
+      // With nothing carried that serves it, a skill a module says needs
+      // equipment takes the no-equipment figure, so that improvised gear
+      // reads better than none (since API 1.135.0). Only asked where it
+      // matters: the rule on and no tool picked.
+      const toolBonus = skillEquipmentModifier(tool, {
+        needsEquipment: equipmentRuleOn && !tool && needsEquipment(item, this.parent),
+        technological,
+      });
       const magicBonus = magicSkillBonus(String(item.name ?? ""), talent);
       // The bonuses as lines, which add-on modules may add to, or change with
       // a reason (a talent that doesn't reach a wildcard skill, say).
@@ -1873,12 +1910,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         item,
         name: String(item.name ?? ""),
         difficulty: sys.difficulty,
+        // The item the `tools` and `techLevel` lines are for, or null (since
+        // API 1.135.0), so a listener can grade one item differently for
+        // different skills.
+        tool: (tool?.id ? equipmentById.get(tool.id) : null) ?? null,
         lines: [
           { key: "bonus", label: "Bonus", value: Number(sys.bonus) || 0, source: "system" },
           { key: "magic", label: "Magery", value: magicBonus, source: "system" },
           { key: "talent", label: "Talent", value: talentBonus, source: "system" },
           ...traitLines,
-          { key: "tools", label: "Equipment", value: toolBonus, source: "system" },
+          { key: "tools", label: tool || toolBonus === 0 ? "Equipment" : "No equipment", value: toolBonus, source: "system" },
           { key: "techLevel", label: "Equipment TL", value: tool?.techLevel ?? 0, source: "system" },
         ] as BonusLine[],
       });
@@ -2649,6 +2690,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           guidance: String(mode.guidance ?? ""),
           aimingSkill: String(mode.aimingSkill ?? ""),
           guidedSkillLevel: Math.max(0, Math.floor(Number(mode.guidedSkillLevel) || 0)),
+          semiActive: mode.semiActive === true,
           areaAttack: Boolean(mode.areaAttack),
           scatterSquared: mode.scatterSquared === true,
           coneMaxWidth: Number(mode.coneMaxWidth ?? 0) || 0,
