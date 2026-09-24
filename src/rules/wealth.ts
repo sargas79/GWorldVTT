@@ -337,3 +337,33 @@ export function skillEquipmentModifier(
   if (tool) return tool.quality;
   return options.needsEquipment ? equipmentQualityModifier("none", { technological: options.technological }) : 0;
 }
+
+/**
+ * A tool on hand, before it is weighed for any one skill: its grade, a
+ * stated modifier where it has one, its own TL, and which item it is
+ * (since API 1.145.0).
+ */
+export interface ToolOnHand {
+  quality: EquipmentQuality;
+  modifier?: number | null;
+  techLevel: number | null;
+  id?: string;
+}
+
+/**
+ * What the tools on hand are worth to one skill (Campaigns p. 345): each
+ * grade read for that skill, so improvised gear is -5 for a technological
+ * skill and -2 for any other. The TL is left for `bestTool` to weigh
+ * against the skill's (Characters p. 168). `tl` is the character's, for the
+ * best grade's +TL/2 (since API 1.145.0).
+ */
+export function toolsForSkill(
+  tools: ReadonlyArray<ToolOnHand>,
+  options: { technological: boolean; tl: number },
+): Array<{ quality: number; techLevel: number | null; id?: string }> {
+  return tools.map((tool) => ({
+    quality: toolModifier(tool.quality, tool.modifier, { technological: options.technological, tl: options.tl }),
+    techLevel: tool.techLevel,
+    ...(tool.id ? { id: tool.id } : {}),
+  }));
+}

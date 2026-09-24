@@ -21,6 +21,7 @@
 import { registerPoison } from "./poison-registry.js";
 import { offeredExplosives, registerExplosive } from "./explosive-registry.js";
 import { TAB_NAMES, type TabName } from "./sheet-tabs.js";
+import { EQUIPMENT_QUALITIES, type EquipmentQuality } from "../rules/wealth.js";
 
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
@@ -864,6 +865,94 @@ export function needsEquipment(skill: any, actor: any): boolean {
   });
 }
 
+// ── what a tool is good for, skill by skill ────────────────────────────────
+
+/**
+ * What a registered grader says of one carried item for one skill (since
+ * 1.145.0): nothing (null or undefined) to leave it to the item's own
+ * `forSkills` and grade; `false` for an item that doesn't serve the skill;
+ * a grade ("improvised", "good", ...) or `{ quality?, modifier? }` for one
+ * that does, at that grade. `quality` left out is the item's own grade;
+ * `modifier` is a stated figure that takes the grade's place, as an item's
+ * own `equipmentModifier` does.
+ */
+export type ToolGradeAnswer =
+  | null
+  | undefined
+  | false
+  | EquipmentQuality
+  | { quality?: EquipmentQuality; modifier?: number | null };
+
+export interface ToolGradeRegistration {
+  module: string;
+  key: string;
+  /** What this carried equipment item is good for when this skill is rolled. */
+  grade: (item: any, skill: any, actor: any) => ToolGradeAnswer;
+}
+
+const toolGraders: Array<{ id: string; grade: ToolGradeRegistration["grade"] }> = [];
+
+/**
+ * Registers a grader for tools, skill by skill (since 1.145.0). Which
+ * skills an item serves, and how well, can differ from one skill to the
+ * next: a kit good for one task is improvised for another, and one made for
+ * a specialty can serve the next one over. That is a matter for the item's
+ * own book, so the system asks rather than knowing. Returns its
+ * `<module>.<key>`, or null.
+ */
+export function registerToolGrade(registration: ToolGradeRegistration): string | null {
+  const r = registration ?? ({} as ToolGradeRegistration);
+  const what = `tool grader ${r.module}.${r.key}`;
+  if (typeof r.module !== "string" || !IDENTIFIER.test(r.module)) return refuse(what, "the module id is missing or malformed");
+  if (typeof r.key !== "string" || !IDENTIFIER.test(r.key)) return refuse(what, "the key is missing or malformed");
+  if (typeof r.grade !== "function") return refuse(what, "it has no grade function");
+  const id = `${r.module}.${r.key}`;
+  if (toolGraders.some((t) => t.id === id)) return refuse(what, "that key is already registered");
+  toolGraders.push({ id, grade: r.grade });
+  return id;
+}
+
+/** Whether any tool grader is registered, so preparation asks only where one is. */
+export function hasToolGraders(): boolean {
+  return toolGraders.length > 0;
+}
+
+/**
+ * What the registered graders say of an item for a skill (since 1.145.0):
+ * the first answer that isn't null, in the order they were registered,
+ * made `{ quality?, modifier? }` or `false`; null where none has a say. A
+ * grader that throws, or answers something that isn't an answer, is warned
+ * about and passed over.
+ */
+export function toolGrade(item: any, skill: any, actor: any): { quality?: EquipmentQuality; modifier?: number } | false | null {
+  for (const { id, grade } of toolGraders) {
+    let answer: unknown;
+    try {
+      answer = grade(item, skill, actor);
+    } catch (error) {
+      console.warn(`gworld | tool grader ${id} failed`, error);
+      continue;
+    }
+    if (answer === null || answer === undefined) continue;
+    if (answer === false) return false;
+    if (typeof answer === "string") {
+      if ((EQUIPMENT_QUALITIES as readonly string[]).includes(answer)) return { quality: answer as EquipmentQuality };
+    } else if (typeof answer === "object") {
+      const { quality, modifier } = answer as { quality?: unknown; modifier?: unknown };
+      const qualityOk = quality === undefined || (EQUIPMENT_QUALITIES as readonly unknown[]).includes(quality);
+      const modifierOk = modifier === undefined || modifier === null || (typeof modifier === "number" && Number.isFinite(modifier));
+      if (qualityOk && modifierOk) {
+        return {
+          ...(quality !== undefined ? { quality: quality as EquipmentQuality } : {}),
+          ...(typeof modifier === "number" ? { modifier: Math.trunc(modifier) } : {}),
+        };
+      }
+    }
+    console.warn(`gworld | tool grader ${id} gave an answer that isn't a grade`, answer);
+  }
+  return null;
+}
+
 /** Fires the derived-data hook for a document. */
 export function afterPrepare(document: any): void {
   const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
@@ -890,5 +979,8 @@ export const dataApi = Object.freeze({
   // Which skills are used for tasks that need equipment (since 1.135.0).
   registerNeedsEquipment,
   needsEquipment,
+  // What a carried item is good for, skill by skill (since 1.145.0).
+  registerToolGrade,
+  toolGrade,
   hooks: DATA_HOOKS,
 });

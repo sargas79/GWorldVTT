@@ -378,6 +378,63 @@ describe("skills that need equipment (since 1.135.0)", () => {
   });
 });
 
+describe("what a tool is good for, skill by skill (since 1.145.0)", () => {
+  const skill = (name: string) => ({ type: "skill", name, system: {} });
+  const kit = { id: "kit", name: "Electronics kit", system: { forSkills: ["Electronics Repair (Computers)"] } };
+
+  it("registers a grader under the module's namespace and refuses a duplicate or a malformed one", async () => {
+    const api = await load();
+    const grade = () => null;
+    expect(api.hasToolGraders()).toBe(false);
+    expect(api.registerToolGrade({ module: "test-addon", key: "kits", grade })).toBe("test-addon.kits");
+    expect(api.registerToolGrade({ module: "test-addon", key: "kits", grade })).toBeNull();
+    expect(api.registerToolGrade({ module: "test addon", key: "x", grade })).toBeNull();
+    expect(api.registerToolGrade({ module: "test-addon", key: "none" } as never)).toBeNull();
+    expect(api.hasToolGraders()).toBe(true);
+    expect(api.dataApi.registerToolGrade).toBe(api.registerToolGrade);
+    expect(api.dataApi.toolGrade).toBe(api.toolGrade);
+  });
+
+  it("has no say with no grader registered", async () => {
+    const api = await load();
+    expect(api.toolGrade(kit, skill("Electronics Repair/TL8 (Computers)"), {})).toBeNull();
+  });
+
+  it("grades one item differently for different skills, the first grader with a say winning", async () => {
+    const api = await load();
+    const actor = { id: "a1" };
+    const seen: unknown[] = [];
+    api.registerToolGrade({
+      module: "test-addon",
+      key: "kits",
+      grade: (item, rolled, who) => {
+        seen.push(who);
+        if (item.id !== "kit") return null;
+        if (rolled.name.startsWith("Electronics Repair/TL8 (Communications)")) return "improvised";
+        if (rolled.name === "Lockpicking/TL8") return { modifier: -3.7 };
+        if (rolled.name === "Forgery/TL8") return false;
+        return undefined;
+      },
+    });
+    api.registerToolGrade({ module: "other-addon", key: "all", grade: () => ({ quality: "good" }) });
+    expect(api.toolGrade(kit, skill("Electronics Repair/TL8 (Communications)"), actor)).toEqual({ quality: "improvised" });
+    expect(api.toolGrade(kit, skill("Lockpicking/TL8"), actor)).toEqual({ modifier: -3 });
+    expect(api.toolGrade(kit, skill("Forgery/TL8"), actor)).toBe(false);
+    // The first had no say, so the second's answer stands.
+    expect(api.toolGrade(kit, skill("Electronics Repair/TL8 (Computers)"), actor)).toEqual({ quality: "good" });
+    expect(seen[0]).toBe(actor);
+  });
+
+  it("passes over a grader that throws or answers something that isn't a grade", async () => {
+    const api = await load();
+    api.registerToolGrade({ module: "test-addon", key: "boom", grade: () => { throw new Error("boom"); } });
+    api.registerToolGrade({ module: "test-addon", key: "odd", grade: (() => "shiny") as never });
+    api.registerToolGrade({ module: "test-addon", key: "odder", grade: (() => ({ quality: "shiny" })) as never });
+    expect(api.toolGrade(kit, skill("Lockpicking/TL8"), {})).toBeNull();
+    expect(console.warn).toHaveBeenCalledTimes(3);
+  });
+});
+
 describe("technique kinds in and out of play (since 1.26.0)", () => {
   it("leaves a kind whose check says no out of the choice, and finds it as out of play", async () => {
     const api = await load();
