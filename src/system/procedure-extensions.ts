@@ -181,6 +181,13 @@ export const PROCEDURE_HOOKS = Object.freeze({
    * source, how }`, `how` being `brokeFree` or `unbound`.
    */
   bindingBroken: "gworld.bindingBroken",
+  /**
+   * Before a stretch of study is turned into points (since 1.133.0; Characters
+   * pp. 292-293): `{ actor, skill, method, hours, multiplier, lines }`.
+   * `multiplier` (1) is mutable, the share of `hours` that counts; push a
+   * string to `lines` for the card.
+   */
+  studyModifiers: "gworld.studyModifiers",
 });
 
 /**

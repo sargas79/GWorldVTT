@@ -1854,6 +1854,26 @@ Two fields a module may read (since 1.62.0):
       shows `label`, or "Can't let go of the source". What holding the
       victim does is the module's: the system applies nothing more.
     - `lines` are the card's lines, the listener's pushes included.
+- **Study time** (since 1.133.0; Characters pp. 292-293): how many hours of
+  the clock a stretch of study counts for is set by its method (instruction,
+  intensive training, self-teaching, work), and anything else that speeds or
+  slows the learning -- training aids, a trait, a campaign's rule -- is the
+  GM's call. Before the sheet's Study tool turns the hours into points,
+  `gworld.studyModifiers` (`combat.hooks.studyModifiers`) is called with
+  `{ actor, skill, method, hours, multiplier, lines }`:
+  - `skill` is the skill item studied, `method` one of `education`,
+    `intensive`, `selfTeaching` or `onTheJob`, and `hours` the hours spent.
+    These are to read.
+  - `multiplier` (1) is the share of `hours` that counts toward a point at
+    the method's rate: 1.5 for study that goes half again as fast, 0.5 for
+    study at half speed, 0 for none. Listeners multiply it in turn, so
+    several can each have their say (`context.multiplier *= 1.5`). A value
+    that isn't a number of 0 or more counts as 1.
+  - Push strings to `lines` for the card.
+
+  The counted hours (`hours` times `multiplier`, to the hundredth) go on top
+  of those banked on the skill, as before. When the multiplier isn't 1 the
+  card says what the hours counted as, then shows the listeners' lines.
 - **Fragile** (since 1.93.0; Characters pp. 136-137): the disadvantage's
   five kinds now do what the book says. A character's are
   `traitEffects.fragile`, a list of `"brittle"`, `"combustible"`,
