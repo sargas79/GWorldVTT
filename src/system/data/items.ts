@@ -1429,6 +1429,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare concealable: boolean;
   declare blocksPeripheralVision: boolean;
   declare soleDr: number | null;
+  declare boots: boolean;
   declare environmentSuit: string;
   declare hardened: number;
   declare drByLocation: Array<{ locations: string[]; dr: number }>;
@@ -1533,6 +1534,12 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
         initial: null,
         min: 0,
       }),
+      /**
+       * Footwear that counts as boots for a kick (Characters p. 271; since
+       * API 1.110.0): while it is worn, the kick does thr+1. The Basic Set's
+       * boots carry it; a module sets it on its own footwear.
+       */
+      boots: new fields.BooleanField({ initial: false }),
       /**
        * The Environment Suit skill the piece is operated with (Characters
        * p. 192): while it is worn, DX and DX-based skills use the lower of that

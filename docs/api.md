@@ -615,6 +615,14 @@ and the roll continues.
     or kick, and the hook isn't called for it; a beast's bite, claws and
     strikers don't pass through it. It is a hook of its own so that
     `gworld.weaponAttacks` listeners never see a null item.
+    Since 1.110.0 the system adds the boots itself (Characters p. 271):
+    armour with `system.boots` true (a boolean, false by default; the Basic
+    Set's Boots, Reinforced Boots and Assault Boots carry it, and a module
+    sets it on its own footwear) makes the kick thr+1 while it is worn
+    (`equipped`). The kick row carries `boots`, true when that +1 is in its
+    damage, and so do its `basis.damage` and `damageAt`; a listener that
+    adds the boots itself should look at it first, or stop doing so.
+    `rules.naturalAttacks` takes `boots` and `rules.BOOTS_KICK_BONUS` is the +1.
   - `gworld.armorDr` (since 1.48.0): before a blow's DR is added up, with
     `{ actor, item, mode, hitLocation, damageType, basicDamage, lines }`. Each
     of `lines` is one piece of worn armour reaching the spot:

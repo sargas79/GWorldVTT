@@ -388,6 +388,8 @@ export interface DerivedAttack {
   damageModifier?: number;
   /** For a punch or a kick, which one: re-derived whole at a pulled ST. */
   naturalKey?: string;
+  /** On the kick row: whether boots are worn, and so in its damage (Characters p. 271; since 1.110.0). */
+  boots?: boolean;
   /** An affliction, which is resisted rather than damaging. */
   affliction: boolean;
   /** The attribute it is resisted with, e.g. "HT". Blank when not an affliction. */
@@ -2768,8 +2770,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const beast = beastTraitsFrom(heldTraits.map((t) => t.name));
     const unarmedIsItsOwn =
       beast.horizontal === true || beast.legless === true || beast.handless === true;
+    // Boots worn make the kick thr+1 (Characters p. 271; since API 1.110.0).
+    const inBoots = this.itemsOfType("armor").some((item: any) => item.system?.equipped === true && item.system?.boots === true);
     const unarmedInput = (st: number) => ({
       st,
+      boots: inBoots,
       // A punch and a kick are DX-based like any weapon skill, so an extra
       // layer of armour costs them the same -1 (Characters p. 286).
       dx: attrs.DX + layering,
@@ -2789,6 +2794,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         modeIndex: 0,
         name: game.i18n.localize(`GWORLD.Natural.${attack.key}`),
         naturalKey: attack.key,
+        // Whether the kick's damage has the boots' +1 in it (since API 1.110.0).
+        ...(attack.key === "kick" ? { boots: inBoots } : {}),
         mode: attack.skillName,
         skillName: attack.skillName,
         skillLevel: attack.skillLevel + legs,
