@@ -25,6 +25,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -56,6 +57,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -85,6 +87,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -114,6 +117,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -144,6 +148,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -176,6 +181,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -206,6 +212,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -236,6 +243,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -266,6 +274,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -298,6 +307,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -328,6 +338,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -359,6 +370,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -392,6 +404,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -423,6 +436,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -452,6 +466,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -481,6 +496,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -511,6 +527,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -541,6 +558,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -572,6 +590,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -603,6 +622,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -634,6 +654,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -665,6 +686,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -695,6 +717,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -725,6 +748,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -758,6 +782,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -790,6 +815,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -821,6 +847,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -854,6 +881,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -885,6 +913,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -915,6 +944,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -946,6 +976,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -977,6 +1008,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1010,6 +1042,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1039,6 +1072,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1068,6 +1102,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1097,6 +1132,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1126,6 +1162,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1155,6 +1192,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1184,6 +1222,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1214,6 +1253,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1246,6 +1286,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1277,6 +1318,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1308,6 +1350,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1337,6 +1380,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1366,6 +1410,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1395,6 +1440,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1424,6 +1470,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1453,6 +1500,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1482,6 +1530,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1512,6 +1561,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1541,6 +1591,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1570,6 +1621,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1599,6 +1651,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1629,6 +1682,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1659,6 +1713,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1691,6 +1746,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1721,6 +1777,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1750,6 +1807,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1781,6 +1839,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1810,6 +1869,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1839,6 +1899,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1868,6 +1929,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1897,6 +1959,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1926,6 +1989,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1955,6 +2019,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": 1,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -1984,6 +2049,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2013,6 +2079,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": true,
       "environmentSuit": ""
     }
   },
@@ -2042,6 +2109,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2072,6 +2140,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2110,6 +2179,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2140,6 +2210,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2177,6 +2248,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2215,6 +2287,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2245,6 +2318,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2283,6 +2357,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2321,6 +2396,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2359,6 +2435,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2397,6 +2474,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2434,6 +2512,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2471,6 +2550,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2508,6 +2588,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2545,6 +2626,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2585,6 +2667,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2625,6 +2708,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2665,6 +2749,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2705,6 +2790,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2739,6 +2825,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2773,6 +2860,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2807,6 +2895,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2841,6 +2930,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -2870,6 +2960,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": 5,
+      "boots": true,
       "environmentSuit": ""
     }
   },
@@ -2906,6 +2997,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": true,
       "environmentSuit": ""
     }
   },
@@ -2935,6 +3027,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": 18,
+      "boots": true,
       "environmentSuit": ""
     }
   },
@@ -2964,6 +3057,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": 24,
+      "boots": true,
       "environmentSuit": ""
     }
   },
@@ -2993,6 +3087,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": 36,
+      "boots": true,
       "environmentSuit": ""
     }
   },
@@ -3029,6 +3124,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3065,6 +3161,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3101,6 +3198,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3137,6 +3235,7 @@
       "concealable": true,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3167,6 +3266,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3196,6 +3296,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3225,6 +3326,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3255,6 +3357,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3284,6 +3387,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3314,6 +3418,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3343,6 +3448,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3373,6 +3479,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3402,6 +3509,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3432,6 +3540,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3461,6 +3570,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3491,6 +3601,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3520,6 +3631,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3550,6 +3662,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3577,6 +3690,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "NBC Suit"
     }
   },
@@ -3604,6 +3718,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "Vacc Suit"
     }
   },
@@ -3634,6 +3749,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3668,6 +3784,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "Battlesuit"
     }
   },
@@ -3705,6 +3822,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3739,6 +3857,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "Battlesuit"
     }
   },
@@ -3776,6 +3895,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3810,6 +3930,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "Battlesuit"
     }
   },
@@ -3847,6 +3968,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3881,6 +4003,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "Battlesuit"
     }
   },
@@ -3918,6 +4041,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3952,6 +4076,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -3989,6 +4114,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4023,6 +4149,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4060,6 +4187,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4094,6 +4222,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4131,6 +4260,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4165,6 +4295,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4202,6 +4333,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4236,6 +4368,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "Vacc Suit"
     }
   },
@@ -4273,6 +4406,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4307,6 +4441,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "Vacc Suit"
     }
   },
@@ -4344,6 +4479,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4378,6 +4514,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "Vacc Suit"
     }
   },
@@ -4415,6 +4552,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4449,6 +4587,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "Vacc Suit"
     }
   },
@@ -4486,6 +4625,7 @@
       "concealable": false,
       "blocksPeripheralVision": true,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4513,6 +4653,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "Vacc Suit"
     }
   },
@@ -4543,6 +4684,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4570,6 +4712,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "Vacc Suit"
     }
   },
@@ -4600,6 +4743,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4627,6 +4771,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "Vacc Suit"
     }
   },
@@ -4657,6 +4802,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   },
@@ -4684,6 +4830,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": "Vacc Suit"
     }
   },
@@ -4714,6 +4861,7 @@
       "concealable": false,
       "blocksPeripheralVision": false,
       "soleDr": null,
+      "boots": false,
       "environmentSuit": ""
     }
   }

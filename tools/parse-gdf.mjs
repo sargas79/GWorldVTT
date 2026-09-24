@@ -2412,6 +2412,8 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
           concealable: /concealable as or under clothing/i.test(r.text),
           blocksPeripheralVision: /no peripheral vision/i.test(r.text),
           soleDr: dr.sole ?? null,
+          // Boots add +1 to a kick (Characters p. 271).
+          boots: /\bboots\b/i.test(name),
           // The Environment Suit skill a sealed suit is operated with (Characters p. 192).
           environmentSuit: environmentSuitFor(name),
         },

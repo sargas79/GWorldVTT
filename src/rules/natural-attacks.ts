@@ -28,12 +28,17 @@ import type { DamageType, DiceAdds } from "./types.js";
 /** The kick's to-hit penalty (Characters p. 271). */
 export const KICK_PENALTY = -2;
 
+/** A kick in boots: thr+1 crushing, where the bare foot does thr (Characters p. 271). */
+export const BOOTS_KICK_BONUS = 1;
+
 /** What the sheet knows that a natural attack needs. */
 export interface NaturalAttackInput {
   st: number;
   dx: number;
   /** Levels of the unarmed skills the character has, by name; missing means untrained. */
   skills: Partial<Record<"Brawling" | "Boxing" | "Karate", number>>;
+  /** True while the character wears boots, which add +1 to a kick (Characters p. 271). */
+  boots?: boolean;
 }
 
 /** The unarmed skills that hit harder with training, and from what level. */
@@ -136,7 +141,8 @@ export function naturalAttacks(input: NaturalAttackInput): NaturalAttack[] {
       key: "kick",
       skillName: kick.name,
       skillLevel: kick.level + KICK_PENALTY,
-      damage: addModifier(thrust, bonus(kick)),
+      // "Kick w. Boots: thr+1 cr" on the Melee Weapons Table (p. 271).
+      damage: addModifier(thrust, bonus(kick) + (input.boots === true ? BOOTS_KICK_BONUS : 0)),
       reach: "C, 1",
       canParry: false,
     },

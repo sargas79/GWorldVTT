@@ -2166,6 +2166,8 @@
       "IllegalLayerHint": "Armour is layered over something that is not both flexible and concealable, which the book does not allow (Characters p. 286).",
       "NoPeripheral": "no peripheral vision",
       "NoPeripheralHint": "A great helm gives the wearer No Peripheral Vision while worn (Characters p. 283).",
+      "Boots": "Boots",
+      "BootsHint": "Counts as boots for a kick: thr+1 while worn (Characters p. 271)",
       "BluntTrauma": "blunt trauma",
       "StruckFrom": "Struck from",
       "FromBelow": "From below",

@@ -484,6 +484,11 @@
                  {{#unless editable}}disabled{{/unless}} />
           {{localize "GWORLD.Armor.NoPeripheral"}}
         </label>
+        <label class="icheck" data-tooltip="{{localize 'GWORLD.Armor.BootsHint'}}">
+          <input type="checkbox" name="system.boots" {{#if system.boots}}checked{{/if}}
+                 {{#unless editable}}disabled{{/unless}} />
+          {{localize "GWORLD.Armor.Boots"}}
+        </label>
       </div>
       <div class="ifields">
         <label data-tooltip="{{localize 'GWORLD.Armor.SoleHint'}}">{{localize "GWORLD.Armor.SoleDR"}}
