@@ -1187,7 +1187,11 @@ one when it is registered, and a module that uses partials loads them with
   on every render, including each search. Each row of the list is `[data-picker-row]` with
   the entry's UUID in `data-uuid`, and the entry's name is `[data-picker-name]` inside it.
 - **`sheets.registerGmTool({ module, key, label, icon?, open, visible? })`.**
-  A button in the token controls, shown to the GM only.
+  A button in the token controls, shown to the GM only. A tool registered
+  during `init`, `setup` or `gworld.ready` is there when the world first
+  loads: Foundry builds the controls before `ready`, so the system rebuilds
+  them once after `gworld.ready` if any module registered a tool. One
+  registered later rebuilds them when it is registered.
 
 Sheet markup follows the system's: a section is an `.isec`, a heading
 `.grph`, a list a `table.gt` with `tr[data-item-id]` rows, a button `.ibtn`,
@@ -1429,6 +1433,15 @@ Two fields a module may read (since 1.62.0):
   secret roll's refusal stays secret). It still resolves to null, unless the
   caller passes `returnRefusal: true`, which makes it resolve to
   `{ refused: true, reason, base, effective, modifiers }` instead.
+  Since 1.121.0 a roll to resist something (an HT roll against a poison, a
+  stun or a blinding light) isn't refused, because it isn't an attempt
+  (Campaigns p. 348). `roll.success` takes `resistance: true`, which also
+  tags the roll `resist`; a roll the caller tags `resist` (as the system's
+  affliction rolls are) counts as one without it. Such a roll is rolled at
+  any effective level: at 1 or 2 a 3 or 4 succeeds, as always, 17 and 18
+  fail, and anything else misses. The system's own HT rolls to stay
+  conscious at 0 HP or less (Campaigns p. 419) are resistance rolls too, so
+  they are made however far below zero the HP have gone.
 - **Medical hooks** (since 1.109.0):
   - *The tech level of First Aid* (Campaigns p. 424): `gworld.firstAid` also
     gets `techLevel`, the healer's TL to start with. A listener may set it
