@@ -295,15 +295,5 @@
     </div>
   {{/if}}
 
-  {{!-- Everything else a body does, in folds that start shut. --}}
-  <details class="v2-group v2-drawer" data-v2-fold="combat:feats" data-v2-default="closed" {{#if (includes @root.v2.opened "combat:feats")}}open{{/if}}>
-    <summary class="v2-group-head"><span class="v2-group-title">{{localize "GWORLD.Section.PhysicalFeats"}}</span><span class="v2-chevron" aria-hidden="true">{{> "gworld.v2icon.chevron"}}</span></summary>
-    <div class="v2-drawer-body">{{> "gworld.part.body-feats"}}</div>
-  </details>
-  <details class="v2-group v2-drawer" data-v2-fold="combat:recovery" data-v2-default="closed" {{#if (includes @root.v2.opened "combat:recovery")}}open{{/if}}>
-    <summary class="v2-group-head"><span class="v2-group-title">{{localize "GWORLD.Section.Recovery"}}</span><span class="v2-chevron" aria-hidden="true">{{> "gworld.v2icon.chevron"}}</span></summary>
-    <div class="v2-drawer-body">{{> "gworld.part.body-recovery"}}{{> "gworld.part.body-hazards"}}</div>
-  </details>
-
   {{> "gworld.addonSections"}}
 </section>

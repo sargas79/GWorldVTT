@@ -150,6 +150,7 @@ const FILE_PARTIALS: Record<string, string> = {
   "gworld.part.description-notes": `systems/${SYSTEM_ID}/templates/actor/parts/description-notes.hbs`,
   "gworld.part.description-npc": `systems/${SYSTEM_ID}/templates/actor/parts/description-npc.hbs`,
   "gworld.part.description-vitals": `systems/${SYSTEM_ID}/templates/actor/parts/description-vitals.hbs`,
+  "gworld.part.general-actions": `systems/${SYSTEM_ID}/templates/actor/parts/general-actions.hbs`,
   "gworld.v2.money": `systems/${SYSTEM_ID}/templates/actor/v2/money.hbs`,
   "gworld.part.magic-body": `systems/${SYSTEM_ID}/templates/actor/parts/magic-body.hbs`,
   "gworld.part.skills-point-spending": `systems/${SYSTEM_ID}/templates/actor/parts/skills-point-spending.hbs`,

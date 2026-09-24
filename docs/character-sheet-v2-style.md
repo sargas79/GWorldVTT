@@ -13,7 +13,7 @@ There are four kinds of heading. Each looks the same on every tab.
 | Kind | Markup | Look | Used for |
 | --- | --- | --- | --- |
 | Panel title | `<h2 class="v2-ph">`, or `<div class="v2-ph v2-ph-tools"><h2>…</h2>…tools…</div>` | 17px heading font, semibold, uppercase, 0.05em tracking, a 1px rule under it across the panel | The first line of every panel: Vitals, Defenses, Attacks, Money, Improvements… |
-| Group band | `<summary class="v2-group-head"><span class="v2-group-title">` | The panel title's type on a `--v2-panel-2` band, with a chevron | A foldable group in a list column (DX-based, Advantages, Stored) and the drawers under Combat |
+| Group band | `<summary class="v2-group-head"><span class="v2-group-title">` | The panel title's type on a `--v2-panel-2` band, with a chevron | A foldable group in a list column (DX-based, Advantages, Stored) and the drawers under Combat and the Overview |
 | Record title | `<header class="v2-detail-head"><h3>` | 22px heading font, uppercase, white on the steel band | The name of the thing a detail panel shows: a skill, trait, item, improvement or journal entry |
 | Sub-heading | `<h3 class="v2-sh">` or `<h4 class="v2-sh">`; `<h4>` in a `.v2-box` | 14px heading font, uppercase, 0.06em tracking, muted | A part inside a panel: Job under Money, a kind under Related, a page in a journal entry, a box's header |
 
