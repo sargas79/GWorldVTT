@@ -18,6 +18,7 @@ import {
 } from "../optional-rules.js";
 import { ruleReferencePages } from "../rule-references.js";
 import { registeredRuleGroups, registeredRules } from "../rule-registry.js";
+import { normaliseQuery, ruleMatches, rulesInView, type SearchableRule } from "../rule-search.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -48,6 +49,12 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
    * pressed. Held here so the toggles survive a re-render.
    */
   #pending: Record<string, boolean> | null = null;
+
+  /** What is typed in the search box, kept so a toggle's re-render does not clear it. */
+  #query = "";
+
+  /** Every rule on the page with the words it can be found by, as last rendered. */
+  #searchable: SearchableRule[] = [];
 
   #state(): Record<string, boolean> {
     return this.#pending ?? ruleState();
@@ -96,8 +103,27 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
         })),
       }));
 
+    const i18n = game.i18n;
+    const groups = [...systemGroups, ...moduleGroups].map((group) => {
+      // What the group can be found by as well as each rule in it: typing
+      // "magic" should bring up the Magic group's rules, whatever they are called.
+      const groupText = [i18n.localize(group.label), group.source ?? ""].join(" ");
+      return {
+        ...group,
+        search: groupText.toLowerCase(),
+        rules: group.rules.map((rule) => ({
+          ...rule,
+          search: [i18n.localize(rule.label), i18n.localize(rule.hint), rule.reference ?? "", groupText]
+            .join(" ")
+            .toLowerCase(),
+        })),
+      };
+    });
+    this.#searchable = groups.flatMap((group) => group.rules.map((rule) => ({ key: rule.key, text: rule.search })));
+
     return {
-      groups: [...systemGroups, ...moduleGroups],
+      groups,
+      query: this.#query,
       // Unsaved changes are worth saying out loud on a page whose whole point
       // is that nothing happens until you press the button.
       dirty: this.#pending !== null,
@@ -107,6 +133,16 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
   override async _onRender(context: object, options: object): Promise<void> {
     await super._onRender(context, options);
 
+    // Filtered in place rather than by re-rendering: a render per keystroke
+    // would take the caret out of the box, and the switches are all on the
+    // page already.
+    const search = this.element.querySelector<HTMLInputElement>('input[name="rule-search"]');
+    search?.addEventListener("input", () => {
+      this.#query = search.value;
+      this.#applyFilter();
+    });
+    this.#applyFilter();
+
     for (const box of this.element.querySelectorAll<HTMLInputElement>("input[data-rule]")) {
       box.addEventListener("change", () => {
         const key = box.dataset.rule;
@@ -114,6 +150,36 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
         this.#pending = { ...this.#state(), [key]: box.checked };
         void this.render();
       });
+    }
+  }
+
+  /**
+   * Hides the rules the search does not match, and the groups left with none.
+   * A group with no rules yet is shown while its own name matches.
+   */
+  #applyFilter(): void {
+    const query = normaliseQuery(this.#query);
+    let shown = 0;
+
+    for (const group of this.element.querySelectorAll<HTMLElement>(".gr-group")) {
+      const rules = [...group.querySelectorAll<HTMLElement>(".gr-rule")];
+      let visible = 0;
+      for (const rule of rules) {
+        const match = ruleMatches(rule.dataset.search ?? "", query);
+        rule.hidden = !match;
+        if (match) visible += 1;
+      }
+      const keep = rules.length > 0 ? visible > 0 : ruleMatches(group.dataset.search ?? "", query);
+      group.hidden = !keep;
+      shown += visible;
+    }
+
+    const none = this.element.querySelector<HTMLElement>(".gr-nomatch");
+    if (none) none.hidden = !query || shown > 0;
+
+    // The bulk buttons say when they will touch only what the search shows.
+    for (const button of this.element.querySelectorAll<HTMLElement>("[data-label-all]")) {
+      button.textContent = query ? (button.dataset.labelShown ?? "") : (button.dataset.labelAll ?? "");
     }
   }
 
@@ -138,11 +204,15 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
     await this.#setAll(false);
   }
 
+  /**
+   * Turns every rule on the page on or off -- or, while a search is typed,
+   * only the rules it shows, leaving the hidden ones as they were.
+   */
   async #setAll(value: boolean): Promise<void> {
     const state = this.#state();
-    this.#pending = Object.fromEntries(
-      Object.keys(state).map((key) => [key, isImplemented(key) ? value : false]),
-    );
+    const keys = normaliseQuery(this.#query) ? rulesInView(this.#searchable, this.#query) : Object.keys(state);
+    const changes = Object.fromEntries(keys.map((key) => [key, isImplemented(key) ? value : false]));
+    this.#pending = { ...state, ...changes };
     await this.render();
   }
 

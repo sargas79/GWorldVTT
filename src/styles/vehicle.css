@@ -38,6 +38,12 @@
 .gworld.vehicle.v2 .vehicle-speed input:hover:not(:disabled),
 .gworld.vehicle.v2 .vehicle-speed input:focus { border-color: var(--color-divider); background: var(--v2-panel-2); }
 
+/* Crippled parts: a label and a small count each, wrapping on a narrow sheet. */
+.gworld.vehicle.v2 .vehicle-crippled { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 8px 0; }
+.gworld.vehicle.v2 .vehicle-crippled .v2-stat-label { flex-basis: 100%; }
+.gworld.vehicle.v2 .vehicle-crippled-part { display: flex; align-items: center; gap: 4px; }
+.gworld.vehicle.v2 .vehicle-crippled-part input { width: 3em; height: 24px; text-align: center; }
+
 .gworld.vehicle.v2 .vehicle-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 .gworld.vehicle.v2 .vehicle-locations { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 

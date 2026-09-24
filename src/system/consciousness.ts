@@ -45,6 +45,10 @@ export async function rollConsciousness(actor: any, penalty: number): Promise<vo
     kind: "attribute",
     modifiers,
     tags: ["consciousness", "HT"],
+    // Staying conscious is resisting the injury, not an attempt, so it is
+    // rolled however far below zero the HP have gone: at an effective 1 or 2
+    // only a 3 or 4 keeps the character up (since API 1.121.0).
+    resistance: true,
   });
   if (!outcome) return;
   const previousPosture = String(actor.system?.posture ?? "standing");

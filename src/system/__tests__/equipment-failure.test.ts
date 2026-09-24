@@ -74,7 +74,7 @@ describe("an equipment failure roll a module asks for (Campaigns p. 485)", () =>
     const item = gear();
     dice.push([2, 3, 3]); // 8 against HT 10 - 2
     const result = await equipmentFailure({ item, modifier: -2, label: "Daily check" });
-    expect(result).toEqual({ outcome: "success", result: "works", target: 8, roll: 8, margin: 0, applied: false });
+    expect(result).toEqual({ outcome: "success", result: "works", target: 8, roll: 8, margin: 0, applied: false, downgraded: false });
     expect(item.update).not.toHaveBeenCalled();
     expect(cards[0]).toMatchObject({ exposure: true, target: 8, failed: false });
     expect(cards[0]?.failureModifiers).toEqual([{ label: "Daily check", value: -2 }]);
@@ -147,6 +147,57 @@ describe("an equipment failure roll a module asks for (Campaigns p. 485)", () =>
   it("is on the API as items.equipmentFailure", async () => {
     dice.push([3, 3, 3]);
     expect((await createApi().items.equipmentFailure({ item: gear() }))?.outcome).toBe("success");
+  });
+});
+
+describe("a listener's downgrade of a critical failure (since 1.127.0)", () => {
+  function downgrading(label = "") {
+    const seen: any[] = [];
+    globals.Hooks = {
+      callAll: (event: string, context: any) => {
+        if (event !== "gworld.equipmentFailure") return;
+        seen.push({ downgradeCriticalFailure: context.downgradeCriticalFailure, downgradeLabel: context.downgradeLabel });
+        context.downgradeCriticalFailure = true;
+        context.downgradeLabel = label;
+      },
+    };
+    return seen;
+  }
+
+  it("makes a critical failure an ordinary one before the thing is marked", async () => {
+    const seen = downgrading("Surge protector");
+    const item = gear({ ht: 12, hp: 8 });
+    dice.push([6, 6, 6]);
+    const result = await equipmentFailure({ item });
+    expect(seen).toEqual([{ downgradeCriticalFailure: false, downgradeLabel: "" }]);
+    expect(result).toMatchObject({ outcome: "failure", result: "needsMinorRepair", applied: true, downgraded: true });
+    // Half its HP, not all of them.
+    expect(item.system.hpLost).toBe(4);
+    expect(cards[0]).toMatchObject({ failed: true, downgraded: "Surge protector", result: "GWORLD.Repair.Exposure.needsMinorRepair" });
+  });
+
+  it("shows the system's line where the listener gave none", async () => {
+    downgrading();
+    dice.push([6, 6, 5]);
+    await equipmentFailure({ item: gear() });
+    expect(cards[0]?.downgraded).toBe("GWORLD.Repair.Downgraded");
+  });
+
+  it("changes nothing on a roll that wasn't a critical failure", async () => {
+    downgrading("Surge protector");
+    dice.push([4, 4, 3], [3, 3, 3]);
+    expect(await equipmentFailure({ item: gear() })).toMatchObject({ outcome: "failure", downgraded: false });
+    expect(await equipmentFailure({ item: gear() })).toMatchObject({ outcome: "success", downgraded: false });
+    expect(cards.map((card) => card.downgraded)).toEqual([null, null]);
+  });
+
+  it("works for the exposure check too", async () => {
+    downgrading();
+    const item = gear();
+    dice.push([6, 6, 6]);
+    await exposureCheck({ actor: null, item, care: 0 });
+    expect(item.system.hpLost).toBe(5);
+    expect(cards[0]).toMatchObject({ result: "GWORLD.Repair.Exposure.needsMinorRepair", downgraded: "GWORLD.Repair.Downgraded" });
   });
 });
 

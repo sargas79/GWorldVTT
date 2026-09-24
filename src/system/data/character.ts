@@ -34,6 +34,8 @@ import {
   type TraitEffects,
 } from "../../rules/trait-effects.js";
 import { gearEffects, grantedEffectSources } from "../../rules/gear-effects.js";
+import { crippledEffects } from "../../rules/hit-locations.js";
+import { crippledPartName, crippledParts } from "../crippling.js";
 import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
 import { talentBonusFor, talentBonuses, traitSkillBonuses, traitSkillBonusesFor } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
@@ -203,7 +205,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
   ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1, fullAutoOnly: false, tightBeam: false,
-  recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0, scopeFixed: false,
+  recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, semiActive: false, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0, scopeFixed: false,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false, outOfAction: null,
   ammunition: "", malediction: 0, ignoresDr: false, spendsFrom: null, roundsPerShot: 1,
 };
@@ -366,6 +368,11 @@ export interface DerivedAttack {
    */
   aimingSkill?: string;
   guidedSkillLevel?: number;
+  /**
+   * A homing weapon that homes on a spot someone holds on the target (since
+   * API 1.128.0), which a `gworld.weaponAttacks` listener may set on a row.
+   */
+  semiActive?: boolean;
   /** True for an attack that covers ground rather than striking a point (p. 413). */
   areaAttack?: boolean;
   /** A cone's widest, in yards; zero where the table does not say. */
@@ -1700,6 +1707,25 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       traitEffectSources.push(...grantedEffectSources(granted));
     }
 
+    // A crippled eye, arm or hand works as the disadvantage the book points
+    // to (Campaigns p. 421; since API 1.129.0), whatever crippled it, so a
+    // module that records one needn't impose the penalty as well. Read after
+    // the character's own traits, because One Eye and a crippled other eye is
+    // blindness. The eyes and the hands are read apart, so the Traits tab
+    // names the parts behind each effect and no other.
+    const crippled = crippledParts(this.parent);
+    const ownEyes = traits.oneEye ? 1 : 2;
+    for (const group of [["eye"], ["arm", "hand"]]) {
+      const parts = crippled.filter((part) => group.includes(part.location));
+      const effect = crippledEffects(parts.map((part) => part.location), ownEyes);
+      if (Object.keys(effect).length === 0) continue;
+      addTraitEffects(traits, effect);
+      traitEffectSources.push(...grantedEffectSources({
+        source: parts.map((part) => part.label || crippledPartName(part.location)).join(", "),
+        effect,
+      }));
+    }
+
     // Then the modules, which see what the character's own traits and gear
     // already came to (since 1.47.0).
     traitEffectSources.push(...moduleTraitEffects(this.parent, traits).sources);
@@ -2668,6 +2694,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           guidance: String(mode.guidance ?? ""),
           aimingSkill: String(mode.aimingSkill ?? ""),
           guidedSkillLevel: Math.max(0, Math.floor(Number(mode.guidedSkillLevel) || 0)),
+          semiActive: mode.semiActive === true,
           areaAttack: Boolean(mode.areaAttack),
           scatterSquared: mode.scatterSquared === true,
           coneMaxWidth: Number(mode.coneMaxWidth ?? 0) || 0,
