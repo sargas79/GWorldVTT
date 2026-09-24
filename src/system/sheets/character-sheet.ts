@@ -87,7 +87,7 @@ import {
   splashAcid,
   setAlight,
 } from "../hazards.js";
-import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
+import { breakFreeFromBinding, checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
 import { useTechnique } from "../unarmed-techniques.js";
 import { resolveSuccess as rollOutcome } from "../../rules/success.js";
 import { isStepPostureChange, reachablePostures } from "../../rules/posture.js";
@@ -929,6 +929,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         successes: system.entangled?.successes ?? 0,
         needed: 3,
         mustBeCut: system.entangled?.mustBeCut === true,
+        // A Binding is one Quick Contest against its ST, not a tally (Characters p. 40).
+        binding: system.entangled?.kind === "binding"
+          ? { st: Number(system.entangled.st) || 0, label: String(system.entangled.label || game.i18n.localize("GWORLD.Entangled.What.binding")) }
+          : null,
       },
       // Shown while evaluating, and on the turn after, when the bonus is spent.
       isEvaluating: system.maneuver === "evaluate" || Number(system.evaluateTurns ?? 0) > 0,
@@ -3700,6 +3704,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    */
   static async #onEscapeEntanglement(this: GWorldCharacterSheet) {
     const held = this.actor.system.entangled ?? {};
+    if (held.kind === "binding") {
+      await breakFreeFromBinding(this.actor);
+      return;
+    }
     const asked = await promptForEscape(
       (held.kind || "net") as Entanglement,
       String(held.where ?? ""),

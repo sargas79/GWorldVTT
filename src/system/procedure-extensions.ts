@@ -148,6 +148,11 @@ export const PROCEDURE_HOOKS = Object.freeze({
    * push `{ label, value }` to `modifiers`.
    */
   reactionModifiers: "gworld.reactionModifiers",
+  /**
+   * A Binding ended (since 1.107.0; Characters p. 40): `{ actor, st, label,
+   * source, how }`, `how` being `brokeFree` or `unbound`.
+   */
+  bindingBroken: "gworld.bindingBroken",
 });
 
 /**

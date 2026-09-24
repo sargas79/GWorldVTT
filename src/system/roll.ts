@@ -444,6 +444,25 @@ export interface SuccessRollOptions {
    * `rollMode` given beside it wins.
    */
   secret?: boolean;
+  /**
+   * True to have a roll refused for an effective skill below 3 resolve to
+   * a {@link SuccessRollRefusal} rather than null (since API 1.107.0).
+   * Left out, a refused roll resolves to null, as it always has.
+   */
+  returnRefusal?: boolean;
+}
+
+/**
+ * A success roll that was not made (since API 1.107.0): its effective skill
+ * was below 3, so "you cannot attempt the roll" (Campaigns p. 344).
+ */
+export interface SuccessRollRefusal {
+  refused: true;
+  /** Why, as the card and the warning say it. */
+  reason: string;
+  base: number;
+  effective: number;
+  modifiers: RollModifier[];
 }
 
 /** The older roll-mode names, as Foundry's message modes. */
@@ -476,13 +495,41 @@ export interface CriticalMissResult {
   again?: { roll: any; total: number; broke: boolean };
 }
 
+/** The card for a roll that could not be attempted: the target, and why no dice were rolled. */
+async function postRefusal(options: SuccessRollOptions, refused: {
+  reason: string;
+  modifiers: RollModifier[];
+  totalModifier: number;
+  effective: number;
+}): Promise<void> {
+  const content = await foundry.applications.handlebars.renderTemplate(CHAT_TEMPLATE, {
+    label: options.label,
+    kind: options.kind ?? "skill",
+    refused: true,
+    base: options.base,
+    modifiers: refused.modifiers.filter((m) => m.value !== 0),
+    totalModifier: refused.totalModifier,
+    effective: refused.effective,
+    resultLabel: refused.reason,
+    resultClass: "failure",
+  });
+  const messageMode = successRollMessageMode(options);
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor: options.actor }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content,
+  }, messageMode ? { messageMode } : {});
+}
+
 /**
  * Rolls 3d6 against a target number and posts the result to chat.
  *
  * Returns the resolved outcome so callers can chain on it (an attack that hits
  * going on to roll damage, for instance).
  */
-export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessRollResult | null> {
+export async function rollSuccess(options: SuccessRollOptions & { returnRefusal: true }): Promise<SuccessRollResult | SuccessRollRefusal>;
+export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessRollResult | null>;
+export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessRollResult | SuccessRollRefusal | null> {
   const {
     actor, base, label, kind = "skill", rapidFire, defensePenalty = 0,
     unarmed = false, noParry = false,
@@ -505,13 +552,17 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   const effective = base + totalModifier;
 
   // A roll at effective skill below 3 may not be attempted at all, and only
-  // active defenses are exempt (GURPS Lite p. 2). Without this check a rolled
-  // 3 or 4 would report success, since those always succeed once rolled.
+  // active defenses are exempt (Campaigns p. 344). Without this check a rolled
+  // 3 or 4 would report success, since those always succeed once rolled. The
+  // table is told on a card, so that everyone knows the attempt was impossible
+  // rather than that nothing happened.
   if (kind !== "defense" && !canAttempt(effective)) {
-    ui.notifications?.warn(
-      game.i18n.format("GWORLD.Roll.TooLowToAttempt", { label, effective }),
-    );
-    return null;
+    const reason = game.i18n.format("GWORLD.Roll.TooLowToAttempt", { label, effective });
+    ui.notifications?.warn(reason);
+    await postRefusal(options, { reason, modifiers, totalModifier, effective });
+    return options.returnRefusal === true
+      ? { refused: true, reason, base, effective, modifiers }
+      : null;
   }
 
   const roll = new Roll("3d6");

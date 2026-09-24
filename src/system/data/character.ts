@@ -642,12 +642,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
   declare dress: { state: Dress; topless: boolean };
   declare entangled: {
-    kind: "" | "net" | "smallNet" | "bolas" | "lariat";
+    kind: "" | "net" | "smallNet" | "bolas" | "lariat" | "binding";
     successes: number;
     failures: number;
     mustBeCut: boolean;
     where: string;
     running: boolean;
+    /** A Binding's ST, what it is and who set it (since API 1.107.0). */
+    st: number;
+    label: string;
+    source: string;
   };
   declare points: {
     starting: number;
@@ -809,7 +813,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       entangled: new fields.SchemaField({
         kind: new fields.StringField({
           required: true, nullable: false, blank: true, initial: "",
-          choices: ["", "net", "smallNet", "bolas", "lariat"],
+          choices: ["", "net", "smallNet", "bolas", "lariat", "binding"],
         }),
         successes: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
         failures: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
@@ -827,6 +831,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         }),
         /** True where they were running when it caught them, which is what trips them. */
         running: new fields.BooleanField({ initial: false }),
+        /**
+         * A Binding (Characters p. 40; since API 1.107.0): the ST the victim
+         * must beat to break free, what holds them, for the sheet and the
+         * card, and who put it there, for the module that did.
+         */
+        st: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+        label: new fields.StringField({ required: true, nullable: false, blank: true, initial: "" }),
+        source: new fields.StringField({ required: true, nullable: false, blank: true, initial: "" }),
       }),
 
       tl: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 3 }),
