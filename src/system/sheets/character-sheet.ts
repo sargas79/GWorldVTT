@@ -35,9 +35,9 @@ import {
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
-import { rollBleeding, stopBleeding } from "../bleeding.js";
+import { rollBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
-import { crippledParts, healCrippled } from "../crippling.js";
+import { crippledPartName, crippledParts, healCrippled } from "../crippling.js";
 import { catchBreath, rollSuffocation } from "../suffocation.js";
 import {
   applyDeprivation,
@@ -135,7 +135,7 @@ import {
 } from "../grappling.js";
 import { grappleSizeBonus } from "../../rules/size.js";
 import { rollStunRecovery } from "../knockdown.js";
-import { applyFirstAid, regenerate, restForADay, restForFatigue, tryToWake } from "../recovery.js";
+import { giveFirstAid, regenerate, restForADay, restForFatigue, tryToWake } from "../recovery.js";
 import { isFrightResistance, rollFrightCheck, rollFrightCheckOutcome } from "../fright.js";
 import { drMetByAttack, traitsOf, wornArmor } from "../damage.js";
 import { afflictionDrBonus } from "../../rules/affliction-resistance.js";
@@ -179,7 +179,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
-import { allOutAttackOptionsFor, feintModifiers, registeredHitLocation, registeredManeuvers } from "../combat-extensions.js";
+import { allOutAttackOptionsFor, feintModifiers, registeredManeuvers } from "../combat-extensions.js";
 import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
 import { bindSectionListeners, decorateItemRows, renderSections, runRowAction } from "../sheet-extensions.js";
@@ -197,7 +197,6 @@ import {
   removeCondition,
   runGrappleAction,
   triggerManeuverResponse,
-  firstAidRules,
   registeredInfluenceSkills,
   wornClothing,
 } from "../procedure-extensions.js";
@@ -926,12 +925,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           })),
       ).map((u) => ({ ...u, powerLabel: game.i18n.localize(`GWORLD.Psi.Power.${u.power}`) })),
       // Parts crippled for a while (Campaigns p. 422; API 1.114.0), healed ones left out.
+      // A part waiting on the p. 422 roll has a button for it, and a temporary
+      // one no injury caused doesn't promise to go at full HP (API 1.129.0).
       crippled: crippledParts(this.actor).map((part) => ({
         id: part.id,
-        label: part.label || (registeredHitLocation(part.location)
-          ? game.i18n.localize(registeredHitLocation(part.location)!.label)
-          : game.i18n.localize(`GWORLD.HitLocation.${part.location}`)),
-        duration: game.i18n.localize(`GWORLD.Dying.${part.duration}`),
+        label: part.label || crippledPartName(part.location),
+        duration: game.i18n.localize(
+          part.duration === "undecided" ? "GWORLD.Crippled.Undecided"
+            : part.duration === "temporary" && !part.injury ? "GWORLD.Crippled.TemporaryNoInjury"
+              : `GWORLD.Dying.${part.duration}`,
+        ),
+        undecided: part.duration === "undecided",
         heals: part.healsAt !== null
           ? game.i18n.format("GWORLD.Crippled.HealsIn", { days: Math.max(0, Math.ceil((part.healsAt - (Number(game.time?.worldTime) || 0)) / 86400)) })
           : "",
@@ -2221,29 +2225,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const patient = targets[0]?.actor;
     if (!patient) return;
 
-    // A module's rules may refuse this, or say a bandage won't stop this bleeding (API 1.36.0).
-    const rules = firstAidRules(this.actor, patient);
-    if (rules.refusal) {
-      ui.notifications?.warn(rules.refusal);
-      return;
-    }
-
-    const modifier = await promptForNumber({
-      title: game.i18n.localize("GWORLD.Recovery.FirstAid"),
-      label: game.i18n.localize("GWORLD.Chat.Modifier"),
-      initial: 0,
+    // The same attempt actors.firstAid makes, so gworld.firstAid hears both
+    // (API 1.122.0); the modifier is asked for only once no listener refuses.
+    await giveFirstAid({
+      healer: this.actor,
+      patient,
+      modifier: () => promptForNumber({
+        title: game.i18n.localize("GWORLD.Recovery.FirstAid"),
+        label: game.i18n.localize("GWORLD.Chat.Modifier"),
+        initial: 0,
+      }),
     });
-    if (modifier === null) return;
-
-    // At the tech level a listener set, where one did (API 1.109.0; Campaigns p. 424).
-    const restored = await applyFirstAid({ healer: this.actor, patient, modifier, techLevel: rules.techLevel });
-
-    // "someone who is wounded but receives a successful First Aid roll ... loses
-    // no HP to bleeding. A later roll will prevent further HP loss."
-    if (restored > 0 && rules.stopsBleeding) await stopBleeding(patient);
-    else if (restored > 0 && patient.statuses?.has?.("bleeding")) {
-      ui.notifications?.info(game.i18n.format("GWORLD.Recovery.StillBleeding", { patient: String(patient.name ?? "") }));
-    }
   }
 
   /**
@@ -2995,7 +2987,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (id) await healCrippled(this.actor, id);
   }
 
-  static async #onCripplingDuration(this: GWorldCharacterSheet) {
+  static async #onCripplingDuration(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const tl = await promptForNumber({
       title: game.i18n.localize("GWORLD.Dying.Crippling"),
       label: game.i18n.localize("GWORLD.Dying.TreatedAt"),
@@ -3003,7 +2995,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (tl === null) return;
 
-    await rollCripplingDuration({ actor: this.actor, treatedAtTl: tl > 0 ? tl : null });
+    // From an undecided part's chip, the roll settles that part.
+    const part = target?.dataset?.id;
+    await rollCripplingDuration({ actor: this.actor, treatedAtTl: tl > 0 ? tl : null, ...(part ? { part } : {}) });
   }
 
   /**

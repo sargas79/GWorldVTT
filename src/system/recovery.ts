@@ -21,7 +21,8 @@ import {
   wakingFrom,
 } from "../rules/recovery.js";
 import { resolveSuccess, type SuccessRollResult } from "../rules/success.js";
-import { afterSuccessRoll, successRollModifiers } from "./procedure-extensions.js";
+import { afterSuccessRoll, firstAidRules, successRollModifiers } from "./procedure-extensions.js";
+import { stopBleeding } from "./bleeding.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { refuseWhileHeld } from "./knockdown.js";
@@ -310,6 +311,56 @@ export async function applyFirstAid(options: {
   });
 
   return change;
+}
+
+/**
+ * First Aid as a whole attempt (p. 424): the sheet's button and
+ * `actors.firstAid` both come here, so `gworld.firstAid` hears every attempt,
+ * not only the ones made from a sheet.
+ *
+ * The listeners go first because they may refuse, and a refusal should come
+ * before anybody is asked for a modifier. `modifier` is a number, or a
+ * question to ask once they have agreed, which may be cancelled (null).
+ * Returns the HP it moved: nothing for a refusal or a cancel.
+ */
+export async function giveFirstAid(options: {
+  healer: any;
+  patient: any;
+  modifier: number | (() => Promise<number | null>);
+  skill?: number;
+  techLevel?: number;
+  label?: string;
+}): Promise<number> {
+  const { healer, patient } = options;
+
+  // A listener may refuse, say a bandage won't stop this bleeding (API 1.36.0),
+  // or move the treatment to another tech level (API 1.109.0). A TL the caller
+  // gave is where the listeners start, as the healer's own is from the sheet.
+  const rules = firstAidRules(healer, patient, options.techLevel);
+  if (rules.refusal) {
+    ui.notifications?.warn(rules.refusal);
+    return 0;
+  }
+
+  const modifier = typeof options.modifier === "function" ? await options.modifier() : options.modifier;
+  if (modifier === null) return 0;
+
+  const restored = await applyFirstAid({
+    healer,
+    patient,
+    modifier,
+    techLevel: rules.techLevel,
+    ...(typeof options.skill === "number" ? { skill: options.skill } : {}),
+    ...(options.label ? { label: options.label } : {}),
+  });
+
+  // "someone who is wounded but receives a successful First Aid roll ... loses
+  // no HP to bleeding. A later roll will prevent further HP loss."
+  if (restored > 0 && rules.stopsBleeding) await stopBleeding(patient);
+  else if (restored > 0 && patient.statuses?.has?.("bleeding")) {
+    ui.notifications?.info(game.i18n.format("GWORLD.Recovery.StillBleeding", { patient: String(patient.name ?? "") }));
+  }
+  return restored;
 }
 
 /**

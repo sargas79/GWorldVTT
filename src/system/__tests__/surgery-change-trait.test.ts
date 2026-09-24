@@ -86,8 +86,8 @@ describe("changing a character's traits", () => {
   it("sets a level, held within the trait's cap", async () => {
     foundryWith([3]);
     const actor = character("A", [charisma, { name: "Intolerance", system: { levels: 1, maxLevels: 2, costTable: [] } }]);
-    expect(await changeTrait(actor, { name: "charisma", level: 4 })).toEqual({ itemId: "t0", from: { name: "Charisma", levels: 2 }, to: { name: "Charisma", levels: 4 }, replaced: false });
-    expect((await changeTrait(actor, { id: "t1", level: 7 }))?.to.levels).toBe(2);
+    expect(await changeTrait(actor, { name: "charisma", level: 4 })).toEqual({ itemId: "t0", from: { name: "Charisma", levels: 2 }, to: { name: "Charisma", levels: 4 }, replaced: false, added: false, removed: false });
+    expect((await changeTrait(actor, { id: "t1", level: 7 }))?.to?.levels).toBe(2);
   });
 
   it("swaps a trait for another from the compendia, or from data", async () => {
@@ -102,13 +102,48 @@ describe("changing a character's traits", () => {
     expect(swapped).toMatchObject({ from: { name: "Appearance (Attractive)" }, to: { name: "Appearance (Beautiful)" }, replaced: true });
     expect(actor.items.map((i: any) => i.name)).toEqual(["Appearance (Beautiful)"]);
     const again = await changeTrait(actor, { name: "Appearance (Beautiful)", replaceWith: { name: "Appearance (Ugly)", type: "trait", system: {} } });
-    expect(again?.to.name).toBe("Appearance (Ugly)");
+    expect(again?.to?.name).toBe("Appearance (Ugly)");
     expect(await changeTrait(actor, { name: "Appearance (Ugly)", replaceWith: "Nothing Like It" })).toBeNull();
+  });
+
+  it("adds a trait from the compendia or from data, at a level", async () => {
+    const pack = {
+      metadata: { type: "Item" },
+      getIndex: async () => [{ _id: "p2", name: "Lame (Crippled Legs)", type: "trait" }],
+      getDocument: async () => ({ toObject: () => ({ _id: "p2", name: "Lame (Crippled Legs)", type: "trait", system: { levels: 0 } }) }),
+    };
+    foundryWith([3], { packs: [pack] });
+    const actor = character("A", [charisma]);
+    const lame = await changeTrait(actor, { add: "lame (crippled legs)" });
+    expect(lame).toMatchObject({ from: null, to: { name: "Lame (Crippled Legs)", levels: 0 }, replaced: false, added: true, removed: false });
+    expect(actor.createEmbeddedDocuments.mock.calls[0]![1][0]._id).toBeUndefined();
+    const hearing = await changeTrait(actor, { add: { name: "Hard of Hearing", type: "trait", system: { levels: 0, maxLevels: 3, costTable: [] } }, level: 5 });
+    expect(hearing?.to).toEqual({ name: "Hard of Hearing", levels: 3 });
+    expect(actor.items.map((i: any) => i.name)).toEqual(["Charisma", "Lame (Crippled Legs)", "Hard of Hearing"]);
+  });
+
+  it("won't add a trait the character has, or one it can't find", async () => {
+    foundryWith([3]);
+    const actor = character("A", [charisma]);
+    expect(await changeTrait(actor, { add: { name: "Charisma", type: "trait", system: { levels: 1 } } })).toBeNull();
+    expect(await changeTrait(actor, { add: "Nothing Like It" })).toBeNull();
+    expect(await changeTrait(actor, { add: { name: "Sword", type: "equipment", system: {} } })).toBeNull();
+    expect(actor.createEmbeddedDocuments).not.toHaveBeenCalled();
+  });
+
+  it("removes a trait, by name or id", async () => {
+    foundryWith([3]);
+    const actor = character("A", [{ name: "Charisma", system: { levels: 2, maxLevels: 0, costTable: [] } }, structuredClone(appearance)]);
+    expect(await changeTrait(actor, { name: "Charisma", remove: true, level: 5 })).toEqual({ itemId: "t0", from: { name: "Charisma", levels: 2 }, to: null, replaced: false, added: false, removed: true });
+    expect((await changeTrait(actor, { id: "t1", remove: true }))?.removed).toBe(true);
+    expect(actor.items).toEqual([]);
+    expect(await changeTrait(actor, { name: "Charisma", remove: true })).toBeNull();
   });
 
   it("is the GM's alone, and needs a trait the character has", async () => {
     foundryWith([3], { gm: false });
     expect(await changeTrait(character("A", [charisma]), { name: "Charisma", level: 3 })).toBeNull();
+    expect(await changeTrait(character("A"), { add: { name: "Lame", type: "trait", system: {} } })).toBeNull();
     foundryWith([3]);
     expect(await changeTrait(character("A", [charisma]), { name: "Magery", level: 3 })).toBeNull();
   });

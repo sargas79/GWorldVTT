@@ -94,6 +94,8 @@ export function lethalShock(options: {
   ht: number;
   /** The failure that stops the heart (since API 1.119.0): 5 by default, null for never. */
   heartAttackMargin?: number | null;
+  /** Whether any critical failure stops the heart too (since API 1.127.0): true by default, as the book says. */
+  heartAttackOnCritical?: boolean;
 }): LethalShock {
   if (options.success) return { unconscious: false, unconsciousMinutes: 0, dazedMinutes: 0, heartAttack: false };
   const minutes = Math.max(1, 20 - options.ht);
@@ -106,7 +108,7 @@ export function lethalShock(options: {
       criticalFailure: options.criticalFailure === true,
       margin: options.margin ?? 0,
       heartAttackMargin: options.heartAttackMargin === undefined ? HEART_ATTACK_MARGIN : options.heartAttackMargin,
-      criticalFailureCounts: true,
+      criticalFailureCounts: options.heartAttackOnCritical !== false,
     }),
   };
 }
