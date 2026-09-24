@@ -203,7 +203,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
   ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1, fullAutoOnly: false, tightBeam: false,
-  recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0, scopeFixed: false,
+  recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, semiActive: false, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0, scopeFixed: false,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false, outOfAction: null,
   ammunition: "", malediction: 0, ignoresDr: false, spendsFrom: null, roundsPerShot: 1,
 };
@@ -366,6 +366,11 @@ export interface DerivedAttack {
    */
   aimingSkill?: string;
   guidedSkillLevel?: number;
+  /**
+   * A homing weapon that homes on a spot someone holds on the target (since
+   * API 1.128.0), which a `gworld.weaponAttacks` listener may set on a row.
+   */
+  semiActive?: boolean;
   /** True for an attack that covers ground rather than striking a point (p. 413). */
   areaAttack?: boolean;
   /** A cone's widest, in yards; zero where the table does not say. */
@@ -2653,6 +2658,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           guidance: String(mode.guidance ?? ""),
           aimingSkill: String(mode.aimingSkill ?? ""),
           guidedSkillLevel: Math.max(0, Math.floor(Number(mode.guidedSkillLevel) || 0)),
+          semiActive: mode.semiActive === true,
           areaAttack: Boolean(mode.areaAttack),
           scatterSquared: mode.scatterSquared === true,
           coneMaxWidth: Number(mode.coneMaxWidth ?? 0) || 0,

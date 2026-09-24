@@ -124,6 +124,7 @@ import {
 } from "../rules/ranged.js";
 import { hearingDistanceModifier, telescopicOffset, telescopicScope } from "../rules/senses.js";
 import {
+  basedOnAnother,
   malfunctionFor,
   malfunctioned,
   mayExplode,
@@ -156,6 +157,8 @@ import {
   coneMayStillCatch,
   coneWidth,
   defendsAgainstArea,
+  designationHeld,
+  designationRolls,
   flightPlan,
   aimedThenGuided,
   guidanceModifiers,
@@ -196,6 +199,12 @@ export interface RollModifier {
   situation?: string;
   /** On an `accuracy` line, how much of it a scope gives (since 1.63.0). */
   scope?: number;
+  /**
+   * On an `accuracy` line, true where only a homing weapon's lock-on earned
+   * it (since 1.128.0): not an Aim maneuver, and not a flight long enough to
+   * count as aimed.
+   */
+  lockOn?: boolean;
   /**
    * On a `darkness` line, the darkness itself, 1 to 9, before the eyes took
    * anything off it (since 1.86.0).
@@ -1928,6 +1937,13 @@ async function rollAction(
   const attackMode = (rolledItem || attackRow?.dataset.derivedMode) && attackRow?.dataset.modeIndex !== undefined && Number.isInteger(attackModeIndex)
     ? { index: attackModeIndex, ranged: attackRow.dataset.ranged === "1", ...(attackRow.dataset.derivedMode ? { derived: attackRow.dataset.derivedMode } : {}) }
     : null;
+  // A homing weapon's lock-on and, for a semi-active one, who holds the spot
+  // on the target (since API 1.128.0). Asked before the attack's own hook, so
+  // what a listener decides about the lock-on is on the lines that hook sees.
+  const homing = rollType === "attack" && ranged && shot && weapon.guidance === "homing"
+    ? homingAttack({ actor, item: rolledItem, mode: attackMode, shot, weapon, semiActive: target.dataset.semiActive === "1" })
+    : null;
+  if (homing) applyLockOn(modifiers, homing.lockedOn === true, weapon);
   const hooked = rollType === "attack"
     ? callCombatHook(COMBAT_HOOKS.attackModifiers, {
         actor,
@@ -2101,6 +2117,13 @@ async function rollAction(
     if (!aiming?.success) return null;
   }
 
+  // A semi-active weapon only finds the target while the spot is held on it:
+  // one roll a turn of flight, made before the attack is (since API 1.128.0).
+  // On the first one failed it misses. It was still launched, so it spends
+  // its shot and the aim as any other attack does; it is just never rolled.
+  const designation = homing?.semiActive === true ? await holdDesignation(actor, homing) : null;
+  const spotLost = designation !== null && !designation.held;
+
   // The item the roll is made with, for the listeners (since 1.95.0): the
   // weapon of an attack, the tool the preparation picked for a skill.
   const rollingWith = rollType === "attack"
@@ -2108,7 +2131,7 @@ async function rollAction(
     : rollType === "skill"
       ? toolFor(actor, String(target.dataset.rollSkill ?? rollLabel ?? ""))
       : null;
-  const outcome = await rollSuccess({
+  const outcome = spotLost ? null : await rollSuccess({
     actor,
     base: guided?.skillLevel ?? base,
     label,
@@ -2189,7 +2212,7 @@ async function rollAction(
   });
   // An attack that could not be attempted -- effective skill below 3 -- was
   // never made: it spends no shots and no aim (since 1.83.0).
-  if (outcome === null) return null;
+  if (outcome === null && !spotLost) return null;
   // The shot spends the zen skill's success, whatever became of it.
   if (zenShot) await clearZenShot(actor);
 
@@ -2267,6 +2290,10 @@ async function rollAction(
       ui.notifications?.info(game.i18n.format("GWORLD.Ready.NowUnready", { name: String(item.name) }));
     }
   }
+
+  // A launch that lost its spot still counts as the attack made this turn,
+  // which the caller only records for a roll it was handed back.
+  if (spotLost && !spray && Boolean((game as any).combat?.started)) await recordAttackMade(actor);
 
   return outcome;
 }
@@ -2581,6 +2608,8 @@ interface RangedShot {
    * the shells asked for were capped by.
    */
   rateOfFire?: number;
+  /** True where the shooter said a homing weapon had locked on (since 1.128.0). */
+  lockedOn?: boolean;
 }
 
 /** The context a module's attack option is shown and applied with. */
@@ -2846,6 +2875,8 @@ export async function promptForRangedAttack(options: {
   effectiveSkill?: number;
   /** Shots already decided, for one target of a Spraying Fire burst: not asked (since 1.70.0). */
   fixedShots?: number;
+  /** How the projectile steers: a homing one is asked whether it locked on (since 1.128.0). */
+  guidance?: string;
 }): Promise<RangedShot | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   const addonContext = attackContextFor({
@@ -2965,6 +2996,9 @@ export async function promptForRangedAttack(options: {
         <input type="checkbox" name="aimed" ${aiming.total > 0 ? "checked" : ""}>
         <span>${accuracyLabel}</span>
       </label>
+      ${options.guidance === "homing" ? `<label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="lockedOn"><span>${L("LockedOnBox")}</span>
+      </label>` : ""}
       <label style="display:flex;align-items:center;gap:8px">
         <input type="checkbox" name="laser"><span>${L("LaserSight")}</span>
       </label>
@@ -3009,6 +3043,7 @@ export async function promptForRangedAttack(options: {
       cover: cover as CoverApproach | "none",
       calledShot,
       aimed,
+      lockedOn: form?.querySelector<HTMLInputElement>('input[name="lockedOn"]')?.checked ?? false,
       laser: {
         on: form?.querySelector<HTMLInputElement>('input[name="laser"]')?.checked ?? false,
         targetSees: form?.querySelector<HTMLInputElement>('input[name="laserSeen"]')?.checked ?? false,
@@ -3111,6 +3146,7 @@ export async function promptForRangedAttack(options: {
     calledShot: aimed.shot,
     rangeYards: input.range,
     cover: input.cover ?? "none",
+    lockedOn: input.lockedOn === true,
     laser: { on: input.laser?.on === true, targetSees: input.laser?.targetSees === true },
     // "But if the target can see it, he gets +1 to Dodge!"
     dodgeBonus: input.laser?.on
@@ -3151,6 +3187,8 @@ interface RangedInput {
   mount?: MountShot | null;
   /** A laser sight in use, and whether the target has seen its dot (p. 411). */
   laser?: { on: boolean; targetSees: boolean } | null;
+  /** True where a homing weapon's seeker has locked on, which is worth its Acc (since 1.128.0). */
+  lockedOn?: boolean;
 }
 
 /** What firing from a vehicle adds to a shot. */
@@ -3388,7 +3426,12 @@ export function rangedModifiers(
   // firer took the maneuver or not -- but only the maneuver buys the extra
   // turns and the bracing, which is why those stay behind the checkbox.
   const deliberatelyAimed = input.aimed && mayAim;
-  if (accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds })) {
+  // A homing weapon that has locked on gets its Acc as if it had aimed (since
+  // API 1.128.0). Where nothing else would have given it, the line says so,
+  // so a listener that clears the lock-on knows which line to take away.
+  const lockedOn = guidance === "homing" && input.lockedOn === true;
+  const onlyLockedOn = lockedOn && !accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds });
+  if (accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds, lockedOn })) {
     // Aimed on the sheet: Accuracy, the second and third turns, the bracing.
     // Aimed by the checkbox alone: Accuracy, as one turn's aim is worth.
     const aimedFor = deliberatelyAimed ? Math.max(1, weapon.aim?.turns ?? 0) : 1;
@@ -3400,7 +3443,15 @@ export function rangedModifiers(
     });
     // The scope's share of the Accuracy rides on the line (since API 1.63.0).
     const scopeShare = Math.max(0, Math.min(scope, aiming.accuracy));
-    if (aiming.accuracy !== 0) modifiers.push({ label: L("Accuracy"), value: aiming.accuracy, key: "accuracy", ...(scopeShare ? { scope: scopeShare } : {}) });
+    if (aiming.accuracy !== 0) {
+      modifiers.push({
+        label: L(onlyLockedOn ? "LockedOn" : "Accuracy"),
+        value: aiming.accuracy,
+        key: "accuracy",
+        ...(scopeShare ? { scope: scopeShare } : {}),
+        ...(onlyLockedOn ? { lockOn: true } : {}),
+      });
+    }
     if (aiming.extraTurns !== 0) modifiers.push({ label: L("AimedLonger"), value: aiming.extraTurns, key: "aim" });
     if (aiming.braced !== 0) modifiers.push({ label: L("Braced"), value: aiming.braced, key: "braced" });
 
@@ -4362,6 +4413,177 @@ function aimingLevel(actor: any, skill: string): number {
   }
   const iq = Number(actor?.system?.derived?.attributes?.IQ ?? actor?.system?.attributes?.IQ) || 10;
   return iq - 5;
+}
+
+/** The skill the spot on a semi-active weapon's target is held with, unless a module says otherwise. */
+export const DESIGNATION_SKILL = "Forward Observer";
+
+/**
+ * What a character rolls to hold the spot on a semi-active weapon's target
+ * (since API 1.128.0): the skill made DX-based (Characters p. 172), since
+ * keeping a dot on a moving target is a matter of a steady hand. The skill is
+ * read as the IQ-based one Forward Observer is, at its IQ-5 default where the
+ * character hasn't got it.
+ */
+export function designationLevel(actor: any, skill: string = DESIGNATION_SKILL): number {
+  const iq = Number(actor?.system?.derived?.attributes?.IQ ?? actor?.system?.attributes?.IQ) || 10;
+  const dx = Number(actor?.system?.derived?.attributes?.DX ?? actor?.system?.attributes?.DX) || 10;
+  return basedOnAnother(aimingLevel(actor, skill), iq, dx);
+}
+
+/** A homing attack as `gworld.homingAttack` leaves it (since API 1.128.0). */
+export interface HomingAttack {
+  actor: any;
+  item: any;
+  mode: unknown;
+  /** The one token targeted's actor, or null. */
+  target: any;
+  rangeYards: number;
+  /** Seconds in the air, counting the turn it is launched. */
+  seconds: number;
+  /** True where it runs out of reach before it arrives. */
+  falls: boolean;
+  /** Whether the seeker has locked on, which is worth the weapon's Acc. */
+  lockedOn: boolean;
+  /** Whether it homes on a spot someone holds on the target. */
+  semiActive: boolean;
+  /** Who holds the spot: the firer unless a listener names someone else. */
+  designator: any;
+  /** The skill they hold it with. */
+  skill: string;
+  /** The level they roll at, or null for `designationLevel` of the designator. */
+  level: number | null;
+  /** How many rolls holding it takes: one a turn of flight. */
+  rolls: number;
+}
+
+/**
+ * Asks the modules about a homing attack before it is rolled (since API
+ * 1.128.0): whether it locked on, whether it is semi-active, and who holds
+ * the spot and how. What the shooter said in the dialog is the starting point.
+ */
+export function homingAttack(options: {
+  actor: any;
+  item: any;
+  mode: unknown;
+  shot: { rangeYards: number; lockedOn?: boolean };
+  weapon: { halfDamageRange?: number; maxRange?: number };
+  semiActive: boolean;
+}): HomingAttack {
+  const flight = flightPlan({
+    rangeYards: options.shot.rangeYards,
+    speed: projectileSpeed(options.weapon.halfDamageRange ?? 0),
+    maxRange: options.weapon.maxRange ?? 0,
+  });
+  const targets = targetedTokens();
+  const hooked = callCombatHook<HomingAttack>(COMBAT_HOOKS.homingAttack, {
+    actor: options.actor,
+    item: options.item,
+    mode: options.mode,
+    target: targets.length === 1 ? targets[0]?.actor ?? null : null,
+    rangeYards: options.shot.rangeYards,
+    seconds: flight.seconds,
+    falls: flight.falls,
+    lockedOn: options.shot.lockedOn === true,
+    semiActive: options.semiActive,
+    designator: options.actor,
+    skill: DESIGNATION_SKILL,
+    level: null,
+    rolls: designationRolls({ semiActive: true, secondsInFlight: flight.seconds, falls: flight.falls }),
+  });
+  // Whatever a listener left, read the way the rolls need it.
+  const level = hooked.level === null || hooked.level === undefined || !Number.isFinite(Number(hooked.level))
+    ? null
+    : Math.floor(Number(hooked.level));
+  return {
+    ...hooked,
+    lockedOn: hooked.lockedOn === true,
+    semiActive: hooked.semiActive === true,
+    designator: hooked.designator ?? options.actor,
+    skill: String(hooked.skill ?? "").trim() || DESIGNATION_SKILL,
+    level,
+    rolls: Math.max(0, Math.floor(Number(hooked.rolls) || 0)),
+  };
+}
+
+/**
+ * Puts a lock-on's Acc on an attack's lines, or takes it off, once the
+ * modules have said whether there is one (since API 1.128.0). A lock-on gives
+ * what one second of aim would, so where the attack already has an Accuracy
+ * line -- aimed, or in the air long enough to count as aimed -- it adds
+ * nothing; and only a line the lock-on alone earned is taken away.
+ */
+export function applyLockOn(
+  modifiers: RollModifier[],
+  lockedOn: boolean,
+  weapon: { accuracy: number; scopeBonus: number; scopeFixed?: boolean },
+): void {
+  if (!lockedOn) {
+    for (let i = modifiers.length - 1; i >= 0; i--) {
+      if (modifiers[i]?.key === "accuracy" && modifiers[i]?.lockOn === true) modifiers.splice(i, 1);
+    }
+    return;
+  }
+  if (modifiers.some((line) => line.key === "accuracy")) return;
+  const scope = scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: 1, fixed: weapon.scopeFixed === true });
+  const value = weapon.accuracy + scope;
+  if (value === 0) return;
+  const scopeShare = Math.max(0, Math.min(scope, value));
+  modifiers.push({
+    label: game.i18n.localize("GWORLD.Ranged.LockedOn"),
+    value,
+    key: "accuracy",
+    ...(scopeShare ? { scope: scopeShare } : {}),
+    lockOn: true,
+  });
+}
+
+/**
+ * The rolls to hold a semi-active weapon's spot on its target (since API
+ * 1.128.0), one a turn of flight, stopping at the first failure. They are all
+ * made when the attack is, since the system works out a steered weapon's
+ * whole flight at once; the card of each says which turn it is for.
+ */
+async function holdDesignation(firer: any, homing: HomingAttack): Promise<{ held: boolean; rolls: Array<SuccessRollResult | null> }> {
+  const designator = homing.designator ?? firer;
+  const level = homing.level ?? designationLevel(designator, homing.skill);
+  const needed = homing.rolls;
+  const rolls: Array<SuccessRollResult | null> = [];
+  for (let turn = 1; turn <= needed; turn++) {
+    const roll = await rollSuccess({
+      actor: designator,
+      base: level,
+      label: game.i18n.format("GWORLD.Guided.HoldSpot", { skill: homing.skill, turn, turns: needed }),
+      kind: "skill",
+      skill: homing.skill,
+      tags: ["designation", "DX"],
+    });
+    rolls.push(roll);
+    if (!roll?.success) break;
+  }
+  const held = designationHeld(rolls, needed);
+  if (!held) {
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor: firer }),
+      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+      content: `<div class="gworld gworld-chat"><div class="gc-result">${foundry.utils.escapeHTML(
+        game.i18n.format("GWORLD.Guided.SpotLost", { name: String(designator?.name ?? "") }),
+      )}</div></div>`,
+    });
+  }
+  callCombatHook(COMBAT_HOOKS.afterDesignation, {
+    actor: firer,
+    item: homing.item,
+    mode: homing.mode,
+    target: homing.target,
+    designator,
+    skill: homing.skill,
+    level,
+    needed,
+    rolls,
+    held,
+  });
+  return { held, rolls };
 }
 
 /** A token's document UUID, whichever of the placeable or the document it is. */

@@ -110,6 +110,18 @@ export const COMBAT_HOOKS = Object.freeze({
   afterVehicleHit: "gworld.afterVehicleHit",
   /** A blow that may leave the weapon stuck in its victim (since 1.105.0): `{ attacker, item, mode, target, result, pick, stuck }`, `stuck` mutable. */
   weaponStuck: "gworld.weaponStuck",
+  /**
+   * Before a homing attack is rolled (since 1.128.0): `{ actor, item, mode,
+   * target, rangeYards, seconds, falls, lockedOn, semiActive, designator,
+   * skill, level, rolls }`, the last seven mutable.
+   */
+  homingAttack: "gworld.homingAttack",
+  /**
+   * After the rolls to hold a semi-active weapon's spot (since 1.128.0):
+   * `{ actor, item, mode, target, designator, skill, level, needed, rolls,
+   * held }`.
+   */
+  afterDesignation: "gworld.afterDesignation",
 });
 
 /** One piece of worn armour as `gworld.armorDr` hands it to a listener. */
