@@ -1576,6 +1576,8 @@
       "EquipmentQualityHint": "What these tools are worth to the skill that uses them (Campaigns p. 345). Good costs five times basic, fine twenty times.",
       "ForSkills": "Tools for",
       "ForSkillsHint": "The skills these are the tools of, separated by commas. While they are carried, those skills are rolled at the grade’s modifier.",
+      "Wheelchair": "Wheelchair",
+      "WheelchairHint": "A muscle-powered wheelchair: while equipped, ground Move is ST/4, rounded down (Characters p. 142)",
       "MissedMaintenance": "Missed checks",
       "MissedMaintenanceHint": "Maintenance checks missed, each costing a point of HT that the exposure roll is made against (Campaigns p. 485).",
       "MustRollInUse": "At zero HP or below: it rolls HT every second it is used under stress, or stops working",
@@ -4115,6 +4117,10 @@
       "HelpedBy": "Helped by {talent}",
       "CouldManifest": "Could manifest as: {abilities}",
       "Unpowered": "{trait} is a {power} ability, but has no power modifier — so it is not psionic. Add the modifier if it is meant to be."
+    },
+    "Towing": {
+      "Title": "Towing",
+      "Line": "Towing: {label}"
     },
     "Entangled": {
       "Escape": "Get loose",

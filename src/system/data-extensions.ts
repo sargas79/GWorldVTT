@@ -136,16 +136,24 @@ export interface WeightNotCounted {
 }
 
 /**
+ * A line a listener raised, or added of its own (since 1.113.0): what it
+ * weighed before (0 for an added line), what counts, and why.
+ */
+export type WeightAdded = WeightNotCounted;
+
+/**
  * Asks the modules which carried weight counts toward encumbrance (since
  * 1.58.0), and adds up what does.
  *
  * A powered suit can carry its own weight, and a pack can hold its load
  * weightlessly; the items still weigh what they weigh, so the change is made
  * here rather than to the item. A listener sets a line's `counts` to false or
- * lowers its `weight`, with a `reason`. One that throws changes nothing, and a
- * weight can't be raised or made negative here.
+ * lowers its `weight`, with a `reason`. Since 1.113.0 it may also raise a
+ * line's `weight`, or push a line of its own (`item` null) -- a load pulled
+ * behind, gear that weighs more wet. One that throws changes nothing, and a
+ * weight can't be made negative here.
  */
-export function moduleCarriedWeight(actor: any, lines: CarriedWeightLine[]): { total: number; notCounted: WeightNotCounted[] } {
+export function moduleCarriedWeight(actor: any, lines: CarriedWeightLine[]): { total: number; notCounted: WeightNotCounted[]; added: WeightAdded[] } {
   const before = lines.map((line) => ({ ...line }));
   const context = { actor, lines };
   const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
@@ -158,14 +166,18 @@ export function moduleCarriedWeight(actor: any, lines: CarriedWeightLine[]): { t
   }
   let total = 0;
   const notCounted: WeightNotCounted[] = [];
+  const added: WeightAdded[] = [];
   read.forEach((line, i) => {
-    const original = before[i]?.weight ?? 0;
+    // A line the listener pushed weighed nothing before it came.
+    const original = i < before.length ? (before[i]?.weight ?? 0) : 0;
     const weight = Number(line?.weight);
-    const counted = line?.counts === false ? 0 : Number.isFinite(weight) ? Math.max(0, Math.min(original, weight)) : original;
+    const counted = line?.counts === false ? 0 : Number.isFinite(weight) ? Math.max(0, weight) : original;
     total += counted;
-    if (counted < original) notCounted.push({ label: String(line.label ?? ""), weight: original, counted, reason: String(line.reason ?? "") });
+    const noted = { label: String(line?.label ?? ""), weight: original, counted, reason: String(line?.reason ?? "") };
+    if (counted < original) notCounted.push(noted);
+    else if (counted > original) added.push(noted);
   });
-  return { total, notCounted };
+  return { total, notCounted, added };
 }
 
 /** One thing added to a character's trait effects, and what added it. */
