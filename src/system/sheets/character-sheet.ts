@@ -18,6 +18,7 @@ import { combatStyle } from "../settings.js";
 import { activeRules, isRuleOn } from "../optional-rules.js";
 import { mayRaiseToSuppress } from "../suppression-fire.js";
 import { legalityClassOf, legalityNote } from "../legality.js";
+import { currentTemperature, dayWeather, setTemperature } from "../weather.js";
 import {
   OPPORTUNITY_LINE_PENALTY,
   evadeModifier,
@@ -2884,10 +2885,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
     // A module may say what the character's worn gear is worth against the
     // cold (API 1.76.0); the GM can still pick otherwise.
-    const asked = await promptForWeather(wornClothing(this.actor));
+    // The dialog starts on the day's temperature where the GM set one, and
+    // the GM may keep what they type as the day's (API 1.138.0), so the next
+    // battle or march is fought in the same weather.
+    const asked = await promptForWeather(wornClothing(this.actor), {
+      temperatureF: currentTemperature(),
+      mayKeep: game.user?.isGM === true,
+    });
     if (!asked) return;
 
-    await rollExposure({ actor: this.actor, ...asked });
+    const { keepTemperature, ...weather } = asked;
+    if (keepTemperature) await setTemperature(weather.temperatureF);
+    await rollExposure({ actor: this.actor, ...weather });
   }
 
   /**
@@ -3625,7 +3634,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   /** A day on the road (Campaigns pp. 351, 426). */
   static async #onHike(this: GWorldCharacterSheet) {
     if (!isRuleOn("hiking")) return;
-    const asked = await promptForHike();
+    // A hot day is ticked where the day's temperature makes it one for this
+    // marcher (API 1.138.0); the GM can still untick it.
+    const asked = await promptForHike(dayWeather(this.actor).hot);
     if (!asked) return;
     await hike({ actor: this.actor, ...asked });
   }

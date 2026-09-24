@@ -110,7 +110,7 @@ Contents:
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0). |
 | `points`, `magic` | Point pools, energy sources and spell attacks (since 1.4.0), and resistance cards (since 1.9.0). |
 | `migration` | Moving world data from the system into a module (since 1.6.0). |
-| `world` | Facts about the campaign world (since 1.77.0): `controlRating()`. See [The campaign world](#the-campaign-world). |
+| `world` | Facts about the campaign world (since 1.77.0): `controlRating()`, and `weather(actor?)` and `setTemperature(temperatureF)` (since 1.138.0). See [The campaign world](#the-campaign-world). |
 
 Since 1.5.0, `combat`, `roll` and `actors` also carry the procedure extension
 points described under [Inside the system's own procedures](#inside-the-systems-own-procedures).
@@ -1918,6 +1918,35 @@ Two fields a module may read (since 1.62.0):
       shows `label`, or "Can't let go of the source". What holding the
       victim does is the module's: the system applies nothing more.
     - `lines` are the card's lines, the listener's pushes included.
+- **The day's temperature, and after fatigue** (since 1.138.0; Campaigns
+  pp. 426, 434).
+  - *The day's temperature* is a world setting: the GM sets it in the
+    system settings, or ticks "Keep this as the day's temperature" in the
+    Weather dialog, which starts on it. `world.weather(actor?)` reads it (see
+    [The campaign world](#the-campaign-world)). A day is hot above 80°F,
+    where an active human starts rolling against the heat (p. 434), plus
+    the actor's Temperature Tolerance on the hot side where there is one.
+  - *Battle and hiking* pass it to `gworld.fatigueCost` and
+    `gworld.afterFatigue`: `details.temperatureF` (null where none is set)
+    and `details.hot`, for the one paying. A battle's `hot` is only told:
+    the extra point for a hot day's battle (p. 426) is still a listener's to
+    add, now off the day's figure. The sheet's hiking dialog starts with "A
+    hot day" ticked where the day is hot for the marcher, and the GM can
+    untick it; `hot` is what was charged either way.
+  - *After fatigue*: `gworld.afterFatigue` fires once the FP has been
+    charged, after the `gworld.fatigueCost` listeners, Very Fit's halving
+    and the fatigue chart, with `{ actor, reason, details, exertion, fpLost,
+    hpLost, fp, hp, sources }`. `reason`, `details` and `exertion` are what
+    `gworld.fatigueCost` was told; `fpLost` and `hpLost` are what it came
+    to, `hpLost` above 0 where it went past 0 FP; `fp` and `hp` are `{
+    previous, now, max }`; `sources` is what the `gworld.fatigueCost`
+    listeners pushed. It is read-only: the context and its objects are
+    frozen. It fires wherever `gworld.fatigueCost` does and the cost after
+    the listeners is above 0 -- every system charge, `actors.spendFatigue`,
+    and extra effort (whose Will roll pays outside the chart, and on a
+    critical failure the same again in HP, which is `hpLost`). It doesn't
+    fire where a listener brought the cost to 0, or for
+    `actors.applyInjury({ fatigue: true })`, which takes FP as given.
 - **Study time** (since 1.133.0; Characters pp. 292-293): how many hours of
   the clock a stretch of study counts for is set by its method (instruction,
   intensive training, self-teaching, work), and anything else that speeds or
@@ -2207,8 +2236,9 @@ Two fields a module may read (since 1.62.0):
     FP, before the fatigue chart and Very Fit's halving, with
     `{ actor, fp, reason, exertion, details, sources }`. Set `fp` (rounded,
     never below 0) and push a label to `sources`. `reason` is `battle` (the
-    end of a fight, p. 426; `details.seconds`, `details.strained`), `hiking`
-    (`hours`, `hot`), `missedSleep`, `exposure` (`heat`, `temperatureF`,
+    end of a fight, p. 426; `details.seconds`, `details.strained`, and since
+    1.138.0 `temperatureF` and `hot`), `hiking` (`hours`, `hot`, and since
+    1.138.0 `temperatureF`), `missedSleep`, `exposure` (`heat`, `temperatureF`,
     `heatStroke`), `deprivation` (`mealsMissed`, `hunger`, `thirst`,
     `climate`), `extraEffort` (a combat option's FP, asked before the cost
     is weighed against the FP left; `what`), `suffocation`, `poison`
@@ -2216,7 +2246,9 @@ Two fields a module may read (since 1.62.0):
     `enchanting` and `drug`. `exertion` is false for spells, held spells,
     enchanting and a drug's crash. This is where a module charges the heat's
     surcharge on exertion and dehydration (p. 434) or a hot day's extra point
-    for a battle (p. 426): the system does not know the day's temperature.
+    for a battle (p. 426). Before 1.138.0 the system didn't know the day's
+    temperature; since then a battle's and a march's `details` carry it (see
+    *The day's temperature, and after fatigue*).
     Battle fatigue now goes through the fatigue chart like other exertion
     (Very Fit halves it; past 0 FP it costs HP), and its card names an actor
     whose cost a listener changed, with the new cost and the `sources`.
@@ -2974,6 +3006,16 @@ that are world settings rather than anything on an actor:
 - **`hooks.campaignChanged`** (`gworld.campaignChanged`) fires with the terms
   when the GM changes one, after every player character has been prepared
   again.
+- **`world.weather(actor?)`** (since 1.138.0; Campaigns pp. 426, 434) --
+  `{ temperatureF, hot }`: the day's temperature in °F as the GM set it in
+  the system settings or from the Weather dialog, null where it's blank, and
+  whether it is a hot day. With an actor, `hot` is for that actor: above
+  80°F plus their Temperature Tolerance on the hot side. Without one it is
+  for an ordinary human. `hot` is false where no temperature is set.
+- **`world.setTemperature(temperatureF)`** (since 1.138.0) sets the day's
+  temperature (rounded to a whole degree), or clears it with null. Only the
+  GM may. It resolves to whether it was set: false for anyone else or a
+  value that isn't a number.
 
 ## Modifying dice + adds
 

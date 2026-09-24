@@ -15,6 +15,7 @@ import { attributeOf, healthRollScore } from "./attributes.js";
 import { conditionLabel, setCondition, syncHealthConditions } from "./conditions.js";
 import { resolveDamageAgainst, traitsOf, type IncomingDamage } from "./damage.js";
 import { applyFatigue } from "./fatigue.js";
+import { dayWeather } from "./weather.js";
 import { loseAim } from "./aim.js";
 import { collisionDamage, collisionVelocity, overrunDamage, type CollisionAngle } from "../rules/collisions.js";
 import { formatDiceAdds, parseDiceAdds, toRollFormula } from "../rules/dice.js";
@@ -234,7 +235,11 @@ export async function hike(options: {
   hours: number;
   terrain: Terrain;
   weather: TravelWeather;
-  hot: boolean;
+  /**
+   * Whether it is a hot day. Left out, the day's temperature as the GM set it
+   * says, for this marcher (since API 1.138.0).
+   */
+  hot?: boolean;
   modifier: number;
 }): Promise<void> {
   const { actor } = options;
@@ -255,12 +260,14 @@ export async function hike(options: {
     enhancedMove: Number(derived.traitEffects?.enhancedMove) || 1,
     hikingSuccess: outcome.success,
   });
+  const day = dayWeather(actor);
+  const hot = options.hot ?? day.hot;
   const perHour = marchingFatiguePerHour({
     encumbranceLevel: Number(derived.encumbrance?.level) || 0,
-    hot: options.hot,
+    hot,
   });
   const hours = Math.max(0, Math.floor(options.hours));
-  const pools = await applyFatigue(actor, perHour * hours, { reason: "hiking", details: { hours, hot: options.hot } });
+  const pools = await applyFatigue(actor, perHour * hours, { reason: "hiking", details: { hours, hot, temperatureF: day.temperatureF } });
 
   const lines = [
     F("Miles", { miles, terrain: H(`Terrain.${options.terrain}`), weather: H(`Weather.${options.weather}`) }),
