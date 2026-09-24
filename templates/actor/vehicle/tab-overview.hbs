@@ -22,6 +22,20 @@
             <span class="v2-pool-status v2-bad">{{localize "GWORLD.Vehicle.Battered"}}</span>
           {{/if}}
         </div>
+        {{#if crippledParts.length}}
+          {{!-- Wheels, tracks, rotors and the rest that change how it moves
+               once crippled (Campaigns p. 555), kept until repaired. --}}
+          <div class="vehicle-crippled" data-tooltip="{{localize 'GWORLD.Vehicle.CrippledPartsHint'}}">
+            <span class="v2-stat-label">{{localize "GWORLD.Vehicle.CrippledParts"}}</span>
+            {{#each crippledParts as |p|}}
+              <label class="vehicle-crippled-part">
+                <span>{{p.label}}</span>
+                <input type="number" name="{{p.name}}" value="{{p.value}}" min="0" step="1"
+                       {{#unless ../editable}}disabled{{/unless}}>
+              </label>
+            {{/each}}
+          </div>
+        {{/if}}
         <div class="v2-stat-pair">
           <div class="v2-stat">
             <span class="v2-stat-label">{{localize "GWORLD.Vehicle.Speed"}}</span>

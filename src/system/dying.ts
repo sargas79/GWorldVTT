@@ -15,6 +15,7 @@ import { traitsOf } from "./damage.js";
 import {
   cripplingDuration,
   cripplingMonths,
+  type CripplingDuration,
   deathCheck,
   mortalWoundCheck,
   mortalWoundInterval,
@@ -26,6 +27,7 @@ import { callCombatHook } from "./combat-extensions.js";
 import { attributeOf, healthRollBonus, healthRollScore } from "./attributes.js";
 import { hasCondition, syncHealthConditions } from "./conditions.js";
 import { fragileExplodes } from "./hazards.js";
+import { crippledPartName, crippledParts, settleCrippling, type CrippledPart } from "./crippling.js";
 import { failsDeathChecks, fragileDeathCheck, fragileExplosion } from "../rules/fragile.js";
 
 const DYING_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/dying.hbs`;
@@ -201,14 +203,26 @@ export async function rollMortalWound(options: {
  *
  * "For battlefield injuries, roll at the end of combat" -- so this is a button
  * somebody presses afterwards rather than something the blow does on the spot.
+ * Given an undecided crippled part (by id or location; since 1.129.0), the
+ * roll settles it. Resolves to the duration and, for a lasting one, its
+ * months; null for a user who can't change the actor, or a part named that
+ * isn't there waiting to be settled.
  */
 export async function rollCripplingDuration(options: {
   actor: any;
   /** The tech level of the medicine treating it, if any. */
   treatedAtTl?: number | null;
-}): Promise<void> {
+  /** An undecided crippled part the roll settles. */
+  part?: string;
+  /** For that part, if no injury caused it: how long a temporary crippling lasts. */
+  seconds?: number;
+}): Promise<{ duration: CripplingDuration; months: number | null; part: CrippledPart | null } | null> {
   const { actor, treatedAtTl = null } = options;
-  if (!actor?.isOwner) return;
+  if (!actor?.isOwner) return null;
+  const waiting = options.part
+    ? crippledParts(actor).find((p) => p.duration === "undecided" && (p.id === options.part || p.location === options.part))
+    : undefined;
+  if (options.part && !waiting) return null;
 
   const ht = healthRollScore(actor);
 
@@ -221,23 +235,39 @@ export async function rollCripplingDuration(options: {
   // character is back at full HP, and a permanent one does not end.
   const months = new Roll("1d6");
   if (duration === "lasting") await months.evaluate();
+  const monthsToHeal = duration === "lasting" ? cripplingMonths({ roll: months.total, treatedAtTl }) : null;
+
+  // A temporary crippling no HP loss caused doesn't end at full HP, so the
+  // card says so rather than promising what won't happen.
+  const outcomeKey = duration === "temporary" && waiting?.injury === false
+    ? "GWORLD.Crippled.TemporaryNoInjury"
+    : `GWORLD.Dying.${duration}`;
 
   await post(actor, {
-    kind: game.i18n.localize("GWORLD.Dying.Crippling"),
+    kind: waiting
+      ? `${game.i18n.localize("GWORLD.Dying.Crippling")}: ${waiting.label || crippledPartName(waiting.location)}`
+      : game.i18n.localize("GWORLD.Dying.Crippling"),
     ht,
     modifier: 0,
     target: ht,
     dice: dieResults(roll),
     roll: roll.total,
-    outcome: game.i18n.localize(`GWORLD.Dying.${duration}`),
+    outcome: game.i18n.localize(outcomeKey),
     detail:
-      duration === "lasting"
-        ? game.i18n.format("GWORLD.Dying.Months", {
-            months: cripplingMonths({ roll: months.total, treatedAtTl }),
-          })
+      monthsToHeal !== null
+        ? game.i18n.format("GWORLD.Dying.Months", { months: monthsToHeal })
         : "",
     bad: duration !== "temporary",
     fatal: duration === "permanent",
     rolls: duration === "lasting" ? [roll, months] : [roll],
   });
+
+  const part = waiting
+    ? await settleCrippling(actor, waiting.id, {
+        duration,
+        ...(monthsToHeal !== null ? { months: monthsToHeal } : {}),
+        ...(options.seconds !== undefined ? { seconds: options.seconds } : {}),
+      })
+    : null;
+  return { duration, months: monthsToHeal, part };
 }

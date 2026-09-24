@@ -364,6 +364,140 @@ export function crippleThreshold(
   }
 }
 
+// ── crippled parts and the Move they leave (p. 555) ─────────────────────
+
+/**
+ * The locations whose crippling changes how a vehicle moves (pp. 554-555).
+ * A weapon mount, a turret or a superstructure knocks out what it carries,
+ * which is a matter for whatever was in it, not for the vehicle's figures.
+ */
+export const MOVE_CRIPPLING_LOCATIONS = ["wheel", "track", "runner", "rotor", "wing", "mast"] as const;
+
+export type MoveCripplingLocation = (typeof MOVE_CRIPPLING_LOCATIONS)[number];
+
+/** How many of each of those are crippled now. */
+export type CrippledVehicleParts = Partial<Record<MoveCripplingLocation, number>>;
+
+/**
+ * How many of a location a vehicle's Locations entry lists: "G4W" is four
+ * wheels, a letter without a figure is one, and a location it doesn't list
+ * is none.
+ */
+export function locationCount(entry: string, location: VehicleLocation): number {
+  const code = Object.keys(LOCATION_CODES).find((key) => LOCATION_CODES[key] === location);
+  if (!code) return 0;
+  // "Wi" is a wing, not a wheel followed by something else.
+  const m = new RegExp(`(\\d*)${code}(?![a-z])`).exec(String(entry ?? ""));
+  if (!m) return 0;
+  return Number(m[1]) || 1;
+}
+
+/**
+ * What is left of a Move when some of the legs are gone (Characters p. 54),
+ * which is what a crippled wheel does: "effects are the same as for a
+ * character with an equal number of legs losing one leg" (p. 555).
+ *
+ * Three or four legs move at half Move after losing one and fall at the
+ * second. Five or six lose 20% a leg, and seven or more 10% a leg, "until
+ * only three legs are left. At that point, your Move is 40% normal. Loss of
+ * another leg causes you to fall." Two legs or fewer have none to spare,
+ * as a motorcycle has no wheel to spare.
+ */
+export function lostLegsMoveFactor(legs: number, lost: number): number {
+  const count = Math.max(1, Math.floor(Number(legs) || 0));
+  const gone = Math.max(0, Math.floor(Number(lost) || 0));
+  if (gone === 0) return 1;
+  const left = count - gone;
+  if (count <= 2) return 0;
+  if (count <= 4) return gone === 1 ? 0.5 : 0;
+  if (left < 3) return 0;
+  if (left === 3) return 0.4;
+  return 1 - gone * (count <= 6 ? 0.2 : 0.1);
+}
+
+/** A Move as crippled parts leave it, and which part did it. */
+export interface CrippledMove {
+  acceleration: number;
+  topSpeed: number;
+  /** The share of the Move left: 1 where nothing crippled matters to the way it moves now. */
+  factor: number;
+  /** The location that changed it, or null. */
+  cause: MoveCripplingLocation | null;
+}
+
+/**
+ * The Move a vehicle has with some of its parts crippled (p. 555), for the
+ * way it is moving now: a crippled wheel slows a car on the road and does
+ * nothing to it as a boat.
+ *
+ * - A wheel: as a character with that many legs losing one (see
+ *   `lostLegsMoveFactor`), rounded down as a character's Move is.
+ * - A track or a runner: "reducing ground Move to 0".
+ * - A rotor or a wing: "causing an airborne vehicle to lose control and
+ *   crash!" -- it doesn't fly on, so its air Move is 0. The crash itself is
+ *   the loss of control the table plays out.
+ * - A mast: "reducing a sailing vessel's Move by 1/(number of masts),
+ *   rounded up".
+ *
+ * Top speed is rounded to whole yards, and acceleration, which the table
+ * gives in tenths, to tenths, both in the direction the book rounds.
+ */
+export function crippledMove(options: {
+  move: { locomotion: Locomotion; acceleration: number; topSpeed: number };
+  crippled: CrippledVehicleParts;
+  /** The vehicle's Locations entry, for how many wheels and masts it has. */
+  locations: string;
+}): CrippledMove {
+  const { move } = options;
+  const lost = (location: MoveCripplingLocation) => Math.max(0, Math.floor(Number(options.crippled?.[location]) || 0));
+  let factor = 1;
+  let cause: MoveCripplingLocation | null = null;
+  let roundUp = false;
+  switch (move.locomotion) {
+    case "wheels":
+      if (lost("wheel") > 0) {
+        factor = lostLegsMoveFactor(locationCount(options.locations, "wheel"), lost("wheel"));
+        cause = "wheel";
+      }
+      break;
+    case "tracks":
+      if (lost("track") > 0) [factor, cause] = [0, "track"];
+      break;
+    case "runners":
+      if (lost("runner") > 0) [factor, cause] = [0, "runner"];
+      break;
+    case "air":
+      if (lost("rotor") > 0) [factor, cause] = [0, "rotor"];
+      else if (lost("wing") > 0) [factor, cause] = [0, "wing"];
+      break;
+    case "water":
+      if (lost("mast") > 0) {
+        const masts = Math.max(1, locationCount(options.locations, "mast"));
+        factor = Math.max(0, (masts - lost("mast")) / masts);
+        cause = "mast";
+        roundUp = true;
+      }
+      break;
+    default:
+      break;
+  }
+  const acceleration = Math.max(0, Number(move.acceleration) || 0);
+  const topSpeed = Math.max(0, Number(move.topSpeed) || 0);
+  if (cause === null) return { acceleration, topSpeed, factor: 1, cause: null };
+  // Floating point makes 0.1 x 3 a hair over 0.3, which would round up to
+  // 0.4; trimming the last few places first keeps an exact figure exact.
+  const round = (value: number, step: number) => {
+    const units = Math.round((value / step) * 1e6) / 1e6;
+    return (roundUp ? Math.ceil(units) : Math.floor(units)) * step;
+  };
+  return {
+    acceleration: Math.round(round(acceleration * factor, 0.1) * 10) / 10,
+    topSpeed: round(topSpeed * factor, 1),
+    factor,
+    cause,
+  };
+}
+
 /** The locations that pass the hit through to somebody instead of the vehicle (p. 555). */
 export function hitsAPerson(location: VehicleLocation): boolean {
   return location === "exposedRider" || location === "openCabin";

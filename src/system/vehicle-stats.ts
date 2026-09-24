@@ -7,9 +7,18 @@
  * a module may change what the rules read through `gworld.vehicleStats`,
  * without touching what is stored. The vehicle's derived data, its Dodge,
  * its control rolls and what it reads for losing control all use these.
+ *
+ * The crippled parts the vehicle keeps are the one such state the Basic Set
+ * spells out, so the system applies them itself before the listeners hear
+ * (since API 1.134.0): a module that knows better -- a run-flat tyre, a
+ * spare rotor -- changes the figures back, rather than every module
+ * working the book's arithmetic out again.
  */
 
 import { activeMove, type VehicleMove } from "../rules/vehicles.js";
+import {
+  MOVE_CRIPPLING_LOCATIONS, crippledMove, type CrippledVehicleParts,
+} from "../rules/vehicle-combat.js";
 import { DATA_HOOKS } from "./data-extensions.js";
 
 /** A line saying what changed a vehicle's figures, for the sheet and the card. */
@@ -32,29 +41,66 @@ export interface VehicleStats {
 }
 
 /**
+ * The parts a vehicle has crippled now (since API 1.134.0). Only a vehicle
+ * actor keeps them; an entry on a Gear tab is the vehicle as bought and has
+ * none.
+ */
+export function crippledParts(owner: any): Record<(typeof MOVE_CRIPPLING_LOCATIONS)[number], number> {
+  const kept = owner?.system?.crippled ?? {};
+  return Object.fromEntries(
+    MOVE_CRIPPLING_LOCATIONS.map((location) => [location, Math.max(0, Math.floor(Number(kept[location]) || 0))]),
+  ) as Record<(typeof MOVE_CRIPPLING_LOCATIONS)[number], number>;
+}
+
+/** A line's label, through the translation where Foundry is there to give one. */
+function say(key: string, data: Record<string, unknown>): string {
+  const i18n = (globalThis as { game?: { i18n?: { format?: (key: string, data: object) => string } } }).game?.i18n;
+  return i18n?.format ? i18n.format(key, data) : key;
+}
+
+/**
  * A vehicle's figures after `gworld.vehicleStats`, with `{ vehicle, handling,
- * stability, acceleration, topSpeed, move, lines }` -- `vehicle` the actor or
- * the item on a Gear tab, the four figures mutable, and `lines` for saying
- * why. A listener that throws changes nothing; a figure that isn't a number
- * is left as it was, and Stability, acceleration and top speed never go
- * below 0.
+ * stability, acceleration, topSpeed, move, crippled, lines }` -- `vehicle`
+ * the actor or the item on a Gear tab, the four figures mutable, `move` the
+ * Move in use as stored, `crippled` the parts crippled now, and `lines` for
+ * saying why. The figures arrive with the crippled parts already applied
+ * (since API 1.134.0). A listener that throws changes nothing a listener
+ * did; a figure that isn't a number is left as it was, and Stability,
+ * acceleration and top speed never go below 0.
  */
 export function vehicleStats(owner: any): VehicleStats {
   const v = owner?.system?.vehicle ?? {};
   const move = activeMove(v);
+  const crippled: CrippledVehicleParts = crippledParts(owner);
+  // What the crippled parts leave of the Move in use (p. 555), before any
+  // module hears, so a listener adjusts the book's figure rather than
+  // having to know it.
+  const lamed = crippledMove({ move, crippled, locations: String(v.locations ?? "") });
+  const lines: VehicleStatLine[] = [];
+  if (lamed.cause) {
+    lines.push({
+      label: say(`GWORLD.Vehicle.CrippledMove.${lamed.cause}`, {
+        count: crippled[lamed.cause] ?? 0,
+        acceleration: lamed.acceleration,
+        topSpeed: lamed.topSpeed,
+      }),
+      stat: "topSpeed",
+      value: lamed.topSpeed - (Number(move.topSpeed) || 0),
+    });
+  }
   const base = {
     handling: Number(v.handling) || 0,
     stability: Number(v.stability) || 0,
-    acceleration: Number(move.acceleration) || 0,
-    topSpeed: Number(move.topSpeed) || 0,
+    acceleration: lamed.acceleration,
+    topSpeed: lamed.topSpeed,
   };
-  const context = { vehicle: owner, ...base, move: { ...move }, lines: [] as VehicleStatLine[] };
+  const context = { vehicle: owner, ...base, move: { ...move }, crippled: { ...crippled }, lines: [...lines] };
   const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
   try {
     hooks?.callAll?.(DATA_HOOKS.vehicleStats, context);
   } catch (error) {
     console.warn(`gworld | a ${DATA_HOOKS.vehicleStats} listener failed`, error);
-    return { ...base, move, lines: [] };
+    return { ...base, move: { ...move, acceleration: base.acceleration, topSpeed: base.topSpeed }, lines };
   }
   const read = (value: unknown, fallback: number, floor: number | null) => {
     const n = Number(value);

@@ -459,6 +459,19 @@ export interface GmToolRegistration {
 
 const gmTools: Array<{ id: string; label: string; icon: string; open: () => unknown; visible: () => boolean }> = [];
 
+/**
+ * Whether the system's ready work is done. Foundry builds the scene controls
+ * while it draws the canvas, before `ready`, so a tool registered from
+ * `gworld.ready` or later misses that build and needs the controls rebuilt.
+ */
+let controlsSettled = false;
+
+/** Rebuilds the scene controls, so `getSceneControlButtons` runs again. */
+function rebuildSceneControls(): void {
+  void Promise.resolve(ui?.controls?.render({ reset: true })).catch((error) =>
+    console.warn("gworld | the scene controls failed to rebuild", error));
+}
+
 /** Registers a GM tool, a button in the token controls. Returns its `<module>.<key>`, or null. */
 export function registerGmTool(registration: GmToolRegistration): string | null {
   const r = registration ?? ({} as GmToolRegistration);
@@ -475,7 +488,19 @@ export function registerGmTool(registration: GmToolRegistration): string | null 
     open: r.open,
     visible: typeof r.visible === "function" ? r.visible : () => true,
   });
+  if (controlsSettled) rebuildSceneControls();
   return id;
+}
+
+/**
+ * Called once `gworld.ready` has run. The controls on screen were built before
+ * any module's ready work, so the tools registered there show only if the
+ * controls are rebuilt now; any registered later rebuild them themselves.
+ */
+export function settleGmTools(): void {
+  if (controlsSettled) return;
+  controlsSettled = true;
+  if (gmTools.length) rebuildSceneControls();
 }
 
 /**

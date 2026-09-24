@@ -9,7 +9,7 @@
  * give a weapon its DR and HP from its weight and what it is made of.
  */
 
-import { objectHealth, objectHitPoints, objectState, type ObjectKind, type ObjectState } from "./objects.js";
+import { isObjectKind, objectHealth, objectHitPoints, objectState, type ObjectKind, type ObjectState } from "./objects.js";
 import { breakageModifier, type WeaponMaterial, type WeaponQuality } from "./weapon-quality.js";
 
 // ── parrying heavy weapons (p. 376) ────────────────────────────────────────
@@ -212,11 +212,13 @@ export function weaponObjectStats(options: {
  * maintained items get -1 to -3 to HT; well-made or rugged ones get +1 or +2"
  * (p. 483). Each of DR, HP and HT a module set to a finite number is kept,
  * rounded and no lower than 0; anything else falls back to what the book gives.
- * Notes are kept where they are non-empty strings.
+ * The kind is kept where it is one of the three the book names (since API
+ * 1.126.0), since a thing the system takes for solid may be a machine, or a
+ * net. Notes are kept where they are non-empty strings.
  */
 export function settleObjectStats(
   base: ObjectStats,
-  proposed: { dr?: unknown; hp?: unknown; ht?: unknown; notes?: unknown },
+  proposed: { kind?: unknown; dr?: unknown; hp?: unknown; ht?: unknown; notes?: unknown },
 ): ObjectStats & { notes: string[] } {
   const pick = (value: unknown, fallback: number): number =>
     typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.round(value)) : fallback;
@@ -224,7 +226,7 @@ export function settleObjectStats(
     ? proposed.notes.filter((n): n is string => typeof n === "string" && n.trim() !== "").map((n) => n.trim())
     : [];
   return {
-    kind: base.kind,
+    kind: isObjectKind(proposed.kind) ? proposed.kind : base.kind,
     dr: pick(proposed.dr, base.dr),
     hp: pick(proposed.hp, base.hp),
     ht: pick(proposed.ht, base.ht),

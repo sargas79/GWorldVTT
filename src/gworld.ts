@@ -49,7 +49,7 @@ import { GWorldCharacterSheetV2 } from "./system/sheets/character-sheet-v2.js";
 import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldGenericItemSheet } from "./system/sheets/generic-item-sheet.js";
 import { setGenericSheetRegistrar } from "./system/data-extensions.js";
-import { registerSheetExtensionHooks } from "./system/sheet-extensions.js";
+import { registerSheetExtensionHooks, settleGmTools } from "./system/sheet-extensions.js";
 import { registerDemolitionTool } from "./system/demolition.js";
 import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
 import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
@@ -237,6 +237,9 @@ Hooks.once("ready", () => {
   // The campaign's terms, kept on a party before #642, into the world settings.
   void migratePartyCampaignTerms();
   Hooks.callAll(READY_HOOK, api);
+  // The token controls were drawn with the canvas, before any module had its
+  // ready turn, so GM tools registered just now aren't on them yet.
+  settleGmTools();
 });
 
 export { rules };
