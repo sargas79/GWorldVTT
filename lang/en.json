@@ -1598,7 +1598,9 @@
       "AimingSkill": "Aiming skill",
       "AimingSkillHint": "A skill the firer rolls before the attack, such as a launcher operator's; the attack is only rolled if it succeeds. Blank for none.",
       "GuidedSkillLevel": "Projectile's skill",
-      "GuidedSkillLevelHint": "The projectile's own skill level, rolled for the attack once it has been aimed. 0 uses the firer's."
+      "GuidedSkillLevelHint": "The projectile's own skill level, rolled for the attack once it has been aimed. 0 uses the firer's.",
+      "SemiActive": "Semi-active",
+      "SemiActiveHint": "Homes on a spot someone keeps on the target, not on the target itself. The attack only hits while the spot is held: a DX-based Forward Observer roll for each turn of flight, made before the attack roll, and it misses on the first one failed."
     },
     "Gear": {
       "Carried": "Carried",
@@ -1751,7 +1753,9 @@
       "MovingMount": "Moving mount",
       "LaserSight": "Laser sight",
       "LaserSeen": "The target sees the laser dot",
-      "AimingRoll": "Aiming ({skill})"
+      "AimingRoll": "Aiming ({skill})",
+      "LockedOn": "Accuracy (locked on)",
+      "LockedOnBox": "The seeker has locked on (+Acc, as if aimed)"
     },
     "TechLevel": {
       "Line": "TL{equipment} equipment, TL{skill} skill",
@@ -4341,7 +4345,9 @@
       "ConeWidth": "The cone is {yards} yards wide here",
       "MayStillCatch": "A miss may still catch the target in the area",
       "MustSteer": "Concentrate each turn to steer it — lose sight of the target and it misses; Attack on the turn it arrives",
-      "DamageHoldsUp": "Damage does not fall off with distance"
+      "DamageHoldsUp": "Damage does not fall off with distance",
+      "HoldSpot": "Holding the spot ({skill}), turn {turn} of {turns}",
+      "SpotLost": "{name} lost the spot on the target: the homing attack misses"
     },
     "HurtingYourself": {
       "Title": "Hurting yourself",

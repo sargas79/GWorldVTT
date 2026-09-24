@@ -2187,6 +2187,8 @@ Two fields a module may read (since 1.62.0):
   `key` a listener can find them by in any language: `speedRange`, `bulk`
   (with `situation` `moveAndAttack` or `closeCombat`), `accuracy` (with
   `scope`, the scope's share of it, where a scope counts), `aim` (extra turns) and `braced`.
+  Since 1.128.0 an `accuracy` line only a homing weapon's lock-on earned
+  carries `lockOn: true` (see *Homing lock-on and semi-active homing*).
   Since 1.86.0 also `darkness`, the darkness penalty (Campaigns p. 394) on a
   ranged or melee attack, with `darkness`, the darkness itself (1 to 9) before
   the attacker's eyes took anything off it; the line's `value` is the penalty
@@ -2267,6 +2269,55 @@ Two fields a module may read (since 1.62.0):
   Since 1.64.0 the ranged row carries `aimingSkill` and `guidedSkillLevel`
   too, so a `gworld.weaponAttacks` listener can set them on a row; the row's
   figures win over the stored mode's.
+- **Homing lock-on and semi-active homing** (since 1.128.0; Campaigns
+  pp. 412-413). These apply to a ranged mode whose `guidance` is `homing`.
+  - *Lock-on.* A homing weapon whose seeker has locked on gets its Acc, as if
+    it had aimed. The ranged dialog of a homing weapon has a "locked on" box.
+    Where nothing else gave the attack Acc (no Aim, and a flight of one
+    second), the lock-on adds an `accuracy` line with `lockOn: true`, labelled
+    "Accuracy (locked on)". Where the attack already has Acc, the lock-on adds
+    nothing. The system doesn't roll the lock-on itself: the box, or a
+    listener, says it was made.
+  - *Semi-active.* A mode's `semiActive` (false by default; the item sheet
+    shows the box on a homing mode) homes on a spot someone holds on the
+    target. The ranged row carries `semiActive` too, so a
+    `gworld.weaponAttacks` listener can set it on a row. Before the attack
+    roll, the one holding the spot makes a roll for each turn of flight,
+    counting the turn of launch, and stops at the first failure. The roll is
+    a success roll tagged `designation` and `DX`, so `gworld.successRollModifiers`
+    sees it. By default it is the designator's Forward Observer, made
+    DX-based: their skill level, or its IQ-5 default, less IQ plus DX. If the
+    spot is held, the attack is rolled as usual. If it is lost, a card says
+    so and the attack is never rolled: it misses, but still spends its shot
+    and the aim, and still counts as the attack made this turn. All the
+    rolls are made when the attack is, since the system works out a steered
+    weapon's whole flight at once. A weapon that crashes before it arrives
+    asks for none.
+  - `gworld.homingAttack` fires before `gworld.attackModifiers` on every
+    homing attack, with `{ actor, item, mode, target, rangeYards, seconds,
+    falls, lockedOn, semiActive, designator, skill, level, rolls }`.
+    `target` is the one targeted token's actor (null otherwise). `seconds`
+    is the time in the air, counting the turn of launch, and `falls` says
+    the weapon crashes first. Both are read-only. The rest are mutable:
+    - `lockedOn`: starts as the dialog's box (false with no dialog). Set it
+      true to give the attack its Acc, or false to take away a line the
+      lock-on alone gave. `gworld.attackModifiers` sees the lines as they
+      stand after this.
+    - `semiActive`: starts as the row's.
+    - `designator`: the actor who holds the spot. Starts as the firer.
+    - `skill`: the skill it's held with, `Forward Observer` by default, named
+      on the cards.
+    - `level`: the level to roll at. Null (the default) works it out from
+      `skill` as above, which assumes an IQ-based skill; a listener naming
+      another skill sets `level` too.
+    - `rolls`: how many rolls holding the spot takes. One a turn of flight
+      by default, 0 where it crashes first. 0 means none.
+  - `gworld.afterDesignation` fires after the rolls, whether the spot was
+    held or lost, with `{ actor, item, mode, target, designator, skill,
+    level, needed, rolls, held }`. `actor` is the firer, `needed` how many
+    rolls were asked for, `rolls` the success roll results in order (null
+    for one that couldn't be attempted), and `held` whether every one
+    succeeded.
 - **Kinetic-only blows** (since 1.63.0): a mode's `kineticOnly`, and the same
   option on `roll.damage`, makes a blow whose whole effect is its shove:
   knockback worked out as a crushing blow's, blunt trauma where flexible armour
