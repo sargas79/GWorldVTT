@@ -15,7 +15,7 @@ import { healthRollScore } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { bleedingMinute, bleedingModifier } from "../rules/bleeding.js";
 import { resolveSuccess } from "../rules/success.js";
-import { bleedingSchedule, successRollModifiers } from "./procedure-extensions.js";
+import { bleedingSchedule, procedureRoll } from "./procedure-extensions.js";
 
 const BLEEDING_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/bleeding.hbs`;
 
@@ -53,11 +53,14 @@ export async function rollBleeding(options: { actor: any }): Promise<number> {
   // A module may change how often the wound bleeds and at what modifier, and
   // the actor's conditions and the modules may add to the roll.
   const schedule = bleedingSchedule(actor, bleedingModifier(Math.max(0, max - current)));
-  const modifier = schedule.modifier + successRollModifiers({ actor, label: "Bleeding", kind: "attribute", skill: "", base: ht, tags: ["bleeding", "HT"], modifiers: [] })
-    .reduce((total, line) => total + line.value, 0);
+  // A bonus held for the roll counts on it (since API 1.144.0); the rules
+  // force the roll, so it can't be refused.
+  const hooked = procedureRoll({ actor, label: "Bleeding", kind: "attribute", skill: "", base: ht, tags: ["bleeding", "HT"], modifiers: [] });
+  const modifier = schedule.modifier + hooked.added.reduce((total, line) => total + line.value, 0);
 
   const roll = new Roll("3d6");
   await roll.evaluate();
+  await hooked.spend();
   const outcome = resolveSuccess(roll.total, ht + modifier, dieResults(roll));
 
   const quiet = Number(actor.getFlag?.(SYSTEM_ID, BLEEDING_FLAG)) || 0;

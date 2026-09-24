@@ -1981,8 +1981,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const first = { actor: this.actor, base: score(this.actor), modifiers: modifier(asked.yours) };
     const second = { actor: foe, base: score(foe), modifiers: modifier(asked.theirs) };
 
-    if (asked.regular) await rollRegularContest({ label, first, second });
-    else await rollQuickContest({ label, first, second });
+    // Nothing follows on from a contest rolled here, so a listener may
+    // refuse a side (since API 1.144.0).
+    if (asked.regular) await rollRegularContest({ label, first, second, returnRefusal: true });
+    else await rollQuickContest({ label, first, second, returnRefusal: true });
   }
 
   /**

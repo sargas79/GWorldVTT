@@ -23,7 +23,8 @@ import {
 } from "../rules/fright.js";
 import { resolveSuccess } from "../rules/success.js";
 import { traitsOf } from "./damage.js";
-import { successRollModifiers } from "./procedure-extensions.js";
+import { procedureRoll } from "./procedure-extensions.js";
+import { postRefusal } from "./roll.js";
 
 const FRIGHT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/fright.hbs`;
 
@@ -84,15 +85,31 @@ export async function rollFrightCheckOutcome(options: {
 
   // What the actor's conditions and the modules add to the check.
   const will = Number(actor?.system?.derived?.will) || 10;
-  const added = successRollModifiers({ actor, label: "Fright Check", kind: "attribute", skill: "", base: will, tags: ["fright", "will", ...(options.tags ?? [])], modifiers: [], ...(options.attack ? { attack: options.attack } : {}) });
+  // A bonus held for the check counts on it, and a listener may refuse it
+  // (since API 1.144.0): then no check is made, as for the Unfazeable, and
+  // the card says why.
+  const hooked = procedureRoll({ actor, label: "Fright Check", kind: "attribute", skill: "", base: will, tags: ["fright", "will", ...(options.tags ?? [])], modifiers: [], ...(options.attack ? { attack: options.attack } : {}) }, { refusable: true });
   const target = frightTarget(
     will,
-    modifier + added.reduce((total, line) => total + line.value, 0),
+    modifier + hooked.added.reduce((total, line) => total + line.value, 0),
     traits.frightCheck,
   );
+  if (hooked.refusal !== null) {
+    ui.notifications?.warn(hooked.refusal);
+    const lines = [
+      { label: game.i18n.localize("GWORLD.Fright.Modifier"), value: modifier },
+      { label: game.i18n.localize("GWORLD.Fright.Traits"), value: target.traitBonus },
+      ...hooked.added,
+    ];
+    await postRefusal({ actor, base: will, label: game.i18n.localize("GWORLD.Fright.Title"), kind: "attribute" }, {
+      reason: hooked.refusal, modifiers: lines, totalModifier: target.effective - will, effective: target.effective,
+    });
+    return null;
+  }
 
   const check = new Roll("3d6");
   await check.evaluate();
+  await hooked.spend();
   const outcome = resolveSuccess(check.total, target.effective, dieResults(check));
 
   // The table is only consulted on a failure, so the second roll is only made

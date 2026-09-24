@@ -22,7 +22,7 @@ import {
   mortalWoundTarget,
 } from "../rules/mortal-wounds.js";
 import { resolveSuccess } from "../rules/success.js";
-import { PROCEDURE_HOOKS, successRollModifiers } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, procedureRoll } from "./procedure-extensions.js";
 import { callCombatHook } from "./combat-extensions.js";
 import { attributeOf, healthRollBonus, healthRollScore } from "./attributes.js";
 import { hasCondition, syncHealthConditions } from "./conditions.js";
@@ -153,15 +153,18 @@ export async function rollMortalWound(options: {
 
   const ht = healthRollScore(actor);
   // What the modules add: a life-support unit's quality, say (API 1.60.0, tagged "mortalWound").
-  const added = successRollModifiers({
+  // A bonus held for the roll counts too (API 1.144.0); the roll is forced, so never refused.
+  const hooked = procedureRoll({
     actor, label: game.i18n.localize("GWORLD.Dying.MortalWound"), kind: "attribute", skill: "HT",
     base: mortalWoundTarget({ health: ht, physician }), tags: ["mortalWound", ...(traumaMaintenance ? ["traumaMaintenance"] : [])], modifiers: [],
-  }).reduce((sum, line) => sum + line.value, 0);
+  });
+  const added = hooked.added.reduce((sum, line) => sum + line.value, 0);
   const modifier = (Number(options.modifier) || 0) + added;
   const target = mortalWoundTarget({ health: ht, physician }) + modifier;
 
   const roll = new Roll("3d6");
   await roll.evaluate();
+  await hooked.spend();
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
   const result = mortalWoundCheck(outcome);
 

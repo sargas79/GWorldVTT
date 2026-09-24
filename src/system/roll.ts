@@ -558,8 +558,12 @@ export interface CriticalMissResult {
   again?: { roll: any; total: number; broke: boolean };
 }
 
-/** The card for a roll that could not be attempted: the target, and why no dice were rolled. */
-async function postRefusal(options: SuccessRollOptions, refused: {
+/**
+ * The card for a roll that could not be attempted: the target, and why no
+ * dice were rolled. The system's procedures that roll their own dice post
+ * theirs with it too (since API 1.144.0).
+ */
+export async function postRefusal(options: Pick<SuccessRollOptions, "actor" | "base" | "label" | "rollMode" | "secret"> & { kind?: string }, refused: {
   reason: string;
   modifiers: RollModifier[];
   totalModifier: number;
