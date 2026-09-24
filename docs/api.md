@@ -1187,7 +1187,11 @@ one when it is registered, and a module that uses partials loads them with
   on every render, including each search. Each row of the list is `[data-picker-row]` with
   the entry's UUID in `data-uuid`, and the entry's name is `[data-picker-name]` inside it.
 - **`sheets.registerGmTool({ module, key, label, icon?, open, visible? })`.**
-  A button in the token controls, shown to the GM only.
+  A button in the token controls, shown to the GM only. A tool registered
+  during `init`, `setup` or `gworld.ready` is there when the world first
+  loads: Foundry builds the controls before `ready`, so the system rebuilds
+  them once after `gworld.ready` if any module registered a tool. One
+  registered later rebuilds them when it is registered.
 
 Sheet markup follows the system's: a section is an `.isec`, a heading
 `.grph`, a list a `table.gt` with `tr[data-item-id]` rows, a button `.ibtn`,
@@ -1429,11 +1433,21 @@ Two fields a module may read (since 1.62.0):
   secret roll's refusal stays secret). It still resolves to null, unless the
   caller passes `returnRefusal: true`, which makes it resolve to
   `{ refused: true, reason, base, effective, modifiers }` instead.
+  Since 1.121.0 a roll to resist something (an HT roll against a poison, a
+  stun or a blinding light) isn't refused, because it isn't an attempt
+  (Campaigns p. 348). `roll.success` takes `resistance: true`, which also
+  tags the roll `resist`; a roll the caller tags `resist` (as the system's
+  affliction rolls are) counts as one without it. Such a roll is rolled at
+  any effective level: at 1 or 2 a 3 or 4 succeeds, as always, 17 and 18
+  fail, and anything else misses. The system's own HT rolls to stay
+  conscious at 0 HP or less (Campaigns p. 419) are resistance rolls too, so
+  they are made however far below zero the HP have gone.
 - **Medical hooks** (since 1.109.0):
   - *The tech level of First Aid* (Campaigns p. 424): `gworld.firstAid` also
     gets `techLevel`, the healer's TL to start with. A listener may set it
     (a doctor working without supplies, at a lower TL, for instance), and
-    the sheet's First Aid then uses the First Aid Table's row for that TL:
+    the sheet's First Aid (and, since 1.122.0, `actors.firstAid`) then uses
+    the First Aid Table's row for that TL:
     the HP restored, and the time it takes.
   - *Dirt in a wound* (Campaigns p. 444): the infection roll's
     `gworld.successRollModifiers` context (tags `disease`, `infection`,
@@ -2445,6 +2459,10 @@ Two fields a module may read (since 1.62.0):
   so a device that treats on its own uses its figures, and `label` names it on the card. Each roll
   passes through `gworld.successRollModifiers` tagged `firstAid`, `physician`, `surgery`, or
   `mortalWound` (with `traumaMaintenance` when it is), so a module adds its gear or care there.
+  Since 1.122.0, `actors.firstAid` makes the button's whole attempt: `gworld.firstAid` fires
+  first, with `techLevel` starting at the one given (or the healer's), so a listener may refuse
+  it (it resolves to 0 and warns, as the button does) or move it to another TL, and a success
+  stops the patient's bleeding unless a listener set `stopsBleeding: false`.
   Since 1.63.0, `gworld.mortalWoundInterval` fires before the check's card with
   `{ actor, traumaMaintenance, minutes, label }`: set `minutes` (1440 for daily checks) and a
   `label` where the module's care changes how often the check comes round; the card says so.
@@ -2527,7 +2545,8 @@ Two fields a module may read (since 1.62.0):
   `selfControl`, with the trait's name as `skill`; `gworld.afterSuccessRoll` follows.
 - **First Aid** (since 1.36.0): `gworld.firstAid` gets `{ healer, patient, refusal,
   stopsBleeding, techLevel }` before an attempt (`techLevel` since 1.109.0;
-  see *Medical hooks*). Set `refusal` (text) to stop it, or
+  see *Medical hooks*), from the sheet's button and, since 1.122.0, from
+  `actors.firstAid` too. Set `refusal` (text) to stop it, or
   `stopsBleeding: false` so success doesn't stop the patient's bleeding. The roll
   itself adds `gworld.successRollModifiers` lines, tagged `firstAid`, with the
   patient as `opponent`. `actors.stopBleeding(actor)` ends an actor's bleeding.
