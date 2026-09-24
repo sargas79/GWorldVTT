@@ -46,7 +46,7 @@ import {
   FRAGILE_BURNING, FRAGILE_ROLLING_SECONDS, type FragileKind,
 } from "../rules/fragile.js";
 import {
-  crippleThreshold, hitsAPerson, locationsOf, lossOfControl, mediumOf, occupantDamage,
+  crippleThreshold, hitsAPerson, locationCount, locationsOf, lossOfControl, MOVE_CRIPPLING_LOCATIONS, mediumOf, occupantDamage,
   occupantHitTarget, OCCUPANT_RISK_DAMAGE, passesThrough, vehicleDrAt, vehicleHitLocation,
   vehicleInjury, vehicleLocationPenalty, vehicleMovement, vehiclePenetration, vehicleWoundingModifier,
   VEHICLE_HIT_LOCATIONS, type VehicleArc, type VehicleLocation,
@@ -358,10 +358,16 @@ export interface ShockContact {
 /** What a shock came to (since API 1.119.0): what `shock` resolves to, and the `gworld.afterShock` context without `actor`. */
 export interface ShockOutcome {
   kind: ShockKind;
+  /** The caller's name for what gave the shock (since API 1.127.0), or null. */
+  source: string | null;
+  /** The caller's tags for the shock (since API 1.127.0), for a listener to know its own. */
+  tags: string[];
   /** A `gworld.shockModifiers` listener made the victim unaffected: nothing else happened. */
   immune: boolean;
   /** HP of injury the burning damage did; 0 for a nonlethal shock. */
   injury: number;
+  /** The burning damage as rolled, before DR (since API 1.127.0); null where there was no damage roll. */
+  damageRoll: number | null;
   /** The DR the burning damage met, or null where there was no damage roll. */
   dr: number | null;
   /** Whether the HT roll was made. */
@@ -393,6 +399,10 @@ export interface ShockOutcome {
 export interface ShockModifiers {
   actor: any;
   kind: ShockKind;
+  /** The caller's name for what gave the shock (since API 1.127.0), or null. */
+  source: string | null;
+  /** The caller's tags for the shock (since API 1.127.0). */
+  tags: string[];
   formula: string;
   continuous: boolean;
   contactSeconds: number;
@@ -402,12 +412,42 @@ export interface ShockModifiers {
   injuryStep: number;
   /** The failure that stops the heart: 5 for a lethal shock, null (never) otherwise. */
   heartAttackMargin: number | null;
+  /**
+   * Whether any critical failure stops the heart too (since API 1.127.0):
+   * true for a lethal shock, false otherwise. Needs a `heartAttackMargin`.
+   */
+  heartAttackOnCritical: boolean;
   /** A DR that counts only against this shock, in place of the armour's: 1 in metal armour, otherwise null. */
   dr: number | null;
   /** Roll against a shock whose burning damage did no injury. */
   rollOnZeroInjury: boolean;
   /** The victim is unaffected (since API 1.119.0): no damage, no roll, no stun. */
   immune: boolean;
+  lines: string[];
+}
+
+/**
+ * The part of a shock a `gworld.shockDamage` listener may change (since API
+ * 1.127.0): once the burning damage is rolled and taken, before the HT roll.
+ */
+export interface ShockDamage {
+  actor: any;
+  kind: ShockKind;
+  source: string | null;
+  tags: string[];
+  formula: string;
+  /** The burning damage as rolled, before DR; it may be 0 or less. */
+  damageRoll: number;
+  /** The DR the damage met. */
+  dr: number;
+  /** HP of injury it did. */
+  injury: number;
+  /** The HT modifier the injury gives. */
+  injuryModifier: number;
+  /** The HT modifier for the source's strength, as `gworld.shockModifiers` left it. */
+  modifier: number;
+  /** Roll against a shock whose burning damage did no injury. */
+  rollOnZeroInjury: boolean;
   lines: string[];
 }
 
@@ -456,9 +496,20 @@ export async function shock(options: {
    * longer before the rolls to recover. Left out or 0: the current has stopped.
    */
   contactSeconds?: number;
+  /** What gave the shock, for the hooks (since API 1.127.0): a module's own name for it. */
+  source?: string | null;
+  /** Tags for the hooks (since API 1.127.0), so a listener can tell its own shock from another's. */
+  tags?: string[];
 }): Promise<ShockOutcome | null> {
   const { actor } = options;
   if (!mayChange(actor)) return null;
+
+  // Two listeners, or two features of one module, can only tell their own
+  // shock from another by what the caller called it.
+  const source = typeof options.source === "string" && options.source.trim() ? options.source.trim() : null;
+  const tags = Array.isArray(options.tags)
+    ? [...new Set(options.tags.filter((tag): tag is string => typeof tag === "string" && tag.trim() !== "").map((tag) => tag.trim()))]
+    : [];
 
   const ht = attributeOf(actor, "HT");
   const contact = Math.max(0, Math.floor(Number(options.contactSeconds) || 0));
@@ -471,6 +522,7 @@ export async function shock(options: {
   let injuryModifier = 0;
   let injury = 0;
   let metDr: number | null = null;
+  let damageRoll: number | null = null;
 
   // "1d-3" as the book writes it, made into a formula the dice can roll.
   const dice = options.kind !== "nonlethal" ? parseDiceAdds(formula) : null;
@@ -485,20 +537,25 @@ export async function shock(options: {
   const asked = callCombatHook<ShockModifiers>(PROCEDURE_HOOKS.shockModifiers, {
     actor,
     kind: options.kind,
+    source,
+    tags: [...tags],
     formula,
     continuous: options.continuous,
     contactSeconds: contact,
     modifier: Number(options.modifier) || 0,
     injuryStep: SHOCK_INJURY_STEP,
     heartAttackMargin: options.kind === "lethal" ? HEART_ATTACK_MARGIN : null,
+    heartAttackOnCritical: options.kind === "lethal",
     dr: options.metalArmor ? METAL_ARMOR_DR : null,
     rollOnZeroInjury: false,
     immune: false,
     lines: [],
   });
-  const modifier = numberOr(asked.modifier, Number(options.modifier) || 0);
+  let modifier = numberOr(asked.modifier, Number(options.modifier) || 0);
   const injuryStep = numberOr(asked.injuryStep, SHOCK_INJURY_STEP);
   const heartAttackMargin = numberOrNull(asked.heartAttackMargin, options.kind === "lethal" ? HEART_ATTACK_MARGIN : null);
+  const heartAttackOnCritical = typeof asked.heartAttackOnCritical === "boolean" ? asked.heartAttackOnCritical : options.kind === "lethal";
+  let rollOnZeroInjury = asked.rollOnZeroInjury === true;
   const shockDr = numberOrNull(asked.dr, options.metalArmor ? METAL_ARMOR_DR : null);
   lines.push(...stringLines(asked.lines));
   // Unaffected: no damage, no roll, no stun -- the listener's lines, or ours.
@@ -512,14 +569,39 @@ export async function shock(options: {
     rolls.push(hit.roll, hit.locationRoll);
     injury = hit.injury;
     metDr = hit.dr;
+    damageRoll = Number(hit.roll.total);
     injuryModifier = lethalShockModifier(injury, injuryStep);
     lines.push(F("ShockDamage", { formula, rolled: hit.roll.total, dr: hit.dr, injury, previous: hit.previous, now: hit.current }));
+
+    // The damage as rolled, before the HT roll (since API 1.127.0): a
+    // module's rule may make the roll easier or harder for how the dice fell,
+    // such as a weak shock whose damage came to nothing.
+    const rolled = callCombatHook<ShockDamage>(PROCEDURE_HOOKS.shockDamage, {
+      actor,
+      kind: options.kind,
+      source,
+      tags: [...tags],
+      formula,
+      damageRoll,
+      dr: hit.dr,
+      injury,
+      injuryModifier,
+      modifier,
+      rollOnZeroInjury,
+      lines: [],
+    });
+    modifier = numberOr(rolled.modifier, modifier);
+    if (typeof rolled.rollOnZeroInjury === "boolean") rollOnZeroInjury = rolled.rollOnZeroInjury;
+    lines.push(...stringLines(rolled.lines));
   }
 
   const outcome: ShockOutcome = {
     kind: options.kind,
+    source,
+    tags: [...tags],
     immune,
     injury,
+    damageRoll,
     dr: metDr,
     rolled: false,
     target: null,
@@ -556,7 +638,7 @@ export async function shock(options: {
 
   // Nothing got through: a lethal shock that did no injury asks for no roll,
   // unless a module says it does.
-  if (options.kind !== "nonlethal" && injury === 0 && asked.rollOnZeroInjury !== true) {
+  if (options.kind !== "nonlethal" && injury === 0 && !rollOnZeroInjury) {
     lines.push(H("ShockHarmless"));
     const result = heard();
     await post(actor, { kind: H("Shock"), detail: H(`ShockKind.${options.kind}`), lines: result.lines, rolls });
@@ -581,6 +663,7 @@ export async function shock(options: {
   if (options.kind === "lethal") {
     const result = lethalShock({
       success: resolved.success, criticalFailure: resolved.criticalFailure, margin: resolved.margin, ht, heartAttackMargin,
+      heartAttackOnCritical,
     });
     if (result.unconscious) {
       // Out while the current flows, and (20 - HT) minutes after.
@@ -609,9 +692,11 @@ export async function shock(options: {
     } else {
       lines.push(H("ShockHeld"));
     }
-    // The Basic Set stops no heart here; a module's margin may.
+    // The Basic Set stops no heart here; a module's margin may, and its say
+    // on whether a critical failure counts too (since API 1.127.0).
     outcome.heartAttack = shockHeartAttack({
       success: resolved.success, criticalFailure: resolved.criticalFailure, margin: resolved.margin, heartAttackMargin,
+      criticalFailureCounts: heartAttackOnCritical,
     });
   }
   if (outcome.heartAttack) {
@@ -1296,8 +1381,8 @@ export async function shootAtVehicle(options: {
   const struck = passesThrough(hit.location);
   const injury = struck ? 0 : vehicleInjury({ penetrating, ...wound });
   const threshold = crippleThreshold(hit.location, hitPoints, {
-    wheels: countOf(String(vehicle.locations ?? ""), "W"),
-    masts: countOf(String(vehicle.locations ?? ""), "M"),
+    wheels: locationCount(String(vehicle.locations ?? ""), "wheel"),
+    masts: locationCount(String(vehicle.locations ?? ""), "mast"),
   });
   if (threshold !== null) {
     lines.push(
@@ -1337,9 +1422,22 @@ export async function shootAtVehicle(options: {
   // A vehicle on the map keeps hit points, and this is what takes them off.
   // A catalogue entry on somebody's Gear tab has none to take: the card says
   // what the shot did, and the GM decides what became of the car.
+  //
+  // A crippled wheel, track, runner, rotor, wing or mast is counted on it
+  // too, in the same update, and the Move it has reads that from then on
+  // (p. 555; since API 1.134.0). The count stops at what the Locations
+  // entry lists: four wheels can't be crippled five times over.
+  const crippled = threshold !== null && injury > threshold;
   if (item.documentName === "Actor" && item.isOwner && injury > 0) {
     const before = Number(item.system?.hp?.value) || 0;
-    await item.update({ "system.hp.value": before - injury });
+    const changes: Record<string, number> = { "system.hp.value": before - injury };
+    if (crippled && (MOVE_CRIPPLING_LOCATIONS as readonly string[]).includes(hit.location)) {
+      const had = Math.max(0, Math.floor(Number(item.system?.crippled?.[hit.location]) || 0));
+      const listed = locationCount(String(vehicle.locations ?? ""), hit.location);
+      const now = listed > 0 ? Math.min(listed, had + 1) : had + 1;
+      if (now !== had) changes[`system.crippled.${hit.location}`] = now;
+    }
+    await item.update(changes);
     lines.push(F("VehicleHp", { previous: before, now: before - injury, max: hitPoints }));
   }
 
@@ -1370,7 +1468,7 @@ export async function shootAtVehicle(options: {
     damageType: options.damageType,
     penetrating,
     injury,
-    crippled: threshold !== null && injury > threshold,
+    crippled,
     passedThrough: struck,
     occupantHit,
   };
@@ -1395,13 +1493,6 @@ export interface VehicleHit {
   passedThrough: boolean;
   /** An occupant struck, with the dice of cutting damage they take, or null. */
   occupantHit: { dice: number } | null;
-}
-
-/** How many of a location a vehicle's entry lists: "4W" is four wheels. */
-function countOf(entry: string, code: string): number {
-  const m = new RegExp(`(\\d*)${code}(?![a-z])`).exec(entry);
-  if (!m) return 1;
-  return Number(m[1]) || 1;
 }
 
 // ── acid, air, pressure and motion (pp. 428-437) ────────────────────────────

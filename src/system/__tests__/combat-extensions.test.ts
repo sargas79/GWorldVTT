@@ -427,7 +427,7 @@ describe("an item's attack rows (#270)", () => {
   it("adds a module's lines to an equipment failure roll's target", async () => {
     const api = await load();
     globals.Hooks = { callAll: (_event: string, context: any) => { context.modifiers.push({ label: "Rugged", value: 2 }, { label: "Bad", value: "3" }); } };
-    expect(api.equipmentFailureModifiers({}, {}, 12)).toEqual({ target: 14, modifiers: [{ label: "Rugged", value: 2 }] });
+    expect(api.equipmentFailureModifiers({}, {}, 12)).toEqual({ target: 14, modifiers: [{ label: "Rugged", value: 2 }], downgrade: null });
   });
 });
 

@@ -22,7 +22,6 @@ import {
   resistsBreakage,
   strikeAtWeaponPenalty,
   weaponCondition,
-  weaponObjectKind,
   weaponState,
   type BrokenWeaponKind,
   type WeaponCondition,
@@ -34,9 +33,12 @@ import {
   type WeaponMaterial,
   type WeaponQuality,
 } from "../rules/weapon-quality.js";
-import { toleratedWoundingModifier, noInjuryTolerance } from "../rules/injury-tolerance.js";
+import { diffuseInjuryCap, toleratedWoundingModifier, noInjuryTolerance } from "../rules/injury-tolerance.js";
+import type { ObjectKind } from "../rules/objects.js";
 import type { DamageType } from "../rules/types.js";
 import { COMBAT_HOOKS, callCombatHook } from "./combat-extensions.js";
+import { facingAgainstTarget } from "./attack-arc.js";
+import { targetedTokens } from "./targets.js";
 import { objectStats, weaponMakeOf } from "./object-stats.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/weapon-damage.hbs`;
@@ -51,6 +53,8 @@ export interface WeaponFacts {
   ranged: boolean;
   skill: string;
   weight: number;
+  /** How damage treats it, once modules have had their say (since API 1.126.0). */
+  kind: ObjectKind;
   dr: number;
   hp: number;
   /** Its HT as an object (since API 1.90.0). */
@@ -81,6 +85,7 @@ export function weaponFacts(item: any): WeaponFacts {
     ranged: melee.length === 0 && ranged.length > 0,
     skill,
     weight,
+    kind: stats.kind,
     dr,
     hp,
     ht,
@@ -277,7 +282,11 @@ export interface WeaponTarget {
  */
 export function weaponTargetsFor(actor: any, foe: any): WeaponTarget[] {
   const targets: WeaponTarget[] = weaponsInHand(foe).map((w) => ({ ...w, canDisarm: true, noParry: false, noDefenseBonus: false, disarmPenaltyForAll: false }));
-  const hooked = callCombatHook(COMBAT_HOOKS.weaponTargets, { actor, foe, targets });
+  // Where the blow comes from, read as a called shot reads it (since API
+  // 1.137.0): some of what a foe carries can't be reached from every side.
+  // Only for the one token targeted, which is the foe a strike is made at.
+  const facing = targetedTokens()[0]?.actor === foe ? facingAgainstTarget(actor) : null;
+  const hooked = callCombatHook(COMBAT_HOOKS.weaponTargets, { actor, foe, targets, arc: facing?.arc ?? null, side: facing?.side ?? null });
   const out = new Map<string, WeaponTarget>();
   for (const t of Array.isArray(hooked.targets) ? hooked.targets : []) {
     const id = String(t?.id ?? "");
@@ -340,8 +349,8 @@ export async function rollStrikeToBreak(options: {
 
 /**
  * Applies a blow to a weapon (p. 483): its DR comes off, the rest is
- * injury by the wounding modifiers of an Unliving or Homogenous thing
- * (p. 380), and what it has lost says what state it is in.
+ * injury by the wounding modifiers of an Unliving, Homogenous or Diffuse
+ * thing (p. 380), and what it has lost says what state it is in.
  */
 export async function applyDamageToWeapon(
   actor: any,
@@ -353,10 +362,13 @@ export async function applyDamageToWeapon(
   const divisor = damage.armorDivisor > 0 ? damage.armorDivisor : 1;
   const effectiveDr = divisor >= 1 ? Math.floor(before.dr / divisor) : Math.round(before.dr / divisor);
   const penetrating = Math.max(0, damage.basicDamage - effectiveDr);
-  const tolerance = { ...noInjuryTolerance(), [weaponObjectKind(before.firearm)]: true };
+  // A machine or a solid thing by default; a module may say otherwise.
+  const tolerance = { ...noInjuryTolerance(), [before.kind]: true };
   const modifier = toleratedWoundingModifier(damage.damageType, tolerance) ?? 1;
-  // "the minimum injury is 1 HP for any attack that penetrates DR at all"
-  const injury = penetrating > 0 ? Math.max(1, Math.floor(penetrating * modifier)) : 0;
+  // "the minimum injury is 1 HP for any attack that penetrates DR at all";
+  // a diffuse thing takes no more than a point or two, however hard it is hit.
+  const cap = diffuseInjuryCap(damage.damageType, tolerance) ?? Number.POSITIVE_INFINITY;
+  const injury = penetrating > 0 ? Math.min(cap, Math.max(1, Math.floor(penetrating * modifier))) : 0;
 
   if (injury > 0) await item.update({ "system.hpLost": before.hpLost + injury });
   const facts = weaponFacts(item);

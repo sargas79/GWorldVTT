@@ -216,3 +216,114 @@ describe("gworld.afterShock (since 1.119.0)", () => {
     expect(outcome!.contact).toBeNull();
   });
 });
+
+describe("a shock's source and tags (since 1.127.0)", () => {
+  it("passes them to both hooks and the outcome", async () => {
+    const heard: Record<string, unknown>[] = [];
+    const { actor } = stage({
+      ht3d6: [10, 9],
+      damage: 4,
+      listeners: {
+        [PROCEDURE_HOOKS.shockModifiers]: (context) => heard.push({ hook: "modifiers", source: context.source, tags: [...context.tags] }),
+        [PROCEDURE_HOOKS.shockDamage]: (context) => heard.push({ hook: "damage", source: context.source, tags: [...context.tags] }),
+        [PROCEDURE_HOOKS.afterShock]: (context) => heard.push({ hook: "after", source: context.source, tags: [...context.tags] }),
+      },
+    });
+    const outcome = await shock({
+      actor, kind: "lethal", modifier: 0, continuous: false, formula: "1d", metalArmor: false,
+      source: " Live rail ", tags: ["trap", "", "trap", 3 as unknown as string],
+    });
+    expect(heard).toEqual([
+      { hook: "modifiers", source: "Live rail", tags: ["trap"] },
+      { hook: "damage", source: "Live rail", tags: ["trap"] },
+      { hook: "after", source: "Live rail", tags: ["trap"] },
+    ]);
+    expect(outcome).toMatchObject({ source: "Live rail", tags: ["trap"] });
+  });
+
+  it("gives null and no tags where the caller gave none", async () => {
+    const { actor } = stage({ ht3d6: [10] });
+    const outcome = await shock({ actor, kind: "nonlethal", modifier: 0, continuous: false, formula: "", metalArmor: false });
+    expect(outcome).toMatchObject({ source: null, tags: [], damageRoll: null });
+  });
+});
+
+describe("heartAttackOnCritical (since 1.127.0)", () => {
+  it("defaults to the lethal shock only", async () => {
+    const seen: boolean[] = [];
+    const listen = { [PROCEDURE_HOOKS.shockModifiers]: (context: any) => seen.push(context.heartAttackOnCritical) };
+    await shock({ actor: stage({ ht3d6: [10], listeners: listen }).actor, kind: "nonlethal", modifier: 0, continuous: false, formula: "", metalArmor: false });
+    await shock({ actor: stage({ ht3d6: [10, 10], damage: 3, listeners: listen }).actor, kind: "lethal", modifier: 0, continuous: false, formula: "1d", metalArmor: false });
+    expect(seen).toEqual([false, true]);
+  });
+
+  it("stops the heart on a nonlethal shock's critical failure when a listener says so", async () => {
+    // HT 12 at -2: a roll of 17 fails by 7, short of the margin of 10, but is a critical failure.
+    const plain = stage({
+      ht3d6: [17],
+      listeners: { [PROCEDURE_HOOKS.shockModifiers]: (context) => { context.heartAttackMargin = 10; } },
+    });
+    const basic = await shock({ actor: plain.actor, kind: "nonlethal", modifier: -2, continuous: false, formula: "", metalArmor: false });
+    expect(basic).toMatchObject({ criticalFailure: true, heartAttack: false });
+
+    const hooked = stage({
+      ht3d6: [17],
+      listeners: {
+        [PROCEDURE_HOOKS.shockModifiers]: (context) => { context.heartAttackMargin = 10; context.heartAttackOnCritical = true; },
+      },
+    });
+    const outcome = await shock({ actor: hooked.actor, kind: "nonlethal", modifier: -2, continuous: false, formula: "", metalArmor: false });
+    expect(outcome).toMatchObject({ criticalFailure: true, margin: 7, heartAttack: true });
+  });
+
+  it("lets a listener count only the margin on a lethal shock", async () => {
+    // 3 injury at DR 0 is -1: a roll of 17 against 11 fails by 6, a critical
+    // failure. With a margin of 8, only the critical failure could stop the heart.
+    const { actor } = stage({
+      ht3d6: [10, 17],
+      damage: 3,
+      listeners: {
+        [PROCEDURE_HOOKS.shockModifiers]: (context) => { context.heartAttackMargin = 8; context.heartAttackOnCritical = false; context.dr = 0; },
+      },
+    });
+    const outcome = await shock({ actor, kind: "lethal", modifier: 0, continuous: false, formula: "1d", metalArmor: false });
+    expect(outcome).toMatchObject({ criticalFailure: true, unconscious: true, heartAttack: false });
+  });
+});
+
+describe("gworld.shockDamage (since 1.127.0)", () => {
+  it("sees the damage as rolled before the HT roll, and changes its modifier", async () => {
+    const heard: any[] = [];
+    const { actor } = stage({
+      ht3d6: [10, 14],
+      damage: -1,
+      listeners: {
+        [PROCEDURE_HOOKS.shockModifiers]: (context) => { context.modifier = -2; },
+        [PROCEDURE_HOOKS.shockDamage]: (context) => {
+          heard.push({ damageRoll: context.damageRoll, injury: context.injury, modifier: context.modifier, rollOnZeroInjury: context.rollOnZeroInjury });
+          // A weak shock: a bonus to the roll, and a roll it would otherwise skip.
+          if (context.damageRoll <= 0) {
+            context.modifier += 3;
+            context.rollOnZeroInjury = true;
+            context.lines.push("A weak shock");
+          }
+        },
+      },
+    });
+    const outcome = await shock({ actor, kind: "lethal", modifier: 0, continuous: false, formula: "1d-3", metalArmor: false });
+    expect(heard).toEqual([{ damageRoll: -1, injury: 0, modifier: -2, rollOnZeroInjury: false }]);
+    expect(outcome).toMatchObject({ damageRoll: -1, injury: 0, rolled: true, target: 13, roll: 14, success: false });
+    expect(outcome!.lines[1]).toBe("A weak shock");
+  });
+
+  it("isn't called without a damage roll", async () => {
+    const calls: string[] = [];
+    const listeners = { [PROCEDURE_HOOKS.shockDamage]: () => calls.push("damage") };
+    await shock({ actor: stage({ ht3d6: [10], listeners }).actor, kind: "nonlethal", modifier: 0, continuous: false, formula: "", metalArmor: false });
+    await shock({
+      actor: stage({ ht3d6: [10], damage: 5, listeners: { ...listeners, [PROCEDURE_HOOKS.shockModifiers]: (c: any) => { c.immune = true; } } }).actor,
+      kind: "lethal", modifier: 0, continuous: false, formula: "1d", metalArmor: false,
+    });
+    expect(calls).toEqual([]);
+  });
+});

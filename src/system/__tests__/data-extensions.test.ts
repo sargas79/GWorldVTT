@@ -324,6 +324,60 @@ describe("bonus lines", () => {
   });
 });
 
+describe("skills that need equipment (since 1.135.0)", () => {
+  const skill = (name: string) => ({ type: "skill", name, system: {} });
+
+  it("registers a test under the module's namespace and refuses a duplicate or a malformed one", async () => {
+    const api = await load();
+    const test = () => true;
+    expect(api.registerNeedsEquipment({ module: "test-addon", key: "kits", test })).toBe("test-addon.kits");
+    expect(api.registerNeedsEquipment({ module: "test-addon", key: "kits", test })).toBeNull();
+    expect(api.registerNeedsEquipment({ module: "test addon", key: "x", test })).toBeNull();
+    expect(api.registerNeedsEquipment({ module: "test-addon", key: "none" } as never)).toBeNull();
+    expect(api.dataApi.registerNeedsEquipment).toBe(api.registerNeedsEquipment);
+    expect(api.dataApi.needsEquipment).toBe(api.needsEquipment);
+  });
+
+  it("says a skill needs equipment when any test says so, and no skill does with none registered", async () => {
+    const api = await load();
+    const actor = { id: "a1" };
+    expect(api.needsEquipment(skill("Lockpicking/TL8"), actor)).toBe(false);
+    const seen: unknown[] = [];
+    api.registerNeedsEquipment({ module: "test-addon", key: "locks", test: (item, who) => { seen.push(who); return item.name.startsWith("Lockpicking"); } });
+    api.registerNeedsEquipment({ module: "other-addon", key: "surgery", test: (item) => item.name === "Surgery/TL8" });
+    expect(api.needsEquipment(skill("Lockpicking/TL8"), actor)).toBe(true);
+    expect(api.needsEquipment(skill("Surgery/TL8"), actor)).toBe(true);
+    expect(api.needsEquipment(skill("Singing"), actor)).toBe(false);
+    expect(seen[0]).toBe(actor);
+  });
+
+  it("counts a test that throws, or answers anything but true, as no", async () => {
+    const api = await load();
+    api.registerNeedsEquipment({ module: "test-addon", key: "boom", test: () => { throw new Error("boom"); } });
+    api.registerNeedsEquipment({ module: "test-addon", key: "truthy", test: (() => "yes") as never });
+    expect(api.needsEquipment(skill("Lockpicking/TL8"), {})).toBe(false);
+    expect(console.warn).toHaveBeenCalled();
+  });
+
+  it("hands a gworld.skillBonuses listener the picked tool, to grade it for this skill", async () => {
+    const api = await load();
+    const scalpel = { id: "scalpel", name: "Scalpel" };
+    globals.Hooks = {
+      callAll: (_hook: string, context: { name: string; tool: { id: string } | null; lines: Array<{ key?: string; value: number; reason?: string }> }) => {
+        // Good for Surgery, improvised for anything else it is carried for.
+        if (context.tool?.id !== "scalpel" || context.name === "Surgery/TL8") return;
+        const tools = context.lines.find((l) => l.key === "tools")!;
+        tools.value = -2;
+        tools.reason = "Improvised for this skill";
+      },
+    };
+    const lines = () => [{ key: "tools", label: "Equipment", value: 1, source: "system" }];
+    expect(api.totalBonusLines(api.DATA_HOOKS.skillBonuses, { name: "Surgery/TL8", tool: scalpel, lines: lines() }).total).toBe(1);
+    expect(api.totalBonusLines(api.DATA_HOOKS.skillBonuses, { name: "Lockpicking/TL8", tool: scalpel, lines: lines() }).total).toBe(-2);
+    expect(api.totalBonusLines(api.DATA_HOOKS.skillBonuses, { name: "Lockpicking/TL8", tool: null, lines: lines() }).total).toBe(1);
+  });
+});
+
 describe("technique kinds in and out of play (since 1.26.0)", () => {
   it("leaves a kind whose check says no out of the choice, and finds it as out of play", async () => {
     const api = await load();

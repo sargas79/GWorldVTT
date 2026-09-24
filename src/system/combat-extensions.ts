@@ -49,7 +49,7 @@ export type DefenseKey = "dodge" | "parry" | "block";
 
 /** The hooks this module fires, by name. */
 export const COMBAT_HOOKS = Object.freeze({
-  /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset, skillCap, calledShot, targets, refusal, rangeYards, minRange, spraying, laser, zen }`, mutable (`rangeYards` and `minRange` since 1.69.0, `spraying` since 1.70.0, `laser` since 1.86.0, `zen` since 1.91.0). */
+  /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset, skillCap, calledShot, targets, refusal, rangeYards, minRange, spraying, laser, zen, arc, side }`, mutable (`rangeYards` and `minRange` since 1.69.0, `spraying` since 1.70.0, `laser` since 1.86.0, `zen` since 1.91.0, `arc` and `side` since 1.137.0). */
   attackModifiers: "gworld.attackModifiers",
   /** The defense card's choices for a defender: `{ defender, attack, delivery, damageType, choices, retreat, feverish, acrobatic }`, mutable. */
   defenseChoices: "gworld.defenseChoices",
@@ -73,7 +73,12 @@ export const COMBAT_HOOKS = Object.freeze({
   weaponAttacks: "gworld.weaponAttacks",
   /** A character's punch and kick once worked out (since 1.102.0): `{ actor, item: null, rows, damageAt, rangeAt, addToDamage }`, the rows mutable. */
   unarmedAttacks: "gworld.unarmedAttacks",
-  /** Before an equipment failure roll: `{ actor, item, target, modifiers, label }`; push lines to `modifiers`. `label` (since 1.118.0) names a module's roll, null for the exposure check. */
+  /**
+   * Before an equipment failure roll: `{ actor, item, target, modifiers, label, downgradeCriticalFailure, downgradeLabel }`;
+   * push lines to `modifiers`. `label` (since 1.118.0) names a module's roll, null for the exposure check.
+   * Set `downgradeCriticalFailure` (since 1.127.0) to make a critical failure an ordinary one, with
+   * `downgradeLabel` for the card.
+   */
   equipmentFailure: "gworld.equipmentFailure",
   /** A character's maneuver allowances as their data is prepared: `{ actor, maneuver, option, movement, defense }`, the allowances mutable. */
   maneuverAllowances: "gworld.maneuverAllowances",
@@ -81,7 +86,7 @@ export const COMBAT_HOOKS = Object.freeze({
   meleeAttackOptions: "gworld.meleeAttackOptions",
   /** Before a feint is rolled (since 1.28.0): `{ actor, foe, item, mode, ranged, modifiers, refusal }`, mutable. */
   feintModifiers: "gworld.feintModifiers",
-  /** What may be struck at on a foe (since 1.31.0): `{ actor, foe, targets }`, the targets mutable. */
+  /** What may be struck at on a foe (since 1.31.0): `{ actor, foe, targets, arc, side }`, the targets mutable (`arc` and `side` since 1.137.0). */
   weaponTargets: "gworld.weaponTargets",
   /** An unarmed blow applied to a target (since 1.32.0): `{ attacker, target, part, hitLocation, addonLocation, dr, basicDamage, minimumDr, applies }`, mutable. */
   hurtingYourself: "gworld.hurtingYourself",
@@ -105,6 +110,18 @@ export const COMBAT_HOOKS = Object.freeze({
   afterVehicleHit: "gworld.afterVehicleHit",
   /** A blow that may leave the weapon stuck in its victim (since 1.105.0): `{ attacker, item, mode, target, result, pick, stuck }`, `stuck` mutable. */
   weaponStuck: "gworld.weaponStuck",
+  /**
+   * Before a homing attack is rolled (since 1.128.0): `{ actor, item, mode,
+   * target, rangeYards, seconds, falls, lockedOn, semiActive, designator,
+   * skill, level, rolls }`, the last seven mutable.
+   */
+  homingAttack: "gworld.homingAttack",
+  /**
+   * After the rolls to hold a semi-active weapon's spot (since 1.128.0):
+   * `{ actor, item, mode, target, designator, skill, level, needed, rolls,
+   * held }`.
+   */
+  afterDesignation: "gworld.afterDesignation",
 });
 
 /** One piece of worn armour as `gworld.armorDr` hands it to a listener. */
@@ -405,11 +422,24 @@ export function feintModifiers(context: Omit<FeintContext, "modifiers" | "refusa
   return { modifiers, refusal };
 }
 
-/** Runs the equipment failure hook: the target, and the lines modules added to it. */
-export function equipmentFailureModifiers(actor: any, item: any, target: number, label: string | null = null): { target: number; modifiers: ModifierLine[] } {
-  const context = callCombatHook(COMBAT_HOOKS.equipmentFailure, { actor, item, target, modifiers: [] as ModifierLine[], label });
+/**
+ * Runs the equipment failure hook: the target, the lines modules added to it,
+ * and (since 1.127.0) whether a critical failure counts only as a failure --
+ * null where it counts in full, or the card's line for it ("" for the
+ * system's own).
+ */
+export function equipmentFailureModifiers(
+  actor: any,
+  item: any,
+  target: number,
+  label: string | null = null,
+): { target: number; modifiers: ModifierLine[]; downgrade: string | null } {
+  const context = callCombatHook(COMBAT_HOOKS.equipmentFailure, {
+    actor, item, target, modifiers: [] as ModifierLine[], label, downgradeCriticalFailure: false, downgradeLabel: "",
+  });
   const modifiers = (context.modifiers ?? []).filter((m) => typeof m?.label === "string" && typeof m.value === "number" && Number.isFinite(m.value));
-  return { target: target + modifiers.reduce((sum, m) => sum + m.value, 0), modifiers };
+  const downgrade = context.downgradeCriticalFailure === true ? String(context.downgradeLabel ?? "").trim() : null;
+  return { target: target + modifiers.reduce((sum, m) => sum + m.value, 0), modifiers, downgrade };
 }
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
