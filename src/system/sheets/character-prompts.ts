@@ -205,6 +205,11 @@ export async function promptForFall(): Promise<{
 export async function promptForWeather(
   /** What the character's worn gear counts as, where a module says (since API 1.76.0): picked to start with. */
   worn: { clothing: string; label: string } | null = null,
+  /**
+   * The day's temperature as the GM set it, or null: the dialog starts on it
+   * (since API 1.138.0), and a GM may keep what they type as the day's.
+   */
+  day: { temperatureF: number | null; mayKeep: boolean } = { temperatureF: null, mayKeep: false },
 ): Promise<{
   heat: boolean;
   temperatureF: number;
@@ -212,8 +217,12 @@ export async function promptForWeather(
   wetClothes: boolean;
   windMph: number;
   modifier: number;
+  /** Whether the GM asked for the temperature to be kept as the day's. */
+  keepTemperature: boolean;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Weather.${key}`);
+  // Below the comfort zone's 35°F it is the cold that is doing the harm.
+  const cold = day.temperatureF !== null && day.temperatureF < 35;
 
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Title") },
@@ -222,13 +231,17 @@ export async function promptForWeather(
         <span>${L("Kind")}</span>
         <select name="kind" style="width:220px">
           <option value="heat">${L("HeatOption")}</option>
-          <option value="cold">${L("ColdOption")}</option>
+          <option value="cold"${cold ? " selected" : ""}>${L("ColdOption")}</option>
         </select>
       </label>
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Temperature")}</span>
-        <input type="number" name="degrees" value="95" step="1" style="width:90px">
+        <input type="number" name="degrees" value="${day.temperatureF ?? 95}" step="1" style="width:90px">
       </label>
+      ${day.mayKeep ? `<label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="keep">
+        <span>${L("Keep")}</span>
+      </label>` : ""}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Clothing")}</span>
         <select name="clothing" style="width:220px">
@@ -269,6 +282,7 @@ export async function promptForWeather(
           wetClothes: form?.querySelector<HTMLInputElement>('input[name="wet"]')?.checked ?? false,
           windMph: Number(value("wind")) || 0,
           modifier: Number(value("modifier")) || 0,
+          keepTemperature: form?.querySelector<HTMLInputElement>('input[name="keep"]')?.checked ?? false,
         };
       },
     },
@@ -1218,9 +1232,9 @@ export function hazardSelect(name: string, label: string, options: Array<[string
     </label>`;
 }
 
-export function hazardCheck(name: string, label: string): string {
+export function hazardCheck(name: string, label: string, checked = false): string {
   return `<label style="display:flex;align-items:center;gap:8px">
-      <input type="checkbox" name="${name}"><span>${label}</span>
+      <input type="checkbox" name="${name}"${checked ? " checked" : ""}><span>${label}</span>
     </label>`;
 }
 
@@ -1697,7 +1711,10 @@ export async function promptForStayingUp(): Promise<{ hoursAwake: number; missed
   );
 }
 
-export async function promptForHike(): Promise<{
+export async function promptForHike(
+  /** Whether the day's temperature makes it a hot day for the marcher: ticked to start with (since API 1.138.0). */
+  hot = false,
+): Promise<{
   hours: number; terrain: "veryBad" | "bad" | "average" | "good";
   weather: "fair" | "rain" | "snow" | "deepSnow" | "ice"; hot: boolean; modifier: number;
 } | null> {
@@ -1708,7 +1725,7 @@ export async function promptForHike(): Promise<{
     hazardField("hours", HZ("HoursMarched"), 8, 'min="0"') +
       hazardSelect("terrain", HZ("TerrainLabel"), terrains) +
       hazardSelect("weather", HZ("WeatherLabel"), weathers) +
-      hazardCheck("hot", HZ("HotDay")) +
+      hazardCheck("hot", HZ("HotDay"), hot) +
       hazardField("modifier", game.i18n.localize("GWORLD.Chat.Modifier"), 0),
     (form) => ({
       hours: num(form, "hours"),

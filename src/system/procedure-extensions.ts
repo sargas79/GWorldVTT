@@ -155,6 +155,11 @@ export const PROCEDURE_HOOKS = Object.freeze({
    */
   fatigueCost: "gworld.fatigueCost",
   /**
+   * Once fatigue has been charged (since 1.138.0): `{ actor, reason, details, exertion,
+   * fpLost, hpLost, fp, hp, sources }`, after Very Fit and the fatigue chart. Read-only.
+   */
+  afterFatigue: "gworld.afterFatigue",
+  /**
    * What somebody is wearing against the cold (since 1.76.0): `{ actor, clothing, label }`.
    * Set `clothing` to `light`, `winter`, `arctic` or `heatedSuit`, and `label` to the gear.
    */
@@ -539,7 +544,11 @@ export interface FatigueCostContext {
   reason: string;
   /** Whether it is exertion, which Fit and Very Fit lighten (Characters p. 55). */
   exertion: boolean;
-  /** What else the caller knows: a battle's `seconds`, the weather's `heat` and `temperatureF`... */
+  /**
+   * What else the caller knows: a battle's `seconds`, the weather's `heat` and
+   * `temperatureF`... A battle or a march carries the day's `temperatureF`
+   * (null where none is set) and whether it is `hot` (since 1.138.0).
+   */
   details: Record<string, unknown>;
   /** Labels a listener pushes to say why the cost changed. */
   sources: string[];
@@ -548,7 +557,8 @@ export interface FatigueCostContext {
 /**
  * The fatigue an action costs once the `gworld.fatigueCost` listeners have
  * had their say: a module's heat surcharge on exertion (Campaigns p. 434), or
- * a hot day's extra point for a battle (p. 426).
+ * a hot day's extra point for a battle (p. 426), read off the day's
+ * temperature the battle's `details` carry.
  */
 export function fatigueCost(options: Omit<FatigueCostContext, "sources" | "details"> & { details?: Record<string, unknown> }): { fp: number; sources: string[] } {
   const ctx = callCombatHook<FatigueCostContext>(PROCEDURE_HOOKS.fatigueCost, {
@@ -564,6 +574,39 @@ export function fatigueCost(options: Omit<FatigueCostContext, "sources" | "detai
     fp: Number.isFinite(fp) ? Math.max(0, Math.round(fp)) : options.fp,
     sources: (Array.isArray(ctx.sources) ? ctx.sources : []).filter((s): s is string => typeof s === "string" && s !== ""),
   };
+}
+
+/** What fatigue cost once it was charged, for the `gworld.afterFatigue` listeners (since 1.138.0). */
+export interface AfterFatigueContext {
+  actor: any;
+  /** What it was for, as `gworld.fatigueCost` was told. */
+  reason: string;
+  /** What else the caller knew, as `gworld.fatigueCost` was told. */
+  details: Readonly<Record<string, unknown>>;
+  exertion: boolean;
+  /** The FP actually lost, after the listeners, Very Fit and the chart. */
+  fpLost: number;
+  /** The HP it cost: past 0 FP each point of fatigue is a point of injury too. */
+  hpLost: number;
+  fp: Readonly<{ previous: number; now: number; max: number }>;
+  hp: Readonly<{ previous: number; now: number; max: number }>;
+  /** What the `gworld.fatigueCost` listeners said changed the cost. */
+  sources: readonly string[];
+}
+
+/**
+ * Tells the listeners what fatigue cost once it has been charged. Everything
+ * is frozen: the FP is spent, and a rule that follows from it (a collapse, a
+ * card of the module's) acts on the figures rather than changing them.
+ */
+export function afterFatigue(context: AfterFatigueContext): void {
+  callCombatHook(PROCEDURE_HOOKS.afterFatigue, Object.freeze({
+    ...context,
+    details: Object.freeze({ ...context.details }),
+    fp: Object.freeze({ ...context.fp }),
+    hp: Object.freeze({ ...context.hp }),
+    sources: Object.freeze([...context.sources]),
+  }));
 }
 
 /** The four classes of clothing against the cold (Campaigns p. 430). */

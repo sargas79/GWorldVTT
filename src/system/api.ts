@@ -97,12 +97,13 @@ import { manaLevel } from "./casting.js";
 import { PARTY_CHANGED_HOOK, addMembers, membersOf, partyOf, removeMember } from "./party.js";
 import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from "./campaign.js";
 import { objectStats, type ItemObjectStats } from "./object-stats.js";
+import { dayWeather, setTemperature } from "./weather.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.120.0";
+export const API_VERSION = "1.138.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -204,7 +205,8 @@ const actors = {
    * Charges FP the way the system's own procedures do (Campaigns p. 426;
    * since 1.109.0): `gworld.fatigueCost` (told `reason`, `module` by default,
    * and `details`), Very Fit's halving where it is exertion (the default),
-   * and the fatigue chart, injury past 0 FP and all. Resolves to `{ fpLost,
+   * and the fatigue chart, injury past 0 FP and all, then since 1.138.0
+   * `gworld.afterFatigue` with what it came to. Resolves to `{ fpLost,
    * hpLost, sources, fp, hp, status }`, or null for a user who can't change
    * the actor or an amount that isn't a positive number.
    */
@@ -686,7 +688,7 @@ export interface GWorldApi {
   readonly areas: typeof areasApi;
   /** The party an actor is in, its members and the campaign's terms (since 1.68.0). */
   readonly party: typeof partyApi;
-  /** Facts about the campaign world (since 1.77.0): its Control Rating, and its terms since 1.82.0. */
+  /** Facts about the campaign world (since 1.77.0): its Control Rating, its terms since 1.82.0, and the day's temperature since 1.138.0. */
   readonly world: typeof worldApi;
   /** Social rolls (since 1.103.0): the skills the Influence roll offers. */
   readonly social: typeof socialApi;
@@ -810,6 +812,18 @@ const worldApi = Object.freeze({
    * and Tech Level as the GM set them for the world, null where left blank.
    */
   campaignTerms: worldCampaignTerms,
+  /**
+   * The day's weather (since 1.138.0; Campaigns pp. 426, 434):
+   * `{ temperatureF, hot }`, the temperature in °F as the GM set it (null
+   * where none is set) and whether it is a hot day -- for `actor` where one
+   * is given, whose Temperature Tolerance counts, else for an ordinary human.
+   */
+  weather: (actor?: any) => dayWeather(actor),
+  /**
+   * Sets the day's temperature in °F, or clears it with null (since
+   * 1.138.0). Only the GM may; resolves to whether it was set.
+   */
+  setTemperature: (temperatureF: number | null) => setTemperature(temperatureF),
 });
 
 /** Builds the frozen API object. */

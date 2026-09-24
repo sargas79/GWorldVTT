@@ -14,7 +14,7 @@
 
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { spendFatigue, type FatigueStatus } from "../rules/fatigue.js";
-import { fatigueCost } from "./procedure-extensions.js";
+import { afterFatigue, fatigueCost } from "./procedure-extensions.js";
 
 /** What a loss of fatigue cost, once the chart was applied. */
 export interface FatigueApplied {
@@ -51,6 +51,13 @@ export async function applyFatigue(
     reason?: string;
     /** What else the caller knows, passed to the listeners as `details`. */
     details?: Record<string, unknown>;
+    /**
+     * Where the caller has already asked the `gworld.fatigueCost` listeners
+     * (extra effort weighs the cost against the FP left first), what they
+     * said: the cost is charged as given, and `reason` still reaches the
+     * `gworld.afterFatigue` listeners.
+     */
+    costed?: { sources: string[] };
   } = {},
 ): Promise<FatigueApplied> {
   const fp = actor?.system?.fp ?? { value: 0, max: 0 };
@@ -62,7 +69,9 @@ export async function applyFatigue(
 
   // A module may change what this costs: a surcharge for the heat, gear that
   // spares the wearer (API 1.76.0).
-  const costed = options.reason && lost > 0
+  const costed = options.costed
+    ? { fp: lost, sources: [...options.costed.sources] }
+    : options.reason && lost > 0
     ? fatigueCost({ actor, fp: lost, reason: options.reason, exertion: options.exertion !== false, ...(options.details ? { details: options.details } : {}) })
     : { fp: lost, sources: [] as string[] };
 
@@ -92,7 +101,7 @@ export async function applyFatigue(
     if (spent.status === "unconscious") await setCondition(actor, "unconscious", true);
   }
 
-  return {
+  const applied: FatigueApplied = {
     fpLost: spent.fpLost,
     hpLost: spent.hpLost,
     sources: costed.sources,
@@ -100,6 +109,24 @@ export async function applyFatigue(
     hp: { previous: hpBefore, now: hpBefore - spent.hpLost, max: hpMax },
     status: spent.status,
   };
+
+  // What it came to, for a rule that follows from the FP actually lost
+  // rather than the price asked (API 1.138.0). Only fatigue the listeners
+  // were asked about, and only where there was something to pay.
+  if (options.reason && costed.fp > 0) {
+    afterFatigue({
+      actor,
+      reason: options.reason,
+      details: options.details ?? {},
+      exertion: options.exertion !== false,
+      fpLost: applied.fpLost,
+      hpLost: applied.hpLost,
+      fp: applied.fp,
+      hp: applied.hp,
+      sources: applied.sources,
+    });
+  }
+  return applied;
 }
 
 /**
@@ -107,7 +134,8 @@ export async function applyFatigue(
  * p. 426; since API 1.109.0): `gworld.fatigueCost` first, told `reason`
  * (`module` where none is given) and `details`, then Very Fit's halving for
  * exertion, then the chart -- past 0 FP each point is a point of injury too,
- * and at -1xFP the character falls unconscious. Null for a user who can't
+ * and at -1xFP the character falls unconscious -- and since 1.138.0
+ * `gworld.afterFatigue` with what it came to. Null for a user who can't
  * change the actor or an amount that isn't a positive number.
  */
 export async function spendFatigueFor(
