@@ -2450,6 +2450,8 @@
       "Attend": "Attend",
       "AttendHint": "A physician's roll to cure the patient you are targeting: a point back on a success, two on a critical, and one off on a critical failure (Campaigns p. 424).",
       "AttendBy": "{healer} attends, Physician {skill}",
+      "AttendAtTl": "Treating at TL{tl}",
+      "AttendBeyondTl": "Treatment at TL{tl} is beyond a Physician skill learned at TL{skill} (Characters p. 168).",
       "CureHp": "{hp} HP: {previous} → {now}",
       "CareBonus": "Under competent care: +{bonus} on every roll for natural recovery",
       "Cure": {

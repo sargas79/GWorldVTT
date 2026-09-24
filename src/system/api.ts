@@ -102,7 +102,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.122.0";
+export const API_VERSION = "1.142.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -360,8 +360,13 @@ const actors = {
     return giveFirstAid({ ...options, modifier: options.modifier ?? 0 });
   },
 
-  /** A physician's rounds on a patient (p. 424, since 1.60.0); the roll is tagged `physician`. */
-  attendPatient(options: { healer: any; patient: any; skill?: number; label?: string; modifier?: number }): Promise<void> {
+  /**
+   * A physician's rounds on a patient (p. 424, since 1.60.0); the roll is tagged `physician`.
+   * Since 1.142.0 `gworld.physicianRounds` hears it, as it hears the sheet's button: a
+   * listener may refuse it, move it to another tech level or add lines to the card.
+   * `techLevel` is the TL of the healer's Physician skill, or of `skill` where one is given.
+   */
+  attendPatient(options: { healer: any; patient: any; skill?: number; techLevel?: number; label?: string; modifier?: number }): Promise<void> {
     return attendPatient({ ...options, modifier: options.modifier ?? 0 });
   },
 

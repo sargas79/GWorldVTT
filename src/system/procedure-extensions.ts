@@ -102,6 +102,12 @@ export const PROCEDURE_HOOKS = Object.freeze({
   bleedingSchedule: "gworld.bleedingSchedule",
   /** Before a First Aid attempt (since 1.36.0): `{ healer, patient, refusal, stopsBleeding, techLevel }` (the last since 1.109.0), mutable. */
   firstAid: "gworld.firstAid",
+  /**
+   * Before a physician's rounds (since 1.142.0; Campaigns p. 424): `{ healer, patient,
+   * refusal, techLevel, lines }`. `refusal` and `techLevel` are mutable; push a string
+   * to `lines` for the card.
+   */
+  physicianRounds: "gworld.physicianRounds",
   /** While a technique's defaults are read: `{ actor, item, defaults }`; push `{ from, skill, modifier }`. */
   techniqueDefaults: "gworld.techniqueDefaults",
   /** After a feint is rolled: `{ feinter, foe, result, record }`; set `record: false` to take the result over. */
@@ -1147,6 +1153,23 @@ export function firstAidRules(healer: any, patient: any, techLevel?: number): { 
     refusal: typeof context.refusal === "string" && context.refusal.trim() ? context.refusal.trim() : null,
     stopsBleeding: context.stopsBleeding !== false,
     techLevel: Number.isFinite(chosen) && chosen >= 0 ? Math.floor(chosen) : start,
+  };
+}
+
+/**
+ * What the modules say about a physician's rounds (since 1.142.0; Campaigns
+ * p. 424): a refusal, the tech level the doctor works at -- the one given,
+ * which is their Physician skill's, unless a listener sets another, as for a
+ * doctor without the supplies of their own TL -- and lines for the card.
+ */
+export function physicianRoundsRules(healer: any, patient: any, techLevel: number): { refusal: string | null; techLevel: number; lines: string[] } {
+  const start = Number.isFinite(techLevel) ? Math.max(0, Math.floor(techLevel)) : 3;
+  const context = callCombatHook(PROCEDURE_HOOKS.physicianRounds, { healer, patient, refusal: null as string | null, techLevel: start, lines: [] as string[] });
+  const chosen = Number(context.techLevel);
+  return {
+    refusal: typeof context.refusal === "string" && context.refusal.trim() ? context.refusal.trim() : null,
+    techLevel: Number.isFinite(chosen) && chosen >= 0 ? Math.floor(chosen) : start,
+    lines: Array.isArray(context.lines) ? context.lines.filter((line) => typeof line === "string" && line.trim()).map((line) => line.trim()) : [],
   };
 }
 
