@@ -9,6 +9,13 @@
  * through a Foundry user query. A module's own disarm or snatch goes the same
  * way through `items.knockAway` and `items.setUnready`.
  *
+ * The GM's client doesn't take the request on trust. Foundry hands the
+ * handler the user who sent the query -- the server fills that in from the
+ * sender's own connection, so a payload can't claim to be somebody else --
+ * and the change is made only for a GM, the owner of the weapon's holder, or
+ * the owner of the attacker the request names. A player can knock a foe's
+ * weapon away on behalf of their own character, and nobody else's.
+ *
  * A weapon knocked away leaves the foe's hands: it stops being carried, so
  * it is on no attack list and weighs nothing, until somebody ticks it carried
  * again -- which is picking it up.
@@ -35,9 +42,20 @@ export interface KnockedAway {
   reason: string;
 }
 
+/** What a caller may pass: why, and on whose behalf. */
+export interface HeldWeaponOptions {
+  reason?: string;
+  /**
+   * The actor doing it -- on a disarm, the attacker. A user who doesn't own
+   * the weapon's holder may still have it changed on behalf of an actor they
+   * own.
+   */
+  attacker?: any;
+}
+
 type HeldWeaponChange =
-  | { action: "unready"; uuid: string; unready: boolean; reason: string }
-  | { action: "knockAway"; uuid: string; reason: string };
+  | { action: "unready"; uuid: string; unready: boolean; reason: string; attackerUuid: string }
+  | { action: "knockAway"; uuid: string; reason: string; attackerUuid: string };
 
 /**
  * Whether the change can be made to this item at all. Only gear can leave a
@@ -48,6 +66,22 @@ function accepts(item: any, action: HeldWeaponChange["action"]): boolean {
   if (!item?.actor && !item?.parent) return false;
   if (action === "unready") return item?.type === "equipment";
   return item?.type === "equipment" || item?.type === "shield";
+}
+
+/** Whether a user owns a document, asked the way Foundry asks it. */
+function owns(user: any, document: any): boolean {
+  if (!user || typeof document?.testUserPermission !== "function") return false;
+  return document.testUserPermission(user, "OWNER") === true;
+}
+
+/**
+ * Whether this user may have the change made: a GM, the owner of the item's
+ * holder, or the owner of the attacker acting.
+ */
+function mayRequest(user: any, item: any, attacker: any): boolean {
+  if (!user) return false;
+  if (user.isGM) return true;
+  return owns(user, item?.actor ?? item?.parent) || owns(user, attacker);
 }
 
 /** Makes the change on this client, which must own the item. */
@@ -70,12 +104,14 @@ async function applyHere(item: any, change: HeldWeaponChange): Promise<UnreadyCh
 
 /**
  * Makes the change here where the user owns the item, or asks the active GM
- * to. Null where it can't be made: an item that can't take it, or nobody
- * connected who may.
+ * to on behalf of an attacker the user owns. Null where it can't be made: an
+ * item that can't take it, a user with no say over it, or no GM connected.
  */
-async function change(item: any, request: HeldWeaponChange): Promise<UnreadyChanged | KnockedAway | null> {
+async function change(item: any, request: HeldWeaponChange, attacker: any): Promise<UnreadyChanged | KnockedAway | null> {
   if (!accepts(item, request.action)) return null;
   if (item.isOwner) return applyHere(item, request);
+  // Not worth troubling the GM with what they would only refuse.
+  if (!mayRequest((game as any).user, item, attacker)) return null;
   const gm = (game as any).users?.activeGM;
   if (!gm || gm.isSelf || typeof gm.query !== "function") return null;
   try {
@@ -89,43 +125,62 @@ async function change(item: any, request: HeldWeaponChange): Promise<UnreadyChan
 
 /**
  * Leaves a weapon unready, or readies it, with no roll and no card. Null for
- * anything but equipment on an actor, or where neither the user nor a GM
- * connected can change it.
+ * anything but equipment on an actor, for a user who owns neither its holder
+ * nor the `attacker` named, or where no GM is connected to make it.
  */
 export async function setWeaponUnready(
   item: any,
   unready: boolean,
-  options: { reason?: string } = {},
+  options: HeldWeaponOptions = {},
 ): Promise<UnreadyChanged | null> {
-  const result = await change(item, { action: "unready", uuid: String(item?.uuid ?? ""), unready: unready === true, reason: String(options?.reason ?? "") });
+  const attacker = options?.attacker ?? null;
+  const result = await change(item, {
+    action: "unready",
+    uuid: String(item?.uuid ?? ""),
+    unready: unready === true,
+    reason: String(options?.reason ?? ""),
+    attackerUuid: String(attacker?.uuid ?? ""),
+  }, attacker);
   return result as UnreadyChanged | null;
 }
 
 /**
  * Knocks a weapon or shield out of its holder's hands, with no roll and no
  * card: it is no longer carried or equipped until somebody picks it up. Null
- * for anything but equipment or a shield on an actor, or where neither the
- * user nor a GM connected can change it.
+ * for anything but equipment or a shield on an actor, for a user who owns
+ * neither its holder nor the `attacker` named, or where no GM is connected to
+ * make it.
  */
-export async function knockWeaponAway(item: any, options: { reason?: string } = {}): Promise<KnockedAway | null> {
-  const result = await change(item, { action: "knockAway", uuid: String(item?.uuid ?? ""), reason: String(options?.reason ?? "") });
+export async function knockWeaponAway(item: any, options: HeldWeaponOptions = {}): Promise<KnockedAway | null> {
+  const attacker = options?.attacker ?? null;
+  const result = await change(item, {
+    action: "knockAway",
+    uuid: String(item?.uuid ?? ""),
+    reason: String(options?.reason ?? ""),
+    attackerUuid: String(attacker?.uuid ?? ""),
+  }, attacker);
   return result as KnockedAway | null;
 }
 
 /**
- * The GM's side of the query. Only the two changes above are made, and only
- * to gear, so a player's client can't use it to write anything else.
+ * The GM's side of the query. Only the two changes above are made, only to
+ * gear, and only for a sender who may ask: a GM, the owner of the weapon's
+ * holder, or the owner of the attacker named. Who the sender is comes from
+ * the `user` Foundry hands the handler, never from the payload.
  */
-export async function answerHeldWeaponQuery(data: unknown): Promise<UnreadyChanged | KnockedAway | null> {
+export async function answerHeldWeaponQuery(data: unknown, context?: { user?: any }): Promise<UnreadyChanged | KnockedAway | null> {
   const request = data as Partial<HeldWeaponChange> | null;
   if (!request || typeof request.uuid !== "string" || !request.uuid) return null;
   if (request.action !== "unready" && request.action !== "knockAway") return null;
   const item = await fromUuid(request.uuid).catch(() => null);
   if (!item) return null;
+  const attackerUuid = typeof request.attackerUuid === "string" ? request.attackerUuid : "";
+  const attacker = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+  if (!mayRequest(context?.user, item, attacker)) return null;
   const reason = String(request.reason ?? "");
   return request.action === "unready"
-    ? applyHere(item, { action: "unready", uuid: request.uuid, unready: (request as { unready?: unknown }).unready === true, reason })
-    : applyHere(item, { action: "knockAway", uuid: request.uuid, reason });
+    ? applyHere(item, { action: "unready", uuid: request.uuid, unready: (request as { unready?: unknown }).unready === true, reason, attackerUuid })
+    : applyHere(item, { action: "knockAway", uuid: request.uuid, reason, attackerUuid });
 }
 
 /** Lets the GM's client answer. Called during `init`. */

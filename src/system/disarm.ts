@@ -179,8 +179,10 @@ export async function applyDisarm(options: {
   const weapon = String(item?.name ?? "");
 
   let applied = true;
-  if (item && result.disarmed) applied = (await knockWeaponAway(item, { reason: "disarm" })) !== null;
-  else if (item && result.unready) applied = (await setWeaponUnready(item, true, { reason: "disarm" })) !== null;
+  // On the attacker's behalf, which is what lets a player who doesn't own
+  // the foe have the GM's client make the change.
+  if (item && result.disarmed) applied = (await knockWeaponAway(item, { reason: "disarm", attacker: actor })) !== null;
+  else if (item && result.unready) applied = (await setWeaponUnready(item, true, { reason: "disarm", attacker: actor })) !== null;
 
   const key = result.disarmed ? "Disarmed" : result.unready ? "Unready" : "HeldFast";
   ui.notifications?.info(
@@ -188,7 +190,7 @@ export async function applyDisarm(options: {
       ? game.i18n.format(`GWORLD.Disarm.${key}Weapon`, { foe: foeName, weapon })
       : game.i18n.format(`GWORLD.Disarm.${key}`, { foe: foeName }),
   );
-  // Nobody here may change the weapon and no GM is connected to: the table
+  // This user may not have the weapon changed, or no GM is connected to: the table
   // has to do it by hand, and ought to be told so.
   if (!applied) ui.notifications?.warn(game.i18n.format("GWORLD.Disarm.NotApplied", { foe: foeName, weapon }));
 
