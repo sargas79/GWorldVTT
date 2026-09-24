@@ -18,6 +18,7 @@ import { setCondition, hasCondition } from "./conditions.js";
 import { rollSuccess } from "./roll.js";
 import { PROCEDURE_HOOKS } from "./procedure-extensions.js";
 import { callCombatHook } from "./combat-extensions.js";
+import { rollOnce } from "./card-buttons.js";
 
 /** Who owes a roll to stay conscious, and at what, as a card records it. */
 export interface ConsciousnessEntry {
@@ -29,9 +30,13 @@ export interface ConsciousnessEntry {
 
 const FLAG = "consciousness";
 
-/** Rolls HT to stay conscious, and puts a failure on the character. */
-export async function rollConsciousness(actor: any, penalty: number): Promise<void> {
-  if (!actor?.isOwner) return;
+/**
+ * Rolls HT to stay conscious, and puts a failure on the character. Resolves
+ * to whether the roll was made: not by a user who does not own the character,
+ * nor where a listener refused it.
+ */
+export async function rollConsciousness(actor: any, penalty: number): Promise<boolean> {
+  if (!actor?.isOwner) return false;
   const traits = traitsOf(actor);
   const bonus = (Number(traits.consciousness) || 0) + (Number(traits.htRolls) || 0);
   const modifiers = [
@@ -50,7 +55,7 @@ export async function rollConsciousness(actor: any, penalty: number): Promise<vo
     // only a 3 or 4 keeps the character up (since API 1.121.0).
     resistance: true,
   });
-  if (!outcome) return;
+  if (!outcome) return false;
   const previousPosture = String(actor.system?.posture ?? "standing");
   if (!outcome.success) {
     await actor.update({ "system.posture": "lying" });
@@ -60,6 +65,7 @@ export async function rollConsciousness(actor: any, penalty: number): Promise<vo
   }
   // The modules hear it, and may take a failure back (since 1.43.0).
   callCombatHook(PROCEDURE_HOOKS.afterConsciousnessRoll, { actor, outcome, previousPosture });
+  return true;
 }
 
 /** The entries a card records, for the characters a blow took to 0 HP or less. */
@@ -89,10 +95,8 @@ export async function addConsciousnessControls(message: any, html: HTMLElement):
     button.className = "gc-apply-button";
     const label = game.i18n.localize("GWORLD.Consciousness.Roll");
     button.textContent = entry.modifier ? `${label} ${entry.modifier > 0 ? "+" : ""}${entry.modifier}` : label;
-    button.addEventListener("click", () => {
-      button.disabled = true;
-      void rollConsciousness(actor, entry.modifier);
-    });
+    // A refused roll gives the button back, so it can still be made.
+    button.addEventListener("click", rollOnce(button, () => rollConsciousness(actor, entry.modifier)));
     row.append(who, button);
     root.append(row);
   }
