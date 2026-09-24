@@ -11,6 +11,7 @@
 
 import { mediumOf, mayUseVehicleSystem, type VehicleMedium } from "../rules/vehicle-combat.js";
 import { activeMove } from "../rules/vehicles.js";
+import { vehicleStats } from "./vehicle-stats.js";
 
 /** The vehicle a character is aboard, and their place in it. */
 export interface Aboard {
@@ -52,7 +53,8 @@ export function vehicleAboard(actor: any, vehicles: Iterable<any> = allVehicles(
       vehicle,
       name: String(vehicle.name ?? ""),
       operator: seat.operator === true,
-      stabilityRating: Number(stats.stability) || 0,
+      // As a state that lasts leaves it (API 1.115.0).
+      stabilityRating: vehicleStats(vehicle).stability,
       flying: medium === "air",
       medium,
       moving: (Number(vehicle.system?.speed) || 0) > 0,

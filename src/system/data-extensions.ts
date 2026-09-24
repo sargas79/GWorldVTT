@@ -54,6 +54,12 @@ export const DATA_HOOKS = Object.freeze({
   objectStats: "gworld.objectStats",
   /** Wherever an item's Legality Class is read (since 1.95.0): `{ item, actor, lc }`, `lc` (0-4 or null) mutable. */
   legalityClass: "gworld.legalityClass",
+  /**
+   * Wherever a vehicle's Handling, Stability and Move are read (since 1.115.0):
+   * `{ vehicle, handling, stability, acceleration, topSpeed, move, lines }`,
+   * the four figures mutable, `lines` for saying why.
+   */
+  vehicleStats: "gworld.vehicleStats",
 });
 
 /** A trait as `gworld.traitsInPlay` hands it to a listener. */

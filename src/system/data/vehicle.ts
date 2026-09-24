@@ -18,13 +18,14 @@
 
 import { vehicleStatFields } from "./items.js";
 import {
-  activeMove, cargoCapacity, cruisingSpeedMph, curbWeight, endurance, fragilityCodes,
+  cargoCapacity, cruisingSpeedMph, curbWeight, endurance, fragilityCodes,
   occupants, safeDecelerationPerTurn, vehicleMoves, type Locomotion,
 } from "../../rules/vehicles.js";
 import { locationsOf, mediumOf, type VehicleLocation } from "../../rules/vehicle-combat.js";
 import { scaleScore, vehicleDodge } from "../../rules/scale.js";
 import { normalizeSkillName } from "../../rules/skills.js";
 import { afterPrepare, extensionsField } from "../data-extensions.js";
+import { vehicleStats } from "../vehicle-stats.js";
 
 const fields = foundry.data.fields;
 
@@ -163,8 +164,10 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
     this.hp.max = v.stHp;
 
     // The rules read the Move it is using now: an amphibian in the water
-    // cruises, brakes and loses control as a boat does.
-    const move = activeMove(v);
+    // cruises, brakes and loses control as a boat does -- and the figures as
+    // a state that lasts leaves them (API 1.115.0): a crippled wheel, a load.
+    const stats = vehicleStats(this.parent);
+    const move = stats.move;
     const locomotion = move.locomotion;
     const seats = occupants(v.occupants);
     const aboard = this.crew.length;
@@ -198,7 +201,7 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
 
     this.derived = {
       basicSpeed: Number(driver?.system?.derived?.basicSpeed) || 0,
-      dodge: vehicleDodge({ controlSkill: control, handling: v.handling }),
+      dodge: vehicleDodge({ controlSkill: control, handling: stats.handling }),
       controlSkill: control,
       // "To avoid excessive die rolling, it is best to adjust the damage
       // scale" (p. 470). Only worth showing for something big enough to need
@@ -217,7 +220,9 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
       fragility: fragilityCodes(v.fragility),
       cruisingSpeedMph: cruising,
       endurance: endurance({ rangeMiles: v.range, cruisingSpeedMph: cruising }),
-      safeDeceleration: safeDecelerationPerTurn({ locomotion, handling: v.handling }),
+      safeDeceleration: safeDecelerationPerTurn({ locomotion, handling: stats.handling }),
+      /** Handling, Stability and the Move in use as the rules read them now, and what changed them (since API 1.115.0). */
+      stats,
       curbWeight: curbWeight({ loadedWeight: v.loadedWeight, load: v.load }),
       cargoCapacity: cargoCapacity({ load: v.load, people: aboard }),
       seats,

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DATA_HOOKS } from "../data-extensions.js";
 import { controlVehicle } from "../hazards.js";
+import { vehicleStats } from "../vehicle-stats.js";
 import { legalityClassOf } from "../legality.js";
 import { PROCEDURE_HOOKS } from "../procedure-extensions.js";
 import { rollInfluence } from "../reactions.js";
@@ -223,5 +224,45 @@ describe("gworld.legalityClass", () => {
     foundryWith([3], () => { throw new Error("boom"); });
     vi.spyOn(console, "warn").mockImplementation(() => {});
     expect(legalityClassOf({ system: { lc: 1 } })).toBe(1);
+  });
+});
+
+/** Vehicle hooks: figures while a state lasts, and why a control roll is made (sargas79/GWorldVTT#718). */
+describe("vehicle figures and control-roll reasons (since 1.115.0)", () => {
+  const driving = { type: "skill", name: "Driving/TL8 (Automobile)", system: { derived: { level: 12 } } };
+  const sedan = () => ({ name: "Sedan", system: { tl: "8", vehicle: { skill: "Driving/TL8 (Automobile)", handling: -1, stability: 4, locomotion: "wheels", acceleration: 5, topSpeed: 50 } } });
+
+  it("carries the reason among the tags and on the context", async () => {
+    const { rolled } = foundryWith([3, 3, 3]);
+    await controlVehicle({ actor: character("Driver", { items: [driving] }), vehicle: sedan(), modifier: 0, reason: "hardBraking" });
+    expect(rolled()[0].tags).toEqual(["vehicleControl", "hardBraking"]);
+    expect(rolled()[0].reason).toBe("hardBraking");
+  });
+
+  it("rolls at the Handling a listener leaves, without touching the stored figure", async () => {
+    const { cards } = foundryWith([3, 3, 3], (event, context) => {
+      if (event !== DATA_HOOKS.vehicleStats) return;
+      context.handling -= 2;
+      context.stability = 1;
+      context.lines.push({ label: "Crippled wheel", stat: "handling", value: -2 });
+    });
+    const car = sedan();
+    await controlVehicle({ actor: character("Driver", { items: [driving] }), vehicle: car, modifier: 0 });
+    // Driving 12, Handling -1 and the wheel's -2.
+    expect(card(cards).target).toBe(9);
+    expect(car.system.vehicle.handling).toBe(-1);
+  });
+});
+
+describe("vehicleStats", () => {
+  it("keeps Stability, acceleration and top speed at 0 or more, and ignores what isn't a number", () => {
+    foundryWith([3], (event, context) => {
+      if (event !== DATA_HOOKS.vehicleStats) return;
+      context.stability = -3;
+      context.topSpeed = 20;
+      context.acceleration = "fast";
+    });
+    const stats = vehicleStats({ system: { vehicle: { handling: 1, stability: 4, locomotion: "wheels", acceleration: 5, topSpeed: 50 } } });
+    expect(stats).toMatchObject({ handling: 1, stability: 0, acceleration: 5, topSpeed: 20, move: { locomotion: "wheels", acceleration: 5, topSpeed: 20 } });
   });
 });

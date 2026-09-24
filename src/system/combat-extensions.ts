@@ -97,6 +97,12 @@ export const COMBAT_HOOKS = Object.freeze({
   clearMalfunction: "gworld.clearMalfunction",
   /** Before a vehicle's DR meets a shot (since 1.79.0): `{ vehicle, actor, item, mode, location, arc, damageType, basicDamage, armorDivisor, ignoresDr, tightBeam, lines }`, the lines mutable. */
   vehicleDr: "gworld.vehicleDr",
+  /**
+   * After a shot at a vehicle is worked out and posted (since 1.115.0):
+   * `{ vehicle, actor, item, mode, location, arc, damageType, penetrating,
+   * injury, crippled, passedThrough, occupantHit }`.
+   */
+  afterVehicleHit: "gworld.afterVehicleHit",
   /** A blow that may leave the weapon stuck in its victim (since 1.105.0): `{ attacker, item, mode, target, result, pick, stuck }`, `stuck` mutable. */
   weaponStuck: "gworld.weaponStuck",
 });
