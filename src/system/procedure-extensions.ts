@@ -122,6 +122,20 @@ export const PROCEDURE_HOOKS = Object.freeze({
    */
   radiationDose: "gworld.radiationDose",
   /**
+   * Before an electrical shock is worked out (since 1.119.0; Campaigns pp. 432-433):
+   * `{ actor, kind, formula, continuous, contactSeconds, modifier, injuryStep,
+   * heartAttackMargin, dr, rollOnZeroInjury, immune, lines }`. `modifier`, `injuryStep`,
+   * `heartAttackMargin`, `dr`, `rollOnZeroInjury` and `immune` are mutable; push a
+   * string to `lines` for the card.
+   */
+  shockModifiers: "gworld.shockModifiers",
+  /**
+   * Once a shock's roll and its effects are applied, before the card is posted
+   * (since 1.119.0): the `ShockOutcome` with `actor`. `contact` and `lines` are
+   * mutable.
+   */
+  afterShock: "gworld.afterShock",
+  /**
    * Before a roll to detect somebody or something (since 1.63.0): a sense roll,
    * or a detection skill such as Observation, Search or Tracking.
    * `{ observer, subject, sense, skill, tags, modifiers }`; push to `modifiers`.

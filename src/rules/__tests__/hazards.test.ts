@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { collisionDamage, collisionVelocity, overrunDamage } from "../collisions.js";
-import { lethalShock, lethalShockModifier, nonlethalShock } from "../electricity.js";
+import { lethalShock, lethalShockModifier, nonlethalShock, shockHeartAttack } from "../electricity.js";
 import { catchingFire, FIRE_DAMAGE, ignites, prolongedContactTarget } from "../fire.js";
 import { dailyMiles, marchingFatiguePerHour } from "../hiking.js";
 import {
@@ -98,6 +98,16 @@ describe("electricity", () => {
     });
     expect(lethalShock({ success: false, margin: 5, ht: 11 }).heartAttack).toBe(true);
     expect(lethalShock({ success: false, criticalFailure: true, ht: 11 }).heartAttack).toBe(true);
+  });
+
+  it("takes a module's rate and heart-attack margin (API 1.119.0)", () => {
+    expect(lethalShockModifier(7, 1)).toBe(-7);
+    expect(lethalShockModifier(7, 0)).toBe(0);
+    expect(lethalShock({ success: false, margin: 5, ht: 11, heartAttackMargin: 6 }).heartAttack).toBe(false);
+    expect(lethalShock({ success: false, criticalFailure: true, ht: 11, heartAttackMargin: null }).heartAttack).toBe(false);
+    expect(shockHeartAttack({ success: false, margin: 10, heartAttackMargin: 10 })).toBe(true);
+    expect(shockHeartAttack({ success: false, margin: 2, criticalFailure: true, heartAttackMargin: 10 })).toBe(false);
+    expect(shockHeartAttack({ success: true, margin: 3, heartAttackMargin: 0 })).toBe(false);
   });
 });
 

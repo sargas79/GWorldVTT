@@ -19,7 +19,8 @@ import { loseAim } from "./aim.js";
 import { collisionDamage, collisionVelocity, overrunDamage, type CollisionAngle } from "../rules/collisions.js";
 import { formatDiceAdds, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import {
-  lethalShock, lethalShockModifier, localizedShock, nonlethalShock, METAL_ARMOR_DR,
+  HEART_ATTACK_MARGIN, lethalShock, lethalShockModifier, localizedShock, nonlethalShock, METAL_ARMOR_DR,
+  SHOCK_INJURY_STEP, shockHeartAttack,
 } from "../rules/electricity.js";
 import {
   catchingFire, FIRE_DAMAGE, ignites, prolongedContactTarget, type FireExposure, type Flammability,
@@ -336,7 +337,102 @@ export async function struckBy(options: {
 
 export type ShockKind = "nonlethal" | "lethal" | "localized";
 
-/** A shock, of whichever kind, and the HT roll it calls for. */
+/**
+ * A victim who touches the source (since API 1.119.0): set by a
+ * `gworld.afterShock` listener, for a module's rule that a victim can't let go.
+ */
+export interface ShockContact {
+  /** True while the victim can't let go of the source. */
+  held: boolean;
+  /** What the card says about it; blank for the system's own line. */
+  label: string;
+}
+
+/** What a shock came to (since API 1.119.0): what `shock` resolves to, and the `gworld.afterShock` context without `actor`. */
+export interface ShockOutcome {
+  kind: ShockKind;
+  /** A `gworld.shockModifiers` listener made the victim unaffected: nothing else happened. */
+  immune: boolean;
+  /** HP of injury the burning damage did; 0 for a nonlethal shock. */
+  injury: number;
+  /** The DR the burning damage met, or null where there was no damage roll. */
+  dr: number | null;
+  /** Whether the HT roll was made. */
+  rolled: boolean;
+  /** The HT roll's target and roll, null where there was none. */
+  target: number | null;
+  roll: number | null;
+  success: boolean;
+  criticalFailure: boolean;
+  /** The roll's margin of success or failure, never negative (see `success`); 0 where there was no roll. */
+  margin: number;
+  /** The HT modifier the injury gave. */
+  injuryModifier: number;
+  stunned: boolean;
+  /** Seconds the stun is held before the rolls to recover. */
+  stunSeconds: number;
+  unconscious: boolean;
+  unconsciousMinutes: number;
+  heartAttack: boolean;
+  /** Seconds the caller said the victim stays in contact. */
+  contactSeconds: number;
+  /** A listener's say on the victim's hold on the source, or null. */
+  contact: ShockContact | null;
+  /** The card's lines. */
+  lines: string[];
+}
+
+/** The part of a shock a `gworld.shockModifiers` listener may change (since API 1.119.0). */
+export interface ShockModifiers {
+  actor: any;
+  kind: ShockKind;
+  formula: string;
+  continuous: boolean;
+  contactSeconds: number;
+  /** The HT modifier for the source's strength. */
+  modifier: number;
+  /** Points of injury per -1 to the HT roll: 2. 0 or less for none. */
+  injuryStep: number;
+  /** The failure that stops the heart: 5 for a lethal shock, null (never) otherwise. */
+  heartAttackMargin: number | null;
+  /** A DR that counts only against this shock, in place of the armour's: 1 in metal armour, otherwise null. */
+  dr: number | null;
+  /** Roll against a shock whose burning damage did no injury. */
+  rollOnZeroInjury: boolean;
+  /** The victim is unaffected (since API 1.119.0): no damage, no roll, no stun. */
+  immune: boolean;
+  lines: string[];
+}
+
+/** What a listener left in a field that must be a number, or the fallback. */
+function numberOr(value: unknown, fallback: number): number {
+  const n = Number(value);
+  return value !== null && value !== "" && Number.isFinite(n) ? n : fallback;
+}
+
+/** The same for a field a listener may clear with null. */
+function numberOrNull(value: unknown, fallback: number | null): number | null {
+  if (value === null) return null;
+  const n = Number(value);
+  return value !== undefined && value !== "" && Number.isFinite(n) ? n : fallback;
+}
+
+/** A listener's contact, made safe to show and return. */
+function contactOf(value: unknown): ShockContact | null {
+  if (!value || typeof value !== "object") return null;
+  const given = value as { held?: unknown; label?: unknown };
+  return { held: given.held === true, label: String(given.label ?? "").trim() };
+}
+
+/** Only the strings in a listener's lines. */
+function stringLines(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((line): line is string => typeof line === "string" && line.trim() !== "") : [];
+}
+
+/**
+ * A shock, of whichever kind, and the HT roll it calls for. Resolves to what
+ * it came to (since API 1.119.0), or null where nothing was done.
+ */
 export async function shock(options: {
   actor: any;
   kind: ShockKind;
@@ -353,12 +449,13 @@ export async function shock(options: {
    * longer before the rolls to recover. Left out or 0: the current has stopped.
    */
   contactSeconds?: number;
-}): Promise<void> {
+}): Promise<ShockOutcome | null> {
   const { actor } = options;
-  if (!mayChange(actor)) return;
+  if (!mayChange(actor)) return null;
 
   const ht = attributeOf(actor, "HT");
   const contact = Math.max(0, Math.floor(Number(options.contactSeconds) || 0));
+  const formula = String(options.formula ?? "");
   // No recovery roll while the condition is held (since 1.89.0).
   const hold = (key: string, seconds: number) =>
     applyCondition(actor, { key, holdRecovery: { seconds } }, { setSystemCondition: setCondition, systemConditionLabel: conditionLabel });
@@ -366,38 +463,118 @@ export async function shock(options: {
   const lines: string[] = [];
   let injuryModifier = 0;
   let injury = 0;
+  let metDr: number | null = null;
 
   // "1d-3" as the book writes it, made into a formula the dice can roll.
-  const dice = options.kind !== "nonlethal" ? parseDiceAdds(options.formula) : null;
-  if (options.kind !== "nonlethal" && options.formula.trim() && !dice) {
-    ui.notifications?.warn(F("BadFormula", { formula: options.formula }));
-    return;
+  const dice = options.kind !== "nonlethal" ? parseDiceAdds(formula) : null;
+  if (options.kind !== "nonlethal" && formula.trim() && !dice) {
+    ui.notifications?.warn(F("BadFormula", { formula }));
+    return null;
   }
-  if (dice) {
+
+  // A module's say on the shock before anything is rolled (since API 1.119.0):
+  // the GM leaves the HT modifier to the source (p. 432), and metal armour's
+  // DR 1 is already a DR that counts only against a shock.
+  const asked = callCombatHook<ShockModifiers>(PROCEDURE_HOOKS.shockModifiers, {
+    actor,
+    kind: options.kind,
+    formula,
+    continuous: options.continuous,
+    contactSeconds: contact,
+    modifier: Number(options.modifier) || 0,
+    injuryStep: SHOCK_INJURY_STEP,
+    heartAttackMargin: options.kind === "lethal" ? HEART_ATTACK_MARGIN : null,
+    dr: options.metalArmor ? METAL_ARMOR_DR : null,
+    rollOnZeroInjury: false,
+    immune: false,
+    lines: [],
+  });
+  const modifier = numberOr(asked.modifier, Number(options.modifier) || 0);
+  const injuryStep = numberOr(asked.injuryStep, SHOCK_INJURY_STEP);
+  const heartAttackMargin = numberOrNull(asked.heartAttackMargin, options.kind === "lethal" ? HEART_ATTACK_MARGIN : null);
+  const shockDr = numberOrNull(asked.dr, options.metalArmor ? METAL_ARMOR_DR : null);
+  lines.push(...stringLines(asked.lines));
+  // Unaffected: no damage, no roll, no stun -- the listener's lines, or ours.
+  const immune = asked.immune === true;
+  if (immune && lines.length === 0) lines.push(H("ShockImmune"));
+
+  if (dice && !immune) {
     const hit = await takeDamage(actor, toRollFormula(dice), "burn", {
-      drOverride: options.metalArmor ? METAL_ARMOR_DR : null,
+      drOverride: shockDr === null ? null : Math.max(0, shockDr),
     });
     rolls.push(hit.roll, hit.locationRoll);
     injury = hit.injury;
-    injuryModifier = lethalShockModifier(injury);
-    lines.push(F("ShockDamage", { formula: options.formula, rolled: hit.roll.total, dr: hit.dr, injury, previous: hit.previous, now: hit.current }));
+    metDr = hit.dr;
+    injuryModifier = lethalShockModifier(injury, injuryStep);
+    lines.push(F("ShockDamage", { formula, rolled: hit.roll.total, dr: hit.dr, injury, previous: hit.previous, now: hit.current }));
   }
 
-  // Nothing got through: a lethal shock that did no injury asks for no roll.
-  if (options.kind !== "nonlethal" && injury === 0) {
-    await post(actor, { kind: H("Shock"), detail: H(`ShockKind.${options.kind}`), lines: [...lines, H("ShockHarmless")], rolls });
-    return;
+  const outcome: ShockOutcome = {
+    kind: options.kind,
+    immune,
+    injury,
+    dr: metDr,
+    rolled: false,
+    target: null,
+    roll: null,
+    success: true,
+    criticalFailure: false,
+    margin: 0,
+    injuryModifier,
+    stunned: false,
+    stunSeconds: 0,
+    unconscious: false,
+    unconsciousMinutes: 0,
+    heartAttack: false,
+    contactSeconds: contact,
+    contact: null,
+    lines,
+  };
+
+  // What the modules make of it, once it is applied and before the card
+  // (since API 1.119.0): a victim who can't let go, say.
+  const heard = (): ShockOutcome => {
+    const context = callCombatHook(PROCEDURE_HOOKS.afterShock, { actor, ...outcome, lines: [...lines] });
+    outcome.contact = contactOf(context.contact);
+    outcome.lines = stringLines(context.lines);
+    if (outcome.contact?.held) outcome.lines.push(outcome.contact.label || H("ShockCantLetGo"));
+    return outcome;
+  };
+
+  if (immune) {
+    const result = heard();
+    await post(actor, { kind: H("Shock"), detail: H(`ShockKind.${options.kind}`), lines: result.lines, rolls });
+    return result;
   }
 
-  const target = healthRollScore(actor) + options.modifier + injuryModifier;
+  // Nothing got through: a lethal shock that did no injury asks for no roll,
+  // unless a module says it does.
+  if (options.kind !== "nonlethal" && injury === 0 && asked.rollOnZeroInjury !== true) {
+    lines.push(H("ShockHarmless"));
+    const result = heard();
+    await post(actor, { kind: H("Shock"), detail: H(`ShockKind.${options.kind}`), lines: result.lines, rolls });
+    return result;
+  }
+
+  const target = healthRollScore(actor) + modifier + injuryModifier;
   const roll = new Roll("3d6");
   await roll.evaluate();
   rolls.push(roll);
-  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+  const resolved = resolveSuccess(roll.total, target, dieResults(roll));
+  Object.assign(outcome, {
+    rolled: true,
+    target,
+    roll: roll.total,
+    success: resolved.success,
+    criticalFailure: resolved.criticalFailure,
+    margin: resolved.margin,
+  });
 
   let bad = false;
   if (options.kind === "lethal") {
-    const result = lethalShock({ success: outcome.success, criticalFailure: outcome.criticalFailure, margin: outcome.margin, ht });
+    const result = lethalShock({
+      success: resolved.success, criticalFailure: resolved.criticalFailure, margin: resolved.margin, ht, heartAttackMargin,
+    });
     if (result.unconscious) {
       // Out while the current flows, and (20 - HT) minutes after.
       await hold("unconscious", contact + result.unconsciousMinutes * 60);
@@ -406,34 +583,48 @@ export async function shock(options: {
     } else {
       lines.push(H("ShockHeld"));
     }
-    if (result.heartAttack) lines.push(H("HeartAttack"));
+    outcome.unconscious = result.unconscious;
+    outcome.unconsciousMinutes = result.unconsciousMinutes;
+    outcome.heartAttack = result.heartAttack;
   } else {
     const result = options.kind === "localized"
-      ? localizedShock({ success: outcome.success })
-      : nonlethalShock({ success: outcome.success, ht, continuous: options.continuous });
+      ? localizedShock({ success: resolved.success })
+      : nonlethalShock({ success: resolved.success, ht, continuous: options.continuous });
     if (result.stunned) {
       // Stunned while the current flows, and its seconds after (p. 432).
       const seconds = result.stunSeconds + (options.kind === "nonlethal" && options.continuous ? contact : 0);
       await actor.update({ "system.conditions.stunned": true });
       await hold("stunned", seconds);
       lines.push(F("ShockStunned", { seconds }));
+      outcome.stunned = true;
+      outcome.stunSeconds = seconds;
       bad = true;
     } else {
       lines.push(H("ShockHeld"));
     }
+    // The Basic Set stops no heart here; a module's margin may.
+    outcome.heartAttack = shockHeartAttack({
+      success: resolved.success, criticalFailure: resolved.criticalFailure, margin: resolved.margin, heartAttackMargin,
+    });
+  }
+  if (outcome.heartAttack) {
+    lines.push(F("HeartAttack", { margin: heartAttackMargin ?? HEART_ATTACK_MARGIN }));
+    bad = true;
   }
 
+  const result = heard();
   await post(actor, {
     kind: H("Shock"),
     detail: H(`ShockKind.${options.kind}`),
     target,
     dice: dieResults(roll),
     roll: roll.total,
-    lines,
+    lines: result.lines,
     good: !bad,
     bad,
     rolls,
   });
+  return result;
 }
 
 // ── fire (pp. 433-434) ──────────────────────────────────────────────────

@@ -39,12 +39,39 @@ export function nonlethalShock(options: { success: boolean; ht: number; continuo
   };
 }
 
+/** The HT roll against a shock is at -1 per this many points of injury (p. 432). */
+export const SHOCK_INJURY_STEP = 2;
+
+/** A lethal shock's HT roll failed by this much or more stops the heart (p. 432). */
+export const HEART_ATTACK_MARGIN = 5;
+
 /**
  * The HT roll's modifier against a lethal shock: "-1 per 2 points of injury
- * suffered" (p. 432). Nothing at all when nothing got through.
+ * suffered" (p. 432). Nothing at all when nothing got through. `step` is the
+ * points of injury per -1 (since API 1.119.0, for a module's own rate); a
+ * step that isn't a positive number gives no modifier at all.
  */
-export function lethalShockModifier(injury: number): number {
-  return -Math.floor(Math.max(0, injury) / 2);
+export function lethalShockModifier(injury: number, step: number = SHOCK_INJURY_STEP): number {
+  if (!Number.isFinite(step) || step <= 0) return 0;
+  return -Math.floor(Math.max(0, injury) / step);
+}
+
+/**
+ * Whether a shock's failed HT roll stops the heart: a failure by
+ * `heartAttackMargin` or more, or, where `criticalFailureCounts`, any critical
+ * failure (p. 432, for a lethal shock). A null margin never does.
+ */
+export function shockHeartAttack(options: {
+  success: boolean;
+  criticalFailure?: boolean;
+  /** Margin of failure. */
+  margin?: number;
+  heartAttackMargin: number | null;
+  criticalFailureCounts?: boolean;
+}): boolean {
+  if (options.success || options.heartAttackMargin === null) return false;
+  if (options.criticalFailureCounts && options.criticalFailure === true) return true;
+  return Math.abs(options.margin ?? 0) >= options.heartAttackMargin;
 }
 
 export interface LethalShock {
@@ -65,6 +92,8 @@ export function lethalShock(options: {
   /** Margin of failure, positive, on a failed roll. */
   margin?: number;
   ht: number;
+  /** The failure that stops the heart (since API 1.119.0): 5 by default, null for never. */
+  heartAttackMargin?: number | null;
 }): LethalShock {
   if (options.success) return { unconscious: false, unconsciousMinutes: 0, dazedMinutes: 0, heartAttack: false };
   const minutes = Math.max(1, 20 - options.ht);
@@ -72,7 +101,13 @@ export function lethalShock(options: {
     unconscious: true,
     unconsciousMinutes: minutes,
     dazedMinutes: minutes,
-    heartAttack: options.criticalFailure === true || Math.abs(options.margin ?? 0) >= 5,
+    heartAttack: shockHeartAttack({
+      success: false,
+      criticalFailure: options.criticalFailure === true,
+      margin: options.margin ?? 0,
+      heartAttackMargin: options.heartAttackMargin === undefined ? HEART_ATTACK_MARGIN : options.heartAttackMargin,
+      criticalFailureCounts: true,
+    }),
   };
 }
 
