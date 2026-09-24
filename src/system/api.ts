@@ -52,7 +52,7 @@ import type { ControlRating, LegalityClass } from "../rules/legality.js";
 import { currentControlRating, legalityClassOf } from "./legality.js";
 import { surprise, undoKnockdown } from "./knockdown.js";
 import { rollFall } from "./falling.js";
-import { restoreFatigue } from "./fatigue.js";
+import { restoreFatigue, spendFatigueFor } from "./fatigue.js";
 import { bind, bindingOf, breakFreeFromBinding, unbind, type BindingBroken } from "./entangling.js";
 import type { LandingSurface } from "../rules/falling.js";
 import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from "./damage-undo.js";
@@ -96,7 +96,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.108.0";
+export const API_VERSION = "1.109.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -192,6 +192,18 @@ const actors = {
    */
   restoreFatigue(actor: any, fp: number, options: { reason?: string } = {}) {
     return restoreFatigue(actor, fp, options);
+  },
+
+  /**
+   * Charges FP the way the system's own procedures do (Campaigns p. 426;
+   * since 1.109.0): `gworld.fatigueCost` (told `reason`, `module` by default,
+   * and `details`), Very Fit's halving where it is exertion (the default),
+   * and the fatigue chart, injury past 0 FP and all. Resolves to `{ fpLost,
+   * hpLost, sources, fp, hp, status }`, or null for a user who can't change
+   * the actor or an amount that isn't a positive number.
+   */
+  spendFatigue(actor: any, fp: number, options: { reason?: string; details?: Record<string, unknown>; exertion?: boolean } = {}) {
+    return spendFatigueFor(actor, fp, options);
   },
 
   /**
