@@ -98,6 +98,8 @@ import { manaLevel } from "./casting.js";
 import { PARTY_CHANGED_HOOK, addMembers, membersOf, partyOf, removeMember } from "./party.js";
 import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from "./campaign.js";
 import { objectStats, type ItemObjectStats } from "./object-stats.js";
+import { vehicleAboard } from "./vehicle-aboard.js";
+import type { VehicleMedium } from "../rules/vehicle-combat.js";
 import { dayWeather, setTemperature } from "./weather.js";
 import { addPendingModifier, pendingModifiers, removePendingModifier, type PendingModifierRequest } from "./pending-modifiers.js";
 import { applyItemDamage, type ItemDamaged } from "./item-damage.js";
@@ -108,7 +110,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.140.0";
+export const API_VERSION = "1.141.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -322,6 +324,17 @@ const actors = {
   /** Takes a crippled part off, by id or location (since 1.114.0). False where there was none. */
   healCrippled(actor: any, which: string): Promise<boolean> {
     return healCrippled(actor, which);
+  },
+
+  /**
+   * The vehicle a character is aboard (Campaigns pp. 467-469; since 1.141.0),
+   * the same reading an attack from it uses: `{ vehicle, operator, moving,
+   * medium }`, or null. Found by the character's place in a vehicle's crew,
+   * among the world's vehicles and those that exist only as unlinked tokens.
+   */
+  vehicleAboard(actor: any): { vehicle: any; operator: boolean; moving: boolean; medium: VehicleMedium } | null {
+    const aboard = vehicleAboard(actor);
+    return aboard ? { vehicle: aboard.vehicle, operator: aboard.operator, moving: aboard.moving, medium: aboard.medium } : null;
   },
 
   /** Lets go of a pulled load (since 1.113.0). False where there was none. */

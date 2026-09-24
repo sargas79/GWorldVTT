@@ -216,9 +216,12 @@ export interface RollModifier {
    * On a `movingPlatform` line (since 1.87.0): `vehicle` or `mount`, the
    * medium (`ground`, `air`, `water`), the ride (`smooth`, `rough`,
    * `offRoad`) and how the weapon is held (`handheld`, `openMount`,
-   * `fixedMount`, `stabilized`).
+   * `fixedMount`, `stabilized`). Since 1.141.0 also `vehicle`, the vehicle
+   * actor for a `vehicle` platform, so a module can tell one kind of vehicle
+   * from another.
    */
   platform?: "vehicle" | "mount";
+  vehicle?: any;
   medium?: string;
   ride?: string;
   mounting?: string;
@@ -3124,6 +3127,7 @@ export async function promptForRangedAttack(options: {
               ? aboard.techLevel
               : 0,
             medium: aboard.medium,
+            vehicle: aboard.vehicle,
             ride: readRide(form),
             weaponMount: (form?.querySelector<HTMLSelectElement>('select[name="vehicleMounting"]')?.value ??
               "fixedMount") as "fixedMount" | "openMount",
@@ -3271,6 +3275,8 @@ export interface VehicleShot {
   medium?: VehicleMedium;
   /** How rough the ride is (since 1.87.0); a good road or calm water where not given. */
   ride?: RideRoughness;
+  /** The vehicle actor, which the `movingPlatform` line carries (since 1.141.0). */
+  vehicle?: any;
   /** What the vehicle's own weapon sits on, when it is not stabilized (since 1.87.0). */
   weaponMount?: "fixedMount" | "openMount";
 }
@@ -3453,7 +3459,7 @@ export function rangedModifiers(
   // handheld weapon" (p. 469). Keyed `movingPlatform`, for a module that
   // eases or replaces it (since 1.87.0).
   const platform = vehicle?.moving
-    ? { platform: "vehicle" as const, medium: vehicle.medium ?? (vehicle.flying ? "air" : "ground"), ride: vehicle.ride ?? "smooth", mounting: platformMounting(vehicle) }
+    ? { platform: "vehicle" as const, vehicle: vehicle.vehicle ?? null, medium: vehicle.medium ?? (vehicle.flying ? "air" : "ground"), ride: vehicle.ride ?? "smooth", mounting: platformMounting(vehicle) }
     : input.mount?.moving
       ? { platform: "mount" as const, medium: "ground" as VehicleMedium, ride: input.mount.ride, mounting: "handheld" as PlatformMounting }
       : null;

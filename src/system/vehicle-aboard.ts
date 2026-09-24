@@ -15,7 +15,7 @@ import { vehicleStats } from "./vehicle-stats.js";
 
 /** The vehicle a character is aboard, and their place in it. */
 export interface Aboard {
-  /** The vehicle actor. */
+  /** The vehicle actor: a token's own actor for a vehicle that exists only as an unlinked token. */
   vehicle: any;
   name: string;
   /** True for whoever has the wheel. */
@@ -39,7 +39,7 @@ export interface Aboard {
  * character, because the crew list is the one place that is true: getting out
  * takes them off it, and a second record would drift.
  */
-export function vehicleAboard(actor: any, vehicles: Iterable<any> = allVehicles()): Aboard | null {
+export function vehicleAboard(actor: any, vehicles: Iterable<any> = vehiclesFor(actor)): Aboard | null {
   const uuid = String(actor?.uuid ?? "");
   if (!uuid) return null;
   for (const vehicle of vehicles) {
@@ -64,8 +64,35 @@ export function vehicleAboard(actor: any, vehicles: Iterable<any> = allVehicles(
   return null;
 }
 
-function allVehicles(): any[] {
-  return (globalThis as { game?: { actors?: { contents?: any[] } } }).game?.actors?.contents ?? [];
+/**
+ * Every vehicle the actor might be aboard: those that exist only as unlinked
+ * tokens, then the world's (since 1.141.0).
+ *
+ * An unlinked token keeps its crew on its own actor, which is not among the
+ * world's, so the scenes are searched too: the one this user is looking at,
+ * the active one, and the one the character's own token stands on. The
+ * tokens come first because a token copied from a vehicle actor starts with
+ * that actor's crew; where both list the character, the one on the map is the
+ * one they are riding in.
+ */
+export function vehiclesFor(actor: any, world: any = (globalThis as { game?: any }).game): any[] {
+  const found: any[] = [];
+  const seen = new Set<unknown>();
+  const add = (vehicle: any) => {
+    if (vehicle?.type !== "vehicle" || seen.has(vehicle)) return;
+    seen.add(vehicle);
+    found.push(vehicle);
+  };
+  const scenes = new Set([world?.scenes?.viewed, world?.scenes?.active, actor?.token?.parent]);
+  for (const scene of scenes) {
+    for (const token of scene?.tokens ?? []) {
+      // A linked token's actor is the world's, found below.
+      if (token?.actorLink) continue;
+      add(token?.actor);
+    }
+  }
+  for (const vehicle of world?.actors?.contents ?? []) add(vehicle);
+  return found;
 }
 
 /**
