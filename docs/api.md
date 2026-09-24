@@ -676,6 +676,23 @@ and the roll continues.
     itself is different, and is the piece's own `drByLocation` (since 1.51.0):
     a list of `{ locations, dr }`, each replacing the piece's figure at those
     locations, split and all.
+
+    Since 1.108.0 the context also says how the blow was aimed, so a rule
+    about how armour meets an aimed blow (a chink, Campaigns p. 400, or an
+    attack option that strikes around partial coverage) reads the blow rather
+    than a flag of its own on the attacker: `calledShot`, `{ hitLocation,
+    addonLocation, chink }` for the location the attack was aimed at, or null
+    for a blow nobody aimed (`hitLocation` is where it landed, which may
+    differ); `chink`, true where the blow found a chink and so meets half the
+    worn DR after the listeners; `addonLocation`, the module's location it
+    struck, or null; and `options`, the attack options chosen for the attack
+    as `<module>.<key>` to value, as `gworld.attackModifiers` has them (`{}`
+    for none). They come from the attack through the damage roll made from
+    the sheet: the damage card keeps `attackOptions` (as `[key, value]`
+    pairs, since a key's dot would nest it in a flag) beside the called shot,
+    and `IncomingDamage` carries `calledShot` and `attackOptions`, so
+    `gworld.injury` and `gworld.afterDamage` see them too. `roll.damage` takes
+    `attackOptions` (and already took `calledShot`) for a module's own roll.
   - `gworld.vehicleDr` (since 1.79.0): before a vehicle's DR meets a shot
     (Campaigns pp. 462, 554-555), with `{ vehicle, actor, item, mode,
     location, arc, damageType, basicDamage, armorDivisor, ignoresDr,
