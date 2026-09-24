@@ -45,7 +45,7 @@ import { takeInjury, wearDr, type DrWorn, type InjuryTaken } from "./damage.js";
 import { equipmentFailure, type EquipmentFailureResult } from "./repairs.js";
 import { stopBleeding } from "./bleeding.js";
 import { activePoisons, advancePoison, clearPoison, dosePoison, treatIllness, treatPoison, type ActivePoison } from "./poison.js";
-import { applyFirstAid, attendPatient, operate, resuscitate } from "./recovery.js";
+import { attendPatient, giveFirstAid, operate, resuscitate } from "./recovery.js";
 import { rollMortalWound } from "./dying.js";
 import type { Poison, Treatment } from "../rules/poison.js";
 import type { ResuscitationCause } from "../rules/medicine.js";
@@ -102,7 +102,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.120.0";
+export const API_VERSION = "1.122.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -352,10 +352,12 @@ const actors = {
   /**
    * First Aid on a patient (Campaigns p. 424, since 1.60.0), as the sheet's button does.
    * `skill` and `techLevel` stand in for the healer's, for a device that treats on its own;
-   * `label` names who treats on the card. Returns the HP it moved.
+   * `label` names who treats on the card. Returns the HP it moved. Since 1.122.0 it runs
+   * the button's whole attempt, so `gworld.firstAid` hears it: a listener may refuse it
+   * (0) or change its tech level, and a success stops the bleeding unless one says not.
    */
   firstAid(options: { healer: any; patient: any; skill?: number; techLevel?: number; label?: string; modifier?: number }): Promise<number> {
-    return applyFirstAid({ ...options, modifier: options.modifier ?? 0 });
+    return giveFirstAid({ ...options, modifier: options.modifier ?? 0 });
   },
 
   /** A physician's rounds on a patient (p. 424, since 1.60.0); the roll is tagged `physician`. */
