@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createApi } from "../api.js";
-import { darknessAt, lightCountsFor, litForOf, registerLitFor, setLitFor } from "../darkness.js";
+import { darknessAt, lightCountsFor, litForOf, registerLightLevel, registerLitFor, setLitFor } from "../darkness.js";
 import { lightFrom } from "../modifier-areas.js";
 import { darknessFromLighting, darknessPenaltyFor, LIT_DARKNESS } from "../../rules/visibility.js";
 
@@ -47,7 +47,7 @@ function drawnScene(options: {
   regionLevel?: (p: any) => number | null;
   lights?: Array<(p: any) => boolean>;
   /** Lights with the placeable they belong to, for the lights only some can see. */
-  sources?: Array<{ test: (p: any) => boolean; object: any }>;
+  sources?: Array<{ test: (p: any) => boolean; object: any; at?: { x: number; y: number } }>;
   darknessSources?: Array<(p: any) => boolean>;
   global?: { enabled: boolean; bright: boolean; min?: number; max?: number };
 }) {
@@ -70,6 +70,13 @@ function drawnScene(options: {
         return (options.sources ?? []).some((source) => opts?.condition?.(source) !== false && source.test(p));
       },
       testInsideDarkness: (p: any) => (options.darknessSources ?? []).some((test) => test(p)),
+      // The light sources, with the global light among them as Foundry keeps it.
+      lightSources: new Map<string, any>([
+        ["global", globalLightSource],
+        ...(options.sources ?? []).map((source, i): [string, any] => [
+          `light${i}`, { active: true, object: source.object, data: source.at ?? { x: 0, y: 0 }, testPoint: source.test },
+        ]),
+      ]),
     },
   };
   return scene;
@@ -246,5 +253,93 @@ describe("a module's light on an area (sargas79/GWorldVTT#693)", () => {
     expect(lightFrom({ radius: 2, litFor: "not a kind" }, { x: 0, y: 0 }, 0, 100)?.litFor).toBeNull();
     expect(lightFrom({}, { x: 0, y: 0 }, 0, 100)).toBeNull();
     expect(lightFrom({ radius: 5 }, null, 0, 100)).toBeNull();
+  });
+});
+
+/**
+ * A light that leaves its own darkness level (sargas79/GWorldVTT#730). Kept
+ * last: a registered light level stays for the rest of the file.
+ */
+describe("a light's own darkness level", () => {
+  /** A lamp whose document carries a test module's mark of how bright it is. */
+  const lamp = (brightness?: number, litFor?: string) => ({
+    document: { documentName: "AmbientLight", flags: { gworld: litFor ? { litFor } : {}, "test-mod": brightness === undefined ? {} : { brightness } } },
+  });
+  const brightnessOf = (light: any): number | undefined => light?.flags?.["test-mod"]?.brightness;
+
+  it("registers a light level once, under <module>.<key>", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    // A lamp leaves 1 within 2 yards, -5 (as a penalty) out to 5, and 8 beyond;
+    // a light it doesn't know is left its own.
+    expect(registerLightLevel({
+      module: "test-mod",
+      key: "falloff",
+      level: (_observer, light, spot) => {
+        if (brightnessOf(light) !== 1) return null;
+        return spot.distance <= 2 ? 1 : spot.distance <= 5 ? -5 : 8;
+      },
+    })).toBe("test-mod.falloff");
+    expect(registerLightLevel({ module: "test-mod", key: "falloff", level: () => 0 })).toBeNull();
+    expect(registerLightLevel({ module: "test mod", key: "x", level: () => 0 })).toBeNull();
+    expect(registerLightLevel({ module: "test-mod", key: "none" } as any)).toBeNull();
+    expect(warn).toHaveBeenCalledTimes(3);
+    warn.mockRestore();
+  });
+
+  it("leaves the level a light source's reading gives, by the spot's distance from it", () => {
+    const scene = drawnScene({ level: 1, sources: [{ test: (p) => p.x < 1000, object: lamp(1), at: { x: 0, y: 0 } }] });
+    expect(darknessAt(scene, { x: 100, y: 0 })).toMatchObject({ darkness: 1, penalty: -1, lighting: { inLight: true } });
+    // Four yards off, it lifts total darkness only to -5, and the spot is not in light.
+    expect(darknessAt(scene, { x: 400, y: 0 })).toMatchObject({ darkness: 5, penalty: -5, lighting: { inLight: false } });
+    expect(darknessAt(scene, { x: 800, y: 0 })?.darkness).toBe(8);
+    // Beyond the light's reach, nothing.
+    expect(darknessAt(scene, { x: 1200, y: 0 })?.darkness).toBe(10);
+    // Never darker than the scene already is.
+    expect(darknessAt(drawnScene({ level: 0.4, sources: [{ test: () => true, object: lamp(1) }] }), { x: 400, y: 0 })?.darkness).toBe(4);
+  });
+
+  it("leaves a light no reading knows the torch's 3, and takes the best of the lights that reach", () => {
+    const plain = drawnScene({ level: 1, sources: [{ test: () => true, object: lamp() }] });
+    expect(darknessAt(plain, { x: 400, y: 0 })).toMatchObject({ darkness: 3, lighting: { inLight: true } });
+    const both = drawnScene({ level: 1, sources: [{ test: () => true, object: lamp(1) }, { test: () => true, object: lamp() }] });
+    expect(darknessAt(both, { x: 800, y: 0 })?.darkness).toBe(3);
+    expect(darknessAt(both, { x: 100, y: 0 })?.darkness).toBe(1);
+  });
+
+  it("takes the least of the registered readings, and ignores one that fails", () => {
+    registerLightLevel({ module: "test-mod", key: "broken", level: () => { throw new Error("no"); } });
+    registerLightLevel({ module: "test-mod", key: "floodlight", level: (_o, light) => (brightnessOf(light) === 2 ? 0 : brightnessOf(light) === 1 ? 6 : undefined) });
+    const scene = drawnScene({ level: 1, sources: [{ test: () => true, object: lamp(1) }] });
+    // The falloff gives 5 four yards off, the other reading 6: the least counts.
+    expect(darknessAt(scene, { x: 400, y: 0 })?.darkness).toBe(5);
+    expect(darknessAt(drawnScene({ level: 1, sources: [{ test: () => true, object: lamp(2) }] }), { x: 0, y: 0 })).toMatchObject({ darkness: 0, penalty: 0 });
+  });
+
+  it("reads a module's light on an area in place of its darkness cap, and passes the observer", () => {
+    const seen: any[] = [];
+    registerLightLevel({ module: "test-mod", key: "area-lamp", level: (observer, light, spot) => {
+      if (light?.id !== "flare") return null;
+      seen.push({ observer, distance: spot.distance });
+      return spot.distance < 3 ? 2 : 7;
+    } });
+    const scene: any = drawnScene({ level: 1 });
+    scene.flags = { gworld: { modifierAreas: [{ id: "flare", label: "Flare", center: { x: 0, y: 0 }, radius: null, lines: [], light: { radius: 1000, darknessCap: 3, litFor: null } }] } };
+    const watcher = { name: "watcher", system: {} };
+    expect(darknessAt(scene, { x: 100, y: 0 }, { observer: watcher })).toMatchObject({ darkness: 2, lighting: { inLight: true }, lightAreas: ["flare"] });
+    expect(darknessAt(scene, { x: 500, y: 0 })).toMatchObject({ darkness: 7, lighting: { inLight: false }, lightAreas: ["flare"] });
+    expect(seen).toEqual([{ observer: watcher, distance: 1 }, { observer: null, distance: 5 }]);
+  });
+
+  it("still counts a light only some can see only for them, and gets no light into unnatural darkness", () => {
+    registerLitFor({ module: "test-mod", key: "level-uv", test: (observer) => observer?.gear === "goggles" });
+    const scene = drawnScene({ level: 1, sources: [{ test: () => true, object: lamp(1, "test-mod.level-uv") }] });
+    expect(darknessAt(scene, { x: 100, y: 0 }, { observer: { gear: "goggles", system: {} } })?.darkness).toBe(1);
+    expect(darknessAt(scene, { x: 100, y: 0 }, { observer: { system: {} } })?.darkness).toBe(10);
+    const dark = drawnScene({ level: 1, sources: [{ test: () => true, object: lamp(2) }], darknessSources: [() => true] });
+    expect(darknessAt(dark, { x: 0, y: 0 })?.darkness).toBe(10);
+  });
+
+  it("is on the API as areas.registerLightLevel", () => {
+    expect(createApi().areas.registerLightLevel).toBe(registerLightLevel);
   });
 });
