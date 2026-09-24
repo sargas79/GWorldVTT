@@ -10,6 +10,10 @@
   </div>
 
   <div class="gc-mods">
+    {{#if modifiedFrom}}
+      {{!-- Modifying Dice + Adds (Characters p. 269): the adds rolled as dice. --}}
+      <span class="gc-mod">{{localize "GWORLD.Chat.ModifiedDice" formula=modifiedFrom}}</span>
+    {{/if}}
     {{#if halvedFrom}}
       <span class="gc-mod">{{localize "GWORLD.Chat.HalfDamage" full=halvedFrom}}</span>
     {{/if}}

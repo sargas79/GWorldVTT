@@ -123,12 +123,21 @@ export const PROCEDURE_HOOKS = Object.freeze({
   radiationDose: "gworld.radiationDose",
   /**
    * Before an electrical shock is worked out (since 1.119.0; Campaigns pp. 432-433):
-   * `{ actor, kind, formula, continuous, contactSeconds, modifier, injuryStep,
-   * heartAttackMargin, dr, rollOnZeroInjury, immune, lines }`. `modifier`, `injuryStep`,
-   * `heartAttackMargin`, `dr`, `rollOnZeroInjury` and `immune` are mutable; push a
-   * string to `lines` for the card.
+   * `{ actor, kind, source, tags, formula, continuous, contactSeconds, modifier, injuryStep,
+   * heartAttackMargin, heartAttackOnCritical, dr, rollOnZeroInjury, immune, lines }`.
+   * `modifier`, `injuryStep`, `heartAttackMargin`, `heartAttackOnCritical` (since 1.127.0),
+   * `dr`, `rollOnZeroInjury` and `immune` are mutable; push a string to `lines` for the
+   * card. `source` and `tags` (since 1.127.0) are what the caller gave.
    */
   shockModifiers: "gworld.shockModifiers",
+  /**
+   * Once a shock's burning damage is rolled and taken, before the HT roll
+   * (since 1.127.0): `{ actor, kind, source, tags, formula, damageRoll, dr, injury,
+   * injuryModifier, modifier, rollOnZeroInjury, lines }`. `damageRoll` is the roll
+   * before DR. `modifier` and `rollOnZeroInjury` are mutable; push a string to
+   * `lines` for the card. Not called where there is no damage roll.
+   */
+  shockDamage: "gworld.shockDamage",
   /**
    * Once a shock's roll and its effects are applied, before the card is posted
    * (since 1.119.0): the `ShockOutcome` with `actor`. `contact` and `lines` are

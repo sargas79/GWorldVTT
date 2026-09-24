@@ -493,6 +493,10 @@
       "Unsaved": "Unsaved changes",
       "AllOn": "All on",
       "AllOff": "All off",
+      "ShownOn": "Shown on",
+      "ShownOff": "Shown off",
+      "Search": "Find a rule",
+      "NoMatch": "No rules match.",
       "Restore": "Restore defaults",
       "NoneYet": "No rules are registered in this group yet.",
       "NotYet": "not built yet",
@@ -618,6 +622,10 @@
         "bleeding": {
           "Name": "Bleeding",
           "Hint": "A wound keeps costing HP each minute until it is bound. The book marks this optional for the bookkeeping."
+        },
+        "modifyingDiceAdds": {
+          "Name": "Modifying dice + adds",
+          "Hint": "Large damage bonuses are rolled as dice: every +7 becomes +2d and a +4 left over becomes +1d, after every bonus (per die ones included) is added. 1d+9 rolls as 3d+2. Negative adds are never turned into fewer dice."
         },
         "grappling": {
           "Name": "Grappling",
@@ -962,7 +970,10 @@
       "Added": "Added {name}.",
       "NotFound": "That compendium entry could not be loaded.",
       "Count": "{total} entries",
-      "Truncated": "showing {shown} of {total}",
+      "Range": "{from}–{to} of {total}",
+      "Page": "Page {page} of {pages}",
+      "Previous": "Previous",
+      "Next": "Next",
       "Empty": "Nothing matches.",
       "Loading": "loading…",
       "LoadingHint": "Reading the compendia…",
@@ -1999,7 +2010,8 @@
       "SubtractDRDivisor": "Divide the target's DR by {divisor} (rounding down), subtract it from basic damage, then apply the wounding modifier.",
       "Cancel": "Cancel",
       "MassShot": "pellets as one mass: damage and DR ×{times}",
-      "HalfDamage": "Past 1/2D: halved from {full}"
+      "HalfDamage": "Past 1/2D: halved from {full}",
+      "ModifiedDice": "Adds rolled as dice, from {formula}"
     },
     "HitLocation": {
       "torso": "Torso",
@@ -3848,6 +3860,24 @@
       "Weapon": "Weapon",
       "NoWeaponToStrike": "The foe has no weapon in hand to strike at."
     },
+    "ItemDamage": {
+      "Label": "{name} is damaged",
+      "HtRoll": "HT roll at -{multiple}xHP: {roll} against {target}",
+      "Holds": "it holds together.",
+      "Destroyed": "it is destroyed.",
+      "Kind": {
+        "unliving": "Unliving",
+        "homogenous": "Homogenous",
+        "diffuse": "Diffuse"
+      },
+      "State": {
+        "sound": "Sound",
+        "damaged": "Damaged: below a third of its HP, it may work less well",
+        "failing": "At 0 HP or below: a HT roll each second it is used, or it stops working",
+        "breaking": "At -1xHP or below, and still in one piece",
+        "destroyed": "Destroyed"
+      }
+    },
     "Ammunition": {
       "none": "Ordinary",
       "hp": "Hollow-point",
@@ -3963,6 +3993,7 @@
       "FailureTitle": "{name}: {label}",
       "FailureLabel": "Equipment failure",
       "FailureModifier": "Modifier",
+      "Downgraded": "A critical failure, held to an ordinary failure",
       "CareLabel": "How it has been treated: +1 cleaned daily, 0 ordinary, -1 or -2 abused",
       "HireOffer": "Nobody here has a repair skill. Hire a technician at ${rate} an hour?",
       "Hired": "A hired technician",
