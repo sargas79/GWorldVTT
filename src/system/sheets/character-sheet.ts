@@ -56,7 +56,7 @@ import {
 } from "../gunplay.js";
 import { rollInfluence, rollReaction } from "../reactions.js";
 import { monthlyPay } from "../../rules/wealth.js";
-import { parseDiceAdds } from "../../rules/dice.js";
+import { rolledDice } from "../modifying-dice.js";
 import { aimableLocations, locationsOf } from "../../rules/vehicle-combat.js";
 import {
   payCostOfLiving,
@@ -1981,8 +1981,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const first = { actor: this.actor, base: score(this.actor), modifiers: modifier(asked.yours) };
     const second = { actor: foe, base: score(foe), modifiers: modifier(asked.theirs) };
 
-    if (asked.regular) await rollRegularContest({ label, first, second });
-    else await rollQuickContest({ label, first, second });
+    // Nothing follows on from a contest rolled here, so a listener may
+    // refuse a side (since API 1.144.0).
+    if (asked.regular) await rollRegularContest({ label, first, second, returnRefusal: true });
+    else await rollQuickContest({ label, first, second, returnRefusal: true });
   }
 
   /**
@@ -2604,7 +2606,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       .filter((row) => row?.explosive || row?.areaAttack || row?.scatterSquared)
       .map((row) => ({
         label: [row.name, row.mode].filter(Boolean).join(" "),
-        fragmentationDice: parseDiceAdds(String(row.fragmentation ?? ""))?.dice ?? 0,
+        // The dice the fragments roll at this table, as their card counts them.
+        fragmentationDice: rolledDice(String(row.fragmentation ?? "")),
         squared: row.scatterSquared === true,
       }));
     const asked = await promptForScatter(weapons);

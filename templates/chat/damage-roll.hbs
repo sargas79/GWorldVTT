@@ -11,8 +11,9 @@
 
   <div class="gc-mods">
     {{#if modifiedFrom}}
-      {{!-- Modifying Dice + Adds (Characters p. 269): the adds rolled as dice. --}}
-      <span class="gc-mod">{{localize "GWORLD.Chat.ModifiedDice" formula=modifiedFrom}}</span>
+      {{!-- Modifying Dice + Adds (Characters p. 269): the adds rolled as dice.
+           It opens the rules page, read-only for a player, to say why. --}}
+      <a class="gc-mod gc-rules-link" data-gworld-open-rules data-tooltip="{{localize 'GWORLD.Rules.ViewLabel'}}">{{localize "GWORLD.Chat.ModifiedDice" formula=modifiedFrom}}</a>
     {{/if}}
     {{#if halvedFrom}}
       <span class="gc-mod">{{localize "GWORLD.Chat.HalfDamage" full=halvedFrom}}</span>

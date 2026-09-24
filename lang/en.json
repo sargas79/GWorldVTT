@@ -486,7 +486,11 @@
     "Rules": {
       "Title": "GURPS rules in play",
       "MenuLabel": "Which rules are we playing?",
-      "MenuHint": "Turn individual GURPS rules on or off for this world. A rule that is off behaves as though it had never been written — no penalty, no control, nothing to explain.",
+      "MenuHint": "Turn individual GURPS rules on or off for this world. A rule that is off behaves as though it had never been written — no penalty, no control, nothing to explain. Players can open this page to see which rules are in play, but only the GM can change them.",
+      "ReadOnly": "The GM chooses these rules. They change what your sheet and your rolls show: with Modifying Dice + Adds on, for instance, 1d+9 damage reads 3d+2.",
+      "InPlayOnly": "Only the rules in play",
+      "ViewLabel": "See the rules in play",
+      "ViewHint": "Which GURPS rules this world is playing. Some change the figures on your sheet.",
       "Intro": "GURPS is written to be played at several depths. Everything here is optional detail; the spine — success rolls, damage, DR and the active defenses — is always in play.",
       "Save": "Save",
       "Saved": "Rules updated.",

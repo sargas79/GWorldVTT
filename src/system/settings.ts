@@ -50,6 +50,8 @@ export function registerSettings(): void {
       for (const app of ((foundry.applications as any).instances as Map<number, unknown>).values()) {
         const name = (app as any).document?.documentName;
         if ((name === "Actor" || name === "Item") && (app as any).rendered) (app as any).render();
+        // A player looking at the rules sees the GM's change as it is saved.
+        else if (app instanceof RulesSettings && app.readOnly && (app as any).rendered) void app.render();
       }
     },
   });
@@ -103,7 +105,10 @@ export function registerSettings(): void {
     hint: "GWORLD.Rules.MenuHint",
     icon: "fa-solid fa-list-check",
     type: RulesSettings,
-    restricted: true,
+    // Open to players too, who get it read-only: a switch like Modifying Dice
+    // + Adds changes the figures on their sheets, and they should be able to
+    // see why. Only the GM can save it, as with any world setting.
+    restricted: false,
   });
 
   // Which compendia the picker offers. Empty means the system's own packs;

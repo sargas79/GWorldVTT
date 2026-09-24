@@ -29,6 +29,7 @@ import { getCombatState, setCombatState } from "./combat-extensions.js";
 import { rollKnockdown } from "./knockdown.js";
 import { PROCEDURE_HOOKS, afterSuccessRoll, successRollTags } from "./procedure-extensions.js";
 import { addConsciousnessControls, consciousnessEntries } from "./consciousness.js";
+import { rollOnce } from "./card-buttons.js";
 import { rollDeathCheck } from "./dying.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { catchFire, fragileCatchesFire, irradiate, rollBrittleLimb } from "./hazards.js";
@@ -37,6 +38,7 @@ import { EXTRA_EFFORT_FP, FEVERISH_DEFENSE_BONUS } from "../rules/extra-effort.j
 import { spendFatigue } from "./extra-effort.js";
 import { isRuleOn } from "./optional-rules.js";
 import { combatStyle } from "./settings.js";
+import { RulesSettings } from "./apps/rules-settings.js";
 import { arcDefense, attackArc, hexDirection, restrictedArc, retreatBonus, type Arc } from "../rules/tactical.js";
 import { attackDirection, facingOf } from "./hex.js";
 import { tacticalOnScene } from "./settings.js";
@@ -1923,16 +1925,14 @@ async function addKnockdownControls(message: any, html: HTMLElement): Promise<vo
     button.textContent = entry.modifier === 0
       ? game.i18n.localize("GWORLD.Knockdown.Roll")
       : `${game.i18n.localize("GWORLD.Knockdown.Roll")} ${entry.modifier > 0 ? "+" : ""}${entry.modifier}`;
-    button.addEventListener("click", () => {
-      button.disabled = true;
-      void rollKnockdown({
-        actor,
-        modifier: entry.modifier,
-        ...(entry.hitLocation
-          ? { blow: { hitLocation: entry.hitLocation, addonLocation: entry.addonLocation ?? null, majorWound: entry.majorWound === true } }
-          : {}),
-      });
-    });
+    // A roll that was not made gives the button back.
+    button.addEventListener("click", rollOnce(button, () => rollKnockdown({
+      actor,
+      modifier: entry.modifier,
+      ...(entry.hitLocation
+        ? { blow: { hitLocation: entry.hitLocation, addonLocation: entry.addonLocation ?? null, majorWound: entry.majorWound === true } }
+        : {}),
+    })));
 
     row.append(who, button);
     root.append(row);
@@ -1983,12 +1983,9 @@ async function addFragileControls(message: any, html: HTMLElement): Promise<void
           location: game.i18n.localize(`GWORLD.HitLocation.${entry.location ?? "torso"}`),
         })
       : `${game.i18n.localize("GWORLD.Hazard.FragileIgnitionButton")}${modifier === 0 ? "" : ` ${modifier > 0 ? "+" : ""}${modifier}`}`;
-    button.addEventListener("click", () => {
-      button.disabled = true;
-      void (entry.roll === "brittle"
-        ? rollBrittleLimb({ actor, location: String(entry.location ?? "torso") })
-        : fragileCatchesFire({ actor, automatic: false, modifier }));
-    });
+    button.addEventListener("click", rollOnce(button, () => entry.roll === "brittle"
+      ? rollBrittleLimb({ actor, location: String(entry.location ?? "torso") })
+      : fragileCatchesFire({ actor, automatic: false, modifier })));
 
     row.append(who, button);
     root.append(row);
@@ -2027,10 +2024,7 @@ async function addDeathCheckControls(message: any, html: HTMLElement): Promise<v
     button.type = "button";
     button.className = "gc-apply-button";
     button.textContent = game.i18n.localize("GWORLD.Dying.Roll");
-    button.addEventListener("click", () => {
-      button.disabled = true;
-      void rollDeathCheck({ actor });
-    });
+    button.addEventListener("click", rollOnce(button, () => rollDeathCheck({ actor })));
 
     row.append(who, button);
     root.append(row);
@@ -2329,5 +2323,20 @@ export function registerChatHooks(): void {
     void addAfflictionControls(message, html);
     void addBuySuccessControls(message, html);
     void addGuidanceControls(message, html);
+    addRulesLinks(html);
   });
+}
+
+/**
+ * A card line a rule wrote -- "Adds rolled as dice" -- opens the rules page,
+ * which a player reads and only the GM can change: the answer to why the dice
+ * are not the ones on the sheet's stored damage.
+ */
+function addRulesLinks(html: HTMLElement): void {
+  for (const link of html.querySelectorAll<HTMLElement>("[data-gworld-open-rules]")) {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      void RulesSettings.open();
+    });
+  }
 }

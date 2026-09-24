@@ -21,7 +21,7 @@ import {
   wakingFrom,
 } from "../rules/recovery.js";
 import { resolveSuccess, type SuccessRollResult } from "../rules/success.js";
-import { afterSuccessRoll, firstAidRules, physicianRoundsRules, successRollLines, successRollModifiers } from "./procedure-extensions.js";
+import { afterSuccessRoll, firstAidRules, physicianRoundsRules, procedureRoll } from "./procedure-extensions.js";
 import { stopBleeding } from "./bleeding.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
@@ -258,14 +258,17 @@ export async function applyFirstAid(options: {
   const max = Number(hp.max) || 0;
 
   // What the patient's conditions and the modules add to the roll (API 1.36.0).
-  const added = successRollModifiers({
+  // A bonus held for the healer's roll counts too (API 1.144.0).
+  const hooked = procedureRoll({
     actor: healer, label: game.i18n.localize("GWORLD.Recovery.FirstAid"), kind: "skill", skill: "First Aid",
     base: skill, tags: ["firstAid"], modifiers: [], opponent: patient,
-  }).reduce((sum, line) => sum + line.value, 0);
+  });
+  const added = hooked.added.reduce((sum, line) => sum + line.value, 0);
   const target = skill + modifier + added;
 
   const check = new Roll("3d6");
   await check.evaluate();
+  await hooked.spend();
   const outcome = resolveSuccess(check.total, target, dieResults(check));
 
   // The table's dice are only rolled when there is something to roll them for:
@@ -473,13 +476,16 @@ export async function attendPatient(options: {
 
   // What the modules add: care, gear, a medical bed (API 1.60.0, tagged "physician"),
   // with the TL line as they left it.
-  const added = successRollLines({
+  // And a bonus held for the physician's roll (API 1.144.0).
+  const hooked = procedureRoll({
     actor: healer, label: R("Attend"), kind: "skill", skill: "Physician",
     base: skill, tags: ["physician", ...given.map((line) => line.key)], modifiers: [...given], opponent: patient,
-  }).reduce((sum, line) => sum + line.value, 0);
+  });
+  const added = hooked.lines.reduce((sum, line) => sum + line.value, 0);
   const target = skill + modifier + added;
   const roll = new Roll("3d6");
   await roll.evaluate();
+  await hooked.spend();
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
   const result = cureResult(outcome);
   const moved = cureHitPoints(result);
@@ -543,10 +549,12 @@ export async function operate(options: {
   const skill = typeof options.skill === "number" ? options.skill : (skillLevelOf(surgeon, "Surgery") ?? attributeOf(surgeon, "IQ") - 5);
   const techLevel = typeof options.techLevel === "number" ? options.techLevel : (Number(surgeon?.system?.tl) || 3);
   // What the modules add (API 1.60.0, tagged "surgery").
-  const added = successRollModifiers({
+  // And a bonus held for the surgeon's roll (API 1.144.0).
+  const hooked = procedureRoll({
     actor: surgeon, label: R("Surgery"), kind: "skill", skill: "Surgery",
     base: skill, tags: ["surgery"], modifiers: [], opponent: patient,
-  }).reduce((sum, line) => sum + line.value, 0);
+  });
+  const added = hooked.added.reduce((sum, line) => sum + line.value, 0);
   const situation = surgeryModifier({
     techLevel,
     equipmentQuality: options.equipmentQuality,
@@ -556,6 +564,7 @@ export async function operate(options: {
 
   const roll = new Roll("3d6");
   await roll.evaluate();
+  await hooked.spend();
   const target = skill + situation + options.modifier + added;
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
 
@@ -653,13 +662,16 @@ export async function resuscitate(options: {
 
   // What the modules add: a defibrillator, a resuscitator (API 1.76.0,
   // tagged "resuscitation" and the cause).
-  const added = successRollModifiers({
+  // And a bonus held for the healer's roll (API 1.144.0).
+  const hooked = procedureRoll({
     actor: healer, label: R("Resuscitate"), kind: "skill", skill: usingPhysician ? "Physician" : "First Aid",
     base: skill, tags: ["resuscitation", options.cause], modifiers: [], opponent: patient,
-  }).reduce((sum, line) => sum + line.value, 0);
+  });
+  const added = hooked.added.reduce((sum, line) => sum + line.value, 0);
 
   const roll = new Roll("3d6");
   await roll.evaluate();
+  await hooked.spend();
   const target = skill + situation + options.modifier + added;
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
 

@@ -104,7 +104,7 @@ Contents:
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. `normalizeDamage(formula)` (since 1.125.0) gives a damage formula as the table rolls it; see [Modifying dice + adds](#modifying-dice--adds). |
 | `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0), and `bind(actor, options)`, `unbind(actor)`, `binding(actor)` and `breakFree(actor)` (since 1.107.0; see *Binding*), and `spendFatigue(actor, fp, options)` (since 1.109.0; see *Medical hooks*), and `changeTrait(actor, options)` (since 1.112.0; `operate` also resolves to its outcome since then; it adds and removes traits since 1.124.0), and `tow(actor, options)` and `stopTowing(actor)` (since 1.113.0; see *Towing and the wheelchair*), and `cripple(actor, location, options)`, `crippled(actor)` and `healCrippled(actor, which)` (since 1.114.0; see *Crippled parts*), and `vehicleAboard(actor)` (since 1.141.0; see *The vehicle a character is aboard*). and `addPendingModifier(actor, request)`, `pendingModifiers(actor)` and `removePendingModifier(actor, id)` (since 1.132.0; see *A bonus held for a later roll*). and `settleCrippling(actor, which, options)` (since 1.129.0; see *Crippled parts*). |
-| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). `equipmentFailure({ actor?, item, modifier?, label?, apply? })` (since 1.118.0) rolls an equipment failure roll for a thing (see *Equipment failure rolls*). `setUnready(item, unready, { reason?, attacker? })` and `knockAway(item, { reason?, attacker? })` (since 1.136.0) leave a weapon unready or knock it out of its holder's hands, through the GM's client, on behalf of an `attacker` the user owns, where the user doesn't own it (see *Disarms*). `applyDamage({ item, damage, type, armorDivisor?, label? })` (since 1.126.0) puts a blow on a thing that keeps hit points (see *Damage to things*). `changeQuantity(item, delta, { reason? })` (since 1.123.0) adds `delta` to a stack of an item, or takes it off with a negative one, for a module that makes, finds or uses up consumables: rounds put in a box, supplies spent. A fraction is dropped toward none. The quantity never goes below 0, and an emptied stack stays on the actor. Weight and cost are kept per unit, so the carried weight and the stack's worth follow with nothing else to change. It resolves to `{ from, to, reason }` -- the quantity before and after, `reason` as given, for the module's own card -- or null for an item that keeps no quantity, a user who doesn't own it, or a delta that isn't a number. |
+| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). `equipmentFailure({ actor?, item, modifier?, label?, apply? })` (since 1.118.0) rolls an equipment failure roll for a thing (see *Equipment failure rolls*). `setUnready(item, unready, { reason?, attacker?, contest? })` and `knockAway(item, { reason?, attacker?, contest? })` (since 1.136.0) leave a weapon unready or knock it out of its holder's hands, through the GM's client where the user doesn't own it: for a GM, or since 1.143.0 on behalf of an `attacker` the user owns with the `contest` card of the disarm they won (see *Disarms*). `applyDamage({ item, damage, type, armorDivisor?, label? })` (since 1.126.0) puts a blow on a thing that keeps hit points (see *Damage to things*). `changeQuantity(item, delta, { reason? })` (since 1.123.0) adds `delta` to a stack of an item, or takes it off with a negative one, for a module that makes, finds or uses up consumables: rounds put in a box, supplies spent. A fraction is dropped toward none. The quantity never goes below 0, and an emptied stack stays on the actor. Weight and cost are kept per unit, so the carried weight and the stack's worth follow with nothing else to change. It resolves to `{ from, to, reason }` -- the quantity before and after, `reason` as given, for the module's own card -- or null for an item that keeps no quantity, a user who doesn't own it, or a delta that isn't a number. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0). |
@@ -1479,7 +1479,10 @@ Two fields a module may read (since 1.62.0):
   `roll.quickContest` may name its `item`, which that side's context carries
   as a success roll's does, and the contest resolvers and
   `gworld.afterQuickContest` see it on the side too; a disarm names both
-  weapons (see *Disarms*).
+  weapons (see *Disarms*). Since 1.144.0 each side of `roll.regularContest`
+  passes through too, tagged `contest` and `regularContest` and any `tags`
+  its caller passes, with `opponent`; its lines go into the side's score
+  before the book's balancing.
   passes reach the contest resolvers too).
 - **A listener refuses a success roll** (since 1.131.0): a rule that says a
   roll can't be made at all -- a task impossible without the right gear, or
@@ -1497,10 +1500,36 @@ Two fields a module may read (since 1.62.0):
   Text that is blank, or anything other than a string, refuses nothing. An
   active defense can't be refused this way (its context has no `refusal`):
   `gworld.defenseChoices` refuses one and `gworld.defenseModifiers` can
-  settle one. Nor can the rolls the system makes outside `roll.success` --
-  a Fright Check, knockdown, bleeding, a contest's sides, and the rolls
-  against exposure, contagion, infection, poison and illness, resuscitation
-  and vehicle control -- whose contexts have no `refusal` either.
+  settle one.
+  - *The rolls the system's procedures make with their own dice* (since
+    1.144.0). Three of them can be refused as `roll.success` is, their
+    contexts carrying `refusal`, null:
+    - a Fright Check (tagged `fright`): no check is made, as for the
+      Unfazeable, so it has no effect -- an affliction resisted with one
+      included. The user is warned and a refusal card is posted;
+      `roll.frightCheck` resolves to null.
+    - a vehicle control roll (tagged `vehicleControl`): no dice, a warning
+      and a refusal card, and nothing happens to the vehicle.
+    - the sides of `roll.quickContest` and `roll.regularContest` called with
+      `returnRefusal: true`, as the sheet's Quick Contest button calls them.
+      Both sides are heard before either rolls; a refused side stops the
+      contest before any dice, with a warning and a refusal card in the
+      contest's message mode, and the call resolves to `{ refused: true,
+      reason, side }`, `side` `first` or `second`. Without it, and on the
+      contests the system rolls for its own procedures (a disarm, a grapple,
+      an evade, a feint, an influence roll), no side can be refused and the
+      contexts have no `refusal`.
+
+    The rest are rolls the rules force on the actor, which have nothing to
+    be refused from: knockdown, stun recovery, bleeding, a mortal wound's
+    roll, and the rolls against exposure, contagion, infection, poison and
+    illness, and drowning. Their contexts have no `refusal`, and one a
+    listener sets there counts for nothing; a module changes such a roll
+    with its `modifiers`, or its outcome through the procedure's own hook
+    (`gworld.afterKnockdown`, `gworld.poisonCycle`...). First Aid, a
+    physician's rounds, surgery and resuscitation aren't refused here
+    either: `gworld.firstAid` and `gworld.physicianRounds` refuse the first
+    two.
 - **The item behind a roll, secret rolls, influence contests** (since
   1.95.0):
   - *`item`.* The `gworld.successRollModifiers` and `gworld.afterSuccessRoll`
@@ -2729,6 +2758,13 @@ Two fields a module may read (since 1.62.0):
   `"second"` or `"tie"`. The Evade contest is tagged `evade`, with the mover
   first and the foe second. Since 1.136.0 each side also has `item`, the item
   its caller named, or null.
+  - *The card's record* (since 1.143.0): `roll.quickContest` resolves to
+    `{ outcome, marginOfVictory, messageId }`, `messageId` the id of the card
+    it posted (empty where none was made), and the card carries
+    `flags.gworld.quickContest`: `{ tags, outcome, marginOfVictory, first,
+    second }`, each side `{ actorUuid, itemUuid, effective }` (`itemUuid`
+    empty where the side named no item). A won disarm's card is what lets a
+    player have the foe's weapon changed (see *Disarms*).
 - **Disarms** (since 1.136.0; Campaigns pp. 400-401). The Quick Contest that
   follows a strike at a weapon names the weapons on both sides: the attacker's
   side carries the weapon struck with as `item` (none for an unarmed strike),
@@ -2747,25 +2783,43 @@ Two fields a module may read (since 1.62.0):
   `gworld.afterDisarm` fires with `{ actor, foe, item, result }`: `item` the
   weapon struck at, or null where none was named, and `result` `{ disarmed,
   unready, attackerDisarmed }`. `items.setUnready(item, unready, { reason?,
-  attacker? })` and `items.knockAway(item, { reason?, attacker? })` make the
-  same changes for a module's own disarm or snatch, with no roll and no card,
-  through the GM in the same way. They return `{ itemId, unready, reason }`
+  attacker?, contest? })` and `items.knockAway(item, { reason?, attacker?,
+  contest? })` make the same changes for a module's own disarm or snatch,
+  with no roll and no card, through the GM in the same way. They return `{ itemId, unready, reason }`
   and `{ itemId, reason }`, `reason` as given, for the module's own card, or
   null: for anything but equipment on an actor (`setUnready`), anything but
   equipment or a shield on an actor (`knockAway`), a caller with no say over
   the change (below), or no GM connected.
   - *Who may have it changed.* A user who owns the item makes the change on
     their own client. Anyone else needs the GM's, and the GM's client makes
-    it only for a GM, a user who owns the actor holding the item, or a user
-    who owns the `attacker` named -- the actor doing the disarming or
-    snatching, which is how a player's disarm of a foe they don't own gets
-    through. The GM's client learns who is asking from the `user` Foundry
-    hands a `CONFIG.queries` handler, which the server takes from the
-    sender's own connection; a user id in the request isn't read. The
-    request carries the attacker's UUID, and a caller who owns neither the
-    holder nor the attacker gets null without the GM being asked. A module
-    calling these for a player therefore passes the player's character as
-    `attacker`.
+    it for a GM or a user who owns the actor holding the item. Anyone else
+    (since 1.143.0) needs a disarm they won: the request names the `attacker`,
+    an actor the user owns, and passes as `contest` the chat message (or its
+    id) of the Quick Contest behind it, and the GM's client checks that card
+    in its chat log. It must be a `roll.quickContest` card tagged `disarm`
+    (see *The card's record* under *Quick Contest results*), posted by that
+    same user in the last two minutes, whose first side is the attacker and
+    whose second side's item is the weapon, and whose result is the change
+    asked for: the attacker winning for `knockAway`, the foe winning by less
+    than 3 or tying for `setUnready(item, true)`. Readying a weapon is never
+    a disarm's to do. Each card gets one change through; the same card sent
+    again is refused. So owning a character is no longer enough on its own,
+    and a card can't be reused or borrowed from somebody else's disarm. The
+    system's own disarm passes its contest's
+    card; a module's own disarm rolls its contest through `roll.quickContest`
+    with the tag `disarm`, the attacker first and the foe's weapon as the
+    second side's `item`, and passes the `messageId` it gets back. A GM
+    caller, and the owner of the weapon's holder, need neither. The GM's
+    client learns who is asking from the `user` Foundry hands a
+    `CONFIG.queries` handler, which the server takes from the sender's own
+    connection; a user id in the request isn't read. A caller who could not
+    get through (no say of their own, and no attacker they own with a
+    contest) gets null without the GM being asked. What this doesn't stop:
+    every roll in Foundry is made on the roller's own client, so the GM's
+    client can't tell a contest rolled at invented scores (a
+    `roll.quickContest` call with any `base`) from a real one. Such a card
+    still passes; it stays in the chat log, scores and all, for the GM to
+    see.
 - **`roll.registerContestResolver({ module, key, label, applies, resolve })`.**
   For the Quick Contests the system offers, the first resolver whose
   `applies(context)` takes the contest returns the `{ base, note }` either side
@@ -2916,8 +2970,19 @@ Two fields a module may read (since 1.62.0):
     name a skill or at least one tag.
   - `expires` is a world time in seconds: the bonus lapses unused then.
     Left out, it waits until a roll takes it or it is removed.
-  - Only a roll made through `roll.success` takes it, as the sheet's rolls
-    are. Its line, keyed `pendingModifier`, is among the caller's
+  - A roll made through `roll.success` takes it, as the sheet's rolls are,
+    and since 1.144.0 so do the rolls the system's procedures make with
+    their own dice, by the same tags their `gworld.successRollModifiers`
+    contexts carry beside the kind: a Fright Check (`attribute`, `fright`,
+    `will`), knockdown, stun recovery, bleeding, a mortal wound's roll, the
+    rolls against exposure, contagion, infection, poison and illness,
+    vehicle control, First Aid, a physician's rounds, surgery,
+    resuscitation, each side of a Quick or Regular Contest (`contest`, an
+    influence roll's among them; a Regular Contest's once for the whole
+    contest), and the first of a span's drowning rolls. A refused roll uses
+    nothing up. A procedure's roll takes an actor's held bonuses only for a
+    user who owns that actor, who alone can use them up: the foe's side of
+    a contest a player rolls against an NPC they don't own takes none. Its line, keyed `pendingModifier`, is among the caller's
     `modifiers` when `gworld.successRollModifiers` is called, so a listener
     may change it or take it off; one taken off isn't used up. A roll
     refused for an effective skill below 3 uses nothing up. Every bonus that
@@ -3162,6 +3227,15 @@ and a formula with no dice are left alone, and a multiplier is kept.
   formula. The sheet shows the converted figure, and `roll.damage` converts
   once its modifiers are summed. The card then shows the converted formula and
   "from" the one it replaced.
+- **A blast counts the dice rolled.** An explosion reaches 2 yards per die of
+  damage and its fragments 5 per die (Campaigns p. 414), and with the rule on
+  those are the dice after the conversion: 2d+5 rolled as 3d+1 reaches 6
+  yards, not 4. The card's radius, the `diceOfDamage` on the damage flag (so
+  the collateral damage where the blast lands) and the fragments' radius on
+  the scatter card all count them the same way.
+- **Players can read the rules page.** The Rules menu opens for everyone; for
+  a player it is read-only, opening on the rules in play. The card's "Adds
+  rolled as dice" line opens it too.
 
 ## Taking over data the system is dropping
 
