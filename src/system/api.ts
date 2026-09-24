@@ -97,12 +97,13 @@ import { manaLevel } from "./casting.js";
 import { PARTY_CHANGED_HOOK, addMembers, membersOf, partyOf, removeMember } from "./party.js";
 import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from "./campaign.js";
 import { objectStats, type ItemObjectStats } from "./object-stats.js";
+import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.120.0";
+export const API_VERSION = "1.123.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -610,6 +611,17 @@ const items = {
    */
   wearDr(item: any, amount: number, options: { location?: string; reason?: string } = {}): Promise<DrWorn | null> {
     return wearDr(item, amount, options);
+  },
+
+  /**
+   * Adds `delta` to a stack of an item, or takes it off with a negative one
+   * (since 1.123.0), for a module that makes, finds or uses up consumables.
+   * Never below 0; weight and cost are per unit, so the totals follow.
+   * Resolves to `{ from, to, reason }`, or null for an item with no
+   * quantity, a user who doesn't own it, or a delta that isn't a number.
+   */
+  changeQuantity(item: any, delta: number, options: { reason?: string } = {}): Promise<QuantityChanged | null> {
+    return changeQuantity(item, delta, options);
   },
 
   /**
