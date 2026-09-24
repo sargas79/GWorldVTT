@@ -468,7 +468,7 @@ describe("trait effects a module adds (since 1.47.0)", () => {
     ]);
   });
 
-  it("lets a listener impose Hard of Hearing, Deafness or Blindness, and say what did (since 1.116.0)", async () => {
+  it("lets a listener impose Hard of Hearing, Deafness or Blindness, and say what did (since 1.120.0)", async () => {
     const { moduleTraitEffects } = await load();
     const { noTraitEffects } = await import("../../rules/trait-effects.js");
     const { senseScores } = await import("../../rules/senses.js");

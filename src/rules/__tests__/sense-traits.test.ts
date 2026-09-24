@@ -115,7 +115,7 @@ describe("what Restricted Vision does to the arcs (Characters p. 151)", () => {
 });
 
 /** Hard of Hearing, Deafness and Blindness imposed rather than owned (Characters pp. 124, 129, 138). */
-describe("the sense disadvantages gear or a condition imposes (since API 1.116.0)", () => {
+describe("the sense disadvantages gear or a condition imposes (since API 1.120.0)", () => {
   it("has the Blindness disadvantage used to it, and nobody else", () => {
     expect(traitEffects([{ name: "Blindness" }])).toMatchObject({ blindness: true, accustomedToBlindness: true });
     expect(noTraitEffects()).toMatchObject({ hardOfHearing: false, deafness: false, blindness: false, accustomedToBlindness: false });

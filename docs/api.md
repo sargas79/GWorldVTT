@@ -1047,7 +1047,7 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     Perception, Colorblindness, Nictitating Membrane, Parabolic Hearing,
     Ham-Fisted and No Sense of Smell/Taste. `derived.senses` rows may carry
     `colorblind: true` (vision) and `rangeMultiplier` (hearing).
-    Since 1.116.0 the three sense disadvantages are documented fields too, so
+    Since 1.120.0 the three sense disadvantages are documented fields too, so
     worn gear or a module's condition can impose them for as long as it lasts
     (earmuffs, a flash, a hood), read wherever the owned traits are:
     - `hardOfHearing` (p. 138): -4 on the Hearing row of `derived.senses`.

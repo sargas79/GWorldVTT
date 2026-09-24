@@ -142,7 +142,7 @@ export interface TraitEffects {
   oneEye: boolean;
   /**
    * Hard of Hearing (p. 138): -4 on Hearing rolls. Gear over the ears or a
-   * condition may impose it through `gworld.traitEffects` (since 1.116.0).
+   * condition may impose it through `gworld.traitEffects` (since 1.120.0).
    */
   hardOfHearing: boolean;
   /** Deafness (p. 129): no Hearing roll at all. Imposed the same way. */
@@ -155,7 +155,7 @@ export interface TraitEffects {
   blindness: boolean;
   /**
    * Used to being blind (p. 124), so fighting at -6 rather than -10 (since
-   * 1.116.0). The Blindness disadvantage sets it; blindness gear or a
+   * 1.120.0). The Blindness disadvantage sets it; blindness gear or a
    * condition imposes does not, until a listener says the character has
    * got used to it.
    */
