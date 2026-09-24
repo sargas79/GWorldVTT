@@ -5,8 +5,8 @@
     <span class="gp-count">
       {{#if loading}}
         {{localize "GWORLD.Picker.Loading"}}
-      {{else if truncated}}
-        {{localize "GWORLD.Picker.Truncated" shown=entries.length total=total}}
+      {{else if paging}}
+        {{paging.label}}
       {{else}}
         {{localize "GWORLD.Picker.Count" total=total}}
       {{/if}}
@@ -80,6 +80,13 @@
       {{/each}}
     {{/if}}
   </ul>
+  {{#if paging}}
+    <div class="gp-pages">
+      <button type="button" class="ibtn" data-action="page" data-page="-1" {{#if paging.first}}disabled{{/if}}>&lsaquo; {{localize "GWORLD.Picker.Previous"}}</button>
+      <span class="gp-page">{{paging.page}}</span>
+      <button type="button" class="ibtn" data-action="page" data-page="1" {{#if paging.last}}disabled{{/if}}>{{localize "GWORLD.Picker.Next"}} &rsaquo;</button>
+    </div>
+  {{/if}}
   {{#if custom}}
     <div class="gp-custom">
       <button type="button" class="gp-add" data-action="addCustom">{{> "gworld.plus"}} {{custom.label}}</button>
