@@ -3478,6 +3478,7 @@
       "How": "How",
       "PointsEarned": "{points} character point(s) into the skill",
       "NoPointYet": "Not a whole point yet",
+      "StudyCounted": "Counted as {hours} hours",
       "Banked": "{hours} hours banked toward the next",
       "BankedShort": "{hours} h banked",
       "NoSkills": "Nothing to study: add a skill first",
