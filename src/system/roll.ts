@@ -1170,6 +1170,12 @@ export interface DamageRollOptions {
   /** Where the attack that earned this damage was aimed. */
   calledShot?: CalledShot | null;
   /**
+   * The attack options chosen for the attack that earned this damage, by
+   * `<module>.<key>` (since API 1.108.0): carried to `gworld.injury` and
+   * `gworld.armorDr` when the blow is applied.
+   */
+  attackOptions?: Record<string, unknown>;
+  /**
    * Pellets striking as one mass (Campaigns p. 409): the rolled damage and
    * the target's DR are both multiplied by this.
    */
@@ -1390,6 +1396,12 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(options.surge ? { surge: true } : {}),
           ...(options.tightBeam && damageType === "burn" ? { tightBeam: true } : {}),
           ...(options.pick ? { pick: true } : {}),
+          // The attack options the blow was struck with, for the modules that
+          // read them when it lands (since API 1.108.0).
+          // Kept as pairs, since a key's dot would nest it in the flag.
+          ...(options.attackOptions && Object.keys(options.attackOptions).length > 0
+            ? { attackOptions: attackOptionEntries(options.attackOptions) }
+            : {}),
           ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
           ...(mode ? { mode } : {}),
           ...(options.source ? { source: String(options.source) } : {}),
@@ -1754,6 +1766,8 @@ async function rollAction(
   });
   const addon = stance && chosenAddon ? mergeAttackEffects([asEffect(chosenAddon), asEffect(stance)]) : (chosenAddon ?? stance);
   if (rollType === "attack") await recordAddonDamage(actor, addon?.damageModifiers ?? []);
+  // And the options themselves, which the blow carries to where it lands (since API 1.108.0).
+  if (rollType === "attack") await recordAttackOptions(actor, { ...(melee?.options ?? shot?.options ?? {}) });
 
   // A setting that spends more than one shot needs the shots to spend
   // (since 1.50.0). Refused rather than fired, because a weapon cannot use
@@ -2188,6 +2202,40 @@ async function rollAction(
   return outcome;
 }
 
+/** Where the attack options chosen wait for the damage roll (since API 1.108.0). */
+const ATTACK_OPTIONS_FLAG = "attackOptions";
+
+/**
+ * The options as `[key, value]` pairs, the way a flag keeps them: a key is
+ * `<module>.<key>`, and Foundry would read its dot as a path and nest it.
+ */
+export function attackOptionEntries(values: Record<string, unknown> | null | undefined): Array<[string, unknown]> {
+  return Object.entries(values ?? {});
+}
+
+/** The options back from their pairs, passing over anything that isn't one. */
+export function attackOptionsFromEntries(entries: unknown): Record<string, unknown> {
+  const values: Record<string, unknown> = {};
+  if (!Array.isArray(entries)) return values;
+  for (const entry of entries) {
+    if (Array.isArray(entry) && typeof entry[0] === "string" && entry[0]) values[entry[0]] = entry[1];
+  }
+  return values;
+}
+
+async function recordAttackOptions(actor: any, values: Record<string, unknown>): Promise<void> {
+  if (!actor?.isOwner) return;
+  const entries = attackOptionEntries(values);
+  if (entries.length > 0) await actor.setFlag(SYSTEM_ID, ATTACK_OPTIONS_FLAG, entries);
+  else if (actor.getFlag?.(SYSTEM_ID, ATTACK_OPTIONS_FLAG)) await actor.unsetFlag(SYSTEM_ID, ATTACK_OPTIONS_FLAG);
+}
+
+async function consumeAttackOptions(actor: any): Promise<Record<string, unknown>> {
+  const entries = actor?.getFlag?.(SYSTEM_ID, ATTACK_OPTIONS_FLAG);
+  if (entries && actor.isOwner) await actor.unsetFlag(SYSTEM_ID, ATTACK_OPTIONS_FLAG);
+  return attackOptionsFromEntries(entries);
+}
+
 /** Where the damage lines a module's attack option added wait for the damage roll. */
 const ADDON_DAMAGE_FLAG = "addonDamage";
 
@@ -2253,6 +2301,7 @@ const SHOT_RANGE_FLAG = "shotRange";
  */
 export async function recordSuppressionShot(actor: any, rowKey: string, rangeYards: number, halfDamageRange: number): Promise<void> {
   await recordAddonDamage(actor, []);
+  await recordAttackOptions(actor, {});
   await recordMassShot(actor, null);
   await recordFirstHit(actor, null);
   await recordShotRange(actor, rangeYards, rowKey);
@@ -4079,6 +4128,8 @@ export async function handleDamageAction(
 
   // Damage a module's option chosen at the attack added.
   modifiers.push(...(await consumeAddonDamage(actor)));
+  // And the options themselves, for the rules that read them where it lands.
+  const attackOptions = await consumeAttackOptions(actor);
 
   // A stop thrust: "+1 to thrust damage for every two full yards your
   // attacker moved toward you" (p. 366).
@@ -4123,6 +4174,7 @@ export async function handleDamageAction(
     armorDivisor: Number(armorDivisor) || 1,
     ...(line.firstHit ? { firstHit: true } : {}),
     ...(aimed ? { calledShot: aimed } : {}),
+    ...(Object.keys(attackOptions).length > 0 ? { attackOptions } : {}),
     ...(mass > 1 ? { massMultiplier: mass } : {}),
     ...(halved ? { halfDamage: true } : {}),
     // The shot's range where the attack recorded one; the map's otherwise.

@@ -104,6 +104,15 @@ export interface IncomingDamage {
   /** What the weapon is made of, for a Vulnerability to silver (Characters p. 161). */
   material?: string;
   /**
+   * How the attack was aimed (since API 1.108.0): the location called, a
+   * module's location called there, and whether it went for a chink
+   * (Campaigns p. 400). Null or left out for a blow nobody aimed. Where the
+   * blow landed is `hitLocation`, which may differ.
+   */
+  calledShot?: { hitLocation: HitLocation; addonLocation: string | null; chink: boolean } | null;
+  /** The attack options chosen for the attack, by `<module>.<key>` (since API 1.108.0). */
+  attackOptions?: Record<string, unknown>;
+  /**
    * Vulnerabilities this blow meets besides the victim's own traits (since
    * API 1.106.0; Characters p. 161), for a `gworld.injury` listener to add:
    * worn gear that makes its wearer vulnerable to a kind of damage, as
@@ -506,6 +515,13 @@ function armourAt(
     arc: damage.arc ?? null,
     // A blow from underneath (since 1.63.0).
     fromBelow: damage.fromBelow === true,
+    // How the blow was aimed (since 1.108.0): the called shot, a chink
+    // included, the module's location it landed on, and the attack options
+    // chosen, so a rule about striking around armour needs no flag of its own.
+    calledShot: damage.calledShot ? { ...damage.calledShot } : null,
+    chink: damage.chink === true,
+    addonLocation: damage.addonLocation ?? null,
+    options: { ...(damage.attackOptions ?? {}) },
     lines,
   });
 
