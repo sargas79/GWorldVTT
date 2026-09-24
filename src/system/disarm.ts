@@ -160,7 +160,7 @@ export async function rollDisarm(options: {
     marginOfVictory: contest.marginOfVictory,
   });
 
-  await applyDisarm({ actor, foe, item: theirWeapon, result });
+  await applyDisarm({ actor, foe, item: theirWeapon, result, contest: contest.messageId });
 }
 
 /**
@@ -173,16 +173,20 @@ export async function applyDisarm(options: {
   foe: any;
   item: any;
   result: { disarmed: boolean; unready: boolean; attackerDisarmed: boolean };
+  /** The contest's chat message id, which the GM's client checks the result against. */
+  contest?: string;
 }): Promise<void> {
   const { actor, foe, item, result } = options;
+  const contest = options.contest ?? "";
   const foeName = String(foe?.name ?? "");
   const weapon = String(item?.name ?? "");
 
   let applied = true;
-  // On the attacker's behalf, which is what lets a player who doesn't own
-  // the foe have the GM's client make the change.
-  if (item && result.disarmed) applied = (await knockWeaponAway(item, { reason: "disarm", attacker: actor })) !== null;
-  else if (item && result.unready) applied = (await setWeaponUnready(item, true, { reason: "disarm", attacker: actor })) !== null;
+  // On the attacker's behalf, with the contest's card to show for it, which
+  // is what lets a player who doesn't own the foe have the GM's client make
+  // the change.
+  if (item && result.disarmed) applied = (await knockWeaponAway(item, { reason: "disarm", attacker: actor, contest })) !== null;
+  else if (item && result.unready) applied = (await setWeaponUnready(item, true, { reason: "disarm", attacker: actor, contest })) !== null;
 
   const key = result.disarmed ? "Disarmed" : result.unready ? "Unready" : "HeldFast";
   ui.notifications?.info(

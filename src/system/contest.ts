@@ -181,7 +181,9 @@ async function postContest(options: {
   sides: RolledSide[];
   result: string;
   resultClass: string;
-} & ContestVisibility): Promise<void> {
+  /** The system's flags for the card, where it records what was rolled. */
+  flags?: Record<string, unknown>;
+} & ContestVisibility): Promise<string> {
   const content = await foundry.applications.handlebars.renderTemplate(CONTEST_TEMPLATE, {
     label: options.label,
     kind: options.kind,
@@ -199,11 +201,27 @@ async function postContest(options: {
   });
 
   const messageMode = successRollMessageMode(options);
-  await ChatMessage.implementation.create({
+  const message = await ChatMessage.implementation.create({
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
     rolls: options.sides.map((side) => side.roll),
+    ...(options.flags ? { flags: { [SYSTEM_ID]: options.flags } } : {}),
   }, messageMode ? { messageMode } : {});
+  return String((message as any)?.id ?? "");
+}
+
+/**
+ * What a Quick Contest's card records of it (since API 1.143.0), under
+ * `flags.gworld.quickContest`: what it was for, who won and by how much, and
+ * each side's actor, item and effective score. The GM's client reads it to
+ * tell a won disarm from a claimed one (see `held-weapons.ts`).
+ */
+export interface QuickContestRecord {
+  tags: string[];
+  outcome: "first" | "second" | "tie";
+  marginOfVictory: number;
+  first: { actorUuid: string; itemUuid: string; effective: number };
+  second: { actorUuid: string; itemUuid: string; effective: number };
 }
 
 /**
@@ -334,9 +352,9 @@ export async function rollRegularContest(options: RegularContestOptions): Promis
   return { outcome: contest.outcome, exchanges: contest.rounds.length };
 }
 
-export async function rollQuickContest(options: QuickContestOptions & { returnRefusal: true }): Promise<ReturnType<typeof quickContest> | ContestRefusal>;
-export async function rollQuickContest(options: QuickContestOptions): Promise<ReturnType<typeof quickContest>>;
-export async function rollQuickContest(options: QuickContestOptions): Promise<ReturnType<typeof quickContest> | ContestRefusal> {
+export async function rollQuickContest(options: QuickContestOptions & { returnRefusal: true }): Promise<(ReturnType<typeof quickContest> & { messageId: string }) | ContestRefusal>;
+export async function rollQuickContest(options: QuickContestOptions): Promise<ReturnType<typeof quickContest> & { messageId: string }>;
+export async function rollQuickContest(options: QuickContestOptions): Promise<(ReturnType<typeof quickContest> & { messageId: string }) | ContestRefusal> {
   const tags = ["quickContest", ...(options.tags ?? [])];
   // A module's resolver may propose what each side rolls against.
   const scores = resolveContestScores({ label: options.label, first: options.first, second: options.second, tags });
@@ -360,9 +378,23 @@ export async function rollQuickContest(options: QuickContestOptions): Promise<Re
         ? String(options.second.actor?.name ?? "")
         : "";
 
-  await postContest({
+  const recordSide = (side: RolledSide) => ({
+    actorUuid: String(side.side.actor?.uuid ?? ""),
+    itemUuid: String(side.side.item?.uuid ?? ""),
+    effective: side.effective,
+  });
+  const record: QuickContestRecord = {
+    tags,
+    outcome: result.outcome,
+    marginOfVictory: result.marginOfVictory,
+    first: recordSide(first),
+    second: recordSide(second),
+  };
+
+  const messageId = await postContest({
     label: options.label,
     kind: game.i18n.localize("GWORLD.Contest.QuickContest"),
+    flags: { quickContest: record },
     ...(options.rollMode !== undefined ? { rollMode: options.rollMode } : {}),
     ...(options.secret !== undefined ? { secret: options.secret } : {}),
     sides: [first, second],
@@ -380,5 +412,7 @@ export async function rollQuickContest(options: QuickContestOptions): Promise<Re
   const report = (side: RolledSide) => ({ actor: side.side.actor ?? null, base: side.side.base, effective: side.effective, outcome: side.outcome, item: side.side.item ?? null });
   afterQuickContest({ label: options.label, tags, first: report(first), second: report(second), outcome: result.outcome, marginOfVictory: result.marginOfVictory });
 
-  return result;
+  // The card it was posted on (since API 1.143.0), which a won disarm names
+  // when it asks the GM's client to knock the weapon away.
+  return { ...result, messageId };
 }

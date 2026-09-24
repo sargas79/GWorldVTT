@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { MODIFYING_DICE_RULE, normalizeDamage, shownDamage } from "../modifying-dice.js";
+import { MODIFYING_DICE_RULE, normalizeDamage, rolledDice, shownDamage } from "../modifying-dice.js";
 import { OPTIONAL_RULES_KEY } from "../optional-rules.js";
 import { rollDamage } from "../roll.js";
 
@@ -98,5 +98,43 @@ describe("a damage roll with the rule on", () => {
     await rollDamage({ actor: {}, label: "Axe", formula: "1d+9", damageType: "cut" });
     expect(formulas).toEqual(["1d6 + 9"]);
     expect(cards[0].content).toMatchObject({ formula: "1d+9", modifiedFrom: "" });
+  });
+});
+
+/**
+ * An explosion reaches 2 yards per die of damage and its fragments 5
+ * (Campaigns p. 414). With the rule on, those are the dice rolled: 2d+5 is
+ * "equivalent to 3d+1" (Characters p. 269), three dice, and reaches 6 yards.
+ */
+describe("a blast with the rule on", () => {
+  it("counts the dice a formula rolls after the conversion, a multiplier included", () => {
+    expect(rolledDice("2d+5", true)).toBe(3);
+    expect(rolledDice("2d+5", false)).toBe(2);
+    expect(rolledDice("2d+5x2", true)).toBe(6);
+    expect(rolledDice("3d-1", true)).toBe(3);
+    expect(rolledDice("spec.", true)).toBe(0);
+    foundryWith(true);
+    expect(rolledDice("1d+9")).toBe(3);
+  });
+
+  it("reaches as far as the dice it rolls, on the card and on the flag", async () => {
+    const { cards } = foundryWith(true);
+    await rollDamage({ actor: {}, label: "Grenade", formula: "2d+5", damageType: "cr", explosive: true, fragmentation: "1d+4" });
+    expect(cards[0].content).toMatchObject({ formula: "3d+1", blastRadius: 6, fragmentationRadius: 10 });
+    expect(cards[0].flags.gworld.damage.diceOfDamage).toBe(3);
+  });
+
+  it("counts a bonus added as the blow is struck once it has turned into dice", async () => {
+    const { cards } = foundryWith(true);
+    await rollDamage({ actor: {}, label: "Grenade", formula: "2d+1", damageType: "cr", explosive: true, modifiers: [{ label: "Bonus", value: 3 }] });
+    expect(cards[0].content).toMatchObject({ formula: "3d", blastRadius: 6 });
+    expect(cards[0].flags.gworld.damage.diceOfDamage).toBe(3);
+  });
+
+  it("counts the dice as written with the rule off", async () => {
+    const { cards } = foundryWith(false);
+    await rollDamage({ actor: {}, label: "Grenade", formula: "2d+5", damageType: "cr", explosive: true, fragmentation: "1d+4" });
+    expect(cards[0].content).toMatchObject({ formula: "2d+5", blastRadius: 4, fragmentationRadius: 5 });
+    expect(cards[0].flags.gworld.damage.diceOfDamage).toBe(2);
   });
 });

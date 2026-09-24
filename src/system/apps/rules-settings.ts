@@ -4,6 +4,11 @@
  * One page rather than thirty entries in Foundry's settings list: the choice is
  * "how much GURPS are we doing tonight", which is one decision made in one
  * sitting, not thirty unrelated ones.
+ *
+ * A player opens the same page read-only: the switches change what their
+ * sheet shows -- Modifying Dice + Adds turns 1d+9 into 3d+2 -- so they can see
+ * which are on and why, but only the GM can change them. It opens on the rules
+ * in play, since those are what a player is asking about.
  */
 
 import { SYSTEM_ID } from "../constants.js";
@@ -56,11 +61,33 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
   /** Every rule on the page with the words it can be found by, as last rendered. */
   #searchable: SearchableRule[] = [];
 
+  /** Opens the page, or brings forward the one already open. */
+  static async open(): Promise<void> {
+    const open = (foundry.applications as any).instances?.get?.(RulesSettings.DEFAULT_OPTIONS.id);
+    await (open instanceof RulesSettings ? open : new RulesSettings()).render({ force: true });
+    if (open instanceof RulesSettings) (open as any).bringToFront?.();
+  }
+
+  /** In a read-only view, whether only the rules in play are shown. */
+  #inPlayOnly = true;
+
+  /**
+   * Whether the page only shows the rules: anyone but a GM, who could not save
+   * the world's setting anyway. `readOnly` in the options says regardless.
+   */
+  get readOnly(): boolean {
+    const asked = ((this as any).options as { readOnly?: unknown } | undefined)?.readOnly;
+    return typeof asked === "boolean" ? asked : game.user?.isGM !== true;
+  }
+
   #state(): Record<string, boolean> {
     return this.#pending ?? ruleState();
   }
 
   override async _prepareContext(): Promise<Record<string, unknown>> {
+    const readOnly = this.readOnly;
+    // Nothing a player does here is kept, so there is nothing pending to show.
+    if (readOnly) this.#pending = null;
     const state = this.#state();
     // A content module's page for a rule, where one is installed (the book's
     // own text, which the system cannot ship).
@@ -123,6 +150,8 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
 
     return {
       groups,
+      readOnly,
+      inPlayOnly: this.#inPlayOnly,
       query: this.#query,
       // Unsaved changes are worth saying out loud on a page whose whole point
       // is that nothing happens until you press the button.
@@ -141,12 +170,17 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
       this.#query = search.value;
       this.#applyFilter();
     });
+    const inPlay = this.element.querySelector<HTMLInputElement>('input[name="in-play-only"]');
+    inPlay?.addEventListener("change", () => {
+      this.#inPlayOnly = inPlay.checked;
+      this.#applyFilter();
+    });
     this.#applyFilter();
 
     for (const box of this.element.querySelectorAll<HTMLInputElement>("input[data-rule]")) {
       box.addEventListener("change", () => {
         const key = box.dataset.rule;
-        if (!key) return;
+        if (!key || this.readOnly) return;
         this.#pending = { ...this.#state(), [key]: box.checked };
         void this.render();
       });
@@ -159,23 +193,26 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   #applyFilter(): void {
     const query = normaliseQuery(this.#query);
+    const inPlayOnly = this.readOnly && this.#inPlayOnly;
     let shown = 0;
 
     for (const group of this.element.querySelectorAll<HTMLElement>(".gr-group")) {
       const rules = [...group.querySelectorAll<HTMLElement>(".gr-rule")];
       let visible = 0;
       for (const rule of rules) {
-        const match = ruleMatches(rule.dataset.search ?? "", query);
+        const match = ruleMatches(rule.dataset.search ?? "", query) && (!inPlayOnly || rule.dataset.on === "true");
         rule.hidden = !match;
         if (match) visible += 1;
       }
-      const keep = rules.length > 0 ? visible > 0 : ruleMatches(group.dataset.search ?? "", query);
+      // A group with no rules in play has nothing to show a player who asked
+      // for those alone.
+      const keep = rules.length > 0 ? visible > 0 : !inPlayOnly && ruleMatches(group.dataset.search ?? "", query);
       group.hidden = !keep;
       shown += visible;
     }
 
     const none = this.element.querySelector<HTMLElement>(".gr-nomatch");
-    if (none) none.hidden = !query || shown > 0;
+    if (none) none.hidden = !(query || inPlayOnly) || shown > 0;
 
     // The bulk buttons say when they will touch only what the search shows.
     for (const button of this.element.querySelectorAll<HTMLElement>("[data-label-all]")) {
@@ -184,6 +221,7 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   static async #onSave(this: RulesSettings): Promise<void> {
+    if (this.readOnly) return;
     const stored = game.settings.get(SYSTEM_ID, OPTIONAL_RULES_KEY) as Record<string, unknown> | null;
     await game.settings.set(SYSTEM_ID, OPTIONAL_RULES_KEY, mergeStoredRules(stored, this.#state()));
     this.#pending = null;
@@ -209,6 +247,7 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
    * only the rules it shows, leaving the hidden ones as they were.
    */
   async #setAll(value: boolean): Promise<void> {
+    if (this.readOnly) return;
     const state = this.#state();
     const keys = normaliseQuery(this.#query) ? rulesInView(this.#searchable, this.#query) : Object.keys(state);
     const changes = Object.fromEntries(keys.map((key) => [key, isImplemented(key) ? value : false]));
@@ -225,6 +264,7 @@ export class RulesSettings extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   static async #onRestore(this: RulesSettings): Promise<void> {
+    if (this.readOnly) return;
     this.#pending = defaultRuleState();
     await this.render();
   }

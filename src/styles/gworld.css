@@ -896,6 +896,7 @@
   color: var(--color-neutral-700);
 }
 .gworld-chat .gc-mod { color: var(--color-accent-700); }
+.gworld-chat .gc-rules-link { cursor: pointer; text-decoration: underline dotted; }
 .gworld-chat .gc-dice { display: flex; align-items: center; gap: 6px; }
 .gworld-chat .gc-die {
   display: inline-flex;
@@ -1530,6 +1531,10 @@
   color: var(--color-neutral-800);
 }
 .gworld-rules .gr-bulk { display: flex; gap: 6px; flex: 0 0 auto; }
+.gworld-rules .gr-inplay { align-items: center; font-size: 12px; }
+.gworld-rules .gr-readonly { font-style: italic; }
+/* A player's switches only say what is on; they are not greyed like a rule not built yet. */
+.gworld-rules .gr-rule:not(.pending) input:disabled { opacity: 1; cursor: default; }
 .gworld-rules .gr-search { flex: 0 0 auto; width: 100%; }
 /* The search hides rules and groups with the attribute, which a display rule would override. */
 .gworld-rules .gr-body [hidden] { display: none; }

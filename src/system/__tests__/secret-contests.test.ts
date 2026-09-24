@@ -64,6 +64,32 @@ describe("a punch or a kick on the attack (Characters p. 271)", () => {
   });
 });
 
+describe("what a Quick Contest's card records (since API 1.143.0)", () => {
+  it("flags the card with the tags, the result and each side, and returns the card's id", async () => {
+    const { cards } = foundryWith([1, 1, 2, 6, 6, 6]);
+    (globals.ChatMessage as any).implementation.create = async (data: any, options: any) => { cards.push({ data, options }); return { id: "card1" }; };
+    const knife = { name: "Knife", uuid: "Actor.b.Item.knife" };
+    const result = await rollQuickContest({
+      label: "Disarm",
+      tags: ["disarm"],
+      first: { ...side("A", 12), actor: { ...side("A", 12).actor, uuid: "Actor.a" } },
+      second: { ...side("B", 11), actor: { ...side("B", 11).actor, uuid: "Actor.b" }, item: knife },
+    });
+    expect(result).toMatchObject({ outcome: "first", messageId: "card1" });
+    expect(cards[0]?.data.flags).toEqual({
+      gworld: {
+        quickContest: {
+          tags: ["quickContest", "disarm"],
+          outcome: "first",
+          marginOfVictory: result.marginOfVictory,
+          first: { actorUuid: "Actor.a", itemUuid: "", effective: 12 },
+          second: { actorUuid: "Actor.b", itemUuid: "Actor.b.Item.knife", effective: 11 },
+        },
+      },
+    });
+  });
+});
+
 describe("the item a side of a Quick Contest names (since API 1.136.0)", () => {
   it("reaches that side's success-roll context and the afterQuickContest report", async () => {
     foundryWith([3, 4, 5, 2, 2, 2]);

@@ -47,6 +47,21 @@ export function normalizeDamage(formula: string, ruleOn: boolean = isRuleOn(MODI
   return { raw, normalized: converted ? formatDiceAdds(modified) : raw, converted };
 }
 
+/**
+ * The dice a formula rolls at this table, a multiplier counted as that many
+ * dice again: what an explosion's reach and its fragments' are measured in
+ * (Campaigns p. 414). 0 for a formula that isn't dice+adds.
+ *
+ * Counted after the conversion. The rule makes 2d+5 "equivalent to 3d+1": the
+ * attack now does three dice of damage, and the blast reaches as far as three
+ * dice do. The card, the scatter prompt and the collateral damage all ask here,
+ * so a blast is never one size on the card and another where it lands.
+ */
+export function rolledDice(formula: string, ruleOn: boolean = isRuleOn(MODIFYING_DICE_RULE)): number {
+  const parsed = parseDiceAdds(normalizeDamage(formula, ruleOn).normalized);
+  return parsed ? parsed.dice * (parsed.multiplier ?? 1) : 0;
+}
+
 /** The damage to show on a sheet: {@link normalizeDamage}'s figure. */
 export function shownDamage(formula: unknown): string {
   return typeof formula === "string" ? normalizeDamage(formula).normalized : String(formula ?? "");

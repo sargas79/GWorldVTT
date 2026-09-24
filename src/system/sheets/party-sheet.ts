@@ -370,6 +370,10 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     await super._onRender(context, options);
     const root = this.element as HTMLElement;
 
+    // Foundry disables every button on a sheet its viewer can't edit; reading
+    // the rules changes nothing, so a player who only observes can still.
+    for (const button of root.querySelectorAll<HTMLButtonElement>('button[data-action="openRules"]')) button.disabled = false;
+
     // A member's current hit points or fatigue, written onto that member. Not
     // a form field: the party's form would not know whose it was.
     for (const input of root.querySelectorAll<HTMLInputElement>("input[data-member-field]")) {
@@ -521,9 +525,9 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     await promptForMana();
   }
 
+  /** The rules page: the GM's to change, a player's to read. */
   static async #onOpenRules(this: GWorldPartySheet) {
-    if (!game.user?.isGM) return;
-    await new RulesSettings().render({ force: true });
+    await RulesSettings.open();
   }
 
   static async #onOpenSources(this: GWorldPartySheet) {
