@@ -975,6 +975,19 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
   1.26.0, `available()` takes a kind out of play: the sheet doesn't offer it
   for a new technique, and a technique already of that kind keeps it, with the
   level (and cost) the system would work out and a note saying why.
+- **`registerNeedsEquipment({ module, key, test })`** (since 1.135.0).
+  Says which skills are used for "tasks that normally require equipment"
+  (Campaigns p. 345). `test(skill, actor)` is given the skill item and its
+  actor, and returns `true` for a skill that needs equipment; anything else,
+  or a test that throws, is no. Where any test says yes, the
+  `equipmentModifiers` rule is on and no carried tool serves the skill (none
+  carried for it, or none it can use at its TL), the skill's `tools` line is
+  the no-equipment figure: -10 for a technological skill, -5 for any other,
+  labelled "No equipment". So improvised gear (-5 or -2) reads better than
+  none. `gworld.skillBonuses` listeners see and may change it like any other
+  line. With no test registered, no skill takes it. The call returns
+  `<module>.<key>`, or null for a refused registration.
+  `needsEquipment(skill, actor)` asks the registered tests.
 - **Hooks:**
   - `gworld.prepareDerivedData`, with the actor or item, after the system has
     prepared it.
@@ -982,6 +995,11 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     system's lines are keyed `bonus`, `magic`, `talent`, `trait` (one per trait that names the skill, labelled with the trait) and `tools`. Push lines
     (`{ label, value, source }`), or change a line's `value` and give its
     `reason`. The skill's level tooltip shows the lines.
+    Since 1.135.0 the context also carries `tool`: the equipment item the
+    `tools` and `techLevel` lines are for (the one the preparation picked, as
+    `derived.toolItemId` records it), or null where no carried tool serves the
+    skill. A listener can grade one item differently for different skills,
+    good for one and improvised for another, by changing those lines' values.
   - `gworld.moveModifiers` (since 1.42.0), with `{ actor, move, lines }`, once
     encumbrance, reeling and very tired are applied: push `{ label, multiplier?, value? }`.
     Move becomes the multipliers' product times Move, rounded down, plus the values, never
@@ -1848,6 +1866,9 @@ Two fields a module may read (since 1.62.0):
     the TL line wins, and one the skill cannot use at all is passed over. The
     skill's `derived.bonusLines` gains a line keyed `techLevel` beside
     `tools`, which `gworld.skillBonuses` listeners see and may change.
+    Since 1.135.0 those listeners are handed the picked item as `tool`, and
+    a skill a `registerNeedsEquipment` test marks, with no tool serving it,
+    takes the no-equipment figure on its `tools` line.
   - *Familiarities.* A character keeps `system.familiarities`, a list of item
     names (compared trimmed and case-blind); familiarity goes by the item's
     name, so "improved or obsolete versions" and look-alike models are made

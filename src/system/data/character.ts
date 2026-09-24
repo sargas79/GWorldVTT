@@ -40,7 +40,7 @@ import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
 import { senseScores } from "../../rules/senses.js";
 import {
-  clothingCost, costOfLiving, gearCost, toolModifier, monthlyIncomeFromTraits, monthlyPay,
+  clothingCost, costOfLiving, gearCost, skillEquipmentModifier, toolModifier, monthlyIncomeFromTraits, monthlyPay,
   pointsForMoney, signatureGearPoints, signatureGearValue, startingWealth, statusFrom, wealthFrom,
   type EquipmentQuality,
   type WealthLevel,
@@ -98,7 +98,7 @@ import { malfunctionOf } from "../malfunctions.js";
 import { stuckWeaponOf } from "../picks.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
-  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleCarriedWeight, moduleTraitEffects, moduleTraitsInPlay, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type CarriedWeightLine, type TraitEffectSource,
+  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleCarriedWeight, moduleTraitEffects, moduleTraitsInPlay, needsEquipment, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type CarriedWeightLine, type TraitEffectSource,
 } from "../data-extensions.js";
 import { perDieOfBasicDamage, swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
@@ -1826,6 +1826,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // that normally require equipment" (Campaigns p. 345): what is carried,
     // by the skill it is the tools of.
     const toolBonuses = this.#equipmentBonuses(Number(this.tl) || 0);
+    // The items those tools are, so a listener is handed the one picked.
+    const equipmentById = new Map(this.itemsOfType("equipment").filter((i) => i.id).map((i) => [String(i.id), i]));
+    const equipmentRuleOn = isRuleOn("equipmentModifiers");
 
     const skillItems = this.itemsOfType("skill");
 
@@ -1859,11 +1862,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // Of several, the one worth most once its TL is weighed against the
       // skill's -- for a technological skill, with the tech-level rule on
       // (Characters p. 168).
-      const skillTL = isRuleOn("techLevelModifiers") && isTechnologicalSkill(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel)
+      const technological = isTechnologicalSkill(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel);
+      const skillTL = isRuleOn("techLevelModifiers") && technological
         ? skillTechLevel(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel, Number(this.tl) || 0)
         : null;
       const tool = bestTool(toolBonuses[toolSkillKey(String(item.name ?? ""))] ?? [], { skillTechLevel: skillTL, iqBased: sys.attribute === "IQ" });
-      const toolBonus = tool?.quality ?? 0;
+      // With nothing carried that serves it, a skill a module says needs
+      // equipment takes the no-equipment figure, so that improvised gear
+      // reads better than none (since API 1.135.0). Only asked where it
+      // matters: the rule on and no tool picked.
+      const toolBonus = skillEquipmentModifier(tool, {
+        needsEquipment: equipmentRuleOn && !tool && needsEquipment(item, this.parent),
+        technological,
+      });
       const magicBonus = magicSkillBonus(String(item.name ?? ""), talent);
       // The bonuses as lines, which add-on modules may add to, or change with
       // a reason (a talent that doesn't reach a wildcard skill, say).
@@ -1872,12 +1883,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         item,
         name: String(item.name ?? ""),
         difficulty: sys.difficulty,
+        // The item the `tools` and `techLevel` lines are for, or null (since
+        // API 1.135.0), so a listener can grade one item differently for
+        // different skills.
+        tool: (tool?.id ? equipmentById.get(tool.id) : null) ?? null,
         lines: [
           { key: "bonus", label: "Bonus", value: Number(sys.bonus) || 0, source: "system" },
           { key: "magic", label: "Magery", value: magicBonus, source: "system" },
           { key: "talent", label: "Talent", value: talentBonus, source: "system" },
           ...traitLines,
-          { key: "tools", label: "Equipment", value: toolBonus, source: "system" },
+          { key: "tools", label: tool || toolBonus === 0 ? "Equipment" : "No equipment", value: toolBonus, source: "system" },
           { key: "techLevel", label: "Equipment TL", value: tool?.techLevel ?? 0, source: "system" },
         ] as BonusLine[],
       });
