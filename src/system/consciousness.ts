@@ -29,9 +29,13 @@ export interface ConsciousnessEntry {
 
 const FLAG = "consciousness";
 
-/** Rolls HT to stay conscious, and puts a failure on the character. */
-export async function rollConsciousness(actor: any, penalty: number): Promise<void> {
-  if (!actor?.isOwner) return;
+/**
+ * Rolls HT to stay conscious, and puts a failure on the character. Resolves
+ * to whether the roll was made: false where it was not the user's to make, or
+ * where it was refused for an effective HT below 3.
+ */
+export async function rollConsciousness(actor: any, penalty: number): Promise<boolean> {
+  if (!actor?.isOwner) return false;
   const traits = traitsOf(actor);
   const bonus = (Number(traits.consciousness) || 0) + (Number(traits.htRolls) || 0);
   const modifiers = [
@@ -46,7 +50,7 @@ export async function rollConsciousness(actor: any, penalty: number): Promise<vo
     modifiers,
     tags: ["consciousness", "HT"],
   });
-  if (!outcome) return;
+  if (!outcome) return false;
   const previousPosture = String(actor.system?.posture ?? "standing");
   if (!outcome.success) {
     await actor.update({ "system.posture": "lying" });
@@ -56,6 +60,7 @@ export async function rollConsciousness(actor: any, penalty: number): Promise<vo
   }
   // The modules hear it, and may take a failure back (since 1.43.0).
   callCombatHook(PROCEDURE_HOOKS.afterConsciousnessRoll, { actor, outcome, previousPosture });
+  return true;
 }
 
 /** The entries a card records, for the characters a blow took to 0 HP or less. */
@@ -85,9 +90,12 @@ export async function addConsciousnessControls(message: any, html: HTMLElement):
     button.className = "gc-apply-button";
     const label = game.i18n.localize("GWORLD.Consciousness.Roll");
     button.textContent = entry.modifier ? `${label} ${entry.modifier > 0 ? "+" : ""}${entry.modifier}` : label;
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       button.disabled = true;
-      void rollConsciousness(actor, entry.modifier);
+      // A roll that was never made -- refused below 3, say, until a bonus
+      // lifts it -- is still owed, so the button is put back rather than
+      // left dead on the card.
+      if (!(await rollConsciousness(actor, entry.modifier))) button.disabled = false;
     });
     row.append(who, button);
     root.append(row);
