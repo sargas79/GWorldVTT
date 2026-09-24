@@ -3429,7 +3429,17 @@
       "Passenger": "Aboard",
       "SpecsHint": "The line as the vehicle tables print it (Campaigns pp. 462-465). The Overview works its figures out from these.",
       "Description": "Description",
-      "NotesHint": "What it is doing here, who owns it, where it is kept"
+      "NotesHint": "What it is doing here, who owns it, where it is kept",
+      "CrippledParts": "Crippled",
+      "CrippledPartsHint": "How many of each are crippled now (Campaigns p. 555). A shot that cripples one counts it here. Set it by hand for a flat tyre, and back to 0 once it is repaired.",
+      "CrippledMove": {
+        "wheel": "{count} crippled wheel(s): Move {acceleration}/{topSpeed}, as for a character with that many legs losing one",
+        "track": "A crippled track: ground Move 0",
+        "runner": "A crippled runner or skid: ground Move 0",
+        "rotor": "A crippled rotor: air Move 0, and an airborne vehicle loses control and crashes",
+        "wing": "A crippled wing: air Move 0, and an airborne vehicle loses control and crashes",
+        "mast": "{count} crippled mast(s): Move {acceleration}/{topSpeed}"
+      }
     },
     "GearCategory": {
       "weapon": "Weapon",

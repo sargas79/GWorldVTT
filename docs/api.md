@@ -1551,6 +1551,36 @@ Two fields a module may read (since 1.62.0):
     `derived.stats` holds the result `{ handling, stability, acceleration,
     topSpeed, move, lines }`, and its sheet shows the changed Hnd/SR with
     the lines as a tooltip.
+  - *Crippled wheels, tracks and rotors* (since 1.134.0; Campaigns p. 555):
+    the vehicle actor keeps `system.crippled`, a count for each part whose
+    crippling changes how it moves: `wheel`, `track`, `runner`, `rotor`,
+    `wing` and `mast`. `hazards.shootAtVehicle` (and the sheet's Shot at)
+    adds one when a hit cripples one of them, up to the number the
+    Locations entry lists, in the same update that takes the hit points.
+    The sheet shows the counts under Condition, for the GM to set by hand
+    (a flat tyre) or clear (a repair). An item on a Gear tab has none.
+    - `gworld.vehicleStats` now applies them before its listeners hear, to
+      the Move in use only: a crippled wheel cuts Move as losing a leg cuts
+      it for a character with that many legs (Characters p. 54), rounded
+      down; a
+      crippled track or runner makes ground Move 0; a crippled rotor or
+      wing makes air Move 0; a crippled mast takes 1/(masts) off a water
+      Move, rounded up. The system pushes a line saying so, with `stat:
+      "topSpeed"`.
+    - The context also carries `crippled`, the counts, and `move` is still
+      the Move in use as stored. A listener that knows better (a run-flat
+      tyre, say) sets `acceleration` and `topSpeed` back from `move` and
+      takes the system's line out of `lines`.
+    - The sheet's Move for the Move in use shows the figures as the rules
+      read them, with the Move lines as a tooltip. Hnd/SR keeps the rest.
+    - `rules.crippledMove({ move, crippled, locations })` gives the Move
+      as crippled parts leave it, `{ acceleration, topSpeed, factor, cause
+      }`. `rules.lostLegsMoveFactor(legs, lost)` gives the share of Move
+      that losing legs leaves, and `rules.locationCount(entry, location)`
+      how many of a location an entry lists ("G4W" is four wheels).
+    - The system doesn't roll HT for a flat tyre when a wheel takes damage,
+      since nothing says whether a vehicle has tyres. Losing control when a
+      rotor or wing goes is the control roll the GM calls for.
   - *Put on the road*: the vehicle actor made from a vehicle item now
     takes the item's `system.extensions` and its flags in every scope
     except `core` and the system's own.
