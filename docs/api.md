@@ -896,9 +896,16 @@ and the roll continues.
     rule is off.
   - `gworld.equipmentFailure` (since 1.10.0): before a thing's equipment
     failure roll (Campaigns p. 485), with `{ actor, item, target, modifiers,
-    label }`. Push lines to `modifiers`; the card shows them. `label` (since
-    1.118.0) is the label a module passed to `items.equipmentFailure`, or
-    null for the item sheet's exposure check.
+    label, downgradeCriticalFailure, downgradeLabel }`. Push lines to
+    `modifiers`; the card shows them. `label` (since 1.118.0) is the label a
+    module passed to `items.equipmentFailure`, or null for the item sheet's
+    exposure check. Set `downgradeCriticalFailure` (since 1.127.0) to true to
+    make a critical failure an ordinary failure before the thing is marked
+    down, for protection in the circuit, say: it then needs a minor repair,
+    not a major one, and the card shows `downgradeLabel`, or "A critical
+    failure, held to an ordinary failure" where it is blank. It changes
+    nothing on a roll that wasn't a critical failure. It works for the
+    exposure check and for `items.equipmentFailure` alike.
   - **Equipment failure rolls** (since 1.118.0; Campaigns p. 485).
     `items.equipmentFailure({ actor?, item, modifier?, label?, apply? })`
     asks for the roll itself, for a module's own occasion: a daily
@@ -912,10 +919,12 @@ and the roll continues.
     breaks down and needs a minor repair, on a critical failure a major one:
     unless `apply` is false, its `hpLost` is marked up as the exposure check
     does (to half its HP, or all of it), for items that keep hit points.
-    It resolves to `{ outcome, result, target, roll, margin, applied }`:
-    `outcome` is `success`, `failure` or `criticalFailure` (a critical
-    success is a `success`), `result` is `works`, `needsMinorRepair` or
-    `needsMajorRepair`, and `applied` says whether `hpLost` was changed. It
+    It resolves to `{ outcome, result, target, roll, margin, applied,
+    downgraded }`: `outcome` is `success`, `failure` or `criticalFailure` (a
+    critical success is a `success`), `result` is `works`, `needsMinorRepair`
+    or `needsMajorRepair`, and `applied` says whether `hpLost` was changed.
+    `downgraded` (since 1.127.0) is true where a critical failure was rolled
+    and a `gworld.equipmentFailure` listener made it a `failure`. It
     resolves to null where the user doesn't own the item. `actor` defaults
     to the item's owner, and speaks the card. The roll does not look at
     the Repairs switch; the module calling it decides when it applies.
@@ -1616,7 +1625,9 @@ Two fields a module may read (since 1.62.0):
   continuous shock; unconsciousness from a lethal one for the contact plus
   its (20 - HT) minutes. Since 1.119.0 it resolves to a `ShockOutcome` (or
   null where nothing was done), and two hooks reach inside it: see *Shock
-  hooks* below. `hazards.irradiate({ actor, rads,
+  hooks* below. Since 1.127.0 it also takes `source` (text) and `tags` (a
+  list of strings), which the hooks and the outcome carry, so a listener can
+  tell its own shock from another module's. `hazards.irradiate({ actor, rads,
   protectionFactor, modifier })` adds a dose of radiation (p. 435). Before a
   dose is added, `gworld.radiationDose` fires with `{ actor, rads,
   protectionFactor, sources }`: change `rads`, and push a label to `sources`.
@@ -1630,12 +1641,15 @@ Two fields a module may read (since 1.62.0):
   vehicle actor its user owns, takes the injury off its hit points.
 - **Shock hooks** (since 1.119.0; Campaigns pp. 432-433). The Basic Set
   leaves the HT modifier for a source's strength to the GM, and metal
-  armour's DR 1 is already a DR that counts only against a shock. Both hooks
-  fire for `hazards.shock` and for the sheet's Shock tool.
+  armour's DR 1 is already a DR that counts only against a shock. The hooks
+  fire for `hazards.shock` and for the sheet's Shock tool. Since 1.127.0
+  each is given the `source` and `tags` the caller passed to `hazards.shock`
+  (null and `[]` from the sheet), to read.
   - *Before anything is rolled*: `gworld.shockModifiers` is called with
-    `{ actor, kind, formula, continuous, contactSeconds, modifier,
-    injuryStep, heartAttackMargin, dr, rollOnZeroInjury, immune, lines }`. The first
-    five are what the shock was called with, to read. The rest are mutable:
+    `{ actor, kind, source, tags, formula, continuous, contactSeconds, modifier,
+    injuryStep, heartAttackMargin, heartAttackOnCritical, dr, rollOnZeroInjury,
+    immune, lines }`. The first seven are what the shock was called with, to
+    read. The rest are mutable:
     - `modifier`: the HT modifier for the source's strength.
     - `injuryStep`: the points of injury per -1 to the HT roll, 2 by
       default (p. 432). 0 or less: the injury gives no modifier.
@@ -1643,7 +1657,14 @@ Two fields a module may read (since 1.62.0):
       shock, where a critical failure also does; null for a nonlethal or
       localized one, which never does in the Basic Set. Set a number to
       give one a heart attack on a failure by that much or more (a critical
-      failure counts only for a lethal shock), or null for none at all.
+      failure counts as `heartAttackOnCritical` says), or null for none at all.
+    - `heartAttackOnCritical` (since 1.127.0): whether any critical failure
+      stops the heart too, whatever its margin. True for a lethal shock, as
+      the book says; false for a nonlethal or localized one. Set it true to
+      give a nonlethal or localized shock with a `heartAttackMargin` the
+      same, or false to count only the margin on a lethal one. It does
+      nothing while `heartAttackMargin` is null. The outcome's `heartAttack`
+      follows it.
     - `dr`: a DR that counts only against this shock, in place of the
       armour's at the spot it lands. 1 in metal armour, otherwise null (the
       armour counts as against any burning damage).
@@ -1658,13 +1679,34 @@ Two fields a module may read (since 1.62.0):
       the outcome saying nothing happened.
     - Push strings to `lines` for the card.
     A value that isn't a number keeps the default.
+  - *Once the damage is rolled* (since 1.127.0): `gworld.shockDamage` is
+    called after a lethal or localized shock's burning damage is rolled and
+    taken, and before the HT roll, with `{ actor, kind, source, tags, formula,
+    damageRoll, dr, injury, injuryModifier, modifier, rollOnZeroInjury,
+    lines }`. `damageRoll` is the damage as rolled, before DR, and may be 0
+    or less; `dr`, `injury` and `injuryModifier` are what it came to. This
+    is where a module's rule can answer how the dice fell, such as a weak
+    shock whose damage roll came to 0 or less giving a bonus to the victim's
+    roll. Mutable:
+    - `modifier`: the HT modifier for the source's strength, as
+      `gworld.shockModifiers` left it. The HT roll uses what this hook
+      leaves.
+    - `rollOnZeroInjury`: as on `gworld.shockModifiers`, decided now the
+      damage is known.
+    - Push strings to `lines` for the card; they follow the damage line.
+    It isn't called for a nonlethal shock, an immune victim, or a shock with
+    no damage formula: there is no damage roll.
   - *Once it is worked out*: `gworld.afterShock` is called with the actor
     and the outcome, after the stun or unconsciousness is applied and
     before the card is posted. `contact` and `lines` are mutable. The
     outcome, `ShockOutcome`, is also what `hazards.shock` resolves to:
-    `{ kind, immune, injury, dr, rolled, target, roll, success, criticalFailure,
-    margin, injuryModifier, stunned, stunSeconds, unconscious,
-    unconsciousMinutes, heartAttack, contactSeconds, contact, lines }`.
+    `{ kind, source, tags, immune, injury, damageRoll, dr, rolled, target,
+    roll, success, criticalFailure, margin, injuryModifier, stunned,
+    stunSeconds, unconscious, unconsciousMinutes, heartAttack,
+    contactSeconds, contact, lines }`.
+    - `source` and `tags` (since 1.127.0) are what the caller passed.
+    - `damageRoll` (since 1.127.0) is the burning damage as rolled, before
+      DR, or null without a damage roll.
     - `dr` is the DR the damage met, or null without a damage roll.
     - `rolled` says whether the HT roll was made. `target` and `roll` are
       null where it wasn't, and `success` is then true.
