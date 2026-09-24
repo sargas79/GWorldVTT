@@ -29,7 +29,8 @@ import {
 import { dailyMiles, marchingFatiguePerHour, type Terrain, type TravelWeather } from "../rules/hiking.js";
 import { randomHitLocation, type HitLocation } from "../rules/hit-locations.js";
 import { callCombatHook, COMBAT_HOOKS, randomLocationWithHooks, type VehicleDrLine } from "./combat-extensions.js";
-import { PROCEDURE_HOOKS, applyCondition, successRollModifiers } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, applyCondition, procedureRoll } from "./procedure-extensions.js";
+import { postRefusal } from "./roll.js";
 import { equipmentUseLines } from "./tech-level.js";
 import { applyInjury } from "../rules/injury.js";
 import {
@@ -1145,16 +1146,31 @@ export async function controlVehicle(options: {
   const given = use.lines.map((line) => ({ key: line.key, label: line.label, value: line.value }));
   // What the operator's conditions and the modules add: a stabilizer, a
   // driver's aid (API 1.76.0, tagged "vehicleControl").
-  const added = successRollModifiers({
+  // A bonus held for the roll counts on it, and a listener may refuse it
+  // (since API 1.144.0): no dice, and a card that says why.
+  const hooked = procedureRoll({
     actor, label: H("Control"), kind: "skill", skill: skillName, base: skill,
     tags: ["vehicleControl", ...use.tags, ...(reason ? [reason] : [])], modifiers: [...given], vehicle: item, item,
     ...(reason ? { reason } : {}),
-  });
+  }, { refusable: true });
   // The TL lines as the listeners left them, and what they added.
-  const lines = [...given, ...added].filter((line) => line.value !== 0);
+  const lines = [...given, ...hooked.added].filter((line) => line.value !== 0);
   const target = skill + handling + options.modifier + lines.reduce((sum, line) => sum + line.value, 0);
+  if (hooked.refusal !== null) {
+    ui.notifications?.warn(hooked.refusal);
+    const shown = [
+      { label: game.i18n.localize("GWORLD.Vehicle.Handling"), value: handling },
+      { label: game.i18n.localize("GWORLD.Chat.Situational"), value: options.modifier },
+      ...lines,
+    ];
+    await postRefusal({ actor, base: skill, label: `${H("Control")}: ${String(item.name ?? "")}`, kind: "skill" }, {
+      reason: hooked.refusal, modifiers: shown, totalModifier: target - skill, effective: target,
+    });
+    return;
+  }
   const roll = new Roll("3d6");
   await roll.evaluate();
+  await hooked.spend();
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
   const stabilityRating = stats.stability;
   const result = controlRoll({

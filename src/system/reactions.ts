@@ -21,7 +21,7 @@ import {
   type Reaction,
 } from "../rules/reactions.js";
 import { quickContest, resolveSuccess } from "../rules/success.js";
-import { reactionModifiers, successRollModifiers } from "./procedure-extensions.js";
+import { procedureRoll, reactionModifiers } from "./procedure-extensions.js";
 
 const REACTION_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/reaction.hbs`;
 
@@ -153,14 +153,17 @@ export async function rollInfluence(options: {
   // a drug that saps the will (since API 1.95.0).
   const contestLabel = game.i18n.localize("GWORLD.Reaction.Influence");
   const tags = ["contest", "quickContest", "influence"];
-  const mine = successRollModifiers({
+  // Each side's held bonuses count too, used up once the dice are rolled (since API 1.144.0).
+  const mySide = procedureRoll({
     actor: options.actor, label: contestLabel, kind: "contest", skill: String(options.skill), base: given,
     tags: [...tags], modifiers: [], opponent: options.subject ?? null,
-  }).filter((line) => line.value !== 0);
-  const theirs = successRollModifiers({
+  });
+  const theirSide = procedureRoll({
     actor: options.subject, label: contestLabel, kind: "contest", skill: "", base: will,
     tags: [...tags, "will"], modifiers: [], opponent: options.actor ?? null,
-  }).filter((line) => line.value !== 0);
+  });
+  const mine = mySide.added.filter((line) => line.value !== 0);
+  const theirs = theirSide.added.filter((line) => line.value !== 0);
   const skill = given + mine.reduce((sum, line) => sum + line.value, 0);
   const resisted = will + theirs.reduce((sum, line) => sum + line.value, 0);
 
@@ -182,6 +185,8 @@ export async function rollInfluence(options: {
     await ours.evaluate();
     await against.evaluate();
     rolls.push(ours, against);
+    await mySide.spend();
+    await theirSide.spend();
 
     const contest = quickContest(
       resolveSuccess(ours.total, skill, dieResults(ours)),

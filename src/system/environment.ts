@@ -15,7 +15,7 @@ import { SYSTEM_ID } from "./constants.js";
 import { syncHealthConditions } from "./conditions.js";
 import { applyFatigue } from "./fatigue.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
-import { successRollModifiers, wornClothing } from "./procedure-extensions.js";
+import { procedureRoll, wornClothing } from "./procedure-extensions.js";
 import { normalizeSkillName } from "../rules/skills.js";
 import {
   coldInterval,
@@ -147,7 +147,9 @@ export async function rollExposure(options: {
       });
 
   // What the actor's conditions and the modules add: gear, a shelter (API 1.76.0).
-  const added = successRollModifiers({
+  // A bonus held for the roll counts too (API 1.144.0); the weather forces
+  // the roll, so it is never refused.
+  const hooked = procedureRoll({
     actor,
     label: game.i18n.localize(heat ? "GWORLD.Weather.Heat" : "GWORLD.Weather.Cold"),
     kind: bySurvival ? "skill" : "attribute",
@@ -157,10 +159,11 @@ export async function rollExposure(options: {
     modifiers: [],
     weather: { heat, temperatureF: options.temperatureF, clothing, wetClothes: options.wetClothes, windMph: options.windMph },
   });
-  const target = ht + conditions + options.modifier + added.reduce((sum, line) => sum + line.value, 0);
+  const target = ht + conditions + options.modifier + hooked.added.reduce((sum, line) => sum + line.value, 0);
 
   const roll = new Roll("3d6");
   await roll.evaluate();
+  await hooked.spend();
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
 
   // Heat stroke costs a die rather than a point, so the die is only rolled
@@ -192,7 +195,7 @@ export async function rollExposure(options: {
     extras: [
       ...(bySurvival ? [game.i18n.format("GWORLD.Weather.BySurvival", { skill: survival.skill, level: survival.level })] : []),
       ...(!heat && worn ? [game.i18n.format("GWORLD.Weather.WornClothing", { clothing: game.i18n.localize(`GWORLD.Weather.Clothing_${clothing}`), label: worn.label })] : []),
-      ...added.map((line) => `${line.label} ${line.value >= 0 ? "+" : ""}${line.value}`),
+      ...hooked.added.map((line) => `${line.label} ${line.value >= 0 ? "+" : ""}${line.value}`),
     ],
     dice: dieResults(roll),
     roll: roll.total,

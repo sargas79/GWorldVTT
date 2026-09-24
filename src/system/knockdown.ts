@@ -19,7 +19,7 @@ import {
 } from "../rules/knockdown.js";
 import { resolveSuccess } from "../rules/success.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
-import { PROCEDURE_HOOKS, activeConditions, applyCondition, patchCondition, recoveryHold, successRollModifiers, type KnockdownBlow } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, activeConditions, applyCondition, patchCondition, procedureRoll, recoveryHold, type KnockdownBlow } from "./procedure-extensions.js";
 import { conditionLabel } from "./conditions.js";
 import { surpriseKind, surpriseRecoveryBonus, type SurpriseKind } from "../rules/surprise.js";
 import { callCombatHook } from "./combat-extensions.js";
@@ -62,10 +62,13 @@ export async function rollKnockdown(options: {
   // What the actor's conditions and the modules add to the roll.
   // Where the blow landed goes with it, since a listener's modifier may turn
   // on it as the Basic Set's own do (since 1.73.0).
-  const added = successRollModifiers({ actor, label: "Knockdown", kind: "attribute", skill: "", base: ht, tags: ["knockdown", "HT"], modifiers: [], blow })
-    .reduce((total, line) => total + line.value, 0);
+  // A bonus held for the roll counts on it (since API 1.144.0); the rules
+  // force the roll, so it can't be refused.
+  const hooked = procedureRoll({ actor, label: "Knockdown", kind: "attribute", skill: "", base: ht, tags: ["knockdown", "HT"], modifiers: [], blow });
+  const added = hooked.added.reduce((total, line) => total + line.value, 0);
   const roll = new Roll("3d6");
   await roll.evaluate();
+  await hooked.spend();
   const outcome = resolveSuccess(roll.total, ht + modifier + added, dieResults(roll));
 
   const result = knockdownResult({
@@ -187,14 +190,18 @@ export async function rollStunRecovery(options: {
     : 0;
   const given = surprised !== 0 ? [{ label: game.i18n.localize("GWORLD.Surprise.Bonus"), value: surprised }] : [];
   // Conditions and modules may make recovery harder or easier (since API 1.63.0, tagged "stunRecovery").
-  const modifier = surprised + successRollModifiers({
+  // A bonus held for the roll counts too (since API 1.144.0); a stunned
+  // actor must roll, so it can't be refused.
+  const hooked = procedureRoll({
     actor, label: game.i18n.localize("GWORLD.Knockdown.recovered"), kind: "attribute", skill: attribute,
     base: score, tags: ["stunRecovery", attribute, ...(mental ? ["mental"] : [])], modifiers: [...given],
-  }).reduce((sum, line) => sum + line.value, 0);
+  });
+  const modifier = surprised + hooked.added.reduce((sum, line) => sum + line.value, 0);
   const target = score + modifier;
 
   const roll = new Roll("3d6");
   await roll.evaluate();
+  await hooked.spend();
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
   const recovered = recoversFromStun(outcome);
 

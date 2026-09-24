@@ -30,7 +30,7 @@ import {
 import { diseaseCycle, diseaseTreatmentBonus } from "../rules/disease.js";
 import { resolveSuccess } from "../rules/success.js";
 import { callCombatHook } from "./combat-extensions.js";
-import { PROCEDURE_HOOKS, successRollModifiers } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, procedureRoll } from "./procedure-extensions.js";
 
 const POISON_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/poison.hbs`;
 
@@ -334,15 +334,19 @@ export async function advancePoison(options: { actor: any; id: string }): Promis
   const ht = healthRollScore(actor);
   // What the actor's conditions and the modules add, for a dose that allows a
   // roll at all (API 1.76.0): tagged `poison`, or `disease` and `illness`.
-  const added = dose.resistanceModifier === null ? 0 : successRollModifiers({
+  // A bonus held for the roll counts too (API 1.144.0); the roll is forced,
+  // so it is never refused.
+  const hooked = dose.resistanceModifier === null ? null : procedureRoll({
     actor, label: dose.name, kind: "attribute", skill: "", base: ht,
     tags: [...(dose.illness ? ["disease", "illness"] : ["poison"]), "HT"], modifiers: [], poison: { ...dose },
-  }).reduce((sum, line) => sum + line.value, 0);
+  });
+  const added = hooked ? hooked.added.reduce((sum, line) => sum + line.value, 0) : 0;
   const target = ht + (dose.resistanceModifier ?? 0) + dose.treatment + added;
 
   // A poison that allows no roll is not resisted, and no dice are wasted on it.
   const check = dose.resistanceModifier === null ? null : new Roll("3d6");
   if (check) await check.evaluate();
+  await hooked?.spend();
   const outcome = check ? resolveSuccess(check.total, target, dieResults(check)) : null;
 
   // A caught disease runs on its own rule (p. 442), which is the poison's

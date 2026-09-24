@@ -24,6 +24,7 @@
 import { sceneAreaLines } from "./modifier-areas.js";
 import { SYSTEM_ID } from "./constants.js";
 import { everyActor } from "./every-actor.js";
+import { pendingModifierLines, spendPendingModifiers } from "./pending-modifiers.js";
 import {
   callCombatHook,
   getCombatState,
@@ -418,7 +419,12 @@ export interface SuccessRollContext {
    * Why the roll can't be made at all (since 1.131.0). It is on the context,
    * as null, only where the roll can be refused -- one made through
    * `roll.success`, other than an active defense -- and a listener that sets
-   * it to text stops the roll: no dice, and a card that says why.
+   * it to text stops the roll: no dice, and a card that says why. Since
+   * 1.144.0 a Fright Check, a vehicle control roll, and a contest whose
+   * caller passed `returnRefusal` carry it too. A roll the rules force on
+   * the actor never does: knockdown, stun recovery, bleeding, staying
+   * conscious or alive, and the rolls against poison, disease, exposure,
+   * suffocation.
    */
   refusal?: string | null;
   /** For a side of a contest, the actor on the other side (since 1.30.0). */
@@ -554,6 +560,47 @@ export function successRollLines(context: SuccessRollContext): ModifierLine[] {
  */
 export function refusableSuccessRoll(context: SuccessRollContext): { modifiers: ModifierLine[]; refusal: string | null } {
   return hookedSuccessRoll(context, true);
+}
+
+/** What a procedure that rolls its own dice gets from {@link procedureRoll}. */
+export interface ProcedureRoll {
+  /**
+   * Every line the caller did not give: the conditions', the listeners' and
+   * the held bonuses' the listeners left on the roll.
+   */
+  added: ModifierLine[];
+  /** Every line on the roll, the caller's as the listeners left them among them. */
+  lines: ModifierLine[];
+  /** A listener's reason for refusing the roll, only where it could be refused; else null. */
+  refusal: string | null;
+  /** Uses up the held bonuses the roll took; called once its dice are rolled. */
+  spend: () => Promise<void>;
+}
+
+/**
+ * A success roll one of the system's own procedures makes with its own dice
+ * -- a Fright Check, a knockdown, a contest's side, a roll against poison --
+ * treated as `roll.success` treats one (since API 1.144.0): the bonuses held
+ * for it (`actors.addPendingModifier`) join the caller's lines, keyed
+ * `pendingModifier`, before the listeners see them, and are used up once the
+ * dice are rolled. A roll the rules force on the actor is never refusable,
+ * so only a caller that will act on a refusal passes `refusable`, and only
+ * then does the context carry `refusal`.
+ */
+export function procedureRoll(context: SuccessRollContext, options: { refusable?: boolean } = {}): ProcedureRoll {
+  const held = pendingModifierLines(context.actor, {
+    skill: context.skill,
+    tags: successRollTags({ kind: context.kind, skill: context.skill, tags: context.tags }),
+  });
+  const given = new Set<unknown>(context.modifiers);
+  const { modifiers, refusal } = hookedSuccessRoll({ ...context, modifiers: [...context.modifiers, ...held.map((h) => h.line)] }, options.refusable === true);
+  return {
+    added: modifiers.filter((line) => !given.has(line)),
+    lines: modifiers,
+    refusal,
+    // A refused roll rolled nothing, so it spent nothing.
+    spend: () => (refusal === null ? spendPendingModifiers(context.actor, held, modifiers) : Promise.resolve()),
+  };
 }
 
 function hookedSuccessRoll(context: SuccessRollContext, refusable: boolean): { modifiers: ModifierLine[]; refusal: string | null } {

@@ -22,7 +22,8 @@ import {
   drowningRollDue,
 } from "../rules/suffocation.js";
 import { resolveSuccess } from "../rules/success.js";
-import { successRollModifiers } from "./procedure-extensions.js";
+import { procedureRoll } from "./procedure-extensions.js";
+import { PENDING_MODIFIER_KEY } from "./pending-modifiers.js";
 
 const SUFFOCATION_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/suffocation.hbs`;
 
@@ -72,11 +73,14 @@ export async function rollSuffocation(options: {
     // and `drowning`, so the actor's conditions and a module's gear (a life
     // jacket) reach them (since API 1.103.0).
     const base = Number(actor.system?.derived?.feats?.swimming?.skill) || 6;
-    const added = successRollModifiers({
+    // A bonus held for a Swimming roll counts on the first of them alone, and
+    // is used up by it (since API 1.144.0); the rolls are forced, so never refused.
+    const hooked = procedureRoll({
       actor, label: game.i18n.localize("GWORLD.Air.Drowning"), kind: "skill", skill: "Swimming", base,
       tags: ["swimming", "drowning"], modifiers: [],
     });
-    const swimming = base + added.reduce((sum, line) => sum + line.value, 0);
+    const swimming = base + hooked.added.reduce((sum, line) => sum + line.value, 0);
+    const held = hooked.added.filter((line) => line.key === PENDING_MODIFIER_KEY).reduce((sum, line) => sum + line.value, 0);
     let attempts = 0;
     for (let second = before + 1; second <= after; second += 1) {
       if (drowningRollDue(second)) attempts += 1;
@@ -86,7 +90,8 @@ export async function rollSuffocation(options: {
       const roll = new Roll("3d6");
       await roll.evaluate();
       rolls.push(roll);
-      if (!resolveSuccess(roll.total, swimming, dieResults(roll)).success) lost += 1;
+      if (i === 0) await hooked.spend();
+      if (!resolveSuccess(roll.total, i === 0 ? swimming : swimming - held, dieResults(roll)).success) lost += 1;
     }
   }
 

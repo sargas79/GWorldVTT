@@ -15,8 +15,8 @@ import { SYSTEM_ID } from "./constants.js";
 import { regularContest } from "../rules/contests.js";
 import { resolveFeint, type FeintResult } from "../rules/maneuvers.js";
 import { quickContest, resolveSuccess } from "../rules/success.js";
-import { afterQuickContest, resolveContestScores, successRollModifiers } from "./procedure-extensions.js";
-import { successRollMessageMode } from "./roll.js";
+import { afterQuickContest, procedureRoll, resolveContestScores } from "./procedure-extensions.js";
+import { postRefusal, successRollMessageMode } from "./roll.js";
 
 const CONTEST_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/contest.hbs`;
 const REGULAR_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/regular-contest.hbs`;
@@ -52,24 +52,72 @@ export interface ContestSide {
   item?: any;
 }
 
-/** Rolls one side of a contest against its own effective score. */
-async function rollSide(side: ContestSide, label = "", opponent: any = null, tags: readonly string[] = []) {
+/** One side of a contest once its conditions and the modules have had their say, before any dice. */
+function prepareSide(side: ContestSide, label = "", opponent: any = null, tags: readonly string[] = [], refusable = false) {
   const given = side.modifiers ?? [];
   // What the side's conditions and the modules add to its roll: since 1.30.0
-  // they also see who is on the other side, and what sort of contest it is.
-  const added = successRollModifiers({ actor: side.actor, label, kind: "contest", skill: side.note ?? "", base: side.base, tags: ["contest", ...tags], modifiers: [...given], opponent, ...(side.item ? { item: side.item } : {}) });
-  const modifiers = [...given, ...added].filter((m) => m.value !== 0);
+  // they also see who is on the other side, and what sort of contest it is;
+  // since 1.144.0 the bonuses held for it come too, and where the caller
+  // will act on it a listener may refuse the side.
+  const hooked = procedureRoll({ actor: side.actor, label, kind: "contest", skill: side.note ?? "", base: side.base, tags: ["contest", ...tags], modifiers: [...given], opponent, ...(side.item ? { item: side.item } : {}) }, { refusable });
+  const modifiers = [...given, ...hooked.added].filter((m) => m.value !== 0);
   const effective = side.base + modifiers.reduce((sum, m) => sum + m.value, 0);
+  return { side, label, effective, modifiers, refusal: hooked.refusal, spend: hooked.spend };
+}
 
+type PreparedSide = ReturnType<typeof prepareSide>;
+
+/** Rolls one side of a contest against its own effective score. */
+async function rollPrepared(prepared: PreparedSide) {
+  const { side, effective, modifiers } = prepared;
   const roll = new Roll("3d6");
   await roll.evaluate();
+  await prepared.spend();
   const dice = roll.dice[0]?.results.filter((r) => r.active !== false).map((r) => r.result) ?? [];
   const outcome = resolveSuccess(roll.total, effective, dice);
 
   return { side, roll, dice, effective, outcome, modifiers };
 }
 
+/** Rolls one side of a contest that can't be refused. */
+async function rollSide(side: ContestSide, label = "", opponent: any = null, tags: readonly string[] = []) {
+  return rollPrepared(prepareSide(side, label, opponent, tags));
+}
+
 type RolledSide = Awaited<ReturnType<typeof rollSide>>;
+
+/**
+ * A contest that was not rolled (since API 1.144.0): a
+ * `gworld.successRollModifiers` listener refused one side's roll, and
+ * `reason` is its. Only a caller that passed `returnRefusal` gets one; the
+ * sides' contexts carry `refusal` only then.
+ */
+export interface ContestRefusal {
+  refused: true;
+  reason: string;
+  /** The side refused. */
+  side: "first" | "second";
+}
+
+/**
+ * The refusal of whichever side a listener refused, first side first, told
+ * as `roll.success` tells one: a warning, and a card in the contest's message
+ * mode with the listener's reason. Null where both sides may roll.
+ */
+async function refusedContest(sides: readonly [PreparedSide, PreparedSide], visibility: ContestVisibility): Promise<ContestRefusal | null> {
+  const index = sides.findIndex((s) => s.refusal !== null);
+  if (index < 0) return null;
+  const refused = sides[index]!;
+  const reason = refused.refusal!;
+  ui.notifications?.warn(reason);
+  const totalModifier = refused.modifiers.reduce((sum, m) => sum + m.value, 0);
+  await postRefusal({
+    actor: refused.side.actor, base: refused.side.base, label: refused.label, kind: "contest",
+    ...(visibility.rollMode !== undefined ? { rollMode: visibility.rollMode } : {}),
+    ...(visibility.secret !== undefined ? { secret: visibility.secret } : {}),
+  }, { reason, modifiers: refused.modifiers, totalModifier, effective: refused.effective });
+  return { refused: true, reason, side: index === 0 ? "first" : "second" };
+}
 
 /** How each side's roll reads on the card. */
 function describeSide(outcome: { success: boolean; margin: number }): string {
@@ -88,6 +136,42 @@ function describeSide(outcome: { success: boolean; margin: number }): string {
 export interface ContestVisibility {
   rollMode?: string;
   secret?: boolean;
+}
+
+/** What a Quick Contest is asked to roll. */
+export interface QuickContestOptions extends ContestVisibility {
+  label: string;
+  first: ContestSide;
+  second: ContestSide;
+  /** What the contest is for, e.g. `disarm` (since 1.30.0): passed to the resolvers and the sides' rolls. */
+  tags?: string[];
+  /**
+   * True to let a `gworld.successRollModifiers` listener refuse a side (since
+   * API 1.144.0): the sides' contexts carry `refusal`, and a refused contest
+   * rolls no dice and resolves to a {@link ContestRefusal}. Left out, no side
+   * can be refused.
+   */
+  returnRefusal?: boolean;
+}
+
+/** What a Regular Contest is asked to roll. */
+export interface RegularContestOptions extends ContestVisibility {
+  label: string;
+  first: ContestSide;
+  second: ContestSide;
+  /**
+   * What the contest is for (since API 1.144.0): passed to the sides' rolls
+   * beside `contest` and `regularContest`.
+   */
+  tags?: string[];
+  /** As a Quick Contest's (since API 1.144.0). */
+  returnRefusal?: boolean;
+}
+
+/** How a Regular Contest came out: the winner, or null where it went unsettled. */
+export interface RegularContestResult {
+  outcome: "first" | "second" | null;
+  exchanges: number;
 }
 
 async function postContest(options: {
@@ -174,13 +258,22 @@ export async function rollFeint(options: {
  * Every roll goes to chat, so the exchanges can be seen rather than summarised:
  * an arm-wrestling match that went nine rounds is worth watching.
  */
-export async function rollRegularContest(options: {
-  label: string;
-  first: ContestSide;
-  second: ContestSide;
-} & ContestVisibility): Promise<{ outcome: "first" | "second" | null; exchanges: number }> {
-  const scoreOf = (side: ContestSide) =>
-    side.base + (side.modifiers ?? []).reduce((sum, m) => sum + m.value, 0);
+export async function rollRegularContest(options: RegularContestOptions & { returnRefusal: true }): Promise<RegularContestResult | ContestRefusal>;
+export async function rollRegularContest(options: RegularContestOptions): Promise<RegularContestResult>;
+export async function rollRegularContest(options: RegularContestOptions): Promise<RegularContestResult | ContestRefusal> {
+  // Each side's roll passes through `gworld.successRollModifiers` as a Quick
+  // Contest's does, tagged `contest` and `regularContest`, and takes the
+  // bonuses held for it (since API 1.144.0): once for the whole contest,
+  // since its exchanges are one struggle, and used up by it.
+  const tags = ["regularContest", ...(options.tags ?? [])];
+  const refusable = options.returnRefusal === true;
+  const sides = [
+    prepareSide(options.first, options.label, options.second.actor ?? null, tags, refusable),
+    prepareSide(options.second, options.label, options.first.actor ?? null, tags, refusable),
+  ] as const;
+  const refused = await refusedContest(sides, options);
+  if (refused) return refused;
+  const [firstSide, secondSide] = sides;
 
   // Every 3d the contest asks for is a real Foundry roll, kept so the whole
   // exchange can go on the message rather than only its totals.
@@ -193,11 +286,13 @@ export async function rollRegularContest(options: {
   };
 
   const contest = await regularContest({
-    first: scoreOf(options.first),
-    second: scoreOf(options.second),
+    first: firstSide.effective,
+    second: secondSide.effective,
     roll,
     maxRounds: MAX_EXCHANGES,
   });
+  await firstSide.spend();
+  await secondSide.spend();
 
   const names = [
     String(options.first.actor?.name ?? ""),
@@ -211,7 +306,7 @@ export async function rollRegularContest(options: {
     scores: contest.scores,
     // What each side rolled at, and what they would have rolled at, so a player
     // can watch the balancing rule happen rather than wonder at the number.
-    given: [scoreOf(options.first), scoreOf(options.second)],
+    given: [firstSide.effective, secondSide.effective],
     rounds: contest.rounds.map((round, index) => ({
       number: index + 1,
       first: { roll: round.first.roll, success: round.first.success },
@@ -239,18 +334,23 @@ export async function rollRegularContest(options: {
   return { outcome: contest.outcome, exchanges: contest.rounds.length };
 }
 
-export async function rollQuickContest(options: {
-  label: string;
-  first: ContestSide;
-  second: ContestSide;
-  /** What the contest is for, e.g. `disarm` (since 1.30.0): passed to the resolvers and the sides' rolls. */
-  tags?: string[];
-} & ContestVisibility): Promise<ReturnType<typeof quickContest>> {
+export async function rollQuickContest(options: QuickContestOptions & { returnRefusal: true }): Promise<ReturnType<typeof quickContest> | ContestRefusal>;
+export async function rollQuickContest(options: QuickContestOptions): Promise<ReturnType<typeof quickContest>>;
+export async function rollQuickContest(options: QuickContestOptions): Promise<ReturnType<typeof quickContest> | ContestRefusal> {
   const tags = ["quickContest", ...(options.tags ?? [])];
   // A module's resolver may propose what each side rolls against.
   const scores = resolveContestScores({ label: options.label, first: options.first, second: options.second, tags });
-  const first = await rollSide({ ...options.first, ...scores.first }, options.label, options.second.actor ?? null, tags);
-  const second = await rollSide({ ...options.second, ...scores.second }, options.label, options.first.actor ?? null, tags);
+  // Both sides are heard before either rolls, so a refused side leaves no
+  // dice on the table (since API 1.144.0).
+  const refusable = options.returnRefusal === true;
+  const sides = [
+    prepareSide({ ...options.first, ...scores.first }, options.label, options.second.actor ?? null, tags, refusable),
+    prepareSide({ ...options.second, ...scores.second }, options.label, options.first.actor ?? null, tags, refusable),
+  ] as const;
+  const refused = await refusedContest(sides, options);
+  if (refused) return refused;
+  const first = await rollPrepared(sides[0]);
+  const second = await rollPrepared(sides[1]);
   const result = quickContest(first.outcome, second.outcome);
 
   const winner =

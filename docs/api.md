@@ -1452,7 +1452,10 @@ Two fields a module may read (since 1.62.0):
   `roll.quickContest` may name its `item`, which that side's context carries
   as a success roll's does, and the contest resolvers and
   `gworld.afterQuickContest` see it on the side too; a disarm names both
-  weapons (see *Disarms*).
+  weapons (see *Disarms*). Since 1.144.0 each side of `roll.regularContest`
+  passes through too, tagged `contest` and `regularContest` and any `tags`
+  its caller passes, with `opponent`; its lines go into the side's score
+  before the book's balancing.
   passes reach the contest resolvers too).
 - **A listener refuses a success roll** (since 1.131.0): a rule that says a
   roll can't be made at all -- a task impossible without the right gear, or
@@ -1470,10 +1473,36 @@ Two fields a module may read (since 1.62.0):
   Text that is blank, or anything other than a string, refuses nothing. An
   active defense can't be refused this way (its context has no `refusal`):
   `gworld.defenseChoices` refuses one and `gworld.defenseModifiers` can
-  settle one. Nor can the rolls the system makes outside `roll.success` --
-  a Fright Check, knockdown, bleeding, a contest's sides, and the rolls
-  against exposure, contagion, infection, poison and illness, resuscitation
-  and vehicle control -- whose contexts have no `refusal` either.
+  settle one.
+  - *The rolls the system's procedures make with their own dice* (since
+    1.144.0). Three of them can be refused as `roll.success` is, their
+    contexts carrying `refusal`, null:
+    - a Fright Check (tagged `fright`): no check is made, as for the
+      Unfazeable, so it has no effect -- an affliction resisted with one
+      included. The user is warned and a refusal card is posted;
+      `roll.frightCheck` resolves to null.
+    - a vehicle control roll (tagged `vehicleControl`): no dice, a warning
+      and a refusal card, and nothing happens to the vehicle.
+    - the sides of `roll.quickContest` and `roll.regularContest` called with
+      `returnRefusal: true`, as the sheet's Quick Contest button calls them.
+      Both sides are heard before either rolls; a refused side stops the
+      contest before any dice, with a warning and a refusal card in the
+      contest's message mode, and the call resolves to `{ refused: true,
+      reason, side }`, `side` `first` or `second`. Without it, and on the
+      contests the system rolls for its own procedures (a disarm, a grapple,
+      an evade, a feint, an influence roll), no side can be refused and the
+      contexts have no `refusal`.
+
+    The rest are rolls the rules force on the actor, which have nothing to
+    be refused from: knockdown, stun recovery, bleeding, a mortal wound's
+    roll, and the rolls against exposure, contagion, infection, poison and
+    illness, and drowning. Their contexts have no `refusal`, and one a
+    listener sets there counts for nothing; a module changes such a roll
+    with its `modifiers`, or its outcome through the procedure's own hook
+    (`gworld.afterKnockdown`, `gworld.poisonCycle`...). First Aid, a
+    physician's rounds, surgery and resuscitation aren't refused here
+    either: `gworld.firstAid` and `gworld.physicianRounds` refuse the first
+    two.
 - **The item behind a roll, secret rolls, influence contests** (since
   1.95.0):
   - *`item`.* The `gworld.successRollModifiers` and `gworld.afterSuccessRoll`
@@ -2881,8 +2910,17 @@ Two fields a module may read (since 1.62.0):
     name a skill or at least one tag.
   - `expires` is a world time in seconds: the bonus lapses unused then.
     Left out, it waits until a roll takes it or it is removed.
-  - Only a roll made through `roll.success` takes it, as the sheet's rolls
-    are. Its line, keyed `pendingModifier`, is among the caller's
+  - A roll made through `roll.success` takes it, as the sheet's rolls are,
+    and since 1.144.0 so do the rolls the system's procedures make with
+    their own dice, by the same tags their `gworld.successRollModifiers`
+    contexts carry beside the kind: a Fright Check (`attribute`, `fright`,
+    `will`), knockdown, stun recovery, bleeding, a mortal wound's roll, the
+    rolls against exposure, contagion, infection, poison and illness,
+    vehicle control, First Aid, a physician's rounds, surgery,
+    resuscitation, each side of a Quick or Regular Contest (`contest`, an
+    influence roll's among them; a Regular Contest's once for the whole
+    contest), and the first of a span's drowning rolls. A refused roll uses
+    nothing up. Its line, keyed `pendingModifier`, is among the caller's
     `modifiers` when `gworld.successRollModifiers` is called, so a listener
     may change it or take it off; one taken off isn't used up. A roll
     refused for an effective skill below 3 uses nothing up. Every bonus that

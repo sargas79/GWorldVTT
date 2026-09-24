@@ -14,7 +14,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { activePoisons, POISON_FLAG, type ActivePoison } from "./poison.js";
 import { healthRollScore } from "./attributes.js";
-import { successRollLines, successRollModifiers } from "./procedure-extensions.js";
+import { procedureRoll } from "./procedure-extensions.js";
 import {
   INFECTION_BASE,
   antibioticsPreventInfection,
@@ -131,14 +131,17 @@ export async function exposeToDisease(options: {
   const ht = healthRollScore(actor);
   const contact = contagionModifier(options.exposures);
   // What the actor's conditions and the modules add: a mask, a charm (API 1.76.0).
-  const added = successRollModifiers({
+  // A bonus held for the roll too (API 1.144.0); the roll is forced, so never refused.
+  const hooked = procedureRoll({
     actor, label: disease.name, kind: "attribute", skill: "", base: ht,
     tags: ["disease", "contagion", "HT"], modifiers: [], disease: { ...disease },
-  }).reduce((sum, line) => sum + line.value, 0);
+  });
+  const added = hooked.added.reduce((sum, line) => sum + line.value, 0);
   const target = ht + disease.resistanceModifier + contact + (options.modifier ?? 0) + added;
 
   const roll = new Roll("3d6");
   await roll.evaluate();
+  await hooked.spend();
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
 
   // "If the GM rolls a 3 or 4 for your first attempt to resist a disease, you
@@ -201,16 +204,17 @@ export async function checkInfection(options: {
   // all stays out of reach. What the actor's conditions and the modules add
   // comes with it (API 1.76.0).
   const dirt = infectionModifier(options.dirt) - INFECTION_BASE;
-  const lines = successRollLines({
+  const hooked = procedureRoll({
     actor, label: game.i18n.localize("GWORLD.Illness.Infection"), kind: "attribute", skill: "", base: ht,
     tags: ["disease", "infection", "HT"],
     modifiers: [{ key: "woundDirt", label: game.i18n.localize("GWORLD.Illness.WoundDirt"), value: dirt }],
     disease: { ...diseaseNamed("Infection")! },
   });
-  const target = ht + INFECTION_BASE + lines.reduce((sum, line) => sum + line.value, 0);
+  const target = ht + INFECTION_BASE + hooked.lines.reduce((sum, line) => sum + line.value, 0);
 
   const roll = new Roll("3d6");
   await roll.evaluate();
+  await hooked.spend();
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
 
   // "A typical infection requires a daily HT roll, modified as above" -- the
