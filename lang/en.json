@@ -3577,6 +3577,7 @@
       "touch": "Touch",
       "Missing": "no roll",
       "Range": "Range ({yards} yd)",
+      "HearingDistance": "Distance ({yards} yd; heard at no penalty to {baseYards} yd)",
       "Telescopic": "Telescopic Vision",
       "TelescopicZoomed": "Telescopic Vision, zoomed in",
       "Colorblind": "no colour",

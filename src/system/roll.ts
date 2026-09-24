@@ -121,7 +121,7 @@ import {
   rapidFireHits,
   speedRangeModifier,
 } from "../rules/ranged.js";
-import { telescopicOffset, telescopicScope } from "../rules/senses.js";
+import { hearingDistanceModifier, telescopicOffset, telescopicScope } from "../rules/senses.js";
 import {
   malfunctionFor,
   malfunctioned,
@@ -318,6 +318,34 @@ export interface AttackWeaponFlag {
   mode?: { index: number; ranged: boolean; derived?: string } | null;
 }
 
+/** How far a listener is from a sound, and how far it carries (since API 1.117.0). */
+export interface HearingDistance {
+  /** The listener's distance from the sound, in yards. */
+  yards: number;
+  /** The distance at which the sound is heard at no penalty (Campaigns p. 358). */
+  baseYards: number;
+}
+
+/**
+ * The Hearing Distance Table's line for a roll made `distance` from a sound
+ * (Campaigns p. 358), the sound carrying as much farther as the listener's
+ * Parabolic Hearing doubles it (Characters p. 72). Null where no distance is
+ * given or it can't be read; a line of 0 where the listener is within one
+ * step of the sound's rated distance, so a listener can still find it.
+ */
+export function hearingDistanceLine(actor: any, distance: HearingDistance | null | undefined): RollModifier | null {
+  const yards = Number(distance?.yards);
+  const baseYards = Number(distance?.baseYards);
+  if (!(yards > 0) || !(baseYards > 0) || !Number.isFinite(yards) || !Number.isFinite(baseYards)) return null;
+  const senses: any[] = Array.isArray(actor?.system?.derived?.senses) ? actor.system.derived.senses : [];
+  const multiplier = Number(senses.find((s) => s?.sense === "hearing")?.rangeMultiplier) || 1;
+  return {
+    label: game.i18n.format("GWORLD.Senses.HearingDistance", { yards, baseYards: baseYards * multiplier }),
+    value: hearingDistanceModifier(yards, baseYards * multiplier),
+    key: "hearingDistance",
+  };
+}
+
 export interface SuccessRollOptions {
   actor: any;
   /** The unmodified target number, e.g. a skill level or defense score. */
@@ -419,6 +447,14 @@ export interface SuccessRollOptions {
    * Teaching skill is tagged from its name.
    */
   tags?: string[];
+  /**
+   * How far a Hearing roll's listener is from the sound (since API 1.117.0):
+   * `yards` away from a sound heard at no penalty out to `baseYards`. Adds
+   * the Hearing Distance Table's line (Campaigns p. 358), keyed
+   * `hearingDistance`, with `baseYards` stretched by the listener's Parabolic
+   * Hearing (Characters p. 72), and tags the roll `hearing`.
+   */
+  distance?: HearingDistance;
   /**
    * What the roll is made against, where it is an attack (since 1.49.0). It
    * reaches the `gworld.successRollModifiers` listeners untouched, so a module
@@ -536,8 +572,11 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   } = options;
   // What the actor's timed conditions and the modules add, beside the lines
   // the caller worked out.
-  const tags = successRollTags({ kind, skill: options.skill, tags: options.tags });
-  const given = options.modifiers ?? [];
+  // A sound's distance makes it a Hearing roll, with the table's line among
+  // the caller's so a listener can find and change it (since API 1.117.0).
+  const heardAt = hearingDistanceLine(actor, options.distance);
+  const tags = successRollTags({ kind, skill: options.skill, tags: heardAt ? [...(options.tags ?? []), "hearing"] : options.tags });
+  const given = heardAt ? [...(options.modifiers ?? []), heardAt] : options.modifiers ?? [];
   // The caller's lines as the listeners left them, and theirs: a keyed line a
   // listener removes is gone from the roll (since API 1.109.0).
   const modifiers = successRollLines({
