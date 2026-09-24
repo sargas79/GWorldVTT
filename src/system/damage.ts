@@ -180,7 +180,11 @@ export interface IncomingDamage {
   firstHit?: boolean;
   /** The item the blow was rolled from, where the card knows it. */
   itemUuid?: string;
-  /** Where the blow came from, where its roll said (since 1.43.0): "parriedLimb" for the strike after a bare-handed parry. */
+  /**
+   * Where the blow came from, where its roll said (since 1.43.0):
+   * "parriedLimb" for the strike after a bare-handed parry, "slam" and
+   * "slammed" for a slam's two blows (since 1.139.0).
+   */
   source?: string;
   /** Which of the item's modes it was rolled from. */
   mode?: { index: number; ranged: boolean; derived?: string };
@@ -522,6 +526,9 @@ function armourAt(
     chink: damage.chink === true,
     addonLocation: damage.addonLocation ?? null,
     options: { ...(damage.attackOptions ?? {}) },
+    // Where the blow came from, as its roll said (since 1.139.0): gear that
+    // guards against a slam, and nothing else, reads "slam" or "slammed".
+    source: damage.source ?? null,
     lines,
   });
 
