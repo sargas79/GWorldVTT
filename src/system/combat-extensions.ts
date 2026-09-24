@@ -73,7 +73,12 @@ export const COMBAT_HOOKS = Object.freeze({
   weaponAttacks: "gworld.weaponAttacks",
   /** A character's punch and kick once worked out (since 1.102.0): `{ actor, item: null, rows, damageAt, rangeAt, addToDamage }`, the rows mutable. */
   unarmedAttacks: "gworld.unarmedAttacks",
-  /** Before an equipment failure roll: `{ actor, item, target, modifiers, label }`; push lines to `modifiers`. `label` (since 1.118.0) names a module's roll, null for the exposure check. */
+  /**
+   * Before an equipment failure roll: `{ actor, item, target, modifiers, label, downgradeCriticalFailure, downgradeLabel }`;
+   * push lines to `modifiers`. `label` (since 1.118.0) names a module's roll, null for the exposure check.
+   * Set `downgradeCriticalFailure` (since 1.127.0) to make a critical failure an ordinary one, with
+   * `downgradeLabel` for the card.
+   */
   equipmentFailure: "gworld.equipmentFailure",
   /** A character's maneuver allowances as their data is prepared: `{ actor, maneuver, option, movement, defense }`, the allowances mutable. */
   maneuverAllowances: "gworld.maneuverAllowances",
@@ -405,11 +410,24 @@ export function feintModifiers(context: Omit<FeintContext, "modifiers" | "refusa
   return { modifiers, refusal };
 }
 
-/** Runs the equipment failure hook: the target, and the lines modules added to it. */
-export function equipmentFailureModifiers(actor: any, item: any, target: number, label: string | null = null): { target: number; modifiers: ModifierLine[] } {
-  const context = callCombatHook(COMBAT_HOOKS.equipmentFailure, { actor, item, target, modifiers: [] as ModifierLine[], label });
+/**
+ * Runs the equipment failure hook: the target, the lines modules added to it,
+ * and (since 1.127.0) whether a critical failure counts only as a failure --
+ * null where it counts in full, or the card's line for it ("" for the
+ * system's own).
+ */
+export function equipmentFailureModifiers(
+  actor: any,
+  item: any,
+  target: number,
+  label: string | null = null,
+): { target: number; modifiers: ModifierLine[]; downgrade: string | null } {
+  const context = callCombatHook(COMBAT_HOOKS.equipmentFailure, {
+    actor, item, target, modifiers: [] as ModifierLine[], label, downgradeCriticalFailure: false, downgradeLabel: "",
+  });
   const modifiers = (context.modifiers ?? []).filter((m) => typeof m?.label === "string" && typeof m.value === "number" && Number.isFinite(m.value));
-  return { target: target + modifiers.reduce((sum, m) => sum + m.value, 0), modifiers };
+  const downgrade = context.downgradeCriticalFailure === true ? String(context.downgradeLabel ?? "").trim() : null;
+  return { target: target + modifiers.reduce((sum, m) => sum + m.value, 0), modifiers, downgrade };
 }
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;

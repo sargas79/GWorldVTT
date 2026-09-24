@@ -3989,6 +3989,7 @@
       "FailureTitle": "{name}: {label}",
       "FailureLabel": "Equipment failure",
       "FailureModifier": "Modifier",
+      "Downgraded": "A critical failure, held to an ordinary failure",
       "CareLabel": "How it has been treated: +1 cleaned daily, 0 ordinary, -1 or -2 abused",
       "HireOffer": "Nobody here has a repair skill. Hire a technician at ${rate} an hour?",
       "Hired": "A hired technician",
