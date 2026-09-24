@@ -2845,6 +2845,10 @@
       "Disarmed": "{foe} is disarmed — the weapon flies a yard.",
       "Unready": "{foe} keeps the weapon, but it is unready.",
       "HeldFast": "{foe} holds on to it.",
+      "DisarmedWeapon": "{foe}'s {weapon} is knocked away — it flies a yard, and is out of their hands until picked up.",
+      "UnreadyWeapon": "{foe} keeps the {weapon}, but it is unready.",
+      "HeldFastWeapon": "{foe} holds on to the {weapon}.",
+      "NotApplied": "Nobody connected may change {foe}'s {weapon}: a GM has to be logged in. Change it on their sheet by hand.",
       "CannotDisarm": "{weapon} can only be struck to damage it, not knocked away"
     },
     "Subdue": {

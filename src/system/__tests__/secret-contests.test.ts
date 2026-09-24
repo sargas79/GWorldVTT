@@ -63,3 +63,17 @@ describe("a punch or a kick on the attack (Characters p. 271)", () => {
     expect(unarmedBlow(undefined)).toBeNull();
   });
 });
+
+describe("the item a side of a Quick Contest names (since API 1.136.0)", () => {
+  it("reaches that side's success-roll context and the afterQuickContest report", async () => {
+    foundryWith([3, 4, 5, 2, 2, 2]);
+    const seen: Array<{ event: string; context: any }> = [];
+    globals.Hooks = { call: () => true, callAll: (event: string, context: any) => { seen.push({ event, context: structuredClone({ ...context, actor: undefined, opponent: undefined, first: undefined, second: undefined, item: context.item?.name, firstItem: context.first?.item?.name ?? null, secondItem: context.second?.item?.name ?? null }) }); return true; } };
+    const sword = { name: "Sword" };
+    await rollQuickContest({ label: "Disarm", tags: ["disarm"], first: { ...side("A", 12), item: sword }, second: side("B", 11) });
+    const rolls = seen.filter((s) => s.event === "gworld.successRollModifiers");
+    expect(rolls.map((r) => r.context.item ?? null)).toEqual(["Sword", null]);
+    const after = seen.find((s) => s.event === "gworld.afterQuickContest");
+    expect(after?.context).toMatchObject({ firstItem: "Sword", secondItem: null });
+  });
+});
