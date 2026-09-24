@@ -1977,6 +1977,7 @@
       "Situational": "situational",
       "Modifier": "Modifier",
       "ModifierTitle": "Situational Modifier",
+      "HeldModifiers": "Held for this roll, and added to it already:",
       "Roll": "Roll",
       "BasicDamage": "basic damage",
       "WoundingModifier": "Wounding modifier",

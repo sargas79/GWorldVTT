@@ -176,6 +176,7 @@ import { POSTURE_EFFECTS } from "../rules/posture.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
 import { rollMalediction } from "./malediction.js";
+import { pendingModifierLines, spendPendingModifiers } from "./pending-modifiers.js";
 
 const CHAT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/success-roll.hbs`;
 const DAMAGE_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-roll.hbs`;
@@ -603,7 +604,10 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
     skill: options.skill,
     tags: [...(options.tags ?? []), ...(heardAt ? ["hearing"] : []), ...(options.resistance === true ? ["resist"] : [])],
   });
-  const given = heardAt ? [...(options.modifiers ?? []), heardAt] : options.modifiers ?? [];
+  // A bonus a module held for this roll (since API 1.132.0) is among the
+  // caller's lines, so a listener sees it and may take it off.
+  const held = pendingModifierLines(actor, { skill: options.skill, tags });
+  const given = [...(options.modifiers ?? []), ...(heardAt ? [heardAt] : []), ...held.map((h) => h.line)];
   // The caller's lines as the listeners left them, and theirs: a keyed line a
   // listener removes is gone from the roll (since API 1.109.0).
   // A listener may refuse the roll outright (since API 1.131.0), but not an
@@ -797,6 +801,8 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
       : {}),
   }, messageMode ? { messageMode } : {});
 
+  // The dice are rolled, so the bonuses held for it are used up.
+  await spendPendingModifiers(actor, held, modifiers);
   afterSuccessRoll({ actor, label, kind, skill: String(options.skill ?? ""), tags, outcome, ...(options.item ? { item: options.item } : {}) });
 
   // What the fumble did to the weapon travels back to whoever rolled, who
@@ -1529,10 +1535,10 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
  * Returns null when the dialog is dismissed, which cancels the roll — distinct
  * from returning 0, which rolls unmodified.
  */
-export async function promptForModifier(): Promise<number | null> {
+export async function promptForModifier(held: RollModifier[] = []): Promise<number | null> {
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: game.i18n.localize("GWORLD.Chat.ModifierTitle") },
-    content: `<div class="gworld">
+    content: `<div class="gworld">${heldModifiersNote(held)}
       <label style="display:flex;align-items:center;gap:8px">
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" autofocus style="width:80px">
@@ -1551,6 +1557,26 @@ export async function promptForModifier(): Promise<number | null> {
   });
 
   return typeof result === "number" && Number.isFinite(result) ? result : null;
+}
+
+/**
+ * The bonuses held for this roll (since API 1.132.0), listed above the
+ * modifier so the player knows they are coming and not to add them again.
+ */
+function heldModifiersNote(held: RollModifier[]): string {
+  if (held.length === 0) return "";
+  const escape = foundry.utils.escapeHTML;
+  const lines = held.map((m) => `<li>${escape(m.label)} ${m.value > 0 ? "+" : ""}${m.value}</li>`).join("");
+  return `<p class="hint">${escape(game.i18n.localize("GWORLD.Chat.HeldModifiers"))}</p><ul class="held-modifiers">${lines}</ul>`;
+}
+
+/**
+ * The bonuses held for the roll a sheet button is about to make, as the roll
+ * itself will find them, for its dialog to list.
+ */
+function heldForRoll(actor: any, rollType: string | undefined, skill: string | undefined, dataset: DOMStringMap): RollModifier[] {
+  const tags = successRollTags({ kind: rollKind(rollType), skill, tags: [dataset.basedOn, dataset.sense].filter((t): t is string => Boolean(t)) });
+  return pendingModifierLines(actor, { skill, tags }).map((h) => h.line);
 }
 
 /**
@@ -1801,7 +1827,7 @@ async function rollAction(
     ? shot.modifiers
     : melee
       ? melee.modifiers
-      : await maybePromptModifiers(event);
+      : await maybePromptModifiers(event, heldForRoll(actor, rollType, target.dataset.rollSkill ?? (rollType === "skill" ? rollLabel : undefined), target.dataset));
   if (modifiers === null) return null;
 
   modifiers.push(...standingRollLines(actor, {
@@ -4380,10 +4406,10 @@ function rollKind(rollType: string | undefined): RollKind {
  * Shift-click asks for a situational modifier. Returns null when the prompt is
  * dismissed, meaning the caller should abandon the roll entirely.
  */
-async function maybePromptModifiers(event: Event): Promise<RollModifier[] | null> {
+async function maybePromptModifiers(event: Event, held: RollModifier[] = []): Promise<RollModifier[] | null> {
   if (!(event as MouseEvent).shiftKey) return [];
 
-  const value = await promptForModifier();
+  const value = await promptForModifier(held);
   if (value === null) return null;
   if (value === 0) return [];
   return [{ label: game.i18n.localize("GWORLD.Chat.Situational"), value }];
