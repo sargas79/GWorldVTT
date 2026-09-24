@@ -97,12 +97,13 @@ import { manaLevel } from "./casting.js";
 import { PARTY_CHANGED_HOOK, addMembers, membersOf, partyOf, removeMember } from "./party.js";
 import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from "./campaign.js";
 import { objectStats, type ItemObjectStats } from "./object-stats.js";
+import { addPendingModifier, pendingModifiers, removePendingModifier, type PendingModifierRequest } from "./pending-modifiers.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.120.0";
+export const API_VERSION = "1.132.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -179,6 +180,26 @@ const actors = {
   /** The timed conditions on an actor (since 1.5.0). */
   conditions(actor: any) {
     return activeConditions(actor);
+  },
+
+  /**
+   * Holds a bonus for the actor's next success roll that matches it (since
+   * 1.132.0): `{ label, value, tags?, skill?, expires? }`. The roll takes its
+   * line and uses it up; it lapses unused at `expires`, a world time. Returns
+   * its id, or null where it can't be held.
+   */
+  addPendingModifier(actor: any, request: PendingModifierRequest): Promise<string | null> {
+    return addPendingModifier(actor, request);
+  },
+
+  /** The bonuses held on an actor for rolls to come, lapsed ones left out (since 1.132.0). */
+  pendingModifiers(actor: any) {
+    return pendingModifiers(actor);
+  },
+
+  /** Takes a held bonus off unused, by the id `addPendingModifier` returned (since 1.132.0). */
+  removePendingModifier(actor: any, id: string): Promise<boolean> {
+    return removePendingModifier(actor, id);
   },
 
   /**
