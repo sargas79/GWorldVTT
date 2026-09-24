@@ -1429,6 +1429,13 @@ Two fields a module may read (since 1.62.0):
   secret roll's refusal stays secret). It still resolves to null, unless the
   caller passes `returnRefusal: true`, which makes it resolve to
   `{ refused: true, reason, base, effective, modifiers }` instead.
+  Since 1.121.0 a roll to resist something (an HT roll against a poison, a
+  stun or a blinding light) isn't refused, because it isn't an attempt
+  (Campaigns p. 348). `roll.success` takes `resistance: true`, which also
+  tags the roll `resist`; a roll the caller tags `resist` (as the system's
+  affliction rolls are) counts as one without it. Such a roll is rolled at
+  any effective level: at 1 or 2 a 3 or 4 succeeds, as always, 17 and 18
+  fail, and anything else misses.
 - **Medical hooks** (since 1.109.0):
   - *The tech level of First Aid* (Campaigns p. 424): `gworld.firstAid` also
     gets `techLevel`, the healer's TL to start with. A listener may set it
