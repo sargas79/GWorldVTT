@@ -4118,6 +4118,10 @@
       "CouldManifest": "Could manifest as: {abilities}",
       "Unpowered": "{trait} is a {power} ability, but has no power modifier — so it is not psionic. Add the modifier if it is meant to be."
     },
+    "Crippled": {
+      "HealsIn": "heals in {days} days",
+      "Heal": "Healed: take it off"
+    },
     "Towing": {
       "Title": "Towing",
       "Line": "Towing: {label}"

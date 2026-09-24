@@ -51,6 +51,13 @@
             data-tooltip="{{localize "GWORLD.Dying.CripplingHint"}}">
       {{localize "GWORLD.Dying.Crippling"}}
     </button>
+    {{#each crippled as |part|}}
+      {{!-- A part crippled for a while, until it heals (Campaigns p. 422). --}}
+      <span class="ichip warn">
+        {{localize "GWORLD.Chat.Crippled"}}: {{part.label}} &middot; {{part.duration}}{{#if part.heals}} &middot; {{part.heals}}{{/if}}
+        <a data-action="healCrippled" data-id="{{part.id}}" data-tooltip="{{localize 'GWORLD.Crippled.Heal'}}">&times;</a>
+      </span>
+    {{/each}}
     <button type="button" class="ibtn" data-action="suffocate"
             data-tooltip="{{localize "GWORLD.Air.Hint"}}">
       {{localize "GWORLD.Air.Action"}}

@@ -55,6 +55,8 @@ import { rollFall } from "./falling.js";
 import { restoreFatigue, spendFatigueFor } from "./fatigue.js";
 import { changeTrait, type TraitChanged } from "./trait-change.js";
 import { stopTowing, tow } from "./towing.js";
+import { cripple, crippledParts, healCrippled, type CrippledPart } from "./crippling.js";
+import type { CripplingDuration } from "../rules/mortal-wounds.js";
 import type { Conveyance } from "../rules/towing.js";
 import { bind, bindingOf, breakFreeFromBinding, unbind, type BindingBroken } from "./entangling.js";
 import type { LandingSurface } from "../rules/falling.js";
@@ -99,7 +101,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.113.0";
+export const API_VERSION = "1.114.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -256,6 +258,26 @@ const actors = {
    */
   tow(actor: any, options: { weight: number; conveyance?: Conveyance; smooth?: boolean; label?: string }) {
     return tow(actor, options);
+  },
+
+  /**
+   * Cripples a part of a character for a while (Campaigns p. 422; since
+   * 1.114.0): `temporary` until back at full HP, `lasting` for `months` (or
+   * 1d months less `treatedAtTl`'s relief), `permanent` for good. Shown on
+   * the sheet until it heals. Resolves to the part recorded, or null.
+   */
+  cripple(actor: any, location: string, options: { duration: CripplingDuration; label?: string; months?: number; treatedAtTl?: number | null }): Promise<CrippledPart | null> {
+    return cripple(actor, location, options);
+  },
+
+  /** The parts crippled now, healed ones left out (since 1.114.0). */
+  crippled(actor: any): CrippledPart[] {
+    return crippledParts(actor);
+  },
+
+  /** Takes a crippled part off, by id or location (since 1.114.0). False where there was none. */
+  healCrippled(actor: any, which: string): Promise<boolean> {
+    return healCrippled(actor, which);
   },
 
   /** Lets go of a pulled load (since 1.113.0). False where there was none. */
