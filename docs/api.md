@@ -1595,7 +1595,9 @@ Two fields a module may read (since 1.62.0):
   current has stopped), and holds the recovery rolls with `holdRecovery`: a
   stun for its second, or for the contact plus (20 - HT) seconds after a
   continuous shock; unconsciousness from a lethal one for the contact plus
-  its (20 - HT) minutes. `hazards.irradiate({ actor, rads,
+  its (20 - HT) minutes. Since 1.119.0 it resolves to a `ShockOutcome` (or
+  null where nothing was done), and two hooks reach inside it: see *Shock
+  hooks* below. `hazards.irradiate({ actor, rads,
   protectionFactor, modifier })` adds a dose of radiation (p. 435). Before a
   dose is added, `gworld.radiationDose` fires with `{ actor, rads,
   protectionFactor, sources }`: change `rads`, and push a label to `sources`.
@@ -1607,6 +1609,53 @@ Two fields a module may read (since 1.62.0):
   `penetrating` is taken as already through. `location` aims at a location,
   or null rolls for one; `arc` picks the face. It posts the card and, for a
   vehicle actor its user owns, takes the injury off its hit points.
+- **Shock hooks** (since 1.119.0; Campaigns pp. 432-433). The Basic Set
+  leaves the HT modifier for a source's strength to the GM, and metal
+  armour's DR 1 is already a DR that counts only against a shock. Both hooks
+  fire for `hazards.shock` and for the sheet's Shock tool.
+  - *Before anything is rolled*: `gworld.shockModifiers` is called with
+    `{ actor, kind, formula, continuous, contactSeconds, modifier,
+    injuryStep, heartAttackMargin, dr, rollOnZeroInjury, immune, lines }`. The first
+    five are what the shock was called with, to read. The rest are mutable:
+    - `modifier`: the HT modifier for the source's strength.
+    - `injuryStep`: the points of injury per -1 to the HT roll, 2 by
+      default (p. 432). 0 or less: the injury gives no modifier.
+    - `heartAttackMargin`: the failure that stops the heart. 5 for a lethal
+      shock, where a critical failure also does; null for a nonlethal or
+      localized one, which never does in the Basic Set. Set a number to
+      give one a heart attack on a failure by that much or more (a critical
+      failure counts only for a lethal shock), or null for none at all.
+    - `dr`: a DR that counts only against this shock, in place of the
+      armour's at the spot it lands. 1 in metal armour, otherwise null (the
+      armour counts as against any burning damage).
+    - `rollOnZeroInjury`: true to roll against a lethal or localized shock
+      whose burning damage did no injury. By default nothing got through
+      and nothing is rolled.
+    - `immune`: true for a victim the shock doesn't touch, such as one in
+      gear that makes the wearer immune to it. False by default. Then there
+      is no damage, no roll and no stun. The card shows the listener's
+      `lines`, or "Unaffected by the shock" where there are none, and
+      `gworld.afterShock` still fires, with `immune` true and the rest of
+      the outcome saying nothing happened.
+    - Push strings to `lines` for the card.
+    A value that isn't a number keeps the default.
+  - *Once it is worked out*: `gworld.afterShock` is called with the actor
+    and the outcome, after the stun or unconsciousness is applied and
+    before the card is posted. `contact` and `lines` are mutable. The
+    outcome, `ShockOutcome`, is also what `hazards.shock` resolves to:
+    `{ kind, immune, injury, dr, rolled, target, roll, success, criticalFailure,
+    margin, injuryModifier, stunned, stunSeconds, unconscious,
+    unconsciousMinutes, heartAttack, contactSeconds, contact, lines }`.
+    - `dr` is the DR the damage met, or null without a damage roll.
+    - `rolled` says whether the HT roll was made. `target` and `roll` are
+      null where it wasn't, and `success` is then true.
+    - `margin` is the margin of success or failure, never negative.
+    - `stunSeconds` includes the contact of a continuous shock.
+    - `contact` is null until a listener sets `{ held, label? }`, for a
+      victim who can't let go of the source. With `held` true the card
+      shows `label`, or "Can't let go of the source". What holding the
+      victim does is the module's: the system applies nothing more.
+    - `lines` are the card's lines, the listener's pushes included.
 - **Fragile** (since 1.93.0; Characters pp. 136-137): the disadvantage's
   five kinds now do what the book says. A character's are
   `traitEffects.fragile`, a list of `"brittle"`, `"combustible"`,
