@@ -19,6 +19,8 @@ import {
   coneMayStillCatch,
   coneWidth,
   defendsAgainstArea,
+  designationHeld,
+  designationRolls,
   flightPlan,
   guidanceModifiers,
   halvesDamage,
@@ -174,6 +176,40 @@ describe("guided and homing weapons (p. 412)", () => {
     expect(accuracyApplies({ guidance: "guided", aimed: true, secondsInFlight: 1 })).toBe(true);
     // An ordinary shell gets nothing for being slow.
     expect(accuracyApplies({ guidance: "none", aimed: false, secondsInFlight: 5 })).toBe(false);
+  });
+
+  it("gives a homing weapon that locked on its Acc, as if it had aimed", () => {
+    expect(accuracyApplies({ guidance: "homing", aimed: false, secondsInFlight: 1, lockedOn: true })).toBe(true);
+    expect(accuracyApplies({ guidance: "homing", aimed: false, secondsInFlight: 1, lockedOn: false })).toBe(false);
+    // A guided weapon has no seeker to lock on, and an ordinary shell none either.
+    expect(accuracyApplies({ guidance: "guided", aimed: false, secondsInFlight: 1, lockedOn: true })).toBe(false);
+    expect(accuracyApplies({ guidance: "none", aimed: false, secondsInFlight: 1, lockedOn: true })).toBe(false);
+  });
+});
+
+describe("semi-active homing (p. 413)", () => {
+  it("asks for a roll each turn of flight, the turn of launch included", () => {
+    expect(designationRolls({ semiActive: true, secondsInFlight: 1, falls: false })).toBe(1);
+    expect(designationRolls({ semiActive: true, secondsInFlight: 3, falls: false })).toBe(3);
+    // Even a figure of 0 is the turn it was launched on.
+    expect(designationRolls({ semiActive: true, secondsInFlight: 0, falls: false })).toBe(1);
+  });
+
+  it("asks nothing of an active seeker, or of a missile that crashes first", () => {
+    expect(designationRolls({ semiActive: false, secondsInFlight: 3, falls: false })).toBe(0);
+    expect(designationRolls({ semiActive: true, secondsInFlight: 3, falls: true })).toBe(0);
+  });
+
+  it("holds only while every roll asked for succeeds", () => {
+    const hit = { success: true };
+    const miss = { success: false };
+    expect(designationHeld([hit, hit, hit], 3)).toBe(true);
+    expect(designationHeld([hit, miss], 3)).toBe(false);
+    // Stopped short: the rolls after the first failure were never made.
+    expect(designationHeld([hit], 3)).toBe(false);
+    // A roll that could not be attempted is a failure.
+    expect(designationHeld([null], 1)).toBe(false);
+    expect(designationHeld([], 0)).toBe(true);
   });
 });
 

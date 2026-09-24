@@ -56,7 +56,7 @@
     <div class="npcline" style="gap: 10px; align-items: center; flex-wrap: wrap">
       <strong>{{magic.held.name}}</strong>
       <span class="tag">{{magic.held.energy}} {{localize "GWORLD.Held.Energy"}}</span>
-      {{#if magic.held.damage}}<span class="tag tag-accent">{{magic.held.damage}} {{magic.held.damageType}}</span>{{/if}}
+      {{#if magic.held.damage}}<span class="tag tag-accent">{{shownDamage magic.held.damage}} {{magic.held.damageType}}</span>{{/if}}
       {{#if magic.held.missile}}<span class="tag">{{magic.held.seconds}}/3 {{localize "GWORLD.Held.Seconds"}}</span>{{/if}}
       {{#if @root.editable}}
         {{#if magic.held.canEnlarge}}

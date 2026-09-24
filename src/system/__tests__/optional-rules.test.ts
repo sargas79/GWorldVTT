@@ -58,7 +58,9 @@ describe("the rule catalogue", () => {
       .filter((key) => !OPTIONAL_RULES.cinematic.some((rule) => rule.key === key));
     // Familiarity is not optional in the book, but it is off until a table
     // keeps the list: with none kept, every weapon would be unfamiliar.
-    expect(off.sort()).toEqual(["bleeding", "damageToShields", "familiarity"]);
+    // Modifying Dice + Adds is headed "Optional Rule" (Characters p. 269), and
+    // changes every damage figure a player already knows.
+    expect(off.sort()).toEqual(["bleeding", "damageToShields", "familiarity", "modifyingDiceAdds"]);
   });
 
   /**

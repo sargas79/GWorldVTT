@@ -16,6 +16,8 @@ import { SYSTEM_ID } from "./constants.js";
 import { conditionLabel, setCondition } from "./conditions.js";
 import { callCombatHook } from "./combat-extensions.js";
 import { PROCEDURE_HOOKS, applyCondition, type ConditionApplication } from "./procedure-extensions.js";
+import type { CalledShot } from "./called-shot.js";
+import type { HitLocation } from "../rules/hit-locations.js";
 import {
   AFFLICTIONS,
   PAIN_GRADES,
@@ -318,6 +320,33 @@ function describe(effect: AfflictionEffect): string[] {
   return out;
 }
 
+/** Where the attack behind an affliction's resistance roll struck. */
+export interface AfflictionLocation {
+  hitLocation: HitLocation;
+  /** A location a module registered, as `<module>.<key>`; `hitLocation` is its parent. */
+  addonLocation: string | null;
+}
+
+/**
+ * Where the attack that forced a resistance roll struck (since 1.130.0;
+ * Campaigns pp. 398-400).
+ *
+ * A blow lands somewhere: where it was aimed, or the torso for a blow nobody
+ * aimed, as it is for damage. An area or a cone falls on
+ * the whole body at once, and a table playing without hit locations has no
+ * location to speak of, so neither has one.
+ */
+export function afflictionLocation(options: {
+  hitLocations: boolean;
+  area: boolean;
+  shot: CalledShot | null;
+}): AfflictionLocation | null {
+  if (!options.hitLocations || options.area) return null;
+  const shot = options.shot;
+  if (!shot?.hitLocation) return { hitLocation: "torso", addonLocation: null };
+  return { hitLocation: shot.hitLocation, addonLocation: shot.addonLocation ?? null };
+}
+
 /**
  * What a failed resistance roll leaves behind (since 1.49.0).
  *
@@ -341,9 +370,19 @@ export async function applyAfflictionEffects(context: {
   frightEffect?: string | null;
   /** For an area attack, yards from its centre (since 1.63.0). */
   distance?: number;
+  /**
+   * Where the attack struck, or null where there is no location: hit
+   * locations off, an area or a cone (since 1.130.0).
+   */
+  hitLocation?: HitLocation | null;
+  /** The module's location it struck, or null (since 1.130.0). */
+  addonLocation?: string | null;
 }): Promise<string[]> {
   const fired = callCombatHook(PROCEDURE_HOOKS.afflictionEffect, {
     ...context,
+    // A caller from before 1.130.0 says nothing of where the attack struck.
+    hitLocation: context.hitLocation ?? null,
+    addonLocation: context.addonLocation ?? null,
     effects: [] as ConditionApplication[],
   });
   const effects = Array.isArray(fired.effects) ? fired.effects : [];
