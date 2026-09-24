@@ -1984,6 +1984,7 @@
       "Crippled": "Crippled",
       "InjuryCapped": "Capped at {cap}: {lost} not taken",
       "InjuryCappedWhy": "Capped at {cap} ({reason}): {lost} not taken",
+      "Vulnerable": "Vulnerability ×{multiplier} ({label})",
       "MajorWound": "Major wound — HT roll to avoid knockdown and stunning",
       "ConsciousnessRoll": "HT roll to stay conscious, at",
       "DeathCheck": "HT roll to avoid death",

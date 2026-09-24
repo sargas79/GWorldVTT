@@ -1298,6 +1298,23 @@ Two fields a module may read (since 1.62.0):
   whether there was one. The rolls to recover from the effect never get it
   ("DR has no effect on this roll"). An affliction resisted with a Fright
   Check gets no line; `attack.drBonus` is there for a module that wants one.
+- **Vulnerability from worn gear** (since 1.106.0; Characters p. 161): a
+  `gworld.injury` listener may put `damage.vulnerabilities`, a list of
+  `{ form, multiplier, label? }`, on a blow, for gear that makes its wearer
+  vulnerable to a kind of damage (soaked clothing to burning, say). `form` is
+  written as a Vulnerability trait's is -- `fire`, `acid`, `crushing`,
+  `cutting`, `impaling`, `piercing`, `silver` -- or is a damage type's own
+  code (`burn`, `pi+`), which matches that type alone. The list is weighed
+  with the victim's Vulnerability traits and, as among those, the worst one
+  that applies to the blow counts, not the product: its multiplier applies
+  to the damage that penetrates DR, before the wounding modifier. The
+  result (`gworld.afterDamage`'s `result`) carries `vulnerability`,
+  `{ multiplier, label }` -- the trait's name, or the listener's `label`
+  (its `form` where it gave none) -- where one multiplied damage that got
+  through, else null, and the applied card shows it beside the injury.
+  `rules.worstVulnerability({ vulnerabilities, material?, damageType })`
+  returns `{ multiplier, vulnerability }`; `rules.vulnerabilityMultiplier`
+  still returns the multiplier alone.
 - **An affliction's effect** (since 1.49.0): `gworld.afflictionEffect` fires
   when a resistance roll fails, with
   `{ actor, attacker, item, mode, label, margin, effects }`. Push a
