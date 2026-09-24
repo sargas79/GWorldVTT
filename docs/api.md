@@ -3152,6 +3152,15 @@ and a formula with no dice are left alone, and a multiplier is kept.
   formula. The sheet shows the converted figure, and `roll.damage` converts
   once its modifiers are summed. The card then shows the converted formula and
   "from" the one it replaced.
+- **A blast counts the dice rolled.** An explosion reaches 2 yards per die of
+  damage and its fragments 5 per die (Campaigns p. 414), and with the rule on
+  those are the dice after the conversion: 2d+5 rolled as 3d+1 reaches 6
+  yards, not 4. The card's radius, the `diceOfDamage` on the damage flag (so
+  the collateral damage where the blast lands) and the fragments' radius on
+  the scatter card all count them the same way.
+- **Players can read the rules page.** The Rules menu opens for everyone; for
+  a player it is read-only, opening on the rules in play. The card's "Adds
+  rolled as dice" line opens it too.
 
 ## Taking over data the system is dropping
 

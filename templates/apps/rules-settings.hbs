@@ -1,9 +1,20 @@
 <div class="gr">
   <p class="gr-intro">{{localize "GWORLD.Rules.Intro"}}</p>
+  {{#if readOnly}}
+    {{!-- A player's view: which rules are in play, and why a figure on the
+         sheet reads as it does, but only the GM changes them. --}}
+    <p class="gr-intro gr-readonly">{{localize "GWORLD.Rules.ReadOnly"}}</p>
+  {{/if}}
 
   <input type="search" name="rule-search" class="gr-search" value="{{query}}" autocomplete="off"
          placeholder="{{localize 'GWORLD.Rules.Search'}}" aria-label="{{localize 'GWORLD.Rules.Search'}}" />
 
+  {{#if readOnly}}
+  <label class="gr-bulk gr-inplay">
+    <input type="checkbox" name="in-play-only" {{#if inPlayOnly}}checked{{/if}} />
+    {{localize "GWORLD.Rules.InPlayOnly"}}
+  </label>
+  {{else}}
   <div class="gr-bulk">
     {{!-- While a search is typed these act on only the rules it shows, and
          say so: the label is swapped as the search filters. --}}
@@ -13,15 +24,16 @@
             data-label-all="{{localize 'GWORLD.Rules.AllOff'}}" data-label-shown="{{localize 'GWORLD.Rules.ShownOff'}}">{{localize "GWORLD.Rules.AllOff"}}</button>
     <button type="button" class="ibtn" data-action="restore">{{localize "GWORLD.Rules.Restore"}}</button>
   </div>
+  {{/if}}
 
   <div class="gr-body">
     {{#each groups as |group|}}
       <section class="gr-group" data-search="{{group.search}}">
         <h3>{{localize group.label}}{{#if group.source}} <span class="gr-source">{{group.source}}</span>{{/if}}</h3>
         {{#each group.rules as |rule|}}
-          <label class="gr-rule{{#if rule.pending}} pending{{/if}}" data-search="{{rule.search}}">
+          <label class="gr-rule{{#if rule.pending}} pending{{/if}}" data-search="{{rule.search}}" data-on="{{#if rule.enabled}}true{{else}}false{{/if}}">
             <input type="checkbox" data-rule="{{rule.key}}"
-                   {{#if rule.enabled}}checked{{/if}} {{#if rule.pending}}disabled{{/if}} />
+                   {{#if rule.enabled}}checked{{/if}} {{#if (or rule.pending @root.readOnly)}}disabled{{/if}} />
             <span class="gr-text">
               <span class="gr-name">
                 {{localize rule.label}}
@@ -49,8 +61,10 @@
     <p class="gr-hint gr-empty gr-nomatch" hidden>{{localize "GWORLD.Rules.NoMatch"}}</p>
   </div>
 
+  {{#unless readOnly}}
   <div class="gr-foot">
     {{#if dirty}}<span class="gr-dirty">{{localize "GWORLD.Rules.Unsaved"}}</span>{{/if}}
     <button type="button" class="ibtn" data-action="save">{{localize "GWORLD.Rules.Save"}}</button>
   </div>
+  {{/unless}}
 </div>

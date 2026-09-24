@@ -58,6 +58,16 @@
           <button type="button" class="v2-button" data-action="openSources">{{localize "GWORLD.Sources.MenuLabel"}}</button>
         </div>
       </div>
+    {{else}}
+      {{!-- A player can't change the world's rules, but can see which are in
+           play: some change the figures on their sheet. --}}
+      <div class="v2-panel party-world">
+        <h2 class="v2-ph">{{localize "GWORLD.Rules.Title"}}</h2>
+        <p class="v2-note">{{localize "GWORLD.Rules.ViewHint"}}</p>
+        <div class="party-buttons">
+          <button type="button" class="v2-button" data-action="openRules">{{localize "GWORLD.Rules.ViewLabel"}}</button>
+        </div>
+      </div>
     {{/if}}
   </div>
 
