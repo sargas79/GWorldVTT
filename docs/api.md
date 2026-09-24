@@ -1435,7 +1435,9 @@ Two fields a module may read (since 1.62.0):
   tags the roll `resist`; a roll the caller tags `resist` (as the system's
   affliction rolls are) counts as one without it. Such a roll is rolled at
   any effective level: at 1 or 2 a 3 or 4 succeeds, as always, 17 and 18
-  fail, and anything else misses.
+  fail, and anything else misses. The system's own HT rolls to stay
+  conscious at 0 HP or less (Campaigns p. 419) are resistance rolls too, so
+  they are made however far below zero the HP have gone.
 - **Medical hooks** (since 1.109.0):
   - *The tech level of First Aid* (Campaigns p. 424): `gworld.firstAid` also
     gets `techLevel`, the healer's TL to start with. A listener may set it

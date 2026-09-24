@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { rollConsciousness } from "../consciousness.js";
 import { PROCEDURE_HOOKS } from "../procedure-extensions.js";
 import { rollSuccess } from "../roll.js";
 
@@ -119,6 +120,19 @@ describe("a roll to resist below an effective 3", () => {
     const { heard } = await resist(1, 3);
     const context = heard.find((h) => h.event === PROCEDURE_HOOKS.successRollModifiers)?.context;
     expect(context.tags).toContain("resist");
+  });
+
+  it("rolls to stay conscious at an effective 2, and a 4 keeps the character up", async () => {
+    const { cards, heard } = foundryWith(DICE[4]!);
+    const actor = { ...victim(), update: vi.fn() };
+    await rollConsciousness(actor, -8);
+    const card = JSON.parse(String(cards[0].data.content));
+    expect(card.refused).toBeUndefined();
+    expect(card.effective).toBe(2);
+    expect(card.outcome).toMatchObject({ roll: 4, success: true });
+    expect(actor.update).not.toHaveBeenCalled();
+    const context = heard.find((h) => h.event === PROCEDURE_HOOKS.successRollModifiers)?.context;
+    expect(context.tags).toEqual(expect.arrayContaining(["consciousness", "resist"]));
   });
 
   it("still refuses an attempt below 3", async () => {
