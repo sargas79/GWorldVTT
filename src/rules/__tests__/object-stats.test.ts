@@ -27,6 +27,13 @@ describe("object stats a module changed", () => {
       .toEqual({ kind: "unliving", dr: 8, hp: 7, ht: 0, notes: ["Rugged: +2 HT", "Cheap"] });
   });
 
+  it("keeps a kind the book names, and ignores any other (since API 1.126.0)", () => {
+    expect(settleObjectStats(base, { kind: "diffuse" }).kind).toBe("diffuse");
+    expect(settleObjectStats(base, { kind: "homogenous" }).kind).toBe("homogenous");
+    expect(settleObjectStats(base, { kind: "gaseous" }).kind).toBe("unliving");
+    expect(settleObjectStats(base, { kind: 3 }).kind).toBe("unliving");
+  });
+
   it("falls back to the book's figures for anything that isn't a number", () => {
     expect(settleObjectStats(base, { dr: "8", hp: Number.NaN, ht: undefined, notes: "no" }))
       .toEqual({ ...base, notes: [] });

@@ -129,6 +129,20 @@ export async function recordCalledShot(actor: any, shot: CalledShot | null): Pro
 }
 
 /**
+ * Reads the called shot the last attack roll left, without spending it
+ * (since API 1.130.0).
+ *
+ * An affliction's resistance roll is made against the same attack as the
+ * damage roll of a line that both burns and shocks, and the two can be
+ * clicked in either order. The attack roll itself replaces the flag, so
+ * leaving it for the damage roll carries nothing into the next attack.
+ */
+export function peekCalledShot(actor: any): CalledShot | null {
+  const shot = actor?.getFlag?.(SYSTEM_ID, CALLED_SHOT_FLAG) as CalledShot | undefined;
+  return shot?.hitLocation ? shot : null;
+}
+
+/**
  * Collects the called shot the next damage roll belongs to.
  *
  * Spent whichever way it goes: a shot aimed at the eye and then rolled for

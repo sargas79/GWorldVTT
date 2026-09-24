@@ -20,6 +20,14 @@ export type ObjectKind =
   /** Nets, mattresses, things with nothing solid in them. */
   | "diffuse";
 
+/** The kinds of thing the book tells apart. */
+export const OBJECT_KINDS: readonly ObjectKind[] = ["unliving", "homogenous", "diffuse"];
+
+/** Whether a value is one of the {@link OBJECT_KINDS}. */
+export function isObjectKind(value: unknown): value is ObjectKind {
+  return typeof value === "string" && (OBJECT_KINDS as readonly string[]).includes(value);
+}
+
 /** Typical DR by what a thing is made of (p. 483). */
 export const TYPICAL_DR: Readonly<Record<string, number>> = {
   /** "Wooden or plastic tools, gadgets, furniture, etc. usually have DR 2." */
@@ -92,4 +100,24 @@ export function objectState(currentHp: number, maxHp: number): ObjectState {
  */
 export function rollsToKeepWorking(state: ObjectState): boolean {
   return state === "failing" || state === "breaking";
+}
+
+/** "At -5xHP, the object is destroyed" (p. 484): no roll, nothing left to mend. */
+export const OBJECT_DESTROYED_MULTIPLE = 5;
+
+/**
+ * The HT rolls a blow calls for (p. 484), as the multiples of -HP it takes the
+ * thing to or past: one at -1xHP, and one more at each further multiple, as a
+ * living being rolls to stay alive. None for a blow that takes it to -5xHP,
+ * which destroys it without a roll, nor for one that leaves it where it was.
+ */
+export function objectSurvivalChecks(currentBefore: number, currentAfter: number, maxHp: number): number[] {
+  if (maxHp <= 0 || currentAfter >= currentBefore) return [];
+  if (currentAfter <= -OBJECT_DESTROYED_MULTIPLE * maxHp) return [];
+  const checks: number[] = [];
+  for (let multiple = 1; multiple < OBJECT_DESTROYED_MULTIPLE; multiple++) {
+    const threshold = -multiple * maxHp;
+    if (currentBefore > threshold && currentAfter <= threshold) checks.push(multiple);
+  }
+  return checks;
 }

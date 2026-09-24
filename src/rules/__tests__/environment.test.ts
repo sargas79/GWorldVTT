@@ -12,6 +12,7 @@ import {
   exposureResult,
   heatModifier,
   heatSurcharge,
+  isHotDay,
   mealsRecoveredByRest,
   starvationFatigue,
   waterNeeded,
@@ -130,6 +131,15 @@ describe("the heat (Campaigns p. 434)", () => {
     expect(heatSurcharge(85)).toBe(0);
     expect(heatSurcharge(100)).toBe(1);
     expect(heatSurcharge(130)).toBe(2);
+  });
+
+  /** The day's temperature makes a hot day for the Fatigue Costs table (p. 426; #740). */
+  it("calls a day hot once an active human starts rolling, later for the heat-tolerant", () => {
+    expect(isHotDay(SWELTERING_F)).toBe(false);
+    expect(isHotDay(SWELTERING_F + 1)).toBe(true);
+    expect(isHotDay(95, 20)).toBe(false);
+    expect(isHotDay(101, 20)).toBe(true);
+    expect(isHotDay(Number.NaN)).toBe(false);
   });
 });
 

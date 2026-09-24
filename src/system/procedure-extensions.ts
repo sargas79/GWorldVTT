@@ -73,7 +73,10 @@ function isLine(line: unknown): line is ModifierLine {
 
 /** The hooks this module fires, by name. */
 export const PROCEDURE_HOOKS = Object.freeze({
-  /** Before any success roll: `{ actor, label, kind, skill, base, tags, modifiers }`; push to `modifiers`. */
+  /**
+   * Before any success roll: `{ actor, label, kind, skill, base, tags, modifiers }`; push to `modifiers`.
+   * Where the context carries `refusal` (null), set it to text to stop the roll (since 1.131.0).
+   */
   successRollModifiers: "gworld.successRollModifiers",
   /** After a success roll is posted: `{ actor, label, kind, skill, tags, outcome }`. */
   afterSuccessRoll: "gworld.afterSuccessRoll",
@@ -90,6 +93,12 @@ export const PROCEDURE_HOOKS = Object.freeze({
   afterQuickContest: "gworld.afterQuickContest",
   /** Once a knockdown roll is applied (since 1.39.0): `{ actor, outcome, result, previousPosture }`. */
   afterKnockdown: "gworld.afterKnockdown",
+  /**
+   * Once a disarm's Quick Contest is applied (since 1.136.0): `{ actor, foe,
+   * item, result }`, `item` the foe's weapon struck at (or null) and `result`
+   * `{ disarmed, unready, attackerDisarmed }`.
+   */
+  afterDisarm: "gworld.afterDisarm",
   /** After a roll to stay conscious (since 1.43.0): `{ actor, outcome, previousPosture }`. */
   afterConsciousnessRoll: "gworld.afterConsciousnessRoll",
   /** When a combat starts: `(combat)`. */
@@ -123,12 +132,21 @@ export const PROCEDURE_HOOKS = Object.freeze({
   radiationDose: "gworld.radiationDose",
   /**
    * Before an electrical shock is worked out (since 1.119.0; Campaigns pp. 432-433):
-   * `{ actor, kind, formula, continuous, contactSeconds, modifier, injuryStep,
-   * heartAttackMargin, dr, rollOnZeroInjury, immune, lines }`. `modifier`, `injuryStep`,
-   * `heartAttackMargin`, `dr`, `rollOnZeroInjury` and `immune` are mutable; push a
-   * string to `lines` for the card.
+   * `{ actor, kind, source, tags, formula, continuous, contactSeconds, modifier, injuryStep,
+   * heartAttackMargin, heartAttackOnCritical, dr, rollOnZeroInjury, immune, lines }`.
+   * `modifier`, `injuryStep`, `heartAttackMargin`, `heartAttackOnCritical` (since 1.127.0),
+   * `dr`, `rollOnZeroInjury` and `immune` are mutable; push a string to `lines` for the
+   * card. `source` and `tags` (since 1.127.0) are what the caller gave.
    */
   shockModifiers: "gworld.shockModifiers",
+  /**
+   * Once a shock's burning damage is rolled and taken, before the HT roll
+   * (since 1.127.0): `{ actor, kind, source, tags, formula, damageRoll, dr, injury,
+   * injuryModifier, modifier, rollOnZeroInjury, lines }`. `damageRoll` is the roll
+   * before DR. `modifier` and `rollOnZeroInjury` are mutable; push a string to
+   * `lines` for the card. Not called where there is no damage roll.
+   */
+  shockDamage: "gworld.shockDamage",
   /**
    * Once a shock's roll and its effects are applied, before the card is posted
    * (since 1.119.0): the `ShockOutcome` with `actor`. `contact` and `lines` are
@@ -155,6 +173,11 @@ export const PROCEDURE_HOOKS = Object.freeze({
    */
   fatigueCost: "gworld.fatigueCost",
   /**
+   * Once fatigue has been charged (since 1.138.0): `{ actor, reason, details, exertion,
+   * fpLost, hpLost, fp, hp, sources }`, after Very Fit and the fatigue chart. Read-only.
+   */
+  afterFatigue: "gworld.afterFatigue",
+  /**
    * What somebody is wearing against the cold (since 1.76.0): `{ actor, clothing, label }`.
    * Set `clothing` to `light`, `winter`, `arctic` or `heatedSuit`, and `label` to the gear.
    */
@@ -169,6 +192,13 @@ export const PROCEDURE_HOOKS = Object.freeze({
    * source, how }`, `how` being `brokeFree` or `unbound`.
    */
   bindingBroken: "gworld.bindingBroken",
+  /**
+   * Before a stretch of study is turned into points (since 1.133.0; Characters
+   * pp. 292-293): `{ actor, skill, method, hours, multiplier, lines }`.
+   * `multiplier` (1) is mutable, the share of `hours` that counts; push a
+   * string to `lines` for the card.
+   */
+  studyModifiers: "gworld.studyModifiers",
 });
 
 /**
@@ -378,6 +408,13 @@ export interface SuccessRollContext {
   /** What sort of roll it is beyond its kind: `fastDraw`, `fright`, `knockdown`, `teaching`, `contest`, a defense's name... */
   tags: string[];
   modifiers: ModifierLine[];
+  /**
+   * Why the roll can't be made at all (since 1.131.0). It is on the context,
+   * as null, only where the roll can be refused -- one made through
+   * `roll.success`, other than an active defense -- and a listener that sets
+   * it to text stops the roll: no dice, and a card that says why.
+   */
+  refusal?: string | null;
   /** For a side of a contest, the actor on the other side (since 1.30.0). */
   opponent?: any;
   /** The actor looked for, on a roll to detect them (since 1.63.0). */
@@ -500,7 +537,24 @@ export function successRollModifiers(context: SuccessRollContext): ModifierLine[
  * left them -- changed, or taken out, as a keyed line may be -- and theirs.
  */
 export function successRollLines(context: SuccessRollContext): ModifierLine[] {
-  const ctx: SuccessRollContext = { ...context, tags: [...context.tags], modifiers: [...context.modifiers] };
+  return hookedSuccessRoll(context, false).modifiers;
+}
+
+/**
+ * The lines of a success roll that may be refused, as {@link successRollLines}
+ * gives them, and the reason a listener gave for refusing it, or null (since
+ * API 1.131.0). Only a roll whose caller will act on a refusal asks this, so
+ * a listener finds `refusal` on the context only where setting it counts.
+ */
+export function refusableSuccessRoll(context: SuccessRollContext): { modifiers: ModifierLine[]; refusal: string | null } {
+  return hookedSuccessRoll(context, true);
+}
+
+function hookedSuccessRoll(context: SuccessRollContext, refusable: boolean): { modifiers: ModifierLine[]; refusal: string | null } {
+  const ctx: SuccessRollContext = {
+    ...context, tags: [...context.tags], modifiers: [...context.modifiers],
+    ...(refusable ? { refusal: null } : {}),
+  };
   ctx.modifiers.push(...conditionModifiers(ctx.actor, ctx.kind, ctx.tags));
   if (ctx.tags.includes("detection")) ctx.modifiers.push(...detectionModifiers(ctx));
   // Smoke, fog and the like on the scene (since 1.63.0).
@@ -516,7 +570,9 @@ export function successRollLines(context: SuccessRollContext): ModifierLine[] {
     }
   }
   callCombatHook(PROCEDURE_HOOKS.successRollModifiers, ctx);
-  return ctx.modifiers.filter(isLine);
+  // Text, not merely something truthy: the card and the warning show it.
+  const refusal = refusable && typeof ctx.refusal === "string" && ctx.refusal.trim() ? ctx.refusal.trim() : null;
+  return { modifiers: ctx.modifiers.filter(isLine), refusal };
 }
 
 /** Tells the listeners how a success roll went. */
@@ -539,7 +595,11 @@ export interface FatigueCostContext {
   reason: string;
   /** Whether it is exertion, which Fit and Very Fit lighten (Characters p. 55). */
   exertion: boolean;
-  /** What else the caller knows: a battle's `seconds`, the weather's `heat` and `temperatureF`... */
+  /**
+   * What else the caller knows: a battle's `seconds`, the weather's `heat` and
+   * `temperatureF`... A battle or a march carries the day's `temperatureF`
+   * (null where none is set) and whether it is `hot` (since 1.138.0).
+   */
   details: Record<string, unknown>;
   /** Labels a listener pushes to say why the cost changed. */
   sources: string[];
@@ -548,7 +608,8 @@ export interface FatigueCostContext {
 /**
  * The fatigue an action costs once the `gworld.fatigueCost` listeners have
  * had their say: a module's heat surcharge on exertion (Campaigns p. 434), or
- * a hot day's extra point for a battle (p. 426).
+ * a hot day's extra point for a battle (p. 426), read off the day's
+ * temperature the battle's `details` carry.
  */
 export function fatigueCost(options: Omit<FatigueCostContext, "sources" | "details"> & { details?: Record<string, unknown> }): { fp: number; sources: string[] } {
   const ctx = callCombatHook<FatigueCostContext>(PROCEDURE_HOOKS.fatigueCost, {
@@ -564,6 +625,39 @@ export function fatigueCost(options: Omit<FatigueCostContext, "sources" | "detai
     fp: Number.isFinite(fp) ? Math.max(0, Math.round(fp)) : options.fp,
     sources: (Array.isArray(ctx.sources) ? ctx.sources : []).filter((s): s is string => typeof s === "string" && s !== ""),
   };
+}
+
+/** What fatigue cost once it was charged, for the `gworld.afterFatigue` listeners (since 1.138.0). */
+export interface AfterFatigueContext {
+  actor: any;
+  /** What it was for, as `gworld.fatigueCost` was told. */
+  reason: string;
+  /** What else the caller knew, as `gworld.fatigueCost` was told. */
+  details: Readonly<Record<string, unknown>>;
+  exertion: boolean;
+  /** The FP actually lost, after the listeners, Very Fit and the chart. */
+  fpLost: number;
+  /** The HP it cost: past 0 FP each point of fatigue is a point of injury too. */
+  hpLost: number;
+  fp: Readonly<{ previous: number; now: number; max: number }>;
+  hp: Readonly<{ previous: number; now: number; max: number }>;
+  /** What the `gworld.fatigueCost` listeners said changed the cost. */
+  sources: readonly string[];
+}
+
+/**
+ * Tells the listeners what fatigue cost once it has been charged. Everything
+ * is frozen: the FP is spent, and a rule that follows from it (a collapse, a
+ * card of the module's) acts on the figures rather than changing them.
+ */
+export function afterFatigue(context: AfterFatigueContext): void {
+  callCombatHook(PROCEDURE_HOOKS.afterFatigue, Object.freeze({
+    ...context,
+    details: Object.freeze({ ...context.details }),
+    fp: Object.freeze({ ...context.fp }),
+    hp: Object.freeze({ ...context.hp }),
+    sources: Object.freeze([...context.sources]),
+  }));
 }
 
 /** The four classes of clothing against the cold (Campaigns p. 430). */
@@ -609,6 +703,8 @@ export interface QuickContestSideResult {
   base: number;
   effective: number;
   outcome: unknown;
+  /** The item the side rolled with, or null (since 1.136.0). */
+  item?: any;
 }
 
 /** Tells the listeners who won a Quick Contest (since 1.37.0). */
@@ -626,8 +722,9 @@ export function afterQuickContest(context: {
 /** What a contest resolver can see. */
 export interface ContestResolverContext {
   label: string;
-  first: { actor: any; base: number; note?: string };
-  second: { actor: any; base: number; note?: string };
+  /** Each side's `item`, where the caller named one (since 1.136.0). */
+  first: { actor: any; base: number; note?: string; item?: any };
+  second: { actor: any; base: number; note?: string; item?: any };
   tags: string[];
 }
 

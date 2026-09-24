@@ -493,6 +493,10 @@
       "Unsaved": "Unsaved changes",
       "AllOn": "All on",
       "AllOff": "All off",
+      "ShownOn": "Shown on",
+      "ShownOff": "Shown off",
+      "Search": "Find a rule",
+      "NoMatch": "No rules match.",
       "Restore": "Restore defaults",
       "NoneYet": "No rules are registered in this group yet.",
       "NotYet": "not built yet",
@@ -618,6 +622,10 @@
         "bleeding": {
           "Name": "Bleeding",
           "Hint": "A wound keeps costing HP each minute until it is bound. The book marks this optional for the bookkeeping."
+        },
+        "modifyingDiceAdds": {
+          "Name": "Modifying dice + adds",
+          "Hint": "Large damage bonuses are rolled as dice: every +7 becomes +2d and a +4 left over becomes +1d, after every bonus (per die ones included) is added. 1d+9 rolls as 3d+2. Negative adds are never turned into fewer dice."
         },
         "grappling": {
           "Name": "Grappling",
@@ -962,7 +970,10 @@
       "Added": "Added {name}.",
       "NotFound": "That compendium entry could not be loaded.",
       "Count": "{total} entries",
-      "Truncated": "showing {shown} of {total}",
+      "Range": "{from}–{to} of {total}",
+      "Page": "Page {page} of {pages}",
+      "Previous": "Previous",
+      "Next": "Next",
       "Empty": "Nothing matches.",
       "Loading": "loading…",
       "LoadingHint": "Reading the compendia…",
@@ -1598,7 +1609,9 @@
       "AimingSkill": "Aiming skill",
       "AimingSkillHint": "A skill the firer rolls before the attack, such as a launcher operator's; the attack is only rolled if it succeeds. Blank for none.",
       "GuidedSkillLevel": "Projectile's skill",
-      "GuidedSkillLevelHint": "The projectile's own skill level, rolled for the attack once it has been aimed. 0 uses the firer's."
+      "GuidedSkillLevelHint": "The projectile's own skill level, rolled for the attack once it has been aimed. 0 uses the firer's.",
+      "SemiActive": "Semi-active",
+      "SemiActiveHint": "Homes on a spot someone keeps on the target, not on the target itself. The attack only hits while the spot is held: a DX-based Forward Observer roll for each turn of flight, made before the attack roll, and it misses on the first one failed."
     },
     "Gear": {
       "Carried": "Carried",
@@ -1751,7 +1764,9 @@
       "MovingMount": "Moving mount",
       "LaserSight": "Laser sight",
       "LaserSeen": "The target sees the laser dot",
-      "AimingRoll": "Aiming ({skill})"
+      "AimingRoll": "Aiming ({skill})",
+      "LockedOn": "Accuracy (locked on)",
+      "LockedOnBox": "The seeker has locked on (+Acc, as if aimed)"
     },
     "TechLevel": {
       "Line": "TL{equipment} equipment, TL{skill} skill",
@@ -1962,6 +1977,7 @@
       "Situational": "situational",
       "Modifier": "Modifier",
       "ModifierTitle": "Situational Modifier",
+      "HeldModifiers": "Held for this roll, and added to it already:",
       "Roll": "Roll",
       "BasicDamage": "basic damage",
       "WoundingModifier": "Wounding modifier",
@@ -1995,7 +2011,8 @@
       "SubtractDRDivisor": "Divide the target's DR by {divisor} (rounding down), subtract it from basic damage, then apply the wounding modifier.",
       "Cancel": "Cancel",
       "MassShot": "pellets as one mass: damage and DR ×{times}",
-      "HalfDamage": "Past 1/2D: halved from {full}"
+      "HalfDamage": "Past 1/2D: halved from {full}",
+      "ModifiedDice": "Adds rolled as dice, from {formula}"
     },
     "HitLocation": {
       "torso": "Torso",
@@ -2637,6 +2654,9 @@
       "Clothing_heatedSuit": "Heated suit",
       "Wet": "Wet through",
       "Wind": "Wind (mph)",
+      "Keep": "Keep this as the day’s temperature",
+      "Setting": "The day’s temperature (°F)",
+      "SettingHint": "The temperature where the party is (Campaigns pp. 426, 434). Above 80°F it is a hot day, and a march costs 1 FP more an hour. The Weather dialog starts on it. Leave blank where it doesn’t matter.",
       "Conditions": "{degrees}°F, a roll every {minutes} minutes",
       "Bore": "Bore it",
       "HeatStroke": "Heat stroke",
@@ -2828,6 +2848,10 @@
       "Disarmed": "{foe} is disarmed — the weapon flies a yard.",
       "Unready": "{foe} keeps the weapon, but it is unready.",
       "HeldFast": "{foe} holds on to it.",
+      "DisarmedWeapon": "{foe}'s {weapon} is knocked away — it flies a yard, and is out of their hands until picked up.",
+      "UnreadyWeapon": "{foe} keeps the {weapon}, but it is unready.",
+      "HeldFastWeapon": "{foe} holds on to the {weapon}.",
+      "NotApplied": "Nobody connected may change {foe}'s {weapon}: a GM has to be logged in. Change it on their sheet by hand.",
       "CannotDisarm": "{weapon} can only be struck to damage it, not knocked away"
     },
     "Subdue": {
@@ -3429,7 +3453,17 @@
       "Passenger": "Aboard",
       "SpecsHint": "The line as the vehicle tables print it (Campaigns pp. 462-465). The Overview works its figures out from these.",
       "Description": "Description",
-      "NotesHint": "What it is doing here, who owns it, where it is kept"
+      "NotesHint": "What it is doing here, who owns it, where it is kept",
+      "CrippledParts": "Crippled",
+      "CrippledPartsHint": "How many of each are crippled now (Campaigns p. 555). A shot that cripples one counts it here. Set it by hand for a flat tyre, and back to 0 once it is repaired.",
+      "CrippledMove": {
+        "wheel": "{count} crippled wheel(s): Move {acceleration}/{topSpeed}, as for a character with that many legs losing one",
+        "track": "A crippled track: ground Move 0",
+        "runner": "A crippled runner or skid: ground Move 0",
+        "rotor": "A crippled rotor: air Move 0, and an airborne vehicle loses control and crashes",
+        "wing": "A crippled wing: air Move 0, and an airborne vehicle loses control and crashes",
+        "mast": "{count} crippled mast(s): Move {acceleration}/{topSpeed}"
+      }
     },
     "GearCategory": {
       "weapon": "Weapon",
@@ -3478,6 +3512,7 @@
       "How": "How",
       "PointsEarned": "{points} character point(s) into the skill",
       "NoPointYet": "Not a whole point yet",
+      "StudyCounted": "Counted as {hours} hours",
       "Banked": "{hours} hours banked toward the next",
       "BankedShort": "{hours} h banked",
       "NoSkills": "Nothing to study: add a skill first",
@@ -3844,6 +3879,24 @@
       "Weapon": "Weapon",
       "NoWeaponToStrike": "The foe has no weapon in hand to strike at."
     },
+    "ItemDamage": {
+      "Label": "{name} is damaged",
+      "HtRoll": "HT roll at -{multiple}xHP: {roll} against {target}",
+      "Holds": "it holds together.",
+      "Destroyed": "it is destroyed.",
+      "Kind": {
+        "unliving": "Unliving",
+        "homogenous": "Homogenous",
+        "diffuse": "Diffuse"
+      },
+      "State": {
+        "sound": "Sound",
+        "damaged": "Damaged: below a third of its HP, it may work less well",
+        "failing": "At 0 HP or below: a HT roll each second it is used, or it stops working",
+        "breaking": "At -1xHP or below, and still in one piece",
+        "destroyed": "Destroyed"
+      }
+    },
     "Ammunition": {
       "none": "Ordinary",
       "hp": "Hollow-point",
@@ -3959,6 +4012,7 @@
       "FailureTitle": "{name}: {label}",
       "FailureLabel": "Equipment failure",
       "FailureModifier": "Modifier",
+      "Downgraded": "A critical failure, held to an ordinary failure",
       "CareLabel": "How it has been treated: +1 cleaned daily, 0 ordinary, -1 or -2 abused",
       "HireOffer": "Nobody here has a repair skill. Hire a technician at ${rate} an hour?",
       "Hired": "A hired technician",
@@ -4095,7 +4149,9 @@
     "hardOfHearing": "Hard of Hearing",
     "deafness": "Deafness",
     "blindness": "Blindness",
-    "accustomedToBlindness": "Used to being blind"
+    "accustomedToBlindness": "Used to being blind",
+    "oneEye": "One Eye",
+    "oneArm": "One Arm"
     },
     "Malediction": {
       "Label": "{name} (Malediction {level})",
@@ -4131,7 +4187,11 @@
     },
     "Crippled": {
       "HealsIn": "heals in {days} days",
-      "Heal": "Healed: take it off"
+      "Heal": "Healed: take it off",
+      "Undecided": "How long is not yet known",
+      "TemporaryNoInjury": "Temporary — no injury caused it, so full HP doesn't end it",
+      "Settle": "Roll HT to see how long it lasts (Campaigns p. 422)",
+      "Roll": "roll HT"
     },
     "Towing": {
       "Title": "Towing",
@@ -4341,7 +4401,9 @@
       "ConeWidth": "The cone is {yards} yards wide here",
       "MayStillCatch": "A miss may still catch the target in the area",
       "MustSteer": "Concentrate each turn to steer it — lose sight of the target and it misses; Attack on the turn it arrives",
-      "DamageHoldsUp": "Damage does not fall off with distance"
+      "DamageHoldsUp": "Damage does not fall off with distance",
+      "HoldSpot": "Holding the spot ({skill}), turn {turn} of {turns}",
+      "SpotLost": "{name} lost the spot on the target: the homing attack misses"
     },
     "HurtingYourself": {
       "Title": "Hurting yourself",
@@ -4625,6 +4687,11 @@
       "ActiveDefenses": "Active defenses",
       "RetreatHint": "Retreat: +3 to Dodge, +1 to Parry and Block (+3 with a fencing weapon), chosen when you defend.",
       "HitLocations": "Hit locations and armor",
+      "DrLine": "{label}: DR {dr}",
+      "DrLineWhy": "{label}: DR {dr} ({reason})",
+      "DrLineRefused": "{label}: does not count",
+      "DrLineRefusedWhy": "{label}: does not count ({reason})",
+      "DrLineLocation": "The location's own: DR {dr}",
       "BodyOutline": "Hit locations on the body",
       "CombatLog": "Combat log",
       "ShowInChat": "Show this card in the chat log",

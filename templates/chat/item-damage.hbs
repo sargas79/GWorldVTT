@@ -1,0 +1,33 @@
+{{!-- A thing damaged at a module's say (GURPS Basic Set: Campaigns pp. 483-484). --}}
+<div class="gworld gworld-chat">
+  <div class="gc-head">
+    <span class="gc-label">{{label}}</span>
+    <span class="gc-target">{{localize "GWORLD.Breakage.Object" dr=dr hp=hp}}</span>
+  </div>
+
+  <div class="gc-mods">
+    <span>{{kindLabel}}</span>
+    <span>{{damage}} {{type}}{{#if divided}} ({{armorDivisor}}){{/if}}</span>
+    <span>{{localize "GWORLD.Chat.DrSubtracted"}} {{effectiveDr}}</span>
+    <span>{{localize "GWORLD.Chat.Penetrating"}} {{penetrating}}</span>
+    <span>&times;{{modifier}}</span>
+  </div>
+  <div class="gc-result {{#if injury}}failure{{else}}success{{/if}}">
+    {{#if injury}}
+      {{localize "GWORLD.Breakage.Injury" injury=injury lost=to hp=hp}}
+    {{else}}
+      {{localize "GWORLD.Chat.Stopped" dr=effectiveDr}}
+    {{/if}}
+  </div>
+
+  {{#each rolls as |r|}}
+    <div class="gc-result {{#if r.success}}success{{else}}crit-failure{{/if}}">
+      {{localize "GWORLD.ItemDamage.HtRoll" multiple=r.multiple roll=r.roll target=r.target}}
+      &mdash; {{#if r.success}}{{localize "GWORLD.ItemDamage.Holds"}}{{else}}{{localize "GWORLD.ItemDamage.Destroyed"}}{{/if}}
+    </div>
+  {{/each}}
+
+  <div class="gc-mods">
+    <span class="gc-mod">{{stateLabel}}</span>
+  </div>
+</div>

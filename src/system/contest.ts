@@ -43,6 +43,13 @@ export interface ContestSide {
    * which one was picked.
    */
   note?: string;
+  /**
+   * The item the side rolls with, where there is one (since 1.136.0): on a
+   * disarm, the attacker's weapon and the foe's weapon struck at. It reaches
+   * the side's `gworld.successRollModifiers` context and the contest
+   * resolvers, so a rule that turns on the weapon held can find it.
+   */
+  item?: any;
 }
 
 /** Rolls one side of a contest against its own effective score. */
@@ -50,7 +57,7 @@ async function rollSide(side: ContestSide, label = "", opponent: any = null, tag
   const given = side.modifiers ?? [];
   // What the side's conditions and the modules add to its roll: since 1.30.0
   // they also see who is on the other side, and what sort of contest it is.
-  const added = successRollModifiers({ actor: side.actor, label, kind: "contest", skill: side.note ?? "", base: side.base, tags: ["contest", ...tags], modifiers: [...given], opponent });
+  const added = successRollModifiers({ actor: side.actor, label, kind: "contest", skill: side.note ?? "", base: side.base, tags: ["contest", ...tags], modifiers: [...given], opponent, ...(side.item ? { item: side.item } : {}) });
   const modifiers = [...given, ...added].filter((m) => m.value !== 0);
   const effective = side.base + modifiers.reduce((sum, m) => sum + m.value, 0);
 
@@ -270,7 +277,7 @@ export async function rollQuickContest(options: {
   });
 
   // And the modules hear who won (since 1.37.0).
-  const report = (side: RolledSide) => ({ actor: side.side.actor ?? null, base: side.side.base, effective: side.effective, outcome: side.outcome });
+  const report = (side: RolledSide) => ({ actor: side.side.actor ?? null, base: side.side.base, effective: side.effective, outcome: side.outcome, item: side.side.item ?? null });
   afterQuickContest({ label: options.label, tags, first: report(first), second: report(second), outcome: result.outcome, marginOfVictory: result.marginOfVictory });
 
   return result;
