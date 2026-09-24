@@ -2561,6 +2561,7 @@
       "Label": "What you can see",
       "Darkness": "Darkness (0 to 9)",
       "Blindness": "Blind (-6, attacking as the blind do)",
+      "SuddenBlindness": "Blinded (-10, not yet used to it)",
       "clear": "The target, clearly",
       "positionKnown": "Nothing, but you know where they are (-4)",
       "foeUnseen": "Everything but the target (-6)",
@@ -4090,7 +4091,11 @@
       "nictitatingMembrane": "Nictitating Membrane",
       "parabolicHearing": "Parabolic Hearing",
       "hamFisted": "Ham-Fisted",
-      "noSmellTaste": "No Sense of Smell/Taste"
+      "noSmellTaste": "No Sense of Smell/Taste",
+    "hardOfHearing": "Hard of Hearing",
+    "deafness": "Deafness",
+    "blindness": "Blindness",
+    "accustomedToBlindness": "Used to being blind"
     },
     "Malediction": {
       "Label": "{name} (Malediction {level})",
@@ -4579,6 +4584,7 @@
         "hardOfHearing": "Hard of Hearing",
         "deafness": "Deaf",
         "blindness": "Blind",
+        "accustomedToBlindness": "Used to being blind (-6 in combat, not -10)",
         "lame": "Lame",
         "oneArm": "One arm",
         "sealed": "Sealed",

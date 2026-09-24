@@ -3284,6 +3284,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         darkVision: traits.darkVision,
         infravision: traits.infravision,
         blindness: traits.blindness,
+        // Blindness gear or a condition imposed fights at -10, not -6 (p. 124).
+        accustomedToBlindness: traits.accustomedToBlindness,
         nearsighted: traits.badSight === "nearsighted",
       },
       // The four senses as Perception rolls, each after the traits that

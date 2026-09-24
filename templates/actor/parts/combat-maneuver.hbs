@@ -258,7 +258,11 @@
       {{/unless}}
     {{/each}}
     {{#if derived.vision.blindness}}
-      <span class="ichip warn">{{localize "GWORLD.Sight.Blindness"}}</span>
+      {{#if derived.vision.accustomedToBlindness}}
+        <span class="ichip warn">{{localize "GWORLD.Sight.Blindness"}}</span>
+      {{else}}
+        <span class="ichip warn">{{localize "GWORLD.Sight.SuddenBlindness"}}</span>
+      {{/if}}
     {{/if}}
     {{#if derived.legPenalty}}
       <span class="ichip warn" data-tooltip="{{localize 'GWORLD.Attack.LameHint'}}">{{localize "GWORLD.Attack.Lame" penalty=derived.legPenalty}}</span>

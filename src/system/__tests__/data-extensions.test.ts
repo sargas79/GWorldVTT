@@ -468,6 +468,28 @@ describe("trait effects a module adds (since 1.47.0)", () => {
     ]);
   });
 
+  it("lets a listener impose Hard of Hearing, Deafness or Blindness, and say what did (since 1.116.0)", async () => {
+    const { moduleTraitEffects } = await load();
+    const { noTraitEffects } = await import("../../rules/trait-effects.js");
+    const { senseScores } = await import("../../rules/senses.js");
+    globals.Hooks = {
+      callAll: (_hook: string, context: {
+        effects: { hardOfHearing: boolean; blindness: boolean };
+        sources: Array<{ effect: string; label: string }>;
+      }) => {
+        context.effects.hardOfHearing = true;
+        context.effects.blindness = true;
+        context.sources.push({ effect: "hardOfHearing", label: "Ear Protectors" }, { effect: "blindness", label: "Flash" });
+      },
+    };
+    const result = moduleTraitEffects({ name: "Someone" }, noTraitEffects());
+    const rows = senseScores(12, result.effects);
+    expect(rows.find((r) => r.sense === "hearing")).toMatchObject({ score: 8, modifier: -4 });
+    expect(rows.find((r) => r.sense === "vision")?.score).toBeNull();
+    expect(result.effects.accustomedToBlindness).toBe(false);
+    expect(result.sources.map((s) => s.effect)).toEqual(["hardOfHearing", "blindness"]);
+  });
+
   it("changes nothing at all when a listener throws", async () => {
     const { moduleTraitEffects } = await load();
     globals.Hooks = {

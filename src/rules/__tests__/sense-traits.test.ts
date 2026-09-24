@@ -113,3 +113,29 @@ describe("what Restricted Vision does to the arcs (Characters p. 151)", () => {
     expect(arcDefense({ arc: flank.arc, side: flank.side }).modifier).toBe(-2);
   });
 });
+
+/** Hard of Hearing, Deafness and Blindness imposed rather than owned (Characters pp. 124, 129, 138). */
+describe("the sense disadvantages gear or a condition imposes (since API 1.116.0)", () => {
+  it("has the Blindness disadvantage used to it, and nobody else", () => {
+    expect(traitEffects([{ name: "Blindness" }])).toMatchObject({ blindness: true, accustomedToBlindness: true });
+    expect(noTraitEffects()).toMatchObject({ hardOfHearing: false, deafness: false, blindness: false, accustomedToBlindness: false });
+  });
+
+  it("reads imposed ones into the sense rows as it reads the owned traits", () => {
+    const effects = traitEffects([{ name: "Acute Hearing", levels: 2 }]);
+    addTraitEffects(effects, { hardOfHearing: true });
+    expect(senseScore("hearing", 12, effects)).toMatchObject({ score: 10, modifier: -2 });
+    addTraitEffects(effects, { deafness: true, blindness: true });
+    const rows = senseScores(12, effects);
+    expect(rows.find((r) => r.sense === "hearing")?.score).toBeNull();
+    expect(rows.find((r) => r.sense === "vision")?.score).toBeNull();
+    // Imposed blindness is fresh blindness: -10 in combat, not the -6 of the disadvantage.
+    expect(effects.accustomedToBlindness).toBe(false);
+  });
+
+  it("keeps a character used to blindness used to it when gear blinds them too", () => {
+    const effects = traitEffects([{ name: "Blindness" }]);
+    addTraitEffects(effects, { blindness: true });
+    expect(effects.accustomedToBlindness).toBe(true);
+  });
+});
