@@ -27,7 +27,7 @@
  */
 
 import * as rules from "../rules/index.js";
-import { normalizeSkillName } from "../rules/skills.js";
+import { skillLevelOf } from "./skill-level.js";
 import { incompatibleModules, satisfiesApiRange } from "./api-version.js";
 import { combatApi } from "./combat-extensions.js";
 import { clearZenShot, pendingZenShot, registerZenSkill, rollZenSkill, zenSkillsOf } from "./zen.js";
@@ -52,13 +52,19 @@ import type { ControlRating, LegalityClass } from "../rules/legality.js";
 import { currentControlRating, legalityClassOf } from "./legality.js";
 import { surprise, undoKnockdown } from "./knockdown.js";
 import { rollFall } from "./falling.js";
-import { restoreFatigue } from "./fatigue.js";
+import { restoreFatigue, spendFatigueFor } from "./fatigue.js";
+import { changeTrait, type TraitChanged } from "./trait-change.js";
+import { stopTowing, tow } from "./towing.js";
+import { cripple, crippledParts, healCrippled, type CrippledPart } from "./crippling.js";
+import type { CripplingDuration } from "../rules/mortal-wounds.js";
+import type { Conveyance } from "../rules/towing.js";
+import { bind, bindingOf, breakFreeFromBinding, unbind, type BindingBroken } from "./entangling.js";
 import type { LandingSurface } from "../rules/falling.js";
 import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from "./damage-undo.js";
 import { carriedAmmunitionFor, loadAmmunition } from "./ammunition.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
 import {
-  fragileCatchesFire, fragileExplodes, fragileKindsOf, irradiate, rollBrittleLimb, shock, shootAtVehicle,
+  fragileCatchesFire, fragileExplodes, fragileKindsOf, irradiate, rollBrittleLimb, shock, shootAtVehicle, controlVehicle,
 } from "./hazards.js";
 import { detonateCharge } from "./demolition.js";
 import { equipmentUseLines, familiarWith, setFamiliar } from "./tech-level.js";
@@ -95,7 +101,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.105.0";
+export const API_VERSION = "1.115.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -126,14 +132,7 @@ const actors = {
    */
   skillLevel(actor: any, name: string): number | null {
     if (!actor || !name) return null;
-    const wanted = normalizeSkillName(name);
-    for (const item of actor.items ?? []) {
-      if (item?.type !== "skill") continue;
-      if (normalizeSkillName(String(item.name ?? "")) !== wanted) continue;
-      const level = item.system?.derived?.level;
-      return typeof level === "number" ? level : null;
-    }
-    return null;
+    return skillLevelOf(actor, name);
   },
 
   /** The active defenses as the sheet shows them, or null. */
@@ -201,12 +200,94 @@ const actors = {
   },
 
   /**
+   * Charges FP the way the system's own procedures do (Campaigns p. 426;
+   * since 1.109.0): `gworld.fatigueCost` (told `reason`, `module` by default,
+   * and `details`), Very Fit's halving where it is exertion (the default),
+   * and the fatigue chart, injury past 0 FP and all. Resolves to `{ fpLost,
+   * hpLost, sources, fp, hp, status }`, or null for a user who can't change
+   * the actor or an amount that isn't a positive number.
+   */
+  spendFatigue(actor: any, fp: number, options: { reason?: string; details?: Record<string, unknown>; exertion?: boolean } = {}) {
+    return spendFatigueFor(actor, fp, options);
+  },
+
+  /**
    * Takes a character by surprise (Campaigns p. 393; since 1.104.0): mentally
    * stunned, recovered with IQ; total surprise freezes them for 1d seconds
    * first. Resolves to `{ kind, freezeSeconds }`, or null.
    */
   surprise(actor: any, options: { total?: boolean } = {}) {
     return surprise(actor, options);
+  },
+
+  /**
+   * Holds a character in a Binding of the given ST (Characters p. 40; since
+   * 1.107.0) until they win a Quick Contest of ST or Escape against it, on
+   * the system's entangled state. `onBreak` is called in this client when it
+   * ends; `gworld.bindingBroken` is heard everywhere. False where it couldn't.
+   */
+  bind(actor: any, options: { st: number; label?: string; source?: string; onBreak?: (broken: BindingBroken) => unknown }): Promise<boolean> {
+    return bind(actor, options);
+  },
+
+  /** Takes a Binding off without a Contest (since 1.107.0). False where there was none. */
+  unbind(actor: any): Promise<boolean> {
+    return unbind(actor);
+  },
+
+  /** An actor's Binding, `{ st, label, source }`, or null (since 1.107.0). */
+  binding(actor: any): { st: number; label: string; source: string } | null {
+    return bindingOf(actor);
+  },
+
+  /**
+   * Changes one of a character's traits, GM only (since 1.112.0): `level`
+   * sets its levels within its cap, `replaceWith` swaps it for another trait
+   * (a compendium name, or item data). Found by `id` or `name`. Resolves to
+   * `{ itemId, from, to, replaced }`, or null.
+   */
+  changeTrait(actor: any, options: { id?: string; name?: string; level?: number; replaceWith?: string | Record<string, any> }): Promise<TraitChanged | null> {
+    return changeTrait(actor, options);
+  },
+
+  /**
+   * Pulls a load behind the character (Campaigns p. 353; since 1.113.0):
+   * `weight` is the load and its conveyance together; its effective weight
+   * counts toward encumbrance until `stopTowing`. Resolves to `{ effective,
+   * limit, movable }`, or null.
+   */
+  tow(actor: any, options: { weight: number; conveyance?: Conveyance; smooth?: boolean; label?: string }) {
+    return tow(actor, options);
+  },
+
+  /**
+   * Cripples a part of a character for a while (Campaigns p. 422; since
+   * 1.114.0): `temporary` until back at full HP, `lasting` for `months` (or
+   * 1d months less `treatedAtTl`'s relief), `permanent` for good. Shown on
+   * the sheet until it heals. Resolves to the part recorded, or null.
+   */
+  cripple(actor: any, location: string, options: { duration: CripplingDuration; label?: string; months?: number; treatedAtTl?: number | null }): Promise<CrippledPart | null> {
+    return cripple(actor, location, options);
+  },
+
+  /** The parts crippled now, healed ones left out (since 1.114.0). */
+  crippled(actor: any): CrippledPart[] {
+    return crippledParts(actor);
+  },
+
+  /** Takes a crippled part off, by id or location (since 1.114.0). False where there was none. */
+  healCrippled(actor: any, which: string): Promise<boolean> {
+    return healCrippled(actor, which);
+  },
+
+  /** Lets go of a pulled load (since 1.113.0). False where there was none. */
+  stopTowing(actor: any): Promise<boolean> {
+    return stopTowing(actor);
+  },
+
+  /** One attempt to break free of a Binding (since 1.107.0): "free", "held", or null. */
+  breakFree(actor: any): Promise<"free" | "held" | null> {
+    return breakFreeFromBinding(actor);
   },
 
   /** Ends an actor's bleeding and clears the condition (since 1.36.0), for a user who owns it. */
@@ -281,8 +362,14 @@ const actors = {
     return attendPatient({ ...options, modifier: options.modifier ?? 0 });
   },
 
-  /** An operation (p. 424, since 1.60.0); the roll is tagged `surgery`. */
-  operate(options: { surgeon: any; patient: any; skill?: number; techLevel?: number; anesthetic?: boolean; repairingCrippled?: boolean; equipmentQuality?: number; label?: string; modifier?: number }): Promise<void> {
+  /**
+   * An operation (p. 424, since 1.60.0); the roll is tagged `surgery`. Since
+   * 1.112.0 it resolves to the outcome -- `{ success, margin,
+   * criticalSuccess, criticalFailure, roll, target, techLevel, ... }` -- or
+   * null where the user can't change the patient, and fires
+   * `gworld.afterSuccessRoll` tagged `surgery`.
+   */
+  operate(options: { surgeon: any; patient: any; skill?: number; techLevel?: number; anesthetic?: boolean; repairingCrippled?: boolean; equipmentQuality?: number; label?: string; modifier?: number }): ReturnType<typeof operate> {
     return operate({ ...options, anesthetic: options.anesthetic ?? true, repairingCrippled: options.repairingCrippled ?? false, equipmentQuality: options.equipmentQuality ?? 0, modifier: options.modifier ?? 0 });
   },
 
@@ -657,6 +744,8 @@ const hazardsApi = Object.freeze({
     });
   },
   shock, irradiate, detonate: detonateCharge, shootAtVehicle,
+  // A vehicle control roll, with why it is made (since 1.115.0; Campaigns p. 466).
+  controlVehicle: (options: { actor: any; vehicle: any; modifier?: number; reason?: string }) => controlVehicle({ ...options, modifier: Number(options?.modifier) || 0 }),
   fragileKinds: fragileKindsOf, fragileCatchesFire, fragileExplodes, brittleLimb: rollBrittleLimb,
 });
 

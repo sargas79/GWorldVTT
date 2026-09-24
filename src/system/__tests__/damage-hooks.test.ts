@@ -157,6 +157,28 @@ describe("gworld.armorDr", () => {
     expect(arcs).toEqual(["back", null]);
   });
 
+  it("knows how the blow was aimed: the called shot, a chink, the module's location and the options (since 1.108.0)", async () => {
+    const { actor } = armoured({ dr: 6 });
+    const seen: any[] = [];
+    globals.Hooks = {
+      callAll: (event: string, context: any) => {
+        if (event !== "gworld.armorDr") return;
+        seen.push({ calledShot: context.calledShot, chink: context.chink, addonLocation: context.addonLocation, options: context.options });
+        // A rule that strikes around partial cover refuses the plate for this option.
+        if (context.options["my-module.around"] === true) for (const line of context.lines) line.applies = false;
+      },
+    };
+    const aimed = await applyDamageToActor(actor, {
+      basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso", chink: true,
+      calledShot: { hitLocation: "torso", addonLocation: null, chink: true },
+      attackOptions: { "my-module.around": true },
+    } as never);
+    await applyDamageToActor(actor, { basicDamage: 10, type: "cr", armorDivisor: 1, hitLocation: "torso" } as never);
+    expect(seen[0]).toEqual({ calledShot: { hitLocation: "torso", addonLocation: null, chink: true }, chink: true, addonLocation: null, options: { "my-module.around": true } });
+    expect(seen[1]).toEqual({ calledShot: null, chink: false, addonLocation: null, options: {} });
+    expect(aimed?.penetrating).toBe(10);
+  });
+
   it("counts a line a listener adds, meeting the blow first when it is a field (since 1.56.0)", async () => {
     const { actor } = armoured({ dr: 6 });
     globals.Hooks = {
@@ -455,3 +477,14 @@ describe("ablative DR spent by a blow (Characters p. 47)", () => {
   });
 });
 
+
+describe("attack options kept on a flag (since 1.108.0)", () => {
+  it("go as pairs, so a module's dotted key is not nested, and come back whole", async () => {
+    const { attackOptionEntries, attackOptionsFromEntries } = await import("../roll.js");
+    const entries = attackOptionEntries({ "my-module.around": true, "my-module.level": 2 });
+    expect(entries).toEqual([["my-module.around", true], ["my-module.level", 2]]);
+    expect(attackOptionsFromEntries(entries)).toEqual({ "my-module.around": true, "my-module.level": 2 });
+    expect(attackOptionsFromEntries({ my: { nested: true } })).toEqual({});
+    expect(attackOptionsFromEntries([["", 1], "junk"])).toEqual({});
+  });
+});

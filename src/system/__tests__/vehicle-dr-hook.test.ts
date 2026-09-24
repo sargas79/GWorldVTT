@@ -112,3 +112,15 @@ describe("gworld.vehicleDr (since 1.79.0)", () => {
     expect(update).not.toHaveBeenCalled();
   });
 });
+
+describe("gworld.afterVehicleHit (since 1.115.0)", () => {
+  it("says what the shot did once it is done, and shootAtVehicle returns it", async () => {
+    const heard: any[] = [];
+    stubFoundry(3, (event, context) => { if (event === COMBAT_HOOKS.afterVehicleHit) heard.push(context); });
+    const { vehicle } = car();
+    const result = await shootAtVehicle({ actor: null, vehicle, damage: 16, location: "body", arc: "front", occupants: 0, damageType: "cr", tightBeam: false });
+    expect(result).toMatchObject({ location: "body", arc: "front", damageType: "cr", penetrating: 6, passedThrough: false, occupantHit: null });
+    expect(heard).toHaveLength(1);
+    expect(heard[0]).toMatchObject({ vehicle, location: "body", penetrating: 6, injury: result!.injury, crippled: false });
+  });
+});

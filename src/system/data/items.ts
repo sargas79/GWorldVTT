@@ -1250,6 +1250,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare ammunition: { kind: AmmunitionType; fits: string };
   declare equipmentModifier: number | null;
   declare forSkills: string[];
+  declare wheelchair: boolean;
   declare meleeModes: unknown[];
   declare rangedModes: unknown[];
   declare vehicle: {
@@ -1323,6 +1324,12 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
         new fields.StringField({ required: true, blank: true, initial: "" }),
         { required: true, initial: [] },
       ),
+      /**
+       * A muscle-powered wheelchair or wheeled platform (Characters p. 142;
+       * since API 1.113.0): while it is equipped, the character's ground Move
+       * is a quarter of their ST, rounded down, before encumbrance.
+       */
+      wheelchair: new fields.BooleanField({ initial: false }),
       /**
        * The grade it was bought in (GURPS Basic Set: Characters p. 274). The
        * tables' prices buy good quality through TL6; a finer weapon cuts
@@ -1429,6 +1436,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare concealable: boolean;
   declare blocksPeripheralVision: boolean;
   declare soleDr: number | null;
+  declare boots: boolean;
   declare environmentSuit: string;
   declare hardened: number;
   declare drByLocation: Array<{ locations: string[]; dr: number }>;
@@ -1533,6 +1541,12 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
         initial: null,
         min: 0,
       }),
+      /**
+       * Footwear that counts as boots for a kick (Characters p. 271; since
+       * API 1.110.0): while it is worn, the kick does thr+1. The Basic Set's
+       * boots carry it; a module sets it on its own footwear.
+       */
+      boots: new fields.BooleanField({ initial: false }),
       /**
        * The Environment Suit skill the piece is operated with (Characters
        * p. 192): while it is worn, DX and DX-based skills use the lower of that

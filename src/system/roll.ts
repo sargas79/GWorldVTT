@@ -34,7 +34,7 @@ import {
   attackTargetCandidates,
   maneuverOptionAttackEffect,
   recordAttackMade,
-  successRollModifiers,
+  successRollLines,
   type ResistedAttack,
   successRollTags,
 } from "./procedure-extensions.js";
@@ -444,6 +444,25 @@ export interface SuccessRollOptions {
    * `rollMode` given beside it wins.
    */
   secret?: boolean;
+  /**
+   * True to have a roll refused for an effective skill below 3 resolve to
+   * a {@link SuccessRollRefusal} rather than null (since API 1.107.0).
+   * Left out, a refused roll resolves to null, as it always has.
+   */
+  returnRefusal?: boolean;
+}
+
+/**
+ * A success roll that was not made (since API 1.107.0): its effective skill
+ * was below 3, so "you cannot attempt the roll" (Campaigns p. 344).
+ */
+export interface SuccessRollRefusal {
+  refused: true;
+  /** Why, as the card and the warning say it. */
+  reason: string;
+  base: number;
+  effective: number;
+  modifiers: RollModifier[];
 }
 
 /** The older roll-mode names, as Foundry's message modes. */
@@ -476,13 +495,41 @@ export interface CriticalMissResult {
   again?: { roll: any; total: number; broke: boolean };
 }
 
+/** The card for a roll that could not be attempted: the target, and why no dice were rolled. */
+async function postRefusal(options: SuccessRollOptions, refused: {
+  reason: string;
+  modifiers: RollModifier[];
+  totalModifier: number;
+  effective: number;
+}): Promise<void> {
+  const content = await foundry.applications.handlebars.renderTemplate(CHAT_TEMPLATE, {
+    label: options.label,
+    kind: options.kind ?? "skill",
+    refused: true,
+    base: options.base,
+    modifiers: refused.modifiers.filter((m) => m.value !== 0),
+    totalModifier: refused.totalModifier,
+    effective: refused.effective,
+    resultLabel: refused.reason,
+    resultClass: "failure",
+  });
+  const messageMode = successRollMessageMode(options);
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor: options.actor }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content,
+  }, messageMode ? { messageMode } : {});
+}
+
 /**
  * Rolls 3d6 against a target number and posts the result to chat.
  *
  * Returns the resolved outcome so callers can chain on it (an attack that hits
  * going on to roll damage, for instance).
  */
-export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessRollResult | null> {
+export async function rollSuccess(options: SuccessRollOptions & { returnRefusal: true }): Promise<SuccessRollResult | SuccessRollRefusal>;
+export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessRollResult | null>;
+export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessRollResult | SuccessRollRefusal | null> {
   const {
     actor, base, label, kind = "skill", rapidFire, defensePenalty = 0,
     unarmed = false, noParry = false,
@@ -491,27 +538,30 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   // the caller worked out.
   const tags = successRollTags({ kind, skill: options.skill, tags: options.tags });
   const given = options.modifiers ?? [];
-  const modifiers = [
-    ...given,
-    ...successRollModifiers({
-      actor, label, kind, skill: String(options.skill ?? ""), base, tags, modifiers: [...given],
-      ...(options.attack ? { attack: options.attack } : {}),
-      ...(options.subject ? { subject: options.subject } : {}),
-      ...(options.item ? { item: options.item } : {}),
-    }),
-  ];
+  // The caller's lines as the listeners left them, and theirs: a keyed line a
+  // listener removes is gone from the roll (since API 1.109.0).
+  const modifiers = successRollLines({
+    actor, label, kind, skill: String(options.skill ?? ""), base, tags, modifiers: [...given],
+    ...(options.attack ? { attack: options.attack } : {}),
+    ...(options.subject ? { subject: options.subject } : {}),
+    ...(options.item ? { item: options.item } : {}),
+  });
 
   const totalModifier = modifiers.reduce((sum, m) => sum + m.value, 0);
   const effective = base + totalModifier;
 
   // A roll at effective skill below 3 may not be attempted at all, and only
-  // active defenses are exempt (GURPS Lite p. 2). Without this check a rolled
-  // 3 or 4 would report success, since those always succeed once rolled.
+  // active defenses are exempt (Campaigns p. 344). Without this check a rolled
+  // 3 or 4 would report success, since those always succeed once rolled. The
+  // table is told on a card, so that everyone knows the attempt was impossible
+  // rather than that nothing happened.
   if (kind !== "defense" && !canAttempt(effective)) {
-    ui.notifications?.warn(
-      game.i18n.format("GWORLD.Roll.TooLowToAttempt", { label, effective }),
-    );
-    return null;
+    const reason = game.i18n.format("GWORLD.Roll.TooLowToAttempt", { label, effective });
+    ui.notifications?.warn(reason);
+    await postRefusal(options, { reason, modifiers, totalModifier, effective });
+    return options.returnRefusal === true
+      ? { refused: true, reason, base, effective, modifiers }
+      : null;
   }
 
   const roll = new Roll("3d6");
@@ -1119,6 +1169,12 @@ export interface DamageRollOptions {
   /** Where the attack that earned this damage was aimed. */
   calledShot?: CalledShot | null;
   /**
+   * The attack options chosen for the attack that earned this damage, by
+   * `<module>.<key>` (since API 1.108.0): carried to `gworld.injury` and
+   * `gworld.armorDr` when the blow is applied.
+   */
+  attackOptions?: Record<string, unknown>;
+  /**
    * Pellets striking as one mass (Campaigns p. 409): the rolled damage and
    * the target's DR are both multiplied by this.
    */
@@ -1339,6 +1395,12 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(options.surge ? { surge: true } : {}),
           ...(options.tightBeam && damageType === "burn" ? { tightBeam: true } : {}),
           ...(options.pick ? { pick: true } : {}),
+          // The attack options the blow was struck with, for the modules that
+          // read them when it lands (since API 1.108.0).
+          // Kept as pairs, since a key's dot would nest it in the flag.
+          ...(options.attackOptions && Object.keys(options.attackOptions).length > 0
+            ? { attackOptions: attackOptionEntries(options.attackOptions) }
+            : {}),
           ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
           ...(mode ? { mode } : {}),
           ...(options.source ? { source: String(options.source) } : {}),
@@ -1703,6 +1765,8 @@ async function rollAction(
   });
   const addon = stance && chosenAddon ? mergeAttackEffects([asEffect(chosenAddon), asEffect(stance)]) : (chosenAddon ?? stance);
   if (rollType === "attack") await recordAddonDamage(actor, addon?.damageModifiers ?? []);
+  // And the options themselves, which the blow carries to where it lands (since API 1.108.0).
+  if (rollType === "attack") await recordAttackOptions(actor, { ...(melee?.options ?? shot?.options ?? {}) });
 
   // A setting that spends more than one shot needs the shots to spend
   // (since 1.50.0). Refused rather than fired, because a weapon cannot use
@@ -1813,6 +1877,10 @@ async function rollAction(
         skillCap: movingMelee || melee?.wildSwing ? WILD_SWING_SKILL_CAP : (null as number | null),
         // Since 1.40.0: whether this is a Wild Swing.
         wildSwing: melee?.wildSwing === true,
+        // Since 1.111.0: a punch or a kick (Characters p. 271), or null for
+        // any other attack, so a rule about a restrained or crippled limb can
+        // refuse the one and allow the other.
+        unarmed: unarmedBlow(target.dataset.naturalKey),
         // Where the blow is aimed, and at whom.
         calledShot: (() => {
           const aimedAt = melee?.calledShot ?? shot?.calledShot ?? null;
@@ -2137,6 +2205,40 @@ async function rollAction(
   return outcome;
 }
 
+/** Where the attack options chosen wait for the damage roll (since API 1.108.0). */
+const ATTACK_OPTIONS_FLAG = "attackOptions";
+
+/**
+ * The options as `[key, value]` pairs, the way a flag keeps them: a key is
+ * `<module>.<key>`, and Foundry would read its dot as a path and nest it.
+ */
+export function attackOptionEntries(values: Record<string, unknown> | null | undefined): Array<[string, unknown]> {
+  return Object.entries(values ?? {});
+}
+
+/** The options back from their pairs, passing over anything that isn't one. */
+export function attackOptionsFromEntries(entries: unknown): Record<string, unknown> {
+  const values: Record<string, unknown> = {};
+  if (!Array.isArray(entries)) return values;
+  for (const entry of entries) {
+    if (Array.isArray(entry) && typeof entry[0] === "string" && entry[0]) values[entry[0]] = entry[1];
+  }
+  return values;
+}
+
+async function recordAttackOptions(actor: any, values: Record<string, unknown>): Promise<void> {
+  if (!actor?.isOwner) return;
+  const entries = attackOptionEntries(values);
+  if (entries.length > 0) await actor.setFlag(SYSTEM_ID, ATTACK_OPTIONS_FLAG, entries);
+  else if (actor.getFlag?.(SYSTEM_ID, ATTACK_OPTIONS_FLAG)) await actor.unsetFlag(SYSTEM_ID, ATTACK_OPTIONS_FLAG);
+}
+
+async function consumeAttackOptions(actor: any): Promise<Record<string, unknown>> {
+  const entries = actor?.getFlag?.(SYSTEM_ID, ATTACK_OPTIONS_FLAG);
+  if (entries && actor.isOwner) await actor.unsetFlag(SYSTEM_ID, ATTACK_OPTIONS_FLAG);
+  return attackOptionsFromEntries(entries);
+}
+
 /** Where the damage lines a module's attack option added wait for the damage roll. */
 const ADDON_DAMAGE_FLAG = "addonDamage";
 
@@ -2202,6 +2304,7 @@ const SHOT_RANGE_FLAG = "shotRange";
  */
 export async function recordSuppressionShot(actor: any, rowKey: string, rangeYards: number, halfDamageRange: number): Promise<void> {
   await recordAddonDamage(actor, []);
+  await recordAttackOptions(actor, {});
   await recordMassShot(actor, null);
   await recordFirstHit(actor, null);
   await recordShotRange(actor, rangeYards, rowKey);
@@ -4028,6 +4131,8 @@ export async function handleDamageAction(
 
   // Damage a module's option chosen at the attack added.
   modifiers.push(...(await consumeAddonDamage(actor)));
+  // And the options themselves, for the rules that read them where it lands.
+  const attackOptions = await consumeAttackOptions(actor);
 
   // A stop thrust: "+1 to thrust damage for every two full yards your
   // attacker moved toward you" (p. 366).
@@ -4072,6 +4177,7 @@ export async function handleDamageAction(
     armorDivisor: Number(armorDivisor) || 1,
     ...(line.firstHit ? { firstHit: true } : {}),
     ...(aimed ? { calledShot: aimed } : {}),
+    ...(Object.keys(attackOptions).length > 0 ? { attackOptions } : {}),
     ...(mass > 1 ? { massMultiplier: mass } : {}),
     ...(halved ? { halfDamage: true } : {}),
     // The shot's range where the attack recorded one; the map's otherwise.
@@ -4165,6 +4271,11 @@ function outcomeClass(outcome: SuccessRollResult): string {
   if (outcome.criticalSuccess) return "crit-success";
   if (outcome.criticalFailure) return "crit-failure";
   return outcome.success ? "success" : "failure";
+}
+
+/** A punch or a kick, read off the row's natural key, or null for anything else. */
+export function unarmedBlow(naturalKey: unknown): "punch" | "kick" | null {
+  return naturalKey === "punch" || naturalKey === "kick" ? naturalKey : null;
 }
 
 /** A skill's level on a character, or its IQ-5 default where they haven't got it, for an aiming roll. */

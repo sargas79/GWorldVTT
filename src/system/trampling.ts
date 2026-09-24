@@ -14,21 +14,9 @@
 
 import { rollDamage, rollSuccess } from "./roll.js";
 import { targetedTokens } from "./targets.js";
-import { normalizeSkillName } from "../rules/skills.js";
+import { skillLevelOf } from "./skill-level.js";
 import { canTrample, trampleDamage, trampleSkill } from "../rules/trampling.js";
 import { formatDiceAdds } from "../rules/dice.js";
-
-/** The level of a skill by name, or null when the character lacks it. */
-function skillLevelOf(actor: any, name: string): number | null {
-  const wanted = normalizeSkillName(name);
-  for (const item of actor?.items ?? []) {
-    if (item.type !== "skill") continue;
-    if (normalizeSkillName(String(item.name)) !== wanted) continue;
-    const level = item.system?.derived?.level;
-    return typeof level === "number" ? level : null;
-  }
-  return null;
-}
 
 /** Whether the character has hooves, which are worth a point a die here. */
 function hasHooves(actor: any): boolean {

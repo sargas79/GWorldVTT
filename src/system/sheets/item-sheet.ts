@@ -774,11 +774,19 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       ui.notifications?.warn(game.i18n.localize("GWORLD.Vehicle.CannotCreate"));
       return;
     }
+    // A module's own data comes with it (API 1.115.0): the item's
+    // `system.extensions`, and the flags of every scope but Foundry's and
+    // the system's own, which belong to the entry on the shelf.
+    const flags = Object.fromEntries(
+      Object.entries(foundry.utils.deepClone(item.flags ?? {})).filter(([scope]) => scope !== "core" && scope !== SYSTEM_ID),
+    );
     const created = await Actor.implementation.create({
       name: String(item.name),
       type: "vehicle",
       img: String(item.img ?? ""),
+      ...(Object.keys(flags).length > 0 ? { flags } : {}),
       system: {
+        extensions: foundry.utils.deepClone(item.system.extensions ?? {}),
         vehicle: foundry.utils.deepClone(item.system.vehicle ?? {}),
         cost: Number(item.system.cost) || 0,
         tl: String(item.system.tl ?? ""),

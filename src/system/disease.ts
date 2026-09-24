@@ -14,7 +14,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { activePoisons, POISON_FLAG, type ActivePoison } from "./poison.js";
 import { healthRollScore } from "./attributes.js";
-import { successRollModifiers } from "./procedure-extensions.js";
+import { successRollLines, successRollModifiers } from "./procedure-extensions.js";
 import {
   INFECTION_BASE,
   antibioticsPreventInfection,
@@ -196,12 +196,18 @@ export async function checkInfection(options: {
   }
 
   const ht = healthRollScore(actor);
-  // What the actor's conditions and the modules add (API 1.76.0).
-  const added = successRollModifiers({
+  // What got into the wound is its own line, keyed `woundDirt` (API 1.109.0),
+  // so a module can offset or replace the dirt alone; the +3 for a wound at
+  // all stays out of reach. What the actor's conditions and the modules add
+  // comes with it (API 1.76.0).
+  const dirt = infectionModifier(options.dirt) - INFECTION_BASE;
+  const lines = successRollLines({
     actor, label: game.i18n.localize("GWORLD.Illness.Infection"), kind: "attribute", skill: "", base: ht,
-    tags: ["disease", "infection", "HT"], modifiers: [], disease: { ...diseaseNamed("Infection")! },
-  }).reduce((sum, line) => sum + line.value, 0);
-  const target = ht + infectionModifier(options.dirt) + added;
+    tags: ["disease", "infection", "HT"],
+    modifiers: [{ key: "woundDirt", label: game.i18n.localize("GWORLD.Illness.WoundDirt"), value: dirt }],
+    disease: { ...diseaseNamed("Infection")! },
+  });
+  const target = ht + INFECTION_BASE + lines.reduce((sum, line) => sum + line.value, 0);
 
   const roll = new Roll("3d6");
   await roll.evaluate();

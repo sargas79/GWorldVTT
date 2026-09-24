@@ -16,6 +16,7 @@ import { regularContest } from "../rules/contests.js";
 import { resolveFeint, type FeintResult } from "../rules/maneuvers.js";
 import { quickContest, resolveSuccess } from "../rules/success.js";
 import { afterQuickContest, resolveContestScores, successRollModifiers } from "./procedure-extensions.js";
+import { successRollMessageMode } from "./roll.js";
 
 const CONTEST_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/contest.hbs`;
 const REGULAR_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/regular-contest.hbs`;
@@ -72,6 +73,16 @@ function describeSide(outcome: { success: boolean; margin: number }): string {
 }
 
 /** Posts the two-roll card both kinds of contest share. */
+/**
+ * Who sees a contest's card (since API 1.111.0): a `rollMode`, or `secret`
+ * for a roll the GM makes in secret (Campaigns p. 494), read as a success
+ * roll's are.
+ */
+export interface ContestVisibility {
+  rollMode?: string;
+  secret?: boolean;
+}
+
 async function postContest(options: {
   label: string;
   /** What kind of roll this is, shown in the card's header. */
@@ -79,7 +90,7 @@ async function postContest(options: {
   sides: RolledSide[];
   result: string;
   resultClass: string;
-}): Promise<void> {
+} & ContestVisibility): Promise<void> {
   const content = await foundry.applications.handlebars.renderTemplate(CONTEST_TEMPLATE, {
     label: options.label,
     kind: options.kind,
@@ -96,11 +107,12 @@ async function postContest(options: {
     resultClass: options.resultClass,
   });
 
+  const messageMode = successRollMessageMode(options);
   await ChatMessage.implementation.create({
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
     rolls: options.sides.map((side) => side.roll),
-  });
+  }, messageMode ? { messageMode } : {});
 }
 
 /**
@@ -159,7 +171,7 @@ export async function rollRegularContest(options: {
   label: string;
   first: ContestSide;
   second: ContestSide;
-}): Promise<{ outcome: "first" | "second" | null; exchanges: number }> {
+} & ContestVisibility): Promise<{ outcome: "first" | "second" | null; exchanges: number }> {
   const scoreOf = (side: ContestSide) =>
     side.base + (side.modifiers ?? []).reduce((sum, m) => sum + m.value, 0);
 
@@ -209,11 +221,13 @@ export async function rollRegularContest(options: {
     resultClass: contest.outcome === null ? "" : "success",
   });
 
+  // A contest the GM rolls in secret, or one a module whispers (since API 1.111.0).
+  const messageMode = successRollMessageMode(options);
   await ChatMessage.implementation.create({
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
     rolls,
-  });
+  }, messageMode ? { messageMode } : {});
 
   return { outcome: contest.outcome, exchanges: contest.rounds.length };
 }
@@ -224,7 +238,7 @@ export async function rollQuickContest(options: {
   second: ContestSide;
   /** What the contest is for, e.g. `disarm` (since 1.30.0): passed to the resolvers and the sides' rolls. */
   tags?: string[];
-}): Promise<ReturnType<typeof quickContest>> {
+} & ContestVisibility): Promise<ReturnType<typeof quickContest>> {
   const tags = ["quickContest", ...(options.tags ?? [])];
   // A module's resolver may propose what each side rolls against.
   const scores = resolveContestScores({ label: options.label, first: options.first, second: options.second, tags });
@@ -242,6 +256,8 @@ export async function rollQuickContest(options: {
   await postContest({
     label: options.label,
     kind: game.i18n.localize("GWORLD.Contest.QuickContest"),
+    ...(options.rollMode !== undefined ? { rollMode: options.rollMode } : {}),
+    ...(options.secret !== undefined ? { secret: options.secret } : {}),
     sides: [first, second],
     result:
       result.outcome === "tie"

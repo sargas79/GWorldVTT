@@ -10,8 +10,8 @@
  * So the picker and the inventory each have two buttons and not one. Add
  * puts a thing on the sheet and charges nothing, which is how a character is
  * built; Buy pays for it out of the cash, which is how one shops. The cash
- * is moved by `adjustCash`, so a purchase lands in the chat beside every
- * other movement of money and the table can see where it went.
+ * is moved by `adjustCash` without a line in the chat: the gear on the
+ * sheet and the cash left say what was bought.
  */
 
 import { clothingCost, purchase } from "../rules/wealth.js";
@@ -108,19 +108,14 @@ async function askHowMany(options: { actor: any; name: string; price: number; la
 }
 
 /**
- * Takes the price out of the cash and says so in the chat.
+ * Takes the price out of the cash. Nothing goes to the chat: the buyer is
+ * told by a notice, and the sheet shows the rest.
  *
- * Something given away costs nothing and moves no money, so it leaves no
- * line: there is nothing to account for.
+ * Something given away costs nothing and moves no money.
  */
-export async function payFor(actor: any, total: number, note: string): Promise<void> {
+export async function payFor(actor: any, total: number): Promise<void> {
   if (total <= 0) return;
-  await adjustCash({ actor, amount: -total, note });
-}
-
-/** The chat line a purchase leaves: "3 × Rope, 3/8"". */
-export function purchaseNote(quantity: number, name: string): string {
-  return S("Note", { quantity, name });
+  await adjustCash({ actor, amount: -total, chat: false });
 }
 
 /**
@@ -168,7 +163,7 @@ export async function buyGear(options: {
   if (plan.action === "update") await actor.items.get(plan.itemId)?.update(plan.changes);
   else await actor.createEmbeddedDocuments("Item", [plan.data]);
 
-  await payFor(actor, sum.total, purchaseNote(sum.quantity, name));
+  await payFor(actor, sum.total);
   ui.notifications?.info(S("Bought", { quantity: sum.quantity, name, total: sum.total }));
   if (sum.short > 0) ui.notifications?.warn(S("Short", { amount: sum.short }));
   return sum.total;
@@ -194,7 +189,7 @@ export async function buyMore(actor: any, item: any, quantity?: number): Promise
   const held = Math.max(0, Math.floor(Number(item.system?.quantity ?? 1)) || 0);
   await item.update({ "system.quantity": held + sum.quantity });
 
-  await payFor(actor, sum.total, purchaseNote(sum.quantity, name));
+  await payFor(actor, sum.total);
   ui.notifications?.info(S("Bought", { quantity: sum.quantity, name, total: sum.total }));
   if (sum.short > 0) ui.notifications?.warn(S("Short", { amount: sum.short }));
   return sum.total;

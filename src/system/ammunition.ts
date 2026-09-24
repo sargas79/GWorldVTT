@@ -11,11 +11,11 @@
 import { SYSTEM_ID } from "./constants.js";
 import { shotsEntryFor } from "./shots-entry.js";
 import { COMBAT_HOOKS, callCombatHook } from "./combat-extensions.js";
-import { normalizeSkillName } from "../rules/skills.js";
+import { skillLevelOf } from "./skill-level.js";
 import { isRuleOn } from "./optional-rules.js";
 import { shotsAfterFiring } from "../rules/cinematic.js";
 import { hasInfiniteAmmunition } from "./cinematic.js";
-import { payFor, purchaseNote } from "./shopping.js";
+import { payFor } from "./shopping.js";
 import {
   AMMUNITION_TYPES,
   ammunitionCost,
@@ -347,7 +347,7 @@ export async function buyAmmunition(actor: any, item: any, modeIndex: number): P
   const [made] = await actor.createEmbeddedDocuments("Item", [data]);
   // Rounds are shopping like any other, so the box is paid for out of the
   // cash on the sheet (Characters pp. 26, 278).
-  await payFor(actor, Math.round(roundCost * count * 100) / 100, purchaseNote(count, name));
+  await payFor(actor, Math.round(roundCost * count * 100) / 100);
   ui.notifications?.info(A("Created", { name, rounds: count }));
   return made ?? null;
 }
@@ -491,17 +491,6 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
   });
-}
-
-/** A character's level in a skill, compared by name the way the sheet compares it. */
-function skillLevelOf(actor: any, name: string): number | null {
-  const wanted = normalizeSkillName(name);
-  for (const item of actor?.items ?? []) {
-    if (item?.type !== "skill" || normalizeSkillName(String(item.name ?? "")) !== wanted) continue;
-    const level = item.system?.derived?.level;
-    return typeof level === "number" ? level : null;
-  }
-  return null;
 }
 
 /** The skill that reloads faster (Characters pp. 194-195). */

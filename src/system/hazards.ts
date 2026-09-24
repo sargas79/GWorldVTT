@@ -33,11 +33,12 @@ import { applyInjury } from "../rules/injury.js";
 import {
   protectedDose, radiationEffect, radiationRow, remainingDose,
 } from "../rules/radiation.js";
-import { normalizeSkillName } from "../rules/skills.js";
+import { skillLevelOf } from "./skill-level.js";
 import { dozingOff, sleepRecovery, stayingUpFatigue, wakingDayHours } from "../rules/sleep.js";
 import { resolveSuccess } from "../rules/success.js";
 import type { DamageType } from "../rules/types.js";
 import { activeMove, controlRoll, fragilityCodes, vehicleMoves } from "../rules/vehicles.js";
+import { vehicleStats } from "./vehicle-stats.js";
 import {
   brittleLimb, explodesOnMajorWound, fragileExplosion, fragileFromVehicleCodes, fragileIgnition,
   FRAGILE_BURNING, FRAGILE_ROLLING_SECONDS, type FragileKind,
@@ -119,18 +120,6 @@ function traitLevels(actor: any, name: string): number {
     return Math.max(1, Math.floor(Number(item.system?.levels ?? 1)) || 1);
   }
   return 0;
-}
-
-/** The level of a skill by name, or null when the character lacks it. */
-function skillLevelOf(actor: any, name: string): number | null {
-  const wanted = normalizeSkillName(name);
-  for (const item of actor?.items ?? []) {
-    if (item.type !== "skill") continue;
-    if (normalizeSkillName(String(item.name)) !== wanted) continue;
-    const level = item.system?.derived?.level;
-    return typeof level === "number" ? level : null;
-  }
-  return null;
 }
 
 /** Injury from a roll of damage, through the worn armour at a random location. */
@@ -839,10 +828,17 @@ export async function controlVehicle(options: {
   /** The vehicle: an item on the Gear tab, or a vehicle actor on the map. */
   vehicle: any;
   modifier: number;
+  /**
+   * Why the roll is made (Campaigns p. 466; since API 1.115.0): hard braking,
+   * a hazard, a maneuver -- a tag of the caller's, such as `hardBraking`. It
+   * joins the roll's tags, so a listener can tell one control roll from another.
+   */
+  reason?: string;
 }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
   const item = options.vehicle;
+  const reason = String(options.reason ?? "").trim();
   const vehicle = item?.system?.vehicle;
   if (!item || !vehicle) return;
 
@@ -851,7 +847,9 @@ export async function controlVehicle(options: {
   // Control skills default to DX-5 at worst; someone who never learned
   // Driving still grabs the wheel.
   const skill = own ?? attributeOf(actor, "DX") - 5;
-  const handling = Number(vehicle.handling) || 0;
+  // The figures as a state that lasts leaves them (API 1.115.0).
+  const stats = vehicleStats(item);
+  const handling = stats.handling;
   // A vehicle of another TL than the operator's skill, or a make they don't
   // know (Characters pp. 168-169; since API 1.95.0): the lines any roll with
   // the vehicle as its item takes, keyed and tagged `techLevel` and
@@ -866,7 +864,8 @@ export async function controlVehicle(options: {
   // driver's aid (API 1.76.0, tagged "vehicleControl").
   const added = successRollModifiers({
     actor, label: H("Control"), kind: "skill", skill: skillName, base: skill,
-    tags: ["vehicleControl", ...use.tags], modifiers: [...given], vehicle: item, item,
+    tags: ["vehicleControl", ...use.tags, ...(reason ? [reason] : [])], modifiers: [...given], vehicle: item, item,
+    ...(reason ? { reason } : {}),
   });
   // The TL lines as the listeners left them, and what they added.
   const lines = [...given, ...added].filter((line) => line.value !== 0);
@@ -874,7 +873,7 @@ export async function controlVehicle(options: {
   const roll = new Roll("3d6");
   await roll.evaluate();
   const outcome = resolveSuccess(roll.total, target, dieResults(roll));
-  const stabilityRating = Number(vehicle.stability) || 0;
+  const stabilityRating = stats.stability;
   const result = controlRoll({
     success: outcome.success,
     criticalFailure: outcome.criticalFailure,
@@ -900,7 +899,7 @@ export async function controlVehicle(options: {
     // What losing control actually does depends on what the thing moves
     // through (Campaigns p. 469) -- the way it is moving now, for one that
     // moves two ways.
-    const move = activeMove(vehicle);
+    const move = stats.move;
     const medium = mediumOf(move.locomotion);
     const lost = lossOfControl({
       medium,
@@ -983,11 +982,11 @@ export async function shootAtVehicle(options: {
   /** The weapon and its attack mode, when known, for `gworld.vehicleDr` (since 1.79.0). */
   item?: any;
   mode?: any;
-}): Promise<void> {
+}): Promise<VehicleHit | null> {
   const { actor } = options;
   const item = options.vehicle;
   const vehicle = item?.system?.vehicle;
-  if (!item || !vehicle) return;
+  if (!item || !vehicle) return null;
 
   const hitPoints = Number(vehicle.stHp) || 0;
   const sm = Number(vehicle.sm) || 0;
@@ -1122,6 +1121,7 @@ export async function shootAtVehicle(options: {
 
   // The people inside, when enough got through to matter and there is anybody
   // in there to matter to. An empty car has no occupant to roll for.
+  let occupantHit: { dice: number } | null = null;
   if (penetrating >= OCCUPANT_RISK_DAMAGE && !struck && options.occupants > 0) {
     const target = occupantHitTarget(options.occupants, sm);
     const occupantRoll = new Roll("3d6");
@@ -1129,6 +1129,7 @@ export async function shootAtVehicle(options: {
     rolls.push(occupantRoll);
     if (occupantRoll.total <= target) {
       const damage = occupantDamage(penetrating);
+      occupantHit = { dice: damage.dice };
       lines.push(F("OccupantHit", { roll: occupantRoll.total, target, dice: damage.dice }));
     } else {
       lines.push(F("OccupantMissed", { roll: occupantRoll.total, target }));
@@ -1162,6 +1163,40 @@ export async function shootAtVehicle(options: {
     bad: penetrating > 0,
     rolls,
   });
+
+  // And the modules hear what it did, once it is done (since API 1.115.0),
+  // for what follows from a hit rather than what the hit meets.
+  const result: VehicleHit = {
+    location: hit.location,
+    arc,
+    damageType: options.damageType,
+    penetrating,
+    injury,
+    crippled: threshold !== null && injury > threshold,
+    passedThrough: struck,
+    occupantHit,
+  };
+  callCombatHook(COMBAT_HOOKS.afterVehicleHit, {
+    vehicle: item, actor, item: options.item ?? null, mode: options.mode ?? null, ...result,
+  });
+  return result;
+}
+
+/** What a shot at a vehicle did (since API 1.115.0). */
+export interface VehicleHit {
+  location: VehicleLocation;
+  arc: VehicleArc | null;
+  damageType: DamageType;
+  /** Damage through the DR. */
+  penetrating: number;
+  /** HP the vehicle lost, after the location's wounding modifier; 0 where the hit passed to a person or animal. */
+  injury: number;
+  /** Whether the location was crippled. */
+  crippled: boolean;
+  /** True where the hit passed to a person or an animal and the vehicle took none of it (p. 555). */
+  passedThrough: boolean;
+  /** An occupant struck, with the dice of cutting damage they take, or null. */
+  occupantHit: { dice: number } | null;
 }
 
 /** How many of a location a vehicle's entry lists: "4W" is four wheels. */

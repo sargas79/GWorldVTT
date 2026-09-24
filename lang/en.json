@@ -1331,6 +1331,7 @@
       "demon": "The spell fails entirely; a demon or other malign entity appears and attacks the caster."
     },
     "Trait": {
+      "GmOnly": "Only the GM can change a character's traits.",
       "Specialty": "Of what",
       "SpecialtyPlaceholder": "Say which: the behaviour, group, weapon or target",
       "SpecialtyHint": "This trait is not complete until it says what it is of.",
@@ -1575,6 +1576,8 @@
       "EquipmentQualityHint": "What these tools are worth to the skill that uses them (Campaigns p. 345). Good costs five times basic, fine twenty times.",
       "ForSkills": "Tools for",
       "ForSkillsHint": "The skills these are the tools of, separated by commas. While they are carried, those skills are rolled at the grade’s modifier.",
+      "Wheelchair": "Wheelchair",
+      "WheelchairHint": "A muscle-powered wheelchair: while equipped, ground Move is ST/4, rounded down (Characters p. 142)",
       "MissedMaintenance": "Missed checks",
       "MissedMaintenanceHint": "Maintenance checks missed, each costing a point of HT that the exposure roll is made against (Campaigns p. 485).",
       "MustRollInUse": "At zero HP or below: it rolls HT every second it is used under stress, or stops working",
@@ -1984,6 +1987,7 @@
       "Crippled": "Crippled",
       "InjuryCapped": "Capped at {cap}: {lost} not taken",
       "InjuryCappedWhy": "Capped at {cap} ({reason}): {lost} not taken",
+      "Vulnerable": "Vulnerability ×{multiplier} ({label})",
       "MajorWound": "Major wound — HT roll to avoid knockdown and stunning",
       "ConsciousnessRoll": "HT roll to stay conscious, at",
       "DeathCheck": "HT roll to avoid death",
@@ -2165,6 +2169,8 @@
       "IllegalLayerHint": "Armour is layered over something that is not both flexible and concealable, which the book does not allow (Characters p. 286).",
       "NoPeripheral": "no peripheral vision",
       "NoPeripheralHint": "A great helm gives the wearer No Peripheral Vision while worn (Characters p. 283).",
+      "Boots": "Boots",
+      "BootsHint": "Counts as boots for a kick: thr+1 while worn (Characters p. 271)",
       "BluntTrauma": "blunt trauma",
       "StruckFrom": "Struck from",
       "FromBelow": "From below",
@@ -2766,6 +2772,7 @@
       "Immune": "Simply immune to it, and does not know",
       "AlreadyImmune": "Immune to this one already",
       "Infection": "Infection",
+      "WoundDirt": "Dirt in the wound",
       "InfectionAction": "Infection",
       "InfectionHint": "Whether an untreated wound goes bad: HT+3, worse for what got into it",
       "Dirt": "What got into the wound",
@@ -3440,7 +3447,7 @@
       "Buy": "Buy",
       "BuyFor": "Buy ${amount}",
       "BuyMore": "Buy more",
-      "BuyHint": "Buy it out of the cash on the sheet, with a line in the chat saying what it cost.",
+      "BuyHint": "Buy it out of the cash on the sheet.",
       "BuyMoreHint": "Buy more of this out of the cash on the sheet. What the character was written up with was paid for out of starting wealth and is not charged again.",
       "AddHint": "Put it on the sheet without paying for it: starting gear comes out of starting wealth, not out of the cash.",
       "Title": "Buy {name}",
@@ -3450,7 +3457,6 @@
       "CashNow": "cash ${amount}",
       "CashAfter": "${amount} left",
       "Short": "${amount} short",
-      "Note": "Bought {quantity} × {name}",
       "Bought": "Bought {quantity} × {name} for ${total}."
     },
     "Life": {
@@ -4112,6 +4118,14 @@
       "CouldManifest": "Could manifest as: {abilities}",
       "Unpowered": "{trait} is a {power} ability, but has no power modifier — so it is not psionic. Add the modifier if it is meant to be."
     },
+    "Crippled": {
+      "HealsIn": "heals in {days} days",
+      "Heal": "Healed: take it off"
+    },
+    "Towing": {
+      "Title": "Towing",
+      "Line": "Towing: {label}"
+    },
     "Entangled": {
       "Escape": "Get loose",
       "EscapeHint": "One attempt to get out, which costs the whole turn. Three successes and you are free; three failures running in a net and you must be cut out (Campaigns pp. 410-411).",
@@ -4126,8 +4140,13 @@
         "net": "a net",
         "smallNet": "a small net",
         "bolas": "a bolas",
-        "lariat": "a lariat"
+        "lariat": "a lariat",
+        "binding": "a binding"
       },
+      "BreakFree": "Break free of {what}",
+      "BrokeFree": "{name} breaks free of {what}.",
+      "StillBound": "{name} is still held by {what} (ST {st}), and loses {fp} FP.",
+      "BoundAt": "ST {st}",
       "Limbs": {
         "hands": "Hands",
         "paws": "Paws",

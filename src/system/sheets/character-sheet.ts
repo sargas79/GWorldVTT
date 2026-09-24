@@ -37,6 +37,7 @@ import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding, stopBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
+import { crippledParts, healCrippled } from "../crippling.js";
 import { catchBreath, rollSuffocation } from "../suffocation.js";
 import {
   applyDeprivation,
@@ -87,7 +88,7 @@ import {
   splashAcid,
   setAlight,
 } from "../hazards.js";
-import { checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
+import { breakFreeFromBinding, checkBottles, throwMolotov, tryToEscape, type Entanglement } from "../entangling.js";
 import { useTechnique } from "../unarmed-techniques.js";
 import { resolveSuccess as rollOutcome } from "../../rules/success.js";
 import { isStepPostureChange, reachablePostures } from "../../rules/posture.js";
@@ -177,7 +178,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
-import { allOutAttackOptionsFor, feintModifiers, registeredManeuvers } from "../combat-extensions.js";
+import { allOutAttackOptionsFor, feintModifiers, registeredHitLocation, registeredManeuvers } from "../combat-extensions.js";
 import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
 import { bindSectionListeners, decorateItemRows, renderSections, runRowAction } from "../sheet-extensions.js";
@@ -452,6 +453,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       bleed: GWorldCharacterSheet.#onBleed,
       mortalWound: GWorldCharacterSheet.#onMortalWound,
       cripplingDuration: GWorldCharacterSheet.#onCripplingDuration,
+      healCrippled: GWorldCharacterSheet.#onHealCrippled,
       suffocate: GWorldCharacterSheet.#onSuffocate,
       catchBreath: GWorldCharacterSheet.#onCatchBreath,
       exposure: GWorldCharacterSheet.#onExposure,
@@ -922,6 +924,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
             power: String(item.system?.power ?? ""),
           })),
       ).map((u) => ({ ...u, powerLabel: game.i18n.localize(`GWORLD.Psi.Power.${u.power}`) })),
+      // Parts crippled for a while (Campaigns p. 422; API 1.114.0), healed ones left out.
+      crippled: crippledParts(this.actor).map((part) => ({
+        id: part.id,
+        label: part.label || (registeredHitLocation(part.location)
+          ? game.i18n.localize(registeredHitLocation(part.location)!.label)
+          : game.i18n.localize(`GWORLD.HitLocation.${part.location}`)),
+        duration: game.i18n.localize(`GWORLD.Dying.${part.duration}`),
+        heals: part.healsAt !== null
+          ? game.i18n.format("GWORLD.Crippled.HealsIn", { days: Math.max(0, Math.ceil((part.healsAt - (Number(game.time?.worldTime) || 0)) / 86400)) })
+          : "",
+      })),
       // Caught in something, and how far through getting out they are.
       entangled: {
         caught: this.actor.statuses?.has?.("entangled") === true,
@@ -929,6 +942,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         successes: system.entangled?.successes ?? 0,
         needed: 3,
         mustBeCut: system.entangled?.mustBeCut === true,
+        // A Binding is one Quick Contest against its ST, not a tally (Characters p. 40).
+        binding: system.entangled?.kind === "binding"
+          ? { st: Number(system.entangled.st) || 0, label: String(system.entangled.label || game.i18n.localize("GWORLD.Entangled.What.binding")) }
+          : null,
       },
       // Shown while evaluating, and on the turn after, when the bonus is spent.
       isEvaluating: system.maneuver === "evaluate" || Number(system.evaluateTurns ?? 0) > 0,
@@ -2217,7 +2234,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (modifier === null) return;
 
-    const restored = await applyFirstAid({ healer: this.actor, patient, modifier });
+    // At the tech level a listener set, where one did (API 1.109.0; Campaigns p. 424).
+    const restored = await applyFirstAid({ healer: this.actor, patient, modifier, techLevel: rules.techLevel });
 
     // "someone who is wounded but receives a successful First Aid roll ... loses
     // no HP to bleeding. A later roll will prevent further HP loss."
@@ -2971,6 +2989,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * "For battlefield injuries, roll at the end of combat" -- so it is a button
    * pressed afterwards rather than something a blow decides on the spot.
    */
+  static async #onHealCrippled(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.dataset.id;
+    if (id) await healCrippled(this.actor, id);
+  }
+
   static async #onCripplingDuration(this: GWorldCharacterSheet) {
     const tl = await promptForNumber({
       title: game.i18n.localize("GWORLD.Dying.Crippling"),
@@ -3700,6 +3723,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    */
   static async #onEscapeEntanglement(this: GWorldCharacterSheet) {
     const held = this.actor.system.entangled ?? {};
+    if (held.kind === "binding") {
+      await breakFreeFromBinding(this.actor);
+      return;
+    }
     const asked = await promptForEscape(
       (held.kind || "net") as Entanglement,
       String(held.where ?? ""),

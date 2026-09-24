@@ -14,7 +14,7 @@ import { attributeOf } from "./attributes.js";
 import { AGED_ATTRIBUTES, agingModifier, agingRoll, diesOfAge } from "../rules/aging.js";
 import { CRITICAL_RAISE, jobRoll, type JobKind } from "../rules/jobs.js";
 import { setCondition } from "./conditions.js";
-import { normalizeSkillName } from "../rules/skills.js";
+import { skillLevelOf } from "./skill-level.js";
 import { resolveSuccess } from "../rules/success.js";
 import { studyPoints, type StudyMethod } from "../rules/study.js";
 
@@ -65,14 +65,16 @@ export function jobRollLevel(actor: any, name: string): number | null {
 
 /**
  * Money in or out of the sheet's cash, with a line in the chat saying what
- * for, so the table can follow where it went.
+ * for, so the table can follow where it went. `chat: false` moves the money
+ * and says nothing, for a purchase the sheet already shows.
  */
-export async function adjustCash(options: { actor: any; amount: number; note: string }): Promise<void> {
+export async function adjustCash(options: { actor: any; amount: number; note?: string; chat?: boolean }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor) || !Number.isFinite(options.amount) || options.amount === 0) return;
   const before = Number(actor.system?.money) || 0;
   const after = Math.round((before + options.amount) * 100) / 100;
   await actor.update({ "system.money": after });
+  if (options.chat === false) return;
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Life.Cash"),
     detail: options.note || game.i18n.localize(options.amount > 0 ? "GWORLD.Life.CashIn" : "GWORLD.Life.CashOut"),
@@ -83,18 +85,6 @@ export async function adjustCash(options: { actor: any; amount: number; note: st
     good: options.amount > 0,
     bad: after < 0,
   });
-}
-
-/** The level of a skill by name, or null when the character lacks it. */
-function skillLevelOf(actor: any, name: string): number | null {
-  const wanted = normalizeSkillName(name);
-  for (const item of actor?.items ?? []) {
-    if (item.type !== "skill") continue;
-    if (normalizeSkillName(String(item.name)) !== wanted) continue;
-    const level = item.system?.derived?.level;
-    return typeof level === "number" ? level : null;
-  }
-  return null;
 }
 
 /**

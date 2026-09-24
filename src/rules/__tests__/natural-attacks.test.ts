@@ -71,3 +71,19 @@ describe("weaponUnarmedBonus", () => {
     expect(weaponUnarmedBonus({ skill: "Brawling", level: null, dx: 12, st: 10 })).toBe(0);
   });
 });
+
+describe("a kick in boots (Characters p. 271)", () => {
+  it("does thr+1, and leaves the punch alone", () => {
+    const bare = naturalAttacks({ st: 10, dx: 10, skills: {} });
+    const shod = naturalAttacks({ st: 10, dx: 10, skills: {}, boots: true });
+    expect(bare.find((a) => a.key === "kick")?.damage).toEqual({ dice: 1, adds: -2 });
+    expect(shod.find((a) => a.key === "kick")?.damage).toEqual({ dice: 1, adds: -1 });
+    expect(shod.find((a) => a.key === "punch")?.damage).toEqual(bare.find((a) => a.key === "punch")?.damage);
+  });
+
+  it("adds the boots after Karate's bonus", () => {
+    // ST 10 thrust 1d-2, Karate at DX+1 gives +2 per die, and the boots +1.
+    const kick = naturalAttacks({ st: 10, dx: 10, skills: { Karate: 11 }, boots: true }).find((a) => a.key === "kick");
+    expect(kick?.damage).toEqual({ dice: 1, adds: 1 });
+  });
+});

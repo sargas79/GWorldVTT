@@ -484,6 +484,11 @@
                  {{#unless editable}}disabled{{/unless}} />
           {{localize "GWORLD.Armor.NoPeripheral"}}
         </label>
+        <label class="icheck" data-tooltip="{{localize 'GWORLD.Armor.BootsHint'}}">
+          <input type="checkbox" name="system.boots" {{#if system.boots}}checked{{/if}}
+                 {{#unless editable}}disabled{{/unless}} />
+          {{localize "GWORLD.Armor.Boots"}}
+        </label>
       </div>
       <div class="ifields">
         <label data-tooltip="{{localize 'GWORLD.Armor.SoleHint'}}">{{localize "GWORLD.Armor.SoleDR"}}
@@ -892,6 +897,11 @@
           <label class="ifull" data-tooltip="{{localize 'GWORLD.Item.ForSkillsHint'}}">{{localize "GWORLD.Item.ForSkills"}}
             <input type="text" name="system.forSkills" value="{{join system.forSkills ", "}}" placeholder="Surgery, First Aid"
                    {{#unless editable}}disabled{{/unless}} />
+          </label>
+          <label class="icheck" data-tooltip="{{localize 'GWORLD.Item.WheelchairHint'}}">
+            <input type="checkbox" name="system.wheelchair" {{#if system.wheelchair}}checked{{/if}}
+                   {{#unless editable}}disabled{{/unless}} />
+            {{localize "GWORLD.Item.Wheelchair"}}
           </label>
         </div>
         {{#if weapon.showQuality}}

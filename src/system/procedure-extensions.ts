@@ -62,6 +62,8 @@ function validNames(module: unknown, key: unknown, label: unknown): string | nul
 interface ModifierLine {
   label: string;
   value: number;
+  /** A name for the line a listener can find it by, where the system gives one (`woundDirt`, `afflictionDr`). */
+  key?: string;
 }
 
 function isLine(line: unknown): line is ModifierLine {
@@ -98,7 +100,7 @@ export const PROCEDURE_HOOKS = Object.freeze({
   turnEnd: "gworld.turnEnd",
   /** Before a bleeding roll: `{ actor, intervalSeconds, modifier }`, mutable. */
   bleedingSchedule: "gworld.bleedingSchedule",
-  /** Before a First Aid attempt (since 1.36.0): `{ healer, patient, refusal, stopsBleeding }`, mutable. */
+  /** Before a First Aid attempt (since 1.36.0): `{ healer, patient, refusal, stopsBleeding, techLevel }` (the last since 1.109.0), mutable. */
   firstAid: "gworld.firstAid",
   /** While a technique's defaults are read: `{ actor, item, defaults }`; push `{ from, skill, modifier }`. */
   techniqueDefaults: "gworld.techniqueDefaults",
@@ -148,6 +150,11 @@ export const PROCEDURE_HOOKS = Object.freeze({
    * push `{ label, value }` to `modifiers`.
    */
   reactionModifiers: "gworld.reactionModifiers",
+  /**
+   * A Binding ended (since 1.107.0; Characters p. 40): `{ actor, st, label,
+   * source, how }`, `how` being `brokeFree` or `unbound`.
+   */
+  bindingBroken: "gworld.bindingBroken",
 });
 
 /**
@@ -466,7 +473,19 @@ export function successRollTags(options: { kind?: string | undefined; skill?: st
  * `gworld.successRollModifiers` listeners. Returns only the added lines.
  */
 export function successRollModifiers(context: SuccessRollContext): ModifierLine[] {
-  const before = context.modifiers.length;
+  // What was added: every line the caller did not give. Compared by line
+  // rather than by count, so a listener that removes a given line (a keyed
+  // one it replaces) does not take an added one with it.
+  const given = new Set<unknown>(context.modifiers);
+  return successRollLines(context).filter((line) => !given.has(line));
+}
+
+/**
+ * Every line of a success roll once the conditions and the listeners have
+ * had their say (since API 1.109.0): the caller's own, as the listeners
+ * left them -- changed, or taken out, as a keyed line may be -- and theirs.
+ */
+export function successRollLines(context: SuccessRollContext): ModifierLine[] {
   const ctx: SuccessRollContext = { ...context, tags: [...context.tags], modifiers: [...context.modifiers] };
   ctx.modifiers.push(...conditionModifiers(ctx.actor, ctx.kind, ctx.tags));
   if (ctx.tags.includes("detection")) ctx.modifiers.push(...detectionModifiers(ctx));
@@ -483,7 +502,7 @@ export function successRollModifiers(context: SuccessRollContext): ModifierLine[
     }
   }
   callCombatHook(PROCEDURE_HOOKS.successRollModifiers, ctx);
-  return ctx.modifiers.slice(before).filter(isLine);
+  return ctx.modifiers.filter(isLine);
 }
 
 /** Tells the listeners how a success roll went. */
@@ -1097,12 +1116,23 @@ async function expireConditions(actor: any, at: { round?: number; time?: number;
 // ── bleeding ───────────────────────────────────────────────────────────────
 
 /** How often a wound bleeds and at what modifier, after the listeners. */
-/** What the modules say about a First Aid attempt (since 1.36.0): a refusal, and whether success stops the bleeding. */
-export function firstAidRules(healer: any, patient: any): { refusal: string | null; stopsBleeding: boolean } {
-  const context = callCombatHook(PROCEDURE_HOOKS.firstAid, { healer, patient, refusal: null as string | null, stopsBleeding: true });
+/**
+ * What the modules say about a First Aid attempt (since 1.36.0): a refusal,
+ * whether success stops the bleeding, and (since 1.109.0) the tech level the
+ * treatment is given at (Campaigns p. 424) -- the healer's own, or the one
+ * given, unless a listener sets another.
+ */
+export function firstAidRules(healer: any, patient: any, techLevel?: number): { refusal: string | null; stopsBleeding: boolean; techLevel: number } {
+  const own = typeof techLevel === "number" && Number.isFinite(techLevel)
+    ? techLevel
+    : Number.parseInt(String(healer?.system?.tl ?? ""), 10);
+  const start = Number.isFinite(own) ? Math.max(0, Math.floor(own)) : 3;
+  const context = callCombatHook(PROCEDURE_HOOKS.firstAid, { healer, patient, refusal: null as string | null, stopsBleeding: true, techLevel: start });
+  const chosen = Number(context.techLevel);
   return {
     refusal: typeof context.refusal === "string" && context.refusal.trim() ? context.refusal.trim() : null,
     stopsBleeding: context.stopsBleeding !== false,
+    techLevel: Number.isFinite(chosen) && chosen >= 0 ? Math.floor(chosen) : start,
   };
 }
 

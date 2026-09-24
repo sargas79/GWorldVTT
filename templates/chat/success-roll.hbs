@@ -13,10 +13,12 @@
     </div>
   {{/if}}
 
+  {{#unless refused}}
   <div class="gc-dice">
     {{#each outcome.dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
     <span class="gc-total">{{outcome.roll}}</span>
   </div>
+  {{/unless}}
 
   <div class="gc-result {{resultClass}}">{{resultLabel}}</div>
 

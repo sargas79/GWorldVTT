@@ -85,6 +85,8 @@ import {
 import { usableInCloseCombat } from "../../rules/tactical.js";
 import { isRuleOn } from "../optional-rules.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
+import { canPull, towedWeight, wheelchairMove, type Conveyance } from "../../rules/towing.js";
+import { SYSTEM_ID } from "../constants.js";
 import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
 import { evaluateBonus, takesEvaluateBonus } from "../../rules/maneuvers.js";
@@ -388,6 +390,8 @@ export interface DerivedAttack {
   damageModifier?: number;
   /** For a punch or a kick, which one: re-derived whole at a pulled ST. */
   naturalKey?: string;
+  /** On the kick row: whether boots are worn, and so in its damage (Characters p. 271; since 1.110.0). */
+  boots?: boolean;
   /** An affliction, which is resisted rather than damaging. */
   affliction: boolean;
   /** The attribute it is resisted with, e.g. "HT". Blank when not an affliction. */
@@ -642,12 +646,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
   declare dress: { state: Dress; topless: boolean };
   declare entangled: {
-    kind: "" | "net" | "smallNet" | "bolas" | "lariat";
+    kind: "" | "net" | "smallNet" | "bolas" | "lariat" | "binding";
     successes: number;
     failures: number;
     mustBeCut: boolean;
     where: string;
     running: boolean;
+    /** A Binding's ST, what it is and who set it (since API 1.107.0). */
+    st: number;
+    label: string;
+    source: string;
   };
   declare points: {
     starting: number;
@@ -809,7 +817,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       entangled: new fields.SchemaField({
         kind: new fields.StringField({
           required: true, nullable: false, blank: true, initial: "",
-          choices: ["", "net", "smallNet", "bolas", "lariat"],
+          choices: ["", "net", "smallNet", "bolas", "lariat", "binding"],
         }),
         successes: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
         failures: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
@@ -827,6 +835,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         }),
         /** True where they were running when it caught them, which is what trips them. */
         running: new fields.BooleanField({ initial: false }),
+        /**
+         * A Binding (Characters p. 40; since API 1.107.0): the ST the victim
+         * must beat to break free, what holds them, for the sheet and the
+         * card, and who put it there, for the module that did.
+         */
+        st: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+        label: new fields.StringField({ required: true, nullable: false, blank: true, initial: "" }),
+        source: new fields.StringField({ required: true, nullable: false, blank: true, initial: "" }),
       }),
 
       tl: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 3 }),
@@ -2162,10 +2178,43 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const q = Number(sys.quantity ?? 1);
       if (Number.isFinite(w) && Number.isFinite(q)) weightLines.push({ item, label: String(item.name ?? ""), weight: w * q, counts: true });
     }
-    // What the modules say doesn't count: a suit carrying its own weight (API 1.58.0).
+    // A load pulled behind, at the effective weight the book gives it
+    // (Campaigns p. 353; API 1.113.0): the load and its sledge, cart or
+    // wagon together, divided for the conveyance and a smooth surface.
+    const towFlag = (this.parent as any)?.getFlag?.(SYSTEM_ID, "towing");
+    const towing = towFlag && Number(towFlag.weight) > 0
+      ? (() => {
+          const conveyance = (["none", "sledge", "cart", "wagon"].includes(towFlag.conveyance) ? towFlag.conveyance : "none") as Conveyance;
+          const smooth = towFlag.smooth === true;
+          const effective = towedWeight({ weight: Number(towFlag.weight), conveyance, smooth });
+          return {
+            weight: Number(towFlag.weight), conveyance, smooth, label: String(towFlag.label ?? ""),
+            effective, movable: canPull(effective, secondary.basicLift),
+          };
+        })()
+      : null;
+    if (towing) {
+      weightLines.push({
+        item: null,
+        label: towing.label ? game.i18n.format("GWORLD.Towing.Line", { label: towing.label }) : game.i18n.localize("GWORLD.Towing.Title"),
+        weight: towing.effective,
+        counts: true,
+      });
+    }
+    // What the modules say doesn't count: a suit carrying its own weight (API
+    // 1.58.0); and, since 1.113.0, what they say weighs more.
     const weighed = moduleCarriedWeight(this.parent, weightLines);
     const carriedWeight = weighed.total;
-    const encumbrance = { ...encumbranceState(carriedWeight, secondary.basicLift, secondary.basicMove), notCounted: weighed.notCounted };
+    // A muscle-powered wheelchair moves at ST/4 on the ground (Characters p. 142; API 1.113.0).
+    const inWheelchair = this.items.some((i: any) => i.type === "equipment" && i.system?.equipped === true && i.system?.wheelchair === true);
+    const groundMove = inWheelchair ? wheelchairMove(attrs.ST) : secondary.basicMove;
+    const encumbrance = {
+      ...encumbranceState(carriedWeight, secondary.basicLift, groundMove),
+      notCounted: weighed.notCounted,
+      added: weighed.added,
+      towing,
+      wheelchair: inWheelchair,
+    };
     const reeling = isReeling(this.hp.value, this.hp.max);
     // Fatigue has a chart of its own, with the same two halvings on it: someone
     // who has not eaten in three days moves and dodges like someone bleeding.
@@ -2756,8 +2805,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const beast = beastTraitsFrom(heldTraits.map((t) => t.name));
     const unarmedIsItsOwn =
       beast.horizontal === true || beast.legless === true || beast.handless === true;
+    // Boots worn make the kick thr+1 (Characters p. 271; since API 1.110.0).
+    const inBoots = this.itemsOfType("armor").some((item: any) => item.system?.equipped === true && item.system?.boots === true);
     const unarmedInput = (st: number) => ({
       st,
+      boots: inBoots,
       // A punch and a kick are DX-based like any weapon skill, so an extra
       // layer of armour costs them the same -1 (Characters p. 286).
       dx: attrs.DX + layering,
@@ -2777,6 +2829,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         modeIndex: 0,
         name: game.i18n.localize(`GWORLD.Natural.${attack.key}`),
         naturalKey: attack.key,
+        // Whether the kick's damage has the boots' +1 in it (since API 1.110.0).
+        ...(attack.key === "kick" ? { boots: inBoots } : {}),
         mode: attack.skillName,
         skillName: attack.skillName,
         skillLevel: attack.skillLevel + legs,

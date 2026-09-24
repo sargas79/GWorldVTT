@@ -17,7 +17,7 @@ import { isUndoable, undoDamage, type DamageTransaction } from "./damage-undo.js
 import { HURTING_YOURSELF_DR, hurtingYourself } from "../rules/hurting-yourself.js";
 import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy } from "./weapon-damage.js";
 import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shields.js";
-import { rollDamage, rollSuccess, type AttackWeaponFlag } from "./roll.js";
+import { attackOptionsFromEntries, rollDamage, rollSuccess, type AttackWeaponFlag } from "./roll.js";
 import { currentTargets, ownsATokenOnScene } from "./targets.js";
 import {
   BLAST_PLACEMENTS, blastAt, blastPlacementOf, contactCoverDr, fragmentationLabel, fragmentationStrikes,
@@ -96,6 +96,8 @@ interface DamageFlag {
   chink?: boolean;
   /** A location a module registered that the attack was aimed at, as `<module>.<key>`. */
   addonLocation?: string;
+  /** The attack options chosen for the attack, as `[<module>.<key>, value]` pairs (since API 1.108.0). */
+  attackOptions?: Array<[string, unknown]>;
   /** Pellets striking as one: the figure the target's DR is multiplied by. */
   drMultiplier?: number;
   /** A blow aimed at a weapon rather than at its wielder (Campaigns p. 401). */
@@ -477,6 +479,12 @@ async function applyFromCard(options: {
     // (p. 400), so it goes in beside the critical's halving rather than
     // instead of it.
     ...(flag.chink ? { chink: true } : {}),
+    // How the blow was aimed, whatever the card applied it to, and the
+    // options it was struck with (since API 1.108.0).
+    ...(flag.hitLocation
+      ? { calledShot: { hitLocation: flag.hitLocation, addonLocation: flag.addonLocation ?? null, chink: flag.chink === true } }
+      : {}),
+    ...(flag.attackOptions ? { attackOptions: attackOptionsFromEntries(flag.attackOptions) } : {}),
     ...(flag.drMultiplier && flag.drMultiplier > 1 ? { drMultiplier: flag.drMultiplier } : {}),
     ...(flag.material ? { material: flag.material } : {}),
     ...(flag.ignoresDr ? { ignoresDr: true } : {}),
@@ -687,6 +695,10 @@ async function applyFromCard(options: {
         ? game.i18n.format(result.injuryCap.reason ? "GWORLD.Chat.InjuryCappedWhy" : "GWORLD.Chat.InjuryCapped", {
             cap: result.injuryCap.cap, lost: result.injuryCap.lost, reason: result.injuryCap.reason,
           })
+        : "",
+      // The Vulnerability that multiplied what got through, a trait's or worn gear's (since API 1.106.0).
+      vulnerabilityNote: result.vulnerability
+        ? game.i18n.format("GWORLD.Chat.Vulnerable", { multiplier: result.vulnerability.multiplier, label: result.vulnerability.label })
         : "",
     })),
   });

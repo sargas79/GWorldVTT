@@ -59,9 +59,14 @@
       {{!-- Caught in something, and trying to get out (pp. 410-411). --}}
       <button type="button" class="ibtn" data-action="tryToEscape"
               data-tooltip="{{localize 'GWORLD.Entangled.EscapeHint'}}">
-        {{localize "GWORLD.Entangled.Escape"}}
-        {{#if entangled.successes}}
-          &middot; {{entangled.successes}}/{{entangled.needed}}
+        {{#if entangled.binding}}
+          {{localize "GWORLD.Entangled.BreakFree" what=entangled.binding.label}}
+          &middot; {{localize "GWORLD.Entangled.BoundAt" st=entangled.binding.st}}
+        {{else}}
+          {{localize "GWORLD.Entangled.Escape"}}
+          {{#if entangled.successes}}
+            &middot; {{entangled.successes}}/{{entangled.needed}}
+          {{/if}}
         {{/if}}
       </button>
       {{#if entangled.mustBeCut}}

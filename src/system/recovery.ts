@@ -20,8 +20,8 @@ import {
   regenerationRate,
   wakingFrom,
 } from "../rules/recovery.js";
-import { resolveSuccess } from "../rules/success.js";
-import { successRollModifiers } from "./procedure-extensions.js";
+import { resolveSuccess, type SuccessRollResult } from "../rules/success.js";
+import { afterSuccessRoll, successRollModifiers } from "./procedure-extensions.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { refuseWhileHeld } from "./knockdown.js";
@@ -39,6 +39,7 @@ import {
   type ResuscitationCause,
   canResuscitate,
 } from "../rules/medicine.js";
+import { skillLevelOf } from "./skill-level.js";
 
 const RECOVERY_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/recovery.hbs`;
 
@@ -75,18 +76,6 @@ function dieResults(roll: any): number[] {
 const R = (key: string) => game.i18n.localize(`GWORLD.Recovery.${key}`);
 const F = (key: string, data: Record<string, unknown>) =>
   game.i18n.format(`GWORLD.Recovery.${key}`, data);
-
-/** The level of a skill by name, or null where the healer lacks it. */
-function skillLevelOf(actor: any, name: string): number | null {
-  const wanted = name.trim().toLowerCase();
-  for (const item of actor?.items ?? []) {
-    if (item.type !== "skill") continue;
-    if (String(item.name ?? "").trim().toLowerCase() !== wanted) continue;
-    const level = Number(item.system?.derived?.level);
-    return Number.isFinite(level) ? level : null;
-  }
-  return null;
-}
 
 /** Posts one recovery card. */
 async function post(actor: any, context: Record<string, unknown>): Promise<void> {
@@ -441,9 +430,9 @@ export async function operate(options: {
   techLevel?: number;
   /** Who operates, as the card names them (since 1.60.0). */
   label?: string;
-}): Promise<void> {
+}): Promise<(SuccessRollResult & { target: number; techLevel: number }) | null> {
   const { surgeon, patient } = options;
-  if (!mayChange(patient)) return;
+  if (!mayChange(patient)) return null;
 
   const skill = typeof options.skill === "number" ? options.skill : (skillLevelOf(surgeon, "Surgery") ?? attributeOf(surgeon, "IQ") - 5);
   const techLevel = typeof options.techLevel === "number" ? options.techLevel : (Number(surgeon?.system?.tl) || 3);
@@ -488,6 +477,11 @@ export async function operate(options: {
     bad: !outcome.success,
     rolls: [roll],
   });
+
+  // And the modules hear how it went (since API 1.112.0), as they do for any
+  // success roll: whether it worked, by how much, and whether it was critical.
+  afterSuccessRoll({ actor: surgeon, label: R("Surgery"), kind: "skill", skill: "Surgery", tags: ["surgery"], outcome, opponent: patient });
+  return { ...outcome, target, techLevel };
 }
 
 /**

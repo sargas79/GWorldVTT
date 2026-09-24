@@ -154,7 +154,9 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
         { label: L("StHp"), value: String(v.stHp) },
         {
           label: L("HandlingStability"),
-          value: `${v.handling >= 0 ? "+" : ""}${v.handling}/${v.stability}`,
+          // As the rules read them now, where a module's state changed them (API 1.115.0).
+          value: `${(derived.stats?.handling ?? v.handling) >= 0 ? "+" : ""}${derived.stats?.handling ?? v.handling}/${derived.stats?.stability ?? v.stability}`,
+          ...(derived.stats?.lines?.length ? { hint: derived.stats.lines.map((line: { label: string }) => line.label).join("; ") } : {}),
         },
         { label: L("Ht"), value: `${v.ht}${fragilityCodes(v.fragility).join("")}` },
         // Each Move it has, the second named by the way it moves (pp. 462-465).

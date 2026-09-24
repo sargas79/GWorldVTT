@@ -14,7 +14,7 @@
  * with the DR that stops a sword.
  */
 
-import { parseVulnerability, vulnerabilityMultiplier, type Vulnerability } from "../rules/vulnerability.js";
+import { parseVulnerability, worstVulnerability, type Vulnerability } from "../rules/vulnerability.js";
 import { type ArmorPiece } from "../rules/armor.js";
 import { bluntTraumaInjury } from "../rules/layered-armor.js";
 import { ablativeLoss, drAgainst, drFromBelow, hardenedAgainst, remainingDr, drLostAfterWear } from "../rules/armor.js";
@@ -103,6 +103,26 @@ export interface IncomingDamage {
   cinematicBlast?: boolean;
   /** What the weapon is made of, for a Vulnerability to silver (Characters p. 161). */
   material?: string;
+  /**
+   * How the attack was aimed (since API 1.108.0): the location called, a
+   * module's location called there, and whether it went for a chink
+   * (Campaigns p. 400). Null or left out for a blow nobody aimed. Where the
+   * blow landed is `hitLocation`, which may differ.
+   */
+  calledShot?: { hitLocation: HitLocation; addonLocation: string | null; chink: boolean } | null;
+  /** The attack options chosen for the attack, by `<module>.<key>` (since API 1.108.0). */
+  attackOptions?: Record<string, unknown>;
+  /**
+   * Vulnerabilities this blow meets besides the victim's own traits (since
+   * API 1.106.0; Characters p. 161), for a `gworld.injury` listener to add:
+   * worn gear that makes its wearer vulnerable to a kind of damage, as
+   * soaked clothing might to burning. Each is `{ form, multiplier, label? }`,
+   * `form` written as a trait's is ("fire", "crushing") or a damage type's
+   * code ("burn"), and it is weighed with the traits' own: the worst one that
+   * applies multiplies the damage that penetrates DR, before the wounding
+   * modifier.
+   */
+  vulnerabilities?: Vulnerability[];
   /**
    * True when "the target's DR has no effect" (Characters p. 106): a
    * Malediction. Worn armour, the target's own DR and a location's all count
@@ -206,6 +226,12 @@ export interface AppliedDamage {
    * 1.73.0): the cap, the injury it kept from being taken, and why.
    */
   injuryCap: { cap: number; lost: number; reason: string } | null;
+  /**
+   * The Vulnerability the blow met (since API 1.106.0; Characters p. 161):
+   * its multiplier and what it came from -- a trait's name, or the label a
+   * listener gave the gear's -- or null where none applied.
+   */
+  vulnerability: { multiplier: number; label: string } | null;
   crippled: boolean;
   /** True when the loss came off Fatigue Points rather than Hit Points. */
   costsFatigue: boolean;
@@ -333,7 +359,7 @@ export function vulnerabilitiesOf(actor: any): Vulnerability[] {
     const name = String(item.name ?? "");
     if (!/vulnerab/i.test(name)) continue;
     const read = parseVulnerability(name) ?? parseVulnerability(String(item.system?.notes ?? ""));
-    if (read) found.push(read);
+    if (read) found.push({ ...read, label: name });
   }
   return found;
 }
@@ -489,6 +515,13 @@ function armourAt(
     arc: damage.arc ?? null,
     // A blow from underneath (since 1.63.0).
     fromBelow: damage.fromBelow === true,
+    // How the blow was aimed (since 1.108.0): the called shot, a chink
+    // included, the module's location it landed on, and the attack options
+    // chosen, so a rule about striking around armour needs no flag of its own.
+    calledShot: damage.calledShot ? { ...damage.calledShot } : null,
+    chink: damage.chink === true,
+    addonLocation: damage.addonLocation ?? null,
+    options: { ...(damage.attackOptions ?? {}) },
     lines,
   });
 
@@ -659,6 +692,15 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
   // roll -- and takes everything else from the Basic Set location it is part of.
   const overrides = locationOverrides(damage.addonLocation, damage.type, Number(hp.max) || 0);
 
+  // A body with a Vulnerability is hurt worse by the thing it fears, and so
+  // is one wearing something that makes it vulnerable (since API 1.106.0):
+  // the worst of the traits' and the listeners' is the one that counts.
+  const vulnerable = worstVulnerability({
+    vulnerabilities: [...vulnerabilitiesOf(actor), ...(Array.isArray(damage.vulnerabilities) ? damage.vulnerabilities : [])],
+    ...(damage.material ? { material: damage.material } : {}),
+    damageType: damage.type,
+  });
+
   // computeInjury adds the location's own natural DR itself, so it is given the
   // worn figure alone. maxHp is what caps injury to a limb at the point the
   // limb is crippled.
@@ -688,12 +730,8 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
     ...(hardened.ignoresDr ? { critical: { ...(critical ?? {}), ignoreDr: true } } : {}),
     // A body that is not flesh is hurt as its substance allows.
     ...(hasInjuryTolerance(traits.injuryTolerance) ? { tolerance: traits.injuryTolerance } : {}),
-    // And a body with a Vulnerability is hurt worse by the thing it fears.
-    vulnerability: vulnerabilityMultiplier({
-      vulnerabilities: vulnerabilitiesOf(actor),
-      ...(damage.material ? { material: damage.material } : {}),
-      damageType: damage.type,
-    }),
+    // And a Vulnerability multiplies what penetrates, before the wounding modifier.
+    vulnerability: vulnerable.multiplier,
   });
 
   // Fatigue comes off FP, and the consequences that follow -- shock, major
@@ -787,6 +825,9 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
     uncappedInjury: beforeCap + (blast || kinetic ? 0 : result.excessLost),
     injuryCap: capped.lost > 0
       ? { cap: Math.max(0, Math.floor(Number(damage.injuryCap))), lost: capped.lost, reason: String(damage.injuryCapReason ?? "") }
+      : null,
+    vulnerability: vulnerable.vulnerability && result.penetrating > 0 && !blast && !kinetic
+      ? { multiplier: vulnerable.multiplier, label: String(vulnerable.vulnerability.label ?? vulnerable.vulnerability.form) }
       : null,
     crippled,
     costsFatigue: result.costsFatigue,

@@ -103,7 +103,7 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0). |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0), and `bind(actor, options)`, `unbind(actor)`, `binding(actor)` and `breakFree(actor)` (since 1.107.0; see *Binding*), and `spendFatigue(actor, fp, options)` (since 1.109.0; see *Medical hooks*), and `changeTrait(actor, options)` (since 1.112.0; `operate` also resolves to its outcome since then), and `tow(actor, options)` and `stopTowing(actor)` (since 1.113.0; see *Towing and the wheelchair*), and `cripple(actor, location, options)`, `crippled(actor)` and `healCrippled(actor, which)` (since 1.114.0; see *Crippled parts*). |
 | `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
@@ -438,6 +438,11 @@ and the roll continues.
     also gets `calledShot` (`{ hitLocation, addonLocation }`, or null) and
     `retreating`. In `gworld.defenseChoices`, set
     `blockAgain` true to allow a block after the one a turn allows;
+  - Since 1.111.0, `gworld.attackModifiers` also gets `unarmed`: `punch` or
+    `kick` for the character's bare-handed blows (the rows' `naturalKey`,
+    Characters p. 271), whose `item` and `mode` are null, and null for any
+    other attack. A rule about a restrained or crippled limb can refuse the
+    one and allow the other (set `refusal`);
   - Since 1.18.0, `gworld.attackModifiers` also gets `calledShot`, the location the
     blow is aimed at as `{ hitLocation, addonLocation }` or null, and `targets`,
     the actors of the targeted tokens; since 1.23.0 also `targetTokens`, their
@@ -615,6 +620,14 @@ and the roll continues.
     or kick, and the hook isn't called for it; a beast's bite, claws and
     strikers don't pass through it. It is a hook of its own so that
     `gworld.weaponAttacks` listeners never see a null item.
+    Since 1.110.0 the system adds the boots itself (Characters p. 271):
+    armour with `system.boots` true (a boolean, false by default; the Basic
+    Set's Boots, Reinforced Boots and Assault Boots carry it, and a module
+    sets it on its own footwear) makes the kick thr+1 while it is worn
+    (`equipped`). The kick row carries `boots`, true when that +1 is in its
+    damage, and so do its `basis.damage` and `damageAt`; a listener that
+    adds the boots itself should look at it first, or stop doing so.
+    `rules.naturalAttacks` takes `boots` and `rules.BOOTS_KICK_BONUS` is the +1.
   - `gworld.armorDr` (since 1.48.0): before a blow's DR is added up, with
     `{ actor, item, mode, hitLocation, damageType, basicDamage, lines }`. Each
     of `lines` is one piece of worn armour reaching the spot:
@@ -676,6 +689,23 @@ and the roll continues.
     itself is different, and is the piece's own `drByLocation` (since 1.51.0):
     a list of `{ locations, dr }`, each replacing the piece's figure at those
     locations, split and all.
+
+    Since 1.108.0 the context also says how the blow was aimed, so a rule
+    about how armour meets an aimed blow (a chink, Campaigns p. 400, or an
+    attack option that strikes around partial coverage) reads the blow rather
+    than a flag of its own on the attacker: `calledShot`, `{ hitLocation,
+    addonLocation, chink }` for the location the attack was aimed at, or null
+    for a blow nobody aimed (`hitLocation` is where it landed, which may
+    differ); `chink`, true where the blow found a chink and so meets half the
+    worn DR after the listeners; `addonLocation`, the module's location it
+    struck, or null; and `options`, the attack options chosen for the attack
+    as `<module>.<key>` to value, as `gworld.attackModifiers` has them (`{}`
+    for none). They come from the attack through the damage roll made from
+    the sheet: the damage card keeps `attackOptions` (as `[key, value]`
+    pairs, since a key's dot would nest it in a flag) beside the called shot,
+    and `IncomingDamage` carries `calledShot` and `attackOptions`, so
+    `gworld.injury` and `gworld.afterDamage` see them too. `roll.damage` takes
+    `attackOptions` (and already took `calledShot`) for a module's own roll.
   - `gworld.vehicleDr` (since 1.79.0): before a vehicle's DR meets a shot
     (Campaigns pp. 462, 554-555), with `{ vehicle, actor, item, mode,
     location, arc, damageType, basicDamage, armorDivisor, ignoresDr,
@@ -1014,8 +1044,15 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     weight, a pack that holds its load weightlessly. The item keeps its weight
     everywhere else. `derived.encumbrance.carriedWeight` is what counts, and
     `derived.encumbrance.notCounted` lists the lines left out or lowered as
-    `{ label, weight, counted, reason }`. A weight can't be raised here, and a
-    listener that throws changes nothing.
+    `{ label, weight, counted, reason }`. A listener that throws changes
+    nothing, and a weight can't be made negative. Since 1.113.0 a listener
+    may also raise a line's `weight`, or push a line of its own (`{ item:
+    null, label, weight, counts: true, reason }`) -- gear that weighs more
+    wet, a load of the module's -- and `derived.encumbrance.added` lists the
+    lines raised or added as `{ label, weight, counted, reason }` (`weight` 0
+    for an added line). Before 1.113.0 a raised weight was ignored. A load
+    pulled with `actors.tow` is a line of its own, `Towing: <label>`, at its
+    effective weight.
   - `gworld.attributeBonuses`, with `{ actor, attributes, lines }`: push
     `{ attribute, label, value, source }`. They show on the attribute's card.
   - `gworld.defenseBonuses`, with `{ actor, defenses, lines }`: push
@@ -1267,6 +1304,10 @@ Two fields a module may read (since 1.62.0):
     makes a secret roll (Campaigns p. 494), the `blind` mode: the GMs see
     the card and whoever rolled does not. `rollMode` wins over `secret`.
     Left out, the card is posted openly, as before.
+  - *Secret contests* (since 1.111.0): `roll.quickContest` and
+    `roll.regularContest` take the same `rollMode` and `secret`, read the
+    same way, so a contest the GM rolls in secret (Campaigns p. 494) goes
+    to the GMs alone. Left out, the card is posted openly, as before.
   - *Influence rolls* (Campaigns p. 359): both sides of the Quick Contest
     pass through `gworld.successRollModifiers`, `kind` `contest`, tagged
     `contest`, `quickContest` and `influence`, each with the other side as
@@ -1298,6 +1339,200 @@ Two fields a module may read (since 1.62.0):
   whether there was one. The rolls to recover from the effect never get it
   ("DR has no effect on this roll"). An affliction resisted with a Fright
   Check gets no line; `attack.drBonus` is there for a module that wants one.
+- **Vulnerability from worn gear** (since 1.106.0; Characters p. 161): a
+  `gworld.injury` listener may put `damage.vulnerabilities`, a list of
+  `{ form, multiplier, label? }`, on a blow, for gear that makes its wearer
+  vulnerable to a kind of damage (soaked clothing to burning, say). `form` is
+  written as a Vulnerability trait's is -- `fire`, `acid`, `crushing`,
+  `cutting`, `impaling`, `piercing`, `silver` -- or is a damage type's own
+  code (`burn`, `pi+`), which matches that type alone. The list is weighed
+  with the victim's Vulnerability traits and, as among those, the worst one
+  that applies to the blow counts, not the product: its multiplier applies
+  to the damage that penetrates DR, before the wounding modifier. The
+  result (`gworld.afterDamage`'s `result`) carries `vulnerability`,
+  `{ multiplier, label }` -- the trait's name, or the listener's `label`
+  (its `form` where it gave none) -- where one multiplied damage that got
+  through, else null, and the applied card shows it beside the injury.
+  `rules.worstVulnerability({ vulnerabilities, material?, damageType })`
+  returns `{ multiplier, vulnerability }`; `rules.vulnerabilityMultiplier`
+  still returns the multiplier alone.
+- **Binding** (since 1.107.0; Characters p. 40): `actors.bind(actor, { st,
+  label?, source?, onBreak? })` holds a character in a Binding of ST `st`
+  (a whole number, 1 or more) on the system's entangled state: `system.entangled`
+  gets `kind` `binding`, `st`, `label` (what holds them, for the sheet and
+  the cards) and `source` (the module's own tag), and the `entangled`
+  condition is set. Binding someone already bound replaces the ST and the
+  label, which is how a module adds a layer (+1 ST each). It resolves to
+  false for a user who can't change the actor or an ST below 1. The sheet's
+  escape button becomes **Break free of** the label, and `actors.breakFree(actor)`
+  does the same thing: one attempt, a Quick Contest (tagged `quickContest`
+  and `binding`) of the victim's ST, or Escape where that is higher, against
+  the Binding's ST. The victim is free only if they win. A failed attempt
+  costs 1 FP through the fatigue chart (the `gworld.fatigueCost` reason is
+  `binding`, with `details` `{ st, label, source }`). It resolves to `free`,
+  `held`, or null where nothing binds them. `actors.unbind(actor)` takes the
+  Binding off with no Contest, for a module whose rule freed the victim or
+  destroyed what held them, and resolves to false if there was none.
+  `actors.binding(actor)` reads `{ st, label, source }` or null. Whenever a
+  Binding ends, `gworld.bindingBroken` is called with `{ actor, st, label,
+  source, how }`, where `how` is `brokeFree` or `unbound`. `onBreak` gets the same object,
+  but only in the client that called `bind`, and only in that session,
+  because a function can't be saved on the sheet. The system doesn't apply
+  the -4 to DX, the rooting in place, or damage wearing the Binding's ST
+  down; a module adds those through conditions and `bind`.
+- **A roll refused below 3** (since 1.107.0; Campaigns p. 344): when
+  `roll.success` (or any system roll other than an active defense) is refused
+  because its effective skill is below 3, it now posts a card with the
+  target and the reason, and no dice, in the roll's own message mode (a
+  secret roll's refusal stays secret). It still resolves to null, unless the
+  caller passes `returnRefusal: true`, which makes it resolve to
+  `{ refused: true, reason, base, effective, modifiers }` instead.
+- **Medical hooks** (since 1.109.0):
+  - *The tech level of First Aid* (Campaigns p. 424): `gworld.firstAid` also
+    gets `techLevel`, the healer's TL to start with. A listener may set it
+    (a doctor working without supplies, at a lower TL, for instance), and
+    the sheet's First Aid then uses the First Aid Table's row for that TL:
+    the HP restored, and the time it takes.
+  - *Dirt in a wound* (Campaigns p. 444): the infection roll's
+    `gworld.successRollModifiers` context (tags `disease`, `infection`,
+    `HT`) has the dirt's modifier as a line keyed `woundDirt`. It is always
+    there, at 0 for clean dirt. A module can change its `value`, or take it
+    out and push its own, to offset or replace the dirt alone. The +3 for
+    an untreated wound isn't a line, and stays.
+  - *Keyed lines a listener removes*: a line the caller gave (`woundDirt`,
+    `afflictionDr`) that a `gworld.successRollModifiers` listener takes out
+    of `modifiers` is now gone from the roll. Before, the roll kept it,
+    and a line the listeners had added could be lost in its place. A
+    listener that changes a given line's `value` changes the roll, as
+    before.
+  - *Fatigue through the chart* (Campaigns p. 426):
+    `actors.spendFatigue(actor, fp, { reason?, details?, exertion? })` charges
+    FP the way the system's own procedures do. `gworld.fatigueCost` runs
+    first, with `reason` (`module` when none is given), `details` and
+    `exertion` (true unless given false). Then Very Fit halves exertion,
+    and the chart applies: past 0 FP each further point is also a point of
+    injury, and at -1xFP the character falls unconscious. It resolves to
+    `{ fpLost, hpLost, sources, fp: { previous, now, max }, hp: { previous,
+    now, max }, status }`, or null for a user who can't change the actor or
+    an amount that isn't a positive whole number. `actors.applyInjury({
+    fatigue: true })` is unchanged and still takes the FP as given.
+- **An operation's outcome, and changing traits** (since 1.112.0):
+  - `actors.operate` (Campaigns p. 424) now resolves to the outcome:
+    `{ success, criticalSuccess, criticalFailure, margin, roll, dice,
+    effectiveSkill, target, techLevel }`. It resolves to null when the user
+    can't change the patient. It also fires `gworld.afterSuccessRoll` with
+    `{ actor: surgeon, label, kind: "skill", skill: "Surgery", tags:
+    ["surgery"], outcome, opponent: patient }`, as the sheet's own operation
+    does.
+  - `actors.changeTrait(actor, { id? | name?, level?, replaceWith? })`, GM
+    only, edits a character's trait items the way the sheet does. It finds
+    the trait by `id`, or by `name` (case, spacing and "/TL" aside).
+    - `level` sets the trait's `levels`, held within its cap and cost
+      table the way a level typed on the sheet is.
+    - `replaceWith` swaps the trait for another, for related traits the
+      book writes separately (one level of Appearance for another,
+      Characters p. 21) or a module's build change. It is either a trait's
+      name, looked up in the Item compendia, or a trait's item data. Given
+      with `level`, the new trait takes that level.
+    - It resolves to `{ itemId, from: { name, levels }, to: { name, levels
+      }, replaced }`, where `itemId` is the item that holds the trait now.
+      It resolves to null for a user who isn't a GM (who also gets a
+      warning), for a trait the character hasn't got, or for a replacement
+      that can't be found.
+- **Towing and the wheelchair** (since 1.113.0):
+  - *Pulling and dragging* (Campaigns p. 353): `actors.tow(actor, { weight,
+    conveyance?, smooth?, label? })` starts pulling a load. `weight` is the
+    load and its sledge, cart or wagon together, in pounds. `conveyance` is
+    `none` (dragged, the default), `sledge` (over snow or ice, /2), `cart`
+    (/10) or `wagon` (/20), and `smooth` true halves it again for a floor,
+    road or frozen lake. The effective weight then counts toward
+    encumbrance, and Move and Dodge follow, until `actors.stopTowing(actor)`.
+    Towing again replaces the load. `tow` resolves to `{ effective, limit,
+    movable }`: `limit` is 15 x Basic Lift, and `movable` is false past it
+    (the book says such a load can't be moved at all; the system doesn't
+    stop the character). It resolves to null for a user who can't change
+    the actor, or a weight that isn't a positive number. The load is kept
+    in `flags.gworld.towing`, and `derived.encumbrance.towing` reads `{
+    weight, conveyance, smooth, label, effective, movable }` or null.
+    `rules.towedWeight`, `rules.canPull`, `rules.CONVEYANCE_DIVISORS` and
+    `rules.TOWING_LIMIT_BL` hold the arithmetic.
+  - *The wheelchair* (Characters p. 142): equipment with `system.wheelchair`
+    true (a boolean, false by default, with a checkbox on the item sheet) is
+    a muscle-powered wheelchair or wheeled platform. While it is equipped,
+    the character's ground Move is ST/4, rounded down, in place of Basic
+    Move, and encumbrance applies to that.
+    `derived.encumbrance.wheelchair` says whether one is in use.
+    `rules.wheelchairMove(st)` gives the figure. The Basic Set's equipment
+    lists no wheelchair, so no pack record carries it.
+- **Crippled parts** (since 1.114.0; Campaigns p. 422):
+  `actors.cripple(actor, location, { duration, label?, months?, treatedAtTl? })`
+  records a crippled body part on a character, for a module whose effect
+  heals as a crippled limb would (a poison's paralysis, say).
+  - `location` is a Basic Set location that can be crippled (`arm`, `leg`,
+    `hand`, `foot`, `eye`) or a registered location (`<module>.<key>`).
+  - `duration` is `temporary`, `lasting` or `permanent`:
+    - A temporary crippling lasts until the character is back at full HP.
+    - A lasting one heals after `months`, or after 1d months less a
+      physician's relief at `treatedAtTl` (3 at TL7+, 2 at TL6, 1 at TL5),
+      and never less than one. A month is 30 days of world time.
+    - A permanent one never heals.
+  - `label` names it on the sheet.
+  - It resolves to the part, `{ id, location, duration, label, since,
+    months, healsAt }` (`since` and `healsAt` are world time in seconds).
+    It resolves to null for a user who can't change the actor, a location
+    that can't be crippled, or an unknown duration.
+  - `actors.crippled(actor)` lists the parts crippled now, healed ones left
+    out. Healing is read whenever the list is read, so nothing needs to run
+    as time passes.
+  - `actors.healCrippled(actor, idOrLocation)` takes one off. It resolves
+    to false where there was none.
+  - The parts are kept in `flags.gworld.crippled`. The sheet lists them
+    under Recovery, with a button to take each off.
+  - The system doesn't apply what a crippled part does (Effects of Crippling
+    Injury, p. 421). A module applies those, as it would to any crippled
+    limb.
+- **Vehicle hooks** (since 1.115.0):
+  - *Figures while a state lasts* (Campaigns p. 555: crippled wheels,
+    tracks or rotors): `gworld.vehicleStats` is called wherever the system
+    reads a vehicle's Handling, Stability or Move. That covers the vehicle
+    actor's derived data (its Dodge, safe deceleration, top speed and
+    cruising speed), control rolls and losing control, and the Stability
+    Rating a passenger's shot is held to. The context is `{ vehicle,
+    handling, stability, acceleration, topSpeed, move, lines }`:
+    - `vehicle` is the actor, or the item on a Gear tab.
+    - The four figures are mutable. `acceleration` and `topSpeed` belong
+      to the Move in use (`move`).
+    - Push `{ label, stat?, value? }` to `lines` to say why.
+    The stored figures are left alone. A listener that throws changes
+    nothing. A figure that isn't a number stays as it was, and Stability,
+    acceleration and top speed never go below 0. The vehicle's
+    `derived.stats` holds the result `{ handling, stability, acceleration,
+    topSpeed, move, lines }`, and its sheet shows the changed Hnd/SR with
+    the lines as a tooltip.
+  - *Put on the road*: the vehicle actor made from a vehicle item now
+    takes the item's `system.extensions` and its flags in every scope
+    except `core` and the system's own.
+  - *Why a control roll is made* (Campaigns p. 466): `hazards.controlVehicle({
+    actor, vehicle, modifier?, reason? })` runs a control roll as the
+    sheet's Control button does. `reason` is a tag of the caller's, such as
+    `hardBraking`, a hazard's name or a maneuver's. It joins the roll's
+    tags (`vehicleControl` and the rest) in `gworld.successRollModifiers`,
+    and the context carries it as `reason`. The sheet's own rolls give
+    none.
+  - *After a shot at a vehicle*: `gworld.afterVehicleHit` is called once
+    `hazards.shootAtVehicle` (or the sheet's Shot at) has worked out and
+    posted the hit. The context is `{ vehicle, actor, item, mode, location,
+    arc, damageType, penetrating, injury, crippled, passedThrough,
+    occupantHit }`:
+    - `injury` is the HP the vehicle lost after the location's wounding
+      modifier.
+    - `crippled` says whether the location was crippled.
+    - `passedThrough` is true where the hit passed to a person or animal.
+    - `occupantHit` is `{ dice }` of cutting damage for an occupant struck,
+      or null.
+    Follow-on effects go here rather than in `gworld.vehicleDr`.
+    `shootAtVehicle` now resolves to the same object (without `vehicle`,
+    `actor`, `item` and `mode`), or null where there was no vehicle.
 - **An affliction's effect** (since 1.49.0): `gworld.afflictionEffect` fires
   when a resistance roll fails, with
   `{ actor, attacker, item, mode, label, margin, effects }`. Push a
@@ -2153,7 +2388,8 @@ Two fields a module may read (since 1.62.0):
 - **Self-control rolls:** the Traits tab rolls a trait's self-control number, tagged
   `selfControl`, with the trait's name as `skill`; `gworld.afterSuccessRoll` follows.
 - **First Aid** (since 1.36.0): `gworld.firstAid` gets `{ healer, patient, refusal,
-  stopsBleeding }` before an attempt. Set `refusal` (text) to stop it, or
+  stopsBleeding, techLevel }` before an attempt (`techLevel` since 1.109.0;
+  see *Medical hooks*). Set `refusal` (text) to stop it, or
   `stopsBleeding: false` so success doesn't stop the patient's bleeding. The roll
   itself adds `gworld.successRollModifiers` lines, tagged `firstAid`, with the
   patient as `opponent`. `actors.stopBleeding(actor)` ends an actor's bleeding.
