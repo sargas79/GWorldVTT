@@ -42,6 +42,7 @@ import { magicApi, pointsApi } from "./roll-extensions.js";
 import { conditionLabel, setCondition } from "./conditions.js";
 import { migrationApi } from "./migration.js";
 import { takeInjury, wearDr, type DrWorn, type InjuryTaken } from "./damage.js";
+import { equipmentFailure, type EquipmentFailureResult } from "./repairs.js";
 import { stopBleeding } from "./bleeding.js";
 import { activePoisons, advancePoison, clearPoison, dosePoison, treatIllness, treatPoison, type ActivePoison } from "./poison.js";
 import { applyFirstAid, attendPatient, operate, resuscitate } from "./recovery.js";
@@ -101,7 +102,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.117.0";
+export const API_VERSION = "1.118.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -609,6 +610,20 @@ const items = {
    */
   wearDr(item: any, amount: number, options: { location?: string; reason?: string } = {}): Promise<DrWorn | null> {
     return wearDr(item, amount, options);
+  },
+
+  /**
+   * Rolls an equipment failure roll for a thing (since 1.118.0; Campaigns p.
+   * 485) with `{ actor?, item, modifier?, label?, apply? }`: 3d against the
+   * item's HT (after missed maintenance) plus `modifier` and the
+   * `gworld.equipmentFailure` lines, with the card. On a failure the thing
+   * is marked down for a minor repair, on a critical failure for a major
+   * one, unless `apply` is false. Resolves to `{ outcome, result, target,
+   * roll, margin, applied }`, `outcome` being `success`, `failure` or
+   * `criticalFailure`; null where the user doesn't own the item.
+   */
+  equipmentFailure(options: { actor?: any; item: any; modifier?: number; label?: string; apply?: boolean }): Promise<EquipmentFailureResult | null> {
+    return equipmentFailure(options);
   },
 };
 

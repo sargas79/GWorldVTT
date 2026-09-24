@@ -22,10 +22,12 @@ import {
   repairTarget,
   sparePartsCost,
   type RepairKind,
+  type FailureOutcome,
+  healthAfterNeglect,
   needsMaintenance,
 } from "../rules/repairs.js";
 import { weaponFacts } from "./weapon-damage.js";
-import { equipmentFailureModifiers } from "./combat-extensions.js";
+import { equipmentFailureModifiers, type ModifierLine } from "./combat-extensions.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/repair.hbs`;
 
@@ -140,6 +142,103 @@ export async function repairItem(options: {
   });
 }
 
+/** How an equipment failure roll went: the success roll's result, in the three words a module needs. */
+export type EquipmentFailureOutcome = "success" | "failure" | "criticalFailure";
+
+/** What `items.equipmentFailure` resolves to. */
+export interface EquipmentFailureResult {
+  outcome: EquipmentFailureOutcome;
+  /** What the failure costs the thing (p. 485): nothing, a minor repair or a major one. */
+  result: FailureOutcome;
+  target: number;
+  roll: number;
+  margin: number;
+  /** Whether the thing's hit points were marked down to what the result calls for. */
+  applied: boolean;
+}
+
+/**
+ * The thing's HT for the book's rolls (p. 485): "Most machines and similar
+ * artifacts in good repair are HT 10. Swords, tables, shields, and other
+ * solid, Homogenous objects are HT 12." A module may make the thing sturdier
+ * or frailer (`gworld.objectStats`). Missed maintenance wears down "machines
+ * and similar artifacts", and "this rule does not apply to items without
+ * moving parts": a sword left uncleaned is a dirty sword, not a failing one.
+ */
+function failureHealth(item: any): { health: number; missedChecks: number; hp: number } {
+  const facts = weaponFacts(item);
+  const maintained = needsMaintenance({ movingParts: facts.firearm });
+  return {
+    health: facts.ht,
+    missedChecks: maintained ? Number(item.system?.missedMaintenance ?? 0) || 0 : 0,
+    hp: facts.hp,
+  };
+}
+
+/**
+ * Rolls against a failure target already worked out, marks the thing down
+ * and posts the card: the half the exposure check and a module's roll share.
+ */
+async function rollEquipmentFailure(options: {
+  actor: any;
+  item: any;
+  target: number;
+  /** The thing's hit points, which a failure marks down. */
+  hp: number;
+  /** Lines the card shows beside the hook's: the module's own modifier. */
+  lines: ModifierLine[];
+  failureModifiers: ModifierLine[];
+  title: string;
+  apply: boolean;
+}): Promise<EquipmentFailureResult> {
+  const { actor, item, target } = options;
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  const outcome = resolveSuccess(roll.total, target, faces(roll));
+  const result = exposureOutcome({ success: outcome.success, criticalFailure: outcome.criticalFailure });
+
+  // A thing that has failed cannot work until it is mended, and the state
+  // the book puts it in is the one the repair rules read: damaged for a
+  // minor repair, out of hit points for a major one. Armour keeps no hit
+  // points to mark.
+  const { hp } = options;
+  const marks = options.apply && result !== "works" && hp > 0 && item.system?.hpLost !== undefined;
+  if (marks) {
+    const hpLost = result === "needsMajorRepair"
+      ? hp
+      : Math.max(Number(item.system?.hpLost ?? 0) || 0, Math.ceil(hp / 2));
+    await item.update({ "system.hpLost": hpLost });
+  }
+
+  const content = await foundry.applications.handlebars.renderTemplate(CARD_TEMPLATE, {
+    name: String(item.name),
+    exposure: true,
+    title: options.title,
+    target,
+    failureModifiers: [...options.lines, ...options.failureModifiers].filter((m) => m.value !== 0),
+    dice: faces(roll),
+    roll: roll.total,
+    outcome,
+    result: L(`Exposure.${result}`),
+    failed: result !== "works",
+  });
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content,
+    rolls: [roll],
+  });
+
+  return {
+    outcome: outcome.criticalFailure ? "criticalFailure" : outcome.success ? "success" : "failure",
+    result,
+    target,
+    roll: roll.total,
+    margin: outcome.margin,
+    applied: marks,
+  };
+}
+
 /**
  * Slime, Sand and Equipment Failure (p. 485): a HT+4 roll for a thing
  * carelessly exposed, off whatever health neglect has left it.
@@ -155,52 +254,56 @@ export async function exposureCheck(options: {
 }): Promise<void> {
   const { actor, item } = options;
   if (!item?.isOwner || !isRuleOn("repairs")) return;
-  const facts = weaponFacts(item);
-  // "Most machines and similar artifacts in good repair are HT 10. Swords,
-  // tables, shields, and other solid, Homogenous objects are HT 12."
-  // A module may make the thing sturdier or frailer (`gworld.objectStats`).
-  const health = facts.ht;
-  // Missed maintenance wears down "machines and similar artifacts", and "this
-  // rule does not apply to items without moving parts" (p. 485): a sword left
-  // uncleaned is a dirty sword, not a failing one.
-  const maintained = needsMaintenance({ movingParts: facts.firearm });
+  const { health, missedChecks, hp } = failureHealth(item);
   const failure = equipmentFailureModifiers(actor, item, equipmentFailureTarget({
     health,
-    missedChecks: maintained ? Number(item.system?.missedMaintenance ?? 0) || 0 : 0,
+    missedChecks,
     cleaned: options.care > 0,
     brutal: options.care < 0 ? options.care : 0,
   }));
-  const target = failure.target;
-  const roll = new Roll("3d6");
-  await roll.evaluate();
-  const outcome = resolveSuccess(roll.total, target, faces(roll));
-  const result = exposureOutcome({ success: outcome.success, criticalFailure: outcome.criticalFailure });
-
-  // A thing that has failed cannot work until it is mended, and the state
-  // the book puts it in is the one the repair rules read: damaged for a
-  // minor repair, out of hit points for a major one.
-  if (result !== "works") {
-    const hpLost = result === "needsMajorRepair"
-      ? facts.hp
-      : Math.max(Number(item.system?.hpLost ?? 0) || 0, Math.ceil(facts.hp / 2));
-    await item.update({ "system.hpLost": hpLost });
-  }
-
-  const content = await foundry.applications.handlebars.renderTemplate(CARD_TEMPLATE, {
-    name: String(item.name),
-    exposure: true,
-    target,
-    failureModifiers: failure.modifiers.filter((m) => m.value !== 0),
-    dice: faces(roll),
-    roll: roll.total,
-    outcome,
-    result: L(`Exposure.${result}`),
-    failed: result !== "works",
+  await rollEquipmentFailure({
+    actor,
+    item,
+    target: failure.target,
+    hp,
+    lines: [],
+    failureModifiers: failure.modifiers,
+    title: L("ExposureTitle", { name: String(item.name) }),
+    apply: true,
   });
-  await ChatMessage.implementation.create({
-    speaker: ChatMessage.implementation.getSpeaker({ actor }),
-    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
-    content,
-    rolls: [roll],
+}
+
+/**
+ * An equipment failure roll a module asks for (p. 485): the thing's HT, off
+ * whatever health neglect has left it, at the module's modifier -- a daily
+ * reliability check, a machine stopped in a hurry. Without the exposure
+ * check's +4, which is for gear carelessly exposed. The hook has its say,
+ * the card is posted, and on a failure the thing is marked down as the book
+ * says unless `apply` is false. Null where the user doesn't own the item.
+ */
+export async function equipmentFailure(options: {
+  actor?: any;
+  item: any;
+  modifier?: number;
+  label?: string;
+  apply?: boolean;
+}): Promise<EquipmentFailureResult | null> {
+  const { item } = options;
+  if (!item?.isOwner) return null;
+  const actor = options.actor ?? item.actor ?? null;
+  const label = typeof options.label === "string" && options.label.trim() ? options.label.trim() : null;
+  const modifier = Math.trunc(Number(options.modifier) || 0);
+  const { health, missedChecks, hp } = failureHealth(item);
+  const base = healthAfterNeglect(health, missedChecks);
+  const failure = equipmentFailureModifiers(actor, item, base + modifier, label);
+  return rollEquipmentFailure({
+    actor,
+    item,
+    target: failure.target,
+    hp,
+    lines: [{ label: label ?? L("FailureModifier"), value: modifier }],
+    failureModifiers: failure.modifiers,
+    title: L("FailureTitle", { name: String(item.name), label: label ?? L("FailureLabel") }),
+    apply: options.apply !== false,
   });
 }
