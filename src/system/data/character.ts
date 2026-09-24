@@ -26,7 +26,6 @@ import { lockedTerms, type CampaignTermKey } from "../party/roster.js";
 import {
   addTraitEffects,
   afterSuperJump,
-  damageResistanceAtEyes,
   impairedAttacks,
   lameCombatPenalty,
   lameMove,
@@ -34,13 +33,15 @@ import {
   type TraitEffects,
 } from "../../rules/trait-effects.js";
 import { gearEffects, grantedEffectSources } from "../../rules/gear-effects.js";
+import { crippledEffects } from "../../rules/hit-locations.js";
+import { crippledPartName, crippledParts } from "../crippling.js";
 import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
 import { talentBonusFor, talentBonuses, traitSkillBonuses, traitSkillBonusesFor } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
 import { senseScores } from "../../rules/senses.js";
 import {
-  clothingCost, costOfLiving, gearCost, toolModifier, monthlyIncomeFromTraits, monthlyPay,
+  clothingCost, costOfLiving, gearCost, skillEquipmentModifier, toolModifier, monthlyIncomeFromTraits, monthlyPay,
   pointsForMoney, signatureGearPoints, signatureGearValue, startingWealth, statusFrom, wealthFrom,
   type EquipmentQuality,
   type WealthLevel,
@@ -87,7 +88,8 @@ import { isRuleOn } from "../optional-rules.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { canPull, towedWeight, wheelchairMove, type Conveyance } from "../../rules/towing.js";
 import { SYSTEM_ID } from "../constants.js";
-import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
+import { type ArmorPiece } from "../../rules/armor.js";
+import { previewBands, previewDrAt } from "../damage.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
 import { evaluateBonus, takesEvaluateBonus } from "../../rules/maneuvers.js";
 import {
@@ -98,7 +100,7 @@ import { malfunctionOf } from "../malfunctions.js";
 import { stuckWeaponOf } from "../picks.js";
 import { derivedAttackRows, techniqueDefaultsWithHooks } from "../procedure-extensions.js";
 import {
-  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleCarriedWeight, moduleTraitEffects, moduleTraitsInPlay, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type CarriedWeightLine, type TraitEffectSource,
+  DATA_HOOKS, adjustSkillLevels, afterPrepare, effectiveCost, effectiveWeight, extensionsField, moduleCarriedWeight, moduleTraitEffects, moduleTraitsInPlay, needsEquipment, registeredTechniqueKind, totalBonusLines, unavailableTechniqueKind, moduleMove, type BonusLine, type CarriedWeightLine, type TraitEffectSource,
 } from "../data-extensions.js";
 import { perDieOfBasicDamage, swingDamage, thrustDamage, weaponDamage } from "../../rules/damage.js";
 import { formatDiceAdds, parseDiceAdds } from "../../rules/dice.js";
@@ -177,8 +179,9 @@ import {
   waterMove,
   type JumpInput,
 } from "../../rules/physical.js";
-import type {
-  DamageType, Difficulty, EncumbranceLevel, Posture, SkillAttribute,
+import {
+  DAMAGE_TYPES,
+  type DamageType, type Difficulty, type EncumbranceLevel, type Posture, type SkillAttribute,
 } from "../../rules/types.js";
 
 const fields = foundry.data.fields;
@@ -203,7 +206,7 @@ const DERIVED_MELEE_DEFAULTS: Record<string, unknown> = {
 };
 const DERIVED_RANGED_DEFAULTS: Record<string, unknown> = {
   ...DERIVED_MELEE_DEFAULTS, feint: false, reach: "", accuracy: 0, range: "", halfDamageRange: 0, maxRange: 0, minRange: 0, rateOfFire: 1, fullAutoOnly: false, tightBeam: false,
-  recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0, scopeFixed: false,
+  recoil: 1, bulk: 0, mount: "", offMount: false, scatterSquared: false, noSprayingFire: false, noSuppressionFire: false, noOverpenetration: false, firstHit: null, shots: "", projectiles: 1, guidance: "", aimingSkill: "", guidedSkillLevel: 0, semiActive: false, areaAttack: false, coneMaxWidth: 0, scopeBonus: 0, scopeFixed: false,
   malfunction: null, shotsLoaded: 0, shotsCapacity: 0, reloadSeconds: null, reloadable: false, empty: false, outOfAction: null,
   ammunition: "", malediction: 0, ignoresDr: false, spendsFrom: null, roundsPerShot: 1,
 };
@@ -366,6 +369,11 @@ export interface DerivedAttack {
    */
   aimingSkill?: string;
   guidedSkillLevel?: number;
+  /**
+   * A homing weapon that homes on a spot someone holds on the target (since
+   * API 1.128.0), which a `gworld.weaponAttacks` listener may set on a row.
+   */
+  semiActive?: boolean;
   /** True for an attack that covers ground rather than striking a point (p. 413). */
   areaAttack?: boolean;
   /** A cone's widest, in yards; zero where the table does not say. */
@@ -1700,6 +1708,25 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       traitEffectSources.push(...grantedEffectSources(granted));
     }
 
+    // A crippled eye, arm or hand works as the disadvantage the book points
+    // to (Campaigns p. 421; since API 1.129.0), whatever crippled it, so a
+    // module that records one needn't impose the penalty as well. Read after
+    // the character's own traits, because One Eye and a crippled other eye is
+    // blindness. The eyes and the hands are read apart, so the Traits tab
+    // names the parts behind each effect and no other.
+    const crippled = crippledParts(this.parent);
+    const ownEyes = traits.oneEye ? 1 : 2;
+    for (const group of [["eye"], ["arm", "hand"]]) {
+      const parts = crippled.filter((part) => group.includes(part.location));
+      const effect = crippledEffects(parts.map((part) => part.location), ownEyes);
+      if (Object.keys(effect).length === 0) continue;
+      addTraitEffects(traits, effect);
+      traitEffectSources.push(...grantedEffectSources({
+        source: parts.map((part) => part.label || crippledPartName(part.location)).join(", "),
+        effect,
+      }));
+    }
+
     // Then the modules, which see what the character's own traits and gear
     // already came to (since 1.47.0).
     traitEffectSources.push(...moduleTraitEffects(this.parent, traits).sources);
@@ -1826,6 +1853,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // that normally require equipment" (Campaigns p. 345): what is carried,
     // by the skill it is the tools of.
     const toolBonuses = this.#equipmentBonuses(Number(this.tl) || 0);
+    // The items those tools are, so a listener is handed the one picked.
+    const equipmentById = new Map(this.itemsOfType("equipment").filter((i) => i.id).map((i) => [String(i.id), i]));
+    const equipmentRuleOn = isRuleOn("equipmentModifiers");
 
     const skillItems = this.itemsOfType("skill");
 
@@ -1859,11 +1889,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // Of several, the one worth most once its TL is weighed against the
       // skill's -- for a technological skill, with the tech-level rule on
       // (Characters p. 168).
-      const skillTL = isRuleOn("techLevelModifiers") && isTechnologicalSkill(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel)
+      const technological = isTechnologicalSkill(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel);
+      const skillTL = isRuleOn("techLevelModifiers") && technological
         ? skillTechLevel(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel, Number(this.tl) || 0)
         : null;
       const tool = bestTool(toolBonuses[toolSkillKey(String(item.name ?? ""))] ?? [], { skillTechLevel: skillTL, iqBased: sys.attribute === "IQ" });
-      const toolBonus = tool?.quality ?? 0;
+      // With nothing carried that serves it, a skill a module says needs
+      // equipment takes the no-equipment figure, so that improvised gear
+      // reads better than none (since API 1.135.0). Only asked where it
+      // matters: the rule on and no tool picked.
+      const toolBonus = skillEquipmentModifier(tool, {
+        needsEquipment: equipmentRuleOn && !tool && needsEquipment(item, this.parent),
+        technological,
+      });
       const magicBonus = magicSkillBonus(String(item.name ?? ""), talent);
       // The bonuses as lines, which add-on modules may add to, or change with
       // a reason (a talent that doesn't reach a wildcard skill, say).
@@ -1872,12 +1910,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         item,
         name: String(item.name ?? ""),
         difficulty: sys.difficulty,
+        // The item the `tools` and `techLevel` lines are for, or null (since
+        // API 1.135.0), so a listener can grade one item differently for
+        // different skills.
+        tool: (tool?.id ? equipmentById.get(tool.id) : null) ?? null,
         lines: [
           { key: "bonus", label: "Bonus", value: Number(sys.bonus) || 0, source: "system" },
           { key: "magic", label: "Magery", value: magicBonus, source: "system" },
           { key: "talent", label: "Talent", value: talentBonus, source: "system" },
           ...traitLines,
-          { key: "tools", label: "Equipment", value: toolBonus, source: "system" },
+          { key: "tools", label: tool || toolBonus === 0 ? "Equipment" : "No equipment", value: toolBonus, source: "system" },
           { key: "techLevel", label: "Equipment TL", value: tool?.techLevel ?? 0, source: "system" },
         ] as BonusLine[],
       });
@@ -2099,6 +2141,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     const armorItems = this.itemsOfType("armor").filter((i) => i.system?.equipped);
     const worn: ArmorPiece[] = armorItems.map((item) => ({
+      // Which piece it is, so a `gworld.armorDr` listener can read its data.
+      id: String(item.id ?? ""),
+      name: String(item.name ?? ""),
       // Fortify "Increases the DR of clothing or a suit of armor" (p. 480).
       dr: Number(item.system?.dr ?? 0) + magicOf(item).fortify,
       drSplit: item.system?.drSplit ?? null,
@@ -2115,25 +2160,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       drLost: Number(item.system?.drLost ?? 0) || 0,
       forceField: item.system?.forceField === true,
       flexible: item.system?.flexible === true,
+      frontOnly: item.system?.frontOnly === true,
       hardened: Number(item.system?.hardened ?? 0) || 0,
     }));
-
-    // The Damage Resistance advantage is armour the character is: it covers
-    // everything, which is what an empty location list means here, and it goes
-    // in with the rest so the sheet shows the DR the damage pipeline will
-    // actually subtract. It leaves the eyes bare unless it was bought to cover
-    // them (Characters p. 46), so only the part taken as a Force Field or
-    // Partial for the eyes is counted there.
-    if (traits.damageResistance > 0) {
-      worn.push({
-        dr: traits.damageResistance,
-        drSplit: null,
-        drSplitAppliesTo: [],
-        locations: HIT_LOCATION_ORDER.filter((loc) => loc !== "eye"),
-      });
-      const atEyes = Math.min(traits.damageResistance, damageResistanceAtEyes(heldTraits));
-      if (atEyes > 0) worn.push({ dr: atEyes, drSplit: null, drSplitAppliesTo: [], locations: ["eye"] });
-    }
 
     // Armour written "4/2" stops one kind of attack better than another, and two
     // passes are not enough to describe that: mail takes its lower DR against
@@ -2146,9 +2175,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // cutting is always the base, and the sheet lets a GM tick "cut" among the
     // types a split applies to -- armour at 4/2 against crushing and cutting
     // would then have headlined as 2 while its profile led with 4.
+    // Each figure is read the way the damage pipeline reads a blow's (since
+    // API 1.140.0): the worn pieces and the character's own DR (Damage
+    // Resistance, which leaves the eyes bare unless bought to cover them,
+    // Characters p. 46; Hooves; a Nictitating Membrane) as `gworld.armorDr`
+    // lines, through the modules' listeners with `preview` true, and then the
+    // location's own. A piece a module takes off one side, or natural DR it
+    // divides, is then shown as the pipeline will subtract it. There is no
+    // blow to read an arc from, so front-only armour counts.
     const profiles = Object.fromEntries(
-      HIT_LOCATION_ORDER.map((loc) => [loc, splitSummary(worn, loc)]),
-    ) as Record<HitLocation, ReturnType<typeof splitSummary>>;
+      HIT_LOCATION_ORDER.map((loc) => [loc, previewBands(previewDrAt(this.parent, loc, traits, worn, DAMAGE_TYPES))]),
+    ) as Record<HitLocation, ReturnType<typeof previewBands>>;
     for (const loc of HIT_LOCATION_ORDER) drByLocation[loc] = profiles[loc].bands[0]?.dr ?? 0;
 
     // The headline DR figure stays the torso, which is what an unaimed blow hits.
@@ -2653,6 +2690,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           guidance: String(mode.guidance ?? ""),
           aimingSkill: String(mode.aimingSkill ?? ""),
           guidedSkillLevel: Math.max(0, Math.floor(Number(mode.guidedSkillLevel) || 0)),
+          semiActive: mode.semiActive === true,
           areaAttack: Boolean(mode.areaAttack),
           scatterSquared: mode.scatterSquared === true,
           coneMaxWidth: Number(mode.coneMaxWidth ?? 0) || 0,
@@ -3379,7 +3417,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // Where a location is protected unevenly it carries every distinct DR
         // with the damage each applies to, rather than a number that is only
         // right against some of what lands there.
-        const { splits, bands } = profiles[key];
+        const { splits, bands, lines, locationDr } = profiles[key];
         const [ordinary, ...exceptions] = bands;
         return {
           key,
@@ -3390,6 +3428,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           // The keys travel as keys. Joining them here would put raw codes
           // like "pi+" on the sheet in every locale.
           exceptions: exceptions.map((band) => ({ dr: band.dr, types: band.types })),
+          // What makes up the headline figure (since API 1.140.0): each line
+          // as the `gworld.armorDr` listeners left it, a refused one and a
+          // listener's reason included, and the location's own DR.
+          lines,
+          locationDr,
         };
       }),
       shieldDb,

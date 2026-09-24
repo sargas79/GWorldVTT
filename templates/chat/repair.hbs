@@ -31,6 +31,7 @@
     {{#if failureModifiers.length}}
       <div class="gc-mods">{{#each failureModifiers as |m|}}<span class="gc-mod">{{m.label}} {{signed m.value}}</span>{{/each}}</div>
     {{/if}}
+    {{#if downgraded}}<div class="gc-mods"><span>{{downgraded}}</span></div>{{/if}}
     <div class="gc-result {{#if failed}}failure{{else}}success{{/if}}">{{result}}</div>
   {{else if outcome.success}}
     <div class="gc-result success">

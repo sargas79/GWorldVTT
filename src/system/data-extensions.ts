@@ -34,7 +34,7 @@ function refuse(what: string, why: string): null {
 export const DATA_HOOKS = Object.freeze({
   /** After the system prepares an actor or an item: `(document)`. */
   prepareDerivedData: "gworld.prepareDerivedData",
-  /** While a skill's level is worked out: `{ actor, item, name, difficulty, lines }`, the lines mutable. */
+  /** While a skill's level is worked out: `{ actor, item, name, difficulty, tool, lines }`, the lines mutable (`tool` since 1.135.0). */
   skillBonuses: "gworld.skillBonuses",
   /** After the attributes are totalled: `{ actor, attributes, lines }`; push `{ attribute, label, value }`. */
   attributeBonuses: "gworld.attributeBonuses",
@@ -818,6 +818,52 @@ export function registeredTechniqueKinds(): Array<{ key: string; label: string }
   return [...techniqueKinds.values()].filter(kindAvailable).map((k) => ({ key: k.key, label: k.label }));
 }
 
+// ── skills that need equipment ─────────────────────────────────────────────
+
+export interface NeedsEquipmentRegistration {
+  module: string;
+  key: string;
+  /** Whether this skill, on this actor, is used for tasks that need equipment. */
+  test: (skill: any, actor: any) => boolean;
+}
+
+const needsEquipmentTests: Array<{ id: string; test: NeedsEquipmentRegistration["test"] }> = [];
+
+/**
+ * Registers a test for skills that need equipment (since 1.135.0). "No
+ * equipment" is a modifier only for "tasks that normally require equipment"
+ * (Campaigns p. 345), and which tasks those are is a matter for the skill's
+ * own book, so the system asks rather than knowing. Returns its
+ * `<module>.<key>`, or null.
+ */
+export function registerNeedsEquipment(registration: NeedsEquipmentRegistration): string | null {
+  const r = registration ?? ({} as NeedsEquipmentRegistration);
+  const what = `needs-equipment test ${r.module}.${r.key}`;
+  if (typeof r.module !== "string" || !IDENTIFIER.test(r.module)) return refuse(what, "the module id is missing or malformed");
+  if (typeof r.key !== "string" || !IDENTIFIER.test(r.key)) return refuse(what, "the key is missing or malformed");
+  if (typeof r.test !== "function") return refuse(what, "it has no test function");
+  const id = `${r.module}.${r.key}`;
+  if (needsEquipmentTests.some((t) => t.id === id)) return refuse(what, "that key is already registered");
+  needsEquipmentTests.push({ id, test: r.test });
+  return id;
+}
+
+/**
+ * Whether any registered test says the skill needs equipment (since
+ * 1.135.0). A test that throws is warned about and counts as no, so one
+ * broken module can't put every skill at the no-equipment penalty.
+ */
+export function needsEquipment(skill: any, actor: any): boolean {
+  return needsEquipmentTests.some(({ id, test }) => {
+    try {
+      return test(skill, actor) === true;
+    } catch (error) {
+      console.warn(`gworld | needs-equipment test ${id} failed`, error);
+      return false;
+    }
+  });
+}
+
 /** Fires the derived-data hook for a document. */
 export function afterPrepare(document: any): void {
   const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
@@ -841,5 +887,8 @@ export const dataApi = Object.freeze({
   registerPriceModifier,
   effectivePrice,
   registerTechniqueKind,
+  // Which skills are used for tasks that need equipment (since 1.135.0).
+  registerNeedsEquipment,
+  needsEquipment,
   hooks: DATA_HOOKS,
 });

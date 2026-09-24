@@ -8,7 +8,7 @@
  * have targeted.
  */
 
-import { attackArc, type Arc } from "../rules/tactical.js";
+import { attackArc, type Arc, type BodySide } from "../rules/tactical.js";
 import { attackDirection, facingOf } from "./hex.js";
 import { SYSTEM_ID } from "./constants.js";
 import { targetedTokens } from "./targets.js";
@@ -18,6 +18,15 @@ import { targetedTokens } from "./targets.js";
  * outside tactical combat, with no token of their own, or with no single target.
  */
 export function arcAgainstTarget(actor: any): Arc | null {
+  return facingAgainstTarget(actor)?.arc ?? null;
+}
+
+/**
+ * The arc and, for a side attack, which side (since API 1.137.0): the reading
+ * a called shot is checked against, which the attack hooks hand on as well, so
+ * a rule about a blow from behind need not work out facing from the tokens.
+ */
+export function facingAgainstTarget(actor: any): { arc: Arc; side: BodySide | null } | null {
   const targets = targetedTokens();
   if (targets.length !== 1) return null;
   const defender = targets[0]?.document ?? targets[0];
@@ -36,5 +45,5 @@ export function arcAgainstTarget(actor: any): Arc | null {
   if (!tactical || typeof gridType !== "number" || gridType < 2 || gridType > 5) return null;
   const from = attackDirection(attacker, defender, gridType);
   if (from === null) return null;
-  return attackArc(facingOf(defender, gridType), from).arc;
+  return attackArc(facingOf(defender, gridType), from);
 }

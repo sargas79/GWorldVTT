@@ -5,6 +5,7 @@ import {
   HIT_LOCATIONS,
   applyCrippling,
   canTarget,
+  crippledEffects,
   cripplingThreshold,
   locationDrAgainst,
   randomHitLocation,
@@ -360,5 +361,26 @@ describe("review fixes: tight-beam, toxic DR, fatigue, limb sides", () => {
     expect(randomHitLocation(7)).toEqual({ location: "leg", side: "right" });
     expect(randomHitLocation(13)).toEqual({ location: "leg", side: "left" });
     expect(randomHitLocation(14)).toEqual({ location: "leg", side: "left" });
+  });
+});
+
+/**
+ * What a crippled part does, read as the disadvantage the book points to
+ * (Campaigns p. 421; sargas79/GWorldVTT#757).
+ */
+describe("what crippled parts do", () => {
+  it("reads one crippled eye as One Eye, and both as Blindness", () => {
+    expect(crippledEffects(["eye"])).toEqual({ oneEye: true });
+    expect(crippledEffects(["eye", "eye"])).toEqual({ blindness: true });
+  });
+
+  it("blinds somebody with One Eye who loses the other", () => {
+    expect(crippledEffects(["eye"], 1)).toEqual({ blindness: true });
+  });
+
+  it("reads a crippled arm or hand as One Arm, and leaves legs, feet and a module's locations alone", () => {
+    expect(crippledEffects(["hand"])).toEqual({ oneArm: true });
+    expect(crippledEffects(["arm", "hand"])).toEqual({ oneArm: true });
+    expect(crippledEffects(["leg", "foot", "mymodule.tail"])).toEqual({});
   });
 });

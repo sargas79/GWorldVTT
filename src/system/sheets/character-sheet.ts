@@ -18,6 +18,7 @@ import { combatStyle } from "../settings.js";
 import { activeRules, isRuleOn } from "../optional-rules.js";
 import { mayRaiseToSuppress } from "../suppression-fire.js";
 import { legalityClassOf, legalityNote } from "../legality.js";
+import { currentTemperature, dayWeather, setTemperature } from "../weather.js";
 import {
   OPPORTUNITY_LINE_PENALTY,
   evadeModifier,
@@ -37,7 +38,7 @@ import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
-import { crippledParts, healCrippled } from "../crippling.js";
+import { crippledPartName, crippledParts, healCrippled } from "../crippling.js";
 import { catchBreath, rollSuffocation } from "../suffocation.js";
 import {
   applyDeprivation,
@@ -139,7 +140,8 @@ import { giveFirstAid, regenerate, restForADay, restForFatigue, tryToWake } from
 import { isFrightResistance, rollFrightCheck, rollFrightCheckOutcome } from "../fright.js";
 import { drMetByAttack, traitsOf, wornArmor } from "../damage.js";
 import { afflictionDrBonus } from "../../rules/affliction-resistance.js";
-import { applyAfflictionEffects } from "../afflictions.js";
+import { afflictionLocation, applyAfflictionEffects } from "../afflictions.js";
+import { peekCalledShot } from "../called-shot.js";
 import { feintDefenseScore, recordFeint } from "../feint.js";
 import { facingChangeAtEndOfMove, facingChangeCost, hexMovementCost } from "../../rules/tactical.js";
 import { CompendiumPicker } from "../apps/compendium-picker.js";
@@ -178,7 +180,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
-import { allOutAttackOptionsFor, feintModifiers, registeredHitLocation, registeredManeuvers } from "../combat-extensions.js";
+import { allOutAttackOptionsFor, feintModifiers, registeredManeuvers } from "../combat-extensions.js";
 import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
 import { bindSectionListeners, decorateItemRows, renderSections, runRowAction } from "../sheet-extensions.js";
@@ -924,12 +926,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           })),
       ).map((u) => ({ ...u, powerLabel: game.i18n.localize(`GWORLD.Psi.Power.${u.power}`) })),
       // Parts crippled for a while (Campaigns p. 422; API 1.114.0), healed ones left out.
+      // A part waiting on the p. 422 roll has a button for it, and a temporary
+      // one no injury caused doesn't promise to go at full HP (API 1.129.0).
       crippled: crippledParts(this.actor).map((part) => ({
         id: part.id,
-        label: part.label || (registeredHitLocation(part.location)
-          ? game.i18n.localize(registeredHitLocation(part.location)!.label)
-          : game.i18n.localize(`GWORLD.HitLocation.${part.location}`)),
-        duration: game.i18n.localize(`GWORLD.Dying.${part.duration}`),
+        label: part.label || crippledPartName(part.location),
+        duration: game.i18n.localize(
+          part.duration === "undecided" ? "GWORLD.Crippled.Undecided"
+            : part.duration === "temporary" && !part.injury ? "GWORLD.Crippled.TemporaryNoInjury"
+              : `GWORLD.Dying.${part.duration}`,
+        ),
+        undecided: part.duration === "undecided",
         heals: part.healsAt !== null
           ? game.i18n.format("GWORLD.Crippled.HealsIn", { days: Math.max(0, Math.ceil((part.healsAt - (Number(game.time?.worldTime) || 0)) / 86400)) })
           : "",
@@ -2878,10 +2885,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
     // A module may say what the character's worn gear is worth against the
     // cold (API 1.76.0); the GM can still pick otherwise.
-    const asked = await promptForWeather(wornClothing(this.actor));
+    // The dialog starts on the day's temperature where the GM set one, and
+    // the GM may keep what they type as the day's (API 1.138.0), so the next
+    // battle or march is fought in the same weather.
+    const asked = await promptForWeather(wornClothing(this.actor), {
+      temperatureF: currentTemperature(),
+      mayKeep: game.user?.isGM === true,
+    });
     if (!asked) return;
 
-    await rollExposure({ actor: this.actor, ...asked });
+    const { keepTemperature, ...weather } = asked;
+    if (keepTemperature) await setTemperature(weather.temperatureF);
+    await rollExposure({ actor: this.actor, ...weather });
   }
 
   /**
@@ -2981,7 +2996,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (id) await healCrippled(this.actor, id);
   }
 
-  static async #onCripplingDuration(this: GWorldCharacterSheet) {
+  static async #onCripplingDuration(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const tl = await promptForNumber({
       title: game.i18n.localize("GWORLD.Dying.Crippling"),
       label: game.i18n.localize("GWORLD.Dying.TreatedAt"),
@@ -2989,7 +3004,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (tl === null) return;
 
-    await rollCripplingDuration({ actor: this.actor, treatedAtTl: tl > 0 ? tl : null });
+    // From an undecided part's chip, the roll settles that part.
+    const part = target?.dataset?.id;
+    await rollCripplingDuration({ actor: this.actor, treatedAtTl: tl > 0 ? tl : null, ...(part ? { part } : {}) });
   }
 
   /**
@@ -3067,7 +3084,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           ...(target.dataset.derivedMode ? { derived: String(target.dataset.derivedMode) } : {}),
         }
       : null;
-    const hitLocation = (target.dataset.hitLocation ?? "torso") as HitLocation;
     const damageType = (target.dataset.damageType ?? "cr") as DamageType;
 
     const targets = currentTargets();
@@ -3075,6 +3091,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       ui.notifications?.warn(game.i18n.localize("GWORLD.Affliction.NoTarget"));
       return;
     }
+    // Where the attack that forced the roll struck, from the called shot its
+    // attack roll left (since API 1.130.0). Read rather than spent: a line
+    // that both burns and shocks rolls its damage from the same attack.
+    const struck = afflictionLocation({
+      hitLocations: isRuleOn("hitLocations"),
+      area: target.dataset.areaAttack === "1",
+      shot: peekCalledShot(this.actor),
+    });
+    // The victim's DR is the armour where the blow landed, and the torso's
+    // where it landed nowhere in particular.
+    const hitLocation: HitLocation = struck?.hitLocation ?? "torso";
+    const where = { hitLocation: struck?.hitLocation ?? null, addonLocation: struck?.addonLocation ?? null };
     // An area affliction's centre (since API 1.63.0): this user's latest
     // template on the map, or else the first target.
     const centre = target.dataset.areaAttack === "1" ? areaCentre(targets) : null;
@@ -3119,7 +3147,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           attack: { attacker: this.actor, item, mode, distanceYards: yards, halfDamageRange, dr: drHere, drCounted: drBonus > 0, drBonus, ...distance },
         });
         if (fright && !fright.success) {
-          await applyAfflictionEffects({ actor: victim, attacker: this.actor, item, mode, label, margin: fright.margin, frightEffect: fright.effect, ...distance });
+          await applyAfflictionEffects({ actor: victim, attacker: this.actor, item, mode, label, margin: fright.margin, frightEffect: fright.effect, ...distance, ...where });
         }
         continue;
       }
@@ -3175,6 +3203,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           label,
           margin: outcome.margin,
           ...distance,
+          ...where,
         });
       }
     }
@@ -3605,7 +3634,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   /** A day on the road (Campaigns pp. 351, 426). */
   static async #onHike(this: GWorldCharacterSheet) {
     if (!isRuleOn("hiking")) return;
-    const asked = await promptForHike();
+    // A hot day is ticked where the day's temperature makes it one for this
+    // marcher (API 1.138.0); the GM can still untick it.
+    const asked = await promptForHike(dayWeather(this.actor).hot);
     if (!asked) return;
     await hike({ actor: this.actor, ...asked });
   }

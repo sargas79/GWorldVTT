@@ -33,6 +33,7 @@ import { combatApi } from "./combat-extensions.js";
 import { clearZenShot, pendingZenShot, registerZenSkill, rollZenSkill, zenSkillsOf } from "./zen.js";
 import { loadInstantly, refundShots } from "./ammunition.js";
 import { clearMalfunction, malfunctionOf, setMalfunction } from "./malfunctions.js";
+import { knockWeaponAway, setWeaponUnready, type HeldWeaponOptions, type KnockedAway, type UnreadyChanged } from "./held-weapons.js";
 import { freeStuckWeapon, letGoOfStuckWeapon, setStuckWeapon, stuckWeaponOf } from "./picks.js";
 import { registerSlam } from "./slam.js";
 import { beginGrapple, endGrapple, grappleOf, grapplesOf, updateGrapple } from "./grappling.js";
@@ -46,7 +47,7 @@ import { equipmentFailure, type EquipmentFailureResult } from "./repairs.js";
 import { stopBleeding } from "./bleeding.js";
 import { activePoisons, advancePoison, clearPoison, dosePoison, treatIllness, treatPoison, type ActivePoison } from "./poison.js";
 import { attendPatient, giveFirstAid, operate, resuscitate } from "./recovery.js";
-import { rollMortalWound } from "./dying.js";
+import { rollCripplingDuration, rollMortalWound } from "./dying.js";
 import type { Poison, Treatment } from "../rules/poison.js";
 import type { ResuscitationCause } from "../rules/medicine.js";
 import type { ControlRating, LegalityClass } from "../rules/legality.js";
@@ -56,7 +57,7 @@ import { rollFall } from "./falling.js";
 import { restoreFatigue, spendFatigueFor } from "./fatigue.js";
 import { changeTrait, type TraitChanged } from "./trait-change.js";
 import { stopTowing, tow } from "./towing.js";
-import { cripple, crippledParts, healCrippled, type CrippledPart } from "./crippling.js";
+import { cripple, crippledParts, healCrippled, settleCrippling, type CrippledDuration, type CrippledPart } from "./crippling.js";
 import type { CripplingDuration } from "../rules/mortal-wounds.js";
 import type { Conveyance } from "../rules/towing.js";
 import { bind, bindingOf, breakFreeFromBinding, unbind, type BindingBroken } from "./entangling.js";
@@ -97,6 +98,13 @@ import { manaLevel } from "./casting.js";
 import { PARTY_CHANGED_HOOK, addMembers, membersOf, partyOf, removeMember } from "./party.js";
 import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from "./campaign.js";
 import { objectStats, type ItemObjectStats } from "./object-stats.js";
+import { vehicleAboard } from "./vehicle-aboard.js";
+import type { VehicleMedium } from "../rules/vehicle-combat.js";
+import { dayWeather, setTemperature } from "./weather.js";
+import { addPendingModifier, pendingModifiers, removePendingModifier, type PendingModifierRequest } from "./pending-modifiers.js";
+import { applyItemDamage, type ItemDamaged } from "./item-damage.js";
+import { normalizeDamage } from "./modifying-dice.js";
+import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
@@ -182,6 +190,26 @@ const actors = {
   },
 
   /**
+   * Holds a bonus for the actor's next success roll that matches it (since
+   * 1.132.0): `{ label, value, tags?, skill?, expires? }`. The roll takes its
+   * line and uses it up; it lapses unused at `expires`, a world time. Returns
+   * its id, or null where it can't be held.
+   */
+  addPendingModifier(actor: any, request: PendingModifierRequest): Promise<string | null> {
+    return addPendingModifier(actor, request);
+  },
+
+  /** The bonuses held on an actor for rolls to come, lapsed ones left out (since 1.132.0). */
+  pendingModifiers(actor: any) {
+    return pendingModifiers(actor);
+  },
+
+  /** Takes a held bonus off unused, by the id `addPendingModifier` returned (since 1.132.0). */
+  removePendingModifier(actor: any, id: string): Promise<boolean> {
+    return removePendingModifier(actor, id);
+  },
+
+  /**
    * Takes injury, or fatigue with `fatigue: true`, off an actor outside a
    * damage card (since 1.8.0). The health conditions follow, and nothing is
    * posted. Returns the pool and what it went from and to, or null where this
@@ -204,7 +232,8 @@ const actors = {
    * Charges FP the way the system's own procedures do (Campaigns p. 426;
    * since 1.109.0): `gworld.fatigueCost` (told `reason`, `module` by default,
    * and `details`), Very Fit's halving where it is exertion (the default),
-   * and the fatigue chart, injury past 0 FP and all. Resolves to `{ fpLost,
+   * and the fatigue chart, injury past 0 FP and all, then since 1.138.0
+   * `gworld.afterFatigue` with what it came to. Resolves to `{ fpLost,
    * hpLost, sources, fp, hp, status }`, or null for a user who can't change
    * the actor or an amount that isn't a positive number.
    */
@@ -244,10 +273,12 @@ const actors = {
   /**
    * Changes one of a character's traits, GM only (since 1.112.0): `level`
    * sets its levels within its cap, `replaceWith` swaps it for another trait
-   * (a compendium name, or item data). Found by `id` or `name`. Resolves to
-   * `{ itemId, from, to, replaced }`, or null.
+   * (a compendium name, or item data). Found by `id` or `name`. Since
+   * 1.124.0, `add` gives the character a trait they haven't got (found as
+   * `replaceWith` is) and `remove: true` takes one away. Resolves to
+   * `{ itemId, from, to, replaced, added, removed }`, or null.
    */
-  changeTrait(actor: any, options: { id?: string; name?: string; level?: number; replaceWith?: string | Record<string, any> }): Promise<TraitChanged | null> {
+  changeTrait(actor: any, options: { id?: string; name?: string; level?: number; replaceWith?: string | Record<string, any>; add?: string | Record<string, any>; remove?: boolean }): Promise<TraitChanged | null> {
     return changeTrait(actor, options);
   },
 
@@ -266,9 +297,23 @@ const actors = {
    * 1.114.0): `temporary` until back at full HP, `lasting` for `months` (or
    * 1d months less `treatedAtTl`'s relief), `permanent` for good. Shown on
    * the sheet until it heals. Resolves to the part recorded, or null.
+   * Since 1.129.0 the duration may be left `undecided` for `settleCrippling`,
+   * and `injury: false` records a crippling no HP loss caused: a temporary
+   * one then lasts until taken off, or for `seconds`. A crippled eye, arm or
+   * hand works as One Eye, Blindness or One Arm while it lasts.
    */
-  cripple(actor: any, location: string, options: { duration: CripplingDuration; label?: string; months?: number; treatedAtTl?: number | null }): Promise<CrippledPart | null> {
+  cripple(actor: any, location: string, options: { duration?: CrippledDuration; label?: string; months?: number; treatedAtTl?: number | null; injury?: boolean; seconds?: number } = {}): Promise<CrippledPart | null> {
     return cripple(actor, location, options);
+  },
+
+  /**
+   * Settles how long an undecided crippling lasts (p. 422; since 1.129.0),
+   * by id or location. With a `duration`, as the caller says; without one,
+   * by the HT roll, posted to chat. Resolves to the part as settled, or null.
+   */
+  async settleCrippling(actor: any, which: string, options: { duration?: CripplingDuration; months?: number; treatedAtTl?: number | null; seconds?: number } = {}): Promise<CrippledPart | null> {
+    if (options.duration !== undefined) return settleCrippling(actor, which, { ...options, duration: options.duration });
+    return (await rollCripplingDuration({ actor, part: which, treatedAtTl: options.treatedAtTl ?? null, ...(options.seconds !== undefined ? { seconds: options.seconds } : {}) }))?.part ?? null;
   },
 
   /** The parts crippled now, healed ones left out (since 1.114.0). */
@@ -279,6 +324,17 @@ const actors = {
   /** Takes a crippled part off, by id or location (since 1.114.0). False where there was none. */
   healCrippled(actor: any, which: string): Promise<boolean> {
     return healCrippled(actor, which);
+  },
+
+  /**
+   * The vehicle a character is aboard (Campaigns pp. 467-469; since 1.141.0),
+   * the same reading an attack from it uses: `{ vehicle, operator, moving,
+   * medium }`, or null. Found by the character's place in a vehicle's crew,
+   * among the world's vehicles and those that exist only as unlinked tokens.
+   */
+  vehicleAboard(actor: any): { vehicle: any; operator: boolean; moving: boolean; medium: VehicleMedium } | null {
+    const aboard = vehicleAboard(actor);
+    return aboard ? { vehicle: aboard.vehicle, operator: aboard.operator, moving: aboard.moving, medium: aboard.medium } : null;
   },
 
   /** Lets go of a pulled load (since 1.113.0). False where there was none. */
@@ -574,12 +630,27 @@ const items = {
 
   /**
    * A weapon's or shield's DR, HP and HT as an object (since 1.90.0):
-   * `{ kind, dr, hp, ht, notes }`, `kind` being `unliving` or `homogenous`,
-   * once `gworld.objectStats` listeners have had their say. The figures
-   * breakage, striking at the item, shield damage and repairs use.
+   * `{ kind, dr, hp, ht, notes }`, `kind` being `unliving` or `homogenous`
+   * (or `diffuse`, which a listener may set since 1.126.0), once
+   * `gworld.objectStats` listeners have had their say. The figures breakage,
+   * striking at the item, shield damage, repairs and `applyDamage` use.
    */
   objectStats(item: any): ItemObjectStats {
     return objectStats(item);
+  },
+
+  /**
+   * Puts a blow on an item that keeps hit points (since 1.126.0; Campaigns
+   * pp. 483-484) with `{ item, damage, type, armorDivisor?, label? }`: its DR
+   * off, the rest turned into injury by its `kind`, `hpLost` raised, the HT
+   * rolls at -1xHP and each multiple after it, and the card. Resolves to an
+   * `ItemDamaged` (the injury, `hpLost` `from`/`to`, `state`, `rolls`,
+   * `destroyed`), or null where the user doesn't own the item, it keeps or
+   * has no hit points, the damage isn't 0 or more, or the type isn't one of
+   * the Basic Set's other than `fat`.
+   */
+  applyDamage(options: { item: any; damage: number; type: string; armorDivisor?: number; label?: string }): Promise<ItemDamaged | null> {
+    return applyItemDamage(options);
   },
 
   /**
@@ -620,6 +691,17 @@ const items = {
   },
 
   /**
+   * Adds `delta` to a stack of an item, or takes it off with a negative one
+   * (since 1.123.0), for a module that makes, finds or uses up consumables.
+   * Never below 0; weight and cost are per unit, so the totals follow.
+   * Resolves to `{ from, to, reason }`, or null for an item with no
+   * quantity, a user who doesn't own it, or a delta that isn't a number.
+   */
+  changeQuantity(item: any, delta: number, options: { reason?: string } = {}): Promise<QuantityChanged | null> {
+    return changeQuantity(item, delta, options);
+  },
+
+  /**
    * Rolls an equipment failure roll for a thing (since 1.118.0; Campaigns p.
    * 485) with `{ actor?, item, modifier?, label?, apply? }`: 3d against the
    * item's HT (after missed maintenance) plus `modifier` and the
@@ -631,6 +713,31 @@ const items = {
    */
   equipmentFailure(options: { actor?: any; item: any; modifier?: number; label?: string; apply?: boolean }): Promise<EquipmentFailureResult | null> {
     return equipmentFailure(options);
+  },
+
+  /**
+   * Leaves a weapon unready, or readies it with false (since 1.136.0), with
+   * no roll and no card: `system.unready`, as a swing that unreadies it sets.
+   * Made through the active GM's client where the user doesn't own the item,
+   * for a user who owns the `attacker` named. Returns `{ itemId, unready,
+   * reason }`, or null for anything but equipment on an actor, a user who
+   * owns neither the item's holder nor the attacker, or no GM connected.
+   */
+  setUnready(item: any, unready: boolean, options: HeldWeaponOptions = {}): Promise<UnreadyChanged | null> {
+    return setWeaponUnready(item, unready, options);
+  },
+
+  /**
+   * Knocks a weapon or shield out of its holder's hands (since 1.136.0), as a
+   * won disarm does, with no roll and no card: no longer carried or equipped,
+   * so on no attack list, until somebody picks it up by carrying it again.
+   * Made through the active GM's client where the user doesn't own the item,
+   * for a user who owns the `attacker` named. Returns `{ itemId, reason }`, or
+   * null for anything but equipment or a shield on an actor, a user who owns
+   * neither the item's holder nor the attacker, or no GM connected.
+   */
+  knockAway(item: any, options: HeldWeaponOptions = {}): Promise<KnockedAway | null> {
+    return knockWeaponAway(item, options);
   },
 };
 
@@ -666,6 +773,12 @@ export interface GWorldApi {
      * TL against the skill's and the familiarity penalty (Characters pp. 168-169).
      */
     readonly equipmentUse: typeof equipmentUseLines;
+    /**
+     * A damage formula as the table rolls it (since 1.125.0): converted by
+     * Modifying Dice + Adds (Characters p. 269) where that rule is on, with
+     * the raw formula and whether anything changed.
+     */
+    readonly normalizeDamage: typeof normalizeDamage;
   };
   readonly actors: typeof actors;
   readonly items: typeof items;
@@ -693,7 +806,7 @@ export interface GWorldApi {
   readonly areas: typeof areasApi;
   /** The party an actor is in, its members and the campaign's terms (since 1.68.0). */
   readonly party: typeof partyApi;
-  /** Facts about the campaign world (since 1.77.0): its Control Rating, and its terms since 1.82.0. */
+  /** Facts about the campaign world (since 1.77.0): its Control Rating, its terms since 1.82.0, and the day's temperature since 1.138.0. */
   readonly world: typeof worldApi;
   /** Social rolls (since 1.103.0): the skills the Influence roll offers. */
   readonly social: typeof socialApi;
@@ -750,7 +863,8 @@ async function rollHitLocation(options: { actor?: any; damageType?: string | nul
  * The hazards namespace (since 1.63.0): an electrical shock and a dose of
  * radiation, as the GM tool runs them, from 1.74.0 a demolition charge, and
  * from 1.79.0 a shot at a vehicle, and from 1.93.0 what Fragile does. Since
- * 1.119.0 `shock` resolves to its `ShockOutcome`.
+ * 1.119.0 `shock` resolves to its `ShockOutcome`, and since 1.127.0 takes a
+ * `source` and `tags` its hooks see.
  */
 const hazardsApi = Object.freeze({
   /**
@@ -817,6 +931,18 @@ const worldApi = Object.freeze({
    * and Tech Level as the GM set them for the world, null where left blank.
    */
   campaignTerms: worldCampaignTerms,
+  /**
+   * The day's weather (since 1.138.0; Campaigns pp. 426, 434):
+   * `{ temperatureF, hot }`, the temperature in °F as the GM set it (null
+   * where none is set) and whether it is a hot day -- for `actor` where one
+   * is given, whose Temperature Tolerance counts, else for an ordinary human.
+   */
+  weather: (actor?: any) => dayWeather(actor),
+  /**
+   * Sets the day's temperature in °F, or clears it with null (since
+   * 1.138.0). Only the GM may; resolves to whether it was set.
+   */
+  setTemperature: (temperatureF: number | null) => setTemperature(temperatureF),
 });
 
 /** Builds the frozen API object. */
@@ -825,7 +951,7 @@ export function createApi(): GWorldApi {
     version: API_VERSION,
     rules,
     registry: Object.freeze({ registerRuleGroup, registerRule, namespacedRuleKey, isAddonRuleKey, isRuleOn, activeRules }),
-    roll: Object.freeze({ hitLocation: rollHitLocation, frightCheck: (actor: any, modifier = 0) => rollFrightCheck({ actor, modifier: Number(modifier) || 0 }), success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver, equipmentUse: equipmentUseLines }),
+    roll: Object.freeze({ hitLocation: rollHitLocation, frightCheck: (actor: any, modifier = 0) => rollFrightCheck({ actor, modifier: Number(modifier) || 0 }), success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver, equipmentUse: equipmentUseLines, normalizeDamage }),
     actors: Object.freeze(actors),
     items: Object.freeze(items),
     combat,
