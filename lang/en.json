@@ -623,6 +623,10 @@
           "Name": "Bleeding",
           "Hint": "A wound keeps costing HP each minute until it is bound. The book marks this optional for the bookkeeping."
         },
+        "modifyingDiceAdds": {
+          "Name": "Modifying dice + adds",
+          "Hint": "Large damage bonuses are rolled as dice: every +7 becomes +2d and a +4 left over becomes +1d, after every bonus (per die ones included) is added. 1d+9 rolls as 3d+2. Negative adds are never turned into fewer dice."
+        },
         "grappling": {
           "Name": "Grappling",
           "Hint": "Take hold of a foe, then take them down, pin them, or choke them."
@@ -2002,7 +2006,8 @@
       "SubtractDRDivisor": "Divide the target's DR by {divisor} (rounding down), subtract it from basic damage, then apply the wounding modifier.",
       "Cancel": "Cancel",
       "MassShot": "pellets as one mass: damage and DR ×{times}",
-      "HalfDamage": "Past 1/2D: halved from {full}"
+      "HalfDamage": "Past 1/2D: halved from {full}",
+      "ModifiedDice": "Adds rolled as dice, from {formula}"
     },
     "HitLocation": {
       "torso": "Torso",

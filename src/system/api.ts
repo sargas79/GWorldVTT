@@ -97,13 +97,14 @@ import { manaLevel } from "./casting.js";
 import { PARTY_CHANGED_HOOK, addMembers, membersOf, partyOf, removeMember } from "./party.js";
 import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from "./campaign.js";
 import { objectStats, type ItemObjectStats } from "./object-stats.js";
+import { normalizeDamage } from "./modifying-dice.js";
 import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.124.0";
+export const API_VERSION = "1.125.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -675,6 +676,12 @@ export interface GWorldApi {
      * TL against the skill's and the familiarity penalty (Characters pp. 168-169).
      */
     readonly equipmentUse: typeof equipmentUseLines;
+    /**
+     * A damage formula as the table rolls it (since 1.125.0): converted by
+     * Modifying Dice + Adds (Characters p. 269) where that rule is on, with
+     * the raw formula and whether anything changed.
+     */
+    readonly normalizeDamage: typeof normalizeDamage;
   };
   readonly actors: typeof actors;
   readonly items: typeof items;
@@ -834,7 +841,7 @@ export function createApi(): GWorldApi {
     version: API_VERSION,
     rules,
     registry: Object.freeze({ registerRuleGroup, registerRule, namespacedRuleKey, isAddonRuleKey, isRuleOn, activeRules }),
-    roll: Object.freeze({ hitLocation: rollHitLocation, frightCheck: (actor: any, modifier = 0) => rollFrightCheck({ actor, modifier: Number(modifier) || 0 }), success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver, equipmentUse: equipmentUseLines }),
+    roll: Object.freeze({ hitLocation: rollHitLocation, frightCheck: (actor: any, modifier = 0) => rollFrightCheck({ actor, modifier: Number(modifier) || 0 }), success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver, equipmentUse: equipmentUseLines, normalizeDamage }),
     actors: Object.freeze(actors),
     items: Object.freeze(items),
     combat,

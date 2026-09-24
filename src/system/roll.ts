@@ -24,6 +24,7 @@ import {
 import { consumeTurnedBlade, recordTurnedBlade } from "./turned-blade.js";
 import { consumePulledBlow, pulledFormula, recordPulledBlow } from "./pulled-blow.js";
 import { isRuleOn } from "./optional-rules.js";
+import { normalizeDamage } from "./modifying-dice.js";
 import { rollBreakdown, signed, type RollBreakdown } from "./roll-breakdown.js";
 import { maySpray, promptForSpray, type SprayShot } from "./spraying-fire.js";
 import { fireSuppression, suppressing } from "./suppression-fire.js";
@@ -1352,11 +1353,17 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
   const bonus = modifiers.reduce((sum, m) => sum + m.value, 0);
   // The multiplier travels with the roll: "6dx10" is six dice times ten, and
   // dropping it here would roll a tenth of the attack.
-  const rolled = {
+  const summed = {
     dice: parsed.dice,
     adds: parsed.adds + bonus,
     ...(parsed.multiplier ? { multiplier: parsed.multiplier } : {}),
   };
+  // Modifying Dice + Adds (Characters p. 269) works on the damage with every
+  // bonus in it, per-die ones included, so it is converted here, after the
+  // modifiers are summed, and not on the formula the caller passed in. The
+  // bonuses were counted from the dice before conversion, as they should be.
+  const modified = normalizeDamage(formatDiceAdds(summed));
+  const rolled = modified.converted ? (parseDiceAdds(modified.normalized) ?? summed) : summed;
   const roll = new Roll(toRollFormula(rolled));
   await roll.evaluate();
 
@@ -1375,7 +1382,10 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
 
   const content = await foundry.applications.handlebars.renderTemplate(DAMAGE_TEMPLATE, {
     label,
-    formula,
+    // What was rolled, where the rule changed it, and what it was before: the
+    // formula with the modifiers below already in it.
+    formula: modified.converted ? modified.normalized : formula,
+    modifiedFrom: modified.converted ? modified.raw : "",
     damageType,
     armorDivisor,
     // A divisor of 1 is the ordinary case and is not worth a line on the card.
