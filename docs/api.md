@@ -1187,7 +1187,11 @@ one when it is registered, and a module that uses partials loads them with
   on every render, including each search. Each row of the list is `[data-picker-row]` with
   the entry's UUID in `data-uuid`, and the entry's name is `[data-picker-name]` inside it.
 - **`sheets.registerGmTool({ module, key, label, icon?, open, visible? })`.**
-  A button in the token controls, shown to the GM only.
+  A button in the token controls, shown to the GM only. A tool registered
+  during `init`, `setup` or `gworld.ready` is there when the world first
+  loads: Foundry builds the controls before `ready`, so the system rebuilds
+  them once after `gworld.ready` if any module registered a tool. One
+  registered later rebuilds them when it is registered.
 
 Sheet markup follows the system's: a section is an `.isec`, a heading
 `.grph`, a list a `table.gt` with `tr[data-item-id]` rows, a button `.ibtn`,
