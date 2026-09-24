@@ -1326,6 +1326,26 @@ Two fields a module may read (since 1.62.0):
   actor on the other side, and its `tags` say what the contest is: `feint`, or
   `quickContest` with `disarm` for a disarm (tags a Quick Contest's caller
   passes reach the contest resolvers too).
+- **A listener refuses a success roll** (since 1.131.0): a rule that says a
+  roll can't be made at all -- a task impossible without the right gear, or
+  under some condition -- rather than made at a penalty. On a roll made
+  through `roll.success` (the system's own skill, attribute and attack rolls
+  among them), the `gworld.successRollModifiers` context carries `refusal`,
+  null; set it to text and the roll isn't made. No dice are rolled, the
+  user is warned with the text, and a card with the target and the text in
+  place of a result is posted in the roll's own message mode, as for a roll
+  refused below 3 (see *A roll refused below 3*). `gworld.afterSuccessRoll`
+  isn't fired, since there is no outcome. `roll.success` resolves to null,
+  or with `returnRefusal: true` to `{ refused: true, reason, base,
+  effective, modifiers }`, `reason` the listener's text. A listener's
+  refusal is checked before the one below 3, so its text is the one shown.
+  Text that is blank, or anything other than a string, refuses nothing. An
+  active defense can't be refused this way (its context has no `refusal`):
+  `gworld.defenseChoices` refuses one and `gworld.defenseModifiers` can
+  settle one. Nor can the rolls the system makes outside `roll.success` --
+  a Fright Check, knockdown, bleeding, a contest's sides, and the rolls
+  against exposure, contagion, infection, poison and illness, resuscitation
+  and vehicle control -- whose contexts have no `refusal` either.
 - **The item behind a roll, secret rolls, influence contests** (since
   1.95.0):
   - *`item`.* The `gworld.successRollModifiers` and `gworld.afterSuccessRoll`

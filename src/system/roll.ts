@@ -34,6 +34,7 @@ import {
   attackTargetCandidates,
   maneuverOptionAttackEffect,
   recordAttackMade,
+  refusableSuccessRoll,
   successRollLines,
   type ResistedAttack,
   successRollTags,
@@ -482,7 +483,8 @@ export interface SuccessRollOptions {
   secret?: boolean;
   /**
    * True to have a roll refused for an effective skill below 3 resolve to
-   * a {@link SuccessRollRefusal} rather than null (since API 1.107.0).
+   * a {@link SuccessRollRefusal} rather than null (since API 1.107.0), and
+   * since API 1.131.0 one a `gworld.successRollModifiers` listener refused.
    * Left out, a refused roll resolves to null, as it always has.
    */
   returnRefusal?: boolean;
@@ -490,7 +492,9 @@ export interface SuccessRollOptions {
 
 /**
  * A success roll that was not made (since API 1.107.0): its effective skill
- * was below 3, so "you cannot attempt the roll" (Campaigns p. 344).
+ * was below 3, so "you cannot attempt the roll" (Campaigns p. 344), or since
+ * API 1.131.0 a `gworld.successRollModifiers` listener refused it, and
+ * `reason` is the listener's.
  */
 export interface SuccessRollRefusal {
   refused: true;
@@ -579,15 +583,33 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   const given = heardAt ? [...(options.modifiers ?? []), heardAt] : options.modifiers ?? [];
   // The caller's lines as the listeners left them, and theirs: a keyed line a
   // listener removes is gone from the roll (since API 1.109.0).
-  const modifiers = successRollLines({
+  // A listener may refuse the roll outright (since API 1.131.0), but not an
+  // active defense: the defense card is where one is refused or settled, and
+  // its caller has no answer to a defense that was never rolled.
+  const context = {
     actor, label, kind, skill: String(options.skill ?? ""), base, tags, modifiers: [...given],
     ...(options.attack ? { attack: options.attack } : {}),
     ...(options.subject ? { subject: options.subject } : {}),
     ...(options.item ? { item: options.item } : {}),
-  });
+  };
+  const { modifiers, refusal } = kind === "defense"
+    ? { modifiers: successRollLines(context), refusal: null }
+    : refusableSuccessRoll(context);
 
   const totalModifier = modifiers.reduce((sum, m) => sum + m.value, 0);
   const effective = base + totalModifier;
+
+  // A roll a module's rule says can't be made is not made, whatever its
+  // level, and is refused the way a roll below 3 is: a warning, a card in the
+  // roll's own message mode with the listener's reason, and no
+  // `gworld.afterSuccessRoll`, since there is no outcome to hear.
+  if (refusal !== null) {
+    ui.notifications?.warn(refusal);
+    await postRefusal(options, { reason: refusal, modifiers, totalModifier, effective });
+    return options.returnRefusal === true
+      ? { refused: true, reason: refusal, base, effective, modifiers }
+      : null;
+  }
 
   // A roll at effective skill below 3 may not be attempted at all, and only
   // active defenses are exempt (Campaigns p. 344). Without this check a rolled
