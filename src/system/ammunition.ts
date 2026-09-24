@@ -11,7 +11,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { shotsEntryFor } from "./shots-entry.js";
 import { COMBAT_HOOKS, callCombatHook } from "./combat-extensions.js";
-import { normalizeSkillName } from "../rules/skills.js";
+import { skillLevelOf } from "./skill-level.js";
 import { isRuleOn } from "./optional-rules.js";
 import { shotsAfterFiring } from "../rules/cinematic.js";
 import { hasInfiniteAmmunition } from "./cinematic.js";
@@ -491,17 +491,6 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
   });
-}
-
-/** A character's level in a skill, compared by name the way the sheet compares it. */
-function skillLevelOf(actor: any, name: string): number | null {
-  const wanted = normalizeSkillName(name);
-  for (const item of actor?.items ?? []) {
-    if (item?.type !== "skill" || normalizeSkillName(String(item.name ?? "")) !== wanted) continue;
-    const level = item.system?.derived?.level;
-    return typeof level === "number" ? level : null;
-  }
-  return null;
 }
 
 /** The skill that reloads faster (Characters pp. 194-195). */

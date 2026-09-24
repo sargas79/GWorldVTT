@@ -27,7 +27,7 @@
  */
 
 import * as rules from "../rules/index.js";
-import { normalizeSkillName } from "../rules/skills.js";
+import { skillLevelOf } from "./skill-level.js";
 import { incompatibleModules, satisfiesApiRange } from "./api-version.js";
 import { combatApi } from "./combat-extensions.js";
 import { clearZenShot, pendingZenShot, registerZenSkill, rollZenSkill, zenSkillsOf } from "./zen.js";
@@ -126,14 +126,7 @@ const actors = {
    */
   skillLevel(actor: any, name: string): number | null {
     if (!actor || !name) return null;
-    const wanted = normalizeSkillName(name);
-    for (const item of actor.items ?? []) {
-      if (item?.type !== "skill") continue;
-      if (normalizeSkillName(String(item.name ?? "")) !== wanted) continue;
-      const level = item.system?.derived?.level;
-      return typeof level === "number" ? level : null;
-    }
-    return null;
+    return skillLevelOf(actor, name);
   },
 
   /** The active defenses as the sheet shows them, or null. */

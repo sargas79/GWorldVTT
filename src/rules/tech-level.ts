@@ -12,6 +12,8 @@
  * from another TL is usually unfamiliar too, so both penalties apply to it.
  */
 
+import { normalizeSkillName } from "./skills.js";
+
 /** What an unfamiliar piece of equipment costs, where a skill says nothing else (p. 169). */
 export const UNFAMILIAR_PENALTY = -2;
 
@@ -116,16 +118,11 @@ export function mayRollForFamiliarity(familiaritiesWithSkill: number): boolean {
  * for "First Aid" serves "First Aid/TL" and one for "Electronics Operation
  * (Security)" serves "Electronics Operation/TL8 (Security)": the "/TL"
  * marker and any TL after it dropped, spaces collapsed, lower case. The
- * specialty stays part of the key, so different specialties never match.
+ * specialty stays part of the key, so different specialties never match. It
+ * is the one comparison every skill lookup makes, `normalizeSkillName`.
  */
 export function toolSkillKey(name: string): string {
-  return String(name ?? "")
-    .replace(/\/TL[\d^]*/gi, "")
-    .replace(/\s*\(\s*/g, " (")
-    .replace(/\s*\)/g, ")")
-    .trim()
-    .replace(/\s+/g, " ")
-    .toLowerCase();
+  return normalizeSkillName(name);
 }
 
 /** Whether a tool carried for `toolSkill` serves the skill named `skillName`, compared as `toolSkillKey` writes them. */

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { normalizeSkillName } from "../skills.js";
 import {
   bestTool,
   familiarityKey,
@@ -136,5 +137,15 @@ describe("toolServesSkill", () => {
   it("writes one key for every spelling", () => {
     expect(toolSkillKey("  Electronics Operation/TL8  (Security) ")).toBe("electronics operation (security)");
     expect(toolSkillKey("Guns/TL^ (Pistol)")).toBe("guns (pistol)");
+  });
+});
+
+describe("normalizeSkillName", () => {
+  it("sees through the /TL marker, case and spacing, and keeps the specialty", () => {
+    expect(normalizeSkillName("Physician/TL")).toBe("physician");
+    expect(normalizeSkillName("First Aid/TL9")).toBe("first aid");
+    expect(normalizeSkillName("Electronics Repair/TL ( Security )")).toBe("electronics repair (security)");
+    expect(normalizeSkillName("Guns/TL8(Pistol)")).toBe(normalizeSkillName("guns (pistol)"));
+    expect(toolSkillKey("Surgery/TL")).toBe(normalizeSkillName("Surgery"));
   });
 });

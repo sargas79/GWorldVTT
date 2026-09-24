@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { rollMortalWound } from "../dying.js";
 import { PROCEDURE_HOOKS } from "../procedure-extensions.js";
-import { applyFirstAid, attendPatient, operate } from "../recovery.js";
+import { applyFirstAid, attendPatient, operate, resuscitate } from "../recovery.js";
+import { repairSkillOf } from "../repairs.js";
+import { jobRollLevel } from "../life.js";
 
 const globals = globalThis as Record<string, unknown>;
 
@@ -98,6 +100,36 @@ describe("a module's healing", () => {
     expect(heard[0]).toMatchObject({ tags: ["surgery"], skill: "Surgery", base: 13 });
   });
 
+  it("finds the healer's Physician/TL and Surgery/TL as the compendium names them (sargas79/GWorldVTT#703)", async () => {
+    const { heard } = foundryWith([3, 3, 3]);
+    const healer = { ...character("Doc"), items: [
+      { type: "skill", name: "Physician/TL", system: { derived: { level: 14 } } },
+      { type: "skill", name: "Surgery/TL8", system: { derived: { level: 11 } } },
+    ] };
+    await attendPatient({ healer, patient: character("Patient"), modifier: 0 });
+    await operate({ surgeon: healer, patient: character("Patient"), anesthetic: true, repairingCrippled: false, equipmentQuality: 0, modifier: 0, techLevel: 9 });
+    // Not the IQ-5 fallback (5): the skills themselves.
+    expect(heard[0]).toMatchObject({ tags: ["physician"], base: 14 });
+    expect(heard[1]).toMatchObject({ tags: ["surgery"], base: 11 });
+  });
+
+  it("resuscitates with the healer's Physician/TL, or First Aid/TL where it is better", async () => {
+    const { heard } = foundryWith([3, 3, 3]);
+    const patient = () => ({ ...character("Drowned"), statuses: new Set(["unconscious"]) });
+    const doctor = { ...character("Doc"), items: [
+      { type: "skill", name: "Physician/TL", system: { derived: { level: 13 } } },
+      { type: "skill", name: "First Aid/TL", system: { derived: { level: 12 } } },
+    ] };
+    const medic = { ...character("Medic"), items: [
+      { type: "skill", name: "Physician/TL", system: { derived: { level: 10 } } },
+      { type: "skill", name: "First Aid/TL9", system: { derived: { level: 15 } } },
+    ] };
+    await resuscitate({ healer: doctor, patient: patient(), cause: "drowning", cpr: true, modifier: 0 });
+    await resuscitate({ healer: medic, patient: patient(), cause: "drowning", cpr: true, modifier: 0 });
+    expect(heard[0]).toMatchObject({ skill: "Physician", base: 13 });
+    expect(heard[1]).toMatchObject({ skill: "First Aid", base: 15 });
+  });
+
   it("tags the mortal wound check, trauma maintenance and all", async () => {
     const { heard, cards } = foundryWith([4, 4, 4]);
     const actor = character("Dying", -12, 10);
@@ -108,5 +140,20 @@ describe("a module's healing", () => {
     // The unit's care makes the check daily (since 1.63.0).
     expect(String(cards[0]?.content)).toContain("GWORLD.Dying.EveryDays");
     expect(String(cards[0]?.content)).toContain("Life support");
+  });
+});
+
+/** Every procedure finds a skill as the compendium names it, "/TL" and all (sargas79/GWorldVTT#703). */
+describe("skills looked up by name", () => {
+  const skill = (name: string, level: number) => ({ type: "skill", name, system: { derived: { level } } });
+
+  it("repairs with any specialty of a repair skill the book names", () => {
+    expect(repairSkillOf({ items: [skill("Armoury/TL (Body Armor)", 12), skill("Electrician/TL", 11)] })).toEqual({ name: "Armoury/TL (Body Armor)", level: 12 });
+    expect(repairSkillOf({ items: [skill("Mechanic/TL8 (Automobile)", 13)] })).toEqual({ name: "Mechanic/TL8 (Automobile)", level: 13 });
+    expect(repairSkillOf({ items: [skill("Electronics Operation/TL (Security)", 15)] })).toBeNull();
+  });
+
+  it("rolls a job's /TL skill", () => {
+    expect(jobRollLevel({ items: [skill("Physician/TL", 13)] }, "Physician")).toBe(13);
   });
 });
