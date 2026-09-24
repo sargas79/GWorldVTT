@@ -1013,8 +1013,9 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
       +1 a level to one is there for a module to read.
     - `parabolicHearing` (p. 72), its levels: the Hearing row notes the range
       multiplier. `rules.hearingDistanceMultiplier(levels)` is 2^levels, for a
-      module that works out hearing distances (Campaigns p. 358); the system
-      has no distance on a Hearing roll.
+      module that works out hearing distances (Campaigns p. 358). Since
+      1.117.0 a Hearing roll made with `distance` applies it itself (see
+      *Hearing distances*).
     - `hamFisted` (p. 138), its levels to 2: -3 a level on the fine-work skills
       High Manual Dexterity lists and on Fast-Draw, as a line on each skill.
       Levels granted add to the trait's own, to -6.
@@ -2133,6 +2134,24 @@ Two fields a module may read (since 1.62.0):
   shows nothing) or the module's own words, shown as given ("Archer loses the
   aim: the mount bolted."). Returns true where there was an aim to lose;
   false, doing nothing, where there wasn't or the user doesn't own the actor.
+- **Hearing distances** (since 1.117.0; Campaigns p. 358):
+  - `rules.hearingDistanceModifier(yards, baseYards)` is the Hearing
+    Distance Table's modifier for a listener `yards` from a sound heard at
+    no penalty out to `baseYards` (normal conversation 1, light traffic 2,
+    and so on, each row double the last): +1 for each step closer, -1 for
+    each step farther, so normal conversation at 8 yards is -3. Between two
+    steps, only whole steps count: a farther listener takes the next step
+    out, a nearer one the last step passed. It is 0 where either distance
+    isn't a number above 0. Gear rated by how far it can be heard gives its
+    range as `baseYards`.
+  - `roll.success` takes `distance: { yards, baseYards }`. It adds the
+    table's line, keyed `hearingDistance`, to the caller's lines, and tags
+    the roll `hearing` (and so `detection`). `baseYards` is first doubled
+    for each level of the roller's Parabolic Hearing (Characters p. 72; the
+    `rangeMultiplier` on its `derived.senses` hearing row). The line is
+    there even at 0, so a `gworld.successRollModifiers` listener can find
+    and change it. A `distance` whose figures aren't numbers above 0 adds
+    nothing. The sheet's own Hearing roll has no distance.
 - **Telescopic Vision and Vision rolls** (since 1.65.0): a Vision roll from
   the sheet with one token targeted takes that token's SM (`key` `size`) and
   the range penalty (`speedRange`), less what `traitEffects.telescopicVision`

@@ -71,6 +71,26 @@ export function hearingDistanceMultiplier(levels: number): number {
   return 2 ** Math.max(0, Math.floor(Number(levels) || 0));
 }
 
+/**
+ * The Hearing Distance Table (Campaigns p. 358): the Hearing roll's modifier
+ * for a listener `yards` from a sound heard at no penalty out to `baseYards`.
+ * The table's rows double, from a quarter yard for rustling leaves to 512
+ * yards for the loudest band, and each step closer is +1, each step farther
+ * -1: normal conversation (1 yd) at 8 yd is -3. A distance between two steps
+ * takes only the whole steps, so a farther one counts the next step out and
+ * a nearer one the last step it has passed. Nothing where either distance is
+ * missing or not above 0.
+ */
+export function hearingDistanceModifier(yards: number, baseYards: number): number {
+  const distance = Number(yards);
+  const base = Number(baseYards);
+  if (!(distance > 0) || !(base > 0) || !Number.isFinite(distance) || !Number.isFinite(base)) return 0;
+  // A hair off so that a printed row (8 yd for 1 yd, a quarter yard) lands
+  // on its own step rather than the next.
+  const steps = Math.ceil(Math.log2(distance / base) - 1e-9);
+  return steps === 0 ? 0 : -steps;
+}
+
 /** All four senses, in the order the sheet lists them. */
 export function senseScores(perception: number, traits: SenseTraits = {}): SenseScore[] {
   return SENSES.map((sense) => senseScore(sense, perception, traits));
