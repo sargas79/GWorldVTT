@@ -8,15 +8,21 @@
  * ways to slam or shove (API 1.31.0): another skill, another bonus, a
  * one-handed shove, something else to take the slammer's damage, or two foes
  * at once.
+ *
+ * Each roll says what it is (since API 1.139.0): the slammer's blow is
+ * `source: "slam"`, what the slammer takes back is `"slammed"`, and a shove's
+ * knockback roll is `"shove"`, so a module's gear can add to a slam's damage,
+ * or guard against it, without touching any other crushing blow.
  */
 
 import { isRuleOn } from "./optional-rules.js";
-import { rollDamage, rollSuccess } from "./roll.js";
+import { damageDistance, rollDamage, rollSuccess } from "./roll.js";
+import { callCombatHook, COMBAT_HOOKS } from "./combat-extensions.js";
 import { targetedTokens, withTargets } from "./targets.js";
 import { attributeOf } from "./attributes.js";
 import { shoveDamage, slamDamage, slamOutcome, slamSkills, slamToHit, type SlamKind } from "../rules/attack-options.js";
 import { knockback, strongAttackDamageBonus } from "../rules/maneuvers.js";
-import { formatDiceAdds, parseDiceAdds } from "../rules/dice.js";
+import { formatDiceAdds, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import { normalizeSkillName } from "../rules/skills.js";
 
 const L = (key: string, data?: Record<string, unknown>) =>
@@ -226,6 +232,7 @@ async function slam(actor: any, prep: SlamPreparation, label: string, hits: any[
       ...(prep.damageBonus ? [{ label, value: Number(prep.damageBonus) }] : []),
       ...(strong ? [{ label: game.i18n.localize("GWORLD.Maneuver.AllOutAttackOption.strong"), value: strong }] : []),
     ],
+    source: "slam",
   });
   // Two foes at once split one roll between them; one foe takes it all.
   const each = foesWanted === 2 ? Math.floor(dealt / 2) : dealt;
@@ -238,6 +245,9 @@ async function slam(actor: any, prep: SlamPreparation, label: string, hits: any[
       label: L("Back", { name: String(victim.name ?? ""), yards: velocity }),
       formula: formatDiceAdds({ dice: theirs.dice, adds: theirs.modifier }),
       damageType: "cr",
+      // Rolled on the foe's HP, but it is the blow the slammer takes back, and
+      // gear worn to slam with may guard against it and nothing else.
+      source: "slammed",
     });
     const outcome = slamOutcome(each, taken);
     await post(actor, label, [
@@ -251,8 +261,22 @@ async function slam(actor: any, prep: SlamPreparation, label: string, hits: any[
 async function shove(actor: any, prep: SlamPreparation, label: string, hits: any[], foesWanted: number): Promise<void> {
   const thrust = parseDiceAdds(String(actor.system?.derived?.thrust ?? "1d-2")) ?? { dice: 1, adds: -2 };
   const dice = shoveDamage(thrust, prep.oneHanded === true);
-  const formula = formatDiceAdds({ dice: dice.dice, adds: dice.adds + (Number(prep.damageBonus) || 0) });
-  const roll = new Roll(formula.replace(/^(\d+)d/, "$1d6"));
+  const given = formatDiceAdds({ dice: dice.dice, adds: dice.adds + (Number(prep.damageBonus) || 0) });
+  // A shove's roll never injures, so it gets no damage card; but it is the
+  // shover's damage all the same, and a module's lines reach it as they do a
+  // slam's (since 1.139.0), tagged so a listener can tell it apart.
+  const hooked = callCombatHook(COMBAT_HOOKS.damageModifiers, {
+    actor, item: null, mode: null, label, formula: given, damageType: "cr" as const,
+    modifiers: [] as Array<{ label: string; value: number }>,
+    distanceYards: damageDistance(actor, undefined),
+    source: "shove",
+  });
+  const parsed = (typeof hooked.formula === "string" ? parseDiceAdds(hooked.formula) : null) ?? parseDiceAdds(given)!;
+  const bonus = (Array.isArray(hooked.modifiers) ? hooked.modifiers : [])
+    .reduce((sum, m) => sum + (typeof m?.value === "number" && Number.isFinite(m.value) ? m.value : 0), 0);
+  const rolled = { ...parsed, adds: parsed.adds + bonus };
+  const formula = formatDiceAdds(rolled);
+  const roll = new Roll(toRollFormula(rolled));
   await roll.evaluate();
   const basic = Math.max(0, Number(roll.total) || 0);
   // Doubled for one foe (p. 372); two foes each take the basic roll.

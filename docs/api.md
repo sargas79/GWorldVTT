@@ -487,7 +487,14 @@ and the roll continues.
     records it), otherwise the distance on
     the map to the one targeted token, and null where neither is known.
     `roll.damage` takes `distanceYards` too; given there, it is what the hook
-    sees, and null says the distance is not known. Since 1.125.0, with
+    sees, and null says the distance is not known.
+    Since 1.139.0 `gworld.damageModifiers` also gets `source`, the
+    `roll.damage` `source` the roll was made with (see 1.43.0), or null, so
+    gear worn to slam with can add to a slam's damage alone. A slam's two
+    rolls are `"slam"` (the slammer's blow) and `"slammed"` (what the slammer
+    takes back); a shove's knockback roll, which gets no damage card, now
+    fires the hook too, as `"shove"`, and rolls what the listeners leave;
+ and null says the distance is not known. Since 1.125.0, with
     Modifying Dice + Adds on, the hook's lines are added to the formula before
     its adds are turned into dice, so a per-die line is counted from the dice
     the hook was given (see [Modifying dice + adds](#modifying-dice--adds));
@@ -720,6 +727,13 @@ and the roll continues.
     and `IncomingDamage` carries `calledShot` and `attackOptions`, so
     `gworld.injury` and `gworld.afterDamage` see them too. `roll.damage` takes
     `attackOptions` (and already took `calledShot`) for a module's own roll.
+
+    Since 1.139.0 the context also carries `source`, where the blow came from
+    as its damage roll said (`roll.damage`'s `source`, kept on the card), or
+    null: `"slam"` for a slammer's blow, `"slammed"` for what the slammer
+    takes back, `"parriedLimb"` for the strike after a bare-handed parry, or a
+    module's own. Gear that guards against a slam and nothing else raises its
+    line only when `source` is `"slam"` or `"slammed"`.
   - `gworld.vehicleDr` (since 1.79.0): before a vehicle's DR meets a shot
     (Campaigns pp. 462, 554-555), with `{ vehicle, actor, item, mode,
     location, arc, damageType, basicDamage, armorDivisor, ignoresDr,
@@ -2730,6 +2744,11 @@ Two fields a module may read (since 1.62.0):
     single damage roll is halved for each foe, and a shove's basic roll pushes
     each rather than being doubled.
   - `notes` go on the card.
+
+  Since 1.139.0 a slam's damage rolls carry `source` `"slam"` (the slammer's
+  blow) and `"slammed"` (what the slammer takes back), and a shove's roll
+  `"shove"`, whether the slam is the system's or a module's; see
+  `gworld.damageModifiers` and `gworld.armorDr`.
 - **Grapples** (since 1.34.0):
   - `combat.grapple(actor, foe?)` is the grapple an actor is in, `{ foe, holding,
     hands, pinned, hitLocation }`, or null. Since 1.45.0 a fighter may be in

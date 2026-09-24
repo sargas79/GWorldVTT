@@ -1313,7 +1313,11 @@ export interface DamageRollOptions {
   mode?: { index: number; ranged: boolean; derived?: string } | null;
   /** The body part an unarmed blow strikes with, for Hurting Yourself (Campaigns p. 379). */
   strikingPart?: string | null;
-  /** Where the blow came from, for the modules' damage hooks (since 1.43.0), e.g. "parriedLimb". */
+  /**
+   * Where the blow came from, for the modules' damage hooks (since 1.43.0),
+   * e.g. "parriedLimb". A slam's two rolls are "slam" and "slammed" (since
+   * API 1.139.0), and `gworld.damageModifiers` and `gworld.armorDr` see it too.
+   */
   source?: string;
   /** The first hit of a multiple-projectile shot, rolled with its own line (since API 1.73.0). */
   firstHit?: boolean;
@@ -1359,6 +1363,9 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
   const hookedDamage = callCombatHook(COMBAT_HOOKS.damageModifiers, {
     actor, item, mode, label, formula: options.formula, damageType, modifiers: [...(options.modifiers ?? [])],
     distanceYards,
+    // Where the blow came from (since 1.139.0), so a listener can add to a
+    // slam's damage alone and leave every other crushing roll as it is.
+    source: options.source ? String(options.source) : null,
   });
   const replaced = typeof hookedDamage.formula === "string" && hookedDamage.formula !== options.formula && parseDiceAdds(hookedDamage.formula)
     ? hookedDamage.formula
