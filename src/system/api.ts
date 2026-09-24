@@ -102,7 +102,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.120.0";
+export const API_VERSION = "1.124.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -244,10 +244,12 @@ const actors = {
   /**
    * Changes one of a character's traits, GM only (since 1.112.0): `level`
    * sets its levels within its cap, `replaceWith` swaps it for another trait
-   * (a compendium name, or item data). Found by `id` or `name`. Resolves to
-   * `{ itemId, from, to, replaced }`, or null.
+   * (a compendium name, or item data). Found by `id` or `name`. Since
+   * 1.124.0, `add` gives the character a trait they haven't got (found as
+   * `replaceWith` is) and `remove: true` takes one away. Resolves to
+   * `{ itemId, from, to, replaced, added, removed }`, or null.
    */
-  changeTrait(actor: any, options: { id?: string; name?: string; level?: number; replaceWith?: string | Record<string, any> }): Promise<TraitChanged | null> {
+  changeTrait(actor: any, options: { id?: string; name?: string; level?: number; replaceWith?: string | Record<string, any>; add?: string | Record<string, any>; remove?: boolean }): Promise<TraitChanged | null> {
     return changeTrait(actor, options);
   },
 
