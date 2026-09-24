@@ -103,7 +103,7 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0), and `bind(actor, options)`, `unbind(actor)`, `binding(actor)` and `breakFree(actor)` (since 1.107.0; see *Binding*), and `spendFatigue(actor, fp, options)` (since 1.109.0; see *Medical hooks*), and `changeTrait(actor, options)` (since 1.112.0; `operate` also resolves to its outcome since then). |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0), and `bind(actor, options)`, `unbind(actor)`, `binding(actor)` and `breakFree(actor)` (since 1.107.0; see *Binding*), and `spendFatigue(actor, fp, options)` (since 1.109.0; see *Medical hooks*), and `changeTrait(actor, options)` (since 1.112.0; `operate` also resolves to its outcome since then), and `tow(actor, options)` and `stopTowing(actor)` (since 1.113.0; see *Towing and the wheelchair*). |
 | `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
@@ -1044,8 +1044,15 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     weight, a pack that holds its load weightlessly. The item keeps its weight
     everywhere else. `derived.encumbrance.carriedWeight` is what counts, and
     `derived.encumbrance.notCounted` lists the lines left out or lowered as
-    `{ label, weight, counted, reason }`. A weight can't be raised here, and a
-    listener that throws changes nothing.
+    `{ label, weight, counted, reason }`. A listener that throws changes
+    nothing, and a weight can't be made negative. Since 1.113.0 a listener
+    may also raise a line's `weight`, or push a line of its own (`{ item:
+    null, label, weight, counts: true, reason }`) -- gear that weighs more
+    wet, a load of the module's -- and `derived.encumbrance.added` lists the
+    lines raised or added as `{ label, weight, counted, reason }` (`weight` 0
+    for an added line). Before 1.113.0 a raised weight was ignored. A load
+    pulled with `actors.tow` is a line of its own, `Towing: <label>`, at its
+    effective weight.
   - `gworld.attributeBonuses`, with `{ actor, attributes, lines }`: push
     `{ attribute, label, value, source }`. They show on the attribute's card.
   - `gworld.defenseBonuses`, with `{ actor, defenses, lines }`: push
@@ -1432,6 +1439,31 @@ Two fields a module may read (since 1.62.0):
       It resolves to null for a user who isn't a GM (who also gets a
       warning), for a trait the character hasn't got, or for a replacement
       that can't be found.
+- **Towing and the wheelchair** (since 1.113.0):
+  - *Pulling and dragging* (Campaigns p. 353): `actors.tow(actor, { weight,
+    conveyance?, smooth?, label? })` starts pulling a load. `weight` is the
+    load and its sledge, cart or wagon together, in pounds. `conveyance` is
+    `none` (dragged, the default), `sledge` (over snow or ice, /2), `cart`
+    (/10) or `wagon` (/20), and `smooth` true halves it again for a floor,
+    road or frozen lake. The effective weight then counts toward
+    encumbrance, and Move and Dodge follow, until `actors.stopTowing(actor)`.
+    Towing again replaces the load. `tow` resolves to `{ effective, limit,
+    movable }`: `limit` is 15 x Basic Lift, and `movable` is false past it
+    (the book says such a load can't be moved at all; the system doesn't
+    stop the character). It resolves to null for a user who can't change
+    the actor, or a weight that isn't a positive number. The load is kept
+    in `flags.gworld.towing`, and `derived.encumbrance.towing` reads `{
+    weight, conveyance, smooth, label, effective, movable }` or null.
+    `rules.towedWeight`, `rules.canPull`, `rules.CONVEYANCE_DIVISORS` and
+    `rules.TOWING_LIMIT_BL` hold the arithmetic.
+  - *The wheelchair* (Characters p. 142): equipment with `system.wheelchair`
+    true (a boolean, false by default, with a checkbox on the item sheet) is
+    a muscle-powered wheelchair or wheeled platform. While it is equipped,
+    the character's ground Move is ST/4, rounded down, in place of Basic
+    Move, and encumbrance applies to that.
+    `derived.encumbrance.wheelchair` says whether one is in use.
+    `rules.wheelchairMove(st)` gives the figure. The Basic Set's equipment
+    lists no wheelchair, so no pack record carries it.
 - **An affliction's effect** (since 1.49.0): `gworld.afflictionEffect` fires
   when a resistance roll fails, with
   `{ actor, attacker, item, mode, label, margin, effects }`. Push a

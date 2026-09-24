@@ -415,13 +415,31 @@ describe("carried weight a module leaves out (since 1.58.0)", () => {
     ]);
   });
 
-  it("never raises a weight, and ignores a listener that throws", async () => {
+  it("raises a weight, or counts a line a listener adds, and says so (since 1.113.0)", async () => {
     const { moduleCarriedWeight } = await load();
-    globals.Hooks = { callAll: (_hook: string, context: { lines: Array<{ weight: number }> }) => { context.lines[2]!.weight = 500; } };
-    expect(moduleCarriedWeight({}, lines()).total).toBe(195);
+    globals.Hooks = {
+      callAll: (_hook: string, context: { lines: any[] }) => {
+        context.lines[2]!.weight = 8;
+        context.lines[2]!.reason = "Soaked";
+        context.lines.push({ item: null, label: "Sled", weight: 60, counts: true, reason: "Pulled" });
+      },
+    };
+    const result = moduleCarriedWeight({}, lines());
+    expect(result.total).toBe(150 + 40 + 8 + 60);
+    expect(result.added).toEqual([
+      { label: "Rope", weight: 5, counted: 8, reason: "Soaked" },
+      { label: "Sled", weight: 0, counted: 60, reason: "Pulled" },
+    ]);
+    expect(result.notCounted).toEqual([]);
+  });
+
+  it("never makes a weight negative, and ignores a listener that throws", async () => {
+    const { moduleCarriedWeight } = await load();
+    globals.Hooks = { callAll: (_hook: string, context: { lines: Array<{ weight: number }> }) => { context.lines[2]!.weight = -50; } };
+    expect(moduleCarriedWeight({}, lines()).total).toBe(190);
     globals.Hooks = { callAll: (_hook: string, context: { lines: Array<{ counts: boolean }> }) => { context.lines[0]!.counts = false; throw new Error("boom"); } };
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    expect(moduleCarriedWeight({}, lines())).toEqual({ total: 195, notCounted: [] });
+    expect(moduleCarriedWeight({}, lines())).toEqual({ total: 195, notCounted: [], added: [] });
   });
 });
 

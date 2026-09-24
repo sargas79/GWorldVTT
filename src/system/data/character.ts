@@ -85,6 +85,8 @@ import {
 import { usableInCloseCombat } from "../../rules/tactical.js";
 import { isRuleOn } from "../optional-rules.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
+import { canPull, towedWeight, wheelchairMove, type Conveyance } from "../../rules/towing.js";
+import { SYSTEM_ID } from "../constants.js";
 import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
 import { evaluateBonus, takesEvaluateBonus } from "../../rules/maneuvers.js";
@@ -2176,10 +2178,43 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const q = Number(sys.quantity ?? 1);
       if (Number.isFinite(w) && Number.isFinite(q)) weightLines.push({ item, label: String(item.name ?? ""), weight: w * q, counts: true });
     }
-    // What the modules say doesn't count: a suit carrying its own weight (API 1.58.0).
+    // A load pulled behind, at the effective weight the book gives it
+    // (Campaigns p. 353; API 1.113.0): the load and its sledge, cart or
+    // wagon together, divided for the conveyance and a smooth surface.
+    const towFlag = (this.parent as any)?.getFlag?.(SYSTEM_ID, "towing");
+    const towing = towFlag && Number(towFlag.weight) > 0
+      ? (() => {
+          const conveyance = (["none", "sledge", "cart", "wagon"].includes(towFlag.conveyance) ? towFlag.conveyance : "none") as Conveyance;
+          const smooth = towFlag.smooth === true;
+          const effective = towedWeight({ weight: Number(towFlag.weight), conveyance, smooth });
+          return {
+            weight: Number(towFlag.weight), conveyance, smooth, label: String(towFlag.label ?? ""),
+            effective, movable: canPull(effective, secondary.basicLift),
+          };
+        })()
+      : null;
+    if (towing) {
+      weightLines.push({
+        item: null,
+        label: towing.label ? game.i18n.format("GWORLD.Towing.Line", { label: towing.label }) : game.i18n.localize("GWORLD.Towing.Title"),
+        weight: towing.effective,
+        counts: true,
+      });
+    }
+    // What the modules say doesn't count: a suit carrying its own weight (API
+    // 1.58.0); and, since 1.113.0, what they say weighs more.
     const weighed = moduleCarriedWeight(this.parent, weightLines);
     const carriedWeight = weighed.total;
-    const encumbrance = { ...encumbranceState(carriedWeight, secondary.basicLift, secondary.basicMove), notCounted: weighed.notCounted };
+    // A muscle-powered wheelchair moves at ST/4 on the ground (Characters p. 142; API 1.113.0).
+    const inWheelchair = this.items.some((i: any) => i.type === "equipment" && i.system?.equipped === true && i.system?.wheelchair === true);
+    const groundMove = inWheelchair ? wheelchairMove(attrs.ST) : secondary.basicMove;
+    const encumbrance = {
+      ...encumbranceState(carriedWeight, secondary.basicLift, groundMove),
+      notCounted: weighed.notCounted,
+      added: weighed.added,
+      towing,
+      wheelchair: inWheelchair,
+    };
     const reeling = isReeling(this.hp.value, this.hp.max);
     // Fatigue has a chart of its own, with the same two halvings on it: someone
     // who has not eaten in three days moves and dodges like someone bleeding.

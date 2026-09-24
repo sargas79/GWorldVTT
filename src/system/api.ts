@@ -54,6 +54,8 @@ import { surprise, undoKnockdown } from "./knockdown.js";
 import { rollFall } from "./falling.js";
 import { restoreFatigue, spendFatigueFor } from "./fatigue.js";
 import { changeTrait, type TraitChanged } from "./trait-change.js";
+import { stopTowing, tow } from "./towing.js";
+import type { Conveyance } from "../rules/towing.js";
 import { bind, bindingOf, breakFreeFromBinding, unbind, type BindingBroken } from "./entangling.js";
 import type { LandingSurface } from "../rules/falling.js";
 import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from "./damage-undo.js";
@@ -97,7 +99,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.112.0";
+export const API_VERSION = "1.113.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -244,6 +246,21 @@ const actors = {
    */
   changeTrait(actor: any, options: { id?: string; name?: string; level?: number; replaceWith?: string | Record<string, any> }): Promise<TraitChanged | null> {
     return changeTrait(actor, options);
+  },
+
+  /**
+   * Pulls a load behind the character (Campaigns p. 353; since 1.113.0):
+   * `weight` is the load and its conveyance together; its effective weight
+   * counts toward encumbrance until `stopTowing`. Resolves to `{ effective,
+   * limit, movable }`, or null.
+   */
+  tow(actor: any, options: { weight: number; conveyance?: Conveyance; smooth?: boolean; label?: string }) {
+    return tow(actor, options);
+  },
+
+  /** Lets go of a pulled load (since 1.113.0). False where there was none. */
+  stopTowing(actor: any): Promise<boolean> {
+    return stopTowing(actor);
   },
 
   /** One attempt to break free of a Binding (since 1.107.0): "free", "held", or null. */

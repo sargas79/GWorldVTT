@@ -41,6 +41,7 @@ export * from "./visibility.js";
 export * from "./disease.js";
 export * from "./dirty-tricks.js";
 export * from "./encumbrance.js";
+export * from "./towing.js";
 export * from "./extra-effort.js";
 export * from "./success.js";
 export * from "./structures.js";

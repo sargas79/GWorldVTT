@@ -1250,6 +1250,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare ammunition: { kind: AmmunitionType; fits: string };
   declare equipmentModifier: number | null;
   declare forSkills: string[];
+  declare wheelchair: boolean;
   declare meleeModes: unknown[];
   declare rangedModes: unknown[];
   declare vehicle: {
@@ -1323,6 +1324,12 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
         new fields.StringField({ required: true, blank: true, initial: "" }),
         { required: true, initial: [] },
       ),
+      /**
+       * A muscle-powered wheelchair or wheeled platform (Characters p. 142;
+       * since API 1.113.0): while it is equipped, the character's ground Move
+       * is a quarter of their ST, rounded down, before encumbrance.
+       */
+      wheelchair: new fields.BooleanField({ initial: false }),
       /**
        * The grade it was bought in (GURPS Basic Set: Characters p. 274). The
        * tables' prices buy good quality through TL6; a finer weapon cuts
