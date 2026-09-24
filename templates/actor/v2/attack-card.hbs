@@ -44,9 +44,9 @@
       {{/if}}
     {{else}}
       {{#if ranged}}
-        <span class="{{#if atk.damageRollable}}rollable{{/if}}" {{> "gworld.part.attack-ranged-damage" atk=atk}}>{{atk.damage}} {{atk.damageType}}</span>
+        <span class="{{#if atk.damageRollable}}rollable{{/if}}" {{> "gworld.part.attack-ranged-damage" atk=atk}}>{{shownDamage atk.damage}} {{atk.damageType}}</span>
       {{else}}
-        <span class="{{#if atk.damageRollable}}rollable{{/if}}" {{> "gworld.part.attack-melee-damage" atk=atk}}>{{atk.damage}} {{atk.damageType}}</span>
+        <span class="{{#if atk.damageRollable}}rollable{{/if}}" {{> "gworld.part.attack-melee-damage" atk=atk}}>{{shownDamage atk.damage}} {{atk.damageType}}</span>
       {{/if}}
     {{/if}}
   </div>

@@ -1,18 +1,25 @@
 <div class="gr">
   <p class="gr-intro">{{localize "GWORLD.Rules.Intro"}}</p>
 
+  <input type="search" name="rule-search" class="gr-search" value="{{query}}" autocomplete="off"
+         placeholder="{{localize 'GWORLD.Rules.Search'}}" aria-label="{{localize 'GWORLD.Rules.Search'}}" />
+
   <div class="gr-bulk">
-    <button type="button" class="ibtn" data-action="allOn">{{localize "GWORLD.Rules.AllOn"}}</button>
-    <button type="button" class="ibtn" data-action="allOff">{{localize "GWORLD.Rules.AllOff"}}</button>
+    {{!-- While a search is typed these act on only the rules it shows, and
+         say so: the label is swapped as the search filters. --}}
+    <button type="button" class="ibtn" data-action="allOn"
+            data-label-all="{{localize 'GWORLD.Rules.AllOn'}}" data-label-shown="{{localize 'GWORLD.Rules.ShownOn'}}">{{localize "GWORLD.Rules.AllOn"}}</button>
+    <button type="button" class="ibtn" data-action="allOff"
+            data-label-all="{{localize 'GWORLD.Rules.AllOff'}}" data-label-shown="{{localize 'GWORLD.Rules.ShownOff'}}">{{localize "GWORLD.Rules.AllOff"}}</button>
     <button type="button" class="ibtn" data-action="restore">{{localize "GWORLD.Rules.Restore"}}</button>
   </div>
 
   <div class="gr-body">
     {{#each groups as |group|}}
-      <section class="gr-group">
+      <section class="gr-group" data-search="{{group.search}}">
         <h3>{{localize group.label}}{{#if group.source}} <span class="gr-source">{{group.source}}</span>{{/if}}</h3>
         {{#each group.rules as |rule|}}
-          <label class="gr-rule{{#if rule.pending}} pending{{/if}}">
+          <label class="gr-rule{{#if rule.pending}} pending{{/if}}" data-search="{{rule.search}}">
             <input type="checkbox" data-rule="{{rule.key}}"
                    {{#if rule.enabled}}checked{{/if}} {{#if rule.pending}}disabled{{/if}} />
             <span class="gr-text">
@@ -39,6 +46,7 @@
         {{/each}}
       </section>
     {{/each}}
+    <p class="gr-hint gr-empty gr-nomatch" hidden>{{localize "GWORLD.Rules.NoMatch"}}</p>
   </div>
 
   <div class="gr-foot">
