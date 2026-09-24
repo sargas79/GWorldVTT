@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 /** A disarm names the weapon and knocks it away (sargas79/GWorldVTT#738). */
 
 const contests: any[] = [];
-let contestResult: { outcome: "first" | "second" | "tie"; marginOfVictory: number } = { outcome: "first", marginOfVictory: 2 };
+let contestResult: { outcome: "first" | "second" | "tie"; marginOfVictory: number; messageId?: string } = { outcome: "first", marginOfVictory: 2, messageId: "contest1" };
 let strike: { success: boolean; criticalFailure: boolean } | null = { success: true, criticalFailure: false };
 const strikes: any[] = [];
 
@@ -23,7 +23,7 @@ vi.mock("../roll.js", async (importOriginal) => ({
 }));
 
 import { holdingSkill, rollDisarm, strikingSkill } from "../disarm.js";
-import { HELD_WEAPON_QUERY, answerHeldWeaponQuery, knockWeaponAway, registerHeldWeaponQuery, setWeaponUnready } from "../held-weapons.js";
+import { HELD_WEAPON_QUERY, answerHeldWeaponQuery, isWonDisarm, knockWeaponAway, registerHeldWeaponQuery, resetSpentContests, setWeaponUnready } from "../held-weapons.js";
 import { createApi } from "../api.js";
 
 const globals = globalThis as Record<string, unknown>;
@@ -45,8 +45,9 @@ beforeEach(() => {
   strikes.length = 0;
   hooks.length = 0;
   notes.length = 0;
-  contestResult = { outcome: "first", marginOfVictory: 2 };
+  contestResult = { outcome: "first", marginOfVictory: 2, messageId: "contest1" };
   strike = { success: true, criticalFailure: false };
+  resetSpentContests();
   globals.game = {
     i18n: { localize: (k: string) => k, format: (k: string, d: any) => `${k}:${JSON.stringify(d)}` },
     user: PLAYER,
@@ -172,7 +173,8 @@ describe("a disarm's contest and what it does", () => {
     const query = vi.fn(async () => ({ itemId: "knife", reason: "disarm" }));
     (globals.game as any).users.activeGM = { isSelf: false, query };
     await rollDisarm({ actor, foe, fencingWeapon: false, jitteOrWhip: false, foeTwoHanded: false, target });
-    expect(query).toHaveBeenCalledWith(HELD_WEAPON_QUERY, { action: "knockAway", uuid: knife.uuid, reason: "disarm", attackerUuid: actor.uuid }, expect.anything());
+    // With the contest's card, for the GM's client to check the result against.
+    expect(query).toHaveBeenCalledWith(HELD_WEAPON_QUERY, { action: "knockAway", uuid: knife.uuid, reason: "disarm", attackerUuid: actor.uuid, contestId: "contest1" }, expect.anything());
     expect(knife.update).not.toHaveBeenCalled();
 
     (globals.game as any).users.activeGM = null;
@@ -213,16 +215,27 @@ describe("items.setUnready and items.knockAway (since API 1.136.0)", () => {
     warn.mockRestore();
   });
 
-  it("don't ask the GM for a caller who owns neither the holder nor an attacker named", async () => {
+  it("don't ask the GM for a caller who owns neither the holder nor an attacker named with a contest", async () => {
     const knife = gear({ id: "knife", name: "Knife", isOwner: false });
     const query = vi.fn(async () => ({ itemId: "knife", reason: "" }));
     (globals.game as any).users.activeGM = { isSelf: false, query };
     expect(await knockWeaponAway(knife)).toBeNull();
-    expect(await knockWeaponAway(knife, { attacker: holder("Actor.theirs", ["stranger"]) })).toBeNull();
+    expect(await knockWeaponAway(knife, { attacker: holder("Actor.theirs", ["stranger"]), contest: "contest1" })).toBeNull();
+    // Their own character with no contest behind it is not enough (#793).
+    expect(await knockWeaponAway(knife, { attacker: holder("Actor.mine", ["player"]) })).toBeNull();
     expect(query).not.toHaveBeenCalled();
-    // Their own character as the attacker gets it through.
-    expect(await knockWeaponAway(knife, { attacker: holder("Actor.mine", ["player"]) })).toEqual({ itemId: "knife", reason: "" });
-    expect(query).toHaveBeenCalledWith(HELD_WEAPON_QUERY, { action: "knockAway", uuid: knife.uuid, reason: "", attackerUuid: "Actor.mine" }, expect.anything());
+    // Their own character and the contest's card go to the GM, a message or its id.
+    expect(await knockWeaponAway(knife, { attacker: holder("Actor.mine", ["player"]), contest: { id: "contest1" } })).toEqual({ itemId: "knife", reason: "" });
+    expect(query).toHaveBeenCalledWith(HELD_WEAPON_QUERY, { action: "knockAway", uuid: knife.uuid, reason: "", attackerUuid: "Actor.mine", contestId: "contest1" }, expect.anything());
+  });
+
+  it("go straight through for a GM caller, with no attacker or contest", async () => {
+    const knife = gear({ id: "knife", name: "Knife", isOwner: false });
+    const query = vi.fn(async () => ({ itemId: "knife", reason: "" }));
+    (globals.game as any).user = GM;
+    (globals.game as any).users.activeGM = { isSelf: false, query };
+    expect(await knockWeaponAway(knife)).toEqual({ itemId: "knife", reason: "" });
+    expect(query).toHaveBeenCalledOnce();
   });
 });
 
@@ -242,8 +255,31 @@ describe("the GM's side of the query", () => {
     expect(await answerHeldWeaponQuery(null, { user: GM })).toBeNull();
   });
 
-  /** The foe's knife, the player's character and somebody else's, as the GM's client finds them. */
-  function world() {
+  const NOW = 1_000_000_000;
+
+  /** A disarm contest's card as the chat log holds it: the player's, just now, the attacker winning. */
+  function card(id: string, overrides: { author?: any; timestamp?: number; tags?: string[]; outcome?: string; marginOfVictory?: number; attackerUuid?: string; itemUuid?: string } = {}) {
+    return {
+      id,
+      author: overrides.author ?? PLAYER,
+      timestamp: overrides.timestamp ?? NOW - 5_000,
+      flags: {
+        gworld: {
+          quickContest: {
+            tags: overrides.tags ?? ["quickContest", "disarm"],
+            outcome: overrides.outcome ?? "first",
+            marginOfVictory: overrides.marginOfVictory ?? 2,
+            first: { actorUuid: overrides.attackerUuid ?? "Actor.mine", itemUuid: "Actor.mine.Item.sword", effective: 14 },
+            second: { actorUuid: "Actor.foe", itemUuid: overrides.itemUuid ?? "Actor.foe.Item.knife", effective: 11 },
+          },
+        },
+      },
+    };
+  }
+
+  /** The foe's knife, the player's character and somebody else's, and the chat log, as the GM's client finds them. */
+  function world(messages: any[] = []) {
+    vi.spyOn(Date, "now").mockReturnValue(NOW);
     const knife = gear({ id: "knife", name: "Knife", actor: holder("Actor.foe", []) });
     const docs: Record<string, any> = {
       [knife.uuid]: knife,
@@ -251,23 +287,83 @@ describe("the GM's side of the query", () => {
       "Actor.theirs": holder("Actor.theirs", ["stranger"]),
     };
     globals.fromUuid = vi.fn(async (uuid: string) => docs[uuid] ?? null);
+    const byId = new Map(messages.map((m) => [m.id, m]));
+    (globals.game as any).messages = { get: (id: string) => byId.get(id) };
     return knife;
   }
 
-  it("makes the change for a player who owns the attacker named", async () => {
-    const knife = world();
-    expect(await answerHeldWeaponQuery({ action: "knockAway", uuid: knife.uuid, reason: "disarm", attackerUuid: "Actor.mine" }, { user: PLAYER }))
-      .toEqual({ itemId: "knife", reason: "disarm" });
+  afterEach(() => vi.restoreAllMocks());
+
+  it("makes the change once for a player who owns the attacker and won the disarm on the card named", async () => {
+    const knife = world([card("won")]);
+    const request = { action: "knockAway", uuid: knife.uuid, reason: "disarm", attackerUuid: "Actor.mine", contestId: "won" };
+    expect(await answerHeldWeaponQuery(request, { user: PLAYER })).toEqual({ itemId: "knife", reason: "disarm" });
     expect(knife.system).toMatchObject({ carried: false, equipped: false });
+    // The card is spent: the same disarm doesn't knock it away again.
+    knife.system.carried = true;
+    expect(await answerHeldWeaponQuery(request, { user: PLAYER })).toBeNull();
+    expect(knife.system.carried).toBe(true);
+    expect(knife.update).toHaveBeenCalledOnce();
+  });
+
+  it("refuses a player's request with no won disarm behind it (#793)", async () => {
+    const knife = world([
+      card("someone-elses", { author: STRANGER }),
+      card("old", { timestamp: NOW - 10 * 60_000 }),
+      card("grapple", { tags: ["quickContest", "grapple"] }),
+      card("lost", { outcome: "second", marginOfVictory: 4 }),
+      card("other-weapon", { itemUuid: "Actor.foe.Item.axe" }),
+      card("other-attacker", { attackerUuid: "Actor.theirs" }),
+      card("won"),
+    ]);
+    const ask = (contestId: string | undefined, action = "knockAway", extra: Record<string, unknown> = {}) =>
+      answerHeldWeaponQuery({ action, uuid: knife.uuid, reason: "disarm", attackerUuid: "Actor.mine", ...(contestId === undefined ? {} : { contestId }), ...extra }, { user: PLAYER });
+    expect(await ask(undefined)).toBeNull();
+    expect(await ask("")).toBeNull();
+    expect(await ask("missing")).toBeNull();
+    for (const id of ["someone-elses", "old", "grapple", "lost", "other-weapon", "other-attacker"]) expect(await ask(id)).toBeNull();
+    // A won disarm knocks it away; it doesn't leave it unready, and a disarm never readies anything.
+    expect(await ask("won", "unready", { unready: true })).toBeNull();
+    expect(await ask("won", "unready", { unready: false })).toBeNull();
+    expect(knife.update).not.toHaveBeenCalled();
+  });
+
+  it("leaves it unready on a disarm the foe won by less than 3, or tied", async () => {
+    for (const [outcome, margin] of [["second", 2], ["tie", 0]] as const) {
+      const knife = world([card("kept", { outcome, marginOfVictory: margin })]);
+      resetSpentContests();
+      expect(await answerHeldWeaponQuery({ action: "knockAway", uuid: knife.uuid, attackerUuid: "Actor.mine", contestId: "kept" }, { user: PLAYER })).toBeNull();
+      expect(await answerHeldWeaponQuery({ action: "unready", uuid: knife.uuid, unready: true, reason: "disarm", attackerUuid: "Actor.mine", contestId: "kept" }, { user: PLAYER }))
+        .toEqual({ itemId: "knife", unready: true, reason: "disarm" });
+    }
   });
 
   it("refuses a player who owns neither the attacker nor the foe, whoever the payload claims", async () => {
-    const knife = world();
-    const request = { action: "knockAway", uuid: knife.uuid, reason: "disarm", attackerUuid: "Actor.mine", userId: "player" };
+    const knife = world([card("won")]);
+    const request = { action: "knockAway", uuid: knife.uuid, reason: "disarm", attackerUuid: "Actor.mine", contestId: "won", userId: "player" };
     expect(await answerHeldWeaponQuery(request, { user: STRANGER })).toBeNull();
-    expect(await answerHeldWeaponQuery({ action: "unready", uuid: knife.uuid, unready: true, attackerUuid: "Actor.gone" }, { user: PLAYER })).toBeNull();
+    expect(await answerHeldWeaponQuery({ action: "unready", uuid: knife.uuid, unready: true, attackerUuid: "Actor.gone", contestId: "won" }, { user: PLAYER })).toBeNull();
     expect(await answerHeldWeaponQuery(request, {})).toBeNull();
     expect(knife.update).not.toHaveBeenCalled();
+  });
+
+  it("makes it for the owner of the weapon's holder, with no contest", async () => {
+    world();
+    const knife = gear({ id: "knife", name: "Knife", actor: holder("Actor.foe", ["player"]) });
+    globals.fromUuid = vi.fn(async () => knife);
+    expect(await answerHeldWeaponQuery({ action: "unready", uuid: knife.uuid, unready: false, reason: "" }, { user: PLAYER }))
+      .toEqual({ itemId: "knife", unready: false, reason: "" });
+  });
+
+  it("reads a card as a won disarm only for its author, recently", () => {
+    const change = { action: "knockAway" as const, uuid: "Actor.foe.Item.knife", attackerUuid: "Actor.mine" };
+    expect(isWonDisarm(card("a"), PLAYER, change, NOW)).toBe(true);
+    // Foundry may hold the author as an id.
+    expect(isWonDisarm({ ...card("a"), author: "player" }, PLAYER, change, NOW)).toBe(true);
+    expect(isWonDisarm(card("a"), STRANGER, change, NOW)).toBe(false);
+    expect(isWonDisarm(card("a", { timestamp: NOW + 10 * 60_000 }), PLAYER, change, NOW)).toBe(false);
+    expect(isWonDisarm({ id: "plain", author: PLAYER, timestamp: NOW }, PLAYER, change, NOW)).toBe(false);
+    expect(isWonDisarm(null, PLAYER, change, NOW)).toBe(false);
   });
 
   it("makes it for a GM, with no attacker named", async () => {
