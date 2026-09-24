@@ -1696,6 +1696,19 @@ Two fields a module may read (since 1.62.0):
   the Basic Set's afflictions for the GM to pick from, or beside it. The
   system pushes nothing: which of the three bands one of its own afflictions
   inflicts is the GM's call, and the card asks.
+
+  Since 1.130.0 the context also says where the attack struck (Campaigns
+  pp. 398-400), so a stun weapon to the face or a spray in the eyes can do
+  something different there: `hitLocation`, the location the attack that
+  forced the roll struck, and `addonLocation`, the module's location
+  (`<module>.<key>`, with `hitLocation` its parent) or null. Both come from
+  the called shot that attack's roll left: where it was aimed, or `torso` for
+  a blow nobody aimed. The resistance roll reads the called shot without
+  spending it, so a linked damage line rolled from the same attack still
+  lands there. `hitLocation` is null where there is no location: the
+  `hitLocations` optional rule off, or an area attack or a cone. The victim's
+  DR bonus to the roll is now the DR at that location (the torso's where it
+  is null).
 - **Afflictions resisted with a Fright Check** (since 1.63.0): a mode whose
   `afflictionAttribute` is `fright` rolls a Fright Check at its
   `afflictionModifier` instead of an attribute roll. The check passes through

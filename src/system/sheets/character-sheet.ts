@@ -139,7 +139,8 @@ import { giveFirstAid, regenerate, restForADay, restForFatigue, tryToWake } from
 import { isFrightResistance, rollFrightCheck, rollFrightCheckOutcome } from "../fright.js";
 import { drMetByAttack, traitsOf, wornArmor } from "../damage.js";
 import { afflictionDrBonus } from "../../rules/affliction-resistance.js";
-import { applyAfflictionEffects } from "../afflictions.js";
+import { afflictionLocation, applyAfflictionEffects } from "../afflictions.js";
+import { peekCalledShot } from "../called-shot.js";
 import { feintDefenseScore, recordFeint } from "../feint.js";
 import { facingChangeAtEndOfMove, facingChangeCost, hexMovementCost } from "../../rules/tactical.js";
 import { CompendiumPicker } from "../apps/compendium-picker.js";
@@ -3074,7 +3075,6 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           ...(target.dataset.derivedMode ? { derived: String(target.dataset.derivedMode) } : {}),
         }
       : null;
-    const hitLocation = (target.dataset.hitLocation ?? "torso") as HitLocation;
     const damageType = (target.dataset.damageType ?? "cr") as DamageType;
 
     const targets = currentTargets();
@@ -3082,6 +3082,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       ui.notifications?.warn(game.i18n.localize("GWORLD.Affliction.NoTarget"));
       return;
     }
+    // Where the attack that forced the roll struck, from the called shot its
+    // attack roll left (since API 1.130.0). Read rather than spent: a line
+    // that both burns and shocks rolls its damage from the same attack.
+    const struck = afflictionLocation({
+      hitLocations: isRuleOn("hitLocations"),
+      area: target.dataset.areaAttack === "1",
+      shot: peekCalledShot(this.actor),
+    });
+    // The victim's DR is the armour where the blow landed, and the torso's
+    // where it landed nowhere in particular.
+    const hitLocation: HitLocation = struck?.hitLocation ?? "torso";
+    const where = { hitLocation: struck?.hitLocation ?? null, addonLocation: struck?.addonLocation ?? null };
     // An area affliction's centre (since API 1.63.0): this user's latest
     // template on the map, or else the first target.
     const centre = target.dataset.areaAttack === "1" ? areaCentre(targets) : null;
@@ -3126,7 +3138,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           attack: { attacker: this.actor, item, mode, distanceYards: yards, halfDamageRange, dr: drHere, drCounted: drBonus > 0, drBonus, ...distance },
         });
         if (fright && !fright.success) {
-          await applyAfflictionEffects({ actor: victim, attacker: this.actor, item, mode, label, margin: fright.margin, frightEffect: fright.effect, ...distance });
+          await applyAfflictionEffects({ actor: victim, attacker: this.actor, item, mode, label, margin: fright.margin, frightEffect: fright.effect, ...distance, ...where });
         }
         continue;
       }
@@ -3182,6 +3194,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           label,
           margin: outcome.margin,
           ...distance,
+          ...where,
         });
       }
     }
