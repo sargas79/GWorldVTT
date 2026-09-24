@@ -45,7 +45,7 @@ import {
   FRAGILE_BURNING, FRAGILE_ROLLING_SECONDS, type FragileKind,
 } from "../rules/fragile.js";
 import {
-  crippleThreshold, hitsAPerson, locationsOf, lossOfControl, mediumOf, occupantDamage,
+  crippleThreshold, hitsAPerson, locationCount, locationsOf, lossOfControl, MOVE_CRIPPLING_LOCATIONS, mediumOf, occupantDamage,
   occupantHitTarget, OCCUPANT_RISK_DAMAGE, passesThrough, vehicleDrAt, vehicleHitLocation,
   vehicleInjury, vehicleLocationPenalty, vehicleMovement, vehiclePenetration, vehicleWoundingModifier,
   VEHICLE_HIT_LOCATIONS, type VehicleArc, type VehicleLocation,
@@ -1374,8 +1374,8 @@ export async function shootAtVehicle(options: {
   const struck = passesThrough(hit.location);
   const injury = struck ? 0 : vehicleInjury({ penetrating, ...wound });
   const threshold = crippleThreshold(hit.location, hitPoints, {
-    wheels: countOf(String(vehicle.locations ?? ""), "W"),
-    masts: countOf(String(vehicle.locations ?? ""), "M"),
+    wheels: locationCount(String(vehicle.locations ?? ""), "wheel"),
+    masts: locationCount(String(vehicle.locations ?? ""), "mast"),
   });
   if (threshold !== null) {
     lines.push(
@@ -1415,9 +1415,22 @@ export async function shootAtVehicle(options: {
   // A vehicle on the map keeps hit points, and this is what takes them off.
   // A catalogue entry on somebody's Gear tab has none to take: the card says
   // what the shot did, and the GM decides what became of the car.
+  //
+  // A crippled wheel, track, runner, rotor, wing or mast is counted on it
+  // too, in the same update, and the Move it has reads that from then on
+  // (p. 555; since API 1.134.0). The count stops at what the Locations
+  // entry lists: four wheels can't be crippled five times over.
+  const crippled = threshold !== null && injury > threshold;
   if (item.documentName === "Actor" && item.isOwner && injury > 0) {
     const before = Number(item.system?.hp?.value) || 0;
-    await item.update({ "system.hp.value": before - injury });
+    const changes: Record<string, number> = { "system.hp.value": before - injury };
+    if (crippled && (MOVE_CRIPPLING_LOCATIONS as readonly string[]).includes(hit.location)) {
+      const had = Math.max(0, Math.floor(Number(item.system?.crippled?.[hit.location]) || 0));
+      const listed = locationCount(String(vehicle.locations ?? ""), hit.location);
+      const now = listed > 0 ? Math.min(listed, had + 1) : had + 1;
+      if (now !== had) changes[`system.crippled.${hit.location}`] = now;
+    }
+    await item.update(changes);
     lines.push(F("VehicleHp", { previous: before, now: before - injury, max: hitPoints }));
   }
 
@@ -1448,7 +1461,7 @@ export async function shootAtVehicle(options: {
     damageType: options.damageType,
     penetrating,
     injury,
-    crippled: threshold !== null && injury > threshold,
+    crippled,
     passedThrough: struck,
     occupantHit,
   };
@@ -1473,13 +1486,6 @@ export interface VehicleHit {
   passedThrough: boolean;
   /** An occupant struck, with the dice of cutting damage they take, or null. */
   occupantHit: { dice: number } | null;
-}
-
-/** How many of a location a vehicle's entry lists: "4W" is four wheels. */
-function countOf(entry: string, code: string): number {
-  const m = new RegExp(`(\\d*)${code}(?![a-z])`).exec(entry);
-  if (!m) return 1;
-  return Number(m[1]) || 1;
 }
 
 // ── acid, air, pressure and motion (pp. 428-437) ────────────────────────────
