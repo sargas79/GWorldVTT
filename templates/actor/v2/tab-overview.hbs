@@ -235,5 +235,21 @@
     {{> "gworld.part.attributes-secondary"}}
   </div>
 
+  {{!-- The rolls that are not a fight's: open, like Combat's Actions. --}}
+  <details class="v2-group v2-drawer" data-v2-fold="overview:actions" {{#unless (includes @root.v2.folded "overview:actions")}}open{{/unless}}>
+    <summary class="v2-group-head"><span class="v2-group-title">{{localize "GWORLD.Section.Actions"}}</span><span class="v2-chevron" aria-hidden="true">{{> "gworld.v2icon.chevron"}}</span></summary>
+    <div class="v2-drawer-body">{{> "gworld.part.general-actions"}}</div>
+  </details>
+
+  {{!-- Everything else a body does, in folds that start shut. --}}
+  <details class="v2-group v2-drawer" data-v2-fold="overview:feats" data-v2-default="closed" {{#if (includes @root.v2.opened "overview:feats")}}open{{/if}}>
+    <summary class="v2-group-head"><span class="v2-group-title">{{localize "GWORLD.Section.PhysicalFeats"}}</span><span class="v2-chevron" aria-hidden="true">{{> "gworld.v2icon.chevron"}}</span></summary>
+    <div class="v2-drawer-body">{{> "gworld.part.body-feats"}}</div>
+  </details>
+  <details class="v2-group v2-drawer" data-v2-fold="overview:recovery" data-v2-default="closed" {{#if (includes @root.v2.opened "overview:recovery")}}open{{/if}}>
+    <summary class="v2-group-head"><span class="v2-group-title">{{localize "GWORLD.Section.Recovery"}}</span><span class="v2-chevron" aria-hidden="true">{{> "gworld.v2icon.chevron"}}</span></summary>
+    <div class="v2-drawer-body">{{> "gworld.part.body-recovery"}}{{> "gworld.part.body-hazards"}}</div>
+  </details>
+
   {{> "gworld.addonSections"}}
 </section>

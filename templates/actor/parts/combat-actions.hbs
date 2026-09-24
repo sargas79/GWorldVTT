@@ -27,30 +27,10 @@
         {{localize "GWORLD.Swarm.FightOff"}}
       </button>
     {{/if}}
-    <button type="button" class="ibtn" data-action="contest"
-            data-tooltip="{{localize "GWORLD.Contest.Hint"}}">
-      {{localize "GWORLD.Contest.Action"}}
-    </button>
-    <button type="button" class="ibtn" data-action="fall"
-            data-tooltip="{{localize "GWORLD.Fall.Hint"}}">
-      {{localize "GWORLD.Fall.Action"}}
-    </button>
     {{#if system.conditions.stunned}}
       <button type="button" class="ibtn" data-action="shakeOffStun"
               data-tooltip="{{localize "GWORLD.Knockdown.ShakeHint"}}">
         {{localize "GWORLD.Knockdown.Shake"}}
-      </button>
-    {{/if}}
-    {{#if rules.frightChecks}}
-      <button type="button" class="ibtn" data-action="frightCheck"
-              data-tooltip="{{localize "GWORLD.Fright.Hint"}}">
-        {{localize "GWORLD.Fright.Action"}}
-      </button>
-    {{/if}}
-    {{#if rules.extraEffort}}
-      <button type="button" class="ibtn" data-action="extraEffort"
-              data-tooltip="{{localize "GWORLD.ExtraEffort.Hint"}}">
-        {{localize "GWORLD.ExtraEffort.Action"}}
       </button>
     {{/if}}
     {{#if rules.grappling}}
@@ -64,6 +44,30 @@
             data-tooltip="{{localize "GWORLD.Disarm.Hint"}}">
       {{localize "GWORLD.Disarm.Action"}}
     </button>
+    {{!-- Locks, chokes and the strikes that are not a punch (pp. 403-404). --}}
+    <button type="button" class="ibtn" data-action="unarmedTechnique">
+      {{localize "GWORLD.Technique.Button"}}
+    </button>
+    {{!-- A Molotov cocktail, and the bottles still on the belt (p. 411). --}}
+    <button type="button" class="ibtn" data-action="throwMolotov">
+      {{localize "GWORLD.Molotov.Throw"}}
+    </button>
+    <button type="button" class="ibtn" data-action="checkBottles">
+      {{localize "GWORLD.Molotov.CheckBottles"}}
+    </button>
+    {{#if entangled.caught}}
+      {{!-- Caught in something, and trying to get out (pp. 410-411). --}}
+      <button type="button" class="ibtn" data-action="tryToEscape"
+              data-tooltip="{{localize 'GWORLD.Entangled.EscapeHint'}}">
+        {{localize "GWORLD.Entangled.Escape"}}
+        {{#if entangled.successes}}
+          &middot; {{entangled.successes}}/{{entangled.needed}}
+        {{/if}}
+      </button>
+      {{#if entangled.mustBeCut}}
+        <span class="ichip warn">{{localize "GWORLD.Entangled.MustBeCut"}}</span>
+      {{/if}}
+    {{/if}}
     {{#if rules.dirtyTricks}}
       <button type="button" class="ibtn" data-action="splash"
               data-tooltip="{{localize "GWORLD.Splash.Hint"}}">
@@ -93,20 +97,6 @@
       <button type="button" class="ibtn" data-action="pushEnvelope"
               data-tooltip="{{localize "GWORLD.Mounted.EnvelopeHint"}}">
         {{localize "GWORLD.Mounted.EnvelopeAction"}}
-      </button>
-    {{/if}}
-    <button type="button" class="ibtn" data-action="attributePenalties"
-            data-tooltip="{{localize "GWORLD.Penalties.Hint"}}">
-      {{localize "GWORLD.Penalties.Action"}}{{#if penaltiesShowing}} &middot; {{penaltiesShowing}}{{/if}}
-    </button>
-    {{#if rules.reactions}}
-      <button type="button" class="ibtn" data-action="reaction"
-              data-tooltip="{{localize "GWORLD.Reaction.Hint"}}">
-        {{localize "GWORLD.Reaction.Action"}}
-      </button>
-      <button type="button" class="ibtn" data-action="influence"
-              data-tooltip="{{localize "GWORLD.Reaction.InfluenceHint"}}">
-        {{localize "GWORLD.Reaction.InfluenceAction"}}
       </button>
     {{/if}}
     <button type="button" class="ibtn" data-action="hearTheShot"

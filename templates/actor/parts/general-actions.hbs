@@ -1,0 +1,41 @@
+{{!-- A section of the character sheet, in a partial of its own: the actions
+      that are not a fight's, rolled as often out of combat as in it. --}}
+<div class="isec">
+  <div class="ish"><span class="num">05</span>{{localize "GWORLD.Section.Actions"}}</div>
+  <div class="toolbar">
+    {{#if rules.reactions}}
+      <button type="button" class="ibtn" data-action="reaction"
+              data-tooltip="{{localize "GWORLD.Reaction.Hint"}}">
+        {{localize "GWORLD.Reaction.Action"}}
+      </button>
+      <button type="button" class="ibtn" data-action="influence"
+              data-tooltip="{{localize "GWORLD.Reaction.InfluenceHint"}}">
+        {{localize "GWORLD.Reaction.InfluenceAction"}}
+      </button>
+    {{/if}}
+    <button type="button" class="ibtn" data-action="contest"
+            data-tooltip="{{localize "GWORLD.Contest.Hint"}}">
+      {{localize "GWORLD.Contest.Action"}}
+    </button>
+    {{#if rules.frightChecks}}
+      <button type="button" class="ibtn" data-action="frightCheck"
+              data-tooltip="{{localize "GWORLD.Fright.Hint"}}">
+        {{localize "GWORLD.Fright.Action"}}
+      </button>
+    {{/if}}
+    {{#if rules.extraEffort}}
+      <button type="button" class="ibtn" data-action="extraEffort"
+              data-tooltip="{{localize "GWORLD.ExtraEffort.Hint"}}">
+        {{localize "GWORLD.ExtraEffort.Action"}}
+      </button>
+    {{/if}}
+    <button type="button" class="ibtn" data-action="attributePenalties"
+            data-tooltip="{{localize "GWORLD.Penalties.Hint"}}">
+      {{localize "GWORLD.Penalties.Action"}}{{#if penaltiesShowing}} &middot; {{penaltiesShowing}}{{/if}}
+    </button>
+    {{!-- A Concept roll, then a Prototype, and the bugs (pp. 472-474). --}}
+    <button type="button" class="ibtn" data-action="invent">
+      {{localize "GWORLD.Invention.Button"}}
+    </button>
+  </div>
+</div>
