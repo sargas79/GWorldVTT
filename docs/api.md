@@ -349,6 +349,17 @@ and the roll continues.
     `{ actor, foe, item, mode, ranged, modifiers, refusal }`. `item` and `mode`
     are the row the Feint was made from (null for a natural attack). Push lines
     to `modifiers` for the feinter's roll, or set `refusal` (text) to stop it;
+  - Since 1.137.0, `gworld.attackModifiers` and `gworld.weaponTargets` also get
+    `arc` and `side`: where the attack comes at the foe from (Campaigns pp.
+    398-400), as `front`, `side` or `back`, and `left` or `right` for a side
+    attack (null otherwise). Both are null outside tactical combat, where
+    the attacker has no token, with no single target or with the two tokens
+    in one place; `gworld.weaponTargets` has them only when `foe` is the one
+    token targeted. They are the reading a called shot is checked against,
+    taken from the tokens before the attack is rolled, and not what a
+    `gworld.attackArc` listener later makes of the arc on the defense card.
+    Read-only: a rule about striking at something on a foe's back, or from
+    behind, reads them rather than working facing out from the tokens;
   - Since 1.19.0, a `gworld.attackModifiers` listener may set `refusal` (text): the
     attack isn't rolled, and the user is told why;
   - Since 1.83.0, `gworld.attackModifiers` also gets `shots`, the shells the
